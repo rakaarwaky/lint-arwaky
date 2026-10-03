@@ -9,10 +9,10 @@
 // the document chain.
 use std::sync::Arc;
 
+use crate::IStructureAggregate;
+use crate::taxonomy_structure_rules_request::StructureRequest;
+use crate::taxonomy_structure_rules_response::StructureResponse;
 use shared_common::ViolationItem;
-use shared_structure_rules::IStructureAggregate;
-use shared_structure_rules::taxonomy_structure_rules_request::StructureRequest;
-use shared_structure_rules::taxonomy_structure_rules_response::StructureResponse;
 
 /// Run the folder-layout audit over *root*, returning the violations.
 pub fn collect_structure(

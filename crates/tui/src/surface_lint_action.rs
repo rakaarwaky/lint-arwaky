@@ -1,20 +1,26 @@
-// PURPOSE: Surface-layer lint executor — facade over dispatcher functions for the TUI.
+// PURPOSE: Surface-layer lint executor — facade over shared_structure_rules functions for the TUI.
 // Provides all lint action methods (check, scan, fix, ci, etc.) with user-facing output
-// formatting. Delegates to dispatcher crate for business logic; formats output as
+// formatting. Delegates to the shared_structure_rules crate for business logic; formats output as
 // LintExecutionResult for the action handler.
-// All methods are synchronous — consistent with dispatcher sync API.
-use dispatcher::surface_check_action::{ScanOptions, collect_scan, collect_scan_with_progress};
-use dispatcher::surface_ci_action::{CiScanDeps, collect_ci};
-use dispatcher::surface_config_action::collect_config_show;
-use dispatcher::surface_fix_action::collect_fix_direct;
-use dispatcher::surface_git_action::{collect_install_hook, collect_uninstall_hook};
-use dispatcher::surface_maintenance_action::{
+// All methods are synchronous — consistent with shared_structure_rules sync API.
+use shared_structure_rules::surface_check_action::{
+    ScanOptions, collect_scan, collect_scan_with_progress,
+};
+use shared_structure_rules::surface_ci_action::{CiScanDeps, collect_ci};
+use shared_structure_rules::surface_config_action::collect_config_show;
+use shared_structure_rules::surface_fix_action::collect_fix_direct;
+use shared_structure_rules::surface_git_action::{collect_install_hook, collect_uninstall_hook};
+use shared_structure_rules::surface_maintenance_action::{
     collect_dependencies, collect_doctor, collect_security,
 };
-use dispatcher::surface_orphan_action::{OrphanFactory, OrphanScanDeps, collect_orphan};
-use dispatcher::surface_plugin_action::collect_adapters_detailed;
-use dispatcher::surface_setup_action::{collect_init, collect_install, collect_mcp_config};
-use dispatcher::surface_version_action::collect_version;
+use shared_structure_rules::surface_orphan_action::{
+    OrphanFactory, OrphanScanDeps, collect_orphan,
+};
+use shared_structure_rules::surface_plugin_action::collect_adapters_detailed;
+use shared_structure_rules::surface_setup_action::{
+    collect_init, collect_install, collect_mcp_config,
+};
+use shared_structure_rules::surface_version_action::collect_version;
 
 use crate::{ActionFlags, LintExecutionResult};
 use shared_auto_fix::IFixAggregate;
@@ -53,8 +59,9 @@ pub struct SurfaceLintExecutor {
     filesystem_io: Arc<dyn shared_filesystem::IFileSystemIOProtocol>,
     filesystem_workspace: Arc<dyn shared_filesystem::IWorkspaceProtocol>,
     filesystem_tool_resolution: Arc<dyn shared_filesystem::IToolResolutionProtocol>,
-    fs_seam: Arc<dispatcher::surface_check_action::FilesystemSeam>,
-    fs_factory: Arc<dyn Fn() -> dispatcher::surface_check_action::FilesystemSeam + Send + Sync>,
+    fs_seam: Arc<shared_structure_rules::surface_check_action::FilesystemSeam>,
+    fs_factory:
+        Arc<dyn Fn() -> shared_structure_rules::surface_check_action::FilesystemSeam + Send + Sync>,
     orphan_factory: Arc<OrphanFactory>,
 }
 
@@ -115,7 +122,7 @@ impl SurfaceLintExecutor {
         }
     }
 
-    /// Scan with dispatcher-owned progress milestones for the interactive TUI.
+    /// Scan with shared_structure_rules progress milestones for the interactive TUI.
     pub fn scan_with_progress<F>(&self, path: &str, on_progress: F) -> LintExecutionResult
     where
         F: FnMut(String, usize, usize),
@@ -520,8 +527,10 @@ impl SurfaceLintExecutor {
         filesystem_io: Arc<dyn shared_filesystem::IFileSystemIOProtocol>,
         filesystem_workspace: Arc<dyn shared_filesystem::IWorkspaceProtocol>,
         filesystem_tool_resolution: Arc<dyn shared_filesystem::IToolResolutionProtocol>,
-        fs_seam: Arc<dispatcher::surface_check_action::FilesystemSeam>,
-        fs_factory: Arc<dyn Fn() -> dispatcher::surface_check_action::FilesystemSeam + Send + Sync>,
+        fs_seam: Arc<shared_structure_rules::surface_check_action::FilesystemSeam>,
+        fs_factory: Arc<
+            dyn Fn() -> shared_structure_rules::surface_check_action::FilesystemSeam + Send + Sync,
+        >,
         orphan_factory: Arc<OrphanFactory>,
     ) -> Self {
         Self {
@@ -626,19 +635,23 @@ impl SurfaceLintExecutor {
         self
     }
 
-    fn build_scan_aggregates(&self) -> Option<dispatcher::surface_check_action::ScanAggregates> {
-        Some(dispatcher::surface_check_action::ScanAggregates {
-            quality: self.code_analysis.clone(),
-            role: self.role_orchestrator.clone()?,
-            import: self.import_orchestrator.clone()?,
-            naming: self.naming_orchestrator.clone()?,
-            external: self.external_lint.clone()?,
-            orphan: self.orphan_aggregate.clone()?,
-            config: self.config_orchestrator.clone()?,
-            structure: self.structure_orchestrator.clone()?,
-            doc: self.doc_orchestrator.clone()?,
-            fs_seam: self.fs_seam.clone(),
-        })
+    fn build_scan_aggregates(
+        &self,
+    ) -> Option<shared_structure_rules::surface_check_action::ScanAggregates> {
+        Some(
+            shared_structure_rules::surface_check_action::ScanAggregates {
+                quality: self.code_analysis.clone(),
+                role: self.role_orchestrator.clone()?,
+                import: self.import_orchestrator.clone()?,
+                naming: self.naming_orchestrator.clone()?,
+                external: self.external_lint.clone()?,
+                orphan: self.orphan_aggregate.clone()?,
+                config: self.config_orchestrator.clone()?,
+                structure: self.structure_orchestrator.clone()?,
+                doc: self.doc_orchestrator.clone()?,
+                fs_seam: self.fs_seam.clone(),
+            },
+        )
     }
 
     fn build_ci_deps(&self) -> Option<CiScanDeps> {

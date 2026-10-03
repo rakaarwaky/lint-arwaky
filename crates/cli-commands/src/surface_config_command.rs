@@ -1,12 +1,12 @@
 // PURPOSE: Config show — CLI thin wrapper
-// Calls dispatcher for config business logic, only adds CLI output.
+// Calls shared_structure_rules::surface_config_action for config business logic, only adds CLI output.
 use shared_common::ExitCode;
 use shared_config_system::IConfigOrchestratorAggregate;
 use std::sync::Arc;
 use tracing::warn;
 
 pub fn handle_config_show(orchestrator: Arc<dyn IConfigOrchestratorAggregate>) -> ExitCode {
-    let report = dispatcher::surface_config_action::collect_config_show(orchestrator);
+    let report = shared_structure_rules::surface_config_action::collect_config_show(orchestrator);
 
     for entry in &report.entries {
         println!("── [{}] {} ──", entry.language, entry.path);

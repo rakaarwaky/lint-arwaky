@@ -1,5 +1,5 @@
 // PURPOSE: Fix command — CLI thin wrapper
-// Calls dispatcher for fix business logic, only adds CLI output.
+// Calls shared_structure_rules::surface_fix_action for fix business logic, only adds CLI output.
 use shared_auto_fix::IFixAggregate;
 use shared_common::{ExitCode, FilePath};
 use shared_quality_rules::ICodeAnalysisAggregate;
@@ -14,7 +14,7 @@ pub fn handle_fix(
     code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
     fix_orchestrator_factory: Arc<dyn Fn(bool) -> Arc<dyn IFixAggregate> + Send + Sync>,
 ) -> ExitCode {
-    match dispatcher::surface_fix_action::collect_fix(
+    match shared_structure_rules::surface_fix_action::collect_fix(
         path,
         dry_run,
         code_analysis_linter,

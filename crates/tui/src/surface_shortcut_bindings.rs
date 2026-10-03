@@ -1,6 +1,6 @@
 //! Surface-owned single source of truth for TUI key bindings.
 //!
-//! The dispatcher, shortcut bar, and help overlay all consume this table. A
+//! The orchestrator (shared_structure_rules), shortcut bar, and help overlay all consume this table. A
 //! binding therefore cannot be changed in one surface while remaining stale in
 //! another.
 

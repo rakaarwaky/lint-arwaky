@@ -1,24 +1,28 @@
-// PURPOSE: Dispatcher crate — Utility Surface
-// Source of truth for shared scan/CI business logic
-// CLI/MCP/TUI call these functions then format output themselves
-
-pub mod surface_check_action;
-pub mod surface_ci_action;
-pub mod surface_config_action;
-pub mod surface_docs_action;
-pub mod surface_external_action;
-pub mod surface_fix_action;
-pub mod surface_git_action;
-pub mod surface_import_action;
-pub mod surface_layer_scan_action;
-pub mod surface_maintenance_action;
-pub mod surface_naming_action;
-pub mod surface_orphan_action;
-pub mod surface_plugin_action;
-pub mod surface_quality_action;
-pub mod surface_role_action;
-pub mod surface_setup_action;
-pub mod surface_structure_action;
-pub mod surface_test_entries;
-pub mod surface_version_action;
-pub mod surface_watch_action;
+// PURPOSE: #570 — dispatcher surface-orchestrator re-export shim.
+//
+// The `surface_*_action` modules have moved to `shared-structure-rules`
+// (issue #570: surface crates must not depend on the dispatcher crate).
+// This crate re-exports every module so existing import paths
+// (`dispatcher::surface_check_action::...`, `dispatcher_lint_arwaky::...`)
+// keep resolving. Surfaces (cli-commands, mcp-server, tui) should import
+// from `shared_structure_rules::surface_*` directly.
+pub use shared_structure_rules::surface_check_action;
+pub use shared_structure_rules::surface_ci_action;
+pub use shared_structure_rules::surface_config_action;
+pub use shared_structure_rules::surface_docs_action;
+pub use shared_structure_rules::surface_external_action;
+pub use shared_structure_rules::surface_fix_action;
+pub use shared_structure_rules::surface_git_action;
+pub use shared_structure_rules::surface_import_action;
+pub use shared_structure_rules::surface_layer_scan_action;
+pub use shared_structure_rules::surface_maintenance_action;
+pub use shared_structure_rules::surface_naming_action;
+pub use shared_structure_rules::surface_orphan_action;
+pub use shared_structure_rules::surface_plugin_action;
+pub use shared_structure_rules::surface_quality_action;
+pub use shared_structure_rules::surface_role_action;
+pub use shared_structure_rules::surface_setup_action;
+pub use shared_structure_rules::surface_structure_action;
+pub use shared_structure_rules::surface_test_entries;
+pub use shared_structure_rules::surface_version_action;
+pub use shared_structure_rules::surface_watch_action;

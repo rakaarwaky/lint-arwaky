@@ -20,3 +20,25 @@ workspace = true
 # apart on which prefixes are legal. Pure data — no cycle: naming-rules does
 # not depend on structure-rules.
 shared-naming-rules.workspace = true
+# #570: surface orchestrators (surface_*_action) moved in from crates/dispatcher.
+shared-auto-fix.workspace = true
+shared-cli-commands.workspace = true
+shared-common.workspace = true
+shared-config-system.workspace = true
+shared-doc-rules.workspace = true
+shared-external-lint.workspace = true
+shared-file-watch.workspace = true
+shared-filesystem.workspace = true
+shared-git-hooks.workspace = true
+shared-import-rules.workspace = true
+shared-maintenance.workspace = true
+shared-orphan-rules.workspace = true
+shared-project-setup.workspace = true
+shared-quality-rules.workspace = true
+shared-role-rules.workspace = true
+serde = { workspace = true }
+serde_json = { workspace = true }
+regex = { workspace = true }
+dirs = { workspace = true }
+ctrlc = { workspace = true }
+tracing = { workspace = true }

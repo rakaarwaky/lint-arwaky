@@ -1,11 +1,11 @@
 // PURPOSE: Plugin list — CLI thin wrapper
-// Calls dispatcher for plugin business logic, only adds CLI output.
+// Calls shared_structure_rules::surface_plugin_action for plugin business logic, only adds CLI output.
 use shared_common::ExitCode;
 use shared_external_lint::IExternalLintAggregate;
 use std::sync::Arc;
 
 pub fn handle_adapters(external_lint: Arc<dyn IExternalLintAggregate>) -> ExitCode {
-    let adapters = dispatcher::surface_plugin_action::collect_adapters(external_lint);
+    let adapters = shared_structure_rules::surface_plugin_action::collect_adapters(external_lint);
     println!("External lint adapters:");
     if adapters.values.is_empty() {
         println!("  (none enabled)");

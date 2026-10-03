@@ -1,5 +1,5 @@
 // PURPOSE: Setup — CLI thin wrapper
-// Calls dispatcher for setup business logic, only adds CLI output.
+// Calls shared_structure_rules::surface_setup_action for setup business logic, only adds CLI output.
 use shared_common::ExitCode;
 use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared_project_setup::ISetupAggregate;
@@ -9,7 +9,8 @@ pub fn handle_init(
     setup_orchestrator: Arc<dyn ISetupAggregate>,
     filesystem: Arc<dyn IFileSystemIOProtocol>,
 ) -> ExitCode {
-    let items = dispatcher::surface_setup_action::collect_init(setup_orchestrator, filesystem);
+    let items =
+        shared_structure_rules::surface_setup_action::collect_init(setup_orchestrator, filesystem);
     let mut all_ok = true;
     for item in &items {
         if item.ok {
@@ -27,7 +28,7 @@ pub fn handle_init(
 }
 
 pub fn handle_install(setup: Arc<dyn ISetupAggregate>, sudo: bool) -> ExitCode {
-    let report = dispatcher::surface_setup_action::collect_install(setup, sudo);
+    let report = shared_structure_rules::surface_setup_action::collect_install(setup, sudo);
 
     println!("Lint Arwaky — Install Adapter Dependencies");
     println!("{}", "=".repeat(50));
@@ -57,7 +58,7 @@ pub fn handle_install(setup: Arc<dyn ISetupAggregate>, sudo: bool) -> ExitCode {
 }
 
 pub fn handle_mcp_config(client: &str) -> ExitCode {
-    let report = dispatcher::surface_setup_action::collect_mcp_config(client);
+    let report = shared_structure_rules::surface_setup_action::collect_mcp_config(client);
     println!("MCP Client Configuration for: {}", report.client);
     println!("Binary: {}", report.binary);
     println!();

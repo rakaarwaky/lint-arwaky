@@ -22,7 +22,6 @@ shared-quality-rules.workspace = true
 shared-role-rules.workspace = true
 shared-structure-rules.workspace = true
 shared-tui.workspace = true
-dispatcher = { workspace = true }
 anyhow = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }

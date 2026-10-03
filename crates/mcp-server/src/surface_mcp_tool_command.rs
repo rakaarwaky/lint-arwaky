@@ -2,7 +2,7 @@
 //
 // Holds Arc<McpActionSurface> and maps rmcp protocol parameters to action
 // surface methods. No business logic here — everything delegates to
-// McpActionSurface (surface_mcp_action_command), which delegates to dispatcher.
+// McpActionSurface (surface_mcp_action_command), which delegates to shared_structure_rules.
 use rmcp::handler::server::tool::ToolRouter;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{

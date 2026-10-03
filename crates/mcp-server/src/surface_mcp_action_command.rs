@@ -1,12 +1,11 @@
 // PURPOSE: McpActionSurface — MCP server action: business logic + JSON building.
 //
 // MCP protocol surface (surface_mcp_tool_command) delegates here; this surface
-// delegates to dispatcher surfaces (pure business logic) and maps results to
+// delegates to shared_structure_rules surfaces (pure business logic) and maps results to
 // JSON responses. No formatting/println — JSON is returned as serde_json::Value.
 use std::path::{Component, Path, PathBuf};
 use std::sync::Arc;
 
-use dispatcher::surface_orphan_action::OrphanFactory;
 use shared_auto_fix::IFixAggregate;
 use shared_common::Threshold;
 use shared_common::taxonomy_path_vo::FilePath;
@@ -29,6 +28,7 @@ use shared_role_rules::IRoleRunnerAggregate;
 use shared_role_rules::{
     LAYER_AGENT, LAYER_CAPABILITIES, LAYER_CONTRACT, LAYER_SURFACES, LAYER_TAXONOMY, LAYER_UTILITY,
 };
+use shared_structure_rules::surface_orphan_action::OrphanFactory;
 
 use shared_common::taxonomy_violation_item_vo::ViolationItem;
 
@@ -54,8 +54,9 @@ pub struct McpServerDependencies {
     pub filesystem_workspace: Arc<dyn shared_filesystem::IWorkspaceProtocol>,
     pub filesystem_tool_resolution: Arc<dyn shared_filesystem::IToolResolutionProtocol>,
     pub filesystem_parser: Arc<dyn shared_filesystem::IParserProtocol>,
-    pub fs_seam: Arc<dispatcher::surface_check_action::FilesystemSeam>,
-    pub fs_factory: Arc<dyn Fn() -> dispatcher::surface_check_action::FilesystemSeam + Send + Sync>,
+    pub fs_seam: Arc<shared_structure_rules::surface_check_action::FilesystemSeam>,
+    pub fs_factory:
+        Arc<dyn Fn() -> shared_structure_rules::surface_check_action::FilesystemSeam + Send + Sync>,
     pub orphan_factory: Arc<OrphanFactory>,
     // DI: config parsing functions
     pub parse_config_yaml: fn(&str) -> ArchitectureConfig,
@@ -96,32 +97,34 @@ impl McpActionSurface {
         }
     }
 
-    /// Run check/scan — all linters combined via dispatcher.
+    /// Run check/scan — all linters combined via shared_structure_rules.
     pub fn execute_check(&self, path: &str) -> serde_json::Value {
         let fp = match self.to_fp(path) {
             Ok(f) => f,
             Err(e) => return e,
         };
-        let opts = dispatcher::surface_check_action::ScanOptions {
+        let opts = shared_structure_rules::surface_check_action::ScanOptions {
             path: Some(fp),
             multi_project_orchestrator: Some(self.deps.config_orchestrator.clone()),
             filter: None,
             member: None,
             filesystem: Arc::new(self.deps.fs_seam.as_ref().clone()),
-            scan_aggregates: Some(dispatcher::surface_check_action::ScanAggregates {
-                quality: self.deps.code_analysis_linter.clone(),
-                role: self.deps.role_orchestrator.clone(),
-                import: self.deps.import_orchestrator.clone(),
-                naming: self.deps.naming_orchestrator.clone(),
-                external: self.deps.external_lint.clone(),
-                orphan: self.deps.orphan_orchestrator.clone(),
-                config: self.deps.config_orchestrator.clone(),
-                structure: self.deps.structure_orchestrator.clone(),
-                doc: self.deps.doc_orchestrator.clone(),
-                fs_seam: self.deps.fs_seam.clone(),
-            }),
+            scan_aggregates: Some(
+                shared_structure_rules::surface_check_action::ScanAggregates {
+                    quality: self.deps.code_analysis_linter.clone(),
+                    role: self.deps.role_orchestrator.clone(),
+                    import: self.deps.import_orchestrator.clone(),
+                    naming: self.deps.naming_orchestrator.clone(),
+                    external: self.deps.external_lint.clone(),
+                    orphan: self.deps.orphan_orchestrator.clone(),
+                    config: self.deps.config_orchestrator.clone(),
+                    structure: self.deps.structure_orchestrator.clone(),
+                    doc: self.deps.doc_orchestrator.clone(),
+                    fs_seam: self.deps.fs_seam.clone(),
+                },
+            ),
         };
-        match dispatcher::surface_check_action::collect_scan(opts) {
+        match shared_structure_rules::surface_check_action::collect_scan(opts) {
             Ok(violations) => {
                 let total = violations.len();
                 let exit_code = if total == 0 { 0 } else { 1 };
@@ -139,14 +142,14 @@ impl McpActionSurface {
         }
     }
 
-    /// Run CI — scoring + threshold via dispatcher.
+    /// Run CI — scoring + threshold via shared_structure_rules.
     pub fn execute_ci(&self, path: &str, threshold: u64) -> serde_json::Value {
         let fp = match self.to_fp(path) {
             Ok(f) => f,
             Err(e) => return e,
         };
-        match dispatcher::surface_ci_action::collect_ci(
-            dispatcher::surface_ci_action::CiScanDeps {
+        match shared_structure_rules::surface_ci_action::collect_ci(
+            shared_structure_rules::surface_ci_action::CiScanDeps {
                 code_analysis_linter: self.deps.code_analysis_linter.clone(),
                 import_orchestrator: self.deps.import_orchestrator.clone(),
                 naming_orchestrator: self.deps.naming_orchestrator.clone(),
@@ -195,26 +198,28 @@ impl McpActionSurface {
             Ok(fp) => fp,
             Err(error) => return error,
         };
-        let opts = dispatcher::surface_check_action::ScanOptions {
+        let opts = shared_structure_rules::surface_check_action::ScanOptions {
             path: Some(fp),
             multi_project_orchestrator: Some(self.deps.config_orchestrator.clone()),
             filter: None,
             member: None,
             filesystem: Arc::new(self.deps.fs_seam.as_ref().clone()),
-            scan_aggregates: Some(dispatcher::surface_check_action::ScanAggregates {
-                quality: self.deps.code_analysis_linter.clone(),
-                role: self.deps.role_orchestrator.clone(),
-                import: self.deps.import_orchestrator.clone(),
-                naming: self.deps.naming_orchestrator.clone(),
-                external: self.deps.external_lint.clone(),
-                orphan: self.deps.orphan_orchestrator.clone(),
-                config: self.deps.config_orchestrator.clone(),
-                structure: self.deps.structure_orchestrator.clone(),
-                doc: self.deps.doc_orchestrator.clone(),
-                fs_seam: self.deps.fs_seam.clone(),
-            }),
+            scan_aggregates: Some(
+                shared_structure_rules::surface_check_action::ScanAggregates {
+                    quality: self.deps.code_analysis_linter.clone(),
+                    role: self.deps.role_orchestrator.clone(),
+                    import: self.deps.import_orchestrator.clone(),
+                    naming: self.deps.naming_orchestrator.clone(),
+                    external: self.deps.external_lint.clone(),
+                    orphan: self.deps.orphan_orchestrator.clone(),
+                    config: self.deps.config_orchestrator.clone(),
+                    structure: self.deps.structure_orchestrator.clone(),
+                    doc: self.deps.doc_orchestrator.clone(),
+                    fs_seam: self.deps.fs_seam.clone(),
+                },
+            ),
         };
-        match dispatcher::surface_layer_scan_action::collect_layer_scan(opts, layer) {
+        match shared_structure_rules::surface_layer_scan_action::collect_layer_scan(opts, layer) {
             Ok(violations) => {
                 let total = violations.len();
                 let exit_code = if total == 0 { 0 } else { 1 };
@@ -233,13 +238,13 @@ impl McpActionSurface {
         }
     }
 
-    /// Run fix — auto-fix with dry_run support via dispatcher.
+    /// Run fix — auto-fix with dry_run support via shared_structure_rules.
     pub fn execute_fix(&self, path: &str, dry_run: bool) -> serde_json::Value {
         let fp = match self.to_fp(path) {
             Ok(f) => f,
             Err(error) => return error,
         };
-        match dispatcher::surface_fix_action::collect_fix(
+        match shared_structure_rules::surface_fix_action::collect_fix(
             Some(fp),
             dry_run,
             self.deps.code_analysis_linter.clone(),
@@ -279,13 +284,13 @@ impl McpActionSurface {
         }
     }
 
-    /// Run quality scan via dispatcher.
+    /// Run quality scan via shared_structure_rules.
     pub fn execute_quality(&self, path: &str) -> serde_json::Value {
         let fp = match self.to_fp(path) {
             Ok(f) => f,
             Err(e) => return e,
         };
-        match dispatcher::surface_quality_action::collect_quality(
+        match shared_structure_rules::surface_quality_action::collect_quality(
             Some(fp),
             self.deps.code_analysis_linter.clone(),
             None,
@@ -298,13 +303,13 @@ impl McpActionSurface {
         }
     }
 
-    /// Run import scan via dispatcher.
+    /// Run import scan via shared_structure_rules.
     pub fn execute_import(&self, path: &str) -> serde_json::Value {
         let fp = match self.to_fp(path) {
             Ok(f) => f,
             Err(e) => return e,
         };
-        match dispatcher::surface_import_action::collect_import(
+        match shared_structure_rules::surface_import_action::collect_import(
             Some(fp),
             self.deps.import_orchestrator.clone(),
             None,
@@ -317,13 +322,13 @@ impl McpActionSurface {
         }
     }
 
-    /// Run naming scan via dispatcher.
+    /// Run naming scan via shared_structure_rules.
     pub fn execute_naming(&self, path: &str) -> serde_json::Value {
         let fp = match self.to_fp(path) {
             Ok(f) => f,
             Err(e) => return e,
         };
-        match dispatcher::surface_naming_action::collect_naming(
+        match shared_structure_rules::surface_naming_action::collect_naming(
             Some(fp),
             self.deps.naming_orchestrator.clone(),
             None,
@@ -336,13 +341,13 @@ impl McpActionSurface {
         }
     }
 
-    /// Run role scan via dispatcher (direct aggregate — no subprocess).
+    /// Run role scan via shared_structure_rules (direct aggregate — no subprocess).
     pub fn execute_role(&self, path: &str) -> serde_json::Value {
         let fp = match self.to_fp(path) {
             Ok(fp) => fp,
             Err(error) => return error,
         };
-        match dispatcher::surface_role_action::collect_role_direct(
+        match shared_structure_rules::surface_role_action::collect_role_direct(
             self.deps.role_orchestrator.clone(),
             None,
             self.deps.filesystem.clone(),
@@ -354,16 +359,16 @@ impl McpActionSurface {
         }
     }
 
-    /// Run orphan scan via dispatcher.
+    /// Run orphan scan via shared_structure_rules.
     pub fn execute_orphan(&self, path: &str) -> serde_json::Value {
         let fp = match self.to_fp(path) {
             Ok(f) => f,
             Err(e) => return e,
         };
-        match dispatcher::surface_orphan_action::collect_orphan(
+        match shared_structure_rules::surface_orphan_action::collect_orphan(
             Some(fp),
             None,
-            dispatcher::surface_orphan_action::OrphanScanDeps::new(
+            shared_structure_rules::surface_orphan_action::OrphanScanDeps::new(
                 self.deps.orphan_orchestrator.clone(),
                 self.deps.config_orchestrator.clone(),
                 self.deps.filesystem.clone(),
@@ -389,13 +394,13 @@ impl McpActionSurface {
         }
     }
 
-    /// Run external lint via dispatcher (direct aggregate — no subprocess).
+    /// Run external lint via shared_structure_rules (direct aggregate — no subprocess).
     pub fn execute_external(&self, path: &str) -> serde_json::Value {
         let fp = match self.to_fp(path) {
             Ok(f) => f,
             Err(e) => return e,
         };
-        match dispatcher::surface_external_action::collect_external_direct(
+        match shared_structure_rules::surface_external_action::collect_external_direct(
             Some(fp),
             self.deps.external_lint.clone(),
             self.deps.filesystem.clone(),
@@ -409,9 +414,9 @@ impl McpActionSurface {
         }
     }
 
-    /// Run doctor diagnostics via dispatcher.
+    /// Run doctor diagnostics via shared_structure_rules.
     pub fn execute_doctor(&self) -> serde_json::Value {
-        let diag = dispatcher::surface_maintenance_action::collect_doctor(
+        let diag = shared_structure_rules::surface_maintenance_action::collect_doctor(
             self.deps.maintenance_orchestrator.clone(),
         );
         let mut checks = Vec::new();
@@ -430,13 +435,13 @@ impl McpActionSurface {
         serde_json::json!({"status": "ok", "action": "doctor", "exit_code": 0, "checks": checks})
     }
 
-    /// Run security scan via dispatcher.
+    /// Run security scan via shared_structure_rules.
     pub fn execute_security(&self, path: &str) -> serde_json::Value {
         let fp = match self.to_fp(path) {
             Ok(f) => f,
             Err(error) => return error,
         };
-        match dispatcher::surface_maintenance_action::collect_security(
+        match shared_structure_rules::surface_maintenance_action::collect_security(
             self.deps.maintenance_orchestrator.clone(),
             Some(fp),
         ) {
@@ -478,13 +483,13 @@ impl McpActionSurface {
         }
     }
 
-    /// Run dependency report via dispatcher.
+    /// Run dependency report via shared_structure_rules.
     pub fn execute_dependencies(&self, path: &str) -> serde_json::Value {
         let fp = match self.to_fp(path) {
             Ok(f) => f,
             Err(error) => return error,
         };
-        match dispatcher::surface_maintenance_action::collect_dependencies(
+        match shared_structure_rules::surface_maintenance_action::collect_dependencies(
             self.deps.maintenance_orchestrator.clone(),
             Some(fp),
         ) {
@@ -513,13 +518,13 @@ impl McpActionSurface {
         serde_json::json!({"error": "watch is not supported via MCP", "exit_code": 2})
     }
 
-    /// Run docs audit via dispatcher.
+    /// Run docs audit via shared_structure_rules.
     pub fn execute_docs(&self, path: &str) -> serde_json::Value {
         let fp = match self.to_fp(path) {
             Ok(fp) => fp,
             Err(error) => return error,
         };
-        let result = dispatcher::surface_docs_action::collect_docs(
+        let result = shared_structure_rules::surface_docs_action::collect_docs(
             fp.value(),
             self.deps.doc_orchestrator.clone(),
         );
@@ -579,7 +584,7 @@ impl McpActionSurface {
                     Ok(f) => f,
                     Err(e) => return e,
                 };
-                match dispatcher::surface_git_action::collect_install_hook(
+                match shared_structure_rules::surface_git_action::collect_install_hook(
                     self.deps.git_hooks_aggregate.clone(),
                     &fp,
                 ) {
@@ -590,7 +595,7 @@ impl McpActionSurface {
                 }
             }
             "uninstall-hook" => {
-                match dispatcher::surface_git_action::collect_uninstall_hook(
+                match shared_structure_rules::surface_git_action::collect_uninstall_hook(
                     self.deps.git_hooks_aggregate.clone(),
                 ) {
                     Ok(report) => {
@@ -600,7 +605,7 @@ impl McpActionSurface {
                 }
             }
             "init" | "install" => {
-                let items = dispatcher::surface_setup_action::collect_init(
+                let items = shared_structure_rules::surface_setup_action::collect_init(
                     self.deps.setup_orchestrator.clone(),
                     self.deps.filesystem_io.clone(),
                 );
@@ -625,11 +630,11 @@ impl McpActionSurface {
         normalize_response(response)
     }
 
-    // ─── Non-dispatcher MCP business logic ────────────────────
+    // ─── Non-orchestrator MCP business logic ────────────────────
 
     /// Health check: adapter availability from maintenance aggregate.
     pub fn handle_health_check(&self) -> serde_json::Value {
-        let health = dispatcher::surface_maintenance_action::collect_health_check(
+        let health = shared_structure_rules::surface_maintenance_action::collect_health_check(
             self.deps.maintenance_orchestrator.clone(),
         );
         let adapters: Vec<serde_json::Value> = health
@@ -643,7 +648,7 @@ impl McpActionSurface {
             .iter()
             .filter(|a| a["status"] == "available")
             .count();
-        let version_report = dispatcher::surface_version_action::collect_version();
+        let version_report = shared_structure_rules::surface_version_action::collect_version();
         serde_json::json!({
             "status": "ok",
             "version": version_report.version,

@@ -501,7 +501,6 @@ dependencies = [
  "criterion",
  "ctrlc",
  "dirs",
- "dispatcher-lint-arwaky",
  "serde_json",
  "shared-auto-fix-lint-arwaky",
  "shared-cli-commands-lint-arwaky",
@@ -3206,7 +3205,6 @@ dependencies = [
  "config-system-lint-arwaky",
  "criterion",
  "dirs",
- "dispatcher-lint-arwaky",
  "filesystem-lint-arwaky",
  "rmcp",
  "schemars",
@@ -4879,7 +4877,28 @@ dependencies = [
 name = "shared-structure-rules-lint-arwaky"
 version = "3.7.1"
 dependencies = [
+ "ctrlc",
+ "dirs",
+ "regex",
+ "serde",
+ "serde_json",
+ "shared-auto-fix-lint-arwaky",
+ "shared-cli-commands-lint-arwaky",
+ "shared-common-lint-arwaky",
+ "shared-config-system-lint-arwaky",
+ "shared-doc-rules-lint-arwaky",
+ "shared-external-lint-lint-arwaky",
+ "shared-file-watch-lint-arwaky",
+ "shared-filesystem-lint-arwaky",
+ "shared-git-hooks-lint-arwaky",
+ "shared-import-rules-lint-arwaky",
+ "shared-maintenance-lint-arwaky",
  "shared-naming-rules-lint-arwaky",
+ "shared-orphan-rules-lint-arwaky",
+ "shared-project-setup-lint-arwaky",
+ "shared-quality-rules-lint-arwaky",
+ "shared-role-rules-lint-arwaky",
+ "tracing",
 ]
 
 [[package]]
@@ -5687,7 +5706,6 @@ dependencies = [
  "criterion",
  "crossterm",
  "dirs",
- "dispatcher-lint-arwaky",
  "ratatui",
  "shared-auto-fix-lint-arwaky",
  "shared-common-lint-arwaky",

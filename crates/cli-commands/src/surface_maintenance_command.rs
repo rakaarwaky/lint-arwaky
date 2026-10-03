@@ -1,5 +1,5 @@
 // PURPOSE: Maintenance — CLI thin wrapper
-// Calls dispatcher for maintenance business logic, only adds CLI output.
+// Calls shared_structure_rules::surface_maintenance_action for maintenance business logic, only adds CLI output.
 use shared_common::ExitCode;
 use shared_common::FilePath;
 use shared_maintenance::IMaintenanceAggregate;
@@ -9,7 +9,7 @@ use tracing::error;
 use shared_cli_commands::utility_output_text_formatter::status_icon;
 
 pub fn handle_doctor(maintenance: Arc<dyn IMaintenanceAggregate>) -> ExitCode {
-    let diag = dispatcher::surface_maintenance_action::collect_doctor(maintenance);
+    let diag = shared_structure_rules::surface_maintenance_action::collect_doctor(maintenance);
 
     println!("Environment Diagnostics");
     println!();
@@ -73,7 +73,7 @@ pub fn handle_security(
         None => ".".to_string(),
     };
 
-    match dispatcher::surface_maintenance_action::collect_security(maintenance, path) {
+    match shared_structure_rules::surface_maintenance_action::collect_security(maintenance, path) {
         Ok(report) => {
             println!("Security Vulnerability Scan — {}", target);
             println!();
@@ -113,8 +113,10 @@ pub fn handle_self_update(
     maintenance: Arc<dyn IMaintenanceAggregate>,
     check_only: bool,
 ) -> ExitCode {
-    let result =
-        dispatcher::surface_maintenance_action::collect_self_update(maintenance, check_only);
+    let result = shared_structure_rules::surface_maintenance_action::collect_self_update(
+        maintenance,
+        check_only,
+    );
 
     println!("Lint Arwaky Self-Update");
     println!();
@@ -147,7 +149,10 @@ pub fn handle_dependencies(
         None => ".".to_string(),
     };
 
-    match dispatcher::surface_maintenance_action::collect_dependencies(maintenance, path) {
+    match shared_structure_rules::surface_maintenance_action::collect_dependencies(
+        maintenance,
+        path,
+    ) {
         Ok(report) => {
             println!("Dependency Report — {}", target);
             println!();

@@ -3,6 +3,7 @@
 // In-process mode (W10): when `scan_aggregates` is provided, all 7 linters run
 // in-process through their aggregate entry points. Subprocess self-invocation
 // remains the fallback when aggregates are absent (`scan_aggregates: None`).
+use crate::IStructureAggregate;
 use shared_common::FilePath;
 use shared_common::ViolationItem;
 use shared_config_system::{ConfigRequest, IConfigOrchestratorAggregate};
@@ -27,7 +28,6 @@ use shared_quality_rules::CodeAnalysisRequest;
 use shared_quality_rules::ICodeAnalysisAggregate;
 use shared_role_rules::IRoleRunnerAggregate;
 use shared_role_rules::taxonomy_role_rules_request::RoleRequest;
-use shared_structure_rules::IStructureAggregate;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
 use std::sync::Arc;

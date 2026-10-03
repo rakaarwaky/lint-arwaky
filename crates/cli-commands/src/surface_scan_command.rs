@@ -1,17 +1,17 @@
 // PURPOSE: Check/scan commands — CLI formatting + exit-code mapping.
-// Calls dispatcher for business logic, only adds CLI output.
-use dispatcher::surface_orphan_action::OrphanFactory;
+// Calls shared_structure_rules::surface_check_action for business logic, only adds CLI output.
 use shared_common::ExitCode;
+use shared_structure_rules::surface_orphan_action::OrphanFactory;
 use std::sync::Arc;
 use tracing::error;
 
-use dispatcher::surface_check_action::FilesystemSeam;
 use shared_cli_commands::Format;
 use shared_common::FilePath;
 use shared_config_system::{IConfigMergeProtocol, IConfigOrchestratorAggregate};
 use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared_quality_rules::ICodeAnalysisAggregate;
 use shared_structure_rules::IStructureAggregate;
+use shared_structure_rules::surface_check_action::FilesystemSeam;
 
 use shared_cli_commands::utility_output_text_formatter::output_violations;
 
@@ -25,7 +25,7 @@ pub struct ScanCommandParams {
     pub filter: Option<String>,
     pub member: Option<String>,
     /// In-process aggregate bundle (W10); `None` falls back to subprocess.
-    pub scan_aggregates: Option<dispatcher::surface_check_action::ScanAggregates>,
+    pub scan_aggregates: Option<shared_structure_rules::surface_check_action::ScanAggregates>,
 }
 
 /// Parameters for the `import` command.
@@ -97,7 +97,7 @@ pub struct ExternalCommandParams {
 pub struct LayerScanContext {
     pub filesystem_seam: FilesystemSeam,
     pub config_orchestrator: Option<Arc<dyn IConfigOrchestratorAggregate>>,
-    pub scan_aggregates: Option<dispatcher::surface_check_action::ScanAggregates>,
+    pub scan_aggregates: Option<shared_structure_rules::surface_check_action::ScanAggregates>,
 }
 
 /// Parameters for the `docs` command.
@@ -127,7 +127,7 @@ fn resolve_root(path: &Option<FilePath>) -> String {
 }
 
 fn is_member(path: &Option<FilePath>, seam: &FilesystemSeam) -> bool {
-    dispatcher::surface_check_action::is_member_path(
+    shared_structure_rules::surface_check_action::is_member_path(
         &FilePath::new(resolve_root(path)).unwrap_or_default(),
         seam.workspace.as_ref(),
     )
@@ -141,10 +141,10 @@ fn exit_for(violations: usize) -> ExitCode {
     }
 }
 
-/// `scan` — run all 6 linters via subprocesses (dispatcher self-invocation).
+/// `scan` — run all 6 linters via subprocesses (shared_structure_rules self-invocation).
 pub fn handle_scan(params: ScanCommandParams) -> ExitCode {
     let member_flag = is_member(&params.path, &params.filesystem_seam);
-    let opts = dispatcher::surface_check_action::ScanOptions {
+    let opts = shared_structure_rules::surface_check_action::ScanOptions {
         path: params.path,
         multi_project_orchestrator: params.config_orchestrator,
         filter: params.filter,
@@ -153,7 +153,7 @@ pub fn handle_scan(params: ScanCommandParams) -> ExitCode {
         scan_aggregates: params.scan_aggregates.clone(),
     };
     let root = resolve_root(&opts.path);
-    match dispatcher::surface_check_action::collect_scan(opts) {
+    match shared_structure_rules::surface_check_action::collect_scan(opts) {
         Ok(violations) => {
             output_violations(&violations, &root, params.format, member_flag);
             exit_for(violations.len())
@@ -181,7 +181,7 @@ pub fn handle_quality(
     ignored_paths: Vec<String>,
 ) -> ExitCode {
     let root = resolve_root(&path);
-    match dispatcher::surface_quality_action::collect_quality(
+    match shared_structure_rules::surface_quality_action::collect_quality(
         path.clone(),
         code_analysis_linter,
         filter,
@@ -208,7 +208,7 @@ pub fn handle_quality(
 /// `import` — import rules scan.
 pub fn handle_import(params: ImportCommandParams) -> ExitCode {
     let root = resolve_root(&params.path);
-    match dispatcher::surface_import_action::collect_import(
+    match shared_structure_rules::surface_import_action::collect_import(
         params.path.clone(),
         params.import_orchestrator,
         params.filter,
@@ -235,7 +235,7 @@ pub fn handle_import(params: ImportCommandParams) -> ExitCode {
 /// `naming` — naming rules scan.
 pub fn handle_naming(params: NamingCommandParams) -> ExitCode {
     let root = resolve_root(&params.path);
-    match dispatcher::surface_naming_action::collect_naming(
+    match shared_structure_rules::surface_naming_action::collect_naming(
         params.path.clone(),
         params.naming_orchestrator,
         params.filter,
@@ -272,7 +272,7 @@ pub fn handle_layer_scan(
     let path = Some(FilePath::new(path).unwrap_or_default());
     let member_flag = is_member(&path, &context.filesystem_seam);
     let root = resolve_root(&path);
-    let opts = dispatcher::surface_check_action::ScanOptions {
+    let opts = shared_structure_rules::surface_check_action::ScanOptions {
         path,
         multi_project_orchestrator: context.config_orchestrator.clone(),
         filter,
@@ -280,7 +280,7 @@ pub fn handle_layer_scan(
         filesystem: Arc::new(context.filesystem_seam.clone()),
         scan_aggregates: context.scan_aggregates.clone(),
     };
-    match dispatcher::surface_layer_scan_action::collect_layer_scan(opts, layer) {
+    match shared_structure_rules::surface_layer_scan_action::collect_layer_scan(opts, layer) {
         Ok(violations) => {
             output_violations(&violations, &root, format, member_flag);
             exit_for(violations.len())
@@ -297,10 +297,11 @@ pub fn handle_layer_scan(
 /// and calls the doc orchestrator directly on the target path.
 pub fn handle_docs(params: DocsCommandParams) -> ExitCode {
     let root = resolve_root(&params.path);
-    match dispatcher::surface_docs_action::collect_docs(&root, params.doc_orchestrator) {
+    match shared_structure_rules::surface_docs_action::collect_docs(&root, params.doc_orchestrator)
+    {
         Ok(findings) => {
             let violations =
-                dispatcher::surface_docs_action::docs_findings_to_violations(&findings);
+                shared_structure_rules::surface_docs_action::docs_findings_to_violations(&findings);
             output_violations(&violations, &root, params.format, false);
             exit_for(violations.len())
         }
@@ -314,7 +315,7 @@ pub fn handle_docs(params: DocsCommandParams) -> ExitCode {
 /// `role` — role rules scan (direct aggregate; subprocess variant used by `scan`).
 pub fn handle_role(params: RoleCommandParams) -> ExitCode {
     let root = resolve_root(&params.path);
-    match dispatcher::surface_role_action::collect_role_direct(
+    match shared_structure_rules::surface_role_action::collect_role_direct(
         params.role_orchestrator,
         params.filter,
         params.filesystem.clone(),
@@ -340,10 +341,10 @@ pub fn handle_role(params: RoleCommandParams) -> ExitCode {
 /// `orphan` — orphan scan.
 pub fn handle_orphan(params: OrphanCommandParams) -> ExitCode {
     let root = resolve_root(&params.path);
-    match dispatcher::surface_orphan_action::collect_orphan(
+    match shared_structure_rules::surface_orphan_action::collect_orphan(
         params.path.clone(),
         params.member,
-        dispatcher::surface_orphan_action::OrphanScanDeps::new(
+        shared_structure_rules::surface_orphan_action::OrphanScanDeps::new(
             params.orphan_orchestrator,
             params.config_orchestrator,
             params.filesystem.clone(),
@@ -373,7 +374,7 @@ pub fn handle_orphan(params: OrphanCommandParams) -> ExitCode {
 /// `external` — external lint scan (direct aggregate; subprocess variant used by `scan`).
 pub fn handle_external(params: ExternalCommandParams) -> ExitCode {
     let root = resolve_root(&params.path);
-    match dispatcher::surface_external_action::collect_external_direct(
+    match shared_structure_rules::surface_external_action::collect_external_direct(
         params.path.clone(),
         params.external_lint,
         params.filesystem,
@@ -396,7 +397,7 @@ pub fn handle_external(params: ExternalCommandParams) -> ExitCode {
 /// `structure` — folder-layout audit (AES701–AES703).
 pub fn handle_structure(params: StructureCommandParams) -> ExitCode {
     let root = resolve_root(&params.path);
-    match dispatcher::surface_structure_action::collect_structure(
+    match shared_structure_rules::surface_structure_action::collect_structure(
         &root,
         params.structure_orchestrator,
     ) {

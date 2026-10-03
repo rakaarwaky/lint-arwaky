@@ -1,5 +1,5 @@
 // PURPOSE: Git diff — CLI thin wrapper
-// Calls dispatcher for git-diff business logic, only adds CLI output.
+// Calls shared_structure_rules::surface_git_action for git-diff business logic, only adds CLI output.
 use shared_common::{ExitCode, GitBranchName};
 use shared_quality_rules::ICodeAnalysisAggregate;
 use std::sync::Arc;
@@ -13,7 +13,7 @@ pub fn handle_git_diff(
     project_path: Option<&str>,
     filter: Option<&str>,
 ) -> ExitCode {
-    match dispatcher::surface_git_action::collect_git_diff(
+    match shared_structure_rules::surface_git_action::collect_git_diff(
         code_analysis_linter,
         base,
         project_path,

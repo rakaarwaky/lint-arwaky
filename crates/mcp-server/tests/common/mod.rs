@@ -111,9 +111,9 @@ stub_aggregate!(
     StructureResponse
 );
 
-fn make_fs_seam() -> dispatcher::surface_check_action::FilesystemSeam {
+fn make_fs_seam() -> shared_structure_rules::surface_check_action::FilesystemSeam {
     let c = filesystem::root_filesystem_container::FilesystemContainer::new();
-    dispatcher::surface_check_action::FilesystemSeam {
+    shared_structure_rules::surface_check_action::FilesystemSeam {
         io: c.io(),
         workspace: c.workspace(),
         parser: c.parser(),

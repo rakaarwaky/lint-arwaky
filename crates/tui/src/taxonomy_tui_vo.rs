@@ -502,7 +502,7 @@ impl AppState {
         self.scan.violations = 0;
     }
 
-    /// Update in-progress scan metrics. The dispatcher owns the file count;
+    /// Update in-progress scan metrics. The orchestrator owns the file count;
     /// violation totals are updated only when the scan completes.
     pub fn update_scan_progress(&mut self, phase: String, done: usize, total: usize) {
         self.scan.phase = phase;

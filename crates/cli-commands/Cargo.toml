@@ -25,7 +25,6 @@ shared-quality-rules.workspace = true
 shared-report-formatter.workspace = true
 shared-role-rules.workspace = true
 shared-structure-rules.workspace = true
-dispatcher = { workspace = true }
 serde_json = { workspace = true }
 dirs = { workspace = true }
 ctrlc = { workspace = true }

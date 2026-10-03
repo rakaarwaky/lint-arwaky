@@ -1,5 +1,5 @@
 // PURPOSE: CI command — CLI thin wrapper
-// Calls dispatcher for CI business logic, only adds CLI output.
+// Calls shared_structure_rules::surface_ci_action for CI business logic, only adds CLI output.
 use shared_common::ExitCode;
 use std::sync::Arc;
 use tracing::{error, info};
@@ -27,8 +27,8 @@ pub struct CiCommandParams {
 }
 
 pub fn handle_ci(params: CiCommandParams) -> ExitCode {
-    match dispatcher::surface_ci_action::collect_ci(
-        dispatcher::surface_ci_action::CiScanDeps {
+    match shared_structure_rules::surface_ci_action::collect_ci(
+        shared_structure_rules::surface_ci_action::CiScanDeps {
             code_analysis_linter: params.code_analysis_linter,
             import_orchestrator: params.import_orchestrator,
             naming_orchestrator: params.naming_orchestrator,
