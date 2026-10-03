@@ -300,6 +300,8 @@ impl std::fmt::Display for BusySlot {
 pub struct ActionState {
     pub flags: ActionFlags,
     pub pending: bool,
+    /// Label of the in-flight background action, shown in the busy status line.
+    pub pending_label: String,
     pub result_rx: Option<std::sync::mpsc::Receiver<LintExecutionResult>>,
     pub pending_confirm: Option<ConfirmState>,
     /// The view to activate when a background action completes.
@@ -363,6 +365,7 @@ impl AppState {
             actions: ActionState {
                 flags: ActionFlags::default(),
                 pending: false,
+                pending_label: String::new(),
                 result_rx: None,
                 pending_confirm: None,
                 result_mode: PreviewMode::ActionOutput,

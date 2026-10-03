@@ -159,6 +159,7 @@ impl SurfaceActionHandler {
         }
         state.actions.result_mode = result_mode;
         state.actions.update_preview = update_preview;
+        state.actions.pending_label = label.to_string();
         state.set_status(format!("Running {label}..."));
         let lint_port = self.lint_port.clone();
         let (tx, rx) = std::sync::mpsc::sync_channel(4);
@@ -212,6 +213,37 @@ impl SurfaceActionHandler {
     /// Main event dispatch — maps every TuiEvent variant to a concrete action.
     /// Categories: navigation, focus cycling, search, path dialog, lint actions, mouse.
     pub fn handle(&self, state: &mut AppState, event: TuiEvent) {
+        // While a background action holds the busy slot (#577), action keys are
+        // rejected with an explicit busy status instead of being silently
+        // swallowed (#565). Navigation, status-only, and non-action events
+        // keep flowing through the match below.
+        if state.actions.pending
+            && matches!(
+                event,
+                TuiEvent::ActionCheck
+                    | TuiEvent::ActionScan
+                    | TuiEvent::ActionFix
+                    | TuiEvent::ActionFixLive
+                    | TuiEvent::ActionCi
+                    | TuiEvent::ActionOrphan
+                    | TuiEvent::ActionSecurity
+                    | TuiEvent::ActionDuplicates
+                    | TuiEvent::ActionDependencies
+                    | TuiEvent::ActionDoctor
+                    | TuiEvent::ActionMcpConfig
+                    | TuiEvent::ActionConfigShow
+                    | TuiEvent::ActionInstall
+                    | TuiEvent::ActionInit
+                    | TuiEvent::ActionUninstallHook
+                    | TuiEvent::ActionInstallHook
+                    | TuiEvent::ActionAdapters
+                    | TuiEvent::ActionVersion
+                    | TuiEvent::ActionWatch
+            )
+        {
+            state.report_busy_slot();
+            return;
+        }
         match event {
             // ---- Navigation: list selection or preview scrolling based on focus ----
             TuiEvent::MoveDown => {
