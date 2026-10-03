@@ -291,23 +291,23 @@ setup_aliases() {
 }
 
 # ── Step: Setup git hooks ─────────────────────────────────────────────────────
+# No pre-commit gate is installed on purpose. GitHub Actions is the merge gate:
+# the 6 quality checks run in CI and branch protection on main refuses the
+# merge until they pass, so a commit never has to pay a full local gate run.
+# Developers who want fast feedback before pushing run `bash scripts/gates.sh`
+# manually (see CONTRIBUTING.md). `lint-arwaky-cli install-hook` remains the
+# opt-in hook for per-repo use on other projects.
 setup_git_hooks() {
     local project_root="$1"
     local git_hooks_dir="$project_root/.git/hooks"
 
-    if [ -d "$git_hooks_dir" ]; then
+    if [ -d "$git_hooks_dir" ] && [ -f "$git_hooks_dir/pre-commit" ] && \
+       grep -q 'scripts/gates.sh' "$git_hooks_dir/pre-commit" 2>/dev/null; then
         if $DRY_RUN; then
-            echo "  [dry-run] Install pre-commit hook"
+            echo "  [dry-run] Remove legacy pre-commit gates.sh hook"
         else
-            cat << 'EOF' > "$git_hooks_dir/pre-commit"
-#!/usr/bin/env bash
-# Git pre-commit hook — runs quality gates before commit
-set -e
-PROJECT_ROOT="$(git rev-parse --show-toplevel)"
-bash "$PROJECT_ROOT/scripts/gates.sh"
-EOF
-            chmod +x "$git_hooks_dir/pre-commit"
-            echo -e "  ${GREEN}✓${NC} Installed .git/hooks/pre-commit -> scripts/gates.sh"
+            rm -f "$git_hooks_dir/pre-commit"
+            echo -e "  ${GREEN}✓${NC} Removed legacy pre-commit -> scripts/gates.sh hook (CI enforces the gates)"
         fi
     fi
 }
