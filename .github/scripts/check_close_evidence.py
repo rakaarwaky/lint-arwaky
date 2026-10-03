@@ -8,6 +8,7 @@ Exit codes:
 
 from __future__ import annotations
 
+import os
 import re
 import sys
 from pathlib import Path
@@ -21,23 +22,56 @@ EVIDENCE_PATTERNS = [
     re.compile(r"regression.*test", re.IGNORECASE),
 ]
 
+# A diff touching one of these paths counts as evidence on its own.
+TEST_FILE_MARKERS = ("regression_", "test.rs", "test.py", "test.ts", "tests/")
+
+FAILURE_NOTICE = """check_close_evidence: FAIL — 'Closes #' declared but no regression \
+evidence found.
+The PR must include one of:
+  • A regression test (regression_<short-name>.rs) in the diff
+  • A 'Verification:' section in the PR body with test output
+  • A reference to passing regression tests
+See CONTRIBUTING.md § Issue Closure Policy for the template."""
+
 
 def extract_closed_issues(pr_body: str) -> list[int]:
     """Extract all issue numbers declared as 'Closes #N' in the PR body."""
     return [int(n) for n in re.findall(r"Closes\s+#(\d+)", pr_body, re.IGNORECASE)]
 
 
+def body_has_evidence(pr_body: str) -> bool:
+    """Return True if the PR body names a verification step or a test run."""
+    return any(pattern.search(pr_body) for pattern in EVIDENCE_PATTERNS)
+
+
+def diff_has_evidence(diff_files: list[str]) -> bool:
+    """Return True if the diff touches a test file."""
+    return any(marker in path.lower() for path in diff_files for marker in TEST_FILE_MARKERS)
+
+
 def has_evidence(pr_body: str, diff_files: list[str] | None = None) -> bool:
     """Return True if the PR body (or diff files) contain evidence markers."""
-    if any(p.search(pr_body) for p in EVIDENCE_PATTERNS):
+    if body_has_evidence(pr_body):
         return True
-    # A diff touching test files is also acceptable evidence.
-    if diff_files:
-        test_markers = ("regression_", "test.rs", "test.py", "test.ts", "tests/")
-        for f in diff_files:
-            if any(m in f.lower() for m in test_markers):
-                return True
-    return False
+    return bool(diff_files) and diff_has_evidence(diff_files)
+
+
+def split_csv(raw: str) -> list[str]:
+    """Split a comma-separated argument into a list of non-empty entries."""
+    return [entry.strip() for entry in raw.split(",") if entry.strip()]
+
+
+def read_from_args() -> tuple[str, list[str] | None]:
+    """Read the PR body from argv[1] and the diff file list from argv[2]."""
+    body_path = Path(sys.argv[1])
+    body = body_path.read_text() if body_path.exists() else ""
+    files = split_csv(sys.argv[2]) if len(sys.argv) >= 3 else None
+    return body, files
+
+
+def read_from_env() -> tuple[str, list[str] | None]:
+    """Read the PR body and diff file list from the GitHub Actions env."""
+    return os.environ.get("PR_BODY", ""), split_csv(os.environ.get("PR_DIFF", "")) or None
 
 
 def main() -> int:
@@ -50,20 +84,7 @@ def main() -> int:
       PR_BODY   — path to a file containing the PR body (or literal body text)
       PR_DIFF   — comma-separated list of changed file paths in the diff
     """
-    pr_body = ""
-    diff_files: list[str] | None = None
-
-    if len(sys.argv) >= 2:
-        # Argument mode: first arg is a file containing the PR body.
-        body_path = Path(sys.argv[1])
-        pr_body = body_path.read_text() if body_path.exists() else ""
-        if len(sys.argv) >= 3:
-            diff_files = [f.strip() for f in sys.argv[2].split(",") if f.strip()]
-    else:
-        # Env-var mode (GitHub Actions):
-        import os
-        pr_body = os.environ.get("PR_BODY", "")
-        diff_files = os.environ.get("PR_DIFF", "").split(",") or None
+    pr_body, diff_files = read_from_args() if len(sys.argv) >= 2 else read_from_env()
 
     if not pr_body.strip():
         print("check_close_evidence: no PR body provided — pass")
@@ -80,15 +101,7 @@ def main() -> int:
         print("check_close_evidence: regression/verification evidence found — pass")
         return 0
 
-    print(
-        "check_close_evidence: FAIL — 'Closes #' declared but no regression "
-        "evidence found.\n"
-        "The PR must include one of:\n"
-        "  • A regression test (regression_<short-name>.rs) in the diff\n"
-        "  • A 'Verification:' section in the PR body with test output\n"
-        "  • A reference to passing regression tests\n"
-        "See CONTRIBUTING.md § Issue Closure Policy for the template."
-    )
+    print(FAILURE_NOTICE)
     return 1
 
 
