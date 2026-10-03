@@ -10,7 +10,7 @@
 use crate::{AppState, PanelFocus, PreviewMode};
 use ratatui::Frame;
 use ratatui::layout::Rect;
-use ratatui::style::{Modifier, Style};
+use ratatui::style::Style;
 use ratatui::widgets::{
     Block, Borders, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState, Wrap,
 };
@@ -28,7 +28,7 @@ impl PreviewView {
         let border_style = if is_focused {
             Style::default()
                 .fg(theme::color(theme::ACCENT))
-                .add_modifier(Modifier::BOLD)
+                .add_modifier(theme::EMPHASIS_HEADING)
         } else {
             Style::default().fg(theme::color(theme::SEPARATOR))
         };

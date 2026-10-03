@@ -6,7 +6,7 @@
 use crate::AppState;
 use ratatui::Frame;
 use ratatui::layout::{Alignment, Constraint, Direction, Layout, Rect};
-use ratatui::style::{Modifier, Style};
+use ratatui::style::Style;
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Borders, Clear, Paragraph};
 use shared_tui::utility_tui_theme as theme;
@@ -29,7 +29,7 @@ impl PathScreen {
             .border_style(
                 Style::default()
                     .fg(theme::color(theme::ACCENT))
-                    .add_modifier(Modifier::BOLD),
+                    .add_modifier(theme::EMPHASIS_HEADING),
             )
             .style(Style::default().bg(theme::color(theme::BACKGROUND)));
 
@@ -59,7 +59,7 @@ impl PathScreen {
                     input_display,
                     Style::default()
                         .fg(theme::color(theme::PATH_INPUT))
-                        .add_modifier(Modifier::BOLD),
+                        .add_modifier(theme::EMPHASIS_SELECTED),
                 ),
                 Span::styled("_", Style::default().fg(theme::color(theme::LABEL))),
             ]),
