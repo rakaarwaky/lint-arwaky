@@ -85,21 +85,14 @@ def main() -> int:
       PR_DIFF — comma-separated list of changed file paths in the diff
     """
     pr_body, diff_files = read_input()
-
-    if not pr_body.strip():
-        print("check_close_evidence: no PR body provided — pass")
-        return 0
-
-    if not CLOSING_KEYWORD.search(pr_body):
-        print("check_close_evidence: no closing keyword found — pass")
-        return 0
-
-    if EVIDENCE.search(pr_body) or REGRESSION_FILE_MARKER in diff_files.lower():
-        print("check_close_evidence: regression/verification evidence found — pass")
-        return 0
-
-    print(FAILURE_NOTICE)
-    return 1
+    if pr_body.strip() and CLOSING_KEYWORD.search(pr_body):
+        if EVIDENCE.search(pr_body) or REGRESSION_FILE_MARKER in diff_files.lower():
+            print("check_close_evidence: regression/verification evidence found — pass")
+            return 0
+        print(FAILURE_NOTICE)
+        return 1
+    print("check_close_evidence: pass (no closing keyword or no PR body)")
+    return 0
 
 
 if __name__ == "__main__":
