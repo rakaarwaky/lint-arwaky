@@ -122,7 +122,17 @@ echo "Phase 2 duration: $((SECONDS - ph2_start))s"
 ph3_start=$SECONDS
 echo -e "\n${CYAN}━━━ Phase 3: Tests (build) then Self-Lint + Scans (parallel) ━━━${NC}"
 
-export CLI="./target/debug/lint-arwaky-cli"
+# Resolve the CLI from wherever cargo actually built it: with CARGO_TARGET_DIR
+# set (shared cache across worktrees) the binary lands there, not in ./target.
+if [ -n "${CARGO_TARGET_DIR:-}" ]; then
+    export CLI="${CARGO_TARGET_DIR}/debug/lint-arwaky-cli"
+else
+    export CLI="./target/debug/lint-arwaky-cli"
+fi
+if [ ! -x "$CLI" ]; then
+    echo "ERROR: CLI binary not found at $CLI — Phase 2 build did not produce it." >&2
+    exit 1
+fi
 
 # Single cargo nextest invocation — 3× faster than cargo test.
 # `set -eo pipefail` matters: without it the pipeline status is `tail`'s (0)
