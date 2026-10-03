@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Check that PRs declaring 'Closes #N' include regression evidence.
+"""Check that PRs declaring a closing keyword include regression evidence.
 
 Exit codes:
-  0 — PR has no 'Closes #' declarations, or evidence is present (pass)
-  1 — PR declares 'Closes #' but lacks evidence markers (fail)
+  0 — PR has no closing declarations, or evidence is present (pass)
+  1 — PR closes an issue but lacks evidence markers (fail)
 """
 
 from __future__ import annotations
@@ -13,40 +13,58 @@ import re
 import sys
 from pathlib import Path
 
-# Patterns that indicate the PR body contains evidence of verified fixes.
-EVIDENCE_PATTERNS = [
-    re.compile(r"regression_\w+", re.IGNORECASE),      # regression test file/name reference
-    re.compile(r"\bVerification:\b", re.MULTILINE),     # explicit Verification section
-    re.compile(r"\bTests?\s*(pass|passed)\b", re.IGNORECASE),
-    re.compile(r"cargo\s+(test|nextest)\b"),
-    re.compile(r"regression.*test", re.IGNORECASE),
-]
+# GitHub closing keywords. All of them close the issue on merge, so all of
+# them must trigger the gate — matching only `Closes` let a PR use the
+# template's `Fixes #N` and skip the check entirely.
+CLOSING_KEYWORDS = r"(?:Closes|Fixes|Resolves)\s+#(\d+)"
 
-# A diff touching one of these paths counts as evidence on its own.
-TEST_FILE_MARKERS = ("regression_", "test.rs", "test.py", "test.ts", "tests/")
+# A `Verification:` heading. The trailing `\b` that used to sit after the
+# colon could only match when a NON-word character followed, so the template's
+# own `Verification:\n` heading was rejected while `Verification:x` passed.
+VERIFICATION_HEADING = re.compile(
+    r"^[ \t]*(?:#{1,6}[ \t]*)?(?:\*\*)?Verification(?:\*\*)?[ \t]*:",
+    re.MULTILINE,
+)
 
-FAILURE_NOTICE = """check_close_evidence: FAIL — 'Closes #' declared but no regression \
-evidence found.
+# A reported passing run. Matching the bare command name let "cargo test
+# failed" satisfy the gate, so a pass word is required in the same sentence.
+PASSING_RUN = re.compile(
+    r"\btests?\s+(?:pass|passed|passes|green)\b"
+    r"|\bcargo\s+(?:test|nextest)\b[^\n]*\b(?:pass|passed|passes|ok|green)\b",
+    re.IGNORECASE,
+)
+
+# A named regression test.
+REGRESSION_REF = re.compile(r"regression[_\s-]\w+", re.IGNORECASE)
+
+EVIDENCE_PATTERNS = (VERIFICATION_HEADING, PASSING_RUN, REGRESSION_REF)
+
+# Only a regression test counts as diff-side evidence. A generic `tests/`
+# match let an unrelated unit-test edit satisfy the gate.
+REGRESSION_TEST_FILE = re.compile(r"regression", re.IGNORECASE)
+
+FAILURE_NOTICE = """check_close_evidence: FAIL — a closing keyword was used but no \
+regression evidence found.
 The PR must include one of:
-  • A regression test (regression_<short-name>.rs) in the diff
-  • A 'Verification:' section in the PR body with test output
+  • A regression test (a file whose name contains 'regression') in the diff
+  • A 'Verification:' section in the PR body reporting a passing run
   • A reference to passing regression tests
 See CONTRIBUTING.md § Issue Closure Policy for the template."""
 
 
 def extract_closed_issues(pr_body: str) -> list[int]:
-    """Extract all issue numbers declared as 'Closes #N' in the PR body."""
-    return [int(n) for n in re.findall(r"Closes\s+#(\d+)", pr_body, re.IGNORECASE)]
+    """Extract every issue number closed by a supported closing keyword."""
+    return [int(n) for n in re.findall(CLOSING_KEYWORDS, pr_body, re.IGNORECASE)]
 
 
 def body_has_evidence(pr_body: str) -> bool:
-    """Return True if the PR body names a verification step or a test run."""
+    """Return True if the PR body names a verification step or a passing run."""
     return any(pattern.search(pr_body) for pattern in EVIDENCE_PATTERNS)
 
 
 def diff_has_evidence(diff_files: list[str]) -> bool:
-    """Return True if the diff touches a test file."""
-    return any(marker in path.lower() for path in diff_files for marker in TEST_FILE_MARKERS)
+    """Return True if the diff adds or edits a regression test file."""
+    return any(REGRESSION_TEST_FILE.search(os.path.basename(path)) for path in diff_files)
 
 
 def has_evidence(pr_body: str, diff_files: list[str] | None = None) -> bool:
@@ -92,10 +110,10 @@ def main() -> int:
 
     declared = extract_closed_issues(pr_body)
     if not declared:
-        print("check_close_evidence: no 'Closes #' declarations found — pass")
+        print("check_close_evidence: no closing keyword declarations found — pass")
         return 0
 
-    print(f"check_close_evidence: declared 'Closes' for issues {declared}")
+    print(f"check_close_evidence: declared closing keywords for issues {declared}")
 
     if has_evidence(pr_body, diff_files):
         print("check_close_evidence: regression/verification evidence found — pass")

@@ -1,11 +1,18 @@
 name: Close-Evidence Check
 
-# Validates that any PR declaring 'Closes #N' carries regression evidence.
-# Fails the check if a PR closes issues without the required evidence markers,
-# preventing the silent re-open of defects (issue #584 / PR #748 failure mode).
+# Validates that any PR using a closing keyword ('Closes/Fixes/Resolves #N')
+# carries regression evidence. Fails the check if a PR closes an issue without
+# the required evidence markers, preventing the silent re-open of defects
+# (issue #584 / PR #748 failure mode).
 
+# `pull_request_target`, not `pull_request`: this workflow gates PRs, so it must
+# run from the trusted base-branch definition. Under `pull_request` a PR could
+# edit this file and the edited copy would run, letting it skip the gate while
+# the `Check closure evidence` job still reported success. Nothing from the PR is
+# checked out or executed — the PR body and file list come from the API, and the
+# check script is read from the BASE ref, not the head ref.
 on:
-  pull_request:
+  pull_request_target:
     types: [opened, edited, synchronize]
 
 permissions:
@@ -17,46 +24,37 @@ jobs:
     name: Check closure evidence
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout (main ref only — no PR code execution)
-        # Uses the base ref so this check cannot be subverted by PR content.
-        # The PR body is read via the API, not by checking out PR code.
-        uses: actions/checkout@v7
-        with:
-          ref: ${{ github.event.pull_request.base.ref }}
-          fetch-depth: 1
-
-      - name: Read PR body, diff, and check script via GitHub API
+      # No `actions/checkout` of PR code. The script is read from the base ref
+      # through the API below, so the only thing on disk is trusted.
+      - name: Read PR body and changed-file list via GitHub API
         id: api
-        # Extracts the PR body, changed file paths, and the check script
-        # without checking out untrusted PR code (pull_request_target style,
-        # read-only). The script is fetched from the head ref via the API;
-        # only the script file is executed, never the full PR tree.
-        # Body is written to a file; the file path (not content) goes into
-        # GITHUB_ENV to avoid multiline KEY=VALUE format errors.
+        # `--slurp` wraps each page in its own array, so a PR with more than 30
+        # changed files yields one array per page instead of concatenated JSON
+        # documents that `json.load` cannot parse.
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
           set -euo pipefail
           gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}" \
             --jq '.body // ""' > /tmp/pr_body.txt
-          DIFF_FILES=$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/files" --paginate \
+          DIFF_FILES=$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/files" --paginate --slurp \
             | python3 -c "
           import sys, json
-          files = json.load(sys.stdin)
+          pages = json.load(sys.stdin)
+          files = [f for page in pages for f in page]
           print(','.join(f['filename'] for f in files))
           ")
           echo "PR_DIFF=${DIFF_FILES}" >> "$GITHUB_ENV"
-          # The check script lives in the PR itself; fetch it from the head
-          # ref. Execution is limited to this single file.
-          HEAD_SHA=$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}" --jq '.head.sha')
-          if ! gh api "repos/${{ github.repository }}/contents/.github/scripts/check_close_evidence.py?ref=${HEAD_SHA}" \
+          # The script comes from the BASE ref, never the PR head, so a PR
+          # cannot weaken the rule that checks it.
+          if ! gh api "repos/${{ github.repository }}/contents/.github/scripts/check_close_evidence.py?ref=${BASE_SHA}" \
               -H "Accept: application/vnd.github.raw" > /tmp/check_close_evidence.py 2>/dev/null; then
-            echo "Check script not present in PR head — skipping (pass)."
+            echo "Check script not present on the base ref — skipping (pass)."
             echo "result=script_missing" >> "${GITHUB_OUTPUT}"
             exit 0
           fi
-          chmod +x /tmp/check_close_evidence.py
           echo "result=found" >> "${GITHUB_OUTPUT}"
 
       - name: Run close-evidence check
