@@ -11,7 +11,7 @@
 use crate::AppState;
 use ratatui::Frame;
 use ratatui::layout::Rect;
-use ratatui::style::{Modifier, Style};
+use ratatui::style::Style;
 use ratatui::symbols::border;
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Borders, Clear, Paragraph};
@@ -78,7 +78,7 @@ impl ConfirmModal {
             .border_style(
                 Style::default()
                     .fg(theme::color(theme::PENDING))
-                    .add_modifier(Modifier::BOLD),
+                    .add_modifier(theme::EMPHASIS_SELECTED),
             )
             .style(Style::default().bg(theme::color(theme::BACKGROUND)));
 
@@ -88,13 +88,13 @@ impl ConfirmModal {
                     format!(" {} ", warn()),
                     Style::default()
                         .fg(theme::color(theme::PENDING))
-                        .add_modifier(Modifier::BOLD),
+                        .add_modifier(theme::EMPHASIS_SELECTED),
                 ),
                 Span::styled(
                     confirm.label.clone(),
                     Style::default()
                         .fg(theme::color(theme::LABEL))
-                        .add_modifier(Modifier::BOLD),
+                        .add_modifier(theme::EMPHASIS_SELECTED),
                 ),
             ]),
             Line::from(""),
@@ -103,7 +103,7 @@ impl ConfirmModal {
                     " [Enter/y] confirm ",
                     Style::default()
                         .fg(theme::color(theme::KEY))
-                        .add_modifier(Modifier::BOLD),
+                        .add_modifier(theme::EMPHASIS_SELECTED),
                 ),
                 Span::styled(
                     "[Esc/n] cancel",

@@ -21,6 +21,11 @@ pub const HIGH_CONTRAST_VAR: &str = "LINT_ARWAKY_TUI_HIGH_CONTRAST";
 
 /// TUI design tokens — central color palette (I7).
 pub const ACCENT: Color = Color::Cyan;
+
+/// Emphasis design tokens — central modifier palette (I7).
+/// Call sites reference these instead of writing `Modifier::BOLD` inline.
+pub const EMPHASIS_SELECTED: Modifier = Modifier::BOLD;
+pub const EMPHASIS_HEADING: Modifier = Modifier::BOLD;
 pub const KEY: Color = Color::Yellow;
 pub const LABEL: Color = Color::White;
 pub const SEPARATOR: Color = Color::DarkGray;

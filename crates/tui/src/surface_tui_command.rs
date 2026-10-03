@@ -15,7 +15,7 @@ use crossterm::terminal::{
 use ratatui::Terminal;
 use ratatui::backend::CrosstermBackend;
 use ratatui::layout::{Alignment, Constraint, Direction, Layout};
-use ratatui::style::{Modifier, Style};
+use ratatui::style::Style;
 use ratatui::text::{Line, Span};
 use ratatui::widgets::Paragraph;
 
@@ -132,7 +132,7 @@ impl TuiCommandSurface {
                                 .fg(shared_tui::utility_tui_theme::color(
                                     shared_tui::utility_tui_theme::KEY,
                                 ))
-                                .add_modifier(Modifier::BOLD),
+                                .add_modifier(shared_tui::utility_tui_theme::EMPHASIS_HEADING),
                         )]);
                         let paragraph = Paragraph::new(line)
                             .style(Style::default().bg(shared_tui::utility_tui_theme::color(

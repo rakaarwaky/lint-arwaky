@@ -9,7 +9,7 @@ use crate::AesLayer;
 use crate::{AppState, PanelFocus};
 use ratatui::Frame;
 use ratatui::layout::{Alignment, Rect};
-use ratatui::style::{Color, Modifier, Style};
+use ratatui::style::{Color, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Borders, List, ListItem, ListState, Paragraph};
 use shared_tui::utility_tui_theme as theme;
@@ -26,7 +26,7 @@ impl FileListView {
         let border_style = if is_focused {
             Style::default()
                 .fg(theme::color(theme::ACCENT))
-                .add_modifier(Modifier::BOLD)
+                .add_modifier(theme::EMPHASIS_HEADING)
         } else {
             Style::default().fg(theme::color(theme::SEPARATOR))
         };
@@ -75,7 +75,7 @@ impl FileListView {
                 let name_style = if entry.is_dir {
                     Style::default()
                         .fg(theme::color(theme::DIRECTORY))
-                        .add_modifier(Modifier::BOLD)
+                        .add_modifier(theme::EMPHASIS_HEADING)
                 } else {
                     Style::default().fg(theme::color(theme::LABEL))
                 };
