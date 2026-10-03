@@ -18,9 +18,9 @@ impl ICalculatorProtocol for SubtractionAnalyzer {
 
 // ─── Block 3: Constructors, Std Traits, Helpers ────────────
 
-impl SubtractionAnalyzer {
-    /// The analyzer holds no state, so construction takes no arguments.
-    pub fn new() -> Self {
+impl Default for SubtractionAnalyzer {
+    /// The analyzer holds no state, so the default carries nothing.
+    fn default() -> Self {
         Self
     }
 }

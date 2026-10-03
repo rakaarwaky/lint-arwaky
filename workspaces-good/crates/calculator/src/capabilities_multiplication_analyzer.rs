@@ -18,9 +18,9 @@ impl ICalculatorProtocol for MultiplicationAnalyzer {
 
 // ─── Block 3: Constructors, Std Traits, Helpers ────────────
 
-impl MultiplicationAnalyzer {
-    /// The analyzer holds no state, so construction takes no arguments.
-    pub fn new() -> Self {
+impl Default for MultiplicationAnalyzer {
+    /// The analyzer holds no state, so the default carries nothing.
+    fn default() -> Self {
         Self
     }
 }
