@@ -52,17 +52,17 @@ See CONTRIBUTING.md § Issue Closure Policy for the template."""
 def read_input() -> tuple[str, str]:
     """Return (pr_body, diff_files_csv) from argv, else from the Actions env.
 
-    The body-file argument is required: a missing or unreadable file fails
-    loudly instead of silently passing as "no PR body provided".
+    A body-file argument that does not exist fails the job — a missing input
+    must not be read as "no PR body provided".
     """
     body_arg = Path(sys.argv[1]) if len(sys.argv) > 1 else None
-    if body_arg is not None:
+    if body_arg is None:
+        body = os.environ.get("PR_BODY", "")
+    else:
         if not body_arg.is_file():
             print(f"check_close_evidence: body file not found: {body_arg} — fail")
             raise SystemExit(1)
         body = body_arg.read_text()
-    else:
-        body = os.environ.get("PR_BODY", "")
     files = sys.argv[2] if len(sys.argv) > 2 else os.environ.get("PR_DIFF", "")
     return body, files
 
