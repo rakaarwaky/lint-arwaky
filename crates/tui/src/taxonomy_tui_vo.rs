@@ -120,19 +120,6 @@ impl AesLayer {
         }
     }
 
-    pub fn color_index(&self) -> u8 {
-        match self {
-            AesLayer::Taxonomy => 14,
-            AesLayer::Contract => 12,
-            AesLayer::Utility => 11,
-            AesLayer::Capabilities => 13,
-            AesLayer::Agent => 10,
-            AesLayer::Surfaces => 9,
-            AesLayer::Root => 15,
-            AesLayer::None => 8,
-        }
-    }
-
     pub fn from_filename(filename: &str) -> Self {
         let stem = Path::new(filename)
             .file_stem()
