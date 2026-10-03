@@ -53,9 +53,11 @@ flowchart TD
 >
 > **Dedup invariant**: a single parse failure must be recorded exactly
 > once per `ScanReport`. `ScanReport::new` enforces this at the producer
-> boundary: when a `PARSE_`-prefixed `LintResult` exists in `results`,
-> parser-sourced `PipelineDiagnostic` entries are dropped from
-> `diagnostics`, so no formatter double-counts the same failure.
+> boundary: a parser-sourced `PipelineDiagnostic` whose file matches a
+> `PARSE_`-prefixed `LintResult` in `results` is dropped from
+> `diagnostics`, so no formatter double-counts the same failure. Dedup is
+> per file: parser diagnostics for other files, and non-parser
+> diagnostics, survive.
 
 ---
 
