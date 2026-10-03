@@ -6,7 +6,7 @@ use shared_quality_rules::ICodeAnalysisAggregate;
 use std::sync::Arc;
 use tracing::{error, info};
 
-use crate::utility_output_text_formatter::format_location;
+use shared_cli_commands::utility_output_text_formatter::format_location;
 
 pub fn handle_fix(
     path: Option<FilePath>,

@@ -6,13 +6,13 @@
 //   - Selected item highlighted with dark gray background
 //   - Focus indicator on the panel border (cyan when focused, gray when not)
 use crate::AesLayer;
-use crate::utility_tui_theme as theme;
 use crate::{AppState, PanelFocus};
 use ratatui::Frame;
 use ratatui::layout::{Alignment, Rect};
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Borders, List, ListItem, ListState, Paragraph};
+use shared_tui::utility_tui_theme as theme;
 
 pub struct FileListView;
 

@@ -4697,6 +4697,7 @@ version = "3.7.1"
 dependencies = [
  "clap",
  "serde",
+ "serde_json",
  "shared-common-lint-arwaky",
 ]
 
@@ -4879,6 +4880,16 @@ name = "shared-structure-rules-lint-arwaky"
 version = "3.7.1"
 dependencies = [
  "shared-naming-rules-lint-arwaky",
+]
+
+[[package]]
+name = "shared-tui-lint-arwaky"
+version = "3.7.1"
+dependencies = [
+ "arboard",
+ "ratatui",
+ "shared-common-lint-arwaky",
+ "shared-maintenance-lint-arwaky",
 ]
 
 [[package]]
@@ -5693,6 +5704,7 @@ dependencies = [
  "shared-quality-rules-lint-arwaky",
  "shared-role-rules-lint-arwaky",
  "shared-structure-rules-lint-arwaky",
+ "shared-tui-lint-arwaky",
  "tempfile",
  "tracing",
  "tracing-appender",

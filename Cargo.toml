@@ -19,6 +19,7 @@ members = [
     "crates/shared/src/report_formatter",
     "crates/shared/src/role_rules",
     "crates/shared/src/structure_rules",
+    "crates/shared/src/tui",
     "crates/filesystem",
     "crates/config-system",
     # Layer 2: Lint rules
@@ -78,6 +79,7 @@ shared-quality-rules = { package = "shared-quality-rules-lint-arwaky", path = "c
 shared-report-formatter = { package = "shared-report-formatter-lint-arwaky", path = "crates/shared/src/report_formatter", version = "3.7.1" }
 shared-role-rules = { package = "shared-role-rules-lint-arwaky", path = "crates/shared/src/role_rules", version = "3.7.1" }
 shared-structure-rules = { package = "shared-structure-rules-lint-arwaky", path = "crates/shared/src/structure_rules", version = "3.7.1" }
+shared-tui = { package = "shared-tui-lint-arwaky", path = "crates/shared/src/tui", version = "3.7.1" }
 filesystem = { package = "filesystem-lint-arwaky", path = "crates/filesystem", version = "3.7.1" }
 config-system = { package = "config-system-lint-arwaky", path = "crates/config-system", version = "3.7.1" }
 naming-rules = { package = "naming-rules-lint-arwaky", path = "crates/naming-rules", version = "3.7.1" }

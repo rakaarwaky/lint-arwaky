@@ -4,7 +4,9 @@
 // must be counted, a section that must be found, a shape that must be rejected.
 // The contract tests prove the seams exist; these prove each one answers its own
 // question.
-use doc_rules_lint_arwaky::capabilities_doc_heading_structure_checker::HeadingStructureChecker;
+use doc_rules_lint_arwaky::capabilities_doc_heading_structure_checker::{
+    AGENTS_TEMPLATE, HeadingStructureChecker,
+};
 use doc_rules_lint_arwaky::capabilities_doc_section_structure_checker::SectionStructureChecker;
 use shared_doc_rules::contract_doc_protocol::{IDocHeadingProtocol, ISectionStructureProtocol};
 use shared_doc_rules::taxonomy_doc_audit_context_vo::DocAuditContext;
@@ -30,22 +32,13 @@ fn codes(findings: &[DocFinding]) -> Vec<&'static str> {
     codes
 }
 
-/// An `AGENTS.md` carrying every H2 its contract requires and nothing else.
+/// An `AGENTS.md` that matches the template exactly.
 ///
-/// Built from the contract itself rather than transcribed, so a future change to
-/// the required set does not silently turn this fixture into a second copy of
-/// the rule.
+/// Built from the same literal the checker enforces against, so the fixture and
+/// the contract can never drift apart: a conforming document is the template
+/// itself.
 fn conforming_agents() -> String {
-    use shared_doc_rules::taxonomy_doc_rules_constant::{AGENTS_DOC, DOC_HEADING_CONTRACTS};
-    let (_, required, _) = DOC_HEADING_CONTRACTS
-        .iter()
-        .find(|(name, _, _)| *name == AGENTS_DOC)
-        .expect("AGENTS.md must have a heading contract");
-    let mut text = String::from("# AGENTS\n\n");
-    for heading in *required {
-        text.push_str(&format!("## {heading}\n\nbody\n\n"));
-    }
-    text
+    AGENTS_TEMPLATE.to_string()
 }
 
 /// An `AGENTS.md` that is conforming except for the one defect under test.

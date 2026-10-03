@@ -12,7 +12,7 @@ use std::sync::Arc;
 // Calls the surface lint executor and filesystem aggregate directly (no abstraction).
 // This is the largest single file in the TUI crate; it owns all event→action mappings.
 
-use crate::utility_file_system;
+use shared_tui::utility_file_system;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 

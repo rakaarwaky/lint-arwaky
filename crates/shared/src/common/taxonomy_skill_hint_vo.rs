@@ -70,3 +70,34 @@ pub fn resolve_skill_hint(code: &str, layer: Option<&str>) -> SkillHint {
 pub fn resolve_skill_hint_typed(code: &ErrorCode, layer: Option<&str>) -> SkillHint {
     resolve_skill_hint(code.code(), layer)
 }
+
+/// Filename stem prefix → AES layer name. Mirrors the AES102 prefix convention;
+/// `surfaces` is the layer name the taxonomy routing table uses.
+///
+/// Lives here, beside the routing table, so every utility resolves the layer
+/// from the shared data instead of importing another utility module (AES201).
+pub fn layer_from_path(file_path: &str) -> Option<&'static str> {
+    const PREFIXES: &[(&str, &str)] = &[
+        ("taxonomy_", "taxonomy"),
+        ("contract_", "contract"),
+        ("capabilities_", "capabilities"),
+        ("utility_", "utility"),
+        ("agent_", "agent"),
+        ("surface_", "surfaces"),
+        ("root_", "root"),
+    ];
+    let filename = file_path.rsplit(['/', '\\']).next().unwrap_or(file_path);
+    let stem = filename.split('.').next().unwrap_or(filename);
+    PREFIXES
+        .iter()
+        .find(|(prefix, _)| stem.starts_with(prefix))
+        .map(|(_, layer)| *layer)
+}
+
+/// Resolve the remediation for `code` in `file_path`, detecting the layer.
+///
+/// The convenience form of [`resolve_skill_hint`] for callers that hold a path
+/// rather than a pre-detected layer.
+pub fn resolve_skill_hint_for_path(code: &str, file_path: &str) -> SkillHint {
+    resolve_skill_hint(code, layer_from_path(file_path))
+}

@@ -16,6 +16,17 @@ fn write(path: &Path, contents: &str) {
 }
 
 /// Audit *root* through the public aggregate and collect (code, violation_type, file).
+/// Every finding message, for asserting on what a finding tells the author.
+fn message_audit(root: &Path) -> Vec<String> {
+    let aggregate = RootStructureRulesContainer::orchestrator();
+    let response = aggregate.execute(StructureRequest::audit_all(root));
+    match response {
+        StructureResponse::Findings { findings } => {
+            findings.into_iter().map(|f| f.message).collect()
+        }
+    }
+}
+
 fn audit(root: &Path) -> Vec<(String, String, String)> {
     let aggregate = RootStructureRulesContainer::orchestrator();
     let response = aggregate.execute(StructureRequest::audit_all(root));
@@ -281,33 +292,44 @@ fn aes703_fires_when_a_surface_folder_holds_a_capability() {
 }
 
 #[test]
-fn aes703_stays_silent_when_surface_folder_keeps_utilities() {
+fn aes703_fires_when_surface_folder_holds_utility_files() {
     let tmp = tempfile::tempdir().unwrap();
     let root = tmp.path();
+    // 创建5个surface文件确保surface占主导
     write(
         root.join("crates/cli/surface_scan_command.rs").as_path(),
         "pub fn scan() {}",
     );
     write(
+        root.join("crates/cli/surface_ci_command.rs").as_path(),
+        "pub fn ci() {}",
+    );
+    write(
+        root.join("crates/cli/surface_fix_command.rs").as_path(),
+        "pub fn fix() {}",
+    );
+    write(
+        root.join("crates/cli/surface_config_command.rs").as_path(),
+        "pub fn config() {}",
+    );
+    write(
+        root.join("crates/cli/surface_git_command.rs").as_path(),
+        "pub fn git() {}",
+    );
+    // 添加utility文件（应触发违规）
+    write(
         root.join("crates/cli/utility_output_text_formatter.rs")
             .as_path(),
         "pub fn fmt() {}",
     );
+    // 添加lib.rs
     write(root.join("crates/cli/lib.rs").as_path(), "");
     fs::write(root.join("crates/cli/DESIGN.md"), "# CLI DESIGN\n").unwrap();
     fs::write(root.join("crates/cli/BACKLOG.md"), "# CLI BACKLOG\n").unwrap();
     let findings = audit(root);
     assert!(
-        !has(&findings, "AES703", "surface_has_misplaced_files"),
-        "utility and barrel files inside a surface folder are allowed; got: {findings:#?}"
-    );
-    assert!(
-        !has(&findings, "AES703", "surface_missing_design_md"),
-        "surface with DESIGN.md must be clean; got: {findings:#?}"
-    );
-    assert!(
-        !has(&findings, "AES703", "surface_missing_backlog_md"),
-        "surface with BACKLOG.md must be clean; got: {findings:#?}"
+        has(&findings, "AES703", "surface_has_misplaced_files"),
+        "utility files inside a surface folder are forbidden; got: {findings:#?}"
     );
 }
 
@@ -705,5 +727,78 @@ fn aes702_stays_silent_when_only_capabilities_and_agents_are_present() {
     assert!(
         !has(&findings, "AES702", "feature_has_forbidden_files"),
         "a clean feature folder must not fire; got: {findings:#?}"
+    );
+}
+
+#[test]
+fn aes705_reports_a_capability_file_loose_at_a_member_root() {
+    let tmp = tempfile::tempdir().unwrap();
+    let root = tmp.path();
+    write(
+        root.join("modules/capabilities_add_analyzer.py").as_path(),
+        "class AddAnalyzer: ...",
+    );
+    let findings = audit(root);
+    assert!(
+        has(&findings, "AES705", "member_root_has_layer_file"),
+        "expected member_root_has_layer_file, got: {findings:#?}"
+    );
+}
+
+#[test]
+fn aes705_names_the_folder_kind_each_prefix_belongs_in() {
+    let tmp = tempfile::tempdir().unwrap();
+    let root = tmp.path();
+    write(
+        root.join("crates/agent_calc_orchestrator.rs").as_path(),
+        "pub struct O;",
+    );
+    write(
+        root.join("crates/surface_cli_command.rs").as_path(),
+        "pub struct C;",
+    );
+    write(
+        root.join("crates/utility_path.rs").as_path(),
+        "pub fn p() {}",
+    );
+    let findings = message_audit(root);
+    for expected in ["feature folder", "surface folder", "shared folder"] {
+        assert!(
+            findings.iter().any(|m| m.contains(expected)),
+            "expected the finding to mention '{expected}', got: {findings:#?}"
+        );
+    }
+}
+
+#[test]
+fn aes705_allows_wiring_and_unclassified_files_at_a_member_root() {
+    let tmp = tempfile::tempdir().unwrap();
+    let root = tmp.path();
+    write(root.join("crates/lib.rs").as_path(), "pub mod x;");
+    write(
+        root.join("crates/root_entry_container.rs").as_path(),
+        "pub struct C;",
+    );
+    write(root.join("crates/README.md").as_path(), "# Crates");
+    let findings = audit(root);
+    assert!(
+        !has(&findings, "AES705", "member_root_has_layer_file"),
+        "wiring and unclassified files are legal at a member root; got: {findings:#?}"
+    );
+}
+
+#[test]
+fn aes705_ignores_a_layer_file_inside_a_feature_folder() {
+    let tmp = tempfile::tempdir().unwrap();
+    let root = tmp.path();
+    write(
+        root.join("crates/calculator/src/capabilities_add_analyzer.rs")
+            .as_path(),
+        "pub struct AddAnalyzer;",
+    );
+    let findings = audit(root);
+    assert!(
+        !has(&findings, "AES705", "member_root_has_layer_file"),
+        "a file inside a feature folder is exactly where it belongs; got: {findings:#?}"
     );
 }

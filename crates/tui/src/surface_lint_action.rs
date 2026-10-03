@@ -345,7 +345,7 @@ impl SurfaceLintExecutor {
             }
         };
         let diagnostics = collect_doctor(maintenance);
-        crate::utility_report_formatter::format_doctor_report(&diagnostics)
+        shared_tui::utility_report_formatter::format_doctor_report(&diagnostics)
     }
 
     pub fn init(&self, _flags: &ActionFlags) -> LintExecutionResult {

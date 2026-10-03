@@ -11,7 +11,7 @@ The shared kernel manages cross-cutting value objects, constants, and contracts
 used by all feature and surface folders. It holds no business logic — only
 types, utilities, and interface definitions that other layers depend on.
 
-## Value Objects
+## Data Domain
 
 | ID | Field | Type | Description |
 |---|---|---|---|

@@ -1,6 +1,6 @@
 // Unit tests — TUI report formatter utility tests.
 use shared_maintenance::{ToolStatus, ToolchainDiagnostics};
-use tui_lint_arwaky::utility_report_formatter;
+use shared_tui::utility_report_formatter;
 
 #[test]
 fn format_doctor_report_all_ok() {

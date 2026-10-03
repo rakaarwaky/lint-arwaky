@@ -1,6 +1,6 @@
 //! NO_COLOR is a rendering contract, not only a glyph substitution.
 use ratatui::style::Color;
-use tui_lint_arwaky::utility_tui_theme;
+use shared_tui::utility_tui_theme;
 
 #[test]
 fn theme_colors_collapse_to_terminal_defaults_when_no_color_is_requested() {

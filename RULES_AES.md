@@ -6,7 +6,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the full 7-layer specification.
 
 ## Summary
 
-**32 rules across 7 groups:** Naming (AES101–102), Import (AES201–205), Quality (AES301–305), Role (AES401–406), Orphan (AES501–506), Doc (AES601–605), and Structure (AES701–703). The `scan`/`check` command runs the six code linters plus structure; Doc rules read Markdown and are audited over the document chain via the `docs` command. External adapters (Clippy, Ruff, ESLint, …) run alongside via `external` and emit tool-native codes.
+**35 rules across 7 groups:** Naming (AES101–102), Import (AES201–205), Quality (AES301–305), Role (AES401–406), Orphan (AES501–506), Doc (AES601–605), and Structure (AES701–705). The `scan`/`check` command runs the six code linters plus structure; Doc rules read Markdown and are audited over the document chain via the `docs` command. External adapters (Clippy, Ruff, ESLint, …) run alongside via `external` and emit tool-native codes.
 
 | Code   | Name                | Severity | Group  | Description                                                                                |
 | -------- | --------------------- | ---------- | -------- | -------------------------------------------------------------------------------------------- |
@@ -62,6 +62,27 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the full 7-layer specification.
 | AES702 | Feature Folder Health | MEDIUM   | Structure | A feature folder lacks an `agent_*_orchestrator` or a `capabilities_*` file, holds foreign layer files, or lacks its doc pair.                                  |
 | AES703 | Surface Folder Purity | MEDIUM   | Structure | A surface folder holds a `capabilities_*` or `agent_*` file, or lacks DESIGN.md.                               |
 | AES704 | Test Suite Coverage | MEDIUM   | Structure | A feature folder lacks a `tests/` category or its `benches/` benchmark.                                      |
+| AES705 | Member-Root Placement | MEDIUM   | Structure | A `crates/`, `modules/`, or `packages/` root holds a loose `capabilities_*`, `agent_*`, `surface_*`, or `utility_*` file. |
+
+### AES705 — Member-Root Placement
+
+**Severity:** MEDIUM
+
+A member dir — `crates/`, `modules/`, or `packages/` — holds folders and
+wiring. A layer file loose at its root belongs to a folder beneath it, and
+without that folder it has no owning feature: AES702 cannot hold it to a
+contract, AES704 cannot ask it for a test suite, and no FRD describes it.
+
+| Prefix           | Belongs in              |
+| ---------------- | ----------------------- |
+| `capabilities_`  | a feature folder        |
+| `agent_`         | the feature that owns the orchestrator |
+| `surface_`       | a surface folder        |
+| `utility_`       | the shared folder       |
+
+Only the top level is read. `root_*` wiring, a barrel module, and any file whose
+stem carries no layer prefix — a README, a manifest — stay legal at a member
+root, because the container composes them there.
 
 ---
 

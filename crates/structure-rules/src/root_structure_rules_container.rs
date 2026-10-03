@@ -1,10 +1,11 @@
 // PURPOSE: root container — structure-rules DI composition root
 //
-// Wires the three capability seams into the agent behind the contract trait.
+// Wires the five capability seams into the agent behind the contract trait.
 // The container is a constructor and a one-liner facade that returns the
 // orchestrator; no business logic lives here.
 use crate::agent_structure_orchestrator::StructureOrchestrator;
 use crate::capabilities_feature_health_auditor::FeatureHealthAuditor;
+use crate::capabilities_member_root_placement_auditor::MemberRootPlacementAuditor;
 use crate::capabilities_shared_purity_auditor::SharedPurityAuditor;
 use crate::capabilities_surface_purity_auditor::SurfacePurityAuditor;
 use crate::capabilities_test_suite_coverage_auditor::TestSuiteCoverageAuditor;
@@ -22,6 +23,7 @@ impl RootStructureRulesContainer {
             Arc::new(FeatureHealthAuditor {}),
             Arc::new(SurfacePurityAuditor {}),
             Arc::new(TestSuiteCoverageAuditor {}),
+            Arc::new(MemberRootPlacementAuditor {}),
         ))
     }
 }

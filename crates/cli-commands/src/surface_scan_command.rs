@@ -13,7 +13,7 @@ use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared_quality_rules::ICodeAnalysisAggregate;
 use shared_structure_rules::IStructureAggregate;
 
-use crate::utility_output_text_formatter::output_violations;
+use shared_cli_commands::utility_output_text_formatter::output_violations;
 
 /// Parameters for the `scan` command.
 pub struct ScanCommandParams {

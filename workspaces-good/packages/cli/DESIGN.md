@@ -1,19 +1,43 @@
-# CLI — DESIGN
+# DESIGN — Cli
 
-## Kind
+## Brand & Style
 
-`cli` — one command surface, driven from the process entry.
+### Colors
 
-## Entry points
+| Role | Value | Use |
+|------|-------|-----|
+| Base surface | terminal default | The pane background. |
+| Primary accent | cyan | The active selection. |
+| Secondary accent | gray | Inactive rows. |
+| Tertiary accent | yellow | A violation the user must act on. |
 
-| Function | Role |
-|----------|------|
-| `surface_calculator_command` | Map the parsed arguments to a request and return the rendered result. |
+### Typography
 
-## States
+| Level | Weight | Use |
+|-------|--------|-----|
+| Section | bold | A pane title. |
+| Body | normal | A file row. |
+| Muted | dim | A path hint. |
 
-| State | Condition |
-|-------|-----------|
-| `ready` | The surface is mounted and awaiting an invocation. |
-| `busy` | A calculation is in flight. |
-| `error` | The request could not be parsed or resolved. |
+## Components
+
+### Pane
+
+| Part | Role |
+|------|------|
+| Title row | Names the pane. |
+| Body | Lists the rows the pane owns. |
+| Status row | Reports counts. |
+
+### Row
+
+| Part | Role |
+|------|------|
+| Label | The file name. |
+| Detail | The violation codes. |
+
+## Reference
+
+- PRD.md — what the product does and why
+- ARCHITECTURE.md — the layer contract this design follows
+- FRD.md — the requirements the interface serves

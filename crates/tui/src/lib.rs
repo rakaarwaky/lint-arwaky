@@ -14,14 +14,12 @@ pub mod surface_tree_view;
 pub mod surface_tui_command;
 pub mod taxonomy_tui_event;
 pub mod taxonomy_tui_vo;
-pub mod utility_file_system;
-pub mod utility_report_formatter;
-pub mod utility_tui_theme;
 
 // ─── Re-exports ────────────────────────────────────────────
 // The TUI taxonomy used to live in the shared kernel crate (shared-tui); it
 // moved here because the TUI is its only consumer (issue #572).
 
+pub use shared_tui::LintExecutionResult;
 pub use taxonomy_tui_event::TuiEvent;
 pub use taxonomy_tui_vo::ActionFlags;
 pub use taxonomy_tui_vo::AdapterInfo;
@@ -29,7 +27,6 @@ pub use taxonomy_tui_vo::AesLayer;
 pub use taxonomy_tui_vo::AppState;
 pub use taxonomy_tui_vo::ConfirmState;
 pub use taxonomy_tui_vo::FileEntry;
-pub use taxonomy_tui_vo::LintExecutionResult;
 pub use taxonomy_tui_vo::PanelFocus;
 pub use taxonomy_tui_vo::PreviewMode;
 pub use taxonomy_tui_vo::ScanUpdate;
