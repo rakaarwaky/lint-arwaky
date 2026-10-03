@@ -12,7 +12,6 @@ fn build_executor() -> Arc<SurfaceLintExecutor> {
     let code_container = CodeAnalysisContainer::new();
     let fs = FilesystemContainer::new();
     let fs_seam = Arc::new(dispatcher::surface_check_action::FilesystemSeam {
-        io: fs.io(),
         workspace: fs.workspace(),
         parser: fs.parser(),
         aggregate: fs.orchestrator(),
@@ -22,7 +21,6 @@ fn build_executor() -> Arc<SurfaceLintExecutor> {
     > = Arc::new(|| {
         let c = FilesystemContainer::new();
         dispatcher::surface_check_action::FilesystemSeam {
-            io: c.io(),
             workspace: c.workspace(),
             parser: c.parser(),
             aggregate: c.orchestrator(),
@@ -40,7 +38,6 @@ fn build_executor() -> Arc<SurfaceLintExecutor> {
     Arc::new(SurfaceLintExecutor::new(
         code_container.code_analysis_linter(),
         fs.orchestrator(),
-        fs.io(),
         fs.workspace(),
         fs.tool_resolution(),
         fs_seam,
