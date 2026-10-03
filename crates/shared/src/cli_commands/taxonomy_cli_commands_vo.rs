@@ -2,7 +2,7 @@
 //          command catalog, scan report, and lint-result aliases.
 use clap::{Parser, Subcommand};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use crate::taxonomy_action_vo::ActionName;
 use crate::taxonomy_format_vo::Format;
@@ -546,6 +546,9 @@ pub struct PipelineDiagnostic {
     pub source: String,
     pub message: String,
     pub severity: DiagnosticSeverity,
+    /// File the diagnostic refers to, when it is file-scoped. Used as the
+    /// dedup key against `LintResult::file` for parser diagnostics.
+    pub file: Option<String>,
 }
 
 impl PipelineDiagnostic {
@@ -554,7 +557,15 @@ impl PipelineDiagnostic {
             source,
             message,
             severity,
+            file: None,
         }
+    }
+
+    /// Attach the file this diagnostic refers to. Parser producers call this
+    /// so `ScanReport` can dedup against `PARSE_` results per file.
+    pub fn with_file(mut self, file: impl Into<String>) -> Self {
+        self.file = Some(file.into());
+        self
     }
 }
 
@@ -601,20 +612,29 @@ impl ScanReport {
 
     /// Dedup invariant: a parse failure already recorded as a `LintResult`
     /// with a `PARSE_`-prefixed code in `results` must not be re-recorded as
-    /// a `PipelineDiagnostic` in `diagnostics`, or formatters double-count it
-    /// in the total violation count. At the producer boundary, suppress the
-    /// diagnostic when an equivalent `PARSE_` results entry exists.
+    /// a parser `PipelineDiagnostic` for the same file in `diagnostics`, or
+    /// formatters double-count it in the total violation count. At the
+    /// producer boundary, suppress the parser diagnostic when an equivalent
+    /// `PARSE_` results entry exists for that file.
     fn dedup_parse_diagnostics(
         diagnostics: Vec<PipelineDiagnostic>,
         results: &[LintResult],
     ) -> Vec<PipelineDiagnostic> {
-        let has_parse_result = results.iter().any(|r| r.code.code().starts_with("PARSE_"));
-        if !has_parse_result {
+        let parse_files: HashSet<&str> = results
+            .iter()
+            .filter(|r| r.code.code().starts_with("PARSE_"))
+            .map(|r| r.file.value())
+            .collect();
+        if parse_files.is_empty() {
             return diagnostics;
         }
         diagnostics
             .into_iter()
-            .filter(|d| !d.source.contains("parser"))
+            .filter(|d| {
+                let is_dup = d.source == "parser"
+                    && d.file.as_deref().is_some_and(|f| parse_files.contains(f));
+                !is_dup
+            })
             .collect()
     }
 
