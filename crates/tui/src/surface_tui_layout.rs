@@ -12,6 +12,7 @@
 // match `is_full_three_column` exactly (the renderer passes
 // `main_layout[1].width`).
 
+use crate::taxonomy_tui_vo::PanelFocus;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use shared_tui::utility_tui_theme::{
     PANEL_FILE_LIST_WIDTH_PCT, PANEL_PREVIEW_WIDTH_PCT, PANEL_TREE_WIDTH_PCT, is_full_three_column,
@@ -85,4 +86,54 @@ pub fn compute_panel_layout(width: u16, height: u16) -> PanelLayout {
         status: main[3],
         three_column,
     }
+}
+
+/// Which panel a click landed in, and where inside it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum HitTarget {
+    Tree,
+    FileList { row: usize },
+    Preview { row: u16 },
+}
+
+/// Resolve a mouse click into a panel-relative target using the shared layout.
+///
+/// Returns `None` for clicks in the shortcut/status band or below the panels.
+/// In narrow mode every panel click resolves to the active panel, which is
+/// why the caller passes `active`.
+pub fn hit_test(layout: &PanelLayout, col: u16, row: u16, active: PanelFocus) -> Option<HitTarget> {
+    if row >= layout.shortcuts.y {
+        return None;
+    }
+    if layout.three_column {
+        if in_rect(layout.preview, col, row) {
+            return Some(HitTarget::Preview {
+                row: row - layout.preview.y,
+            });
+        }
+        if in_rect(layout.file_list, col, row) {
+            return Some(HitTarget::FileList {
+                row: (row - layout.file_list.y) as usize,
+            });
+        }
+        if in_rect(layout.tree, col, row) {
+            return Some(HitTarget::Tree);
+        }
+        return None;
+    }
+    let band = layout.band();
+    if !in_rect(band, col, row) {
+        return None;
+    }
+    match active {
+        PanelFocus::FileList => Some(HitTarget::FileList {
+            row: (row - band.y) as usize,
+        }),
+        PanelFocus::Preview => Some(HitTarget::Preview { row: row - band.y }),
+        PanelFocus::Tree => Some(HitTarget::Tree),
+    }
+}
+
+fn in_rect(rect: Rect, col: u16, row: u16) -> bool {
+    col >= rect.x && col < rect.right() && row >= rect.y && row < rect.bottom()
 }

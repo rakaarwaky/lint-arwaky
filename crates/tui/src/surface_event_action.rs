@@ -1,9 +1,9 @@
 use crate::surface_lint_action::SurfaceLintExecutor;
 use crate::{ConfirmState, LintExecutionResult, ScanUpdate};
-use ratatui::layout::Rect;
 use shared_common::FilePath;
 use shared_tui::outcome_label;
 
+use crate::surface_tui_layout::HitTarget;
 use crate::taxonomy_tui_event::TuiEvent;
 use crate::taxonomy_tui_vo::{AppState, BusySlot, PanelFocus, PreviewMode};
 use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
@@ -747,68 +747,29 @@ impl SurfaceActionHandler {
         }
 
         let layout = crate::surface_tui_layout::compute_panel_layout(w, h);
-
-        // Clicks in the shortcuts/status band or below the panels are ignored.
-        if row >= layout.shortcuts.y {
+        let Some(target) =
+            crate::surface_tui_layout::hit_test(&layout, col, row, state.navigation.panel_focus)
+        else {
             return;
-        }
+        };
 
-        if layout.three_column {
-            // Three-column: column-aware hit-test against tree/file_list/preview rects.
-            let scrollbar_col = w.saturating_sub(3);
-            if Self::in_rect(layout.preview, col, row) && col >= scrollbar_col {
-                self.jump_to_scroll_position(
-                    state,
-                    row.saturating_sub(layout.preview.y),
-                    layout.preview.height,
-                );
-                state.navigation.panel_focus = PanelFocus::Preview;
-                return;
+        match target {
+            HitTarget::Tree => {
+                // Display-only panel: clicking just moves focus to the tree.
+                state.navigation.panel_focus = PanelFocus::Tree;
             }
-            if Self::in_rect(layout.file_list, col, row) {
-                let panel_row = row - layout.file_list.y;
-                let new_index = state.navigation.scroll_offset + panel_row as usize;
+            HitTarget::FileList { row: panel_row } => {
+                let new_index = state.navigation.scroll_offset + panel_row;
                 if new_index < state.navigation.entries.len() {
                     state.navigation.selected_index = new_index;
                 }
                 state.navigation.panel_focus = PanelFocus::FileList;
-            } else if Self::in_rect(layout.tree, col, row) {
-                // Display-only panel: clicking just moves focus to the tree.
-                state.navigation.panel_focus = PanelFocus::Tree;
-            } else if Self::in_rect(layout.preview, col, row) {
-                self.jump_to_scroll_position(
-                    state,
-                    row.saturating_sub(layout.preview.y),
-                    layout.preview.height,
-                );
+            }
+            HitTarget::Preview { row: panel_row } => {
+                self.jump_to_scroll_position(state, panel_row, layout.band().height);
                 state.navigation.panel_focus = PanelFocus::Preview;
             }
-        } else {
-            // Narrow mode: only the active panel is visible, spanning the full band.
-            let band = layout.band();
-            if !Self::in_rect(band, col, row) {
-                return;
-            }
-            match state.navigation.panel_focus {
-                PanelFocus::FileList => {
-                    let panel_row = row.saturating_sub(band.y);
-                    let new_index = state.navigation.scroll_offset + panel_row as usize;
-                    if new_index < state.navigation.entries.len() {
-                        state.navigation.selected_index = new_index;
-                    }
-                }
-                PanelFocus::Preview => {
-                    self.jump_to_scroll_position(state, row.saturating_sub(band.y), band.height);
-                }
-                PanelFocus::Tree => {}
-            }
         }
-    }
-
-    /// Column/row hit-test against a panel rect (ratatui 0.30's
-    /// `Rect::contains` takes a `Position`, not separate x/y).
-    fn in_rect(rect: Rect, col: u16, row: u16) -> bool {
-        col >= rect.x && col < rect.right() && row >= rect.y && row < rect.bottom()
     }
 
     /// Handle mouse drag on the scrollbar thumb area.
@@ -823,12 +784,14 @@ impl SurfaceActionHandler {
         let layout = crate::surface_tui_layout::compute_panel_layout(w, h);
         let scrollbar_col = w.saturating_sub(3);
 
-        if Self::in_rect(layout.preview, col, row) && col >= scrollbar_col {
-            self.jump_to_scroll_position(
-                state,
-                row.saturating_sub(layout.preview.y),
-                layout.preview.height,
-            );
+        // Drag only acts on the preview scrollbar, not the panel body.
+        if col < scrollbar_col {
+            return;
+        }
+        if let Some(HitTarget::Preview { row }) =
+            crate::surface_tui_layout::hit_test(&layout, col, row, state.navigation.panel_focus)
+        {
+            self.jump_to_scroll_position(state, row, layout.preview.height);
             state.navigation.panel_focus = PanelFocus::Preview;
         }
     }
