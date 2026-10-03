@@ -116,7 +116,7 @@ impl StatusComponent {
                     " Running ",
                     Style::default()
                         .fg(theme::color(theme::ACCENT))
-                        .add_modifier(ratatui::style::Modifier::BOLD),
+                        .add_modifier(theme::EMPHASIS_SELECTED),
                 ),
                 Span::styled(
                     &state.actions.pending_label,
