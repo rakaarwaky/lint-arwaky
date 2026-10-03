@@ -1,7 +1,12 @@
 // Smoke tests — verify container creation and aggregate access complete within 5s.
 use git_hooks_lint_arwaky::root_git_hooks_container::GitContainer;
 use shared_common::FilePath;
+use shared_quality_rules::ICodeAnalysisAggregate;
 use std::sync::Arc;
+
+fn test_linter() -> Arc<dyn ICodeAnalysisAggregate> {
+    quality_rules::root_quality_rules_container::CodeAnalysisContainer::new().code_analysis_linter()
+}
 
 #[test]
 fn git_container_creates() {
@@ -10,7 +15,7 @@ fn git_container_creates() {
     let filesystem = fc.orchestrator();
     let io = fc.io();
     let fp = FilePath::new("/tmp".to_string()).unwrap();
-    let _container = GitContainer::new(fp, filesystem, io);
+    let _container = GitContainer::new(fp, filesystem, io, test_linter());
     let elapsed = start.elapsed();
     assert!(
         elapsed.as_secs() < 5,
@@ -26,7 +31,7 @@ fn git_container_aggregate_accessible() {
     let filesystem = fc.orchestrator();
     let io = fc.io();
     let fp = FilePath::new("/tmp".to_string()).unwrap();
-    let container = GitContainer::new(fp, filesystem, io);
+    let container = GitContainer::new(fp, filesystem, io, test_linter());
     let _agg = container.aggregate();
     let elapsed = start.elapsed();
     assert!(
@@ -49,7 +54,7 @@ fn git_container_aggregate_trait_object() {
     let filesystem = fc.orchestrator();
     let io = fc.io();
     let fp = FilePath::new("/tmp".to_string()).unwrap();
-    let container = GitContainer::new(fp, filesystem, io);
+    let container = GitContainer::new(fp, filesystem, io, test_linter());
     let _: Arc<dyn shared_git_hooks::contract_git_hooks_aggregate::IGitHooksAggregate> =
         container.aggregate();
     let elapsed = start.elapsed();

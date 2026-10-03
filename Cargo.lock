@@ -1537,12 +1537,14 @@ version = "3.7.2"
 dependencies = [
  "criterion",
  "filesystem-lint-arwaky",
+ "quality-rules-lint-arwaky",
  "serde_yaml_ng",
  "shared-cli-commands-lint-arwaky",
  "shared-common-lint-arwaky",
  "shared-file-watch-lint-arwaky",
  "shared-filesystem-lint-arwaky",
  "shared-git-hooks-lint-arwaky",
+ "shared-quality-rules-lint-arwaky",
  "tempfile",
  "tracing",
 ]

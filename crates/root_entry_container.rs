@@ -170,6 +170,7 @@ impl CommonDeps {
             shared_common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default(),
             filesystem.clone(),
             filesystem_io.clone(),
+            code_analysis_linter.clone(),
         );
         let git_hooks_aggregate = git_container.aggregate();
 

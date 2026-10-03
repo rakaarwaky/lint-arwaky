@@ -9,8 +9,13 @@ use shared_common::FilePath;
 use shared_git_hooks::GitHooksRequest;
 use shared_git_hooks::contract_git_hooks_aggregate::IGitHooksAggregate;
 use shared_git_hooks::{IHookInstallProtocol, IHookUninstallProtocol};
+use shared_quality_rules::ICodeAnalysisAggregate;
 use std::sync::Arc;
 use tempfile::TempDir;
+
+fn test_linter() -> Arc<dyn ICodeAnalysisAggregate> {
+    quality_rules::root_quality_rules_container::CodeAnalysisContainer::new().code_analysis_linter()
+}
 
 fn make_container() -> (TempDir, Arc<dyn IGitHooksAggregate>) {
     let tmp = TempDir::new().unwrap();
@@ -24,7 +29,7 @@ fn make_container() -> (TempDir, Arc<dyn IGitHooksAggregate>) {
         tmp.path().to_string_lossy().to_string(),
         io.clone(),
     ));
-    let diff_checker = Arc::new(DiffChecker::new(io.clone()));
+    let diff_checker = Arc::new(DiffChecker::new(io.clone(), test_linter()));
     let config_init = Arc::new(ConfigInit::new(io.clone()));
     let orch: Arc<dyn IGitHooksAggregate> = Arc::new(GitHooksOrchestrator::new(
         diff_checker,
@@ -47,7 +52,7 @@ fn make_orchestrator() -> (TempDir, Arc<GitHooksOrchestrator>) {
         tmp.path().to_string_lossy().to_string(),
         io.clone(),
     ));
-    let diff_checker = Arc::new(DiffChecker::new(io.clone()));
+    let diff_checker = Arc::new(DiffChecker::new(io.clone(), test_linter()));
     let config_init = Arc::new(ConfigInit::new(io));
     let orch = Arc::new(GitHooksOrchestrator::new(
         diff_checker,
