@@ -16,6 +16,7 @@ use shared_filesystem::{
     contract_filesystem_protocol::IWorkspaceProtocol,
     taxonomy_filesystem_request::FilesystemRequest,
     taxonomy_filesystem_response::FilesystemResponse,
+    taxonomy_filesystem_vo::FileMode,
     taxonomy_filesystem_vo::{
         DefinitionEntry, FileEntry, GraphAnalysisContext, ImplEntry, ImportEntry, ImportGraph,
         ImportType, InboundLinkMap, InheritanceMap, Language, ParseMetadata, ParseWarning,
@@ -148,6 +149,60 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
                     languages: self.deps.workspace.detect_project_languages(&root),
                 }
             }
+            FilesystemRequest::ReadFileResult { path } => FilesystemResponse::Content {
+                value: shared_common::ContentString::new(
+                    self.deps
+                        .io
+                        .read_to_string(&path)
+                        .map(|c| c.value)
+                        .unwrap_or_default(),
+                ),
+            },
+            FilesystemRequest::WriteFile { path, content } => FilesystemResponse::OpOk {
+                ok: self.deps.io.write_string(&path, &content).is_ok(),
+            },
+            FilesystemRequest::CreateDirAll { path } => FilesystemResponse::OpOk {
+                ok: self.deps.io.create_dir_all(&path).is_ok(),
+            },
+            FilesystemRequest::CopyFile { src, dst } => FilesystemResponse::OpOk {
+                ok: self.deps.io.copy_file(&src, &dst).is_ok(),
+            },
+            FilesystemRequest::RemoveDirAll { path } => FilesystemResponse::OpOk {
+                ok: self.deps.io.remove_dir_all(&path).is_ok(),
+            },
+            FilesystemRequest::RemoveFile { path } => FilesystemResponse::OpOk {
+                ok: self.deps.io.remove_file(&path).is_ok(),
+            },
+            FilesystemRequest::SetPermissions { path, mode } => FilesystemResponse::OpOk {
+                ok: self
+                    .deps
+                    .io
+                    .set_permissions(&path, FileMode::new(mode))
+                    .is_ok(),
+            },
+            FilesystemRequest::Canonicalize { path } => FilesystemResponse::Paths {
+                paths: self
+                    .deps
+                    .io
+                    .canonicalize(&path)
+                    .map(|p| vec![p.to_string_lossy().to_string()])
+                    .unwrap_or_default(),
+            },
+            FilesystemRequest::PathExists { path } => FilesystemResponse::PathExists {
+                exists: self.deps.io.path_exists(&path),
+            },
+            FilesystemRequest::ReadDirEntries { dir } => FilesystemResponse::Paths {
+                paths: self
+                    .deps
+                    .io
+                    .read_dir_entries_as_pathbuf(&dir)
+                    .map(|v| {
+                        v.into_iter()
+                            .map(|p| p.to_string_lossy().to_string())
+                            .collect()
+                    })
+                    .unwrap_or_default(),
+            },
         }
     }
 }

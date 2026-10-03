@@ -50,7 +50,6 @@ pub struct McpServerDependencies {
     pub doc_orchestrator: Arc<dyn IDocRunnerAggregate>,
     pub structure_orchestrator: Arc<dyn shared_structure_rules::IStructureAggregate>,
     pub filesystem: Arc<dyn IFilesystemAggregate>,
-    pub filesystem_io: Arc<dyn shared_filesystem::IFileSystemIOProtocol>,
     pub filesystem_workspace: Arc<dyn shared_filesystem::IWorkspaceProtocol>,
     pub filesystem_tool_resolution: Arc<dyn shared_filesystem::IToolResolutionProtocol>,
     pub filesystem_parser: Arc<dyn shared_filesystem::IParserProtocol>,
@@ -168,33 +167,28 @@ impl McpActionSurface {
             Ok(f) => f,
             Err(e) => return e,
         };
-        let deps = dispatcher::surface_ci_action::CiScanDeps {
-            code_analysis_linter: self.deps.code_analysis_linter.clone(),
-            import_orchestrator: self.deps.import_orchestrator.clone(),
-            naming_orchestrator: self.deps.naming_orchestrator.clone(),
-            config_orchestrator: self.deps.config_orchestrator.clone(),
-            orphan_orchestrator: self.deps.orphan_orchestrator.clone(),
-            filesystem: self.deps.filesystem.clone(),
-            filesystem_io: self.deps.filesystem_io.clone(),
-        };
-        let threshold_result = match u32::try_from(threshold)
-            .ok()
-            .and_then(|value| Threshold::try_new(value).ok())
-        {
-            Some(threshold) => threshold,
-            None => {
-                return error_response("Invalid 'threshold': expected an integer from 0 to 100");
-            }
-        };
-        let ci_result = match Self::run_blocking(move || {
-            dispatcher::surface_ci_action::collect_ci(deps, Some(fp), threshold_result)
-        })
-        .await
-        {
-            Ok(ci_result) => ci_result,
-            Err(e) => return e,
-        };
-        match ci_result {
+        match dispatcher::surface_ci_action::collect_ci(
+            dispatcher::surface_ci_action::CiScanDeps {
+                code_analysis_linter: self.deps.code_analysis_linter.clone(),
+                import_orchestrator: self.deps.import_orchestrator.clone(),
+                naming_orchestrator: self.deps.naming_orchestrator.clone(),
+                config_orchestrator: self.deps.config_orchestrator.clone(),
+                orphan_orchestrator: self.deps.orphan_orchestrator.clone(),
+                filesystem: self.deps.filesystem.clone(),
+            },
+            Some(fp),
+            match u32::try_from(threshold)
+                .ok()
+                .and_then(|value| Threshold::try_new(value).ok())
+            {
+                Some(threshold) => threshold,
+                None => {
+                    return error_response(
+                        "Invalid 'threshold': expected an integer from 0 to 100",
+                    );
+                }
+            },
+        ) {
             Ok(report) => {
                 let exit_code = if report.pass { 0 } else { 1 };
                 serde_json::json!({
@@ -331,25 +325,13 @@ impl McpActionSurface {
             Ok(f) => f,
             Err(e) => return e,
         };
-        let linter = self.deps.code_analysis_linter.clone();
-        let fs = self.deps.filesystem.clone();
-        let fs_io = self.deps.filesystem_io.clone();
-        let quality_result = match Self::run_blocking(move || {
-            dispatcher::surface_quality_action::collect_quality(
-                Some(fp),
-                linter,
-                None,
-                fs,
-                fs_io,
-                &[],
-            )
-        })
-        .await
-        {
-            Ok(quality_result) => quality_result,
-            Err(e) => return e,
-        };
-        match quality_result {
+        match dispatcher::surface_quality_action::collect_quality(
+            Some(fp),
+            self.deps.code_analysis_linter.clone(),
+            None,
+            self.deps.filesystem.clone(),
+            &[],
+        ) {
             Ok(violations) => violations_response("quality", path, &violations),
             Err(e) => serde_json::json!({"error": e, "exit_code": 2}),
         }
@@ -361,25 +343,13 @@ impl McpActionSurface {
             Ok(f) => f,
             Err(e) => return e,
         };
-        let importer = self.deps.import_orchestrator.clone();
-        let fs = self.deps.filesystem.clone();
-        let fs_io = self.deps.filesystem_io.clone();
-        let import_result = match Self::run_blocking(move || {
-            dispatcher::surface_import_action::collect_import(
-                Some(fp),
-                importer,
-                None,
-                fs,
-                fs_io,
-                &[],
-            )
-        })
-        .await
-        {
-            Ok(import_result) => import_result,
-            Err(e) => return e,
-        };
-        match import_result {
+        match dispatcher::surface_import_action::collect_import(
+            Some(fp),
+            self.deps.import_orchestrator.clone(),
+            None,
+            self.deps.filesystem.clone(),
+            &[],
+        ) {
             Ok(violations) => violations_response("import", path, &violations),
             Err(e) => serde_json::json!({"error": e, "exit_code": 2}),
         }
@@ -391,18 +361,13 @@ impl McpActionSurface {
             Ok(f) => f,
             Err(e) => return e,
         };
-        let namer = self.deps.naming_orchestrator.clone();
-        let fs = self.deps.filesystem.clone();
-        let fs_io = self.deps.filesystem_io.clone();
-        let naming_result = match Self::run_blocking(move || {
-            dispatcher::surface_naming_action::collect_naming(Some(fp), namer, None, fs, fs_io, &[])
-        })
-        .await
-        {
-            Ok(naming_result) => naming_result,
-            Err(e) => return e,
-        };
-        match naming_result {
+        match dispatcher::surface_naming_action::collect_naming(
+            Some(fp),
+            self.deps.naming_orchestrator.clone(),
+            None,
+            self.deps.filesystem.clone(),
+            &[],
+        ) {
             Ok(violations) => violations_response("naming", path, &violations),
             Err(e) => serde_json::json!({"error": e, "exit_code": 2}),
         }
@@ -438,35 +403,19 @@ impl McpActionSurface {
             Ok(f) => f,
             Err(e) => return e,
         };
-        let orphan = self.deps.orphan_orchestrator.clone();
-        let config = self.deps.config_orchestrator.clone();
-        let fs = self.deps.filesystem.clone();
-        let fs_io = self.deps.filesystem_io.clone();
-        let fs_ws = self.deps.filesystem_workspace.clone();
-        let fs_factory = self.deps.fs_factory.clone();
-        let orphan_factory = self.deps.orphan_factory.clone();
-        let orphan_result = match Self::run_blocking(move || {
-            dispatcher::surface_orphan_action::collect_orphan(
-                Some(fp),
-                None,
-                dispatcher::surface_orphan_action::OrphanScanDeps::new(
-                    orphan,
-                    config,
-                    fs,
-                    fs_io,
-                    fs_ws,
-                    fs_factory,
-                    orphan_factory,
-                ),
-                None,
-            )
-        })
-        .await
-        {
-            Ok(orphan_result) => orphan_result,
-            Err(e) => return e,
-        };
-        match orphan_result {
+        match dispatcher::surface_orphan_action::collect_orphan(
+            Some(fp),
+            None,
+            dispatcher::surface_orphan_action::OrphanScanDeps::new(
+                self.deps.orphan_orchestrator.clone(),
+                self.deps.config_orchestrator.clone(),
+                self.deps.filesystem.clone(),
+                self.deps.filesystem_workspace.clone(),
+                self.deps.fs_factory.clone(),
+                self.deps.orphan_factory.clone(),
+            ),
+            None,
+        ) {
             Ok(violations) => {
                 let exit_code = if violations.is_empty() { 0 } else { 1 };
                 serde_json::json!({
@@ -488,27 +437,14 @@ impl McpActionSurface {
             Ok(f) => f,
             Err(e) => return e,
         };
-        let ext = self.deps.external_lint.clone();
-        let fs = self.deps.filesystem.clone();
-        let fs_io = self.deps.filesystem_io.clone();
-        let parser = self.deps.config_parser.clone();
-        let external_result = match Self::run_blocking(move || {
-            dispatcher::surface_external_action::collect_external_direct(
-                Some(fp),
-                ext,
-                fs,
-                fs_io,
-                parser,
-                None,
-                &[],
-            )
-        })
-        .await
-        {
-            Ok(external_result) => external_result,
-            Err(e) => return e,
-        };
-        match external_result {
+        match dispatcher::surface_external_action::collect_external_direct(
+            Some(fp),
+            self.deps.external_lint.clone(),
+            self.deps.filesystem.clone(),
+            self.deps.config_parser.clone(),
+            None,
+            &[],
+        ) {
             Ok(violations) => violations_response("external", path, &violations),
             Err(e) => serde_json::json!({"error": e, "exit_code": 2}),
         }
@@ -744,16 +680,10 @@ impl McpActionSurface {
                 }
             }
             "init" | "install" => {
-                let setup = self.deps.setup_orchestrator.clone();
-                let fs_io = self.deps.filesystem_io.clone();
-                let items = match Self::run_blocking(move || {
-                    dispatcher::surface_setup_action::collect_init(setup, fs_io)
-                })
-                .await
-                {
-                    Ok(items) => items,
-                    Err(e) => return e,
-                };
+                let items = dispatcher::surface_setup_action::collect_init(
+                    self.deps.setup_orchestrator.clone(),
+                    self.deps.filesystem.clone(),
+                );
                 let any_failure = items.iter().any(|i| !i.ok);
                 let exit_code = if any_failure { 2 } else { 0 };
                 let messages: Vec<String> = items.iter().map(|i| i.message.clone()).collect();

@@ -5,7 +5,6 @@ use std::sync::Arc;
 use shared_common::FilePath;
 use shared_filesystem::FilesystemRequest;
 use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared_import_rules::IImportRunnerAggregate;
 use shared_import_rules::taxonomy_import_rules_request::ImportRequest;
 
@@ -16,14 +15,16 @@ pub fn collect_import(
     import_orchestrator: Arc<dyn IImportRunnerAggregate>,
     filter: Option<String>,
     fs_agg: Arc<dyn IFilesystemAggregate>,
-    filesystem_io: Arc<dyn IFileSystemIOProtocol>,
     ignored_paths: &[String],
 ) -> Result<Vec<ViolationItem>, String> {
     let root = match &path {
         Some(p) => p.value().to_string(),
         None => ".".to_string(),
     };
-    if !filesystem_io.path_exists(std::path::Path::new(&root)) {
+    if !fs_agg
+        .execute(FilesystemRequest::path_exists(std::path::Path::new(&root)))
+        .into_path_exists()
+    {
         return Err(format!("Error: path '{}' does not exist", root));
     }
     let root_fp = FilePath::new(root).map_err(|_| "invalid path".to_string())?;

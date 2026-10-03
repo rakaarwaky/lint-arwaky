@@ -322,7 +322,6 @@ fn main() {
     let filesystem_tool_resolution = fs_container.tool_resolution();
     let filesystem_parser = fs_container.parser();
     let fs_seam = dispatcher::surface_check_action::FilesystemSeam {
-        io: filesystem_io.clone(),
         workspace: filesystem_workspace.clone(),
         parser: filesystem_parser.clone(),
         aggregate: filesystem.clone(),
@@ -600,7 +599,6 @@ fn main() {
                 fs_factory: Arc::new(|| {
                     let c = filesystem::root_filesystem_container::FilesystemContainer::new();
                     dispatcher::surface_check_action::FilesystemSeam {
-                        io: c.io(),
                         workspace: c.workspace(),
                         parser: c.parser(),
                         aggregate: c.orchestrator(),
@@ -741,7 +739,6 @@ fn main() {
                 config_orchestrator: config_orchestrator.clone(),
                 orphan_orchestrator: orphan_orchestrator.clone(),
                 filesystem: filesystem.clone(),
-                filesystem_io: filesystem_io.clone(),
                 path: Some(FilePath::new(path).unwrap_or_default()),
                 threshold: Threshold::new(threshold),
             },
@@ -785,7 +782,7 @@ fn main() {
         }
         Command::Init => cli_commands::surface_setup_command::handle_init(
             setup_orchestrator.clone(),
-            filesystem_io.clone(),
+            filesystem.clone(),
         ),
         Command::Install { sudo } => {
             cli_commands::surface_setup_command::handle_install(setup_orchestrator.clone(), sudo)

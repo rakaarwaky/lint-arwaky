@@ -1,9 +1,11 @@
 // Unit tests — skills language relevance and filtering for init command.
 use dispatcher_lint_arwaky::surface_setup_action::{collect_init, is_skill_relevant_for_languages};
 use shared_common::taxonomy_job_vo::{EnvContentVO, McpConfigVO, SuccessStatus};
+use shared_common::taxonomy_source_vo::ContentString;
 use shared_common::taxonomy_suggestion_vo::DescriptionVO;
-use shared_common::taxonomy_tool_name_vo::ToolName;
-use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared_filesystem::taxonomy_filesystem_request::FilesystemRequest;
+use shared_filesystem::taxonomy_filesystem_response::FilesystemResponse;
 use shared_project_setup::{
     EMBEDDED_SKILLS, EMBEDDED_SKILLS_COUNT, ISetupAggregate, ProjectLanguageVO, ProjectLanguagesVO,
     SetupRequest, SetupResponse,
@@ -299,151 +301,54 @@ struct RecordingFilesystem {
     written_files: Mutex<HashMap<String, String>>,
 }
 
-impl IFileSystemIOProtocol for RecordingFilesystem {
-    fn path_exists(&self, _path: &Path) -> bool {
-        false
-    }
-    fn is_dir(&self, _path: &Path) -> bool {
-        false
-    }
-    fn is_file(&self, _path: &Path) -> bool {
-        false
-    }
-    fn should_ignore(
-        &self,
-        _path: &shared_common::taxonomy_path_vo::FilePath,
-        _ignored: &[String],
-    ) -> bool {
-        false
-    }
-    fn canonicalize(&self, path: &Path) -> Result<PathBuf, std::io::Error> {
-        Ok(path.to_path_buf())
-    }
-    fn canonicalize_path_str(
-        &self,
-        path: &shared_common::taxonomy_path_vo::FilePath,
-    ) -> shared_common::taxonomy_path_vo::FilePath {
-        path.clone()
-    }
-    fn is_symlink(&self, _path: &Path) -> bool {
-        false
-    }
-    fn metadata(&self, _path: &Path) -> Result<std::fs::Metadata, std::io::Error> {
-        Err(std::io::Error::new(std::io::ErrorKind::NotFound, "mock"))
-    }
-    fn symlink_metadata(&self, _path: &Path) -> Result<std::fs::Metadata, std::io::Error> {
-        Err(std::io::Error::new(std::io::ErrorKind::NotFound, "mock"))
-    }
-    fn get_file_stem<'a>(&self, path: &'a str) -> &'a str {
-        path
-    }
-    fn is_source_file(&self, _path: &Path) -> bool {
-        false
-    }
-    fn is_source_ext(
-        &self,
-        _ext: &shared_filesystem::taxonomy_filesystem_vo::FileExtension,
-    ) -> bool {
-        false
-    }
-    fn get_basename<'a>(&self, path: &'a str) -> &'a str {
-        path
-    }
-    fn get_parent<'a>(&self, path: &'a str) -> &'a str {
-        path
-    }
-    fn is_python_file(&self, _path: &Path) -> bool {
-        false
-    }
-    fn scan_directory_with_ignored(
-        &self,
-        _dir: &Path,
-        _ignored: &shared_common::taxonomy_common_vo::PatternList,
-    ) -> Vec<PathBuf> {
-        vec![]
-    }
-    fn is_ignored_dir(
-        &self,
-        _dir: &Path,
-        _ignored: &shared_common::taxonomy_common_vo::PatternList,
-    ) -> bool {
-        false
-    }
-    fn read_dir_entries_as_pathbuf(&self, _dir: &Path) -> Result<Vec<PathBuf>, std::io::Error> {
-        Ok(vec![])
-    }
-    fn read_to_string(
-        &self,
-        _path: &Path,
-    ) -> Result<shared_common::taxonomy_source_vo::ContentString, std::io::Error> {
-        Err(std::io::Error::new(std::io::ErrorKind::NotFound, "mock"))
-    }
-    fn write_string(&self, path: &Path, content: &str) -> Result<(), std::io::Error> {
-        let mut map = self.written_files.lock().unwrap();
-        map.insert(path.to_string_lossy().to_string(), content.to_string());
-        Ok(())
-    }
-    fn copy_file(
-        &self,
-        _src: &Path,
-        _dst: &Path,
-    ) -> Result<shared_filesystem::taxonomy_filesystem_vo::ByteCount, std::io::Error> {
-        Ok(shared_filesystem::taxonomy_filesystem_vo::ByteCount::new(0))
-    }
-    fn create_dir_all(&self, _path: &Path) -> Result<(), std::io::Error> {
-        Ok(())
-    }
-    fn remove_dir_all(&self, _path: &Path) -> Result<(), std::io::Error> {
-        Ok(())
-    }
-    fn set_permissions(
-        &self,
-        _path: &Path,
-        _mode: shared_filesystem::taxonomy_filesystem_vo::FileMode,
-    ) -> std::io::Result<()> {
-        Ok(())
-    }
-    fn remove_file(&self, _path: &Path) -> std::io::Result<()> {
-        Ok(())
-    }
-    fn run_git_command(
-        &self,
-        _args: &[&str],
-        _dir: &str,
-    ) -> shared_filesystem::taxonomy_filesystem_vo::GitCommandResult {
-        shared_filesystem::taxonomy_filesystem_vo::GitCommandResult::new(
-            String::new(),
-            String::new(),
-            false,
-        )
-    }
-    fn parse_output_lines(
-        &self,
-        output: &str,
-    ) -> shared_filesystem::taxonomy_filesystem_vo::ParsedLines {
-        shared_filesystem::taxonomy_filesystem_vo::ParsedLines::new(
-            output.lines().map(String::from).collect(),
-        )
-    }
-    fn run_external_command_in(
-        &self,
-        _name: &ToolName,
-        _args: &[&str],
-        _current_dir: &str,
-    ) -> (String, String, bool) {
-        (String::new(), String::new(), false)
-    }
-    fn timing(&self) -> &shared_filesystem::taxonomy_filesystem_vo::ScanTiming {
-        static T: shared_filesystem::taxonomy_filesystem_vo::ScanTiming =
-            shared_filesystem::taxonomy_filesystem_vo::ScanTiming {
-                walk_ms: 0,
-                cache_ms: 0,
-                parse_ms: 0,
-                extract_ms: 0,
-                graph_ms: 0,
-                total_ms: 0,
-            };
-        &T
+impl IFilesystemAggregate for RecordingFilesystem {
+    fn execute(&self, request: FilesystemRequest) -> FilesystemResponse {
+        match request {
+            FilesystemRequest::WriteFile { path, content } => {
+                let mut map = self.written_files.lock().unwrap();
+                map.insert(path.to_string_lossy().to_string(), content);
+                FilesystemResponse::OpOk { ok: true }
+            }
+            FilesystemRequest::CreateDirAll { .. } => FilesystemResponse::OpOk { ok: true },
+            FilesystemRequest::ReadFileResult { .. } => FilesystemResponse::Content {
+                value: ContentString::default(),
+            },
+            FilesystemRequest::PathExists { .. } => {
+                FilesystemResponse::PathExists { exists: false }
+            }
+            FilesystemRequest::CopyFile { .. }
+            | FilesystemRequest::RemoveDirAll { .. }
+            | FilesystemRequest::RemoveFile { .. }
+            | FilesystemRequest::SetPermissions { .. }
+            | FilesystemRequest::Canonicalize { .. }
+            | FilesystemRequest::ReadDirEntries { .. }
+            | FilesystemRequest::FileList
+            | FilesystemRequest::ReadCached { .. }
+            | FilesystemRequest::GetFileContent { .. }
+            | FilesystemRequest::HasFile { .. }
+            | FilesystemRequest::CollectFileEntries { .. }
+            | FilesystemRequest::DiscoverSourceFiles { .. }
+            | FilesystemRequest::DiscoverFilesInDirectories { .. }
+            | FilesystemRequest::ReadFile { .. }
+            | FilesystemRequest::ScanDirectory { .. }
+            | FilesystemRequest::DiscoverFiles { .. }
+            | FilesystemRequest::CollectSourceFiles { .. }
+            | FilesystemRequest::ReadLintableFile { .. }
+            | FilesystemRequest::UsedIdentifiers { .. }
+            | FilesystemRequest::FileListSnapshot
+            | FilesystemRequest::ImplementedTraitsMap
+            | FilesystemRequest::BuildFileIndex { .. }
+            | FilesystemRequest::BuildFileIndexWithIgnored { .. }
+            | FilesystemRequest::BuildOrphanGraphContext { .. }
+            | FilesystemRequest::FindWorkspaceRoot { .. }
+            | FilesystemRequest::ResolvedImportList
+            | FilesystemRequest::ExtendImportCache { .. }
+            | FilesystemRequest::ImportListSnapshot
+            | FilesystemRequest::UsedIdentifiersAll
+            | FilesystemRequest::DetectProjectLanguages { .. } => {
+                FilesystemResponse::OpOk { ok: true }
+            }
+        }
     }
 }
 

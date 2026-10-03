@@ -114,7 +114,6 @@ stub_aggregate!(
 fn make_fs_seam() -> dispatcher::surface_check_action::FilesystemSeam {
     let c = filesystem::root_filesystem_container::FilesystemContainer::new();
     dispatcher::surface_check_action::FilesystemSeam {
-        io: c.io(),
         workspace: c.workspace(),
         parser: c.parser(),
         aggregate: c.orchestrator(),
@@ -171,7 +170,6 @@ fn make_action_surface_with(allow_mutations: bool) -> McpActionSurface {
         doc_orchestrator: Arc::new(DocStub),
         structure_orchestrator: Arc::new(StructureStub),
         filesystem: fs_aggregate,
-        filesystem_io: fs_io,
         filesystem_workspace: fs_workspace,
         filesystem_tool_resolution: fs_tool_resolution,
         filesystem_parser: fs_parser,

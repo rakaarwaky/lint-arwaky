@@ -60,6 +60,27 @@ pub enum FilesystemRequest {
     UsedIdentifiersAll,
     /// Detect which language groups and content types are present under a root.
     DetectProjectLanguages { root: PathBuf },
+    /// Read a file's text content as `Result<String, String>` so callers can
+    /// distinguish a read failure from empty content (aggregate-level seam).
+    ReadFileResult { path: PathBuf },
+    /// Write text content to a file (create parent dirs first).
+    WriteFile { path: PathBuf, content: String },
+    /// Create all parent directories of a path.
+    CreateDirAll { path: PathBuf },
+    /// Copy a file.
+    CopyFile { src: PathBuf, dst: PathBuf },
+    /// Remove a directory tree.
+    RemoveDirAll { path: PathBuf },
+    /// Remove a single file.
+    RemoveFile { path: PathBuf },
+    /// Set Unix permission mode bits on a file.
+    SetPermissions { path: PathBuf, mode: u32 },
+    /// Canonicalize a path (resolve symlinks).
+    Canonicalize { path: PathBuf },
+    /// List directory entries as path buffers.
+    ReadDirEntries { dir: PathBuf },
+    /// Check whether a filesystem path exists.
+    PathExists { path: PathBuf },
 }
 
 impl FilesystemRequest {
@@ -175,6 +196,59 @@ impl FilesystemRequest {
     pub fn detect_project_languages(root: &Path) -> Self {
         Self::DetectProjectLanguages {
             root: root.to_path_buf(),
+        }
+    }
+    pub fn read_file_result(path: &Path) -> Self {
+        Self::ReadFileResult {
+            path: path.to_path_buf(),
+        }
+    }
+    pub fn write_file(path: &Path, content: &str) -> Self {
+        Self::WriteFile {
+            path: path.to_path_buf(),
+            content: content.to_string(),
+        }
+    }
+    pub fn create_dir_all(path: &Path) -> Self {
+        Self::CreateDirAll {
+            path: path.to_path_buf(),
+        }
+    }
+    pub fn copy_file(src: &Path, dst: &Path) -> Self {
+        Self::CopyFile {
+            src: src.to_path_buf(),
+            dst: dst.to_path_buf(),
+        }
+    }
+    pub fn remove_dir_all(path: &Path) -> Self {
+        Self::RemoveDirAll {
+            path: path.to_path_buf(),
+        }
+    }
+    pub fn remove_file(path: &Path) -> Self {
+        Self::RemoveFile {
+            path: path.to_path_buf(),
+        }
+    }
+    pub fn set_permissions(path: &Path, mode: u32) -> Self {
+        Self::SetPermissions {
+            path: path.to_path_buf(),
+            mode,
+        }
+    }
+    pub fn canonicalize(path: &Path) -> Self {
+        Self::Canonicalize {
+            path: path.to_path_buf(),
+        }
+    }
+    pub fn read_dir_entries(dir: &Path) -> Self {
+        Self::ReadDirEntries {
+            dir: dir.to_path_buf(),
+        }
+    }
+    pub fn path_exists(path: &Path) -> Self {
+        Self::PathExists {
+            path: path.to_path_buf(),
         }
     }
 }

@@ -1,7 +1,7 @@
 use crate::surface_event_action::SurfaceActionHandler;
 use crate::surface_lint_action::SurfaceLintExecutor;
 use crate::surface_tui_command::TuiCommandSurface;
-use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use std::sync::Arc;
 
 // PURPOSE: Root-layer TUI container — composition root wiring surfaces directly.
@@ -15,7 +15,7 @@ impl TuiContainer {
     /// containers and passing the aggregates here.
     pub fn run(
         lint_executor: Arc<SurfaceLintExecutor>,
-        io: Arc<dyn IFileSystemIOProtocol>,
+        io: Arc<dyn IFilesystemAggregate>,
     ) -> anyhow::Result<()> {
         crate::surface_logging_controller::init()?;
         tracing::info!(target = "tui", "TUI container starting");

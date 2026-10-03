@@ -12,7 +12,6 @@ use shared_doc_rules::taxonomy_doc_rules_response::DocResponse;
 use shared_external_lint::IExternalLintAggregate;
 use shared_filesystem::FilesystemRequest;
 use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared_filesystem::contract_filesystem_protocol::IParserProtocol;
 use shared_filesystem::contract_filesystem_protocol::IWorkspaceProtocol;
 use shared_filesystem::utility_test_file_discovery;
@@ -28,7 +27,7 @@ use shared_quality_rules::ICodeAnalysisAggregate;
 use shared_role_rules::IRoleRunnerAggregate;
 use shared_role_rules::taxonomy_role_rules_request::RoleRequest;
 use shared_structure_rules::IStructureAggregate;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use std::sync::Arc;
 
@@ -42,10 +41,11 @@ use shared_common::utility_subprocess_runner::{subprocess_timeout, wait_for_chil
 pub use crate::surface_scan_cancel_action::{CancellableScanOutcome, collect_scan_with_cancel};
 
 /// Capability seams exposed alongside the filesystem aggregate, so callers can
-/// dispatch individual protocol operations without leaking the aggregate layer.
+/// dispatch protocol operations without holding the raw IO protocol (#571).
+/// File access goes through `aggregate`; `workspace`/`parser` stay seams because
+/// no aggregate facade exposes them.
 #[derive(Clone)]
 pub struct FilesystemSeam {
-    pub io: Arc<dyn IFileSystemIOProtocol>,
     pub workspace: Arc<dyn IWorkspaceProtocol>,
     pub parser: Arc<dyn IParserProtocol>,
     pub aggregate: Arc<dyn IFilesystemAggregate>,
@@ -64,7 +64,7 @@ pub struct ScanAggregates {
     pub config: Arc<dyn IConfigOrchestratorAggregate>,
     pub structure: Arc<dyn IStructureAggregate>,
     pub doc: Arc<dyn IDocRunnerAggregate>,
-    /// Provides raw protocol seams + aggregate per scan run.
+    /// Provides protocol seams + the aggregate per scan run.
     pub fs_seam: Arc<FilesystemSeam>,
 }
 
@@ -101,7 +101,12 @@ where
         Some(p) => p.value().to_string(),
         None => ".".to_string(),
     };
-    if !opts.filesystem.io.path_exists(std::path::Path::new(&root)) {
+    if !&opts
+        .filesystem
+        .aggregate
+        .execute(FilesystemRequest::path_exists(std::path::Path::new(&root)))
+        .into_path_exists()
+    {
         return Err(format!("Error: path '{}' does not exist", root));
     }
 
@@ -109,7 +114,9 @@ where
     // in-process linters scan the intended scope. Subprocess fallback keeps the
     // raw path (its per-linter normalization differs).
     let root = if opts.scan_aggregates.is_some() {
-        canonicalize_scan_root(&opts.filesystem.io, &root)
+        canonicalize_via(&opts.filesystem.aggregate, Path::new(&root))
+            .map(|p| p.to_string_lossy().to_string())
+            .unwrap_or(root)
     } else {
         root
     };
@@ -131,13 +138,15 @@ where
     Ok(violations)
 }
 
-/// Canonicalize a scan root (falling back to the raw path when the filesystem
-/// cannot canonicalize it, e.g. the path does not exist yet).
-pub(crate) fn canonicalize_scan_root(io: &Arc<dyn IFileSystemIOProtocol>, root: &str) -> String {
-    io.canonicalize(std::path::Path::new(root))
-        .unwrap_or_else(|_| PathBuf::from(root))
-        .to_string_lossy()
-        .to_string()
+/// Canonicalize a path via the filesystem aggregate (`None` on failure).
+fn canonicalize_via(fs: &Arc<dyn IFilesystemAggregate>, path: &Path) -> Option<PathBuf> {
+    match fs
+        .execute(FilesystemRequest::canonicalize(path))
+        .into_paths()
+    {
+        paths if paths.is_empty() => None,
+        paths => Some(PathBuf::from(&paths[0])),
+    }
 }
 
 /// Resolve the member-scoped scan target, validating it against discovered
@@ -192,7 +201,11 @@ pub fn is_member_path(path: &FilePath, ws: &dyn IWorkspaceProtocol) -> bool {
 
 /// Run all 6 linters via subprocesses for a given path; return violations.
 pub fn collect_scan_json(path: &str, seam: &FilesystemSeam) -> Result<Vec<ViolationItem>, String> {
-    if !seam.io.path_exists(std::path::Path::new(path)) {
+    if !&seam
+        .aggregate
+        .execute(FilesystemRequest::path_exists(std::path::Path::new(path)))
+        .into_path_exists()
+    {
         return Err(format!("Error: path '{}' does not exist", path));
     }
     run_all_linters_json(path, seam)
@@ -229,10 +242,8 @@ fn run_all_linters_in_process(
     let seam = agg.fs_seam.clone();
 
     let target = std::path::Path::new(path);
-    let target_canon = seam
-        .io
-        .canonicalize(target)
-        .unwrap_or_else(|_| std::path::PathBuf::from(path));
+    let target_canon =
+        canonicalize_via(&seam.aggregate, target).unwrap_or_else(|| std::path::PathBuf::from(path));
     let target_canon_str = target_canon.to_string_lossy().to_string();
 
     // W10: build the in-process file index directly from the scan target so
@@ -431,7 +442,7 @@ fn run_all_linters_in_process(
         // where the workspaces-good false positives came from.
         let config_entries = crate::surface_external_action::load_config_entries(
             std::path::Path::new(&target_canon_str),
-            seam.io.as_ref(),
+            seam.aggregate.as_ref(),
         );
         let context = shared_external_lint::taxonomy_external_lint_vo::ExternalLintContext {
             has_rust,
@@ -441,7 +452,7 @@ fn run_all_linters_in_process(
             ignored_paths: ignored.clone(),
             ignored_rules: crate::surface_external_action::load_ignored_rules(
                 std::path::Path::new(&target_canon_str),
-                seam.io.as_ref(),
+                seam.aggregate.as_ref(),
             ),
             config_entries,
         };
@@ -543,7 +554,12 @@ pub(crate) fn structure_violations_in_scope(
             // member dir under that root, so a member-dir scan target must
             // additionally keep only the findings inside itself.
             let resolved = ws_root.join(&v.file.value);
-            let exists = resolved.is_dir() || agg.fs_seam.io.path_exists(&resolved);
+            let exists = resolved.is_dir()
+                || agg
+                    .fs_seam
+                    .aggregate
+                    .execute(FilesystemRequest::path_exists(&resolved))
+                    .into_path_exists();
             exists && resolved.starts_with(target_path)
         })
         .collect::<Vec<_>>()
@@ -556,11 +572,8 @@ pub(crate) fn structure_violations_in_scope(
 /// All doc rules are HIGH-severity invariant failures → `Severity::HIGH`.
 pub(crate) fn doc_violations_in_scope(target: &str, agg: &ScanAggregates) -> Vec<ViolationItem> {
     let target_path = std::path::Path::new(target);
-    let target_canon = agg
-        .fs_seam
-        .io
-        .canonicalize(target_path)
-        .unwrap_or_else(|_| target_path.to_path_buf());
+    let target_canon = canonicalize_via(&agg.fs_seam.aggregate, target_path)
+        .unwrap_or_else(|| target_path.to_path_buf());
 
     let DocResponse::Findings { findings } = agg.doc.execute(DocRequest::audit_all(&target_canon));
     findings
@@ -568,7 +581,12 @@ pub(crate) fn doc_violations_in_scope(target: &str, agg: &ScanAggregates) -> Vec
         .filter_map(|finding| {
             let file = shared_common::FilePath::new(finding.doc.clone()).ok()?;
             let doc_path = target_canon.join(&finding.doc);
-            let exists = doc_path.is_file() || agg.fs_seam.io.path_exists(&doc_path);
+            let exists = doc_path.is_file()
+                || agg
+                    .fs_seam
+                    .aggregate
+                    .execute(FilesystemRequest::path_exists(&doc_path))
+                    .into_path_exists();
             if !exists {
                 return None;
             }
@@ -604,9 +622,13 @@ pub(crate) fn external_violation_in_scope(
 ) -> bool {
     let resolved_canon = resolve_violation_path(v, seam, target_canon, parent_workspace);
     if let Some(members) = member_dirs {
-        return members
-            .iter()
-            .any(|m| resolved_canon.starts_with(m) && seam.io.path_exists(&resolved_canon));
+        return members.iter().any(|m| {
+            resolved_canon.starts_with(m)
+                && seam
+                    .aggregate
+                    .execute(FilesystemRequest::path_exists(&resolved_canon))
+                    .into_path_exists()
+        });
     }
     resolved_canon.starts_with(target_canon)
         || (v.code.code() == "AES205"
@@ -628,7 +650,11 @@ pub(crate) fn violation_in_scan_scope(
     member_dirs: Option<&[&std::path::Path]>,
 ) -> bool {
     let resolved_canon = resolve_violation_path(v, seam, target_canon, workspace_root);
-    if !seam.io.path_exists(&resolved_canon) {
+    if !&seam
+        .aggregate
+        .execute(FilesystemRequest::path_exists(&resolved_canon))
+        .into_path_exists()
+    {
         return false; // E902 guard: non-existent file — drop, no violation.
     }
     let in_target = resolved_canon.starts_with(target_canon);
@@ -662,13 +688,16 @@ pub(crate) fn resolve_violation_path(
         file_path.to_path_buf()
     } else {
         let under_target = target_canon.join(file_path);
-        let exists_under_target = seam.io.path_exists(&under_target);
+        let exists_under_target = &seam
+            .aggregate
+            .execute(FilesystemRequest::path_exists(&under_target))
+            .into_path_exists();
         match workspace_root {
             Some(pw) if !exists_under_target => pw.join(file_path),
             _ => under_target,
         }
     };
-    seam.io.canonicalize(&resolved).unwrap_or(resolved)
+    canonicalize_via(&seam.aggregate, &resolved).unwrap_or(resolved)
 }
 
 /// Run all 6 linters on a single-file target, returning in-scope violations.
@@ -795,10 +824,10 @@ pub(crate) fn run_single_file_scan(
             scan_root,
             ignored,
             &agg.external,
-            crate::surface_external_action::load_config_entries(scan_root, seam.io.as_ref()),
-            seam.io.as_ref(),
-        )
-    }));
+            crate::surface_external_action::load_config_entries(scan_root, seam.aggregate.as_ref()),
+            seam.aggregate.as_ref(),
+        ),
+    );
     // Drop violations naming files outside the target.
     all.retain(|v| {
         let p = std::path::Path::new(&v.file.value);
@@ -1105,7 +1134,7 @@ pub(crate) fn run_all_linters_json(
     }
 
     // Normalize relative paths to absolute before filtering.
-    let target_canonical = seam.io.canonicalize(std::path::Path::new(path)).ok();
+    let target_canonical = canonicalize_via(&seam.aggregate, std::path::Path::new(path));
     // Detect workspace root for resolving relative paths from orphan scan
     // (orphan scan returns paths like "crates/calculator/src/foo.rs" relative to workspace root)
     let ws_root = seam
@@ -1152,7 +1181,7 @@ fn normalize_violation_paths(
             target_parent,
         ];
         for base in bases.into_iter().flatten() {
-            if let Ok(canon) = seam.io.canonicalize(&base.join(file_path)) {
+            if let Some(canon) = canonicalize_via(&seam.aggregate, &base.join(file_path)) {
                 v.file = FilePath::new(canon.to_string_lossy().to_string())
                     .unwrap_or_else(|_| v.file.clone());
                 break;
@@ -1173,24 +1202,26 @@ fn json_violation_in_target(
     // Always retain AES205 cycle violations if within the same parent workspace
     if v.code.code() == "AES205" {
         if let Some(pw) = parent_workspace {
-            if let Ok(canonical) = seam.io.canonicalize(file_path) {
+            if let Some(canonical) = canonicalize_via(&seam.aggregate, file_path) {
                 if canonical.starts_with(pw) {
                     return true;
                 }
             }
         }
     }
-    if let Ok(canonical) = seam.io.canonicalize(file_path) {
+    if let Some(canonical) = canonicalize_via(&seam.aggregate, file_path) {
         return canonical.starts_with(canonical_target);
     }
     if let Ok(cwd) = std::env::current_dir() {
         let joined = cwd.join(file_path);
-        let cwd_joined = seam.io.canonicalize(&joined).unwrap_or(joined);
+        let cwd_joined = canonicalize_via(&seam.aggregate, &joined).unwrap_or(joined);
         if cwd_joined.starts_with(canonical_target) {
             return true;
         }
     }
-    if let Ok(target_joined) = seam.io.canonicalize(&canonical_target.join(file_path)) {
+    if let Some(target_joined) =
+        canonicalize_via(&seam.aggregate, &canonical_target.join(file_path))
+    {
         return target_joined.starts_with(canonical_target);
     }
     false
