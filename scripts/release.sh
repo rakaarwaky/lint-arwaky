@@ -142,16 +142,39 @@ update_cargo_version() {
   # Root package version (the release version shown by --version / scan header)
   sed -i -E "s/^version = \"[^\"]+\"/version = \"${new_version}\"/" "$CARGO_TOML"
 
-  # Workspace dependency pins for internal crates (lines with `path = "crates/...`)
-  sed -i -E "/path = \"crates\//s/version = \"[^\"]+\"/version = \"${new_version}\"/" "$CARGO_TOML"
+  # [workspace.dependencies] pins for the published line only: members at a
+  # 3.x version move with the release; independent 0.x members keep their own
+  # pins (crates.io requires every path dependency a published crate carries
+  # to be satisfiable — see issue #583 follow-up).
+  python3 - "$CARGO_TOML" "$new_version" <<'PYEOF'
+import re, sys, pathlib
+root_toml, new_version = sys.argv[1], sys.argv[2]
+root = pathlib.Path(root_toml)
+member = {}
+for f in sorted(root.parent.glob("crates/*/Cargo.toml")) + sorted(root.parent.glob("crates/shared/src/*/Cargo.toml")):
+    m = re.search(r'^name = "([^"]+)"', f.read_text(), re.M)
+    v = re.search(r'^version = "([^"]+)"', f.read_text(), re.M)
+    if m and v:
+        member[m.group(1)] = v.group(1)
+out = []
+in_ws = False
+for line in root.read_text().splitlines(keepends=True):
+    if line.strip() == "[workspace.dependencies]":
+        in_ws = True
+    elif line.startswith("["):
+        in_ws = False
+    if in_ws and 'path = "crates/' in line:
+        pkg = re.search(r'package = "([^"]+)"', line) or re.search(r'^(\w[\w-]*)\s*=', line)
+        v = member.get(pkg.group(1)) if pkg else None
+        if v and v.startswith("3."):
+            line = re.sub(r'version = "[^"]+"', f'version = "{new_version}"', line)
+    out.append(line)
+root.write_text("".join(out))
+PYEOF
 
-  # All member crates — keep crate versions aligned so version-displaying
-  # surfaces (scan header, SARIF, MCP info, --version) report the release.
-  for crate_toml in "$ROOT_DIR"/crates/*/Cargo.toml; do
-    if grep -q '^version = ' "$crate_toml"; then
-      sed -i -E "s/^version = \"[^\"]+\"/version = \"${new_version}\"/" "$crate_toml"
-    fi
-  done
+  # Member crates version independently (issue #583): only the root package
+  # above carries the release version. Version-displaying surfaces read the
+  # root version, so scan header / SARIF / --version stay correct.
 
   # README version references (badge, heading, install tag)
   if [[ -f "$ROOT_DIR/README.md" ]]; then
