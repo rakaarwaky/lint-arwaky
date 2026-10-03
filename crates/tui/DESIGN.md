@@ -89,6 +89,21 @@ token; padding inside a pane is left to the renderer.
 | `SHORTCUT_ROW_COUNT`       | `3`   | rows in the keybinding hint bar     |
 | `MIN_TERMINAL_WIDTH`       | `40`  | below this the surface degrades     |
 | `MIN_TERMINAL_HEIGHT`      | `15`  | below this the surface degrades     |
+| `NARROW_BREAKPOINT_WIDTH`  | `100` | below this the layout collapses to a single active panel |
+
+The three pane splits are used when the terminal is wide enough. Below the
+narrow breakpoint the layout collapses to a single active panel — the user
+cycles between tree, file-list, and preview with Tab. The split that is used
+is determined by `NARROW_BREAKPOINT_WIDTH`:
+
+| Terminal width range   | Layout mode         | What is visible                          |
+| ---------------------- | ------------------- | ---------------------------------------- |
+| `>= NARROW_BREAKPOINT_WIDTH` (100) | `FullThree`       | all three panes: tree / file-list / preview |
+| `< NARROW_BREAKPOINT_WIDTH` but `>= MIN_TERMINAL_WIDTH` | `ActiveOnly` | the single active panel fills the area; Tab cycles between tree, file-list, preview |
+| `< MIN_TERMINAL_WIDTH` (40) | —                  | "Terminal too small — resize" message; layout not drawn |
+
+At `MIN_TERMINAL_WIDTH` (40 cols) the active single panel has enough width for
+a 20-character filename without truncation after border overhead.
 
 The pane widths live here so the mouse hit-map and the split can never drift
 apart.

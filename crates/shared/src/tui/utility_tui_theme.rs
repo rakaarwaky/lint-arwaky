@@ -33,6 +33,13 @@ pub const STATUS_BAR_HEIGHT: u16 = 1;
 pub const HEADER_HEIGHT: u16 = 1;
 pub const MIN_TERMINAL_HEIGHT: u16 = 15;
 pub const MIN_TERMINAL_WIDTH: u16 = 40;
+pub const NARROW_BREAKPOINT_WIDTH: u16 = 100;
+
+/// Returns true when the panel area is wide enough for the full 3-column split.
+/// Below `NARROW_BREAKPOINT_WIDTH` the layout collapses to a single active panel.
+pub fn is_full_three_column(width: u16) -> bool {
+    width >= NARROW_BREAKPOINT_WIDTH
+}
 
 /// Returns true when the user has requested no-color output.
 pub fn no_color() -> bool {
