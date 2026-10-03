@@ -60,18 +60,21 @@ impl SurfaceActionHandler {
         state.scan.cancel = Some(cancel.clone());
         let (tx, rx) = std::sync::mpsc::sync_channel(16);
         std::thread::spawn(move || {
-            // User requested cancellation (Esc) while the scan was in flight.
-            if cancel.load(std::sync::atomic::Ordering::Relaxed) {
-                let _ = tx.send(ScanUpdate::Cancelled);
-                return;
-            }
             let progress_tx = tx.clone();
             let cancel_for_progress = cancel.clone();
-            let result = lint_port.scan_with_progress(&path, move |phase, done, total| {
+            let result = lint_port.scan_with_cancel(&path, &cancel, move |phase, done, total| {
                 if !cancel_for_progress.load(std::sync::atomic::Ordering::Relaxed) {
                     let _ = progress_tx.send(ScanUpdate::Progress { phase, done, total });
                 }
             });
+            // Cancelled is only emitted when the dispatcher genuinely stopped
+            // the scan short (the cancel token was observed set before every
+            // linter phase ran). A fully-finished scan still reports Complete
+            // even if the flag was set late in the run.
+            if result.cancelled_early() {
+                let _ = tx.send(ScanUpdate::Cancelled);
+                return;
+            }
             let _ = tx.send(ScanUpdate::Complete {
                 output: result.output,
                 violation_count: result.violation_count,
