@@ -1,6 +1,6 @@
 [package]
 name = "naming-rules-lint-arwaky"
-version = "0.1.0"
+version = "3.7.2"
 edition = "2024"
 description = "Naming-convention enforcer for AES101 (stem shape), AES102 (layer suffix), and AES103 (test/bench file prefix)."
 license = "MIT"
