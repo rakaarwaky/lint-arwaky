@@ -1048,11 +1048,19 @@ dependencies = [
 name = "dispatcher-lint-arwaky"
 version = "3.7.2"
 dependencies = [
+ "config-system-lint-arwaky",
  "criterion",
  "ctrlc",
  "dirs",
+ "doc-rules-lint-arwaky",
+ "external-lint-lint-arwaky",
  "filesystem-lint-arwaky",
+ "import-rules-lint-arwaky",
+ "naming-rules-lint-arwaky",
+ "orphan-rules-lint-arwaky",
+ "quality-rules-lint-arwaky",
  "regex",
+ "role-rules-lint-arwaky",
  "serde",
  "serde_json",
  "shared-auto-fix-lint-arwaky",
@@ -1072,6 +1080,7 @@ dependencies = [
  "shared-quality-rules-lint-arwaky",
  "shared-role-rules-lint-arwaky",
  "shared-structure-rules-lint-arwaky",
+ "structure-rules-lint-arwaky",
  "tempfile",
  "tracing",
 ]
