@@ -60,46 +60,46 @@ collapsible_if = "allow"
 too_many_arguments = "allow"
 
 [workspace.dependencies]
-# Workspace member crates (version required for crates.io publish)
-shared-auto-fix = { package = "shared-auto-fix-lint-arwaky", path = "crates/shared/src/auto_fix", version = "3.7.1" }
-shared-cli-commands = { package = "shared-cli-commands-lint-arwaky", path = "crates/shared/src/cli_commands", version = "3.7.1" }
-shared-common = { package = "shared-common-lint-arwaky", path = "crates/shared/src/common", version = "3.7.1" }
-shared-config-system = { package = "shared-config-system-lint-arwaky", path = "crates/shared/src/config_system", version = "3.7.1" }
-shared-doc-rules = { package = "shared-doc-rules-lint-arwaky", path = "crates/shared/src/doc_rules", version = "3.7.1" }
-shared-external-lint = { package = "shared-external-lint-lint-arwaky", path = "crates/shared/src/external_lint", version = "3.7.1" }
-shared-file-watch = { package = "shared-file-watch-lint-arwaky", path = "crates/shared/src/file_watch", version = "3.7.1" }
-shared-filesystem = { package = "shared-filesystem-lint-arwaky", path = "crates/shared/src/filesystem", version = "3.7.1" }
-shared-git-hooks = { package = "shared-git-hooks-lint-arwaky", path = "crates/shared/src/git_hooks", version = "3.7.1" }
-shared-import-rules = { package = "shared-import-rules-lint-arwaky", path = "crates/shared/src/import_rules", version = "3.7.1" }
-shared-maintenance = { package = "shared-maintenance-lint-arwaky", path = "crates/shared/src/maintenance", version = "3.7.1" }
-shared-naming-rules = { package = "shared-naming-rules-lint-arwaky", path = "crates/shared/src/naming_rules", version = "3.7.1" }
-shared-orphan-rules = { package = "shared-orphan-rules-lint-arwaky", path = "crates/shared/src/orphan_rules", version = "3.7.1" }
-shared-project-setup = { package = "shared-project-setup-lint-arwaky", path = "crates/shared/src/project_setup", version = "3.7.1" }
-shared-quality-rules = { package = "shared-quality-rules-lint-arwaky", path = "crates/shared/src/quality_rules", version = "3.7.1" }
-shared-report-formatter = { package = "shared-report-formatter-lint-arwaky", path = "crates/shared/src/report_formatter", version = "3.7.1" }
-shared-role-rules = { package = "shared-role-rules-lint-arwaky", path = "crates/shared/src/role_rules", version = "3.7.1" }
-shared-structure-rules = { package = "shared-structure-rules-lint-arwaky", path = "crates/shared/src/structure_rules", version = "3.7.1" }
-shared-tui = { package = "shared-tui-lint-arwaky", path = "crates/shared/src/tui", version = "3.7.1" }
-filesystem = { package = "filesystem-lint-arwaky", path = "crates/filesystem", version = "3.7.1" }
-config-system = { package = "config-system-lint-arwaky", path = "crates/config-system", version = "3.7.1" }
-naming-rules = { package = "naming-rules-lint-arwaky", path = "crates/naming-rules", version = "3.7.1" }
-import-rules = { package = "import-rules-lint-arwaky", path = "crates/import-rules", version = "3.7.1" }
-quality-rules = { package = "quality-rules-lint-arwaky", path = "crates/quality-rules", version = "3.7.1" }
-orphan-rules = { package = "orphan-rules-lint-arwaky", path = "crates/orphan-rules", version = "3.7.1" }
-doc-rules = { package = "doc-rules-lint-arwaky", path = "crates/doc-rules", version = "3.7.1" }
-structure-rules = { package = "structure-rules-lint-arwaky", path = "crates/structure-rules", version = "3.7.1" }
-role-rules = { package = "role-rules-lint-arwaky", path = "crates/role-rules", version = "3.7.1" }
-external-lint = { package = "external-lint-lint-arwaky", path = "crates/external-lint", version = "3.7.1" }
-auto-fix = { package = "auto-fix-lint-arwaky", path = "crates/auto-fix", version = "3.7.1" }
-git-hooks = { package = "git-hooks-lint-arwaky", path = "crates/git-hooks", version = "3.7.1" }
-file-watch = { package = "file-watch-lint-arwaky", path = "crates/file-watch", version = "3.7.1" }
-project-setup = { package = "project-setup-lint-arwaky", path = "crates/project-setup", version = "3.7.1" }
-maintenance = { package = "maintenance-lint-arwaky", path = "crates/maintenance", version = "3.7.1" }
-dispatcher = { package = "dispatcher-lint-arwaky", path = "crates/dispatcher", version = "3.7.1" }
-report-formatter = { package = "report-formatter-lint-arwaky", path = "crates/report-formatter", version = "3.7.1" }
-cli-commands = { path = "crates/cli-commands", version = "3.7.1" }
-mcp-server = { package = "mcp-server-lint-arwaky", path = "crates/mcp-server", version = "3.7.1" }
-tui = { package = "tui-lint-arwaky", path = "crates/tui", version = "3.7.1" }
+# Workspace member crates (path deps; each crate publishes at its own version)
+shared-auto-fix = { package = "shared-auto-fix-lint-arwaky", path = "crates/shared/src/auto_fix" }
+shared-cli-commands = { package = "shared-cli-commands-lint-arwaky", path = "crates/shared/src/cli_commands" }
+shared-common = { package = "shared-common-lint-arwaky", path = "crates/shared/src/common" }
+shared-config-system = { package = "shared-config-system-lint-arwaky", path = "crates/shared/src/config_system" }
+shared-doc-rules = { package = "shared-doc-rules-lint-arwaky", path = "crates/shared/src/doc_rules" }
+shared-external-lint = { package = "shared-external-lint-lint-arwaky", path = "crates/shared/src/external_lint" }
+shared-file-watch = { package = "shared-file-watch-lint-arwaky", path = "crates/shared/src/file_watch" }
+shared-filesystem = { package = "shared-filesystem-lint-arwaky", path = "crates/shared/src/filesystem" }
+shared-git-hooks = { package = "shared-git-hooks-lint-arwaky", path = "crates/shared/src/git_hooks" }
+shared-import-rules = { package = "shared-import-rules-lint-arwaky", path = "crates/shared/src/import_rules" }
+shared-maintenance = { package = "shared-maintenance-lint-arwaky", path = "crates/shared/src/maintenance" }
+shared-naming-rules = { package = "shared-naming-rules-lint-arwaky", path = "crates/shared/src/naming_rules" }
+shared-orphan-rules = { package = "shared-orphan-rules-lint-arwaky", path = "crates/shared/src/orphan_rules" }
+shared-project-setup = { package = "shared-project-setup-lint-arwaky", path = "crates/shared/src/project_setup" }
+shared-quality-rules = { package = "shared-quality-rules-lint-arwaky", path = "crates/shared/src/quality_rules" }
+shared-report-formatter = { package = "shared-report-formatter-lint-arwaky", path = "crates/shared/src/report_formatter" }
+shared-role-rules = { package = "shared-role-rules-lint-arwaky", path = "crates/shared/src/role_rules" }
+shared-structure-rules = { package = "shared-structure-rules-lint-arwaky", path = "crates/shared/src/structure_rules" }
+shared-tui = { package = "shared-tui-lint-arwaky", path = "crates/shared/src/tui" }
+filesystem = { package = "filesystem-lint-arwaky", path = "crates/filesystem" }
+config-system = { package = "config-system-lint-arwaky", path = "crates/config-system" }
+naming-rules = { package = "naming-rules-lint-arwaky", path = "crates/naming-rules" }
+import-rules = { package = "import-rules-lint-arwaky", path = "crates/import-rules" }
+quality-rules = { package = "quality-rules-lint-arwaky", path = "crates/quality-rules" }
+orphan-rules = { package = "orphan-rules-lint-arwaky", path = "crates/orphan-rules" }
+doc-rules = { package = "doc-rules-lint-arwaky", path = "crates/doc-rules" }
+structure-rules = { package = "structure-rules-lint-arwaky", path = "crates/structure-rules" }
+role-rules = { package = "role-rules-lint-arwaky", path = "crates/role-rules" }
+external-lint = { package = "external-lint-lint-arwaky", path = "crates/external-lint" }
+auto-fix = { package = "auto-fix-lint-arwaky", path = "crates/auto-fix" }
+git-hooks = { package = "git-hooks-lint-arwaky", path = "crates/git-hooks" }
+file-watch = { package = "file-watch-lint-arwaky", path = "crates/file-watch" }
+project-setup = { package = "project-setup-lint-arwaky", path = "crates/project-setup" }
+maintenance = { package = "maintenance-lint-arwaky", path = "crates/maintenance" }
+dispatcher = { package = "dispatcher-lint-arwaky", path = "crates/dispatcher" }
+report-formatter = { package = "report-formatter-lint-arwaky", path = "crates/report-formatter" }
+cli-commands = { path = "crates/cli-commands" }
+mcp-server = { package = "mcp-server-lint-arwaky", path = "crates/mcp-server" }
+tui = { package = "tui-lint-arwaky", path = "crates/tui" }
 
 # External dependencies (pinned versions - all crates inherit from here)
 serde = { version = "1.0.229", features = ["derive"] }

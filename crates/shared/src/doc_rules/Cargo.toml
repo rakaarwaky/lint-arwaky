@@ -1,6 +1,6 @@
 [package]
 name = "shared-doc-rules-lint-arwaky"
-version = "3.7.1"
+version = "0.1.0"
 edition = "2024"
 description = "AES doc rules foundation: taxonomy (`_vo`, `_entity`, `_event`, `_error`, `_constant`), contract (`_port`, `_protocol`, `_aggregate`), and utility types shared across lint-arwaky. Split out of `shared-lint-arwaky`."
 license = "MIT"
