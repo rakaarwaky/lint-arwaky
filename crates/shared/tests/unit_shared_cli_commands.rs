@@ -254,8 +254,9 @@ fn pipeline_diagnostic_new() {
 // ── PARSE_WARN dedup invariant (issue #542) ───────────────
 
 /// A parse failure recorded as both a `PARSE_`-prefixed `LintResult` in
-/// `results` and a parser `PipelineDiagnostic` in `diagnostics` must
-/// count once, not twice.
+/// `results` and a parser `PipelineDiagnostic` for the same file in
+/// `diagnostics` must count once, not twice. Parser diagnostics for other
+/// files survive.
 #[test]
 fn scan_report_suppresses_parser_diagnostic_when_parse_result_exists() {
     use shared_common::LintResult;
@@ -266,7 +267,7 @@ fn scan_report_suppresses_parser_diagnostic_when_parse_result_exists() {
         Severity::MEDIUM,
         "File skipped: parse failure — syntax error",
     );
-    let double_recorded = vec![
+    let results = vec![
         LintResult::new_arch(
             "src/surface.rs",
             1,
@@ -276,28 +277,50 @@ fn scan_report_suppresses_parser_diagnostic_when_parse_result_exists() {
         ),
         parse_result,
     ];
-    let parse_diagnostic = PipelineDiagnostic::new(
+    let dup_diagnostic = PipelineDiagnostic::new(
         "parser".to_string(),
         "File skipped: parse failure — syntax error".to_string(),
         DiagnosticSeverity::Warning,
-    );
+    )
+    .with_file("src/bad.rs");
+    let other_file_diagnostic = PipelineDiagnostic::new(
+        "parser".to_string(),
+        "File skipped: parse failure — unexpected token".to_string(),
+        DiagnosticSeverity::Warning,
+    )
+    .with_file("src/worse.rs");
     let other_diagnostic = PipelineDiagnostic::new(
         "config".to_string(),
         "no config found".to_string(),
         DiagnosticSeverity::Info,
     );
 
-    let report = ScanReport::new(double_recorded, vec![parse_diagnostic, other_diagnostic]);
+    let report = ScanReport::new(
+        results,
+        vec![dup_diagnostic, other_file_diagnostic, other_diagnostic],
+    );
 
-    // The parser diagnostic is suppressed; the unrelated one survives.
-    assert_eq!(report.diagnostics.len(), 1);
-    assert!(report.diagnostics.iter().all(|d| d.source != "parser"));
+    // Only the same-file duplicate is dropped; other-file and non-parser
+    // diagnostics survive.
+    assert_eq!(report.diagnostics.len(), 2);
+    assert!(
+        !report
+            .diagnostics
+            .iter()
+            .any(|d| d.source == "parser" && d.file.as_deref() == Some("src/bad.rs"))
+    );
+    assert!(
+        report
+            .diagnostics
+            .iter()
+            .any(|d| d.file.as_deref() == Some("src/worse.rs"))
+    );
     // Both results (incl. the PARSE_ one) still present — the count
     // reflects each finding once.
     assert_eq!(report.results.len(), 2);
     assert_eq!(report.violation_count(), 2);
 
-    // No PARSE_ result: the parser diagnostic is kept (legacy path intact).
+    // No PARSE_ result: parser diagnostics are kept (legacy path intact).
     let no_parse = vec![LintResult::new_arch(
         "src/surface.rs",
         1,
@@ -307,11 +330,14 @@ fn scan_report_suppresses_parser_diagnostic_when_parse_result_exists() {
     )];
     let report2 = ScanReport::new(
         no_parse,
-        vec![PipelineDiagnostic::new(
-            "parser".to_string(),
-            "File skipped: parse failure — syntax error".to_string(),
-            DiagnosticSeverity::Warning,
-        )],
+        vec![
+            PipelineDiagnostic::new(
+                "parser".to_string(),
+                "File skipped: parse failure — syntax error".to_string(),
+                DiagnosticSeverity::Warning,
+            )
+            .with_file("src/bad.rs"),
+        ],
     );
     assert_eq!(report2.diagnostics.len(), 1);
 }
