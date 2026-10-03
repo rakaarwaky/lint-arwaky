@@ -9,7 +9,6 @@ use std::sync::Arc;
 use shared_common::FilePath;
 use shared_filesystem::FilesystemRequest;
 use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared_role_rules::IRoleRunnerAggregate;
 use shared_role_rules::taxonomy_role_rules_request::RoleRequest;
 
@@ -54,14 +53,16 @@ pub fn collect_role(
     path: Option<FilePath>,
     _role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
     filter: Option<String>,
-    _fs_agg: Arc<dyn IFilesystemAggregate>,
-    _filesystem_io: Arc<dyn IFileSystemIOProtocol>,
+    fs_agg: Arc<dyn IFilesystemAggregate>,
 ) -> Result<Vec<ViolationItem>, String> {
     let root = match &path {
         Some(p) => p.value().to_string(),
         None => ".".to_string(),
     };
-    if !_filesystem_io.path_exists(std::path::Path::new(&root)) {
+    if !fs_agg
+        .execute(FilesystemRequest::path_exists(std::path::Path::new(&root)))
+        .into_path_exists()
+    {
         return Err(format!("Error: path '{}' does not exist", root));
     }
 

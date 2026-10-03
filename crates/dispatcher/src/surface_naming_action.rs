@@ -11,7 +11,6 @@ use std::sync::Arc;
 use shared_common::FilePath;
 use shared_filesystem::FilesystemRequest;
 use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared_naming_rules::INamingRunnerAggregate;
 use shared_naming_rules::taxonomy_naming_rules_request::NamingRequest;
 use shared_naming_rules::taxonomy_naming_rules_response::NamingResponse;
@@ -25,7 +24,6 @@ pub fn collect_naming(
     naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
     filter: Option<String>,
     fs_agg: Arc<dyn IFilesystemAggregate>,
-    filesystem_io: Arc<dyn IFileSystemIOProtocol>,
     ignored_paths: &[String],
 ) -> Result<Vec<ViolationItem>, String> {
     // 1. Resolve target path (default: current directory)
@@ -35,7 +33,10 @@ pub fn collect_naming(
     };
 
     // 2. Validate path exists (delegated to filesystem aggregate)
-    if !filesystem_io.path_exists(std::path::Path::new(&root)) {
+    if !fs_agg
+        .execute(FilesystemRequest::path_exists(std::path::Path::new(&root)))
+        .into_path_exists()
+    {
         return Err(format!("Error: path '{}' does not exist", root));
     }
     let _root_fp = FilePath::new(root.clone()).map_err(|_| "invalid path".to_string())?;

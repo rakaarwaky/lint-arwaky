@@ -16,7 +16,6 @@ fn main() -> anyhow::Result<()> {
     > = Arc::new(|| {
         let c = filesystem::root_filesystem_container::FilesystemContainer::new();
         dispatcher::surface_check_action::FilesystemSeam {
-            io: c.io(),
             workspace: c.workspace(),
             parser: c.parser(),
             aggregate: c.orchestrator(),
@@ -34,7 +33,6 @@ fn main() -> anyhow::Result<()> {
         tui::surface_lint_action::SurfaceLintExecutor::new(
             deps.code_analysis_linter,
             deps.filesystem.clone(),
-            deps.filesystem_io.clone(),
             deps.filesystem_workspace.clone(),
             deps.filesystem_tool_resolution.clone(),
             deps.fs_seam.clone(),
@@ -55,5 +53,5 @@ fn main() -> anyhow::Result<()> {
         .with_doc_orchestrator(deps.doc_orchestrator),
     );
 
-    tui::root_tui_container::TuiContainer::run(lint_executor, deps.filesystem_io)
+    tui::root_tui_container::TuiContainer::run(lint_executor, deps.filesystem)
 }

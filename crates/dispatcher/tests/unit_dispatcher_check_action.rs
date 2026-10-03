@@ -21,7 +21,6 @@ use mock_filesystem::MockFilesystem;
 fn mock_seam() -> Arc<dispatcher_lint_arwaky::surface_check_action::FilesystemSeam> {
     Arc::new(
         dispatcher_lint_arwaky::surface_check_action::FilesystemSeam {
-            io: Arc::new(MockFilesystem::new()),
             workspace: Arc::new(MockFilesystem::new()),
             parser: Arc::new(MockFilesystem::new()),
             aggregate: Arc::new(MockFilesystem::new()),

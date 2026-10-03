@@ -6,7 +6,8 @@ use shared_tui::outcome_label;
 use crate::surface_tui_layout::HitTarget;
 use crate::taxonomy_tui_event::TuiEvent;
 use crate::taxonomy_tui_vo::{AppState, BusySlot, PanelFocus, PreviewMode};
-use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared_filesystem::taxonomy_filesystem_request::FilesystemRequest;
 use std::sync::Arc;
 
 // PURPOSE: Surface-layer action handler — the central state machine for TUI events.
@@ -23,7 +24,7 @@ use shared_tui::utility_file_system;
 /// Filesystem operations use direct utility calls instead of protocol ports.
 pub struct SurfaceActionHandler {
     lint_port: Arc<SurfaceLintExecutor>,
-    io: Arc<dyn IFileSystemIOProtocol>,
+    io: Arc<dyn IFilesystemAggregate>,
 }
 
 // A small, independently testable worker primitive shared by all background
@@ -210,7 +211,7 @@ impl SurfaceActionHandler {
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
 impl SurfaceActionHandler {
-    pub fn new(lint_port: Arc<SurfaceLintExecutor>, io: Arc<dyn IFileSystemIOProtocol>) -> Self {
+    pub fn new(lint_port: Arc<SurfaceLintExecutor>, io: Arc<dyn IFilesystemAggregate>) -> Self {
         Self { lint_port, io }
     }
 
@@ -595,11 +596,12 @@ impl SurfaceActionHandler {
         let dir_path = std::path::Path::new(fp.value());
         let paths = self
             .io
-            .read_dir_entries_as_pathbuf(dir_path)
-            .unwrap_or_default();
+            .execute(FilesystemRequest::read_dir_entries(dir_path))
+            .into_paths();
         state.navigation.entries = paths
             .into_iter()
-            .filter_map(|entry_path| {
+            .filter_map(|entry| {
+                let entry_path = std::path::PathBuf::from(entry);
                 let name = entry_path.file_name()?.to_str()?;
                 if name.starts_with('.') {
                     return None;
@@ -633,20 +635,24 @@ impl SurfaceActionHandler {
         let fp = FilePath::new(path.to_string()).unwrap_or_default();
         let file_path = std::path::Path::new(fp.value());
         let max_lines = 100;
-        let display = match self.io.read_to_string(file_path) {
-            Ok(content) => {
-                let lines: Vec<&str> = content.value.lines().take(max_lines).collect();
-                let mut output = String::new();
-                for (i, line) in lines.iter().enumerate() {
-                    output.push_str(&format!("{:>4} │ {}\n", i + 1, line));
-                }
-                let total = content.value.lines().count();
-                if total > max_lines {
-                    output.push_str(&format!("\n... ({} more lines)", total - max_lines));
-                }
-                shared_common::DisplayContent::new(output)
+        let content = self
+            .io
+            .execute(FilesystemRequest::read_file_result(file_path))
+            .into_content()
+            .value;
+        let display = if content.is_empty() {
+            shared_common::DisplayContent::new(format!("Cannot read file: {path}"))
+        } else {
+            let lines: Vec<&str> = content.lines().take(max_lines).collect();
+            let mut output = String::new();
+            for (i, line) in lines.iter().enumerate() {
+                output.push_str(&format!("{:>4} │ {}\n", i + 1, line));
             }
-            Err(e) => shared_common::DisplayContent::new(format!("Cannot read file: {e}")),
+            let total = content.lines().count();
+            if total > max_lines {
+                output.push_str(&format!("\n... ({} more lines)", total - max_lines));
+            }
+            shared_common::DisplayContent::new(output)
         };
         state.preview.text = display.to_string();
         state.preview.scroll = 0;
@@ -729,9 +735,14 @@ impl SurfaceActionHandler {
         }
 
         let path = std::path::Path::new("lint-results.txt");
-        match self.io.write_string(path, text) {
-            Ok(()) => state.set_status("Saved to lint-results.txt"),
-            Err(e) => state.set_status(format!("Save failed: {e}")),
+        let ok = self
+            .io
+            .execute(FilesystemRequest::write_file(path, text))
+            .into_op_ok();
+        if ok {
+            state.set_status("Saved to lint-results.txt");
+        } else {
+            state.set_status("Save failed".to_string());
         }
     }
 

@@ -7,7 +7,6 @@ fn dispatcher_check_action_on_clean_project() {
         let c = filesystem::root_filesystem_container::FilesystemContainer::new();
         std::sync::Arc::new(
             dispatcher_lint_arwaky::surface_check_action::FilesystemSeam {
-                io: c.io(),
                 workspace: c.workspace(),
                 parser: c.parser(),
                 aggregate: c.orchestrator(),

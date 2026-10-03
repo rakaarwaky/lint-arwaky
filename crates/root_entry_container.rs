@@ -55,7 +55,6 @@ impl CommonDeps {
         let filesystem_tool_resolution = fs_container.tool_resolution();
         let filesystem_parser = fs_container.parser();
         let fs_seam = Arc::new(dispatcher::surface_check_action::FilesystemSeam {
-            io: filesystem_io.clone(),
             workspace: filesystem_workspace.clone(),
             parser: filesystem_parser.clone(),
             aggregate: filesystem.clone(),
@@ -153,7 +152,6 @@ impl CommonDeps {
         > = Arc::new(|| {
             let c = filesystem::root_filesystem_container::FilesystemContainer::new();
             dispatcher::surface_check_action::FilesystemSeam {
-                io: c.io(),
                 workspace: c.workspace(),
                 parser: c.parser(),
                 aggregate: c.orchestrator(),

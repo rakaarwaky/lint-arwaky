@@ -7,7 +7,6 @@ use tracing::{error, info};
 use shared_common::{FilePath, Threshold};
 use shared_config_system::IConfigOrchestratorAggregate;
 use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared_import_rules::IImportRunnerAggregate;
 use shared_naming_rules::INamingRunnerAggregate;
 use shared_orphan_rules::IOrphanAggregate;
@@ -21,7 +20,6 @@ pub struct CiCommandParams {
     pub config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
     pub orphan_orchestrator: Arc<dyn IOrphanAggregate>,
     pub filesystem: Arc<dyn IFilesystemAggregate>,
-    pub filesystem_io: Arc<dyn IFileSystemIOProtocol>,
     pub path: Option<FilePath>,
     pub threshold: Threshold,
 }
@@ -35,7 +33,6 @@ pub fn handle_ci(params: CiCommandParams) -> ExitCode {
             config_orchestrator: params.config_orchestrator,
             orphan_orchestrator: params.orphan_orchestrator,
             filesystem: params.filesystem,
-            filesystem_io: params.filesystem_io,
         },
         params.path,
         params.threshold,

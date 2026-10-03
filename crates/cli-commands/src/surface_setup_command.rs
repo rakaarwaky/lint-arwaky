@@ -1,13 +1,13 @@
 // PURPOSE: Setup — CLI thin wrapper
 // Calls dispatcher for setup business logic, only adds CLI output.
 use shared_common::ExitCode;
-use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared_project_setup::ISetupAggregate;
 use std::sync::Arc;
 
 pub fn handle_init(
     setup_orchestrator: Arc<dyn ISetupAggregate>,
-    filesystem: Arc<dyn IFileSystemIOProtocol>,
+    filesystem: Arc<dyn IFilesystemAggregate>,
 ) -> ExitCode {
     let items = dispatcher::surface_setup_action::collect_init(setup_orchestrator, filesystem);
     let mut all_ok = true;

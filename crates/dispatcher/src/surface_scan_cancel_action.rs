@@ -21,10 +21,10 @@ use shared_role_rules::taxonomy_role_rules_request::RoleRequest;
 
 use crate::surface_check_action::{
     ScanAggregates, ScanOptions, apply_filter, build_entries, build_import_map,
-    build_index_ignored, canonicalize_scan_root, discover_lintable_files,
-    discover_test_suite_files, doc_violations_in_scope, external_violation_in_scope,
-    run_all_linters_json, run_single_file_scan, structure_violations_in_scope,
-    validate_member_path, violation_in_scan_scope,
+    build_index_ignored, canonicalize_via, discover_lintable_files, discover_test_suite_files,
+    doc_violations_in_scope, external_violation_in_scope, run_all_linters_json,
+    run_single_file_scan, structure_violations_in_scope, validate_member_path,
+    violation_in_scan_scope,
 };
 
 /// Outcome of a cancellable scan. `stopped_early` is set when the dispatcher
@@ -58,15 +58,19 @@ where
         Some(p) => p.value().to_string(),
         None => ".".to_string(),
     };
-    if !opts.filesystem.io.path_exists(std::path::Path::new(&root)) {
+    if !opts
+        .filesystem
+        .aggregate
+        .execute(FilesystemRequest::path_exists(std::path::Path::new(&root)))
+        .into_path_exists()
+    {
         return Err(format!("Error: path '{root}' does not exist"));
     }
 
-    let root = if opts.scan_aggregates.is_some() {
-        canonicalize_scan_root(&opts.filesystem.io, &root)
-    } else {
-        root
-    };
+    let root = canonicalize_via(&opts.filesystem.aggregate, std::path::Path::new(&root))
+        .unwrap_or_else(|| std::path::PathBuf::from(&root))
+        .to_string_lossy()
+        .to_string();
 
     let target_path = match opts.member.as_deref() {
         Some(m) => validate_member_path(&opts, &root, m)?,
@@ -105,10 +109,8 @@ fn run_all_linters_in_process_cancel(
     let seam = agg.fs_seam.clone();
 
     let target = std::path::Path::new(path);
-    let target_canon = seam
-        .io
-        .canonicalize(target)
-        .unwrap_or_else(|_| std::path::PathBuf::from(path));
+    let target_canon =
+        canonicalize_via(&seam.aggregate, target).unwrap_or_else(|| std::path::PathBuf::from(path));
     let target_canon_str = target_canon.to_string_lossy().to_string();
 
     let scan_root = target_canon.clone();
@@ -277,7 +279,7 @@ fn run_all_linters_in_process_cancel(
             .any(|f| f.ends_with(".md") || f.ends_with(".markdown"));
         let config_entries = crate::surface_external_action::load_config_entries(
             std::path::Path::new(&target_canon_str),
-            seam.io.as_ref(),
+            seam.aggregate.as_ref(),
         );
         let context = shared_external_lint::taxonomy_external_lint_vo::ExternalLintContext {
             has_rust,
@@ -287,7 +289,7 @@ fn run_all_linters_in_process_cancel(
             ignored_paths: ignored.clone(),
             ignored_rules: crate::surface_external_action::load_ignored_rules(
                 std::path::Path::new(&target_canon_str),
-                seam.io.as_ref(),
+                seam.aggregate.as_ref(),
             ),
             config_entries,
         };

@@ -352,6 +352,20 @@ impl IFilesystemAggregate for MockFilesystem {
                     languages: ProjectLanguagesVO::default(),
                 }
             }
+            FilesystemRequest::ReadFileResult { .. } => FilesystemResponse::Content {
+                value: ContentString::default(),
+            },
+            FilesystemRequest::PathExists { .. } => {
+                FilesystemResponse::PathExists { exists: false }
+            }
+            FilesystemRequest::WriteFile { .. }
+            | FilesystemRequest::CreateDirAll { .. }
+            | FilesystemRequest::CopyFile { .. }
+            | FilesystemRequest::RemoveDirAll { .. }
+            | FilesystemRequest::RemoveFile { .. }
+            | FilesystemRequest::SetPermissions { .. }
+            | FilesystemRequest::Canonicalize { .. }
+            | FilesystemRequest::ReadDirEntries { .. } => FilesystemResponse::OpOk { ok: false },
         }
     }
 }

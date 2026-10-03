@@ -186,7 +186,6 @@ pub fn handle_quality(
         code_analysis_linter,
         filter,
         filesystem.clone(),
-        filesystem_seam.io.clone(),
         &ignored_paths,
     ) {
         Ok(violations) => {
@@ -213,7 +212,6 @@ pub fn handle_import(params: ImportCommandParams) -> ExitCode {
         params.import_orchestrator,
         params.filter,
         params.filesystem.clone(),
-        params.filesystem_seam.io.clone(),
         &params.ignored_paths,
     ) {
         Ok(violations) => {
@@ -240,7 +238,6 @@ pub fn handle_naming(params: NamingCommandParams) -> ExitCode {
         params.naming_orchestrator,
         params.filter,
         params.filesystem.clone(),
-        params.filesystem_seam.io.clone(),
         &params.ignored_paths,
     ) {
         Ok(violations) => {
@@ -347,7 +344,6 @@ pub fn handle_orphan(params: OrphanCommandParams) -> ExitCode {
             params.orphan_orchestrator,
             params.config_orchestrator,
             params.filesystem.clone(),
-            params.filesystem_seam.io.clone(),
             params.filesystem_seam.workspace.clone(),
             params.fs_factory,
             params.orphan_factory,
@@ -377,7 +373,6 @@ pub fn handle_external(params: ExternalCommandParams) -> ExitCode {
         params.path.clone(),
         params.external_lint,
         params.filesystem,
-        params.filesystem_seam.io.clone(),
         params.config_parser,
         params.filter,
         &params.ignored_paths,

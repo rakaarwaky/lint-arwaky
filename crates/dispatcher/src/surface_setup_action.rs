@@ -1,7 +1,8 @@
 // PURPOSE: SetupCommandsSurface — project setup business logic, no formatting.
 // handle_install delegates to ISetupAggregate.
 // No direct std::process::Command calls.
-use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared_filesystem::taxonomy_filesystem_request::FilesystemRequest;
 use shared_project_setup::SetupRequest;
 use shared_project_setup::{ISetupAggregate, ProjectLanguagesVO};
 use std::sync::Arc;
@@ -30,7 +31,7 @@ pub struct McpConfigReport {
 
 pub fn collect_init(
     setup_orchestrator: Arc<dyn ISetupAggregate>,
-    filesystem: Arc<dyn IFileSystemIOProtocol>,
+    filesystem: Arc<dyn IFilesystemAggregate>,
 ) -> Vec<SetupInitItem> {
     let mut items: Vec<SetupInitItem> = Vec::new();
 
@@ -89,22 +90,27 @@ pub fn collect_init(
                 });
                 continue;
             }
-            match filesystem.read_to_string(&xdg_src) {
-                Ok(content) => match setup_orchestrator
-                    .execute(SetupRequest::write_config_file(doc, &content.value))
-                    .into_write_result()
-                {
-                    Ok(_) => items.push(SetupInitItem {
-                        message: format!("  {doc} — copied/overwritten from XDG config"),
-                        ok: true,
-                    }),
-                    Err(e) => items.push(SetupInitItem {
-                        message: format!("  {doc} — error: {e}"),
-                        ok: false,
-                    }),
-                },
+            let xdg_content = filesystem
+                .execute(FilesystemRequest::read_file_result(&xdg_src))
+                .into_content()
+                .value;
+            if xdg_content.is_empty() {
+                items.push(SetupInitItem {
+                    message: format!("  {doc} — could not be read from XDG config"),
+                    ok: false,
+                });
+                continue;
+            }
+            match setup_orchestrator
+                .execute(SetupRequest::write_config_file(doc, &xdg_content))
+                .into_write_result()
+            {
+                Ok(_) => items.push(SetupInitItem {
+                    message: format!("  {doc} — copied/overwritten from XDG config"),
+                    ok: true,
+                }),
                 Err(e) => items.push(SetupInitItem {
-                    message: format!("  {doc} — read error: {e}"),
+                    message: format!("  {doc} — error: {e}"),
                     ok: false,
                 }),
             }
@@ -155,27 +161,29 @@ pub fn collect_init(
         if is_skill_relevant_for_languages(skill.language, &languages) {
             let target_file = skills_root.join(skill.relative_path);
             if let Some(parent) = target_file.parent() {
-                if let Err(e) = filesystem.create_dir_all(parent) {
+                let dir_ok = filesystem
+                    .execute(FilesystemRequest::create_dir_all(parent))
+                    .into_op_ok();
+                if !dir_ok {
                     items.push(SetupInitItem {
-                        message: format!(
-                            "  .agents/skills/ — directory error for {}: {e}",
-                            skill.name
-                        ),
+                        message: format!("  .agents/skills/ — directory error for {}", skill.name),
                         ok: false,
                     });
                     install_failed = true;
                     continue;
                 }
             }
-            match filesystem.write_string(&target_file, skill.content) {
-                Ok(_) => installed_count += 1,
-                Err(e) => {
-                    items.push(SetupInitItem {
-                        message: format!("  .agents/skills/ — write error for {}: {e}", skill.name),
-                        ok: false,
-                    });
-                    install_failed = true;
-                }
+            let write_ok = filesystem
+                .execute(FilesystemRequest::write_file(&target_file, skill.content))
+                .into_op_ok();
+            if write_ok {
+                installed_count += 1;
+            } else {
+                items.push(SetupInitItem {
+                    message: format!("  .agents/skills/ — write error for {}", skill.name),
+                    ok: false,
+                });
+                install_failed = true;
             }
         }
     }
@@ -228,20 +236,36 @@ pub fn is_skill_relevant_for_languages(
 fn copy_dir_all(
     src: &std::path::Path,
     dst: &std::path::Path,
-    fs: &dyn IFileSystemIOProtocol,
-) -> std::io::Result<usize> {
-    fs.create_dir_all(dst)?;
+    fs: &dyn IFilesystemAggregate,
+) -> Result<usize, String> {
+    if !fs
+        .execute(FilesystemRequest::create_dir_all(dst))
+        .into_op_ok()
+    {
+        return Err(format!("failed to create dir: {}", dst.display()));
+    }
+    let entries: Vec<std::path::PathBuf> = fs
+        .execute(FilesystemRequest::read_dir_entries(src))
+        .into_paths()
+        .into_iter()
+        .map(std::path::PathBuf::from)
+        .collect();
     let mut count = 0;
-    for entry_path in fs.read_dir_entries_as_pathbuf(src)? {
-        let file_name = entry_path.file_name().unwrap_or_default();
+    for entry in entries {
+        let file_name = entry.file_name().unwrap_or_default();
         if file_name == "skills" {
             continue;
         }
         let dst_path = dst.join(file_name);
-        if entry_path.is_dir() {
-            count += copy_dir_all(&entry_path, &dst_path, fs)?;
+        if entry.is_dir() {
+            count += copy_dir_all(&entry, &dst_path, fs)?;
         } else {
-            fs.copy_file(&entry_path, &dst_path)?;
+            if !fs
+                .execute(FilesystemRequest::copy_file(&entry, &dst_path))
+                .into_op_ok()
+            {
+                return Err(format!("failed to copy: {}", entry.display()));
+            }
             count += 1;
         }
     }

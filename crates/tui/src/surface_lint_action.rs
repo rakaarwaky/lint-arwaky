@@ -50,7 +50,6 @@ pub struct SurfaceLintExecutor {
     structure_orchestrator: Option<Arc<dyn shared_structure_rules::IStructureAggregate>>,
     doc_orchestrator: Option<Arc<dyn shared_doc_rules::IDocRunnerAggregate>>,
     filesystem: Arc<dyn IFilesystemAggregate>,
-    filesystem_io: Arc<dyn shared_filesystem::IFileSystemIOProtocol>,
     filesystem_workspace: Arc<dyn shared_filesystem::IWorkspaceProtocol>,
     filesystem_tool_resolution: Arc<dyn shared_filesystem::IToolResolutionProtocol>,
     fs_seam: Arc<dispatcher::surface_check_action::FilesystemSeam>,
@@ -401,7 +400,7 @@ impl SurfaceLintExecutor {
                 );
             }
         };
-        let items = collect_init(setup, self.filesystem_io.clone());
+        let items = collect_init(setup, self.filesystem.clone());
         let mut output = String::from("Config initialization.\n");
         let mut has_errors = false;
         for item in &items {
@@ -556,7 +555,6 @@ impl SurfaceLintExecutor {
     pub fn new(
         code_analysis: Arc<dyn ICodeAnalysisAggregate>,
         filesystem: Arc<dyn IFilesystemAggregate>,
-        filesystem_io: Arc<dyn shared_filesystem::IFileSystemIOProtocol>,
         filesystem_workspace: Arc<dyn shared_filesystem::IWorkspaceProtocol>,
         filesystem_tool_resolution: Arc<dyn shared_filesystem::IToolResolutionProtocol>,
         fs_seam: Arc<dispatcher::surface_check_action::FilesystemSeam>,
@@ -566,7 +564,6 @@ impl SurfaceLintExecutor {
         Self {
             code_analysis,
             filesystem,
-            filesystem_io,
             filesystem_workspace,
             filesystem_tool_resolution,
             fs_seam,
@@ -688,7 +685,6 @@ impl SurfaceLintExecutor {
             config_orchestrator: self.config_orchestrator.clone()?,
             orphan_orchestrator: self.orphan_aggregate.clone()?,
             filesystem: self.filesystem.clone(),
-            filesystem_io: self.filesystem_io.clone(),
         })
     }
 
@@ -697,7 +693,6 @@ impl SurfaceLintExecutor {
             self.orphan_aggregate.clone()?,
             self.config_orchestrator.clone()?,
             self.filesystem.clone(),
-            self.filesystem_io.clone(),
             self.filesystem_workspace.clone(),
             self.fs_factory.clone(),
             self.orphan_factory.clone(),
