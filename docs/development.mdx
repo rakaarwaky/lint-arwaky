@@ -1,0 +1,29 @@
+---
+title: Development
+description: Local preview with the Archbee CLI
+icon: code
+---
+
+## Install the CLI
+
+```bash
+npm install -g @archbee/cli
+```
+
+## Preview locally
+
+From the root of this repo:
+
+```bash
+archbee dev
+```
+
+The dev server hot-reloads as you edit `.mdx` files or `archbee.json`.
+
+## Validate before pushing
+
+```bash
+archbee validate
+```
+
+Checks that `archbee.json` is valid and that every referenced doc file exists.
