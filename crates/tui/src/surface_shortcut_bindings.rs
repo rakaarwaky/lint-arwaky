@@ -383,10 +383,14 @@ pub const SHORTCUTS: &[Shortcut] = &[
         normal_row: Some(1),
         result_row: Some(1),
     },
+    // Plain `x`, not a Ctrl-modified letter: Ctrl+S is XOFF and freezes the
+    // terminal (#363, reintroduced as a regression and closed again in #553).
+    // `x` was proposed for an action in #363 and never taken, so it is free
+    // here and needs no shift modifier on terminals that swallow Alt.
     Shortcut {
-        triggers: &[Trigger::Ctrl('s')],
+        triggers: &[Trigger::Plain('x')],
         action: ShortcutAction::ActionDependencies,
-        key_label: "^S",
+        key_label: "x",
         label: "deps",
         result_label: "deps",
         section: "Actions",
@@ -507,6 +511,22 @@ pub fn help_text() -> String {
 mod tests {
     use super::*;
 
+    /// Control codes a terminal driver may act on before the application ever
+    /// sees them. `s` (XOFF) is the freeze class that #363 closed and #553
+    /// caught being reintroduced under a different action; the rest kill the
+    /// process or the terminal outright. A binding on any of them is
+    /// unreachable at best and a hang or a lost session at worst.
+    ///
+    /// `q` (XON) is deliberately absent: it *resumes* output rather than
+    /// pausing it, so Quit keeping `Ctrl+Q` costs nothing and matches
+    /// `Ctrl+C`. `Ctrl+S` staying a no-op is the #553 requirement.
+    const RESERVED_CONTROL_CHARS: &[(char, &str)] = &[
+        ('s', "XOFF — pauses terminal output, looks like a hung TUI"),
+        ('c', "SIGINT"),
+        ('d', "EOF"),
+        ('z', "SIGTSTP (suspend)"),
+    ];
+
     #[test]
     fn every_displayed_binding_has_a_dispatch_entry() {
         for shortcut in SHORTCUTS {
@@ -517,5 +537,42 @@ mod tests {
                 })
             }));
         }
+    }
+
+    /// Regression test for #553: Ctrl+S must never reach a TuiEvent.
+    ///
+    /// Binding it froze the terminal via XOFF while looking like a hung TUI.
+    /// #363 closed that for one action; the key came back for another. Reading
+    /// the live table keeps the guard honest if bindings move again.
+    #[test]
+    fn no_binding_uses_a_reserved_control_char() {
+        for (ch, reason) in RESERVED_CONTROL_CHARS {
+            for shortcut in SHORTCUTS {
+                assert!(
+                    !shortcut.triggers.contains(&Trigger::Ctrl(*ch)),
+                    "Ctrl+{ch} ({reason}) is bound to {:?} as `{}` — terminal \
+                     drivers consume it before the TUI sees it",
+                    shortcut.action,
+                    shortcut.key_label,
+                );
+            }
+        }
+    }
+
+    /// Ctrl+S must be a no-op, not merely a differently-labelled binding.
+    #[test]
+    fn ctrl_s_resolves_to_no_action() {
+        let key = KeyEvent::new(KeyCode::Char('s'), KeyModifiers::CONTROL);
+        assert_eq!(action_for(&key), None);
+    }
+
+    /// `deps` stays reachable, now on the plain key `x` (#553).
+    #[test]
+    fn dependencies_is_reachable_on_a_plain_key() {
+        let key = KeyEvent::new(KeyCode::Char('x'), KeyModifiers::NONE);
+        assert_eq!(
+            action_for(&key).map(ShortcutAction::to_event),
+            Some(TuiEvent::ActionDependencies),
+        );
     }
 }
