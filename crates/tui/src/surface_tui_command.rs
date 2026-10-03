@@ -148,52 +148,31 @@ impl TuiCommandSurface {
                         return;
                     }
 
-                    let main_layout = Layout::default()
-                        .direction(Direction::Vertical)
-                        .constraints([
-                            Constraint::Length(1),
-                            Constraint::Min(10),
-                            Constraint::Length(3),
-                            Constraint::Length(1),
-                        ])
-                        .split(area);
+                    let layout =
+                        crate::surface_tui_layout::compute_panel_layout(area.width, area.height);
 
-                    render_header(state, frame, main_layout[0]);
+                    render_header(state, frame, layout.header);
 
-                    let panel_area = main_layout[1];
-                    if shared_tui::utility_tui_theme::is_full_three_column(panel_area.width) {
-                        let panel_layout = Layout::default()
-                            .direction(Direction::Horizontal)
-                            .constraints([
-                                Constraint::Percentage(
-                                    shared_tui::utility_tui_theme::PANEL_TREE_WIDTH_PCT,
-                                ),
-                                Constraint::Percentage(
-                                    shared_tui::utility_tui_theme::PANEL_FILE_LIST_WIDTH_PCT,
-                                ),
-                                Constraint::Percentage(
-                                    shared_tui::utility_tui_theme::PANEL_PREVIEW_WIDTH_PCT,
-                                ),
-                            ])
-                            .split(panel_area);
-                        views.tree.render(state, frame, panel_layout[0]);
-                        views.file_list.render(state, frame, panel_layout[1]);
-                        views.preview.render(state, frame, panel_layout[2]);
+                    if layout.three_column {
+                        views.tree.render(state, frame, layout.tree);
+                        views.file_list.render(state, frame, layout.file_list);
+                        views.preview.render(state, frame, layout.preview);
                     } else {
-                        // Narrow terminal: show only the active panel at full width.
-                        // Tab/BackTab cycles between tree, file-list, and preview
-                        // (handled by cycle_focus_forward / cycle_focus_backward).
+                        // Narrow terminal: only the active panel fills the band.
+                        // Tab/BackTab cycles between tree, file-list, preview.
                         match state.navigation.panel_focus {
-                            PanelFocus::Tree => views.tree.render(state, frame, panel_area),
+                            PanelFocus::Tree => views.tree.render(state, frame, layout.band()),
                             PanelFocus::FileList => {
-                                views.file_list.render(state, frame, panel_area)
+                                views.file_list.render(state, frame, layout.band())
                             }
-                            PanelFocus::Preview => views.preview.render(state, frame, panel_area),
+                            PanelFocus::Preview => {
+                                views.preview.render(state, frame, layout.band())
+                            }
                         }
                     }
 
-                    views.shortcuts.render(state, frame, main_layout[2]);
-                    views.status.render(state, frame, main_layout[3]);
+                    views.shortcuts.render(state, frame, layout.shortcuts);
+                    views.status.render(state, frame, layout.status);
 
                     // A pending confirm is a gate, not a status line (#554): overlay a
                     // modal over every panel so it cannot be missed while browsing.

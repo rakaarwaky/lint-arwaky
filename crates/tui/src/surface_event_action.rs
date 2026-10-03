@@ -1,5 +1,6 @@
 use crate::surface_lint_action::SurfaceLintExecutor;
 use crate::{ConfirmState, LintExecutionResult, ScanUpdate};
+use ratatui::layout::Rect;
 use shared_common::FilePath;
 use shared_tui::outcome_label;
 
@@ -734,59 +735,100 @@ impl SurfaceActionHandler {
         }
     }
 
-    /// Handle mouse clicks on the file list, shortcut, preview, and scrollbar areas.
+    /// Handle mouse clicks on the file list, tree, preview, and scrollbar areas.
+    ///
+    /// Hit-testing derives column boundaries from `compute_panel_layout` — the
+    /// same rects the renderer draws — so the two can't drift apart (issue #555).
     fn handle_mouse_click(&self, state: &mut AppState, col: u16, row: u16) {
         let h = state.terminal_height;
         let w = state.terminal_width;
         if h < 5 || w < 10 {
             return;
         }
-        let shortcuts_start = h - 4;
-        let file_list_start: u16 = 1;
-        let file_list_end = shortcuts_start - 1;
-        let preview_start = file_list_end;
-        let preview_end = shortcuts_start;
-        let scrollbar_col = w.saturating_sub(3);
 
-        if row >= shortcuts_start && row < h {
+        let layout = crate::surface_tui_layout::compute_panel_layout(w, h);
+
+        // Clicks in the shortcuts/status band or below the panels are ignored.
+        if row >= layout.shortcuts.y {
             return;
         }
 
-        // Click on scrollbar thumb area → jump to proportional position
-        if col >= scrollbar_col && row >= preview_start && row < preview_end {
-            self.jump_to_scroll_position(state, row - preview_start, preview_end - preview_start);
-            state.navigation.panel_focus = PanelFocus::Preview;
-            return;
-        }
-
-        if row >= file_list_start && row < file_list_end {
-            let panel_row = row - file_list_start;
-            let new_index = state.navigation.scroll_offset + panel_row as usize;
-            if new_index < state.navigation.entries.len() {
-                state.navigation.selected_index = new_index;
-                state.navigation.panel_focus = PanelFocus::FileList;
+        if layout.three_column {
+            // Three-column: column-aware hit-test against tree/file_list/preview rects.
+            let scrollbar_col = w.saturating_sub(3);
+            if Self::in_rect(layout.preview, col, row) && col >= scrollbar_col {
+                self.jump_to_scroll_position(
+                    state,
+                    row.saturating_sub(layout.preview.y),
+                    layout.preview.height,
+                );
+                state.navigation.panel_focus = PanelFocus::Preview;
+                return;
             }
-        } else if row >= preview_start && row < preview_end {
-            self.jump_to_scroll_position(state, row - preview_start, preview_end - preview_start);
-            state.navigation.panel_focus = PanelFocus::Preview;
+            if Self::in_rect(layout.file_list, col, row) {
+                let panel_row = row - layout.file_list.y;
+                let new_index = state.navigation.scroll_offset + panel_row as usize;
+                if new_index < state.navigation.entries.len() {
+                    state.navigation.selected_index = new_index;
+                }
+                state.navigation.panel_focus = PanelFocus::FileList;
+            } else if Self::in_rect(layout.tree, col, row) {
+                // Display-only panel: clicking just moves focus to the tree.
+                state.navigation.panel_focus = PanelFocus::Tree;
+            } else if Self::in_rect(layout.preview, col, row) {
+                self.jump_to_scroll_position(
+                    state,
+                    row.saturating_sub(layout.preview.y),
+                    layout.preview.height,
+                );
+                state.navigation.panel_focus = PanelFocus::Preview;
+            }
+        } else {
+            // Narrow mode: only the active panel is visible, spanning the full band.
+            let band = layout.band();
+            if !Self::in_rect(band, col, row) {
+                return;
+            }
+            match state.navigation.panel_focus {
+                PanelFocus::FileList => {
+                    let panel_row = row.saturating_sub(band.y);
+                    let new_index = state.navigation.scroll_offset + panel_row as usize;
+                    if new_index < state.navigation.entries.len() {
+                        state.navigation.selected_index = new_index;
+                    }
+                }
+                PanelFocus::Preview => {
+                    self.jump_to_scroll_position(state, row.saturating_sub(band.y), band.height);
+                }
+                PanelFocus::Tree => {}
+            }
         }
     }
 
+    /// Column/row hit-test against a panel rect (ratatui 0.30's
+    /// `Rect::contains` takes a `Position`, not separate x/y).
+    fn in_rect(rect: Rect, col: u16, row: u16) -> bool {
+        col >= rect.x && col < rect.right() && row >= rect.y && row < rect.bottom()
+    }
+
     /// Handle mouse drag on the scrollbar thumb area.
+    ///
+    /// Uses the same shared layout as `handle_mouse_click` (issue #555).
     fn handle_mouse_drag(&self, state: &mut AppState, col: u16, row: u16) {
         let h = state.terminal_height;
         let w = state.terminal_width;
         if h < 5 || w < 10 {
             return;
         }
-        let shortcuts_start = h - 4;
-        let file_list_end = shortcuts_start - 1;
-        let preview_start = file_list_end;
-        let preview_end = shortcuts_start;
+        let layout = crate::surface_tui_layout::compute_panel_layout(w, h);
         let scrollbar_col = w.saturating_sub(3);
 
-        if col >= scrollbar_col && row >= preview_start && row < preview_end {
-            self.jump_to_scroll_position(state, row - preview_start, preview_end - preview_start);
+        if Self::in_rect(layout.preview, col, row) && col >= scrollbar_col {
+            self.jump_to_scroll_position(
+                state,
+                row.saturating_sub(layout.preview.y),
+                layout.preview.height,
+            );
             state.navigation.panel_focus = PanelFocus::Preview;
         }
     }
