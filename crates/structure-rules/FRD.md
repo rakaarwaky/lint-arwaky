@@ -1,4 +1,4 @@
-# FRD — Structure Rules (AES701–AES704)
+# FRD — Structure Rules (AES701–AES705)
 
 ## Reference
 
@@ -66,6 +66,19 @@ The structure-rules crate enforces the 7-layer AES folder discipline by auditing
   - Support prefixes — `regression_`, `behavioral_`, `mock_`, `fixture_` — are legal file names but satisfy no category. A folder carrying only regression guards still owes all seven.
 - **Edge Cases**: A `tests/` directory holding every category except one reports exactly one `test_suite_missing_category`. A feature folder with a complete suite is clean. A folder with no `tests/` directory at all reports the directory finding once. A utility-only folder reports nothing.
 - **Error Handling**: If a test directory cannot be read, it is treated as empty — every category it owed is reported — so an unreadable directory can never read as a satisfied one.
+
+### FR-STR-005: Member-Root File Placement (AES705)
+
+- **Description**: Require `crates/`, `modules/`, and `packages/` to hold folders and wiring only; a layer file loose at a member root belongs inside the folder that owns it.
+- **Input**: An audit root path and the top-level entries of every member dir.
+- **Output**: `Vec<LintResult>` carrying one finding per misplaced file.
+- **Business Rules**:
+  - Only the top level of a member dir is read. A file inside a folder beneath it belongs to that folder, which is the shape this rule preserves.
+  - `capabilities_*`, `agent_*`, `surface_*`, and `utility_*` files are forbidden at a member root. Each produces one `member_root_has_layer_file` finding naming the prefix and the folder kind it belongs in.
+  - The finding names the destination by layer: capabilities and agents move into a feature folder, surfaces into a surface folder, utilities into the shared folder.
+  - `root_*` and barrel-module files stay legal at a member root — they are the wiring the container composes. So does any file whose stem carries no classified layer prefix, such as `README.md` or `Cargo.toml`.
+- **Edge Cases**: A member dir holding every forbidden prefix reports one finding per file. A member dir holding only `root_*` wiring and a barrel module is clean. A member dir with no files at all is clean.
+- **Error Handling**: If a member dir cannot be read, it reports nothing rather than failing the audit.
 
 ## API Contract
 

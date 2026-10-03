@@ -13,10 +13,11 @@ from addition.src.agent_addition_orchestrator import (
 )
 from addition.src.capabilities_addition_analyzer import AdditionAnalyzer
 from addition.src.capabilities_addition_log import AdditionLog
-from agent_calculator_orchestrator import (
+from calculator.src.agent_calculator_orchestrator import (
     CalculatorOrchestrator,
     CalculatorOrchestratorDeps,
 )
+from calculator.src.capabilities_calculator_history import CalculatorHistoryCapability
 from division.src.agent_division_orchestrator import (
     DivisionOrchestrator,
     DivisionOrchestratorDeps,
@@ -97,6 +98,7 @@ class CalculatorContainer:
                 subtraction_log=subtraction_log,
                 multiplication_log=multiplication_log,
                 division_log=division_log,
+                history=CalculatorHistoryCapability(),
             )
         )
 

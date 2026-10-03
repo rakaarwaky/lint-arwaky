@@ -42,6 +42,7 @@ class CalculatorOrchestratorDeps:
         addition_log: IOperationLogProtocol,
         subtraction_log: IOperationLogProtocol,
         multiplication_log: IOperationLogProtocol,
+        history: IOperationLogProtocol,
         division_log: IOperationLogProtocol,
     ):
         self.addition = addition
@@ -52,6 +53,7 @@ class CalculatorOrchestratorDeps:
         self.subtraction_log = subtraction_log
         self.multiplication_log = multiplication_log
         self.division_log = division_log
+        self.history = history
 
 
 # ─── Block 2: Aggregate Implementation ────────────────────
@@ -64,6 +66,7 @@ class CalculatorOrchestrator(ICalculatorAggregate):
             OperationVO.MULTIPLY: deps.multiplication,
             OperationVO.DIVIDE: deps.division,
         }
+        self._history = deps.history
 
     def execute(self, request: CalculatorRequest) -> CalculatorResponse:
         if request.verb is CalculatorVerb.DELEGATE:
@@ -82,7 +85,4 @@ class CalculatorOrchestrator(ICalculatorAggregate):
         return owner.evaluate(expr)
 
     def _merged_history(self) -> list[ResultVO]:
-        merged: list[ResultVO] = []
-        for feature in self._features.values():
-            merged.extend(feature.history())
-        return merged
+        return self._history.merge([feature.history() for feature in self._features.values()])

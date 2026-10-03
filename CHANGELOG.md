@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+### AES705 — member-root file placement
+
+- **A member dir root now carries folders and wiring only.** An
+  `agent_calculator_orchestrator.py` sat loose at `modules/` in a workspace
+  that every other rule called clean: AES703 forbids an agent file in a
+  *surface* folder but skips a folder that is not surface-dominated, AES702
+  requires an agent inside a feature folder but says nothing about one outside
+  it, and AES701 covers the shared kernel. The file belonged to no feature, so
+  no FRD described it and no test suite covered it.
+- **`MemberRootPlacementAuditor` reads only the top level of `crates/`,
+  `modules/`, and `packages/`**, reporting one `member_root_has_layer_file`
+  finding per `capabilities_*`, `agent_*`, `surface_*`, or `utility_*` file,
+  naming the folder kind each belongs in. `root_*` wiring, a barrel module, and
+  any unclassified file stay legal, because that is where the container composes
+  them.
+
+### AGENTS.md template contract (AES605)
 ### AGENTS.md template contract (AES605)
 
 - **Resolved the 12-vs-14 H2 conflict in the AGENTS.md contract.** The heading

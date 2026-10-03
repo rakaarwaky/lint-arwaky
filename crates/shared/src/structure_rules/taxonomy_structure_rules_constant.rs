@@ -59,6 +59,27 @@ pub const FEATURE_DOC_PAIR: &[&str] = &[FRD_DOC, BACKLOG_DOC];
 pub const SURFACE_DOC_PAIR: &[&str] = &[DESIGN_DOC, BACKLOG_DOC];
 pub const SHARED_DOC_PAIR: &[&str] = &[DATA_DOC, BACKLOG_DOC];
 
+/// ─── AES705 — Member-root file placement ───────────────────────────────────
+/// A member dir (crates/, modules/, packages/) holds folders and wiring, never
+/// a layer file that belongs inside one of those folders. An `agent_*`,
+/// `capabilities_*`, `surface_*`, or `utility_*` file at the member root has no
+/// owning feature, so its behaviour cannot be attributed to one.
+pub const RULE_CODE_MEMBER_ROOT_PLACEMENT: &str = "AES705";
+
+/// A member dir holds a layer file that belongs inside a folder beneath it.
+pub const MEMBER_ROOT_VIOLATION_MISPLACED_FILE: &str = "member_root_has_layer_file";
+
+/// Layer prefixes that must not sit at a member root, with where each belongs.
+pub const MEMBER_ROOT_FORBIDDEN_PREFIXES: &[(&str, &str)] = &[
+    (CAPABILITIES_PREFIX, "move it into a feature folder"),
+    (
+        AGENT_PREFIX,
+        "move it into the feature folder that owns the orchestrator",
+    ),
+    (SURFACE_PREFIX, "move it into a surface folder"),
+    (UTILITY_PREFIX, "move it into the shared folder"),
+];
+
 /// ─── AES704 — Test-suite coverage ───────────────────────────────────────────
 /// The aes-testing-suite skill fixes one test layout: seven test types in
 /// `tests/` plus benchmarks in `benches/`, each named by a flat prefix. A
