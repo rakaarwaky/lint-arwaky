@@ -39,6 +39,9 @@ workspace = true
 [dev-dependencies]
 tempfile = "3"
 criterion = { version = "0.8.2", features = ["html_reports"] }
+orphan-rules = { workspace = true }
+filesystem = { workspace = true }
+quality-rules = { workspace = true }
 
 [[bench]]
 name = "bench_tui"
