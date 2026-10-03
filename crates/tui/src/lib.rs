@@ -13,6 +13,7 @@ pub mod surface_shortcut_component;
 pub mod surface_status_component;
 pub mod surface_tree_view;
 pub mod surface_tui_command;
+pub mod surface_tui_layout;
 pub mod taxonomy_tui_event;
 pub mod taxonomy_tui_vo;
 

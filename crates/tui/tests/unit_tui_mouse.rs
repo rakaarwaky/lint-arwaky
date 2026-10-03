@@ -1,0 +1,505 @@
+// PURPOSE: Unit tests for mouse hit-testing (issue #555).
+//
+// `handle_mouse_click` derives column boundaries from `compute_panel_layout`,
+// so a click in the preview panel must land in the preview handler, not the
+// file-list handler. These tests pin that contract by driving the public
+// `SurfaceActionHandler::handle` entry point with `TuiEvent::MouseClick`.
+//
+// Mouse clicks never call the lint executor, so the filesystem aggregates
+// wired into `SurfaceLintExecutor::new` are inert stubs — they exist only to
+// satisfy the constructor.
+
+use std::sync::Arc;
+
+use dispatcher::surface_check_action::FilesystemSeam;
+use dispatcher::surface_orphan_action::OrphanFactory;
+use shared_common::taxonomy_common_vo::PatternList;
+use shared_common::taxonomy_config_language_vo::ConfigLanguage;
+use shared_common::taxonomy_language_vo::Language;
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_common::taxonomy_source_vo::ContentString;
+use shared_common::taxonomy_tool_name_vo::ToolName;
+use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared_filesystem::contract_filesystem_protocol::{
+    IFileSystemIOProtocol, IParserProtocol, IToolResolutionProtocol, IWorkspaceProtocol,
+};
+use shared_filesystem::taxonomy_filesystem_vo::{
+    ByteCount, FileExtension, FileMode, GitCommandResult, ParseWarning, ParsedLines,
+    ProjectLanguagesVO, ScanTiming,
+};
+use shared_quality_rules::{CodeAnalysisRequest, CodeAnalysisResponse, ICodeAnalysisAggregate};
+use tui_lint_arwaky::surface_event_action::SurfaceActionHandler;
+use tui_lint_arwaky::surface_lint_action::SurfaceLintExecutor;
+use tui_lint_arwaky::surface_tui_layout::compute_panel_layout;
+use tui_lint_arwaky::taxonomy_tui_event::TuiEvent;
+use tui_lint_arwaky::{AppState, PanelFocus};
+
+// ─── Stub filesystem aggregates (never touched by a mouse click) ──
+
+#[derive(Debug)]
+struct StubIO;
+
+/// ScanTiming is owned per StubIO so `timing()` can return a stable reference.
+const STUB_TIMING: ScanTiming = ScanTiming {
+    walk_ms: 0,
+    cache_ms: 0,
+    parse_ms: 0,
+    extract_ms: 0,
+    graph_ms: 0,
+    total_ms: 0,
+};
+
+impl IFileSystemIOProtocol for StubIO {
+    fn path_exists(&self, _path: &std::path::Path) -> bool {
+        false
+    }
+
+    fn is_dir(&self, _path: &std::path::Path) -> bool {
+        false
+    }
+
+    fn is_file(&self, _path: &std::path::Path) -> bool {
+        false
+    }
+
+    fn should_ignore(&self, _path: &FilePath, _ignored: &[String]) -> bool {
+        false
+    }
+
+    fn canonicalize(&self, path: &std::path::Path) -> Result<std::path::PathBuf, std::io::Error> {
+        Ok(path.to_path_buf())
+    }
+
+    fn canonicalize_path_str(&self, path: &FilePath) -> FilePath {
+        path.clone()
+    }
+
+    fn is_symlink(&self, _path: &std::path::Path) -> bool {
+        false
+    }
+
+    fn metadata(&self, _path: &std::path::Path) -> Result<std::fs::Metadata, std::io::Error> {
+        Err(std::io::Error::new(std::io::ErrorKind::NotFound, "stub"))
+    }
+
+    fn symlink_metadata(
+        &self,
+        _path: &std::path::Path,
+    ) -> Result<std::fs::Metadata, std::io::Error> {
+        Err(std::io::Error::new(std::io::ErrorKind::NotFound, "stub"))
+    }
+
+    fn get_file_stem<'a>(&self, path: &'a str) -> &'a str {
+        path.rsplit('/').next().unwrap_or(path)
+    }
+
+    fn is_source_file(&self, _path: &std::path::Path) -> bool {
+        false
+    }
+
+    fn is_source_ext(&self, _ext: &FileExtension) -> bool {
+        false
+    }
+
+    fn get_basename<'a>(&self, path: &'a str) -> &'a str {
+        path.rsplit('/').next().unwrap_or(path)
+    }
+
+    fn get_parent<'a>(&self, path: &'a str) -> &'a str {
+        path.rsplit('/').next_back().unwrap_or(path)
+    }
+
+    fn is_python_file(&self, _path: &std::path::Path) -> bool {
+        false
+    }
+
+    fn scan_directory_with_ignored(
+        &self,
+        _dir: &std::path::Path,
+        _ignored: &PatternList,
+    ) -> Vec<std::path::PathBuf> {
+        Vec::new()
+    }
+
+    fn is_ignored_dir(&self, _dir: &std::path::Path, _ignored: &PatternList) -> bool {
+        false
+    }
+
+    fn read_dir_entries_as_pathbuf(
+        &self,
+        _dir: &std::path::Path,
+    ) -> Result<Vec<std::path::PathBuf>, std::io::Error> {
+        Ok(Vec::new())
+    }
+
+    fn read_to_string(&self, _path: &std::path::Path) -> Result<ContentString, std::io::Error> {
+        Err(std::io::Error::new(std::io::ErrorKind::NotFound, "stub"))
+    }
+
+    fn write_string(&self, _path: &std::path::Path, _content: &str) -> Result<(), std::io::Error> {
+        Ok(())
+    }
+
+    fn copy_file(
+        &self,
+        _src: &std::path::Path,
+        _dst: &std::path::Path,
+    ) -> Result<ByteCount, std::io::Error> {
+        Err(std::io::Error::new(std::io::ErrorKind::NotFound, "stub"))
+    }
+
+    fn create_dir_all(&self, _path: &std::path::Path) -> Result<(), std::io::Error> {
+        Ok(())
+    }
+
+    fn remove_dir_all(&self, _path: &std::path::Path) -> Result<(), std::io::Error> {
+        Ok(())
+    }
+
+    fn set_permissions(&self, _path: &std::path::Path, _mode: FileMode) -> std::io::Result<()> {
+        Ok(())
+    }
+
+    fn remove_file(&self, _path: &std::path::Path) -> std::io::Result<()> {
+        Ok(())
+    }
+
+    fn run_git_command(&self, _args: &[&str], _dir: &str) -> GitCommandResult {
+        GitCommandResult {
+            success: false,
+            stdout: String::new(),
+            stderr: "stub".to_string(),
+        }
+    }
+
+    fn parse_output_lines(&self, _output: &str) -> ParsedLines {
+        ParsedLines::new(Vec::new())
+    }
+
+    fn run_external_command_in(
+        &self,
+        _name: &ToolName,
+        _args: &[&str],
+        _current_dir: &str,
+    ) -> (String, String, bool) {
+        (String::new(), "stub".to_string(), false)
+    }
+
+    fn timing(&self) -> &ScanTiming {
+        &STUB_TIMING
+    }
+}
+
+#[derive(Debug)]
+struct StubWorkspace;
+
+impl IWorkspaceProtocol for StubWorkspace {
+    fn workspace_root(&self, _start: &FilePath) -> Option<std::path::PathBuf> {
+        None
+    }
+
+    fn find_workspace_root_from_path(
+        &self,
+        _start: &std::path::Path,
+    ) -> Result<std::path::PathBuf, std::io::Error> {
+        Err(std::io::Error::new(std::io::ErrorKind::NotFound, "stub"))
+    }
+
+    fn is_member_path(&self, _path: &FilePath) -> bool {
+        false
+    }
+
+    fn is_leaf_member_path(&self, _path: &FilePath) -> bool {
+        false
+    }
+
+    fn detect_source_dir(&self, _project_root: &std::path::Path) -> std::path::PathBuf {
+        std::path::PathBuf::new()
+    }
+
+    fn detect_language_from_path(&self, _path: &str) -> ConfigLanguage {
+        ConfigLanguage::Rust
+    }
+
+    fn check_wired_in_container(
+        &self,
+        _workspace_root: &std::path::Path,
+        _identifiers: &PatternList,
+    ) -> bool {
+        false
+    }
+
+    fn detect_project_languages(&self, _root: &std::path::Path) -> ProjectLanguagesVO {
+        ProjectLanguagesVO::default()
+    }
+
+    fn resolve_orphan_module_path(
+        &self,
+        _root: &std::path::Path,
+        _base_dir: &std::path::Path,
+        _module_path: &str,
+    ) -> Option<std::path::PathBuf> {
+        None
+    }
+}
+
+#[derive(Debug)]
+struct StubParser;
+
+impl IParserProtocol for StubParser {
+    fn parse_warnings(&self) -> &[ParseWarning] {
+        &[]
+    }
+
+    fn import_list(&self) -> Vec<shared_filesystem::taxonomy_filesystem_vo::ImportEntry> {
+        Vec::new()
+    }
+
+    fn parse_all(&self, _files: &mut [shared_filesystem::taxonomy_filesystem_vo::FileEntry]) {}
+
+    fn imports_for(
+        &self,
+        _path: &std::path::Path,
+    ) -> Vec<shared_filesystem::taxonomy_filesystem_vo::ImportEntry> {
+        Vec::new()
+    }
+
+    fn extract(
+        &self,
+        _path: &std::path::Path,
+        _content: &str,
+        _language: Language,
+    ) -> Vec<shared_filesystem::taxonomy_filesystem_vo::ImportEntry> {
+        Vec::new()
+    }
+
+    fn resolve_barrel_imports(&self, _root_dir: &std::path::Path) {}
+}
+
+#[derive(Debug)]
+struct StubFilesystemAggregate;
+
+impl IFilesystemAggregate for StubFilesystemAggregate {
+    fn execute(
+        &self,
+        _request: shared_filesystem::taxonomy_filesystem_request::FilesystemRequest,
+    ) -> shared_filesystem::taxonomy_filesystem_response::FilesystemResponse {
+        unimplemented!("mouse click tests never invoke the filesystem aggregate")
+    }
+}
+
+#[derive(Debug)]
+struct StubToolResolution;
+
+impl IToolResolutionProtocol for StubToolResolution {
+    fn is_executable_in_path(&self, _executable: &ToolName) -> bool {
+        false
+    }
+
+    fn is_binary_available(&self, _bin_name: &ToolName) -> bool {
+        false
+    }
+
+    fn has_local_bin(&self, _working_dir: &std::path::Path, _executable: &ToolName) -> bool {
+        false
+    }
+
+    fn resolve_js_cmd(
+        &self,
+        _executable: &ToolName,
+        _args: Vec<String>,
+        _working_dir: &FilePath,
+    ) -> Option<Vec<String>> {
+        None
+    }
+
+    fn resolve_js_working_dir(&self, path: &FilePath) -> FilePath {
+        path.clone()
+    }
+
+    fn resolve_cargo_working_dir(&self, path: &FilePath) -> FilePath {
+        path.clone()
+    }
+
+    fn resolve_cargo_lock_working_dir(&self, path: &FilePath) -> FilePath {
+        path.clone()
+    }
+
+    fn has_config_file(&self, _dir: &std::path::Path) -> bool {
+        false
+    }
+
+    fn has_cargo_toml(&self, _path: &FilePath) -> Option<FilePath> {
+        None
+    }
+
+    fn has_cargo_lock(&self, _path: &FilePath) -> Option<FilePath> {
+        None
+    }
+
+    fn is_python_file_recursive(&self, _path: &FilePath) -> bool {
+        false
+    }
+
+    fn default_working_dir(&self, path: &FilePath) -> FilePath {
+        path.clone()
+    }
+}
+
+#[derive(Debug)]
+struct StubCodeAnalysis;
+
+impl ICodeAnalysisAggregate for StubCodeAnalysis {
+    fn execute(&self, _request: CodeAnalysisRequest) -> CodeAnalysisResponse {
+        unimplemented!("mouse click tests never invoke code analysis")
+    }
+}
+
+// ─── Handler wiring ─────────────────────────────────────────────────
+
+fn handler() -> SurfaceActionHandler {
+    let io = Arc::new(StubIO);
+    let workspace = Arc::new(StubWorkspace);
+    let parser = Arc::new(StubParser);
+    let tool_resolution = Arc::new(StubToolResolution);
+    let fs_agg = Arc::new(StubFilesystemAggregate);
+    let code_analysis = Arc::new(StubCodeAnalysis);
+
+    let fs_seam = Arc::new(FilesystemSeam {
+        io: io.clone(),
+        workspace: workspace.clone(),
+        parser: parser.clone(),
+        aggregate: fs_agg.clone(),
+    });
+    let inner_seam = FilesystemSeam {
+        io: io.clone(),
+        workspace: workspace.clone(),
+        parser: parser.clone(),
+        aggregate: fs_agg.clone(),
+    };
+    let fs_factory = Arc::new(move || inner_seam.clone());
+
+    let orphan_factory: Arc<OrphanFactory> = Arc::new(move |_config, _fs, _ws| {
+        unimplemented!("mouse click tests never invoke orphan scanning")
+    });
+
+    let executor = Arc::new(SurfaceLintExecutor::new(
+        code_analysis,
+        fs_agg,
+        io.clone(),
+        workspace,
+        tool_resolution,
+        fs_seam,
+        fs_factory,
+        orphan_factory,
+    ));
+    SurfaceActionHandler::new(executor, io)
+}
+
+fn click_state(w: u16, h: u16, selected: usize) -> AppState {
+    let mut state = AppState::new("/tmp".to_string());
+    state.terminal_width = w;
+    state.terminal_height = h;
+    state.path_dialog.visible = false;
+    state.navigation.selected_index = selected;
+    state.navigation.panel_focus = PanelFocus::FileList;
+    state
+}
+
+/// Populate `state.navigation.entries` with `n` dummy files so a file-list
+/// click can select a valid index (the handler only updates selection when
+/// the computed index is within `entries.len()`).
+fn with_entries(mut state: AppState, n: usize) -> AppState {
+    for i in 0..n {
+        state.navigation.entries.push(tui_lint_arwaky::FileEntry {
+            name: format!("f{i}.rs"),
+            full_path: format!("/tmp/f{i}.rs"),
+            is_dir: false,
+            layer: tui_lint_arwaky::AesLayer::None,
+            violation_count: 0,
+            extension: "rs".to_string(),
+            size_bytes: 0,
+        });
+    }
+    state
+}
+
+/// Clicking a row inside the preview panel must focus Preview and must not
+/// touch the file-list selection.
+#[test]
+fn preview_click_keeps_selected_index() {
+    // Width 120 > NARROW_BREAKPOINT_WIDTH (100) → three_column mode.
+    let layout = compute_panel_layout(120, 24);
+    let col = layout.preview.x + layout.preview.width / 2;
+    let row = layout.preview.y + layout.preview.height / 2;
+
+    let mut state = click_state(120, 24, 42);
+    let h = handler();
+    h.handle(&mut state, TuiEvent::MouseClick(col, row));
+
+    assert_eq!(
+        state.navigation.panel_focus,
+        PanelFocus::Preview,
+        "click inside preview rect must focus Preview"
+    );
+    assert_eq!(
+        state.navigation.selected_index, 42,
+        "preview click must not mutate file selection"
+    );
+}
+
+/// Clicking a row inside the tree panel must focus Tree and must not touch
+/// the file-list selection.
+#[test]
+fn tree_click_focuses_tree() {
+    let layout = compute_panel_layout(120, 24);
+    let col = layout.tree.x + layout.tree.width / 2;
+    let row = layout.tree.y + layout.tree.height / 2;
+
+    let mut state = click_state(120, 24, 7);
+    let h = handler();
+    h.handle(&mut state, TuiEvent::MouseClick(col, row));
+
+    assert_eq!(
+        state.navigation.panel_focus,
+        PanelFocus::Tree,
+        "click inside tree rect must focus Tree"
+    );
+    assert_eq!(
+        state.navigation.selected_index, 7,
+        "tree click must not mutate file selection"
+    );
+}
+
+/// Clicking a row inside the file-list panel selects that entry.
+#[test]
+fn file_list_click_updates_selection() {
+    let layout = compute_panel_layout(120, 24);
+    let col = layout.file_list.x + layout.file_list.width / 2;
+    let row = layout.file_list.y + 3;
+
+    let mut state = with_entries(click_state(120, 24, 0), 5);
+    let h = handler();
+    h.handle(&mut state, TuiEvent::MouseClick(col, row));
+
+    assert_eq!(state.navigation.panel_focus, PanelFocus::FileList);
+    // selected_index = scroll_offset + panel_row = 0 + 3
+    assert_eq!(state.navigation.selected_index, 3);
+}
+
+/// A click in the shortcuts/status band below the panels is ignored.
+#[test]
+fn click_below_panels_is_ignored() {
+    let layout = compute_panel_layout(120, 24);
+    let col = layout.file_list.x;
+    let row = layout.shortcuts.y + 1;
+
+    let mut state = click_state(120, 24, 5);
+    let h = handler();
+    h.handle(&mut state, TuiEvent::MouseClick(col, row));
+
+    assert_eq!(
+        state.navigation.selected_index, 5,
+        "click in shortcut band must not change selection"
+    );
+}

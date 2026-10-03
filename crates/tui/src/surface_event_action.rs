@@ -3,6 +3,7 @@ use crate::{ConfirmState, LintExecutionResult, ScanUpdate};
 use shared_common::FilePath;
 use shared_tui::outcome_label;
 
+use crate::surface_tui_layout::HitTarget;
 use crate::taxonomy_tui_event::TuiEvent;
 use crate::taxonomy_tui_vo::{AppState, BusySlot, PanelFocus, PreviewMode};
 use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
@@ -734,59 +735,63 @@ impl SurfaceActionHandler {
         }
     }
 
-    /// Handle mouse clicks on the file list, shortcut, preview, and scrollbar areas.
+    /// Handle mouse clicks on the file list, tree, preview, and scrollbar areas.
+    ///
+    /// Hit-testing derives column boundaries from `compute_panel_layout` — the
+    /// same rects the renderer draws — so the two can't drift apart (issue #555).
     fn handle_mouse_click(&self, state: &mut AppState, col: u16, row: u16) {
         let h = state.terminal_height;
         let w = state.terminal_width;
         if h < 5 || w < 10 {
             return;
         }
-        let shortcuts_start = h - 4;
-        let file_list_start: u16 = 1;
-        let file_list_end = shortcuts_start - 1;
-        let preview_start = file_list_end;
-        let preview_end = shortcuts_start;
-        let scrollbar_col = w.saturating_sub(3);
 
-        if row >= shortcuts_start && row < h {
+        let layout = crate::surface_tui_layout::compute_panel_layout(w, h);
+        let Some(target) =
+            crate::surface_tui_layout::hit_test(&layout, col, row, state.navigation.panel_focus)
+        else {
             return;
-        }
+        };
 
-        // Click on scrollbar thumb area → jump to proportional position
-        if col >= scrollbar_col && row >= preview_start && row < preview_end {
-            self.jump_to_scroll_position(state, row - preview_start, preview_end - preview_start);
-            state.navigation.panel_focus = PanelFocus::Preview;
-            return;
-        }
-
-        if row >= file_list_start && row < file_list_end {
-            let panel_row = row - file_list_start;
-            let new_index = state.navigation.scroll_offset + panel_row as usize;
-            if new_index < state.navigation.entries.len() {
-                state.navigation.selected_index = new_index;
+        match target {
+            HitTarget::Tree => {
+                // Display-only panel: clicking just moves focus to the tree.
+                state.navigation.panel_focus = PanelFocus::Tree;
+            }
+            HitTarget::FileList { row: panel_row } => {
+                let new_index = state.navigation.scroll_offset + panel_row;
+                if new_index < state.navigation.entries.len() {
+                    state.navigation.selected_index = new_index;
+                }
                 state.navigation.panel_focus = PanelFocus::FileList;
             }
-        } else if row >= preview_start && row < preview_end {
-            self.jump_to_scroll_position(state, row - preview_start, preview_end - preview_start);
-            state.navigation.panel_focus = PanelFocus::Preview;
+            HitTarget::Preview { row: panel_row } => {
+                self.jump_to_scroll_position(state, panel_row, layout.band().height);
+                state.navigation.panel_focus = PanelFocus::Preview;
+            }
         }
     }
 
     /// Handle mouse drag on the scrollbar thumb area.
+    ///
+    /// Uses the same shared layout as `handle_mouse_click` (issue #555).
     fn handle_mouse_drag(&self, state: &mut AppState, col: u16, row: u16) {
         let h = state.terminal_height;
         let w = state.terminal_width;
         if h < 5 || w < 10 {
             return;
         }
-        let shortcuts_start = h - 4;
-        let file_list_end = shortcuts_start - 1;
-        let preview_start = file_list_end;
-        let preview_end = shortcuts_start;
+        let layout = crate::surface_tui_layout::compute_panel_layout(w, h);
         let scrollbar_col = w.saturating_sub(3);
 
-        if col >= scrollbar_col && row >= preview_start && row < preview_end {
-            self.jump_to_scroll_position(state, row - preview_start, preview_end - preview_start);
+        // Drag only acts on the preview scrollbar, not the panel body.
+        if col < scrollbar_col {
+            return;
+        }
+        if let Some(HitTarget::Preview { row }) =
+            crate::surface_tui_layout::hit_test(&layout, col, row, state.navigation.panel_focus)
+        {
+            self.jump_to_scroll_position(state, row, layout.preview.height);
             state.navigation.panel_focus = PanelFocus::Preview;
         }
     }
