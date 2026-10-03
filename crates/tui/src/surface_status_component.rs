@@ -82,7 +82,7 @@ impl StatusComponent {
                     format!(" {} ", phase_display),
                     Style::default()
                         .fg(theme::color(theme::ACCENT))
-                        .add_modifier(ratatui::style::Modifier::BOLD),
+                        .add_modifier(theme::EMPHASIS_HEADING),
                 ),
                 Span::styled(
                     progress_detail,

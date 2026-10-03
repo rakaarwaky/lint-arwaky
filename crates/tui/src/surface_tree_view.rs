@@ -8,7 +8,7 @@
 use crate::{AppState, PanelFocus};
 use ratatui::Frame;
 use ratatui::layout::Rect;
-use ratatui::style::{Modifier, Style};
+use ratatui::style::Style;
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{
     Block, Borders, List, ListItem, ListState, Scrollbar, ScrollbarOrientation, ScrollbarState,
@@ -28,7 +28,7 @@ impl TreeView {
         let border_style = if is_focused {
             Style::default()
                 .fg(theme::color(theme::ACCENT))
-                .add_modifier(Modifier::BOLD)
+                .add_modifier(theme::EMPHASIS_HEADING)
         } else {
             Style::default().fg(theme::color(theme::SEPARATOR))
         };
@@ -50,7 +50,7 @@ impl TreeView {
                 shorten_path(&state.navigation.project_root),
                 Style::default()
                     .fg(theme::color(theme::LABEL))
-                    .add_modifier(Modifier::BOLD),
+                    .add_modifier(theme::EMPHASIS_HEADING),
             ),
         ]);
         items.push(ListItem::new(root_line));
@@ -61,7 +61,7 @@ impl TreeView {
             let style = if is_current {
                 Style::default()
                     .fg(theme::color(theme::ACCENT))
-                    .add_modifier(Modifier::BOLD)
+                    .add_modifier(theme::EMPHASIS_SELECTED)
             } else {
                 Style::default().fg(theme::color(theme::DIRECTORY))
             };
