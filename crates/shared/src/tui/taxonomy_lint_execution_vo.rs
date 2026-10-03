@@ -43,6 +43,7 @@ impl LintExecutionResult {
         Self {
             output: output.into(),
             violation_count: violations,
+            outcome: LintOutcome::Success,
             success: true,
             cancelled,
         }
@@ -56,6 +57,7 @@ impl LintExecutionResult {
             violation_count: 0,
             outcome: LintOutcome::Unavailable,
             success: false,
+            cancelled: false,
         }
     }
 
