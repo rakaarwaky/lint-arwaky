@@ -16,8 +16,8 @@ use std::sync::Arc;
 use dispatcher_lint_arwaky::surface_check_action::{
     FilesystemSeam, ScanAggregates, ScanOptions, collect_scan,
 };
-use shared_common::taxonomy_path_vo::FilePath;
 use shared_common::ViolationItem;
+use shared_common::taxonomy_path_vo::FilePath;
 
 // ── Container wiring — mirrors crates/root_cli_main_entry.rs ──────────────
 
@@ -44,7 +44,8 @@ fn build_scan_aggregates(root: &str) -> ScanAggregates {
 
     let quality_container =
         quality_rules::root_quality_rules_container::CodeAnalysisContainer::from_orchestrator(
-            &config_orchestrator, root,
+            &config_orchestrator,
+            root,
         );
     let quality = quality_container.code_analysis_linter();
 
@@ -80,18 +81,21 @@ fn build_scan_aggregates(root: &str) -> ScanAggregates {
         );
     let orphan = orphan_container.analyzer();
 
-    let external_container = external_lint::root_external_lint_container::ExternalLintContainer::new(
-        filesystem.clone(),
-        fs_io.clone(),
-        fs_tool_resolution.clone(),
-    );
+    let external_container =
+        external_lint::root_external_lint_container::ExternalLintContainer::new(
+            filesystem.clone(),
+            fs_io.clone(),
+            fs_tool_resolution.clone(),
+        );
     let external = external_container.aggregate();
 
     let role_container =
         role_rules::root_role_rules_container::RoleContainer::new_with_config(sync_config);
     let role = role_container.orchestrator();
 
-    let structure = structure_rules::root_structure_rules_container::RootStructureRulesContainer::orchestrator();
+    let structure =
+        structure_rules::root_structure_rules_container::RootStructureRulesContainer::orchestrator(
+        );
     let doc = doc_rules::root_doc_rules_container::RootDocRulesContainer::orchestrator();
 
     ScanAggregates {
@@ -124,10 +128,7 @@ fn fixture_path(relative: &str) -> std::path::PathBuf {
 fn in_process_scan(agg: &ScanAggregates, target: &str) -> Result<Vec<ViolationItem>, String> {
     let full = fixture_path(target);
     let opts = ScanOptions {
-        path: Some(
-            FilePath::new(full.to_string_lossy().to_string())
-                .expect("valid fixture path"),
-        ),
+        path: Some(FilePath::new(full.to_string_lossy().to_string()).expect("valid fixture path")),
         multi_project_orchestrator: None,
         filter: None,
         member: None,
@@ -139,14 +140,11 @@ fn in_process_scan(agg: &ScanAggregates, target: &str) -> Result<Vec<ViolationIt
 
 /// Same as `in_process_scan` but with an unreadable path to exercise the
 /// contract error path.
-fn in_process_scan_missing(
-    agg: &ScanAggregates,
-) -> Result<Vec<ViolationItem>, String> {
+fn in_process_scan_missing(agg: &ScanAggregates) -> Result<Vec<ViolationItem>, String> {
     let missing = fixture_path("definitely/does/not/exist/anywhere.rs");
     let opts = ScanOptions {
         path: Some(
-            FilePath::new(missing.to_string_lossy().to_string())
-                .expect("valid string → FilePath"),
+            FilePath::new(missing.to_string_lossy().to_string()).expect("valid string → FilePath"),
         ),
         multi_project_orchestrator: None,
         filter: None,
@@ -168,13 +166,12 @@ fn in_process_bad_rust_fixture_yields_aes102() {
         .to_string_lossy()
         .to_string();
     let agg = build_scan_aggregates(&root);
-    let violations =
-        in_process_scan(&agg, "workspaces-bad/crates/naming_violations/src/capabilities_user_vo.rs")
-            .expect("in-process scan of valid fixture must succeed");
-    let codes: Vec<&str> = violations
-        .iter()
-        .map(|v| v.code.code())
-        .collect();
+    let violations = in_process_scan(
+        &agg,
+        "workspaces-bad/crates/naming_violations/src/capabilities_user_vo.rs",
+    )
+    .expect("in-process scan of valid fixture must succeed");
+    let codes: Vec<&str> = violations.iter().map(|v| v.code.code()).collect();
     assert!(
         codes.iter().any(|c| c.starts_with("AES102")),
         "expected AES102 in in-process scan, got: {codes:?}"
@@ -189,9 +186,8 @@ fn in_process_bad_rust_subfolder_has_many_violations() {
         .to_string_lossy()
         .to_string();
     let agg = build_scan_aggregates(&root);
-    let violations =
-        in_process_scan(&agg, "workspaces-bad/crates/naming_violations")
-            .expect("in-process subfolder scan must succeed");
+    let violations = in_process_scan(&agg, "workspaces-bad/crates/naming_violations")
+        .expect("in-process subfolder scan must succeed");
     assert!(
         violations.len() >= 20,
         "expected >= 20 violations in in-process subfolder scan, got {}",
@@ -207,9 +203,8 @@ fn in_process_clean_fixture_yields_zero_violations() {
         .to_string_lossy()
         .to_string();
     let agg = build_scan_aggregates(&root);
-    let violations =
-        in_process_scan(&agg, "workspaces-good/crates/calculator")
-            .expect("in-process scan of clean fixture must succeed");
+    let violations = in_process_scan(&agg, "workspaces-good/crates/calculator")
+        .expect("in-process scan of clean fixture must succeed");
     assert!(
         violations.is_empty(),
         "clean fixture must produce 0 in-process violations, got: {violations:?}",
@@ -220,9 +215,7 @@ fn in_process_clean_fixture_yields_zero_violations() {
 /// message — the same contract the subprocess fallback honours.
 #[test]
 fn in_process_missing_path_returns_error() {
-    let root = fixture_path(".")
-        .to_string_lossy()
-        .to_string();
+    let root = fixture_path(".").to_string_lossy().to_string();
     let agg = build_scan_aggregates(&root);
     let result = in_process_scan_missing(&agg);
     assert!(
