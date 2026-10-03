@@ -3,7 +3,7 @@ use crate::{ConfirmState, LintExecutionResult, ScanUpdate};
 use shared_common::FilePath;
 
 use crate::taxonomy_tui_event::TuiEvent;
-use crate::taxonomy_tui_vo::{AppState, PanelFocus, PreviewMode};
+use crate::taxonomy_tui_vo::{AppState, BusySlot, PanelFocus, PreviewMode};
 use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use std::sync::Arc;
 
@@ -43,8 +43,8 @@ impl SurfaceActionHandler {
         &self,
         state: &mut AppState,
     ) -> Option<std::sync::mpsc::Receiver<ScanUpdate>> {
-        // Guard: don't start a second scan while one is running.
-        if state.scan.running {
+        // Guard: never start a scan while a scan or background action holds the slot.
+        if !state.try_claim_busy_slot(BusySlot::Scan) {
             return None;
         }
         let path = state.selected_path();
@@ -154,10 +154,9 @@ impl SurfaceActionHandler {
         update_preview: bool,
         action: Box<dyn FnOnce(&SurfaceLintExecutor) -> LintExecutionResult + Send>,
     ) -> bool {
-        if state.actions.pending {
+        if !state.try_claim_busy_slot(BusySlot::Action) {
             return false;
         }
-        state.actions.pending = true;
         state.actions.result_mode = result_mode;
         state.actions.update_preview = update_preview;
         state.set_status(format!("Running {label}..."));

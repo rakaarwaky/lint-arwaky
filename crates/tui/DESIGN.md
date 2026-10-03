@@ -176,6 +176,12 @@ keystroke is visibly declined rather than silently dropped. The transition out
 of `running` is driven only by the in-flight run finishing, into `results`,
 `clean`, or `error`.
 
+Scans and background actions share **one** busy slot (`AppState::try_claim_busy_slot`,
+parameterised by `BusySlot::Scan` / `BusySlot::Action`). Both fan out onto the
+process-global rayon pool, so a scan and a background action can never be in
+flight at the same time; the second request is declined with
+`Busy: scan is running` or `Busy: action is running` on the status line (#577).
+
 | Trigger while `running` | Transition | What the user sees |
 | --- | --- | --- |
 | Another action key (scan, fix, ci, orphan, security) | None — stays `running` | The busy status line, with a transient "action ignored" hint |
