@@ -37,6 +37,17 @@ workspace = true
 criterion = { version = "0.8.2", features = ["html_reports"] }
 tempfile = "3"
 filesystem.workspace = true
+config-system.workspace = true
+quality-rules.workspace = true
+import-rules.workspace = true
+naming-rules.workspace = true
+orphan-rules.workspace = true
+role-rules.workspace = true
+external-lint.workspace = true
+structure-rules.workspace = true
+doc-rules.workspace = true
+shared-common.workspace = true
+shared-config-system.workspace = true
 
 [[bench]]
 name = "bench_dispatcher"
