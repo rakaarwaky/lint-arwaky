@@ -828,7 +828,6 @@ pub(crate) fn run_single_file_scan(
             seam.aggregate.as_ref(),
         ),
     );
-    // Drop violations naming files outside the target.
     all.retain(|v| {
         let p = std::path::Path::new(&v.file.value);
         p.is_absolute() && p.starts_with(scan_root)
