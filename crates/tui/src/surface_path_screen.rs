@@ -82,7 +82,9 @@ impl Default for PathScreen {
     }
 }
 
-fn centered_rect(percent_x: u16, percent_y: u16, area: Rect) -> Rect {
+/// Center a popup of the given percentage size inside `area`.
+/// Shared with the confirm modal (#554) so every overlay lands in the same place.
+pub fn centered_rect(percent_x: u16, percent_y: u16, area: Rect) -> Rect {
     let popup_layout = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
