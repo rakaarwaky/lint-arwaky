@@ -22,13 +22,13 @@ fn parse(json: &str) -> serde_json::Value {
 
 // ─── execute_command handler wiring ────────────────────────────────
 
-#[test]
-fn handle_execute_command_wires_action_into_dispatch() {
+#[tokio::test]
+async fn handle_execute_command_wires_action_into_dispatch() {
     let args = ExecuteCommandArgs {
         action: "definitely-not-real".to_string(),
         args: None,
     };
-    let result = parse(&server().handle_execute_command(Parameters(args)));
+    let result = parse(&server().handle_execute_command(Parameters(args)).await);
     assert_eq!(result["exit_code"], 2);
     assert!(
         result["error"]
@@ -40,8 +40,8 @@ fn handle_execute_command_wires_action_into_dispatch() {
     );
 }
 
-#[test]
-fn handle_execute_command_wires_path_arg_into_path_validation() {
+#[tokio::test]
+async fn handle_execute_command_wires_path_arg_into_path_validation() {
     // An empty `path` argument must surface the `Invalid path` envelope,
     // proving args.args["path"] is actually read by the handler. `fix` is a
     // mutating action, and authorization runs before path validation, so this
@@ -52,18 +52,18 @@ fn handle_execute_command_wires_path_arg_into_path_validation() {
     };
     let server =
         LintArwakyMcpServer::new(Arc::new(common::make_action_surface_allowing_mutations()));
-    let result = parse(&server.handle_execute_command(Parameters(args)));
+    let result = parse(&server.handle_execute_command(Parameters(args)).await);
     assert_eq!(result["exit_code"], 2);
     assert_eq!(result["error"], "Invalid path");
 }
 
-#[test]
-fn handle_execute_command_version_has_stable_envelope() {
+#[tokio::test]
+async fn handle_execute_command_version_has_stable_envelope() {
     let args = ExecuteCommandArgs {
         action: "version".to_string(),
         args: None,
     };
-    let result = parse(&server().handle_execute_command(Parameters(args)));
+    let result = parse(&server().handle_execute_command(Parameters(args)).await);
     assert_eq!(result["exit_code"], 0);
     assert_eq!(result["name"], "lint-arwaky");
     assert!(

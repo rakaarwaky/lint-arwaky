@@ -41,7 +41,7 @@ impl LintArwakyMcpServer {
         &self.tool_router
     }
 
-    pub fn handle_execute_command(
+    pub async fn handle_execute_command(
         &self,
         Parameters(args): Parameters<ExecuteCommandArgs>,
     ) -> String {
@@ -77,7 +77,8 @@ impl LintArwakyMcpServer {
         );
         let result = self
             .action
-            .execute_command(&action, &path, threshold, dry_run);
+            .execute_command(&action, &path, threshold, dry_run)
+            .await;
         let exit_code = result
             .get("exit_code")
             .and_then(serde_json::Value::as_i64)
@@ -104,8 +105,8 @@ impl LintArwakyMcpServer {
         serde_json::to_string(&result).unwrap_or_default()
     }
 
-    pub fn handle_health_check(&self) -> String {
-        let result = self.action.handle_health_check();
+    pub async fn handle_health_check(&self) -> String {
+        let result = self.action.handle_health_check().await;
         serde_json::to_string(&result).unwrap_or_else(|e| {
             serde_json::json!({"error": format!("Serialization failed: {e}"), "exit_code": 2})
                 .to_string()
@@ -147,7 +148,7 @@ impl ServerHandler for LintArwakyMcpServer {
 impl LintArwakyMcpServer {
     #[tool(description = "Execute any CLI command. This is the primary tool.")]
     pub async fn execute_command(&self, args: Parameters<ExecuteCommandArgs>) -> String {
-        LintArwakyMcpServer::handle_execute_command(self, args)
+        LintArwakyMcpServer::handle_execute_command(self, args).await
     }
 
     #[tool(
@@ -166,7 +167,7 @@ impl LintArwakyMcpServer {
 
     #[tool(description = "Check system health: adapters and system state.")]
     pub async fn health_check(&self) -> String {
-        LintArwakyMcpServer::handle_health_check(self)
+        LintArwakyMcpServer::handle_health_check(self).await
     }
 
     #[tool(
