@@ -25,9 +25,11 @@ jobs:
           ref: ${{ github.event.pull_request.base.ref }}
           fetch-depth: 1
 
-      - name: Read PR body and diff via GitHub API
-        # Extracts the PR body and changed file paths without checking out
-        # untrusted PR code (pull_request_target style, but read-only).
+      - name: Read PR body, diff, and check script via GitHub API
+        # Extracts the PR body, changed file paths, and the check script
+        # without checking out untrusted PR code (pull_request_target style,
+        # read-only). The script is fetched from the head ref via the API;
+        # only the script file is executed, never the full PR tree.
         # Body is written to a file; the file path (not content) goes into
         # GITHUB_ENV to avoid multiline KEY=VALUE format errors.
         env:
@@ -44,8 +46,15 @@ jobs:
           print(','.join(f['filename'] for f in files))
           ")
           echo "PR_DIFF=${DIFF_FILES}" >> "$GITHUB_ENV"
+          # The check script lives in the PR itself; fetch it from the head
+          # ref. Execution is limited to this single file.
+          HEAD_SHA=$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}" --jq '.head.sha')
+          gh api "repos/${{ github.repository }}/contents/.github/scripts/check_close_evidence.py" \
+            -H "Accept: application/vnd.github.raw" \
+            -f ref="${HEAD_SHA}" > /tmp/check_close_evidence.py
+          chmod +x /tmp/check_close_evidence.py
 
       - name: Run close-evidence check
         run: |
           set -euo pipefail
-          python3 .github/scripts/check_close_evidence.py /tmp/pr_body.txt "${PR_DIFF:-}"
+          python3 /tmp/check_close_evidence.py /tmp/pr_body.txt "${PR_DIFF:-}"
