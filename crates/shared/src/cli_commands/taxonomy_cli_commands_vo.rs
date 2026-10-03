@@ -591,11 +591,31 @@ pub struct ScanReport {
 
 impl ScanReport {
     pub fn new(results: Vec<LintResult>, diagnostics: Vec<PipelineDiagnostic>) -> Self {
+        let deduped = Self::dedup_parse_diagnostics(diagnostics, &results);
         Self {
             results,
-            diagnostics,
+            diagnostics: deduped,
             score: None,
         }
+    }
+
+    /// Dedup invariant: a parse failure already recorded as a `LintResult`
+    /// with a `PARSE_`-prefixed code in `results` must not be re-recorded as
+    /// a `PipelineDiagnostic` in `diagnostics`, or formatters double-count it
+    /// in the total violation count. At the producer boundary, suppress the
+    /// diagnostic when an equivalent `PARSE_` results entry exists.
+    fn dedup_parse_diagnostics(
+        diagnostics: Vec<PipelineDiagnostic>,
+        results: &[LintResult],
+    ) -> Vec<PipelineDiagnostic> {
+        let has_parse_result = results.iter().any(|r| r.code.code().starts_with("PARSE_"));
+        if !has_parse_result {
+            return diagnostics;
+        }
+        diagnostics
+            .into_iter()
+            .filter(|d| !d.source.contains("parser"))
+            .collect()
     }
 
     /// Return the number of violations (results with severity > INFO).

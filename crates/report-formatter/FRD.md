@@ -50,6 +50,12 @@ flowchart TD
 > `report.results` (as `LintResult` with code starting with `PARSE_`) or
 > via `report.diagnostics` (as `PipelineDiagnostic`). All formatters
 > handle both paths and render them consistently.
+>
+> **Dedup invariant**: a single parse failure must be recorded exactly
+> once per `ScanReport`. `ScanReport::new` enforces this at the producer
+> boundary: when a `PARSE_`-prefixed `LintResult` exists in `results`,
+> parser-sourced `PipelineDiagnostic` entries are dropped from
+> `diagnostics`, so no formatter double-counts the same failure.
 
 ---
 
