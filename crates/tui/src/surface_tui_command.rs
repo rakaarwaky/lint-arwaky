@@ -6,7 +6,7 @@ use crate::surface_preview_view::PreviewView;
 use crate::surface_shortcut_component::ShortcutComponent;
 use crate::surface_status_component::StatusComponent;
 use crate::surface_tree_view::TreeView;
-use crate::{AppState, ScanUpdate, TuiEvent};
+use crate::{AppState, PanelFocus, ScanUpdate, TuiEvent};
 use crossterm::event;
 use crossterm::event::{KeyCode, KeyEvent, MouseEvent, MouseEventKind};
 use crossterm::terminal::{
@@ -160,18 +160,37 @@ impl TuiCommandSurface {
 
                     render_header(state, frame, main_layout[0]);
 
-                    let panel_layout = Layout::default()
-                        .direction(Direction::Horizontal)
-                        .constraints([
-                            Constraint::Percentage(20),
-                            Constraint::Percentage(35),
-                            Constraint::Percentage(45),
-                        ])
-                        .split(main_layout[1]);
-
-                    views.tree.render(state, frame, panel_layout[0]);
-                    views.file_list.render(state, frame, panel_layout[1]);
-                    views.preview.render(state, frame, panel_layout[2]);
+                    let panel_area = main_layout[1];
+                    if shared_tui::utility_tui_theme::is_full_three_column(panel_area.width) {
+                        let panel_layout = Layout::default()
+                            .direction(Direction::Horizontal)
+                            .constraints([
+                                Constraint::Percentage(
+                                    shared_tui::utility_tui_theme::PANEL_TREE_WIDTH_PCT,
+                                ),
+                                Constraint::Percentage(
+                                    shared_tui::utility_tui_theme::PANEL_FILE_LIST_WIDTH_PCT,
+                                ),
+                                Constraint::Percentage(
+                                    shared_tui::utility_tui_theme::PANEL_PREVIEW_WIDTH_PCT,
+                                ),
+                            ])
+                            .split(panel_area);
+                        views.tree.render(state, frame, panel_layout[0]);
+                        views.file_list.render(state, frame, panel_layout[1]);
+                        views.preview.render(state, frame, panel_layout[2]);
+                    } else {
+                        // Narrow terminal: show only the active panel at full width.
+                        // Tab/BackTab cycles between tree, file-list, and preview
+                        // (handled by cycle_focus_forward / cycle_focus_backward).
+                        match state.navigation.panel_focus {
+                            PanelFocus::Tree => views.tree.render(state, frame, panel_area),
+                            PanelFocus::FileList => {
+                                views.file_list.render(state, frame, panel_area)
+                            }
+                            PanelFocus::Preview => views.preview.render(state, frame, panel_area),
+                        }
+                    }
 
                     views.shortcuts.render(state, frame, main_layout[2]);
                     views.status.render(state, frame, main_layout[3]);
