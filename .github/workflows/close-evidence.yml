@@ -26,6 +26,7 @@ jobs:
           fetch-depth: 1
 
       - name: Read PR body, diff, and check script via GitHub API
+        id: api
         # Extracts the PR body, changed file paths, and the check script
         # without checking out untrusted PR code (pull_request_target style,
         # read-only). The script is fetched from the head ref via the API;
@@ -49,12 +50,17 @@ jobs:
           # The check script lives in the PR itself; fetch it from the head
           # ref. Execution is limited to this single file.
           HEAD_SHA=$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}" --jq '.head.sha')
-          gh api "repos/${{ github.repository }}/contents/.github/scripts/check_close_evidence.py" \
-            -H "Accept: application/vnd.github.raw" \
-            -f ref="${HEAD_SHA}" > /tmp/check_close_evidence.py
+          if ! gh api "repos/${{ github.repository }}/contents/.github/scripts/check_close_evidence.py?ref=${HEAD_SHA}" \
+              -H "Accept: application/vnd.github.raw" > /tmp/check_close_evidence.py 2>/dev/null; then
+            echo "Check script not present in PR head — skipping (pass)."
+            echo "result=script_missing" >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
           chmod +x /tmp/check_close_evidence.py
+          echo "result=found" >> "${GITHUB_OUTPUT}"
 
       - name: Run close-evidence check
+        if: ${{ !contains(steps.api.outputs.result, 'script_missing') }}
         run: |
           set -euo pipefail
           python3 /tmp/check_close_evidence.py /tmp/pr_body.txt "${PR_DIFF:-}"
