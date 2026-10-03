@@ -314,28 +314,12 @@ impl SurfaceActionHandler {
                 self.run_action(state, |lp, p, f| lp.fix(p, f))
             }
             // Live fix is destructive — gate it with a confirm prompt (#364).
-            TuiEvent::ActionFixLive => {
-                if state.actions.pending_confirm.is_some() {
-                    // Already in a confirm flow — fall through to the ConfirmAction handler
-                } else {
-                    state.actions.pending_confirm = Some(ConfirmState {
-                        pending: TuiEvent::ActionFixLive,
-                        label: "Apply live fixes to files".to_string(),
-                    });
-                    state.set_status("Confirm: apply live fixes?");
-                }
-                // If we set up the confirm, stop here — ConfirmAction/CANCEL will handle it
-                if state
-                    .actions
-                    .pending_confirm
-                    .as_ref()
-                    .is_some_and(|c| c.pending == TuiEvent::ActionFixLive)
-                {
-                    return;
-                }
-                state.actions.flags.dry_run = false;
-                self.run_action(state, |lp, p, f| lp.fix(p, f))
-            }
+            TuiEvent::ActionFixLive => self.arm_gated(
+                state,
+                TuiEvent::ActionFixLive,
+                "Apply live fixes to files",
+                "Confirm: apply live fixes?",
+            ),
             TuiEvent::ActionCi => self.run_action(state, |lp, p, f| lp.ci(p, f)),
             TuiEvent::ActionOrphan => self.run_action(state, |lp, p, _f| lp.orphan(p)),
             TuiEvent::ActionSecurity => self.run_action(state, |lp, p, _f| lp.security(p)),
@@ -348,27 +332,24 @@ impl SurfaceActionHandler {
                 }
             }
             // ---- I5 confirm gate: destructive actions require explicit confirmation ----
-            TuiEvent::ActionInstall => {
-                state.actions.pending_confirm = Some(ConfirmState {
-                    pending: TuiEvent::ActionInstall,
-                    label: "Install lint-arwaky binaries into PATH".to_string(),
-                });
-                state.set_status("Confirm: install?");
-            }
-            TuiEvent::ActionInit => {
-                state.actions.pending_confirm = Some(ConfirmState {
-                    pending: TuiEvent::ActionInit,
-                    label: "Initialize project setup".to_string(),
-                });
-                state.set_status("Confirm: init?");
-            }
-            TuiEvent::ActionUninstallHook => {
-                state.actions.pending_confirm = Some(ConfirmState {
-                    pending: TuiEvent::ActionUninstallHook,
-                    label: "Uninstall pre-commit hook".to_string(),
-                });
-                state.set_status("Confirm: uninstall hook?");
-            }
+            TuiEvent::ActionInstall => self.arm_gated(
+                state,
+                TuiEvent::ActionInstall,
+                "Install lint-arwaky binaries into PATH",
+                "Confirm: install?",
+            ),
+            TuiEvent::ActionInit => self.arm_gated(
+                state,
+                TuiEvent::ActionInit,
+                "Initialize project setup",
+                "Confirm: init?",
+            ),
+            TuiEvent::ActionUninstallHook => self.arm_gated(
+                state,
+                TuiEvent::ActionUninstallHook,
+                "Uninstall pre-commit hook",
+                "Confirm: uninstall hook?",
+            ),
             TuiEvent::ConfirmAction => {
                 let Some(confirm) = state.actions.pending_confirm.take() else {
                     return;
@@ -426,16 +407,12 @@ impl SurfaceActionHandler {
             }
             TuiEvent::ActionConfigShow => self.run_action_no_path(state, |lp| lp.config_show()),
             // Install hook is destructive — gate it with a confirm prompt (#364).
-            TuiEvent::ActionInstallHook => {
-                if state.actions.pending_confirm.is_some() {
-                    return;
-                }
-                state.actions.pending_confirm = Some(ConfirmState {
-                    pending: TuiEvent::ActionInstallHook,
-                    label: "Install git pre-commit hook".to_string(),
-                });
-                state.set_status("Confirm: install pre-commit hook?");
-            }
+            TuiEvent::ActionInstallHook => self.arm_gated(
+                state,
+                TuiEvent::ActionInstallHook,
+                "Install git pre-commit hook",
+                "Confirm: install pre-commit hook?",
+            ),
             TuiEvent::ActionAdapters => self.run_action_no_path(state, |lp| lp.adapters()),
             TuiEvent::ActionVersion => self.run_action_no_path(state, |lp| lp.version()),
             // ---- Watch: FR-006 says watch is NOT supported in TUI ----
@@ -532,6 +509,21 @@ impl SurfaceActionHandler {
             TuiEvent::CopyToFile => self.copy_to_file(state),
             _ => {}
         }
+    }
+
+    /// Arm the confirm gate for a destructive action.
+    /// No-op if any confirm is already pending (idempotent re-arm) — so a re-press
+    /// of any gated action cannot clobber a pending confirmation (#552).
+    fn arm_gated(&self, state: &mut AppState, event: TuiEvent, label: &str, status: &str) {
+        if state.actions.pending_confirm.is_some() {
+            return;
+        }
+        state.actions.pending_confirm = Some(ConfirmState {
+            pending: event,
+            label: label.to_string(),
+        });
+        state.preview.mode = PreviewMode::ActionOutput;
+        state.set_status(status);
     }
 
     /// Navigate to the parent directory, clamped to the project root boundary.
