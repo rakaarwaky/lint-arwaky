@@ -247,9 +247,33 @@ crate `version`, and `CHANGELOG.md` must move together in the same change.
 
 ## Issue Closure Policy
 
-A **defect/bug issue must not be closed without a PR that includes a regression
-test** demonstrating the reported behavior no longer reproduces. Link the test
-(file + test name) in the closing PR description or comment.
+A **defect/bug issue may only be closed** when **all** of the following requirements are satisfied:
+
+### Mandatory Evidence Types
+
+An issue describing a specific reproducible defect may only be closed with **ONE** of the following:
+
+1. **A linked merged PR** that contains:
+   - A regression test reproducing the defect (per [TEST.md §2.0](TEST.md))
+   - The test file and test name linked in the PR body
+
+2. **A verification comment** posted directly on the issue that includes:
+   - Explicit test output proving the defect no longer reproduces
+   - The regression test artifact or direct evidence (screenshots, logs, etc.)
+
+### Verification Comment Template
+
+> **Verification:**
+>
+> Test `crates/<crate>/tests/regression_<short-name>.rs::test_<name>` passes:
+>
+> ```
+> test output evidence here
+> ```
+>
+> Manual verification confirms the reported defect no longer reproduces.
+
+### Rationale
 
 This policy exists because issues #354, #366, and #368 were previously closed
 while at least one of their originally-reported defects remained in the code —
