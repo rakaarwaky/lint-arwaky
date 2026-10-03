@@ -86,9 +86,7 @@ impl FileListView {
                 ]);
 
                 let item_style = if Some(i) == display_selected {
-                    Style::default()
-                        .bg(theme::color(theme::HIGHLIGHT))
-                        .add_modifier(Modifier::BOLD)
+                    theme::highlight_style()
                 } else {
                     Style::default()
                 };
@@ -120,11 +118,9 @@ impl FileListView {
                 .alignment(Alignment::Center);
             frame.render_widget(paragraph, area);
         } else {
-            let list = List::new(items).block(block).highlight_style(
-                Style::default()
-                    .bg(theme::color(theme::HIGHLIGHT))
-                    .add_modifier(Modifier::BOLD),
-            );
+            let list = List::new(items)
+                .block(block)
+                .highlight_style(theme::highlight_style());
             frame.render_stateful_widget(list, area, &mut list_state);
         }
     }
