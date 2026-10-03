@@ -1,6 +1,6 @@
 [package]
 name = "external-lint-lint-arwaky"
-version = "3.7.1"
+version = "0.1.0"
 edition = "2024"
 description = "External linter adapters (clippy, ruff, eslint, etc.)."
 license = "MIT"
