@@ -49,20 +49,27 @@ The PR must include one of:
 See CONTRIBUTING.md § Issue Closure Policy for the template."""
 
 
-def read_input() -> tuple[str, str]:
-    """Return (pr_body, diff_files_csv) from argv, else from the Actions env.
+def read_body_arg() -> str | None:
+    """Read the body-file argument if present.
 
-    A body-file argument that does not exist fails the job — a missing input
-    must not be read as "no PR body provided".
+    Returns `None` when no file argument was given, so the caller can fall
+    back to the `PR_BODY` env var. A path that does not exist fails the job —
+    a missing input must not be read as "no PR body provided".
     """
-    body_arg = Path(sys.argv[1]) if len(sys.argv) > 1 else None
-    if body_arg is None:
+    if len(sys.argv) <= 1:
+        return None
+    body_arg = Path(sys.argv[1])
+    if not body_arg.is_file():
+        print(f"check_close_evidence: body file not found: {body_arg} — fail")
+        raise SystemExit(1)
+    return body_arg.read_text()
+
+
+def read_input() -> tuple[str, str]:
+    """Return (pr_body, diff_files_csv) from argv, else from the Actions env."""
+    body = read_body_arg()
+    if body is None:
         body = os.environ.get("PR_BODY", "")
-    else:
-        if not body_arg.is_file():
-            print(f"check_close_evidence: body file not found: {body_arg} — fail")
-            raise SystemExit(1)
-        body = body_arg.read_text()
     files = sys.argv[2] if len(sys.argv) > 2 else os.environ.get("PR_DIFF", "")
     return body, files
 
