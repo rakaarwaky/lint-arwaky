@@ -504,6 +504,7 @@ pub fn help_text() -> String {
             shortcut.key_label, shortcut.label
         ));
     }
+    output.push_str("\nFor screen readers, use `lint-arwaky-cli` instead.\n");
     output
 }
 
@@ -573,6 +574,16 @@ mod tests {
         assert_eq!(
             action_for(&key).map(ShortcutAction::to_event),
             Some(TuiEvent::ActionDependencies),
+        );
+    }
+
+    /// #563: the help overlay must point screen-reader users at the CLI.
+    #[test]
+    fn help_text_points_screen_reader_users_at_the_cli() {
+        let help = help_text();
+        assert!(
+            help.contains("For screen readers, use `lint-arwaky-cli` instead."),
+            "help overlay must carry the accessibility pointer; got: {help}"
         );
     }
 }
