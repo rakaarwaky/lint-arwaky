@@ -1,6 +1,7 @@
 use crate::surface_lint_action::SurfaceLintExecutor;
 use crate::{ConfirmState, LintExecutionResult, ScanUpdate};
 use shared_common::FilePath;
+use shared_tui::outcome_label;
 
 use crate::taxonomy_tui_event::TuiEvent;
 use crate::taxonomy_tui_vo::{AppState, BusySlot, PanelFocus, PreviewMode};
@@ -74,7 +75,7 @@ impl SurfaceActionHandler {
             let _ = tx.send(ScanUpdate::Complete {
                 output: result.output,
                 violation_count: result.violation_count,
-                success: result.success,
+                outcome: result.outcome,
             });
         });
 
@@ -96,19 +97,18 @@ impl SurfaceActionHandler {
                 ScanUpdate::Complete {
                     output,
                     violation_count,
-                    success,
+                    outcome,
                 } => {
                     state.finish_scan(violation_count);
                     state.preview.text = output;
                     state.violation_count = violation_count;
                     state.preview.scroll = 0;
                     state.preview.mode = PreviewMode::LintResults;
-                    let status = if success { "Done" } else { "Error" };
+                    let path = state.selected_path();
+                    let status = outcome_label(outcome, &path);
                     state.set_status(format!(
                         "{}: {} | {} violations",
-                        status,
-                        state.selected_path(),
-                        violation_count
+                        status, path, violation_count
                     ));
                 }
                 ScanUpdate::Cancelled => {
@@ -182,7 +182,7 @@ impl SurfaceActionHandler {
             state.violation_count = result.violation_count;
             state.preview.scroll = 0;
             state.preview.mode = state.actions.result_mode;
-            let status = if result.success { "Done" } else { "Error" };
+            let status = outcome_label(result.outcome, &state.selected_path());
             state.set_status(status);
         } else {
             state.set_status(result.output);

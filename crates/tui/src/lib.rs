@@ -20,7 +20,7 @@ pub mod taxonomy_tui_vo;
 // The TUI taxonomy used to live in the shared kernel crate (shared-tui); it
 // moved here because the TUI is its only consumer (issue #572).
 
-pub use shared_tui::LintExecutionResult;
+pub use shared_tui::{LintExecutionResult, LintOutcome};
 pub use taxonomy_tui_event::TuiEvent;
 pub use taxonomy_tui_vo::ActionFlags;
 pub use taxonomy_tui_vo::AdapterInfo;

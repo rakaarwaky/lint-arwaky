@@ -195,7 +195,7 @@ impl FileEntry {
 
 // ─── Lint execution result ─────────────────────────────────────────────
 // Re-exported from shared-tui (single source of truth).
-pub use shared_tui::LintExecutionResult;
+pub use shared_tui::{LintExecutionResult, LintOutcome};
 
 // ─── Scan update ───────────────────────────────────────────────────────
 
@@ -212,7 +212,7 @@ pub enum ScanUpdate {
     Complete {
         output: String,
         violation_count: usize,
-        success: bool,
+        outcome: LintOutcome,
     },
     /// Scan aborted before completion (user pressed Esc while scanning).
     Cancelled,
