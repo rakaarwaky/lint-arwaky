@@ -28,26 +28,24 @@ jobs:
       - name: Read PR body and diff via GitHub API
         # Extracts the PR body and changed file paths without checking out
         # untrusted PR code (pull_request_target style, but read-only).
+        # Body is written to a file; the file path (not content) goes into
+        # GITHUB_ENV to avoid multiline KEY=VALUE format errors.
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           set -euo pipefail
-          BODY_JSON=$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}" --jq '.body // ""')
+          gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}" \
+            --jq '.body // ""' > /tmp/pr_body.txt
           DIFF_FILES=$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/files" --paginate \
             | python3 -c "
-          import sys, json, csv
+          import sys, json
           files = json.load(sys.stdin)
           print(','.join(f['filename'] for f in files))
           ")
-          echo "PR_BODY=${BODY_JSON}" >> "$GITHUB_ENV"
           echo "PR_DIFF=${DIFF_FILES}" >> "$GITHUB_ENV"
 
       - name: Run close-evidence check
-        env:
-          PR_BODY_FILE: /dev/stdin
         run: |
           set -euo pipefail
-          # Write PR body to a temp file for the script.
-          printf '%s' "${PR_BODY:-}" > /tmp/pr_body.txt
           python3 .github/scripts/check_close_evidence.py /tmp/pr_body.txt "${PR_DIFF:-}"

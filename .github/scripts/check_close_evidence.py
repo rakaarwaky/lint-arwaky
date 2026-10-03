@@ -56,7 +56,7 @@ def main() -> int:
     if len(sys.argv) >= 2:
         # Argument mode: first arg is a file containing the PR body.
         body_path = Path(sys.argv[1])
-        pr_body = body_path.read_text() if body_path.exists() else sys.argv[1]
+        pr_body = body_path.read_text() if body_path.exists() else ""
         if len(sys.argv) >= 3:
             diff_files = [f.strip() for f in sys.argv[2].split(",") if f.strip()]
     else:
