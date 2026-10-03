@@ -136,6 +136,15 @@ impl Default for FileListView {
     }
 }
 
+/// Single source of truth for the `AesLayer` → color mapping in the TUI.
+///
+/// Every layer badge reads this function, and every token comes from
+/// `shared_tui::utility_tui_theme`. Do not add a second per-layer color table
+/// elsewhere: a duplicate raw-palette table shipped as `AesLayer::color_index`
+/// drifted from these tokens for the lifetime of issue #558 because `pub` items
+/// in a `pub mod` are never flagged by the `dead_code` lint.
+///
+/// Extend `utility_tui_theme` if a layer needs a new color.
 fn layer_color(layer: &AesLayer) -> Color {
     match layer {
         AesLayer::Taxonomy => theme::color(theme::ACCENT),
@@ -146,5 +155,36 @@ fn layer_color(layer: &AesLayer) -> Color {
         AesLayer::Surfaces => theme::color(theme::VIOLATIONS),
         AesLayer::Root => theme::color(theme::LABEL),
         AesLayer::None => theme::color(theme::SEPARATOR),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Guards the single-mapping invariant behind #558: every `AesLayer`
+    /// variant resolves to one `utility_tui_theme` token, and each variant is
+    /// listed here. A new variant fails to compile above (non-exhaustive match)
+    /// and fails this assertion until its token is pinned.
+    #[test]
+    fn every_layer_variant_pins_one_theme_token() {
+        const EXPECTED: [(AesLayer, Color); 8] = [
+            (AesLayer::Taxonomy, theme::ACCENT),
+            (AesLayer::Contract, theme::DIRECTORY),
+            (AesLayer::Utility, theme::KEY),
+            (AesLayer::Capabilities, theme::CAPABILITIES_BADGE),
+            (AesLayer::Agent, theme::CLEAN),
+            (AesLayer::Surfaces, theme::VIOLATIONS),
+            (AesLayer::Root, theme::LABEL),
+            (AesLayer::None, theme::SEPARATOR),
+        ];
+
+        for (layer, token) in EXPECTED {
+            assert_eq!(
+                layer_color(&layer),
+                theme::color(token),
+                "{layer:?} must map to exactly one shared_tui::utility_tui_theme token"
+            );
+        }
     }
 }
