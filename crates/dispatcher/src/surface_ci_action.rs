@@ -31,6 +31,28 @@ pub struct CiReport {
     pub total_violations: usize,
 }
 
+/// Run a capability's aggregate inside `catch_unwind`. A panicking linter is
+/// logged to `panics` while the rest of the pipeline continues; the caller
+/// never unwinds through the dispatcher.
+pub(crate) fn run_isolated<T, F>(capability: &str, panics: &mut Vec<String>, audit: F) -> T
+where
+    T: Default,
+    F: FnOnce() -> T,
+{
+    match std::panic::catch_unwind(std::panic::AssertUnwindSafe(audit)) {
+        Ok(result) => result,
+        Err(payload) => {
+            let detail = payload
+                .downcast_ref::<String>()
+                .map(|s| s.as_str())
+                .or_else(|| payload.downcast_ref::<&str>().copied())
+                .unwrap_or("unknown panic payload");
+            panics.push(format!("[{capability}] capability panicked: {detail}"));
+            T::default()
+        }
+    }
+}
+
 /// DI container for all aggregates needed by CI validation.
 pub struct CiScanDeps {
     pub code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
@@ -76,7 +98,7 @@ pub fn collect_ci(
 
     // Quality analysis (sync) — isolated, so a panic here cannot unwind
     // through the CI path and kill the host process.
-    let mut results = crate::surface_check_action::run_isolated_ci("quality", &mut panics, || {
+    let mut results = run_isolated("quality", &mut panics, || {
         deps.code_analysis_linter
             .execute(CodeAnalysisRequest::run_analysis(&[]))
             .into_violations()
@@ -87,7 +109,7 @@ pub fn collect_ci(
         .filesystem
         .execute(FilesystemRequest::FileList)
         .into_file_list();
-    let import_res = crate::surface_check_action::run_isolated_ci("import", &mut panics, || {
+    let import_res = run_isolated("import", &mut panics, || {
         deps.import_orchestrator
             .execute(ImportRequest::audit_with_entries(&file_list))
             .into_violations()
@@ -106,7 +128,7 @@ pub fn collect_ci(
         .into_file_list();
     let naming_tests =
         surface_test_entries::build_test_entries(&deps.filesystem, root_path, &ignored.values);
-    let naming_res = crate::surface_check_action::run_isolated_ci("naming", &mut panics, || {
+    let naming_res = run_isolated("naming", &mut panics, || {
         deps.naming_orchestrator
             .execute(NamingRequest::audit_with_tests(
                 &naming_source,
@@ -118,7 +140,7 @@ pub fn collect_ci(
 
     // Orphan detection (sync) — reuse already-fetched ignored paths; isolated
     // like the other capabilities so one panic cannot take down the CI run.
-    let orphan_res = crate::surface_check_action::run_isolated_ci("orphan", &mut panics, || {
+    let orphan_res = run_isolated("orphan", &mut panics, || {
         deps.orphan_orchestrator
             .execute(OrphanRequest::scan(&root, &ignored))
             .into_scan_outcome()

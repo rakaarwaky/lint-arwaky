@@ -32,6 +32,7 @@ use std::path::PathBuf;
 use std::process::{Command, Stdio};
 use std::sync::Arc;
 
+use crate::surface_ci_action::run_isolated;
 use shared_common::utility_subprocess_runner::{subprocess_timeout, wait_for_child};
 
 /// Capability seams exposed alongside the filesystem aggregate, so callers can
@@ -207,53 +208,6 @@ pub fn collect_default_check(
 ///
 /// Each capability runs through `run_isolated`, so one panicking linter is
 /// logged to stderr while the others continue.
-pub(crate) fn run_isolated<F>(
-    capability: &str,
-    panics: &mut Vec<String>,
-    audit: F,
-) -> Vec<ViolationItem>
-where
-    F: FnOnce() -> Vec<ViolationItem>,
-{
-    match std::panic::catch_unwind(std::panic::AssertUnwindSafe(audit)) {
-        Ok(violations) => violations,
-        Err(payload) => {
-            let detail = payload
-                .downcast_ref::<String>()
-                .map(|s| s.as_str())
-                .or_else(|| payload.downcast_ref::<&str>().copied())
-                .unwrap_or("unknown panic payload");
-            panics.push(format!("[{capability}] capability panicked: {detail}"));
-            Vec::new()
-        }
-    }
-}
-
-/// Run one capability's aggregate inside `catch_unwind` for a CI-style call
-/// site whose pipeline works on raw `LintResult` rows (score + severity
-/// counting happen before the `ViolationItem` mapping).
-pub(crate) fn run_isolated_ci<F>(
-    capability: &str,
-    panics: &mut Vec<String>,
-    audit: F,
-) -> Vec<shared_common::LintResult>
-where
-    F: FnOnce() -> Vec<shared_common::LintResult>,
-{
-    match std::panic::catch_unwind(std::panic::AssertUnwindSafe(audit)) {
-        Ok(violations) => violations,
-        Err(payload) => {
-            let detail = payload
-                .downcast_ref::<String>()
-                .map(|s| s.as_str())
-                .or_else(|| payload.downcast_ref::<&str>().copied())
-                .unwrap_or("unknown panic payload");
-            panics.push(format!("[{capability}] capability panicked: {detail}"));
-            Vec::new()
-        }
-    }
-}
-
 fn run_all_linters_in_process(
     path: &str,
     agg: &ScanAggregates,
@@ -358,7 +312,7 @@ fn run_all_linters_in_process(
             .into_violations()
             .iter()
             .map(ViolationItem::from_lint_result)
-            .collect()
+            .collect::<Vec<_>>()
     }));
     on_progress(
         "Quality checks complete".to_string(),
@@ -371,7 +325,7 @@ fn run_all_linters_in_process(
             .into_violations()
             .iter()
             .map(ViolationItem::from_lint_result)
-            .collect()
+            .collect::<Vec<_>>()
     }));
     on_progress("Role checks complete".to_string(), total_files, total_files);
     // Workspace-wide import map so AES201/202/203/205 see cross-member imports
@@ -385,7 +339,7 @@ fn run_all_linters_in_process(
             .into_violations()
             .iter()
             .map(ViolationItem::from_lint_result)
-            .collect()
+            .collect::<Vec<_>>()
     }));
     on_progress(
         "Import checks complete".to_string(),
@@ -398,7 +352,7 @@ fn run_all_linters_in_process(
             .into_violations()
             .iter()
             .map(ViolationItem::from_lint_result)
-            .collect()
+            .collect::<Vec<_>>()
     }));
     on_progress(
         "Naming checks complete".to_string(),
@@ -416,7 +370,7 @@ fn run_all_linters_in_process(
         orphan_violations
             .iter()
             .map(ViolationItem::from_lint_result)
-            .collect()
+            .collect::<Vec<_>>()
     }));
     on_progress(
         "Orphan checks complete".to_string(),
@@ -490,7 +444,7 @@ fn run_all_linters_in_process(
                 .values
                 .iter()
                 .map(ViolationItem::from_lint_result)
-                .collect()
+                .collect::<Vec<_>>()
         });
         external.retain(|v| {
             external_violation_in_scope(
@@ -576,7 +530,7 @@ fn structure_violations_in_scope(target: &str, agg: &ScanAggregates) -> Vec<Viol
             let exists = resolved.is_dir() || agg.fs_seam.io.path_exists(&resolved);
             exists && resolved.starts_with(target_path)
         })
-        .collect()
+        .collect::<Vec<_>>()
 }
 
 /// Run the doc-invariant audit (AES601–AES605) and convert its findings into
@@ -615,7 +569,7 @@ fn doc_violations_in_scope(target: &str, agg: &ScanAggregates) -> Vec<ViolationI
                 severity: shared_common::Severity::HIGH,
             })
         })
-        .collect()
+        .collect::<Vec<_>>()
 }
 
 /// Whether an external-lint violation falls inside the scan scope: its file
@@ -759,7 +713,7 @@ fn run_single_file_scan(
             .into_violations()
             .iter()
             .map(ViolationItem::from_lint_result)
-            .collect()
+            .collect::<Vec<_>>()
     }));
     all.extend(run_isolated("role", &mut panics, || {
         agg.role
@@ -767,7 +721,7 @@ fn run_single_file_scan(
             .into_violations()
             .iter()
             .map(ViolationItem::from_lint_result)
-            .collect()
+            .collect::<Vec<_>>()
     }));
     all.extend(run_isolated("import", &mut panics, || {
         agg.import
@@ -778,7 +732,7 @@ fn run_single_file_scan(
             .into_violations()
             .iter()
             .map(ViolationItem::from_lint_result)
-            .collect()
+            .collect::<Vec<_>>()
     }));
     // AES103 judges the test/bench files, so a one-file scan of a misnamed or
     // nested test file has to reach it. The file itself is the only evidence
@@ -799,7 +753,7 @@ fn run_single_file_scan(
             .into_violations()
             .iter()
             .map(ViolationItem::from_lint_result)
-            .collect()
+            .collect::<Vec<_>>()
     }));
     all.extend(run_isolated("orphan", &mut panics, || {
         let (_graph_ctx, orphan_violations) = agg
@@ -812,7 +766,7 @@ fn run_single_file_scan(
         orphan_violations
             .iter()
             .map(ViolationItem::from_lint_result)
-            .collect()
+            .collect::<Vec<_>>()
     }));
     // External — the MarkdownLint adapter is the only one that lints a single
     // file meaningfully: every other adapter shells out to a project-wide tool
@@ -1002,7 +956,7 @@ fn build_index_ignored(ignored: &[String], scan_root: &std::path::Path) -> Vec<S
                 .filter(|_name| !scan_root_is_fixture)
                 .map(|name| name.to_string()),
         )
-        .collect()
+        .collect::<Vec<_>>()
 }
 
 /// Build parsed `FileEntry`s for the discovered file paths, running the
