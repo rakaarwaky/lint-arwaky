@@ -31,6 +31,28 @@ pub struct CiReport {
     pub total_violations: usize,
 }
 
+/// Run a capability's aggregate inside `catch_unwind`. A panicking linter is
+/// logged to `panics` while the rest of the pipeline continues; the caller
+/// never unwinds through the dispatcher.
+pub(crate) fn run_isolated<T, F>(capability: &str, panics: &mut Vec<String>, audit: F) -> T
+where
+    T: Default,
+    F: FnOnce() -> T,
+{
+    match std::panic::catch_unwind(std::panic::AssertUnwindSafe(audit)) {
+        Ok(result) => result,
+        Err(payload) => {
+            let detail = payload
+                .downcast_ref::<String>()
+                .map(|s| s.as_str())
+                .or_else(|| payload.downcast_ref::<&str>().copied())
+                .unwrap_or("unknown panic payload");
+            panics.push(format!("[{capability}] capability panicked: {detail}"));
+            T::default()
+        }
+    }
+}
+
 /// DI container for all aggregates needed by CI validation.
 pub struct CiScanDeps {
     pub code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
@@ -72,21 +94,26 @@ pub fn collect_ci(
             &ignored.values,
         ));
 
-    // Quality analysis (sync)
-    let mut results = deps
-        .code_analysis_linter
-        .execute(CodeAnalysisRequest::run_analysis(&[]))
-        .into_violations();
+    let mut panics: Vec<String> = Vec::new();
 
-    // Import rules — pass pre-fetched FileEntry data
+    // Quality analysis (sync) — isolated, so a panic here cannot unwind
+    // through the CI path and kill the host process.
+    let mut results = run_isolated("quality", &mut panics, || {
+        deps.code_analysis_linter
+            .execute(CodeAnalysisRequest::run_analysis(&[]))
+            .into_violations()
+    });
+
+    // Import rules — pass pre-fetched FileEntry data; isolated the same way.
     let file_list = deps
         .filesystem
         .execute(FilesystemRequest::FileList)
         .into_file_list();
-    let import_res = deps
-        .import_orchestrator
-        .execute(ImportRequest::audit_with_entries(&file_list))
-        .into_violations();
+    let import_res = run_isolated("import", &mut panics, || {
+        deps.import_orchestrator
+            .execute(ImportRequest::audit_with_entries(&file_list))
+            .into_violations()
+    });
     results.extend(import_res);
 
     // Naming rules — pass pre-fetched FileEntry data.
@@ -101,20 +128,24 @@ pub fn collect_ci(
         .into_file_list();
     let naming_tests =
         surface_test_entries::build_test_entries(&deps.filesystem, root_path, &ignored.values);
-    let naming_res = deps
-        .naming_orchestrator
-        .execute(NamingRequest::audit_with_tests(
-            &naming_source,
-            &naming_tests,
-        ))
-        .into_violations();
+    let naming_res = run_isolated("naming", &mut panics, || {
+        deps.naming_orchestrator
+            .execute(NamingRequest::audit_with_tests(
+                &naming_source,
+                &naming_tests,
+            ))
+            .into_violations()
+    });
     results.extend(naming_res);
 
-    // Orphan detection (sync) — reuse already-fetched ignored paths
-    let (_, orphan_res) = deps
-        .orphan_orchestrator
-        .execute(OrphanRequest::scan(&root, &ignored))
-        .into_scan_outcome();
+    // Orphan detection (sync) — reuse already-fetched ignored paths; isolated
+    // like the other capabilities so one panic cannot take down the CI run.
+    let orphan_res = run_isolated("orphan", &mut panics, || {
+        deps.orphan_orchestrator
+            .execute(OrphanRequest::scan(&root, &ignored))
+            .into_scan_outcome()
+            .1
+    });
     results.extend(orphan_res);
 
     let score = deps
@@ -147,6 +178,12 @@ pub fn collect_ci(
             Severity::MEDIUM => medium_count += 1,
             Severity::LOW => low_count += 1,
             _ => {}
+        }
+    }
+
+    if !panics.is_empty() {
+        for line in &panics {
+            eprintln!("{line}");
         }
     }
 
