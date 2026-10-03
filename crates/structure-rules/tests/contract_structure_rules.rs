@@ -281,33 +281,44 @@ fn aes703_fires_when_a_surface_folder_holds_a_capability() {
 }
 
 #[test]
-fn aes703_stays_silent_when_surface_folder_keeps_utilities() {
+fn aes703_fires_when_surface_folder_holds_utility_files() {
     let tmp = tempfile::tempdir().unwrap();
     let root = tmp.path();
+    // 创建5个surface文件确保surface占主导
     write(
         root.join("crates/cli/surface_scan_command.rs").as_path(),
         "pub fn scan() {}",
     );
     write(
+        root.join("crates/cli/surface_ci_command.rs").as_path(),
+        "pub fn ci() {}",
+    );
+    write(
+        root.join("crates/cli/surface_fix_command.rs").as_path(),
+        "pub fn fix() {}",
+    );
+    write(
+        root.join("crates/cli/surface_config_command.rs").as_path(),
+        "pub fn config() {}",
+    );
+    write(
+        root.join("crates/cli/surface_git_command.rs").as_path(),
+        "pub fn git() {}",
+    );
+    // 添加utility文件（应触发违规）
+    write(
         root.join("crates/cli/utility_output_text_formatter.rs")
             .as_path(),
         "pub fn fmt() {}",
     );
+    // 添加lib.rs
     write(root.join("crates/cli/lib.rs").as_path(), "");
     fs::write(root.join("crates/cli/DESIGN.md"), "# CLI DESIGN\n").unwrap();
     fs::write(root.join("crates/cli/BACKLOG.md"), "# CLI BACKLOG\n").unwrap();
     let findings = audit(root);
     assert!(
-        !has(&findings, "AES703", "surface_has_misplaced_files"),
-        "utility and barrel files inside a surface folder are allowed; got: {findings:#?}"
-    );
-    assert!(
-        !has(&findings, "AES703", "surface_missing_design_md"),
-        "surface with DESIGN.md must be clean; got: {findings:#?}"
-    );
-    assert!(
-        !has(&findings, "AES703", "surface_missing_backlog_md"),
-        "surface with BACKLOG.md must be clean; got: {findings:#?}"
+        has(&findings, "AES703", "surface_has_misplaced_files"),
+        "utility files inside a surface folder are forbidden; got: {findings:#?}"
     );
 }
 

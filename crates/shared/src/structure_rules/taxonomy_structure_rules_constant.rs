@@ -117,6 +117,9 @@ pub const AGENT_PREFIX: &str = "agent_";
 /// The surface layer prefix.
 pub const SURFACE_PREFIX: &str = "surface_";
 
+/// The utility layer prefix.
+pub const UTILITY_PREFIX: &str = "utility_";
+
 /// The root layer prefix, accepted alongside utilities in a surface folder.
 pub const ROOT_PREFIX: &str = "root_";
 

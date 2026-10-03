@@ -2,6 +2,26 @@
 
 ## Unreleased
 
+### AGENTS.md template contract (AES605)
+
+- **Resolved the 12-vs-14 H2 conflict in the AGENTS.md contract.** The heading
+  contract required 12 sections the template never declared (`Project Overview`,
+  `Build & dev`, `Architecture`, `Branch Management`, `Skills`, `Quality gates`),
+  so a document written from the template always failed AES605 and a document
+  that passed could not have been written from the template. The contract now
+  lists the 14 H2s the template actually declares, and `AGENTS.md` was rebuilt
+  from the template so the two match by construction rather than by hand.
+- **Line drift is now checked against `{...}` placeholders.** The old check
+  required every non-blank line to be verbatim template text, which rejected
+  every filled placeholder — the very thing the template instructs authors to
+  fill. Drift is now scoped per H2 section and exempts `{...}` slots, matching
+  the contract the template states: do not rename, reorder, or remove.
+- **The template ships as a literal in the checker.** `AGENTS605` reads it from
+  `capabilities_doc_heading_structure_checker.rs` rather than reading the
+  `aes-docs` skill at runtime, so a workspace without that skill still gets the
+  contract.
+
+
 ### Layer-scoped commands
 
 - **`lint-arwaky-cli` gained one subcommand per AES layer: `taxonomy`,

@@ -23,20 +23,28 @@ impl IStructureSurfacePurityProtocol for SurfacePurityAuditor {
         let ws_root = workspace_root(&root);
         let mut findings = Vec::new();
 
+        // If root is a member sub-dir (like crates/cli-commands), check it directly
+        let root_abs = std::fs::canonicalize(&root).unwrap_or_else(|_| root.clone());
+        let ws_root_abs = std::fs::canonicalize(&ws_root).unwrap_or_else(|_| ws_root.clone());
+        if root_abs != ws_root_abs
+            && root_abs.starts_with(&ws_root_abs)
+            && !root_abs.join("crates").is_dir()
+            && !root_abs.join("modules").is_dir()
+            && !root_abs.join("packages").is_dir()
+        {
+            check_member_folder(&root_abs, &ws_root, &mut findings);
+        }
+
         for member in utility_structure_parsers::member_dirs(&ws_root) {
+            // Check the member folder itself
+            check_member_folder(&member, &ws_root, &mut findings);
+
+            // Check subdirectories (feature folders)
             for folder in utility_structure_parsers::feature_dirs(&member) {
                 if folder_name(&folder) == consts::KERNEL_DIR {
                     continue;
                 }
-                let inventory = utility_structure_parsers::inventory(&folder);
-                if !inventory.is_surface_dominated() {
-                    continue;
-                }
-                let folder_rel = match folder.strip_prefix(&ws_root) {
-                    Ok(p) => p.to_string_lossy().replace('\\', "/"),
-                    Err(_) => folder.to_string_lossy().replace('\\', "/"),
-                };
-                check_surface_folder(&folder, &folder_rel, &ws_root, &inventory, &mut findings);
+                check_member_folder(&folder, &ws_root, &mut findings);
             }
         }
 
@@ -46,7 +54,22 @@ impl IStructureSurfacePurityProtocol for SurfacePurityAuditor {
     }
 }
 
-// ─── Private helpers ───────────────────────────────────────────────────────────
+/// Check a single folder candidate for AES703 violations.
+fn check_member_folder(
+    folder: &std::path::Path,
+    ws_root: &std::path::Path,
+    findings: &mut Vec<StructureFinding>,
+) {
+    let inventory = utility_structure_parsers::inventory(folder);
+    if !inventory.is_surface_dominated() {
+        return;
+    }
+    let folder_rel = match folder.strip_prefix(ws_root) {
+        Ok(p) => p.to_string_lossy().replace('\\', "/"),
+        Err(_) => folder.to_string_lossy().replace('\\', "/"),
+    };
+    check_surface_folder(folder, &folder_rel, ws_root, &inventory, findings);
+}
 
 // ─── Block 3: Constructors, Std Traits, Helpers ────────────
 
@@ -54,12 +77,21 @@ impl IStructureSurfacePurityProtocol for SurfacePurityAuditor {
 /// member directories. If *root* itself holds them, it is the root; if it is
 /// a member directory, its parent is.
 fn workspace_root(root: &std::path::Path) -> std::path::PathBuf {
+    // Case 1: root already has member dirs (crates/, modules/, packages/)
     if root.join("crates").is_dir()
         || root.join("modules").is_dir()
         || root.join("packages").is_dir()
     {
         return root.to_path_buf();
     }
+    // Case 2: root IS a member dir (e.g., crates/cli-commands)
+    // Its parent is the workspace root
+    if let Some(parent) = root.parent().filter(|p| {
+        p.join("crates").is_dir() || p.join("modules").is_dir() || p.join("packages").is_dir()
+    }) {
+        return parent.to_path_buf();
+    }
+    // Case 3: fallback to parent or current
     root.parent()
         .map(|p| p.to_path_buf())
         .unwrap_or_else(|| root.to_path_buf())
@@ -83,20 +115,32 @@ fn check_surface_folder(
     inventory: &shared_structure_rules::taxonomy_structure_rules_vo::FolderInventory,
     findings: &mut Vec<StructureFinding>,
 ) {
-    // Purity: no capabilities or agent files.
+    // Purity: no capabilities, agent, or utility files.
     for file in &inventory.files {
-        let misplaced = file.stem.starts_with(consts::CAPABILITIES_PREFIX)
-            || file.stem.starts_with(consts::AGENT_PREFIX);
-        if !misplaced {
+        let misplaced_kind = if file.stem.starts_with(consts::CAPABILITIES_PREFIX)
+            || file.stem.starts_with(consts::AGENT_PREFIX)
+        {
+            Some("a capability/agent file")
+        } else if file.stem.starts_with(consts::UTILITY_PREFIX) {
+            Some("a utility file")
+        } else {
+            None
+        };
+        let Some(kind) = misplaced_kind else {
             continue;
-        }
+        };
+        let destination = if kind == "a utility file" {
+            "move it to the shared folder"
+        } else {
+            "move it to a feature folder"
+        };
         findings.push(StructureFinding::new(
             consts::RULE_CODE_SURFACE_PURITY,
             consts::SURFACE_PURITY_VIOLATION_MISPLACED_FILES,
             file.rel(ws_root),
             format!(
-                "surface folder '{folder_rel}' holds '{}'; a surface folder carries surface files only — move it to a feature folder",
-                file.name,
+                "surface folder '{folder_rel}' holds '{kind}' ({name}); a surface folder carries surface files only — {destination}",
+                name = file.name,
             ),
         ));
     }

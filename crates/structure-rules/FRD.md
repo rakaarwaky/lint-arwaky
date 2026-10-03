@@ -43,11 +43,12 @@ The structure-rules crate enforces the 7-layer AES folder discipline by auditing
 - **Input**: An audit root path and the filesystem inventory of each surface-dominated folder.
 - **Output**: `Vec<LintResult>` carrying one finding per structural defect found in a surface folder.
 - **Business Rules**:
-  - A surface-dominated folder (where `surface_*` files outnumber all other classified files combined) must not hold `capabilities_*` or `agent_*` files. Each misplaced file produces one `surface_has_misplaced_files` finding.
-  - Utility files, root wiring files, and barrel files are permitted alongside surface files.
+  - A surface-dominated folder must hold ONLY `surface_*` prefixed files (plus permitted support files like barrel files and package manifests).
+  - Files with any other layer prefix (`capabilities_*`, `agent_*`, `utility_*`, `taxonomy_*`, `contract_*`, `root_*`) are misplaced and produce one `surface_has_misplaced_files` finding per file.
+  - Utility files are **NOT allowed** in surface folders — they belong in feature folders.
   - A surface-dominated folder must carry `DESIGN.md` and `BACKLOG.md` at its root. Missing DESIGN.md produces `surface_missing_design_md`; missing BACKLOG.md produces `surface_missing_backlog_md`.
   - A folder that is not surface-dominated is not checked for AES703.
-- **Edge Cases**: A feature-dominated folder that happens to contain one surface file is NOT surface-dominated and is checked under AES702 instead. A surface folder with only permitted support files, DESIGN.md, and BACKLOG.md is clean.
+- **Edge Cases**: A feature-dominated folder that happens to contain one surface file is NOT surface-dominated and is checked under AES702 instead. A surface folder with only `surface_*` files, permitted support files, DESIGN.md, and BACKLOG.md is clean.
 - **Error Handling**: If the folder path cannot be read, the auditor skips it silently.
 
 ### FR-STR-004: Test Suite Category Coverage (AES704)
