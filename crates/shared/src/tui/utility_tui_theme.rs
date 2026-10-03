@@ -1,8 +1,11 @@
 // PURPOSE: TUI theme — central color palette (design tokens) for all TUI views (I7).
 //
-// When the NO_COLOR environment variable is set, all colors become monochrome
-// (white on black background) so the TUI remains readable on dumb terminals
-// and light-theme setups. This covers the whole TUI — not just the status bar.
+// When the NO_COLOR environment variable is set, every color resolved through
+// `color()`/`color_with_override()` becomes `Color::Reset`, delegating
+// foreground and background to the terminal's own defaults. No palette
+// constant may be applied to a `.fg()`/`.bg()` call site without going
+// through this accessor; the only remaining NO_COLOR handling in the TUI is
+// the ASCII glyph substitution in the status bar (#365).
 //
 // Contrast limit: every token here names an ANSI colour, and the terminal
 // emulator — not this application — decides the RGB each name renders to. A
