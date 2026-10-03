@@ -198,13 +198,13 @@ fn render_text(
             let lang = lang_tag(&results[0].file.value);
             println!("[{lang}] {member_name} — {} violations", results.len());
             println!();
-            for r in results {
-                let loc = format_location(&r.file.value, r.line.value(), r.column.value());
-                let hint = resolve_skill_hint_for_file(r.code.code(), &r.file.value);
-                println!("  {} [{}] {}", loc, r.code.code(), r.message.value);
-                println!("    ↳ WHY: {}", r.message.value);
-                println!("    ↳ HOW TO FIX: {}", hint.guidance());
-                println!();
+            // Grouped by rule code, not listed per file: a member that trips 40
+            // rules shows 40 lines rather than 400, and the count beside each
+            // code is what a reader scans for first. CI parses this shape
+            // (`  [CODE] N  ← …`) to confirm the external adapters ran, so the
+            // grouping is part of the contract, not a display preference.
+            for line in code_summary_lines(results) {
+                println!("{line}");
             }
         }
     }
@@ -475,4 +475,31 @@ pub fn status_icon(is_ok: bool) -> &'static str {
     } else {
         "✗"
     }
+}
+
+/// One `  [CODE] N  ← guidance` line per distinct code, sorted by code.
+///
+/// Grouping by code rather than listing every violation is what keeps a member
+/// that trips 40 rules to 40 lines instead of 400, and the count beside each
+/// code is the first thing a reader scans for. CI parses this exact shape to
+/// confirm the external adapters ran end-to-end, so it is a contract: a change
+/// to this format has to change `.github/workflows/ci.yml` in the same commit.
+pub fn code_summary_lines(results: &[&ViolationItem]) -> Vec<String> {
+    let mut code_counts: BTreeMap<String, usize> = BTreeMap::new();
+    let mut code_examples: BTreeMap<String, String> = BTreeMap::new();
+    for r in results {
+        let code = r.code.code().to_string();
+        *code_counts.entry(code.clone()).or_insert(0) += 1;
+        code_examples
+            .entry(code)
+            .or_insert_with(|| r.file.value.clone());
+    }
+    code_counts
+        .iter()
+        .map(|(code, count)| {
+            let example_file = code_examples.get(code).map(|s| s.as_str()).unwrap_or("");
+            let hint = resolve_skill_hint_for_file(code, example_file);
+            format!("  [{code}] {count}  ← {}", hint.guidance())
+        })
+        .collect()
 }
