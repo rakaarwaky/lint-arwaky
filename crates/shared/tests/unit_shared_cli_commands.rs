@@ -251,6 +251,71 @@ fn pipeline_diagnostic_new() {
     assert_eq!(diag.source, "config");
 }
 
+// ── PARSE_WARN dedup invariant (issue #542) ───────────────
+
+/// A parse failure recorded as both a `PARSE_`-prefixed `LintResult` in
+/// `results` and a parser `PipelineDiagnostic` in `diagnostics` must
+/// count once, not twice.
+#[test]
+fn scan_report_suppresses_parser_diagnostic_when_parse_result_exists() {
+    use shared_common::LintResult;
+    let parse_result = LintResult::new_arch(
+        "src/bad.rs",
+        1,
+        "PARSE_WARN",
+        Severity::MEDIUM,
+        "File skipped: parse failure — syntax error",
+    );
+    let double_recorded = vec![
+        LintResult::new_arch(
+            "src/surface.rs",
+            1,
+            "AES201",
+            Severity::CRITICAL,
+            "surface -> capabilities import forbidden",
+        ),
+        parse_result,
+    ];
+    let parse_diagnostic = PipelineDiagnostic::new(
+        "parser".to_string(),
+        "File skipped: parse failure — syntax error".to_string(),
+        DiagnosticSeverity::Warning,
+    );
+    let other_diagnostic = PipelineDiagnostic::new(
+        "config".to_string(),
+        "no config found".to_string(),
+        DiagnosticSeverity::Info,
+    );
+
+    let report = ScanReport::new(double_recorded, vec![parse_diagnostic, other_diagnostic]);
+
+    // The parser diagnostic is suppressed; the unrelated one survives.
+    assert_eq!(report.diagnostics.len(), 1);
+    assert!(report.diagnostics.iter().all(|d| d.source != "parser"));
+    // Both results (incl. the PARSE_ one) still present — the count
+    // reflects each finding once.
+    assert_eq!(report.results.len(), 2);
+    assert_eq!(report.violation_count(), 2);
+
+    // No PARSE_ result: the parser diagnostic is kept (legacy path intact).
+    let no_parse = vec![LintResult::new_arch(
+        "src/surface.rs",
+        1,
+        "AES201",
+        Severity::CRITICAL,
+        "bad import",
+    )];
+    let report2 = ScanReport::new(
+        no_parse,
+        vec![PipelineDiagnostic::new(
+            "parser".to_string(),
+            "File skipped: parse failure — syntax error".to_string(),
+            DiagnosticSeverity::Warning,
+        )],
+    );
+    assert_eq!(report2.diagnostics.len(), 1);
+}
+
 #[test]
 fn pipeline_error_display() {
     assert!(
