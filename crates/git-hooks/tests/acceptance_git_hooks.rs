@@ -16,8 +16,13 @@ use shared_git_hooks::contract_git_hooks_aggregate::IGitHooksAggregate;
 use shared_git_hooks::{
     HookIgnoreUpdateVO, IConfigInitProtocol, IHookInstallProtocol, IHookUninstallProtocol,
 };
+use shared_quality_rules::ICodeAnalysisAggregate;
 use std::sync::Arc;
 use tempfile::TempDir;
+
+fn test_linter() -> Arc<dyn ICodeAnalysisAggregate> {
+    quality_rules::root_quality_rules_container::CodeAnalysisContainer::new().code_analysis_linter()
+}
 
 // ─── Helpers ──────────────────────────────────────────────
 
@@ -27,7 +32,7 @@ fn make_container() -> (TempDir, Arc<dyn IGitHooksAggregate>) {
     let filesystem = fc.orchestrator();
     let io = fc.io();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    let container = GitContainer::new(fp, filesystem, io);
+    let container = GitContainer::new(fp, filesystem, io, test_linter());
     (tmp, container.aggregate())
 }
 

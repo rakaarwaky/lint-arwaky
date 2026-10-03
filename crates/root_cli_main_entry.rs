@@ -441,6 +441,7 @@ fn main() {
         .unwrap_or_default(),
         filesystem.clone(),
         filesystem_io.clone(),
+        code_analysis_linter.clone(),
     );
     let git_orchestrator = git_container.aggregate();
 

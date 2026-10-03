@@ -14,11 +14,13 @@ shared-common.workspace = true
 shared-file-watch.workspace = true
 shared-filesystem.workspace = true
 shared-git-hooks.workspace = true
+shared-quality-rules.workspace = true
 serde_yaml_ng.workspace = true
 tracing.workspace = true
 
 [dev-dependencies]
 filesystem = { workspace = true }
+quality-rules = { workspace = true }
 tempfile = "3"
 criterion = { version = "0.8.2", features = ["html_reports"] }
 

@@ -10,8 +10,13 @@ use shared_git_hooks::GitHooksRequest;
 use shared_git_hooks::IHookInstallProtocol;
 use shared_git_hooks::IHookUninstallProtocol;
 use shared_git_hooks::contract_git_hooks_aggregate::IGitHooksAggregate;
+use shared_quality_rules::ICodeAnalysisAggregate;
 use std::sync::Arc;
 use tempfile::TempDir;
+
+fn test_linter() -> Arc<dyn ICodeAnalysisAggregate> {
+    quality_rules::root_quality_rules_container::CodeAnalysisContainer::new().code_analysis_linter()
+}
 
 fn make_orchestrator() -> Arc<GitHooksOrchestrator> {
     let fc = filesystem::root_filesystem_container::FilesystemContainer::new();
@@ -25,7 +30,7 @@ fn make_orchestrator() -> Arc<GitHooksOrchestrator> {
         tmp_path.to_string_lossy().to_string(),
         io.clone(),
     ));
-    let diff_checker = Arc::new(DiffChecker::new(io.clone()));
+    let diff_checker = Arc::new(DiffChecker::new(io.clone(), test_linter()));
     let config_init = Arc::new(ConfigInit::new(io));
     Arc::new(GitHooksOrchestrator::new(
         diff_checker,
@@ -41,7 +46,7 @@ fn make_container() -> (TempDir, Arc<dyn IGitHooksAggregate>) {
     let filesystem = fc.orchestrator();
     let io = fc.io();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    let container = GitContainer::new(fp, filesystem, io);
+    let container = GitContainer::new(fp, filesystem, io, test_linter());
     (tmp, container.aggregate())
 }
 
@@ -52,7 +57,7 @@ fn container_creates_with_filesystem() {
     let filesystem = fc.orchestrator();
     let io = fc.io();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    let _container = GitContainer::new(fp, filesystem, io);
+    let _container = GitContainer::new(fp, filesystem, io, test_linter());
 }
 
 #[test]
