@@ -5,16 +5,26 @@
 // one seam because they always execute together in the pre-commit flow.
 
 use std::collections::HashSet;
+use std::path::Path;
 
-use shared_cli_commands::LintResultList;
-use shared_common::taxonomy_common_vo::Count;
+use shared_cli_commands::{LintResult, LintResultList};
+use shared_common::taxonomy_adapter_name_vo::AdapterName;
+use shared_common::taxonomy_common_vo::{ColumnNumber, Count, LineNumber};
+use shared_common::taxonomy_error_vo::ErrorCode;
 use shared_common::taxonomy_git_vo::GitBranchName;
+use shared_common::taxonomy_lint_vo::LocationList;
+use shared_common::taxonomy_message_vo::LintMessage;
 use shared_common::taxonomy_path_vo::FilePath;
 use shared_common::taxonomy_paths_vo::{FilePathList, RenamedFile, RenamedFileList};
+use shared_common::taxonomy_severity_vo::Severity;
 use shared_file_watch::GitDiffResultVO;
 use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared_filesystem::taxonomy_filesystem_vo::FileEntry;
 use shared_git_hooks::contract_git_hooks_protocol::IDiffDetectionProtocol;
 use shared_git_hooks::taxonomy_git_hooks_constant::LINTABLE_EXTENSIONS;
+use shared_quality_rules::Language;
+use shared_quality_rules::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
+use shared_quality_rules::taxonomy_quality_rules_request::CodeAnalysisRequest;
 
 use std::sync::Arc;
 
@@ -24,10 +34,32 @@ pub fn is_lintable_file(fp: &FilePath) -> bool {
     LINTABLE_EXTENSIONS.contains(&ext.as_str())
 }
 
+/// Code carried by analysis-failure results, so "analysis could not run" is
+/// reported distinctly from AES rule violations in `run_git_diff_check` output.
+pub const ANALYSIS_FAILURE_CODE: &str = "GIT_HOOK_ANALYSIS_FAILURE";
+
+/// One analysis-failure result (read error or aggregate panic). Non-empty
+/// output blocks the commit like a violation, but the code and CRITICAL
+/// severity identify it as an infrastructure failure, not an AES finding.
+fn analysis_failure(file: &str, msg: impl Into<String>) -> LintResult {
+    LintResult {
+        file: FilePath::new(file.to_string()).unwrap_or_default(),
+        line: LineNumber::new(0),
+        column: ColumnNumber::new(0),
+        code: ErrorCode::raw(ANALYSIS_FAILURE_CODE),
+        message: LintMessage::new(msg),
+        source: Some(AdapterName::raw("git-hooks")),
+        severity: Severity::CRITICAL,
+        enclosing_scope: None,
+        related_locations: LocationList::new(),
+    }
+}
+
 // ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct DiffChecker {
     io: Arc<dyn IFileSystemIOProtocol>,
+    code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
 }
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
@@ -94,24 +126,80 @@ impl IDiffDetectionProtocol for DiffChecker {
         let changed_files = self.collect_changed_files_sync(path, &default_branch);
 
         // Filter to lintable source files only
-        let _lintable: Vec<FilePath> = changed_files
+        let lintable: Vec<FilePath> = changed_files
             .values
             .iter()
             .filter(|f| is_lintable_file(f))
             .cloned()
             .collect();
+        if lintable.is_empty() {
+            return LintResultList::new(Vec::new());
+        }
 
-        // TODO: delegate to linter aggregates for AES analysis on lintable files.
-        // Requires linter aggregate integration — returns empty for now.
-        LintResultList::new(Vec::new())
+        // Build FileEntry list for the linter aggregate, tracking read failures.
+        let mut entries: Vec<FileEntry> = Vec::with_capacity(lintable.len());
+        let mut failures: Vec<LintResult> = Vec::new();
+        for fp in &lintable {
+            let joined = Path::new(&path.value).join(&fp.value);
+            match self.io.read_to_string(&joined) {
+                Ok(content) => entries.push(FileEntry {
+                    path: joined,
+                    extension: fp.extension(),
+                    language: Language::from_extension(&fp.extension())
+                        .unwrap_or(Language::Unknown),
+                    size: content.value.len() as u64,
+                    content: content.value,
+                    parse_ok: true,
+                    parse_metadata: None,
+                }),
+                // Deleted or renamed-away files still appear in git diff; they
+                // cannot be analysed and are skipped silently (FRD: invalid
+                // FilePath from git output → skipped silently). A symlink whose
+                // target is missing is NOT a deletion: the entry is on disk and
+                // the read failure is an analysis failure. Any other read
+                // failure is likewise reported distinctly.
+                Err(e)
+                    if e.kind() == std::io::ErrorKind::NotFound && !self.io.is_symlink(&joined) => {
+                }
+                Err(e) => failures.push(analysis_failure(
+                    &fp.value,
+                    format!("failed to read changed file for analysis: {e}"),
+                )),
+            }
+        }
+
+        if !entries.is_empty() {
+            // Delegate to the linter aggregate: AES analysis over changed files.
+            // A panicking aggregate must not crash the hook: the failure is
+            // reported distinctly from violations (FRD Integration Points).
+            let violations = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                self.code_analysis_linter
+                    .execute(CodeAnalysisRequest::run_analysis(&entries))
+                    .into_violations()
+            }))
+            .unwrap_or_else(|_| {
+                vec![analysis_failure(
+                    &path.value,
+                    "AES analysis panicked over changed files",
+                )]
+            });
+            failures.extend(violations);
+        }
+        LintResultList::new(failures)
     }
 }
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
 impl DiffChecker {
-    pub fn new(io: Arc<dyn IFileSystemIOProtocol>) -> Self {
-        Self { io }
+    pub fn new(
+        io: Arc<dyn IFileSystemIOProtocol>,
+        code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
+    ) -> Self {
+        Self {
+            io,
+            code_analysis_linter,
+        }
     }
 
     fn get_default_branch_sync(&self, project_path: &FilePath) -> String {
