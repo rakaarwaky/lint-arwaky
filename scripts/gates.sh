@@ -19,30 +19,17 @@ NPROC=$(nproc 2>/dev/null || sysctl -n hw.logicalcpu 2>/dev/null || echo 4)
 export CARGO_BUILD_JOBS="${CARGO_BUILD_JOBS:-$NPROC}"
 export CARGO_INCREMENTAL=0  # enables sccache caching (5.5× speedup on rebuild)
 
-# Linked worktrees share the main checkout's target dir: cargo keys build
-# artifacts by absolute source path, so a per-worktree target cold-recompiles
-# ~200 crates and turns the test gate from ~13s into a multi-minute build.
-# An explicit CARGO_TARGET_DIR in the environment always wins.
-if [ -z "${CARGO_TARGET_DIR:-}" ]; then
-    common_dir=$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null || true)
-    current_dir=$(git rev-parse --absolute-git-dir 2>/dev/null || true)
-    # Linked worktrees have a per-worktree gitdir under the common dir; the
-    # main checkout's gitdir IS the common dir.
-    if [ -n "$common_dir" ] && [ -n "$current_dir" ] && [ "$current_dir" != "$common_dir" ]; then
-        # For submodules the main tree is recorded as a relative core.worktree
-        # in the common dir's config; for normal repos it's the gitdir's parent.
-        main_tree=$(git config --file "$common_dir/config" core.worktree 2>/dev/null || true)
-        if [ -n "$main_tree" ]; then
-            main_tree=$(cd "$common_dir/$main_tree" 2>/dev/null && pwd)
-        else
-            main_tree=$(cd "$common_dir/.." 2>/dev/null && pwd)
-        fi
-        if [ -n "$main_tree" ] && [ -f "$main_tree/Cargo.toml" ]; then
-            export CARGO_TARGET_DIR="$main_tree/target"
-            echo "linked worktree: reusing build cache at $CARGO_TARGET_DIR"
-        fi
-    fi
-fi
+# Each worktree builds into its own ./target/. Sharing one target dir across
+# worktrees trades ~120s of rebuild for a wrong answer: cargo keys artifacts by
+# absolute source path, so a crate compiled in the main checkout stays valid for
+# a linked worktree even after that worktree changes the crate's source. The
+# consumer then compiles against a stale rlib — observed as
+# `cannot find function 'highlight_style' in module 'theme'` on a worktree that
+# defines the function, passing on a rerun only once the main checkout happened
+# to rebuild it. Correctness wins over build time here.
+#
+# An explicit CARGO_TARGET_DIR in the environment still wins, for callers that
+# manage their own cache.
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -148,7 +135,7 @@ ph3_start=$SECONDS
 echo -e "\n${CYAN}━━━ Phase 3: Tests (build) then Self-Lint + Scans (parallel) ━━━${NC}"
 
 # Resolve the CLI from wherever cargo actually built it: with CARGO_TARGET_DIR
-# set (shared cache across worktrees) the binary lands there, not in ./target.
+# set by the caller the binary lands there, not in ./target.
 if [ -n "${CARGO_TARGET_DIR:-}" ]; then
     export CLI="${CARGO_TARGET_DIR}/debug/lint-arwaky-cli"
 else
