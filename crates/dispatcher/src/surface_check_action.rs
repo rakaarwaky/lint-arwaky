@@ -34,6 +34,12 @@ use std::sync::Arc;
 
 use shared_common::utility_subprocess_runner::{subprocess_timeout, wait_for_child};
 
+// Re-exported so the cancel-aware scan path stays reachable at its historical
+// import site (`surface_check_action::collect_scan_with_cancel` /
+// `CancellableScanOutcome`) after that block moved to
+// `surface_scan_cancel_action`.
+pub use crate::surface_scan_cancel_action::{CancellableScanOutcome, collect_scan_with_cancel};
+
 /// Capability seams exposed alongside the filesystem aggregate, so callers can
 /// dispatch individual protocol operations without leaking the aggregate layer.
 #[derive(Clone)]
@@ -126,7 +132,7 @@ where
 
 /// Canonicalize a scan root (falling back to the raw path when the filesystem
 /// cannot canonicalize it, e.g. the path does not exist yet).
-fn canonicalize_scan_root(io: &Arc<dyn IFileSystemIOProtocol>, root: &str) -> String {
+pub(crate) fn canonicalize_scan_root(io: &Arc<dyn IFileSystemIOProtocol>, root: &str) -> String {
     io.canonicalize(std::path::Path::new(root))
         .unwrap_or_else(|_| PathBuf::from(root))
         .to_string_lossy()
@@ -135,7 +141,11 @@ fn canonicalize_scan_root(io: &Arc<dyn IFileSystemIOProtocol>, root: &str) -> St
 
 /// Resolve the member-scoped scan target, validating it against discovered
 /// workspaces when a multi-project orchestrator is available.
-fn validate_member_path(opts: &ScanOptions, root: &str, member: &str) -> Result<String, String> {
+pub(crate) fn validate_member_path(
+    opts: &ScanOptions,
+    root: &str,
+    member: &str,
+) -> Result<String, String> {
     if let Some(ref orchestrator) = opts.multi_project_orchestrator {
         let root_fp = FilePath::new(root.to_string()).map_err(|_| "invalid path".to_string())?;
         let workspaces = orchestrator
@@ -163,7 +173,10 @@ fn validate_member_path(opts: &ScanOptions, root: &str, member: &str) -> Result<
 }
 
 /// Apply the optional case-insensitive code filter to a violation list.
-fn apply_filter(mut violations: Vec<ViolationItem>, filter: &Option<String>) -> Vec<ViolationItem> {
+pub(crate) fn apply_filter(
+    mut violations: Vec<ViolationItem>,
+    filter: &Option<String>,
+) -> Vec<ViolationItem> {
     if let Some(filter_str) = filter {
         let filter_upper = filter_str.to_uppercase();
         violations.retain(|v| v.code.code().contains(&filter_upper));
@@ -479,7 +492,10 @@ fn run_all_linters_in_process(
 /// scan target. Structure findings carry workspace-root-relative paths, so they
 /// resolve against the workspace root (the target itself, or its parent when
 /// the target is a member directory).
-fn structure_violations_in_scope(target: &str, agg: &ScanAggregates) -> Vec<ViolationItem> {
+pub(crate) fn structure_violations_in_scope(
+    target: &str,
+    agg: &ScanAggregates,
+) -> Vec<ViolationItem> {
     let target_path = std::path::Path::new(target);
     // The audit resolves the workspace root the same way; mirror that here so
     // a finding path joins onto the right base.
@@ -515,7 +531,7 @@ fn structure_violations_in_scope(target: &str, agg: &ScanAggregates) -> Vec<Viol
 /// scan target; a finding names a document that must exist inside the target,
 /// so out-of-scope or stale findings are dropped like structure findings.
 /// All doc rules are HIGH-severity invariant failures → `Severity::HIGH`.
-fn doc_violations_in_scope(target: &str, agg: &ScanAggregates) -> Vec<ViolationItem> {
+pub(crate) fn doc_violations_in_scope(target: &str, agg: &ScanAggregates) -> Vec<ViolationItem> {
     let target_path = std::path::Path::new(target);
     let target_canon = agg
         .fs_seam
@@ -556,7 +572,7 @@ fn doc_violations_in_scope(target: &str, agg: &ScanAggregates) -> Vec<ViolationI
 /// dirs — the AES linters only lint `crates`/`packages`/`modules`, so root
 /// level files (e.g. a packaging `setup.py`) are out of scope for the external
 /// adapters too.
-fn external_violation_in_scope(
+pub(crate) fn external_violation_in_scope(
     v: &ViolationItem,
     seam: &FilesystemSeam,
     target_canon: &std::path::Path,
@@ -580,7 +596,7 @@ fn external_violation_in_scope(
 /// When `member_dirs` is `Some` (workspace root target), the violation must
 /// additionally resolve inside one of the member dirs — root-level packaging
 /// files (e.g. setup.py) are out of scope for every linter.
-fn violation_in_scan_scope(
+pub(crate) fn violation_in_scan_scope(
     v: &ViolationItem,
     seam: &FilesystemSeam,
     target_canon: &std::path::Path,
@@ -612,7 +628,7 @@ fn violation_in_scan_scope(
 /// workspace root, which is the target's parent when a member directory is the
 /// scan target. Those do not resolve under the target, so a relative path that
 /// misses there is retried against the parent workspace before being kept.
-fn resolve_violation_path(
+pub(crate) fn resolve_violation_path(
     v: &ViolationItem,
     seam: &FilesystemSeam,
     target_canon: &std::path::Path,
@@ -633,7 +649,7 @@ fn resolve_violation_path(
 }
 
 /// Run all 6 linters on a single-file target, returning in-scope violations.
-fn run_single_file_scan(
+pub(crate) fn run_single_file_scan(
     seam: &FilesystemSeam,
     scan_root: &std::path::Path,
     agg: &ScanAggregates,
@@ -763,7 +779,7 @@ fn run_single_file_scan(
 /// Discover lintable source files under `scan_root` matching the index walk:
 /// under a workspace root only member dirs carry source; elsewhere member-dir
 /// names and fixture dirs are skipped. Returns the discovered file paths.
-fn discover_lintable_files(
+pub(crate) fn discover_lintable_files(
     seam: &FilesystemSeam,
     scan_root: &std::path::Path,
     ignored: &[String],
@@ -798,7 +814,7 @@ fn discover_lintable_files(
 /// path that does not prune `tests/` and `benches`; this only asks for it by
 /// the names the AES103 vocabulary fixes, so a change to the layout rules
 /// cannot leave this call pointing at the old names.
-fn discover_test_suite_files(
+pub(crate) fn discover_test_suite_files(
     seam: &FilesystemSeam,
     scan_root: &std::path::Path,
     ignored: &[String],
@@ -816,7 +832,7 @@ fn discover_test_suite_files(
 /// plus member dirs when not at a workspace root, plus fixture dirs when they
 /// are not the scan target itself (a `check .` of the repo root must never
 /// lint `workspaces-bad/good`, but a direct fixture scan must lint its files).
-fn build_skip_dirs(
+pub(crate) fn build_skip_dirs(
     is_ws_root: bool,
     scan_root: &std::path::Path,
 ) -> std::collections::HashSet<&'static str> {
@@ -844,7 +860,7 @@ fn build_skip_dirs(
 /// Breadth-first walk into subdirectories of `scan_root`, collecting lintable
 /// source files. At a workspace root the depth-0 level is gated to member dirs
 /// only; deeper levels enter every subdir. `discovered` is extended in place.
-fn bfs_enter_subdirs(
+pub(crate) fn bfs_enter_subdirs(
     seam: &FilesystemSeam,
     scan_root: &std::path::Path,
     skip_dirs: &std::collections::HashSet<&str>,
@@ -904,7 +920,7 @@ fn bfs_enter_subdirs(
 /// sibling source. An explicit fixture scan keeps its own tree: the fixture
 /// names are omitted then, since an ignore entry matching the scan root's own
 /// name would suppress the entire subtree.
-fn build_index_ignored(ignored: &[String], scan_root: &std::path::Path) -> Vec<String> {
+pub(crate) fn build_index_ignored(ignored: &[String], scan_root: &std::path::Path) -> Vec<String> {
     let fixture_names: [&str; 2] = ["workspaces-bad", "workspaces-good"];
     let scan_root_is_fixture = scan_root
         .file_name()
@@ -925,7 +941,7 @@ fn build_index_ignored(ignored: &[String], scan_root: &std::path::Path) -> Vec<S
 
 /// Build parsed `FileEntry`s for the discovered file paths, running the
 /// tree-sitter parse so `parse_metadata` is populated for the auditors.
-fn build_entries(
+pub(crate) fn build_entries(
     seam: &FilesystemSeam,
     discovered: &[String],
 ) -> Vec<shared_filesystem::taxonomy_filesystem_vo::FileEntry> {
@@ -972,7 +988,7 @@ fn build_entries(
 /// Merge the out-of-scope import snapshot with in-scope parser imports into
 /// a workspace-wide import map keyed by absolute source path, so
 /// AES201/202/203/205 see cross-member imports.
-fn build_import_map(
+pub(crate) fn build_import_map(
     seam: &FilesystemSeam,
     entries: &[shared_filesystem::taxonomy_filesystem_vo::FileEntry],
 ) -> std::collections::HashMap<String, Vec<shared_filesystem::taxonomy_filesystem_vo::ImportEntry>>
@@ -1008,7 +1024,10 @@ fn build_import_map(
 }
 
 /// Run all 6 linters as subprocesses with `--format json`, collect ViolationItems.
-fn run_all_linters_json(path: &str, seam: &FilesystemSeam) -> Result<Vec<ViolationItem>, String> {
+pub(crate) fn run_all_linters_json(
+    path: &str,
+    seam: &FilesystemSeam,
+) -> Result<Vec<ViolationItem>, String> {
     let exe_path = match std::env::current_exe() {
         Ok(p) => p,
         Err(_) => std::path::PathBuf::from("lint-arwaky-cli"),
