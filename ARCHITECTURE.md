@@ -61,11 +61,14 @@ groups files by feature, with layers as filenames, not directories.
 _Example feature crate `crates|packages|modules/<name-features>/`_
 
 ```text
-surface_<concern>_<role>.rs/py/ts                ← surface layer
-utility_<concern>_<role>.rs/py/ts                ← utility layer
 capabilities_<concern>_<role>.rs/py/ts           ← capabilities layer
 agent_<concern>_orchestrator.rs/py/ts            ← agent layer
 ```
+
+A feature folder holds capabilities and agent files only. A `surface_*`,
+`utility_*`, `taxonomy_*`, or `contract_*` file inside a feature folder is
+misplaced (**AES702** `feature_has_forbidden_files`). Surface files belong in
+a surface folder; utility files belong in the `shared/` kernel folder.
 
 Exceptions: `main.rs`, `lib.rs`, `mod.rs`, `__init__.py`, `index.ts`, `index.js`.
 
@@ -80,9 +83,16 @@ taxonomy_<concern>_vo.rs/py/ts                   ← taxonomy layer
 taxonomy_<concern>_event.rs/py/ts                ← taxonomy layer
 taxonomy_<concern>_entity.rs/py/ts               ← taxonomy layer
 taxonomy_<concern>_constant.rs/py/ts             ← taxonomy layer
+utility_<concern>_<role>.rs/py/ts                ← utility layer (shared folder only, AES701)
 ```
 
 `shared` folder groups by domain. Use `shared/common/` for generic files.
+
+The shared folder is the only place utility files may live. A `utility_*`
+file in a feature folder fires **AES702** (`feature_has_forbidden_files`);
+in a surface folder fires **AES703** (`surface_has_misplaced_files`).
+Feature and surface crates consume utility functions through their layer's
+import rules; they do not own or co-locate utility files.
 
 ### General Workspace Layout
 
@@ -163,9 +173,11 @@ capabilities and no orchestrator is not a feature and owes no document pair.
 #### Surface folders
 
 A surface folder is named for the kind of surface it serves: `api`, `mcp`, `cli`,
-`desktop`, `tui`. It carries surface files only — a `capabilities_*` or `agent_*`
-file inside one is misplaced (**AES703**). Utility files, root wiring, and barrels
-are permitted alongside the surfaces.
+`desktop`, `tui`. It carries surface files only — a `capabilities_*`, `agent_*`,
+or `utility_*` file inside one is misplaced (**AES703**). Root wiring and
+barrel files (`lib.rs`, `mod.rs`, `Cargo.toml`, ...) are permitted alongside
+the surfaces. A `utility_*` file must live in the `shared/` kernel folder;
+move it there if it appears in a surface folder.
 
 A surface folder carries `DESIGN.md`, recording the surface's kind, its entry
 points, and the states a user sees. Its level-2 headings are fixed by the
@@ -270,6 +282,12 @@ Utility role suffixes are unlimited. The role name is chosen based on demand and
 
 Utility may depend only on Taxonomy.
 
+Utility files live only in the `shared/` kernel folder (AES701). Feature
+and surface crates consume utility functions via import; they do not own
+or co-locate `utility_*` files. A `utility_*` file in a feature folder is
+misplaced (AES702 `feature_has_forbidden_files`); a `utility_*` file in a
+surface folder is misplaced (AES703 `surface_has_misplaced_files`).
+
 ### Technical Concern Examples
 
 | Concern                 | Responsibility                                      |
@@ -364,32 +382,41 @@ Agent may depend only on Taxonomy, Contract, and Utility.
 - Agent must not calculate business results.
 - Agent must not define domain models.
 
-### Cross-Feature Orchestrators (`dispatcher`)
+### Cross-Feature Router (`dispatcher`)
 
 Every feature crate owns a single-feature `agent_<feature>_orchestrator`. The
-workspace-level `dispatcher` crate is the **cross-feature** equivalent: an
-orchestrator-of-orchestrators that composes several features' Contract
-Aggregates into one executable flow (scan, ci, fix, setup, ...). Because the
-per-feature `agent` role is strictly single-feature, the dispatcher uses its own
-role name and file suffix:
+workspace-level `dispatcher` crate is the **cross-feature** surface router:
+it sequences per-feature Contract Aggregates and Protocols into executable
+flows (scan, ci, fix, setup, ...). The dispatcher itself performs no business
+calculation; it delegates every domain decision to the feature's aggregate.
 
-| Role                          | File pattern                              | Allowed Imports                                                     | Forbidden Imports          |
-| ----------------------------- | ----------------------------------------- | -------------------------------------------------------------------- | --------------------------- |
-| Cross-feature orchestrator    | `orchestrator_<concern>_pipeline`         | Taxonomy, Contract (aggregate + protocol), Utility                    | Capabilities, Surface, Root |
+| Role                     | File pattern                        | Allowed Imports                                     | Forbidden Imports          |
+| ------------------------ | ---------------------------------- | --------------------------------------------------- | --------------------------- |
+| Cross-feature router     | `surface_<concern>_action`         | Taxonomy, Contract (aggregate + protocol), Utility  | Capabilities, Surface, Root |
+
+"Utility" in the allowed-imports column refers to `utility_*` files in the
+`shared/` kernel only (AES701). The dispatcher crate does not own or co-locate
+utility files; it imports them from `shared`.
 
 Rules:
 
-- Dispatcher files are named `orchestrator_<concern>_pipeline.rs` — never with
-  a Surface `_action` suffix, which is reserved for Taxonomy-only Utility
-  surfaces and previously made Surface crates treat dispatcher as a same-layer
-  peer (see issue #570/#580).
-- Surface crates (cli-commands, mcp-server, tui) must **not** depend on the
-  `dispatcher` crate directly. They reach cross-feature flows only through the
-  `IOrchestrationAggregate` contract re-exported from the `shared-orchestration`
-  crate; the dispatcher implements that aggregate internally. The composition
-  root (`root_entry_container.rs`) injects the implementation.
-- A workspace dependency-graph test (`tests/architecture_boundaries.rs`) fails
-  the build if any Surface crate re-adds a direct edge to `dispatcher`.
+- Dispatcher files are named `surface_<concern>_action.rs`. The `_action`
+  suffix in the dispatcher crate denotes a **cross-feature router**, not a
+  Taxonomy-only Utility surface. The AES201 exception below governs this.
+- Surface crates (cli-commands, mcp-server, tui) currently depend on the
+  `dispatcher` crate directly. The `IOrchestrationAggregate` contract is the
+  planned indirection; until it lands, Surface crates import
+  `dispatcher::<concern>_action::collect_*` directly.
+- Dispatcher is exempt from the Utility-surface import restriction in
+  §10: the dispatcher crate's `surface_*_action` files are the sole permitted
+  surface files that may import Contract Aggregates and Protocols, because
+  their role is cross-feature routing, not passive data/state.
+
+**AES201 exception — cross-feature router:**
+
+| Scope                        | Allowed Imports                                   | Mandatory Imports | Forbidden Imports         |
+| ---------------------------- | ------------------------------------------------- | ----------------- | ------------------------- |
+| `surface(action)` (dispatcher crate only) | Taxonomy, Contract (aggregate + protocol), Utility | None               | Capabilities, Surface, Root |
 
 ---
 
@@ -422,6 +449,7 @@ Surface roles include:
 | Smart surfaces   | command, controller, page, router | Taxonomy, Contract Aggregate, Utility | Agent, Capabilities, Contract Protocol, Root              | May initiate feature behavior through aggregate |
 | Utility surfaces | hook, store, action, screen       | Taxonomy                            | Agent, Capabilities, Contract, Utility, Other surfaces, Root | Support smart surfaces, data/state only         |
 | Passive surfaces | component, view, layout           | Taxonomy                            | Agent, Contract, Capabilities, Other surfaces, Root        | Presentation-only, no logic or orchestration    |
+| Cross-feature router | action (dispatcher crate only)   | Taxonomy, Contract (aggregate + protocol), Utility | Agent, Capabilities, Surface, Root | See §9 AES201 exception                          |
 
 ### Special Rules
 

@@ -60,7 +60,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the full 7-layer specification.
 | -------- | -------------------- | ---------- | ----------- | ---------------------------------------------------------------------------------------------- |
 | AES701 | Shared Folder Purity | HIGH     | Structure | A `shared` folder holds a `capabilities_*`, `agent_*`, or `surface_*` file.                  |
 | AES702 | Feature Folder Health | MEDIUM   | Structure | A feature folder lacks an `agent_*_orchestrator` or a `capabilities_*` file, holds foreign layer files, or lacks its doc pair.                                  |
-| AES703 | Surface Folder Purity | MEDIUM   | Structure | A surface folder holds a `capabilities_*` or `agent_*` file, or lacks DESIGN.md.                               |
+| AES703 | Surface Folder Purity | MEDIUM   | Structure | A surface folder holds a `capabilities_*`, `agent_*`, or `utility_*` file, or lacks DESIGN.md.              |
 | AES704 | Test Suite Coverage | MEDIUM   | Structure | A feature folder lacks a `tests/` category or its `benches/` benchmark.                                      |
 | AES705 | Member-Root Placement | MEDIUM   | Structure | A `crates/`, `modules/`, or `packages/` root holds a loose `capabilities_*`, `agent_*`, `surface_*`, or `utility_*` file. |
 
@@ -643,11 +643,11 @@ The check is per folder. A member-level orchestrator — one sitting directly un
 
 **Severity:** MEDIUM
 
-A surface folder is a folder where surface files dominate — it has more surface files than all other layers combined. Such a folder must contain surface files only. Any `capabilities_*` or `agent_*` file in a surface folder is misplaced and should move to a feature folder. Utility files, barrels, and entry-point wrappers are permitted alongside surfaces.
+A surface folder is a folder where surface files dominate — it has more surface files than all other layers combined. Such a folder must contain surface files only. Any `capabilities_*`, `agent_*`, or `utility_*` file in a surface folder is misplaced: capability and agent files move to a feature folder, utility files move to the `shared/` kernel folder. Barrel files and entry-point wrappers are permitted alongside surfaces.
 
 | Violation type                       | Fires when                                                             |
 | -------------------------------------- | ------------------------------------------------------------------------ |
-| `surface_has_misplaced_files` | A surface-dominated folder holds a `capabilities_*` or `agent_*` file. |
+| `surface_has_misplaced_files` | A surface-dominated folder holds a `capabilities_*`, `agent_*`, or `utility_*` file. |
 
 ---
 
