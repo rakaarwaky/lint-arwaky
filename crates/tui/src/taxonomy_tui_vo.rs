@@ -291,6 +291,24 @@ pub struct ScanProgressState {
     pub violations: usize,
 }
 
+/// The one long-running operation family allowed to hold the busy slot.
+/// Scans and background actions contend for the same rayon pool, so exactly one
+/// of them may be in flight at a time (#577).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum BusySlot {
+    Scan,
+    Action,
+}
+
+impl std::fmt::Display for BusySlot {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            BusySlot::Scan => write!(f, "scan"),
+            BusySlot::Action => write!(f, "action"),
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct ActionState {
     pub flags: ActionFlags,
@@ -444,6 +462,43 @@ impl AppState {
 
     pub fn set_status(&mut self, msg: impl Into<String>) {
         self.status_message = msg.into();
+    }
+
+    /// Claim the single long-operation slot held by `operation`, or decline it.
+    ///
+    /// A scan and a background action each fan out onto the process-global rayon
+    /// pool, so only one may be in flight. Claiming is atomic with the check:
+    /// the flag is set before returning `true`, so no caller can start work
+    /// without having consulted the other flag (#577).
+    pub fn try_claim_busy_slot(&mut self, operation: BusySlot) -> bool {
+        if self.busy_slot_holder().is_some() {
+            self.report_busy_slot();
+            return false;
+        }
+        match operation {
+            BusySlot::Scan => self.scan.running = true,
+            BusySlot::Action => self.actions.pending = true,
+        }
+        true
+    }
+
+    /// Which long-running family currently holds the slot, if any.
+    pub fn busy_slot_holder(&self) -> Option<BusySlot> {
+        if self.scan.running {
+            Some(BusySlot::Scan)
+        } else if self.actions.pending {
+            Some(BusySlot::Action)
+        } else {
+            None
+        }
+    }
+
+    /// Name the slot holder on the status line so a declined request is visibly
+    /// declined instead of silently dropped.
+    pub fn report_busy_slot(&mut self) {
+        if let Some(holder) = self.busy_slot_holder() {
+            self.set_status(format!("Busy: {holder} is running"));
+        }
     }
 
     pub fn adjust_scroll(&mut self, visible_height: usize) {

@@ -182,13 +182,12 @@ impl TuiCommandSurface {
                 crate::surface_logging_controller::record(&tui_event);
 
                 // --- Intercept ActionScan: spawn background thread ---
+                // Both families claim one shared busy slot; a declined request
+                // reports the holder on the status line instead of racing it.
                 if matches!(tui_event, TuiEvent::ActionScan) {
-                    if !state.scan.running
-                        && let Some(rx) = self.action_handler.start_scan(state)
-                    {
+                    if let Some(rx) = self.action_handler.start_scan(state) {
                         scan_rx = Some(rx);
                     }
-                    // Ignore if already scanning
                 } else if state.scan.running
                     && matches!(
                         tui_event,
@@ -202,6 +201,7 @@ impl TuiCommandSurface {
                     )
                 {
                     // Block long-running actions while a scan is in progress
+                    state.report_busy_slot();
                 } else {
                     self.action_handler.handle(state, tui_event);
                 }
