@@ -16,7 +16,7 @@ use dispatcher::surface_plugin_action::collect_adapters_detailed;
 use dispatcher::surface_setup_action::{collect_init, collect_install, collect_mcp_config};
 use dispatcher::surface_version_action::collect_version;
 
-use crate::{ActionFlags, LintExecutionResult};
+use crate::{ActionFlags, LintExecutionResult, LintOutcome};
 use shared_auto_fix::IFixAggregate;
 use shared_common::FilePath;
 use shared_config_system::IConfigOrchestratorAggregate;
@@ -151,7 +151,7 @@ impl SurfaceLintExecutor {
                     path,
                     path
                 );
-                return LintExecutionResult::failure(output);
+                return LintExecutionResult::unavailable(output);
             }
         };
         let fp = Some(match validated_path(path) {
@@ -208,6 +208,11 @@ impl SurfaceLintExecutor {
                 LintExecutionResult {
                     output,
                     violation_count: report.total_violations,
+                    outcome: if report.pass {
+                        LintOutcome::Success
+                    } else {
+                        LintOutcome::Failure
+                    },
                     success: report.pass,
                 }
             }
@@ -223,7 +228,7 @@ impl SurfaceLintExecutor {
                     "Orphan detection for {}\nUse CLI `lint-arwaky-cli orphan {}` for full orphan graph analysis.",
                     path, path
                 );
-                return LintExecutionResult::success(output, 0);
+                return LintExecutionResult::unavailable(output);
             }
         };
         let fp = Some(match validated_path(path) {
@@ -264,7 +269,7 @@ impl SurfaceLintExecutor {
                     "Security scan for {}\nUse CLI `lint-arwaky-cli security {}` for full vulnerability scan.",
                     path, path
                 );
-                return LintExecutionResult::success(output, 0);
+                return LintExecutionResult::unavailable(output);
             }
         };
         let fp = Some(match validated_path(path) {
@@ -308,7 +313,7 @@ impl SurfaceLintExecutor {
                     "Dependency scan for {}\nUse CLI `lint-arwaky-cli dependencies {}` for full report.",
                     path, path
                 );
-                return LintExecutionResult::success(output, 0);
+                return LintExecutionResult::unavailable(output);
             }
         };
         let fp = Some(match validated_path(path) {
@@ -338,9 +343,8 @@ impl SurfaceLintExecutor {
         let maintenance = match &self.maintenance {
             Some(m) => m.clone(),
             None => {
-                return LintExecutionResult::success(
+                return LintExecutionResult::unavailable(
                     "Environment Diagnostics:\nUse CLI `lint-arwaky-cli maintenance doctor` for full environment check.\nRequired: Rust toolchain, Python 3.8+, Node.js 18+".to_string(),
-                    0,
                 );
             }
         };
@@ -352,9 +356,8 @@ impl SurfaceLintExecutor {
         let setup = match &self.setup_aggregate {
             Some(s) => s.clone(),
             None => {
-                return LintExecutionResult::success(
+                return LintExecutionResult::unavailable(
                     "Config initialization.\nUse CLI `lint-arwaky-cli init` to create configuration.".to_string(),
-                    0,
                 );
             }
         };
@@ -380,9 +383,8 @@ impl SurfaceLintExecutor {
         let setup = match &self.setup_aggregate {
             Some(s) => s.clone(),
             None => {
-                return LintExecutionResult::success(
+                return LintExecutionResult::unavailable(
                     "Adapter dependency installation.\nUse CLI `lint-arwaky-cli setup install` to install all adapter dependencies.".to_string(),
-                    0,
                 );
             }
         };
@@ -412,9 +414,8 @@ impl SurfaceLintExecutor {
         let orchestrator = match &self.config_orchestrator {
             Some(o) => o.clone(),
             None => {
-                return LintExecutionResult::success(
+                return LintExecutionResult::unavailable(
                     "Active Configuration\nSource: embedded (built-in defaults)\nNo config orchestrator configured. Use CLI `lint-arwaky-cli config-show`.".to_string(),
-                    0,
                 );
             }
         };
@@ -439,10 +440,9 @@ impl SurfaceLintExecutor {
         let hooks = match &self.hook_port {
             Some(h) => h.clone(),
             None => {
-                return LintExecutionResult::success(
+                return LintExecutionResult::unavailable(
                     "Git pre-commit hook installation.\nUse CLI `lint-arwaky-cli install-hook` to install."
                         .to_string(),
-                    0,
                 );
             }
         };
@@ -466,10 +466,9 @@ impl SurfaceLintExecutor {
         let hooks = match &self.hook_port {
             Some(h) => h.clone(),
             None => {
-                return LintExecutionResult::success(
+                return LintExecutionResult::unavailable(
                     "Git pre-commit hook removal.\nUse CLI `lint-arwaky-cli uninstall-hook` to remove."
                         .to_string(),
-                    0,
                 );
             }
         };
