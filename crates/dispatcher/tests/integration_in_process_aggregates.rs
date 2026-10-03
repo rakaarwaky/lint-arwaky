@@ -30,7 +30,6 @@ fn build_scan_aggregates(root: &str) -> ScanAggregates {
     let fs_tool_resolution = fs_container.tool_resolution();
 
     let fs_seam = Arc::new(FilesystemSeam {
-        io: fs_io.clone(),
         workspace: fs_workspace.clone(),
         parser: fs_parser.clone(),
         aggregate: filesystem.clone(),

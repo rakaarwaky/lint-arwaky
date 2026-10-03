@@ -9,10 +9,9 @@ use shared_common::FilePath;
 use shared_config_system::{
     ArchitectureConfig, ConfigLanguage, ConfigRequest, IConfigOrchestratorAggregate,
 };
-use shared_filesystem::FilesystemRequest;
 use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared_filesystem::contract_filesystem_protocol::IWorkspaceProtocol;
+use shared_filesystem::taxonomy_filesystem_request::FilesystemRequest;
 
 use crate::surface_check_action::FilesystemSeam;
 use shared_orphan_rules::IOrphanAggregate;
@@ -37,7 +36,6 @@ pub struct OrphanScanDeps {
     pub orphan_orchestrator: Arc<dyn IOrphanAggregate>,
     pub config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
     pub fs_agg: Arc<dyn IFilesystemAggregate>,
-    pub fs_io: Arc<dyn IFileSystemIOProtocol>,
     pub fs_workspace: Arc<dyn IWorkspaceProtocol>,
     /// Factory for creating fresh filesystem instances (multi-workspace / single-root).
     pub fs_factory: Arc<FilesystemFactory>,
@@ -50,7 +48,6 @@ impl OrphanScanDeps {
         orphan_orchestrator: Arc<dyn IOrphanAggregate>,
         config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
         fs_agg: Arc<dyn IFilesystemAggregate>,
-        fs_io: Arc<dyn IFileSystemIOProtocol>,
         fs_workspace: Arc<dyn IWorkspaceProtocol>,
         fs_factory: Arc<FilesystemFactory>,
         orphan_factory: Arc<OrphanFactory>,
@@ -59,7 +56,6 @@ impl OrphanScanDeps {
             orphan_orchestrator,
             config_orchestrator,
             fs_agg,
-            fs_io,
             fs_workspace,
             fs_factory,
             orphan_factory,
@@ -77,7 +73,11 @@ pub fn collect_orphan(
         Some(p) => p.value().to_string(),
         None => ".".to_string(),
     };
-    if !deps.fs_io.path_exists(std::path::Path::new(&root)) {
+    if !deps
+        .fs_agg
+        .execute(FilesystemRequest::path_exists(std::path::Path::new(&root)))
+        .into_path_exists()
+    {
         return Err(format!("Error: path '{}' does not exist", root));
     }
 

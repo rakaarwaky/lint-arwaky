@@ -20,7 +20,6 @@ use shared_external_lint::IExternalLintAggregate;
 use shared_external_lint::taxonomy_external_lint_vo::ExternalLintContext;
 use shared_filesystem::FilesystemRequest;
 use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 
 use shared_common::ViolationItem;
 
@@ -30,7 +29,6 @@ pub fn collect_external_direct(
     path: Option<FilePath>,
     external_lint: Arc<dyn IExternalLintAggregate>,
     filesystem: Arc<dyn IFilesystemAggregate>,
-    filesystem_io: Arc<dyn IFileSystemIOProtocol>,
     _config_parser: Arc<dyn IConfigMergeProtocol>,
     filter: Option<String>,
     ignored_paths: &[String],
@@ -39,7 +37,10 @@ pub fn collect_external_direct(
         Some(p) => p.value().to_string(),
         None => ".".to_string(),
     };
-    if !filesystem_io.path_exists(std::path::Path::new(&root)) {
+    if !filesystem
+        .execute(FilesystemRequest::path_exists(std::path::Path::new(&root)))
+        .into_path_exists()
+    {
         return Err(format!("Error: path '{}' does not exist", root));
     }
     let root_fp = FilePath::new(root.clone()).map_err(|_| "invalid path".to_string())?;
@@ -65,7 +66,7 @@ pub fn collect_external_direct(
         .any(|f| f.ends_with(".md") || f.ends_with(".markdown"));
 
     // Load adapter entries from config (pre-computed, no orchestrator I/O)
-    let config_entries = load_config_entries(root_path, filesystem_io.as_ref());
+    let config_entries = load_config_entries(root_path, &*filesystem);
 
     let context = ExternalLintContext {
         has_rust,
@@ -73,7 +74,7 @@ pub fn collect_external_direct(
         has_js,
         has_markdown,
         ignored_paths: ignored_paths.to_vec(),
-        ignored_rules: load_ignored_rules(root_path, filesystem_io.as_ref()),
+        ignored_rules: load_ignored_rules(root_path, &*filesystem),
         config_entries,
     };
 
@@ -157,7 +158,7 @@ pub fn filter_outside_member_dirs(
 /// that never opted into it).
 pub fn load_config_entries(
     root_path: &std::path::Path,
-    fs_io: &dyn IFileSystemIOProtocol,
+    fs: &dyn IFilesystemAggregate,
 ) -> Vec<AdapterEntry> {
     let config_names = vec!["lint_arwaky.config.yaml"];
     let start = if root_path.is_file() {
@@ -169,9 +170,18 @@ pub fn load_config_entries(
     while let Some(dir) = current {
         for cfg_name in &config_names {
             let cfg_path = dir.join(cfg_name);
-            if cfg_path.exists() {
-                if let Ok(content) = fs_io.read_to_string(&cfg_path) {
-                    let entries = shared_config_system::utility_config_parser::parse_adapter_entries_from_yaml(&content.value);
+            let exists = fs
+                .execute(FilesystemRequest::path_exists(&cfg_path))
+                .into_path_exists();
+            if exists {
+                if let Some(content) = fs
+                    .execute(FilesystemRequest::read_file_result(&cfg_path))
+                    .into_content_opt()
+                {
+                    let entries =
+                        shared_config_system::utility_config_parser::parse_adapter_entries_from_yaml(
+                            &content,
+                        );
                     if !entries.is_empty() {
                         return entries;
                     }
@@ -191,9 +201,9 @@ pub fn load_config_entries(
 /// "run everything" — it means the project declared no rule suppressions.
 pub fn load_ignored_rules(
     root_path: &std::path::Path,
-    fs_io: &dyn IFileSystemIOProtocol,
+    fs: &dyn IFilesystemAggregate,
 ) -> Vec<String> {
-    find_config_content(root_path, fs_io)
+    find_config_content(root_path, fs)
         .map(|content| {
             shared_config_system::utility_config_parser::parse_ignored_rules_from_yaml(&content)
         })
@@ -203,7 +213,7 @@ pub fn load_ignored_rules(
 /// Read the first `lint_arwaky.config.yaml` found walking up from `root_path`.
 fn find_config_content(
     root_path: &std::path::Path,
-    fs_io: &dyn IFileSystemIOProtocol,
+    fs: &dyn IFilesystemAggregate,
 ) -> Option<String> {
     let start = root_path
         .parent()
@@ -212,8 +222,16 @@ fn find_config_content(
     let mut current: Option<&std::path::Path> = Some(start);
     while let Some(dir) = current {
         let cfg_path = dir.join("lint_arwaky.config.yaml");
-        if let Ok(content) = fs_io.read_to_string(&cfg_path) {
-            return Some(content.value);
+        // Keep walking when the file is missing or empty. A `?` here would
+        // bail out of the whole lookup on the first miss and silently drop
+        // every `ignored_rules` entry, which main's `if let Ok(..)` avoids.
+        let content = fs
+            .execute(FilesystemRequest::read_file_result(&cfg_path))
+            .into_content_opt();
+        if let Some(content) = content {
+            if !content.is_empty() {
+                return Some(content);
+            }
         }
         current = dir.parent().filter(|&p| p != dir);
     }
@@ -224,14 +242,16 @@ pub fn collect_external(
     path: Option<FilePath>,
     _external_lint: Arc<dyn IExternalLintAggregate>,
     filter: Option<String>,
-    _filesystem: Arc<dyn IFilesystemAggregate>,
-    filesystem_io: Arc<dyn IFileSystemIOProtocol>,
+    filesystem: Arc<dyn IFilesystemAggregate>,
 ) -> Result<Vec<ViolationItem>, String> {
     let root = match &path {
         Some(p) => p.value().to_string(),
         None => ".".to_string(),
     };
-    if !filesystem_io.path_exists(std::path::Path::new(&root)) {
+    if !filesystem
+        .execute(FilesystemRequest::path_exists(std::path::Path::new(&root)))
+        .into_path_exists()
+    {
         return Err(format!("Error: path '{}' does not exist", root));
     }
 
@@ -289,13 +309,13 @@ pub fn collect_single_file_external(
     ignored: &[String],
     external_lint: &Arc<dyn IExternalLintAggregate>,
     config_entries: Vec<AdapterEntry>,
-    fs_io: &dyn IFileSystemIOProtocol,
+    fs: &dyn IFilesystemAggregate,
 ) -> Vec<ViolationItem> {
     let context = single_file_external_context(
         scan_root,
         ignored,
         config_entries,
-        load_ignored_rules(scan_root, fs_io),
+        load_ignored_rules(scan_root, fs),
     );
     let Ok(target) = FilePath::new(scan_root.to_string_lossy().to_string()) else {
         return Vec::new();

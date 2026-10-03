@@ -6,7 +6,7 @@ use shared_common::{FilePath, Severity, Threshold};
 use shared_config_system::{ConfigRequest, IConfigOrchestratorAggregate};
 use shared_filesystem::FilesystemRequest;
 use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+// CiScanDeps uses IFilesystemAggregate for all filesystem operations.
 use shared_import_rules::IImportRunnerAggregate;
 use shared_import_rules::taxonomy_import_rules_request::ImportRequest;
 use shared_naming_rules::INamingRunnerAggregate;
@@ -61,7 +61,6 @@ pub struct CiScanDeps {
     pub config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
     pub orphan_orchestrator: Arc<dyn IOrphanAggregate>,
     pub filesystem: Arc<dyn IFilesystemAggregate>,
-    pub filesystem_io: Arc<dyn IFileSystemIOProtocol>,
 }
 
 pub fn collect_ci(
@@ -75,8 +74,11 @@ pub fn collect_ci(
         None => ".".to_string(),
     };
     if !deps
-        .filesystem_io
-        .path_exists(std::path::Path::new(&root_str))
+        .filesystem
+        .execute(FilesystemRequest::path_exists(std::path::Path::new(
+            &root_str,
+        )))
+        .into_path_exists()
     {
         return Err(format!("Error: path '{}' does not exist", root_str));
     }

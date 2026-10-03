@@ -50,6 +50,14 @@ pub enum FilesystemResponse {
     ProjectLanguages {
         languages: crate::taxonomy_filesystem_vo::ProjectLanguagesVO,
     },
+    /// Result of a filesystem mutation — `true` on success, `false` on failure.
+    OpOk {
+        ok: bool,
+    },
+    /// Result of a path existence check.
+    PathExists {
+        exists: bool,
+    },
 }
 
 impl FilesystemResponse {
@@ -143,7 +151,23 @@ impl FilesystemResponse {
     pub fn into_project_languages(self) -> crate::taxonomy_filesystem_vo::ProjectLanguagesVO {
         match self {
             Self::ProjectLanguages { languages } => languages,
-            _ => crate::taxonomy_filesystem_vo::ProjectLanguagesVO::default(),
+            _ => Default::default(),
+        }
+    }
+
+    /// Whether a filesystem mutation succeeded.
+    pub fn into_op_ok(self) -> bool {
+        match self {
+            Self::OpOk { ok } => ok,
+            _ => false,
+        }
+    }
+
+    /// Whether a path existence check passed.
+    pub fn into_path_exists(self) -> bool {
+        match self {
+            Self::PathExists { exists } => exists,
+            _ => false,
         }
     }
 }

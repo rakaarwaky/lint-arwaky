@@ -45,7 +45,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         doc_orchestrator: deps.doc_orchestrator,
         structure_orchestrator: deps.structure_orchestrator,
         filesystem: deps.filesystem,
-        filesystem_io: deps.filesystem_io,
         filesystem_workspace: deps.filesystem_workspace,
         filesystem_tool_resolution: deps.filesystem_tool_resolution,
         filesystem_parser: deps.filesystem_parser,

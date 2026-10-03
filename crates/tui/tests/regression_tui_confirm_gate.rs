@@ -24,7 +24,6 @@ use mock_filesystem::MockFilesystem;
 
 use dispatcher::surface_check_action::FilesystemSeam;
 use dispatcher::surface_orphan_action::OrphanFactory;
-use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared_orphan_rules::{IOrphanAggregate, OrphanRequest, OrphanResponse};
 use shared_quality_rules::{
     ICodeAnalysisAggregate, taxonomy_quality_rules_request::CodeAnalysisRequest,
@@ -63,10 +62,10 @@ impl IOrphanAggregate for NoopOrphan {
 /// can hand work to a background worker.
 fn executor() -> Arc<SurfaceLintExecutor> {
     let mock = Arc::new(MockFilesystem::new());
-    let io: Arc<dyn IFileSystemIOProtocol> = mock.clone();
     let code_analysis: Arc<dyn ICodeAnalysisAggregate> = Arc::new(NoopQuality);
+    let workspace: Arc<dyn shared_filesystem::IWorkspaceProtocol> = mock.clone();
+    let tool_resolution: Arc<dyn shared_filesystem::IToolResolutionProtocol> = mock.clone();
     let seam = Arc::new(FilesystemSeam {
-        io: mock.clone(),
         workspace: mock.clone(),
         parser: mock.clone(),
         aggregate: mock.clone(),
@@ -74,7 +73,6 @@ fn executor() -> Arc<SurfaceLintExecutor> {
     let closure_mock = mock.clone();
     let fs_factory: Arc<dyn Fn() -> FilesystemSeam + Send + Sync> =
         Arc::new(move || FilesystemSeam {
-            io: closure_mock.clone(),
             workspace: closure_mock.clone(),
             parser: closure_mock.clone(),
             aggregate: closure_mock.clone(),
@@ -85,9 +83,8 @@ fn executor() -> Arc<SurfaceLintExecutor> {
     Arc::new(SurfaceLintExecutor::new(
         code_analysis,
         mock.clone(),
-        io,
-        mock.clone(),
-        mock.clone(),
+        workspace,
+        tool_resolution,
         seam,
         fs_factory,
         orphan_factory,
