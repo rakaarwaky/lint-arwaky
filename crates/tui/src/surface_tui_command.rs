@@ -225,6 +225,33 @@ impl TuiCommandSurface {
     }
 }
 
+/// Key-to-event mapping while the help overlay is open (#556).
+///
+/// Each key keeps the directional meaning it has outside the overlay: `k`/`Up`
+/// and `h`/`Left` scroll back, `j`/`Down` and `l`/`Right` scroll forward,
+/// `Home` jumps to the top, `End` to the bottom, `PgUp`/`PgDn` page. `Esc`
+/// closes the overlay like `?` does; `q` quits.
+///
+/// The overlay renders into the preview panel, so `MoveTop`/`MoveBottom` and
+/// `PreviewScrollUp`/`PreviewScrollDown` act on `preview.scroll` while it is
+/// open. Before #556 every navigation key collapsed onto `MoveDown`, leaving a
+/// long help panel with no way back to the top.
+pub fn help_overlay_event_for(code: KeyCode) -> TuiEvent {
+    match code {
+        KeyCode::Char('?') | KeyCode::Esc => TuiEvent::ToggleHelp,
+        KeyCode::Char('q') => TuiEvent::Quit,
+        KeyCode::Char('j') | KeyCode::Down => TuiEvent::MoveDown,
+        KeyCode::Char('l') | KeyCode::Right => TuiEvent::MoveDown,
+        KeyCode::Char('k') | KeyCode::Up => TuiEvent::MoveUp,
+        KeyCode::Char('h') | KeyCode::Left => TuiEvent::MoveUp,
+        KeyCode::Home => TuiEvent::MoveTop,
+        KeyCode::End => TuiEvent::MoveBottom,
+        KeyCode::PageUp => TuiEvent::PreviewScrollUp,
+        KeyCode::PageDown => TuiEvent::PreviewScrollDown,
+        _ => TuiEvent::None,
+    }
+}
+
 fn from_crossterm_event(event: event::Event, state: &AppState) -> TuiEvent {
     match event {
         event::Event::Key(key) => from_key_event(key, state),
@@ -244,25 +271,9 @@ fn from_key_event(key: KeyEvent, state: &AppState) -> TuiEvent {
         };
     }
 
-    // --- Help overlay: only ? (toggle), q/Esc (quit), navigation allowed (#359) ---
+    // --- Help overlay: ?/Esc toggle, q quit, directional navigation (#359, #556) ---
     if state.show_help {
-        return match key.code {
-            KeyCode::Char('?') => TuiEvent::ToggleHelp,
-            KeyCode::Char('q') | KeyCode::Esc => TuiEvent::Quit,
-            KeyCode::Char('j')
-            | KeyCode::Down
-            | KeyCode::Char('k')
-            | KeyCode::Up
-            | KeyCode::Char('h')
-            | KeyCode::Left
-            | KeyCode::Char('l')
-            | KeyCode::Right
-            | KeyCode::Home
-            | KeyCode::End
-            | KeyCode::PageUp
-            | KeyCode::PageDown => TuiEvent::MoveDown,
-            _ => TuiEvent::None,
-        };
+        return help_overlay_event_for(key.code);
     }
 
     // Path dialog: ALL input goes to path editing when dialog is visible
