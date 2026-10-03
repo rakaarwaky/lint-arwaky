@@ -34,3 +34,4 @@ pub use taxonomy_cli_commands_vo::command_catalog;
 pub use taxonomy_format_vo::Format;
 pub use utility_skill_hint_resolver::resolve_skill_hint_for_file;
 pub use utility_skill_hint_resolver::resolve_skill_hint_for_file_typed;
+pub mod utility_output_text_formatter;

@@ -1,8 +1,8 @@
 // Unit tests — TUI filesystem utility tests.
 use shared_common::FilePath;
+use shared_tui::utility_file_system;
 use std::fs;
 use tempfile::TempDir;
-use tui_lint_arwaky::utility_file_system;
 
 #[test]
 fn is_valid_directory_true() {

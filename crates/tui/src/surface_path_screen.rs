@@ -4,12 +4,12 @@
 // User can type a path, confirm, or use current directory.
 // Uses centered_rect() helper to calculate popup dimensions.
 use crate::AppState;
-use crate::utility_tui_theme as theme;
 use ratatui::Frame;
 use ratatui::layout::{Alignment, Constraint, Direction, Layout, Rect};
 use ratatui::style::{Modifier, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Borders, Clear, Paragraph};
+use shared_tui::utility_tui_theme as theme;
 
 pub struct PathScreen;
 

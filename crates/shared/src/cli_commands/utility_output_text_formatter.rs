@@ -5,9 +5,9 @@
 
 use std::collections::BTreeMap;
 
-use shared_cli_commands::Format;
-use shared_cli_commands::resolve_skill_hint_for_file;
 use shared_common::ViolationItem;
+use shared_common::taxonomy_format_vo::Format;
+use shared_common::taxonomy_skill_hint_vo::resolve_skill_hint_for_path as resolve_skill_hint_for_file;
 
 /// Format a violation location as "file:line:column".
 pub fn format_location(file: &str, line: i64, column: i64) -> String {
@@ -42,6 +42,26 @@ fn extract_member_from_path(file_path: &str, root: &str) -> String {
     let normalized_path = file_path.trim_start_matches("./");
 
     let skip_dirs: &[&str] = &["src", "lib", "bin", "tests", "benches", "examples"];
+
+    // For markdown docs at root level, show the actual file name
+    if normalized_path.ends_with(".md") && !normalized_path.contains('/') {
+        return normalized_path.to_string();
+    }
+
+    // Handle single-file scan (e.g., linting a specific file)
+    if normalized_path.contains('/')
+        && normalized_path
+            .rsplit('/')
+            .next()
+            .is_some_and(|f| !f.contains('.'))
+    {
+        if let Some(idx) = normalized_path.find('/') {
+            let first_segment = &normalized_path[..idx];
+            if !first_segment.is_empty() && !skip_dirs.contains(&first_segment) {
+                return first_segment.to_string();
+            }
+        }
+    }
 
     if let Some(rest) = normalized_path.strip_prefix(normalized_root) {
         let rest = rest.trim_start_matches('/');
@@ -85,7 +105,11 @@ fn extract_member_from_path(file_path: &str, root: &str) -> String {
             }
         }
     }
-    ".".to_string()
+    // Fallback: extract basename for root-level files
+    std::path::Path::new(normalized_path)
+        .file_name()
+        .map(|n| n.to_string_lossy().to_string())
+        .unwrap_or_else(|| normalized_path.to_string())
 }
 
 /// Check if a path points to a recognized source file (not a directory).
@@ -173,21 +197,15 @@ fn render_text(
         } else {
             let lang = lang_tag(&results[0].file.value);
             println!("[{lang}] {member_name} — {} violations", results.len());
-            let mut code_counts: BTreeMap<String, usize> = BTreeMap::new();
-            let mut code_examples: BTreeMap<String, String> = BTreeMap::new();
-            for r in results {
-                let code = r.code.code().to_string();
-                *code_counts.entry(code.clone()).or_insert(0) += 1;
-                code_examples
-                    .entry(code)
-                    .or_insert_with(|| r.file.value.clone());
-            }
-            for (code, count) in &code_counts {
-                let example_file = code_examples.get(code).map(|s| s.as_str()).unwrap_or("");
-                let hint = resolve_skill_hint_for_file(code, example_file);
-                println!("  [{code}] {count}  ← {}", hint.guidance());
-            }
             println!();
+            for r in results {
+                let loc = format_location(&r.file.value, r.line.value(), r.column.value());
+                let hint = resolve_skill_hint_for_file(r.code.code(), &r.file.value);
+                println!("  {} [{}] {}", loc, r.code.code(), r.message.value);
+                println!("    ↳ WHY: {}", r.message.value);
+                println!("    ↳ HOW TO FIX: {}", hint.guidance());
+                println!();
+            }
         }
     }
 
@@ -431,6 +449,18 @@ fn lang_tag(path: &str) -> &str {
         || path.ends_with(".jsx")
     {
         "typescript"
+    } else if path.ends_with(".md") {
+        "markdown"
+    } else if path.ends_with(".yaml") || path.ends_with(".yml") {
+        "yaml"
+    } else if path.ends_with(".toml") {
+        "toml"
+    } else if path.ends_with(".json") {
+        "json"
+    } else if path.ends_with(".go") {
+        "go"
+    } else if path.ends_with(".java") {
+        "java"
     } else {
         "unknown"
     }

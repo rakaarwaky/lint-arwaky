@@ -9,7 +9,7 @@ fn tui_container_type_exists() {
 
 #[test]
 fn tui_utility_modules_importable() {
-    use tui_lint_arwaky::utility_file_system;
+    use shared_tui::utility_file_system;
 
     // Verify key functions are accessible
     let _ = utility_file_system::is_valid_directory as fn(&shared_common::FilePath) -> bool;
@@ -19,7 +19,7 @@ fn tui_utility_modules_importable() {
 
 #[test]
 fn tui_report_formatter_module_importable() {
-    use tui_lint_arwaky::utility_report_formatter;
+    use shared_tui::utility_report_formatter;
 
     let _ = utility_report_formatter::format_doctor_report
         as fn(&shared_maintenance::ToolchainDiagnostics) -> tui_lint_arwaky::LintExecutionResult;
