@@ -8,6 +8,17 @@ use shared_maintenance::ToolchainDiagnostics;
 
 /// Format toolchain diagnostics into a LintExecutionResult.
 pub fn format_doctor_report(diagnostics: &ToolchainDiagnostics) -> LintExecutionResult {
+    // Same direct NO_COLOR read as `status_icon` in the CLI doctor formatter;
+    // importing utility_tui_theme here would trip AES201 (utility→utility).
+    format_doctor_report_with_no_color(diagnostics, std::env::var_os("NO_COLOR").is_some())
+}
+
+/// #559: no-color-aware variant, exposed for testability (mirrors
+/// `utility_tui_theme::color_with_override`).
+pub fn format_doctor_report_with_no_color(
+    diagnostics: &ToolchainDiagnostics,
+    no_color: bool,
+) -> LintExecutionResult {
     let mut output = format!(
         "Environment Diagnostics\nBinary: {}\n\n",
         diagnostics.binary_path
@@ -21,14 +32,28 @@ pub fn format_doctor_report(diagnostics: &ToolchainDiagnostics) -> LintExecution
     ] {
         output.push_str(&format!("== {} ==\n", name));
         for tool in tools {
-            let icon = match tool.status.as_str() {
-                "OK" => "\u{2713}",
-                "WARN" => "\u{26A0}",
-                "FAIL" => {
-                    fail_count += 1;
-                    "\u{2717}"
+            // #559: fall back to ASCII labels when NO_COLOR is set, matching
+            // the glyph_* convention established in #365.
+            let icon = if no_color {
+                match tool.status.as_str() {
+                    "OK" => "OK",
+                    "WARN" => "WARN",
+                    "FAIL" => {
+                        fail_count += 1;
+                        "FAIL"
+                    }
+                    _ => "?",
                 }
-                _ => "?",
+            } else {
+                match tool.status.as_str() {
+                    "OK" => "\u{2713}",
+                    "WARN" => "\u{26A0}",
+                    "FAIL" => {
+                        fail_count += 1;
+                        "\u{2717}"
+                    }
+                    _ => "?",
+                }
             };
             let note = match tool.status.as_str() {
                 "WARN" => " (optional)",
