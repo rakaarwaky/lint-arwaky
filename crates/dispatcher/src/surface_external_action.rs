@@ -222,11 +222,16 @@ fn find_config_content(
     let mut current: Option<&std::path::Path> = Some(start);
     while let Some(dir) = current {
         let cfg_path = dir.join("lint_arwaky.config.yaml");
+        // Keep walking when the file is missing or empty. A `?` here would
+        // bail out of the whole lookup on the first miss and silently drop
+        // every `ignored_rules` entry, which main's `if let Ok(..)` avoids.
         let content = fs
             .execute(FilesystemRequest::read_file_result(&cfg_path))
-            .into_content_opt()?;
-        if !content.is_empty() {
-            return Some(content);
+            .into_content_opt();
+        if let Some(content) = content {
+            if !content.is_empty() {
+                return Some(content);
+            }
         }
         current = dir.parent().filter(|&p| p != dir);
     }
