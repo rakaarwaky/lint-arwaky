@@ -1,0 +1,22 @@
+---
+title: Quickstart
+description: How docs sync between this repo and Archbee
+icon: rocket
+---
+
+## How it works
+
+1. Edit `.mdx` files in `/docs` on any branch.
+2. Open a pull request.
+3. When the PR is merged into the default branch, Archbee picks up the changes and updates your space.
+4. Edits made inside Archbee come back as commits on this repo.
+
+## Adding a page
+
+Create a new file under `/docs`, then add it to `structure.docsTree` in `archbee.json`:
+
+```json
+{ "path": "my-page.mdx" }
+```
+
+Open a PR — your new page appears in Archbee after merge.
