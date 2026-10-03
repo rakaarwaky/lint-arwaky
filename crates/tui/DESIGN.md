@@ -203,6 +203,59 @@ results across navigation" failure this surface already has history with.
 | A run returns findings above threshold | Show the findings and the threshold                          |
 | The terminal is too small to draw      | Degrade to the status line alone rather than panicking       |
 
+### Accessibility
+
+The full-screen surface redraws every tick with cursor-addressed terminal
+output. Screen readers (NVDA, JAWS, VoiceOver, Orca) read discrete text
+events, not a repainted framebuffer, so the TUI is not reliably
+interpretable by assistive technology. This is a known, accepted
+trade-off of the terminal surface; the help overlay carries the pointer:
+"For screen readers, use `lint-arwaky-cli` instead"
+(`surface_shortcut_bindings.rs::help_text`).
+
+Keyboard-only operation. Every action has a key; no mouse is required.
+The single source of truth is the `SHORTCUTS` table in
+`crates/tui/src/surface_shortcut_bindings.rs`:
+
+| Key            | Action                                          |
+| -------------- | ----------------------------------------------- |
+| `j`/`↓` `k`/`↑` | Move down / up                                  |
+| `h`/`←` `l`/`→`/`Enter` | Back / open (forward)                          |
+| `Home` `End`   | Top / bottom of the list                        |
+| `PgUp` `PgDn`  | Scroll the preview pane                         |
+| `Tab` `BackTab`| Focus next / previous pane                      |
+| `c` `s` `f` `F` `t` `w` `o` `d` | check · scan · fix (dry) · fix (live) · ci · watch · orphan · doctor |
+| `i` `I` `m` `C` `H` `U` `a` `v` `x` `^P` | init · install · mcp-config · config show · install-hook · uninstall-hook · adapters · version · dependencies · security |
+| `y` `^Y`       | Copy to clipboard / save to file                |
+| `?` `/`        | Toggle help / search                            |
+| `q` `^Q` `Esc`| Quit                                            |
+
+Colour and `NO_COLOR`. Tokens resolve through
+`utility_tui_theme.rs::color()`. When `NO_COLOR` is set the whole surface
+collapses to white-on-black monochrome (`utility_tui_theme.rs::no_color`),
+and the status line falls back to ASCII glyphs (`surface_status_component.rs`),
+so a colour-blind terminal or a dumb terminal still reads state. Status
+meanings are never glyph-only: every status line pairs each symbol with a
+text label (phase text, `n/total`, and `n violations` in
+`surface_status_component.rs`), so colour loss never removes the meaning.
+A high-contrast theme (a user-selectable palette beyond `NO_COLOR`'s
+monochrome collapse) is tracked in #561/#562 and is not yet merged; until it
+lands, the only non-default palette switch is `NO_COLOR=1`.
+
+Assistive-technology consumption via the CLI. `lint-arwaky-cli` produces
+linear, screen-reader-friendly output for the scan-side actions the TUI
+offers; `scan`, `check`, `orphan`, and the layer-scoped commands accept
+`--format` (`text` default, `json`, `sarif`, `junit` —
+`shared/src/common/taxonomy_format_vo.rs`). A user or screen reader pipes
+deterministic output to a file:
+`lint-arwaky-cli scan . --format json > report.json`. `doctor`,
+`security`, `dependencies`, and `adapters` print plain text with no
+format flag; writing actions have no report to redirect — their CLI
+equivalents are one-shot commands (`fix . --dry-run`, `git`, `init`,
+`install`, `mcp-config`, `watch`). The TUI itself has no file-redirect
+mode; when a user cannot read the redrawn screen, the CLI is the
+alternative, and the help overlay says so.
+
 ## Reference
 
 - PRD: [PRD.md](../../PRD.md)
