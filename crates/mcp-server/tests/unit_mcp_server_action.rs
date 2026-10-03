@@ -18,9 +18,11 @@ fn mutable_surface() -> McpActionSurface {
 
 // ─── Dispatch: unknown actions fail loudly, never silently ─────────
 
-#[test]
-fn execute_command_unknown_action_fails_loudly() {
-    let result = surface().execute_command("not-a-real-action", ".", 80, false);
+#[tokio::test]
+async fn execute_command_unknown_action_fails_loudly() {
+    let result = surface()
+        .execute_command("not-a-real-action", ".", 80, false)
+        .await;
     assert_eq!(result["exit_code"], 2);
     assert!(
         result["error"]
@@ -34,9 +36,9 @@ fn execute_command_unknown_action_fails_loudly() {
 
 // ─── Envelope: unsupported transports/actions ──────────────────────
 
-#[test]
-fn execute_command_watch_is_explicitly_unsupported_via_mcp() {
-    let result = surface().execute_command("watch", ".", 80, false);
+#[tokio::test]
+async fn execute_command_watch_is_explicitly_unsupported_via_mcp() {
+    let result = surface().execute_command("watch", ".", 80, false).await;
     assert_eq!(result["exit_code"], 2);
     assert!(
         result["error"]
@@ -48,9 +50,11 @@ fn execute_command_watch_is_explicitly_unsupported_via_mcp() {
     );
 }
 
-#[test]
-fn execute_command_mcp_config_redirects_to_cli() {
-    let result = surface().execute_command("mcp-config", ".", 80, false);
+#[tokio::test]
+async fn execute_command_mcp_config_redirects_to_cli() {
+    let result = surface()
+        .execute_command("mcp-config", ".", 80, false)
+        .await;
     assert_eq!(result["exit_code"], 2);
     assert!(
         result["error"]
@@ -62,9 +66,9 @@ fn execute_command_mcp_config_redirects_to_cli() {
     );
 }
 
-#[test]
-fn execute_command_version_reports_configured_version() {
-    let result = surface().execute_command("version", ".", 80, false);
+#[tokio::test]
+async fn execute_command_version_reports_configured_version() {
+    let result = surface().execute_command("version", ".", 80, false).await;
     assert_eq!(result["exit_code"], 0);
     assert_eq!(result["name"], "lint-arwaky");
     assert_eq!(result["version"], "0.0.0-qa-test");
@@ -72,30 +76,34 @@ fn execute_command_version_reports_configured_version() {
 
 // ─── Path-validation boundary (QA #641 / BE path-validation finding) ──
 
-#[test]
-fn execute_command_fix_rejects_empty_path_with_invalid_path_envelope() {
-    let result = mutable_surface().execute_command("fix", "", 80, false);
+#[tokio::test]
+async fn execute_command_fix_rejects_empty_path_with_invalid_path_envelope() {
+    let result = mutable_surface()
+        .execute_command("fix", "", 80, false)
+        .await;
     assert_eq!(result["exit_code"], 2);
     assert_eq!(result["error"], "Invalid path");
 }
 
-#[test]
-fn execute_command_check_rejects_whitespace_only_path() {
-    let result = surface().execute_command("check", "   ", 80, false);
+#[tokio::test]
+async fn execute_command_check_rejects_whitespace_only_path() {
+    let result = surface().execute_command("check", "   ", 80, false).await;
     assert_eq!(result["exit_code"], 2);
     assert_eq!(result["error"], "Invalid path");
 }
 
-#[test]
-fn execute_command_ci_rejects_empty_path() {
-    let result = surface().execute_command("ci", "", 80, false);
+#[tokio::test]
+async fn execute_command_ci_rejects_empty_path() {
+    let result = surface().execute_command("ci", "", 80, false).await;
     assert_eq!(result["exit_code"], 2);
     assert_eq!(result["error"], "Invalid path");
 }
 
-#[test]
-fn execute_command_install_hook_rejects_empty_path() {
-    let result = mutable_surface().execute_command("install-hook", "", 80, false);
+#[tokio::test]
+async fn execute_command_install_hook_rejects_empty_path() {
+    let result = mutable_surface()
+        .execute_command("install-hook", "", 80, false)
+        .await;
     assert_eq!(result["exit_code"], 2);
     assert_eq!(result["error"], "Invalid path");
 }
@@ -106,10 +114,10 @@ fn execute_command_install_hook_rejects_empty_path() {
 // the default surface is read-only. Authorization runs first: a mutating
 // action must be refused on its own terms, before any path is touched.
 
-#[test]
-fn execute_command_denies_mutating_actions_on_a_read_only_surface() {
+#[tokio::test]
+async fn execute_command_denies_mutating_actions_on_a_read_only_surface() {
     for action in ["fix", "install-hook", "uninstall-hook", "init", "install"] {
-        let result = surface().execute_command(action, ".", 80, false);
+        let result = surface().execute_command(action, ".", 80, false).await;
         assert_eq!(result["exit_code"], 2, "action {action} must not succeed");
         assert_eq!(
             result["error"],
@@ -119,11 +127,10 @@ fn execute_command_denies_mutating_actions_on_a_read_only_surface() {
     }
 }
 
-#[test]
-fn execute_command_read_only_refusal_precedes_path_validation() {
-    // The refusal must not depend on the path being valid or invalid.
+#[tokio::test]
+async fn execute_command_read_only_refusal_precedes_path_validation() {
     for path in [".", "", "../escape"] {
-        let result = surface().execute_command("fix", path, 80, false);
+        let result = surface().execute_command("fix", path, 80, false).await;
         assert_eq!(
             result["error"],
             "Action 'fix' is disabled: MCP server is read-only"

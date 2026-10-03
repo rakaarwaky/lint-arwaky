@@ -77,6 +77,22 @@ impl McpActionSurface {
         Self { deps }
     }
 
+    /// Run a CPU-bound closure on a blocking thread pool so it never blocks
+    /// the async Tokio reactor. `JoinError` is mapped to a JSON error envelope
+    /// with `exit_code: 2`, identical to other dispatch failures.
+    async fn run_blocking<T, F>(f: F) -> Result<T, serde_json::Value>
+    where
+        T: Send + 'static,
+        F: FnOnce() -> T + Send + 'static,
+    {
+        tokio::task::spawn_blocking(f).await.map_err(|e| {
+            serde_json::json!({
+                "error": format!("Blocking task failed: {e}"),
+                "exit_code": 2
+            })
+        })
+    }
+
     fn to_fp(&self, path: &str) -> Result<FilePath, serde_json::Value> {
         resolve_confined_path(&self.deps.workspace_root, path).and_then(|resolved| {
             FilePath::new(resolved.to_string_lossy().to_string())
@@ -97,7 +113,7 @@ impl McpActionSurface {
     }
 
     /// Run check/scan — all linters combined via dispatcher.
-    pub fn execute_check(&self, path: &str) -> serde_json::Value {
+    pub async fn execute_check(&self, path: &str) -> serde_json::Value {
         let fp = match self.to_fp(path) {
             Ok(f) => f,
             Err(e) => return e,
@@ -121,7 +137,14 @@ impl McpActionSurface {
                 fs_seam: self.deps.fs_seam.clone(),
             }),
         };
-        match dispatcher::surface_check_action::collect_scan(opts) {
+        let scan_result =
+            match Self::run_blocking(move || dispatcher::surface_check_action::collect_scan(opts))
+                .await
+            {
+                Ok(scan_result) => scan_result,
+                Err(e) => return e,
+            };
+        match scan_result {
             Ok(violations) => {
                 let total = violations.len();
                 let exit_code = if total == 0 { 0 } else { 1 };
@@ -140,34 +163,38 @@ impl McpActionSurface {
     }
 
     /// Run CI — scoring + threshold via dispatcher.
-    pub fn execute_ci(&self, path: &str, threshold: u64) -> serde_json::Value {
+    pub async fn execute_ci(&self, path: &str, threshold: u64) -> serde_json::Value {
         let fp = match self.to_fp(path) {
             Ok(f) => f,
             Err(e) => return e,
         };
-        match dispatcher::surface_ci_action::collect_ci(
-            dispatcher::surface_ci_action::CiScanDeps {
-                code_analysis_linter: self.deps.code_analysis_linter.clone(),
-                import_orchestrator: self.deps.import_orchestrator.clone(),
-                naming_orchestrator: self.deps.naming_orchestrator.clone(),
-                config_orchestrator: self.deps.config_orchestrator.clone(),
-                orphan_orchestrator: self.deps.orphan_orchestrator.clone(),
-                filesystem: self.deps.filesystem.clone(),
-                filesystem_io: self.deps.filesystem_io.clone(),
-            },
-            Some(fp),
-            match u32::try_from(threshold)
-                .ok()
-                .and_then(|value| Threshold::try_new(value).ok())
-            {
-                Some(threshold) => threshold,
-                None => {
-                    return error_response(
-                        "Invalid 'threshold': expected an integer from 0 to 100",
-                    );
-                }
-            },
-        ) {
+        let deps = dispatcher::surface_ci_action::CiScanDeps {
+            code_analysis_linter: self.deps.code_analysis_linter.clone(),
+            import_orchestrator: self.deps.import_orchestrator.clone(),
+            naming_orchestrator: self.deps.naming_orchestrator.clone(),
+            config_orchestrator: self.deps.config_orchestrator.clone(),
+            orphan_orchestrator: self.deps.orphan_orchestrator.clone(),
+            filesystem: self.deps.filesystem.clone(),
+            filesystem_io: self.deps.filesystem_io.clone(),
+        };
+        let threshold_result = match u32::try_from(threshold)
+            .ok()
+            .and_then(|value| Threshold::try_new(value).ok())
+        {
+            Some(threshold) => threshold,
+            None => {
+                return error_response("Invalid 'threshold': expected an integer from 0 to 100");
+            }
+        };
+        let ci_result = match Self::run_blocking(move || {
+            dispatcher::surface_ci_action::collect_ci(deps, Some(fp), threshold_result)
+        })
+        .await
+        {
+            Ok(ci_result) => ci_result,
+            Err(e) => return e,
+        };
+        match ci_result {
             Ok(report) => {
                 let exit_code = if report.pass { 0 } else { 1 };
                 serde_json::json!({
@@ -190,7 +217,12 @@ impl McpActionSurface {
     /// subcommand the caller asked for, echoed back verbatim — it is the layer's
     /// public name (`surface`), which the internal `LAYER_*` spelling (`surfaces`)
     /// does not match.
-    pub fn execute_layer_scan(&self, path: &str, layer: &str, action: &str) -> serde_json::Value {
+    pub async fn execute_layer_scan(
+        &self,
+        path: &str,
+        layer: &str,
+        action: &str,
+    ) -> serde_json::Value {
         let fp = match self.to_fp(path) {
             Ok(fp) => fp,
             Err(error) => return error,
@@ -214,7 +246,16 @@ impl McpActionSurface {
                 fs_seam: self.deps.fs_seam.clone(),
             }),
         };
-        match dispatcher::surface_layer_scan_action::collect_layer_scan(opts, layer) {
+        let layer_str = layer.to_string();
+        let layer_result = match Self::run_blocking(move || {
+            dispatcher::surface_layer_scan_action::collect_layer_scan(opts, &layer_str)
+        })
+        .await
+        {
+            Ok(layer_result) => layer_result,
+            Err(e) => return e,
+        };
+        match layer_result {
             Ok(violations) => {
                 let total = violations.len();
                 let exit_code = if total == 0 { 0 } else { 1 };
@@ -234,17 +275,22 @@ impl McpActionSurface {
     }
 
     /// Run fix — auto-fix with dry_run support via dispatcher.
-    pub fn execute_fix(&self, path: &str, dry_run: bool) -> serde_json::Value {
+    pub async fn execute_fix(&self, path: &str, dry_run: bool) -> serde_json::Value {
         let fp = match self.to_fp(path) {
             Ok(f) => f,
             Err(error) => return error,
         };
-        match dispatcher::surface_fix_action::collect_fix(
-            Some(fp),
-            dry_run,
-            self.deps.code_analysis_linter.clone(),
-            self.deps.fix_orchestrator_factory.clone(),
-        ) {
+        let linter = self.deps.code_analysis_linter.clone();
+        let factory = self.deps.fix_orchestrator_factory.clone();
+        let fix_result = match Self::run_blocking(move || {
+            dispatcher::surface_fix_action::collect_fix(Some(fp), dry_run, linter, factory)
+        })
+        .await
+        {
+            Ok(fix_result) => fix_result,
+            Err(e) => return e,
+        };
+        match fix_result {
             Ok(report) => {
                 let exit_code = if report.has_failed {
                     2 // runtime error — any Failed(reason) outranks policy fail
@@ -280,100 +326,147 @@ impl McpActionSurface {
     }
 
     /// Run quality scan via dispatcher.
-    pub fn execute_quality(&self, path: &str) -> serde_json::Value {
+    pub async fn execute_quality(&self, path: &str) -> serde_json::Value {
         let fp = match self.to_fp(path) {
             Ok(f) => f,
             Err(e) => return e,
         };
-        match dispatcher::surface_quality_action::collect_quality(
-            Some(fp),
-            self.deps.code_analysis_linter.clone(),
-            None,
-            self.deps.filesystem.clone(),
-            self.deps.filesystem_io.clone(),
-            &[],
-        ) {
+        let linter = self.deps.code_analysis_linter.clone();
+        let fs = self.deps.filesystem.clone();
+        let fs_io = self.deps.filesystem_io.clone();
+        let quality_result = match Self::run_blocking(move || {
+            dispatcher::surface_quality_action::collect_quality(
+                Some(fp),
+                linter,
+                None,
+                fs,
+                fs_io,
+                &[],
+            )
+        })
+        .await
+        {
+            Ok(quality_result) => quality_result,
+            Err(e) => return e,
+        };
+        match quality_result {
             Ok(violations) => violations_response("quality", path, &violations),
             Err(e) => serde_json::json!({"error": e, "exit_code": 2}),
         }
     }
 
     /// Run import scan via dispatcher.
-    pub fn execute_import(&self, path: &str) -> serde_json::Value {
+    pub async fn execute_import(&self, path: &str) -> serde_json::Value {
         let fp = match self.to_fp(path) {
             Ok(f) => f,
             Err(e) => return e,
         };
-        match dispatcher::surface_import_action::collect_import(
-            Some(fp),
-            self.deps.import_orchestrator.clone(),
-            None,
-            self.deps.filesystem.clone(),
-            self.deps.filesystem_io.clone(),
-            &[],
-        ) {
+        let importer = self.deps.import_orchestrator.clone();
+        let fs = self.deps.filesystem.clone();
+        let fs_io = self.deps.filesystem_io.clone();
+        let import_result = match Self::run_blocking(move || {
+            dispatcher::surface_import_action::collect_import(
+                Some(fp),
+                importer,
+                None,
+                fs,
+                fs_io,
+                &[],
+            )
+        })
+        .await
+        {
+            Ok(import_result) => import_result,
+            Err(e) => return e,
+        };
+        match import_result {
             Ok(violations) => violations_response("import", path, &violations),
             Err(e) => serde_json::json!({"error": e, "exit_code": 2}),
         }
     }
 
     /// Run naming scan via dispatcher.
-    pub fn execute_naming(&self, path: &str) -> serde_json::Value {
+    pub async fn execute_naming(&self, path: &str) -> serde_json::Value {
         let fp = match self.to_fp(path) {
             Ok(f) => f,
             Err(e) => return e,
         };
-        match dispatcher::surface_naming_action::collect_naming(
-            Some(fp),
-            self.deps.naming_orchestrator.clone(),
-            None,
-            self.deps.filesystem.clone(),
-            self.deps.filesystem_io.clone(),
-            &[],
-        ) {
+        let namer = self.deps.naming_orchestrator.clone();
+        let fs = self.deps.filesystem.clone();
+        let fs_io = self.deps.filesystem_io.clone();
+        let naming_result = match Self::run_blocking(move || {
+            dispatcher::surface_naming_action::collect_naming(Some(fp), namer, None, fs, fs_io, &[])
+        })
+        .await
+        {
+            Ok(naming_result) => naming_result,
+            Err(e) => return e,
+        };
+        match naming_result {
             Ok(violations) => violations_response("naming", path, &violations),
             Err(e) => serde_json::json!({"error": e, "exit_code": 2}),
         }
     }
 
     /// Run role scan via dispatcher (direct aggregate — no subprocess).
-    pub fn execute_role(&self, path: &str) -> serde_json::Value {
+    pub async fn execute_role(&self, path: &str) -> serde_json::Value {
         let fp = match self.to_fp(path) {
             Ok(fp) => fp,
             Err(error) => return error,
         };
-        match dispatcher::surface_role_action::collect_role_direct(
-            self.deps.role_orchestrator.clone(),
-            None,
-            self.deps.filesystem.clone(),
-            fp.value(),
-            &[],
-        ) {
-            Ok(violations) => violations_response("role", fp.value(), &violations),
+        let role = self.deps.role_orchestrator.clone();
+        let fs = self.deps.filesystem.clone();
+        let fp_value = fp.value().to_string();
+        let fp_value_outer = fp_value.clone();
+        let role_result = match Self::run_blocking(move || {
+            dispatcher::surface_role_action::collect_role_direct(role, None, fs, &fp_value, &[])
+        })
+        .await
+        {
+            Ok(role_result) => role_result,
+            Err(e) => return e,
+        };
+        match role_result {
+            Ok(violations) => violations_response("role", &fp_value_outer, &violations),
             Err(e) => serde_json::json!({"error": e, "exit_code": 2}),
         }
     }
 
     /// Run orphan scan via dispatcher.
-    pub fn execute_orphan(&self, path: &str) -> serde_json::Value {
+    pub async fn execute_orphan(&self, path: &str) -> serde_json::Value {
         let fp = match self.to_fp(path) {
             Ok(f) => f,
             Err(e) => return e,
         };
-        match dispatcher::surface_orphan_action::collect_orphan(
-            Some(fp),
-            None,
-            dispatcher::surface_orphan_action::OrphanScanDeps::new(
-                self.deps.orphan_orchestrator.clone(),
-                self.deps.config_orchestrator.clone(),
-                self.deps.filesystem.clone(),
-                self.deps.filesystem_io.clone(),
-                self.deps.filesystem_workspace.clone(),
-                self.deps.fs_factory.clone(),
-                self.deps.orphan_factory.clone(),
-            ),
-            None,
-        ) {
+        let orphan = self.deps.orphan_orchestrator.clone();
+        let config = self.deps.config_orchestrator.clone();
+        let fs = self.deps.filesystem.clone();
+        let fs_io = self.deps.filesystem_io.clone();
+        let fs_ws = self.deps.filesystem_workspace.clone();
+        let fs_factory = self.deps.fs_factory.clone();
+        let orphan_factory = self.deps.orphan_factory.clone();
+        let orphan_result = match Self::run_blocking(move || {
+            dispatcher::surface_orphan_action::collect_orphan(
+                Some(fp),
+                None,
+                dispatcher::surface_orphan_action::OrphanScanDeps::new(
+                    orphan,
+                    config,
+                    fs,
+                    fs_io,
+                    fs_ws,
+                    fs_factory,
+                    orphan_factory,
+                ),
+                None,
+            )
+        })
+        .await
+        {
+            Ok(orphan_result) => orphan_result,
+            Err(e) => return e,
+        };
+        match orphan_result {
             Ok(violations) => {
                 let exit_code = if violations.is_empty() { 0 } else { 1 };
                 serde_json::json!({
@@ -390,30 +483,48 @@ impl McpActionSurface {
     }
 
     /// Run external lint via dispatcher (direct aggregate — no subprocess).
-    pub fn execute_external(&self, path: &str) -> serde_json::Value {
+    pub async fn execute_external(&self, path: &str) -> serde_json::Value {
         let fp = match self.to_fp(path) {
             Ok(f) => f,
             Err(e) => return e,
         };
-        match dispatcher::surface_external_action::collect_external_direct(
-            Some(fp),
-            self.deps.external_lint.clone(),
-            self.deps.filesystem.clone(),
-            self.deps.filesystem_io.clone(),
-            self.deps.config_parser.clone(),
-            None,
-            &[],
-        ) {
+        let ext = self.deps.external_lint.clone();
+        let fs = self.deps.filesystem.clone();
+        let fs_io = self.deps.filesystem_io.clone();
+        let parser = self.deps.config_parser.clone();
+        let external_result = match Self::run_blocking(move || {
+            dispatcher::surface_external_action::collect_external_direct(
+                Some(fp),
+                ext,
+                fs,
+                fs_io,
+                parser,
+                None,
+                &[],
+            )
+        })
+        .await
+        {
+            Ok(external_result) => external_result,
+            Err(e) => return e,
+        };
+        match external_result {
             Ok(violations) => violations_response("external", path, &violations),
             Err(e) => serde_json::json!({"error": e, "exit_code": 2}),
         }
     }
 
     /// Run doctor diagnostics via dispatcher.
-    pub fn execute_doctor(&self) -> serde_json::Value {
-        let diag = dispatcher::surface_maintenance_action::collect_doctor(
-            self.deps.maintenance_orchestrator.clone(),
-        );
+    pub async fn execute_doctor(&self) -> serde_json::Value {
+        let maint = self.deps.maintenance_orchestrator.clone();
+        let diag = match Self::run_blocking(move || {
+            dispatcher::surface_maintenance_action::collect_doctor(maint)
+        })
+        .await
+        {
+            Ok(diag) => diag,
+            Err(e) => return e,
+        };
         let mut checks = Vec::new();
         for status in &diag.rust_tools {
             checks.push(serde_json::json!({"tool": status.name, "status": if status.status == "OK" { "ok" } else { "not_found" }, "version": status.version}));
@@ -431,15 +542,21 @@ impl McpActionSurface {
     }
 
     /// Run security scan via dispatcher.
-    pub fn execute_security(&self, path: &str) -> serde_json::Value {
+    pub async fn execute_security(&self, path: &str) -> serde_json::Value {
         let fp = match self.to_fp(path) {
             Ok(f) => f,
             Err(error) => return error,
         };
-        match dispatcher::surface_maintenance_action::collect_security(
-            self.deps.maintenance_orchestrator.clone(),
-            Some(fp),
-        ) {
+        let maint = self.deps.maintenance_orchestrator.clone();
+        let security_result = match Self::run_blocking(move || {
+            dispatcher::surface_maintenance_action::collect_security(maint, Some(fp))
+        })
+        .await
+        {
+            Ok(security_result) => security_result,
+            Err(e) => return e,
+        };
+        match security_result {
             Ok(report) => {
                 let exit_code = if !report.tool_installed {
                     3
@@ -479,15 +596,21 @@ impl McpActionSurface {
     }
 
     /// Run dependency report via dispatcher.
-    pub fn execute_dependencies(&self, path: &str) -> serde_json::Value {
+    pub async fn execute_dependencies(&self, path: &str) -> serde_json::Value {
         let fp = match self.to_fp(path) {
             Ok(f) => f,
             Err(error) => return error,
         };
-        match dispatcher::surface_maintenance_action::collect_dependencies(
-            self.deps.maintenance_orchestrator.clone(),
-            Some(fp),
-        ) {
+        let maint = self.deps.maintenance_orchestrator.clone();
+        let dep_result = match Self::run_blocking(move || {
+            dispatcher::surface_maintenance_action::collect_dependencies(maint, Some(fp))
+        })
+        .await
+        {
+            Ok(dep_result) => dep_result,
+            Err(e) => return e,
+        };
+        match dep_result {
             Ok(report) => serde_json::json!({
                 "status": "ok",
                 "result": "complete",
@@ -514,15 +637,20 @@ impl McpActionSurface {
     }
 
     /// Run docs audit via dispatcher.
-    pub fn execute_docs(&self, path: &str) -> serde_json::Value {
+    pub async fn execute_docs(&self, path: &str) -> serde_json::Value {
         let fp = match self.to_fp(path) {
             Ok(fp) => fp,
             Err(error) => return error,
         };
-        let result = dispatcher::surface_docs_action::collect_docs(
-            fp.value(),
-            self.deps.doc_orchestrator.clone(),
-        );
+        let doc = self.deps.doc_orchestrator.clone();
+        let result = match Self::run_blocking(move || {
+            dispatcher::surface_docs_action::collect_docs(fp.value(), doc)
+        })
+        .await
+        {
+            Ok(result) => result,
+            Err(e) => return e,
+        };
         match result {
             Ok(findings) => {
                 let exit_code = if findings.is_empty() { 0 } else { 1 };
@@ -541,7 +669,7 @@ impl McpActionSurface {
     }
 
     /// Dispatch execute_command actions.
-    pub fn execute_command(
+    pub async fn execute_command(
         &self,
         action: &str,
         path: &str,
@@ -552,37 +680,46 @@ impl McpActionSurface {
             return error;
         }
         let response = match action {
-            "check" | "scan" => self.execute_check(path),
-            "ci" => self.execute_ci(path, threshold),
-            "fix" => self.execute_fix(path, dry_run),
-            "doctor" => self.execute_doctor(),
-            "orphan" => self.execute_orphan(path),
-            "security" => self.execute_security(path),
-            "quality" => self.execute_quality(path),
-            "import" => self.execute_import(path),
-            "naming" => self.execute_naming(path),
-            "role" => self.execute_role(path),
-            "docs" => self.execute_docs(path),
-            "external" => self.execute_external(path),
-            "taxonomy" => self.execute_layer_scan(path, LAYER_TAXONOMY, action),
-            "contract" => self.execute_layer_scan(path, LAYER_CONTRACT, action),
-            "capabilities" => self.execute_layer_scan(path, LAYER_CAPABILITIES, action),
-            "utility" => self.execute_layer_scan(path, LAYER_UTILITY, action),
-            "agents" => self.execute_layer_scan(path, LAYER_AGENT, action),
-            "surface" => self.execute_layer_scan(path, LAYER_SURFACES, action),
-            "dependencies" => self.execute_dependencies(path),
+            "check" | "scan" => self.execute_check(path).await,
+            "ci" => self.execute_ci(path, threshold).await,
+            "fix" => self.execute_fix(path, dry_run).await,
+            "doctor" => self.execute_doctor().await,
+            "orphan" => self.execute_orphan(path).await,
+            "security" => self.execute_security(path).await,
+            "quality" => self.execute_quality(path).await,
+            "import" => self.execute_import(path).await,
+            "naming" => self.execute_naming(path).await,
+            "role" => self.execute_role(path).await,
+            "docs" => self.execute_docs(path).await,
+            "external" => self.execute_external(path).await,
+            "taxonomy" => self.execute_layer_scan(path, LAYER_TAXONOMY, action).await,
+            "contract" => self.execute_layer_scan(path, LAYER_CONTRACT, action).await,
+            "capabilities" => {
+                self.execute_layer_scan(path, LAYER_CAPABILITIES, action)
+                    .await
+            }
+            "utility" => self.execute_layer_scan(path, LAYER_UTILITY, action).await,
+            "agents" => self.execute_layer_scan(path, LAYER_AGENT, action).await,
+            "surface" => self.execute_layer_scan(path, LAYER_SURFACES, action).await,
+            "dependencies" => self.execute_dependencies(path).await,
             "version" => self.execute_version(),
             "watch" => self.execute_watch(),
-            "adapters" => self.handle_health_check(),
+            "adapters" => self.handle_health_check().await,
             "install-hook" => {
                 let fp = match self.to_fp(path) {
                     Ok(f) => f,
                     Err(e) => return e,
                 };
-                match dispatcher::surface_git_action::collect_install_hook(
-                    self.deps.git_hooks_aggregate.clone(),
-                    &fp,
-                ) {
+                let git_hooks = self.deps.git_hooks_aggregate.clone();
+                let hook_result = match Self::run_blocking(move || {
+                    dispatcher::surface_git_action::collect_install_hook(git_hooks, &fp)
+                })
+                .await
+                {
+                    Ok(hook_result) => hook_result,
+                    Err(e) => return e,
+                };
+                match hook_result {
                     Ok(report) => {
                         serde_json::json!({"status": if report.success { "ok" } else { "error" }, "result": if report.success { "installed" } else { "failed" }, "action": "install-hook", "exit_code": if report.success { 0 } else { 2 }, "message": report.message})
                     }
@@ -590,9 +727,16 @@ impl McpActionSurface {
                 }
             }
             "uninstall-hook" => {
-                match dispatcher::surface_git_action::collect_uninstall_hook(
-                    self.deps.git_hooks_aggregate.clone(),
-                ) {
+                let git_hooks = self.deps.git_hooks_aggregate.clone();
+                let hook_result = match Self::run_blocking(move || {
+                    dispatcher::surface_git_action::collect_uninstall_hook(git_hooks)
+                })
+                .await
+                {
+                    Ok(hook_result) => hook_result,
+                    Err(e) => return e,
+                };
+                match hook_result {
                     Ok(report) => {
                         serde_json::json!({"status": if report.success { "ok" } else { "error" }, "result": if report.success { "uninstalled" } else { "failed" }, "action": "uninstall-hook", "exit_code": if report.success { 0 } else { 2 }, "message": report.message})
                     }
@@ -600,10 +744,16 @@ impl McpActionSurface {
                 }
             }
             "init" | "install" => {
-                let items = dispatcher::surface_setup_action::collect_init(
-                    self.deps.setup_orchestrator.clone(),
-                    self.deps.filesystem_io.clone(),
-                );
+                let setup = self.deps.setup_orchestrator.clone();
+                let fs_io = self.deps.filesystem_io.clone();
+                let items = match Self::run_blocking(move || {
+                    dispatcher::surface_setup_action::collect_init(setup, fs_io)
+                })
+                .await
+                {
+                    Ok(items) => items,
+                    Err(e) => return e,
+                };
                 let any_failure = items.iter().any(|i| !i.ok);
                 let exit_code = if any_failure { 2 } else { 0 };
                 let messages: Vec<String> = items.iter().map(|i| i.message.clone()).collect();
@@ -628,10 +778,18 @@ impl McpActionSurface {
     // ─── Non-dispatcher MCP business logic ────────────────────
 
     /// Health check: adapter availability from maintenance aggregate.
-    pub fn handle_health_check(&self) -> serde_json::Value {
-        let health = dispatcher::surface_maintenance_action::collect_health_check(
-            self.deps.maintenance_orchestrator.clone(),
-        );
+    pub async fn handle_health_check(&self) -> serde_json::Value {
+        let maint = self.deps.maintenance_orchestrator.clone();
+        let (health, version_report) = match Self::run_blocking(move || {
+            let health = dispatcher::surface_maintenance_action::collect_health_check(maint);
+            let version_report = dispatcher::surface_version_action::collect_version();
+            (health, version_report)
+        })
+        .await
+        {
+            Ok(v) => v,
+            Err(e) => return e,
+        };
         let adapters: Vec<serde_json::Value> = health
             .adapters
             .iter()
@@ -643,7 +801,6 @@ impl McpActionSurface {
             .iter()
             .filter(|a| a["status"] == "available")
             .count();
-        let version_report = dispatcher::surface_version_action::collect_version();
         serde_json::json!({
             "status": "ok",
             "version": version_report.version,
