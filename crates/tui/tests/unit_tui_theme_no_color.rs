@@ -102,7 +102,9 @@ fn selection_band_uses_reversed_video_in_high_contrast_mode() {
 
 #[test]
 fn high_contrast_is_opt_in_and_loses_to_no_color() {
-    assert!(!utility_tui_theme::high_contrast_with_override(false, false));
+    assert!(!utility_tui_theme::high_contrast_with_override(
+        false, false
+    ));
     assert!(utility_tui_theme::high_contrast_with_override(false, true));
     // NO_COLOR wins: reversed video still assumes the terminal renders color.
     assert!(!utility_tui_theme::high_contrast_with_override(true, true));
