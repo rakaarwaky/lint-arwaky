@@ -204,6 +204,56 @@ pub fn collect_default_check(
 /// the target itself as the scan scope, and every linter output that names a
 /// non-existent file is dropped (with no violation emitted) so stale or
 /// doubled paths can never surface as E902.
+///
+/// Each capability runs through `run_isolated`, so one panicking linter is
+/// logged to stderr while the others continue.
+pub(crate) fn run_isolated<F>(
+    capability: &str,
+    panics: &mut Vec<String>,
+    audit: F,
+) -> Vec<ViolationItem>
+where
+    F: FnOnce() -> Vec<ViolationItem>,
+{
+    match std::panic::catch_unwind(std::panic::AssertUnwindSafe(audit)) {
+        Ok(violations) => violations,
+        Err(payload) => {
+            let detail = payload
+                .downcast_ref::<String>()
+                .map(|s| s.as_str())
+                .or_else(|| payload.downcast_ref::<&str>().copied())
+                .unwrap_or("unknown panic payload");
+            panics.push(format!("[{capability}] capability panicked: {detail}"));
+            Vec::new()
+        }
+    }
+}
+
+/// Run one capability's aggregate inside `catch_unwind` for a CI-style call
+/// site whose pipeline works on raw `LintResult` rows (score + severity
+/// counting happen before the `ViolationItem` mapping).
+pub(crate) fn run_isolated_ci<F>(
+    capability: &str,
+    panics: &mut Vec<String>,
+    audit: F,
+) -> Vec<shared_common::LintResult>
+where
+    F: FnOnce() -> Vec<shared_common::LintResult>,
+{
+    match std::panic::catch_unwind(std::panic::AssertUnwindSafe(audit)) {
+        Ok(violations) => violations,
+        Err(payload) => {
+            let detail = payload
+                .downcast_ref::<String>()
+                .map(|s| s.as_str())
+                .or_else(|| payload.downcast_ref::<&str>().copied())
+                .unwrap_or("unknown panic payload");
+            panics.push(format!("[{capability}] capability panicked: {detail}"));
+            Vec::new()
+        }
+    }
+}
+
 fn run_all_linters_in_process(
     path: &str,
     agg: &ScanAggregates,
@@ -298,30 +348,35 @@ fn run_all_linters_in_process(
     let workspace_root = target_canon.parent().map(|p| p.to_path_buf());
 
     let mut all: Vec<ViolationItem> = Vec::new();
+    // Capability panics are logged after the scan-scope filters, so an isolated
+    // failure is visible without inventing a rule code.
+    let mut panics: Vec<String> = Vec::new();
 
-    all.extend(
+    all.extend(run_isolated("quality", &mut panics, || {
         agg.quality
             .execute(CodeAnalysisRequest::run_analysis(&entries))
             .into_violations()
             .iter()
-            .map(ViolationItem::from_lint_result),
-    );
+            .map(ViolationItem::from_lint_result)
+            .collect()
+    }));
     on_progress(
         "Quality checks complete".to_string(),
         total_files,
         total_files,
     );
-    all.extend(
+    all.extend(run_isolated("role", &mut panics, || {
         agg.role
             .execute(RoleRequest::audit(&entries))
             .into_violations()
             .iter()
-            .map(ViolationItem::from_lint_result),
-    );
+            .map(ViolationItem::from_lint_result)
+            .collect()
+    }));
     on_progress("Role checks complete".to_string(), total_files, total_files);
     // Workspace-wide import map so AES201/202/203/205 see cross-member imports
     // (the dispatcher's fs instance differs from the import orchestrator's own).
-    all.extend(
+    all.extend(run_isolated("import", &mut panics, || {
         agg.import
             .execute(ImportRequest::audit_with_entries_and_imports(
                 &entries,
@@ -329,37 +384,40 @@ fn run_all_linters_in_process(
             ))
             .into_violations()
             .iter()
-            .map(ViolationItem::from_lint_result),
-    );
+            .map(ViolationItem::from_lint_result)
+            .collect()
+    }));
     on_progress(
         "Import checks complete".to_string(),
         total_files,
         total_files,
     );
-    all.extend(
+    all.extend(run_isolated("naming", &mut panics, || {
         agg.naming
             .execute(NamingRequest::audit_with_tests(&entries, &test_files))
             .into_violations()
             .iter()
-            .map(ViolationItem::from_lint_result),
-    );
+            .map(ViolationItem::from_lint_result)
+            .collect()
+    }));
     on_progress(
         "Naming checks complete".to_string(),
         total_files,
         total_files,
     );
-    let (_graph_ctx, orphan_violations) = agg
-        .orphan
-        .execute(OrphanRequest::scan(
-            &root_fp,
-            &shared_common::taxonomy_common_vo::PatternList::new(ignored.clone()),
-        ))
-        .into_scan_outcome();
-    all.extend(
+    all.extend(run_isolated("orphan", &mut panics, || {
+        let (_graph_ctx, orphan_violations) = agg
+            .orphan
+            .execute(OrphanRequest::scan(
+                &root_fp,
+                &shared_common::taxonomy_common_vo::PatternList::new(ignored.clone()),
+            ))
+            .into_scan_outcome();
         orphan_violations
             .iter()
-            .map(ViolationItem::from_lint_result),
-    );
+            .map(ViolationItem::from_lint_result)
+            .collect()
+    }));
     on_progress(
         "Orphan checks complete".to_string(),
         total_files,
@@ -420,19 +478,20 @@ fn run_all_linters_in_process(
             ),
             config_entries,
         };
-        let mut external: Vec<ViolationItem> = agg
-            .external
-            .execute(
-                shared_external_lint::ExternalLintRequest::scan_all_with_context(
-                    &ext_target_fp,
-                    &context,
-                ),
-            )
-            .into_violations()
-            .values
-            .iter()
-            .map(ViolationItem::from_lint_result)
-            .collect();
+        let mut external: Vec<ViolationItem> = run_isolated("external", &mut panics, || {
+            agg.external
+                .execute(
+                    shared_external_lint::ExternalLintRequest::scan_all_with_context(
+                        &ext_target_fp,
+                        &context,
+                    ),
+                )
+                .into_violations()
+                .values
+                .iter()
+                .map(ViolationItem::from_lint_result)
+                .collect()
+        });
         external.retain(|v| {
             external_violation_in_scope(
                 v,
@@ -463,14 +522,24 @@ fn run_all_linters_in_process(
     // Structure — folder-layout audit (AES701–AES703). Its findings name a
     // folder or a file inside one, and a folder path is not itself a file, so
     // these are scoped separately and appended after the file-scope filter.
-    all.extend(structure_violations_in_scope(&target_canon_str, agg));
+    all.extend(run_isolated("structure", &mut panics, || {
+        structure_violations_in_scope(&target_canon_str, agg)
+    }));
 
     // Doc invariants (AES601–AES605) audit the workspace document chain
     // (FRD/BACKLOG pairs, PRD, AGENTS, ...) which is not part of the
     // source-file index, so it runs against the scan target directly and its
     // findings are appended after the file-scope filter like structure does.
-    all.extend(doc_violations_in_scope(&target_canon_str, agg));
+    all.extend(run_isolated("doc", &mut panics, || {
+        doc_violations_in_scope(&target_canon_str, agg)
+    }));
+
     on_progress("Scan complete".to_string(), total_files, total_files);
+    if !panics.is_empty() {
+        for line in &panics {
+            eprintln!("{line}");
+        }
+    }
 
     all
 }
@@ -681,21 +750,26 @@ fn run_single_file_scan(
         Vec<shared_filesystem::taxonomy_filesystem_vo::ImportEntry>,
     > = std::collections::HashMap::new();
     let mut all: Vec<ViolationItem> = Vec::new();
-    all.extend(
+    // Capability panics are logged after the scope filter, so an isolated
+    // failure is visible without inventing a rule code.
+    let mut panics: Vec<String> = Vec::new();
+    all.extend(run_isolated("quality", &mut panics, || {
         agg.quality
             .execute(CodeAnalysisRequest::run_analysis(&entries))
             .into_violations()
             .iter()
-            .map(ViolationItem::from_lint_result),
-    );
-    all.extend(
+            .map(ViolationItem::from_lint_result)
+            .collect()
+    }));
+    all.extend(run_isolated("role", &mut panics, || {
         agg.role
             .execute(RoleRequest::audit(&entries))
             .into_violations()
             .iter()
-            .map(ViolationItem::from_lint_result),
-    );
-    all.extend(
+            .map(ViolationItem::from_lint_result)
+            .collect()
+    }));
+    all.extend(run_isolated("import", &mut panics, || {
         agg.import
             .execute(ImportRequest::audit_with_entries_and_imports(
                 &entries,
@@ -703,8 +777,9 @@ fn run_single_file_scan(
             ))
             .into_violations()
             .iter()
-            .map(ViolationItem::from_lint_result),
-    );
+            .map(ViolationItem::from_lint_result)
+            .collect()
+    }));
     // AES103 judges the test/bench files, so a one-file scan of a misnamed or
     // nested test file has to reach it. The file itself is the only evidence
     // that scan target can offer, so it is passed as the test set when it sits
@@ -718,45 +793,52 @@ fn run_single_file_scan(
         } else {
             Vec::new()
         };
-    all.extend(
+    all.extend(run_isolated("naming", &mut panics, || {
         agg.naming
             .execute(NamingRequest::audit_with_tests(&entries, &test_entries))
             .into_violations()
             .iter()
-            .map(ViolationItem::from_lint_result),
-    );
-    let (_graph_ctx, orphan_violations) = agg
-        .orphan
-        .execute(OrphanRequest::scan(
-            root_fp,
-            &shared_common::taxonomy_common_vo::PatternList::new(ignored.to_vec()),
-        ))
-        .into_scan_outcome();
-    all.extend(
+            .map(ViolationItem::from_lint_result)
+            .collect()
+    }));
+    all.extend(run_isolated("orphan", &mut panics, || {
+        let (_graph_ctx, orphan_violations) = agg
+            .orphan
+            .execute(OrphanRequest::scan(
+                root_fp,
+                &shared_common::taxonomy_common_vo::PatternList::new(ignored.to_vec()),
+            ))
+            .into_scan_outcome();
         orphan_violations
             .iter()
-            .map(ViolationItem::from_lint_result),
-    );
+            .map(ViolationItem::from_lint_result)
+            .collect()
+    }));
     // External — the MarkdownLint adapter is the only one that lints a single
     // file meaningfully: every other adapter shells out to a project-wide tool
     // (cargo, ruff, eslint) whose findings name other files, so on a one-file
     // target they would all be dropped by the scope filter below anyway. The
     // adapter itself already early-returns empty for a non-Markdown file, so
     // this is safe to call unconditionally.
-    all.extend(
+    all.extend(run_isolated("external", &mut panics, || {
         crate::surface_external_action::collect_single_file_external(
             scan_root,
             ignored,
             &agg.external,
             crate::surface_external_action::load_config_entries(scan_root, seam.io.as_ref()),
             seam.io.as_ref(),
-        ),
-    );
+        )
+    }));
     // Drop violations naming files outside the target.
     all.retain(|v| {
         let p = std::path::Path::new(&v.file.value);
         p.is_absolute() && p.starts_with(scan_root)
     });
+    if !panics.is_empty() {
+        for line in &panics {
+            eprintln!("{line}");
+        }
+    }
     all
 }
 
