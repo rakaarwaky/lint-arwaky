@@ -149,14 +149,12 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
                     languages: self.deps.workspace.detect_project_languages(&root),
                 }
             }
-            FilesystemRequest::ReadFileResult { path } => FilesystemResponse::Content {
-                value: shared_common::ContentString::new(
-                    self.deps
-                        .io
-                        .read_to_string(&path)
-                        .map(|c| c.value)
-                        .unwrap_or_default(),
-                ),
+            FilesystemRequest::ReadFileResult { path } => FilesystemResponse::ContentOpt {
+                // A missing or unreadable file is `None`, not "". Returning an
+                // empty string here made every caller that probes for a file
+                // (config discovery walking up the tree) believe it found an
+                // empty file and stop looking.
+                value: self.deps.io.read_to_string(&path).ok().map(|c| c.value),
             },
             FilesystemRequest::WriteFile { path, content } => FilesystemResponse::OpOk {
                 ok: self.deps.io.write_string(&path, &content).is_ok(),
