@@ -252,18 +252,37 @@ fn write_agents_workspace(dir: &Path) {
     fs::write(
         dir.join("AGENTS.md"),
         "# Sample AGENTS.md\n\n\
-## Project Overview\n\nSample project.\n\n\
-## Precedence\n\n1. Safety rules.\n\n\
-## Build & dev\n\n```bash\ncargo build\n```\n\n\
-## Security\n\n- Explicit approval is required before destructive actions.\n\n\
-## Architecture\n\nSee [ARCHITECTURE.md](ARCHITECTURE.md) for the layer specification.\n\n\
-## Commands\n\n```bash\ncargo nextest run --workspace\n```\n\n\
-## Git Workflow\n\nEvery change must use a worktree or branch.\n\n\
-## Branch Management\n\nUse `main` and `develop`.\n\n\
-## Skills\n\n`.agents/skills/` holds skill definitions.\n\n\
-## Quality gates\n\nRun `bash scripts/gates.sh`.\n\n\
-## Definition of Done\n\nA change is done when tests pass.\n\n\
-## Related Documents\n\n- [PRD.md](PRD.md): Product requirements.\n",
+## User Context\n\n\
+- Preferences: concise.\n\n\
+## Precedence\n\n\
+1. Explicit user approval.\n\n\
+## Security\n\n\
+- Explicit approval is required before destructive actions.\n\n\
+## Memory\n\n\
+- Write important state to the session notes.\n\n\
+## Session Start\n\n\
+Read the todo list, then check state.\n\n\
+## Runtime\n\n\
+- Language: Rust.\n\n\
+## Quick Facts\n\n\
+INPUT  = sample input\n\
+OUTPUT = sample output\n\n\
+## Pipeline\n\n\
+scan → check\n\
+lint\n\
+orchestrated by CI\n\n\
+## Git Workflow\n\n\
+Every change must use a worktree or branch.\n\n\
+## Commands\n\n\
+```bash\ncargo nextest run --workspace\n```\n\n\
+## Guided Skills\n\n\
+Use `.agents/skills` when a task matches a guided workflow.\n\n\
+## Definition of Done\n\n\
+A change is done when tests pass.\n\n\
+## Writing Style\n\n\
+Lead with the point.\n\n\
+## Related Documents\n\n\
+- [PRD.md](PRD.md): Product requirements.\n",
     )
     .unwrap();
 }
@@ -895,42 +914,42 @@ fn aes605_allows_extra_and_free_h3_headings() {
     let tmp = tempfile::tempdir().unwrap();
     write_bad_agents(
         tmp.path(),
-        "\
-# Sample AGENTS.md
+        "# Sample AGENTS.md
 
-## Project Overview
+## User Context
 
-Sample project.
+- Preferences: concise.
 
 ## Precedence
 
 1. Safety rules.
 
-## Build & dev
-
-```bash
-cargo build
-```
-
 ## Security
 
 - Be safe.
 
-## Architecture
+## Memory
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) for the layer specification.
+- Write state down.
 
-## Branch Management
+## Session Start
 
-Use `main` and `develop`.
+Read the todo list.
 
-## Skills
+## Runtime
 
-`.agents/skills/` holds skill definitions.
+- Language: Rust.
 
-## Quality gates
+## Quick Facts
 
-Run `bash scripts/gates.sh`.
+INPUT  = sample
+OUTPUT = sample
+
+## Pipeline
+
+scan → check
+lint
+run by CI
 
 ## Git Workflow
 
@@ -942,13 +961,21 @@ Use a worktree.
 true
 ```
 
+## Guided Skills
+
+Use `.agents/skills`.
+
 ## Definition of Done
 
 Tests pass.
 
+## Writing Style
+
+Lead with the point.
+
 ## Related Documents
 
-- [PRD.md](PRD.md).\
+- [PRD.md](PRD.md).
 ",
     );
     let findings = audit(tmp.path());
@@ -959,8 +986,8 @@ Tests pass.
 }
 
 #[test]
-fn aes605_fires_when_project_overview_or_build_dev_is_absent() {
-    // Removing any of the newest required sections must fire h2_missing.
+fn aes605_fires_when_a_required_section_is_absent() {
+    // Removing any required section must fire h2_missing.
     let tmp = tempfile::tempdir().unwrap();
     write_bad_agents(
         tmp.path(),
@@ -997,7 +1024,7 @@ Tests pass.
     let findings = audit(tmp.path());
     assert!(
         has(&findings, "AES605", "h2_missing"),
-        "missing Project Overview and Build & dev should fire; got: {findings:#?}"
+        "missing required sections should fire; got: {findings:#?}"
     );
     let message = findings
         .iter()
@@ -1005,8 +1032,8 @@ Tests pass.
         .map(|(_, _, m)| m.as_str())
         .unwrap();
     assert!(
-        message.contains("Project Overview") && message.contains("Build"),
-        "message must name both missing sections; got: {message}"
+        message.contains("User Context") && message.contains("Memory"),
+        "message must name the missing sections; got: {message}"
     );
 }
 
@@ -1085,8 +1112,11 @@ fn aes605_allows_the_project_specific_h2_set() {
     let tmp = tempfile::tempdir().unwrap();
     write_bad_agents(
         tmp.path(),
-        "\
-# Sample AGENTS.md
+        "# Sample AGENTS.md
+
+## User Context
+
+- Preferences: concise.
 
 ## Precedence
 
@@ -1096,29 +1126,28 @@ fn aes605_allows_the_project_specific_h2_set() {
 
 - Be safe.
 
-## Project Overview
+## Memory
 
-What this project is.
+- Write state down.
 
-## Build & dev
+## Session Start
 
-How to build it.
+Read the todo list.
 
-## Branch Management
+## Runtime
 
-Which branches exist.
+- Language: Rust.
 
-## Skills
+## Quick Facts
 
-The skill catalogue.
+INPUT  = sample
+OUTPUT = sample
 
-## Quality gates
+## Pipeline
 
-The gate pipeline.
-
-## Architecture
-
-See [ARCHITECTURE.md](ARCHITECTURE.md).
+scan → check
+lint
+run by CI
 
 ## Git Workflow
 
@@ -1130,13 +1159,21 @@ Use a worktree.
 true
 ```
 
+## Guided Skills
+
+Use `.agents/skills`.
+
 ## Definition of Done
 
 Tests pass.
 
+## Writing Style
+
+Lead with the point.
+
 ## Related Documents
 
-- [PRD.md](PRD.md).\
+- [PRD.md](PRD.md).
 ",
     );
     let findings = audit(tmp.path());

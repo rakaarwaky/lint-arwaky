@@ -2,6 +2,43 @@
 
 ## Unreleased
 
+### AES705 — member-root file placement
+
+- **A member dir root now carries folders and wiring only.** An
+  `agent_calculator_orchestrator.py` sat loose at `modules/` in a workspace
+  that every other rule called clean: AES703 forbids an agent file in a
+  *surface* folder but skips a folder that is not surface-dominated, AES702
+  requires an agent inside a feature folder but says nothing about one outside
+  it, and AES701 covers the shared kernel. The file belonged to no feature, so
+  no FRD described it and no test suite covered it.
+- **`MemberRootPlacementAuditor` reads only the top level of `crates/`,
+  `modules/`, and `packages/`**, reporting one `member_root_has_layer_file`
+  finding per `capabilities_*`, `agent_*`, `surface_*`, or `utility_*` file,
+  naming the folder kind each belongs in. `root_*` wiring, a barrel module, and
+  any unclassified file stay legal, because that is where the container composes
+  them.
+
+### AGENTS.md template contract (AES605)
+### AGENTS.md template contract (AES605)
+
+- **Resolved the 12-vs-14 H2 conflict in the AGENTS.md contract.** The heading
+  contract required 12 sections the template never declared (`Project Overview`,
+  `Build & dev`, `Architecture`, `Branch Management`, `Skills`, `Quality gates`),
+  so a document written from the template always failed AES605 and a document
+  that passed could not have been written from the template. The contract now
+  lists the 14 H2s the template actually declares, and `AGENTS.md` was rebuilt
+  from the template so the two match by construction rather than by hand.
+- **Line drift is now checked against `{...}` placeholders.** The old check
+  required every non-blank line to be verbatim template text, which rejected
+  every filled placeholder — the very thing the template instructs authors to
+  fill. Drift is now scoped per H2 section and exempts `{...}` slots, matching
+  the contract the template states: do not rename, reorder, or remove.
+- **The template ships as a literal in the checker.** `AGENTS605` reads it from
+  `capabilities_doc_heading_structure_checker.rs` rather than reading the
+  `aes-docs` skill at runtime, so a workspace without that skill still gets the
+  contract.
+
+
 ### Layer-scoped commands
 
 - **`lint-arwaky-cli` gained one subcommand per AES layer: `taxonomy`,

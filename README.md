@@ -1,10 +1,10 @@
 # Lint Arwaky
 
-[![CI](https://github.com/rakaarwaky/lint-arwaky/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/rakaarwaky/lint-arwaky/actions/workflows/ci.yml)
+![CI](https://github.com/rakaarwaky/lint-arwaky/actions/workflows/ci.yml/badge.svg?branch=main)
 
 Architecture linter enforcement for Rust, Python, and TypeScript. Built in Rust, structured by the [Agentic Engineering System](ARCHITECTURE.md), and self-auditing — the project lints itself under its own rules.
 
-Most linters catch syntax and style. Lint Arwaky catches architecture drift: forbidden cross-layer imports, dead files, role confusion, unused imports, and bypass culture. It enforces 34 AES rules across 7 groups (naming, import, quality, role, orphan, structure, and doc) in Rust, Python, and TypeScript in a single scan.
+Most linters catch syntax and style. Lint Arwaky catches architecture drift: forbidden cross-layer imports, dead files, role confusion, unused imports, and bypass culture. It enforces 35 AES rules across 7 groups (naming, import, quality, role, orphan, structure, and doc) in Rust, Python, and TypeScript in a single scan.
 
 > **Security scope:** Lint Arwaky does not detect hardcoded secrets or
 > credentials such as API keys, tokens, and passwords. Pair it with a dedicated
@@ -42,25 +42,26 @@ Section 5.5 "Demo Walkthrough".
 
 ## Available Scripts/Commands
 
-| Command                                                      | Description                                                             |
-| ------------------------------------------------------------ | ----------------------------------------------------------------------- |
-| `scan` / `check` \[path\]                                                | Run all 7 code linters (naming, import, quality, role, orphan, structure, external) |
-| `naming` / `import` / `quality` / `role` / `orphan` / `structure` \[path\] | Individual rule groups (AES101–102, 201–205, 301–305, 401–406, 501–506, 701–703) |
+
+| Command                                                                              | Description                                                                                                                                   |
+| ------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `scan` / `check` \[path\]                                                            | Run all 8 linters (naming, import, quality, role, orphan, structure, docs, external)                                                           |
+| `naming` / `import` / `quality` / `role` / `orphan` / `structure` / `docs` \[path\]  | Individual rule groups (AES101–102, 201–205, 301–305, 401–406, 501–506, 601–605, 701–703)                                                     |
 | `taxonomy` / `contract` / `capabilities` / `utility` / `agents` / `surface` \[path\] | All rule groups, reported for one AES layer only (files prefixed `taxonomy_`, `contract_`, `capabilities_`, `utility_`, `agent_`, `surface_`) |
-| `external` \[path\]                                          | External linters (Clippy, Ruff, ESLint, tool-native codes)              |
-| `fix` \[path\]                                               | Apply safe fixes (`--dry-run` previews)                                 |
-| `ci` \[path\]                                                | CI mode with exit codes (`--threshold <n>`)                             |
-| `docs` \[path\]                                              | Audit document invariants (AES601–AES605)                               |
-| `git` \[path\]                                               | Scan only files changed since a git base (`--base <ref>`)               |
-| `watch` \[path\]                                             | Continuous linting on file changes                                      |
-| `doctor` / `security` / `dependencies` \[path\]              | Toolchain diagnostics, cargo-audit scan, dependency report              |
-| `install-hook` / `uninstall-hook`                            | Git pre-commit hook                                                     |
-| `init` / `install` / `mcp-config` / `config`                 | Setup and config                                                        |
-| `update` (alias `la`)                                        | Self-update to the latest release binary (`--check-only` previews)      |
-| `version` / `adapters`                                       | Info                                                                    |
-| `skill list`                                                 | List embedded AES skill documentation                                   |
-| `skill read <name>`                                          | Print a skill's SKILL.md (`--with-references` adds language HOW-TOs)    |
-| `lint-arwaky-tui`                                            | Start TUI                                                            |
+| `external` \[path\]                                                                  | External linters (Clippy, Ruff, ESLint, tool-native codes)                                                                                    |
+| `fix` \[path\]                                                                       | Apply safe fixes (`--dry-run` previews)                                                                                                       |
+| `ci` \[path\]                                                                        | CI mode with exit codes (`--threshold <n>`)                                                                                                   |
+| `git` \[path\]                                                                       | Scan only files changed since a git base (`--base <ref>`)                                                                                     |
+| `watch` \[path\]                                                                     | Continuous linting on file changes                                                                                                            |
+| `doctor` / `security` / `dependencies` \[path\]                                      | Toolchain diagnostics, cargo-audit scan, dependency report                                                                                    |
+| `install-hook` / `uninstall-hook`                                                    | Git pre-commit hook                                                                                                                           |
+| `init` / `install` / `mcp-config` / `config`                                         | Setup and config                                                                                                                              |
+| `update` (alias `la`)                                                                | Self-update to the latest release binary (`--check-only` previews)                                                                            |
+| `version` / `adapters`                                                               | Info                                                                                                                                          |
+| `skill list`                                                                         | List embedded AES skill documentation                                                                                                         |
+| `skill read <name>`                                                                  | Print a skill's SKILL.md (`--with-references` adds language HOW-TOs)                                                                          |
+| `lint-arwaky-tui`                                                                    | Start TUI                                                                                                                                     |
+
 
 The six layer commands differ from the rule-group commands in what they narrow.
 A group command runs one linter over the whole workspace; a layer command runs
@@ -107,7 +108,7 @@ Add a CI job running `lint-arwaky-cli check .` (exit 1 on any violation), make i
 
 ## Architecture
 
-7-layer Agentic Engineering System: taxonomy → contract → capabilities → utility → agent → surface → root. Every file is named `layer_concern_role` and dependencies flow down only. Full spec: [ARCHITECTURE.md](ARCHITECTURE.md).
+see  [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ### Performance
 
@@ -122,7 +123,7 @@ cargo nextest run --workspace --lib --tests   # 3× faster than cargo test
 cargo run --bin lint-arwaky-cli -- check .    # self-lint, must report 0 violations
 ```
 
-Acceptance tests follow `tests/acceptance_FR_00N.rs`. Pass/fail criteria: [TEST.md](TEST.md).
+see : [TEST.md](TEST.md).
 
 ## Project Structure
 
@@ -138,7 +139,7 @@ crates/
 ├── role-rules/        # AES401–406
 ├── orphan-rules/      # AES501–506
 ├── doc-rules/         # AES601–605 (document invariants)
-├── structure-rules/   # AES701–704 (folder structure)
+├── structure-rules/   # AES701–705 (folder structure)
 ├── external-lint/     # External linter adapters
 ├── auto-fix/          # Mechanical fixes
 ├── report-formatter/  # text/JSON/SARIF/JUnit output
@@ -156,8 +157,8 @@ Each crate has an `FRD.md` (spec) beside a `BACKLOG.md` (real condition). Root: 
 
 ## Contributing
 
-All code follows the AES 7-layer architecture (enforced by this tool). Acceptance tests named `acceptance_FR_00N.rs`. No `unwrap()`, `#[allow(...)]`, `todo!()`, `FIXME`, or `HACK` in production code. Full AST parsing only — no regex. See [CONTRIBUTING.md](CONTRIBUTING.md).
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-[MIT](LICENSE)
+See [MIT](LICENSE)

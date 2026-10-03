@@ -1,6 +1,8 @@
 // Unit tests — Formatting utility tests: group_by_member, status_icon, output structure.
-use cli_commands::utility_output_text_formatter::{group_by_member, status_icon};
 use shared_cli_commands::resolve_skill_hint_for_file;
+use shared_cli_commands::utility_output_text_formatter::{
+    code_summary_lines, group_by_member, status_icon,
+};
 use shared_common::ViolationItem;
 use shared_common::{ColumnNumber, ErrorCode, FilePath, LineNumber, LintMessage, Severity};
 
@@ -120,4 +122,62 @@ fn aes403_in_agent_file_routes_to_agent_skill() {
         hint.guidance(),
         "[run cli \"lint-arwaky-cli skill read aes-agent\"]"
     );
+}
+
+/// The CI job that proves the external adapters ran parses this exact shape
+/// with `grep -oP '^\s*\[\K[A-Za-z0-9_.\/-]+(?=\]\s+\d+\s+←)'`. Changing
+/// the format without changing the workflow turns that step red with no local
+/// failure, so the shape is pinned here.
+#[test]
+fn code_summary_lines_matches_the_shape_ci_parses() {
+    let items = vec![
+        violation("crates/foo/src/a.rs", "AES201", 1),
+        violation("crates/foo/src/b.rs", "AES201", 9),
+        violation("crates/foo/src/c.rs", "ruff.E501", 4),
+    ];
+    let refs: Vec<&ViolationItem> = items.iter().collect();
+
+    let lines = code_summary_lines(&refs);
+    assert_eq!(
+        lines.len(),
+        2,
+        "one line per distinct code, however many files each touches; got {lines:#?}"
+    );
+    assert!(
+        lines.iter().any(|l| l.starts_with("  [AES201] 2  ← ")),
+        "a code touching two files counts 2; got {lines:#?}"
+    );
+    assert!(
+        lines.iter().any(|l| l.starts_with("  [ruff.E501] 1  ← ")),
+        "a tool-native code keeps its own name so CI can tell it from an AES code; got {lines:#?}"
+    );
+}
+
+/// The shape CI uses, applied to a real line, must yield the code.
+#[test]
+fn code_summary_lines_satisfies_the_ci_regex() {
+    let items = vec![violation("crates/foo/src/a.rs", "ruff.E501", 1)];
+    let refs: Vec<&ViolationItem> = items.iter().collect();
+    let line = code_summary_lines(&refs).remove(0);
+
+    let parsed = regex_lite_capture(&line);
+    assert_eq!(
+        parsed.as_deref(),
+        Some("ruff.E501"),
+        "CI derives the code from `CODE] COUNT arrow`; the line {line:?} does not satisfy it"
+    );
+}
+
+/// The subset of the CI regex that matters here: a code between `[` and `]`,
+/// followed by a count, then the arrow.
+fn regex_lite_capture(line: &str) -> Option<String> {
+    let rest = line.trim_start().strip_prefix('[')?;
+    let end = rest.find(']')?;
+    let code = &rest[..end];
+    let tail = rest[end + 1..].trim_start();
+    let count_end = tail.find(char::is_whitespace)?;
+    tail[count_end..]
+        .trim_start()
+        .starts_with('←')
+        .then(|| code.to_string())
 }

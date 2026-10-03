@@ -21,9 +21,9 @@ impl ICalculatorProtocol for DivisionAnalyzer {
 
 // ─── Block 3: Constructors, Std Traits, Helpers ────────────
 
-impl DivisionAnalyzer {
-    /// The analyzer holds no state, so construction takes no arguments.
-    pub fn new() -> Self {
+impl Default for DivisionAnalyzer {
+    /// The analyzer holds no state, so the default carries nothing.
+    fn default() -> Self {
         Self
     }
 }

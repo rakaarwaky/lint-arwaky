@@ -25,6 +25,14 @@ pub trait IStructureSurfacePurityProtocol: Send + Sync {
 /// Test-suite coverage: every feature folder that owns source holds at least one
 /// file for each of the seven test types in `tests/`, and at least one `bench_`
 /// file in `benches/` (AES704).
+/// AES705 — reports layer files sitting at a member dir root instead of
+/// inside the folder that owns them.
+pub trait IStructureMemberRootProtocol: Send + Sync {
+    /// Report every misplaced layer file at every member dir root.
+    fn audit_member_root(&self, request: StructureRequest) -> StructureResponse;
+}
+
+/// AES704 — reports missing test categories across every feature folder.
 pub trait IStructureTestSuiteProtocol: Send + Sync {
     /// Report every missing test category across every feature folder.
     fn audit_test_suite(&self, request: StructureRequest) -> StructureResponse;

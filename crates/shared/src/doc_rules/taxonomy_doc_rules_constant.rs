@@ -93,6 +93,14 @@ pub const DOC_STRUCTURE_VIOLATION_H2_MISSING: &str = "h2_missing";
 /// A document carries a level-2 heading outside the agreed template.
 pub const DOC_STRUCTURE_VIOLATION_H2_UNEXPECTED: &str = "h2_unexpected";
 
+/// A non-placeholder line drifts from the template — content was changed
+/// instead of left verbatim. Every line without `{}` must match the template
+/// exactly.
+pub const DOC_STRUCTURE_VIOLATION_LINE_DRIFT: &str = "line_drift";
+
+/// A document is missing the YAML frontmatter block.
+pub const DOC_STRUCTURE_VIOLATION_FRONTMATTER_MISSING: &str = "frontmatter_missing";
+
 /// The FRD declares a different number of requirements than the feature's
 /// contract module declares protocol classes. (Merged into AES601.)
 pub const FR_PROTOCOL_PARITY_VIOLATION_COUNT_MISMATCH: &str = "protocol_count_mismatch";
@@ -237,17 +245,19 @@ pub const DOC_HEADING_CONTRACTS: &[DocH2Contract] = &[
     (
         AGENTS_DOC,
         &[
-            "Project Overview",
+            "User Context",
             "Precedence",
-            "Build & dev",
             "Security",
-            "Architecture",
-            "Commands",
+            "Memory",
+            "Session Start",
+            "Runtime",
+            "Quick Facts",
+            "Pipeline",
             "Git Workflow",
-            "Branch Management",
-            "Skills",
-            "Quality gates",
+            "Commands",
+            "Guided Skills",
             "Definition of Done",
+            "Writing Style",
             "Related Documents",
         ],
         &[],
@@ -375,7 +385,7 @@ pub const DOC_HEADING_CONTRACTS: &[DocH2Contract] = &[
         &[
             "Reference",
             "Data Overview",
-            "Value Objects",
+            "Data Domain",
             "Assumptions & Constraints",
         ],
         &[],

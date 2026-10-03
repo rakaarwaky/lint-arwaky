@@ -116,8 +116,8 @@ impl TuiCommandSurface {
                     let area = frame.area();
 
                     // W5: guard — refuse to draw the full layout on a too-small terminal.
-                    let min_h = crate::utility_tui_theme::MIN_TERMINAL_HEIGHT;
-                    let min_w = crate::utility_tui_theme::MIN_TERMINAL_WIDTH;
+                    let min_h = shared_tui::utility_tui_theme::MIN_TERMINAL_HEIGHT;
+                    let min_w = shared_tui::utility_tui_theme::MIN_TERMINAL_WIDTH;
                     if area.height < min_h || area.width < min_w {
                         let message = format!(
                             "Terminal too small — resize to at least {}x{}",
@@ -126,14 +126,14 @@ impl TuiCommandSurface {
                         let line = Line::from(vec![Span::styled(
                             message,
                             Style::default()
-                                .fg(crate::utility_tui_theme::color(
-                                    crate::utility_tui_theme::KEY,
+                                .fg(shared_tui::utility_tui_theme::color(
+                                    shared_tui::utility_tui_theme::KEY,
                                 ))
                                 .add_modifier(Modifier::BOLD),
                         )]);
                         let paragraph = Paragraph::new(line)
-                            .style(Style::default().bg(crate::utility_tui_theme::color(
-                                crate::utility_tui_theme::BACKGROUND,
+                            .style(Style::default().bg(shared_tui::utility_tui_theme::color(
+                                shared_tui::utility_tui_theme::BACKGROUND,
                             )))
                             .alignment(Alignment::Center);
                         frame.render_widget(paragraph, area);
@@ -308,33 +308,33 @@ fn render_header(state: &AppState, frame: &mut ratatui::Frame, area: ratatui::la
     let line = Line::from(vec![
         Span::styled(
             " lint-arwaky TUI ",
-            Style::default().fg(crate::utility_tui_theme::color(
-                crate::utility_tui_theme::HEADER,
+            Style::default().fg(shared_tui::utility_tui_theme::color(
+                shared_tui::utility_tui_theme::HEADER,
             )),
         ),
         Span::styled(
             "\u{2502} ",
-            Style::default().fg(crate::utility_tui_theme::color(
-                crate::utility_tui_theme::SEPARATOR,
+            Style::default().fg(shared_tui::utility_tui_theme::color(
+                shared_tui::utility_tui_theme::SEPARATOR,
             )),
         ),
         Span::styled(
             "Path: ",
-            Style::default().fg(crate::utility_tui_theme::color(
-                crate::utility_tui_theme::SEPARATOR,
+            Style::default().fg(shared_tui::utility_tui_theme::color(
+                shared_tui::utility_tui_theme::SEPARATOR,
             )),
         ),
         Span::styled(
             &state.navigation.current_dir,
-            Style::default().fg(crate::utility_tui_theme::color(
-                crate::utility_tui_theme::LABEL,
+            Style::default().fg(shared_tui::utility_tui_theme::color(
+                shared_tui::utility_tui_theme::LABEL,
             )),
         ),
         Span::styled("  ", Style::default()),
         Span::styled(
             "[q/Esc] Quit",
-            Style::default().fg(crate::utility_tui_theme::color(
-                crate::utility_tui_theme::SEPARATOR,
+            Style::default().fg(shared_tui::utility_tui_theme::color(
+                shared_tui::utility_tui_theme::SEPARATOR,
             )),
         ),
     ]);

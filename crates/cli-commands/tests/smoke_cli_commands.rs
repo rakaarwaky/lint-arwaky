@@ -1,5 +1,5 @@
 // Smoke tests — module imports work, key types accessible within 5s.
-use cli_commands::utility_output_text_formatter;
+use shared_cli_commands::utility_output_text_formatter;
 
 #[test]
 fn smoke_utility_output_text_formatter_module_imports() {
@@ -24,7 +24,7 @@ fn smoke_all_surface_modules_importable() {
     let _ = cli_commands::surface_fix_command::handle_fix;
     let _ = cli_commands::surface_skill_command::handle_skill_list;
     let _ = cli_commands::surface_skill_command::handle_skill_read;
-    let _ = cli_commands::utility_output_text_formatter::group_by_member;
+    let _ = shared_cli_commands::utility_output_text_formatter::group_by_member;
     let elapsed = start.elapsed();
     assert!(
         elapsed.as_secs() < 5,

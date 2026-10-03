@@ -18,9 +18,9 @@ impl ICalculatorProtocol for AdditionAnalyzer {
 
 // ─── Block 3: Constructors, Std Traits, Helpers ────────────
 
-impl AdditionAnalyzer {
-    /// The analyzer holds no state, so construction takes no arguments.
-    pub fn new() -> Self {
+impl Default for AdditionAnalyzer {
+    /// The analyzer holds no state, so the default carries nothing.
+    fn default() -> Self {
         Self
     }
 }

@@ -162,11 +162,21 @@ run_gate "False Negatives (workspaces-bad >= 29)" bash -c '
 FN_PID=$!
 
 run_gate "False Positives (workspaces-good == 0)" bash -c '
-    fp_rust=$($CLI scan workspaces-good/crates --format json 2>/dev/null | python3 -c "import sys,json; print(len(json.load(sys.stdin).get(\"results\",[])))" 2>/dev/null || echo "0")
-    fp_python=$($CLI scan workspaces-good/modules --format json 2>/dev/null | python3 -c "import sys,json; print(len(json.load(sys.stdin).get(\"results\",[])))" 2>/dev/null || echo "0")
-    fp_ts=$($CLI scan workspaces-good/packages --format json 2>/dev/null | python3 -c "import sys,json; print(len(json.load(sys.stdin).get(\"results\",[])))" 2>/dev/null || echo "0")
-    echo "  Rust FP: ${fp_rust}, Python FP: ${fp_python}, TS FP: ${fp_ts}"
-    [ "${fp_rust:-0}" -eq 0 ] && [ "${fp_python:-0}" -eq 0 ] && [ "${fp_ts:-0}" -eq 0 ]
+    # Scan the workspace root, not a member folder: the linter resolves members
+    # from the Cargo.toml one level up, so scanning workspaces-good/crates finds
+    # nothing and reports 0 for a clean tree.
+    json=$($CLI scan workspaces-good --format json 2>/dev/null)
+    if [ -z "$json" ]; then
+        echo "  scan produced no output — cannot confirm the tree is clean"
+        exit 1
+    fi
+    fp=$(printf "%s" "$json" | python3 -c "import sys,json; d=json.load(sys.stdin); print(len(d.get(\"results\",[])))")
+    if [ -z "$fp" ]; then
+        echo "  could not parse scan output"
+        exit 1
+    fi
+    echo "  workspaces-good: ${fp} violations"
+    [ "${fp}" -eq 0 ]
 ' &
 FP_PID=$!
 

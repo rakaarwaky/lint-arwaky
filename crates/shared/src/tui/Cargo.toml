@@ -1,0 +1,21 @@
+[package]
+name = "shared-tui-lint-arwaky"
+version = "3.7.1"
+edition = "2024"
+description = "AES tui foundation: shared TUI utilities (theme tokens, report formatting, filesystem helpers) used by the tui surface."
+license = "MIT"
+repository = "https://github.com/rakaarwaky/lint-arwaky"
+publish = true
+
+# The folder *is* the crate root, so the manifest lives beside `mod.rs`.
+[lib]
+path = "mod.rs"
+
+[lints]
+workspace = true
+
+[dependencies]
+ratatui.workspace = true
+arboard.workspace = true
+shared-common.workspace = true
+shared-maintenance.workspace = true

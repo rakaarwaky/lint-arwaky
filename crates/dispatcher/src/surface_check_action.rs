@@ -32,7 +32,7 @@ use std::path::PathBuf;
 use std::process::{Command, Stdio};
 use std::sync::Arc;
 
-use crate::utility_subprocess_runner::{subprocess_timeout, wait_for_child};
+use shared_common::utility_subprocess_runner::{subprocess_timeout, wait_for_child};
 
 /// Capability seams exposed alongside the filesystem aggregate, so callers can
 /// dispatch individual protocol operations without leaking the aggregate layer.

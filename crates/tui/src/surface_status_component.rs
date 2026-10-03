@@ -4,12 +4,12 @@
 // Violation count is colored red when > 0, green when 0.
 // Uses ASCII box-drawing fallback when NO_COLOR is set (#365).
 use crate::AppState;
-use crate::utility_tui_theme as theme;
 use ratatui::Frame;
 use ratatui::layout::Rect;
 use ratatui::style::Style;
 use ratatui::text::{Line, Span};
 use ratatui::widgets::Paragraph;
+use shared_tui::utility_tui_theme as theme;
 
 /// Returns the box-drawing character for a vertical separator.
 /// Falls back to "|" when NO_COLOR is set (#365).

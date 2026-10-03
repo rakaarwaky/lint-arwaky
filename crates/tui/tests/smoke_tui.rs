@@ -1,6 +1,6 @@
 // Smoke tests — container creation, key types accessible within 5s.
 use shared_common::{DisplayContent, FilePath};
-use tui_lint_arwaky::utility_file_system;
+use shared_tui::utility_file_system;
 
 #[test]
 fn smoke_is_valid_directory_completes_quickly() {
