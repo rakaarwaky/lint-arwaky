@@ -161,16 +161,18 @@ Before restructuring a shared document contract enforced by AES605 (such as `AGE
 
 ## Quality Verification & PR Process
 
-Clear every gate before committing or opening a PR.
-
 ### 1. Run the verification commands
 
 ```bash
 bash scripts/gates.sh
 ```
 
-This runs format, clippy, self-lint, and the full test suite. CI mirrors each
-of these as a separate required status check.
+This runs format, clippy, self-lint, and the full test suite — the same gates
+CI mirrors as required status checks. There is deliberately no local
+pre-commit hook: **GitHub is the enforcement point.** Branch protection on
+`main` refuses any merge whose required checks fail, so run this script
+manually when you want a full local pass before pushing; commits themselves
+stay fast.
 
 ### 2. Code style
 
