@@ -4,13 +4,16 @@
 
 use ratatui::Terminal;
 use ratatui::backend::TestBackend;
+use tui_lint_arwaky::surface_confirm_modal::ConfirmModal;
 use tui_lint_arwaky::surface_file_list_view::FileListView;
 use tui_lint_arwaky::surface_path_screen::PathScreen;
 use tui_lint_arwaky::surface_preview_view::PreviewView;
 use tui_lint_arwaky::surface_shortcut_component::ShortcutComponent;
 use tui_lint_arwaky::surface_status_component::StatusComponent;
 use tui_lint_arwaky::surface_tree_view::TreeView;
-use tui_lint_arwaky::{AesLayer, AppState, FileEntry, PanelFocus, PreviewMode};
+use tui_lint_arwaky::{
+    AesLayer, AppState, ConfirmState, FileEntry, PanelFocus, PreviewMode, TuiEvent,
+};
 
 fn buffer_text(terminal: &Terminal<TestBackend>) -> String {
     terminal
@@ -121,6 +124,87 @@ fn path_dialog_renders_input_and_controls() {
     let text = buffer_text(&terminal);
     assert!(text.contains("Enter Project Path"));
     assert!(text.contains("/tmp/workspace"));
+}
+
+/// The confirm modal only exists while a confirmation is pending (#554).
+/// It must be a bordered box carrying the action label and the two choices,
+/// not another status-bar string.
+#[test]
+fn confirm_modal_renders_a_border_with_label_and_choices_when_pending_confirm_is_set() {
+    let mut state = AppState::new("/project".to_string());
+    state.actions.pending_confirm = Some(ConfirmState {
+        pending: TuiEvent::ActionFixLive,
+        label: "Apply live fixes to files".to_string(),
+    });
+
+    let mut terminal = Terminal::new(TestBackend::new(70, 20)).unwrap();
+    terminal
+        .draw(|frame| ConfirmModal::new().render(&state, frame, frame.area()))
+        .unwrap();
+    let text = buffer_text(&terminal);
+
+    assert!(text.contains("Confirm"));
+    assert!(text.contains("Apply live fixes to files"));
+    assert!(text.contains("[Enter/y] confirm"));
+    assert!(text.contains("[Esc/n] cancel"));
+    // Bordered box: the modal draws its own frame glyphs around the content.
+    // THICK border verticals are U+2503; the ASCII fallback uses "|".
+    assert!(text.contains('\u{2503}') || text.contains('|'));
+}
+
+/// Clearing the confirmation must remove the modal entirely — otherwise a
+/// resolved gate stays on screen over the panels.
+#[test]
+fn confirm_modal_draws_nothing_once_pending_confirm_is_cleared() {
+    let mut state = AppState::new("/project".to_string());
+    state.actions.pending_confirm = Some(ConfirmState {
+        pending: TuiEvent::ActionFixLive,
+        label: "Apply live fixes to files".to_string(),
+    });
+
+    let mut terminal = Terminal::new(TestBackend::new(70, 20)).unwrap();
+    terminal
+        .draw(|frame| ConfirmModal::new().render(&state, frame, frame.area()))
+        .unwrap();
+    assert!(buffer_text(&terminal).contains("Apply live fixes to files"));
+
+    state.actions.pending_confirm = None;
+    terminal
+        .draw(|frame| ConfirmModal::new().render(&state, frame, frame.area()))
+        .unwrap();
+    let text = buffer_text(&terminal);
+
+    assert!(!text.contains("Apply live fixes to files"));
+    assert!(!text.contains("[Enter/y] confirm"));
+    assert!(!text.contains("[Esc/n] cancel"));
+}
+
+/// The modal is a gate on the whole screen, so it overlays panel content
+/// rather than living inside one focused pane.
+#[test]
+fn confirm_modal_overlays_panel_content_regardless_of_focus() {
+    for focus in [PanelFocus::Tree, PanelFocus::FileList, PanelFocus::Preview] {
+        let mut state = AppState::new("/project".to_string());
+        state.navigation.panel_focus = focus;
+        state.actions.pending_confirm = Some(ConfirmState {
+            pending: TuiEvent::ActionFixLive,
+            label: "Apply live fixes to files".to_string(),
+        });
+
+        let mut terminal = Terminal::new(TestBackend::new(70, 20)).unwrap();
+        terminal
+            .draw(|frame| {
+                let area = frame.area();
+                PreviewView::new().render(&state, frame, area);
+                ConfirmModal::new().render(&state, frame, area);
+            })
+            .unwrap();
+
+        assert!(
+            buffer_text(&terminal).contains("Apply live fixes to files"),
+            "modal must render with {focus:?} focused"
+        );
+    }
 }
 
 #[test]

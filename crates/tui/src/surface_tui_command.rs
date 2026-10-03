@@ -1,3 +1,4 @@
+use crate::surface_confirm_modal::ConfirmModal;
 use crate::surface_event_action::SurfaceActionHandler;
 use crate::surface_file_list_view::FileListView;
 use crate::surface_path_screen::PathScreen;
@@ -29,6 +30,7 @@ struct RenderViews {
     path_screen: PathScreen,
     shortcuts: ShortcutComponent,
     status: StatusComponent,
+    confirm_modal: ConfirmModal,
 }
 
 impl RenderViews {
@@ -40,6 +42,7 @@ impl RenderViews {
             path_screen: PathScreen::new(),
             shortcuts: ShortcutComponent::new(),
             status: StatusComponent::new(),
+            confirm_modal: ConfirmModal::new(),
         }
     }
 }
@@ -172,6 +175,10 @@ impl TuiCommandSurface {
 
                     views.shortcuts.render(state, frame, main_layout[2]);
                     views.status.render(state, frame, main_layout[3]);
+
+                    // A pending confirm is a gate, not a status line (#554): overlay a
+                    // modal over every panel so it cannot be missed while browsing.
+                    views.confirm_modal.render(state, frame, area);
                 })?;
                 needs_redraw = false;
             }
