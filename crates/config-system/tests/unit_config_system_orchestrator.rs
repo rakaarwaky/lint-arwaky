@@ -123,7 +123,8 @@ fn load_config_sync_finds_config_in_current_dir() {
     let config = make_orchestrator()
         .execute(ConfigRequest::load_sync(&fp))
         .into_sync_config();
-    assert!(!config.enabled.value);
+    // The lock forces architecture.enabled from embedded defaults.
+    assert!(config.enabled.value);
 }
 
 #[test]
@@ -188,6 +189,34 @@ fn config_cache_returns_same_arc_on_second_load() {
     assert_eq!(r1.source.path, r2.source.path);
 }
 
+/// The lock: a user config's `architecture:` rules must not reach the merged
+/// config. `ignored_paths` still carries through.
+#[test]
+fn load_config_sync_locks_architecture_section() {
+    let tmp = TempDir::new().unwrap();
+    fs::write(
+        tmp.path().join("lint_arwaky.config.yaml"),
+        "architecture:\n  enabled: false\n  rules:\n    AES999:\n      enabled: true\nignored_paths: [vendor]\n",
+    )
+    .unwrap();
+    fs::write(tmp.path().join("Cargo.toml"), "[package]\nname=\"x\"\n").unwrap();
+    let fp = shared_common::taxonomy_path_vo::FilePath::new(tmp.path().to_str().unwrap()).unwrap();
+    let config = make_orchestrator()
+        .execute(ConfigRequest::load_sync(&fp))
+        .into_sync_config();
+    // Embedded defaults win: AES999 is not part of the tool's fixed rules.
+    assert!(config.enabled.value);
+    assert!(config.rules.iter().all(|r| r.name.value != "AES999"));
+    // User ignored_paths carry through the lock.
+    assert!(
+        config
+            .ignored_paths
+            .values
+            .iter()
+            .any(|p| p.value == "vendor")
+    );
+}
+
 // ─── Regression: Phase 3.4 — Config loading from deeply nested file paths ─────
 
 /// `load_config_sync` should find the config file when scanning a file
@@ -216,8 +245,8 @@ fn load_config_sync_finds_config_from_deep_file_path() {
     let config = make_orchestrator()
         .execute(ConfigRequest::load_sync(&fp))
         .into_sync_config();
-    // Config has enabled: false, so we verify it was loaded (not the default which has enabled: true)
-    assert!(!config.enabled.value);
+    // The lock forces architecture.enabled from embedded defaults.
+    assert!(config.enabled.value);
 }
 
 /// `load_config_sync` should find the config from a file nested 4 levels deep
@@ -245,7 +274,8 @@ fn load_config_sync_finds_config_from_very_deep_file_path() {
     let config = make_orchestrator()
         .execute(ConfigRequest::load_sync(&fp))
         .into_sync_config();
-    assert!(!config.enabled.value);
+    // The lock forces architecture.enabled from embedded defaults.
+    assert!(config.enabled.value);
 }
 
 /// `load_config_sync` returns default config (enabled) when no config file exists,
@@ -293,7 +323,8 @@ fn load_config_sync_finds_rust_config_from_deep_crate_file() {
     let config = make_orchestrator()
         .execute(ConfigRequest::load_sync(&fp))
         .into_sync_config();
-    assert!(!config.enabled.value);
+    // The lock forces architecture.enabled from embedded defaults.
+    assert!(config.enabled.value);
 }
 
 #[test]
@@ -319,5 +350,6 @@ fn config_cache_invalidates_when_file_content_changes() {
     let second = sut
         .execute(ConfigRequest::load_for_language(&fp, ConfigLanguage::Rust))
         .into_config_result();
-    assert!(!second.config.enabled.value);
+    // The lock forces architecture.enabled from embedded defaults.
+    assert!(second.config.enabled.value);
 }
