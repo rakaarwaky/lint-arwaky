@@ -28,11 +28,9 @@ use shared_role_rules::IRoleRunnerAggregate;
 use shared_role_rules::taxonomy_role_rules_request::RoleRequest;
 use shared_structure_rules::IStructureAggregate;
 use std::path::{Path, PathBuf};
-use std::process::{Command, Stdio};
 use std::sync::Arc;
 
 use crate::surface_ci_action::run_isolated;
-use shared_common::utility_subprocess_runner::{subprocess_timeout, wait_for_child};
 
 // Re-exported so the cancel-aware scan path stays reachable at its historical
 // import site (`surface_check_action::collect_scan_with_cancel` /
@@ -110,16 +108,11 @@ where
         return Err(format!("Error: path '{}' does not exist", root));
     }
 
-    // W10: when aggregates are wired, resolve the target to an absolute path so
-    // in-process linters scan the intended scope. Subprocess fallback keeps the
-    // raw path (its per-linter normalization differs).
-    let root = if opts.scan_aggregates.is_some() {
-        canonicalize_via(&opts.filesystem.aggregate, Path::new(&root))
-            .map(|p| p.to_string_lossy().to_string())
-            .unwrap_or(root)
-    } else {
-        root
-    };
+    // W10: resolve the target to an absolute path so in-process linters scan
+    // the intended scope.
+    let root = canonicalize_via(&opts.filesystem.aggregate, Path::new(&root))
+        .map(|p| p.to_string_lossy().to_string())
+        .unwrap_or(root);
 
     // Validate member against discovered workspaces, then dispatch.
     let target_path = match opts.member.as_deref() {
@@ -129,9 +122,13 @@ where
     let violations = match opts.scan_aggregates.as_ref() {
         Some(agg) => run_all_linters_in_process(&target_path, agg, &mut on_progress),
         None => {
-            let result = run_all_linters_json(&target_path, opts.filesystem.as_ref())?;
-            on_progress("Scan complete".to_string(), 0, 0);
-            result
+            // Subprocess fallback is forbidden (current_exe self-invocation
+            // violates the architecture rules). Callers must provide a
+            // ScanAggregates bundle to run the scan in-process.
+            return Err(
+                "scan_aggregates is required: in-process scan only; subprocess fallback is an architecture violation"
+                    .to_string(),
+            );
         }
     };
     let violations = apply_filter(violations, &opts.filter);
@@ -199,8 +196,12 @@ pub fn is_member_path(path: &FilePath, ws: &dyn IWorkspaceProtocol) -> bool {
     ws.is_member_path(path)
 }
 
-/// Run all 6 linters via subprocesses for a given path; return violations.
-pub fn collect_scan_json(path: &str, seam: &FilesystemSeam) -> Result<Vec<ViolationItem>, String> {
+/// Run all 6 linters in-memory for a given path; return violations.
+pub fn collect_scan_json(
+    path: &str,
+    seam: &FilesystemSeam,
+    agg: &ScanAggregates,
+) -> Result<Vec<ViolationItem>, String> {
     if !&seam
         .aggregate
         .execute(FilesystemRequest::path_exists(std::path::Path::new(path)))
@@ -208,15 +209,16 @@ pub fn collect_scan_json(path: &str, seam: &FilesystemSeam) -> Result<Vec<Violat
     {
         return Err(format!("Error: path '{}' does not exist", path));
     }
-    run_all_linters_json(path, seam)
+    run_all_linters_json(path, seam, agg)
 }
 
-/// Default check: subprocess JSON scan of all linters.
+/// Default check: in-memory scan of all linters.
 pub fn collect_default_check(
     project_root: &str,
     seam: &FilesystemSeam,
+    agg: &ScanAggregates,
 ) -> Result<Vec<ViolationItem>, String> {
-    collect_scan_json(project_root, seam)
+    collect_scan_json(project_root, seam, agg)
 }
 
 /// Run all 6 linters in-process through their aggregate entry points (W10).
@@ -1087,141 +1089,29 @@ pub(crate) fn build_import_map(
     import_map
 }
 
-/// Run all 6 linters as subprocesses with `--format json`, collect ViolationItems.
+/// Run all 6 linters in-memory through their aggregate entry points and
+/// collect ViolationItems. No subprocess — the linters execute in-process
+/// via `run_all_linters_in_process`.
+pub(crate) fn run_all_linters_in_memory(
+    path: &str,
+    agg: &ScanAggregates,
+) -> Result<Vec<ViolationItem>, String> {
+    let result = run_all_linters_in_process(
+        path,
+        agg,
+        &mut |_phase: String, _done: usize, _total: usize| {},
+    );
+    Ok(result)
+}
+
+/// In-memory scan for callers that do not hold a full `ScanAggregates`
+/// bundle. Runs all 6 linters through their aggregate entry points — no
+/// subprocess self-invocation (current_exe is forbidden by the architecture
+/// rules).
 pub(crate) fn run_all_linters_json(
     path: &str,
-    seam: &FilesystemSeam,
+    _seam: &FilesystemSeam,
+    agg: &ScanAggregates,
 ) -> Result<Vec<ViolationItem>, String> {
-    let exe_path = match std::env::current_exe() {
-        Ok(p) => p,
-        Err(_) => std::path::PathBuf::from("lint-arwaky-cli"),
-    };
-
-    let linter_names = ["quality", "role", "import", "naming", "orphan", "external"];
-
-    let mut all: Vec<ViolationItem> = Vec::new();
-
-    for linter_name in &linter_names {
-        let child = Command::new(&exe_path)
-            .args([linter_name, path, "--format", "json"])
-            .stdin(Stdio::null())
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .spawn()
-            .map_err(|error| {
-                format!("Failed to spawn linter subprocess '{linter_name}': {error}")
-            })?;
-        let timeout = subprocess_timeout();
-        let out = wait_for_child(child, timeout)
-            .map_err(|error| format!("Linter subprocess '{linter_name}' {error}"))?;
-        let stdout = String::from_utf8_lossy(&out.stdout);
-        if let Ok(val) = serde_json::from_str::<serde_json::Value>(stdout.trim()) {
-            if let Some(results) = val.get("results").and_then(|r| r.as_array()) {
-                for item in results {
-                    if let Some(v) = ViolationItem::from_json_obj(item) {
-                        all.push(v);
-                    }
-                }
-            } else if let Some(items) = val.as_array() {
-                for item in items {
-                    if let Some(v) = ViolationItem::from_json_obj(item) {
-                        all.push(v);
-                    }
-                }
-            }
-        }
-    }
-
-    // Normalize relative paths to absolute before filtering.
-    let target_canonical = canonicalize_via(&seam.aggregate, std::path::Path::new(path));
-    // Detect workspace root for resolving relative paths from orphan scan
-    // (orphan scan returns paths like "crates/calculator/src/foo.rs" relative to workspace root)
-    let ws_root = seam
-        .workspace
-        .workspace_root(&FilePath::new(path.to_string()).unwrap_or_default());
-    normalize_violation_paths(&mut all, seam, &target_canonical, &ws_root);
-
-    // Filter: only keep violations whose file path is within the target directory.
-    // Exception: AES205 cycle violations are global — keep them if the file is
-    // within the same parent workspace (e.g., workspaces-bad/).
-    if let Some(canonical_target) = &target_canonical {
-        let parent_workspace = canonical_target
-            .parent()
-            .and_then(|p| p.parent())
-            .map(|p| p.to_path_buf());
-        all.retain(|v| {
-            json_violation_in_target(v, seam, canonical_target, parent_workspace.as_deref())
-        });
-    }
-
-    Ok(all)
-}
-
-/// Rewrite each violation's relative file path to an absolute, canonicalized
-/// path, trying (in order) the workspace root, the process CWD, the scan
-/// target, then the target's parent. Absolute paths are left untouched.
-fn normalize_violation_paths(
-    violations: &mut [ViolationItem],
-    seam: &FilesystemSeam,
-    target_canonical: &Option<std::path::PathBuf>,
-    ws_root: &Option<std::path::PathBuf>,
-) {
-    let cwd = std::env::current_dir().ok();
-    let target_parent = target_canonical.as_deref().and_then(|t| t.parent());
-    for v in violations.iter_mut() {
-        if std::path::Path::new(&v.file.value).is_absolute() {
-            continue;
-        }
-        let file_path = std::path::Path::new(&v.file.value);
-        let bases: [Option<&std::path::Path>; 4] = [
-            ws_root.as_deref(),
-            cwd.as_deref(),
-            target_canonical.as_deref(),
-            target_parent,
-        ];
-        for base in bases.into_iter().flatten() {
-            if let Some(canon) = canonicalize_via(&seam.aggregate, &base.join(file_path)) {
-                v.file = FilePath::new(canon.to_string_lossy().to_string())
-                    .unwrap_or_else(|_| v.file.clone());
-                break;
-            }
-        }
-    }
-}
-
-/// Whether a subprocess-collected violation stays inside the scan target
-/// (or, for AES205 cycles, inside the parent workspace).
-fn json_violation_in_target(
-    v: &ViolationItem,
-    seam: &FilesystemSeam,
-    canonical_target: &std::path::Path,
-    parent_workspace: Option<&std::path::Path>,
-) -> bool {
-    let file_path = std::path::Path::new(&v.file.value);
-    // Always retain AES205 cycle violations if within the same parent workspace
-    if v.code.code() == "AES205" {
-        if let Some(pw) = parent_workspace {
-            if let Some(canonical) = canonicalize_via(&seam.aggregate, file_path) {
-                if canonical.starts_with(pw) {
-                    return true;
-                }
-            }
-        }
-    }
-    if let Some(canonical) = canonicalize_via(&seam.aggregate, file_path) {
-        return canonical.starts_with(canonical_target);
-    }
-    if let Ok(cwd) = std::env::current_dir() {
-        let joined = cwd.join(file_path);
-        let cwd_joined = canonicalize_via(&seam.aggregate, &joined).unwrap_or(joined);
-        if cwd_joined.starts_with(canonical_target) {
-            return true;
-        }
-    }
-    if let Some(target_joined) =
-        canonicalize_via(&seam.aggregate, &canonical_target.join(file_path))
-    {
-        return target_joined.starts_with(canonical_target);
-    }
-    false
+    run_all_linters_in_memory(path, agg)
 }
