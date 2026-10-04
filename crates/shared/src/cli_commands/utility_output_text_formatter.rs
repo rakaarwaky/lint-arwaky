@@ -159,6 +159,7 @@ fn render_text(
     println!();
 
     let norm_target = target_path.trim_end_matches('/');
+    let is_global = !is_specific_member && !is_single_file;
 
     let mut total = 0usize;
     for (member_name, results) in grouped {
@@ -173,6 +174,9 @@ fn render_text(
                 let hint = resolve_skill_hint_for_file(r.code.code(), &r.file.value);
                 println!("  {} [{}] {}", loc, r.code.code(), r.message.value);
                 println!("    ↳ {}", hint.guidance());
+                for wf in why_fix_lines(&r.message.value, 4) {
+                    println!("{wf}");
+                }
             }
             println!();
         } else if is_specific_member {
@@ -191,6 +195,9 @@ fn render_text(
                     let hint = resolve_skill_hint_for_file(r.code.code(), &r.file.value);
                     println!("    {} [{}] {}", loc, r.code.code(), r.message.value);
                     println!("      ↳ {}", hint.guidance());
+                    for wf in why_fix_lines(&r.message.value, 6) {
+                        println!("{wf}");
+                    }
                 }
             }
             println!();
@@ -198,28 +205,121 @@ fn render_text(
             let lang = lang_tag(&results[0].file.value);
             println!("[{lang}] {member_name} — {} violations", results.len());
             println!();
-            // Grouped by rule code, not listed per file: a member that trips 40
-            // rules shows 40 lines rather than 400, and the count beside each
-            // code is what a reader scans for first. CI parses this shape
-            // (`  [CODE] N  ← …`) to confirm the external adapters ran, so the
-            // grouping is part of the contract, not a display preference.
             for line in code_summary_lines(results) {
                 println!("{line}");
             }
+            // Per-file blocks with per-violation WHY/FIX
+            render_member_file_blocks(results, norm_target);
         }
     }
 
-    println!("Total: {total} violations");
+    if is_global && total > 0 {
+        render_by_folder_rollup(grouped, total);
+    } else {
+        println!("Total: {total} violations");
+    }
 
     if !is_specific_member {
         println!();
-        println!("Tip: Scan specific feature folder for detailed violations:");
-        println!("  lint-arwaky-cli scan <member-path>");
-        println!("  lint-arwaky-cli scan <root> --member <member-name>");
-    } else if !is_single_file {
-        println!();
-        println!("Tip: Scan specific file for focused output:");
-        println!("  lint-arwaky-cli scan <file-path>");
+        if is_global {
+            println!("Tip: Scan a folder for per-file WHY/FIX detail:");
+            println!("  lint-arwaky-cli scan <folder>");
+        } else {
+            println!("Tip: Scan a file for focused output:");
+            println!("  lint-arwaky-cli scan <file-path>");
+        }
+    }
+}
+
+/// "By folder" rollup for global `.` / `check .` scans.
+/// One line per top-level folder (crates/, packages/, modules/, src/) with
+/// total count + top-3 codes. No per-file, no WHY/FIX — summary only.
+fn render_by_folder_rollup(grouped: &BTreeMap<String, Vec<&ViolationItem>>, total: usize) {
+    // Group members into top-level folders
+    let mut folder_totals: BTreeMap<String, usize> = BTreeMap::new();
+    let mut folder_codes: BTreeMap<String, BTreeMap<String, usize>> = BTreeMap::new();
+
+    for (member, results) in grouped {
+        if results.is_empty() {
+            continue;
+        }
+        // Determine top-level folder: the first path segment relative to scan root
+        let first_file = &results[0].file.value;
+        let norm = first_file.trim_start_matches("./");
+        let top_folder = norm
+            .split('/')
+            .next()
+            .filter(|s| {
+                !s.ends_with(".rs")
+                    && !s.ends_with(".py")
+                    && !s.ends_with(".ts")
+                    && !s.ends_with(".md")
+            })
+            .unwrap_or("root");
+
+        let key = if top_folder.is_empty() {
+            "root".to_string()
+        } else {
+            format!("{top_folder}/")
+        };
+
+        *folder_totals.entry(key.clone()).or_insert(0) += results.len();
+        let code_map = folder_codes.entry(key.clone()).or_default();
+        for r in results {
+            let code = r.code.code().to_string();
+            *code_map.entry(code).or_insert(0) += 1;
+        }
+
+        // Member name is used for grouping but folder key is what matters here
+        let _ = member;
+    }
+
+    println!("Total: {total} violations");
+    println!();
+    println!("By folder:");
+    for (folder, count) in &folder_totals {
+        let top3: Vec<String> = folder_codes
+            .get(folder)
+            .map(|m| {
+                let mut entries: Vec<_> = m.iter().collect();
+                entries.sort_by(|a, b| b.1.cmp(a.1));
+                entries
+                    .iter()
+                    .take(3)
+                    .map(|(c, n)| format!("{c} ({n})"))
+                    .collect()
+            })
+            .unwrap_or_default();
+        let codes_str = top3.join(", ");
+        println!("  {folder:<12} {count:>4} violations  ({codes_str})");
+    }
+    println!();
+    println!("Run `lint-arwaky-cli scan <folder>` for detail.");
+}
+
+/// Per-file blocks under a member for folder scans (mode 2).
+/// Groups violations by file, prints `FILE — N violations` header,
+/// then per-violation WHY/FIX lines.
+fn render_member_file_blocks(results: &[&ViolationItem], norm_target: &str) {
+    let mut file_violations: BTreeMap<String, Vec<&&ViolationItem>> = BTreeMap::new();
+    for r in results {
+        let rel_path = make_relative(&r.file.value, norm_target);
+        file_violations.entry(rel_path).or_default().push(r);
+    }
+    println!();
+    for (file_path, file_results) in &file_violations {
+        println!("  {file_path} — {} violations", file_results.len());
+        for r in file_results {
+            let code = r.code.code();
+            println!(
+                "    {}: [{code}] {}",
+                r.line.value(),
+                r.message.value.lines().next().unwrap_or("")
+            );
+            for wf in why_fix_lines(&r.message.value, 4) {
+                println!("{wf}");
+            }
+        }
     }
 }
 
@@ -475,6 +575,49 @@ pub fn status_icon(is_ok: bool) -> &'static str {
     } else {
         "✗"
     }
+}
+
+/// Extract WHY and FIX lines from a `LintMessage` value.
+///
+/// Message formats:
+/// - AES: `CODE DESC.\nWHY? …\nHOW TO FIX? …` (or `FIX:`)
+/// - External: short single-line, no WHY/FIX
+///
+/// Returns `(Option<why>, Option<fix>)` — `None` when the message has no
+/// embedded WHY/FIX. Never invents text.
+pub fn extract_why_fix(msg: &str) -> (Option<&str>, Option<&str>) {
+    let mut why: Option<&str> = None;
+    let mut fix: Option<&str> = None;
+    for line in msg.lines() {
+        let trimmed = line.trim();
+        if let Some(w) = trimmed
+            .strip_prefix("WHY?")
+            .or_else(|| trimmed.strip_prefix("WHY:"))
+        {
+            why = Some(w.trim());
+        } else if let Some(f) = trimmed
+            .strip_prefix("HOW TO FIX?")
+            .or_else(|| trimmed.strip_prefix("FIX:"))
+        {
+            fix = Some(f.trim());
+        }
+    }
+    (why, fix)
+}
+
+/// Render WHY/FIX sub-lines for a violation, indented to `indent` spaces.
+/// Skips lines entirely when the message has no embedded WHY/FIX.
+fn why_fix_lines(msg: &str, indent: usize) -> Vec<String> {
+    let (why, fix) = extract_why_fix(msg);
+    let mut out = Vec::new();
+    let prefix = " ".repeat(indent);
+    if let Some(w) = why {
+        out.push(format!("{prefix}WHY: {w}"));
+    }
+    if let Some(f) = fix {
+        out.push(format!("{prefix}FIX: {f}"));
+    }
+    out
 }
 
 /// One `  [CODE] N  ← guidance` line per distinct code, sorted by code.
