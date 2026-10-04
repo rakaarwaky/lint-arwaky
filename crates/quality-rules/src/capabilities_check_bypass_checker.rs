@@ -177,7 +177,7 @@ impl IBypassCheckerProtocol for BypassChecker {
                     "AES304",
                     Severity::CRITICAL,
                     format!(
-                        "AES304 BYPASS_COMMENT: Forbidden bypass comment or annotation detected.\nWHY: Found forbidden bypass attribute: '{}'\nFIX: Remove the bypass comment and resolve the issue properly.",
+                        "Forbidden bypass attribute: '{}'.",
                         code_trim.lines().next().unwrap_or(code_trim)
                     ),
                     "BYPASS_COMMENT",
@@ -216,37 +216,43 @@ impl IBypassCheckerProtocol for BypassChecker {
                     {
                         let reason = format!("Found forbidden bypass token: '{}'", token);
                         let msg = match Self::classify_token(token) {
-                            ViolationKind::UnwrapExpect => format!(
-                                "AES304 UNWRAP_EXPECT: Forbidden unwrap or expect call detected.\nWHY: {}\nFIX: Replace the unwrap/expect call with structured error handling.",
-                                reason
-                            ),
-                            ViolationKind::Panic => format!(
-                                "AES304 PANIC: Forbidden panic call detected.\nWHY: {}\nFIX: Return a Result or handle the failure case gracefully without panicking.",
-                                reason
-                            ),
-                            ViolationKind::Todo => format!(
-                                "AES304 TODO: Forbidden todo!() call detected.\nWHY: {}\nFIX: Implement the function body with real logic.",
-                                reason
-                            ),
-                            ViolationKind::Unimplemented => format!(
-                                "AES304 UNIMPLEMENTED: Forbidden unimplemented!() call detected.\nWHY: {}\nFIX: Either implement the missing logic or return a Result::Err.",
-                                reason
-                            ),
-                            ViolationKind::BypassComment => format!(
-                                "AES304 BYPASS_COMMENT: Forbidden bypass comment or annotation detected.\nWHY: {}\nFIX: Remove the bypass comment and resolve the issue properly.",
-                                reason
-                            ),
+                            ViolationKind::UnwrapExpect => {
+                                "Forbidden unwrap or expect call detected.".to_string()
+                            }
+                            ViolationKind::Panic => "Forbidden panic call detected.".to_string(),
+                            ViolationKind::Todo => {
+                                "Forbidden unfinished-implementation marker detected.".to_string()
+                            }
+                            ViolationKind::Unimplemented => {
+                                "Forbidden unimplemented-body marker detected.".to_string()
+                            }
+                            ViolationKind::BypassComment => {
+                                "Forbidden bypass comment or annotation detected.".to_string()
+                            }
                         };
 
-                        let why = shared_common::taxonomy_violation_message_vo::parse_why(&msg);
-                        let fix = shared_common::taxonomy_violation_message_vo::parse_fix(&msg);
+                        let why = reason;
+                        let fix = match Self::classify_token(token) {
+                            ViolationKind::UnwrapExpect => "Replace the unwrap/expect call with structured error handling.".to_string(),
+                            ViolationKind::Panic => "Return a Result or handle the failure case gracefully without panicking.".to_string(),
+                            ViolationKind::Todo => "Implement the function body with real logic.".to_string(),
+                            ViolationKind::Unimplemented => "Either implement the missing logic or return a Result::Err.".to_string(),
+                            ViolationKind::BypassComment => "Remove the bypass comment and resolve the issue properly.".to_string(),
+                        };
+
                         violations.push(LintResult::new_arch_with_name(
                             file,
                             line_number,
                             "AES304",
                             Severity::CRITICAL,
                             msg,
-                            "BYPASS_COMMENT",
+                            match Self::classify_token(token) {
+                                ViolationKind::UnwrapExpect => "UNWRAP_EXPECT",
+                                ViolationKind::Panic => "PANIC",
+                                ViolationKind::Todo => "TODO",
+                                ViolationKind::Unimplemented => "UNIMPLEMENTED",
+                                ViolationKind::BypassComment => "BYPASS_COMMENT",
+                            },
                             why,
                             fix,
                         ));
@@ -269,10 +275,7 @@ impl IBypassCheckerProtocol for BypassChecker {
                             line_number,
                             "AES304",
                             Severity::CRITICAL,
-                            format!(
-                                "AES304 BYPASS_COMMENT: Forbidden bypass comment or annotation detected.\nWHY: Found forbidden bypass pattern: '{}'\nFIX: Remove the bypass comment and resolve the issue properly.",
-                                token
-                            ),
+                            "Forbidden bypass comment or annotation detected".to_string(),
                             "BYPASS_COMMENT",
                             format!("Found forbidden bypass pattern: '{}'", token),
                             "Remove the bypass comment and resolve the issue properly.",
@@ -298,7 +301,7 @@ impl IBypassCheckerProtocol for BypassChecker {
                                 line_number,
                                 "AES304",
                                 Severity::CRITICAL,
-                                "AES304 UNIMPLEMENTED: Forbidden unimplemented!() call detected.\nWHY: Found forbidden Python pattern: 'raise NotImplementedError'\nFIX: Either implement the missing logic or return a Result::Err.".to_string(),
+                                "Forbidden unimplemented!() call detected".to_string(),
                                 "UNIMPLEMENTED",
                                 "Found forbidden Python pattern: 'raise NotImplementedError'",
                                 "Either implement the missing logic or return a Result::Err.",
@@ -308,8 +311,7 @@ impl IBypassCheckerProtocol for BypassChecker {
                                 file,
                                 line_number,
                                 "AES304",
-                                Severity::CRITICAL,
-                                "AES304 PANIC: Forbidden panic call detected.\nWHY: Found forbidden Python pattern: 'assert False'\nFIX: Return a Result or handle the failure case gracefully without panicking.".to_string(),
+                                Severity::CRITICAL,"Forbidden panic call detected".to_string(),
                                 "PANIC",
                                 "Found forbidden Python pattern: 'assert False'",
                                 "Return a Result or handle the failure case gracefully without panicking.",
@@ -332,11 +334,7 @@ impl IBypassCheckerProtocol for BypassChecker {
                                 file,
                                 line_number,
                                 "AES304",
-                                Severity::CRITICAL,
-                                format!(
-                                    "AES304 PANIC: Forbidden panic call detected.\nWHY: Found forbidden JS/TS pattern: '{}'\nFIX: Return a Result or handle the failure case gracefully without panicking.",
-                                    display
-                                ),
+                                Severity::CRITICAL,"Forbidden panic call detected".to_string(),
                                 "PANIC",
                                 format!("Found forbidden JS/TS pattern: '{}'", display),
                                 "Return a Result or handle the failure case gracefully without panicking.",

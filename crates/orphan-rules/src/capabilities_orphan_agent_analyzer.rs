@@ -83,20 +83,11 @@ impl IAgentOrphanProtocol for AgentOrphanAnalyzer {
         // Build diagnostic message
         let filename = shared_common::utility_layer_detector::extract_filename(fp);
         let reason = if !is_alive && !is_wired {
-            format!(
-                "AES505 AGENT_ORPHAN: '{}' is not reachable and not wired.\nWHY: Agent file '{}' is not reachable from any _entry file AND not wired in any root_*_container.\nFIX: Import '{}' from a _entry file AND register it in a root_*_container.rs.",
-                filename, filename, filename
-            )
+            format!("'{}' is not reachable and not wired.", filename)
         } else if !is_alive {
-            format!(
-                "AES505 AGENT_ORPHAN: '{}' is not reachable.\nWHY: Agent file '{}' is not reachable from any _entry file.\nFIX: Import '{}' from a _entry file.",
-                filename, filename, filename
-            )
+            format!("'{}' is not reachable.", filename)
         } else {
-            format!(
-                "AES505 AGENT_ORPHAN: '{}' is not wired.\nWHY: Agent file '{}' is not wired in any root_*_container file.\nFIX: Register '{}' in a root_*_container",
-                filename, filename, filename
-            )
+            format!("'{}' is not wired.", filename)
         };
 
         OrphanIndicatorResult::new(true, reason, Severity::HIGH)

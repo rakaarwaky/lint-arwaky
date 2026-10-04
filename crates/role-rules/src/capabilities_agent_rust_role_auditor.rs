@@ -103,13 +103,7 @@ impl IAgentRoleProtocol for AgentRustRoleAuditor {
                     i + 1,
                     "AES405",
                     Severity::MEDIUM,
-                    format!(
-                        "AES405 AGENT_ROLE: Trait declared in an agent file.\n\
-                         WHY: Line {} declares a body-less `fn` inside a trait.\n\
-                         FIX: An agent delegates to contracts it consumes; it does not \
-                         declare new ones. Move the trait to `crates/shared/src/<feature>/`.",
-                        i + 1
-                    ),
+                    "Trait declared in an agent file".to_string(),
                     "AGENT_ROLE",
                     format!("Line {} declares a body-less `fn` inside a trait.", i + 1),
                     "An agent delegates to contracts it consumes; it does not \
@@ -194,15 +188,7 @@ impl AgentRustRoleAuditor {
                 path,
                 inh_idx + 1,
                 "AES405",
-                Severity::HIGH,
-                format!(
-                    "AES405 AGENT_ROLE: Block 3 (inherent impl) precedes Block 2 (aggregate impl).\n\
-                     WHY: `{inh_src}` is declared at line {} but `{agg_src}` follows at line {}.\n\
-                     FIX: Reorder the file so it reads:\n  \
-                     Block 1 (type + injected deps) -> Block 2 (aggregate impl) -> Block 3 (constructor, std traits, helpers).",
-                    inh_idx + 1,
-                    agg_idx + 1,
-                ),
+                Severity::HIGH,"Block 3 (inherent impl) precedes Block 2 (aggregate impl)".to_string(),
                 "AGENT_ROLE",
                 format!(
                     "`{inh_src}` is declared at line {} but `{agg_src}` follows at line {}.",
@@ -247,13 +233,7 @@ impl AgentRustRoleAuditor {
                     i + 1,
                     "AES405",
                     Severity::MEDIUM,
-                    format!(
-                        "AES405 AGENT_ROLE: File-level constant in an agent file.\n\
-                         WHY: `const {name}` is declared at line {}. Policy constants \
-                         belong to the shared taxonomy so every layer reads one value.\n\
-                         FIX: Move `{name}` into `taxonomy_<domain>_constant.rs` and import it.",
-                        i + 1
-                    ),
+                    "File-level constant in an agent file".to_string(),
                     "AGENT_ROLE",
                     format!(
                         "`const {name}` is declared at line {}. Policy constants \
@@ -297,12 +277,7 @@ impl AgentRustRoleAuditor {
                 0,
                 "AES405",
                 Severity::LOW,
-                "AES405 AGENT_ROLE: Orchestrator has a single execution goal.\n\
-                 WHY: File injects 1 protocol field(s); an orchestrator must coordinate \
-                 at least 2 subsystems.\n\
-                 FIX: Either this work belongs in a capability file rather than an \
-                 agent, or the feature genuinely has more than one subsystem and the agent \
-                 should hold and coordinate their protocols.",
+                "Orchestrator has a single execution goal".to_string(),
                 "AGENT_ROLE",
                 "File injects 1 protocol field(s); an orchestrator must coordinate \
                  at least 2 subsystems.",
@@ -336,14 +311,7 @@ impl AgentRustRoleAuditor {
                         i + 1,
                         "AES405",
                         Severity::MEDIUM,
-                        format!(
-                            "AES405 AGENT_ROLE: Computation in an agent file.\n\
-                             WHY: Line {} calls `{token}`. An agent orchestrates; it does \
-                             not compute totals or averages over domain data.\n\
-                             FIX: Move the aggregation into a capability, and have the agent \
-                             route to it.",
-                            i + 1
-                        ),
+                        "Computation in an agent file".to_string(),
                         "AGENT_ROLE",
                         format!(
                             "Line {} calls `{token}`. An agent orchestrates; it does \
@@ -377,14 +345,7 @@ impl AgentRustRoleAuditor {
                     i + 1,
                     "AES405",
                     Severity::MEDIUM,
-                    format!(
-                        "AES405 AGENT_ROLE: Mutable receiver in an agent file.\n\
-                         WHY: Line {} takes `&mut self`. An agent coordinates \
-                         dependencies and does not mutate its own state.\n\
-                         FIX: Take `&self` and move any mutation behind the injected \
-                         protocol that owns the state.",
-                        i + 1
-                    ),
+                    "Mutable receiver in an agent file".to_string(),
                     "AGENT_ROLE",
                     format!(
                         "Line {} takes `&mut self`. An agent coordinates \
@@ -457,14 +418,7 @@ impl AgentRustRoleAuditor {
                     i + 1,
                     "AES405",
                     Severity::LOW,
-                    format!(
-                        "AES405 AGENT_ROLE: Free function in an agent file.\n\
-                         WHY: `fn {name}` is declared at file level (line {}). An agent \
-                         file holds one type and its methods.\n\
-                         FIX: Move `{name}` into a `utility_<domain>_*.rs` file, or make it \
-                         an associated function on the agent's type.",
-                        i + 1
-                    ),
+                    "Free function in an agent file".to_string(),
                     "AGENT_ROLE",
                     format!(
                         "`fn {name}` is declared at file level (line {}). An agent \

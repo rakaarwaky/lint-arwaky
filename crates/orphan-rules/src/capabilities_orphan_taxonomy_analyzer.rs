@@ -122,14 +122,10 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
         // Build diagnostic message
         let reason = if !is_reachable && !has_higher_layer_importer {
             match &importers {
-                None => format!(
-                    "AES501 TAXONOMY_ORPHAN: '{}' is not reachable and has no importers.\nWHY: Taxonomy file '{}' is not reachable from any _entry file AND has no importers.\nFIX: Import '{}' from a _entry file AND a contract_* or higher-layer file.",
-                    stem, stem, stem
-                ),
-                Some(v) if v.is_empty() => format!(
-                    "AES501 TAXONOMY_ORPHAN: '{}' is not reachable and has no importers.\nWHY: Taxonomy file '{}' is not reachable from any _entry file AND has no importers.\nFIX: Import '{}' from a _entry file AND a contract_* or higher-layer file.",
-                    stem, stem, stem
-                ),
+                None => format!("'{}' is not reachable and has no importers.", stem),
+                Some(v) if v.is_empty() => {
+                    format!("'{}' is not reachable and has no importers.", stem)
+                }
                 Some(v) => {
                     let low_layer: Vec<String> = v
                         .iter()
@@ -139,24 +135,16 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
                         })
                         .collect();
                     format!(
-                        "AES501 TAXONOMY_ORPHAN: '{}' is not reachable and not imported by higher layers.\nWHY: Taxonomy file '{}' is not reachable from any _entry file AND only imported by lower-layer files ({}).\nFIX: Import '{}' from a _entry file AND a contract_* or higher-layer file.",
+                        "'{}' is not reachable and only imported by lower-layer files ({}).",
                         stem,
-                        stem,
-                        low_layer.join(", "),
-                        stem
+                        low_layer.join(", ")
                     )
                 }
             }
         } else if !is_reachable {
-            format!(
-                "AES501 TAXONOMY_ORPHAN: '{}' is not reachable.\nWHY: Taxonomy file '{}' is not reachable from any _entry file.\nFIX: Import '{}' from a _entry file.",
-                stem, stem, stem
-            )
+            format!("'{}' is not reachable.", stem)
         } else {
-            format!(
-                "AES501 TAXONOMY_ORPHAN: '{}' is not imported by any higher-layer file.\nWHY: Taxonomy file '{}' has no importers in contract, capabilities, agent, or surface layers.\nFIX: Import '{}' in a contract_* or higher-layer file.",
-                stem, stem, stem
-            )
+            format!("'{}' is not imported by any higher-layer file.", stem)
         };
 
         OrphanIndicatorResult::new(true, reason, Severity::LOW)

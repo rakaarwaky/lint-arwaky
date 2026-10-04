@@ -186,13 +186,9 @@ impl CapabilitiesPythonRoleAuditor {
                 "AES403",
                 Severity::HIGH,
                 format!(
-                    "AES403 CAPABILITY_ROLE: Block 2 (protocol methods) must precede Block 3 (helpers).\n\
-                     WHY: `{help_src}` is declared at line {} but the first public protocol method `{proto_src}` \
-                     follows at line {}.\n\
-                     FIX: Move all `def _helper` and `def with_*` methods below the public protocol methods.\n  \
-                     Block 1 (class + __init__) -> Block 2 (public protocol methods) -> Block 3 (private helpers, factories).",
-                    help_idx + 1,
-                    proto_idx + 1,
+                    "Block 2 (protocol methods) must precede Block 3 (helpers): helper `{help_src}` is declared before the first public protocol method `{proto_src}`.",
+                    help_src = help_src,
+                    proto_src = proto_src,
                 ),
                 "CAPABILITY_ROLE",
                 format!(
@@ -239,13 +235,7 @@ impl CapabilitiesPythonRoleAuditor {
                 i + 1,
                 "AES403",
                 Severity::MEDIUM,
-                format!(
-                    "AES403 CAPABILITY_ROLE: Local constant in capabilities file.\n\
-                     WHY: `{name}` is declared as a module-level constant at line {}.\n\
-                     FIX: Move `{name}` into `taxonomy_<domain>_constant.py` so every layer shares one policy value.\n  \
-                     Keep the constant in this file only when it is a private mechanical detail, not a domain policy.",
-                    i + 1,
-                ),
+                format!("Local constant in capabilities file: `{name}`."),
                 "CAPABILITY_ROLE",
                 format!("`{name}` is declared as a module-level constant at line {}.", i + 1),
                 format!(
@@ -286,14 +276,7 @@ impl CapabilitiesPythonRoleAuditor {
                 i + 1,
                 "AES403",
                 Severity::LOW,
-                format!(
-                    "AES403 CAPABILITY_ROLE: Embedded test code in capabilities file.\n\
-                     WHY: Test code starts at line {} (`{t}`).\n\
-                     FIX: Move it into `tests/` as a dedicated module \
-                     (for example `tests/unit_capabilities_<name>.py`) and keep the capability source \
-                     free of test-only code.",
-                    i + 1,
-                ),
+                "Embedded test code in capabilities file.".to_string(),
                 "CAPABILITY_ROLE",
                 format!("Test code starts at line {} (`{t}`).", i + 1),
                 "Move it into `tests/` as a dedicated module \
@@ -362,12 +345,7 @@ impl CapabilitiesPythonRoleAuditor {
                 i + 1,
                 "AES403",
                 Severity::MEDIUM,
-                format!(
-                    "AES403 CAPABILITY_ROLE: Public helper has no external caller.\n\
-                     WHY: `def {fn_name}` is not referenced from any other module or test.\n\
-                     FIX: Prefix it with `_` (e.g. `def _{fn_name}`) to mark it as a private helper.",
-                    fn_name = fn_name,
-                ),
+                format!("Public helper has no external caller: `{fn_name}`."),
                 "CAPABILITY_ROLE",
                 format!(
                     "`def {fn_name}` is not referenced from any other module or test.",

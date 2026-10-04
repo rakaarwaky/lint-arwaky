@@ -56,8 +56,8 @@ impl ILineCheckerProtocol for ArchLineChecker {
                 "AES302",
                 Severity::HIGH,
                 format!(
-                    "AES302 FILE_TOO_SHORT: File contains fewer than the required minimum lines.\nWHY: File has {} lines, less than minimum {} lines\nFIX: Expand the component or merge this logic into a related module. (min: {}).",
-                    count, def.code_analysis.min_lines.value, def.code_analysis.min_lines.value
+                    "File has {} lines, fewer than the minimum {} lines.",
+                    count, def.code_analysis.min_lines.value
                 ),
                 "FILE_TOO_SHORT",
                 format!(
@@ -78,8 +78,8 @@ impl ILineCheckerProtocol for ArchLineChecker {
                 "AES301",
                 Severity::HIGH,
                 format!(
-                    "AES301 FILE_TOO_LARGE: File exceeds the maximum allowed line count.\nWHY: File has {} lines, exceeding maximum {} lines\nFIX: Split the module into smaller, more focused files. (max: {}).",
-                    count, def.code_analysis.max_lines.value, def.code_analysis.max_lines.value
+                    "File has {} lines, more than the maximum {} lines.",
+                    count, def.code_analysis.max_lines.value
                 ),
                 "FILE_TOO_LARGE",
                 format!(

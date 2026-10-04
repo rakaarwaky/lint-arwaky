@@ -174,13 +174,9 @@ impl CapabilitiesRustRoleAuditor {
                 "AES403",
                 Severity::HIGH,
                 format!(
-                    "AES403 CAPABILITY_ROLE: Block 2 (protocol impl) must precede Block 3 (inherent impl).\n\
-                     WHY: `{inh_src}` is declared at line {} but `{proto_src}` follows at line {}.\n\
-                     FIX: Reorder the file so the blocks read:\n  \
-                     Block 1 (type + constructor) -> Block 2 (protocol methods only) -> Block 3 (factories, std traits, helpers).\n  \
-                     Move the protocol trait implementation above the inherent impl block.",
-                    inh_idx + 1,
-                    proto_idx + 1,
+                    "Block 2 (protocol impl) must precede Block 3 (inherent impl): `{inh_src}` is declared before `{proto_src}`.",
+                    inh_src = inh_src,
+                    proto_src = proto_src,
                 ),
                 "CAPABILITY_ROLE",
                 format!(
@@ -225,13 +221,7 @@ impl CapabilitiesRustRoleAuditor {
                     i + 1,
                     "AES403",
                     Severity::MEDIUM,
-                    format!(
-                        "AES403 CAPABILITY_ROLE: Local constant in capabilities file.\n\
-                         WHY: `{name}` is declared as a file-level `const` at line {}.\n\
-                         FIX: Move `{name}` into `taxonomy_<domain>_constant.rs` so every layer shares one policy value.\n  \
-                         Keep the constant in this file only when it is a private mechanical detail, not a domain policy.",
-                        i + 1,
-                    ),
+                    format!("Local constant in capabilities file: `{name}`."),
                     "CAPABILITY_ROLE",
                     format!(
                         "`{name}` is declared as a file-level `const` at line {}.",
@@ -277,14 +267,7 @@ impl CapabilitiesRustRoleAuditor {
                 i + 1,
                 "AES403",
                 Severity::LOW,
-                format!(
-                    "AES403 CAPABILITY_ROLE: Embedded test code in capabilities file.\n\
-                     WHY: A test module is declared inline at line {}.\n\
-                     FIX: Move it into `crates/<crate>/tests/` as a dedicated test file \
-                     (for example `tests/unit_capabilities_<name>.rs`) and keep the capability source \
-                     free of test-only code.",
-                    i + 1,
-                ),
+                "Embedded test code in capabilities file.".to_string(),
                 "CAPABILITY_ROLE",
                 format!("A test module is declared inline at line {}.", i + 1),
                 "Move it into `crates/<crate>/tests/` as a dedicated test file \
@@ -379,13 +362,7 @@ impl CapabilitiesRustRoleAuditor {
                     i + 1,
                     "AES403",
                     Severity::MEDIUM,
-                    format!(
-                        "AES403 CAPABILITY_ROLE: Public helper has no external caller.\n\
-                         WHY: `pub fn {}` in {} is not referenced from any other module or test.\n\
-                         FIX: Change it to `fn {}` (private). \
-                         If a test module in the same crate calls it, change it to `pub(crate) fn {}`.",
-                        fn_name, path, fn_name, fn_name,
-                    ),
+                    format!("Public helper has no external caller: `{fn_name}`."),
                     "CAPABILITY_ROLE",
                     format!(
                         "`pub fn {}` in {} is not referenced from any other module or test.",

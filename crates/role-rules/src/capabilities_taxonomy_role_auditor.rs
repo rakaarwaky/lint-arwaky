@@ -203,9 +203,8 @@ impl TaxonomyRoleChecker {
                         }) {
                             let primitive_clean = p.trim_end_matches('<');
                             let msg = format!(
-                                "AES401 TAXONOMY_ROLE: Direct primitive in taxonomy entity, error, or event.\nWHY: Primitive type '{}' used on line {}\nFIX: Replace the primitive type with a domain Value Object (VO) or constant from the taxonomy layer.",
+                                "Primitive type '{}' in a taxonomy entity, error, or event.",
                                 primitive_clean,
-                                i + 1,
                             );
 
                             violations.push(LintResult::new_arch_with_name(
@@ -235,9 +234,8 @@ impl TaxonomyRoleChecker {
                 {
                     let primitive_clean = p.trim_end_matches('<');
                     let msg = format!(
-                        "AES401 TAXONOMY_ROLE: Direct primitive in taxonomy entity, error, or event.\nWHY: Primitive type '{}' used on line {}\nFIX: Replace the primitive type with a domain Value Object (VO) or constant from the taxonomy layer.",
+                        "Primitive type '{}' in a taxonomy entity, error, or event.",
                         primitive_clean,
-                        i + 1,
                     );
 
                     violations.push(LintResult::new_arch_with_name(
@@ -276,7 +274,7 @@ impl TaxonomyRoleChecker {
                         0,
                         "AES401",
                         Severity::HIGH,
-                        format!("AES401 TAXONOMY_ROLE: Constant file contains non-constant declaration.\nWHY: Struct '{}' found in constant file.\nFIX: Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.", name),
+                        format!("Struct '{}' found in constant file.", name),
                         "TAXONOMY_ROLE",
                         format!("Struct '{}' found in constant file.", name),
                         "Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.",
@@ -288,7 +286,7 @@ impl TaxonomyRoleChecker {
                         0,
                         "AES401",
                         Severity::HIGH,
-                        format!("AES401 TAXONOMY_ROLE: Constant file contains non-constant declaration.\nWHY: Enum '{}' found in constant file.\nFIX: Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.", name),
+                        format!("Enum '{}' found in constant file.", name),
                         "TAXONOMY_ROLE",
                         format!("Enum '{}' found in constant file.", name),
                         "Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.",
@@ -300,7 +298,7 @@ impl TaxonomyRoleChecker {
                         0,
                         "AES401",
                         Severity::HIGH,
-                        format!("AES401 TAXONOMY_ROLE: Constant file contains non-constant declaration.\nWHY: Trait '{}' found in constant file.\nFIX: Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.", name),
+                        format!("Trait '{}' found in constant file.", name),
                         "TAXONOMY_ROLE",
                         format!("Trait '{}' found in constant file.", name),
                         "Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.",
@@ -312,9 +310,7 @@ impl TaxonomyRoleChecker {
                         0,
                         "AES401",
                         Severity::HIGH,
-
-                        format!("AES401 TAXONOMY_ROLE: Constant file contains non-constant declaration.\nWHY: Function '{}' found in constant file.\nFIX: Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.", fn_item.name)
-,
+                        format!("Function '{}' found in constant file.", fn_item.name),
                         "TAXONOMY_ROLE",
                         format!("Function '{}' found in constant file.", fn_item.name),
                         "Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.",
@@ -326,8 +322,7 @@ impl TaxonomyRoleChecker {
                         0,
                         "AES401",
                         Severity::HIGH,
-
-                        "AES401 TAXONOMY_ROLE: Constant file contains non-constant declaration.\nWHY: Impl block found in constant file.\nFIX: Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.",
+                        "Impl block found in constant file.".to_string(),
                         "TAXONOMY_ROLE",
                         "Impl block found in constant file.",
                         "Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.",
@@ -341,9 +336,7 @@ impl TaxonomyRoleChecker {
                         0,
                         "AES401",
                         Severity::HIGH,
-
-                        format!("AES401 TAXONOMY_ROLE: Constant file contains non-constant declaration.\nWHY: Class '{}' found in constant file.\nFIX: Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.", class.name)
-,
+                        format!("Class '{}' found in constant file.", class.name),
                         "TAXONOMY_ROLE",
                         format!("Class '{}' found in constant file.", class.name),
                         "Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.",
@@ -355,9 +348,7 @@ impl TaxonomyRoleChecker {
                         0,
                         "AES401",
                         Severity::HIGH,
-
-                        format!("AES401 TAXONOMY_ROLE: Constant file contains non-constant declaration.\nWHY: Function '{}' found in constant file.\nFIX: Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.", fn_item.name)
-,
+                        format!("Function '{}' found in constant file.", fn_item.name),
                         "TAXONOMY_ROLE",
                         format!("Function '{}' found in constant file.", fn_item.name),
                         "Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.",
@@ -371,9 +362,7 @@ impl TaxonomyRoleChecker {
                         0,
                         "AES401",
                         Severity::HIGH,
-
-                        format!("AES401 TAXONOMY_ROLE: Constant file contains non-constant declaration.\nWHY: Class '{}' found in constant file.\nFIX: Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.", class.name)
-,
+                        format!("Class '{}' found in constant file.", class.name),
                         "TAXONOMY_ROLE",
                         format!("Class '{}' found in constant file.", class.name),
                         "Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.",
@@ -385,9 +374,7 @@ impl TaxonomyRoleChecker {
                         0,
                         "AES401",
                         Severity::HIGH,
-
-                        format!("AES401 TAXONOMY_ROLE: Constant file contains non-constant declaration.\nWHY: Interface '{}' found in constant file.\nFIX: Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.", name)
-,
+                        format!("Interface '{}' found in constant file.", name),
                         "TAXONOMY_ROLE",
                         format!("Interface '{}' found in constant file.", name),
                         "Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.",
@@ -399,9 +386,7 @@ impl TaxonomyRoleChecker {
                         0,
                         "AES401",
                         Severity::HIGH,
-
-                        format!("AES401 TAXONOMY_ROLE: Constant file contains non-constant declaration.\nWHY: Type alias '{}' found in constant file.\nFIX: Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.", name)
-,
+                        format!("Type alias '{}' found in constant file.", name),
                         "TAXONOMY_ROLE",
                         format!("Type alias '{}' found in constant file.", name),
                         "Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.",
@@ -413,9 +398,7 @@ impl TaxonomyRoleChecker {
                         0,
                         "AES401",
                         Severity::HIGH,
-
-                        format!("AES401 TAXONOMY_ROLE: Constant file contains non-constant declaration.\nWHY: Function '{}' found in constant file.\nFIX: Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.", fn_item.name)
-,
+                        format!("Function '{}' found in constant file.", fn_item.name),
                         "TAXONOMY_ROLE",
                         format!("Function '{}' found in constant file.", fn_item.name),
                         "Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.",
@@ -470,7 +453,7 @@ impl TaxonomyRoleChecker {
                     "AES401",
                     Severity::HIGH,
                     format!(
-                        "AES401 TAXONOMY_ROLE: Constant file contains non-constant declaration.\nWHY: Non-constant declaration '{}' found in constant file on line {}\nFIX: Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.",
+                        "Non-constant declaration '{}' found in constant file on line {}",
                         t,
                         i + 1,
                     ),

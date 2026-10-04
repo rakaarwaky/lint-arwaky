@@ -260,12 +260,7 @@ impl DependencyCycleAnalyzer {
                     1,
                     "AES205",
                     Severity::CRITICAL,
-                    format!(
-                        "AES205 CIRCULAR_IMPORT: Circular dependency.\n\
-                         WHY: Circular dependency between layers '{}' and '{}' creates implicit bidirectional coupling.\n\
-                         FIX: Extract shared types to taxonomy, define a contract protocol, or restructure the dependency direction.",
-                        source, target
-                    ),
+                    "Circular dependency detected.",
                     "CIRCULAR_IMPORT",
                     format!(
                         "Circular dependency between layers '{}' and '{}' creates implicit bidirectional coupling.",

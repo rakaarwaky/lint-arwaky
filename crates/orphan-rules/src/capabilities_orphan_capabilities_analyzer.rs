@@ -66,23 +66,13 @@ impl ICapabilitiesOrphanProtocol for CapabilitiesOrphanAnalyzer {
 
         // Build diagnostic message
         let reason = if !is_reachable && !is_wired {
-            format!(
-                "AES503 CAPABILITIES_ORPHAN: '{}' is not reachable and not wired.\nWHY: Capabilities file '{}' is not reachable from any _entry file AND not wired in any root_*_container.\nFIX: Import '{}' from a _entry file AND register it in a root_*_container file.",
-                stem, stem, stem
-            )
+            format!("'{}' is not reachable and not wired.", stem)
         } else if !is_reachable {
-            format!(
-                "AES503 CAPABILITIES_ORPHAN: '{}' is not reachable.\nWHY: Capabilities file '{}' is not reachable from any _entry file.\nFIX: Import '{}' from a _entry file.",
-                stem, stem, stem
-            )
+            format!("'{}' is not reachable.", stem)
         } else {
             // P5 (visibility): the file IS reachable — typically via the DI impl
-            // bridge (a contract it implements is reachable) or container wiring —
-            // so the report says so and pinpoints the remaining gap: container wiring.
-            format!(
-                "AES503 CAPABILITIES_ORPHAN: '{}' is not wired.\nWHY: Capabilities file '{}' is reachable (via import chain, container wiring, or contract implementation bridge) but not wired in any root_*_container file.\nFIX: Register '{}' in a root_*_container file.",
-                stem, stem, stem
-            )
+            // bridge or container wiring — so name the remaining gap: container wiring.
+            format!("'{}' is reachable but not wired.", stem)
         };
 
         OrphanIndicatorResult::new(true, reason, Severity::MEDIUM)

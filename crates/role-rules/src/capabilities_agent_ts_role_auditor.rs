@@ -96,14 +96,7 @@ impl IAgentRoleProtocol for AgentTsRoleAuditor {
                     i + 1,
                     "AES405",
                     Severity::MEDIUM,
-                    format!(
-                        "AES405 AGENT_ROLE: Abstract class in a TypeScript agent file.\n\
-                         WHY: Line {} declares an abstract class. An agent delegates to \
-                         protocols it consumes; it does not declare new abstract contracts.\n\
-                         FIX: Move the interface to the feature's protocol file in the \
-                         shared layer.",
-                        i + 1
-                    ),
+                    "Abstract class in a TypeScript agent file".to_string(),
                     "AGENT_ROLE",
                     format!(
                         "Line {} declares an abstract class. An agent delegates to \
@@ -171,15 +164,7 @@ impl AgentTsRoleAuditor {
                 ctor_idx + 1,
                 "AES405",
                 Severity::HIGH,
-                format!(
-                    "AES405 AGENT_ROLE: Constructor precedes protocol-delegating methods.\n\
-                     WHY: The constructor at line {} appears before the first protocol \
-                     method at line {}.\n\
-                     FIX: Order the class so that Block 2 (protocol-delegating methods) \
-                     comes before Block 3 (constructor).",
-                    ctor_idx + 1,
-                    proto_idx + 1,
-                ),
+                "Constructor precedes protocol-delegating methods".to_string(),
                 "AGENT_ROLE",
                 format!(
                     "The constructor at line {} appears before the first protocol \
@@ -231,13 +216,7 @@ impl AgentTsRoleAuditor {
                         i + 1,
                         "AES405",
                         Severity::MEDIUM,
-                        format!(
-                            "AES405 AGENT_ROLE: Top-level constant in a TypeScript agent file.\n\
-                             WHY: `const {name}` is declared at line {}. Policy constants \
-                             belong in the taxonomy layer.\n\
-                             FIX: Move `{name}` into the feature's taxonomy module and import it.",
-                            i + 1,
-                        ),
+                        "Top-level constant in a TypeScript agent file".to_string(),
                         "AGENT_ROLE",
                         format!(
                             "`const {name}` is declared at line {}. Policy constants \
@@ -274,11 +253,7 @@ impl AgentTsRoleAuditor {
                 0,
                 "AES405",
                 Severity::LOW,
-                "AES405 AGENT_ROLE: Orchestrator has a single execution goal.\n\
-                 WHY: File injects 1 protocol field(s); an orchestrator must coordinate \
-                 at least 2 subsystems.\n\
-                 FIX: Either this work belongs in a capability file rather than an agent, \
-                 or inject the protocols of both subsystems into the constructor.",
+                "Orchestrator has a single execution goal".to_string(),
                 "AGENT_ROLE",
                 "File injects 1 protocol field(s); an orchestrator must coordinate \
                  at least 2 subsystems.",
@@ -302,13 +277,7 @@ impl AgentTsRoleAuditor {
                         i + 1,
                         "AES405",
                         Severity::MEDIUM,
-                        format!(
-                            "AES405 AGENT_ROLE: Computation in a TypeScript agent file.\n\
-                             WHY: Line {} calls `{token}`. An agent orchestrates; it does \
-                             not compute totals or averages over domain data.\n\
-                             FIX: Move the aggregation into a capability.",
-                            i + 1
-                        ),
+                        "Computation in a TypeScript agent file".to_string(),
                         "AGENT_ROLE",
                         format!(
                             "Line {} calls `{token}`. An agent orchestrates; it does \
@@ -363,13 +332,7 @@ impl AgentTsRoleAuditor {
                 i + 1,
                 "AES405",
                 Severity::MEDIUM,
-                format!(
-                    "AES405 AGENT_ROLE: State assignment outside constructor.\n\
-                     WHY: Line {} assigns `this.{field}` outside the constructor.\n\
-                     FIX: An agent holds no mutable state. Initialize the field in the \
-                     constructor and append to it; move domain data behind a protocol.",
-                    i + 1
-                ),
+                "State assignment outside constructor".to_string(),
                 "AGENT_ROLE",
                 format!(
                     "Line {} assigns `this.{field}` outside the constructor.",
@@ -427,18 +390,9 @@ impl AgentTsRoleAuditor {
                             i + 1,
                             "AES405",
                             Severity::LOW,
-                            format!(
-                                "AES405 AGENT_ROLE: Module-level function in a TypeScript agent file.\n\
-                                 WHY: `{name}` is declared at line {} at module level.\n\
-                                 FIX: Move it into a `utility_<domain>.ts` file, or make it a \
-                                 method on the agent's class.",
-                                i + 1
-                            ),
+                            "Module-level function in a TypeScript agent file".to_string(),
                             "AGENT_ROLE",
-                            format!(
-                                "`{name}` is declared at line {} at module level.",
-                                i + 1
-                            ),
+                            format!("`{name}` is declared at line {} at module level.", i + 1),
                             "Move it into a `utility_<domain>.ts` file, or make it a \
                              method on the agent's class.",
                         ));

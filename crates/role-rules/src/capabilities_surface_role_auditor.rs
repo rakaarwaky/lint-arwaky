@@ -68,13 +68,8 @@ impl ISurfaceRoleProtocol for SurfaceRoleChecker {
             "AES406",
             Severity::HIGH,
             format!(
-                "AES406 SURFACE_ROLE: {} tier surface has {} functions (max {})\n\
-                 WHY: A {}-tier surface with too many functions has too many responsibilities.\n\
-                 FIX: Split into smaller surface files, or move logic down to capabilities or an agent.",
-                tier_name,
-                fn_count,
-                limit,
-                tier_name,
+                "{} tier surface has {} functions (max {})",
+                tier_name, fn_count, limit
             ),
             "SURFACE_ROLE",
             format!(
@@ -109,12 +104,7 @@ impl SurfaceRoleChecker {
                 0,
                 "AES406",
                 Severity::HIGH,
-                format!(
-                    "AES406 SURFACE_ROLE: Surface role boundary violation.\n\
-                     WHY: Surface file '{}' has {} functions (max {})\n\
-                     FIX: Ensure surface only performs its designated responsibilities.",
-                    path_str, fn_count, MAX_PUBLIC_METHODS,
-                ),
+                "Surface role boundary violation".to_string(),
                 "SURFACE_ROLE",
                 format!(
                     "Surface file '{}' has {} functions (max {})",
@@ -150,13 +140,7 @@ impl SurfaceRoleChecker {
                 &path_str,
                 0,
                 "AES406",
-                Severity::HIGH,
-                format!(
-                    "AES406 SURFACE_ROLE: Complex domain logic detected in a passive/utility surface.\n\
-                     WHY: Surface file has {} control flow statements (max {})\n\
-                     FIX: Move the complex domain/control logic into capabilities or orchestrator components.",
-                    control_flow_count, MAX_CONTROL_FLOW,
-                ),
+                Severity::HIGH,"Complex domain logic detected in a passive/utility surface".to_string(),
                 "SURFACE_ROLE",
                 format!(
                     "Surface file has {} control flow statements (max {})",

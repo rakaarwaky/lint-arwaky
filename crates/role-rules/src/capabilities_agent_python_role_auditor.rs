@@ -148,15 +148,7 @@ impl AgentPythonRoleAuditor {
                 factory_idx + 1,
                 "AES405",
                 Severity::HIGH,
-                format!(
-                    "AES405 AGENT_ROLE: Factory/dunder methods precede protocol-delegating methods.\n\
-                     WHY: Line {} declares a `@classmethod`/`@staticmethod`/dunder before \
-                     the first protocol-delegating method at line {}.\n\
-                     FIX: Order the class so that Block 2 (protocol-delegating methods) \
-                     comes before Block 3 (factories/dunders).",
-                    factory_idx + 1,
-                    proto_idx + 1,
-                ),
+                "Factory/dunder methods precede protocol-delegating methods".to_string(),
                 "AGENT_ROLE",
                 format!(
                     "Line {} declares a `@classmethod`/`@staticmethod`/dunder before \
@@ -219,13 +211,7 @@ impl AgentPythonRoleAuditor {
                         i + 1,
                         "AES405",
                         Severity::MEDIUM,
-                        format!(
-                            "AES405 AGENT_ROLE: Module-level constant in a Python agent file.\n\
-                             WHY: `{name}` is declared at line {}. Policy constants \
-                             belong in the taxonomy layer.\n\
-                             FIX: Move `{name}` into the feature's taxonomy module and import it.",
-                            i + 1,
-                        ),
+                        "Module-level constant in a Python agent file".to_string(),
                         "AGENT_ROLE",
                         format!(
                             "`{name}` is declared at line {}. Policy constants \
@@ -262,11 +248,7 @@ impl AgentPythonRoleAuditor {
                 0,
                 "AES405",
                 Severity::LOW,
-                "AES405 AGENT_ROLE: Orchestrator has a single execution goal.\n\
-                 WHY: File injects 1 protocol field(s) in `__init__`; an orchestrator must \
-                 coordinate at least 2 subsystems.\n\
-                 FIX: Either this work belongs in a capability file rather than an agent, \
-                 or inject the protocols of both subsystems into `__init__`.",
+                "Orchestrator has a single execution goal".to_string(),
                 "AGENT_ROLE",
                 "File injects 1 protocol field(s) in `__init__`; an orchestrator must \
                  coordinate at least 2 subsystems.",
@@ -290,13 +272,7 @@ impl AgentPythonRoleAuditor {
                         i + 1,
                         "AES405",
                         Severity::MEDIUM,
-                        format!(
-                            "AES405 AGENT_ROLE: Computation in a Python agent file.\n\
-                             WHY: Line {} calls `{token}`. An agent orchestrates; it does \
-                             not compute totals or averages over domain data.\n\
-                             FIX: Move the aggregation into a capability.",
-                            i + 1
-                        ),
+                        "Computation in a Python agent file".to_string(),
                         "AGENT_ROLE",
                         format!(
                             "Line {} calls `{token}`. An agent orchestrates; it does \
@@ -322,14 +298,7 @@ impl AgentPythonRoleAuditor {
                     i + 1,
                     "AES405",
                     Severity::MEDIUM,
-                    format!(
-                        "AES405 AGENT_ROLE: Abstract method in a Python agent file.\n\
-                         WHY: Line {} uses `@abstractmethod`. An agent delegates to \
-                         contracts it consumes; it does not declare new abstract contracts.\n\
-                         FIX: Move the abstract method to the feature's protocol ABC in \
-                         `contract_<feature>_protocol.py`.",
-                        i + 1
-                    ),
+                    "Abstract method in a Python agent file".to_string(),
                     "AGENT_ROLE",
                     format!(
                         "Line {} uses `@abstractmethod`. An agent delegates to \
@@ -394,14 +363,7 @@ impl AgentPythonRoleAuditor {
                 i + 1,
                 "AES405",
                 Severity::MEDIUM,
-                format!(
-                    "AES405 AGENT_ROLE: State assignment outside `__init__`.\n\
-                     WHY: Line {} assigns `self.{field}` outside the constructor.\n\
-                     FIX: An agent holds no mutable state. If this is a results buffer, \
-                     initialise the field in `__init__` and append to it; if it is domain data, \
-                     move it behind an injected protocol.",
-                    i + 1
-                ),
+                "State assignment outside `__init__`".to_string(),
                 "AGENT_ROLE",
                 format!(
                     "Line {} assigns `self.{field}` outside the constructor.",
@@ -450,13 +412,7 @@ impl AgentPythonRoleAuditor {
                     i + 1,
                     "AES405",
                     Severity::LOW,
-                    format!(
-                        "AES405 AGENT_ROLE: Module-level function in a Python agent file.\n\
-                         WHY: `def {name}` is declared at line {} at module level.\n\
-                         FIX: Move it into a `utility_<domain>_<name>.py` file, or make it a \
-                         method on the agent's class.",
-                        i + 1,
-                    ),
+                    "Module-level function in a Python agent file".to_string(),
                     "AGENT_ROLE",
                     format!(
                         "`def {name}` is declared at line {} at module level.",

@@ -106,11 +106,7 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
                 ast_line,
                 "AES203",
                 Severity::MEDIUM,
-                format!(
-                    "AES203 UNUSED_IMPORT: Unused import '{alias_str}' detected.\n\
-                        WHY: Unused imports clutter the codebase.\n\
-                        FIX: Remove the unused import."
-                ),
+                format!("Unused import '{}' detected.", alias_str),
                 "UNUSED_IMPORT",
                 "Unused imports clutter the codebase.",
                 "Remove the unused import.",

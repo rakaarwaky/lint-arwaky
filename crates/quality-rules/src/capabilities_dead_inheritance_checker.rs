@@ -60,15 +60,9 @@ impl IDeadInheritanceProtocol for DeadInheritanceChecker {
                         i + 1,
                         "AES303",
                         Severity::MEDIUM,
-                        format!(
-                            "AES303 DEAD_INHERITANCE: Empty struct, class, or interface implementation block detected.\nWHY: Unit struct declared on line {} without impl or derive\nFIX: Implement the necessary methods/fields or remove the empty definition block.",
-                            i + 1
-                        ),
+                        "Unit struct without impl or derive".to_string(),
                         "DEAD_INHERITANCE",
-                        format!(
-                            "Unit struct declared on line {} without impl or derive",
-                            i + 1
-                        ),
+                        format!("Unit struct declared on line {} without impl or derive", i + 1),
                         "Implement the necessary methods/fields or remove the empty definition block.",
                     ));
                 }
@@ -91,11 +85,7 @@ impl IDeadInheritanceProtocol for DeadInheritanceChecker {
                         file,
                         i + 1,
                         "AES303",
-                        Severity::MEDIUM,
-                        format!(
-                            "AES303 DEAD_INHERITANCE: Empty struct, class, or interface implementation block detected.\nWHY: Empty Python class on line {} (': pass')\nFIX: Implement the necessary methods/fields or remove the empty definition block.",
-                            i + 1
-                        ),
+                        Severity::MEDIUM,"Empty Python class".to_string(),
                         "DEAD_INHERITANCE",
                         format!(
                             "Empty Python class on line {} (': pass')",
@@ -110,12 +100,7 @@ impl IDeadInheritanceProtocol for DeadInheritanceChecker {
                             file,
                             i + 1,
                             "AES303",
-                            Severity::MEDIUM,
-                            format!(
-                                "AES303 DEAD_INHERITANCE: Empty struct, class, or interface implementation block detected.\nWHY: Empty Python class on line {} (body is '{}')\nFIX: Implement the necessary methods/fields or remove the empty definition block.",
-                                i + 1,
-                                next
-                            ),
+                            Severity::MEDIUM,"Empty Python class".to_string(),
                             "DEAD_INHERITANCE",
                             format!(
                                 "Empty Python class on line {} (body is '{}')",
@@ -134,15 +119,9 @@ impl IDeadInheritanceProtocol for DeadInheritanceChecker {
                     i + 1,
                     "AES303",
                     Severity::MEDIUM,
-                    format!(
-                        "AES303 DEAD_INHERITANCE: Empty struct, class, or interface implementation block detected.\nWHY: Empty JS/TS class/interface on line {}\nFIX: Implement the necessary methods/fields or remove the empty definition block.",
-                        i + 1
-                    ),
+                    "Empty JS/TS class or interface".to_string(),
                     "DEAD_INHERITANCE",
-                    format!(
-                        "Empty JS/TS class/interface on line {}",
-                        i + 1
-                    ),
+                    format!("Empty JS/TS class/interface on line {}", i + 1),
                     "Implement the necessary methods/fields or remove the empty definition block.",
                 ));
             }
