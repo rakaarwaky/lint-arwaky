@@ -2,6 +2,37 @@
 
 ## 3.7.2 (2026-10-04)
 
+### Progress report command
+
+- **`lint-arwaky-cli report [path]` shows progress instead of violations.** It
+  runs the same scan as `scan` and prints a count per member with the change
+  against the last run, instead of the violations themselves, so the question
+  "is this getting better?" is one command. It exits success whenever it
+  prints: a report that failed on findings would be useless for looking at
+  progress. Snapshots go to the XDG data directory
+  (`$XDG_DATA_HOME/lint-arwaky/snapshots.json`), one entry per target, so a
+  scan leaves no file in the repository for a contributor to commit or
+  delete.
+
+### Scan output as a folder tree
+
+- **`scan` prints a folder tree with a per-violation `WHY` and `FIX`.** The old
+  member rollup — one line per violation — is gone. Each level names one thing:
+  the member dir, then the folder inside it, then the file. Each violation
+  block carries four lines: `(file:line)`, the rule code, `WHY:` the reason,
+  and `FIX:` the remedy. The report ends with a four-line `Hint` naming
+  `lint-arwaky-cli skill list` and the three ways to narrow a scan.
+- **A scan path filters the report, not the scan.** Naming a subfolder or a
+  single file inside a member dir still scans the whole member, because the
+  architecture rules read sibling files: scanning only the named path would
+  miss a missing import declared in a file the user never named. The user path
+  decides what the report shows; the report shows the named scope, the analysis
+  runs on the whole member.
+- **`scan --format json|sarif|junit` carries the fields the text report shows.**
+  Every output format now carries `code`, `violation_name`, `file`, `line`,
+  `column`, `severity`, `why`, and `fix`, and the scan JSON no longer carries a
+  summary block.
+
 ### AES705 — member-root file placement
 
 - **A member dir root now carries folders and wiring only.** An

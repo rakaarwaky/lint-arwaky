@@ -19,6 +19,10 @@ types, utilities, and interface definitions that other layers depend on.
 | DO-002 | ViolationItem | entity | Canonical representation of a single architecture violation |
 | DO-003 | StructureFinding | vo | Structural violation found during folder layout audit |
 | DO-004 | DocFinding | vo | Documentation invariant violation |
+| DO-005 | ReportSnapshot | vo | A scan's per-member violation counts plus the Unix timestamp it was taken, the row `report` compares against its predecessor |
+| DO-006 | SnapshotStore | entity | One `ReportSnapshot` per scanned target, in one file under the XDG data directory; a target's snapshot is never the baseline of another target's |
+| DO-007 | MemberDelta | vo | One member's row of the report: the count now, the count before, and the change |
+| DO-008 | ReportDelta | vo | The whole comparison of two scans, plus the totals a reader checks first |
 
 Each row's attributes are listed below. The attribute tables are the
 specification the value objects satisfy: a field added, removed, or retyped in
@@ -76,6 +80,36 @@ rule crates can report without depending on the common taxonomy.
 | line | Count | 1-based line in the document; zero or one for document-level findings |
 | severity | Severity | Always HIGH — every document invariant is an architectural policy gap |
 
+### DO-005: ReportSnapshot — Attributes
+
+| Field | Type | Description |
+|---|---|---|
+| taken_at | Count | Unix seconds of the scan that produced these counts |
+| members | map (Text → Count) | Violation count per member, keyed by the report's member path, so a member counts the same whether the scan covered one member or the whole workspace |
+
+### DO-006: SnapshotStore — Attributes
+
+| Field | Type | Description |
+|---|---|---|
+| entries | map (Text → DO-005 ReportSnapshot) | One entry per target; one file holds the last snapshot of every target scanned |
+
+### DO-007: MemberDelta — Attributes
+
+| Field | Type | Description |
+|---|---|---|
+| member | Text | The report's member path |
+| now | Count | The member's violation count in the current scan |
+| before | optional Count | The member's count in the baseline; empty only when there is no baseline at all — a member missing from the baseline is zero, so it is measured from zero rather than reported as unknown |
+
+### DO-008: ReportDelta — Attributes
+
+| Field | Type | Description |
+|---|---|---|
+| members | list (DO-007 MemberDelta) | One row per member, heaviest member first, so the work in front of the reader is at the top |
+| total_now | Count | The current scan's total violation count |
+| total_before | optional Count | The baseline scan's total; empty when there is no baseline |
+| since | optional Count | The baseline's taken_at, so a reader knows how old the comparison is |
+
 ### Relationships
 
 | From | To | Kind | Rule |
@@ -84,6 +118,10 @@ rule crates can report without depending on the common taxonomy.
 | DO-003 StructureFinding | DO-002 ViolationItem | projection (1:1) | The dispatcher maps a structure finding onto a violation item, defaulting line and column to zero and severity to MEDIUM. |
 | DO-004 DocFinding | DO-002 ViolationItem | projection (1:1) | A doc finding maps onto a violation item for JSON/SARIF output: `doc` joined to the audit root becomes the file path, column becomes 1, and severity stays HIGH. |
 | DO-002 ViolationItem | DO-001 Severity | composition | Every violation item carries exactly one severity; severity is shared by all three finding types. |
+| DO-005 ReportSnapshot | DO-002 ViolationItem | aggregation (N:1) | A snapshot is a count of a scan's violation items grouped by member path, plus when the scan ran. |
+| DO-006 SnapshotStore | DO-005 ReportSnapshot | composition (1:N) | The store is one snapshot per scanned target, in one file. |
+| DO-007 MemberDelta | DO-005 ReportSnapshot | derivation | A member row is the current and baseline counts of one member; the baseline is a previous snapshot, not a stored count. |
+| DO-008 ReportDelta | DO-007 MemberDelta | aggregation (N:1) | The delta is every member's row plus the totals and the baseline's timestamp. |
 
 ## Assumptions & Constraints
 

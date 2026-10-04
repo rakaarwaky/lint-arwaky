@@ -24,6 +24,71 @@ the machine signal, and it is the only one.
 Every failure path returns an `ExitCode`, so the process ends through one place.
 A caller must branch on the exit code; the rendered text is for a human.
 
+### Path Semantics
+
+A path decides what the report shows, not what the scan covers. The
+architecture rules read sibling files, so the scan always walks the whole
+member dir. The target classifies into four scopes:
+
+- Workspace root: scan every member, report everything.
+- A member dir (`crates`, `packages`, `modules`): scan that dir alone, report all of it.
+- A subfolder inside a member: scan the whole member, report only the violations under the subfolder.
+- A single file inside a member: scan the whole member, report only that file.
+
+- `report [path]` runs the same scan as `scan <path>`; it changes only the
+  report shape, so it narrows the result the same way a subfolder or file target does.
+
+### Output Shapes
+
+Three report shapes, one field set. Every violation carries `code`,
+`violation_name`, `file`, `line`, `column`, `severity`, `why`, and `fix`.
+`violation_name`, `why`, and `fix` come from the `LintResult` fields a
+capability fills; when a capability leaves them empty the legacy message
+format parses the same three fields out of the `msg` text, so an
+unconverted capability still renders complete.
+
+The text report is a folder tree: `{top}` braces the member dir, `[member]`
+braces the member, `(file:line:col)` braces the source position, and each
+violation prints as four lines.
+
+```text
+{crates}
+
+[shared_common]
+
+(src/agent_aes304_bypass.rs:7)
+AES304:UNWRAP_EXPECT
+WHY: Found forbidden bypass token: 'unwrap'
+FIX: Replace the unwrap/expect call with structured error handling.
+```
+
+The text report ends with a `Hint` block of four lines: `lint-arwaky-cli skill
+list` and the three ways to narrow a scan: one member dir, one folder under a
+member dir, one file. The machine formats carry the same fields:
+
+- JSON: one object per violation with `code`, `violation_name`, `file`, `line`,
+  `column`, `message`, `severity`, `why`, `fix`, `member`, wrapped in
+  `{target, results}`. No summary block: a scan lists what it found, not
+  counts of what it found.
+- SARIF: the reason goes in `message.text` and the rest in `properties`.
+- JUnit: the fields travel as `failure` attributes.
+
+A violation's `msg` argument states the fact and the subject only. It carries
+no `AES### NAME:` prefix and no embedded `WHY:` or `FIX:` clauses, because
+those now travel in the three dedicated fields.
+
+### Report
+
+`report [path]` runs the same scan as `scan`, counts violations per member,
+and prints the count and its change against the last run for the target,
+rather than the violations themselves. Counts are keyed by the same member
+path the scan report groups by, so a baseline compares identical definitions
+whether the scan covered one member or the whole workspace. Snapshots live in
+the XDG data directory, one entry per target, so a scan of one target never
+becomes the baseline of another. The command exits success whenever it prints
+a report: a first run with no baseline prints absolute counts and a note that
+the next run will show the delta.
+
 ### Kind
 
 `cli` — the process surface a user types into. Each `surface_*_command.rs` file
@@ -39,10 +104,15 @@ group never has to know the process's working directory.
 ### Invariants
 
 - A surface file computes nothing about the codebase. It renders what an
-  aggregate returns and maps the outcome to an exit code.
+  aggregate returns and maps the outcome to an exit code. The exception is
+  `report`: it counts violations per member and reads a snapshot, because a
+  progress table is data, not rendering.
+
 - A surface may not import a capabilities file directly. It reaches behavior
   through the aggregate seam (`crates/dispatcher`).
 - A surface holds no state across invocations; each subcommand is a fresh call.
+  `report` reads a snapshot file written by an earlier run of itself — the
+  exception is the stored counts, not process state.
 - Every subcommand path ends in exactly one `ExitCode`. There is no second
   place the process can terminate.
 
@@ -69,6 +139,7 @@ surface file, the CLI wiring, and the Entry Points table below.
 | `init`, `install`, `mcp-config` | `surface_setup_command.rs`     | project-setup aggregate | rendered / error                         |
 | `watch`       | `surface_watch_command.rs`       | file-watch aggregate | streaming / error                         |
 | `plugin`      | `surface_plugin_command.rs`      | plugin registry     | rendered / error                          |
+| `report [path]` | `surface_report_command.rs` | the same groups as `scan`; prints counts, not violations | clean / error |
 | `skill`       | `surface_skill_command.rs`       | skill registry      | rendered / error                          |
 | Findings rendering | `utility_output_text_formatter.rs` | — | rendered                                |
 
@@ -79,8 +150,10 @@ document chain, so crosslink checks (AES604) that expect root-level
 `PRD.md`/`ROADMAP.md` siblings behave differently than in a whole-workspace run.
 See `crates/doc-rules/FRD.md`.
 
-`utility_output_text_formatter.rs` renders findings for a terminal; it holds no
-rule logic and reads nothing from the aggregates beyond their results.
+The `report` command never prints findings. It counts the scan's violations
+per member and shows each count's change against the last run for that target.
+A first run has no baseline, so it shows absolute counts and a note that the
+next run will show the delta.
 
 ### States
 
@@ -88,6 +161,7 @@ rule logic and reads nothing from the aggregates beyond their results.
 | ----------------------- | ------------------------------------------------------------- | ------------------------------------------ |
 | `clean`                 | The scan returned zero violations                              | The summary line plus `Ok`                  |
 | `violations`            | One or more groups returned findings                           | The rendered findings plus `PolicyFail`     |
+| `progress`              | The `report` command printed a table; it exits success whether or not the scan found violations | The progress table plus `Ok` |
 | `prerequisite_missing`  | A required external tool is absent                             | The tool name and an install hint plus `PrerequisiteMissing` |
 | `error`                 | The path is missing, arguments are invalid, or I/O failed      | The cause plus `RuntimeError`               |
 
