@@ -13,9 +13,8 @@
 
 use serde::Deserialize;
 use shared_cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
-use shared_common::taxonomy_adapter_error::AdapterError;
 use shared_common::taxonomy_adapter_name_vo::AdapterName;
-use shared_common::taxonomy_common_vo::{ColumnNumber, ErrorMessage, LineNumber, PatternList};
+use shared_common::taxonomy_common_vo::{ColumnNumber, LineNumber, PatternList};
 use shared_common::taxonomy_error_vo::ErrorCode;
 use shared_common::taxonomy_lint_vo::LocationList;
 use shared_common::taxonomy_message_vo::{ComplianceStatus, LintMessage};
@@ -90,12 +89,7 @@ impl ILinterAdapterProtocol for CargoAuditAdapter {
         let response = self
             .executor
             .execute_command(cmd, working_dir.clone(), Some(Timeout::new(120.0)))
-            .map_err(|e| {
-                LinterOperationError::Adapter(AdapterError::new(
-                    self.name(),
-                    ErrorMessage::new(e.to_string()),
-                ))
-            })?;
+            .map_err(|e| crate::map_executor_err(e, self.name()))?;
 
         if response.returncode != 0 && response.returncode != 1 {
             debug!("cargo-audit exited with code: {}", response.returncode);

@@ -17,8 +17,6 @@
 
 use serde_json::Value;
 use shared_cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
-use shared_common::ErrorMessage;
-use shared_common::taxonomy_adapter_error::AdapterError;
 use shared_common::taxonomy_adapter_name_vo::AdapterName;
 use shared_common::taxonomy_common_vo::{ColumnNumber, LineNumber, PatternList};
 use shared_common::taxonomy_error_vo::ErrorCode;
@@ -81,12 +79,7 @@ impl ILinterAdapterProtocol for RustLinterAdapter {
                 working_dir.clone(),
                 Some(Timeout::new(180.0)),
             )
-            .map_err(|e| {
-                LinterOperationError::Adapter(AdapterError::new(
-                    self.name(),
-                    ErrorMessage::new(e.to_string()),
-                ))
-            })?;
+            .map_err(|e| crate::map_executor_err(e, self.name()))?;
 
         let output = if result.stdout.trim().is_empty() {
             result.stderr.clone()
