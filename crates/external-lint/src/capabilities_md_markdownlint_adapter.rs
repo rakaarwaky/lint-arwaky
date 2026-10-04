@@ -31,7 +31,7 @@ use shared_external_lint::taxonomy_external_lint_constant::{
     MARKDOWNLINT_CLI_VARIANTS, MARKDOWNLINT_EXTENSIONS, MARKDOWNLINT_FIX_FLAG,
 };
 use shared_external_lint::utility_path_normalization::{
-    resolve_capabilities_path, resolve_or_fallback,
+    resolve_or_fallback, resolve_or_fallback_with_context,
 };
 use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared_filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
@@ -319,7 +319,7 @@ fn build_result(
     message: String,
     root: &FilePath,
 ) -> LintResult {
-    let file_vo = resolve_capabilities_path(file, Some(root.clone()));
+    let file_vo = resolve_or_fallback_with_context(&file.value, file.clone(), Some(root.clone()));
     LintResult {
         file: file_vo,
         line: LineNumber::new(line),

@@ -18,3 +18,15 @@ pub fn resolve_capabilities_path(path: FilePath, _context_path: Option<FilePath>
 pub fn resolve_or_fallback(raw: &str, fallback: FilePath) -> FilePath {
     FilePath::new(raw).unwrap_or(fallback)
 }
+
+/// Combined: parse `raw` into `FilePath` (with `fallback` on failure),
+/// then resolve it relative to `context_path`.
+/// Collapses the two-step call pattern repeated across 7 adapters.
+pub fn resolve_or_fallback_with_context(
+    raw: &str,
+    fallback: FilePath,
+    context_path: Option<FilePath>,
+) -> FilePath {
+    let fp = resolve_or_fallback(raw, fallback);
+    resolve_capabilities_path(fp, context_path)
+}
