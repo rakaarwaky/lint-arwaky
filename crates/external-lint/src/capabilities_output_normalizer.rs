@@ -15,6 +15,7 @@ use shared_common::taxonomy_path_vo::FilePath;
 use shared_common::taxonomy_severity_vo::Severity;
 use shared_common::taxonomy_tool_name_vo::ToolName;
 use shared_external_lint::contract_external_lint_protocol::INormalizeProtocol;
+use shared_external_lint::utility_path_normalization::resolve_or_fallback;
 
 // ─── Block 1: Struct Definition ────────────────────────────
 
@@ -197,13 +198,13 @@ fn map_ruff_severity(code: &str) -> Severity {
 fn canonicalize_against(root: &FilePath, file: &str) -> FilePath {
     let candidate = std::path::Path::new(file);
     if candidate.is_absolute() {
-        return FilePath::new(file.to_string()).unwrap_or_else(|_| root.clone());
+        return resolve_or_fallback(file, root.clone());
     }
-    FilePath::new(
+    resolve_or_fallback(
         std::path::Path::new(&root.value)
             .join(candidate)
             .to_string_lossy()
-            .to_string(),
+            .as_ref(),
+        root.clone(),
     )
-    .unwrap_or_else(|_| root.clone())
 }
