@@ -49,15 +49,19 @@ def main() -> int:
     """Entry point: 0 when the gate passes, 1 when it fails."""
     argv = sys.argv[1:]
     body_arg = argv[0] if argv else None
-    diff_files = argv[1].lower() if len(argv) > 1 else os.environ.get("PR_DIFF", "").lower()
+    diff_files = (argv[1] if len(argv) > 1 else os.environ.get("PR_DIFF", "")).lower()
     if body_arg is not None and not Path(body_arg).is_file():
         print(f"check_close_evidence: body file not found: {body_arg} — fail")
         return 1
     pr_body = Path(body_arg).read_text() if body_arg is not None else os.environ.get("PR_BODY", "")
-    closes_issue = bool(pr_body.strip()) and CLOSING_KEYWORD.search(pr_body) is not None
-    has_evidence = EVIDENCE.search(pr_body) is not None or REGRESSION_FILE_MARKER in diff_files
-    print(FAILURE_NOTICE if closes_issue and not has_evidence else "check_close_evidence: pass")
-    return int(closes_issue and not has_evidence)
+    fails = (
+        bool(pr_body.strip())
+        and CLOSING_KEYWORD.search(pr_body) is not None
+        and EVIDENCE.search(pr_body) is None
+        and REGRESSION_FILE_MARKER not in diff_files
+    )
+    print(FAILURE_NOTICE if fails else "check_close_evidence: pass")
+    return int(fails)
 
 
 if __name__ == "__main__":
