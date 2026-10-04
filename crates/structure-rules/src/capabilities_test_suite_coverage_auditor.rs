@@ -132,11 +132,14 @@ fn check_feature_test_suite(folder: &Path, rel: &str, findings: &mut Vec<Structu
             consts::RULE_CODE_TEST_SUITE_COVERAGE,
             consts::TEST_SUITE_VIOLATION_MISSING_TESTS_DIR,
             rel.to_string(),
+            format!("feature folder '{rel}' has no '{TESTS_DIR}/' directory"),
+        )
+        .with_reason(
             format!(
-                "feature folder '{rel}' has no '{TESTS_DIR}/' directory; a feature folder owes one file \
-                 per test type ({})",
+                "A feature folder owes one test file per test type ({}).",
                 prefix_list(required_tests_prefixes())
             ),
+            format!("Add a '{TESTS_DIR}/' directory with one file per required test type."),
         ));
     } else {
         let present = test_stems_in(&tests_dir);
@@ -158,10 +161,13 @@ fn check_feature_test_suite(folder: &Path, rel: &str, findings: &mut Vec<Structu
             consts::RULE_CODE_TEST_SUITE_COVERAGE,
             consts::TEST_SUITE_VIOLATION_MISSING_BENCH_DIR,
             rel.to_string(),
+            format!("feature folder '{rel}' has no '{BENCHES_DIR}/' directory"),
+        )
+        .with_reason(
             format!(
-                "feature folder '{rel}' has no '{BENCHES_DIR}/' directory; a feature folder owes at least one \
-                 '{BENCH_PREFIX}<subject>' performance regression benchmark"
+                "A feature folder owes at least one '{BENCH_PREFIX}<subject>' performance regression benchmark."
             ),
+            format!("Add a '{BENCHES_DIR}/' directory holding one '{BENCH_PREFIX}<subject>' benchmark."),
         ));
     } else {
         let present = test_stems_in(&benches_dir);
@@ -188,10 +194,11 @@ fn missing_category(rel: &str, prefix: &str, directory: &str, fix: String) -> St
         consts::RULE_CODE_TEST_SUITE_COVERAGE,
         consts::TEST_SUITE_VIOLATION_MISSING_CATEGORY,
         format!("{rel}/{directory}"),
-        format!(
-            "feature folder '{rel}' holds no '{prefix}' test file; every test type is required — \
-             '{prefix}' proves: {purpose}. The prefix is the virtual folder, so {fix}."
-        ),
+        format!("feature folder '{rel}' holds no '{prefix}' test file"),
+    )
+    .with_reason(
+        format!("Every test type is required. '{prefix}' proves: {purpose}."),
+        format!("{fix} The prefix is the virtual folder."),
     )
 }
 

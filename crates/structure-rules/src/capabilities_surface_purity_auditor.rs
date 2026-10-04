@@ -139,9 +139,13 @@ fn check_surface_folder(
             consts::SURFACE_PURITY_VIOLATION_MISPLACED_FILES,
             file.rel(ws_root),
             format!(
-                "surface folder '{folder_rel}' holds '{kind}' ({name}); a surface folder carries surface files only — {destination}",
-                name = file.name,
+                "surface folder '{folder_rel}' holds '{kind}' ({})",
+                file.name,
             ),
+        )
+        .with_reason(
+            "A surface folder carries surface files only. A layer file there would make the folder's own layer unclear.",
+            destination.to_string(),
         ));
     }
 
@@ -158,10 +162,16 @@ fn check_surface_folder(
             },
             folder_rel.to_string(),
             format!(
-                "surface folder '{folder_rel}' is missing {}; a surface folder carries {} recording its kind, entry points, and visible states",
-                missing.join(" and "),
-                names.join(" and "),
+                "surface folder '{folder_rel}' is missing {}",
+                missing.join(" and ")
             ),
+        )
+        .with_reason(
+            format!(
+                "A surface folder carries {} recording its kind, entry points, and visible states.",
+                names.join(" and ")
+            ),
+            format!("Add {} to the surface folder.", missing.join(" and ")),
         ));
     }
 }

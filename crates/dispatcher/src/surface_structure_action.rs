@@ -38,8 +38,8 @@ pub fn collect_structure(
                 message,
                 severity: shared_common::Severity::MEDIUM,
                 violation_name: f.violation_type,
-                why: String::new(),
-                fix: String::new(),
+                why: f.why,
+                fix: f.fix,
             }
         })
         .collect())

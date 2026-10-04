@@ -13,6 +13,11 @@ pub struct StructureFinding {
     pub file: String,
     /// Human-readable detail about what drifted.
     pub message: String,
+    /// Why the invariant matters. Rendered on its own line in the report, so
+    /// it holds the reason and not a restatement of `message`.
+    pub why: String,
+    /// What to do about it. Rendered on its own line under `why`.
+    pub fix: String,
 }
 
 impl StructureFinding {
@@ -27,7 +32,22 @@ impl StructureFinding {
             violation_type: violation_type.into(),
             file: file.into(),
             message: message.into(),
+            why: String::new(),
+            fix: String::new(),
         }
+    }
+
+    /// Attach the reason and the remedy, for the report to print under the
+    /// code. The 4-argument `new` keeps working for a caller that has no
+    /// separate wording to offer.
+    pub fn with_reason(
+        mut self,
+        why: impl Into<String>,
+        fix: impl Into<String>,
+    ) -> Self {
+        self.why = why.into();
+        self.fix = fix.into();
+        self
     }
 }
 
