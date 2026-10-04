@@ -1,18 +1,32 @@
 # Codeac Cloud config — per-repo behaviour overrides.
 # Docs: https://www.codeac.io/documentation/custom-configuration.html
 #
-# `.codeac.yml` supports only `version`, `thresholds`, and `tools` sections.
-# Folder / path exclusions are configured in the Codeac Cloud dashboard
-# (Settings → Ignore paths) — they are not read from this file.
+# Schema (only keys Codeac actually reads):
+#   version   – '1'
+#   thresholds – max_complexity / max_quality / max_unused_code
+#   tools      – per-linter ignores + rule toggles
 #
-# To stop Codeac reporting violations from fixture / build folders, add the
-# following ignore paths in the dashboard:
-#   workspaces-bad/**
-#   workspaces-good/**
-#   target/**
-#   dist/**
-#   build/**
-#   node_modules/**
-#   crates/*/tests/**
+# Codeac runs ESLint in flat-config mode on this repo (see
+# .codacy/tools-configs/eslint.config.mjs), so ESLint ignores live in
+# eslint.config.mjs — they are applied by the ESLint tool itself.
+# pylint / rubocop / pmd / detekt / etc. follow the same pattern: each
+# uses its own standard config file (pylintrc, .rubocop.yml, …).
+#
+# Codeac additionally applies its own default ignores on top of every
+# tool (node_modules, dist, build, …); the full default list is in the
+# dashboard under Settings.
 
 version: '1'
+
+tools:
+  eslint:
+    ignores:
+      # fixture folders are intentional violations, not product code
+      - "workspaces-bad/**"
+      - "workspaces-good/**"
+      # per-crate integration tests add no signal to the static analysis
+      - "crates/*/tests/**"
+      # local tooling and docs do not need lint checks
+      - "scripts/**"
+      - "tools/**"
+      - "CONTRIBUTING.md"
