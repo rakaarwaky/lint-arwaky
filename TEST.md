@@ -46,9 +46,9 @@ workspaces-good/
 
 | Workspace | Language | Files | Violations | False Positives | Expected AES Codes |
 | --------- | -------- | ----- | ---------- | --------------- | ------------------ |
-| bad       | Rust     | 156   | ≥ 100 (non-regressing floor) | — | 27 unique codes |
-| bad       | Python   | 160   | ≥ 100 (non-regressing floor) | — | 27 unique codes |
-| bad       | JS/TS    | 114   | ≥ 100 (non-regressing floor) | — | 27 unique codes |
+| bad       | Rust     | 156   | ≥ 100 (non-regressing floor) | — | 35 unique codes |
+| bad       | Python   | 160   | ≥ 100 (non-regressing floor) | — | 35 unique codes |
+| bad       | JS/TS    | 114   | ≥ 100 (non-regressing floor) | — | 35 unique codes |
 | good      | Rust     | 35    | 0          | 0               | —                  |
 | good      | Python   | 42    | 0          | 0               | —                  |
 | good      | JS/TS    | 33    | 0          | 0               | —                  |
@@ -58,13 +58,11 @@ workspaces-good/
 > below the documented ≥ 100 violation floor per language.
 >
 > **Reconciled rule count (single source of truth — §3.2):** the product
-> enforces **34 AES rules** total (per README and the §3.2 Per-Rule Detection
-> Matrix). `scan` can only ever surface **29** of them: AES601–AES605 are
-> doc-only invariants audited by the separate `docs` command. So
-> *29 unique scan codes + 5 doc-only codes = 34 rules*. This is the documented
-> exception explaining why the aggregate `workspaces-bad` scan expectation
-> (29) is below the full catalog (34); the CI "AES Codes Check" gate enforces
-> exactly 29 — no lower safety margin (QA #636).
+> enforces **35 AES rules** total (per RULES_AES.md and the §3.2 Per-Rule
+> Detection Matrix). `scan` now surfaces **all 35** — including the five
+> doc-invariant codes AES601–AES605, which the doc-audit pass folds into
+> every scan target. The CI "AES Codes Check" gate enforces all 35 unique
+> codes per scan — no safety margin (QA #636).
 >
 > **External tools prerequisite**: Python & JS/TS scans require external tools
 > installed (ruff, mypy, bandit, eslint, prettier, tsc, markdownlint-cli2) for
@@ -227,17 +225,17 @@ Thresholds match the §1 Expected Violation Counts table (≥ 100 violations flo
 | Total violations (Rust scan)   | >= 100 | < 100 or 0 |
 | Total violations (Python scan) | >= 100 | < 100 or 0 |
 | Total violations (JS/TS scan)  | >= 100 | < 100 or 0 |
-| Unique AES codes (Rust)        | >= 27  | < 27       |
-| Unique AES codes (Python)      | >= 27  | < 27       |
-| Unique AES codes (JS/TS)       | >= 27  | < 27       |
+| Unique AES codes (Rust)        | >= 35  | < 35       |
+| Unique AES codes (Python)      | >= 35  | < 35       |
+| Unique AES codes (JS/TS)       | >= 35  | < 35       |
 | Self-lint violations           | 0      | > 0        |
 | Doc-consistency gate failures  | 0      | > 0        |
 
 > The "Unique AES codes" threshold is the reconciled scan-visible count from
-> §1/§3.2 (29 of the 34 total AES rules; AES601–AES605 are doc-only). The CI
-> "AES Codes Check" step enforces exactly this value with no lower safety
-> margin, so a detection regression in any one of the 27 scan-visible rules
-> fails CI (QA #636). When rules are added/removed, update §3.2, this table,
+> §1/§3.2 (all 35 AES rules; AES601–AES605 are now surfaced by the doc-audit
+> pass inside `scan`). The CI "AES Codes Check" step enforces exactly 35
+> with no lower safety margin, so a detection regression in any one of the
+> 35 rules fails CI (QA #636). When rules are added/removed, update §3.2, this table,
 > §1, and the `ci.yml` threshold in lockstep.
 
 ### 3.2 Per-Rule Detection Matrix
@@ -427,7 +425,7 @@ The base codebase must be clean of internal architecture rule violations.
 
 - [ ] **Criteria**: Bad workspaces meet aggregate thresholds (Section 3.1).
 - [ ] **Criteria**: Good workspaces produce 0 violations (false positive test).
-- [ ] **Criteria**: All 27 unique scan-visible AES codes detected per language (Section 3.2).
+- [ ] **Criteria**: All 35 unique AES codes detected per language (Section 3.2).
 - [ ] **Criteria**: All negative tests pass (Section 3.3).
 - [ ] **Criteria**: All exit code tests pass (Section 3.4).
 
