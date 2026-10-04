@@ -255,17 +255,19 @@ impl DependencyCycleAnalyzer {
                     .get(&(source.to_string(), target.to_string()))
                     .cloned()
                     .unwrap_or_else(|| source.to_string());
-                Some(LintResult::new_arch(
+                Some(LintResult::new_arch_with_name(
                     &file,
                     1,
                     "AES205",
                     Severity::CRITICAL,
+                    "Circular dependency detected.",
+                    "CIRCULAR_IMPORT",
                     format!(
-                        "AES205 CIRCULAR_IMPORT: Circular dependency.\n\
-                         WHY? Circular dependency between layers '{}' and '{}' creates implicit bidirectional coupling.\n\
-                         FIX: Extract shared types to taxonomy, define a contract protocol, or restructure the dependency direction.",
+                        "Circular dependency between layers '{}' and '{}' creates implicit bidirectional coupling.",
                         source, target
                     ),
+                    "Extract shared types to taxonomy, define a contract protocol, or restructure \
+                     the dependency direction.",
                 ))
             })
             .collect()

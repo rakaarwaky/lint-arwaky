@@ -292,21 +292,28 @@ fn write_bad_agents(dir: &Path, agent_text: &str) {
     fs::write(dir.join("AGENTS.md"), agent_text).unwrap();
 }
 
-fn audit(root: &Path) -> Vec<(String, String, String)> {
+fn audit(root: &Path) -> Vec<(String, String, String, String)> {
     let orchestrator = RootDocRulesContainer::orchestrator();
     match orchestrator.execute(DocRequest::audit_all(root)) {
         DocResponse::Findings { findings } => findings
             .into_iter()
-            .map(|f| (f.code.to_string(), f.violation_type.to_string(), f.message))
+            .map(|f| {
+                (
+                    f.code.to_string(),
+                    f.violation_type.to_string(),
+                    f.message,
+                    f.fix,
+                )
+            })
             .collect(),
     }
 }
 
 /// Does any finding carry this (code, violation_type) pair?
-fn has(findings: &[(String, String, String)], code: &str, violation_type: &str) -> bool {
+fn has(findings: &[(String, String, String, String)], code: &str, violation_type: &str) -> bool {
     findings
         .iter()
-        .any(|(c, v, _)| c == code && v == violation_type)
+        .any(|(c, v, _, _)| c == code && v == violation_type)
 }
 
 #[test]
@@ -345,8 +352,8 @@ fn aes601_reports_each_missing_field_with_its_own_type() {
     let findings = audit(tmp.path());
     let field_findings: Vec<&str> = findings
         .iter()
-        .filter(|(c, v, _)| c == "AES601" && v == "field_missing")
-        .map(|(_, _, m)| m.as_str())
+        .filter(|(c, v, _, _)| c == "AES601" && v == "field_missing")
+        .map(|(_, _, m, _)| m.as_str())
         .collect();
     // Only FR-SAMPLE-001 loses its fields (FR-SAMPLE-002's text differs); expect 1 finding.
     assert_eq!(
@@ -422,7 +429,7 @@ fn aes602_fires_when_api_contract_has_two_extra_h3s() {
     // Each unknown H3 is reported.
     let count = findings
         .iter()
-        .filter(|(c, v, _)| c == "AES602" && v == "api_h3_unexpected")
+        .filter(|(c, v, _, _)| c == "AES602" && v == "api_h3_unexpected")
         .count();
     assert_eq!(count, 2, "expected 2 api_h3_unexpected, got: {findings:#?}");
 }
@@ -615,7 +622,7 @@ fn aes602_conforming_api_contract_reports_no_findings() {
     // No API-Contract-related finding should fire on a conforming FRD.
     let api_findings: Vec<_> = findings
         .iter()
-        .filter(|(c, v, _)| c == "AES602" && v.starts_with("api_"))
+        .filter(|(c, v, _, _)| c == "AES602" && v.starts_with("api_"))
         .collect();
     assert!(
         api_findings.is_empty(),
@@ -694,8 +701,8 @@ fn aes603_fires_when_a_spec_names_a_source_file() {
     // The message must name the offending file, not just the rule.
     let message = findings
         .iter()
-        .find(|(c, v, _)| c == "AES603" && v == "source_file_named")
-        .map(|(_, _, m)| m.as_str())
+        .find(|(c, v, _, _)| c == "AES603" && v == "source_file_named")
+        .map(|(_, _, m, _)| m.as_str())
         .unwrap_or_default();
     assert!(
         message.contains("main.rs"),
@@ -898,8 +905,8 @@ fn aes605_fires_when_required_h2_is_absent() {
     assert!(has(&findings, "AES605", "h2_missing"));
     let message = findings
         .iter()
-        .find(|(c, v, _)| c == "AES605" && v == "h2_missing")
-        .map(|(_, _, m)| m.as_str())
+        .find(|(c, v, _, _)| c == "AES605" && v == "h2_missing")
+        .map(|(_, _, m, _)| m.as_str())
         .unwrap();
     // The message names the absent section(s), not just the rule.
     assert!(
@@ -1028,8 +1035,8 @@ Tests pass.
     );
     let message = findings
         .iter()
-        .find(|(c, v, _)| c == "AES605" && v == "h2_missing")
-        .map(|(_, _, m)| m.as_str())
+        .find(|(c, v, _, _)| c == "AES605" && v == "h2_missing")
+        .map(|(_, _, m, _)| m.as_str())
         .unwrap();
     assert!(
         message.contains("User Context") && message.contains("Memory"),
@@ -1097,8 +1104,8 @@ Tests pass.
     );
     let message = findings
         .iter()
-        .find(|(c, v, _)| c == "AES605" && v == "h2_unexpected")
-        .map(|(_, _, m)| m.as_str())
+        .find(|(c, v, _, _)| c == "AES605" && v == "h2_unexpected")
+        .map(|(_, _, m, _)| m.as_str())
         .unwrap();
     assert!(
         message.contains("random notes"),
@@ -1185,7 +1192,7 @@ Lead with the point.
 
 /// Audit a single root document inside a workspace whose AGENTS.md is
 /// already conforming, so only that document contributes findings.
-fn audit_root_doc(name: &str, text: &str) -> Vec<(String, String, String)> {
+fn audit_root_doc(name: &str, text: &str) -> Vec<(String, String, String, String)> {
     let tmp = tempfile::tempdir().unwrap();
     write_agents_workspace(tmp.path());
     fs::write(tmp.path().join(name), text).unwrap();
@@ -1200,8 +1207,8 @@ fn aes605_reports_a_missing_h2_naming_the_document() {
     assert!(has(&findings, "AES605", "h2_missing"));
     let message = findings
         .iter()
-        .find(|(c, v, _)| c == "AES605" && v == "h2_missing")
-        .map(|(_, _, m)| m.as_str())
+        .find(|(c, v, _, _)| c == "AES605" && v == "h2_missing")
+        .map(|(_, _, m, _)| m.as_str())
         .unwrap_or_default();
     assert!(
         message.contains("ROADMAP.md") && message.contains("Risk Register"),
@@ -1255,14 +1262,14 @@ Off-template.
 "#;
     let findings = audit_root_doc("README.md", text);
     assert!(has(&findings, "AES605", "h2_unexpected"));
-    let message = findings
+    let (message, fix) = findings
         .iter()
-        .find(|(c, v, _)| c == "AES605" && v == "h2_unexpected")
-        .map(|(_, _, m)| m.as_str())
+        .find(|(c, v, _, _)| c == "AES605" && v == "h2_unexpected")
+        .map(|(_, _, m, fix)| (m.as_str(), fix.as_str()))
         .unwrap_or_default();
     assert!(
-        message.contains("random extra") && message.contains("level-3"),
-        "message must name the heading and the remedy; got: {message}"
+        message.contains("random extra") && fix.contains("level-3"),
+        "message must name the heading and the fix must name the remedy; got: {message} / {fix}"
     );
 }
 
@@ -1336,8 +1343,8 @@ Outer.
     assert!(has(&findings, "AES605", "h2_missing"), "{findings:#?}");
     let message = findings
         .iter()
-        .find(|(c, v, _)| c == "AES605" && v == "h2_missing")
-        .map(|(_, _, m)| m.as_str())
+        .find(|(c, v, _, _)| c == "AES605" && v == "h2_missing")
+        .map(|(_, _, m, _)| m.as_str())
         .unwrap_or_default();
     assert!(
         message.contains("Root Layer"),
@@ -1513,19 +1520,19 @@ fn aes607_fires_when_the_frd_declares_more_requirements_than_protocol_classes() 
         has(&findings, "AES601", "protocol_count_mismatch"),
         "3 requirements against 2 protocol classes must fire; got: {findings:#?}"
     );
-    let message = findings
+    let (message, fix) = findings
         .iter()
-        .find(|(c, v, _)| c == "AES601" && v == "protocol_count_mismatch")
-        .map(|(_, _, m)| m.as_str())
+        .find(|(c, v, _, _)| c == "AES601" && v == "protocol_count_mismatch")
+        .map(|(_, _, m, fix)| (m.as_str(), fix.as_str()))
         .unwrap();
     assert!(
         message.contains("3 requirements") && message.contains("2 protocol classes"),
         "the message must state both counts; got: {message}"
     );
     assert!(
-        message.contains("split the methods into more classes")
-            && message.contains("merge the requirements down"),
-        "the message must name both fix directions; got: {message}"
+        fix.contains("split the methods into more classes")
+            && fix.contains("merge the requirements down"),
+        "the fix must name both directions; got: {fix}"
     );
 }
 
@@ -1539,15 +1546,15 @@ fn aes607_fires_when_the_code_declares_more_protocol_classes_than_requirements()
         has(&findings, "AES601", "protocol_count_mismatch"),
         "1 requirement against 3 protocol classes must fire; got: {findings:#?}"
     );
-    let message = findings
+    let (_, fix) = findings
         .iter()
-        .find(|(c, v, _)| c == "AES601" && v == "protocol_count_mismatch")
-        .map(|(_, _, m)| m.as_str())
+        .find(|(c, v, _, _)| c == "AES601" && v == "protocol_count_mismatch")
+        .map(|(_, _, m, fix)| (m.as_str(), fix.as_str()))
         .unwrap();
     assert!(
-        message.contains("split the requirements up to match")
-            && message.contains("merge the classes down"),
-        "the message must name both fix directions for this direction; got: {message}"
+        fix.contains("split the requirements up to match")
+            && fix.contains("merge the classes down"),
+        "the fix must name both directions for this direction; got: {fix}"
     );
 }
 
@@ -1749,19 +1756,19 @@ fn aes601_fires_when_an_api_table_method_is_not_declared_in_the_contract_module(
         has(&findings, "AES601", "api_method_not_found"),
         "a promised method the module never declares must fire; got: {findings:#?}"
     );
-    let message = findings
+    let (message, fix) = findings
         .iter()
-        .find(|(c, v, _)| c == "AES601" && v == "api_method_not_found")
-        .map(|(_, _, m)| m.as_str())
+        .find(|(c, v, _, _)| c == "AES601" && v == "api_method_not_found")
+        .map(|(_, _, m, fix)| (m.as_str(), fix.as_str()))
         .unwrap();
     assert!(
         message.contains("`audit_purity`") && message.contains("Protocol API"),
         "the message must name the method and the table it sits in; got: {message}"
     );
     assert!(
-        message.contains("remove `audit_purity` from the table")
-            && message.contains("create the protocol/aggregate method"),
-        "the message must offer both remedies; got: {message}"
+        fix.contains("Remove `audit_purity` from the")
+            && fix.contains("create the protocol/aggregate method"),
+        "the fix must offer both remedies; got: {fix}"
     );
 }
 
@@ -1791,8 +1798,8 @@ fn aes601_reports_a_promised_method_missing_from_the_aggregate_table() {
     let findings = audit(tmp.path());
     let message = findings
         .iter()
-        .find(|(c, v, _)| c == "AES601" && v == "api_method_not_found")
-        .map(|(_, _, m)| m.as_str())
+        .find(|(c, v, _, _)| c == "AES601" && v == "api_method_not_found")
+        .map(|(_, _, m, _)| m.as_str())
         .unwrap_or_else(|| panic!("the Aggregate API row must fire; got: {findings:#?}"));
     assert!(
         message.contains("Aggregate API") && message.contains("`dispatch`"),
@@ -1879,8 +1886,8 @@ fn aes601_reads_every_method_a_single_cell_promises() {
     let findings = audit(tmp.path());
     let message = findings
         .iter()
-        .find(|(c, v, _)| c == "AES601" && v == "api_method_not_found")
-        .map(|(_, _, m)| m.as_str())
+        .find(|(c, v, _, _)| c == "AES601" && v == "api_method_not_found")
+        .map(|(_, _, m, _)| m.as_str())
         .unwrap_or_else(|| panic!("the missing method must fire; got: {findings:#?}"));
     assert!(
         message.contains("`stop`") && !message.contains("`start`"),
@@ -1940,9 +1947,9 @@ fn aes601_anchors_the_method_finding_to_the_table_row() {
         .unwrap()
         + 1;
     let findings = audit(tmp.path());
-    let (_, _, message) = findings
+    let (_, _, message, _) = findings
         .iter()
-        .find(|(c, v, _)| c == "AES601" && v == "api_method_not_found")
+        .find(|(c, v, _, _)| c == "AES601" && v == "api_method_not_found")
         .expect("the promised method must fire");
     assert!(
         message.contains(&format!("line {row_line}")),
@@ -2260,8 +2267,8 @@ fn aes605_fires_when_required_design_headings_are_absent() {
     assert!(has(&findings, "AES605", "h2_missing"));
     let message = findings
         .iter()
-        .find(|(c, v, _)| c == "AES605" && v == "h2_missing")
-        .map(|(_, _, m)| m.as_str())
+        .find(|(c, v, _, _)| c == "AES605" && v == "h2_missing")
+        .map(|(_, _, m, _)| m.as_str())
         .unwrap();
     assert!(
         message.contains("Brand & Style") && message.contains("Components"),
@@ -2280,8 +2287,8 @@ fn aes605_fires_when_design_carries_off_template_h2() {
     assert!(has(&findings, "AES605", "h2_unexpected"));
     let message = findings
         .iter()
-        .find(|(c, v, _)| c == "AES605" && v == "h2_unexpected")
-        .map(|(_, _, m)| m.as_str())
+        .find(|(c, v, _, _)| c == "AES605" && v == "h2_unexpected")
+        .map(|(_, _, m, _)| m.as_str())
         .unwrap();
     assert!(
         message.contains("history"),

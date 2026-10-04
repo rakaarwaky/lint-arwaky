@@ -116,6 +116,9 @@ impl ILinterAdapterProtocol for MyPyAdapter {
                     severity: Self::map_severity(msg_type, message),
                     enclosing_scope: None,
                     related_locations: LocationList::new(),
+                    violation_name: String::new(),
+                    why: String::new(),
+                    fix: String::new(),
                 });
             } else if let Some(caps) = re_simple.captures(line) {
                 let filename = caps.get(1).map(|m| m.as_str()).unwrap_or("");
@@ -140,6 +143,9 @@ impl ILinterAdapterProtocol for MyPyAdapter {
                     severity: Self::map_severity(msg_type, message),
                     enclosing_scope: None,
                     related_locations: LocationList::new(),
+                    violation_name: String::new(),
+                    why: String::new(),
+                    fix: String::new(),
                 });
             }
         }

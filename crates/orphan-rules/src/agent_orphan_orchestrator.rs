@@ -466,6 +466,9 @@ impl ArchOrphanAnalyzer {
     }
 
     fn _make_result(&self, file: &str, msg: &str, sev: Severity, code: &str) -> LintResult {
+        use shared_common::taxonomy_violation_message_vo::{
+            parse_fix, parse_violation_name, parse_why,
+        };
         LintResult {
             file: FilePath {
                 value: file.to_string(),
@@ -484,6 +487,9 @@ impl ArchOrphanAnalyzer {
                 end_line: None,
             }),
             related_locations: LocationList::new(),
+            violation_name: parse_violation_name(code, msg),
+            why: parse_why(msg),
+            fix: parse_fix(msg),
         }
     }
 

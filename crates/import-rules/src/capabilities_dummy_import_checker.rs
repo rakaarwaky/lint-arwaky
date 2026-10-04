@@ -173,10 +173,11 @@ impl DummyImportChecker {
             ) {
                 continue;
             }
-            violations.push(LintResult::new_arch(file, line_no.value() as usize, "AES204", Severity::HIGH,
-                "AES204 DUMMY_IMPORT: Import intent mismatch.\n\
-                     WHY? Imported symbols placed inside _use_ dummy functions are dead code — they exist only to suppress unused-import warnings.\n\
-                     FIX: Remove the dummy function and its imports, or move imports to where they're actually used.".to_string(),
+            violations.push(LintResult::new_arch_with_name(file, line_no.value() as usize, "AES204", Severity::HIGH,
+                "Import intent mismatch: imported symbols placed inside _use_ dummy functions.".to_string(),
+                "DUMMY_IMPORT",
+                "Imported symbols placed inside _use_ dummy functions are dead code — they exist only to suppress unused-import warnings.",
+                "Remove the dummy function and its imports, or move imports to where they're actually used.",
             ));
         }
     }
@@ -187,17 +188,21 @@ impl DummyImportChecker {
         violations: &mut Vec<LintResult>,
     ) {
         for (start, end) in &ctx.dummy_ranges {
-            violations.push(LintResult::new_arch(
+            violations.push(LintResult::new_arch_with_name(
                 file,
                 start.value() as usize,
                 "AES204",
                 Severity::HIGH,
                 format!(
-                    "AES204 DUMMY_IMPORT: Dummy function detected.\n\
-                     WHY? Dummy function range ends at line {} — these functions exist only to suppress unused-import warnings.\n\
-                     FIX: Remove the dummy function and ensure all imports are used in real code.",
+                    "Dummy function detected; range ends at line {}.",
                     end
                 ),
+                "DUMMY_IMPORT",
+                format!(
+                    "Dummy function range ends at line {} — these functions exist only to suppress unused-import warnings.",
+                    end
+                ),
+                "Remove the dummy function and ensure all imports are used in real code.",
             ));
         }
     }
@@ -205,14 +210,15 @@ impl DummyImportChecker {
     fn _check_dummy_impls(file: &str, ctx: &DummyFileContext, violations: &mut Vec<LintResult>) {
         let lines = ctx.str_refs();
         for (_trait_name, start) in utility_dummy_detector::dummy_impl_traits_with_lines(&lines) {
-            violations.push(LintResult::new_arch(
+            violations.push(LintResult::new_arch_with_name(
                 file,
                 start.value() as usize,
                 "AES204",
                 Severity::HIGH,
-                "AES204 DUMMY_IMPORT: Empty trait implementation.\n\
-                     WHY? Trait implementations with empty bodies violate the contract abstraction.\n\
-                     FIX: Implement the trait properly or remove the empty impl.".to_string(),
+                "Empty trait implementation".to_string(),
+                "DUMMY_IMPORT",
+                "Trait implementations with empty bodies violate the contract abstraction.",
+                "Implement the trait properly or remove the empty impl.",
             ));
         }
     }
@@ -301,10 +307,11 @@ impl DummyImportChecker {
                 }
             });
             if has_taxonomy_import {
-                violations.push(LintResult::new_arch(file, dummy_function_line, "AES204", Severity::HIGH,
-                    "AES204 DUMMY_IMPORT: Taxonomy intent mismatch.\n\
-                         WHY? Taxonomy VOs encode domain concepts — using raw primitives defeats the purpose.\n\
-                         FIX: Use taxonomy VOs (taxonomy_*.rs) instead of raw primitives like String or i32.".to_string(),
+                violations.push(LintResult::new_arch_with_name(file, dummy_function_line, "AES204", Severity::HIGH,
+                    "Taxonomy intent mismatch: raw primitives used where taxonomy VOs encode domain concepts.".to_string(),
+                    "DUMMY_IMPORT",
+                    "Taxonomy VOs encode domain concepts — using raw primitives defeats the purpose.",
+                    "Use taxonomy VOs (taxonomy_*.rs) instead of raw primitives like String or i32.",
                 ));
             }
         }
@@ -345,10 +352,10 @@ impl DummyImportChecker {
                 let is_string_lit = trimmed.contains(&format!("\"{}", pattern))
                     || trimmed.contains(&format!("'{}", pattern));
                 if trimmed.contains(pattern) && !is_string_lit {
-                    violations.push(LintResult::new_arch(file, i + 1, "AES204", Severity::MEDIUM,
-                        "AES204 DUMMY_IMPORT: Business logic in surface layer.\n\
-                             WHY? Surface-layer code must delegate business logic to the aggregate layer.\n\
-                             FIX: Move the logic to a capabilities module and call it through a contract aggregate.".to_string(),
+                    violations.push(LintResult::new_arch_with_name(file, i + 1, "AES204", Severity::MEDIUM,"Business logic in surface layer".to_string(),
+                        "DUMMY_IMPORT",
+                        "Surface-layer code must delegate business logic to the aggregate layer.",
+                        "Move the logic to a capabilities module and call it through a contract aggregate.",
                     ));
                 }
             }

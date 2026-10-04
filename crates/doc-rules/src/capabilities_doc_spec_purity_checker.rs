@@ -85,17 +85,19 @@ impl SpecPurityChecker {
                 {
                     continue;
                 }
-                findings.push(DocFinding::new_with_line(
-                    "",
-                    number + 1,
-                    consts::RULE_CODE_SPEC_PURITY,
-                    consts::SPEC_PURITY_VIOLATION_STATUS_LEAK,
-                    format!(
-                        "line {} carries {what} ('{}'); specs promise, backlogs report; move the claim to BACKLOG.md",
+                findings.push(
+                    DocFinding::new_with_line(
+                        "",
                         number + 1,
-                        line.trim()
+                        consts::RULE_CODE_SPEC_PURITY,
+                        consts::SPEC_PURITY_VIOLATION_STATUS_LEAK,
+                        format!("line {} carries {what} ('{}')", number + 1, line.trim()),
+                    )
+                    .with_reason(
+                        "Specs state what the system promises; implementation state belongs in the backlog, so a spec carrying it no longer reads as a stable promise.",
+                        format!("Move the {what} claim on line {} to BACKLOG.md.", number + 1),
                     ),
-                ));
+                );
             }
         }
     }
@@ -107,17 +109,27 @@ impl SpecPurityChecker {
         };
         for (number, line) in document.text.lines().enumerate() {
             if let Some(matched) = re.find(line) {
-                findings.push(DocFinding::new_with_line(
-                    "",
-                    number + 1,
-                    consts::RULE_CODE_SPEC_PURITY,
-                    consts::SPEC_PURITY_VIOLATION_SOURCE_FILE_NAMED,
-                    format!(
-                        "line {} names source file '{}' — specs are stateless: refer to roles and behaviour, never source files",
+                findings.push(
+                    DocFinding::new_with_line(
+                        "",
                         number + 1,
-                        matched.as_str()
+                        consts::RULE_CODE_SPEC_PURITY,
+                        consts::SPEC_PURITY_VIOLATION_SOURCE_FILE_NAMED,
+                        format!(
+                            "line {} names source file '{}'",
+                            number + 1,
+                            matched.as_str()
+                        ),
+                    )
+                    .with_reason(
+                        "Specs are stateless: naming a source file ties the promise to a current file layout that will move.",
+                        format!(
+                            "Replace the reference to '{}' on line {} with the role or behaviour it describes.",
+                            matched.as_str(),
+                            number + 1
+                        ),
                     ),
-                ));
+                );
             }
         }
     }

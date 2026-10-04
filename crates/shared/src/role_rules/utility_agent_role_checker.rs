@@ -42,8 +42,8 @@ pub fn check_type_budget(file: &FileEntry, violations: &mut Vec<LintResult>) {
             Severity::HIGH,
             format!(
                 "AES405 AGENT_ROLE: Agent declares too many types.\n\
-                 WHY? Found {count} type declarations in {path}, max 3 allowed.\n\
-                 HOW TO FIX? Keep at most 3 types in an agent file. \
+                 WHY? Found {count} type declarations, max 3 allowed.\n\
+                 FIX: Keep at most 3 types in an agent file. \
                  Move excess types to the taxonomy layer, or give the agent a \
                  companion file that owns the helper types."
             ),
@@ -102,7 +102,7 @@ pub fn check_implementor(file: &FileEntry, violations: &mut Vec<LintResult>) {
                 "AES405 AGENT_ROLE: No type implements an _aggregate trait.\n\
                  WHY? {why} An agent is the composition root for its feature, so it \
                  is the type that implements the feature's aggregate.\n\
-                 HOW TO FIX? Have one type declared in this file implement the \
+                 FIX: Have one type declared in this file implement the \
                  feature aggregate, or add the feature aggregate with the `aes-contract` skill."
             ),
         ));
@@ -132,9 +132,9 @@ pub fn check_any_annotation(file: &FileEntry, violations: &mut Vec<LintResult>) 
                 Severity::MEDIUM,
                 format!(
                     "AES405 AGENT_ROLE: Any-type annotation detected.\n\
-                     WHY? Line {} of {path} annotates a value with Any/any, which \
+                     WHY? Line {} annotates a value with Any/any, which \
                      erases the domain type the orchestrator is supposed to coordinate.\n\
-                     HOW TO FIX? Use the concrete VO or protocol type the value \
+                     FIX: Use the concrete VO or protocol type the value \
                      actually is, and move the type-erasing boundary to the surface layer.",
                     i + 1
                 ),
@@ -829,11 +829,11 @@ pub fn check_agent_protocol_forbidden(file: &FileEntry, violations: &mut Vec<Lin
         Severity::HIGH,
         format!(
             "AES405 AGENT_ROLE: Agent file implements a contract protocol.\n\
-             WHY? {path} implements {names}. An agent is the feature's composition \
+             WHY? File implements {names}. An agent is the feature's composition \
              root: it implements the feature aggregate and injects protocol seams. \
              Implementing a protocol here makes the orchestration layer duplicate a \
              capability's work.\n\
-             HOW TO FIX? Move the protocol implementation into a \
+             FIX: Move the protocol implementation into a \
              `capabilities_*` file in this feature and inject that capability's \
              protocol into the agent. Keep the aggregate impl as the only contract \
              this file fulfils."
@@ -865,10 +865,10 @@ pub fn check_block_markers(file: &FileEntry, violations: &mut Vec<LintResult>) {
         Severity::MEDIUM,
         format!(
             "AES405 AGENT_ROLE: Agent file carries block markers beyond Block 3.\n\
-             WHY? {path} declares {}. The 3-block structure is Block 1 (types and \
+             WHY? File declares {}. The 3-block structure is Block 1 (types and \
              injected deps) -> Block 2 (aggregate impl) -> Block 3 (constructors, \
              std traits, helpers); a Block 4 means the file has outgrown it.\n\
-             HOW TO FIX? Fold the extra blocks back into Block 3, or move the \
+             FIX: Fold the extra blocks back into Block 3, or move the \
              behaviour they hold into a capability or utility file so the agent \
              returns to 3 blocks.",
             found.join(", ")

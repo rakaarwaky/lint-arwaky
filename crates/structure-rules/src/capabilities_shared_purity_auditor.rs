@@ -82,11 +82,18 @@ fn check_shared_purity(
             consts::SHARED_PURITY_VIOLATION_FORBIDDEN_FILES,
             file.rel(ws_root),
             format!(
-                "'{}' sits in the shared folder '{}' but is a {} file; shared holds only taxonomy, utility, and contract files — move it to a feature folder",
+                "'{}' sits in the shared folder '{}' but is a {} file",
                 file.name,
                 folder_rel,
                 layer_label(prefix),
             ),
+        )
+        .with_reason(
+            format!(
+                "Shared holds only taxonomy, utility, and contract files. A {} file there puts feature logic in the kernel every member depends on.",
+                layer_label(prefix)
+            ),
+            "Move it to the feature folder that owns its layer.",
         ));
     }
 }
@@ -103,11 +110,14 @@ fn check_shared_has_docs(
             consts::RULE_CODE_SHARED_PURITY,
             consts::SHARED_PURITY_VIOLATION_NO_DOC_PAIR,
             rel.to_string(),
+            format!("shared folder '{rel}' is missing {}", missing.join(" and ")),
+        )
+        .with_reason(
             format!(
-                "shared folder '{rel}' is missing {}; a shared folder carries {} beside its source",
-                missing.join(" and "),
-                consts::SHARED_DOC_PAIR.join(" and "),
+                "A shared folder carries {} beside its source, so a reader of the kernel knows what it is for.",
+                consts::SHARED_DOC_PAIR.join(" and ")
             ),
+            format!("Add {} to the shared folder.", missing.join(" and ")),
         ));
     }
 }

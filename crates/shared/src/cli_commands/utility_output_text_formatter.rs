@@ -7,7 +7,6 @@ use std::collections::BTreeMap;
 
 use shared_common::ViolationItem;
 use shared_common::taxonomy_format_vo::Format;
-use shared_common::taxonomy_skill_hint_vo::resolve_skill_hint_for_path as resolve_skill_hint_for_file;
 
 /// Format a violation location as "file:line:column".
 pub fn format_location(file: &str, line: i64, column: i64) -> String {
@@ -150,8 +149,8 @@ pub fn output_violations(
 fn render_text(
     grouped: &BTreeMap<String, Vec<&ViolationItem>>,
     target_path: &str,
-    is_specific_member: bool,
-    is_single_file: bool,
+    _is_specific_member: bool,
+    _is_single_file: bool,
 ) {
     let ver = env!("CARGO_PKG_VERSION");
     println!("Lint Arwaky v{ver} — Scan Report");
@@ -159,168 +158,142 @@ fn render_text(
     println!();
 
     let norm_target = target_path.trim_end_matches('/');
-    let is_global = !is_specific_member && !is_single_file;
-
-    let mut total = 0usize;
-    for (member_name, results) in grouped {
-        total += results.len();
-        if results.is_empty() {
-            continue;
-        } else if is_single_file {
-            println!("[{member_name}] — {} violations", results.len());
-            println!();
-            for r in results {
-                let loc = format_location(&r.file.value, r.line.value(), r.column.value());
-                let hint = resolve_skill_hint_for_file(r.code.code(), &r.file.value);
-                println!("  {} [{}] {}", loc, r.code.code(), r.message.value);
-                println!("    ↳ {}", hint.guidance());
-                for wf in why_fix_lines(&r.message.value, 4) {
-                    println!("{wf}");
-                }
-            }
-            println!();
-        } else if is_specific_member {
-            println!("[{member_name}] — violations by file");
-            println!();
-
-            let mut file_violations: BTreeMap<String, Vec<&&ViolationItem>> = BTreeMap::new();
-            for r in results {
-                let rel_path = make_relative(&r.file.value, norm_target);
-                file_violations.entry(rel_path).or_default().push(r);
-            }
-            for (file_path, file_results) in &file_violations {
-                println!("  {file_path}");
-                for r in file_results {
-                    let loc = format_location(&r.file.value, r.line.value(), r.column.value());
-                    let hint = resolve_skill_hint_for_file(r.code.code(), &r.file.value);
-                    println!("    {} [{}] {}", loc, r.code.code(), r.message.value);
-                    println!("      ↳ {}", hint.guidance());
-                    for wf in why_fix_lines(&r.message.value, 6) {
-                        println!("{wf}");
-                    }
-                }
-            }
-            println!();
-        } else {
-            let lang = lang_tag(&results[0].file.value);
-            println!("[{lang}] {member_name} — {} violations", results.len());
-            println!();
-            for line in code_summary_lines(results) {
-                println!("{line}");
-            }
-            // Per-file blocks with per-violation WHY/FIX
-            render_member_file_blocks(results, norm_target);
-        }
+    let total: usize = grouped.values().map(|r| r.len()).sum();
+    if total == 0 {
+        println!("Total: 0 violations");
+        return;
     }
 
-    if is_global && total > 0 {
-        render_by_folder_rollup(grouped, total);
-    } else {
-        println!("Total: {total} violations");
-    }
-
-    if !is_specific_member {
-        println!();
-        if is_global {
-            println!("Tip: Scan a folder for per-file WHY/FIX detail:");
-            println!("  lint-arwaky-cli scan <folder>");
-        } else {
-            println!("Tip: Scan a file for focused output:");
-            println!("  lint-arwaky-cli scan <file-path>");
-        }
-    }
-}
-
-/// "By folder" rollup for global `.` / `check .` scans.
-/// One line per top-level folder (crates/, packages/, modules/, src/) with
-/// total count + top-3 codes. No per-file, no WHY/FIX — summary only.
-fn render_by_folder_rollup(grouped: &BTreeMap<String, Vec<&ViolationItem>>, total: usize) {
-    // Group members into top-level folders
-    let mut folder_totals: BTreeMap<String, usize> = BTreeMap::new();
-    let mut folder_codes: BTreeMap<String, BTreeMap<String, usize>> = BTreeMap::new();
-
-    for (member, results) in grouped {
-        if results.is_empty() {
-            continue;
-        }
-        // Determine top-level folder: the first path segment relative to scan root
-        let first_file = &results[0].file.value;
-        let norm = first_file.trim_start_matches("./");
-        let top_folder = norm
-            .split('/')
-            .next()
-            .filter(|s| {
-                !s.ends_with(".rs")
-                    && !s.ends_with(".py")
-                    && !s.ends_with(".ts")
-                    && !s.ends_with(".md")
-            })
-            .unwrap_or("root");
-
-        let key = if top_folder.is_empty() {
-            "root".to_string()
-        } else {
-            format!("{top_folder}/")
-        };
-
-        *folder_totals.entry(key.clone()).or_insert(0) += results.len();
-        let code_map = folder_codes.entry(key.clone()).or_default();
+    // {top} → [member] → (file): each level has its own bracket so a reader
+    // can tell a member folder from a file by shape alone.
+    let mut hierarchy: BTreeMap<String, BTreeMap<String, BTreeMap<String, Vec<&ViolationItem>>>> =
+        BTreeMap::new();
+    for results in grouped.values() {
         for r in results {
-            let code = r.code.code().to_string();
-            *code_map.entry(code).or_insert(0) += 1;
+            let rel = make_relative(&r.file.value, norm_target);
+            let (top, member, file) = hierarchy_key(&rel);
+            hierarchy
+                .entry(top)
+                .or_default()
+                .entry(member)
+                .or_default()
+                .entry(file)
+                .or_default()
+                .push(r);
         }
+    }
 
-        // Member name is used for grouping but folder key is what matters here
-        let _ = member;
+    // {top} → [member] → (file): each level has its own bracket so a reader
+    // can tell a member folder from a file by shape alone.
+    for (top, members) in &hierarchy {
+        println!("{{{top}}}");
+        println!();
+        for (member, files) in members {
+            // An empty member means the finding sat directly under the member
+            // dir, with no folder of its own to name.
+            if !member.is_empty() {
+                println!("[{member}]");
+                println!();
+            }
+            for (file, violations) in files {
+                for v in violations {
+                    render_violation(file, v);
+                }
+            }
+            println!();
+        }
     }
 
     println!("Total: {total} violations");
     println!();
-    println!("By folder:");
-    for (folder, count) in &folder_totals {
-        let top3: Vec<String> = folder_codes
-            .get(folder)
-            .map(|m| {
-                let mut entries: Vec<_> = m.iter().collect();
-                entries.sort_by(|a, b| b.1.cmp(a.1));
-                entries
-                    .iter()
-                    .take(3)
-                    .map(|(c, n)| format!("{c} ({n})"))
-                    .collect()
-            })
-            .unwrap_or_default();
-        let codes_str = top3.join(", ");
-        println!("  {folder:<12} {count:>4} violations  ({codes_str})");
-    }
-    println!();
-    println!("Run `lint-arwaky-cli scan <folder>` for detail.");
+    render_suggestions(grouped);
 }
 
-/// Per-file blocks under a member for folder scans (mode 2).
-/// Groups violations by file, prints `FILE — N violations` header,
-/// then per-violation WHY/FIX lines.
-fn render_member_file_blocks(results: &[&ViolationItem], norm_target: &str) {
-    let mut file_violations: BTreeMap<String, Vec<&&ViolationItem>> = BTreeMap::new();
-    for r in results {
-        let rel_path = make_relative(&r.file.value, norm_target);
-        file_violations.entry(rel_path).or_default().push(r);
-    }
-    println!();
-    for (file_path, file_results) in &file_violations {
-        println!("  {file_path} — {} violations", file_results.len());
-        for r in file_results {
-            let code = r.code.code();
-            println!(
-                "    {}: [{code}] {}",
-                r.line.value(),
-                r.message.value.lines().next().unwrap_or("")
-            );
-            for wf in why_fix_lines(&r.message.value, 4) {
-                println!("{wf}");
-            }
+/// Split a target-relative path into (top folder, member, file path).
+///
+/// Public because the bracket levels are the report's contract: a file
+/// landing in the member slot prints `[report.md]`, which reads as a folder
+/// that does not exist.
+pub fn hierarchy_key(rel: &str) -> (String, String, String) {
+    let segments: Vec<&str> = rel.split('/').filter(|s| !s.is_empty()).collect();
+    match segments.len() {
+        // No path at all: nothing to group under.
+        0 => ("root".to_string(), "root".to_string(), String::new()),
+        // A flat document at the target root (`FRD.md`) or a flat file inside a
+        // member dir (`crates/root_violation.rs`). Neither has a member level,
+        // so the member slot is empty and no `[heading]` prints. Filling it
+        // with the file name would print `[FRD.md]`, a folder that is not there.
+        1 => ("root".to_string(), String::new(), segments[0].to_string()),
+        2 => (
+            segments[0].to_string(),
+            // `crates/shared_common` is a finding about the member folder;
+            // `crates/root_violation.rs` is a finding about a file. A source
+            // extension tells them apart, because a member dir has none.
+            match is_file_segment(segments[1]) {
+                true => String::new(),
+                false => segments[1].to_string(),
+            },
+            segments[1].to_string(),
+        ),
+        // `<member-dir>/<member>/<file>` and deeper: the normal shape.
+        _ => {
+            let file = segments[2..].join("/");
+            (segments[0].to_string(), segments[1].to_string(), file)
         }
     }
+}
+
+/// Whether a path segment names a source file rather than a folder.
+///
+/// Only used where a segment could be either. A member folder carries no
+/// extension; a source file always carries one of these.
+fn is_file_segment(segment: &str) -> bool {
+    const SOURCE_EXTENSIONS: [&str; 11] = [
+        "rs", "py", "ts", "tsx", "js", "jsx", "md", "toml", "json", "yaml", "yml",
+    ];
+    match segment.rsplit_once('.') {
+        Some((stem, ext)) => !stem.is_empty() && SOURCE_EXTENSIONS.contains(&ext),
+        None => false,
+    }
+}
+
+/// One violation block: `(file:line[:col])`, `CODE:NAME`, `WHY: …`, `FIX: …`.
+fn render_violation(file: &str, v: &ViolationItem) {
+    println!(
+        "({})",
+        format_location(file, v.line.value(), v.column.value())
+    );
+    let name = if v.violation_name.is_empty() {
+        String::new()
+    } else {
+        format!(":{}", v.violation_name)
+    };
+    println!("{}{name}", v.code.code());
+    if !v.why.is_empty() {
+        println!("WHY: {}", v.why);
+    }
+    if !v.fix.is_empty() {
+        println!("FIX: {}", v.fix);
+    }
+    println!();
+}
+
+/// Bottom `Hint` section: four lines, no more.
+///
+/// A long hint repeating every code per layer answered a question nobody was
+/// asking — a reader opens the skill list to browse, not to be handed the
+/// whole index. So the hint names where the skills are and how to narrow the
+/// scan, which is the two things a reader cannot work out from the report.
+fn render_suggestions(_grouped: &BTreeMap<String, Vec<&ViolationItem>>) {
+    println!("Hint");
+    println!("  lint-arwaky-cli skill list — pick the skill that matches the file you are fixing");
+    println!(
+        "  lint-arwaky-cli scan crates|modules|packages — filter the report down to one member dir"
+    );
+    println!(
+        "  lint-arwaky-cli scan crates|modules|packages/<member> — filter the report down to one folder"
+    );
+    println!("  lint-arwaky-cli scan <file> — filter the report down to one file");
 }
 
 // ─── JSON ───────────────────────────────────────────────────
@@ -466,104 +439,84 @@ fn render_junit(grouped: &BTreeMap<String, Vec<&ViolationItem>>) {
 
 // ─── Private helpers (UI-only) ──────────────────────────────
 
-/// Make a file path relative to the workspace root.
+/// Render a file path as `<member-dir>/<rest>`, the shape the report groups by.
+///
+/// Every level above the member dir is dropped, so a scan of one member and a
+/// scan of the whole workspace group the same file the same way. Without this
+/// a scan of `packages/surface_layer_probe` reported its own folder name as
+/// the top level and its files as members.
+///
+/// A path with no member dir in it - a flat document such as `FRD.md` - has no
+/// member to hang off, so its file name is returned on its own.
 fn make_relative(file_path: &str, target: &str) -> String {
-    let canon_file = std::path::Path::new(file_path)
-        .canonicalize()
-        .map(|p| p.to_string_lossy().to_string())
-        .unwrap_or_else(|_| file_path.to_string());
-    let canon_target = std::path::Path::new(target)
-        .canonicalize()
-        .map(|p| p.to_string_lossy().to_string())
-        .unwrap_or_else(|_| target.to_string());
+    // Rules disagree on what a violation's `file` holds: the external adapters
+    // and most rules emit an absolute path, while the doc and structure rules
+    // emit one relative to the workspace root. Resolving the relative kind
+    // against the scan target puts both in the same shape, so a file groups
+    // under one heading no matter which rule reported it.
+    let absolute = match std::path::Path::new(file_path).is_relative() {
+        true => std::path::Path::new(target)
+            .join(file_path)
+            .to_string_lossy()
+            .into_owned(),
+        false => file_path.to_string(),
+    };
 
-    let workspace_root = find_common_workspace_root(&canon_file, &canon_target);
-
-    if let Some(root) = &workspace_root {
-        if let Some(rest) = canon_file.strip_prefix(root) {
-            let rest = rest.trim_start_matches('/');
-            if !rest.is_empty() {
-                return rest.to_string();
-            }
+    let (top, rest) = match split_at_member_dir(&absolute) {
+        Some(parts) => parts,
+        None => {
+            return std::path::Path::new(&absolute)
+                .file_name()
+                .map(|n| n.to_string_lossy().to_string())
+                .unwrap_or(absolute);
         }
+    };
+    if rest.is_empty() {
+        // The finding is about the member dir itself, which has no file level.
+        return top;
     }
-
-    if let Some(rest) = canon_file.strip_prefix(&canon_target) {
-        let rest = rest.trim_start_matches('/');
-        if !rest.is_empty() {
-            return rest.to_string();
-        }
-    }
-
-    std::path::Path::new(file_path)
-        .file_name()
-        .map(|n| n.to_string_lossy().to_string())
-        .unwrap_or_else(|| file_path.to_string())
+    format!("{top}/{rest}")
 }
 
-/// Walk up from both paths to find the common workspace root.
-fn find_common_workspace_root(path1: &str, path2: &str) -> Option<String> {
-    let mut dirs1: Vec<std::path::PathBuf> = vec![];
-    let mut p = std::path::PathBuf::from(path1);
-    while let Some(parent) = p.parent() {
-        let parent_path = parent.to_path_buf();
-        dirs1.push(parent_path.clone());
-        if parent_path.join("crates").is_dir()
-            || parent_path.join("packages").is_dir()
-            || parent_path.join("modules").is_dir()
-        {
-            break;
+/// Cut a path at its member dir, returning `("packages", "surface/x.ts")`.
+///
+/// The member dirs are the level the report prints as `{top}`. A relative path
+/// already starts there, so it is returned unchanged.
+fn split_at_member_dir(file: &str) -> Option<(String, String)> {
+    const MEMBER_DIRS: [&str; 3] = ["crates", "packages", "modules"];
+    let path = std::path::Path::new(file);
+    if path.is_relative() {
+        let first = path
+            .components()
+            .next()?
+            .as_os_str()
+            .to_string_lossy()
+            .into_owned();
+        return MEMBER_DIRS.contains(&first.as_str()).then(|| {
+            (
+                first,
+                path.to_string_lossy().trim_start_matches('/').to_string(),
+            )
+        });
+    }
+    let mut prefix = std::path::PathBuf::new();
+    for part in path.components() {
+        prefix.push(part);
+        let name = part.as_os_str().to_string_lossy().into_owned();
+        if MEMBER_DIRS.contains(&name.as_str()) {
+            // Cut *after* this component: the member dir is the `{top}` level,
+            // which the report prints on its own, so it must not reappear in
+            // the member-and-file part behind it.
+            let rest = path
+                .strip_prefix(&prefix)
+                .ok()?
+                .to_string_lossy()
+                .trim_start_matches('/')
+                .to_string();
+            return Some((name, rest));
         }
-        p = parent.to_path_buf();
     }
-
-    let mut dirs2: Vec<std::path::PathBuf> = vec![];
-    let mut p = std::path::PathBuf::from(path2);
-    while let Some(parent) = p.parent() {
-        let parent_path = parent.to_path_buf();
-        dirs2.push(parent_path.clone());
-        if parent_path.join("crates").is_dir()
-            || parent_path.join("packages").is_dir()
-            || parent_path.join("modules").is_dir()
-        {
-            break;
-        }
-        p = parent.to_path_buf();
-    }
-
-    dirs1
-        .iter()
-        .rev()
-        .find(|d| dirs2.contains(d))
-        .map(|p| p.to_string_lossy().to_string())
-}
-
-fn lang_tag(path: &str) -> &str {
-    if path.ends_with(".rs") {
-        "rust"
-    } else if path.ends_with(".py") {
-        "python"
-    } else if path.ends_with(".ts")
-        || path.ends_with(".tsx")
-        || path.ends_with(".js")
-        || path.ends_with(".jsx")
-    {
-        "typescript"
-    } else if path.ends_with(".md") {
-        "markdown"
-    } else if path.ends_with(".yaml") || path.ends_with(".yml") {
-        "yaml"
-    } else if path.ends_with(".toml") {
-        "toml"
-    } else if path.ends_with(".json") {
-        "json"
-    } else if path.ends_with(".go") {
-        "go"
-    } else if path.ends_with(".java") {
-        "java"
-    } else {
-        "unknown"
-    }
+    None
 }
 
 /// Status icon helper for doctor output (NO_COLOR aware).
@@ -575,74 +528,4 @@ pub fn status_icon(is_ok: bool) -> &'static str {
     } else {
         "✗"
     }
-}
-
-/// Extract WHY and FIX lines from a `LintMessage` value.
-///
-/// Message formats:
-/// - AES: `CODE DESC.\nWHY? …\nHOW TO FIX? …` (or `FIX:`)
-/// - External: short single-line, no WHY/FIX
-///
-/// Returns `(Option<why>, Option<fix>)` — `None` when the message has no
-/// embedded WHY/FIX. Never invents text.
-pub fn extract_why_fix(msg: &str) -> (Option<&str>, Option<&str>) {
-    let mut why: Option<&str> = None;
-    let mut fix: Option<&str> = None;
-    for line in msg.lines() {
-        let trimmed = line.trim();
-        if let Some(w) = trimmed
-            .strip_prefix("WHY?")
-            .or_else(|| trimmed.strip_prefix("WHY:"))
-        {
-            why = Some(w.trim());
-        } else if let Some(f) = trimmed
-            .strip_prefix("HOW TO FIX?")
-            .or_else(|| trimmed.strip_prefix("FIX:"))
-        {
-            fix = Some(f.trim());
-        }
-    }
-    (why, fix)
-}
-
-/// Render WHY/FIX sub-lines for a violation, indented to `indent` spaces.
-/// Skips lines entirely when the message has no embedded WHY/FIX.
-fn why_fix_lines(msg: &str, indent: usize) -> Vec<String> {
-    let (why, fix) = extract_why_fix(msg);
-    let mut out = Vec::new();
-    let prefix = " ".repeat(indent);
-    if let Some(w) = why {
-        out.push(format!("{prefix}WHY: {w}"));
-    }
-    if let Some(f) = fix {
-        out.push(format!("{prefix}FIX: {f}"));
-    }
-    out
-}
-
-/// One `  [CODE] N  ← guidance` line per distinct code, sorted by code.
-///
-/// Grouping by code rather than listing every violation is what keeps a member
-/// that trips 40 rules to 40 lines instead of 400, and the count beside each
-/// code is the first thing a reader scans for. CI parses this exact shape to
-/// confirm the external adapters ran end-to-end, so it is a contract: a change
-/// to this format has to change `.github/workflows/ci.yml` in the same commit.
-pub fn code_summary_lines(results: &[&ViolationItem]) -> Vec<String> {
-    let mut code_counts: BTreeMap<String, usize> = BTreeMap::new();
-    let mut code_examples: BTreeMap<String, String> = BTreeMap::new();
-    for r in results {
-        let code = r.code.code().to_string();
-        *code_counts.entry(code.clone()).or_insert(0) += 1;
-        code_examples
-            .entry(code)
-            .or_insert_with(|| r.file.value.clone());
-    }
-    code_counts
-        .iter()
-        .map(|(code, count)| {
-            let example_file = code_examples.get(code).map(|s| s.as_str()).unwrap_or("");
-            let hint = resolve_skill_hint_for_file(code, example_file);
-            format!("  [{code}] {count}  ← {}", hint.guidance())
-        })
-        .collect()
 }

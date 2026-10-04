@@ -290,9 +290,7 @@ fn aes503_reachable_unwired_message_mentions_di_bridge_gap() {
     let result = analyzer.is_capabilities_orphan(&fp, &root, &alive, &content_map, &workspace_root);
     assert!(result.is_orphan, "mock filesystem never reports wired");
     assert!(
-        result.reason.contains(
-            "reachable (via import chain, container wiring, or contract implementation bridge)"
-        ),
+        result.reason.contains("is reachable but not wired"),
         "P5 message should explain the file is reachable but the wiring gap remains: {}",
         result.reason
     );

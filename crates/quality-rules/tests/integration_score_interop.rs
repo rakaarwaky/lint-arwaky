@@ -27,6 +27,9 @@ fn vo_interop_filepath_to_lintresultlist_to_score() {
         severity: Severity::HIGH,
         enclosing_scope: Some(scope),
         related_locations: LocationList::new(),
+        violation_name: String::new(),
+        why: String::new(),
+        fix: String::new(),
     };
 
     // Build a list

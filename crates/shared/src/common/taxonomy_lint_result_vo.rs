@@ -24,9 +24,71 @@ pub struct LintResult {
     pub severity: Severity,
     pub enclosing_scope: Option<ScopeRef>,
     pub related_locations: LocationList,
+    /// Short violation subtype (e.g. "TAXONOMY_ROLE", "AGENT_ROLE").
+    /// Empty when the capability has not yet populated it — `ViolationItem`
+    /// falls back to parsing it out of `message`.
+    #[serde(default)]
+    pub violation_name: String,
+    /// WHY text. Empty → `ViolationItem` parses `WHY?` / `WHY:` from `message`.
+    #[serde(default)]
+    pub why: String,
+    /// FIX text. Empty → `ViolationItem` parses `FIX:` / `HOW TO FIX?` from `message`.
+    #[serde(default)]
+    pub fix: String,
 }
 
 impl LintResult {
+    /// Constructor with WHY/FIX detail fields. `why` and `fix` are printed
+    /// directly by the formatter; when empty, `ViolationItem::from_lint_result`
+    /// falls back to parsing them out of `msg`.
+    pub fn new_arch_detail(
+        file: &str,
+        line: usize,
+        column: usize,
+        code: &str,
+        sev: Severity,
+        msg: impl Into<String>,
+        violation_name: &str,
+        why: impl Into<String>,
+        fix: impl Into<String>,
+    ) -> Self {
+        let message_text = msg.into();
+        Self {
+            file: FilePath::new(file.to_string()).unwrap_or_default(),
+            line: LineNumber::new(line as i64),
+            column: ColumnNumber::new(column as i64),
+            code: ErrorCode::raw(code),
+            message: LintMessage::new(message_text),
+            source: Some(AdapterName::raw("architecture")),
+            severity: sev,
+            enclosing_scope: Some(ScopeRef {
+                name: DescriptionVO::new(String::new()),
+                kind: DescriptionVO::new(String::new()),
+                file: None,
+                start_line: None,
+                end_line: None,
+            }),
+            related_locations: LocationList::new(),
+            violation_name: violation_name.to_string(),
+            why: why.into(),
+            fix: fix.into(),
+        }
+    }
+
+    /// Convenience: `new_arch_detail` with column 0.
+    pub fn new_arch_with_name(
+        file: &str,
+        line: usize,
+        code: &str,
+        sev: Severity,
+        msg: impl Into<String>,
+        violation_name: &str,
+        why: impl Into<String>,
+        fix: impl Into<String>,
+    ) -> Self {
+        Self::new_arch_detail(file, line, 0, code, sev, msg, violation_name, why, fix)
+    }
+
     /// Convenience constructor used by architecture checkers (make_result / mk pattern).
     pub fn new_arch(
         file: &str,
@@ -63,6 +125,9 @@ impl LintResult {
                 end_line: None,
             }),
             related_locations: LocationList::new(),
+            violation_name: String::new(),
+            why: String::new(),
+            fix: String::new(),
         }
     }
 
@@ -78,6 +143,9 @@ impl LintResult {
             severity: sev,
             enclosing_scope: None,
             related_locations: LocationList::new(),
+            violation_name: String::new(),
+            why: String::new(),
+            fix: String::new(),
         }
     }
 

@@ -47,6 +47,9 @@ pub fn string_filename_result(
     code: &str,
     message: impl Into<String>,
     severity: Severity,
+    violation_name: &str,
+    why: impl Into<String>,
+    fix: impl Into<String>,
 ) -> LintResult {
     let file_path = FilePath::new(file).unwrap_or_default();
     LintResult {
@@ -59,6 +62,9 @@ pub fn string_filename_result(
         severity,
         enclosing_scope: None,
         related_locations: LocationList::new(),
+        violation_name: violation_name.to_string(),
+        why: why.into(),
+        fix: fix.into(),
     }
 }
 

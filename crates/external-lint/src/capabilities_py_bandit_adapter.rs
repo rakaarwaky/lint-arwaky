@@ -121,6 +121,9 @@ impl ILinterAdapterProtocol for BanditAdapter {
                 severity: self.map_severity(issue_severity, issue_confidence),
                 enclosing_scope: None,
                 related_locations: LocationList::new(),
+                violation_name: String::new(),
+                why: String::new(),
+                fix: String::new(),
             });
         }
         Ok(LintResultList::new(results))

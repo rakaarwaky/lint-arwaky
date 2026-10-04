@@ -230,12 +230,20 @@ impl CodeAnalysisOrchestrator {
                     continue;
                 }
                 let msg = format_code_analysis_violation(&aes_violation);
-                violations.push(LintResult::new_arch(
+                let vname = shared_common::taxonomy_violation_message_vo::parse_violation_name(
+                    "AES305", &msg,
+                );
+                let why = shared_common::taxonomy_violation_message_vo::parse_why(&msg);
+                let fix = shared_common::taxonomy_violation_message_vo::parse_fix(&msg);
+                violations.push(LintResult::new_arch_with_name(
                     &file_path,
                     1,
                     "AES305",
                     Severity::MEDIUM,
                     msg,
+                    &vname,
+                    why,
+                    fix,
                 ));
             }
         }

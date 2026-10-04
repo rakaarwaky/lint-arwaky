@@ -110,6 +110,9 @@ impl ILinterAdapterProtocol for RustFmtAdapter {
                     severity: Severity::MEDIUM,
                     enclosing_scope: None,
                     related_locations: LocationList::new(),
+                    violation_name: String::new(),
+                    why: String::new(),
+                    fix: String::new(),
                 });
             }
         }

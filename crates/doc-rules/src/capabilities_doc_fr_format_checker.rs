@@ -80,15 +80,19 @@ impl FrFormatChecker {
                 .count()
                 .max(1);
             let num = caps.get(2).map_or("", |m| m.as_str());
-            findings.push(DocFinding::new_with_line(
-                "",
-                line,
-                consts::RULE_CODE_FR_FORMAT,
-                consts::FR_ID_VIOLATION_MISSING_FEATURE_PREFIX,
-                format!(
-                    "line {line} heading 'FR-{num}: {title}' is missing its feature prefix; it must be 'FR-<FEATURE>-NNN: <imperative name>'",
+            findings.push(
+                DocFinding::new_with_line(
+                    "",
+                    line,
+                    consts::RULE_CODE_FR_FORMAT,
+                    consts::FR_ID_VIOLATION_MISSING_FEATURE_PREFIX,
+                    format!("line {line} heading 'FR-{num}: {title}' is missing its feature prefix"),
+                )
+                .with_reason(
+                    "A requirement without its feature prefix cannot be traced back to the feature it belongs to.",
+                    "Rename the heading to 'FR-<FEATURE>-NNN: <imperative name>'.",
                 ),
-            ));
+            );
         }
     }
 
@@ -120,17 +124,25 @@ impl FrFormatChecker {
                     .lines()
                     .count()
                     .max(1);
-                findings.push(DocFinding::new_with_line(
-                    "",
-                    line,
-                    consts::RULE_CODE_FR_FORMAT,
-                    consts::FR_FIELDS_VIOLATION_FIELD_MISSING,
-                    format!(
-                        "line {line} {id} is missing required field(s): {}; the contract requires all of {}",
-                        missing.join(", "),
-                        consts::FR_FIELDS.join(", ")
+                findings.push(
+                    DocFinding::new_with_line(
+                        "",
+                        line,
+                        consts::RULE_CODE_FR_FORMAT,
+                        consts::FR_FIELDS_VIOLATION_FIELD_MISSING,
+                        format!(
+                            "line {line} {id} is missing required field(s): {}",
+                            missing.join(", ")
+                        ),
+                    )
+                    .with_reason(
+                        format!(
+                            "The contract requires all of {} so a reader can evaluate the requirement against the full specification.",
+                            consts::FR_FIELDS.join(", ")
+                        ),
+                        format!("Add the missing field(s) {} to the {id} block.", missing.join(", ")),
                     ),
-                ));
+                );
             }
         }
     }
@@ -199,16 +211,22 @@ impl FrFormatChecker {
                 l.starts_with("## ") && l.contains("Requirements")
             })
             .map_or(1, |index| index + 1);
-        findings.push(DocFinding::new_with_line(
-            "",
-            line,
-            consts::RULE_CODE_FR_FORMAT,
-            consts::FR_PROTOCOL_PARITY_VIOLATION_COUNT_MISMATCH,
-            format!(
-                "line {line} FRD declares {fr_count} requirements but the feature's contract \
-                 module declares {protocol_count} protocol classes; {direction}"
+        findings.push(
+            DocFinding::new_with_line(
+                "",
+                line,
+                consts::RULE_CODE_FR_FORMAT,
+                consts::FR_PROTOCOL_PARITY_VIOLATION_COUNT_MISMATCH,
+                format!(
+                    "line {line} FRD declares {fr_count} requirements but the feature's contract \
+                     module declares {protocol_count} protocol classes"
+                ),
+            )
+            .with_reason(
+                "One protocol class is one capability seam and one seam is one requirement, so the two counts must be equal.",
+                direction,
             ),
-        ));
+        );
     }
 
     /// Every method the FRD promises must be declared in the code.
@@ -248,17 +266,27 @@ impl FrFormatChecker {
             if declared.contains(&method) {
                 continue;
             }
-            findings.push(DocFinding::new_with_line(
-                "",
-                line,
-                consts::RULE_CODE_FR_FORMAT,
-                consts::FR_API_METHOD_VIOLATION_NOT_FOUND,
-                format!(
-                    "line {line} method `{method}` in the '{subsection}' table is not declared \
-                     by any protocol/aggregate trait in the feature's contract module; either \
-                     remove `{method}` from the table or create the protocol/aggregate method"
+            findings.push(
+                DocFinding::new_with_line(
+                    "",
+                    line,
+                    consts::RULE_CODE_FR_FORMAT,
+                    consts::FR_API_METHOD_VIOLATION_NOT_FOUND,
+                    format!(
+                        "line {line} method `{method}` in the '{subsection}' table is not declared \
+                         by any protocol/aggregate trait in the feature's contract module"
+                    ),
+                )
+                .with_reason(
+                    "The `Protocol API` and `Aggregate API` tables are a promise to the integrator; \
+                     a row whose method no protocol/aggregate trait declares is a promise the code \
+                     does not keep.",
+                    format!(
+                        "Remove `{method}` from the '{subsection}' table or create the \
+                         protocol/aggregate method."
+                    ),
                 ),
-            ));
+            );
         }
     }
 }

@@ -243,17 +243,21 @@ impl ArchImportMandatoryChecker {
             );
 
             if !is_present {
-                let v = LintResult::new_arch(
+                let v = LintResult::new_arch_with_name(
                     file,
                     1,
                     AES202_RULE_CODE,
                     Severity::HIGH,
                     format!(
-                        "AES202 MANDATORY_IMPORT: Layer '{}' is missing required import '{}'.\n\
-                            WHY? Layer '{}' must import '{}' to satisfy architectural requirements.\n\
-                            FIX: Add the required import statement.",
-                        source_layer, required, source_layer, required
+                        "Layer '{}' is missing required import '{}'.",
+                        source_layer, required
                     ),
+                    "MANDATORY_IMPORT",
+                    format!(
+                        "Layer '{}' must import '{}' to satisfy architectural requirements.",
+                        source_layer, required
+                    ),
+                    "Add the required import statement.",
                 );
                 if !violations.contains(&v) {
                     violations.push(v);

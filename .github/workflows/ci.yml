@@ -158,7 +158,7 @@ jobs:
         # diagnosis. The captured count is unaffected, and a total tool
         # failure still yields 0 codes, which fails the threshold below.
         run: |
-          codes=$(./target/debug/lint-arwaky-cli scan workspaces-bad 2>&1 | grep -oP "AES\d+" | sort -u | wc -l) || true
+          codes=$(./target/debug/lint-arwaky-cli scan workspaces-bad --format json 2>/dev/null | grep -oP '"code": *"[A-Z0-9_:]+"' | grep -oP '(?<="code": ")[A-Z0-9_:]+' | grep '^AES' | sort -u | wc -l) || true
           echo "Unique codes: ${codes:-0}"
           [ "${codes:-0}" -ge 35 ]
 
@@ -166,19 +166,19 @@ jobs:
         # Proves the external-lint adapters actually invoked the real tools
         # installed above: at least one tool-native (non-AES) violation code
         # must appear for both the Python and the JS/TS bad workspaces.
-        # Adapters report bare tool codes (`F401`, `formatting`), never a
-        # `tool::code` prefix, so match the report's violation lines
-        # (`  [CODE] <count>  ← …`) and drop the AES codes the built-in
-        # linters own — including the `[typescript]`/`[python]` language tags
-        # in the section headers, which the trailing count/arrow excludes.
+        # Counts the codes from the JSON report rather than the text report.
+        # The text report's `Hint` section is four lines of next-step commands
+        # and carries no code list, so a gate reading it would count nothing.
+        # JSON is also the more stable contract: it is not reshaped by a change
+        # to how the text report prints a violation.
         # `|| true` on the count assignments: GitHub runs steps under
         # `bash -eo pipefail`, so a grep with no match would abort the step
         # before the `[ ... -lt 1 ]` check could print its diagnosis.
         run: |
-          py_out=$(./target/debug/lint-arwaky-cli scan workspaces-bad/modules 2>&1 || true)
-          ts_out=$(./target/debug/lint-arwaky-cli scan workspaces-bad/packages 2>&1 || true)
-          py_native=$(echo "$py_out" | grep -oP '^\s*\[\K[A-Za-z0-9_.\/-]+(?=\]\s+\d+\s+←)' | grep -v '^AES' | sort -u | wc -l) || true
-          ts_native=$(echo "$ts_out" | grep -oP '^\s*\[\K[A-Za-z0-9_.\/-]+(?=\]\s+\d+\s+←)' | grep -v '^AES' | sort -u | wc -l) || true
+          py_out=$(./target/debug/lint-arwaky-cli scan workspaces-bad/modules --format json 2>/dev/null || true)
+          ts_out=$(./target/debug/lint-arwaky-cli scan workspaces-bad/packages --format json 2>/dev/null || true)
+          py_native=$(echo "$py_out" | grep -oP '(?<="code": ")[A-Za-z0-9_:]+' | grep -v '^AES' | sort -u | wc -l) || true
+          ts_native=$(echo "$ts_out" | grep -oP '(?<="code": ")[A-Za-z0-9_:]+' | grep -v '^AES' | sort -u | wc -l) || true
           echo "Tool-native codes — Python: ${py_native:-0}, JS/TS: ${ts_native:-0}"
           if [ "${py_native:-0}" -lt 1 ] || [ "${ts_native:-0}" -lt 1 ]; then
             echo "::error::no tool-native violation codes found — external adapters did not run end-to-end"

@@ -98,18 +98,16 @@ impl IAgentRoleProtocol for AgentRustRoleAuditor {
                 in_trait = true;
             }
             if in_trait && t.ends_with('{') && t.starts_with("fn ") {
-                violations.push(LintResult::new_arch(
+                violations.push(LintResult::new_arch_with_name(
                     &path,
                     i + 1,
                     "AES405",
                     Severity::MEDIUM,
-                    format!(
-                        "AES405 AGENT_ROLE: Trait declared in an agent file.\n\
-                         WHY? Line {} of {path} declares a body-less `fn` inside a trait.\n\
-                         HOW TO FIX? An agent delegates to contracts it consumes; it does not \
-                         declare new ones. Move the trait to `crates/shared/src/<feature>/`.",
-                        i + 1
-                    ),
+                    "Trait declared in an agent file".to_string(),
+                    "AGENT_ROLE",
+                    format!("Line {} declares a body-less `fn` inside a trait.", i + 1),
+                    "An agent delegates to contracts it consumes; it does not \
+                     declare new ones. Move the trait to `crates/shared/src/<feature>/`.",
                 ));
             }
             if in_trait && t == "}" {
@@ -186,19 +184,19 @@ impl AgentRustRoleAuditor {
             (aggregate_line, inherent_line)
             && inh_idx < agg_idx
         {
-            violations.push(LintResult::new_arch(
+            violations.push(LintResult::new_arch_with_name(
                 path,
                 inh_idx + 1,
                 "AES405",
-                Severity::HIGH,
+                Severity::HIGH,"Block 3 (inherent impl) precedes Block 2 (aggregate impl)".to_string(),
+                "AGENT_ROLE",
                 format!(
-                    "AES405 AGENT_ROLE: Block 3 (inherent impl) precedes Block 2 (aggregate impl).\n\
-                     WHY? `{inh_src}` is declared at line {} but `{agg_src}` follows at line {}.\n\
-                     HOW TO FIX? Reorder the file so it reads:\n  \
-                     Block 1 (type + injected deps) -> Block 2 (aggregate impl) -> Block 3 (constructor, std traits, helpers).",
+                    "`{inh_src}` is declared at line {} but `{agg_src}` follows at line {}.",
                     inh_idx + 1,
-                    agg_idx + 1,
+                    agg_idx + 1
                 ),
+                "Reorder the file so it reads:\n  \
+                 Block 1 (type + injected deps) -> Block 2 (aggregate impl) -> Block 3 (constructor, std traits, helpers).",
             ));
         }
     }
@@ -230,18 +228,19 @@ impl AgentRustRoleAuditor {
                 && t.contains("=")
             {
                 let name = t.split_whitespace().nth(1).unwrap_or("<unnamed>");
-                violations.push(LintResult::new_arch(
+                violations.push(LintResult::new_arch_with_name(
                     path,
                     i + 1,
                     "AES405",
                     Severity::MEDIUM,
+                    "File-level constant in an agent file".to_string(),
+                    "AGENT_ROLE",
                     format!(
-                        "AES405 AGENT_ROLE: File-level constant in an agent file.\n\
-                         WHY? `const {name}` is declared at line {} of {path}. Policy constants \
-                         belong to the shared taxonomy so every layer reads one value.\n\
-                         HOW TO FIX? Move `{name}` into `taxonomy_<domain>_constant.rs` and import it.",
+                        "`const {name}` is declared at line {}. Policy constants \
+                         belong to the shared taxonomy so every layer reads one value.",
                         i + 1
                     ),
+                    format!("Move `{name}` into `taxonomy_<domain>_constant.rs` and import it."),
                 ));
             }
         }
@@ -273,20 +272,18 @@ impl AgentRustRoleAuditor {
             return;
         }
         if injected < 2 {
-            violations.push(LintResult::new_arch(
+            violations.push(LintResult::new_arch_with_name(
                 path,
                 0,
                 "AES405",
                 Severity::LOW,
-                format!(
-                    "AES405 AGENT_ROLE: Orchestrator has a single execution goal.\n\
-                     WHY? {path} injects {} protocol field(s); an orchestrator must coordinate \
-                     at least 2 subsystems.\n\
-                     HOW TO FIX? Either this work belongs in a capability file rather than an \
-                     agent, or the feature genuinely has more than one subsystem and the agent \
-                     should hold and coordinate their protocols.",
-                    injected
-                ),
+                "Orchestrator has a single execution goal".to_string(),
+                "AGENT_ROLE",
+                "File injects 1 protocol field(s); an orchestrator must coordinate \
+                 at least 2 subsystems.",
+                "Either this work belongs in a capability file rather than an \
+                 agent, or the feature genuinely has more than one subsystem and the agent \
+                 should hold and coordinate their protocols.",
             ));
         }
     }
@@ -309,19 +306,20 @@ impl AgentRustRoleAuditor {
             }
             for token in FORBIDDEN {
                 if t.contains(token) {
-                    violations.push(LintResult::new_arch(
+                    violations.push(LintResult::new_arch_with_name(
                         path,
                         i + 1,
                         "AES405",
                         Severity::MEDIUM,
+                        "Computation in an agent file".to_string(),
+                        "AGENT_ROLE",
                         format!(
-                            "AES405 AGENT_ROLE: Computation in an agent file.\n\
-                             WHY? Line {} of {path} calls `{token}`. An agent orchestrates; it does \
-                             not compute totals or averages over domain data.\n\
-                             HOW TO FIX? Move the aggregation into a capability, and have the agent \
-                             route to it.",
+                            "Line {} calls `{token}`. An agent orchestrates; it does \
+                             not compute totals or averages over domain data.",
                             i + 1
                         ),
+                        "Move the aggregation into a capability, and have the agent \
+                         route to it.",
                     ));
                 }
             }
@@ -342,19 +340,20 @@ impl AgentRustRoleAuditor {
                 continue;
             }
             if t.contains("&mut self") {
-                violations.push(LintResult::new_arch(
+                violations.push(LintResult::new_arch_with_name(
                     path,
                     i + 1,
                     "AES405",
                     Severity::MEDIUM,
+                    "Mutable receiver in an agent file".to_string(),
+                    "AGENT_ROLE",
                     format!(
-                        "AES405 AGENT_ROLE: Mutable receiver in an agent file.\n\
-                         WHY? Line {} of {path} takes `&mut self`. An agent coordinates \
-                         dependencies and does not mutate its own state.\n\
-                         HOW TO FIX? Take `&self` and move any mutation behind the injected \
-                         protocol that owns the state.",
+                        "Line {} takes `&mut self`. An agent coordinates \
+                         dependencies and does not mutate its own state.",
                         i + 1
                     ),
+                    "Take `&self` and move any mutation behind the injected \
+                     protocol that owns the state.",
                 ));
             }
         }
@@ -414,18 +413,21 @@ impl AgentRustRoleAuditor {
                     .next()
                     .unwrap_or("")
                     .to_string();
-                violations.push(LintResult::new_arch(
+                violations.push(LintResult::new_arch_with_name(
                     path,
                     i + 1,
                     "AES405",
                     Severity::LOW,
+                    "Free function in an agent file".to_string(),
+                    "AGENT_ROLE",
                     format!(
-                        "AES405 AGENT_ROLE: Free function in an agent file.\n\
-                         WHY? `fn {name}` is declared at file level (line {}) of {path}. An agent \
-                         file holds one type and its methods.\n\
-                         HOW TO FIX? Move `{name}` into a `utility_<domain>_*.rs` file, or make it \
-                         an associated function on the agent's type.",
+                        "`fn {name}` is declared at file level (line {}). An agent \
+                         file holds one type and its methods.",
                         i + 1
+                    ),
+                    format!(
+                        "Move `{name}` into a `utility_<domain>_*.rs` file, or make it \
+                         an associated function on the agent's type."
                     ),
                 ));
             }

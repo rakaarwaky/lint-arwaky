@@ -93,16 +93,24 @@ fn check_feature_folder(
             consts::FEATURE_HEALTH_VIOLATION_MISSING_AGENT,
             rel.to_string(),
             format!(
-                "feature folder '{rel}' holds capabilities but no agent_*_orchestrator file; a feature folder needs at least one agent and one capability"
+                "feature folder '{rel}' holds capabilities but no agent_*_orchestrator file"
             ),
+        )
+        .with_reason(
+            "A feature folder is the agent/capability pair: the agent routes, the capability does. A capability with no agent has no entry point.",
+            "Add an agent_*_orchestrator file that composes the folder's capabilities.",
         )),
         (false, true) => findings.push(StructureFinding::new(
             consts::RULE_CODE_FEATURE_HEALTH,
             consts::FEATURE_HEALTH_VIOLATION_MISSING_CAPABILITY,
             rel.to_string(),
             format!(
-                "feature folder '{rel}' holds an agent orchestrator but no capabilities file; a feature folder needs at least one agent and one capability"
+                "feature folder '{rel}' holds an agent orchestrator but no capabilities file"
             ),
+        )
+        .with_reason(
+            "An orchestrator that routes to nothing is dead wiring; the feature does no work.",
+            "Add a capabilities_* file carrying the feature's checks.",
         )),
         _ => {}
     }
@@ -119,10 +127,11 @@ fn check_feature_folder(
             consts::RULE_CODE_FEATURE_HEALTH,
             consts::FEATURE_HEALTH_VIOLATION_FORBIDDEN_FILES,
             file.rel(ws_root),
-            format!(
-                "feature folder '{rel}' holds '{}'; feature folders carry only capabilities and agent files — move utility, taxonomy, contract, and surface files to shared or a dedicated surface folder",
-                file.name,
-            ),
+            format!("feature folder '{rel}' holds '{}'", file.name),
+        )
+        .with_reason(
+            "A feature folder carries only capabilities and agent files. Utility, taxonomy, contract, and surface files belong elsewhere.",
+            "Move the file to shared/, or to the surface folder that owns its layer.",
         ));
     }
 
@@ -142,11 +151,14 @@ fn check_feature_docs(folder: &std::path::Path, rel: &str, findings: &mut Vec<St
             consts::RULE_CODE_FEATURE_HEALTH,
             consts::FEATURE_HEALTH_VIOLATION_NO_DOC_PAIR,
             rel.to_string(),
+            format!("feature folder '{rel}' is missing {}", missing.join(" and ")),
+        )
+        .with_reason(
             format!(
-                "feature folder '{rel}' is missing {}; a feature folder carries {} beside its source",
-                missing.join(" and "),
-                consts::FEATURE_DOC_PAIR.join(" and "),
+                "A feature folder carries {} beside its source, so a reader can tell what the feature does without reading the code.",
+                consts::FEATURE_DOC_PAIR.join(" and ")
             ),
+            format!("Add {} to the feature folder.", missing.join(" and ")),
         ));
     }
 }
@@ -171,9 +183,11 @@ fn check_reverse_doc_orchestrator(
             consts::RULE_CODE_FEATURE_HEALTH,
             consts::FEATURE_HEALTH_VIOLATION_REVERSE_MISSING_ORCHESTRATOR,
             rel.to_string(),
-            format!(
-                "folder '{rel}' carries a doc pair but holds no *_orchestrator; a doc pair implies an orchestrator"
-            ),
+            format!("folder '{rel}' carries a doc pair but holds no *_orchestrator"),
+        )
+        .with_reason(
+            "A documented feature with no orchestrator has nothing to route; the doc describes wiring that does not exist.",
+            "Add an agent_*_orchestrator file, or remove the doc pair from this folder.",
         ));
     }
 }

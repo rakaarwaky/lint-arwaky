@@ -180,20 +180,25 @@ impl CapabilitiesPythonRoleAuditor {
             (helper_line, proto_method_line)
             && help_idx < proto_idx
         {
-            violations.push(LintResult::new_arch(
+            violations.push(LintResult::new_arch_with_name(
                 path,
                 help_idx + 1,
                 "AES403",
                 Severity::HIGH,
                 format!(
-                    "AES403 CAPABILITY_ROLE: Block 2 (protocol methods) must precede Block 3 (helpers).\n\
-                     WHY? `{help_src}` is declared at line {} but the first public protocol method `{proto_src}` \
-                     follows at line {}.\n\
-                     HOW TO FIX? Move all `def _helper` and `def with_*` methods below the public protocol methods.\n  \
-                     Block 1 (class + __init__) -> Block 2 (public protocol methods) -> Block 3 (private helpers, factories).",
-                    help_idx + 1,
-                    proto_idx + 1,
+                    "Block 2 (protocol methods) must precede Block 3 (helpers): helper `{help_src}` is declared before the first public protocol method `{proto_src}`.",
+                    help_src = help_src,
+                    proto_src = proto_src,
                 ),
+                "CAPABILITY_ROLE",
+                format!(
+                    "`{help_src}` is declared at line {} but the first public protocol method `{proto_src}` \
+                     follows at line {}.",
+                    help_idx + 1,
+                    proto_idx + 1
+                ),
+                "Move all `def _helper` and `def with_*` methods below the public protocol methods.\n  \
+                 Block 1 (class + __init__) -> Block 2 (public protocol methods) -> Block 3 (private helpers, factories).",
             ));
         }
     }
@@ -225,17 +230,17 @@ impl CapabilitiesPythonRoleAuditor {
             {
                 continue;
             }
-            violations.push(LintResult::new_arch(
+            violations.push(LintResult::new_arch_with_name(
                 path,
                 i + 1,
                 "AES403",
                 Severity::MEDIUM,
+                format!("Local constant in capabilities file: `{name}`."),
+                "CAPABILITY_ROLE",
+                format!("`{name}` is declared as a module-level constant at line {}.", i + 1),
                 format!(
-                    "AES403 CAPABILITY_ROLE: Local constant in capabilities file.\n\
-                     WHY? `{name}` is declared as a module-level constant at line {}.\n\
-                     HOW TO FIX? Move `{name}` into `taxonomy_<domain>_constant.py` so every layer shares one policy value.\n  \
-                     Keep the constant in this file only when it is a private mechanical detail, not a domain policy.",
-                    i + 1,
+                    "Move `{name}` into `taxonomy_<domain>_constant.py` so every layer shares one policy value.\n  \
+                     Keep the constant in this file only when it is a private mechanical detail, not a domain policy."
                 ),
             ));
         }
@@ -266,19 +271,17 @@ impl CapabilitiesPythonRoleAuditor {
                 continue;
             }
             reported_block = true;
-            violations.push(LintResult::new_arch(
+            violations.push(LintResult::new_arch_with_name(
                 path,
                 i + 1,
                 "AES403",
                 Severity::LOW,
-                format!(
-                    "AES403 CAPABILITY_ROLE: Embedded test code in capabilities file.\n\
-                     WHY? Test code starts at line {} (`{t}`).\n\
-                     HOW TO FIX? Move it into `tests/` as a dedicated module \
-                     (for example `tests/unit_capabilities_<name>.py`) and keep the capability source \
-                     free of test-only code.",
-                    i + 1,
-                ),
+                "Embedded test code in capabilities file.".to_string(),
+                "CAPABILITY_ROLE",
+                format!("Test code starts at line {} (`{t}`).", i + 1),
+                "Move it into `tests/` as a dedicated module \
+                 (for example `tests/unit_capabilities_<name>.py`) and keep the capability source \
+                 free of test-only code.",
             ));
         }
     }
@@ -337,18 +340,18 @@ impl CapabilitiesPythonRoleAuditor {
                 continue;
             }
             // A public method with no external caller should be private.
-            violations.push(LintResult::new_arch(
+            violations.push(LintResult::new_arch_with_name(
                 path,
                 i + 1,
                 "AES403",
                 Severity::MEDIUM,
+                format!("Public helper has no external caller: `{fn_name}`."),
+                "CAPABILITY_ROLE",
                 format!(
-                    "AES403 CAPABILITY_ROLE: Public helper has no external caller.\n\
-                     WHY? `def {fn_name}` in {path} is not referenced from any other module or test.\n\
-                     HOW TO FIX? Prefix it with `_` (e.g. `def _{fn_name}`) to mark it as a private helper.",
+                    "`def {fn_name}` is not referenced from any other module or test.",
                     fn_name = fn_name,
-                    path = path,
                 ),
+                "Prefix it with `_` (e.g. `def _{fn_name}`) to mark it as a private helper.",
             ));
         }
     }

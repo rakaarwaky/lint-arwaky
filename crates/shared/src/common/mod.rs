@@ -37,6 +37,7 @@ pub mod taxonomy_suggestion_vo;
 pub mod taxonomy_threshold_vo;
 pub mod taxonomy_tool_name_vo;
 pub mod taxonomy_violation_item_vo;
+pub mod taxonomy_violation_message_vo;
 pub mod utility_layer_detector;
 pub mod utility_subprocess_runner;
 pub mod utility_value_object_generator;

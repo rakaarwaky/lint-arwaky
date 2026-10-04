@@ -55,16 +55,15 @@ impl IDeadInheritanceProtocol for DeadInheritanceChecker {
                     None => false,
                 };
                 if !next_is_impl {
-                    violations.push(LintResult::new_arch(
+                    violations.push(LintResult::new_arch_with_name(
                         file,
                         i + 1,
                         "AES303",
                         Severity::MEDIUM,
-                        format!(
-                            "AES303 DEAD_INHERITANCE: Empty struct, class, or interface implementation block detected.\nWHY? Unit struct declared on line {} in {} without impl or derive\nFIX: Implement the necessary methods/fields or remove the empty definition block.",
-                            i + 1,
-                            file
-                        ),
+                        "Unit struct without impl or derive".to_string(),
+                        "DEAD_INHERITANCE",
+                        format!("Unit struct declared on line {} without impl or derive", i + 1),
+                        "Implement the necessary methods/fields or remove the empty definition block.",
                     ));
                 }
                 i += 1;
@@ -82,47 +81,48 @@ impl IDeadInheritanceProtocol for DeadInheritanceChecker {
                     continue;
                 }
                 if t.ends_with(": pass") || t.ends_with(":pass") {
-                    violations.push(LintResult::new_arch(
+                    violations.push(LintResult::new_arch_with_name(
                         file,
                         i + 1,
                         "AES303",
-                        Severity::MEDIUM,
+                        Severity::MEDIUM,"Empty Python class".to_string(),
+                        "DEAD_INHERITANCE",
                         format!(
-                            "AES303 DEAD_INHERITANCE: Empty struct, class, or interface implementation block detected.\nWHY? Empty Python class on line {} in {} (': pass')\nFIX: Implement the necessary methods/fields or remove the empty definition block.",
-                            i + 1,
-                            file
+                            "Empty Python class on line {} (': pass')",
+                            i + 1
                         ),
+                        "Implement the necessary methods/fields or remove the empty definition block.",
                     ));
                 } else if t.ends_with(':') && i + 1 < lines.len() {
                     let next = lines[i + 1].trim();
                     if next == "pass" || next == "..." || next == "Ellipsis" {
-                        violations.push(LintResult::new_arch(
+                        violations.push(LintResult::new_arch_with_name(
                             file,
                             i + 1,
                             "AES303",
-                            Severity::MEDIUM,
+                            Severity::MEDIUM,"Empty Python class".to_string(),
+                            "DEAD_INHERITANCE",
                             format!(
-                                "AES303 DEAD_INHERITANCE: Empty struct, class, or interface implementation block detected.\nWHY? Empty Python class on line {} in {} (body is '{}')\nFIX: Implement the necessary methods/fields or remove the empty definition block.",
+                                "Empty Python class on line {} (body is '{}')",
                                 i + 1,
-                                file,
                                 next
                             ),
+                            "Implement the necessary methods/fields or remove the empty definition block.",
                         ));
                     }
                 }
             }
             // JS/TS: empty class/interface `class Foo {}`, `export class Foo {}`, `interface Bar {}`
             if Self::is_empty_js_declaration(t) {
-                violations.push(LintResult::new_arch(
+                violations.push(LintResult::new_arch_with_name(
                     file,
                     i + 1,
                     "AES303",
                     Severity::MEDIUM,
-                    format!(
-                        "AES303 DEAD_INHERITANCE: Empty struct, class, or interface implementation block detected.\nWHY? Empty JS/TS class/interface on line {} in {}\nFIX: Implement the necessary methods/fields or remove the empty definition block.",
-                        i + 1,
-                        file
-                    ),
+                    "Empty JS/TS class or interface".to_string(),
+                    "DEAD_INHERITANCE",
+                    format!("Empty JS/TS class/interface on line {}", i + 1),
+                    "Implement the necessary methods/fields or remove the empty definition block.",
                 ));
             }
             i += 1;

@@ -133,23 +133,30 @@ fn write_contract_module(root: &Path, classes: usize) {
     }
 }
 
-/// Run the audit and return `(code, violation_type, message)` triples.
-fn audit(root: &Path) -> Vec<(String, String, String)> {
+/// Run the audit and return `(code, violation_type, message, fix)` tuples.
+fn audit(root: &Path) -> Vec<(String, String, String, String)> {
     let orchestrator = RootDocRulesContainer::orchestrator();
     match orchestrator.execute(DocRequest::audit_all(root)) {
         DocResponse::Findings { findings } => findings
             .into_iter()
-            .map(|f| (f.code.to_string(), f.violation_type.to_string(), f.message))
+            .map(|f| {
+                (
+                    f.code.to_string(),
+                    f.violation_type.to_string(),
+                    f.message,
+                    f.fix,
+                )
+            })
             .collect(),
     }
 }
 
 /// The parity finding, if the audit produced one.
-fn parity_message(findings: &[(String, String, String)]) -> Option<String> {
+fn parity_message(findings: &[(String, String, String, String)]) -> Option<(String, String)> {
     findings
         .iter()
-        .find(|(c, v, _)| c == CODE && v == VIOLATION)
-        .map(|(_, _, m)| m.clone())
+        .find(|(c, v, _, _)| c == CODE && v == VIOLATION)
+        .map(|(_, _, m, fix)| (m.clone(), fix.clone()))
 }
 
 #[test]
@@ -169,16 +176,16 @@ fn fr_doc_001_rejects_more_requirements_than_protocol_classes() {
     let tmp = tempfile::tempdir().unwrap();
     write_feature(tmp.path(), &frd_with_requirements(3));
     write_contract_module(tmp.path(), 2);
-    let message =
+    let (message, fix) =
         parity_message(&audit(tmp.path())).expect("3 requirements vs 2 classes must fire");
     assert!(
         message.contains("3 requirements") && message.contains("2 protocol classes"),
         "the message states both counts; got: {message}"
     );
     assert!(
-        message.contains("merge the requirements down")
-            && message.contains("split the methods into more classes"),
-        "the message names both fix directions; got: {message}"
+        fix.contains("merge the requirements down")
+            && fix.contains("split the methods into more classes"),
+        "the fix names both directions; got: {fix}"
     );
 }
 
@@ -187,11 +194,16 @@ fn fr_doc_001_rejects_more_protocol_classes_than_requirements() {
     let tmp = tempfile::tempdir().unwrap();
     write_feature(tmp.path(), &frd_with_requirements(1));
     write_contract_module(tmp.path(), 3);
-    let message = parity_message(&audit(tmp.path())).expect("1 requirement vs 3 classes must fire");
+    let (message, fix) =
+        parity_message(&audit(tmp.path())).expect("1 requirement vs 3 classes must fire");
     assert!(
-        message.contains("split the requirements up to match")
-            && message.contains("merge the classes down"),
-        "the message names both fix directions; got: {message}"
+        message.contains("1 requirement") && message.contains("3 protocol classes"),
+        "the message states both counts; got: {message}"
+    );
+    assert!(
+        fix.contains("split the requirements up to match")
+            && fix.contains("merge the classes down"),
+        "the fix names both directions; got: {fix}"
     );
 }
 
@@ -223,7 +235,8 @@ fn fr_doc_001_anchors_the_finding_to_a_line() {
     let tmp = tempfile::tempdir().unwrap();
     write_feature(tmp.path(), &frd_with_requirements(2));
     write_contract_module(tmp.path(), 1);
-    let message = parity_message(&audit(tmp.path())).expect("2 requirements vs 1 class must fire");
+    let (message, _) =
+        parity_message(&audit(tmp.path())).expect("2 requirements vs 1 class must fire");
     assert!(
         message.starts_with("line "),
         "every doc finding names a line so reports can anchor it; got: {message}"
@@ -266,11 +279,11 @@ fn write_contract_module_with_methods(root: &Path, classes: usize, method: &str)
 }
 
 /// The method-existence finding, if the audit produced one.
-fn method_message(findings: &[(String, String, String)]) -> Option<String> {
+fn method_message(findings: &[(String, String, String, String)]) -> Option<(String, String)> {
     findings
         .iter()
-        .find(|(c, v, _)| c == CODE && v == "api_method_not_found")
-        .map(|(_, _, m)| m.clone())
+        .find(|(c, v, _, _)| c == CODE && v == "api_method_not_found")
+        .map(|(_, _, m, fix)| (m.clone(), fix.clone()))
 }
 
 #[test]
@@ -292,7 +305,7 @@ fn fr_doc_001_fires_when_a_promised_method_is_never_declared() {
     // method-existence check can answer this document.
     write_feature(tmp.path(), &frd_promising_methods("audit_ghost"));
     write_contract_module_with_methods(tmp.path(), 1, "audit_thing");
-    let message =
+    let (message, _) =
         method_message(&audit(tmp.path())).expect("a promised method the code lacks must fire");
     assert!(
         message.contains("`audit_ghost`") && message.contains("Protocol API"),
@@ -305,15 +318,15 @@ fn fr_doc_001_offers_both_remedies_for_a_missing_method() {
     let tmp = tempfile::tempdir().unwrap();
     write_feature(tmp.path(), &frd_promising_methods("audit_ghost"));
     write_contract_module_with_methods(tmp.path(), 1, "audit_thing");
-    let message =
+    let (_, fix) =
         method_message(&audit(tmp.path())).expect("a promised method the code lacks must fire");
     assert!(
-        message.contains("remove `audit_ghost` from the table"),
-        "the message must offer to delete the promise; got: {message}"
+        fix.contains("Remove `audit_ghost` from the"),
+        "the fix must offer to delete the promise; got: {fix}"
     );
     assert!(
-        message.contains("create the protocol/aggregate method"),
-        "the message must offer to declare the missing method; got: {message}"
+        fix.contains("create the protocol/aggregate method"),
+        "the fix must offer to declare the missing method; got: {fix}"
     );
 }
 
@@ -329,7 +342,7 @@ fn fr_doc_001_anchors_a_missing_method_to_its_table_row() {
         .position(|l| l.contains("`audit_ghost`"))
         .unwrap()
         + 1;
-    let message = method_message(&audit(tmp.path())).expect("the missing method must fire");
+    let (message, _) = method_message(&audit(tmp.path())).expect("the missing method must fire");
     assert!(
         message.contains(&format!("line {row_line}")),
         "the finding anchors to its own row at line {row_line}; got: {message}"
@@ -343,7 +356,7 @@ fn fr_doc_001_reports_a_missing_aggregate_method_too() {
     let frd = frd_promising_methods("audit_thing").replace("| `execute` |", "| `dispatch` |");
     write_feature(tmp.path(), &frd);
     write_contract_module_with_methods(tmp.path(), 1, "audit_thing");
-    let message =
+    let (message, _) =
         method_message(&audit(tmp.path())).expect("an aggregate method the code lacks must fire");
     assert!(
         message.contains("`dispatch`") && message.contains("Aggregate API"),
