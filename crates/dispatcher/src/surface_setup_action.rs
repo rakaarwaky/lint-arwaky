@@ -357,7 +357,7 @@ fn which_mcp_binary() -> String {
 /// Resolve the MCP binary to an absolute canonicalized path.
 /// Resolution order:
 ///   1. LINT_ARWAKY_MCP_BIN env var
-///   2. Sibling of current executable
+///   2. CARGO_HOME/bin/lint-arwaky-mcp
 ///   3. Fail closed — no bare PATH fallback
 fn resolve_mcp_binary() -> Result<std::path::PathBuf, String> {
     if let Ok(explicit) = std::env::var("LINT_ARWAKY_MCP_BIN") {
@@ -373,14 +373,17 @@ fn resolve_mcp_binary() -> Result<std::path::PathBuf, String> {
             .map_err(|e| format!("cannot canonicalize LINT_ARWAKY_MCP_BIN: {e}"));
     }
 
-    if let Ok(exe) = std::env::current_exe()
-        && let Some(dir) = exe.parent()
-    {
-        let sibling = dir.join("lint-arwaky-mcp");
-        if sibling.is_file() {
-            return sibling
+    // current_exe() is forbidden (subprocess-adjacent architecture rule);
+    // use CARGO_HOME/bin as the canonical install location instead.
+    let cargo_home = std::env::var_os("CARGO_HOME")
+        .map(std::path::PathBuf::from)
+        .or_else(|| dirs::home_dir().map(|h| h.join(".cargo")));
+    if let Some(dir) = cargo_home {
+        let candidate = dir.join("bin").join("lint-arwaky-mcp");
+        if candidate.is_file() {
+            return candidate
                 .canonicalize()
-                .map_err(|e| format!("cannot canonicalize sibling: {e}"));
+                .map_err(|e| format!("cannot canonicalize CARGO_HOME bin: {e}"));
         }
     }
 

@@ -1,4 +1,6 @@
 // Acceptance tests — dispatcher surface actions produce valid output.
+mod common;
+
 use shared_cli_commands::LintResult;
 use shared_common::ViolationItem;
 use shared_common::taxonomy_path_vo::FilePath;
@@ -6,22 +8,20 @@ use shared_common::taxonomy_path_vo::FilePath;
 #[test]
 fn acceptance_check_action_on_current_project() {
     let path = FilePath::new(".").unwrap();
+    let c = filesystem::root_filesystem_container::FilesystemContainer::new();
     let opts = dispatcher_lint_arwaky::surface_check_action::ScanOptions {
         path: Some(path),
         multi_project_orchestrator: None,
         filter: None,
         member: None,
-        filesystem: {
-            let c = filesystem::root_filesystem_container::FilesystemContainer::new();
-            std::sync::Arc::new(
-                dispatcher_lint_arwaky::surface_check_action::FilesystemSeam {
-                    workspace: c.workspace(),
-                    parser: c.parser(),
-                    aggregate: c.orchestrator(),
-                },
-            )
-        },
-        scan_aggregates: None,
+        filesystem: std::sync::Arc::new(
+            dispatcher_lint_arwaky::surface_check_action::FilesystemSeam {
+                workspace: c.workspace(),
+                parser: c.parser(),
+                aggregate: c.orchestrator(),
+            },
+        ),
+        scan_aggregates: Some(common::build_scan_aggregates(".")),
     };
     let result = dispatcher_lint_arwaky::surface_check_action::collect_scan(opts);
     assert!(result.is_ok());

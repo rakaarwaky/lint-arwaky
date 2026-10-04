@@ -10,6 +10,8 @@
 use shared_common::taxonomy_path_vo::FilePath;
 use std::process::Command;
 
+mod common;
+
 fn fs() -> std::sync::Arc<dyn shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate>
 {
     filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator()
@@ -39,13 +41,14 @@ fn workspace_root() -> std::path::PathBuf {
 /// In-process scan via collect_scan (works for workspaces-good where 0 violations expected).
 fn scan(path: &str) -> Vec<shared_common::ViolationItem> {
     let full_path = workspace_root().join(path);
+    let root_str = full_path.to_string_lossy().to_string();
     let opts = dispatcher_lint_arwaky::surface_check_action::ScanOptions {
         path: Some(FilePath::new(full_path.to_string_lossy().to_string()).unwrap()),
         multi_project_orchestrator: None,
         filter: None,
         member: None,
         filesystem: seam(),
-        scan_aggregates: None,
+        scan_aggregates: Some(common::build_scan_aggregates(&root_str)),
     };
     dispatcher_lint_arwaky::surface_check_action::collect_scan(opts).unwrap_or_default()
 }

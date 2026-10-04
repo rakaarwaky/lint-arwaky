@@ -485,9 +485,8 @@ impl SurfaceLintExecutor {
                 );
             }
         };
-        let exe_path = std::env::current_exe()
-            .map(|p| p.to_string_lossy().to_string())
-            .unwrap_or_else(|_| "lint-arwaky-cli".to_string());
+        let exe_path =
+            std::env::var("LINT_ARWAKY_CLI_PATH").unwrap_or_else(|_| "lint-arwaky-cli".to_string());
         let fp = FilePath::new(exe_path).unwrap_or_default();
         match collect_install_hook(hooks, &fp) {
             Ok(report) => {
