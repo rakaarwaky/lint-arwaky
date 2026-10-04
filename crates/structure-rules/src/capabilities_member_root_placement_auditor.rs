@@ -39,9 +39,13 @@ impl IStructureMemberRootProtocol for MemberRootPlacementAuditor {
                     consts::MEMBER_ROOT_VIOLATION_MISPLACED_FILE,
                     file.rel(&ws_root),
                     format!(
-                        "member dir '{member_rel}' holds '{name}' (prefix '{prefix}') at its root; a member dir carries folders and wiring — {destination}",
-                        name = file.name,
+                        "member dir '{member_rel}' holds '{}' (prefix '{prefix}') at its root",
+                        file.name,
                     ),
+                )
+                .with_reason(
+                    "A member dir carries folders and wiring. A layer file at its root has no feature folder to belong to.",
+                    destination.to_string(),
                 ));
             }
         }

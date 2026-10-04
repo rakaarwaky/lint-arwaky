@@ -52,6 +52,9 @@ fn analysis_failure(file: &str, msg: impl Into<String>) -> LintResult {
         severity: Severity::CRITICAL,
         enclosing_scope: None,
         related_locations: LocationList::new(),
+        violation_name: String::new(),
+        why: String::new(),
+        fix: String::new(),
     }
 }
 

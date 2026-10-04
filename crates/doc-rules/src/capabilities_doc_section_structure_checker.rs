@@ -102,45 +102,60 @@ impl SectionStructureChecker {
                 })
                 .collect();
             if matches.is_empty() {
-                findings.push(DocFinding::new_with_line(
-                    "",
-                    api.line,
-                    consts::RULE_CODE_SECTION_STRUCTURE,
-                    consts::SECTION_STRUCTURE_VIOLATION_API_SUBSECTION,
-                    format!(
-                        "line {} API Contract has no {want} subsection; the template splits the contract into Protocol API and Aggregate API",
-                        api.line
+                findings.push(
+                    DocFinding::new_with_line(
+                        "",
+                        api.line,
+                        consts::RULE_CODE_SECTION_STRUCTURE,
+                        consts::SECTION_STRUCTURE_VIOLATION_API_SUBSECTION,
+                        format!("line {} API Contract has no {want} subsection", api.line),
+                    )
+                    .with_reason(
+                        "The template splits the API Contract into Protocol API and Aggregate API, so a missing subsection leaves one half of the contract unstateable.",
+                        format!("Add the missing `{want}` subsection under `## API Contract`."),
                     ),
-                ));
+                );
             }
             for (index, section) in matches.iter().enumerate() {
                 // A table is mandatory per subsection: `Aggregate API` stating
                 // its single entry point only in prose is as unverifiable as
                 // `Protocol API` with no rows.
                 if !has_table_with_columns(&section.body, consts::API_COLUMNS) {
-                    findings.push(DocFinding::new_with_line(
-                        "",
-                        section.line,
-                        consts::RULE_CODE_SECTION_STRUCTURE,
-                        consts::SECTION_STRUCTURE_VIOLATION_API_SUBSECTION_NO_TABLE,
-                        format!(
-                            "line {} {want} carries no table with columns {}; every row is a method the caller builds against, so the subsection states them in a table",
+                    findings.push(
+                        DocFinding::new_with_line(
+                            "",
                             section.line,
-                            consts::API_COLUMNS.join(" | ")
+                            consts::RULE_CODE_SECTION_STRUCTURE,
+                            consts::SECTION_STRUCTURE_VIOLATION_API_SUBSECTION_NO_TABLE,
+                            format!(
+                                "line {} {want} carries no table with columns {}",
+                                section.line,
+                                consts::API_COLUMNS.join(" | ")
+                            ),
+                        )
+                        .with_reason(
+                            "Every row is a method the caller builds against, so the subsection states them in a table to stay verifiable.",
+                            format!(
+                                "Add a table with columns {} under the {want} subsection.",
+                                consts::API_COLUMNS.join(" | ")
+                            ),
                         ),
-                    ));
+                    );
                 }
                 if index > 0 {
-                    findings.push(DocFinding::new_with_line(
-                        "",
-                        section.line,
-                        consts::RULE_CODE_SECTION_STRUCTURE,
-                        consts::SECTION_STRUCTURE_VIOLATION_API_SUBSECTION_DUPLICATED,
-                        format!(
-                            "line {} {want} appears more than once; the pair Protocol API / Aggregate API is fixed, so each appears exactly once",
-                            section.line
+                    findings.push(
+                        DocFinding::new_with_line(
+                            "",
+                            section.line,
+                            consts::RULE_CODE_SECTION_STRUCTURE,
+                            consts::SECTION_STRUCTURE_VIOLATION_API_SUBSECTION_DUPLICATED,
+                            format!("line {} {want} appears more than once", section.line),
+                        )
+                        .with_reason(
+                            "The pair Protocol API / Aggregate API is fixed, so each appears exactly once.",
+                            "Remove the duplicate {want} subsection from the API Contract.",
                         ),
-                    ));
+                    );
                 }
             }
         }
@@ -155,16 +170,22 @@ impl SectionStructureChecker {
                 norm == want || norm.starts_with(&want)
             });
             if !recognized {
-                findings.push(DocFinding::new_with_line(
-                    "",
-                    section.line,
-                    consts::RULE_CODE_SECTION_STRUCTURE,
-                    consts::SECTION_STRUCTURE_VIOLATION_API_H3_UNEXPECTED,
-                    format!(
-                        "line {} API Contract carries subsection '{}'; the section holds exactly Protocol API and Aggregate API — fold per-protocol detail into the rows of the Protocol API table, never into a heading",
-                        section.line, section.title
+                findings.push(
+                    DocFinding::new_with_line(
+                        "",
+                        section.line,
+                        consts::RULE_CODE_SECTION_STRUCTURE,
+                        consts::SECTION_STRUCTURE_VIOLATION_API_H3_UNEXPECTED,
+                        format!(
+                            "line {} API Contract carries subsection '{}'",
+                            section.line, section.title
+                        ),
+                    )
+                    .with_reason(
+                        "The section holds exactly Protocol API and Aggregate API; an invented subsection is the author working around the fixed pair.",
+                        "Fold the per-protocol detail into the rows of the Protocol API table and remove the heading.",
                     ),
-                ));
+                );
             }
         }
 
@@ -183,17 +204,25 @@ impl SectionStructureChecker {
         let mut ascending = order.clone();
         ascending.sort_unstable();
         if order != ascending {
-            findings.push(DocFinding::new_with_line(
-                "",
-                api.line,
-                consts::RULE_CODE_SECTION_STRUCTURE,
-                consts::SECTION_STRUCTURE_VIOLATION_ORDER,
-                format!(
-                    "line {} API Contract subsections appear out of order; expected: {}",
+            findings.push(
+                DocFinding::new_with_line(
+                    "",
                     api.line,
-                    consts::API_CONTRACT_SUBSECTIONS.join(", ")
+                    consts::RULE_CODE_SECTION_STRUCTURE,
+                    consts::SECTION_STRUCTURE_VIOLATION_ORDER,
+                    format!(
+                        "line {} API Contract subsections appear out of order",
+                        api.line
+                    ),
+                )
+                .with_reason(
+                    "Readers meet the protocol surface before the composite entry point that delegates to it, so the pair has a fixed order.",
+                    format!(
+                        "Reorder the API Contract subsections to the expected order: {}.",
+                        consts::API_CONTRACT_SUBSECTIONS.join(", ")
+                    ),
                 ),
-            ));
+            );
         }
     }
 
@@ -206,17 +235,26 @@ impl SectionStructureChecker {
             return;
         };
         if !has_table_with_columns(&section.body, consts::INTEGRATION_COLUMNS) {
-            findings.push(DocFinding::new_with_line(
-                "",
-                section.line,
-                consts::RULE_CODE_SECTION_STRUCTURE,
-                consts::SECTION_STRUCTURE_VIOLATION_INTEGRATION_NOT_TABLE,
-                format!(
-                    "line {} Integration Points must be a markdown table with columns {}",
+            findings.push(
+                DocFinding::new_with_line(
+                    "",
                     section.line,
-                    consts::INTEGRATION_COLUMNS.join(" | ")
+                    consts::RULE_CODE_SECTION_STRUCTURE,
+                    consts::SECTION_STRUCTURE_VIOLATION_INTEGRATION_NOT_TABLE,
+                    format!(
+                        "line {} Integration Points must be a markdown table with columns {}",
+                        section.line,
+                        consts::INTEGRATION_COLUMNS.join(" | ")
+                    ),
+                )
+                .with_reason(
+                    "The table shape names the component, the data that flows, and the mechanism, so a reader can trace each integration without reading the code.",
+                    format!(
+                        "Rewrite Integration Points as a markdown table with columns {}.",
+                        consts::INTEGRATION_COLUMNS.join(" | ")
+                    ),
                 ),
-            ));
+            );
         }
     }
 
@@ -229,17 +267,26 @@ impl SectionStructureChecker {
             return;
         };
         if !has_table_with_columns(&section.body, consts::NFR_COLUMNS) {
-            findings.push(DocFinding::new_with_line(
-                "",
-                section.line,
-                consts::RULE_CODE_SECTION_STRUCTURE,
-                consts::SECTION_STRUCTURE_VIOLATION_NFR_NOT_TABLE,
-                format!(
-                    "line {} Non-functional Requirements must be a markdown table with columns {}",
+            findings.push(
+                DocFinding::new_with_line(
+                    "",
                     section.line,
-                    consts::NFR_COLUMNS.join(" | ")
+                    consts::RULE_CODE_SECTION_STRUCTURE,
+                    consts::SECTION_STRUCTURE_VIOLATION_NFR_NOT_TABLE,
+                    format!(
+                        "line {} Non-functional Requirements must be a markdown table with columns {}",
+                        section.line,
+                        consts::NFR_COLUMNS.join(" | ")
+                    ),
+                )
+                .with_reason(
+                    "The table shape names each requirement, its scope, and its budget, so a reader can evaluate it without reading the code.",
+                    format!(
+                        "Rewrite Non-functional Requirements as a markdown table with columns {}.",
+                        consts::NFR_COLUMNS.join(" | ")
+                    ),
                 ),
-            ));
+            );
         }
     }
 
@@ -263,17 +310,25 @@ impl SectionStructureChecker {
         let mut ascending = ordered.clone();
         ascending.sort_unstable();
         if ordered != ascending {
-            findings.push(DocFinding::new_with_line(
-                "",
-                found.first().map_or(0, |(_, line)| *line),
-                consts::RULE_CODE_SECTION_STRUCTURE,
-                consts::SECTION_STRUCTURE_VIOLATION_ORDER,
-                format!(
-                    "line {} FRD sections appear out of template order; expected: {}",
+            findings.push(
+                DocFinding::new_with_line(
+                    "",
                     found.first().map_or(0, |(_, line)| *line),
-                    consts::FRD_SECTION_ORDER.join(", ")
+                    consts::RULE_CODE_SECTION_STRUCTURE,
+                    consts::SECTION_STRUCTURE_VIOLATION_ORDER,
+                    format!(
+                        "line {} FRD sections appear out of template order",
+                        found.first().map_or(0, |(_, line)| *line)
+                    ),
+                )
+                .with_reason(
+                    "The FRD must read in template order so a reader can navigate it against the reference shape.",
+                    format!(
+                        "Reorder the FRD sections to the template order: {}.",
+                        consts::FRD_SECTION_ORDER.join(", ")
+                    ),
                 ),
-            ));
+            );
         }
     }
 
@@ -319,18 +374,19 @@ impl SectionStructureChecker {
             if sanctioned(&title) || requirement_lines.contains(&line) {
                 continue;
             }
-            findings.push(DocFinding::new_with_line(
-                "",
-                line,
-                consts::RULE_CODE_SECTION_STRUCTURE,
-                consts::SECTION_STRUCTURE_VIOLATION_H3_OFF_TEMPLATE,
-                format!(
-                    "line {line} '{title}' is a level-3 heading the FRD template does not sanction; \
-                     the template's only level-3 headings are '### FR-<FEATURENAME>-NNN: <name>', \
-                     '### Protocol API', and '### Aggregate API' — state this content inside the \
-                     section that owns it, or demote it to a level-4 heading"
+            findings.push(
+                DocFinding::new_with_line(
+                    "",
+                    line,
+                    consts::RULE_CODE_SECTION_STRUCTURE,
+                    consts::SECTION_STRUCTURE_VIOLATION_H3_OFF_TEMPLATE,
+                    format!("line {line} '{title}' is a level-3 heading the FRD template does not sanction"),
+                )
+                .with_reason(
+                    "The template's only level-3 headings are '### FR-<FEATURENAME>-NNN: <name>', '### Protocol API', and '### Aggregate API', so an invented H3 drifts from the reference shape.",
+                    "State this content inside the section that owns it, or demote the heading to a level-4 heading.",
                 ),
-            ));
+            );
         }
     }
 
@@ -343,16 +399,19 @@ impl SectionStructureChecker {
             return;
         };
         if !has_bullet(&section.body) {
-            findings.push(DocFinding::new_with_line(
-                "",
-                section.line,
-                consts::RULE_CODE_SECTION_STRUCTURE,
-                consts::SECTION_STRUCTURE_VIOLATION_SCENARIOS_EMPTY,
-                format!(
-                    "line {} Test Scenarios has no bullet items; the template requires at least one '- scenario' bullet",
-                    section.line
+            findings.push(
+                DocFinding::new_with_line(
+                    "",
+                    section.line,
+                    consts::RULE_CODE_SECTION_STRUCTURE,
+                    consts::SECTION_STRUCTURE_VIOLATION_SCENARIOS_EMPTY,
+                    format!("line {} Test Scenarios has no bullet items", section.line),
+                )
+                .with_reason(
+                    "The template requires at least one bullet so the scenarios list them one per line instead of one undifferentiated block.",
+                    "Add at least one '- scenario' bullet to the Test Scenarios section.",
                 ),
-            ));
+            );
         }
     }
 
@@ -365,16 +424,19 @@ impl SectionStructureChecker {
             return;
         };
         if !has_bullet(&section.body) {
-            findings.push(DocFinding::new_with_line(
-                "",
-                section.line,
-                consts::RULE_CODE_SECTION_STRUCTURE,
-                consts::SECTION_STRUCTURE_VIOLATION_GLOSSARY_EMPTY,
-                format!(
-                    "line {} Glossary has no bullet items; the template requires at least one '- **Term**: definition' bullet",
-                    section.line
+            findings.push(
+                DocFinding::new_with_line(
+                    "",
+                    section.line,
+                    consts::RULE_CODE_SECTION_STRUCTURE,
+                    consts::SECTION_STRUCTURE_VIOLATION_GLOSSARY_EMPTY,
+                    format!("line {} Glossary has no bullet items", section.line),
+                )
+                .with_reason(
+                    "The template requires at least one bullet so the glossary lists terms one per line instead of one undifferentiated block.",
+                    "Add at least one '- **Term**: definition' bullet to the Glossary section.",
                 ),
-            ));
+            );
         }
     }
 }

@@ -91,19 +91,20 @@ impl IAgentRoleProtocol for AgentTsRoleAuditor {
                 continue;
             }
             if t.starts_with("abstract class ") || t.starts_with("abstract class") {
-                violations.push(LintResult::new_arch(
+                violations.push(LintResult::new_arch_with_name(
                     &path,
                     i + 1,
                     "AES405",
                     Severity::MEDIUM,
+                    "Abstract class in a TypeScript agent file".to_string(),
+                    "AGENT_ROLE",
                     format!(
-                        "AES405 AGENT_ROLE: Abstract class in a TypeScript agent file.\n\
-                         WHY? Line {} of {path} declares an abstract class. An agent delegates to \
-                         protocols it consumes; it does not declare new abstract contracts.\n\
-                         HOW TO FIX? Move the interface to the feature's protocol file in the \
-                         shared layer.",
+                        "Line {} declares an abstract class. An agent delegates to \
+                         protocols it consumes; it does not declare new abstract contracts.",
                         i + 1
                     ),
+                    "Move the interface to the feature's protocol file in the \
+                     shared layer.",
                 ));
             }
         }
@@ -158,20 +159,21 @@ impl AgentTsRoleAuditor {
         if let (Some(proto_idx), Some(ctor_idx)) = (first_protocol_method, constructor_line)
             && ctor_idx < proto_idx
         {
-            violations.push(LintResult::new_arch(
+            violations.push(LintResult::new_arch_with_name(
                 path,
                 ctor_idx + 1,
                 "AES405",
                 Severity::HIGH,
+                "Constructor precedes protocol-delegating methods".to_string(),
+                "AGENT_ROLE",
                 format!(
-                    "AES405 AGENT_ROLE: Constructor precedes protocol-delegating methods.\n\
-                     WHY? The constructor at line {} of {path} appears before the first protocol \
-                     method at line {}.\n\
-                     HOW TO FIX? Order the class so that Block 2 (protocol-delegating methods) \
-                     comes before Block 3 (constructor).",
+                    "The constructor at line {} appears before the first protocol \
+                     method at line {}.",
                     ctor_idx + 1,
-                    proto_idx + 1,
+                    proto_idx + 1
                 ),
+                "Order the class so that Block 2 (protocol-delegating methods) \
+                 comes before Block 3 (constructor).",
             ));
         }
     }
@@ -209,18 +211,19 @@ impl AgentTsRoleAuditor {
                     .unwrap_or("")
                     .trim();
                 if !name.is_empty() {
-                    violations.push(LintResult::new_arch(
+                    violations.push(LintResult::new_arch_with_name(
                         path,
                         i + 1,
                         "AES405",
                         Severity::MEDIUM,
+                        "Top-level constant in a TypeScript agent file".to_string(),
+                        "AGENT_ROLE",
                         format!(
-                            "AES405 AGENT_ROLE: Top-level constant in a TypeScript agent file.\n\
-                             WHY? `const {name}` is declared at line {} of {path}. Policy constants \
-                             belong in the taxonomy layer.\n\
-                             HOW TO FIX? Move `{name}` into the feature's taxonomy module and import it.",
-                            i + 1,
+                            "`const {name}` is declared at line {}. Policy constants \
+                             belong in the taxonomy layer.",
+                            i + 1
                         ),
+                        format!("Move `{name}` into the feature's taxonomy module and import it."),
                     ));
                 }
             }
@@ -245,19 +248,17 @@ impl AgentTsRoleAuditor {
             return;
         }
         if injected < 2 {
-            violations.push(LintResult::new_arch(
+            violations.push(LintResult::new_arch_with_name(
                 path,
                 0,
                 "AES405",
                 Severity::LOW,
-                format!(
-                    "AES405 AGENT_ROLE: Orchestrator has a single execution goal.\n\
-                     WHY? {path} injects {} protocol field(s); an orchestrator must coordinate \
-                     at least 2 subsystems.\n\
-                     HOW TO FIX? Either this work belongs in a capability file rather than an agent, \
-                     or inject the protocols of both subsystems into the constructor.",
-                    injected
-                ),
+                "Orchestrator has a single execution goal".to_string(),
+                "AGENT_ROLE",
+                "File injects 1 protocol field(s); an orchestrator must coordinate \
+                 at least 2 subsystems.",
+                "Either this work belongs in a capability file rather than an agent, \
+                 or inject the protocols of both subsystems into the constructor.",
             ));
         }
     }
@@ -271,18 +272,19 @@ impl AgentTsRoleAuditor {
             }
             for token in FORBIDDEN {
                 if t.contains(token) {
-                    violations.push(LintResult::new_arch(
+                    violations.push(LintResult::new_arch_with_name(
                         path,
                         i + 1,
                         "AES405",
                         Severity::MEDIUM,
+                        "Computation in a TypeScript agent file".to_string(),
+                        "AGENT_ROLE",
                         format!(
-                            "AES405 AGENT_ROLE: Computation in a TypeScript agent file.\n\
-                             WHY? Line {} of {path} calls `{token}`. An agent orchestrates; it does \
-                             not compute totals or averages over domain data.\n\
-                             HOW TO FIX? Move the aggregation into a capability.",
+                            "Line {} calls `{token}`. An agent orchestrates; it does \
+                             not compute totals or averages over domain data.",
                             i + 1
                         ),
+                        "Move the aggregation into a capability.",
                     ));
                 }
             }
@@ -325,18 +327,19 @@ impl AgentTsRoleAuditor {
                 continue;
             }
             let field = rest[..eq_pos].trim_end_matches(['+', '-', '*', '/', '%']);
-            violations.push(LintResult::new_arch(
+            violations.push(LintResult::new_arch_with_name(
                 path,
                 i + 1,
                 "AES405",
                 Severity::MEDIUM,
+                "State assignment outside constructor".to_string(),
+                "AGENT_ROLE",
                 format!(
-                    "AES405 AGENT_ROLE: State assignment outside constructor.\n\
-                     WHY? Line {} of {path} assigns `this.{field}` outside the constructor.\n\
-                     HOW TO FIX? An agent holds no mutable state. Initialize the field in the \
-                     constructor and append to it; move domain data behind a protocol.",
+                    "Line {} assigns `this.{field}` outside the constructor.",
                     i + 1
                 ),
+                "An agent holds no mutable state. Initialize the field in the \
+                 constructor and append to it; move domain data behind a protocol.",
             ));
         }
     }
@@ -382,18 +385,16 @@ impl AgentTsRoleAuditor {
                         .unwrap_or("")
                         .trim();
                     if !name.is_empty() {
-                        violations.push(LintResult::new_arch(
+                        violations.push(LintResult::new_arch_with_name(
                             path,
                             i + 1,
                             "AES405",
                             Severity::LOW,
-                            format!(
-                                "AES405 AGENT_ROLE: Module-level function in a TypeScript agent file.\n\
-                                 WHY? `{name}` is declared at line {} of {path} at module level.\n\
-                                 HOW TO FIX? Move it into a `utility_<domain>.ts` file, or make it a \
-                                 method on the agent's class.",
-                                i + 1
-                            ),
+                            "Module-level function in a TypeScript agent file".to_string(),
+                            "AGENT_ROLE",
+                            format!("`{name}` is declared at line {} at module level.", i + 1),
+                            "Move it into a `utility_<domain>.ts` file, or make it a \
+                             method on the agent's class.",
                         ));
                     }
                 }

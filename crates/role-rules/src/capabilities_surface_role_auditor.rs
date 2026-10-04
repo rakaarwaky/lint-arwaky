@@ -62,20 +62,21 @@ impl ISurfaceRoleProtocol for SurfaceRoleChecker {
             SurfaceTier::Utility => "utility",
             SurfaceTier::Passive => "passive",
         };
-        violations.push(LintResult::new_arch(
+        violations.push(LintResult::new_arch_with_name(
             &path_str,
             0,
             "AES406",
             Severity::HIGH,
             format!(
-                "AES406 SURFACE_ROLE: {} tier surface has {} functions (max {})\n\
-                 WHY? A {}-tier surface with too many functions has too many responsibilities.\n\
-                 FIX: Split into smaller surface files, or move logic down to capabilities or an agent.",
-                tier_name,
-                fn_count,
-                limit,
-                tier_name,
+                "{} tier surface has {} functions (max {})",
+                tier_name, fn_count, limit
             ),
+            "SURFACE_ROLE",
+            format!(
+                "A {}-tier surface with too many functions has too many responsibilities.",
+                tier_name
+            ),
+            "Split into smaller surface files, or move logic down to capabilities or an agent.",
         ));
     }
 }
@@ -98,17 +99,18 @@ impl SurfaceRoleChecker {
         let path_str = file.path.to_string_lossy();
         let fn_count = count_functions(file).unwrap_or(0);
         if fn_count > MAX_PUBLIC_METHODS {
-            violations.push(LintResult::new_arch(
+            violations.push(LintResult::new_arch_with_name(
                 &path_str,
                 0,
                 "AES406",
                 Severity::HIGH,
+                "Surface role boundary violation".to_string(),
+                "SURFACE_ROLE",
                 format!(
-                    "AES406 SURFACE_ROLE: Surface role boundary violation.\n\
-                     WHY? Surface file '{}' has {} functions (max {})\n\
-                     FIX: Ensure surface only performs its designated responsibilities.",
-                    path_str, fn_count, MAX_PUBLIC_METHODS,
+                    "Surface file '{}' has {} functions (max {})",
+                    path_str, fn_count, MAX_PUBLIC_METHODS
                 ),
+                "Ensure surface only performs its designated responsibilities.",
             ));
         }
     }
@@ -134,17 +136,17 @@ impl SurfaceRoleChecker {
             })
             .count();
         if control_flow_count > MAX_CONTROL_FLOW {
-            violations.push(LintResult::new_arch(
+            violations.push(LintResult::new_arch_with_name(
                 &path_str,
                 0,
                 "AES406",
-                Severity::HIGH,
+                Severity::HIGH,"Complex domain logic detected in a passive/utility surface".to_string(),
+                "SURFACE_ROLE",
                 format!(
-                    "AES406 SURFACE_ROLE: Complex domain logic detected in a passive/utility surface.\n\
-                     WHY? Surface {} has {} control flow statements (max {})\n\
-                     FIX: Move the complex domain/control logic into capabilities or orchestrator components.",
-                    path_str, control_flow_count, MAX_CONTROL_FLOW,
+                    "Surface file has {} control flow statements (max {})",
+                    control_flow_count, MAX_CONTROL_FLOW
                 ),
+                "Move the complex domain/control logic into capabilities or orchestrator components.",
             ));
         }
     }

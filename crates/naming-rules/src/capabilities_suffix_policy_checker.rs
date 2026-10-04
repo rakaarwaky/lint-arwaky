@@ -153,6 +153,16 @@ impl SuffixPolicyChecker {
                     suf, layer_display, suf, layer_display
                 ),
                 Severity::HIGH,
+                "SUFFIX_PREFIX",
+                format!(
+                    "Suffix '{}' is not permitted in the '{}' layer. Each architectural layer allows only \
+                     specific suffixes that match its role.",
+                    suf, layer_display
+                ),
+                format!(
+                    "Rename the file with an allowed suffix for '{}', or move it to the appropriate layer.",
+                    layer_display
+                ),
             ));
         }
 
@@ -175,6 +185,15 @@ impl SuffixPolicyChecker {
                         suffix_belonging_layer
                     ),
                     Severity::HIGH,
+                    "SUFFIX_PREFIX",
+                    format!(
+                        "Suffix '{}' belongs to the '{}' layer's suffix set, but this file is in the '{}' layer.",
+                        suf, suffix_belonging_layer, layer_display
+                    ),
+                    format!(
+                        "Rename the file with a suffix appropriate for the '{}' layer, or move it to the '{}' layer.",
+                        layer_display, suffix_belonging_layer
+                    ),
                 ));
             }
         }
@@ -202,6 +221,18 @@ impl SuffixPolicyChecker {
                         allowed_list.join(", ")
                     ),
                     Severity::HIGH,
+                    "SUFFIX_PREFIX",
+                    format!(
+                        "Suffix '{}' is not in the allowed list for layer '{}'. \
+                         A suffix outside this list means either the file belongs in a different layer \
+                         or needs a different architectural role suffix.",
+                        suffix_display, layer_display
+                    ),
+                    format!(
+                        "Allowed suffixes for '{}': {}. Rename the file with one of the allowed suffixes.",
+                        layer_display,
+                        allowed_list.join(", ")
+                    ),
                 ));
             }
         }

@@ -125,6 +125,9 @@ impl ILinterAdapterProtocol for TSCAdapter {
                     severity: Severity::HIGH,
                     enclosing_scope: Default::default(),
                     related_locations: LocationList::new(),
+                    violation_name: String::new(),
+                    why: String::new(),
+                    fix: String::new(),
                 });
             }
         }

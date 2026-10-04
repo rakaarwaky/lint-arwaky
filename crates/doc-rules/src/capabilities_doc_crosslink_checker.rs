@@ -76,30 +76,42 @@ impl CrosslinkChecker {
             return;
         };
         if !section.body.contains(consts::BACKLOG_DOC) {
-            findings.push(DocFinding::new_with_line(
-                "",
-                section.line,
-                consts::RULE_CODE_CROSSLINKS,
-                consts::CROSSLINKS_VIOLATION_NO_BACKLOG_LINK,
-                format!(
-                    "line {} Reference section must link {}",
+            findings.push(
+                DocFinding::new_with_line(
+                    "",
                     section.line,
-                    consts::BACKLOG_DOC
+                    consts::RULE_CODE_CROSSLINKS,
+                    consts::CROSSLINKS_VIOLATION_NO_BACKLOG_LINK,
+                    format!(
+                        "line {} Reference section must link {}",
+                        section.line,
+                        consts::BACKLOG_DOC
+                    ),
+                )
+                .with_reason(
+                    "A reader of the requirement cannot reach the report that says whether the promise was kept without the backlog link.",
+                    format!("Add a link to {} in the Reference section.", consts::BACKLOG_DOC),
                 ),
-            ));
+            );
         }
         if !section.body.contains(consts::PRD_DOC) {
-            findings.push(DocFinding::new_with_line(
-                "",
-                section.line,
-                consts::RULE_CODE_CROSSLINKS,
-                consts::CROSSLINKS_VIOLATION_NO_PRD_LINK,
-                format!(
-                    "line {} Reference section must link {}",
+            findings.push(
+                DocFinding::new_with_line(
+                    "",
                     section.line,
-                    consts::PRD_DOC
+                    consts::RULE_CODE_CROSSLINKS,
+                    consts::CROSSLINKS_VIOLATION_NO_PRD_LINK,
+                    format!(
+                        "line {} Reference section must link {}",
+                        section.line,
+                        consts::PRD_DOC
+                    ),
+                )
+                .with_reason(
+                    "A reader of the requirement cannot reach the product intent that justifies it without the PRD link.",
+                    format!("Add a link to {} in the Reference section.", consts::PRD_DOC),
                 ),
-            ));
+            );
         }
     }
 
@@ -133,17 +145,23 @@ impl CrosslinkChecker {
             return;
         }
         if context.master().is_some() {
-            findings.push(DocFinding::new_with_line(
-                "",
-                section.line,
-                consts::RULE_CODE_CROSSLINKS,
-                consts::CROSSLINKS_VIOLATION_STATE_VOCAB_RESTATED,
-                format!(
-                    "line {} feature backlog carries {} section(s); those live once, in the root master",
+            findings.push(
+                DocFinding::new_with_line(
+                    "",
                     section.line,
-                    restated.join(", ")
+                    consts::RULE_CODE_CROSSLINKS,
+                    consts::CROSSLINKS_VIOLATION_STATE_VOCAB_RESTATED,
+                    format!(
+                        "line {} feature backlog carries {} section(s)",
+                        section.line,
+                        restated.join(", ")
+                    ),
+                )
+                .with_reason(
+                    "Duplicating the vocabulary is how two documents come to disagree about what `In Progress` means; a sub-doc restating a master-only section breaks the single home.",
+                    "Remove the section(s) from the feature backlog; they live once, in the root master.",
                 ),
-            ));
+            );
         }
     }
 }

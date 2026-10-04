@@ -89,16 +89,19 @@ impl HeadingStructureChecker {
             .filter(|c| c.get(1).is_some_and(|m| m.as_str().len() == 1))
             .count();
         if h1_count != 1 {
-            findings.push(DocFinding::new_with_line(
-                "",
-                0,
-                consts::RULE_CODE_DOC_STRUCTURE,
-                consts::DOC_STRUCTURE_VIOLATION_H1_COUNT,
-                format!(
-                    "{name} must open with exactly one level-1 heading, found {}; the template names one H1 at the top of the file",
-                    h1_count
+            findings.push(
+                DocFinding::new_with_line(
+                    "",
+                    0,
+                    consts::RULE_CODE_DOC_STRUCTURE,
+                    consts::DOC_STRUCTURE_VIOLATION_H1_COUNT,
+                    format!("{name} opens with {h1_count} level-1 headings"),
+                )
+                .with_reason(
+                    "The template names exactly one H1 at the top of the file, so a reader knows where the document starts.",
+                    "Reduce the document to a single level-1 heading at the top.",
                 ),
-            ));
+            );
         }
         let h2: Vec<String> = captures
             .iter()
@@ -115,17 +118,19 @@ impl HeadingStructureChecker {
             })
             .collect();
         if !missing.is_empty() {
-            findings.push(DocFinding::new_with_line(
-                "",
-                0,
-                consts::RULE_CODE_DOC_STRUCTURE,
-                consts::DOC_STRUCTURE_VIOLATION_H2_MISSING,
-                format!(
-                    "{name} has no H2 heading for {}; each of these level-2 sections is mandatory — {}",
-                    missing.join(", "),
-                    required.join(", ")
+            findings.push(
+                DocFinding::new_with_line(
+                    "",
+                    0,
+                    consts::RULE_CODE_DOC_STRUCTURE,
+                    consts::DOC_STRUCTURE_VIOLATION_H2_MISSING,
+                    format!("{name} has no H2 heading for {}", missing.join(", ")),
+                )
+                .with_reason(
+                    "Each of these level-2 sections is mandatory in the document's registered template, so the reader cannot find the section the reader expects.",
+                    format!("Add the missing level-2 heading(s) {} to the document.", missing.join(", ")),
                 ),
-            ));
+            );
         }
         // The H2 set is closed: a heading at level 2 that is not in the
         // required + allowed union must be demoted to a level-3 heading or removed.
@@ -140,16 +145,22 @@ impl HeadingStructureChecker {
             .filter(|title| !permitted.iter().any(|a| title == a || title.starts_with(a)))
             .collect();
         if !unexpected_h2.is_empty() {
-            findings.push(DocFinding::new_with_line(
-                "",
-                0,
-                consts::RULE_CODE_DOC_STRUCTURE,
-                consts::DOC_STRUCTURE_VIOLATION_H2_UNEXPECTED,
-                format!(
-                    "{name} carries H2 heading(s) outside the template: {}; move each to a level-3 heading or remove it",
-                    unexpected_h2.join(", ")
+            findings.push(
+                DocFinding::new_with_line(
+                    "",
+                    0,
+                    consts::RULE_CODE_DOC_STRUCTURE,
+                    consts::DOC_STRUCTURE_VIOLATION_H2_UNEXPECTED,
+                    format!(
+                        "{name} carries H2 heading(s) outside the template: {}",
+                        unexpected_h2.join(", ")
+                    ),
+                )
+                .with_reason(
+                    "The H2 set is closed: a heading at level 2 that is not in the required + allowed union breaks the document's registered shape.",
+                    format!("Demote each unexpected H2 in {} to a level-3 heading or remove it.", unexpected_h2.join(", ")),
                 ),
-            ));
+            );
         }
     }
 
@@ -171,13 +182,19 @@ impl HeadingStructureChecker {
 
         let has_frontmatter = doc_lines.first().is_some_and(|l| l.trim() == "---");
         if !has_frontmatter {
-            findings.push(DocFinding::new_with_line(
-                doc_name,
-                1,
-                consts::RULE_CODE_DOC_STRUCTURE,
-                consts::DOC_STRUCTURE_VIOLATION_FRONTMATTER_MISSING,
-                "AGENTS.md must have YAML frontmatter (---) at the start".to_string(),
-            ));
+            findings.push(
+                DocFinding::new_with_line(
+                    doc_name,
+                    1,
+                    consts::RULE_CODE_DOC_STRUCTURE,
+                    consts::DOC_STRUCTURE_VIOLATION_FRONTMATTER_MISSING,
+                    "AGENTS.md must have YAML frontmatter (---) at the start".to_string(),
+                )
+                .with_reason(
+                    "The frontmatter declares the tool contract (trigger, description) that consumers rely on to decide when the file applies.",
+                    "Add YAML frontmatter (---) at the top of AGENTS.md.",
+                ),
+            );
         }
 
         let first_line = doc_lines.first().map_or("", |v| *v);
@@ -207,15 +224,21 @@ impl HeadingStructureChecker {
         // rename cannot slip through a section that holds no fixed lines.
         for (name, _) in &doc_sections {
             if !template_sections.iter().any(|(key, _)| key == name) {
-                findings.push(DocFinding::new_with_line(
-                    doc_name,
-                    0,
-                    consts::RULE_CODE_DOC_STRUCTURE,
-                    consts::DOC_STRUCTURE_VIOLATION_LINE_DRIFT,
-                    format!(
-                        "AGENTS.md has the section `## {name}`, which the template does not declare; the template fixes the section set"
+                findings.push(
+                    DocFinding::new_with_line(
+                        doc_name,
+                        0,
+                        consts::RULE_CODE_DOC_STRUCTURE,
+                        consts::DOC_STRUCTURE_VIOLATION_LINE_DRIFT,
+                        format!(
+                            "AGENTS.md has the section `## {name}`, which the template does not declare"
+                        ),
+                    )
+                    .with_reason(
+                        "The template fixes the section set, so an undeclared section is drift from the reference shape.",
+                        "Remove or rename the section `## {name}` to one the template declares.",
                     ),
-                ));
+                );
             }
         }
 
@@ -225,15 +248,21 @@ impl HeadingStructureChecker {
                 // does not carry under this exact name has been renamed or
                 // dropped. `check_doc_heading` allows a title suffix for other
                 // documents, so state the rename here where it is drift.
-                findings.push(DocFinding::new_with_line(
-                    doc_name,
-                    0,
-                    consts::RULE_CODE_DOC_STRUCTURE,
-                    consts::DOC_STRUCTURE_VIOLATION_LINE_DRIFT,
-                    format!(
-                        "AGENTS.md is missing the template section `## {name}`, or renamed it; the template fixes this heading"
+                findings.push(
+                    DocFinding::new_with_line(
+                        doc_name,
+                        0,
+                        consts::RULE_CODE_DOC_STRUCTURE,
+                        consts::DOC_STRUCTURE_VIOLATION_LINE_DRIFT,
+                        format!(
+                            "AGENTS.md is missing the template section `## {name}`, or renamed it"
+                        ),
+                    )
+                    .with_reason(
+                        "The template fixes this heading, so a renamed or dropped section drifts from the reference shape.",
+                        "Restore the template section `## {name}` with its exact heading.",
                     ),
-                ));
+                );
                 continue;
             };
             // A placeholder may wrap onto the next line. When a line opens a
@@ -257,15 +286,21 @@ impl HeadingStructureChecker {
                             .copied()
                             .or_else(|| have_lines.last().copied())
                             .unwrap_or("");
-                        findings.push(DocFinding::new_with_line(
-                            doc_name,
-                            0,
-                            consts::RULE_CODE_DOC_STRUCTURE,
-                            consts::DOC_STRUCTURE_VIOLATION_LINE_DRIFT,
-                            format!(
-                                "AGENTS.md section `{name}` does not match the template: expected the line '{want}' (or a {{...}} placeholder), but found '{offending}'; only {{...}} placeholder slots may differ"
+                        findings.push(
+                            DocFinding::new_with_line(
+                                doc_name,
+                                0,
+                                consts::RULE_CODE_DOC_STRUCTURE,
+                                consts::DOC_STRUCTURE_VIOLATION_LINE_DRIFT,
+                                format!(
+                                    "AGENTS.md section `{name}` does not match the template: expected the line '{want}' (or a {{...}} placeholder), but found '{offending}'"
+                                ),
+                            )
+                            .with_reason(
+                                "Every line the template fixes must appear verbatim and in order; only {{...}} placeholder slots may differ.",
+                                "Replace '{offending}' in section `{name}` with the template line '{want}' or a {{...}} placeholder.",
                             ),
-                        ));
+                        );
                         cursor = start + 1;
                     }
                 }
@@ -273,13 +308,19 @@ impl HeadingStructureChecker {
         }
 
         if !doc_lines.iter().any(|l| l.trim_start().starts_with("# ")) {
-            findings.push(DocFinding::new_with_line(
-                doc_name,
-                0,
-                consts::RULE_CODE_DOC_STRUCTURE,
-                consts::DOC_STRUCTURE_VIOLATION_LINE_DRIFT,
-                "AGENTS.md must open with a level-1 heading naming the project".to_string(),
-            ));
+            findings.push(
+                DocFinding::new_with_line(
+                    doc_name,
+                    0,
+                    consts::RULE_CODE_DOC_STRUCTURE,
+                    consts::DOC_STRUCTURE_VIOLATION_LINE_DRIFT,
+                    "AGENTS.md must open with a level-1 heading naming the project".to_string(),
+                )
+                .with_reason(
+                    "The H1 names the project and anchors the document for a reader at the top of the file.",
+                    "Add a level-1 heading naming the project at the top of AGENTS.md.",
+                ),
+            );
         }
         // A project may name itself freely, so only the shape is fixed: one
         // H1, non-empty, carrying no `{...}` slot left unfilled.
@@ -289,13 +330,19 @@ impl HeadingStructureChecker {
         {
             let title = line.trim_start().trim_start_matches('#').trim();
             if title.is_empty() {
-                findings.push(DocFinding::new_with_line(
-                    doc_name,
-                    0,
-                    consts::RULE_CODE_DOC_STRUCTURE,
-                    consts::DOC_STRUCTURE_VIOLATION_LINE_DRIFT,
-                    "AGENTS.md H1 has no title".to_string(),
-                ));
+                findings.push(
+                    DocFinding::new_with_line(
+                        doc_name,
+                        0,
+                        consts::RULE_CODE_DOC_STRUCTURE,
+                        consts::DOC_STRUCTURE_VIOLATION_LINE_DRIFT,
+                        "AGENTS.md H1 has no title".to_string(),
+                    )
+                    .with_reason(
+                        "A level-1 heading with no title leaves the document unnamed at the top.",
+                        "Fill in the H1 title of AGENTS.md.",
+                    ),
+                );
             }
         }
     }

@@ -27,6 +27,17 @@ fn message_audit(root: &Path) -> Vec<String> {
     }
 }
 
+/// The remedy half of each finding. AES705 names the destination folder in
+/// its `fix` rather than in `message`, so a test about where a file belongs
+/// reads this, not `message_audit`.
+fn fix_audit(root: &Path) -> Vec<String> {
+    let aggregate = RootStructureRulesContainer::orchestrator();
+    let response = aggregate.execute(StructureRequest::audit_all(root));
+    match response {
+        StructureResponse::Findings { findings } => findings.into_iter().map(|f| f.fix).collect(),
+    }
+}
+
 fn audit(root: &Path) -> Vec<(String, String, String)> {
     let aggregate = RootStructureRulesContainer::orchestrator();
     let response = aggregate.execute(StructureRequest::audit_all(root));
@@ -761,11 +772,11 @@ fn aes705_names_the_folder_kind_each_prefix_belongs_in() {
         root.join("crates/utility_path.rs").as_path(),
         "pub fn p() {}",
     );
-    let findings = message_audit(root);
+    let findings = fix_audit(root);
     for expected in ["feature folder", "surface folder", "shared folder"] {
         assert!(
             findings.iter().any(|m| m.contains(expected)),
-            "expected the finding to mention '{expected}', got: {findings:#?}"
+            "expected the finding to name '{expected}' as the destination, got: {findings:#?}"
         );
     }
 }

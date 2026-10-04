@@ -124,6 +124,9 @@ impl ILinterAdapterProtocol for PrettierAdapter {
                     severity: Severity::MEDIUM, // FR-004: Prettier diff → MEDIUM
                     enclosing_scope: Default::default(),
                     related_locations: LocationList::new(),
+                    violation_name: String::new(),
+                    why: String::new(),
+                    fix: String::new(),
                 });
             }
         }

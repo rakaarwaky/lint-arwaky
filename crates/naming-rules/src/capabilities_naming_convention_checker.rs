@@ -151,6 +151,17 @@ impl NamingConventionChecker {
                     stem, min_words, stem, min_words, layer_hint
                 ),
                 Severity::HIGH,
+                "NAMING_CONVENTION",
+                format!(
+                    "Stem '{}' does not match the required pattern 'prefix_concept_suffix'. \
+                     Issue: '{}' may have uppercase characters, wrong separator, or fewer than {} words{}.",
+                    stem, stem, min_words, layer_hint
+                ),
+                format!(
+                    "Expected: lowercase alphanumeric words separated by underscores, minimum {} words. \
+                     Example valid names: 'capabilities_user_checker', 'capabilities_db_adapter'.",
+                    min_words
+                ),
             ));
         }
 

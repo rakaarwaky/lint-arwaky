@@ -114,6 +114,9 @@ pub fn docs_findings_to_violations(findings: &[DocsFinding]) -> Vec<ViolationIte
                 column: ColumnNumber::new(0),
                 message: LintMessage::new(f.message.clone()),
                 severity: f.severity.clone(),
+                violation_name: f.violation_type.to_string(),
+                why: String::new(),
+                fix: String::new(),
             }
         })
         .collect()

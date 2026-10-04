@@ -143,20 +143,21 @@ impl AgentPythonRoleAuditor {
         if let (Some(proto_idx), Some(factory_idx)) = (first_protocol_method, first_factory)
             && factory_idx < proto_idx
         {
-            violations.push(LintResult::new_arch(
+            violations.push(LintResult::new_arch_with_name(
                 path,
                 factory_idx + 1,
                 "AES405",
                 Severity::HIGH,
+                "Factory/dunder methods precede protocol-delegating methods".to_string(),
+                "AGENT_ROLE",
                 format!(
-                    "AES405 AGENT_ROLE: Factory/dunder methods precede protocol-delegating methods.\n\
-                     WHY? Line {} of {path} declares a `@classmethod`/`@staticmethod`/dunder before \
-                     the first protocol-delegating method at line {}.\n\
-                     HOW TO FIX? Order the class so that Block 2 (protocol-delegating methods) \
-                     comes before Block 3 (factories/dunders).",
+                    "Line {} declares a `@classmethod`/`@staticmethod`/dunder before \
+                     the first protocol-delegating method at line {}.",
                     factory_idx + 1,
-                    proto_idx + 1,
+                    proto_idx + 1
                 ),
+                "Order the class so that Block 2 (protocol-delegating methods) \
+                 comes before Block 3 (factories/dunders).",
             ));
         }
     }
@@ -205,18 +206,19 @@ impl AgentPythonRoleAuditor {
             {
                 let name = t.split('=').next().unwrap_or("").trim();
                 if !name.is_empty() && name.chars().next().is_some_and(char::is_uppercase) {
-                    violations.push(LintResult::new_arch(
+                    violations.push(LintResult::new_arch_with_name(
                         path,
                         i + 1,
                         "AES405",
                         Severity::MEDIUM,
+                        "Module-level constant in a Python agent file".to_string(),
+                        "AGENT_ROLE",
                         format!(
-                            "AES405 AGENT_ROLE: Module-level constant in a Python agent file.\n\
-                             WHY? `{name}` is declared at line {} of {path}. Policy constants \
-                             belong in the taxonomy layer.\n\
-                             HOW TO FIX? Move `{name}` into the feature's taxonomy module and import it.",
-                            i + 1,
+                            "`{name}` is declared at line {}. Policy constants \
+                            belong in the taxonomy layer.",
+                            i + 1
                         ),
+                        format!("Move `{name}` into the feature's taxonomy module and import it."),
                     ));
                 }
             }
@@ -241,19 +243,17 @@ impl AgentPythonRoleAuditor {
             return;
         }
         if injected < 2 {
-            violations.push(LintResult::new_arch(
+            violations.push(LintResult::new_arch_with_name(
                 path,
                 0,
                 "AES405",
                 Severity::LOW,
-                format!(
-                    "AES405 AGENT_ROLE: Orchestrator has a single execution goal.\n\
-                     WHY? {path} injects {} protocol field(s) in `__init__`; an orchestrator must \
-                     coordinate at least 2 subsystems.\n\
-                     HOW TO FIX? Either this work belongs in a capability file rather than an agent, \
-                     or inject the protocols of both subsystems into `__init__`.",
-                    injected
-                ),
+                "Orchestrator has a single execution goal".to_string(),
+                "AGENT_ROLE",
+                "File injects 1 protocol field(s) in `__init__`; an orchestrator must \
+                 coordinate at least 2 subsystems.",
+                "Either this work belongs in a capability file rather than an agent, \
+                 or inject the protocols of both subsystems into `__init__`.",
             ));
         }
     }
@@ -267,18 +267,19 @@ impl AgentPythonRoleAuditor {
             }
             for token in FORBIDDEN {
                 if t.contains(token) {
-                    violations.push(LintResult::new_arch(
+                    violations.push(LintResult::new_arch_with_name(
                         path,
                         i + 1,
                         "AES405",
                         Severity::MEDIUM,
+                        "Computation in a Python agent file".to_string(),
+                        "AGENT_ROLE",
                         format!(
-                            "AES405 AGENT_ROLE: Computation in a Python agent file.\n\
-                             WHY? Line {} of {path} calls `{token}`. An agent orchestrates; it does \
-                             not compute totals or averages over domain data.\n\
-                             HOW TO FIX? Move the aggregation into a capability.",
+                            "Line {} calls `{token}`. An agent orchestrates; it does \
+                             not compute totals or averages over domain data.",
                             i + 1
                         ),
+                        "Move the aggregation into a capability.",
                     ));
                 }
             }
@@ -292,19 +293,20 @@ impl AgentPythonRoleAuditor {
                 continue;
             }
             if t == "@abstractmethod" {
-                violations.push(LintResult::new_arch(
+                violations.push(LintResult::new_arch_with_name(
                     path,
                     i + 1,
                     "AES405",
                     Severity::MEDIUM,
+                    "Abstract method in a Python agent file".to_string(),
+                    "AGENT_ROLE",
                     format!(
-                        "AES405 AGENT_ROLE: Abstract method in a Python agent file.\n\
-                         WHY? Line {} of {path} uses `@abstractmethod`. An agent delegates to \
-                         contracts it consumes; it does not declare new abstract contracts.\n\
-                         HOW TO FIX? Move the abstract method to the feature's protocol ABC in \
-                         `contract_<feature>_protocol.py`.",
+                        "Line {} uses `@abstractmethod`. An agent delegates to \
+                         contracts it consumes; it does not declare new abstract contracts.",
                         i + 1
                     ),
+                    "Move the abstract method to the feature's protocol ABC in \
+                     `contract_<feature>_protocol.py`.",
                 ));
             }
         }
@@ -356,19 +358,20 @@ impl AgentPythonRoleAuditor {
                 continue;
             }
             let field = rest[..eq_pos].trim_end_matches(['+', '-', '*', '/', '%']);
-            violations.push(LintResult::new_arch(
+            violations.push(LintResult::new_arch_with_name(
                 path,
                 i + 1,
                 "AES405",
                 Severity::MEDIUM,
+                "State assignment outside `__init__`".to_string(),
+                "AGENT_ROLE",
                 format!(
-                    "AES405 AGENT_ROLE: State assignment outside `__init__`.\n\
-                     WHY? Line {} of {path} assigns `self.{field}` outside the constructor.\n\
-                     HOW TO FIX? An agent holds no mutable state. If this is a results buffer, \
-                     initialise the field in `__init__` and append to it; if it is domain data, \
-                     move it behind an injected protocol.",
+                    "Line {} assigns `self.{field}` outside the constructor.",
                     i + 1
                 ),
+                "An agent holds no mutable state. If this is a results buffer, \
+                 initialise the field in `__init__` and append to it; if it is domain data, \
+                 move it behind an injected protocol.",
             ));
         }
     }
@@ -404,18 +407,19 @@ impl AgentPythonRoleAuditor {
                     .unwrap_or("")
                     .trim()
                     .to_string();
-                violations.push(LintResult::new_arch(
+                violations.push(LintResult::new_arch_with_name(
                     path,
                     i + 1,
                     "AES405",
                     Severity::LOW,
+                    "Module-level function in a Python agent file".to_string(),
+                    "AGENT_ROLE",
                     format!(
-                        "AES405 AGENT_ROLE: Module-level function in a Python agent file.\n\
-                         WHY? `def {name}` is declared at line {} of {path} at module level.\n\
-                         HOW TO FIX? Move it into a `utility_<domain>_<name>.py` file, or make it a \
-                         method on the agent's class.",
-                        i + 1,
+                        "`def {name}` is declared at line {} at module level.",
+                        i + 1
                     ),
+                    "Move it into a `utility_<domain>_<name>.py` file, or make it a \
+                     method on the agent's class.",
                 ));
             }
         }

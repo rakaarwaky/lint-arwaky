@@ -73,7 +73,7 @@ pub fn build_violation(
         line as usize,
         code,
         severity,
-        format!("{code} CONTRACT_ROLE: {detail}\nWHY? {why}\nHOW TO FIX? {fix}"),
+        format!("{code} CONTRACT_ROLE: {detail}\nWHY? {why}\nFIX: {fix}"),
     )
 }
 

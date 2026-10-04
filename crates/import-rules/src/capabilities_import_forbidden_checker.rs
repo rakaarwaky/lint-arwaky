@@ -370,17 +370,18 @@ impl ArchImportForbiddenChecker {
                         _ => "Remove the import or refactor to use one of the allowed layers.",
                     };
                     let message = format!(
-                        "AES201 FORBIDDEN_IMPORT: Layer '{}' is importing from forbidden layer '{}'.\n\
-                            WHY? {}\n\
-                            FIX: {}",
-                        source_layer, forbidden, why, fix
+                        "Layer '{}' is importing from forbidden layer '{}'.",
+                        source_layer, forbidden
                     );
-                    violations.push(LintResult::new_arch(
+                    violations.push(LintResult::new_arch_with_name(
                         file,
                         idx + 1,
                         "AES201",
                         Severity::CRITICAL,
                         message,
+                        "FORBIDDEN_IMPORT",
+                        why,
+                        fix,
                     ));
                 }
             }
