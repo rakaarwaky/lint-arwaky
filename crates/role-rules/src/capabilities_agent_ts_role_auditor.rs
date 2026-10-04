@@ -11,6 +11,7 @@ use shared_role_rules::contract_role_protocol::IAgentRoleProtocol;
 use shared_role_rules::taxonomy_role_rules_constant::AGENT_FORBIDDEN_IO_TYPESCRIPT;
 
 use shared_role_rules::utility_agent_role_checker;
+use shared_role_rules::utility_agent_role_io_checker;
 
 // ─── Block 1: Struct Definition ────────────────────────────
 
@@ -176,7 +177,7 @@ impl AgentTsRoleAuditor {
     }
 
     fn io_forbidden(&self, content: &str, path: &str, violations: &mut Vec<LintResult>) {
-        utility_agent_role_checker::scan_io_forbidden(
+        utility_agent_role_io_checker::scan_io_forbidden(
             content,
             path,
             "TypeScript",

@@ -13,6 +13,7 @@ use shared_role_rules::contract_role_protocol::IAgentRoleProtocol;
 use shared_role_rules::taxonomy_role_rules_constant::AGENT_FORBIDDEN_IO_RUST;
 
 use shared_role_rules::utility_agent_role_checker;
+use shared_role_rules::utility_agent_role_io_checker;
 
 // === Block 1: Type Definition ===
 
@@ -204,7 +205,7 @@ impl AgentRustRoleAuditor {
 
     /// No filesystem, network, database, or console access. MEDIUM.
     fn io_forbidden(&self, content: &str, path: &str, violations: &mut Vec<LintResult>) {
-        utility_agent_role_checker::scan_io_forbidden(
+        utility_agent_role_io_checker::scan_io_forbidden(
             content,
             path,
             "Rust",
