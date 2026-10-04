@@ -6,6 +6,7 @@ pub mod taxonomy_external_lint_constant;
 pub mod taxonomy_external_lint_request;
 pub mod taxonomy_external_lint_response;
 pub mod taxonomy_external_lint_vo;
+pub mod utility_extension_guard;
 pub mod utility_output_normalization;
 pub mod utility_path_normalization;
 
