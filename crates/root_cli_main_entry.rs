@@ -802,9 +802,13 @@ fn main() {
                 phase = "started",
                 "CLI git-hook action started"
             );
-            let exe = std::env::current_exe()
-                .map(|p| FilePath::new(p.to_string_lossy().to_string()).unwrap_or_default())
-                .unwrap_or_default();
+            // LINT_ARWAKY_CLI_PATH overrides the CLI path; current_exe() is
+            // forbidden (subprocess-adjacent architecture rule).
+            let exe = std::env::var("LINT_ARWAKY_CLI_PATH")
+                .map(|p| FilePath::new(p).unwrap_or_default())
+                .unwrap_or_else(|_| {
+                    FilePath::new("lint-arwaky-cli".to_string()).unwrap_or_default()
+                });
             match dispatcher::surface_git_action::collect_install_hook(
                 git_orchestrator.clone(),
                 &exe,

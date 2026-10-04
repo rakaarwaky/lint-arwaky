@@ -22,9 +22,8 @@ use shared_role_rules::taxonomy_role_rules_request::RoleRequest;
 use crate::surface_check_action::{
     ScanAggregates, ScanOptions, apply_filter, build_entries, build_import_map,
     build_index_ignored, canonicalize_via, discover_lintable_files, discover_test_suite_files,
-    doc_violations_in_scope, external_violation_in_scope, run_all_linters_json,
-    run_single_file_scan, structure_violations_in_scope, validate_member_path,
-    violation_in_scan_scope,
+    doc_violations_in_scope, external_violation_in_scope, run_single_file_scan,
+    structure_violations_in_scope, validate_member_path, violation_in_scan_scope,
 };
 
 /// Outcome of a cancellable scan. `stopped_early` is set when the dispatcher
@@ -85,9 +84,13 @@ where
                     stopped_early: true,
                 });
             }
-            let result = run_all_linters_json(&target_path, opts.filesystem.as_ref())?;
-            on_progress("Scan complete".to_string(), 0, 0);
-            (result, false)
+            // Subprocess self-invocation via current_exe() is forbidden by the
+            // architecture rules. Callers must supply a ScanAggregates bundle
+            // to run the scan in-process.
+            return Err(
+                "scan_aggregates is required: in-process scan only; subprocess fallback is an architecture violation"
+                    .to_string(),
+            );
         }
     };
     let violations = apply_filter(violations, &opts.filter);
