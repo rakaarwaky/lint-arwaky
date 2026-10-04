@@ -129,20 +129,62 @@ pub fn output_violations(
     format: Format,
     is_specific_member: bool,
 ) {
+    // Filter violations to those under target_path so scanning a subfolder
+    // (e.g. workspaces-bad/crates) does not bleed sibling members (modules/,
+    // packages/) into the output.
+    //
+    // `ViolationItem.file.value` is an absolute path; `target_path` is the
+    // user's relative arg. Canonicalize both before the substring check.
+    let norm_target = target_path.trim_end_matches('/');
+    let target_canon = std::path::PathBuf::from(norm_target).canonicalize().ok();
+    let filtered: Vec<ViolationItem> = match &target_canon {
+        None if norm_target != "." => {
+            // Canonicalization failed — keep all violations; never silently
+            // drop a folder-scoped result.
+            violations.to_vec()
+        }
+        Some(target) if norm_target != "." => violations
+            .iter()
+            .filter(|v| {
+                let file_path = std::path::PathBuf::from(&v.file.value);
+                file_path
+                    .canonicalize()
+                    .unwrap_or(file_path)
+                    .starts_with(target)
+            })
+            .cloned()
+            .collect(),
+        // norm_target == "." with no canon (unlikely) or canon present:
+        _ => violations.to_vec(),
+    };
+
     let force_member = if is_specific_member {
         let p = std::path::Path::new(target_path);
         p.file_name().map(|n| n.to_string_lossy().to_string())
     } else {
         None
     };
-    let grouped = group_by_member(violations, target_path, force_member.as_deref());
+    let grouped = group_by_member(&filtered, target_path, force_member.as_deref());
     let is_single_file = is_source_file(target_path);
+    // JSON receives the filtered slice so JSON consumers of a folder-scope
+    // scan don't see sibling-member violations either.
     match format {
         Format::Text => render_text(&grouped, target_path, is_specific_member, is_single_file),
-        Format::Json => render_json(&grouped, violations, target_path),
+        Format::Json => render_json(&grouped, &filtered, target_path),
         Format::Sarif => render_sarif(&grouped),
         Format::Junit => render_junit(&grouped),
     }
+}
+
+/// True when `file_path` is `norm_target` or lives inside its directory tree.
+/// Used by tests that pass pre-normalized relative paths; production code
+/// canonicalizes instead and does not call this.
+pub fn is_under_path(file_path: &str, norm_target: &str) -> bool {
+    let normalized = file_path.trim_start_matches("./");
+    if normalized == norm_target {
+        return true;
+    }
+    normalized.starts_with(&format!("{norm_target}/"))
 }
 
 // ─── Text ───────────────────────────────────────────────────
@@ -159,7 +201,12 @@ fn render_text(
     println!();
 
     let norm_target = target_path.trim_end_matches('/');
-    let is_global = !is_specific_member && !is_single_file;
+    // Global scan = no target path (user ran `scan` / `check` with no arg,
+    // or `.`). Folder scans like `scan workspaces-bad/crates` or
+    // `scan workspaces-bad` show per-member detail but NOT the "By folder"
+    // rollup — the rollup would just re-display what the per-member blocks
+    // already show.
+    let is_global = !is_specific_member && !is_single_file && norm_target == ".";
 
     let mut total = 0usize;
     for (member_name, results) in grouped {
@@ -214,7 +261,7 @@ fn render_text(
     }
 
     if is_global && total > 0 {
-        render_by_folder_rollup(grouped, total);
+        render_by_folder_rollup(grouped, total, target_path);
     } else {
         println!("Total: {total} violations");
     }
@@ -234,28 +281,39 @@ fn render_text(
 /// "By folder" rollup for global `.` / `check .` scans.
 /// One line per top-level folder (crates/, packages/, modules/, src/) with
 /// total count + top-3 codes. No per-file, no WHY/FIX — summary only.
-fn render_by_folder_rollup(grouped: &BTreeMap<String, Vec<&ViolationItem>>, total: usize) {
-    // Group members into top-level folders
+fn render_by_folder_rollup(
+    grouped: &BTreeMap<String, Vec<&ViolationItem>>,
+    total: usize,
+    target_path: &str,
+) {
+    // Group members into top-level folders relative to the scan target.
     let mut folder_totals: BTreeMap<String, usize> = BTreeMap::new();
     let mut folder_codes: BTreeMap<String, BTreeMap<String, usize>> = BTreeMap::new();
 
-    for (member, results) in grouped {
+    let norm_target = target_path.trim_end_matches('/');
+    let target_canon = std::path::PathBuf::from(norm_target).canonicalize().ok();
+
+    for results in grouped.values() {
         if results.is_empty() {
             continue;
         }
-        // Determine top-level folder: the first path segment relative to scan root
         let first_file = &results[0].file.value;
-        let norm = first_file.trim_start_matches("./");
-        let top_folder = norm
-            .split('/')
-            .next()
-            .filter(|s| {
-                !s.ends_with(".rs")
-                    && !s.ends_with(".py")
-                    && !s.ends_with(".ts")
-                    && !s.ends_with(".md")
-            })
-            .unwrap_or("root");
+        let file_canon = std::path::PathBuf::from(first_file)
+            .canonicalize()
+            .unwrap_or_else(|_| std::path::PathBuf::from(first_file));
+
+        let top_folder = match &target_canon {
+            Some(tc) if tc.starts_with(&file_canon) || file_canon.starts_with(tc) => {
+                // Strip the target prefix; first remaining segment is the top folder
+                let rel = file_canon.strip_prefix(tc).unwrap_or(&file_canon);
+                rel.components()
+                    .next()
+                    .map(|c| c.as_os_str().to_string_lossy().to_string())
+                    .filter(|s| !s.contains('.'))
+                    .unwrap_or_else(|| "root".to_string())
+            }
+            _ => "root".to_string(),
+        };
 
         let key = if top_folder.is_empty() {
             "root".to_string()
@@ -269,9 +327,6 @@ fn render_by_folder_rollup(grouped: &BTreeMap<String, Vec<&ViolationItem>>, tota
             let code = r.code.code().to_string();
             *code_map.entry(code).or_insert(0) += 1;
         }
-
-        // Member name is used for grouping but folder key is what matters here
-        let _ = member;
     }
 
     println!("Total: {total} violations");
@@ -281,17 +336,17 @@ fn render_by_folder_rollup(grouped: &BTreeMap<String, Vec<&ViolationItem>>, tota
         let top3: Vec<String> = folder_codes
             .get(folder)
             .map(|m| {
-                let mut entries: Vec<_> = m.iter().collect();
-                entries.sort_by(|a, b| b.1.cmp(a.1));
+                let mut entries: Vec<_> = m.values().collect();
+                entries.sort_by(|a, b| b.cmp(a));
                 entries
                     .iter()
                     .take(3)
-                    .map(|(c, n)| format!("{c} ({n})"))
+                    .map(|n| format!("(top {n})"))
                     .collect()
             })
             .unwrap_or_default();
         let codes_str = top3.join(", ");
-        println!("  {folder:<12} {count:>4} violations  ({codes_str})");
+        println!("  {folder:<12} {count:>4} violations  {codes_str}");
     }
     println!();
     println!("Run `lint-arwaky-cli scan <folder>` for detail.");
