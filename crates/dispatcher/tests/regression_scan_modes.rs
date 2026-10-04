@@ -325,6 +325,9 @@ fn violation_for(path: &str) -> shared_common::ViolationItem {
         column: shared_common::taxonomy_common_vo::ColumnNumber::new(1),
         message: shared_common::taxonomy_message_vo::LintMessage::new("test"),
         severity: shared_common::taxonomy_severity_vo::Severity::MEDIUM,
+        violation_name: String::new(),
+        why: String::new(),
+        fix: String::new(),
     }
 }
 

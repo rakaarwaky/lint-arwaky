@@ -119,8 +119,17 @@ where
         Some(m) => validate_member_path(&opts, &root, m)?,
         None => root.clone(),
     };
+    // A subfolder or single-file target must still be judged against its whole
+    // member dir — the architecture rules read sibling files — so the scan
+    // widens to the member dir and only the *report* narrows.
+    let scope = shared_cli_commands::classify_scan_scope(&root, &target_path);
+    let scan_path = match scope.scan_root() {
+        "" => target_path.clone(),
+        member_root => member_root.to_string(),
+    };
+
     let violations = match opts.scan_aggregates.as_ref() {
-        Some(agg) => run_all_linters_in_process(&target_path, agg, &mut on_progress),
+        Some(agg) => run_all_linters_in_process(&scan_path, agg, &mut on_progress),
         None => {
             // Subprocess fallback is forbidden (current_exe self-invocation
             // violates the architecture rules). Callers must provide a
@@ -131,8 +140,36 @@ where
             );
         }
     };
+    let violations = retain_scope(violations, &scope);
     let violations = apply_filter(violations, &opts.filter);
     Ok(violations)
+}
+
+/// Keep only the violations the user's path selects. `Workspace` and
+/// `TopLevel` keep everything; the other two narrow to the requested prefix.
+///
+/// A failed canonicalization keeps the violation: dropping a real finding
+/// because a path did not resolve would hide a defect, which is worse than
+/// reporting one extra line.
+fn retain_scope(
+    violations: Vec<ViolationItem>,
+    scope: &shared_cli_commands::ScanScope,
+) -> Vec<ViolationItem> {
+    let Some(prefix) = scope.filter_prefix() else {
+        return violations;
+    };
+    let prefix_canon = std::path::PathBuf::from(prefix)
+        .canonicalize()
+        .unwrap_or_else(|_| std::path::PathBuf::from(prefix));
+    violations
+        .into_iter()
+        .filter(|v| {
+            std::path::PathBuf::from(&v.file.value)
+                .canonicalize()
+                .unwrap_or_else(|_| std::path::PathBuf::from(&v.file.value))
+                .starts_with(&prefix_canon)
+        })
+        .collect()
 }
 
 /// Canonicalize a path via the filesystem aggregate (`None` on failure).
@@ -603,6 +640,9 @@ pub(crate) fn doc_violations_in_scope(target: &str, agg: &ScanAggregates) -> Vec
                 column: shared_common::ColumnNumber::new(1),
                 message,
                 severity: shared_common::Severity::HIGH,
+                violation_name: finding.violation_type.to_string(),
+                why: String::new(),
+                fix: String::new(),
             })
         })
         .collect::<Vec<_>>()

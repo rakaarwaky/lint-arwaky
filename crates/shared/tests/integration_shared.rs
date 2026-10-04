@@ -70,6 +70,9 @@ fn lintresult_with_related_locations() {
         severity: Severity::CRITICAL,
         enclosing_scope: None,
         related_locations: related,
+        violation_name: String::new(),
+        why: String::new(),
+        fix: String::new(),
     };
 
     assert_eq!(result.related_locations.len(), 1);

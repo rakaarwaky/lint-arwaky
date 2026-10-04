@@ -28,5 +28,8 @@ pub fn violation(file: &str, line: usize, code: &str, severity: Severity) -> Lin
         severity,
         enclosing_scope: None,
         related_locations: Default::default(),
+        violation_name: String::new(),
+        why: String::new(),
+        fix: String::new(),
     }
 }

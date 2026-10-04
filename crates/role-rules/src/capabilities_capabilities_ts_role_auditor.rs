@@ -189,20 +189,29 @@ impl CapabilitiesTypeScriptRoleAuditor {
             (helper_line, proto_method_line)
             && help_idx < proto_idx
         {
-            violations.push(LintResult::new_arch(
+            violations.push(LintResult::new_arch_with_name(
                 path,
                 help_idx + 1,
                 "AES403",
                 Severity::HIGH,
                 format!(
                     "AES403 CAPABILITY_ROLE: Block 2 (protocol methods) must precede Block 3 (helpers).\n\
-                     WHY? `{help_src}` is declared at line {} but the first public protocol method `{proto_src}` \
+                     WHY: `{help_src}` is declared at line {} but the first public protocol method `{proto_src}` \
                      follows at line {}.\n\
-                     HOW TO FIX? Move all helper methods below the public protocol methods.\n  \
+                     FIX: Move all helper methods below the public protocol methods.\n  \
                      Block 1 (class + constructor) -> Block 2 (public protocol methods) -> Block 3 (helpers, statics, factories).",
                     help_idx + 1,
                     proto_idx + 1,
                 ),
+                "CAPABILITY_ROLE",
+                format!(
+                    "`{help_src}` is declared at line {} but the first public protocol method `{proto_src}` \
+                     follows at line {}.",
+                    help_idx + 1,
+                    proto_idx + 1
+                ),
+                "Move all helper methods below the public protocol methods.\n  \
+                 Block 1 (class + constructor) -> Block 2 (public protocol methods) -> Block 3 (helpers, statics, factories).",
             ));
         }
     }
@@ -235,17 +244,26 @@ impl CapabilitiesTypeScriptRoleAuditor {
             if name.is_empty() || name.contains(' ') {
                 continue;
             }
-            violations.push(LintResult::new_arch(
+            violations.push(LintResult::new_arch_with_name(
                 path,
                 i + 1,
                 "AES403",
                 Severity::MEDIUM,
                 format!(
                     "AES403 CAPABILITY_ROLE: Local constant in capabilities file.\n\
-                     WHY? `{name}` is declared as a module-level `const` at line {}.\n\
-                     HOW TO FIX? Move `{name}` into `taxonomy_<domain>_constant.ts` so every layer shares one policy value.\n  \
+                     WHY: `{name}` is declared as a module-level `const` at line {}.\n\
+                     FIX: Move `{name}` into `taxonomy_<domain>_constant.ts` so every layer shares one policy value.\n  \
                      Keep the constant in this file only when it is a private mechanical detail, not a domain policy.",
                     i + 1,
+                ),
+                "CAPABILITY_ROLE",
+                format!(
+                    "`{name}` is declared as a module-level `const` at line {}.",
+                    i + 1
+                ),
+                format!(
+                    "Move `{name}` into `taxonomy_<domain>_constant.ts` so every layer shares one policy value.\n  \
+                     Keep the constant in this file only when it is a private mechanical detail, not a domain policy."
                 ),
             ));
         }
@@ -280,19 +298,24 @@ impl CapabilitiesTypeScriptRoleAuditor {
                 continue;
             }
             reported_block = true;
-            violations.push(LintResult::new_arch(
+            violations.push(LintResult::new_arch_with_name(
                 path,
                 i + 1,
                 "AES403",
                 Severity::LOW,
                 format!(
                     "AES403 CAPABILITY_ROLE: Embedded test code in capabilities file.\n\
-                     WHY? Test code starts at line {} (`{t}`).\n\
-                     HOW TO FIX? Move it into `tests/` as a dedicated test file \
+                     WHY: Test code starts at line {} (`{t}`).\n\
+                     FIX: Move it into `tests/` as a dedicated test file \
                      (for example `tests/unit_capabilities_<name>.test.ts`) and keep the capability source \
                      free of test-only code.",
                     i + 1,
                 ),
+                "CAPABILITY_ROLE",
+                format!("Test code starts at line {} (`{t}`).", i + 1),
+                "Move it into `tests/` as a dedicated test file \
+                 (for example `tests/unit_capabilities_<name>.test.ts`) and keep the capability source \
+                 free of test-only code.",
             ));
         }
     }
@@ -345,18 +368,25 @@ impl CapabilitiesTypeScriptRoleAuditor {
             if references.referenced_only_from_tests(path, fn_name) {
                 continue;
             }
-            violations.push(LintResult::new_arch(
+            violations.push(LintResult::new_arch_with_name(
                 path,
                 i + 1,
                 "AES403",
                 Severity::MEDIUM,
                 format!(
                     "AES403 CAPABILITY_ROLE: Public helper has no external caller.\n\
-                     WHY? `public {fn_name}()` in {path} is not referenced from any other module or test.\n\
-                     HOW TO FIX? Remove the `public` keyword or mark it `private` if it is an internal helper.",
+                     WHY: `public {fn_name}()` in {path} is not referenced from any other module or test.\n\
+                     FIX: Remove the `public` keyword or mark it `private` if it is an internal helper.",
                     fn_name = fn_name,
                     path = path,
                 ),
+                "CAPABILITY_ROLE",
+                format!(
+                    "`public {fn_name}()` in {path} is not referenced from any other module or test.",
+                    fn_name = fn_name,
+                    path = path,
+                ),
+                "Remove the `public` keyword or mark it `private` if it is an internal helper.",
             ));
         }
     }

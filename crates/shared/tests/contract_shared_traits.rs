@@ -219,6 +219,9 @@ fn lint_result_direct_construction() {
         severity: Severity::CRITICAL,
         enclosing_scope: None,
         related_locations: LocationList::new(),
+        violation_name: String::new(),
+        why: String::new(),
+        fix: String::new(),
     };
     assert_eq!(result.file.value(), "test.rs");
     assert_eq!(result.line.value, 1);

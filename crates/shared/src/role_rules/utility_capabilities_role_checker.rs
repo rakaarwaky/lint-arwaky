@@ -97,7 +97,7 @@ pub fn check_type_budget(file: &FileEntry, violations: &mut Vec<LintResult>) {
                 format!(
                     "AES403 CAPABILITY_ROLE: Capability declares too many types.\n\
                      WHY? Found {count} type declarations, max 3 allowed.\n\
-                     HOW TO FIX? Keep at most 3 types in a capability file. \
+                     FIX: Keep at most 3 types in a capability file. \
                      Move the excess to the taxonomy layer or split across capability files."
                 ),
             ));
@@ -113,7 +113,7 @@ pub fn check_type_budget(file: &FileEntry, violations: &mut Vec<LintResult>) {
             format!(
                 "AES403 CAPABILITY_ROLE: Capability declares too many types.\n\
                  WHY? Found {count} {kind} declarations, max 3 allowed.\n\
-                 HOW TO FIX? Keep at most 3 types in a capability file. \
+                 FIX: Keep at most 3 types in a capability file. \
                  Move the excess to the taxonomy layer or split across capability files."
             ),
         ));
@@ -146,7 +146,7 @@ pub fn check_implementor(file: &FileEntry, violations: &mut Vec<LintResult>) {
             "AES403 CAPABILITY_ROLE: Capability implements no contract protocol.\n\
              WHY? {found} A capability must implement a protocol contract; \
              an aggregate trait belongs to the agent layer (AES405).\n\
-             HOW TO FIX? Create the contract with the `aes-contract` skill, \
+             FIX: Create the contract with the `aes-contract` skill, \
              then add the protocol implementation as Block 2 of this file."
         ),
     ));
@@ -221,7 +221,7 @@ pub fn check_single_protocol(file: &FileEntry, violations: &mut Vec<LintResult>)
         format!(
             "AES403 CAPABILITY_ROLE: Capability file implements multiple protocols.\n\
              WHY? {count} protocol traits found: {names}.\n\
-             HOW TO FIX? Split this file into separate capability files, one per protocol \
+             FIX: Split this file into separate capability files, one per protocol \
              (e.g. `capabilities_foo_handler.rs`, `capabilities_bar_handler.rs`). \
              If the capabilities share common helper functions, move those shared functions \
              to a `utility_<shared>_resolver.*` file and import it from both capabilities.",
@@ -273,7 +273,7 @@ pub fn check_block_markers(file: &FileEntry, violations: &mut Vec<LintResult>) {
                  comment, so the reader is given no map of the file. The 3-block shape \
                  is Block 1 (struct definition) -> Block 2 (protocol trait \
                  implementation) -> Block 3 (constructors, std traits, helpers).\n\
-                 HOW TO FIX? Add the three banner comments above their blocks:\n  \
+                 FIX: Add the three banner comments above their blocks:\n  \
                  // Block 1: Struct Definition\n  \
                  // Block 2: Protocol Trait Implementation\n  \
                  // Block 3: Constructors, Std Traits, Helpers"
@@ -299,7 +299,7 @@ pub fn check_block_markers(file: &FileEntry, violations: &mut Vec<LintResult>) {
                  Block 1 (struct definition), Block 2 (protocol trait implementation), \
                  Block 3 (constructors, std traits, helpers) — and each needs its banner \
                  so the reader can find the seam.\n\
-                 HOW TO FIX? Add the missing banner comment(s) above the block they head.",
+                 FIX: Add the missing banner comment(s) above the block they head.",
                 block_list(&declared),
                 missing
                     .iter()
@@ -325,7 +325,7 @@ pub fn check_block_markers(file: &FileEntry, violations: &mut Vec<LintResult>) {
                  definition) -> Block 2 (protocol trait implementation) -> Block 3 \
                  (constructors, std traits, helpers); a Block 4 means the file has \
                  outgrown it.\n\
-                 HOW TO FIX? Fold the extra blocks back into Block 3, or move the \
+                 FIX: Fold the extra blocks back into Block 3, or move the \
                  behaviour they hold into a capability or utility file.",
                 above_three
                     .iter()
@@ -357,7 +357,7 @@ pub fn check_block_markers(file: &FileEntry, violations: &mut Vec<LintResult>) {
                  WHY? {path} declares them as {} but the structure is fixed: Block 1 \
                  (struct definition) -> Block 2 (protocol trait implementation) -> \
                  Block 3 (constructors, std traits, helpers).\n\
-                 HOW TO FIX? Move the banner comments so they head their blocks in \
+                 FIX: Move the banner comments so they head their blocks in \
                  1 -> 2 -> 3 order.",
                 sequence
                     .iter()

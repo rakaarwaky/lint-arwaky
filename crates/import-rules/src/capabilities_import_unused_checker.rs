@@ -101,16 +101,19 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
             }
             let ast_line = utility_import_resolver::find_import_line_number(content, alias_str)
                 .value() as usize;
-            violations.push(LintResult::new_arch(
+            violations.push(LintResult::new_arch_with_name(
                 file,
                 ast_line,
                 "AES203",
                 Severity::MEDIUM,
                 format!(
                     "AES203 UNUSED_IMPORT: Unused import '{alias_str}' detected.\n\
-                        WHY? Unused imports clutter the codebase.\n\
+                        WHY: Unused imports clutter the codebase.\n\
                         FIX: Remove the unused import."
                 ),
+                "UNUSED_IMPORT",
+                "Unused imports clutter the codebase.",
+                "Remove the unused import.",
             ));
         }
         Ok(violations)

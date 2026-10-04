@@ -72,7 +72,7 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
             return OrphanIndicatorResult::new(
                 true,
                 format!(
-                    "AES502 CONTRACT_ORPHAN: Contract {} '{}' is not reachable.\nWHY? Contract {} '{}' is not reachable from any _entry file.\nFIX: Import '{}' from a _entry file.",
+                    "AES502 CONTRACT_ORPHAN: Contract {} '{}' is not reachable.\nWHY: Contract {} '{}' is not reachable from any _entry file.\nFIX: Import '{}' from a _entry file.",
                     suffix,
                     trait_names.join(", "),
                     suffix,
@@ -110,7 +110,7 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
                 return OrphanIndicatorResult::new(
                     true,
                     format!(
-                        "AES502 CONTRACT_ORPHAN: Contract protocol '{}' is not implemented.\nWHY? Contract protocol '{}' is not implemented by any capabilities_* file.\nFIX: Implement '{}' in a capabilities_* file.",
+                        "AES502 CONTRACT_ORPHAN: Contract protocol '{}' is not implemented.\nWHY: Contract protocol '{}' is not implemented by any capabilities_* file.\nFIX: Implement '{}' in a capabilities_* file.",
                         unimplemented.join(", "),
                         unimplemented.join(", "),
                         unimplemented.join(", ")
@@ -146,7 +146,7 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
                 return OrphanIndicatorResult::new(
                     true,
                     format!(
-                        "AES502 CONTRACT_ORPHAN: Contract aggregate '{}' is not implemented.\nWHY? Contract aggregate '{}' is not implemented by any agent_* file.\nFIX: Implement '{}' in an agent_* file.",
+                        "AES502 CONTRACT_ORPHAN: Contract aggregate '{}' is not implemented.\nWHY: Contract aggregate '{}' is not implemented by any agent_* file.\nFIX: Implement '{}' in an agent_* file.",
                         unimplemented.join(", "),
                         unimplemented.join(", "),
                         unimplemented.join(", ")

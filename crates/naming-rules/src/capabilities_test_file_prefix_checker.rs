@@ -133,6 +133,15 @@ impl TestFilePrefixChecker {
                  e.g. 'unit_<subject>.rs' instead of '{directory}/<sub>/{filename}'."
             ),
             Severity::HIGH,
+            "TEST_FILE_PREFIX",
+            format!(
+                "Test file '{filename}' sits {depth} level(s) below '{directory}/'. \
+                 The file-name prefix IS the virtual folder: '{directory}/' must stay flat."
+            ),
+            format!(
+                "Move the file up to '{directory}/' and let its prefix carry the type — \
+                 e.g. 'unit_<subject>.rs' instead of '{directory}/<sub>/{filename}'."
+            ),
         )
     }
 
@@ -171,7 +180,37 @@ impl TestFilePrefixChecker {
             ),
         };
 
-        string_filename_result(file, RULE_CODE_TEST_FILE_PREFIX, message, Severity::HIGH)
+        let (why, fix) = match &foreign {
+            Some((prefix, home)) => (
+                format!(
+                    "Test file '{filename}' starts with '{prefix}', which belongs in '{home}/', \
+                     but this file sits in '{directory}/'. The prefix is the virtual folder."
+                ),
+                format!(
+                    "Move the file to '{home}/' or rename it with a '{directory}/' prefix — \
+                     legal '{directory}/' prefixes: {legal}."
+                ),
+            ),
+            None => (
+                format!(
+                    "Test file '{filename}' does not start with a legal test-type prefix. \
+                     Files in '{directory}/' are typed by their prefix, which is the virtual folder."
+                ),
+                format!(
+                    "Rename the file to '<type>_<subject>.<ext>' — legal '{directory}/' prefixes: {legal}."
+                ),
+            ),
+        };
+
+        string_filename_result(
+            file,
+            RULE_CODE_TEST_FILE_PREFIX,
+            message,
+            Severity::HIGH,
+            "TEST_FILE_PREFIX",
+            why,
+            fix,
+        )
     }
 }
 

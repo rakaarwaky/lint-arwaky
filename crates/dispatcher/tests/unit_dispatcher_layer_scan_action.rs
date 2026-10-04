@@ -19,6 +19,9 @@ fn violation(code: &str, file: &str) -> ViolationItem {
         column: ColumnNumber::new(1),
         message: LintMessage::new("finding"),
         severity: Severity::HIGH,
+        violation_name: String::new(),
+        why: String::new(),
+        fix: String::new(),
     }
 }
 

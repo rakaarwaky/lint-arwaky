@@ -76,6 +76,9 @@ impl DocFinding {
             column: shared_common::ColumnNumber::new(1),
             message: LintMessage::new(self.message.clone()),
             severity: self.severity.clone(),
+            violation_name: self.violation_type.to_string(),
+            why: String::new(),
+            fix: String::new(),
         }
     }
 }

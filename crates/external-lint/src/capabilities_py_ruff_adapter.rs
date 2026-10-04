@@ -128,6 +128,9 @@ impl ILinterAdapterProtocol for RuffAdapter {
                 severity: self.map_severity(severity_str, code),
                 enclosing_scope: None,
                 related_locations: LocationList::new(),
+                violation_name: String::new(),
+                why: String::new(),
+                fix: String::new(),
             });
         }
         Ok(LintResultList::new(results))

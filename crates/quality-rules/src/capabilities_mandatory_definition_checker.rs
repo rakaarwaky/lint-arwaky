@@ -74,15 +74,18 @@ impl IMandatoryClassProtocol for MandatoryDefinitionChecker {
         }
 
         if !has_class {
-            violations.push(LintResult::new_arch(
+            violations.push(LintResult::new_arch_with_name(
                 file,
                 0,
                 "AES303",
                 Severity::HIGH,
                 format!(
-                    "AES303 MANDATORY_DEFINITION: File is missing a struct, interface, or type definition.\nWHY? File {} has no class/struct/enum/trait definition\nFIX: Group functions into a struct or implement an interface.",
+                    "AES303 MANDATORY_DEFINITION: File is missing a struct, interface, or type definition.\nWHY: File {} has no class/struct/enum/trait definition\nFIX: Group functions into a struct or implement an interface.",
                     file
                 ),
+                "MANDATORY_DEFINITION",
+                format!("File {} has no class/struct/enum/trait definition", file),
+                "Group functions into a struct or implement an interface.",
             ));
         }
     }

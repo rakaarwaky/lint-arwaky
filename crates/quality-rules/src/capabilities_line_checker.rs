@@ -50,27 +50,45 @@ impl ILineCheckerProtocol for ArchLineChecker {
         let count = content.lines().count() as i64;
 
         if def.code_analysis.min_lines.value > 0 && count < def.code_analysis.min_lines.value {
-            violations.push(LintResult::new_arch(
+            violations.push(LintResult::new_arch_with_name(
                 file,
                 count as usize,
                 "AES302",
                 Severity::HIGH,
                 format!(
-                    "AES302 FILE_TOO_SHORT: File contains fewer than the required minimum lines.\nWHY? File has {} lines, less than minimum {} lines\nFIX: Expand the component or merge this logic into a related module. (min: {}).",
+                    "AES302 FILE_TOO_SHORT: File contains fewer than the required minimum lines.\nWHY: File has {} lines, less than minimum {} lines\nFIX: Expand the component or merge this logic into a related module. (min: {}).",
                     count, def.code_analysis.min_lines.value, def.code_analysis.min_lines.value
+                ),
+                "FILE_TOO_SHORT",
+                format!(
+                    "File has {} lines, less than minimum {} lines",
+                    count, def.code_analysis.min_lines.value
+                ),
+                format!(
+                    "Expand the component or merge this logic into a related module. (min: {}).",
+                    def.code_analysis.min_lines.value
                 ),
             ));
         }
 
         if def.code_analysis.max_lines.value > 0 && count > def.code_analysis.max_lines.value {
-            violations.push(LintResult::new_arch(
+            violations.push(LintResult::new_arch_with_name(
                 file,
                 count as usize,
                 "AES301",
                 Severity::HIGH,
                 format!(
-                    "AES301 FILE_TOO_LARGE: File exceeds the maximum allowed line count.\nWHY? File has {} lines, exceeding maximum {} lines\nFIX: Split the module into smaller, more focused files. (max: {}).",
+                    "AES301 FILE_TOO_LARGE: File exceeds the maximum allowed line count.\nWHY: File has {} lines, exceeding maximum {} lines\nFIX: Split the module into smaller, more focused files. (max: {}).",
                     count, def.code_analysis.max_lines.value, def.code_analysis.max_lines.value
+                ),
+                "FILE_TOO_LARGE",
+                format!(
+                    "File has {} lines, exceeding maximum {} lines",
+                    count, def.code_analysis.max_lines.value
+                ),
+                format!(
+                    "Split the module into smaller, more focused files. (max: {}).",
+                    def.code_analysis.max_lines.value
                 ),
             ));
         }

@@ -27,7 +27,7 @@ pub fn collect_structure(
     Ok(findings
         .into_iter()
         .map(|f| {
-            let code = shared_common::ErrorCode::raw(f.code);
+            let code = shared_common::ErrorCode::raw(f.code.clone());
             let file = shared_common::FilePath::new(f.file.clone()).unwrap_or_default();
             let message = shared_common::LintMessage::new(f.message.clone());
             ViolationItem {
@@ -37,6 +37,9 @@ pub fn collect_structure(
                 column: shared_common::ColumnNumber::default(),
                 message,
                 severity: shared_common::Severity::MEDIUM,
+                violation_name: f.violation_type,
+                why: String::new(),
+                fix: String::new(),
             }
         })
         .collect())

@@ -8,6 +8,7 @@ use crate::taxonomy_lint_result_vo::LintResult;
 use crate::taxonomy_message_vo::LintMessage;
 use crate::taxonomy_path_vo::FilePath;
 use crate::taxonomy_severity_vo::Severity;
+use crate::taxonomy_violation_message_vo::{parse_fix, parse_violation_name, parse_why};
 
 /// Minimal violation item for display. Uses existing VOs — no duplicate String wrappers.
 #[derive(Debug, Clone)]
@@ -18,6 +19,12 @@ pub struct ViolationItem {
     pub column: ColumnNumber,
     pub message: LintMessage,
     pub severity: Severity,
+    /// Short subtype name (e.g. "TAXONOMY_ROLE"). Empty → parsed from `message`.
+    pub violation_name: String,
+    /// WHY text. Empty → parsed from `message` (`WHY?` / `WHY:`).
+    pub why: String,
+    /// FIX text. Empty → parsed from `message` (`FIX:` / `HOW TO FIX?`).
+    pub fix: String,
 }
 
 impl ViolationItem {
@@ -29,6 +36,21 @@ impl ViolationItem {
             column: r.column.clone(),
             message: r.message.clone(),
             severity: r.severity.clone(),
+            violation_name: if r.violation_name.is_empty() {
+                parse_violation_name(r.code.code(), &r.message.value)
+            } else {
+                r.violation_name.clone()
+            },
+            why: if r.why.is_empty() {
+                parse_why(&r.message.value)
+            } else {
+                r.why.clone()
+            },
+            fix: if r.fix.is_empty() {
+                parse_fix(&r.message.value)
+            } else {
+                r.fix.clone()
+            },
         }
     }
 
@@ -44,6 +66,13 @@ impl ViolationItem {
                     .and_then(|v| v.as_str())
                     .unwrap_or("INFO"),
             ),
+            violation_name: item
+                .get("violation_name")
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .to_string(),
+            why: item.get("why").and_then(|v| v.as_str()).unwrap_or("").to_string(),
+            fix: item.get("fix").and_then(|v| v.as_str()).unwrap_or("").to_string(),
         })
     }
 

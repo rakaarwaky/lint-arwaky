@@ -168,20 +168,29 @@ impl CapabilitiesRustRoleAuditor {
             (inherent_line, protocol_line)
             && inh_idx < proto_idx
         {
-            violations.push(LintResult::new_arch(
+            violations.push(LintResult::new_arch_with_name(
                 path,
                 inh_idx + 1,
                 "AES403",
                 Severity::HIGH,
                 format!(
                     "AES403 CAPABILITY_ROLE: Block 2 (protocol impl) must precede Block 3 (inherent impl).\n\
-                     WHY? `{inh_src}` is declared at line {} but `{proto_src}` follows at line {}.\n\
-                     HOW TO FIX? Reorder the file so the blocks read:\n  \
+                     WHY: `{inh_src}` is declared at line {} but `{proto_src}` follows at line {}.\n\
+                     FIX: Reorder the file so the blocks read:\n  \
                      Block 1 (type + constructor) -> Block 2 (protocol methods only) -> Block 3 (factories, std traits, helpers).\n  \
                      Move the protocol trait implementation above the inherent impl block.",
                     inh_idx + 1,
                     proto_idx + 1,
                 ),
+                "CAPABILITY_ROLE",
+                format!(
+                    "`{inh_src}` is declared at line {} but `{proto_src}` follows at line {}.",
+                    inh_idx + 1,
+                    proto_idx + 1
+                ),
+                "Reorder the file so the blocks read:\n  \
+                 Block 1 (type + constructor) -> Block 2 (protocol methods only) -> Block 3 (factories, std traits, helpers).\n  \
+                 Move the protocol trait implementation above the inherent impl block.",
             ));
         }
     }
@@ -211,17 +220,26 @@ impl CapabilitiesRustRoleAuditor {
                     .nth(1)
                     .unwrap_or("<unnamed>")
                     .to_string();
-                violations.push(LintResult::new_arch(
+                violations.push(LintResult::new_arch_with_name(
                     path,
                     i + 1,
                     "AES403",
                     Severity::MEDIUM,
                     format!(
                         "AES403 CAPABILITY_ROLE: Local constant in capabilities file.\n\
-                         WHY? `{name}` is declared as a file-level `const` at line {}.\n\
-                         HOW TO FIX? Move `{name}` into `taxonomy_<domain>_constant.rs` so every layer shares one policy value.\n  \
+                         WHY: `{name}` is declared as a file-level `const` at line {}.\n\
+                         FIX: Move `{name}` into `taxonomy_<domain>_constant.rs` so every layer shares one policy value.\n  \
                          Keep the constant in this file only when it is a private mechanical detail, not a domain policy.",
                         i + 1,
+                    ),
+                    "CAPABILITY_ROLE",
+                    format!(
+                        "`{name}` is declared as a file-level `const` at line {}.",
+                        i + 1
+                    ),
+                    format!(
+                        "Move `{name}` into `taxonomy_<domain>_constant.rs` so every layer shares one policy value.\n  \
+                         Keep the constant in this file only when it is a private mechanical detail, not a domain policy."
                     ),
                 ));
             }
@@ -254,19 +272,24 @@ impl CapabilitiesRustRoleAuditor {
                     continue;
                 }
             }
-            violations.push(LintResult::new_arch(
+            violations.push(LintResult::new_arch_with_name(
                 path,
                 i + 1,
                 "AES403",
                 Severity::LOW,
                 format!(
                     "AES403 CAPABILITY_ROLE: Embedded test code in capabilities file.\n\
-                     WHY? A test module is declared inline at line {}.\n\
-                     HOW TO FIX? Move it into `crates/<crate>/tests/` as a dedicated test file \
+                     WHY: A test module is declared inline at line {}.\n\
+                     FIX: Move it into `crates/<crate>/tests/` as a dedicated test file \
                      (for example `tests/unit_capabilities_<name>.rs`) and keep the capability source \
                      free of test-only code.",
                     i + 1,
                 ),
+                "CAPABILITY_ROLE",
+                format!("A test module is declared inline at line {}.", i + 1),
+                "Move it into `crates/<crate>/tests/` as a dedicated test file \
+                 (for example `tests/unit_capabilities_<name>.rs`) and keep the capability source \
+                 free of test-only code.",
             ));
         }
     }
@@ -351,17 +374,27 @@ impl CapabilitiesRustRoleAuditor {
 
                 // This `pub` helper has zero external callers — it should be
                 // private or `pub(crate)`.
-                violations.push(LintResult::new_arch(
+                violations.push(LintResult::new_arch_with_name(
                     path,
                     i + 1,
                     "AES403",
                     Severity::MEDIUM,
                     format!(
                         "AES403 CAPABILITY_ROLE: Public helper has no external caller.\n\
-                         WHY? `pub fn {}` in {} is not referenced from any other module or test.\n\
-                         HOW TO FIX? Change it to `fn {}` (private). \
+                         WHY: `pub fn {}` in {} is not referenced from any other module or test.\n\
+                         FIX: Change it to `fn {}` (private). \
                          If a test module in the same crate calls it, change it to `pub(crate) fn {}`.",
                         fn_name, path, fn_name, fn_name,
+                    ),
+                    "CAPABILITY_ROLE",
+                    format!(
+                        "`pub fn {}` in {} is not referenced from any other module or test.",
+                        fn_name, path
+                    ),
+                    format!(
+                        "Change it to `fn {}` (private). \
+                         If a test module in the same crate calls it, change it to `pub(crate) fn {}`.",
+                        fn_name, fn_name
                     ),
                 ));
             }

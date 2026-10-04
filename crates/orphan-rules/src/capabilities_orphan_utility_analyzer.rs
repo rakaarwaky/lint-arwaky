@@ -139,17 +139,17 @@ impl IUtilityOrphanProtocol for UtilityOrphanAnalyzer {
 
         let reason = if !is_reachable && !has_consumer_importers {
             format!(
-                "AES504 UTILITY_ORPHAN: '{}' is not reachable and not imported by consumer layer.\nWHY? Utility file '{}' is not reachable from any _entry file{}.\nFIX: Import '{}' from a _entry file AND a capabilities_* file.",
+                "AES504 UTILITY_ORPHAN: '{}' is not reachable and not imported by consumer layer.\nWHY: Utility file '{}' is not reachable from any _entry file{}.\nFIX: Import '{}' from a _entry file AND a capabilities_* file.",
                 module_name, module_name, imported_by_str, module_name
             )
         } else if !is_reachable {
             format!(
-                "AES504 UTILITY_ORPHAN: '{}' is not reachable.\nWHY? Utility file '{}' is not reachable from any _entry file.\nFIX: Import '{}' from a _entry file.",
+                "AES504 UTILITY_ORPHAN: '{}' is not reachable.\nWHY: Utility file '{}' is not reachable from any _entry file.\nFIX: Import '{}' from a _entry file.",
                 module_name, module_name, module_name
             )
         } else {
             format!(
-                "AES504 UTILITY_ORPHAN: '{}' is not imported by consumer layer.\nWHY? Utility file '{}' is not imported by any capabilities_*, agent_*, or surface_* file{}.\nFIX: Import '{}' in a capabilities_* file.",
+                "AES504 UTILITY_ORPHAN: '{}' is not imported by consumer layer.\nWHY: Utility file '{}' is not imported by any capabilities_*, agent_*, or surface_* file{}.\nFIX: Import '{}' in a capabilities_* file.",
                 module_name, module_name, imported_by_str, module_name
             )
         };
