@@ -25,9 +25,7 @@ use shared_external_lint::ICommandExecutorProtocol;
 use shared_external_lint::IJsToolResolutionProtocol;
 use shared_external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
 use shared_external_lint::utility_extension_guard::is_scannable_file;
-use shared_external_lint::utility_path_normalization::{
-    resolve_capabilities_path, resolve_or_fallback,
-};
+use shared_external_lint::utility_path_normalization::resolve_or_fallback_with_context;
 use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared_filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
 use shared_quality_rules::LinterOperationError;
@@ -99,10 +97,8 @@ impl ILinterAdapterProtocol for ESLintAdapter {
                     .as_str()
                     .unwrap_or_default()
                     .to_string();
-                let filename_vo = resolve_capabilities_path(
-                    resolve_or_fallback(&filename, path.clone()),
-                    Some(path.clone()),
-                );
+                let filename_vo =
+                    resolve_or_fallback_with_context(&filename, path.clone(), Some(path.clone()));
 
                 if let Some(messages) = file_data["messages"].as_array() {
                     for msg in messages {
