@@ -301,13 +301,8 @@ fn render_suggestions(_grouped: &BTreeMap<String, Vec<&ViolationItem>>) {
 fn render_json(
     grouped: &BTreeMap<String, Vec<&ViolationItem>>,
     all_violations: &[ViolationItem],
-    _target_path: &str,
+    target_path: &str,
 ) {
-    let members: Vec<serde_json::Value> = grouped
-        .iter()
-        .map(|(name, results)| serde_json::json!({ "member": name, "violations": results.len() }))
-        .collect();
-
     let mut file_to_member: std::collections::HashMap<String, &str> =
         std::collections::HashMap::new();
     for (name, items) in grouped {
@@ -316,6 +311,9 @@ fn render_json(
         }
     }
 
+    // The JSON output carries one object per violation, the same fields the
+    // text report shows. It does not carry a summary block — a scan's output
+    // lists what it found, not counts of what it found.
     let results: Vec<serde_json::Value> = all_violations
         .iter()
         .map(|v| {
@@ -325,11 +323,14 @@ fn render_json(
                 .unwrap_or(".");
             serde_json::json!({
                 "code": v.code.code(),
+                "violation_name": v.violation_name,
                 "file": v.file.value,
                 "line": v.line.value(),
                 "column": v.column.value(),
                 "message": v.message.value,
                 "severity": format!("{}", v.severity),
+                "why": v.why,
+                "fix": v.fix,
                 "member": member,
             })
         })
@@ -338,9 +339,7 @@ fn render_json(
     println!(
         "{}",
         serde_json::to_string_pretty(&serde_json::json!({
-            "target": _target_path,
-            "total_violations": all_violations.len(),
-            "members": members,
+            "target": target_path,
             "results": results,
         }))
         .unwrap_or_default()
@@ -377,8 +376,22 @@ fn render_sarif(grouped: &BTreeMap<String, Vec<&ViolationItem>>) {
                     serde_json::json!({
                         "ruleId": v.code.code(),
                         "level": level,
-                        "message": { "text": v.message.value },
+                        // `message.text` is what a reader sees on the GitHub
+                        // finding page, so it carries the reason — the same
+                        // text the report prints on its WHY line. `value`
+                        // keeps the fact, which the text report shows as the
+                        // code's own line.
+                        "message": { "text": why_or_message(v), "value": v.message.value },
                         "locations": [location],
+                        // SARIF reserves `properties` for fields the schema does
+                        // not name, which is where the text report's remaining
+                        // fields travel without breaking Code Scanning.
+                        "properties": {
+                            "violation_name": v.violation_name,
+                            "severity": format!("{}", v.severity),
+                            "why": v.why,
+                            "fix": v.fix,
+                        },
                     })
                 })
                 .collect();
@@ -399,6 +412,34 @@ fn render_sarif(grouped: &BTreeMap<String, Vec<&ViolationItem>>) {
     );
 }
 
+/// Escape a value for an XML attribute.
+///
+/// The quote matters as much as the ampersand: a violation message quoting a
+/// path or a code would otherwise close the attribute and produce a document
+/// no CI reader can parse.
+fn escape_attr(value: &str) -> String {
+    value
+        .replace('&', "&amp;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;")
+        .replace('"', "&quot;")
+        .replace('\'', "&apos;")
+}
+
+/// The text a machine-readable format shows as the violation's message.
+///
+/// Prefers the reason, because that is what the text report puts on the WHY
+/// line and what a reader on a CI page or a GitHub finding actually needs.
+/// An external tool's finding carries no reason of ours, so its own message
+/// is the best text there is.
+fn why_or_message(v: &ViolationItem) -> String {
+    match (v.why.is_empty(), v.message.value.is_empty()) {
+        (false, _) => v.why.clone(),
+        (true, false) => v.message.value.clone(),
+        (true, true) => v.code.code().to_string(),
+    }
+}
+
 // ─── JUnit ──────────────────────────────────────────────────
 
 fn render_junit(grouped: &BTreeMap<String, Vec<&ViolationItem>>) {
@@ -412,22 +453,20 @@ fn render_junit(grouped: &BTreeMap<String, Vec<&ViolationItem>>) {
         } else {
             println!("    <testcase name=\"{member_name}\">");
             for r in results {
-                let escaped = r
-                    .message
-                    .value
-                    .replace('&', "&amp;")
-                    .replace('<', "&lt;")
-                    .replace('>', "&gt;");
-                let loc = if r.line.value() > 0 {
-                    format!("{}:{}", r.file.value, r.line.value())
-                } else {
-                    r.file.value.clone()
-                };
+                // The text report's four fields travel as attributes so a CI
+                // page shows the same reason and remedy the terminal does. JUnit
+                // has no element for them, and inventing one would break the
+                // schema every CI reader parses.
                 println!(
-                    "      <failure message=\"[{}] {}\">{}</failure>",
-                    r.code.code(),
-                    loc,
-                    escaped
+                    "      <failure message=\"{}\" type=\"{}\" file=\"{}\" line=\"{}\" column=\"{}\" violation_name=\"{}\" severity=\"{}\" fix=\"{}\" />",
+                    escape_attr(&why_or_message(r)),
+                    escape_attr(r.code.code()),
+                    escape_attr(&r.file.value),
+                    r.line.value(),
+                    r.column.value(),
+                    escape_attr(&r.violation_name),
+                    escape_attr(&format!("{}", r.severity)),
+                    escape_attr(&r.fix),
                 );
             }
             println!("    </testcase>");
