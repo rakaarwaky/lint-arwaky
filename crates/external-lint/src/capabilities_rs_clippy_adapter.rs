@@ -28,7 +28,9 @@ use shared_common::taxonomy_path_vo::FilePath;
 use shared_common::taxonomy_severity_vo::Severity;
 use shared_external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
 use shared_external_lint::taxonomy_duration_vo::Timeout;
-use shared_external_lint::utility_path_normalization::resolve_capabilities_path;
+use shared_external_lint::utility_path_normalization::{
+    resolve_capabilities_path, resolve_or_fallback,
+};
 use shared_filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
 use shared_quality_rules::LinterOperationError;
 use std::path::Path;
@@ -140,10 +142,7 @@ impl ILinterAdapterProtocol for RustLinterAdapter {
                             _ => continue,
                         };
                         let resolved_file = resolve_capabilities_path(
-                            match FilePath::new(filename.to_string()) {
-                                Ok(fp) => fp,
-                                Err(_) => path.clone(),
-                            },
+                            resolve_or_fallback(filename, path.clone()),
                             Some(path.clone()),
                         );
                         let line_num = match span.get("line_start").and_then(|v| v.as_u64()) {

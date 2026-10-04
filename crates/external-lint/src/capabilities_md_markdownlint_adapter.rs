@@ -30,7 +30,9 @@ use shared_external_lint::contract_external_lint_protocol::ILinterAdapterProtoco
 use shared_external_lint::taxonomy_external_lint_constant::{
     MARKDOWNLINT_CLI_VARIANTS, MARKDOWNLINT_EXTENSIONS, MARKDOWNLINT_FIX_FLAG,
 };
-use shared_external_lint::utility_path_normalization::resolve_capabilities_path;
+use shared_external_lint::utility_path_normalization::{
+    resolve_capabilities_path, resolve_or_fallback,
+};
 use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared_filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
 use shared_quality_rules::LinterOperationError;
@@ -381,15 +383,15 @@ fn split_location(loc: &str) -> Option<(&str, i64, i64)> {
 fn canonicalize_against(root: &FilePath, file: &str) -> FilePath {
     let candidate = std::path::Path::new(file);
     if candidate.is_absolute() {
-        return FilePath::new(file.to_string()).unwrap_or_else(|_| root.clone());
+        return resolve_or_fallback(file, root.clone());
     }
-    FilePath::new(
+    resolve_or_fallback(
         std::path::Path::new(&root.value)
             .join(candidate)
             .to_string_lossy()
-            .to_string(),
+            .as_ref(),
+        root.clone(),
     )
-    .unwrap_or_else(|_| root.clone())
 }
 
 /// Build the tool-native rule code from markdownlint's `ruleNames` array. The

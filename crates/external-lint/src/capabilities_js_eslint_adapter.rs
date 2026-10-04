@@ -24,7 +24,9 @@ use shared_common::{ErrorMessage, ScanError};
 use shared_external_lint::ICommandExecutorProtocol;
 use shared_external_lint::IJsToolResolutionProtocol;
 use shared_external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
-use shared_external_lint::utility_path_normalization::resolve_capabilities_path;
+use shared_external_lint::utility_path_normalization::{
+    resolve_capabilities_path, resolve_or_fallback,
+};
 use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared_filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
 use shared_quality_rules::LinterOperationError;
@@ -100,7 +102,7 @@ impl ILinterAdapterProtocol for ESLintAdapter {
                     .unwrap_or_default()
                     .to_string();
                 let filename_vo = resolve_capabilities_path(
-                    FilePath::new(filename).unwrap_or_else(|_| path.clone()),
+                    resolve_or_fallback(&filename, path.clone()),
                     Some(path.clone()),
                 );
 
