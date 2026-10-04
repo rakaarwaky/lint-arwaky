@@ -165,7 +165,8 @@ fn render_text(
         return;
     }
 
-    // H1 = top folder, H2 = member, H3 = file path, body = per-violation block.
+    // {top} → [member] → (file): each level has its own bracket so a reader
+    // can tell a member folder from a file by shape alone.
     let mut hierarchy: BTreeMap<String, BTreeMap<String, BTreeMap<String, Vec<&ViolationItem>>>> =
         BTreeMap::new();
     for results in grouped.values() {
