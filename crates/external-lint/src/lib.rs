@@ -46,6 +46,21 @@ pub(crate) fn map_adapter_error(
     ))
 }
 
+/// Map a raw subprocess failure onto the adapter error type used by
+/// `ILinterAdapterProtocol` implementations (shared_quality_rules).
+/// Shared by `rs_audit`, `rs_clippy`, and `rs_fmt` adapters.
+pub(crate) fn map_executor_err(
+    e: anyhow::Error,
+    adapter_name: shared_common::taxonomy_adapter_name_vo::AdapterName,
+) -> shared_quality_rules::LinterOperationError {
+    shared_quality_rules::LinterOperationError::Adapter(
+        shared_common::taxonomy_adapter_error::AdapterError::new(
+            adapter_name,
+            shared_common::taxonomy_common_vo::ErrorMessage::new(e.to_string()),
+        ),
+    )
+}
+
 pub mod agent_external_lint_orchestrator;
 pub mod capabilities_cargo_dir_resolver;
 pub mod capabilities_command_executor;
