@@ -11,6 +11,7 @@ use shared_role_rules::contract_role_protocol::IAgentRoleProtocol;
 use shared_role_rules::taxonomy_role_rules_constant::AGENT_FORBIDDEN_IO_TYPESCRIPT;
 
 use shared_role_rules::utility_agent_role_checker;
+use shared_role_rules::utility_agent_role_io_checker;
 
 // ─── Block 1: Struct Definition ────────────────────────────
 
@@ -176,30 +177,13 @@ impl AgentTsRoleAuditor {
     }
 
     fn io_forbidden(&self, content: &str, path: &str, violations: &mut Vec<LintResult>) {
-        for (i, line) in content.lines().enumerate() {
-            let t = line.trim();
-            if utility_agent_role_checker::is_comment(t) {
-                continue;
-            }
-            for (token, what) in AGENT_FORBIDDEN_IO_TYPESCRIPT {
-                if t.contains(token) {
-                    violations.push(LintResult::new_arch(
-                        path,
-                        i + 1,
-                        "AES405",
-                        Severity::MEDIUM,
-                        format!(
-                            "AES405 AGENT_ROLE: Forbidden {what} in a TypeScript agent file.\n\
-                             WHY? Line {} of {path} uses `{token}`. An agent coordinates in-memory \
-                             protocols and must not perform I/O itself.\n\
-                             HOW TO FIX? Move the {what} into a capability module and inject it via \
-                             a protocol.",
-                            i + 1
-                        ),
-                    ));
-                }
-            }
-        }
+        utility_agent_role_io_checker::scan_io_forbidden(
+            content,
+            path,
+            "TypeScript",
+            AGENT_FORBIDDEN_IO_TYPESCRIPT,
+            violations,
+        );
     }
 
     fn constant_placement(&self, content: &str, path: &str, violations: &mut Vec<LintResult>) {

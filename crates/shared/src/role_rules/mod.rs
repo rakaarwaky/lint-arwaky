@@ -6,6 +6,7 @@ pub mod taxonomy_role_rules_request;
 pub mod taxonomy_role_rules_response;
 pub mod taxonomy_role_rules_vo;
 pub mod utility_agent_role_checker;
+pub mod utility_agent_role_io_checker;
 pub mod utility_capabilities_role_checker;
 pub mod utility_contract_role_checker;
 pub mod utility_role_reference_scanner;
