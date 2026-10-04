@@ -12,3 +12,9 @@ pub fn normalize_path(path: FilePath) -> FilePath {
 pub fn resolve_capabilities_path(path: FilePath, _context_path: Option<FilePath>) -> FilePath {
     path
 }
+
+/// Build a `FilePath` from a string, falling back to `fallback` when the
+/// string fails `FilePath::new` validation.
+pub fn resolve_or_fallback(raw: &str, fallback: FilePath) -> FilePath {
+    FilePath::new(raw).unwrap_or(fallback)
+}
