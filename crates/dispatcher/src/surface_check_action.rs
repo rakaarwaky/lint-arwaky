@@ -636,8 +636,12 @@ pub(crate) fn doc_violations_in_scope(target: &str, agg: &ScanAggregates) -> Vec
             Some(ViolationItem {
                 code: shared_common::ErrorCode::raw(finding.code),
                 file,
-                line: shared_common::LineNumber::new(1),
-                column: shared_common::ColumnNumber::new(1),
+                // The finding already carries the line it anchored to;
+                // hardcoding 1 sent every doc finding to the top of the file.
+                line: shared_common::LineNumber::new(finding.line as i64),
+                // Doc findings anchor to a line, not a column. Reporting a
+                // column of 1 would claim a precision the check does not have.
+                column: shared_common::ColumnNumber::new(0),
                 message,
                 severity: shared_common::Severity::HIGH,
                 violation_name: finding.violation_type.to_string(),

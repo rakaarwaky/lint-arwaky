@@ -183,16 +183,13 @@ fn render_text(
         }
     }
 
+    // {top} → [member] → (file): each level has its own bracket so a reader
+    // can tell a member folder from a file by shape alone.
     for (top, members) in &hierarchy {
-        println!("[{top}]");
+        println!("{{{top}}}");
         println!();
         for (member, files) in members {
-            let heading = if top == "root" {
-                member.clone()
-            } else {
-                format!("{top}/{member}")
-            };
-            println!("[{heading}]");
+            println!("[{member}]");
             println!();
             for (file, violations) in files {
                 for v in violations {
@@ -231,20 +228,13 @@ fn hierarchy_key(rel: &str) -> (String, String, String) {
     (top, member, file)
 }
 
-/// One violation block: `file+line`, `CODE+NAME`, `WHY: …`, `FIX: …`.
+/// One violation block: `(file:line[:col])`, `CODE:NAME`, `WHY: …`, `FIX: …`.
 fn render_violation(file: &str, v: &ViolationItem) {
-    // A capability that reports a whole-file finding passes line 0. The report
-    // always shows an anchor, so it reads `+1` rather than a bare filename.
-    let line = if v.line.value() > 0 {
-        v.line.value()
-    } else {
-        1
-    };
-    println!("{file}+{line}");
+    println!("({})", format_location(file, v.line.value(), v.column.value()));
     let name = if v.violation_name.is_empty() {
         String::new()
     } else {
-        format!("+{}", v.violation_name)
+        format!(":{}", v.violation_name)
     };
     println!("{}{name}", v.code.code());
     if !v.why.is_empty() {
