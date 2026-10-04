@@ -48,7 +48,7 @@ workspaces-good/
 | --------- | -------- | ----- | ---------- | --------------- | ------------------ |
 | bad       | Rust     | 156   | ≥ 100 (non-regressing floor) | — | 27 unique codes |
 | bad       | Python   | 160   | ≥ 100 (non-regressing floor) | — | 27 unique codes |
-| bad       | JS/TS    | 150   | ≥ 100 (non-regressing floor) | — | 27 unique codes |
+| bad       | JS/TS    | 107   | ≥ 100 (non-regressing floor) | — | 27 unique codes |
 | good      | Rust     | 35    | 0          | 0               | —                  |
 | good      | Python   | 42    | 0          | 0               | —                  |
 | good      | JS/TS    | 33    | 0          | 0               | —                  |
