@@ -207,26 +207,37 @@ fn render_text(
 }
 
 /// Split a target-relative path into (top folder, member, file path).
-fn hierarchy_key(rel: &str) -> (String, String, String) {
+///
+/// Public because the bracket levels are the report's contract: a file
+/// landing in the member slot prints `[report.md]`, which reads as a folder
+/// that does not exist.
+pub fn hierarchy_key(rel: &str) -> (String, String, String) {
     let segments: Vec<&str> = rel.split('/').filter(|s| !s.is_empty()).collect();
-    if segments.is_empty() {
-        return ("root".to_string(), "root".to_string(), String::new());
-    }
-    // A bare file at the target root (e.g. `FRD.md`).
-    if segments.len() == 1 {
-        return (
+    match segments.len() {
+        // No path at all: nothing to group under.
+        0 => ("root".to_string(), "root".to_string(), String::new()),
+        // A flat file sitting directly in the scan target (e.g. `FRD.md`).
+        1 => (
             "root".to_string(),
             segments[0].to_string(),
             segments[0].to_string(),
-        );
+        ),
+        // `<member-dir>/<file>`: a file directly under `crates/`, `modules/`,
+        // or `packages/` with no member dir in between. There is no member
+        // level here, so printing `[agent_orphan_root_probe.rs]` under
+        // `{crates}` would read as a folder that does not exist. The member
+        // dir itself carries no violations of its own to report.
+        2 => (
+            segments[0].to_string(),
+            segments[1].to_string(),
+            segments[1].to_string(),
+        ),
+        // `<member-dir>/<member>/<file>` and deeper: the normal shape.
+        _ => {
+            let file = segments[2..].join("/");
+            (segments[0].to_string(), segments[1].to_string(), file)
+        }
     }
-    let top = segments[0].to_string();
-    if segments.len() == 2 {
-        return (top.clone(), segments[1].to_string(), segments[1].to_string());
-    }
-    let member = segments[1].to_string();
-    let file = segments[2..].join("/");
-    (top, member, file)
 }
 
 /// One violation block: `(file:line[:col])`, `CODE:NAME`, `WHY: …`, `FIX: …`.
@@ -432,6 +443,15 @@ fn make_relative(file_path: &str, target: &str) -> String {
         if !rest.is_empty() {
             return rest.to_string();
         }
+    }
+
+    // A relative path is already relative to the scan target. Resolving it
+    // against the CWD would send it outside the workspace, and the fallback
+    // below would reduce it to a bare filename — which then lands in the
+    // member slot and prints as `[report.md]`, a folder that does not exist.
+    let path = std::path::Path::new(file_path);
+    if path.is_relative() && path.components().count() > 1 {
+        return file_path.to_string();
     }
 
     std::path::Path::new(file_path)

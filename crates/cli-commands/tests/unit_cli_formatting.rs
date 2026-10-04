@@ -1,6 +1,6 @@
 // Unit tests — Formatting utility tests: group_by_member, status_icon, output structure.
 use shared_cli_commands::resolve_skill_hint_for_file;
-use shared_cli_commands::utility_output_text_formatter::{group_by_member, status_icon};
+use shared_cli_commands::utility_output_text_formatter::{group_by_member, hierarchy_key, status_icon};
 use shared_cli_commands::{ScanScope, classify_scan_scope};
 use shared_common::ViolationItem;
 use shared_common::{
@@ -242,6 +242,49 @@ fn lowercase_prose_is_not_a_violation_name() {
     let item = ViolationItem::from_lint_result(&result);
 
     assert!(item.violation_name.is_empty());
+}
+
+// ─── report hierarchy ────────────────────────────────────────
+//
+// Each level has its own bracket — `{top}`, `[member]`, `(file)` — so a
+// reader can tell a member folder from a file by shape alone. A file landing
+// in the member slot would print `[report.md]` and read as a folder that does
+// not exist.
+
+/// The normal shape: member dir, member, file path.
+#[test]
+fn a_member_file_nests_under_its_member() {
+    let (top, member, file) = hierarchy_key("crates/shared_common/src/agent_foo.rs");
+    assert_eq!((top.as_str(), member.as_str(), file.as_str()),
+        ("crates", "shared_common", "src/agent_foo.rs"));
+}
+
+/// A file sitting directly in a member dir has no member level of its own.
+#[test]
+fn a_flat_file_does_not_become_a_member_heading() {
+    let (top, _member, file) = hierarchy_key("crates/agent_orphan_root_probe.rs");
+    assert_eq!(top, "crates");
+    assert_eq!(
+        file, "agent_orphan_root_probe.rs",
+        "the file keeps its own name so it renders as `(agent_orphan_root_probe.rs)`, not `[…]`"
+    );
+}
+
+/// A file at the target root reports under `root`, not under a phantom member.
+#[test]
+fn a_target_root_file_reports_under_root() {
+    let (top, _member, file) = hierarchy_key("BACKLOG.md");
+    assert_eq!(top, "root");
+    assert_eq!(file, "BACKLOG.md");
+}
+
+/// An empty relative path still yields the three slots.
+#[test]
+fn an_empty_path_yields_placeholder_levels() {
+    assert_eq!(
+        hierarchy_key(""),
+        ("root".to_string(), "root".to_string(), String::new())
+    );
 }
 
 // ─── scan scope ──────────────────────────────────────────────
