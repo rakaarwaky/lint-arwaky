@@ -53,6 +53,11 @@ enum Command {
         #[arg(long)]
         member: Option<String>,
     },
+    /// Progress report: counts per member and what changed since the last run
+    Report {
+        #[arg(value_name = "PATH", default_value = ".")]
+        path: String,
+    },
     /// Quality rules scan (single linter)
     Quality {
         #[arg(value_name = "PATH", default_value = ".")]
@@ -516,6 +521,16 @@ fn main() {
                 config_orchestrator: Some(config_orchestrator.clone()),
                 filter,
                 member,
+                scan_aggregates: Some(scan_aggregates.clone()),
+            },
+        ),
+        Command::Report { path } => cli_commands::surface_report_command::handle_report(
+            cli_commands::surface_report_command::ReportCommandParams {
+                path: Some(FilePath::new(path).unwrap_or_default()),
+                config_orchestrator: Some(config_orchestrator.clone()),
+                filesystem_seam: fs_seam.clone(),
+                code_analysis_linter: code_analysis_linter.clone(),
+                structure_aggregate: structure_orchestrator.clone(),
                 scan_aggregates: Some(scan_aggregates.clone()),
             },
         ),

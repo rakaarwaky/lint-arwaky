@@ -117,11 +117,17 @@ fn cli_scan(path: &str) -> String {
 }
 
 fn count_violations(json: &str) -> usize {
-    serde_json::from_str::<serde_json::Value>(json)
-        .ok()
-        .and_then(|v| v.get("total_violations").and_then(|n| n.as_u64()))
-        .map(|n| n as usize)
-        .unwrap_or(0)
+    // Count the results array. The scan JSON carries one object per violation
+    // and no summary block, so a count key would have to be invented here — and
+    // an absent key would make this return 0 and quietly pass every count
+    // assertion below. So a missing or malformed `results` panics instead.
+    let value: serde_json::Value = serde_json::from_str(json)
+        .unwrap_or_else(|e| panic!("scan output is not JSON: {e}\n{json}"));
+    value
+        .get("results")
+        .and_then(|r| r.as_array())
+        .unwrap_or_else(|| panic!("scan JSON has no `results` array: {json}"))
+        .len()
 }
 
 fn has_violation_code(json: &str, code: &str) -> bool {
