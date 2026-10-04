@@ -1,7 +1,7 @@
 // Unit tests — Formatting utility tests: group_by_member, status_icon, output structure.
 use shared_cli_commands::resolve_skill_hint_for_file;
 use shared_cli_commands::utility_output_text_formatter::{
-    code_summary_lines, group_by_member, status_icon,
+    code_summary_lines, extract_why_fix, group_by_member, status_icon,
 };
 use shared_common::ViolationItem;
 use shared_common::{ColumnNumber, ErrorCode, FilePath, LineNumber, LintMessage, Severity};
@@ -180,4 +180,50 @@ fn regex_lite_capture(line: &str) -> Option<String> {
         .trim_start()
         .starts_with('←')
         .then(|| code.to_string())
+}
+
+// ─── extract_why_fix tests ─────────────────────────────────────
+
+#[test]
+fn extract_why_fix_parses_aes_code_message() {
+    let msg = "AES403 CAPABILITIES_PURITY: no orchestration allowed.\nWHY? Line 12 of foo.rs declares orchestration.\nHOW TO FIX? Move orchestration to agent layer.";
+    let (why, fix) = extract_why_fix(msg);
+    assert!(why.is_some(), "WHY should be extracted");
+    assert!(fix.is_some(), "FIX should be extracted");
+    assert!(why.unwrap().contains("orchestration"));
+    assert!(fix.unwrap().contains("agent layer"));
+}
+
+#[test]
+fn extract_why_fix_parses_orphan_code_message() {
+    let msg = "AES505 AGENT_ORPHAN: 'foo' is not reachable.\nWHY? Agent file 'foo' is not reachable from any _entry file.\nFIX: Import 'foo' from a _entry file AND register it in a root_*_container.";
+    let (why, fix) = extract_why_fix(msg);
+    assert!(why.is_some());
+    assert!(fix.is_some());
+    assert!(why.unwrap().contains("not reachable"));
+    assert!(fix.unwrap().contains("_entry file"));
+}
+
+#[test]
+fn extract_why_fix_returns_none_for_external_code() {
+    let msg = "F841 local variable assigned but never used";
+    let (why, fix) = extract_why_fix(msg);
+    assert!(why.is_none());
+    assert!(fix.is_none());
+}
+
+#[test]
+fn extract_why_fix_handles_why_colon_prefix() {
+    let msg = "AES501 taxonomy file not reachable.\nWHY: file not wired.\nFIX: register in root container.";
+    let (why, fix) = extract_why_fix(msg);
+    assert_eq!(why.unwrap(), "file not wired.");
+    assert_eq!(fix.unwrap(), "register in root container.");
+}
+
+#[test]
+fn extract_why_fix_no_invented_text_for_plain_message() {
+    let msg = "markdownlint_MD022 heading without blank line";
+    let (why, fix) = extract_why_fix(msg);
+    assert!(why.is_none());
+    assert!(fix.is_none());
 }
