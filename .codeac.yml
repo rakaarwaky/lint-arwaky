@@ -1,17 +1,21 @@
-# Codeac config — excludes paths the analyzer should skip.
+# Codeac Cloud config — per-repo behaviour overrides.
 # Docs: https://www.codeac.io/documentation/custom-configuration.html
-# Excludes use glob syntax; a trailing ** matches everything inside.
-# workspaces-bad / workspaces-good are intentional fixtures, not product code.
-exclude:
-  # Fixtures (intentional violations, not real code)
-  - "workspaces-bad/**"
-  - "workspaces-good/**"
+#
+# `.codeac.yml` accepts only `version`, `thresholds`, and `tools` sections.
+# `tools.<name>` supports an `enabled` boolean per linter; Codeac's default
+# config has every tool enabled.
+#
+# File-level exclusions are delegated to each linter's own config file,
+# read from the repo root:
+#   ESLint     — .eslintignore
+#   Pylint     — .pylintrc
+#   RuboCop    — .rubocop.yml
+#   jscpd      — .jscpd.json
+#   …etc.
+#
+# This repo's ESLint ignore list lives in .eslintignore (same paths as
+# .codacy.yaml / .codacy/codacy.yaml exclude_paths). No `enabled: false`
+# override is needed — Codeac's tool auto-detection handles language
+# filtering.
 
-  # Build output
-  - "target/**"
-  - "dist/**"
-  - "build/**"
-  - "node_modules/**"
-
-  # Per-crate test suites in the main workspace
-  - "crates/*/tests/**"
+version: '1'
