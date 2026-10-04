@@ -12,6 +12,12 @@ use shared_common::taxonomy_lint_result_vo::LintResult;
 use shared_common::taxonomy_severity_vo::Severity;
 use shared_filesystem::taxonomy_filesystem_vo::{FileEntry, Language, ParseMetadata};
 
+/// True when `layer` names the agent layer, as a bare name or a parameterised
+/// variant such as `agent(feature_x)`.
+pub fn is_agent_layer(layer: &str) -> bool {
+    layer == "agent" || layer.starts_with("agent(")
+}
+
 /// Rule 2 — at most 3 type declarations per agent file. HIGH.
 pub fn check_type_budget(file: &FileEntry, violations: &mut Vec<LintResult>) {
     let path = file.path.to_string_lossy().to_string();
@@ -259,10 +265,26 @@ pub fn count_feature_protocol_traits(feature_dir: &Path) -> usize {
 /// root container). Dead protocols not referenced by anything in the feature
 /// are excluded. Pass an empty slice to count every declaration.
 pub fn count_feature_protocol_traits_with(feature_dir: &Path, referenced: &[String]) -> usize {
-    if !feature_dir.is_dir() {
+    count_protocol_traits_in_dir_with_stem_filter(
+        feature_dir,
+        referenced,
+        Some(&|base: &str| base.contains("protocol") || base.contains("Protocol")),
+    )
+}
+
+/// Shared scan core: count the protocol traits declared in `dir`, keeping only
+/// names in `referenced` (an empty list counts every declaration). When
+/// `stem_filter` is `Some`, a source file is scanned only if its file stem
+/// passes the filter.
+fn count_protocol_traits_in_dir_with_stem_filter(
+    dir: &Path,
+    referenced: &[String],
+    stem_filter: Option<&dyn Fn(&str) -> bool>,
+) -> usize {
+    if !dir.is_dir() {
         return 0;
     }
-    let Ok(entries) = std::fs::read_dir(feature_dir) else {
+    let Ok(entries) = std::fs::read_dir(dir) else {
         return 0;
     };
     let mut count = 0usize;
@@ -280,7 +302,9 @@ pub fn count_feature_protocol_traits_with(feature_dir: &Path, referenced: &[Stri
         let Some(base) = p.file_stem().and_then(|n| n.to_str()) else {
             continue;
         };
-        if !base.contains("protocol") && !base.contains("Protocol") {
+        if let Some(filter) = stem_filter
+            && !filter(base)
+        {
             continue;
         }
         let Ok(content) = std::fs::read_to_string(&p) else {
@@ -351,49 +375,7 @@ fn referenced_protocols_in(feature_src_dir: &Path) -> Vec<String> {
 /// src/ layout when the shared module is absent), keeping only those whose
 /// name appears in `referenced`.
 fn count_protocol_traits_in_dir(dir: &Path, referenced: &[String]) -> usize {
-    if !dir.is_dir() {
-        return 0;
-    }
-    let Ok(entries) = std::fs::read_dir(dir) else {
-        return 0;
-    };
-    let mut count = 0usize;
-    for entry in entries.flatten() {
-        let p = entry.path();
-        if !p.is_file() {
-            continue;
-        }
-        let Some(ext) = p.extension().and_then(|e| e.to_str()) else {
-            continue;
-        };
-        if !matches!(ext, "rs" | "py" | "ts") {
-            continue;
-        }
-        let Ok(content) = std::fs::read_to_string(&p) else {
-            continue;
-        };
-        for line in content.lines() {
-            let t = line.trim();
-            if is_comment(t) {
-                continue;
-            }
-            let declares = t.starts_with("pub trait ")
-                || t.starts_with("trait ")
-                || t.starts_with("class ")
-                || t.starts_with("export class ")
-                || t.starts_with("abstract class ");
-            if declares {
-                for name in declared_names(t) {
-                    if is_protocol_name(&name)
-                        && (referenced.is_empty() || referenced.contains(&name))
-                    {
-                        count += 1;
-                    }
-                }
-            }
-        }
-    }
-    count
+    count_protocol_traits_in_dir_with_stem_filter(dir, referenced, None)
 }
 
 /// Resolve how many protocols the agent file's own feature declares.
