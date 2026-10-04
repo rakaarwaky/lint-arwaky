@@ -190,8 +190,12 @@ fn render_text(
         println!("{{{top}}}");
         println!();
         for (member, files) in members {
-            println!("[{member}]");
-            println!();
+            // An empty member means the finding sat directly under the member
+            // dir, with no folder of its own to name.
+            if !member.is_empty() {
+                println!("[{member}]");
+                println!();
+            }
             for (file, violations) in files {
                 for v in violations {
                     render_violation(file, v);
@@ -216,20 +220,20 @@ pub fn hierarchy_key(rel: &str) -> (String, String, String) {
     match segments.len() {
         // No path at all: nothing to group under.
         0 => ("root".to_string(), "root".to_string(), String::new()),
-        // A flat file sitting directly in the scan target (e.g. `FRD.md`).
-        1 => (
-            "root".to_string(),
-            segments[0].to_string(),
-            segments[0].to_string(),
-        ),
-        // `<member-dir>/<file>`: a file directly under `crates/`, `modules/`,
-        // or `packages/` with no member dir in between. There is no member
-        // level here, so printing `[agent_orphan_root_probe.rs]` under
-        // `{crates}` would read as a folder that does not exist. The member
-        // dir itself carries no violations of its own to report.
+        // A flat document at the target root (`FRD.md`) or a flat file inside a
+        // member dir (`crates/root_violation.rs`). Neither has a member level,
+        // so the member slot is empty and no `[heading]` prints. Filling it
+        // with the file name would print `[FRD.md]`, a folder that is not there.
+        1 => ("root".to_string(), String::new(), segments[0].to_string()),
         2 => (
             segments[0].to_string(),
-            segments[1].to_string(),
+            // `crates/shared_common` is a finding about the member folder;
+            // `crates/root_violation.rs` is a finding about a file. A source
+            // extension tells them apart, because a member dir has none.
+            match is_file_segment(segments[1]) {
+                true => String::new(),
+                false => segments[1].to_string(),
+            },
             segments[1].to_string(),
         ),
         // `<member-dir>/<member>/<file>` and deeper: the normal shape.
@@ -237,6 +241,20 @@ pub fn hierarchy_key(rel: &str) -> (String, String, String) {
             let file = segments[2..].join("/");
             (segments[0].to_string(), segments[1].to_string(), file)
         }
+    }
+}
+
+/// Whether a path segment names a source file rather than a folder.
+///
+/// Only used where a segment could be either. A member folder carries no
+/// extension; a source file always carries one of these.
+fn is_file_segment(segment: &str) -> bool {
+    const SOURCE_EXTENSIONS: [&str; 11] = [
+        "rs", "py", "ts", "tsx", "js", "jsx", "md", "toml", "json", "yaml", "yml",
+    ];
+    match segment.rsplit_once('.') {
+        Some((stem, ext)) => !stem.is_empty() && SOURCE_EXTENSIONS.contains(&ext),
+        None => false,
     }
 }
 
@@ -419,85 +437,84 @@ fn render_junit(grouped: &BTreeMap<String, Vec<&ViolationItem>>) {
 
 // ─── Private helpers (UI-only) ──────────────────────────────
 
-/// Make a file path relative to the workspace root.
+/// Render a file path as `<member-dir>/<rest>`, the shape the report groups by.
+///
+/// Every level above the member dir is dropped, so a scan of one member and a
+/// scan of the whole workspace group the same file the same way. Without this
+/// a scan of `packages/surface_layer_probe` reported its own folder name as
+/// the top level and its files as members.
+///
+/// A path with no member dir in it - a flat document such as `FRD.md` - has no
+/// member to hang off, so its file name is returned on its own.
 fn make_relative(file_path: &str, target: &str) -> String {
-    let canon_file = std::path::Path::new(file_path)
-        .canonicalize()
-        .map(|p| p.to_string_lossy().to_string())
-        .unwrap_or_else(|_| file_path.to_string());
-    let canon_target = std::path::Path::new(target)
-        .canonicalize()
-        .map(|p| p.to_string_lossy().to_string())
-        .unwrap_or_else(|_| target.to_string());
+    // Rules disagree on what a violation's `file` holds: the external adapters
+    // and most rules emit an absolute path, while the doc and structure rules
+    // emit one relative to the workspace root. Resolving the relative kind
+    // against the scan target puts both in the same shape, so a file groups
+    // under one heading no matter which rule reported it.
+    let absolute = match std::path::Path::new(file_path).is_relative() {
+        true => std::path::Path::new(target)
+            .join(file_path)
+            .to_string_lossy()
+            .into_owned(),
+        false => file_path.to_string(),
+    };
 
-    let workspace_root = find_common_workspace_root(&canon_file, &canon_target);
-
-    if let Some(root) = &workspace_root {
-        if let Some(rest) = canon_file.strip_prefix(root) {
-            let rest = rest.trim_start_matches('/');
-            if !rest.is_empty() {
-                return rest.to_string();
-            }
+    let (top, rest) = match split_at_member_dir(&absolute) {
+        Some(parts) => parts,
+        None => {
+            return std::path::Path::new(&absolute)
+                .file_name()
+                .map(|n| n.to_string_lossy().to_string())
+                .unwrap_or(absolute);
         }
+    };
+    if rest.is_empty() {
+        // The finding is about the member dir itself, which has no file level.
+        return top;
     }
-
-    if let Some(rest) = canon_file.strip_prefix(&canon_target) {
-        let rest = rest.trim_start_matches('/');
-        if !rest.is_empty() {
-            return rest.to_string();
-        }
-    }
-
-    // A relative path is already relative to the scan target. Resolving it
-    // against the CWD would send it outside the workspace, and the fallback
-    // below would reduce it to a bare filename — which then lands in the
-    // member slot and prints as `[report.md]`, a folder that does not exist.
-    let path = std::path::Path::new(file_path);
-    if path.is_relative() && path.components().count() > 1 {
-        return file_path.to_string();
-    }
-
-    std::path::Path::new(file_path)
-        .file_name()
-        .map(|n| n.to_string_lossy().to_string())
-        .unwrap_or_else(|| file_path.to_string())
+    format!("{top}/{rest}")
 }
 
-/// Walk up from both paths to find the common workspace root.
-fn find_common_workspace_root(path1: &str, path2: &str) -> Option<String> {
-    let mut dirs1: Vec<std::path::PathBuf> = vec![];
-    let mut p = std::path::PathBuf::from(path1);
-    while let Some(parent) = p.parent() {
-        let parent_path = parent.to_path_buf();
-        dirs1.push(parent_path.clone());
-        if parent_path.join("crates").is_dir()
-            || parent_path.join("packages").is_dir()
-            || parent_path.join("modules").is_dir()
-        {
-            break;
-        }
-        p = parent.to_path_buf();
+/// Cut a path at its member dir, returning `("packages", "surface/x.ts")`.
+///
+/// The member dirs are the level the report prints as `{top}`. A relative path
+/// already starts there, so it is returned unchanged.
+fn split_at_member_dir(file: &str) -> Option<(String, String)> {
+    const MEMBER_DIRS: [&str; 3] = ["crates", "packages", "modules"];
+    let path = std::path::Path::new(file);
+    if path.is_relative() {
+        let first = path
+            .components()
+            .next()?
+            .as_os_str()
+            .to_string_lossy()
+            .into_owned();
+        return MEMBER_DIRS.contains(&first.as_str()).then(|| {
+            (
+                first,
+                path.to_string_lossy().trim_start_matches('/').to_string(),
+            )
+        });
     }
-
-    let mut dirs2: Vec<std::path::PathBuf> = vec![];
-    let mut p = std::path::PathBuf::from(path2);
-    while let Some(parent) = p.parent() {
-        let parent_path = parent.to_path_buf();
-        dirs2.push(parent_path.clone());
-        if parent_path.join("crates").is_dir()
-            || parent_path.join("packages").is_dir()
-            || parent_path.join("modules").is_dir()
-        {
-            break;
+    let mut prefix = std::path::PathBuf::new();
+    for part in path.components() {
+        prefix.push(part);
+        let name = part.as_os_str().to_string_lossy().into_owned();
+        if MEMBER_DIRS.contains(&name.as_str()) {
+            // Cut *after* this component: the member dir is the `{top}` level,
+            // which the report prints on its own, so it must not reappear in
+            // the member-and-file part behind it.
+            let rest = path
+                .strip_prefix(&prefix)
+                .ok()?
+                .to_string_lossy()
+                .trim_start_matches('/')
+                .to_string();
+            return Some((name, rest));
         }
-        p = parent.to_path_buf();
     }
-
-    dirs1
-        .iter()
-        .rev()
-        .find(|d| dirs2.contains(d))
-        .map(|p| p.to_string_lossy().to_string())
+    None
 }
 
 /// Status icon helper for doctor output (NO_COLOR aware).

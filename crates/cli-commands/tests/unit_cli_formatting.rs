@@ -264,21 +264,31 @@ fn a_member_file_nests_under_its_member() {
 }
 
 /// A file sitting directly in a member dir has no member level of its own.
+///
+/// `crates/root_violation.rs` is a file; `crates/shared_common` is a folder.
 #[test]
-fn a_flat_file_does_not_become_a_member_heading() {
-    let (top, _member, file) = hierarchy_key("crates/agent_orphan_root_probe.rs");
+fn a_flat_member_file_gets_no_member_heading() {
+    let (top, member, file) = hierarchy_key("crates/root_violation.rs");
     assert_eq!(top, "crates");
-    assert_eq!(
-        file, "agent_orphan_root_probe.rs",
-        "the file keeps its own name so it renders as `(agent_orphan_root_probe.rs)`, not `[…]`"
-    );
+    assert_eq!(member, "", "a file must not fill the member slot");
+    assert_eq!(file, "root_violation.rs");
 }
 
-/// A file at the target root reports under `root`, not under a phantom member.
+/// A finding about a member folder itself keeps that folder as the member.
+#[test]
+fn a_member_folder_finding_keeps_the_member_heading() {
+    let (top, member, file) = hierarchy_key("crates/shared_common");
+    assert_eq!(top, "crates");
+    assert_eq!(member, "shared_common");
+    assert_eq!(file, "shared_common");
+}
+
+/// A flat document at the target root reports under `root`, with no member.
 #[test]
 fn a_target_root_file_reports_under_root() {
-    let (top, _member, file) = hierarchy_key("BACKLOG.md");
+    let (top, member, file) = hierarchy_key("BACKLOG.md");
     assert_eq!(top, "root");
+    assert_eq!(member, "", "a flat document must not fill the member slot");
     assert_eq!(file, "BACKLOG.md");
 }
 

@@ -28,7 +28,16 @@ pub fn collect_structure(
         .into_iter()
         .map(|f| {
             let code = shared_common::ErrorCode::raw(f.code.clone());
-            let file = shared_common::FilePath::new(f.file.clone()).unwrap_or_default();
+            // Structure findings carry paths relative to the audited root. Resolve them
+            // here, or a finding that names a file inside a member arrives as
+            // `member/file.rs`, which the report cannot place in its tree.
+            let file = shared_common::FilePath::new(
+                std::path::Path::new(root)
+                    .join(&f.file)
+                    .to_string_lossy()
+                    .into_owned(),
+            )
+            .unwrap_or_default();
             let message = shared_common::LintMessage::new(f.message.clone());
             ViolationItem {
                 code,

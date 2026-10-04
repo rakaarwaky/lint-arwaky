@@ -618,8 +618,12 @@ pub(crate) fn doc_violations_in_scope(target: &str, agg: &ScanAggregates) -> Vec
     findings
         .into_iter()
         .filter_map(|finding| {
-            let file = shared_common::FilePath::new(finding.doc.clone()).ok()?;
             let doc_path = target_canon.join(&finding.doc);
+            // Store the resolved path, not `finding.doc`. A bare relative name
+            // cannot be placed in the report's folder tree, so it would fall
+            // back to the scan root and appear to belong to no member.
+            let file =
+                shared_common::FilePath::new(doc_path.to_string_lossy().into_owned()).ok()?;
             let exists = doc_path.is_file()
                 || agg
                     .fs_seam
