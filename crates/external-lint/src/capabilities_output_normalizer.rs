@@ -15,7 +15,9 @@ use shared_common::taxonomy_path_vo::FilePath;
 use shared_common::taxonomy_severity_vo::Severity;
 use shared_common::taxonomy_tool_name_vo::ToolName;
 use shared_external_lint::contract_external_lint_protocol::INormalizeProtocol;
-use shared_external_lint::utility_path_normalization::resolve_or_fallback;
+use shared_external_lint::utility_path_normalization::{
+    resolve_or_fallback, resolve_or_fallback_with_context,
+};
 
 // ─── Block 1: Struct Definition ────────────────────────────
 
@@ -200,11 +202,12 @@ fn canonicalize_against(root: &FilePath, file: &str) -> FilePath {
     if candidate.is_absolute() {
         return resolve_or_fallback(file, root.clone());
     }
-    resolve_or_fallback(
+    resolve_or_fallback_with_context(
         std::path::Path::new(&root.value)
             .join(candidate)
             .to_string_lossy()
             .as_ref(),
         root.clone(),
+        Some(root.clone()),
     )
 }

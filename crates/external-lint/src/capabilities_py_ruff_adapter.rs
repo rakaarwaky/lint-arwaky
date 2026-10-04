@@ -23,9 +23,7 @@ use shared_common::taxonomy_path_vo::FilePath;
 use shared_common::taxonomy_severity_vo::Severity;
 use shared_external_lint::ICommandExecutorProtocol;
 use shared_external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
-use shared_external_lint::utility_path_normalization::{
-    resolve_capabilities_path, resolve_or_fallback,
-};
+use shared_external_lint::utility_path_normalization::resolve_or_fallback_with_context;
 use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared_filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
 use shared_quality_rules::LinterOperationError;
@@ -117,10 +115,8 @@ impl ILinterAdapterProtocol for RuffAdapter {
                 .and_then(|v| v.as_str())
                 .unwrap_or_default();
 
-            let resolved = resolve_capabilities_path(
-                resolve_or_fallback(filename, path.clone()),
-                Some(path.clone()),
-            );
+            let resolved =
+                resolve_or_fallback_with_context(filename, path.clone(), Some(path.clone()));
 
             results.push(LintResult {
                 file: resolved,
