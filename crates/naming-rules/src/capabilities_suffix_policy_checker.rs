@@ -188,14 +188,11 @@ impl SuffixPolicyChecker {
                     "SUFFIX_PREFIX",
                     format!(
                         "Suffix '{}' belongs to the '{}' layer's suffix set, but this file is in the '{}' layer.",
-                        suf,
-                        suffix_belonging_layer,
-                        layer_display
+                        suf, suffix_belonging_layer, layer_display
                     ),
                     format!(
                         "Rename the file with a suffix appropriate for the '{}' layer, or move it to the '{}' layer.",
-                        layer_display,
-                        suffix_belonging_layer
+                        layer_display, suffix_belonging_layer
                     ),
                 ));
             }
@@ -229,8 +226,7 @@ impl SuffixPolicyChecker {
                         "Suffix '{}' is not in the allowed list for layer '{}'. \
                          A suffix outside this list means either the file belongs in a different layer \
                          or needs a different architectural role suffix.",
-                        suffix_display,
-                        layer_display
+                        suffix_display, layer_display
                     ),
                     format!(
                         "Allowed suffixes for '{}': {}. Rename the file with one of the allowed suffixes.",

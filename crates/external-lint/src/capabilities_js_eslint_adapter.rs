@@ -124,9 +124,9 @@ impl ILinterAdapterProtocol for ESLintAdapter {
                             severity,
                             enclosing_scope: Default::default(),
                             related_locations: LocationList::new(),
-    violation_name: String::new(),
-    why: String::new(),
-    fix: String::new(),
+                            violation_name: String::new(),
+                            why: String::new(),
+                            fix: String::new(),
                         });
                     }
                 }

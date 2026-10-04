@@ -46,7 +46,7 @@ pub fn scan_io_forbidden(
                     Severity::MEDIUM,
                     format!(
                         "AES405 AGENT_ROLE: Forbidden {what} in a {language_label} agent file.\n\
-                         WHY? Line {} of {path} uses `{token}`. An agent coordinates in-memory \
+                         WHY? Line {} uses `{token}`. An agent coordinates in-memory \
                          protocols and must not perform I/O itself.\n\
                          FIX: Move the {what} into a capability or surface module and \
                          inject it via a protocol.",

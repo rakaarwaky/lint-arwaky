@@ -47,9 +47,15 @@ pub enum ScanScope {
     TopLevel { member: String },
     /// A subfolder inside a member dir: scan the whole member dir, report only
     /// violations under the subfolder.
-    Subfolder { scan_root: String, filter_to: String },
+    Subfolder {
+        scan_root: String,
+        filter_to: String,
+    },
     /// One file: scan the whole member dir, report only that file.
-    SingleFile { scan_root: String, filter_to: String },
+    SingleFile {
+        scan_root: String,
+        filter_to: String,
+    },
 }
 
 impl ScanScope {

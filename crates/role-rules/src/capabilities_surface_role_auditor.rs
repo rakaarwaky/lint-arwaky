@@ -153,14 +153,14 @@ impl SurfaceRoleChecker {
                 Severity::HIGH,
                 format!(
                     "AES406 SURFACE_ROLE: Complex domain logic detected in a passive/utility surface.\n\
-                     WHY: Surface {} has {} control flow statements (max {})\n\
+                     WHY: Surface file has {} control flow statements (max {})\n\
                      FIX: Move the complex domain/control logic into capabilities or orchestrator components.",
-                    path_str, control_flow_count, MAX_CONTROL_FLOW,
+                    control_flow_count, MAX_CONTROL_FLOW,
                 ),
                 "SURFACE_ROLE",
                 format!(
-                    "Surface {} has {} control flow statements (max {})",
-                    path_str, control_flow_count, MAX_CONTROL_FLOW
+                    "Surface file has {} control flow statements (max {})",
+                    control_flow_count, MAX_CONTROL_FLOW
                 ),
                 "Move the complex domain/control logic into capabilities or orchestrator components.",
             ));

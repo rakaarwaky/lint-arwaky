@@ -1,6 +1,8 @@
 // Unit tests — Formatting utility tests: group_by_member, status_icon, output structure.
 use shared_cli_commands::resolve_skill_hint_for_file;
-use shared_cli_commands::utility_output_text_formatter::{group_by_member, hierarchy_key, status_icon};
+use shared_cli_commands::utility_output_text_formatter::{
+    group_by_member, hierarchy_key, status_icon,
+};
 use shared_cli_commands::{ScanScope, classify_scan_scope};
 use shared_common::ViolationItem;
 use shared_common::{
@@ -255,8 +257,10 @@ fn lowercase_prose_is_not_a_violation_name() {
 #[test]
 fn a_member_file_nests_under_its_member() {
     let (top, member, file) = hierarchy_key("crates/shared_common/src/agent_foo.rs");
-    assert_eq!((top.as_str(), member.as_str(), file.as_str()),
-        ("crates", "shared_common", "src/agent_foo.rs"));
+    assert_eq!(
+        (top.as_str(), member.as_str(), file.as_str()),
+        ("crates", "shared_common", "src/agent_foo.rs")
+    );
 }
 
 /// A file sitting directly in a member dir has no member level of its own.
@@ -307,7 +311,10 @@ fn a_member_dir_scans_only_that_member() {
             member: "crates".to_string()
         }
     );
-    assert!(scope.filter_prefix().is_none(), "the member dir is the scope");
+    assert!(
+        scope.filter_prefix().is_none(),
+        "the member dir is the scope"
+    );
 }
 
 /// A subfolder widens the scan to the member dir and narrows the report.
@@ -326,7 +333,10 @@ fn a_subfolder_scans_the_whole_member_but_reports_the_subfolder() {
         "workspaces-bad/crates",
         "the sibling files the architecture rules read must still be scanned"
     );
-    assert_eq!(scope.filter_prefix(), Some("workspaces-bad/crates/import-rules"));
+    assert_eq!(
+        scope.filter_prefix(),
+        Some("workspaces-bad/crates/import-rules")
+    );
 }
 
 /// A single file widens the scan to the member dir and narrows to that file.
@@ -340,7 +350,10 @@ fn a_single_file_scans_the_whole_member_but_reports_one_file() {
     let file = root.join("crates/utility_orphan_test/src/utility_dead_code.rs");
     let scope = classify_scan_scope(&root.to_string_lossy(), &file.to_string_lossy());
     match &scope {
-        ScanScope::SingleFile { scan_root, filter_to } => {
+        ScanScope::SingleFile {
+            scan_root,
+            filter_to,
+        } => {
             assert_eq!(
                 std::path::Path::new(scan_root),
                 root.join("crates"),

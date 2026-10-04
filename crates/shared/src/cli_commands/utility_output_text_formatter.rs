@@ -242,7 +242,10 @@ pub fn hierarchy_key(rel: &str) -> (String, String, String) {
 
 /// One violation block: `(file:line[:col])`, `CODE:NAME`, `WHY: …`, `FIX: …`.
 fn render_violation(file: &str, v: &ViolationItem) {
-    println!("({})", format_location(file, v.line.value(), v.column.value()));
+    println!(
+        "({})",
+        format_location(file, v.line.value(), v.column.value())
+    );
     let name = if v.violation_name.is_empty() {
         String::new()
     } else {

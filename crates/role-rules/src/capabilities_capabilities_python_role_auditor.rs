@@ -364,16 +364,14 @@ impl CapabilitiesPythonRoleAuditor {
                 Severity::MEDIUM,
                 format!(
                     "AES403 CAPABILITY_ROLE: Public helper has no external caller.\n\
-                     WHY: `def {fn_name}` in {path} is not referenced from any other module or test.\n\
+                     WHY: `def {fn_name}` is not referenced from any other module or test.\n\
                      FIX: Prefix it with `_` (e.g. `def _{fn_name}`) to mark it as a private helper.",
                     fn_name = fn_name,
-                    path = path,
                 ),
                 "CAPABILITY_ROLE",
                 format!(
-                    "`def {fn_name}` in {path} is not referenced from any other module or test.",
+                    "`def {fn_name}` is not referenced from any other module or test.",
                     fn_name = fn_name,
-                    path = path,
                 ),
                 "Prefix it with `_` (e.g. `def _{fn_name}`) to mark it as a private helper.",
             ));

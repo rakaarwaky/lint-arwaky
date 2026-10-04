@@ -71,8 +71,16 @@ impl ViolationItem {
                 .and_then(|v| v.as_str())
                 .unwrap_or("")
                 .to_string(),
-            why: item.get("why").and_then(|v| v.as_str()).unwrap_or("").to_string(),
-            fix: item.get("fix").and_then(|v| v.as_str()).unwrap_or("").to_string(),
+            why: item
+                .get("why")
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .to_string(),
+            fix: item
+                .get("fix")
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .to_string(),
         })
     }
 

@@ -39,7 +39,10 @@ fn is_violation_name(candidate: &str) -> bool {
         && candidate
             .chars()
             .all(|c| c.is_ascii_uppercase() || c.is_ascii_digit() || c == '_')
-        && candidate.chars().next().is_some_and(|c| c.is_ascii_uppercase())
+        && candidate
+            .chars()
+            .next()
+            .is_some_and(|c| c.is_ascii_uppercase())
 }
 
 /// Extract WHY text from a message.
@@ -53,7 +56,10 @@ fn is_violation_name(candidate: &str) -> bool {
 pub fn parse_why(message: &str) -> String {
     for line in message.lines() {
         let trimmed = line.trim();
-        if let Some(text) = trimmed.strip_prefix("WHY?").or_else(|| trimmed.strip_prefix("WHY:")) {
+        if let Some(text) = trimmed
+            .strip_prefix("WHY?")
+            .or_else(|| trimmed.strip_prefix("WHY:"))
+        {
             return text.trim().to_string();
         }
     }
@@ -87,7 +93,8 @@ mod tests {
 
     #[test]
     fn parse_name_from_standard_message() {
-        let msg = "AES401 TAXONOMY_ROLE: Direct primitive in taxonomy entity.\nWHY? reason\nFIX: fix";
+        let msg =
+            "AES401 TAXONOMY_ROLE: Direct primitive in taxonomy entity.\nWHY? reason\nFIX: fix";
         assert_eq!(parse_violation_name("AES401", msg), "TAXONOMY_ROLE");
     }
 

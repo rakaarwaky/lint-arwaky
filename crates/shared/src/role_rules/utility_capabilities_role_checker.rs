@@ -267,17 +267,15 @@ pub fn check_block_markers(file: &FileEntry, violations: &mut Vec<LintResult>) {
             0,
             "AES403",
             Severity::MEDIUM,
-            format!(
-                "AES403 CAPABILITY_ROLE: Capability file declares no block markers.\n\
-                 WHY? {path} carries no `Block 1:` / `Block 2:` / `Block 3:` banner \
-                 comment, so the reader is given no map of the file. The 3-block shape \
-                 is Block 1 (struct definition) -> Block 2 (protocol trait \
-                 implementation) -> Block 3 (constructors, std traits, helpers).\n\
-                 FIX: Add the three banner comments above their blocks:\n  \
-                 // Block 1: Struct Definition\n  \
-                 // Block 2: Protocol Trait Implementation\n  \
-                 // Block 3: Constructors, Std Traits, Helpers"
-            ),
+            "AES403 CAPABILITY_ROLE: Capability file declares no block markers.\n\
+             WHY? File carries no `Block 1:` / `Block 2:` / `Block 3:` banner \
+             comment, so the reader is given no map of the file. The 3-block shape \
+             is Block 1 (struct definition) -> Block 2 (protocol trait \
+             implementation) -> Block 3 (constructors, std traits, helpers).\n\
+             FIX: Add the three banner comments above their blocks:\n  \
+             // Block 1: Struct Definition\n  \
+             // Block 2: Protocol Trait Implementation\n  \
+             // Block 3: Constructors, Std Traits, Helpers",
         ));
         return;
     }
@@ -295,7 +293,7 @@ pub fn check_block_markers(file: &FileEntry, violations: &mut Vec<LintResult>) {
             Severity::MEDIUM,
             format!(
                 "AES403 CAPABILITY_ROLE: Capability file is missing block marker(s).\n\
-                 WHY? {path} declares {} but not {}. A capability is three blocks — \
+                 WHY? File declares {} but not {}. A capability is three blocks — \
                  Block 1 (struct definition), Block 2 (protocol trait implementation), \
                  Block 3 (constructors, std traits, helpers) — and each needs its banner \
                  so the reader can find the seam.\n\
@@ -321,7 +319,7 @@ pub fn check_block_markers(file: &FileEntry, violations: &mut Vec<LintResult>) {
             Severity::MEDIUM,
             format!(
                 "AES403 CAPABILITY_ROLE: Capability file carries block markers beyond Block 3.\n\
-                 WHY? {path} declares {}. The 3-block structure is Block 1 (struct \
+                 WHY? File declares {}. The 3-block structure is Block 1 (struct \
                  definition) -> Block 2 (protocol trait implementation) -> Block 3 \
                  (constructors, std traits, helpers); a Block 4 means the file has \
                  outgrown it.\n\
@@ -354,7 +352,7 @@ pub fn check_block_markers(file: &FileEntry, violations: &mut Vec<LintResult>) {
             Severity::MEDIUM,
             format!(
                 "AES403 CAPABILITY_ROLE: Capability block markers are out of order.\n\
-                 WHY? {path} declares them as {} but the structure is fixed: Block 1 \
+                 WHY? File declares them as {} but the structure is fixed: Block 1 \
                  (struct definition) -> Block 2 (protocol trait implementation) -> \
                  Block 3 (constructors, std traits, helpers).\n\
                  FIX: Move the banner comments so they head their blocks in \
