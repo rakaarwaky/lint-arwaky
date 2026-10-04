@@ -29,6 +29,11 @@ pub struct DocFinding {
     pub line: usize,
     /// Severity of the finding. All AES6xx rules are HIGH per RULES_AES.
     pub severity: Severity,
+    /// Why the invariant matters. Rendered on its own line in the report, so
+    /// it holds the reason and not a restatement of `message`.
+    pub why: String,
+    /// What to do about it. Rendered on its own line under `why`.
+    pub fix: String,
 }
 
 impl DocFinding {
@@ -48,7 +53,18 @@ impl DocFinding {
             message: message.into(),
             line,
             severity: Severity::HIGH,
+            why: String::new(),
+            fix: String::new(),
         }
+    }
+
+    /// Attach the reason and the remedy, for the report to print under the
+    /// code. The 5-argument `new_with_line` keeps working for a caller that
+    /// has no separate wording to offer.
+    pub fn with_reason(mut self, why: impl Into<String>, fix: impl Into<String>) -> Self {
+        self.why = why.into();
+        self.fix = fix.into();
+        self
     }
 
     /// Convert this finding to a shared `ViolationItem` for SARIF/JSON output.

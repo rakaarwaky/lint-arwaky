@@ -128,19 +128,21 @@ fn check_feature_test_suite(folder: &Path, rel: &str, findings: &mut Vec<Structu
     let benches_dir = folder.join(BENCHES_DIR);
 
     if !tests_dir.is_dir() {
-        findings.push(StructureFinding::new(
-            consts::RULE_CODE_TEST_SUITE_COVERAGE,
-            consts::TEST_SUITE_VIOLATION_MISSING_TESTS_DIR,
-            rel.to_string(),
-            format!("feature folder '{rel}' has no '{TESTS_DIR}/' directory"),
-        )
-        .with_reason(
-            format!(
-                "A feature folder owes one test file per test type ({}).",
-                prefix_list(required_tests_prefixes())
+        findings.push(
+            StructureFinding::new(
+                consts::RULE_CODE_TEST_SUITE_COVERAGE,
+                consts::TEST_SUITE_VIOLATION_MISSING_TESTS_DIR,
+                rel.to_string(),
+                format!("feature folder '{rel}' has no '{TESTS_DIR}/' directory"),
+            )
+            .with_reason(
+                format!(
+                    "A feature folder owes one test file per test type ({}).",
+                    prefix_list(required_tests_prefixes())
+                ),
+                format!("Add a '{TESTS_DIR}/' directory with one file per required test type."),
             ),
-            format!("Add a '{TESTS_DIR}/' directory with one file per required test type."),
-        ));
+        );
     } else {
         let present = test_stems_in(&tests_dir);
         for prefix in required_tests_prefixes() {

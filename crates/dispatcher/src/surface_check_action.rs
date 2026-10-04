@@ -645,8 +645,8 @@ pub(crate) fn doc_violations_in_scope(target: &str, agg: &ScanAggregates) -> Vec
                 message,
                 severity: shared_common::Severity::HIGH,
                 violation_name: finding.violation_type.to_string(),
-                why: String::new(),
-                fix: String::new(),
+                why: finding.why,
+                fix: finding.fix,
             })
         })
         .collect::<Vec<_>>()

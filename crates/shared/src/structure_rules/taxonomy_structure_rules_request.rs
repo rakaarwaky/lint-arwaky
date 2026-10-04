@@ -40,11 +40,7 @@ impl StructureFinding {
     /// Attach the reason and the remedy, for the report to print under the
     /// code. The 4-argument `new` keeps working for a caller that has no
     /// separate wording to offer.
-    pub fn with_reason(
-        mut self,
-        why: impl Into<String>,
-        fix: impl Into<String>,
-    ) -> Self {
+    pub fn with_reason(mut self, why: impl Into<String>, fix: impl Into<String>) -> Self {
         self.why = why.into();
         self.fix = fix.into();
         self
