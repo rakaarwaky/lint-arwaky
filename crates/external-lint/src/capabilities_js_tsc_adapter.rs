@@ -23,6 +23,7 @@ use shared_common::taxonomy_severity_vo::Severity;
 use shared_common::taxonomy_tool_name_vo::ToolName;
 use shared_external_lint::ICommandExecutorProtocol;
 use shared_external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
+use shared_external_lint::utility_extension_guard::is_scannable_file;
 use shared_external_lint::utility_path_normalization::{
     resolve_capabilities_path, resolve_or_fallback,
 };
@@ -50,10 +51,7 @@ impl ILinterAdapterProtocol for TSCAdapter {
 
     fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError> {
         let path_str = path.value();
-        if self.io.is_file(Path::new(path_str))
-            && !path_str.ends_with(".ts")
-            && !path_str.ends_with(".tsx")
-        {
+        if self.io.is_file(Path::new(path_str)) && !is_scannable_file(path_str, &[".ts", ".tsx"]) {
             return Ok(LintResultList::default());
         }
 
