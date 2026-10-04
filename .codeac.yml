@@ -1,17 +1,18 @@
-# Codeac config — excludes paths the analyzer should skip.
+# Codeac Cloud config — per-repo behaviour overrides.
 # Docs: https://www.codeac.io/documentation/custom-configuration.html
-# Excludes use glob syntax; a trailing ** matches everything inside.
-# workspaces-bad / workspaces-good are intentional fixtures, not product code.
-exclude:
-  # Fixtures (intentional violations, not real code)
-  - "workspaces-bad/**"
-  - "workspaces-good/**"
+#
+# `.codeac.yml` supports only `version`, `thresholds`, and `tools` sections.
+# Folder / path exclusions are configured in the Codeac Cloud dashboard
+# (Settings → Ignore paths) — they are not read from this file.
+#
+# To stop Codeac reporting violations from fixture / build folders, add the
+# following ignore paths in the dashboard:
+#   workspaces-bad/**
+#   workspaces-good/**
+#   target/**
+#   dist/**
+#   build/**
+#   node_modules/**
+#   crates/*/tests/**
 
-  # Build output
-  - "target/**"
-  - "dist/**"
-  - "build/**"
-  - "node_modules/**"
-
-  # Per-crate test suites in the main workspace
-  - "crates/*/tests/**"
+version: '1'
