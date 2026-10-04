@@ -23,9 +23,7 @@ use shared_external_lint::ICommandExecutorProtocol;
 use shared_external_lint::IJsToolResolutionProtocol;
 use shared_external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
 use shared_external_lint::utility_extension_guard::is_scannable_file;
-use shared_external_lint::utility_path_normalization::{
-    resolve_capabilities_path, resolve_or_fallback,
-};
+use shared_external_lint::utility_path_normalization::resolve_or_fallback_with_context;
 use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared_filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
 use shared_quality_rules::LinterOperationError;
@@ -111,8 +109,8 @@ impl ILinterAdapterProtocol for PrettierAdapter {
                         .to_string_lossy()
                         .to_string()
                 };
-                let file_fp = resolve_or_fallback(&file_abs, path.clone());
-                let filename_vo = resolve_capabilities_path(file_fp, Some(path.clone()));
+                let filename_vo =
+                    resolve_or_fallback_with_context(&file_abs, path.clone(), Some(path.clone()));
                 results.push(LintResult {
                     file: filename_vo,
                     line: LineNumber::new(1),

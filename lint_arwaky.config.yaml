@@ -69,8 +69,9 @@ ignored_rules:
   #   MD033 inline HTML — `<Type>` is Rust/TS generic notation in prose and
   #     code spans, not markup.
   #   MD024 duplicate heading — ARCHITECTURE.md repeats Purpose/Components/
-  #     Dependencies/Special Rules once per AES layer, by design. This silences
-  #     the rule outright, so a genuine duplicate heading under one parent is
+  #     Dependencies/Special Rules once per AES layer, by design, and CHANGELOG.md
+  #     repeats Added/Changed/Fixed per version entry. This silences the rule
+  #     outright, so a genuine duplicate heading under one parent is
   #     no longer reported; nothing in this repo currently relies on that.
   - "markdownlint::MD013"
   - "markdownlint::MD060"
