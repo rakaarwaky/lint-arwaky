@@ -54,21 +54,34 @@ impl IConfigMergeProtocol for ConfigParserProvider {
         shared_config_system::utility_config_parser::parse_config_yaml_with_warnings(yaml_str)
     }
 
-    /// FR-003: merge rules into layer definitions, injecting the embedded
-    /// defaults when the config declares no layers.
+    /// FR-003: lock the `architecture:` section to the embedded defaults.
+    ///
+    /// The AES business rules (layer definitions, per-rule scope/allowed/
+    /// forbidden/mandatory/severity, naming) are fixed in the tool. A user
+    /// config may only carry tool-policy fields: `thresholds`, `adapters`,
+    /// `ignored_rules` (read on a separate path), and `ignored_paths`.
     fn merge_config_with_defaults(
         &self,
         config: &ArchitectureConfig,
         language: ConfigLanguage,
     ) -> (ArchitectureConfig, Vec<String>) {
-        let (merged_layers, _) = shared_config_system::utility_config_merger::merge_config(config);
-        let mut merged = config.clone();
+        let embedded = default_config_for_language(language.as_str());
+        let (merged_layers, _) =
+            shared_config_system::utility_config_merger::merge_config(&embedded);
+        let mut merged = embedded;
         merged.layers = merged_layers;
+        // User policy fields carry through; architecture business fields stay
+        // from the embedded defaults.
+        merged.ignored_paths = config.ignored_paths.clone();
         let mut warnings = Vec::new();
-        if merged.layers.is_empty() {
-            merged.layers = default_config_for_language(language.as_str()).layers;
+        if !config.rules.is_empty()
+            || !config.layers.is_empty()
+            || config.naming.word_count.value != 0
+            || !config.enabled.value
+        {
             warnings.push(
-                "Config file had no architecture layers, using built-in defaults for layers only."
+                "architecture section in user config is ignored: AES rules are fixed by the tool. \
+                 Only `ignored_rules` and `ignored_paths` apply from the user config file."
                     .to_string(),
             );
         }

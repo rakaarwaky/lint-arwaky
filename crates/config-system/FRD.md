@@ -123,7 +123,7 @@ Loaded config is merged with embedded defaults via rule-based layer merging (FR-
 
 ### FR-ConfigSystem-003: Config Merger
 
-- **Description**: Parse YAML config content into a typed configuration and merge it with embedded defaults using rule-based layer merging with scoped sub-layer creation. Threshold validation, adapter enablement, config caching, and ignored-path assembly are steps of this same merge concern.
+- **Description**: Parse YAML config content into a typed configuration and merge it with embedded defaults using rule-based layer merging with scoped sub-layer creation. The `architecture:` section is locked to the embedded defaults: user-supplied `architecture:` rules, layers, naming, and `enabled` are discarded; only the tool-policy fields (`thresholds`, `adapters`, `ignored_rules`, `ignored_paths`) apply from user config. Threshold validation, adapter enablement, config caching, and ignored-path assembly are steps of this same merge concern.
 - **Input**: YAML source text or a file path; a parsed `ArchitectureConfig`; a `ConfigLanguage`.
 - **Output**: `ArchitectureConfig` or `(ArchitectureConfig, Vec<String>)` of merge warnings; a `ValidationResult` for threshold validation; a boolean adapter-enabled flag; a `PatternList` of ignored paths.
 - **Business Rules**:
@@ -134,6 +134,7 @@ Loaded config is merged with embedded defaults via rule-based layer merging (FR-
   - **Naming** — merged recursively; non-empty values override defaults.
   - **Ignored paths** — concatenated and deduplicated with the 8 universal defaults.
   - Empty arrays/objects in a child config do NOT override parent values.
+  - **Architecture lock** — user `architecture:` rules/layers/naming/enabled are discarded; embedded defaults are the sole source of AES business rules. `ignored_paths` carries through. A warning is emitted when a user config declares an `architecture:` section.
   - When config has no layers, injects defaults for layers only and adds a warning.
   - When no config file found, returns embedded defaults with warning.
   - **Score threshold** must be between 0.0 and 100.0 (inclusive); **complexity** and **max_file_lines** thresholds must be positive (> 0).
