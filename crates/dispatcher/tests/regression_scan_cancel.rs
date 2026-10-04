@@ -7,6 +7,8 @@
 // violations AND omits the "Scan complete" milestone — it does not just emit
 // a cosmetic Cancelled message.
 
+mod common;
+
 use std::sync::atomic::AtomicBool;
 
 use shared_common::taxonomy_path_vo::FilePath;
@@ -37,13 +39,14 @@ fn seam() -> std::sync::Arc<dispatcher_lint_arwaky::surface_check_action::Filesy
 
 fn scan_opts() -> dispatcher_lint_arwaky::surface_check_action::ScanOptions {
     let fixture = many_file_fixture();
+    let root_str = fixture.to_string_lossy().to_string();
     dispatcher_lint_arwaky::surface_check_action::ScanOptions {
         path: Some(FilePath::new(fixture.to_string_lossy().to_string()).unwrap()),
         multi_project_orchestrator: None,
         filter: None,
         member: None,
         filesystem: seam(),
-        scan_aggregates: None,
+        scan_aggregates: Some(common::build_scan_aggregates(&root_str)),
     }
 }
 
