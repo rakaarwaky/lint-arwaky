@@ -33,9 +33,16 @@ Verify: `lint-arwaky-cli version`. First scan:
 
 ```bash
 lint-arwaky-cli scan .            # run all linters
+lint-arwaky-cli report .          # progress counts per member vs the last run
 lint-arwaky-cli ci . --threshold 0   # CI exit codes
 lint-arwaky-cli fix . --dry-run      # preview auto-fixes
 ```
+
+`scan` prints one block per violation under the member dir it found it in, four lines each: `(file:line)`, the rule code, `WHY:` the reason, `FIX:` the remedy.
+
+`report` runs the same scan and prints a per-member count with the change against the last run, instead of the violations. It exits success whenever it prints; it is a progress readout, not a gate. Snapshots go to the XDG data directory, one entry per target, so a scan leaves no file in the repository.
+
+A scan target only filters the report, not the scan: naming a subfolder or a file inside a member dir still scans the whole member, because the architecture rules read sibling files.
 
 For a guided, presenter-ready walkthrough using the bundled fixtures, see `TEST.md`
 Section 5.5 "Demo Walkthrough".
@@ -46,6 +53,7 @@ Section 5.5 "Demo Walkthrough".
 | Command                                                                              | Description                                                                                                                                   |
 | ------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | `scan` / `check` \[path\]                                                            | Run all 8 linters (naming, import, quality, role, orphan, structure, docs, external)                                                           |
+| `report` \[path\]                                                                     | Progress report: per-member violation counts with the change against the last run; exits success whenever it prints                              |
 | `naming` / `import` / `quality` / `role` / `orphan` / `structure` / `docs` \[path\]  | Individual rule groups (AES101–102, 201–205, 301–305, 401–406, 501–506, 601–605, 701–703)                                                     |
 | `taxonomy` / `contract` / `capabilities` / `utility` / `agents` / `surface` \[path\] | All rule groups, reported for one AES layer only (files prefixed `taxonomy_`, `contract_`, `capabilities_`, `utility_`, `agent_`, `surface_`) |
 | `external` \[path\]                                                                  | External linters (Clippy, Ruff, ESLint, tool-native codes)                                                                                    |
