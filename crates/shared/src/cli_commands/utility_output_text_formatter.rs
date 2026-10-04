@@ -3,11 +3,10 @@
 // Dispatcher returns data (Vec<ViolationItem> / report structs); this module renders it.
 // Uses existing VOs from shared: ErrorCode, FilePath, LintMessage, Severity.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use shared_common::ViolationItem;
 use shared_common::taxonomy_format_vo::Format;
-use shared_common::taxonomy_skill_hint_vo::resolve_skill_hint_for_path as resolve_skill_hint_for_file;
 
 /// Format a violation location as "file:line:column".
 pub fn format_location(file: &str, line: i64, column: i64) -> String {
@@ -279,19 +278,100 @@ fn render_violation(file: &str, v: &ViolationItem) {
     println!();
 }
 
-/// Bottom `Hint` section: one line per distinct code, each hint printed once.
+/// Bottom `Hint` section: the skills available, grouped by the layer whose
+/// files were flagged.
+///
+/// A per-code lookup answered "which skill fixes AES101" by reading the first
+/// file that code happened to appear in, so a naming violation in an agent
+/// file pointed at the taxonomy skill. Grouping by layer answers the question
+/// a reader actually has — this file is an agent file, what do I read — and
+/// leaves the choice of which skill to them.
 fn render_suggestions(grouped: &BTreeMap<String, Vec<&ViolationItem>>) {
-    let mut samples: BTreeMap<String, &ViolationItem> = BTreeMap::new();
+    let mut layers: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
     for results in grouped.values() {
         for r in results {
-            samples.entry(r.code.code().to_string()).or_insert(r);
+            // A file outside the naming convention still groups under `other`,
+            // so a tool violation on it does not vanish from the report.
+            let layer = layer_of(&r.file.value).unwrap_or("other");
+            layers
+                .entry(layer.to_string())
+                .or_default()
+                .insert(r.code.code().to_string());
         }
     }
-    println!("Hint");
-    for (code, sample) in &samples {
-        let hint = resolve_skill_hint_for_file(code, &sample.file.value);
-        println!("{code} → {}", hint.guidance());
+    if layers.is_empty() {
+        return;
     }
+
+    println!("Hint");
+    println!("Skills, by the kind of file they govern:");
+    println!();
+    for (layer, codes) in &layers {
+        println!("{layer}");
+        println!("  codes: {}", join_sorted(codes));
+        for skill in skills_for_layer(layer) {
+            println!("  - lint-arwaky-cli skill read {skill}");
+        }
+        println!();
+    }
+}
+
+/// The skills worth reading for a file in `layer`.
+///
+/// Each layer skill owns that layer's rules; `aes-docs` owns the markdown
+/// documents wherever they sit, and `aes-lint-arwaky` covers the rules that
+/// hold everywhere — naming, file length, duplication.
+fn skills_for_layer(layer: &str) -> Vec<&'static str> {
+    let mut skills: Vec<&'static str> = match layer {
+        "taxonomy" => vec!["aes-taxonomy", "aes-contract"],
+        "contract" => vec!["aes-contract", "aes-taxonomy"],
+        "capabilities" => vec!["aes-capabilities"],
+        "utility" => vec!["aes-utility"],
+        "agent" => vec!["aes-agent"],
+        "surfaces" => vec!["aes-surface"],
+        "root" => vec!["aes-root"],
+        _ => vec!["aes-lint-arwaky"],
+    };
+    // Every layer also sits under the cross-cutting rules and the doc rules.
+    for shared in ["aes-lint-arwaky", "aes-docs"] {
+        if !skills.contains(&shared) {
+            skills.push(shared);
+        }
+    }
+    skills
+}
+
+/// The layer a file belongs to, from its name prefix (the AES102 convention).
+///
+/// `None` for a file outside the convention — a tool violation on a file with
+/// no layer prefix, for instance. The report groups those under `other` rather
+/// than dropping them, so an external tool's codes stay visible.
+fn layer_of(file_path: &str) -> Option<&'static str> {
+    const PREFIXES: [(&str, &str); 8] = [
+        ("taxonomy", "taxonomy"),
+        ("contract", "contract"),
+        ("capabilities", "capabilities"),
+        ("utility", "utility"),
+        ("agent", "agent"),
+        ("surface", "surfaces"),
+        ("root", "root"),
+        ("cli_", "surface"),
+    ];
+    let filename = file_path.rsplit(['/', '\\']).next().unwrap_or(file_path);
+    // A document is judged by the doc rules wherever it sits.
+    if filename.ends_with(".md") {
+        return Some("docs");
+    }
+    let stem = filename.split('.').next().unwrap_or(filename);
+    PREFIXES
+        .iter()
+        .find(|(prefix, _)| stem.starts_with(prefix))
+        .map(|(_, layer)| *layer)
+}
+
+/// Join a set in a stable order, without pulling in a dependency.
+fn join_sorted(values: &BTreeSet<String>) -> String {
+    values.iter().cloned().collect::<Vec<_>>().join(", ")
 }
 
 // ─── JSON ───────────────────────────────────────────────────
