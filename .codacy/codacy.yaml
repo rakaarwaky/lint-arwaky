@@ -1,3 +1,10 @@
+exclude_paths:
+- workspaces-bad/**
+- workspaces-good/**
+- "crates/*/tests/**"
+- scripts/**
+- tools/**
+- CONTRIBUTING.md
 runtimes:
     - python@3.11.11
     - java@17.0.10
