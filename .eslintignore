@@ -1,0 +1,17 @@
+# Fixtures — intentional violations, not product code
+workspaces-bad/**
+workspaces-good/**
+
+# Per-crate integration tests add no signal to ESLint
+crates/*/tests/**
+
+# Build / output
+target/**
+dist/**
+build/**
+node_modules/**
+
+# Local tooling and docs
+scripts/**
+tools/**
+CONTRIBUTING.md
