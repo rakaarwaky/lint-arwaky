@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 3.7.2 (2026-10-04)
 
 ### AES705 — member-root file placement
 
@@ -18,7 +18,6 @@
   any unclassified file stay legal, because that is where the container composes
   them.
 
-### AGENTS.md template contract (AES605)
 ### AGENTS.md template contract (AES605)
 
 - **Resolved the 12-vs-14 H2 conflict in the AGENTS.md contract.** The heading
@@ -137,13 +136,10 @@
   `crates/shared/skills/`, colocating packaged assets with the crate that owns
   and embeds them.
 
-<!-- STATUS (PE-3-01 / #623, recorded 2026-10-01): 3.7.1 below is versioned in Cargo.toml
-     and changelogged here, but has NO corresponding GitHub tag or Release
-     (`gh release view v3.7.1` → not found; `gh api .../tags` lists no v3.7.1). Treat it
-     as not-yet-released. Resolve the tag/Release status (see ROADMAP.md Risk Register)
-     before adding further entries above this line or bumping the version again. -->
+## 3.7.1 (2026-09-27, not tagged)
 
-## 3.7.1 (2026-09-27)
+> Versioned and changelogged, but no `v3.7.1` GitHub tag or Release exists.
+> Its features shipped with 3.7.2 above. See ROADMAP.md Risk Register (PE-3-01).
 
 ### Features
 

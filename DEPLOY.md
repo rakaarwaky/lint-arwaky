@@ -1,11 +1,11 @@
 # Deployment Guide — Lint Arwaky
 
-**Status**: RELEASE CANDIDATE (v3.7.1) — pending final sign-offs in checklist below. Tracked in `ROADMAP.md`.
+**Status**: RELEASE CANDIDATE (v3.7.2) — pending final sign-offs in checklist below. Tracked in `ROADMAP.md`.
 
-> **Known gap (PE-3-01 / #623):** `Cargo.toml` and `CHANGELOG.md` already declare 3.7.1,
-> but no `v3.7.1` GitHub tag or Release exists yet (`gh release view v3.7.1` → not found).
-> The sign-off table below evidences pipeline-gate health at commit `8d4342a`; it is not,
-> by itself, authorization to tag 3.7.1 — see `ROADMAP.md` Risk Register before cutting
+> **Known gap (PE-3-01 / #623):** `Cargo.toml` and `CHANGELOG.md` already declare 3.7.2,
+> but no `v3.7.2` GitHub tag or Release exists yet. The prior 3.7.1 candidate was also
+> never tagged. The sign-off table below evidences pipeline-gate health; it is not,
+> by itself, authorization to tag 3.7.2 — see `ROADMAP.md` Risk Register before cutting
 > the tag.
 
 ---
