@@ -27,7 +27,7 @@ impl ICapabilitiesRoleProtocol for CapabilitiesTypeScriptRoleAuditor {
         layer: &str,
         violations: &mut Vec<LintResult>,
     ) {
-        if !is_capabilities_layer(layer) {
+        if !utility_capabilities_role_checker::is_capabilities_layer(layer) {
             return;
         }
         let references = ExternalReferenceMap::default();
@@ -41,7 +41,7 @@ impl ICapabilitiesRoleProtocol for CapabilitiesTypeScriptRoleAuditor {
         references: &ExternalReferenceMap,
         violations: &mut Vec<LintResult>,
     ) {
-        if !is_capabilities_layer(layer) {
+        if !utility_capabilities_role_checker::is_capabilities_layer(layer) {
             return;
         }
         utility_capabilities_role_checker::check_type_budget(file, violations);
@@ -360,9 +360,4 @@ impl CapabilitiesTypeScriptRoleAuditor {
             ));
         }
     }
-}
-
-/// True when `layer` names the capabilities layer.
-fn is_capabilities_layer(layer: &str) -> bool {
-    layer == "capabilities" || layer.starts_with("capabilities(")
 }

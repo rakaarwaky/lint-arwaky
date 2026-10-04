@@ -20,7 +20,7 @@ pub struct AgentTsRoleAuditor {}
 
 impl IAgentRoleProtocol for AgentTsRoleAuditor {
     fn check_agent_routing(&self, file: &FileEntry, layer: &str, violations: &mut Vec<LintResult>) {
-        if !is_agent_layer(layer) {
+        if !utility_agent_role_checker::is_agent_layer(layer) {
             return;
         }
         // Composition sub-checks only; the orchestrator calls the remaining
@@ -416,8 +416,4 @@ impl AgentTsRoleAuditor {
             }
         }
     }
-}
-
-fn is_agent_layer(layer: &str) -> bool {
-    layer == "agent" || layer.starts_with("agent(")
 }
