@@ -8,10 +8,21 @@ use std::sync::OnceLock;
 
 static DEFAULT_CONFIG: OnceLock<ArchitectureConfig> = OnceLock::new();
 
-/// Returns the full default AES config parsed from `lint_arwaky.config.yaml`.
+/// Returns the default AES architecture.
+///
+/// The AES business rules — layer scopes, import dependency matrix, suffix
+/// policies, exceptions — are fixed in the tool, not read from config. See
+/// `utility_architecture_constants`. A project's config file may only switch
+/// rules on or off and add exceptions.
 pub fn default_aes_config() -> ArchitectureConfig {
     DEFAULT_CONFIG
-        .get_or_init(|| parse_config_yaml(include_str!("../../config/lint_arwaky.config.yaml")))
+        .get_or_init(|| {
+            // Orphan detection is on for every layer unless one opts out, the
+            // same post-processing a parsed config receives.
+            enable_default_orphan_detection(
+                crate::utility_architecture_constants::hardcoded_default_architecture(),
+            )
+        })
         .clone()
 }
 
