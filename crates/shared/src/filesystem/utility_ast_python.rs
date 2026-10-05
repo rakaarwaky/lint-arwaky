@@ -107,8 +107,50 @@ pub fn extract_python_metadata(tree: &tree_sitter::Tree, content: &str) -> Pytho
 fn collect_python_class(node: tree_sitter::Node, content: &str, meta: &mut PythonMetadata) {
     let name = child_by_field(node, content, "name").unwrap_or_default();
     let bases = extract_python_class_bases(node, content);
-    meta.class_declarations
-        .push(PythonClassItem { name, bases });
+    let mut decorators = Vec::new();
+    let mut body_fn_count = 0usize;
+    if let Some(parent) = node.parent() {
+        let mut cursor = parent.walk();
+        for sibling in parent.named_children(&mut cursor) {
+            match sibling.kind() {
+                "class_definition" => {
+                    if sibling.byte_range() == node.byte_range() {
+                        let mut c = sibling.walk();
+                        for child in sibling.named_children(&mut c) {
+                            if child.kind() == "block" {
+                                let mut bc = child.walk();
+                                body_fn_count = child
+                                    .named_children(&mut bc)
+                                    .filter(|n| n.kind() == "function_definition")
+                                    .count();
+                            }
+                        }
+                    }
+                }
+                "decorator" => {
+                    // A decorator inside a `decorated_definition` may carry a
+                    // `name` field that is an identifier node (text "with_x")
+                    // or, with call syntax, a `call` node. Record the raw
+                    // source so the checker can match by shape.
+                    let text = text_of(sibling, content);
+                    decorators.push(text.trim_start_matches('@').to_string());
+                }
+                _ => {}
+            }
+        }
+    }
+
+    meta.class_declarations.push(PythonClassItem {
+        name,
+        bases,
+        decorators,
+        body_fn_count,
+        module_fn_names: meta
+            .function_definitions
+            .iter()
+            .map(|f| f.name.clone())
+            .collect(),
+    });
 }
 
 /// Extracts the base expressions from a Python class definition.
