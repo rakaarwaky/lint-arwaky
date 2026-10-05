@@ -3,7 +3,9 @@ rustc-wrapper = "sccache"
 
 [target.x86_64-unknown-linux-gnu]
 linker = "cc"
-rustflags = ["-C", "link-arg=-fuse-ld=mold"]
+
+# mold 2.34.1 rejects R_X86_64_TPOFF64 in .eh_frame under -pie; use cc's default
+# GNU ld instead. mold is kept for non-pie targets where it is safe.
 
 # For sccache to work, disable incremental on full builds:
 #   CARGO_INCREMENTAL=0 cargo build
