@@ -94,11 +94,42 @@ jobs:
           ./lint-arwaky-cli --version
           ./lint-arwaky-cli --help
 
+      - name: Verify the binary reports the tagged version
+        # Guards the release version against drifting back to whichever crate
+        # holds the printing code: `la --version` and the scan header must both
+        # agree with the VERSION file the tag was cut from.
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          reported="$(./lint-arwaky-cli --version | awk '{print $NF}')"
+          if [ "$reported" != "$version" ]; then
+            echo "Binary reports $reported but the tag is $version" >&2
+            exit 1
+          fi
+
       - name: Verify MCP server
         run: ./lint-arwaky-mcp --version || true
 
       - name: Smoke scan
-        run: ./lint-arwaky-cli scan . --format json | grep '"total_violations"'
+        # The scan JSON carries `results` and `target`; the `total_violations`
+        # summary block was removed when the formats were aligned (#855/#861),
+        # and this check still looked for it. Assert the real shape, and that
+        # it parses, so a renamed or reshaped payload fails here rather than
+        # in a consumer.
+        run: |
+          ./lint-arwaky-cli scan . --format json > scan.json
+          python3 - <<'PY'
+          import json, sys
+
+          with open("scan.json") as handle:
+              payload = json.load(handle)
+
+          missing = {"results", "target"} - set(payload)
+          if missing:
+              sys.exit(f"scan JSON is missing {sorted(missing)}; got {list(payload)}")
+          if not isinstance(payload["results"], list):
+              sys.exit("scan JSON 'results' is not a list")
+          print(f"scan JSON ok: {len(payload['results'])} results, target={payload['target']}")
+          PY
 
   provenance:
     name: Generate SLSA provenance

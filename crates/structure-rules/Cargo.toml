@@ -1,6 +1,6 @@
 [package]
 name = "structure-rules-lint-arwaky"
-version = "0.1.0"
+version.workspace = true
 edition = "2024"
 description = "Folder and file structure enforcer for AES701 (shared purity), AES702 (feature health), AES703 (surface purity), and AES704 (test-suite coverage)."
 license = "MIT"
