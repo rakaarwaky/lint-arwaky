@@ -216,3 +216,29 @@ fn an_absent_file_reads_as_an_empty_store() {
     );
     assert!(store.entries.is_empty());
 }
+
+/// The renderer lists every member. The table used to stop after 20 rows and
+/// print "… and N more members", which hid the members that had cleared and
+/// left the visible rows short of `Total`. `render_report` writes straight to
+/// stdout, so this pins the invariant on the delta it is fed from: every member
+/// reaches the renderer, and the rows account for the whole total.
+#[test]
+fn every_member_reaches_the_report_and_accounts_for_the_total() {
+    let member_count = 47;
+    let members: BTreeMap<String, usize> = (0..member_count)
+        .map(|i| (format!("member_{i:02}"), i + 1))
+        .collect();
+    let total: usize = members.values().sum();
+
+    let snapshot = ReportSnapshot {
+        taken_at: 0,
+        members: members.clone(),
+    };
+    let delta = shared_cli_commands::utility_report_delta::compare(&snapshot, None);
+
+    assert_eq!(delta.members.len(), member_count);
+    assert_eq!(delta.total_now, total);
+
+    let rendered_sum: usize = delta.members.iter().map(|m| m.now).sum();
+    assert_eq!(rendered_sum, total, "member rows must add up to the total");
+}
