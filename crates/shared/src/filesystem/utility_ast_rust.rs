@@ -181,44 +181,78 @@ fn extract_rust_impl(node: tree_sitter::Node, content: &str) -> RustImplItem {
     let has_generics = text.contains('<');
     let mut trait_name = None;
     let mut trait_path = None;
-    let implementor_type;
+    let implementor;
 
-    if let Some(for_pos) = text.find(" for ") {
-        let before_for = text[..for_pos].trim();
-        let after_for = text[for_pos + 5..].trim();
+    // Every answer below comes from the impl *header*, never the body. The body
+    // is arbitrary user code: an arrow in `fn f() -> T`, a comparison, a
+    // nested impl. Searching the whole block mislabels the implementor — for
+    // `impl RuleRow { fn into_rule(self) -> ArchitectureRule { .. } }` a `>`-scan
+    // over the full text yields "ArchitectureRule" instead of "RuleRow".
+    let header = text.split('{').next().unwrap_or(&text);
+
+    if let Some(for_pos) = header.find(" for ") {
+        let before_for = header[..for_pos].trim();
+        let after_for = header[for_pos + 5..].trim();
         if let Some(trait_part) = trait_name_before_for(before_for) {
             trait_name = Some(trait_part.to_string());
             trait_path = Some(trait_part.to_string());
         }
-        implementor_type = after_for
-            .split_whitespace()
-            .next()
-            .unwrap_or("")
-            .trim_end_matches('{')
-            .trim()
-            .to_string();
+        implementor = type_name_after_generic(after_for);
     } else {
-        let impl_part = text.strip_prefix("impl").unwrap_or(&text);
-        let impl_part = if let Some(generic_end) = impl_part.find('>') {
-            impl_part[generic_end + 1..].trim()
-        } else {
-            impl_part.trim()
-        };
-        implementor_type = impl_part
-            .split_whitespace()
-            .next()
-            .unwrap_or("")
-            .trim_end_matches('{')
-            .trim()
-            .to_string();
+        let impl_part = header.strip_prefix("impl").unwrap_or(header);
+        implementor = type_name_after_generic(impl_part);
     }
 
     RustImplItem {
         trait_name,
         trait_path,
-        implementor_type,
+        implementor_type: implementor,
         has_generics,
     }
+}
+
+/// The type name in an impl header, with the impl's own generic list removed.
+///
+/// `impl<T> Foo for Bar<T>` names `Bar`. The generic list only belongs to the
+/// impl when it opens immediately after `impl` (`impl<'a, T> Foo for Bar`); in
+/// `impl Foo<u32> for Bar` the `<` belongs to the trait and must be kept, so
+/// this is used only on text that has already had its trait stripped.
+fn type_name_after_generic(text: &str) -> String {
+    let text = text.trim();
+    let text = if text.starts_with('<') {
+        match text.find('>') {
+            Some(offset) => text[offset + 1..].trim_start(),
+            None => text,
+        }
+    } else {
+        text
+    };
+    first_type_token(text)
+}
+
+/// First whitespace-delimited type token, minus generic parameters.
+fn first_type_token(text: &str) -> String {
+    let mut token = String::new();
+    let mut depth = 0i32;
+    for ch in text.chars() {
+        match ch {
+            '<' => {
+                depth += 1;
+            }
+            '>' if depth > 0 => {
+                depth -= 1;
+            }
+            _ if depth > 0 => {}
+            _ => token.push(ch),
+        }
+    }
+    token
+        .split_whitespace()
+        .next()
+        .unwrap_or("")
+        .trim_end_matches(['{', ',', ':', '&'])
+        .trim()
+        .to_string()
 }
 
 /// The trait named in the head of an `impl … Trait for Type` block.
