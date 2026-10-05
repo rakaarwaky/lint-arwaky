@@ -1,6 +1,6 @@
 [package]
 name = "shared-tui-lint-arwaky"
-version = "0.1.0"
+version.workspace = true
 edition = "2024"
 description = "AES tui foundation: shared TUI utilities (theme tokens, report formatting, filesystem helpers) used by the tui surface."
 license = "MIT"

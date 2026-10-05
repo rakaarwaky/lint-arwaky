@@ -1,6 +1,6 @@
 [package]
 name = "shared-common-lint-arwaky"
-version = "0.1.0"
+version.workspace = true
 edition = "2024"
 description = "AES common foundation: taxonomy (`_vo`, `_entity`, `_event`, `_error`, `_constant`), contract (`_port`, `_protocol`, `_aggregate`), and utility types shared across lint-arwaky. Split out of `shared-lint-arwaky`."
 license = "MIT"

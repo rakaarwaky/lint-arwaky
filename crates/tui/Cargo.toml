@@ -1,6 +1,6 @@
 [package]
 name = "tui-lint-arwaky"
-version = "3.7.2"
+version.workspace = true
 edition = "2024"
 description = "Ratatui-based interactive TUI for lint-arwaky"
 license = "MIT"
