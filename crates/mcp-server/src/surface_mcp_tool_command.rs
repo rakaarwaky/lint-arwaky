@@ -138,7 +138,7 @@ impl ServerHandler for LintArwakyMcpServer {
         ServerConfig::new(capabilities)
             .with_server_info(Implementation::new(
                 "lint-arwaky",
-                env!("CARGO_PKG_VERSION"),
+                shared_common::RELEASE_VERSION,
             ))
             .with_protocol_version(ProtocolVersion::default())
     }

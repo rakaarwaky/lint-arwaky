@@ -15,7 +15,7 @@ use shared_common::taxonomy_suggestion_vo::Suggestion;
 #[derive(Parser, Debug)]
 #[command(name = "lint-arwaky")]
 #[command(about = "Lint Arwaky CLI: Autonomous Code Quality Gatekeeper.", long_about = None)]
-#[command(version = env!("CARGO_PKG_VERSION"))]
+#[command(version = shared_common::RELEASE_VERSION)]
 pub struct Cli {
     /// Show debug information
     #[arg(short, long, global = true)]

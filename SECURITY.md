@@ -2,13 +2,17 @@
 
 ## Supported Versions
 
-Security fixes are applied to the latest released `3.7.x` line. Older versions
+Security fixes are applied to the latest released `3.8.x` line. Older versions
 are not maintained — upgrade to the newest release before reporting an issue.
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 3.7.x   | :white_check_mark: |
-| < 3.7   | :x:                |
+| 3.8.x   | :white_check_mark: |
+| < 3.8   | :x:                |
+
+> 3.7.1 and 3.7.2 were never tagged; the last published 3.7 release is
+> `v3.7.0`. Everything after it first shipped as 3.8.0, so there is no
+> maintained 3.7 line.
 
 ## Reporting a Vulnerability
 

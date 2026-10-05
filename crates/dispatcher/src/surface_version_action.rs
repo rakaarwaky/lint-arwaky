@@ -11,7 +11,7 @@ pub struct VersionReport {
 /// Collect version info from compile-time environment.
 pub fn collect_version() -> VersionReport {
     VersionReport {
-        version: env!("CARGO_PKG_VERSION").to_string(),
+        version: shared_common::RELEASE_VERSION.to_string(),
         edition: env!("CARGO_PKG_RUST_VERSION").to_string(),
     }
 }

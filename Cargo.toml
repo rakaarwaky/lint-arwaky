@@ -138,7 +138,7 @@ syn = { version = "3", features = ["full", "visit", "parsing"] }
 
 [package]
 name = "lint_arwaky-arwaky"
-version = "3.7.2"
+version = "3.8.0"
 edition = "2024"
 description = "Autonomous code quality and architecture enforcement for AI agents and developers, enforcing 24 Agentic Engineering System (AES) rules."
 license = "MIT"

@@ -78,7 +78,7 @@ impl WatchOrchestrator {
 
     fn run_watch_loop(&self, config: &WatchConfig, running: Arc<AtomicBool>) -> ExitCode {
         info!(
-            version = env!("CARGO_PKG_VERSION"),
+            version = shared_common::RELEASE_VERSION,
             target = config.path.value(),
             "Watch mode started, press Ctrl+C to stop"
         );

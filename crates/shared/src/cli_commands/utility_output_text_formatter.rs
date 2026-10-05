@@ -152,7 +152,7 @@ fn render_text(
     _is_specific_member: bool,
     _is_single_file: bool,
 ) {
-    let ver = env!("CARGO_PKG_VERSION");
+    let ver = shared_common::RELEASE_VERSION;
     println!("Lint Arwaky v{ver} — Scan Report");
     println!("Target: {target_path}");
     println!();
@@ -349,7 +349,7 @@ fn render_json(
 // ─── SARIF ──────────────────────────────────────────────────
 
 fn render_sarif(grouped: &BTreeMap<String, Vec<&ViolationItem>>) {
-    let ver = env!("CARGO_PKG_VERSION");
+    let ver = shared_common::RELEASE_VERSION;
     let runs: Vec<serde_json::Value> = grouped
         .iter()
         .map(|(member_name, results)| {

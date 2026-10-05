@@ -1,5 +1,44 @@
 # Changelog
 
+## 3.8.0 (2026-10-05)
+
+### The AES architecture is now fixed in the binary
+
+- **A project's config file can no longer redefine the architecture.** The AES
+  business rules — layer scopes, the import dependency matrix, suffix policies,
+  code-quality limits — live in
+  `crates/shared/src/config_system/utility_architecture_constants.rs` and are
+  compiled into the binary. Every project enforces the same architecture.
+  `lint_arwaky.config.yaml` keeps only `enabled` + `exceptions` per rule, and
+  shrunk from 537 to 177 lines.
+- **User overrides are rejected, not silently merged.** The merge now locks the
+  `architecture:` business fields to the tool's values and reports a warning
+  naming the fields it ignored, instead of accepting a config that changes them.
+- **Markdownlint's four doc-style rules are off by default.** MD013, MD060,
+  MD033 and MD024 collide with how documentation is normally written (long
+  spec-table rows, compact unaligned tables, `<Type>` generic notation in prose,
+  repeated per-layer and per-version headings). The structural rules stay on.
+  A project that wants one back declares it in its own config.
+
+### Fixes
+
+- **AES404 named the wrong type for inherent `impl` blocks.** `extract_rust_impl`
+  searched the whole impl text for `>`, so the arrow in `fn f(self) -> T` in a
+  method body was mistaken for the close of the impl's generic list. For
+  `impl RuleRow { fn into_rule(self) -> ArchitectureRule { .. } }` the audit
+  reported `ArchitectureRule` instead of `RuleRow`. Header parsing is now bound
+  to the text before the first `{`.
+- **`report` lists every member.** It used to print 20 rows and then
+  "… and 27 more members", hiding the members that had dropped to zero — the
+  ones you had just fixed — and leaving the visible rows short of `Total`.
+
+### Release notes
+
+- This release supersedes 3.7.1 and 3.7.2, which were declared in `Cargo.toml`
+  and `CHANGELOG.md` but never tagged. The previous actual tag is `v3.7.0`;
+  everything between `v3.7.0` and here first ships as 3.8.0. This closes
+  PE-3-01 / #623.
+
 ## 3.7.2 (2026-10-04)
 
 ### Progress report command
