@@ -1,6 +1,6 @@
 [package]
 name = "doc-rules-lint-arwaky"
-version = "0.1.0"
+version.workspace = true
 edition = "2024"
 description = "Structural invariants for the AES document chain (AES601–AES605)."
 license = "MIT"
