@@ -50,7 +50,25 @@ ignored_rules:
   # on, then silence individual rules by their reported code:
   #   ignored_rules:
   #     - "markdownlint::MD013"
-  []
+  #
+  # Off by default, because most projects write documentation the way this
+  # tool's own docs are written:
+  #   MD013 line-length - spec tables carry a full rule code, a path and a
+  #     command on one row so each table stays scannable as a single unit.
+  #   MD060 table-column-style - tables are written compact (pipes tight
+  #     against the cell text), not column-aligned.
+  #   MD033 inline HTML - `<Type>` is Rust/TS generic notation in prose and
+  #     code spans, not markup.
+  #   MD024 duplicate heading - per-layer Purpose/Components sections and
+  #     per-version CHANGELOG entries repeat headings on purpose.
+  #
+  # The structural rules (MD012, MD022, MD031, MD032, MD040, MD047, MD056,
+  # MD058) deliberately stay enabled - they catch malformed tables and
+  # unlabelled code fences, which have surfaced real defects.
+  - "markdownlint::MD013"
+  - "markdownlint::MD060"
+  - "markdownlint::MD033"
+  - "markdownlint::MD024"
 
 ignored_paths: []
 
