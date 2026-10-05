@@ -3,13 +3,11 @@
 use crate::taxonomy_report_snapshot_vo::ReportDelta;
 use crate::taxonomy_report_snapshot_vo::ReportSnapshot;
 
-/// How many members to name before collapsing the tail into one line.
-///
-/// A forty-member workspace does not fit a terminal, and the members that
-/// cleared entirely are the least interesting part of it.
-const MAX_ROWS: usize = 20;
-
 /// Print the report: counts per member, and what changed since the last run.
+///
+/// Every member is listed. A truncated tail hides exactly the members that
+/// cleared themselves — the ones a reader wants to confirm are fixed — and it
+/// makes the visible rows disagree with `Total`, so the table stops adding up.
 pub fn render_report(target: &str, delta: &ReportDelta, current: &ReportSnapshot) {
     println!("Lint Arwaky — Progress Report");
     println!("Target: {target}");
@@ -30,12 +28,7 @@ pub fn render_report(target: &str, delta: &ReportDelta, current: &ReportSnapshot
     );
     println!("{}", "─".repeat(member_width + 21));
 
-    for (index, m) in delta.members.iter().enumerate() {
-        if index == MAX_ROWS && delta.members.len() > MAX_ROWS {
-            let hidden = delta.members.len() - MAX_ROWS;
-            println!("… and {hidden} more member{}", plural(hidden));
-            break;
-        }
+    for m in &delta.members {
         println!(
             "{:<member_width$}  {:>9}  {:>7}",
             truncate(&m.member, member_width),
@@ -120,8 +113,4 @@ fn truncate(text: &str, width: usize) -> String {
     let mut out: String = text.chars().take(width.saturating_sub(1)).collect();
     out.push('…');
     out
-}
-
-fn plural(count: usize) -> &'static str {
-    if count == 1 { "" } else { "s" }
 }
