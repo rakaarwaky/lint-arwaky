@@ -45,9 +45,15 @@ fn collect_scan_without_aggregates_returns_error() {
 /// `scan_aggregates: Some(..)` still runs in-process and succeeds.
 #[test]
 fn collect_scan_with_aggregates_runs_in_memory() {
-    let agg = common::build_scan_aggregates(".");
+    let root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .and_then(|p| p.parent())
+        .map(|p| p.join("workspaces-good/crates/calculator"))
+        .expect("CARGO_MANIFEST_DIR must be crates/dispatcher");
+    let root_str = root.to_string_lossy().to_string();
+    let agg = common::build_scan_aggregates(&root_str);
     let opts = dispatcher_lint_arwaky::surface_check_action::ScanOptions {
-        path: Some(FilePath::new(".").unwrap()),
+        path: Some(FilePath::new(root_str.clone()).unwrap()),
         multi_project_orchestrator: None,
         filter: None,
         member: None,

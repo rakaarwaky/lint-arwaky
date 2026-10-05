@@ -216,12 +216,13 @@ fn build_seam() -> Arc<FilesystemSeam> {
     })
 }
 
-/// Repo `crates/` dir — a real directory so the scan reaches every capability.
+/// Small clean fixture — enough files to reach every capability without
+/// scanning the whole repo.
 fn scan_target() -> std::path::PathBuf {
     std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .parent()
         .and_then(|p| p.parent())
-        .map(|p| p.join("crates"))
+        .map(|p| p.join("workspaces-good/crates/calculator"))
         .expect("workspace root resolves")
 }
 
