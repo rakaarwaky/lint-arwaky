@@ -123,3 +123,9 @@ pub use taxonomy_suggestion_vo::MetadataVO;
 pub use taxonomy_threshold_vo::Threshold;
 pub use taxonomy_tool_name_vo::ToolName;
 pub use taxonomy_violation_item_vo::ViolationItem;
+
+// The release version lives in `utility_release_version` so a `utility_` file
+// carries no type definition (AES404). Re-exported here because every crate
+// that prints a version reaches it as `shared_common::RELEASE_VERSION`.
+pub mod utility_release_version;
+pub use utility_release_version::RELEASE_VERSION;

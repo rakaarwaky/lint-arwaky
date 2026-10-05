@@ -1,12 +1,10 @@
 # Deployment Guide — Lint Arwaky
 
-**Status**: RELEASE CANDIDATE (v3.7.2) — pending final sign-offs in checklist below. Tracked in `ROADMAP.md`.
+**Status**: RELEASED (v3.8.0). Tracked in `ROADMAP.md`.
 
-> **Known gap (PE-3-01 / #623):** `Cargo.toml` and `CHANGELOG.md` already declare 3.7.2,
-> but no `v3.7.2` GitHub tag or Release exists yet. The prior 3.7.1 candidate was also
-> never tagged. The sign-off table below evidences pipeline-gate health; it is not,
-> by itself, authorization to tag 3.7.2 — see `ROADMAP.md` Risk Register before cutting
-> the tag.
+> **Superseded versions:** 3.7.1 and 3.7.2 were declared in `Cargo.toml` and
+> `CHANGELOG.md` but never tagged (PE-3-01 / #623). The previous actual tag was
+> `v3.7.0`; everything since first ships as 3.8.0. Closed by that release.
 
 ---
 
@@ -26,11 +24,8 @@ previously used role names that did not match the Deploy checklist's literal tex
 | Operations | Security Engineer + DevOps Engineer (`@raka`) | `SECURITY.md` supported versions & cargo-audit clean; binaries built, checksums registered | Approved | `8d4342a` (`cargo-audit`, PR #516; `target/release/lint-arwaky-*`) | 2026-09-30 |
 
 **Caveat (PE-5-01 / #629, PE-3-01 / #623):** this record was captured at commit `8d4342a`
-before the BA/SA/UX/ARCH/BE/FE/PE audit backlog (#522-#631) existed and before `v3.7.1`'s
-tag/Release status was confirmed absent. It is not release authorization for `v3.7.1` as
-it stands today. Re-collect all five sign-offs against the actual release commit once the
-tag ambiguity (Risk Register, PE-3-01) and the CRITICAL findings cited against FR-DISP,
-FR-CONF, FR-GITH, FR-TUIC, and FR-MCPP in `ROADMAP.md`'s Feature Roll-up are resolved.
+before the BA/SA/UX/ARCH/BE/FE/PE audit backlog (#522-#631) existed. Re-collect all five
+sign-offs against the actual release commit before relying on it for a future cut.
 
 ---
 
@@ -119,7 +114,7 @@ cargo build --release --target x86_64-pc-windows-msvc
 
 ```bash
 lint-arwaky-cli version
-# Expected: lint-arwaky 3.7.1
+# Expected: lint-arwaky 3.8.0
 
 lint-arwaky-cli doctor
 # Expected: cargo: OK (cargo X.Y.Z), binary: OK (/path/to/lint-arwaky-cli)

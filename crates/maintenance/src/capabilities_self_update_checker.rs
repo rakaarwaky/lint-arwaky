@@ -15,7 +15,8 @@ pub struct SelfUpdateChecker {
 // ─── Block 2: Protocol Implementation ─────────────────────
 impl ISelfUpdateProtocol for SelfUpdateChecker {
     fn self_update(&self, check_only: bool) -> SelfUpdateResultVO {
-        let current = utility_maintenance_helpers::normalize_version(env!("CARGO_PKG_VERSION"));
+        let current =
+            utility_maintenance_helpers::normalize_version(shared_common::RELEASE_VERSION);
         let tag = match self.fetch_latest_tag() {
             Ok(t) => t,
             Err(e) => {
