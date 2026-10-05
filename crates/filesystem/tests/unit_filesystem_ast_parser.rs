@@ -303,3 +303,73 @@ fn path_qualified_trait_keeps_full_path() {
 fn inherent_impl_has_no_trait_name() {
     assert_eq!(rust_impl_trait("impl Bar {\n}\n"), None);
 }
+
+// ─── Implementor type ──────────────────────────────────────────────────────
+//
+// The implementor is what AES404 reports and what the implementation graph keys
+// on. Reading it from the whole impl block mislabels it: for
+// `impl RuleRow { fn into_rule(self) -> ArchitectureRule { .. } }` the first `>`
+// sits in the body's return arrow, so a full-block scan yields
+// "ArchitectureRow"… "ArchitectureRule" instead of "RuleRow".
+
+fn rust_impl_implementor(content: &str) -> Option<String> {
+    use shared_filesystem::utility_ast_rust::extract_rust_metadata;
+    let mut parser = tree_sitter::Parser::new();
+    parser
+        .set_language(&tree_sitter_rust::LANGUAGE.into())
+        .unwrap();
+    let tree = parser.parse(content, None).unwrap();
+    let meta = extract_rust_metadata(&tree, content);
+    meta.impl_blocks
+        .into_iter()
+        .next()
+        .map(|b| b.implementor_type)
+}
+
+#[test]
+fn plain_impl_implementor_name() {
+    assert_eq!(
+        rust_impl_implementor("impl Foo for Bar {\n}\n").as_deref(),
+        Some("Bar")
+    );
+}
+
+#[test]
+fn inherent_impl_implementor_name() {
+    assert_eq!(
+        rust_impl_implementor("impl Bar {\n}\n").as_deref(),
+        Some("Bar")
+    );
+}
+
+#[test]
+fn inherent_impl_with_arrow_in_body_keeps_its_own_name() {
+    // The regression: the body's `-> ArchitectureRule` must not become the
+    // implementor.
+    let content =
+        "impl RuleRow {\n    fn into_rule(self) -> ArchitectureRule {\n        todo!()\n    }\n}\n";
+    assert_eq!(rust_impl_implementor(content).as_deref(), Some("RuleRow"));
+}
+
+#[test]
+fn inherent_impl_with_generic_body_keeps_its_own_name() {
+    let content =
+        "impl RuleRow {\n    fn build(&self) -> Vec<String> {\n        Vec::new()\n    }\n}\n";
+    assert_eq!(rust_impl_implementor(content).as_deref(), Some("RuleRow"));
+}
+
+#[test]
+fn generic_impl_implementor_drops_its_own_generics() {
+    assert_eq!(
+        rust_impl_implementor("impl<T> Foo for Bar<T> {\n}\n").as_deref(),
+        Some("Bar")
+    );
+}
+
+#[test]
+fn path_qualified_implementor_keeps_full_path() {
+    assert_eq!(
+        rust_impl_implementor("impl crate::Foo for crate::Bar {\n}\n").as_deref(),
+        Some("crate::Bar")
+    );
+}
