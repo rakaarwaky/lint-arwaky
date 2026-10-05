@@ -6,6 +6,9 @@ description = "AES common foundation: taxonomy (`_vo`, `_entity`, `_event`, `_er
 license = "MIT"
 repository = "https://github.com/rakaarwaky/lint-arwaky"
 publish = true
+# Emits the release version from the workspace `VERSION` file, so every crate
+# that prints a version reads one number instead of its own package version.
+build = "build.rs"
 
 # The folder *is* the crate root, so the manifest lives beside `mod.rs`.
 [lib]

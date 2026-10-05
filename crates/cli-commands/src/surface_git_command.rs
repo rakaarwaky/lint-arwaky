@@ -20,7 +20,10 @@ pub fn handle_git_diff(
         filter,
     ) {
         Ok(report) => {
-            println!("Lint Arwaky v{} (Git-Diff Mode)", env!("CARGO_PKG_VERSION"));
+            println!(
+                "Lint Arwaky v{} (Git-Diff Mode)",
+                shared_common::RELEASE_VERSION
+            );
             println!("Base: {} (changed files)", report.base);
             println!("Files changed: {}", report.files.len());
             println!();

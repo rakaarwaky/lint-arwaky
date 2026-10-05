@@ -190,7 +190,7 @@ pub fn collect_ci(
     }
 
     Ok(CiReport {
-        version: env!("CARGO_PKG_VERSION").to_string(),
+        version: shared_common::RELEASE_VERSION.to_string(),
         score: score.value(),
         threshold: threshold.value(),
         pass: reasons.is_empty(),

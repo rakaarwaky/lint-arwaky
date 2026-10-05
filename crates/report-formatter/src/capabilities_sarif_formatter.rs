@@ -156,7 +156,7 @@ fn format_sarif_report(report: &ScanReport) -> DisplayContent {
             tool: SarifTool {
                 driver: SarifDriver {
                     name: "lint-arwaky",
-                    version: env!("CARGO_PKG_VERSION"),
+                    version: shared_common::RELEASE_VERSION,
                     information_uri: "https://github.com/rakaarwaky/lint-arwaky",
                 },
             },
