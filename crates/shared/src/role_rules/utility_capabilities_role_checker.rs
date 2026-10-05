@@ -7,7 +7,7 @@ use std::collections::BTreeSet;
 
 use shared_common::taxonomy_lint_result_vo::LintResult;
 use shared_common::taxonomy_severity_vo::Severity;
-use shared_filesystem::taxonomy_filesystem_vo::{FileEntry, ParseMetadata};
+use shared_filesystem::taxonomy_filesystem_vo::{FileEntry, ParseMetadata, PythonClassItem};
 
 /// True when `layer` names the capabilities layer, as a bare name or a
 /// parameterised variant such as `capabilities(feature_x)`.
@@ -28,6 +28,39 @@ pub fn is_protocol_trait(trait_name: &str) -> bool {
 pub fn is_protocol_base(base: &str) -> bool {
     let base = base.split('[').next().unwrap_or(base).trim();
     is_protocol_trait(base.rsplit('.').next().unwrap_or(base))
+}
+
+/// True when a decorator claims protocol attachment: `@with_protocol`,
+/// `@with_adapter_protocol`, `@protocol`, `@protocol_impl("I...")`, …
+/// Matched by shape so renames (`@with_tools_protocol`) stay covered.
+pub fn is_protocol_decorator(name: &str) -> bool {
+    let head = name
+        .trim_start_matches('@')
+        .split(|c: char| c.is_ascii_digit() || c == '(')
+        .next()
+        .unwrap_or(name);
+    head == "protocol"
+        || head == "protocol_impl"
+        || head.starts_with("with_protocol")
+        || (head.starts_with("with_") && head.ends_with("_protocol"))
+}
+
+/// Python: does `c` satisfy the protocol-implementor requirement?
+///
+/// A class counts when it inherits a protocol base, OR when a decorator
+/// claims protocol attachment AND the class body actually carries methods
+/// (an empty class wrapped in a decorator is the bypass).
+fn python_class_satisfies_protocol(c: &PythonClassItem) -> bool {
+    if c.bases.iter().any(|b| is_protocol_base(b)) {
+        return true;
+    }
+    let deco = c
+        .decorators
+        .iter()
+        .any(|d| is_protocol_decorator(d.as_str()));
+    // A decorator claims the protocol is attached elsewhere; the class body
+    // must still carry methods, or the file does real work in module scope.
+    deco && (c.body_fn_count > 0 || !c.module_fn_names.is_empty())
 }
 
 /// Number of type declarations and whether one implements a protocol.
@@ -56,7 +89,7 @@ fn profile(meta: &ParseMetadata) -> Option<(usize, bool, &'static str, &'static 
             let has_impl = py
                 .class_declarations
                 .iter()
-                .any(|c| c.bases.iter().any(|b| is_protocol_base(b)));
+                .any(python_class_satisfies_protocol);
             Some((
                 count,
                 has_impl,
@@ -182,6 +215,14 @@ pub fn count_protocol_traits(file: &FileEntry) -> (usize, Vec<String>) {
                         if is_protocol_base(base) && !protocols.contains(&base.to_lowercase()) {
                             protocols.push(base.clone());
                         }
+                    }
+                    if protocols.is_empty()
+                        && c.decorators
+                            .iter()
+                            .any(|d| is_protocol_decorator(d.as_str()))
+                        && (c.body_fn_count > 0 || !c.module_fn_names.is_empty())
+                    {
+                        protocols.push("decorated_protocol".to_string());
                     }
                 }
                 (protocols.len(), protocols)
@@ -472,6 +513,7 @@ fn scan_type_declarations(content: &str) -> usize {
 
 /// True when a line-scan finds a protocol implementation.
 fn scan_protocol_impl(content: &str) -> bool {
+    let has_function = content.lines().any(|l| l.trim_start().starts_with("def "));
     content.lines().any(|line| {
         let t = line.trim();
         if let Some(rest) = t.strip_prefix("impl ") {
@@ -493,6 +535,12 @@ fn scan_protocol_impl(content: &str) -> bool {
             }
             return false;
         }
+        // Decorator that claims protocol attachment: requires at least one
+        // `def` somewhere in the file, so a bare `@with_adapter_protocol` on
+        // an empty class does not pass.
+        if t.starts_with('@') && is_protocol_decorator(t) && has_function {
+            return true;
+        }
         t.contains("implements I") && t.contains("Protocol")
     })
 }
@@ -504,6 +552,7 @@ fn scan_protocol_impl(content: &str) -> bool {
 /// (`class X implements IAProtocol, IBProtocol`).
 fn scan_protocol_names(content: &str) -> Vec<String> {
     let mut protocols: Vec<String> = Vec::new();
+    let has_function = content.lines().any(|l| l.trim_start().starts_with("def "));
 
     for line in content.lines() {
         let t = line.trim();
@@ -555,6 +604,12 @@ fn scan_protocol_names(content: &str) -> Vec<String> {
                     }
                 }
             }
+        }
+
+        // Decorator that claims protocol attachment: one synthetic entry per
+        // file, counted only when the file actually carries a `def`.
+        if t.starts_with('@') && is_protocol_decorator(t) && has_function && protocols.is_empty() {
+            protocols.push("decorated_protocol".to_string());
         }
     }
 

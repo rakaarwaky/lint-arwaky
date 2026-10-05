@@ -188,6 +188,9 @@ fn python_metadata_protocol_base_flagged() {
     meta.class_declarations = vec![PythonClassItem {
         name: "Agent".to_string(),
         bases: vec!["IScannerProtocol".to_string()],
+        decorators: vec![],
+        body_fn_count: 0,
+        module_fn_names: vec![],
     }];
     let file = FileEntry {
         path: PathBuf::from("src/agent_thing.py"),
@@ -215,6 +218,9 @@ fn python_metadata_parameterized_protocol_base_flagged() {
     meta.class_declarations = vec![PythonClassItem {
         name: "Scanner".to_string(),
         bases: vec!["IScannerProtocol[T]".to_string()],
+        decorators: vec![],
+        body_fn_count: 0,
+        module_fn_names: vec![],
     }];
     let file = FileEntry {
         path: PathBuf::from("src/agent_thing.py"),
