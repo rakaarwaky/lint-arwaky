@@ -358,7 +358,7 @@ Capability routing, protocol enforcement, and 3-block structure. Eight sub-check
 | Sub-check                        | Severity   | Description                                                                                          |
 | -------------------------------- | ---------- | ---------------------------------------------------------------------------------------------------- |
 | **CapabilityTooManyTypes**       | **HIGH**   | File exceeds max 3 type declarations.                                                                 |
-| **CapabilityNoImplementor**      | **MEDIUM** | No struct/class in the capability file implements a `_protocol` contract trait.                        |
+| **CapabilityNoImplementor**      | **MEDIUM** | No struct/class in the capability file implements a `_protocol` contract trait. Python classes satisfied only by a decorator claim (e.g. `@with_adapter_protocol`) still pass the check when the class body or module carries methods; a decorated class with no methods is reported.                        |
 | **CapabilityMultiProtocol**      | **MEDIUM** | File implements more than one protocol trait — should be split into separate capability files; shared helpers belong in `utility_*`. |
 | **CapabilityBlockOrder**         | **HIGH**   | Block 2 (protocol trait impl) does not precede Block 3 (inherent impl: ctors, std traits, helpers).    |
 | **CapabilityBlockMarkers**       | **MEDIUM** | The `// Block 1:` / `// Block 2:` / `// Block 3:` banners are not all present, are out of order, or declare a block above 3. |

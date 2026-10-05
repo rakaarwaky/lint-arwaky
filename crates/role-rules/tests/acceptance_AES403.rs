@@ -528,6 +528,83 @@ fn aes403_valid_typescript_capability_no_violation() {
 // ──────────────────────────────────────────────────────────
 
 #[test]
+fn aes403_python_decorator_protocol_claim_with_methods_ok() {
+    // `@with_adapter_protocol` claims the protocol attachment; module-level
+    // functions carry the real work, so the implementor check passes. No
+    // protocol-named base class, so the multi-protocol sub-check stays silent.
+    let file = make_file(
+        "src/capabilities_codegraph_tools.py",
+        Language::Python,
+        &format!(
+            "{PY_BANNERS}\
+             @with_adapter_protocol\nclass CodegraphToolsAdapter:\n    _display = 'codegraph'\n    def __init__(self, units=None):\n        self._units = dict(ADAPTER_UNITS) if units is None else units\n\ndef build_adapter_unit(tool_id, cfg):\n    return AdapterUnit(tool_id, cfg)\n"
+        ),
+    );
+    let results = run_audit(vec![file]);
+    let aes403: Vec<_> = results
+        .iter()
+        .filter(|r| r.code.code() == "AES403")
+        .collect();
+    assert!(
+        aes403.is_empty(),
+        "decorated class backed by module functions should not trigger AES403: {aes403:?}"
+    );
+}
+
+#[test]
+fn aes403_python_decorator_protocol_claim_empty_bypass_flagged() {
+    // A decorator that claims protocol attachment on a class that carries no
+    // methods and no module-level functions is the linter-cheating bypass.
+    let file = make_file(
+        "src/capabilities_codegraph_tools.py",
+        Language::Python,
+        &format!(
+            "{PY_BANNERS}\
+             @with_adapter_protocol\nclass CodegraphToolsAdapter:\n    _display = 'codegraph'\n"
+        ),
+    );
+    let results = run_audit(vec![file]);
+    let aes403: Vec<_> = results
+        .iter()
+        .filter(|r| r.code.code() == "AES403")
+        .collect();
+    assert_eq!(
+        aes403.len(),
+        1,
+        "decorated empty-class bypass must trigger AES403"
+    );
+    assert!(
+        aes403[0].message.value.contains("no contract protocol"),
+        "violation should cite the implementor failure"
+    );
+}
+
+#[test]
+fn aes403_python_decorator_renamed_variant_bypass_flagged() {
+    // Shape-based decorator match: `@with_tools_protocol` claims protocol
+    // attachment; no bases, no methods, no module functions → bypass stays
+    // blocked.
+    let file = make_file(
+        "src/capabilities_tools_adapter.py",
+        Language::Python,
+        &format!(
+            "{PY_BANNERS}\
+             @with_tools_protocol\nclass ToolsAdapter:\n    _display = 'tools'\n"
+        ),
+    );
+    let results = run_audit(vec![file]);
+    let aes403: Vec<_> = results
+        .iter()
+        .filter(|r| r.code.code() == "AES403")
+        .collect();
+    assert_eq!(
+        aes403.len(),
+        1,
+        "renamed with_*_protocol decorator bypass must still trigger AES403"
+    );
+}
+
+#[test]
 fn aes403_multi_protocol_rust_detected() {
     // Two distinct protocol impls on the same struct → MEDIUM violation.
     let file = make_file(

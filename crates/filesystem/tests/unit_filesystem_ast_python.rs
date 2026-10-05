@@ -116,6 +116,29 @@ fn decorated_class_with_multiple_bases() {
     );
 }
 
+#[test]
+fn decorated_class_records_decorators_and_body_method_count() {
+    let content = "@with_adapter_protocol\nclass AppEngine(AppProtocol):\n    def run(self):\n        pass\n    def _helper(self):\n        pass\n";
+    let tree = parse(content);
+    let meta = extract_python_metadata(&tree, content);
+
+    assert_eq!(meta.class_declarations.len(), 1);
+    let class = &meta.class_declarations[0];
+    assert_eq!(class.decorators, vec!["with_adapter_protocol".to_string()]);
+    assert_eq!(class.body_fn_count, 2);
+}
+
+#[test]
+fn empty_decorated_class_records_zero_body_methods() {
+    let content = "@with_adapter_protocol\nclass AppEngine:\n    _display = 'engine'\n";
+    let tree = parse(content);
+    let meta = extract_python_metadata(&tree, content);
+
+    let class = &meta.class_declarations[0];
+    assert_eq!(class.body_fn_count, 0);
+    assert!(class.module_fn_names.is_empty());
+}
+
 // ─── AES203 regression: identifiers inside f-string interpolations ──────
 
 use shared_filesystem::utility_ast_python::extract_python_identifiers;

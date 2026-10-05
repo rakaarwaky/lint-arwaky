@@ -167,12 +167,19 @@ pub struct PythonMetadata {
 }
 
 /// A Python class declaration.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct PythonClassItem {
     /// Class name.
     pub name: String,
     /// Base class names (from `class Foo(Bar, Baz)`).
     pub bases: Vec<String>,
+    /// Decorator names applied to the class (from `@with_adapter_protocol`).
+    pub decorators: Vec<String>,
+    /// Methods defined in the class body.
+    pub body_fn_count: usize,
+    /// Top-level function names in the module (module-scope helpers the
+    /// capability actually works with).
+    pub module_fn_names: Vec<String>,
 }
 
 /// A Python function definition.
