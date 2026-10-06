@@ -98,6 +98,26 @@ fn ts_no_any_no_violation() {
     assert!(v.is_empty(), "typed param should pass");
 }
 
+#[test]
+fn ts_any_in_prose_not_flagged() {
+    let content = "\
+export class Orchestrator {
+  process(v: string) {
+    // Any value may flow through the scanner.
+    const d = { any: 1 };
+    return d;
+  }
+}
+";
+    let f = make_file("src/agent_thing.ts", content);
+    let mut v = Vec::new();
+    auditor().check_agent_any_annotation(&f, &mut v);
+    assert!(
+        v.is_empty(),
+        "any inside a comment or dict key is not a type annotation"
+    );
+}
+
 // ── P6 forbidden I/O ──
 
 #[test]

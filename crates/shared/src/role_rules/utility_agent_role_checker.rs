@@ -473,12 +473,10 @@ pub fn is_aggregate_name(name: Option<&str>) -> bool {
 
 /// True when a type name looks like a contract protocol seam.
 ///
-/// The name may arrive in any of the shapes a caller writes it: a bare
-/// `IScannerProtocol`, a path-qualified `shared::IScannerProtocol`, or a
-/// parameterized `IScannerProtocol<T>` / `IScannerProtocol[T]` / `Box<dyn
-/// IScannerProtocol>`. Generic brackets and a path qualifier are stripped so
-/// every spelling reduces to the bare trait name before it is matched —
-/// otherwise a parameterized seam slips past and the agent goes unflagged.
+/// The name may arrive as a bare `IScannerProtocol`, a path-qualified
+/// `shared::IScannerProtocol`, or a parameterized `IScannerProtocol<T>` /
+/// `Box<dyn IScannerProtocol>`. Generic brackets and a path qualifier are
+/// stripped so every spelling reduces to the bare trait name before matching.
 fn is_protocol_name(name: &str) -> bool {
     // Cut at the first generic or trait-object bracket, so `IFooProtocol<T>`
     // and `Box<dyn IFooProtocol>` both reduce to `IFooProtocol`.
@@ -691,12 +689,22 @@ fn rust_any(t: &str) -> bool {
         || t.contains("-> Any")
 }
 
-/// True when a Python / TS line uses `any` or `Any` as a whole-word type.
+/// True when a Python / TS line spells `any`/`Any` in an annotation
+/// position: the identifier right after a `:` or `->`.
 fn dynamic_any(t: &str) -> bool {
-    for word in t.split(|c: char| !c.is_alphanumeric() && c != '_') {
-        if word == "any" || word == "Any" {
+    fn any_at_end(s: &str) -> bool {
+        let is_ident = |r: &str| r.starts_with(|c: char| c.is_alphanumeric() || c == '_');
+        (s.starts_with("any") || s.starts_with("Any")) && !s.get(4..).is_some_and(is_ident)
+    }
+    let mut rest = t;
+    while let Some(i) = rest.find(':') {
+        if any_at_end(rest[i + 1..].trim_start()) {
             return true;
         }
+        rest = &rest[i + 1..];
+    }
+    if let Some(i) = t.find("->") {
+        return any_at_end(t[i + 2..].trim_start());
     }
     false
 }
@@ -793,14 +801,8 @@ fn rust_impl_trait_name(t: &str) -> Option<&str> {
 
 /// The base-class / implements list of a `class` declaration line, when the
 /// line carries one. Returns the text inside `(...)` for Python and the part
-/// after `implements` for TypeScript.
-///
-/// TypeScript writes `export class X …` in every module, so the keyword is
-/// located rather than required at the start of the line, but only after one of
-/// the declaration prefixes has been confirmed. Accepting `class ` anywhere in
-/// the line would read a string literal or a trailing comment that mentions a
-/// class as if it declared one, and the fallback would then report a protocol
-/// that was never implemented.
+/// after `implements` for TypeScript. The keyword is located, not required at
+/// line start, because `export class X …` is the normal TS shape.
 fn class_base_list(t: &str) -> Option<&str> {
     let idx = t.find("class ")?;
     // Everything before the keyword must be a modifier or nothing at all.
