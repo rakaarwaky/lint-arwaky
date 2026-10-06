@@ -149,8 +149,8 @@ impl IConfigMergeProtocol for ConfigParserProvider {
 ///
 /// `enabled` and `exceptions` are the two fields a user config may set on a
 /// rule; every other field (scope, allowed, forbidden, mandatory, severity,
-/// …) stays at its embedded value. An unknown rule code is appended so the
-/// toggle still reaches the checkers.
+/// …) stays at its embedded value. Unknown rule codes are dropped: the tool
+/// lock keeps only the embedded rule set.
 fn fold_user_rule_toggles(merged: &mut ArchitectureConfig, user: &ArchitectureConfig) {
     for user_rule in &user.rules {
         if let Some(embedded) = merged
@@ -164,8 +164,6 @@ fn fold_user_rule_toggles(merged: &mut ArchitectureConfig, user: &ArchitectureCo
                     embedded.exceptions.values.push(val.clone());
                 }
             }
-        } else {
-            merged.rules.push(user_rule.clone());
         }
     }
 }
