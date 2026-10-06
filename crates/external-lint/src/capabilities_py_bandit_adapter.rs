@@ -88,13 +88,9 @@ impl ILinterAdapterProtocol for BanditAdapter {
                 .get("line_number")
                 .and_then(|v| v.as_i64())
                 .unwrap_or_default();
-            let line_range = f
-                .get("line_range")
-                .and_then(|v| v.as_array())
-                .and_then(|a| a.first())
-                .and_then(|v| v.as_i64())
-                .unwrap_or_default();
             let test_id = f.get("test_id").and_then(|v| v.as_str()).unwrap_or("B000");
+            // FRD: tool-native codes carry a `bandit::` prefix.
+            let code = format!("bandit::{}", test_id);
             let issue_text = f
                 .get("issue_text")
                 .and_then(|v| v.as_str())
@@ -114,8 +110,11 @@ impl ILinterAdapterProtocol for BanditAdapter {
             results.push(LintResult {
                 file: resolved,
                 line: LineNumber::new(line_number),
-                column: ColumnNumber::new(line_range),
-                code: ErrorCode::raw(test_id),
+                // Bandit has no column data: use the 1-based column default
+                // instead of the line_range span (which is a line number, not a
+                // column — #913).
+                column: ColumnNumber::new(1),
+                code: ErrorCode::raw(code),
                 message: LintMessage::new(issue_text),
                 source: Some(self.name()),
                 severity: self.map_severity(issue_severity, issue_confidence),
