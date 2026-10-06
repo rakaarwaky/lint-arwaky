@@ -57,8 +57,7 @@ impl IWatchLifecycleProtocol for NotifyWatchProvider {
                         let path_str = event.path.to_string_lossy().to_string();
                         let skip = ignore.iter().any(|p| path_str.contains(p.as_str()));
                         if !skip {
-                            let watch_event =
-                                WatchEvent::new(path_str, WatchEventKind::Modified);
+                            let watch_event = WatchEvent::new(path_str, WatchEventKind::Modified);
                             let _ = tx.send(watch_event);
                         }
                     }
