@@ -93,6 +93,46 @@ fn python_no_any_no_violation() {
     assert!(v.is_empty(), "typed signature should pass");
 }
 
+#[test]
+fn python_any_in_docstring_not_flagged() {
+    let content = "\
+class Orchestrator:
+    \"\"\"
+    Any unwired action stays None, and the caller sees it.
+    \"\"\"
+    def execute(self):
+        return None
+";
+    let f = make_file("src/agent_thing.py", content);
+    let mut v = Vec::new();
+    auditor().check_agent_any_annotation(&f, &mut v);
+    assert!(
+        v.is_empty(),
+        "Any in a docstring is prose, not an annotation"
+    );
+}
+
+#[test]
+fn python_any_in_prose_not_flagged() {
+    let content = "\
+def process(value):
+    return any(hasattr(v, 'items') for v in value)
+";
+    let f = make_file("src/agent_thing.py", content);
+    let mut v = Vec::new();
+    auditor().check_agent_any_annotation(&f, &mut v);
+    assert!(v.is_empty(), "a bare any() call is not a type annotation");
+}
+
+#[test]
+fn python_return_any_annotation_flagged() {
+    let content = "def process(value: int) -> Any:\n    return value\n";
+    let f = make_file("src/agent_thing.py", content);
+    let mut v = Vec::new();
+    auditor().check_agent_any_annotation(&f, &mut v);
+    assert!(!v.is_empty(), "-> Any return annotation should be flagged");
+}
+
 // ── P6 forbidden I/O ──
 
 #[test]
