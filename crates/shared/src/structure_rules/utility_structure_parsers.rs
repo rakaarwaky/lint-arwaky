@@ -70,6 +70,24 @@ fn collect_files(dir: &Path, inventory: &mut FolderInventory, depth: usize) {
     }
 }
 
+/// Find the workspace root by walking up from *root* until we find
+/// a directory that contains at least one of the member directories.
+pub fn find_workspace_root(root: &Path) -> PathBuf {
+    let mut dir = root.to_path_buf();
+    loop {
+        if dir.join("crates").is_dir()
+            || dir.join("modules").is_dir()
+            || dir.join("packages").is_dir()
+        {
+            return dir;
+        }
+        match dir.parent() {
+            Some(parent) => dir = parent.to_path_buf(),
+            None => return root.to_path_buf(),
+        }
+    }
+}
+
 /// The workspace member directories that exist under *root*.
 pub fn member_dirs(root: &Path) -> Vec<PathBuf> {
     ["crates", "modules", "packages"]

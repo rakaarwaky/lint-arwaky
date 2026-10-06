@@ -9,7 +9,7 @@ use shared_structure_rules::taxonomy_structure_rules_request::{
     StructureFinding, StructureRequest,
 };
 use shared_structure_rules::taxonomy_structure_rules_response::StructureResponse;
-use shared_structure_rules::utility_structure_parsers::{self, sorted};
+use shared_structure_rules::utility_structure_parsers::{find_workspace_root, member_dirs, sorted};
 
 use std::path::Path;
 
@@ -68,17 +68,10 @@ impl TestSuiteCoverageAuditor {
     }
 }
 
-/// Resolve the workspace root: the nearest ancestor holding a member directory.
+/// Resolve the workspace root by walking up from *root* until we find
+/// a directory that contains at least one of the member directories.
 fn workspace_root(root: &Path) -> std::path::PathBuf {
-    if root.join("crates").is_dir()
-        || root.join("modules").is_dir()
-        || root.join("packages").is_dir()
-    {
-        return root.to_path_buf();
-    }
-    root.parent()
-        .map(|p| p.to_path_buf())
-        .unwrap_or_else(|| root.to_path_buf())
+    find_workspace_root(root)
 }
 
 fn folder_name(folder: &Path) -> String {
