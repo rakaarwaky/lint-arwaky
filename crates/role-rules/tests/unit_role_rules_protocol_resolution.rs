@@ -57,6 +57,88 @@ fn python_modules_layout_multi_protocol_resolves() {
 }
 
 #[test]
+fn python_modules_layout_split_contract_siblings_resolve() {
+    let tmp = tempfile::TempDir::new().unwrap();
+    let shared = tmp.path().join("modules/shared/src");
+    fs::create_dir_all(&shared).unwrap();
+    fs::write(
+        shared.join("contract_skill_protocol.py"),
+        "class ISkillProvisionProtocol:\n    pass\n\nclass ISkillRegistryProtocol:\n    pass\n",
+    )
+    .unwrap();
+    fs::write(
+        shared.join("contract_skill_update_protocol.py"),
+        "class ISkillUpdateProtocol:\n    pass\n",
+    )
+    .unwrap();
+    let skill_src = tmp.path().join("modules/skill/src");
+    fs::create_dir_all(&skill_src).unwrap();
+    fs::write(
+        skill_src.join("agent_skill_orchestrator.py"),
+        "class SkillOrchestrator:\n    def __init__(self, provision: ISkillProvisionProtocol, registry: ISkillRegistryProtocol, update: ISkillUpdateProtocol):\n        pass\n",
+    )
+    .unwrap();
+    let agent = skill_src.join("agent_skill_orchestrator.py");
+    assert_eq!(
+        resolve_feature_protocol_count(&agent),
+        3,
+        "a split-contract layout must count protocols in every sibling file"
+    );
+}
+
+#[test]
+fn python_modules_layout_split_contract_siblings_filter_dead_references() {
+    let tmp = tempfile::TempDir::new().unwrap();
+    let shared = tmp.path().join("modules/shared/src");
+    fs::create_dir_all(&shared).unwrap();
+    fs::write(
+        shared.join("contract_skill_protocol.py"),
+        "class ISkillProvisionProtocol:\n    pass\n",
+    )
+    .unwrap();
+    fs::write(
+        shared.join("contract_skill_update_protocol.py"),
+        "class ISkillUpdateProtocol:\n    pass\n\nclass ISkillUpdateDeadProtocol:\n    pass\n",
+    )
+    .unwrap();
+    let skill_src = tmp.path().join("modules/skill/src");
+    fs::create_dir_all(&skill_src).unwrap();
+    // The dead protocol is referenced nowhere in the feature, so only the two
+    // live ones count.
+    fs::write(
+        skill_src.join("agent_skill_orchestrator.py"),
+        "class SkillOrchestrator:\n    def __init__(self, provision: ISkillProvisionProtocol, update: ISkillUpdateProtocol):\n        pass\n",
+    )
+    .unwrap();
+    let agent = skill_src.join("agent_skill_orchestrator.py");
+    assert_eq!(resolve_feature_protocol_count(&agent), 2);
+}
+
+#[test]
+fn python_modules_layout_feature_prefix_does_not_overmatch() {
+    let tmp = tempfile::TempDir::new().unwrap();
+    let shared = tmp.path().join("modules/shared/src");
+    fs::create_dir_all(&shared).unwrap();
+    fs::write(
+        shared.join("contract_skill_protocol.py"),
+        "class ISkillProtocol:\n    pass\n",
+    )
+    .unwrap();
+    let skill_update_src = tmp.path().join("modules/skill_update/src");
+    fs::create_dir_all(&skill_update_src).unwrap();
+    // The `skill_update` feature has no contract file of its own; the
+    // `contract_skill_protocol.py` sibling belongs to the `skill` feature and
+    // must not be counted for it.
+    fs::write(
+        skill_update_src.join("agent_skill_update_orchestrator.py"),
+        "class SkillUpdateOrchestrator:\n    def __init__(self, skill: ISkillProtocol):\n        pass\n",
+    )
+    .unwrap();
+    let agent = skill_update_src.join("agent_skill_update_orchestrator.py");
+    assert_eq!(resolve_feature_protocol_count(&agent), 0);
+}
+
+#[test]
 fn rust_crates_layout_still_resolves() {
     let tmp = tempfile::TempDir::new().unwrap();
     let shared = tmp.path().join("crates/shared/src/mcp");
