@@ -82,7 +82,7 @@ flowchart TD
     correct — if broader — file list, whereas a retried external tool run can
     report against a changed tool state.
   - Classification via `--diff-filter`: added (A), modified (M), deleted (D),
-    renamed (R with `old => new` parsing).
+    renamed (R with `R<score>\t<old>\t<new>` tab-separated parsing).
   - Lintable file filter (source code only):
     `.rs`, `.py`, `.ts`, `.js`, `.jsx`, `.tsx`.
   - Non-source files (`.md`, `.toml`, `.json`, `.yaml`, `.yml`, `.lock`,
