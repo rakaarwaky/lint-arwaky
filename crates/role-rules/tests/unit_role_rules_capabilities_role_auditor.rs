@@ -763,6 +763,44 @@ fn helper_visibility_ts_prod_caller_not_flagged() {
 }
 
 // ──────────────────────────────────────────────────────────
+// #930: referenced_only_from_tests determinism
+// ──────────────────────────────────────────────────────────
+
+#[test]
+fn referenced_only_from_tests_prod_and_test_ref_returns_false() {
+    // A method referenced by both a test file and a prod file is NOT
+    // "referenced only from tests" — must return false regardless of
+    // HashMap iteration order.
+    let mut refs = ExternalReferenceMap::default();
+    refs.by_file.insert(
+        "tests/acceptance_foo.rs".to_string(),
+        vec!["cycles".to_string()],
+    );
+    refs.by_file.insert(
+        "src/agent_foo_orchestrator.rs".to_string(),
+        vec!["cycles".to_string()],
+    );
+    assert!(!refs.referenced_only_from_tests("src/capabilities_foo.rs", "cycles"));
+}
+
+#[test]
+fn referenced_only_from_tests_test_only_returns_true() {
+    // Path must sit under a `/tests/` directory (is_test_or_bench_path).
+    let mut refs = ExternalReferenceMap::default();
+    refs.by_file.insert(
+        "crates/foo/tests/acceptance_foo.rs".to_string(),
+        vec!["cycles".to_string()],
+    );
+    assert!(refs.referenced_only_from_tests("src/capabilities_foo.rs", "cycles"));
+}
+
+#[test]
+fn referenced_only_from_tests_no_external_refs_returns_false() {
+    let refs = ExternalReferenceMap::default();
+    assert!(!refs.referenced_only_from_tests("src/capabilities_foo.rs", "cycles"));
+}
+
+// ──────────────────────────────────────────────────────────
 // Implementor must be a contract PROTOCOL, not an aggregate
 // ──────────────────────────────────────────────────────────
 

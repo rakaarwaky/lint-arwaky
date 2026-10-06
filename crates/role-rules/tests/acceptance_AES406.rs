@@ -55,7 +55,7 @@ fn aes406_passive_surface_excess_control_flow_detected() {
     );
 }
 
-// ── Smart surface exempt from passive checks ──
+// ── Smart surface exempt from all checks (including fn count) ──
 
 #[test]
 fn aes406_smart_surface_exempt() {
@@ -75,16 +75,16 @@ fn aes406_smart_surface_exempt() {
         .collect();
     assert!(
         aes406.is_empty(),
-        "smart surface (suffix _command) should be exempt from passive checks"
+        "smart surface (suffix _command) is exempt from all checks (FRD)"
     );
 }
 
-// ── Passive surface with 26 functions → AES406 fn-count violation ──
+// ── Passive surface with 51 functions → AES406 fn-count violation ──
 
 #[test]
 fn aes406_many_functions_flagged() {
-    // `_layout` is passive; 26 > passive limit 25 → AES406.
-    let content: String = (0..26)
+    // `_layout` is passive; 51 > passive limit 50 → AES406.
+    let content: String = (0..51)
         .map(|i| format!("fn func_{}() {{}}", i))
         .collect::<Vec<_>>()
         .join("\n");
@@ -96,7 +96,7 @@ fn aes406_many_functions_flagged() {
         .collect();
     assert!(
         !aes406.is_empty(),
-        "passive surface with 26 functions should trigger AES406 (fn count limit)"
+        "passive surface with 51 functions should trigger AES406 (fn count limit 50)"
     );
 }
 
@@ -104,7 +104,7 @@ fn aes406_many_functions_flagged() {
 
 #[test]
 fn aes406_fn_count_under_passive_limit_clean() {
-    // `_layout` is passive; 20 < passive limit 25 → no AES406.
+    // `_layout` is passive; 20 < passive limit 50 → no AES406.
     let content: String = (0..20)
         .map(|i| format!("fn func_{}() {{}}", i))
         .collect::<Vec<_>>()

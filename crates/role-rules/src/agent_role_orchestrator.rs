@@ -172,16 +172,18 @@ impl RoleOrchestrator {
                 "surfaces" | "surface"
                     if self.is_rule_enabled("AES406") && !self.is_exception("AES406", filename) =>
                 {
-                    self.deps.surface.check_fn_count_limit(file, violations);
                     match shared_role_rules::taxonomy_role_rules_vo::classify_surface_tier(basename)
                     {
                         shared_role_rules::taxonomy_role_rules_vo::SurfaceTier::Smart => {
+                            // FRD: smart surfaces are subject to no checks.
                             self.deps.surface.check_smart_surface(file, violations);
                         }
                         shared_role_rules::taxonomy_role_rules_vo::SurfaceTier::Utility => {
+                            self.deps.surface.check_fn_count_limit(file, violations);
                             self.deps.surface.check_utility_surface(file, violations);
                         }
                         shared_role_rules::taxonomy_role_rules_vo::SurfaceTier::Passive => {
+                            self.deps.surface.check_fn_count_limit(file, violations);
                             self.deps.surface.check_passive_surface(file, violations);
                         }
                     }
@@ -248,13 +250,10 @@ impl RoleOrchestrator {
     }
 
     fn is_ignored(&self, path: &str) -> bool {
-        let segments: Vec<&str> = path.split('/').collect();
-        self.ignored_paths.iter().any(|ignored| {
-            let ignored_segments: Vec<&str> = ignored.split('/').collect();
-            ignored_segments
-                .iter()
-                .all(|igs| segments.iter().any(|s| s == igs))
-        })
+        // FR-RoleRules-001: single-segment patterns match when that segment
+        // appears anywhere in the path; multi-segment patterns match as a
+        // contiguous run. The shared helper handles both separator styles.
+        shared_filesystem::utility_path_filter::is_path_ignored(path, &self.ignored_paths)
     }
 
     fn is_exception(&self, code: &str, filename: &str) -> bool {
