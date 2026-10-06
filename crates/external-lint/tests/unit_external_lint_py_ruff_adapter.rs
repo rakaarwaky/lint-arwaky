@@ -69,6 +69,12 @@ fn make_adapter() -> RuffAdapter {
 fn e999_syntax_error_maps_to_critical() {
     let adapter = make_adapter();
     assert_eq!(adapter.map_severity("error", "E999"), Severity::CRITICAL);
+    // FRD codes carry the `ruff::` prefix (#918); severity mapping must
+    // accept the qualified form.
+    assert_eq!(
+        adapter.map_severity("error", "ruff::E999"),
+        Severity::CRITICAL
+    );
 }
 
 #[test]
@@ -124,6 +130,81 @@ fn unknown_code_defaults_to_medium() {
     let adapter = make_adapter();
     assert_eq!(adapter.map_severity("warning", "C999"), Severity::MEDIUM);
     assert_eq!(adapter.map_severity("error", "XXXX"), Severity::MEDIUM);
+}
+
+/// Regression #918: ruff JSON codes must be stored tool-qualified as
+/// `ruff::<code>` so `ignored_rules` can match them.
+#[test]
+fn scan_stores_tool_qualified_ruff_code() {
+    use shared_common::taxonomy_adapter_name_vo::AdapterName;
+    use shared_common::taxonomy_operation_error::LinterOperationError;
+    use shared_common::taxonomy_path_vo::FilePath;
+    use shared_common::taxonomy_response_data_vo::ResponseData;
+    use shared_external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
+    use std::sync::Mutex;
+
+    #[derive(Default)]
+    struct RuffFindingExecutor {
+        used: Mutex<bool>,
+    }
+    impl ICommandExecutorProtocol for RuffFindingExecutor {
+        fn execute_command(
+            &self,
+            _: shared_common::taxonomy_common_vo::PatternList,
+            _: FilePath,
+            _: Option<shared_external_lint::taxonomy_duration_vo::Timeout>,
+        ) -> anyhow::Result<ResponseData> {
+            Ok(ResponseData::default())
+        }
+        fn health_check(&self) -> anyhow::Result<ResponseData> {
+            Ok(ResponseData::default())
+        }
+        fn exec_cmd_scan(
+            &self,
+            _: Vec<String>,
+            _: FilePath,
+            _: f64,
+            _: Option<AdapterName>,
+            _: &FilePath,
+        ) -> Result<ResponseData, LinterOperationError> {
+            Ok(ResponseData::default())
+        }
+        fn exec_cmd_adapter(
+            &self,
+            _: Vec<String>,
+            _: FilePath,
+            _: f64,
+            _: AdapterName,
+        ) -> Result<ResponseData, LinterOperationError> {
+            *self.used.lock().unwrap() = true;
+            let json = r#"[{
+                "filename": "x.py",
+                "location": {"row": 3, "column": 7},
+                "code": "E501",
+                "message": "line too long",
+                "severity": "WARNING"
+            }]"#;
+            Ok(ResponseData {
+                stdout: json.to_string(),
+                ..ResponseData::default()
+            })
+        }
+    }
+
+    let executor = Arc::new(RuffFindingExecutor::default());
+    let fs = Arc::new(MockFilesystem::with_python_flag(true));
+    let adapter = external_lint_lint_arwaky::RuffAdapter::new(executor, None, fs.clone(), fs);
+    let target = FilePath::new("pkg".to_string()).unwrap();
+    let results = adapter.scan(&target).unwrap();
+    assert_eq!(results.len(), 1);
+    let r = results.values[0].clone();
+    assert_eq!(
+        r.code.code(),
+        "ruff::E501",
+        "code must be tool-qualified ruff::E501 (#918)"
+    );
+    assert_eq!(r.line.value(), 3);
+    assert_eq!(r.column.value(), 7);
 }
 
 /// Regression: when the scan target is a relative path (e.g. `workspaces-good/modules`),
