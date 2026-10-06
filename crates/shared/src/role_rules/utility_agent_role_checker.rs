@@ -255,27 +255,23 @@ pub fn count_feature_protocol_traits_with(feature_dir: &Path, referenced: &[Stri
     )
 }
 
-/// Count the protocol traits in a flat `modules/shared/src/` layout, where
-/// contracts are named `contract_<feature>_protocol.py` rather than living in
-/// a per-feature subfolder. Only the feature's own contract file is scanned,
-/// so protocols of other features are not counted as subsystems.
+/// Count the protocol traits a feature's flat `modules/shared/src/` layout
+/// declares. Contracts are named `contract_<feature>_protocol.py`, but a
+/// feature's protocols are often split across sibling files such as
+/// `contract_<feature>_update_protocol.py`, so every `contract_<feature>_*`
+/// file is scanned, not just the exact-stem one. The trailing `starts_with`
+/// keeps a `skill_update` feature from picking up `contract_skill_protocol`.
 fn count_feature_protocol_traits_in_modules_dir(
     modules_shared: &Path,
     feature: &str,
     referenced: &[String],
 ) -> usize {
-    let file_stem = format!("contract_{}_protocol", feature);
-    for ext in ["rs", "py", "ts"] {
-        let path = modules_shared.join(format!("{}.{}", file_stem, ext));
-        if path.is_file() {
-            return count_protocol_traits_in_dir_with_stem_filter(
-                modules_shared,
-                referenced,
-                Some(&|base: &str| base == file_stem.as_str()),
-            );
-        }
-    }
-    0
+    let stem = format!("contract_{}", feature);
+    count_protocol_traits_in_dir_with_stem_filter(
+        modules_shared,
+        referenced,
+        Some(&|base: &str| base == stem || base.starts_with(&format!("{stem}_"))),
+    )
 }
 
 /// Shared scan core: count the protocol traits declared in `dir`, keeping only
@@ -429,8 +425,9 @@ pub fn resolve_feature_protocol_count(file_path: &Path) -> usize {
     let mut count = count_feature_protocol_traits_with(&shared_dir, &referenced);
 
     // Python modules layout: contracts sit flat in `modules/shared/src/`,
-    // named `contract_<feature>_protocol.py`, so no per-feature subfolder.
-    // Count the feature's own contract file when the nested module is absent.
+    // named `contract_<feature>_*.{rs,py,ts}` (often split across sibling
+    // files), so no per-feature subfolder. Count the feature's own contract
+    // files when the nested module is absent.
     if count == 0 {
         let modules_shared = root.join("modules").join("shared").join("src");
         if modules_shared.is_dir() {
