@@ -1,5 +1,25 @@
 # Changelog
 
+## 3.8.1 (2026-10-06)
+
+### Fixes
+
+- **AES405 over-fired on Python orchestrators with a flat `modules/` layout.**
+  `workspace_root` only recognized `crates/shared/src`, so a Python
+  modules repo resolved the protocol count to the `usize::MAX` sentinel
+  and the single-subsystem skip never fired. `workspace_root` now also
+  accepts `modules/shared/src`, and a new
+  `count_feature_protocol_traits_in_modules_dir` counts protocols from
+  the flat `contract_<feature>_protocol.py` files.
+- **AES305 user-supplied exceptions were dropped by the config merge.**
+  `merge_config_with_defaults` replaced user rules with the embedded
+  defaults, so a project's `exceptions:` list never reached the checkers.
+  `fold_user_rule_toggles` now carries user `enabled` and `exceptions`
+  forward into the embedded rules before the layer merge.
+- **AES403 decorator-claim bypass in Python capabilities** (#881).
+- **Tests gate perf: 67s → 22s** by pointing dispatcher tests at a small
+  fixture (#879).
+
 ## 3.8.0 (2026-10-05)
 
 ### The AES architecture is now fixed in the binary
