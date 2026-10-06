@@ -14,6 +14,7 @@ use shared_filesystem::FilesystemRequest;
 use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared_filesystem::contract_filesystem_protocol::IParserProtocol;
 use shared_filesystem::contract_filesystem_protocol::IWorkspaceProtocol;
+use shared_filesystem::utility_path_filter;
 use shared_filesystem::utility_test_file_discovery;
 use shared_import_rules::IImportRunnerAggregate;
 use shared_import_rules::taxonomy_import_rules_request::ImportRequest;
@@ -1007,6 +1008,21 @@ pub(crate) fn bfs_enter_subdirs(
             if gate_members && !is_member_dir {
                 continue;
             }
+            // Multi-segment ignored_paths (e.g. `internal/lint-arwaky/.worktrees`)
+            // must match the full relative path from scan_root, not just the base
+            // name — the base-name check in `skip_dirs` cannot see across segments.
+            let rel_str = entry_path
+                .strip_prefix(scan_root)
+                .map(|rel| rel.to_string_lossy().to_string())
+                .unwrap_or_else(|_| entry_path.to_string_lossy().to_string());
+            if utility_path_filter::is_path_ignored(&rel_str, ignored) {
+                continue;
+            }
+            // Nested git repos (submodules / worktrees) carry their own `.git`
+            // file (not directory) and are linted by their own config — skip them.
+            if entry_path.join(".git").is_file() {
+                continue;
+            }
             if !seen.insert(entry_path.to_path_buf()) {
                 continue;
             }
@@ -1162,4 +1178,105 @@ pub(crate) fn run_all_linters_json(
     agg: &ScanAggregates,
 ) -> Result<Vec<ViolationItem>, String> {
     run_all_linters_in_memory(path, agg)
+}
+
+// ─── BFS unit tests ──────────────────────────────────────────────
+
+#[cfg(test)]
+mod bfs_tests {
+    use super::*;
+    use std::collections::HashSet;
+
+    /// Build a `FilesystemSeam` from the real `FilesystemContainer` so the BFS
+    /// drives actual directory entries (the `MockFilesystem` returns the same
+    /// list for every `ScanDirectory` call, which would loop).
+    fn real_seam() -> FilesystemSeam {
+        let container = filesystem::root_filesystem_container::FilesystemContainer::new();
+        FilesystemSeam {
+            workspace: container.workspace(),
+            parser: container.parser(),
+            aggregate: container.orchestrator(),
+        }
+    }
+
+    fn skip_dirs() -> HashSet<&'static str> {
+        HashSet::new()
+    }
+
+    #[test]
+    fn bfs_skips_nested_git_repo_with_dotgit_file() {
+        let tmp = tempfile::TempDir::new().unwrap();
+        let root = tmp.path();
+        // Nested repo: dir with a `.git` FILE (not dir) — the submodule / worktree marker.
+        let nested = root.join("submodule");
+        std::fs::create_dir_all(nested.join("src")).unwrap();
+        std::fs::write(nested.join(".git"), "gitdir: /elsewhere").unwrap();
+        std::fs::write(nested.join("src").join("main.rs"), "fn main() {}").unwrap();
+        // Normal dir: no `.git` file.
+        let normal = root.join("normal");
+        std::fs::create_dir_all(normal.join("src")).unwrap();
+        std::fs::write(normal.join("src").join("lib.rs"), "fn lib() {}").unwrap();
+
+        let seam = real_seam();
+        let mut discovered = Vec::new();
+        let ignored: Vec<String> = Vec::new();
+        bfs_enter_subdirs(
+            &seam,
+            root,
+            &skip_dirs(),
+            false,
+            &ignored,
+            &mut discovered,
+        );
+        let has_nested = discovered
+            .iter()
+            .any(|p| p.contains("submodule"));
+        assert!(
+            !has_nested,
+            "BFS must skip a dir carrying its own .git file: {discovered:?}"
+        );
+        let has_normal = discovered
+            .iter()
+            .any(|p| p.contains("normal"));
+        assert!(
+            has_normal,
+            "BFS must keep a plain dir without a .git marker: {discovered:?}"
+        );
+    }
+
+    #[test]
+    fn bfs_skips_multi_segment_ignored_path() {
+        let tmp = tempfile::TempDir::new().unwrap();
+        let root = tmp.path();
+        // Multi-segment path: internal/lint-arwaky/.worktrees
+        let wt = root
+            .join("internal")
+            .join("lint-arwaky")
+            .join(".worktrees");
+        std::fs::create_dir_all(wt.join("feature-x")).unwrap();
+        std::fs::write(wt.join("feature-x").join("main.rs"), "fn main() {}").unwrap();
+        // A dir that should survive.
+        let src = root.join("internal").join("lint-arwaky").join("src");
+        std::fs::create_dir_all(&src).unwrap();
+        std::fs::write(src.join("lib.rs"), "fn lib() {}").unwrap();
+
+        let seam = real_seam();
+        let mut discovered = Vec::new();
+        let ignored = vec!["internal/lint-arwaky/.worktrees".to_string()];
+        bfs_enter_subdirs(
+            &seam,
+            root,
+            &skip_dirs(),
+            false,
+            &ignored,
+            &mut discovered,
+        );
+        let has_worktrees = discovered
+            .iter()
+            .any(|p| p.contains(".worktrees"));
+        assert!(
+            !has_worktrees,
+            "BFS must prune the multi-segment ignored subtree: {discovered:?}"
+        );
+    }
 }

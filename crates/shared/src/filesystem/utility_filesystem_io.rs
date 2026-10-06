@@ -244,12 +244,39 @@ pub fn scan_directory(dir: &Path) -> Vec<PathBuf> {
 }
 
 /// List directory entries with ignore filter.
+///
+/// Each entry is filtered against `ignored` using its path relative to `dir`
+/// (i.e. the entry's base name). Multi-segment patterns such as
+/// `internal/lint-arwaky/.worktrees` require the full relative path from the
+/// scan root — use `scan_directory_with_ignored_root` for that.
 pub fn scan_directory_with_ignored(dir: &Path, ignored: &[String]) -> Vec<PathBuf> {
     scan_directory(dir)
         .into_iter()
         .filter(|p| {
             let name = p.file_name().and_then(|n| n.to_str()).unwrap_or("");
             !is_path_ignored(name, ignored)
+        })
+        .collect()
+}
+
+/// List directory entries with ignore filter, matching patterns against the
+/// entry's path relative to `root`. Multi-segment patterns such as
+/// `internal/lint-arwaky/.worktrees` are honoured because the full relative
+/// path (e.g. `internal/lint-arwaky/.worktrees`) is passed to
+/// `is_path_ignored`, not just the base name.
+pub fn scan_directory_with_ignored_root(
+    dir: &Path,
+    root: &Path,
+    ignored: &[String],
+) -> Vec<PathBuf> {
+    scan_directory(dir)
+        .into_iter()
+        .filter(|p| {
+            let rel_str = p
+                .strip_prefix(root)
+                .map(|rel| rel.to_string_lossy().to_string())
+                .unwrap_or_else(|_| p.to_string_lossy().to_string());
+            !is_path_ignored(&rel_str, ignored)
         })
         .collect()
 }
