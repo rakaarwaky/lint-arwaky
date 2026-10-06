@@ -40,6 +40,7 @@ impl AutoFixContainer {
             unused_import_fix.clone(),
             bypass_fix.clone(),
             symbol_rename.clone(),
+            io.clone(),
         ));
         Arc::new(FixOrchestrator::new(FixOrchestratorDeps {
             violation_report,
