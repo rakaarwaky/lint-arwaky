@@ -44,9 +44,26 @@ pub fn collect_git_diff(
         .collect();
 
     let mut results: Vec<LintResult> = Vec::new();
-    for _f in &files {
+    if !files.is_empty() {
+        // Build FileEntry list from changed files (matching capabilities_diff_checker.rs)
+        let mut entries: Vec<shared_filesystem::taxonomy_filesystem_vo::FileEntry> = Vec::new();
+        for fp in &files {
+            let joined = std::path::Path::new(&project_path.value).join(&fp.value);
+            if let Ok(content) = std::fs::read_to_string(&joined) {
+                let size = content.len() as u64;
+                entries.push(shared_filesystem::taxonomy_filesystem_vo::FileEntry {
+                    path: joined,
+                    extension: fp.extension(),
+                    language: shared_filesystem::utility_language_detector::detect_language(fp),
+                    size,
+                    content,
+                    parse_ok: size > 0,
+                    parse_metadata: None,
+                });
+            }
+        }
         let r = code_analysis_linter
-            .execute(CodeAnalysisRequest::run_analysis(&[]))
+            .execute(CodeAnalysisRequest::run_analysis(&entries))
             .into_violations();
         results.extend(r);
     }
