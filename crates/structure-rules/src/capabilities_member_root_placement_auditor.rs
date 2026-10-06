@@ -5,7 +5,6 @@ use shared_structure_rules::utility_structure_parsers;
 
 use shared_structure_rules::utility_structure_parsers::find_workspace_root;
 
-
 use shared_structure_rules::contract_structure_protocol::IStructureMemberRootProtocol;
 use shared_structure_rules::taxonomy_structure_rules_constant as consts;
 use shared_structure_rules::taxonomy_structure_rules_request::{
