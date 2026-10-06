@@ -17,8 +17,11 @@ use shared_common::taxonomy_lint_result_vo::LintResult;
 use shared_common::taxonomy_message_vo::LintMessage;
 use shared_common::taxonomy_path_vo::FilePath;
 use shared_common::{AdapterName, Count, DescriptionVO, ErrorCode};
+use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared_filesystem::taxonomy_filesystem_vo::FileEntry;
 use shared_quality_rules::CodeAnalysisRequest;
 use shared_quality_rules::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
+use std::path::Path;
 use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -28,15 +31,22 @@ pub struct ViolationReport {
     unused_import_fix: Arc<dyn IUnusedImportFixProtocol>,
     bypass_fix: Arc<dyn IBypassFixProtocol>,
     symbol_rename: Arc<dyn ISymbolRenameProtocol>,
+    /// Filesystem IO seam — builds the linter's file list from the requested
+    /// path so fix scope is confined to it (#934).
+    io: Arc<dyn IFileSystemIOProtocol>,
 }
 
 // ─── Block 2: Protocol Trait Implementation ──────────────
 
 impl IViolationReportProtocol for ViolationReport {
     fn report_violations(&self, path: &FilePath, dry_run: bool) -> FixResult {
+        // #934: confine fix scope to the requested path — build the linter's
+        // file list from `path` instead of an empty list (which made the
+        // linter fall back to project-wide discovery and ignored the path).
+        let entries = self.build_entries(path);
         let analysis = self
             .linter
-            .execute(CodeAnalysisRequest::run_analysis(&[]))
+            .execute(CodeAnalysisRequest::run_analysis(&entries))
             .into_violations();
         let results = &analysis;
 
@@ -61,20 +71,23 @@ impl IViolationReportProtocol for ViolationReport {
         let mut events: Vec<shared_auto_fix::FixApplied> = Vec::new();
 
         for violation in &naming_violations {
+            // #937: extract the actually flagged symbol — the token after
+            // "Symbol" when present (e.g. "Symbol MyName does not match
+            // snake_case" → MyName, not snake_case), else the first
+            // CamelCase/UPPER_CASE token. The old heuristic grabbed the first
+            // underscore-bearing token, so "snake_case" shadowed "MyName".
             let msg = violation.message.value();
-            if let Some(old_name) = msg
-                .split_whitespace()
-                .find(|w| w.contains('_') && w.len() > 3)
-            {
+            let old_name = Self::extract_flagged_symbol(msg);
+            if let Some(old_name) = old_name {
                 // Keyword conflict detection
-                if RUST_KEYWORDS.contains(&old_name) {
+                if RUST_KEYWORDS.contains(&old_name.as_str()) {
                     total_fixable -= 1;
                     continue;
                 }
 
                 let parts: Vec<&str> = old_name.split('_').collect();
                 let new_name = if parts.len() >= 3 {
-                    old_name.to_string()
+                    old_name.clone()
                 } else {
                     format!("renamed_{}", old_name)
                 };
@@ -82,7 +95,7 @@ impl IViolationReportProtocol for ViolationReport {
                 if old_name != new_name {
                     let outcome = self.symbol_rename.rename_symbol_dry(
                         path.value(),
-                        old_name,
+                        &old_name,
                         &new_name,
                         dry_run,
                     );
@@ -108,10 +121,25 @@ impl IViolationReportProtocol for ViolationReport {
                         }
                         FixOutcome::Skipped(_) => {
                             total_fixable -= 1;
+                            manual_skipped.push(LintMessage::new(format!(
+                                "  {} | {} | skipped: {} | {}:{}",
+                                violation.code,
+                                violation.message,
+                                outcome,
+                                violation.file,
+                                violation.line
+                            )));
                         }
                     }
                 } else {
+                    // #938: extracted new name equals old name (parts.len() >= 3
+                    // keeps the name unchanged) — record it as skipped so the
+                    // violation stays in the report instead of vanishing.
                     total_fixable -= 1;
+                    manual_skipped.push(LintMessage::new(format!(
+                        "  {} | {} | skipped: AlreadyValid | {}:{}",
+                        violation.code, violation.message, violation.file, violation.line
+                    )));
                 }
             } else {
                 total_fixable -= 1;
@@ -180,7 +208,7 @@ impl IViolationReportProtocol for ViolationReport {
         let remaining = if !dry_run && fixed_count > 0 {
             let after_results = self
                 .linter
-                .execute(CodeAnalysisRequest::run_analysis(&[]))
+                .execute(CodeAnalysisRequest::run_analysis(&entries))
                 .into_violations();
             after_results.len()
         } else {
@@ -261,13 +289,81 @@ impl ViolationReport {
         unused_import_fix: Arc<dyn IUnusedImportFixProtocol>,
         bypass_fix: Arc<dyn IBypassFixProtocol>,
         symbol_rename: Arc<dyn ISymbolRenameProtocol>,
+        io: Arc<dyn IFileSystemIOProtocol>,
     ) -> Self {
         Self {
             linter,
             unused_import_fix,
             bypass_fix,
             symbol_rename,
+            io,
         }
+    }
+
+    /// Build the linter's `FileEntry` list from the requested path (#934).
+    ///
+    /// A single source file contributes one entry; a directory is walked
+    /// recursively (skipping `DEFAULT_IGNORED_PATHS` and symlinks) and every
+    /// source file under it contributes an entry. The linter then reports
+    /// violations only for these files, confining fix scope to the path.
+    fn build_entries(&self, path: &FilePath) -> Vec<FileEntry> {
+        let p = Path::new(path.value());
+        if p.is_file() {
+            return self.read_entry(p);
+        }
+        let mut entries: Vec<FileEntry> = Vec::new();
+        self.walk_dir(p, &mut entries);
+        entries
+    }
+
+    fn walk_dir(&self, dir: &Path, entries: &mut Vec<FileEntry>) {
+        let empty = shared_common::PatternList::new(Vec::<String>::new());
+        for child in self.io.scan_directory_with_ignored(dir, &empty) {
+            let ft = match child.symlink_metadata() {
+                Ok(ft) => ft,
+                Err(_) => continue,
+            };
+            if ft.is_symlink() {
+                continue;
+            }
+            if ft.is_dir() {
+                let name = child.file_name().and_then(|n| n.to_str()).unwrap_or("");
+                if shared_common::DEFAULT_IGNORED_PATHS.contains(&name) {
+                    continue;
+                }
+                self.walk_dir(&child, entries);
+            } else if ft.is_file() {
+                entries.extend(self.read_entry(&child));
+            }
+        }
+    }
+
+    /// One entry per readable lintable source file; non-source or unreadable
+    /// files are skipped (the linter filters by `parse_ok` and extension).
+    fn read_entry(&self, p: &Path) -> Vec<FileEntry> {
+        let content = match self.io.read_to_string(p) {
+            Ok(c) => c.value().to_string(),
+            Err(_) => return Vec::new(),
+        };
+        let extension = p
+            .extension()
+            .and_then(|e| e.to_str())
+            .unwrap_or("")
+            .to_string();
+        let Some(language) =
+            shared_common::taxonomy_language_vo::Language::from_extension(&extension)
+        else {
+            return Vec::new();
+        };
+        vec![FileEntry {
+            path: p.to_path_buf(),
+            extension,
+            language,
+            size: content.len() as u64,
+            content,
+            parse_ok: true,
+            parse_metadata: None,
+        }]
     }
 
     /// Publish a FixApplied event for the given violation.
@@ -283,5 +379,32 @@ impl ViolationReport {
             ErrorCode::raw(error_code.to_string()),
             Count::new(changes as i64),
         )
+    }
+
+    /// Extract the symbol an AES101 message flagged (#937).
+    ///
+    /// The message's own symbol is the token following "Symbol" when that
+    /// keyword is present ("Symbol MyName does not match snake_case" →
+    /// `MyName`), else the first CamelCase or UPPER_CASE token. The previous
+    /// heuristic grabbed the first underscore-bearing token, so the
+    /// convention word `snake_case` shadowed the real symbol and the fix
+    /// renamed the wrong identifier.
+    fn extract_flagged_symbol(message: &str) -> Option<String> {
+        let tokens: Vec<&str> = message.split_whitespace().collect();
+        if let Some(pos) = tokens.iter().position(|t| *t == "Symbol")
+            && pos + 1 < tokens.len()
+        {
+            return Some(tokens[pos + 1].to_string());
+        }
+        tokens
+            .iter()
+            .find(|t| Self::is_camel_or_upper(t))
+            .map(|s| s.to_string())
+    }
+
+    /// A candidate flagged symbol: starts with an uppercase letter — a
+    /// CamelCase or UPPER_CASE identifier, never a snake_case convention word.
+    fn is_camel_or_upper(token: &str) -> bool {
+        token.chars().next().is_some_and(|c| c.is_ascii_uppercase())
     }
 }
