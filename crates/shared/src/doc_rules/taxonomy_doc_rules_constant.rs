@@ -246,8 +246,6 @@ pub const DOC_HEADING_CONTRACTS: &[DocH2Contract] = &[
         AGENTS_DOC,
         &[
             "User Context",
-            "Precedence",
-            "Security",
             "Session Start",
             "Runtime",
             "Quick Facts",
