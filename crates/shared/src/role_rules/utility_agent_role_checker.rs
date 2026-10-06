@@ -240,23 +240,6 @@ pub fn count_protocol_fields(content: &str, language: Language) -> (usize, usize
     (injected, distinct.len())
 }
 
-/// Count the protocol traits a feature's shared module declares.
-///
-/// Used by P14 to recognise a genuinely single-subsystem feature. A feature
-/// that declares exactly one protocol has nothing else for its agent to
-/// coordinate, so flagging its single injected seam would push the author to
-/// invent a protocol that does no distinct job.
-///
-/// A protocol trait that no file in the feature references is dead code and
-/// does not count: a declared-but-unused trait is not a subsystem the agent
-/// could coordinate. Only `count_feature_protocol_traits_with` applies that
-/// filter, using the protocol names the feature's own source files reference.
-///
-/// Returns 0 when the directory is absent or empty.
-pub fn count_feature_protocol_traits(feature_dir: &Path) -> usize {
-    count_feature_protocol_traits_with(feature_dir, &[])
-}
-
 /// Count the protocol traits a feature's shared module declares, keeping only
 /// those whose name appears in `referenced`.
 ///
