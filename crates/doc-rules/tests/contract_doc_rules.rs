@@ -254,10 +254,6 @@ fn write_agents_workspace(dir: &Path) {
         "# Sample AGENTS.md\n\n\
 ## User Context\n\n\
 - Preferences: concise.\n\n\
-## Precedence\n\n\
-1. Explicit user approval.\n\n\
-## Security\n\n\
-- Explicit approval is required before destructive actions.\n\n\
 ## Session Start\n\n\
 Read the todo list, then check state.\n\n\
 ## Runtime\n\n\
@@ -840,7 +836,7 @@ fn aes605_fires_when_no_h1() {
     let tmp = tempfile::tempdir().unwrap();
     write_bad_agents(
         tmp.path(),
-        "## Security\n\n- Explicit approval is required.\n",
+        "## User Context\n\n- Be concise.\n",
     );
     let findings = audit(tmp.path());
     assert!(has(&findings, "AES605", "h1_count"));
@@ -851,7 +847,7 @@ fn aes605_fires_when_multiple_h1() {
     let tmp = tempfile::tempdir().unwrap();
     write_bad_agents(
         tmp.path(),
-        "# One\n\n# Two\n\n## Security\n\n- Explicit approval.\n",
+        "# One\n\n# Two\n\n## User Context\n\n- Be concise.\n",
     );
     let findings = audit(tmp.path());
     assert!(has(&findings, "AES605", "h1_count"));
@@ -867,7 +863,7 @@ fn aes605_does_not_falsely_fire_on_sharp_commented_commands() {
         "\
 # Sample AGENTS.md
 
-## Security
+## User Context
 
 - Be safe.
 
@@ -890,11 +886,11 @@ cargo nextest run
 #[test]
 fn aes605_fires_when_required_h2_is_absent() {
     let tmp = tempfile::tempdir().unwrap();
-    // Precedence and Definition of Done are missing from the required set.
+    // User Context and Definition of Done are missing from the required set.
     write_bad_agents(
         tmp.path(),
         "# Sample AGENTS.md\n\n\
-## Security\n\n- Be safe.\n\n\
+## Session Start\n\nCheck state.\n\n\
 ## Git Workflow\n\nUse a worktree.\n\n\
 ## Commands\n\n```bash\ntrue\n```\n\n\
 ",
@@ -908,7 +904,7 @@ fn aes605_fires_when_required_h2_is_absent() {
         .unwrap();
     // The message names the absent section(s), not just the rule.
     assert!(
-        message.contains("Precedence") || message.contains("Definition of Done"),
+        message.contains("User Context") || message.contains("Definition of Done"),
         "the message must name the absent section(s); got: {message}"
     );
 }
@@ -924,14 +920,6 @@ fn aes605_allows_extra_and_free_h3_headings() {
 ## User Context
 
 - Preferences: concise.
-
-## Precedence
-
-1. Safety rules.
-
-## Security
-
-- Be safe.
 
 ## Session Start
 
@@ -995,14 +983,6 @@ fn aes605_fires_when_a_required_section_is_absent() {
         "\
 # Sample AGENTS.md
 
-## Precedence
-
-1. Safety rules.
-
-## Security
-
-- Be safe.
-
 ## Git Workflow
 
 Use a worktree.
@@ -1047,14 +1027,6 @@ fn aes605_fires_on_an_h2_outside_the_template() {
         tmp.path(),
         "\
 # Sample AGENTS.md
-
-## Precedence
-
-1. Safety rules.
-
-## Security
-
-- Be safe.
 
 ## Architecture
 
@@ -1109,7 +1081,7 @@ Tests pass.
 
 #[test]
 fn aes605_allows_the_project_specific_h2_set() {
-    // Only the 12 required H2 sections are enforced; no optional headings exist.
+    // Only the 11 required H2 sections are enforced; no optional headings exist.
     let tmp = tempfile::tempdir().unwrap();
     write_bad_agents(
         tmp.path(),
@@ -1118,14 +1090,6 @@ fn aes605_allows_the_project_specific_h2_set() {
 ## User Context
 
 - Preferences: concise.
-
-## Precedence
-
-1. Safety rules.
-
-## Security
-
-- Be safe.
 
 ## Session Start
 
@@ -1987,7 +1951,7 @@ fn findings_carry_a_1_based_line_and_high_severity() {
 #[test]
 fn document_level_findings_use_line_zero() {
     let tmp = tempfile::tempdir().unwrap();
-    write_bad_agents(tmp.path(), "## Security\n\n- Be safe.\n");
+    write_bad_agents(tmp.path(), "## User Context\n\n- Be concise.\n");
     let findings = audit_findings(tmp.path());
     let h1 = findings
         .iter()
@@ -2028,7 +1992,7 @@ fn violation_items_reach_the_sarif_path() {
     // survive the DocFinding -> ViolationItem -> JSON-object round trip that
     // the SARIF/JSON renderers consume via `ViolationItem::from_json_obj`.
     let tmp = tempfile::tempdir().unwrap();
-    write_bad_agents(tmp.path(), "## Security\n\n- Be safe.\n");
+    write_bad_agents(tmp.path(), "## User Context\n\n- Be concise.\n");
     let findings = audit_findings(tmp.path());
     assert!(!findings.is_empty());
     for finding in &findings {
