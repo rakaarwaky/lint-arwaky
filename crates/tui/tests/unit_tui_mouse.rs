@@ -340,3 +340,52 @@ fn click_below_panels_is_ignored() {
         "click in shortcut band must not change selection"
     );
 }
+
+/// Search-mode mouse click (#909): the panel shows `filtered_indices`, so a
+/// click on panel row `i` must resolve to `filtered_indices[i]`, not `i`.
+/// Before the fix, clicking row 1 with `filtered_indices = [2, 5, 8]`
+/// selected entry #1 instead of entry #5.
+#[test]
+fn file_list_click_in_search_mode_resolves_filtered_indices() {
+    let layout = compute_panel_layout(120, 24);
+    let col = layout.file_list.x + layout.file_list.width / 2;
+    let row = layout.file_list.y + 1; // panel row 1
+
+    let mut state = with_entries(click_state(120, 24, 0), 9);
+    state.search.mode = true;
+    state.search.query = "f5".to_string();
+    state.search.filtered_indices = vec![2, 5, 8];
+    state.search.filter_pos = 0;
+    let h = handler();
+    h.handle(&mut state, TuiEvent::MouseClick(col, row));
+
+    // Click on filtered row 1 → entry 5, not entry 1.
+    assert_eq!(state.navigation.selected_index, 5);
+    assert_eq!(
+        state.search.filter_pos, 1,
+        "filter_pos must follow the click"
+    );
+    assert_eq!(state.navigation.panel_focus, PanelFocus::FileList);
+}
+
+/// Search-mode click on a row beyond the filtered list bounds must not
+/// change the selection (#909 guard).
+#[test]
+fn file_list_click_in_search_mode_bounds_check() {
+    let layout = compute_panel_layout(120, 24);
+    let col = layout.file_list.x + layout.file_list.width / 2;
+    let row = layout.file_list.y + 5; // panel row 5, only 3 filtered rows exist
+
+    let mut state = with_entries(click_state(120, 24, 0), 9);
+    state.search.mode = true;
+    state.search.query = "f5".to_string();
+    state.search.filtered_indices = vec![2, 5, 8];
+    state.search.filter_pos = 0;
+    let h = handler();
+    h.handle(&mut state, TuiEvent::MouseClick(col, row));
+
+    assert_eq!(
+        state.navigation.selected_index, 0,
+        "out-of-bounds click must not change selection"
+    );
+}
