@@ -169,12 +169,16 @@ architecture:
         .iter()
         .find(|r| r.rule_type.code() == "AES305")
         .expect("AES305 rule must exist in merged config");
-    assert!(aes305
-        .exceptions
-        .values
-        .contains(&"capabilities_tools_blender_adapter.py".to_string()));
-    assert!(aes305
-        .exceptions
-        .values
-        .contains(&"capabilities_tools_codegraph_adapter.py".to_string()));
+    assert!(
+        aes305
+            .exceptions
+            .values
+            .contains(&"capabilities_tools_blender_adapter.py".to_string())
+    );
+    assert!(
+        aes305
+            .exceptions
+            .values
+            .contains(&"capabilities_tools_codegraph_adapter.py".to_string())
+    );
 }

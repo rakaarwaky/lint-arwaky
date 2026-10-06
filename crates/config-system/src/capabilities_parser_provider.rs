@@ -72,16 +72,13 @@ impl IConfigMergeProtocol for ConfigParserProvider {
         let embedded = default_config_for_language(language.as_str());
         let mut merged = embedded;
         fold_user_rule_toggles(&mut merged, config);
-        let (merged_layers, _) =
-            shared_config_system::utility_config_merger::merge_config(&merged);
+        let (merged_layers, _) = shared_config_system::utility_config_merger::merge_config(&merged);
         merged.layers = merged_layers;
         // User policy fields carry through; architecture business fields stay
         // from the embedded defaults.
         merged.ignored_paths = config.ignored_paths.clone();
         let mut warnings = Vec::new();
-        if !config.layers.is_empty()
-            || config.naming.word_count.value != 0
-            || !config.enabled.value
+        if !config.layers.is_empty() || config.naming.word_count.value != 0 || !config.enabled.value
         {
             warnings.push(
                 "architecture section in user config is ignored: AES rules are fixed by the tool. \

@@ -47,7 +47,11 @@ fn python_modules_layout_multi_protocol_resolves() {
     // A second protocol in the same flat shared dir that the mcp feature does
     // not reference — dead for this feature, so it must not raise the count.
     let shared = tmp.path().join("modules/shared/src");
-    fs::write(shared.join("contract_other_protocol.py"), "class IOtherProtocol:\n    pass\n").unwrap();
+    fs::write(
+        shared.join("contract_other_protocol.py"),
+        "class IOtherProtocol:\n    pass\n",
+    )
+    .unwrap();
     let agent = tmp.path().join("modules/mcp/src/agent_mcp_orchestrator.py");
     assert_eq!(resolve_feature_protocol_count(&agent), 1);
 }
@@ -57,11 +61,7 @@ fn rust_crates_layout_still_resolves() {
     let tmp = tempfile::TempDir::new().unwrap();
     let shared = tmp.path().join("crates/shared/src/mcp");
     fs::create_dir_all(&shared).unwrap();
-    fs::write(
-        shared.join("protocol.rs"),
-        "pub trait IMcpProtocol {}\n",
-    )
-    .unwrap();
+    fs::write(shared.join("protocol.rs"), "pub trait IMcpProtocol {}\n").unwrap();
     let agent_src = tmp.path().join("crates/mcp/src");
     fs::create_dir_all(&agent_src).unwrap();
     let agent = agent_src.join("agent_mcp_orchestrator.rs");
@@ -75,5 +75,9 @@ fn unknown_layout_returns_sentinel() {
     let agent = tmp.path().join("agent.py");
     fs::write(&agent, "class A:\n    pass\n").unwrap();
     let count = resolve_feature_protocol_count(&agent);
-    assert_eq!(count, usize::MAX, "no layout must keep the sentinel so the skip never fires");
+    assert_eq!(
+        count,
+        usize::MAX,
+        "no layout must keep the sentinel so the skip never fires"
+    );
 }
