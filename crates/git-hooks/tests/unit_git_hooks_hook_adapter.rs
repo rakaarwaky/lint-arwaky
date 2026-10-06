@@ -42,8 +42,8 @@ fn fr002_1_normal_install_creates_hook_script() {
     assert!(hook_path.exists(), "hook script should exist");
     let content = std::fs::read_to_string(&hook_path).unwrap();
     assert!(
-        content.contains("lint-arwaky-cli check ."),
-        "hook should contain executable"
+        content.contains("'lint-arwaky-cli' check ."),
+        "hook should contain the quoted executable"
     );
     assert!(
         content.starts_with("#!/bin/bash"),
@@ -76,7 +76,7 @@ fn fr002_3_unmanaged_hook_is_backed_up_before_install() {
     let content = std::fs::read_to_string(&hook_path).unwrap();
     assert_ne!(content, "old content", "managed hook should be installed");
     assert!(content.contains("# managed-by: lint-arwaky"));
-    assert!(content.contains("lint-arwaky-cli check ."));
+    assert!(content.contains("'lint-arwaky-cli' check ."));
     assert_eq!(
         std::fs::read_to_string(tmp.path().join(".git/hooks/pre-commit.bak")).unwrap(),
         "old content"
@@ -116,6 +116,49 @@ fn fr002_5_unix_permissions_set() {
 // Note: FR-002 Scenario 7 (empty executable path defaults to lint-arwaky-cli)
 // cannot be tested because FilePath rejects empty strings.
 // The empty-check in install_pre_commit is dead code — unreachable via the public API.
+
+// ─── #928: client-supplied paths are shell-quoted in the hook script ─
+
+// A path containing shell-active characters must be embedded inert: no
+// `$(` command substitution or quote breakouts may leak into the generated
+// pre-commit script.
+#[test]
+fn regression_928_shell_metacharacters_are_quoted_in_hook() {
+    let tmp = TempDir::new().unwrap();
+    make_git_repo(&tmp);
+    let installer = make_installer(&tmp);
+    let exe = FilePath::new("$(touch /tmp/pwned928)".to_string()).unwrap();
+    let result = installer.install_pre_commit(&exe);
+    assert!(result.is_ok(), "install should succeed: {:?}", result.err());
+    let hook_content = std::fs::read_to_string(tmp.path().join(".git/hooks/pre-commit")).unwrap();
+    assert!(
+        hook_content.contains("'$(touch /tmp/pwned928)' check ."),
+        "metacharacters must be trapped inside single quotes: {}",
+        hook_content
+    );
+    assert!(
+        !hook_content.contains("\n$(touch /tmp/pwned928)"),
+        "unquoted command substitution must not reach the hook: {}",
+        hook_content
+    );
+}
+
+// A path containing a single quote must round-trip through the `'\''`
+// escape sequence, keeping the script syntactically valid.
+#[test]
+fn regression_928_single_quote_in_path_uses_round_trip_escape() {
+    let tmp = TempDir::new().unwrap();
+    make_git_repo(&tmp);
+    let installer = make_installer(&tmp);
+    let exe = FilePath::new("/bin/it'is check".to_string()).unwrap();
+    installer.install_pre_commit(&exe).unwrap();
+    let hook_content = std::fs::read_to_string(tmp.path().join(".git/hooks/pre-commit")).unwrap();
+    assert!(
+        hook_content.contains("'/bin/it'\\''is check' check ."),
+        "embedded single quote must use the close-reopen escape: {}",
+        hook_content
+    );
+}
 
 // ─── FR-003: Pre-Commit Hook Uninstallation ───────────────
 

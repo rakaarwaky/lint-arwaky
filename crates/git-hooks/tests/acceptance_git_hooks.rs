@@ -81,8 +81,8 @@ fn fr002_hook_script_contains_correct_executable() {
 
     let hook_content = std::fs::read_to_string(hooks_dir.join("pre-commit")).unwrap();
     assert!(
-        hook_content.contains("/usr/local/bin/lint-arwaky-cli check ."),
-        "hook should contain the full executable path as check command: {}",
+        hook_content.contains("'/usr/local/bin/lint-arwaky-cli' check ."),
+        "hook should contain the quoted full executable path as check command: {}",
         hook_content
     );
 }
