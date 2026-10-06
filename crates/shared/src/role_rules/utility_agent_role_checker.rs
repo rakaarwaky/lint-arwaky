@@ -147,19 +147,15 @@ pub fn check_any_annotation(file: &FileEntry, violations: &mut Vec<LintResult>) 
 // P14 — subsystem count
 // ───────────────────────────────────────────────────────────────────────────────
 
-/// Count the protocol seams injected into an agent file.
-///
-/// Returns `(injected, distinct)`: how many protocol fields the agent
-/// declares, and how many distinct protocol type names appear among them.
-///
-/// `Rust` counts struct fields typed `Arc<dyn I*Protocol>` / `Box<dyn I*Protocol>`,
-/// so a `new` parameter that takes the same protocol is not double-counted.
-/// `Python` counts `__init__` parameters annotated `I*Protocol`, and
-/// `TypeScript` counts interface members and constructor fields typed
-/// `I*Protocol`.
-///
-/// The result is a tuple rather than a named struct because this module is a
-/// utility file, and AES404 forbids a type definition there.
+/// Count the protocol seams injected into an agent file, returning
+/// `(injected, distinct)`: how many protocol fields the agent declares and
+/// how many distinct protocol type names appear among them. `Rust` counts
+/// struct fields typed `Arc<dyn I*Protocol>` / `Box<dyn I*Protocol>`, so a
+/// `new` parameter that takes the same protocol is not double-counted.
+/// `Python` counts `__init__` parameters annotated `I*Protocol`.
+/// `TypeScript` counts interface members and constructor fields. The result
+/// is a tuple rather than a named struct because this module is a utility
+/// file, and AES404 forbids a type definition there.
 pub fn count_protocol_fields(content: &str, language: Language) -> (usize, usize) {
     let mut injected = 0usize;
     let mut distinct: Vec<String> = Vec::new();
@@ -184,11 +180,10 @@ pub fn count_protocol_fields(content: &str, language: Language) -> (usize, usize
             Language::Python => {
                 // Protocol-typed params in `__init__` — counts the
                 // `CalculatorOrchestratorDeps` class `__init__` as well as
-                // the orchestrator's own `__init__`, so the total reflects
-                // every protocol seam the agent coordinates. A signature
-                // that wraps is joined before the params are split, and each
-                // param contributes its annotation rather than the whole
-                // `name: Type` text.
+                // the orchestrator's own, so the total reflects every
+                // protocol seam the agent coordinates. A wrapped signature is
+                // joined before the params are split, and each param
+                // contributes its annotation, not the whole `name: Type` text.
                 if t.starts_with("def __init__") {
                     let sig = read_wrapped_params(&lines, i);
                     for param in params_of(&sig) {
@@ -203,12 +198,10 @@ pub fn count_protocol_fields(content: &str, language: Language) -> (usize, usize
             Language::TypeScript | Language::JavaScript => {
                 // A field declaration (`private readonly dep: IFooProtocol`)
                 // is the injection site, whether it sits on the orchestrator
-                // class or on a separate `Deps` class the orchestrator holds.
-                // A constructor shorthand
-                // (`constructor(private readonly dep: IFooProtocol, …)`)
-                // also declares fields inline, so those are counted too.
-                // The TS convention keeps the field table in an
-                // `interface`, so its members count as well.
+                // class or on a separate `Deps` class the orchestrator
+                // holds. A constructor shorthand also declares fields
+                // inline, so those count too. The TS convention keeps the
+                // field table in an `interface`, so its members count.
                 let is_field = t.starts_with("private readonly")
                     || t.starts_with("public readonly")
                     || t.starts_with("protected readonly")
@@ -217,9 +210,8 @@ pub fn count_protocol_fields(content: &str, language: Language) -> (usize, usize
                     && (t.contains("private readonly") || t.contains("public readonly"));
                 let is_interface_member = t.ends_with(';') && t.contains(':') && !t.contains('=');
                 if is_field || is_shorthand_param || is_interface_member {
-                    // For a field declaration the type comes after the last
-                    // `:` on the line; a wrapped declaration appends its
-                    // continuation lines before that `:` lands.
+                    // The type follows the last `:` on the line; a wrapped
+                    // declaration appends its continuation lines first.
                     let joined = if t.contains(':') {
                         t.to_string()
                     } else {
@@ -292,13 +284,10 @@ fn count_protocol_traits_in_dir_with_stem_filter(
     let mut count = 0usize;
     for entry in entries.flatten() {
         let p = entry.path();
-        if !p.is_file() {
-            continue;
-        }
         let Some(ext) = p.extension().and_then(|e| e.to_str()) else {
             continue;
         };
-        if !matches!(ext, "rs" | "py" | "ts") {
+        if !p.is_file() || !matches!(ext, "rs" | "py" | "ts") {
             continue;
         }
         let Some(base) = p.file_stem().and_then(|n| n.to_str()) else {
@@ -385,18 +374,12 @@ fn count_protocol_traits_in_dir(dir: &Path, referenced: &[String]) -> usize {
 /// A feature's protocols live in its shared module
 /// (`crates/shared/src/<feature>/`) in the production layout, and beside the
 /// agent file itself in the test-workspace layout. Both are counted, because
-/// "this feature declares exactly one protocol" means the same thing wherever
-/// the declaration sits.
-///
-/// Protocols that appear nowhere in any non-shared source file of the feature
-/// are treated as dead code and excluded — an unreferenced protocol trait is
-/// not a subsystem the agent can coordinate. This keeps a single-subsystem
-/// feature flagged only when the agent coordinates every subsystem the
-/// feature actually has.
-///
-/// Returns `usize::MAX` when the layout does not match — a file that does not
-/// sit under `crates/<feature>/src/`, or an ancestor with no `crates/shared`
-/// at all. The sentinel is not equal to 1, so the single-subsystem skip does
+/// "this feature declares exactly one protocol" means the same thing
+/// wherever the declaration sits. Protocols that appear nowhere in any
+/// non-shared source file of the feature are dead and excluded. Returns
+/// `usize::MAX` when the layout does not match — a file that does not sit
+/// under `crates/<feature>/src/`, or an ancestor with no `crates/shared` at
+/// all. The sentinel is not equal to 1, so the single-subsystem skip does
 /// not fire for an unknown layout.
 pub fn resolve_feature_protocol_count(file_path: &Path) -> usize {
     let Some(root) = workspace_root(file_path) else {
@@ -471,20 +454,40 @@ pub fn is_aggregate_name(name: Option<&str>) -> bool {
     })
 }
 
-/// True when a type name looks like a contract protocol seam.
-///
-/// The name may arrive as a bare `IScannerProtocol`, a path-qualified
-/// `shared::IScannerProtocol`, or a parameterized `IScannerProtocol<T>` /
-/// `Box<dyn IScannerProtocol>`. Generic brackets and a path qualifier are
-/// stripped so every spelling reduces to the bare trait name before matching.
+/// True when a type name looks like a contract protocol seam. A PEP 604
+/// union counts when any member is a protocol; `Optional[X]` and
+/// `Union[A, B]` wrappers are unwrapped. Generic brackets, a path
+/// qualifier, and union tokens are stripped so every spelling reduces to
+/// the bare trait name before the match.
 fn is_protocol_name(name: &str) -> bool {
-    // Cut at the first generic or trait-object bracket, so `IFooProtocol<T>`
-    // and `Box<dyn IFooProtocol>` both reduce to `IFooProtocol`.
-    let base = name.split(['<', '[', '{']).next().unwrap_or(name);
-    // Then take the last path segment: `crate::IFooProtocol` -> `IFooProtocol`.
-    let base = base.rsplit("::").next().unwrap_or(base);
-    let base = base.rsplit(['.', ':']).next().unwrap_or(base);
-    let base = base.trim().trim_end_matches(['>', ']', ' ', ',']);
+    name.split('|').any(is_protocol_name_in)
+}
+
+/// One PEP 604 union member: unwrap `Optional[X]` and `Union[A, B]` and
+/// fall through to the bare-name test, so wrapper spellings count too.
+fn is_protocol_name_in(member: &str) -> bool {
+    let inner = member.get(member.find('[').unwrap_or(0) + 1..member.rfind(']').unwrap_or(0));
+    let bare = member
+        .trim()
+        .split(['[', '<', '{'])
+        .next()
+        .unwrap_or(member.trim())
+        .rsplit("::")
+        .next()
+        .unwrap_or(member)
+        .trim();
+    if bare == "Optional" {
+        return inner.is_some_and(is_protocol_name_in);
+    }
+    if bare == "Union" {
+        return inner.is_some_and(|s| s.split(',').any(is_protocol_name_in));
+    }
+    let base = bare
+        .rsplit(['.', ':'])
+        .next()
+        .unwrap_or(bare)
+        .trim()
+        .trim_end_matches(['>', ']', ' ', ',']);
     base.starts_with('I') && base.ends_with("Protocol")
 }
 
@@ -548,31 +551,48 @@ fn field_types(t: &str) -> Vec<String> {
 }
 
 /// Split a parameter list into its parameters, dropping the `self` receiver.
-///
-/// A signature that wraps past the end of its first line is read from
-/// `signature`, which the caller builds by joining the opening line with its
-/// continuation lines up to the closing paren.
+/// Generic args like `Union[A, B]` stay one param because only top-level
+/// commas split. A wrapped signature is read by the caller up to its
+/// closing paren.
 fn params_of(signature: &str) -> Vec<String> {
     let Some(open) = signature.find('(') else {
         return Vec::new();
     };
     let rest = &signature[open + 1..];
-    let body = match rest.find(')') {
-        Some(close) => &rest[..close],
-        None => rest,
+    let mut out: Vec<String> = Vec::new();
+    let mut depth = 0i32;
+    let mut prev = 0;
+    let push = |out: &mut Vec<String>, seg: &str| {
+        let p = seg.trim();
+        if !p.is_empty() && p != "self" && p != "*" && p != "**kwargs" {
+            out.push(p.to_string());
+        }
     };
-    body.split(',')
-        .map(|p| p.trim().to_string())
-        .filter(|p| !p.is_empty() && p != "self" && p != "*" && p != "**kwargs")
-        .collect()
+    for (i, ch) in rest.char_indices() {
+        match ch {
+            '(' | '[' | '{' => depth += 1,
+            ')' => {
+                if depth == 0 {
+                    push(&mut out, &rest[prev..i]);
+                    return out;
+                }
+                depth -= 1;
+            }
+            ']' | '}' => depth -= 1,
+            ',' if depth == 0 => {
+                push(&mut out, &rest[prev..i]);
+                prev = i + 1;
+            }
+            _ => {}
+        }
+    }
+    push(&mut out, &rest[prev..]);
+    out
 }
 
 /// Read a possibly-wrapped parameter list starting at `start` in `lines`.
-///
-/// Returns the whole signature including its opening paren, so the caller can
-/// pass it straight to `params_of` or `field_types`. A signature whose parens
-/// close on the opening line is used as-is; otherwise the following lines are
-/// appended until the paren balances.
+/// A signature whose parens close on the opening line is used as-is;
+/// otherwise the following lines are appended until the paren balances.
 fn read_wrapped_params(lines: &[&str], start: usize) -> String {
     let first = lines[start];
     let Some(open) = first.find('(') else {
@@ -592,11 +612,9 @@ fn read_wrapped_params(lines: &[&str], start: usize) -> String {
     acc
 }
 
-/// Names declared on a trait / class declaration line.
-///
-/// The declaration keyword is stripped before the name is taken, because
-/// `pub trait IFooProtocol:` and `export class IFooProtocol {` both put the name
-/// after the keyword and behind a different terminator.
+/// Names declared on a trait / class declaration line. The declaration keyword
+/// is stripped first because `pub trait IFooProtocol:` and `export class
+/// IFooProtocol {` both put the name after the keyword.
 fn declared_names(t: &str) -> Vec<String> {
     let rest = t
         .trim_start_matches("pub ")
@@ -615,10 +633,8 @@ fn declared_names(t: &str) -> Vec<String> {
 }
 
 /// The type annotation of a Python parameter, or the parameter itself when it
-/// carries no annotation.
-///
-/// `addition: ICalculatorProtocol = None` yields `ICalculatorProtocol`; a
-/// bare `deps` yields `deps`, which then fails the protocol-name test.
+/// carries no annotation. `addition: ICalculatorProtocol = None` yields
+/// `ICalculatorProtocol`; a bare `deps` fails the protocol-name test.
 fn annotation_of(param: &str) -> &str {
     let body = param.split('=').next().unwrap_or(param);
     match body.rsplit_once(':') {
@@ -709,15 +725,12 @@ fn dynamic_any(t: &str) -> bool {
     false
 }
 
-/// Contract protocols implemented by a type declared in this file.
-///
-/// A contract protocol is an `I<Name>Protocol` seam: the agent implements the
-/// feature aggregate and injects protocol seams, it never *implements* one,
-/// because that is a capability's job. Std traits (`Default`, `Display`,
-/// `Clone`) and aggregate traits are not contract protocols and are excluded
-/// here so `impl Default for X` reads as nothing.
-///
-/// Returns the trait names in declaration order, deduplicated.
+/// Contract protocols implemented by a type declared in this file. A contract
+/// protocol is an `I<Name>Protocol` seam: the agent implements the feature
+/// aggregate and injects protocol seams, it never *implements* one, because
+/// that is a capability's job. Std traits and aggregate traits are excluded so
+/// `impl Default for X` reads as nothing. Returns deduplicated names in
+/// declaration order.
 pub fn contract_protocol_impls(file: &FileEntry) -> Vec<String> {
     let mut out: Vec<String> = Vec::new();
     let mut push = |name: &str| {
@@ -785,13 +798,9 @@ fn scan_contract_protocol_impls(content: &str, mut scan: impl FnMut(&str)) {
 }
 
 /// The trait name of a Rust `impl … Trait for Type` line, if the line is one.
-///
 /// `impl` may carry its own generic list before the trait and that list is not
 /// always followed by a space — `impl<T> IFoo for X` — so the keyword is matched
-/// on its own and whatever follows it, parameters included, is the head. The
-/// trait is then the last whitespace-separated token before ` for `, which skips
-/// the generic list without having to parse it. A line with no ` for ` is an
-/// inherent impl and has no trait.
+/// on its own. The trait is the last whitespace-separated token before ` for `.
 fn rust_impl_trait_name(t: &str) -> Option<&str> {
     let rest = t.strip_prefix("impl")?;
     let rest = rest.trim_start();
@@ -827,13 +836,12 @@ fn class_base_list(t: &str) -> Option<&str> {
 
 /// Rule — an agent file implements no contract protocol. HIGH.
 ///
-/// This is a flat prohibition, not a budget: there is no count at which a second
-/// implementation becomes acceptable, and implementing one *alongside* the
-/// aggregate is already a violation. An agent composes its feature by injecting
-/// protocol seams, so implementing a protocol here makes the orchestration layer
-/// duplicate a capability's work — the behaviour belongs in a `capabilities_*`
-/// file. See `contract_protocol_impls` for what counts as a contract protocol
-/// and what is deliberately excluded (std traits and aggregate traits).
+/// This is a flat prohibition, not a budget: implementing one *alongside* the
+/// aggregate is already a violation. An agent composes its feature by
+/// injecting protocol seams, so implementing a protocol here makes the
+/// orchestration layer duplicate a capability's work — the behaviour belongs
+/// in a `capabilities_*` file. See `contract_protocol_impls` for what counts
+/// as a contract protocol.
 pub fn check_agent_protocol_forbidden(file: &FileEntry, violations: &mut Vec<LintResult>) {
     let protocols = contract_protocol_impls(file);
     if protocols.is_empty() {
@@ -927,13 +935,11 @@ fn block_marker_numbers(content: &str) -> Vec<usize> {
 }
 
 /// The byte offset of *word* in `t` when it stands as a standalone token, plus
-/// the length of the characters that follow it.
-///
-/// `Sub-Block 4:` contains the substring "Block" but the character before it is
-/// part of a longer word, so it is not a standalone occurrence. Rust identifiers
-/// treat `-` as a separator, but a banner comment is prose: a hyphenated
-/// `Sub-Block` reads as one word to a human, so a hyphen counts as part of the
-/// preceding token here.
+/// the length of the characters that follow it. `Sub-Block 4:` contains the
+/// substring "Block" but the character before it is part of a longer word, so
+/// it is not a standalone occurrence. Rust identifiers treat `-` as a
+/// separator, but a banner comment is prose: a hyphenated `Sub-Block` reads
+/// as one word to a human, so a hyphen counts as part of the preceding token.
 fn standalone_word(t: &str, word: &str) -> Option<(usize, usize)> {
     let mut from = 0;
     while let Some(rel) = t[from..].find(word) {
@@ -948,11 +954,9 @@ fn standalone_word(t: &str, word: &str) -> Option<(usize, usize)> {
             .next()
             .is_none_or(|c| !c.is_alphanumeric() && c != '_');
         if before_ok && after_ok {
-            // Return the offset *after* the word and the character that follows
-            // it, measured from the character that follows — never from the
-            // word's own first byte, which is always one byte and would leave
-            // the slice inside a multi-byte character when the next character is
-            // not ASCII (a fullwidth colon in a comment, say).
+            // Measure from the character that follows the word, not the
+            // word's own first byte, so the slice never lands inside a
+            // multi-byte character when the next character is not ASCII.
             let skip = after.chars().next().map_or(0, char::len_utf8);
             return Some((idx, word.len() + skip));
         }
