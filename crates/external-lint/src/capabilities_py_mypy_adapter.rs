@@ -102,6 +102,7 @@ impl ILinterAdapterProtocol for MyPyAdapter {
                 let msg_type = caps.get(4).map(|m| m.as_str()).unwrap_or("error");
                 let message = caps.get(5).map(|m| m.as_str()).unwrap_or("");
                 let code = caps.get(6).map(|m| m.as_str()).unwrap_or("");
+                let code = format!("mypy::{}", code);
 
                 let resolved =
                     resolve_or_fallback_with_context(filename, path.clone(), Some(path.clone()));
@@ -129,6 +130,7 @@ impl ILinterAdapterProtocol for MyPyAdapter {
                 let msg_type = caps.get(3).map(|m| m.as_str()).unwrap_or("error");
                 let message = caps.get(4).map(|m| m.as_str()).unwrap_or("");
                 let code = caps.get(5).map(|m| m.as_str()).unwrap_or("");
+                let code = format!("mypy::{}", code);
 
                 let resolved =
                     resolve_or_fallback_with_context(filename, path.clone(), Some(path.clone()));
@@ -193,7 +195,7 @@ impl MyPyAdapter {
         }
     }
 
-    fn map_severity(msg_type: &str, msg: &str) -> Severity {
+    pub fn map_severity(msg_type: &str, msg: &str) -> Severity {
         let m = msg.to_lowercase();
         if msg_type == "note" {
             return Severity::LOW;

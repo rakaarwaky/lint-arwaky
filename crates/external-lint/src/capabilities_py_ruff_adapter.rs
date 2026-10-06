@@ -114,6 +114,7 @@ impl ILinterAdapterProtocol for RuffAdapter {
                 .get("severity")
                 .and_then(|v| v.as_str())
                 .unwrap_or_default();
+            let qualified_code = format!("ruff::{}", code);
 
             let resolved =
                 resolve_or_fallback_with_context(filename, path.clone(), Some(path.clone()));
@@ -122,10 +123,10 @@ impl ILinterAdapterProtocol for RuffAdapter {
                 file: resolved,
                 line: LineNumber::new(row),
                 column: ColumnNumber::new(col),
-                code: ErrorCode::raw(code),
+                code: ErrorCode::raw(qualified_code.as_str()),
                 message: LintMessage::new(message),
                 source: Some(self.name()),
-                severity: self.map_severity(severity_str, code),
+                severity: self.map_severity(severity_str, &qualified_code),
                 enclosing_scope: None,
                 related_locations: LocationList::new(),
                 violation_name: String::new(),
@@ -181,30 +182,32 @@ impl RuffAdapter {
 
     pub fn map_severity(&self, _severity: &str, code: &str) -> Severity {
         // FR-004: Ruff severity mapping is code-based, not tool-severity-based.
-        if code == "E999" || code.starts_with('S') {
+        // Codes may carry the `ruff::` prefix; match on the bare code.
+        let bare = code.rsplit("::").next().unwrap_or(code);
+        if bare == "E999" || bare.starts_with('S') {
             Severity::CRITICAL // syntax error (E999) or security rules (S1xx)
-        } else if code == "F401" {
+        } else if bare == "F401" {
             Severity::MEDIUM // unused import
-        } else if (code.starts_with('F')
-            && code.len() >= 3
-            && code[1..]
+        } else if (bare.starts_with('F')
+            && bare.len() >= 3
+            && bare[1..]
                 .parse::<u32>()
                 .is_ok_and(|n| (800..900).contains(&n)))
-            || (code.starts_with('B')
-                && code.len() >= 3
-                && code[1..]
+            || (bare.starts_with('B')
+                && bare.len() >= 3
+                && bare[1..]
                     .parse::<u32>()
                     .is_ok_and(|n| (1..100).contains(&n)))
         {
             Severity::HIGH // F8xx: undefined name, B0xx: bugbear
-        } else if (code.starts_with('E')
-            && code.len() >= 3
-            && code[1..]
+        } else if (bare.starts_with('E')
+            && bare.len() >= 3
+            && bare[1..]
                 .parse::<u32>()
                 .is_ok_and(|n| (100..200).contains(&n) || (500..600).contains(&n)))
-            || (code.starts_with('W')
-                && code.len() >= 3
-                && code[1..]
+            || (bare.starts_with('W')
+                && bare.len() >= 3
+                && bare[1..]
                     .parse::<u32>()
                     .is_ok_and(|n| (200..300).contains(&n)))
         {

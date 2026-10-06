@@ -1,10 +1,11 @@
-// Unit tests for BanditAdapter — bandit stdout JSON parsing.
-use external_lint_lint_arwaky::capabilities_py_bandit_adapter::BanditAdapter;
+// Unit tests for MyPyAdapter — mypy stdout parsing.
+use external_lint_lint_arwaky::capabilities_py_mypy_adapter::MyPyAdapter;
 
 #[allow(dead_code, unused_imports)]
 #[path = "../../shared/tests/common/mock_filesystem.rs"]
 mod mock_filesystem;
 
+use mock_filesystem::MockFilesystem;
 use shared_common::taxonomy_adapter_name_vo::AdapterName;
 use shared_common::taxonomy_common_vo::PatternList;
 use shared_common::taxonomy_operation_error::LinterOperationError;
@@ -15,10 +16,9 @@ use shared_external_lint::ICommandExecutorProtocol;
 use shared_external_lint::taxonomy_duration_vo::Timeout;
 use std::sync::Arc;
 
-use mock_filesystem::MockFilesystem;
-
 /// Backs the FR-006 `ICommandExecutorProtocol` seam: raw execution plus the
 /// `exec_cmd_*` error-mapping wrappers. Returns empty output for every call.
+#[allow(dead_code)]
 struct MockCmdExecutor;
 
 impl ICommandExecutorProtocol for MockCmdExecutor {
@@ -54,9 +54,10 @@ impl ICommandExecutorProtocol for MockCmdExecutor {
     }
 }
 
-fn make_adapter() -> BanditAdapter {
+#[allow(dead_code)]
+fn make_adapter() -> MyPyAdapter {
     let executor: Arc<dyn ICommandExecutorProtocol> = Arc::new(MockCmdExecutor);
-    BanditAdapter::new(
+    MyPyAdapter::new(
         executor,
         None,
         Arc::new(MockFilesystem::new()),
@@ -65,57 +66,52 @@ fn make_adapter() -> BanditAdapter {
 }
 
 #[test]
-fn high_confidence_high_severity_maps_to_critical() {
-    let adapter = make_adapter();
-    assert_eq!(adapter.map_severity("HIGH", "HIGH"), Severity::CRITICAL);
+fn notes_map_to_low() {
+    assert_eq!(
+        MyPyAdapter::map_severity("note", "module is installed, but cannot be found"),
+        Severity::LOW
+    );
 }
 
 #[test]
-fn high_severity_low_confidence_maps_to_high() {
-    let adapter = make_adapter();
-    assert_eq!(adapter.map_severity("HIGH", "LOW"), Severity::HIGH);
-    assert_eq!(adapter.map_severity("HIGH", "MEDIUM"), Severity::HIGH);
+fn syntax_errors_map_to_critical() {
+    assert_eq!(
+        MyPyAdapter::map_severity("error", "syntax error in x.py"),
+        Severity::CRITICAL
+    );
 }
 
 #[test]
-fn medium_severity_any_confidence_maps_to_medium() {
-    let adapter = make_adapter();
-    assert_eq!(adapter.map_severity("MEDIUM", "HIGH"), Severity::MEDIUM);
-    assert_eq!(adapter.map_severity("MEDIUM", "LOW"), Severity::MEDIUM);
+fn warnings_map_to_medium() {
+    assert_eq!(
+        MyPyAdapter::map_severity("warning", "returning a value from a function"),
+        Severity::MEDIUM
+    );
 }
 
 #[test]
-fn low_severity_any_confidence_maps_to_low() {
-    let adapter = make_adapter();
-    assert_eq!(adapter.map_severity("LOW", "HIGH"), Severity::LOW);
-    assert_eq!(adapter.map_severity("LOW", "LOW"), Severity::LOW);
+fn errors_default_to_high() {
+    assert_eq!(
+        MyPyAdapter::map_severity("error", "incompatible return value type"),
+        Severity::HIGH
+    );
 }
 
+/// Regression #919: mypy codes must be stored tool-qualified as
+/// `mypy::<code>` so tool-qualified `ignored_rules` entries match.
 #[test]
-fn unknown_severity_defaults_to_medium() {
-    let adapter = make_adapter();
-    assert_eq!(adapter.map_severity("UNKNOWN", "HIGH"), Severity::MEDIUM);
-}
-
-/// Regression #913/#919: Bandit JSON has no column field. The adapter must
-/// use the 1-based column default (not the `line_range` span) and must store
-/// the tool-qualified `bandit::` code.
-#[test]
-fn scan_uses_column_default_and_qualified_code() {
-    use shared_common::taxonomy_common_vo::PatternList;
+fn scan_stores_tool_qualified_mypy_code() {
     use shared_common::taxonomy_operation_error::LinterOperationError;
     use shared_common::taxonomy_path_vo::FilePath;
     use shared_common::taxonomy_response_data_vo::ResponseData;
-    use shared_external_lint::ICommandExecutorProtocol;
     use shared_external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
-    use shared_external_lint::taxonomy_duration_vo::Timeout;
     use std::sync::Mutex;
 
     #[derive(Default)]
-    struct FindingExecutor {
+    struct MypyFindingExecutor {
         used: Mutex<bool>,
     }
-    impl ICommandExecutorProtocol for FindingExecutor {
+    impl ICommandExecutorProtocol for MypyFindingExecutor {
         fn execute_command(
             &self,
             _: PatternList,
@@ -145,41 +141,27 @@ fn scan_uses_column_default_and_qualified_code() {
             _: AdapterName,
         ) -> Result<ResponseData, LinterOperationError> {
             *self.used.lock().unwrap() = true;
-            let json = r#"{
-                "results": [{
-                    "filename": "x.py",
-                    "line_number": 42,
-                    "line_range": [42, 44],
-                    "test_id": "B104",
-                    "issue_text": "Any() use",
-                    "issue_severity": "HIGH",
-                    "issue_confidence": "HIGH"
-                }]
-            }"#;
+            let stdout = "x.py:3:10: error: Argument 1 has incompatible type [arg-type]\n";
             Ok(ResponseData {
-                stdout: json.to_string(),
+                stdout: stdout.to_string(),
                 ..ResponseData::default()
             })
         }
     }
 
+    let executor: Arc<dyn ICommandExecutorProtocol> = Arc::new(MypyFindingExecutor::default());
     let fs = Arc::new(MockFilesystem::with_python_flag(true));
-    let executor: Arc<dyn ICommandExecutorProtocol> = Arc::new(FindingExecutor::default());
-    let adapter = BanditAdapter::new(executor, None, fs.clone(), fs);
+    let adapter = MyPyAdapter::new(executor, None, fs.clone(), fs);
     let target = FilePath::new("pkg".to_string()).unwrap();
     let results = adapter.scan(&target).unwrap();
     assert_eq!(results.len(), 1);
     let r = results.values[0].clone();
-    assert_eq!(r.line.value(), 42, "line comes from line_number");
-    assert_eq!(
-        r.column.value(),
-        1,
-        "column must be the 1-based default, not the line_range span (#913)"
-    );
     assert_eq!(
         r.code.code(),
-        "bandit::B104",
-        "code must be tool-qualified bandit::B104 (#919)"
+        "mypy::arg-type",
+        "code must be tool-qualified mypy::arg-type (#919)"
     );
-    assert_eq!(r.severity, Severity::CRITICAL);
+    assert_eq!(r.line.value(), 3);
+    assert_eq!(r.column.value(), 10);
+    assert_eq!(r.severity, Severity::HIGH);
 }

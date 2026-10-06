@@ -53,14 +53,14 @@ impl ICommandExecutorProtocol for StdioClient {
 
         // Drain stdout/stderr in threads so the child never blocks on a full
         // pipe buffer, regardless of output size.
-        let stdout_handle = stdout.map(|mut h| {
+        let mut stdout_handle = stdout.map(|mut h| {
             std::thread::spawn(move || {
                 let mut buf = String::new();
                 std::io::Read::read_to_string(&mut h, &mut buf).unwrap_or_default();
                 buf
             })
         });
-        let stderr_handle = stderr.map(|mut h| {
+        let mut stderr_handle = stderr.map(|mut h| {
             std::thread::spawn(move || {
                 let mut buf = String::new();
                 std::io::Read::read_to_string(&mut h, &mut buf).unwrap_or_default();
@@ -74,8 +74,23 @@ impl ICommandExecutorProtocol for StdioClient {
                 Ok(Some(status)) => break status,
                 Ok(None) => {
                     if start.elapsed() >= timeout_val {
+                        // Drain the reader threads before the bounded post-kill
+                        // wait: a leaked reader thread, or a grandchild holding
+                        // the pipe write-ends, would block `wait()` forever.
+                        // Take the handles out so they are joined exactly once
+                        // on every path (timeout, error, success).
+                        let (stdout_handle, stderr_handle) =
+                            (stdout_handle.take(), stderr_handle.take());
+                        let _stdout = match stdout_handle {
+                            Some(h) => h.join().unwrap_or_default(),
+                            None => String::new(),
+                        };
+                        let _stderr = match stderr_handle {
+                            Some(h) => h.join().unwrap_or_default(),
+                            None => String::new(),
+                        };
                         let _ = child.kill();
-                        let _ = child.wait();
+                        bounded_child_wait(&mut child, 5.0);
                         anyhow::bail!(
                             "Command timed out after {:.1}s: {}",
                             timeout_val.as_secs_f64(),
@@ -86,9 +101,20 @@ impl ICommandExecutorProtocol for StdioClient {
                 }
                 Err(e) => {
                     let _ = child.kill();
+                    let (stdout_handle, stderr_handle) =
+                        (stdout_handle.take(), stderr_handle.take());
+                    let _stdout = match stdout_handle {
+                        Some(h) => h.join().unwrap_or_default(),
+                        None => String::new(),
+                    };
+                    let _stderr = match stderr_handle {
+                        Some(h) => h.join().unwrap_or_default(),
+                        None => String::new(),
+                    };
+                    bounded_child_wait(&mut child, 5.0);
                     return Err(anyhow::anyhow!("Failed to check command status: {}", e));
                 }
-            }
+            };
         };
 
         let stdout = match stdout_handle {
@@ -157,6 +183,27 @@ impl ICommandExecutorProtocol for StdioClient {
 }
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
+
+/// Poll `child.try_wait()` until it exits or the deadline passes. An
+/// unbounded `wait()` after `kill()` blocks while any grandchild holds a
+/// pipe write-end open; bounding the wait keeps a stuck grandchild from
+/// hanging the whole command.
+fn bounded_child_wait(child: &mut std::process::Child, deadline_secs: f64) -> bool {
+    let deadline = Duration::from_secs_f64(deadline_secs);
+    let start = std::time::Instant::now();
+    loop {
+        match child.try_wait() {
+            Ok(Some(_)) => return true,
+            Ok(None) => {
+                if start.elapsed() >= deadline {
+                    return false;
+                }
+                std::thread::sleep(Duration::from_millis(50));
+            }
+            Err(_) => return false,
+        }
+    }
+}
 
 impl StdioClient {
     pub fn new(timeout: Timeout) -> Self {
