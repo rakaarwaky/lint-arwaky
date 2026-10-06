@@ -100,17 +100,18 @@ pub fn collect_ci(
 
     // Quality analysis (sync) — isolated, so a panic here cannot unwind
     // through the CI path and kill the host process.
-    let mut results = run_isolated("quality", &mut panics, || {
-        deps.code_analysis_linter
-            .execute(CodeAnalysisRequest::run_analysis(&[]))
-            .into_violations()
-    });
-
-    // Import rules — pass pre-fetched FileEntry data; isolated the same way.
+    // Pass the pre-built file index so AES3xx violations reach the CI score (#908).
     let file_list = deps
         .filesystem
         .execute(FilesystemRequest::FileList)
         .into_file_list();
+    let mut results = run_isolated("quality", &mut panics, || {
+        deps.code_analysis_linter
+            .execute(CodeAnalysisRequest::run_analysis(&file_list))
+            .into_violations()
+    });
+
+    // Import rules — pass pre-fetched FileEntry data; isolated the same way.
     let import_res = run_isolated("import", &mut panics, || {
         deps.import_orchestrator
             .execute(ImportRequest::audit_with_entries(&file_list))
