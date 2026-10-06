@@ -1,6 +1,8 @@
 // PURPOSE: SurfacePurityAuditor — AES703: surface folder purity and docs
 
-use shared_structure_rules::utility_structure_parsers::{find_workspace_root, member_dirs, sorted};
+use shared_structure_rules::utility_structure_parsers;
+
+use shared_structure_rules::utility_structure_parsers::{find_workspace_root, sorted};
 
 use shared_structure_rules::contract_structure_protocol::IStructureSurfacePurityProtocol;
 use shared_structure_rules::taxonomy_structure_rules_constant as consts;

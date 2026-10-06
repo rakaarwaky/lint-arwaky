@@ -9,7 +9,9 @@ use shared_structure_rules::taxonomy_structure_rules_request::{
     StructureFinding, StructureRequest,
 };
 use shared_structure_rules::taxonomy_structure_rules_response::StructureResponse;
-use shared_structure_rules::utility_structure_parsers::{find_workspace_root, member_dirs, sorted};
+use shared_structure_rules::utility_structure_parsers;
+
+use shared_structure_rules::utility_structure_parsers::{find_workspace_root, sorted};
 
 use std::path::Path;
 

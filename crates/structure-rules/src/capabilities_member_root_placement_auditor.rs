@@ -1,7 +1,9 @@
 // PURPOSE: MemberRootPlacementAuditor — AES705: a member dir root carries
 // wiring only; every layer file belongs to a folder beneath it.
 
-use shared_structure_rules::utility_structure_parsers::{find_workspace_root, member_dirs};
+use shared_structure_rules::utility_structure_parsers;
+
+use shared_structure_rules::utility_structure_parsers::find_workspace_root;
 
 
 use shared_structure_rules::contract_structure_protocol::IStructureMemberRootProtocol;
