@@ -86,7 +86,10 @@ impl CodeDuplicationAnalyzer {
             std::hash::Hasher::finish(&hasher)
         }
 
-        // Build global map: normalized window hash → file indices that contain it
+        // Build global map: normalized window hash → file indices that contain it.
+        // Windows that consist entirely of import/`use`/`from` lines are
+        // scaffolding, not logic, so they are excluded from both the global
+        // map and the per-file shared count (AES305 counts logic duplication).
         let mut global: HashMap<u64, HashSet<usize>> = HashMap::with_capacity(entries.len());
         for (fi, (_, content)) in entries.iter().enumerate() {
             let lines: Vec<&str> = content.lines().collect();
@@ -94,6 +97,13 @@ impl CodeDuplicationAnalyzer {
                 continue;
             }
             for w in lines.windows(min_dup_lines) {
+                if w.iter().all(|l| {
+                    let t = l.trim();
+                    !t.is_empty()
+                        && shared_quality_rules::utility_code_duplication_detector::is_import_line(t)
+                }) {
+                    continue;
+                }
                 let key =
                     shared_quality_rules::utility_code_duplication_detector::normalize_window(w);
                 global.entry(hash_key(&key)).or_default().insert(fi);
@@ -110,13 +120,24 @@ impl CodeDuplicationAnalyzer {
         // Count shared window OCCURRENCES per file: the numerator must reflect how
         // many of a file's windows are shared, not just how many distinct shared
         // hashes it has — otherwise repeated blocks deflate the similarity %.
+        // Import-only windows are excluded from both numerator and denominator
+        // so that mechanical scaffolding never counts toward duplication.
         let mut shared_counts: Vec<usize> = vec![0; entries.len()];
+        let mut total_counts: Vec<usize> = vec![0; entries.len()];
         for (fi, (_, content)) in entries.iter().enumerate() {
             let lines: Vec<&str> = content.lines().collect();
             if lines.len() < min_dup_lines {
                 continue;
             }
             for w in lines.windows(min_dup_lines) {
+                if w.iter().all(|l| {
+                    let t = l.trim();
+                    !t.is_empty()
+                        && shared_quality_rules::utility_code_duplication_detector::is_import_line(t)
+                }) {
+                    continue;
+                }
+                total_counts[fi] += 1;
                 let key =
                     shared_quality_rules::utility_code_duplication_detector::normalize_window(w);
                 if shared_ids.contains(&hash_key(&key)) {
@@ -150,10 +171,13 @@ impl CodeDuplicationAnalyzer {
             if lines.len() < min_dup_lines {
                 continue;
             }
-            let total_win = lines.len() - min_dup_lines + 1;
+            let total_non_import = total_counts[fi];
             let shared_count = shared_counts[fi];
 
-            let pct = shared_count as f64 / total_win as f64 * 100.0;
+            if total_non_import == 0 {
+                continue;
+            }
+            let pct = shared_count as f64 / total_non_import as f64 * 100.0;
             if pct > threshold_pct {
                 let other_indices = &file_to_others[fi];
                 let mut other_files: Vec<String> = other_indices
@@ -163,8 +187,8 @@ impl CodeDuplicationAnalyzer {
                 other_files.sort();
 
                 let mut msg = format!(
-                    "AES305: {:.0}% of this file's content appears in other files (threshold: {:.0}%). {} of {} windows are non-unique.",
-                    pct, threshold_pct, shared_count, total_win,
+                    "AES305: {:.0}% of this file's non-import content appears in other files (threshold: {:.0}%). {} of {} windows are non-unique.",
+                    pct, threshold_pct, shared_count, total_non_import,
                 );
                 if !other_files.is_empty() {
                     msg.push_str(&format!(
