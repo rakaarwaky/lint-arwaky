@@ -770,9 +770,19 @@ impl SurfaceActionHandler {
                 state.navigation.panel_focus = PanelFocus::Tree;
             }
             HitTarget::FileList { row: panel_row } => {
-                let new_index = state.navigation.scroll_offset + panel_row;
-                if new_index < state.navigation.entries.len() {
-                    state.navigation.selected_index = new_index;
+                if state.search.mode && !state.search.query.is_empty() {
+                    // Search mode: the panel shows filtered_indices, so panel_row
+                    // is a position in the filtered list, not an entry index.
+                    let pos = state.navigation.scroll_offset + panel_row;
+                    if let Some(entry_idx) = state.search.filtered_indices.get(pos).copied() {
+                        state.search.filter_pos = pos;
+                        state.navigation.selected_index = entry_idx;
+                    }
+                } else {
+                    let new_index = state.navigation.scroll_offset + panel_row;
+                    if new_index < state.navigation.entries.len() {
+                        state.navigation.selected_index = new_index;
+                    }
                 }
                 state.navigation.panel_focus = PanelFocus::FileList;
             }
@@ -825,7 +835,9 @@ impl SurfaceActionHandler {
         if h < 5 {
             return 0;
         }
-        let preview_height = (h - 4) as usize;
+        // Same band height as file_list_visible_height: 1 header + 3 shortcuts
+        // + 1 status row = 5 overhead rows.
+        let preview_height = (h - 5) as usize;
         let content_length = state.preview.text.lines().count().max(1);
         content_length.saturating_sub(preview_height)
     }
