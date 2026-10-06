@@ -141,3 +141,40 @@ fn parse_toml_config_invalid_toml() {
 fn new_creates_instance() {
     let _a = ConfigParserProvider::new(common::make_io());
 }
+
+#[test]
+fn user_rule_exceptions_fold_into_merged_config() {
+    let tmp = TempDir::new().unwrap();
+    let yaml = r#"
+architecture:
+  enabled: true
+  rules:
+    AES305:
+      enabled: true
+      exceptions:
+        - "capabilities_tools_blender_adapter.py"
+        - "capabilities_tools_codegraph_adapter.py"
+"#;
+    let path = tmp.path().join("config.yaml");
+    fs::write(&path, yaml).unwrap();
+    let parsed = shared_config_system::utility_config_parser::parse_config_yaml(
+        fs::read_to_string(&path).unwrap().as_str(),
+    );
+    let (merged, _warnings) = make_parser().merge_config_with_defaults(
+        &parsed,
+        shared_config_system::taxonomy_config_language_vo::ConfigLanguage::Python,
+    );
+    let aes305 = merged
+        .rules
+        .iter()
+        .find(|r| r.rule_type.code() == "AES305")
+        .expect("AES305 rule must exist in merged config");
+    assert!(aes305
+        .exceptions
+        .values
+        .contains(&"capabilities_tools_blender_adapter.py".to_string()));
+    assert!(aes305
+        .exceptions
+        .values
+        .contains(&"capabilities_tools_codegraph_adapter.py".to_string()));
+}

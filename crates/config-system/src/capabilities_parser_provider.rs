@@ -60,22 +60,26 @@ impl IConfigMergeProtocol for ConfigParserProvider {
     /// forbidden/mandatory/severity, naming) are fixed in the tool. A user
     /// config may only carry tool-policy fields: `thresholds`, `adapters`,
     /// `ignored_rules` (read on a separate path), and `ignored_paths`.
+    ///
+    /// The two rule-level fields a user *may* set — `enabled` and
+    /// `exceptions` — are folded into the embedded defaults so a project
+    /// can scope a rule without changing its body.
     fn merge_config_with_defaults(
         &self,
         config: &ArchitectureConfig,
         language: ConfigLanguage,
     ) -> (ArchitectureConfig, Vec<String>) {
         let embedded = default_config_for_language(language.as_str());
-        let (merged_layers, _) =
-            shared_config_system::utility_config_merger::merge_config(&embedded);
         let mut merged = embedded;
+        fold_user_rule_toggles(&mut merged, config);
+        let (merged_layers, _) =
+            shared_config_system::utility_config_merger::merge_config(&merged);
         merged.layers = merged_layers;
         // User policy fields carry through; architecture business fields stay
         // from the embedded defaults.
         merged.ignored_paths = config.ignored_paths.clone();
         let mut warnings = Vec::new();
-        if !config.rules.is_empty()
-            || !config.layers.is_empty()
+        if !config.layers.is_empty()
             || config.naming.word_count.value != 0
             || !config.enabled.value
         {
@@ -139,6 +143,32 @@ impl IConfigMergeProtocol for ConfigParserProvider {
             Ok(Some(config))
         } else {
             Ok(None)
+        }
+    }
+}
+
+/// Fold the user's rule-level toggles and exceptions into the embedded
+/// defaults, keyed by rule code.
+///
+/// `enabled` and `exceptions` are the two fields a user config may set on a
+/// rule; every other field (scope, allowed, forbidden, mandatory, severity,
+/// …) stays at its embedded value. An unknown rule code is appended so the
+/// toggle still reaches the checkers.
+fn fold_user_rule_toggles(merged: &mut ArchitectureConfig, user: &ArchitectureConfig) {
+    for user_rule in &user.rules {
+        if let Some(embedded) = merged
+            .rules
+            .iter_mut()
+            .find(|r| r.rule_type == user_rule.rule_type)
+        {
+            embedded.enabled = user_rule.enabled.clone();
+            for val in &user_rule.exceptions.values {
+                if !embedded.exceptions.values.contains(val) {
+                    embedded.exceptions.values.push(val.clone());
+                }
+            }
+        } else {
+            merged.rules.push(user_rule.clone());
         }
     }
 }
