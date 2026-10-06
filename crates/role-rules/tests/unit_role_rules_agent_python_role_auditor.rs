@@ -427,3 +427,105 @@ class Orchestrator:
     auditor().check_agent_subsystem_count(&f, 2, &mut v);
     assert!(v.is_empty(), "defaulted protocol params should be counted");
 }
+
+// ── P14: PEP 604 unions and typing wrappers ──
+
+#[test]
+fn p14_pep604_union_with_none_counted() {
+    // #891 — a PEP 604 union `IFooProtocol | None` is still an injection
+    // of the protocol seam.
+    let content = "\
+class Orchestrator:
+    def __init__(
+        self,
+        addition: ICalculatorProtocol | None,
+        subtraction: ICalculatorProtocol | None,
+    ):
+        self.addition = addition
+        self.subtraction = subtraction
+";
+    let f = make_file("src/agent_thing.py", content);
+    let mut v = Vec::new();
+    auditor().check_agent_subsystem_count(&f, 2, &mut v);
+    assert!(
+        v.is_empty(),
+        "PEP 604 union protocol params should be counted"
+    );
+}
+
+#[test]
+fn p14_optional_wrapper_counted() {
+    let content = "\
+class Orchestrator:
+    def __init__(
+        self,
+        addition: Optional[ICalculatorProtocol],
+        subtraction: Optional[ICalculatorProtocol],
+    ):
+        self.addition = addition
+        self.subtraction = subtraction
+";
+    let f = make_file("src/agent_thing.py", content);
+    let mut v = Vec::new();
+    auditor().check_agent_subsystem_count(&f, 2, &mut v);
+    assert!(v.is_empty(), "Optional[IProtocol] params should be counted");
+}
+
+#[test]
+fn p14_union_wrapper_counted() {
+    let content = "\
+class Orchestrator:
+    def __init__(
+        self,
+        addition: Union[ICalculatorProtocol, None],
+        subtraction: Union[ICalculatorProtocol, None],
+    ):
+        self.addition = addition
+        self.subtraction = subtraction
+";
+    let f = make_file("src/agent_thing.py", content);
+    let mut v = Vec::new();
+    auditor().check_agent_subsystem_count(&f, 2, &mut v);
+    assert!(
+        v.is_empty(),
+        "Union[IProtocol, None] params should be counted"
+    );
+}
+
+#[test]
+fn p14_bare_protocol_still_counted() {
+    let content = "\
+class Orchestrator:
+    def __init__(
+        self,
+        addition: ICalculatorProtocol,
+        subtraction: ICalculatorProtocol,
+    ):
+        self.addition = addition
+        self.subtraction = subtraction
+";
+    let f = make_file("src/agent_thing.py", content);
+    let mut v = Vec::new();
+    auditor().check_agent_subsystem_count(&f, 2, &mut v);
+    assert!(v.is_empty(), "bare protocol params should still be counted");
+}
+
+#[test]
+fn p14_non_protocol_union_not_counted() {
+    // A union over a non-protocol type is not a protocol injection.
+    let content = "\
+class Orchestrator:
+    def __init__(
+        self,
+        mode: str | None,
+    ):
+        self.mode = mode
+";
+    let f = make_file("src/agent_thing.py", content);
+    let mut v = Vec::new();
+    auditor().check_agent_subsystem_count(&f, 2, &mut v);
+    assert!(
+        !v.is_empty(),
+        "non-protocol union member must not count as a protocol injection"
+    );
+}
