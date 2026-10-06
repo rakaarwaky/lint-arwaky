@@ -97,6 +97,9 @@ impl BypassFix {
         }
 
         // Apply fix — strip comments, don't delete line
+        // #935: preserve the original trailing-newline state — a file whose
+        // last line had no `\n` must not gain one from the reconstruction.
+        let had_trailing_newline = content.ends_with('\n');
         let mut result = String::new();
         for (i, l) in lines.iter().enumerate() {
             if i == target_idx {
@@ -133,6 +136,9 @@ impl BypassFix {
             }
             result.push_str(l);
             result.push('\n');
+        }
+        if !had_trailing_newline {
+            result.pop();
         }
         if self
             .io
