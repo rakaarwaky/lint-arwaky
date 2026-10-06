@@ -1,6 +1,8 @@
 // PURPOSE: SurfacePurityAuditor — AES703: surface folder purity and docs
 
-use shared_structure_rules::utility_structure_parsers::{self, sorted};
+use shared_structure_rules::utility_structure_parsers;
+
+use shared_structure_rules::utility_structure_parsers::{find_workspace_root, sorted};
 
 use shared_structure_rules::contract_structure_protocol::IStructureSurfacePurityProtocol;
 use shared_structure_rules::taxonomy_structure_rules_constant as consts;
@@ -73,28 +75,10 @@ fn check_member_folder(
 
 // ─── Block 3: Constructors, Std Traits, Helpers ────────────
 
-/// Resolve the workspace root: the nearest ancestor that contains one of the
-/// member directories. If *root* itself holds them, it is the root; if it is
-/// a member directory, its parent is.
+/// Resolve the workspace root by walking up from *root* until we find
+/// a directory that contains at least one of the member directories.
 fn workspace_root(root: &std::path::Path) -> std::path::PathBuf {
-    // Case 1: root already has member dirs (crates/, modules/, packages/)
-    if root.join("crates").is_dir()
-        || root.join("modules").is_dir()
-        || root.join("packages").is_dir()
-    {
-        return root.to_path_buf();
-    }
-    // Case 2: root IS a member dir (e.g., crates/cli-commands)
-    // Its parent is the workspace root
-    if let Some(parent) = root.parent().filter(|p| {
-        p.join("crates").is_dir() || p.join("modules").is_dir() || p.join("packages").is_dir()
-    }) {
-        return parent.to_path_buf();
-    }
-    // Case 3: fallback to parent or current
-    root.parent()
-        .map(|p| p.to_path_buf())
-        .unwrap_or_else(|| root.to_path_buf())
+    find_workspace_root(root)
 }
 
 /// The folder's own name.
