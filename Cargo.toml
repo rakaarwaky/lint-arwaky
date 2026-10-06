@@ -55,7 +55,7 @@ repository = "https://github.com/rakaarwaky/lint-arwaky"
 # Every member crate inherits the release version from here, so the 39 member
 # manifests can never drift from the version the binary reports. Keep this in
 # step with the `VERSION` file the binary builds from.
-version = "3.8.0"
+version = "3.8.1"
 
 #do not bypass with allow
 [workspace.lints.clippy]
@@ -142,7 +142,7 @@ syn = { version = "3", features = ["full", "visit", "parsing"] }
 
 [package]
 name = "lint_arwaky-arwaky"
-version = "3.8.0"
+version = "3.8.1"
 edition = "2024"
 description = "Autonomous code quality and architecture enforcement for AI agents and developers, enforcing 24 Agentic Engineering System (AES) rules."
 license = "MIT"
