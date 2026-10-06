@@ -4,7 +4,7 @@ use std::sync::Mutex;
 use std::time::Duration;
 
 use notify::{RecommendedWatcher, RecursiveMode};
-use notify_debouncer_mini::{DebouncedEventKind, new_debouncer};
+use notify_debouncer_mini::new_debouncer;
 use shared_common::taxonomy_common_vo::BooleanVO;
 use shared_common::taxonomy_message_vo::LintMessage;
 use shared_file_watch::contract_watch_protocol::IWatchLifecycleProtocol;
@@ -54,14 +54,11 @@ impl IWatchLifecycleProtocol for NotifyWatchProvider {
             move |res: Result<Vec<notify_debouncer_mini::DebouncedEvent>, _>| {
                 if let Ok(events) = res {
                     for event in events {
-                        if event.kind == DebouncedEventKind::Any {
-                            let path_str = event.path.to_string_lossy().to_string();
-                            let skip = ignore.iter().any(|p| path_str.contains(p.as_str()));
-                            if !skip {
-                                let watch_event =
-                                    WatchEvent::new(path_str, WatchEventKind::Modified);
-                                let _ = tx.send(watch_event);
-                            }
+                        let path_str = event.path.to_string_lossy().to_string();
+                        let skip = ignore.iter().any(|p| path_str.contains(p.as_str()));
+                        if !skip {
+                            let watch_event = WatchEvent::new(path_str, WatchEventKind::Modified);
+                            let _ = tx.send(watch_event);
                         }
                     }
                 }
