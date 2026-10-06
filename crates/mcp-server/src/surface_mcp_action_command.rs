@@ -790,19 +790,12 @@ impl McpActionSurface {
             }
         };
         match section.as_deref() {
-            Some(s) if !s.is_empty() => {
-                let header = format!("## {}", s);
-                if let Some(start) = content.find(&header) {
-                    let remaining = &content[start..];
-                    let end = match remaining[1..].find("\n## ") {
-                        Some(i) => i + 1,
-                        None => remaining.len(),
-                    };
-                    serde_json::json!({"section": s, "content": &remaining[..end], "exit_code": 0})
-                } else {
-                    serde_json::json!({"error": format!("Section '{}' not found", s), "exit_code": 2})
+            Some(s) if !s.is_empty() => match extract_skill_section(&content, s) {
+                Some(body) => serde_json::json!({"section": s, "content": body, "exit_code": 0}),
+                None => {
+                    serde_json::json!({"error": format!("Section '{s}' not found"), "exit_code": 2})
                 }
-            }
+            },
             _ => serde_json::json!({"content": content, "exit_code": 0}),
         }
     }
@@ -876,6 +869,26 @@ impl McpActionSurface {
                 .to_string()
         })
     }
+}
+
+/// Extract one top-level (`## `) section from a skill document.
+///
+/// #927: the section heading must sit at the start of a line (or the start of
+/// the document) to count; a mid-line `## {section}` mention is not a heading.
+/// The section ends at the next top-level H2 heading that begins its own line.
+/// `\n## ` cannot match `###`/`####` headings (their third char is `#`, not a
+/// space), so deeper headings are not boundaries. Trailing newlines are
+/// trimmed so the body matches the heading's exact text.
+pub fn extract_skill_section(content: &str, section: &str) -> Option<String> {
+    let header = format!("## {section}");
+    let start = if content.starts_with(&header) {
+        0usize
+    } else {
+        content.find(&format!("\n{header}"))? + 1
+    };
+    let remaining = &content[start..];
+    let end = remaining.find("\n## ").unwrap_or(remaining.len());
+    Some(remaining[..end].trim_end_matches('\n').to_string())
 }
 
 /// Serialize violations to JSON (mirrors old execute_* shape + severity).
