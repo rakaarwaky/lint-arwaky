@@ -240,23 +240,6 @@ pub fn count_protocol_fields(content: &str, language: Language) -> (usize, usize
     (injected, distinct.len())
 }
 
-/// Count the protocol traits a feature's shared module declares.
-///
-/// Used by P14 to recognise a genuinely single-subsystem feature. A feature
-/// that declares exactly one protocol has nothing else for its agent to
-/// coordinate, so flagging its single injected seam would push the author to
-/// invent a protocol that does no distinct job.
-///
-/// A protocol trait that no file in the feature references is dead code and
-/// does not count: a declared-but-unused trait is not a subsystem the agent
-/// could coordinate. Only `count_feature_protocol_traits_with` applies that
-/// filter, using the protocol names the feature's own source files reference.
-///
-/// Returns 0 when the directory is absent or empty.
-pub fn count_feature_protocol_traits(feature_dir: &Path) -> usize {
-    count_feature_protocol_traits_with(feature_dir, &[])
-}
-
 /// Count the protocol traits a feature's shared module declares, keeping only
 /// those whose name appears in `referenced`.
 ///
@@ -270,6 +253,29 @@ pub fn count_feature_protocol_traits_with(feature_dir: &Path, referenced: &[Stri
         referenced,
         Some(&|base: &str| base.contains("protocol") || base.contains("Protocol")),
     )
+}
+
+/// Count the protocol traits in a flat `modules/shared/src/` layout, where
+/// contracts are named `contract_<feature>_protocol.py` rather than living in
+/// a per-feature subfolder. Only the feature's own contract file is scanned,
+/// so protocols of other features are not counted as subsystems.
+fn count_feature_protocol_traits_in_modules_dir(
+    modules_shared: &Path,
+    feature: &str,
+    referenced: &[String],
+) -> usize {
+    let file_stem = format!("contract_{}_protocol", feature);
+    for ext in ["rs", "py", "ts"] {
+        let path = modules_shared.join(format!("{}.{}", file_stem, ext));
+        if path.is_file() {
+            return count_protocol_traits_in_dir_with_stem_filter(
+                modules_shared,
+                referenced,
+                Some(&|base: &str| base == file_stem.as_str()),
+            );
+        }
+    }
+    0
 }
 
 /// Shared scan core: count the protocol traits declared in `dir`, keeping only
@@ -421,6 +427,20 @@ pub fn resolve_feature_protocol_count(file_path: &Path) -> usize {
         .join("src")
         .join(&feature);
     let mut count = count_feature_protocol_traits_with(&shared_dir, &referenced);
+
+    // Python modules layout: contracts sit flat in `modules/shared/src/`,
+    // named `contract_<feature>_protocol.py`, so no per-feature subfolder.
+    // Count the feature's own contract file when the nested module is absent.
+    if count == 0 {
+        let modules_shared = root.join("modules").join("shared").join("src");
+        if modules_shared.is_dir() {
+            count = count_feature_protocol_traits_in_modules_dir(
+                &modules_shared,
+                &feature,
+                &referenced,
+            );
+        }
+    }
 
     // Test-workspace layout: contracts sit beside the agent file. When the
     // shared module declares nothing, the local declarations stand in.
@@ -942,11 +962,15 @@ fn standalone_word(t: &str, word: &str) -> Option<(usize, usize)> {
     None
 }
 
-/// The workspace root: the ancestor that owns `crates/shared/src`.
+/// The workspace root: the ancestor that owns a shared source folder
+/// (`crates/shared/src` in the Rust layout, `modules/shared/src` in the
+/// Python modules layout).
 fn workspace_root(file_path: &Path) -> Option<std::path::PathBuf> {
     let mut current = file_path.parent();
     while let Some(dir) = current {
-        if dir.join("crates").join("shared").join("src").is_dir() {
+        if dir.join("crates").join("shared").join("src").is_dir()
+            || dir.join("modules").join("shared").join("src").is_dir()
+        {
             return Some(dir.to_path_buf());
         }
         current = dir.parent();
