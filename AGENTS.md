@@ -22,27 +22,12 @@ description: "Lint Arwaky operational guide. ARCHITECTURE.md wins on ambiguity."
   history, deleting branches, deleting user data, publishing packages,
   deploying, changing secrets, installing global tools, writing outside
   approved output paths, running destructive cleanup.
-- Approvals do not carry across sessions unless recorded in
-  .agents/session-notes.md.
-- .agents/ must be gitignored so it is never committed. Create
-  .agents/ if absent before writing any state files.
 - Do not write secrets, tokens, or private keys into todo files, session
   notes, PR bodies, or logs.
 
-## Memory
-
-- Write important state to the todo list and
-  .agents/session-notes.md.
-- If it is not written down, it does not exist.
-- .agents/ = `.agents/`. Add it to `.gitignore` before creating it;
-  never commit it.
-- If .agents/ does not exist, create it before writing state
- files.
-
 ## Session Start
 
-Read the current todo list and .agents/session-notes.md, then
-check state:
+Check state:
 
 ```bash
 git status
@@ -78,8 +63,10 @@ lint, audit, verify, ship
 
 ## Git Workflow
 
-Every change must use a worktree or branch under
-.worktrees/feature-x. Do not work directly on main.
+Every change must use a worktree under
+.worktrees/feature-x. Do not work directly on main. Do not
+switch branches (no `git checkout`/`git switch`); use `git worktree add`
+so each branch lives in its own directory. PR to main when done.
 Exceptions require explicit user approval.
 
 Branch prefixes: `<type>/`, ...
@@ -155,9 +142,8 @@ A change is done when:
 - Linter, type checker, and architecture scanner pass for touched paths.
 - PR title and body follow conventions.
 - A PR that merges a fix updates every invalidated backlog row in the
-  same PR.
+  same PR, then merges to main.
 - Generated output is under an approved output path.
-- .agents/ is gitignored (`git check-ignore -v .agents/session-notes.md` exits 0).
 - No destructive action ran without explicit approval.
 
 ## Writing Style
@@ -165,45 +151,12 @@ A change is done when:
 Use this section when editing prose, docs, PR descriptions, or release
 notes. Do not apply it to code identifiers, commands, or config keys.
 
-- Preserve the writer's voice. Make the minimum effective edit.
-
-- Lead with the point. Keep concrete facts: names, dates, numbers, mechanisms.
-
-- Use plain verbs and active voice. Use "is" and "has" when clearer.
-
-- Apply the portability test: if a sentence fits any product, replace it with a specific fact.
-
-- Do not invent claims, sources, stats, or examples.
-
-- Em dashes are not default rhythm crutches. Use 1-2 in long drafts only when they beat commas or periods.
-
-- Ban binary contrasts. Cut "This is not X, it's Y." and "Not a X. Not a Y. A Z."
-  State the preferred option directly: "The question isn't the model, it's the
-  eval." becomes "The eval matters more than the model."
-
-- Cut throat-clearing openers, faux-insight setups, and rhetorical setups.
-
-- Ban dramatic colon reveals. Reserve colons for lists, labels, and quotes.
-
-- Cut superficial analysis. Drop trailing "-ing" clauses that fake meaning. State the cause and effect.
-
-- Cut importance puffery. State the fact.
-
-- Cut interpretive metadiscourse and dramatic mic-drop endings. End on the clearest concrete sentence.
-
-- Ban weasel attribution. Name the source or cut the claim.
-
-- Stop synonym cycling. Repeat the clear word.
-
-- Ban dramatic fragmentation. Use complete sentences.
-
-- Cut summary-recap endings. End on the last concrete point or next action.
-
-- Avoid formatting slop. No mid-sentence bolding, no bullets where prose works, no headers over short sections. Use code formatting for commands and variables.
-
-- Ban emoji by default. Use one only for UI status markers, diff glyphs, or test results.
-
-- Avoid robotic rhythm. Vary sentence shape only when it helps.
+- Lead with the point. Use plain, active verbs. Keep concrete facts
+  (names, dates, numbers, mechanisms).
+- No invented claims, weasel attribution, throat-clearing openers,
+  binary contrasts, or dramatic endings. Name the source or cut the claim.
+- Use complete sentences, no emoji by default, code formatting for
+  commands and variables. Vary rhythm only when it helps.
 
 ## Related Documents
 
@@ -216,6 +169,5 @@ notes. Do not apply it to code identifiers, commands, or config keys.
 - [CONTRIBUTING.md](CONTRIBUTING.md): Branch, commit, and PR conventions.
 - [DEPLOY.md](DEPLOY.md): Release path and the checks it gates on.
 - [SECURITY.md](SECURITY.md): Reporting a vulnerability and what counts as one.
-
 
 ---

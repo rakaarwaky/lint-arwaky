@@ -258,8 +258,6 @@ fn write_agents_workspace(dir: &Path) {
 1. Explicit user approval.\n\n\
 ## Security\n\n\
 - Explicit approval is required before destructive actions.\n\n\
-## Memory\n\n\
-- Write important state to the session notes.\n\n\
 ## Session Start\n\n\
 Read the todo list, then check state.\n\n\
 ## Runtime\n\n\
@@ -935,10 +933,6 @@ fn aes605_allows_extra_and_free_h3_headings() {
 
 - Be safe.
 
-## Memory
-
-- Write state down.
-
 ## Session Start
 
 Read the todo list.
@@ -1039,7 +1033,7 @@ Tests pass.
         .map(|(_, _, m, _)| m.as_str())
         .unwrap();
     assert!(
-        message.contains("User Context") && message.contains("Memory"),
+        message.contains("User Context") && message.contains("Quick Facts"),
         "message must name the missing sections; got: {message}"
     );
 }
@@ -1132,10 +1126,6 @@ fn aes605_allows_the_project_specific_h2_set() {
 ## Security
 
 - Be safe.
-
-## Memory
-
-- Write state down.
 
 ## Session Start
 
