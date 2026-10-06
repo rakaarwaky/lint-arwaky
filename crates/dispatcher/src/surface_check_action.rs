@@ -6,27 +6,27 @@
 use shared_common::FilePath;
 use shared_common::ViolationItem;
 use shared_config_system::{ConfigRequest, IConfigOrchestratorAggregate};
-use shared_doc_rules::IDocRunnerAggregate;
 use shared_doc_rules::taxonomy_doc_rules_request::DocRequest;
 use shared_doc_rules::taxonomy_doc_rules_response::DocResponse;
+use shared_doc_rules::IDocRunnerAggregate;
 use shared_external_lint::IExternalLintAggregate;
-use shared_filesystem::FilesystemRequest;
 use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared_filesystem::contract_filesystem_protocol::IParserProtocol;
 use shared_filesystem::contract_filesystem_protocol::IWorkspaceProtocol;
 use shared_filesystem::utility_path_filter;
 use shared_filesystem::utility_test_file_discovery;
-use shared_import_rules::IImportRunnerAggregate;
+use shared_filesystem::FilesystemRequest;
 use shared_import_rules::taxonomy_import_rules_request::ImportRequest;
-use shared_naming_rules::INamingRunnerAggregate;
+use shared_import_rules::IImportRunnerAggregate;
 use shared_naming_rules::taxonomy_naming_rules_request::NamingRequest;
+use shared_naming_rules::INamingRunnerAggregate;
 use shared_naming_rules::{BENCHES_DIR, TESTS_DIR};
 use shared_orphan_rules::IOrphanAggregate;
 use shared_orphan_rules::OrphanRequest;
 use shared_quality_rules::CodeAnalysisRequest;
 use shared_quality_rules::ICodeAnalysisAggregate;
-use shared_role_rules::IRoleRunnerAggregate;
 use shared_role_rules::taxonomy_role_rules_request::RoleRequest;
+use shared_role_rules::IRoleRunnerAggregate;
 use shared_structure_rules::IStructureAggregate;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -37,7 +37,7 @@ use crate::surface_ci_action::run_isolated;
 // import site (`surface_check_action::collect_scan_with_cancel` /
 // `CancellableScanOutcome`) after that block moved to
 // `surface_scan_cancel_action`.
-pub use crate::surface_scan_cancel_action::{CancellableScanOutcome, collect_scan_with_cancel};
+pub use crate::surface_scan_cancel_action::{collect_scan_with_cancel, CancellableScanOutcome};
 
 /// Capability seams exposed alongside the filesystem aggregate, so callers can
 /// dispatch protocol operations without holding the raw IO protocol (#571).
@@ -1220,24 +1220,13 @@ mod bfs_tests {
         let seam = real_seam();
         let mut discovered = Vec::new();
         let ignored: Vec<String> = Vec::new();
-        bfs_enter_subdirs(
-            &seam,
-            root,
-            &skip_dirs(),
-            false,
-            &ignored,
-            &mut discovered,
-        );
-        let has_nested = discovered
-            .iter()
-            .any(|p| p.contains("submodule"));
+        bfs_enter_subdirs(&seam, root, &skip_dirs(), false, &ignored, &mut discovered);
+        let has_nested = discovered.iter().any(|p| p.contains("submodule"));
         assert!(
             !has_nested,
             "BFS must skip a dir carrying its own .git file: {discovered:?}"
         );
-        let has_normal = discovered
-            .iter()
-            .any(|p| p.contains("normal"));
+        let has_normal = discovered.iter().any(|p| p.contains("normal"));
         assert!(
             has_normal,
             "BFS must keep a plain dir without a .git marker: {discovered:?}"
@@ -1249,10 +1238,7 @@ mod bfs_tests {
         let tmp = tempfile::TempDir::new().unwrap();
         let root = tmp.path();
         // Multi-segment path: internal/lint-arwaky/.worktrees
-        let wt = root
-            .join("internal")
-            .join("lint-arwaky")
-            .join(".worktrees");
+        let wt = root.join("internal").join("lint-arwaky").join(".worktrees");
         std::fs::create_dir_all(wt.join("feature-x")).unwrap();
         std::fs::write(wt.join("feature-x").join("main.rs"), "fn main() {}").unwrap();
         // A dir that should survive.
@@ -1263,17 +1249,8 @@ mod bfs_tests {
         let seam = real_seam();
         let mut discovered = Vec::new();
         let ignored = vec!["internal/lint-arwaky/.worktrees".to_string()];
-        bfs_enter_subdirs(
-            &seam,
-            root,
-            &skip_dirs(),
-            false,
-            &ignored,
-            &mut discovered,
-        );
-        let has_worktrees = discovered
-            .iter()
-            .any(|p| p.contains(".worktrees"));
+        bfs_enter_subdirs(&seam, root, &skip_dirs(), false, &ignored, &mut discovered);
+        let has_worktrees = discovered.iter().any(|p| p.contains(".worktrees"));
         assert!(
             !has_worktrees,
             "BFS must prune the multi-segment ignored subtree: {discovered:?}"
