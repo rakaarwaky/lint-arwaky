@@ -27,6 +27,7 @@ pub use taxonomy_lint_result_vo::LintResult;
 pub use taxonomy_lint_result_vo::LintResultList;
 // NOTE: LogVerbosity moved to shared_logging. Code importing from here
 // should instead import from shared_logging::LogVerbosity directly.
+pub mod taxonomy_compliance_vo;
 pub mod taxonomy_message_vo;
 pub mod taxonomy_name_vo;
 pub mod taxonomy_operation_error;
@@ -76,6 +77,7 @@ pub use taxonomy_common_vo::Score;
 pub use taxonomy_common_vo::SuffixPolicyVO;
 pub use taxonomy_common_vo::SuffixVO;
 pub use taxonomy_common_vo::Timestamp;
+pub use taxonomy_compliance_vo::ComplianceStatus;
 pub use taxonomy_default_constant::DEFAULT_IGNORED_PATHS;
 pub use taxonomy_default_constant::DEFAULT_RULE_EXCEPTIONS;
 pub use taxonomy_definition_vo::LayerDefinition;
@@ -104,7 +106,6 @@ pub use taxonomy_lint_vo::LocationList;
 pub use taxonomy_lint_vo::ScopeBounds;
 pub use taxonomy_lint_vo::ScopeRef;
 pub use taxonomy_lint_vo::ViolationConstraint;
-pub use taxonomy_message_vo::ComplianceStatus;
 pub use taxonomy_message_vo::LintMessage;
 pub use taxonomy_name_vo::NameVariants;
 pub use taxonomy_name_vo::SymbolName;
