@@ -127,10 +127,18 @@ impl IDiffDetectionProtocol for DiffChecker {
     fn run_git_diff_check(&self, path: &FilePath) -> LintResultList {
         let default_branch = self.get_default_branch_sync(path);
         let changed_files = self.collect_changed_files_sync(path, &default_branch);
+        let renamed_files = self.collect_by_filter_renamed(path, &default_branch);
+
+        // Build a set of all file paths that need processing
+        let mut all_paths: HashSet<FilePath> = HashSet::new();
+        all_paths.extend(changed_files.values.iter().cloned());
+        for renamed_file in &renamed_files.values {
+            all_paths.insert(renamed_file.old_path.clone());
+            all_paths.insert(renamed_file.new_path.clone());
+        }
 
         // Filter to lintable source files only
-        let lintable: Vec<FilePath> = changed_files
-            .values
+        let lintable: Vec<FilePath> = all_paths
             .iter()
             .filter(|f| is_lintable_file(f))
             .cloned()
@@ -162,7 +170,21 @@ impl IDiffDetectionProtocol for DiffChecker {
                 // the read failure is an analysis failure. Any other read
                 // failure is likewise reported distinctly.
                 Err(e)
-                    if e.kind() == std::io::ErrorKind::NotFound && !self.io.is_symlink(&joined) => {
+                    if e.kind() == std::io::ErrorKind::NotFound && !self.io.is_symlink(&joined) =>
+                {
+                    // For files not found on disk, try to read from git base
+                    if let Some(content) = self.read_from_git_base(path, fp, &default_branch) {
+                        entries.push(FileEntry {
+                            path: joined,
+                            extension: fp.extension(),
+                            language: Language::from_extension(&fp.extension())
+                                .unwrap_or(Language::Unknown),
+                            size: content.len() as u64,
+                            content,
+                            parse_ok: true,
+                            parse_metadata: None,
+                        });
+                    }
                 }
                 Err(e) => failures.push(analysis_failure(
                     &fp.value,
@@ -380,5 +402,29 @@ impl DiffChecker {
                 }
             }
         }
+    }
+
+    /// Read file content from git base (for renamed/deleted files).
+    /// Uses `git show <base>:<path>` to get the content of a file at the base commit.
+    fn read_from_git_base(
+        &self,
+        project_path: &FilePath,
+        file_path: &FilePath,
+        base_branch: &str,
+    ) -> Option<String> {
+        let variants = [
+            format!("origin/{}", base_branch),
+            "HEAD".to_string(),
+            base_branch.to_string(),
+        ];
+        for variant in &variants {
+            let ref_spec = format!("{variant}:{}", file_path.value);
+            let args = ["show", &ref_spec];
+            let result = self.io.run_git_command(&args, &project_path.value);
+            if result.success {
+                return Some(result.stdout);
+            }
+        }
+        None
     }
 }
