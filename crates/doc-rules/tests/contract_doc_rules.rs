@@ -252,29 +252,19 @@ fn write_agents_workspace(dir: &Path) {
     fs::write(
         dir.join("AGENTS.md"),
         "# Sample AGENTS.md\n\n\
-## User Context\n\n\
-- Preferences: concise.\n\n\
-## Session Start\n\n\
-Read the todo list, then check state.\n\n\
 ## Runtime\n\n\
 - Language: Rust.\n\n\
-## Quick Facts\n\n\
+## Project Quick Facts\n\n\
 INPUT  = sample input\n\
 OUTPUT = sample output\n\n\
 ## Pipeline\n\n\
-scan → check\n\
-lint\n\
-orchestrated by CI\n\n\
-## Git Workflow\n\n\
-Every change must use a worktree or branch.\n\n\
+scan → check\n\n\
+## Git Conventions\n\n\
+- Default branch: main\n\n\
 ## Commands\n\n\
 ```bash\ncargo nextest run --workspace\n```\n\n\
 ## Guided Skills\n\n\
-Use `.agents/skills` when a task matches a guided workflow.\n\n\
-## Definition of Done\n\n\
-A change is done when tests pass.\n\n\
-## Writing Style\n\n\
-Lead with the point.\n\n\
+- Skill directory: .agents/skills\n\n\
 ## Related Documents\n\n\
 - [PRD.md](PRD.md): Product requirements.\n",
     )
@@ -886,7 +876,7 @@ cargo nextest run
 #[test]
 fn aes605_fires_when_required_h2_is_absent() {
     let tmp = tempfile::tempdir().unwrap();
-    // Quick Facts and Definition of Done are missing from the required set.
+    // Runtime, Project Quick Facts, and most others are missing from the required set.
     write_bad_agents(
         tmp.path(),
         "# Sample AGENTS.md\n\n\
@@ -904,7 +894,7 @@ fn aes605_fires_when_required_h2_is_absent() {
         .unwrap();
     // The message names the absent section(s), not just the rule.
     assert!(
-        message.contains("Quick Facts") || message.contains("Definition of Done"),
+        message.contains("Project Quick Facts") || message.contains("Git Conventions"),
         "the message must name the absent section(s); got: {message}"
     );
 }
@@ -917,19 +907,11 @@ fn aes605_allows_extra_and_free_h3_headings() {
         tmp.path(),
         "# Sample AGENTS.md
 
-## User Context
-
-- Preferences: concise.
-
-## Session Start
-
-Read the todo list.
-
 ## Runtime
 
 - Language: Rust.
 
-## Quick Facts
+## Project Quick Facts
 
 INPUT  = sample
 OUTPUT = sample
@@ -940,9 +922,10 @@ scan → check
 lint
 run by CI
 
-## Git Workflow
+## Git Conventions
 
-Use a worktree.
+- Default branch: main
+- Worktree directory: .worktrees/
 
 ## Commands
 
@@ -952,15 +935,7 @@ true
 
 ## Guided Skills
 
-Use `.agents/skills`.
-
-## Definition of Done
-
-Tests pass.
-
-## Writing Style
-
-Lead with the point.
+- Skill directory: .agents/skills
 
 ## Related Documents
 
@@ -981,14 +956,10 @@ fn aes605_fires_when_a_required_section_is_absent() {
     write_bad_agents(
         tmp.path(),
         "# Sample AGENTS.md\n\n\
-## User Context\n\
-- Preferences: concise.\n\n\
-## Git Workflow\n\
-Use a worktree.\n\n\
+## Runtime\n\
+- Language: Rust.\n\n\
 ## Commands\n\
 ```bash\ntrue\n```\n\n\
-## Definition of Done\n\
-Tests pass.\n\n\
 ## Related Documents\n\
 - [PRD.md](PRD.md).",
     );
@@ -1003,7 +974,7 @@ Tests pass.\n\n\
         .map(|(_, _, m, _)| m.as_str())
         .unwrap();
     assert!(
-        message.contains("Quick Facts") && message.contains("Pipeline"),
+        message.contains("Project Quick Facts") && message.contains("Pipeline"),
         "message must name the missing sections; got: {message}"
     );
 }
@@ -1016,8 +987,8 @@ fn aes605_fires_on_an_h2_outside_the_template() {
     write_bad_agents(
         tmp.path(),
         "# Sample AGENTS.md\n\n\
-## User Context\n\
-- Preferences: concise.\n\n\
+## Runtime\n\
+- Language: Rust.\n\n\
 ## Architecture\n\
 See [ARCHITECTURE.md](ARCHITECTURE.md) for the layer specification.\n\n\
 ## Contributing\n\
@@ -1026,14 +997,10 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).\n\n\
 MIT. See [LICENSE](LICENSE).\n\n\
 ## Random Notes\n\
 Anything the author wanted to jot down.\n\n\
-## Git Workflow\n\
-Use a worktree.\n\n\
 ## Commands\n\
 ```bash\ntrue\n```\n\n\
-## Definition of Done\n\
-Tests pass.\n\n\
 ## Related Documents\n\
-- [PRD.md](PRD.md).\\n",
+- [PRD.md](PRD.md).\n",
     );
     let findings = audit(tmp.path());
     assert!(
@@ -1053,25 +1020,17 @@ Tests pass.\n\n\
 
 #[test]
 fn aes605_allows_the_project_specific_h2_set() {
-    // Only the 12 required H2 sections are enforced; no optional headings exist.
+    // Only the 7 required H2 sections are enforced; no optional headings exist.
     let tmp = tempfile::tempdir().unwrap();
     write_bad_agents(
         tmp.path(),
         "# Sample AGENTS.md
 
-## User Context
-
-- Preferences: concise.
-
-## Session Start
-
-Read the todo list.
-
 ## Runtime
 
 - Language: Rust.
 
-## Quick Facts
+## Project Quick Facts
 
 INPUT  = sample
 OUTPUT = sample
@@ -1082,9 +1041,9 @@ scan → check
 lint
 run by CI
 
-## Git Workflow
+## Git Conventions
 
-Use a worktree.
+- Default branch: main
 
 ## Commands
 
@@ -1094,15 +1053,7 @@ true
 
 ## Guided Skills
 
-Use `.agents/skills`.
-
-## Definition of Done
-
-Tests pass.
-
-## Writing Style
-
-Lead with the point.
+- Skill directory: .agents/skills
 
 ## Related Documents
 

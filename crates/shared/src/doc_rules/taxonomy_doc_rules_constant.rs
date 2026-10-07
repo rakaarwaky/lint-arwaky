@@ -245,16 +245,12 @@ pub const DOC_HEADING_CONTRACTS: &[DocH2Contract] = &[
     (
         AGENTS_DOC,
         &[
-            "User Context",
-            "Session Start",
             "Runtime",
-            "Quick Facts",
+            "Project Quick Facts",
             "Pipeline",
-            "Git Workflow",
+            "Git Conventions",
             "Commands",
             "Guided Skills",
-            "Definition of Done",
-            "Writing Style",
             "Related Documents",
         ],
         &[],
