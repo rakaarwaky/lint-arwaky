@@ -122,10 +122,14 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
         // Build diagnostic message
         let reason = if !is_reachable && !has_higher_layer_importer {
             match &importers {
-                None => format!("'{}' is not reachable and has no importers.", stem),
-                Some(v) if v.is_empty() => {
-                    format!("'{}' is not reachable and has no importers.", stem)
-                }
+                None => format!(
+                    "'{}' is a taxonomy file with no importer.\nWHY? A taxonomy file must be imported by a contract or capability to be discoverable.\nFIX: Add an import from a higher-layer file.",
+                    stem
+                ),
+                Some(v) if v.is_empty() => format!(
+                    "'{}' is a taxonomy file with no importer.\nWHY? A taxonomy file must be imported by a contract or capability to be discoverable.\nFIX: Add an import from a higher-layer file.",
+                    stem
+                ),
                 Some(v) => {
                     let low_layer: Vec<String> = v
                         .iter()
@@ -135,16 +139,23 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
                         })
                         .collect();
                     format!(
-                        "'{}' is not reachable and only imported by lower-layer files ({}).",
+                        "'{}' is a taxonomy file only imported by lower-layer files ({}).\nWHY? Taxonomy files must be imported by contract, agent, capability, surface, or root layers.\nFIX: Import '{}' from a higher-layer file.",
                         stem,
-                        low_layer.join(", ")
+                        low_layer.join(", "),
+                        stem
                     )
                 }
             }
         } else if !is_reachable {
-            format!("'{}' is not reachable.", stem)
+            format!(
+                "'{}' is a taxonomy file not reachable from any entry.\nWHY? Taxonomy files must be reachable from the module barrel.\nFIX: Ensure the barrel mod.rs re-exports this file.",
+                stem
+            )
         } else {
-            format!("'{}' is not imported by any higher-layer file.", stem)
+            format!(
+                "'{}' is a taxonomy file not imported by any higher-layer file.\nWHY? Taxonomy files must be imported by contract, agent, capability, surface, or root layers.\nFIX: Add an import from a higher-layer file.",
+                stem
+            )
         };
 
         OrphanIndicatorResult::new(true, reason, Severity::LOW)
