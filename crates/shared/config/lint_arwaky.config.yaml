@@ -126,6 +126,7 @@ architecture:
     AES305:
       enabled: true
       exceptions: []
+      duplication_threshold: 75
     # ─── AES400 ───
     AES401:
       enabled: true

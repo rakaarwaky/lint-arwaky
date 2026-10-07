@@ -113,6 +113,39 @@ fn files_below_min_lines_no_violation() {
 }
 
 #[test]
+fn repeated_block_counts_each_occurrence_not_one() {
+    let ana = analyzer_with_threshold(0.0); // flag anything shared
+    // Default min_lines = 10. One 10-line block repeated 3 times = 30 lines.
+    // Sliding window of 10 → 21 windows per file, but only 1 distinct window
+    // (the block itself repeats identically). Deduped count = 1 → 1/21 ≈ 5%.
+    // Correct occurrence count = 21 → 21/21 = 100%.
+    let block: Vec<String> = (0..10).map(|i| format!("let var_{i} = {i};")).collect();
+    let block_str = block.join("\n");
+    let content = format!("{block_str}\n{block_str}\n{block_str}");
+
+    let entries = vec![
+        (PathBuf::from("src/repeat_a.rs"), content.clone()),
+        (PathBuf::from("src/repeat_b.rs"), content),
+    ];
+
+    let violations = ana.handle_duplicates_entries(&entries);
+    assert!(
+        !violations.is_empty(),
+        "repeated shared block must be flagged"
+    );
+    let msg = match &violations[0].1 {
+        shared_quality_rules::AesCodeAnalysisViolation::CodeDuplication { reason } => {
+            reason.as_ref().map_or(String::new(), |r| r.to_string())
+        }
+        other => format!("{other:?}"),
+    };
+    assert!(
+        msg.contains("100% of this file's non-import content"),
+        "every repeated occurrence must count toward the similarity percentage, got: {msg}"
+    );
+}
+
+#[test]
 fn violation_message_contains_percentage() {
     let ana = analyzer_with_threshold(10.0); // very low threshold
     let content = (0..20)

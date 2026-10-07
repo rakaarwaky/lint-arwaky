@@ -52,14 +52,6 @@ fn render_json(report: &ScanReport) -> DisplayContent {
     let mut external_results = Vec::new();
 
     for r in &report.results {
-        let output = JsonViolation {
-            file: r.file.value().to_string(),
-            line: r.line.value(),
-            code: r.code.to_string(),
-            severity: r.severity.to_string(),
-            message: r.message.value().to_string(),
-        };
-
         match r.severity {
             shared_common::Severity::CRITICAL => crit += 1,
             shared_common::Severity::HIGH => high += 1,
@@ -67,6 +59,21 @@ fn render_json(report: &ScanReport) -> DisplayContent {
             shared_common::Severity::LOW => low += 1,
             _ => {}
         }
+
+        // INFO results are excluded from the summary, so they must not land
+        // in the violations array either — otherwise total_violations could
+        // not equal violations.len().
+        if r.severity == shared_common::Severity::INFO {
+            continue;
+        }
+
+        let output = JsonViolation {
+            file: r.file.value().to_string(),
+            line: r.line.value(),
+            code: r.code.to_string(),
+            severity: r.severity.to_string(),
+            message: r.message.value().to_string(),
+        };
 
         if r.code.code().starts_with("AES") || r.code.code().starts_with("PARSE_") {
             violations.push(output);
@@ -86,7 +93,10 @@ fn render_json(report: &ScanReport) -> DisplayContent {
         .collect();
 
     let summary = JsonSummary {
-        total_violations: crit + high + med + low,
+        // Must always equal violations.len() — counting crit+high+med+low would
+        // include external_results and silently drop INFO severities that land
+        // in the violations array.
+        total_violations: violations.len(),
         critical: crit,
         high,
         medium: med,

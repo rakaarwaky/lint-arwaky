@@ -32,7 +32,14 @@ impl IProjectStatsProtocol for ProjectStatsChecker {
                     .file_name()
                     .and_then(|n| n.to_str())
                     .unwrap_or("");
-                if name.contains("test") || name.contains("spec") {
+                // test_files counts SOURCE files only (same extension set as
+                // source_count) so test_ratio stays bounded within [0.0, 1.0].
+                // Non-source files like test_data.json must not inflate it.
+                let is_source = matches!(
+                    entry_path.extension().and_then(|e| e.to_str()),
+                    Some("rs" | "py" | "ts" | "js" | "jsx" | "tsx")
+                );
+                if is_source && (name.contains("test") || name.contains("spec")) {
                     test_files += 1;
                 }
                 if let Some(ext) = entry_path.extension().and_then(|e| e.to_str()) {

@@ -63,7 +63,7 @@ fn mixed_report_separates_aes_from_external() {
     let v: serde_json::Value = serde_json::from_str(out.value()).expect("must be valid JSON");
     let violations = v["violations"].as_array().unwrap();
     let external = v["external_results"].as_array().unwrap();
-    assert_eq!(violations.len(), 2);
+    assert_eq!(violations.len(), 1);
     assert_eq!(external.len(), 1);
     assert_eq!(violations[0]["code"], "AES201");
     assert_eq!(violations[0]["severity"], "critical");
@@ -77,12 +77,23 @@ fn summary_counts_severities() {
     let out = JsonFormatter::new().format_json(&report_with_mixed_results());
     let v: serde_json::Value = serde_json::from_str(out.value()).unwrap();
     let summary = &v["summary"];
-    // total_violations excludes INFO-severity results (consistent with ScanReport::violation_count)
-    assert_eq!(summary["total_violations"], 2);
+    // total_violations equals the violations array length. INFO-severity
+    // results are excluded from the array (consistent with
+    // ScanReport::violation_count), so only the AES CRITICAL result lands in
+    // violations; the external MEDIUM goes to external_results.
+    assert_eq!(summary["total_violations"], 1);
     assert_eq!(summary["critical"], 1);
     assert_eq!(summary["medium"], 1);
     assert_eq!(summary["low"], 0);
     assert_eq!(summary["high"], 0);
+}
+
+#[test]
+fn total_violations_equals_violations_array_length() {
+    let out = JsonFormatter::new().format_json(&report_with_mixed_results());
+    let v: serde_json::Value = serde_json::from_str(out.value()).unwrap();
+    let violations = v["violations"].as_array().unwrap();
+    assert_eq!(v["summary"]["total_violations"], violations.len());
 }
 
 #[test]
