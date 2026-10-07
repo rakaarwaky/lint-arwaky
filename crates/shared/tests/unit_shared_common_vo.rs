@@ -4,8 +4,7 @@ mod common;
 use shared_common::taxonomy_adapter_name_vo::AdapterName;
 use shared_common::taxonomy_common_error::ExitCode;
 use shared_common::taxonomy_common_vo::{
-    BooleanVO, ColumnNumber, Count, ErrorMessage, LanguageVO, LineNumber, PatternList, Score,
-    Timestamp,
+    BooleanVO, ColumnNumber, Count, ErrorMessage, LineNumber, PatternList, Score, Timestamp,
 };
 use shared_common::taxonomy_error_vo::{
     ErrorCode, error_code_is_architecture, error_code_is_logic, error_code_is_security,
@@ -18,9 +17,7 @@ use shared_common::taxonomy_language_vo::ConfigLanguage;
 use shared_common::taxonomy_language_vo::Language;
 use shared_common::taxonomy_layer_vo::{FileContentVO, Identity, LayerNameVO, LineContentVO};
 use shared_common::taxonomy_lint_vo::{Location, LocationList, ScopeRef};
-use shared_common::taxonomy_message_vo::{
-    ClassPath, DescriptionVO, LogOutput, MetadataVO, StdError, StdOutput, Suggestion,
-};
+use shared_common::taxonomy_message_vo::{DescriptionVO, Suggestion};
 use shared_common::taxonomy_path_vo::{DirectoryPath, FilePath};
 use shared_common::taxonomy_path_vo::{FilePathList, RenamedFile};
 use shared_common::taxonomy_severity_vo::Severity;
@@ -270,11 +267,12 @@ fn language_metadata_keywords() {
 }
 
 #[test]
-fn language_vo_from_path() {
-    assert_eq!(LanguageVO::from_path("a.rs"), LanguageVO::Rust);
-    assert_eq!(LanguageVO::from_path("a.py"), LanguageVO::Python);
-    assert_eq!(LanguageVO::from_path("a.ts"), LanguageVO::JavaScript);
-    assert_eq!(LanguageVO::from_path("a.txt"), LanguageVO::Unknown);
+fn language_from_extension() {
+    assert_eq!(Language::from_extension("rs"), Some(Language::Rust));
+    assert_eq!(Language::from_extension("py"), Some(Language::Python));
+    assert_eq!(Language::from_extension("ts"), Some(Language::TypeScript));
+    assert_eq!(Language::from_extension("js"), Some(Language::JavaScript));
+    assert_eq!(Language::from_extension("txt"), None);
 }
 
 // ── Detect language utilities ───────────────────────────────
@@ -466,23 +464,8 @@ fn lint_message_vo() {
 
 #[test]
 fn suggestion_vo_string_wrappers() {
-    let class = ClassPath::new("com.foo.Bar");
-    assert_eq!(class.value(), "com.foo.Bar");
     assert_eq!(DescriptionVO::from("desc").value(), "desc");
-    assert_eq!(LogOutput::new("log").value(), "log");
-    assert_eq!(StdError::from("err").value(), "err");
-    assert_eq!(StdOutput::new("out").value(), "out");
     assert_eq!(Suggestion::from("fix").to_string(), "fix");
-    assert_eq!(ClassPath::default().value(), "");
-}
-
-#[test]
-fn metadata_vo_wraps_map() {
-    let mut values = std::collections::HashMap::new();
-    values.insert("lang".to_string(), serde_json::json!("rust"));
-    let meta = MetadataVO::new(values);
-    assert_eq!(meta.value().len(), 1);
-    assert_eq!(meta.value()["lang"], serde_json::json!("rust"));
 }
 
 // ── Utilities ───────────────────────────────────────────────

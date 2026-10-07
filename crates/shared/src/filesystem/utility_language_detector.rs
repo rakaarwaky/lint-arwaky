@@ -1,7 +1,6 @@
 // PURPOSE: Language detection — pure, stateless taxonomy utility.
 use shared_common::taxonomy_language_vo::Language;
 use shared_common::taxonomy_language_vo::LanguageInfo;
-use shared_common::taxonomy_lint_vo::SourceContentVO;
 use shared_common::taxonomy_path_vo::FilePath;
 
 /// Detect the programming language of a file from its extension.
@@ -27,11 +26,6 @@ pub fn is_lintable(path: &FilePath) -> bool {
 pub fn detect_language_info(path: &FilePath) -> LanguageInfo {
     let lang = detect_language(path);
     flags_from_lang(lang)
-}
-
-/// Detect language info (pre-computed flags) from a SourceContentVO.
-pub fn detect_language_info_from_source(source: &SourceContentVO) -> LanguageInfo {
-    detect_language_info(&source.file_path)
 }
 
 fn flags_from_lang(lang: Language) -> LanguageInfo {

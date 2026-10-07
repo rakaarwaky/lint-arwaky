@@ -8,9 +8,7 @@
 use shared_common::taxonomy_adapter_name_vo::AdapterName;
 use shared_common::taxonomy_layer_vo::{FileContentVO, Identity, LayerNameVO, LineContentVO};
 use shared_common::taxonomy_lint_vo::{LintResult, LintResultList};
-use shared_common::taxonomy_message_vo::{
-    ClassPath, DescriptionVO, LogOutput, MetadataVO, StdError, StdOutput, Suggestion,
-};
+use shared_common::taxonomy_message_vo::{DescriptionVO, Suggestion};
 use shared_common::taxonomy_severity_vo::Severity;
 use shared_common::{ComplianceStatus, LintMessage};
 
@@ -143,16 +141,4 @@ fn adapter_name_raw_skips_validation() {
 fn suggestion_strings_wrap_and_display() {
     assert_eq!(DescriptionVO::new("fix it").value(), "fix it");
     assert_eq!(Suggestion::from("s").to_string(), "s");
-    assert_eq!(ClassPath::new("a::b").value(), "a::b");
-    assert_eq!(LogOutput::new("out").value(), "out");
-    assert_eq!(StdError::new("err").value(), "err");
-    assert_eq!(StdOutput::new("out").value(), "out");
-}
-
-#[test]
-fn metadata_vo_wraps_map() {
-    let mut map = std::collections::HashMap::new();
-    map.insert("k".to_string(), serde_json::json!("v"));
-    let m = MetadataVO::new(map.clone());
-    assert_eq!(m.value().get("k").and_then(|v| v.as_str()), Some("v"));
 }

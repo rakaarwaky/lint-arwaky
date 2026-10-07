@@ -1,10 +1,8 @@
 // PURPOSE: AdapterError, ScanError, ValidationError — structured error types for adapter operations
 use crate::taxonomy_adapter_name_vo::AdapterName;
-use crate::taxonomy_common_error::Cause;
 use crate::taxonomy_common_error::Constraint;
 use crate::taxonomy_common_error::ErrorMessage;
 use crate::taxonomy_common_error::ExitCode;
-use crate::taxonomy_common_error::FieldName;
 use crate::taxonomy_error_vo::ErrorCode;
 use crate::taxonomy_lint_vo::ContentString;
 use crate::taxonomy_path_vo::FilePath;
@@ -64,7 +62,7 @@ pub struct ScanError {
     #[serde(default)]
     pub adapter_name: Option<AdapterName>,
     #[serde(default)]
-    pub cause: Option<Cause>,
+    pub cause: Option<ContentString>,
     #[serde(default)]
     pub error_id: crate::taxonomy_error_vo::ErrorId,
 }
@@ -120,7 +118,7 @@ impl std::fmt::Display for ScanError {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, thiserror::Error)]
 pub struct ValidationError {
-    pub field_name: FieldName,
+    pub field_name: ContentString,
     pub message: ErrorMessage,
     #[serde(default)]
     pub constraint: Option<Constraint>,
@@ -129,9 +127,9 @@ pub struct ValidationError {
 }
 
 impl ValidationError {
-    pub fn new(field_name: FieldName, message: ErrorMessage) -> Self {
+    pub fn new(field_name: impl Into<ContentString>, message: ErrorMessage) -> Self {
         Self {
-            field_name,
+            field_name: field_name.into(),
             message,
             constraint: None,
             value: None,
