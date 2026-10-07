@@ -90,9 +90,11 @@ impl NamingConventionChecker {
         usize::try_from(value).unwrap_or(MIN_WORDS_DEFAULT)
     }
 
-    /// Regex cache: counts up to `MIN_WORDS_CACHE_MAX` use cached slots so
-    /// repeated checks don't rebuild the pattern. Counts above the cache build
-    /// the regex on demand so the configured value is honored exactly.
+    /// Regex cache: word counts 1..=10 use the cached `REGEX_TABLE` slots so
+    /// repeated checks don't rebuild the pattern. Counts above the table
+    /// (min_words >= 11) build the pattern on demand with an unbounded tail
+    /// (`{N-1,}`), so the configured value is honored exactly — a 10-word
+    /// stem is rejected when the configured minimum is 11, 15, or 100.
     fn naming_regex(min_words: usize) -> Option<Regex> {
         static REGEX_TABLE: [OnceLock<Option<Regex>>; 10] = [
             OnceLock::new(),
