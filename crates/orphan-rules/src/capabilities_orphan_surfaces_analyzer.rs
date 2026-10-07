@@ -49,7 +49,7 @@ impl ISurfacesOrphanProtocol for SurfacesOrphanAnalyzer {
         OrphanIndicatorResult::new(
             true,
             format!(
-                "WHY: {} surface '{}' is not reachable from any entry point.\nFIX: Import '{}' in a root_*_entry file or ensure it's reachable via the import graph.",
+                "AES506 SURFACE_ORPHAN: {} surface '{}' is not reachable from any entry point.\nWHY: A surface without reachability cannot handle any command.\nFIX: Import '{}' in a root_*_entry file or ensure it's reachable via the import graph.",
                 category, stem, stem
             ),
             severity,
