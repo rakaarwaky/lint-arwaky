@@ -434,10 +434,16 @@ Taxonomy file (VO, entity, error, event, constant) has no inbound imports from a
 
 **Severity:** MEDIUM
 
-Contract trait not implemented by the expected layer:
+Contract file not wired or missing implementation:
 
-- `_protocol` → not implemented by any `capabilities_` & not called by any `agent_`
-- `_aggregate` → not implemented by any `agent_` & not called by any `surface_`
+- **Reachability**: Not imported by any container or entry point → orphan
+- `_protocol` → not implemented by any `capabilities_` file
+- `_aggregate` → not implemented by any `agent_` file
+
+**Examples:**
+- Protocol with implementation but not wired in container → orphan
+- Aggregate with implementation but not wired → orphan
+- Barrel re-exported contract → not orphan
 
 ---
 
