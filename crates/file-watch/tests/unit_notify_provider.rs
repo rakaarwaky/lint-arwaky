@@ -27,8 +27,10 @@ async fn real_debounced_event_is_not_discarded() {
     fs::write(&target, "initial").expect("write probe");
 
     let config = WatchConfig {
-        path: shared_common::taxonomy_path_vo::FilePath::new(path_buf.to_string_lossy().into_owned())
-            .expect("valid path"),
+        path: shared_common::taxonomy_path_vo::FilePath::new(
+            path_buf.to_string_lossy().into_owned(),
+        )
+        .expect("valid path"),
         recursive: false,
         debounce_ms: 50,
         ignore_patterns: Vec::new(),
