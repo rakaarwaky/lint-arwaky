@@ -1,15 +1,14 @@
 // PURPOSE: LoggingOrchestrator — agent layer, composes the four
-// capability seams. Handles lifecycle (init) and emits timing/walker
-// events through the capability seams.
+// capability seams. One execute() method routes requests to capabilities.
 
 use std::sync::Arc;
 
 use shared_common::taxonomy_logging_vo::LogVerbosity;
-use shared_logging::contract_logging_aggregate::ILoggingAggregate;
+use shared_logging::contract_logging_aggregate::{ILoggingAggregate, LoggingRequest, LoggingResponse, LoggingRequestKind, LoggingResponseKind};
 use shared_logging::contract_logging_protocol::{
     IPhaseTimerProtocol, ISubscriberInstallProtocol, IWalkerReportProtocol,
 };
-use shared_logging::taxonomy_logging_vo::{PhaseTimer, SkipReason};
+use shared_logging::taxonomy_logging_vo::SkipReason;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -22,28 +21,33 @@ pub struct LoggingOrchestrator {
 // ─── Block 2: Aggregate Trait Implementation ──────────────
 
 impl ILoggingAggregate for LoggingOrchestrator {
-    fn init(&self, verbosity: LogVerbosity, with_ansi: bool) {
-        self.subscriber.install(verbosity, with_ansi);
-    }
-
-    fn phase_started(&self, phase: &'static str) -> PhaseTimer {
-        self.timer.phase_started(phase)
-    }
-
-    fn phase_finished(&self, timer: &PhaseTimer, count: Option<usize>) {
-        self.timer.phase_finished(timer, count);
-    }
-
-    fn walker_enter(&self, dir: &str) {
-        self.walker.walker_enter(dir);
-    }
-
-    fn walker_skip(&self, dir: &str, reason: SkipReason) {
-        self.walker.walker_skip(dir, reason);
-    }
-
-    fn files_discovered(&self, count: usize, elapsed_ms: u64) {
-        self.walker.files_discovered(count, elapsed_ms);
+    fn execute(&self, request: LoggingRequest) -> LoggingResponse {
+        match request.kind {
+            LoggingRequestKind::InstallSubscriber { verbosity, with_ansi } => {
+                self.subscriber.install(verbosity, with_ansi);
+                LoggingResponse { kind: LoggingResponseKind::Done }
+            }
+            LoggingRequestKind::PhaseStarted { phase } => {
+                let timer = self.timer.phase_started(phase);
+                LoggingResponse { kind: LoggingResponseKind::PhaseTimer { timer } }
+            }
+            LoggingRequestKind::PhaseFinished { timer, count } => {
+                self.timer.phase_finished(&timer, count);
+                LoggingResponse { kind: LoggingResponseKind::Done }
+            }
+            LoggingRequestKind::WalkerEnter { dir } => {
+                self.walker.walker_enter(&dir);
+                LoggingResponse { kind: LoggingResponseKind::Done }
+            }
+            LoggingRequestKind::WalkerSkip { dir, reason } => {
+                self.walker.walker_skip(&dir, reason);
+                LoggingResponse { kind: LoggingResponseKind::Done }
+            }
+            LoggingRequestKind::FilesDiscovered { count, elapsed_ms } => {
+                self.walker.files_discovered(count, elapsed_ms);
+                LoggingResponse { kind: LoggingResponseKind::Done }
+            }
+        }
     }
 }
 

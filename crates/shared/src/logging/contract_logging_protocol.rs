@@ -1,9 +1,8 @@
 // PURPOSE: logging capability contracts — four capability seams plus the
 // aggregate entry the orchestrator exposes to the surface.
 
-use crate::taxonomy_logging_vo::PhaseTimer;
-use crate::taxonomy_logging_vo::SkipReason;
-use shared_common::LogVerbosity;
+use crate::taxonomy_logging_vo::{FilterDirective, PhaseTimerVO, SkipReason};
+use shared_common::taxonomy_logging_vo::LogVerbosity;
 
 /// FR-Logging-001: Build the filter directives.
 ///

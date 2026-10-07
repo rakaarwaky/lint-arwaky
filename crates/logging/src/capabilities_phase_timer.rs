@@ -2,7 +2,7 @@
 // One capability seam that wraps any closure with elapsed_ms reporting.
 
 use shared_logging::contract_logging_protocol::IPhaseTimerProtocol;
-use shared_logging::taxonomy_logging_vo::PhaseTimer;
+use shared_logging::taxonomy_logging_vo::PhaseTimerVO;
 use tracing::info;
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -13,14 +13,14 @@ pub struct PhaseTimerCapability {}
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
 impl IPhaseTimerProtocol for PhaseTimerCapability {
-    fn phase_started(&self, phase: &'static str) -> PhaseTimer {
-        PhaseTimer {
+    fn phase_started(&self, phase: &'static str) -> PhaseTimerVO {
+        PhaseTimerVO {
             phase,
             start: std::time::Instant::now(),
         }
     }
 
-    fn phase_finished(&self, timer: &PhaseTimer, count: Option<usize>) {
+    fn phase_finished(&self, timer: &PhaseTimerVO, count: Option<usize>) {
         let elapsed_ms = timer.start.elapsed().as_millis() as u64;
         match count {
             Some(n) => {

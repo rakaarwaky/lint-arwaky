@@ -18,7 +18,7 @@ pub use contract_logging_protocol::{
 pub use contract_logging_protocol::ISubscriberInstallProtocol as ISubscriberInitProtocol;
 
 // Taxonomy types
-pub use taxonomy_logging_vo::{AUDIT_TARGET, PhaseTimer, SkipReason, WalkAction};
+pub use taxonomy_logging_vo::{AUDIT_TARGET, PhaseTimerVO, SkipReason, WalkAction};
 
 // Re-export LogVerbosity from shared-common for convenience.
 pub use shared_common::LogVerbosity;

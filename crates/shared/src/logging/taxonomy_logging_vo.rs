@@ -1,15 +1,23 @@
 // PURPOSE: Taxonomy types for the logging feature.
 //
-// `LogVerbosity` lives in `shared_common` (it's a true cross-cutting
-// taxonomy value used by the CLI entry point and every capability).
-// This file owns only the logging-feature-specific types.
+// All types here are Value Objects that cross layer boundaries.
+
+use shared_common::taxonomy_logging_vo::LogVerbosity;
+use std::time::Instant;
+
+/// The filter directive string for `LogVerbosity::Default` — returned by
+/// `build_filter` when no `LINT_ARWAKY_LOG` env var is set.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct FilterDirective {
+    pub value: String,
+}
 
 /// One timing scope for a scan phase. Created by `IPhaseTimerProtocol::phase_started`,
 /// consumed by `phase_finished` to emit the `phase_done` event.
 #[derive(Clone, Debug)]
-pub struct PhaseTimer {
+pub struct PhaseTimerVO {
     pub phase: &'static str,
-    pub start: std::time::Instant,
+    pub start: Instant,
 }
 
 /// The four reasons a walker can skip a directory. Reported verbatim in

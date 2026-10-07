@@ -1,33 +1,40 @@
 // PURPOSE: ILoggingAggregate — single entry point over the logging feature.
 //
-// This is NOT a standard feature aggregate with execute(request) -> response.
-// Logging is cross-cutting infrastructure. The aggregate provides direct
-// methods that capabilities implement, similar to how ISubscriberInitProtocol
-// provides build_filter() and init().
-//
-// Root callers use these methods; the dispatcher will later use them via
-// the walker reporter and phase timer.
+// One `execute` method that routes LoggingRequest to capability seams.
+// Uses PhaseTimerVO (not raw primitives) in signatures per AES402.
 
-use crate::taxonomy_logging_vo::SkipReason;
 use shared_common::taxonomy_logging_vo::LogVerbosity;
+use crate::taxonomy_logging_vo::{PhaseTimerVO, SkipReason};
+
+/// Request for the logging feature.
+pub struct LoggingRequest {
+    pub kind: LoggingRequestKind,
+}
+
+/// The kind of logging operation requested.
+pub enum LoggingRequestKind {
+    InstallSubscriber { verbosity: LogVerbosity, with_ansi: bool },
+    PhaseStarted { phase: &'static str },
+    PhaseFinished { timer: PhaseTimerVO, count: Option<usize> },
+    WalkerEnter { dir: String },
+    WalkerSkip { dir: String, reason: SkipReason },
+    FilesDiscovered { count: usize, elapsed_ms: u64 },
+}
+
+/// Response from the logging feature.
+pub struct LoggingResponse {
+    pub kind: LoggingResponseKind,
+}
+
+/// The kind of logging response returned.
+pub enum LoggingResponseKind {
+    Done,
+    PhaseTimer { timer: PhaseTimerVO },
+}
 
 /// Single entry point over the logging feature.
+///
+/// ONE method only: `execute`. All behavior routes through request variants.
 pub trait ILoggingAggregate: Send + Sync {
-    /// Install the global subscriber: build the filter, then install it.
-    fn init(&self, verbosity: LogVerbosity, with_ansi: bool);
-
-    /// Begin timing a phase; returns a PhaseTimer for the caller to hold.
-    fn phase_started(&self, phase: &'static str) -> crate::taxonomy_logging_vo::PhaseTimer;
-
-    /// End timing a phase; emit the elapsed_ms event.
-    fn phase_finished(&self, timer: &crate::taxonomy_logging_vo::PhaseTimer, count: Option<usize>);
-
-    /// Emit a walker-enter event.
-    fn walker_enter(&self, dir: &str);
-
-    /// Emit a walker-skip event with reason.
-    fn walker_skip(&self, dir: &str, reason: SkipReason);
-
-    /// Emit a files-discovered event with count and elapsed time.
-    fn files_discovered(&self, count: usize, elapsed_ms: u64);
+    fn execute(&self, request: LoggingRequest) -> LoggingResponse;
 }
