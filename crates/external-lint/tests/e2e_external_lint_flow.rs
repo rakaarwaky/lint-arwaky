@@ -84,10 +84,8 @@ impl IJsToolResolutionProtocol for MockJsResolution {
         _: &FilePath,
         _: &shared_common::taxonomy_tool_name_vo::ToolName,
         _: &str,
-    ) -> Result<shared_common::taxonomy_message_vo::ComplianceStatus, LinterOperationError> {
-        Ok(shared_common::taxonomy_message_vo::ComplianceStatus::new(
-            false,
-        ))
+    ) -> Result<shared_common::taxonomy_compliance_vo::ComplianceStatus, LinterOperationError> {
+        Ok(shared_common::taxonomy_compliance_vo::ComplianceStatus::new(false))
     }
 }
 

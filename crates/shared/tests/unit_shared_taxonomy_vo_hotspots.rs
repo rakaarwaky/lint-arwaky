@@ -8,11 +8,11 @@
 use shared_common::taxonomy_adapter_name_vo::AdapterName;
 use shared_common::taxonomy_layer_vo::{FileContentVO, Identity, LayerNameVO, LineContentVO};
 use shared_common::taxonomy_lint_result_vo::{LintResult, LintResultList};
-use shared_common::taxonomy_message_vo::{ComplianceStatus, LintMessage};
 use shared_common::taxonomy_severity_vo::Severity;
 use shared_common::taxonomy_suggestion_vo::{
     ClassPath, DescriptionVO, LogOutput, MetadataVO, StdError, StdOutput, Suggestion,
 };
+use shared_common::{ComplianceStatus, LintMessage};
 
 // ── LintResult ──────────────────────────────────────────────
 #[test]
