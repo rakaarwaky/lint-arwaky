@@ -28,8 +28,8 @@ pub trait ISubscriberInstallProtocol: Send + Sync {
 /// emits `{phase, elapsed_ms, count?}` on the audit target. The timer is
 /// a scope guard — the end marker fires even if the phase panics.
 pub trait IPhaseTimerProtocol: Send + Sync {
-    fn phase_started(&self, phase: &'static str) -> PhaseTimer;
-    fn phase_finished(&self, timer: &PhaseTimer, count: Option<usize>);
+    fn phase_started(&self, phase: &'static str) -> PhaseTimerVO;
+    fn phase_finished(&self, timer: &PhaseTimerVO, count: Option<usize>);
 }
 
 /// FR-Logging-004: Report walker progress.

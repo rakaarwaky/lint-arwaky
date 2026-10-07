@@ -4,7 +4,9 @@
 use std::sync::Arc;
 
 use shared_common::taxonomy_logging_vo::LogVerbosity;
-use shared_logging::contract_logging_aggregate::{ILoggingAggregate, LoggingRequest, LoggingResponse, LoggingRequestKind, LoggingResponseKind};
+use shared_logging::contract_logging_aggregate::{
+    ILoggingAggregate, LoggingRequest, LoggingRequestKind, LoggingResponse, LoggingResponseKind,
+};
 use shared_logging::contract_logging_protocol::{
     IPhaseTimerProtocol, ISubscriberInstallProtocol, IWalkerReportProtocol,
 };
@@ -23,29 +25,44 @@ pub struct LoggingOrchestrator {
 impl ILoggingAggregate for LoggingOrchestrator {
     fn execute(&self, request: LoggingRequest) -> LoggingResponse {
         match request.kind {
-            LoggingRequestKind::InstallSubscriber { verbosity, with_ansi } => {
+            LoggingRequestKind::InstallSubscriber {
+                verbosity,
+                with_ansi,
+            } => {
                 self.subscriber.install(verbosity, with_ansi);
-                LoggingResponse { kind: LoggingResponseKind::Done }
+                LoggingResponse {
+                    kind: LoggingResponseKind::Done,
+                }
             }
             LoggingRequestKind::PhaseStarted { phase } => {
                 let timer = self.timer.phase_started(phase);
-                LoggingResponse { kind: LoggingResponseKind::PhaseTimer { timer } }
+                LoggingResponse {
+                    kind: LoggingResponseKind::PhaseTimer { timer },
+                }
             }
             LoggingRequestKind::PhaseFinished { timer, count } => {
                 self.timer.phase_finished(&timer, count);
-                LoggingResponse { kind: LoggingResponseKind::Done }
+                LoggingResponse {
+                    kind: LoggingResponseKind::Done,
+                }
             }
             LoggingRequestKind::WalkerEnter { dir } => {
                 self.walker.walker_enter(&dir);
-                LoggingResponse { kind: LoggingResponseKind::Done }
+                LoggingResponse {
+                    kind: LoggingResponseKind::Done,
+                }
             }
             LoggingRequestKind::WalkerSkip { dir, reason } => {
                 self.walker.walker_skip(&dir, reason);
-                LoggingResponse { kind: LoggingResponseKind::Done }
+                LoggingResponse {
+                    kind: LoggingResponseKind::Done,
+                }
             }
             LoggingRequestKind::FilesDiscovered { count, elapsed_ms } => {
                 self.walker.files_discovered(count, elapsed_ms);
-                LoggingResponse { kind: LoggingResponseKind::Done }
+                LoggingResponse {
+                    kind: LoggingResponseKind::Done,
+                }
             }
         }
     }

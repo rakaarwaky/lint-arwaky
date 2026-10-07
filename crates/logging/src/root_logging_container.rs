@@ -8,7 +8,9 @@ use crate::capabilities_phase_timer::PhaseTimerCapability;
 use crate::capabilities_subscriber_init::SubscriberInit;
 use crate::capabilities_walker_reporter::WalkerReporter;
 use shared_common::taxonomy_logging_vo::LogVerbosity;
-use shared_logging::contract_logging_aggregate::{ILoggingAggregate, LoggingRequest, LoggingRequestKind};
+use shared_logging::contract_logging_aggregate::{
+    ILoggingAggregate, LoggingRequest, LoggingRequestKind,
+};
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -37,7 +39,10 @@ impl LoggingContainer {
 
     pub fn init(&self, verbosity: LogVerbosity, with_ansi: bool) {
         self.orchestrator.execute(LoggingRequest {
-            kind: LoggingRequestKind::InstallSubscriber { verbosity, with_ansi },
+            kind: LoggingRequestKind::InstallSubscriber {
+                verbosity,
+                with_ansi,
+            },
         });
     }
 }
