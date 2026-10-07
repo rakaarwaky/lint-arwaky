@@ -193,8 +193,14 @@ jobs:
           # Skip only when an open release PR for this version already
           # exists (prevents duplicate release PRs after a merge). The
           # branch itself may exist from a previous attempt.
-          if gh pr list --head "$BRANCH" --state open --json number \
-            --jq 'length' 2>/dev/null | grep -q '[1-9]'; then
+          # Use the REST API (not gh pr) — GITHUB_TOKEN on workflow_run /
+          # workflow_dispatch events cannot call the createPullRequest
+          # GraphQL mutation regardless of repo-level permissions.
+          REPO_OWNER="${GITHUB_REPOSITORY%%/*}"
+          EXISTING=$(curl -s -H "Authorization: token ${GITHUB_TOKEN}" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/pulls?head=${REPO_OWNER}:${BRANCH}&state=open" \
+            | python3 -c "import json,sys; print(len(json.load(sys.stdin)))")
+          if [ "$EXISTING" -gt 0 ]; then
             echo "Release PR for ${VERSION} already open — skipping."
             exit 0
           fi
@@ -210,16 +216,20 @@ jobs:
           git switch -c "$BRANCH"
           git push --force-with-lease -u origin "$BRANCH"
 
-          # Open a PR to main; the auto-merge workflow merges it once the
-          # required checks pass. A failure here must fail the job.
-          PR_BODY=$(cat <<BODY
-          Automated release PR for v${VERSION}.
-
-          ## Changelog
-
-          See the version entry in [CHANGELOG.md](CHANGELOG.md).
-          BODY
-          )
-          gh pr create --base main --head "$BRANCH" \
-            --title "chore(release): v${VERSION}" \
-            --body "$PR_BODY"
+          # Open a draft PR to main via the REST API; the auto-merge workflow
+          # merges it once the required checks pass. A failure here must fail
+          # the job. Draft status is intentional: a release PR should not
+          # auto-merge until explicitly approved.
+          PR_BODY="Automated release PR for v${VERSION}.\n\n## Changelog\n\nSee the version entry in [CHANGELOG.md](CHANGELOG.md)."
+          PR_PAYLOAD=$(python3 -c "import json,sys; v=sys.argv[1]; b=sys.argv[2]; print(json.dumps({'title':f'chore(release): v{v}','head':f'release/v{v}','base':'main','body':b,'draft':True}))" "$VERSION" "$PR_BODY")
+          PR_RESPONSE=$(curl -s -X POST \
+            -H "Authorization: token ${GITHUB_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d "$PR_PAYLOAD" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/pulls")
+          PR_URL=$(echo "$PR_RESPONSE" | python3 -c "import json,sys; print(json.load(sys.stdin).get('html_url',''))" 2>/dev/null)
+          if [ -z "$PR_URL" ]; then
+            echo "::error::PR creation failed: ${PR_RESPONSE}"
+            exit 1
+          fi
+          echo "Opened draft release PR: ${PR_URL}"
