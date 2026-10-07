@@ -6,17 +6,16 @@ use logging_lint_arwaky::LogVerbosity;
 
 #[test]
 fn filter_directive_default() {
-    assert_eq!(
-        LogVerbosity::Default.filter_directive(),
-        "warn,lint_arwaky::audit=info"
-    );
+    // CLI is quiet by default — no audit events unless verbose.
+    assert_eq!(LogVerbosity::Default.filter_directive(), "warn");
 }
 
 #[test]
 fn filter_directive_info() {
+    // Verbose (`-v`) enables the real-time scan feed.
     assert_eq!(
         LogVerbosity::Info.filter_directive(),
-        "info,lint_arwaky::audit=info"
+        "warn,lint_arwaky::audit=info"
     );
 }
 

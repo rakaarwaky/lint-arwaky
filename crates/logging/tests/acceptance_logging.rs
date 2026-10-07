@@ -10,10 +10,7 @@ use logging_lint_arwaky::root_logging_container::LoggingContainer;
 #[test]
 fn fr_001_default_filter_directive() {
     // CLI is quiet by default — no audit events unless verbose.
-    assert_eq!(
-        LogVerbosity::Default.filter_directive(),
-        "warn"
-    );
+    assert_eq!(LogVerbosity::Default.filter_directive(), "warn");
 }
 
 #[test]
