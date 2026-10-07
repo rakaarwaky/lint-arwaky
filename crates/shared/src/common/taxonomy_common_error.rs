@@ -1,13 +1,9 @@
-// PURPOSE: Cause, Constraint, ExitCode, FieldName, ModuleName, PrimitiveTypeName — common error value objects
+// PURPOSE: Constraint, ExitCode — common error value objects
 use crate::string_value_object;
 pub use crate::taxonomy_common_vo::ErrorMessage;
 use serde::Serialize;
 
-string_value_object!(Cause);
 string_value_object!(Constraint);
-string_value_object!(FieldName);
-string_value_object!(ModuleName);
-string_value_object!(PrimitiveTypeName);
 
 /// Strongly-typed exit code value object. Written manually because the
 /// `string_value_object!` macro only supports `String` (not `i64`).

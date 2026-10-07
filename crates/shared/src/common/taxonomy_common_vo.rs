@@ -1,31 +1,8 @@
-// PURPOSE: BooleanVO, ColumnNumber, Count, DataFlowList, LineContentList, LineNumber, PatternList, Score, Timestamp — common VOs
-use crate::taxonomy_job_vo::JobId;
-use crate::taxonomy_job_vo::ResponseData;
-use crate::taxonomy_layer_vo::LineContentVO;
+// PURPOSE: BooleanVO, ColumnNumber, Count, LineNumber, PatternList, Score, Timestamp — common VOs
 use crate::taxonomy_severity_vo::Severity;
 use serde::{Deserialize, Serialize};
 
-use crate::{list_wrapper_vo, primitive_value_object, string_value_object};
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub enum LanguageVO {
-    Rust,
-    Python,
-    JavaScript,
-    Unknown,
-}
-
-impl LanguageVO {
-    pub fn from_path(path: &str) -> Self {
-        let ext = path.rsplit('.').next().unwrap_or("");
-        match ext {
-            "rs" => LanguageVO::Rust,
-            "py" => LanguageVO::Python,
-            "js" | "ts" | "jsx" | "tsx" => LanguageVO::JavaScript,
-            _ => LanguageVO::Unknown,
-        }
-    }
-}
+use crate::{primitive_value_object, string_value_object};
 
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(transparent)]
@@ -139,11 +116,6 @@ impl SuffixPolicyVO {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
-pub struct SuffixVO {
-    pub values: PatternList,
-}
-
 /// File content pair: path + content string (replaces raw `(PathBuf, String)` in contract signatures).
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct FileContentPair {
@@ -156,11 +128,6 @@ impl FileContentPair {
         Self { path, content }
     }
 }
-
-list_wrapper_vo!(DataFlowList, ErrorMessage);
-list_wrapper_vo!(JobIdList, JobId);
-list_wrapper_vo!(LineContentList, LineContentVO);
-list_wrapper_vo!(ResponseDataList, ResponseData);
 
 // PatternList uses custom coercion trait; hand-written to preserve the
 // `IntoPatternListValues` surface that downstream code relies on.

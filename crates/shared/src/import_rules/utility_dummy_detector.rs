@@ -1,15 +1,15 @@
 // PURPOSE: utility_dummy_helper — pure utility functions for dummy function, block, and trait detection
-use shared_common::taxonomy_common_vo::LanguageVO;
 use shared_common::taxonomy_common_vo::LineNumber;
+use shared_common::taxonomy_language_vo::Language;
 use shared_common::taxonomy_name_vo::SymbolName;
 use shared_filesystem::taxonomy_filesystem_vo::ImportEntry;
 
-pub fn dummy_function_ranges(lines: &[&str], lang: LanguageVO) -> Vec<(LineNumber, LineNumber)> {
+pub fn dummy_function_ranges(lines: &[&str], lang: Language) -> Vec<(LineNumber, LineNumber)> {
     match lang {
-        LanguageVO::Rust => rust_dummy_function_ranges(lines),
-        LanguageVO::Python => python_dummy_function_ranges(lines),
-        LanguageVO::JavaScript => js_dummy_function_ranges(lines),
-        LanguageVO::Unknown => Vec::new(),
+        Language::Rust => rust_dummy_function_ranges(lines),
+        Language::Python => python_dummy_function_ranges(lines),
+        Language::JavaScript | Language::TypeScript => js_dummy_function_ranges(lines),
+        Language::Unknown => Vec::new(),
     }
 }
 

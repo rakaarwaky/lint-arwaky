@@ -1,6 +1,6 @@
 use shared_cli_commands::LintResult;
 use shared_common::taxonomy_layer_vo::LayerMapVO;
-use shared_common::{ContentString, FilePath, Identity, LanguageVO, LineNumber, Severity};
+use shared_common::{ContentString, FilePath, Identity, Language, LineNumber, Severity};
 use shared_filesystem::taxonomy_filesystem_vo::ImportEntry;
 
 use shared_import_rules::contract_import_protocol::IDummyImportCheckerProtocol;
@@ -238,12 +238,12 @@ impl DummyImportChecker {
         for (i, line) in lines.iter().enumerate() {
             let trimmed = line.trim();
             let is_dummy = match ctx.lang {
-                LanguageVO::Rust => trimmed.starts_with("fn _use_") && trimmed.contains("()"),
-                LanguageVO::Python => trimmed.starts_with("def _use_") && trimmed.contains("()"),
-                LanguageVO::JavaScript => {
+                Language::Rust => trimmed.starts_with("fn _use_") && trimmed.contains("()"),
+                Language::Python => trimmed.starts_with("def _use_") && trimmed.contains("()"),
+                Language::JavaScript | Language::TypeScript => {
                     trimmed.starts_with("function _use") && trimmed.contains("()")
                 }
-                LanguageVO::Unknown => false,
+                Language::Unknown => false,
             };
             if is_dummy {
                 has_dummy_function = true;
@@ -261,19 +261,19 @@ impl DummyImportChecker {
                 .is_some_and(|line| {
                     let t = line.trim();
                     match ctx.lang {
-                        LanguageVO::Rust => {
+                        Language::Rust => {
                             t.contains("use shared::taxonomy_")
                                 || t.contains("use shared_common::taxonomy_")
                                 || t.contains("use crate::common::taxonomy_")
                                 || t.contains("use crate::taxonomy_")
                         }
-                        LanguageVO::Python => {
+                        Language::Python => {
                             t.contains("from taxonomy_") || t.contains("from shared.taxonomy_")
                         }
-                        LanguageVO::JavaScript => {
+                        Language::JavaScript | Language::TypeScript => {
                             t.contains("from 'taxonomy_") || t.contains("from \"taxonomy_")
                         }
-                        LanguageVO::Unknown => false,
+                        Language::Unknown => false,
                     }
                 });
             if !is_taxonomy {
@@ -291,19 +291,19 @@ impl DummyImportChecker {
             let has_taxonomy_import = lines.iter().any(|l| {
                 let t = l.trim();
                 match ctx.lang {
-                    LanguageVO::Rust => {
+                    Language::Rust => {
                         t.contains("use shared::taxonomy_")
                             || t.contains("use shared_common::taxonomy_")
                             || t.contains("use crate::common::taxonomy_")
                             || t.contains("use crate::taxonomy_")
                     }
-                    LanguageVO::Python => {
+                    Language::Python => {
                         t.contains("import taxonomy_") || t.contains("from taxonomy_")
                     }
-                    LanguageVO::JavaScript => {
+                    Language::JavaScript | Language::TypeScript => {
                         t.contains("from 'taxonomy_") || t.contains("from \"taxonomy_")
                     }
-                    LanguageVO::Unknown => false,
+                    Language::Unknown => false,
                 }
             });
             if has_taxonomy_import {
@@ -327,7 +327,8 @@ impl DummyImportChecker {
             return;
         }
         let lines: Vec<&str> = content.lines().collect();
-        let lang = LanguageVO::from_path(file);
+        let ext = file.rsplit('.').next().unwrap_or("");
+        let lang = Language::from_extension(ext).unwrap_or(Language::Unknown);
         let logic_patterns = [
             "lint_path(",
             "compute_score(",
@@ -338,12 +339,12 @@ impl DummyImportChecker {
         for (i, line) in lines.iter().enumerate() {
             let trimmed = line.trim();
             let is_skip = match lang {
-                LanguageVO::Rust => trimmed.starts_with("//") || trimmed.starts_with("fn _use_"),
-                LanguageVO::Python => trimmed.starts_with("#") || trimmed.starts_with("def _use_"),
-                LanguageVO::JavaScript => {
+                Language::Rust => trimmed.starts_with("//") || trimmed.starts_with("fn _use_"),
+                Language::Python => trimmed.starts_with("#") || trimmed.starts_with("def _use_"),
+                Language::JavaScript | Language::TypeScript => {
                     trimmed.starts_with("//") || trimmed.starts_with("function _use")
                 }
-                LanguageVO::Unknown => false,
+                Language::Unknown => false,
             };
             if is_skip {
                 continue;
@@ -371,7 +372,7 @@ fn is_future_import(lines: &[&str], symbol: &str) -> bool {
 
 struct DummyFileContext {
     lines: Vec<String>,
-    lang: LanguageVO,
+    lang: Language,
     dummy_ranges: Vec<(LineNumber, LineNumber)>,
     dummy_impl_traits: Vec<String>,
 }
@@ -387,7 +388,8 @@ impl DummyFileContext {
         }
         let lines: Vec<String> = content.lines().map(|l| l.to_string()).collect();
         let str_refs: Vec<&str> = lines.iter().map(|s| s.as_str()).collect();
-        let lang = LanguageVO::from_path(file);
+        let ext = file.rsplit('.').next().unwrap_or("");
+        let lang = Language::from_extension(ext).unwrap_or(Language::Unknown);
         let dummy_ranges = utility_dummy_detector::dummy_function_ranges(&str_refs, lang);
         let dummy_impl_traits: Vec<String> =
             utility_dummy_detector::dummy_impl_traits_with_lines(&str_refs)
