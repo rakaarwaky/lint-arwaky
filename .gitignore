@@ -66,3 +66,4 @@ serviceAccountKey
 # crates/shared/build.rs), not here.
 .agents/
 
+trigger clippy
