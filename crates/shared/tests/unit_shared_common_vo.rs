@@ -18,7 +18,6 @@ use shared_common::taxonomy_job_vo::{AdapterMetadata, McpConfigVO, SuccessStatus
 use shared_common::taxonomy_language_vo::Language;
 use shared_common::taxonomy_layer_vo::{FileContentVO, Identity, LayerNameVO, LineContentVO};
 use shared_common::taxonomy_lint_vo::{Location, LocationList, ScopeRef};
-use shared_common::taxonomy_message_vo::{ComplianceStatus, LintMessage};
 use shared_common::taxonomy_path_vo::{DirectoryPath, FilePath};
 use shared_common::taxonomy_paths_vo::{FilePathList, RenamedFile};
 use shared_common::taxonomy_severity_vo::Severity;
@@ -26,6 +25,7 @@ use shared_common::taxonomy_suggestion_vo::{
     ClassPath, DescriptionVO, LogOutput, MetadataVO, StdError, StdOutput, Suggestion,
 };
 use shared_common::taxonomy_threshold_vo::Threshold;
+use shared_common::{ComplianceStatus, LintMessage};
 use shared_common::{LintResult, LintResultList};
 use shared_filesystem::utility_command_runner::{run_command, run_command_in_dir};
 use std::str::FromStr;
