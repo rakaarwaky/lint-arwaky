@@ -228,9 +228,9 @@ impl FilesystemOrchestrator {
     fn build_orphan_graph_context(
         &self,
         root_dir: &Path,
-        _ignored: &[String],
+        ignored: &[String],
     ) -> GraphAnalysisContext {
-        self.build_file_index(root_dir);
+        self.build_file_index_with_ignored(root_dir, ignored);
         self.ensure_graph_built();
         let top_root = self
             .deps
