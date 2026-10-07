@@ -174,3 +174,67 @@ fn io_capability_parse_output_lines_filters_empty() {
     let result = io.parse_output_lines("a\n\nb\n  \nc\n");
     assert_eq!(result.lines, vec!["a", "b", "c"]);
 }
+
+#[test]
+fn warm_index_rebuilds_when_ignore_set_changes() {
+    let tmp = TempDir::new().unwrap();
+    // Create files in two directories: one that will be ignored and one that won't.
+    let dir_a = tmp.path().join("dir_a");
+    let dir_b = tmp.path().join("dir_b");
+    std::fs::create_dir_all(&dir_a).unwrap();
+    std::fs::create_dir_all(&dir_b).unwrap();
+    std::fs::write(dir_a.join("a.rs"), "pub fn in_a() {}\n").unwrap();
+    std::fs::write(dir_b.join("b.rs"), "pub fn in_b() {}\n").unwrap();
+
+    let container = FilesystemContainer::new();
+    let orch = container.orchestrator();
+    let root = tmp.path();
+
+    // First build: no extra ignores → both files visible.
+    orch.execute(FilesystemRequest::BuildFileIndexWithIgnored {
+        root: root.to_path_buf(),
+        ignored: Vec::new(),
+    });
+    let files1 = orch.execute(FilesystemRequest::FileList).into_file_list();
+    assert_eq!(files1.len(), 2, "first build should include both files");
+
+    // Second build: ignore dir_b → only dir_a file visible.
+    orch.execute(FilesystemRequest::BuildFileIndexWithIgnored {
+        root: root.to_path_buf(),
+        ignored: vec!["dir_b/".to_string()],
+    });
+    let files2 = orch.execute(FilesystemRequest::FileList).into_file_list();
+    assert_eq!(
+        files2.len(),
+        1,
+        "rebuild with dir_b ignored should show only dir_a file"
+    );
+    assert!(
+        files2[0].path.to_string_lossy().contains("dir_a"),
+        "the remaining file should be in dir_a"
+    );
+
+    // Third build: back to no extra ignores → both files visible again.
+    orch.execute(FilesystemRequest::BuildFileIndexWithIgnored {
+        root: root.to_path_buf(),
+        ignored: Vec::new(),
+    });
+    let files3 = orch.execute(FilesystemRequest::FileList).into_file_list();
+    assert_eq!(
+        files3.len(),
+        2,
+        "rebuild back to original ignore set should restore both files"
+    );
+
+    // Fourth build: same ignore set as last → no-op, still two files.
+    orch.execute(FilesystemRequest::BuildFileIndexWithIgnored {
+        root: root.to_path_buf(),
+        ignored: Vec::new(),
+    });
+    let files4 = orch.execute(FilesystemRequest::FileList).into_file_list();
+    assert_eq!(
+        files4.len(),
+        2,
+        "identical ignore set should be a no-op, not a rebuild"
+    );
+}
