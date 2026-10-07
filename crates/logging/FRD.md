@@ -165,9 +165,7 @@ flowchart TD
 
 | Method | Input | Output | Error | Event | Description |
 |---|---|---|---|---|---|
-| `init` | `LogVerbosity`, `with_ansi: bool` | `()` | — | — | Install the subscriber: build the filter, then install it. |
-| `time_phase` | `&str`, a closure | `()` | — | `phase_start` / `phase_done` | Run the closure with the phase timed. |
-| `report_walk` | `dir: &str`, `action: WalkAction` | `()` | — | `walker_enter` / `walker_skip` / `files_discovered` | Emit one walker event. |
+| `execute` | `LoggingRequest` | `LoggingResponse` | — | — | Single entry point. Routes request variants to capability seams. |
 
 ---
 

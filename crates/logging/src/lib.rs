@@ -16,7 +16,7 @@ pub use root_logging_container::LoggingContainer;
 
 // Re-exported so CLI and MCP entry points can import from this crate
 // without adding a second shared-common import.
-pub use shared_common::LogVerbosity;
+pub use shared_logging::LogVerbosity;
 pub use shared_logging::AUDIT_TARGET;
 pub use shared_logging::ILoggingAggregate;
 pub use shared_logging::ISubscriberInitProtocol;

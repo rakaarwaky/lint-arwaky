@@ -4,6 +4,8 @@
 
 pub mod contract_logging_aggregate;
 pub mod contract_logging_protocol;
+pub mod taxonomy_logging_request;
+pub mod taxonomy_logging_response;
 pub mod taxonomy_logging_vo;
 
 // ─── Re-exports ────────────────────────────────────────────
@@ -13,12 +15,18 @@ pub use contract_logging_aggregate::ILoggingAggregate;
 pub use contract_logging_protocol::{
     IFilterBuildProtocol, IPhaseTimerProtocol, ISubscriberInstallProtocol, IWalkerReportProtocol,
 };
+
 // Backward-compat alias: the old single-trait seam kept as a type alias so
 // that existing code importing ISubscriberInitProtocol continues to resolve.
 pub use contract_logging_protocol::ISubscriberInstallProtocol as ISubscriberInitProtocol;
 
 // Taxonomy types
-pub use taxonomy_logging_vo::{AUDIT_TARGET, PhaseTimerVO, SkipReason, WalkAction};
+pub use taxonomy_logging_vo::{
+    AUDIT_TARGET, FilterDirective, LogVerbosity, PhaseTimerVO, SkipReason, WalkAction,
+};
 
-// Re-export LogVerbosity from shared-common for convenience.
-pub use shared_common::LogVerbosity;
+// Request/Response types
+pub use taxonomy_logging_request::LoggingRequest;
+pub use taxonomy_logging_request::LoggingRequestKind;
+pub use taxonomy_logging_response::LoggingResponse;
+pub use taxonomy_logging_response::LoggingResponseKind;

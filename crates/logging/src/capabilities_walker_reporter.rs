@@ -4,7 +4,7 @@
 // are skipped.
 
 use shared_logging::contract_logging_protocol::IWalkerReportProtocol;
-use shared_logging::taxonomy_logging_vo::SkipReason;
+use shared_logging::taxonomy_logging_vo::{Count, DurationMs, SkipReason};
 use tracing::info;
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -24,8 +24,8 @@ impl IWalkerReportProtocol for WalkerReporter {
         info!(target: "lint_arwaky::audit", event = "walker_skip", dir = dir, reason = reason_str, "skipping directory");
     }
 
-    fn files_discovered(&self, count: usize, elapsed_ms: u64) {
-        info!(target: "lint_arwaky::audit", event = "files_discovered", count = count, elapsed_ms = elapsed_ms, "walk complete");
+    fn files_discovered(&self, count: Count, elapsed_ms: DurationMs) {
+        info!(target: "lint_arwaky::audit", event = "files_discovered", count = count.value, elapsed_ms = elapsed_ms.value, "walk complete");
     }
 }
 

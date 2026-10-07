@@ -1,8 +1,7 @@
 // PURPOSE: logging capability contracts — four capability seams plus the
 // aggregate entry the orchestrator exposes to the surface.
 
-use crate::taxonomy_logging_vo::{FilterDirective, PhaseTimerVO, SkipReason};
-use shared_common::taxonomy_logging_vo::LogVerbosity;
+use crate::taxonomy_logging_vo::{Count, DurationMs, FilterDirective, LogVerbosity, PhaseTimerVO, SkipReason};
 
 /// FR-Logging-001: Build the filter directives.
 ///
@@ -40,5 +39,5 @@ pub trait IPhaseTimerProtocol: Send + Sync {
 pub trait IWalkerReportProtocol: Send + Sync {
     fn walker_enter(&self, dir: &str);
     fn walker_skip(&self, dir: &str, reason: SkipReason);
-    fn files_discovered(&self, count: usize, elapsed_ms: u64);
+    fn files_discovered(&self, count: Count, elapsed_ms: DurationMs);
 }

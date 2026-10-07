@@ -25,7 +25,8 @@ pub mod taxonomy_logging_vo;
 
 pub use taxonomy_lint_result_vo::LintResult;
 pub use taxonomy_lint_result_vo::LintResultList;
-pub use taxonomy_logging_vo::LogVerbosity;
+// NOTE: LogVerbosity moved to shared_logging. Code importing from here
+// should instead import from shared_logging::LogVerbosity directly.
 pub mod taxonomy_message_vo;
 pub mod taxonomy_name_vo;
 pub mod taxonomy_operation_error;

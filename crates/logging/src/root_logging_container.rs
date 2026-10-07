@@ -7,10 +7,9 @@ use crate::agent_logging_orchestrator::LoggingOrchestrator;
 use crate::capabilities_phase_timer::PhaseTimerCapability;
 use crate::capabilities_subscriber_init::SubscriberInit;
 use crate::capabilities_walker_reporter::WalkerReporter;
-use shared_common::taxonomy_logging_vo::LogVerbosity;
-use shared_logging::contract_logging_aggregate::{
-    ILoggingAggregate, LoggingRequest, LoggingRequestKind,
-};
+use shared_logging::LogVerbosity;
+use shared_logging::contract_logging_aggregate::ILoggingAggregate;
+use shared_logging::taxonomy_logging_request::{LoggingRequest, LoggingRequestKind};
 
 // ─── Block 1: Struct Definition ───────────────────────────
 

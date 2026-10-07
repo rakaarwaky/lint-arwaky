@@ -3,14 +3,12 @@
 
 use std::sync::Arc;
 
-use shared_common::taxonomy_logging_vo::LogVerbosity;
-use shared_logging::contract_logging_aggregate::{
-    ILoggingAggregate, LoggingRequest, LoggingRequestKind, LoggingResponse, LoggingResponseKind,
-};
+use shared_logging::contract_logging_aggregate::ILoggingAggregate;
 use shared_logging::contract_logging_protocol::{
     IPhaseTimerProtocol, ISubscriberInstallProtocol, IWalkerReportProtocol,
 };
-use shared_logging::taxonomy_logging_vo::SkipReason;
+use shared_logging::taxonomy_logging_request::{LoggingRequest, LoggingRequestKind};
+use shared_logging::taxonomy_logging_response::{LoggingResponse, LoggingResponseKind};
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -25,10 +23,8 @@ pub struct LoggingOrchestrator {
 impl ILoggingAggregate for LoggingOrchestrator {
     fn execute(&self, request: LoggingRequest) -> LoggingResponse {
         match request.kind {
-            LoggingRequestKind::InstallSubscriber {
-                verbosity,
-                with_ansi,
-            } => {
+            LoggingRequestKind::InstallSubscriber { verbosity, with_ansi } => {
+                let _ = verbosity;
                 self.subscriber.install(verbosity, with_ansi);
                 LoggingResponse {
                     kind: LoggingResponseKind::Done,

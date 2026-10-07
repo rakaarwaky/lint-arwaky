@@ -5,7 +5,7 @@
 
 use std::sync::Once;
 
-use shared_common::taxonomy_logging_vo::LogVerbosity;
+use shared_logging::taxonomy_logging_vo::LogVerbosity;
 use shared_logging::contract_logging_protocol::ISubscriberInstallProtocol;
 use tracing_subscriber::EnvFilter;
 
