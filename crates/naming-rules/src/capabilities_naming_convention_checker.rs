@@ -90,8 +90,10 @@ impl NamingConventionChecker {
         usize::try_from(value).unwrap_or(MIN_WORDS_DEFAULT)
     }
 
-    /// Slots map 1:1 to word counts 1..=10; counts > 10 clamp to the 10-word slot.
-    fn naming_regex(min_words: usize) -> Option<&'static Regex> {
+    /// Regex cache: counts up to `MIN_WORDS_CACHE_MAX` use cached slots so
+    /// repeated checks don't rebuild the pattern. Counts above the cache build
+    /// the regex on demand so the configured value is honored exactly.
+    fn naming_regex(min_words: usize) -> Option<Regex> {
         static REGEX_TABLE: [OnceLock<Option<Regex>>; 10] = [
             OnceLock::new(),
             OnceLock::new(),
@@ -104,13 +106,24 @@ impl NamingConventionChecker {
             OnceLock::new(),
             OnceLock::new(),
         ];
-        let clamped = min_words.clamp(1, 10);
-        REGEX_TABLE[clamped - 1]
-            .get_or_init(|| {
-                let pattern = format!(r"^[a-z0-9]+(_[a-z0-9]+){{{},}}$", clamped.saturating_sub(1));
-                Regex::new(&pattern).ok()
-            })
-            .as_ref()
+
+        fn build(min_words: usize) -> Option<Regex> {
+            let pattern = format!(
+                r"^[a-z0-9]+(_[a-z0-9]+){{{},}}$",
+                min_words.saturating_sub(1)
+            );
+            Regex::new(&pattern).ok()
+        }
+
+        let effective = min_words.max(1);
+        if effective <= REGEX_TABLE.len() {
+            REGEX_TABLE[effective - 1]
+                .get_or_init(|| build(effective))
+                .as_ref()
+                .cloned()
+        } else {
+            build(effective)
+        }
     }
 
     /// Check file naming conventions (AES101: pattern validation — lowercase, underscore, min N words).

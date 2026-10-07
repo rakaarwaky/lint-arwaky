@@ -45,7 +45,7 @@ impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
             .iter()
             .find(|r| r.name.value == "AES305")
             .and_then(|r| r.code_analysis.duplication_threshold)
-            .unwrap_or(50.0);
+            .unwrap_or(75.0);
 
         // Borrow path/content as &str instead of cloning into (String, String)
         let borrowed: Vec<(&str, &str)> = entries
@@ -80,55 +80,71 @@ impl CodeDuplicationAnalyzer {
             return Vec::new();
         }
 
-        // P2.1/P2.2/P2.3 fix: Hash-based dedup with single-pass normalization.
-        // - Store normalized window hash → file indices (P2.3: no line tuples)
-        // - Normalize each window only once (P2.1: cache per-file hashes)
-        // - Remove unused interned_keys storage (P2.2)
-
         fn hash_key(key: &str) -> u64 {
             let mut hasher = DefaultHasher::new();
             std::hash::Hash::hash(key, &mut hasher);
             std::hash::Hasher::finish(&hasher)
         }
 
-        // First pass: build global map + cache per-file unique hashes (P2.1: normalize once)
-        // P2.3: HashMap<u64, HashSet<usize>> — hash-based, file-only
+        // Build global map: normalized window hash → file indices that contain it.
+        // Windows that consist entirely of import/`use`/`from` lines are
+        // scaffolding, not logic, so they are excluded from both the global
+        // map and the per-file shared count (AES305 counts logic duplication).
         let mut global: HashMap<u64, HashSet<usize>> = HashMap::with_capacity(entries.len());
-        let mut file_unique_hashes: Vec<Vec<u64>> = Vec::with_capacity(entries.len());
-
         for (fi, (_, content)) in entries.iter().enumerate() {
             let lines: Vec<&str> = content.lines().collect();
             if lines.len() < min_dup_lines {
-                file_unique_hashes.push(Vec::new());
                 continue;
             }
-            let mut file_hashes: HashSet<u64> = HashSet::new();
             for w in lines.windows(min_dup_lines) {
-                // P2.1: normalize once — cache hash for second pass
+                if w.iter().all(|l| {
+                    let t = l.trim();
+                    !t.is_empty()
+                        && shared_quality_rules::utility_code_duplication_detector::is_import_line(
+                            t,
+                        )
+                }) {
+                    continue;
+                }
                 let key =
                     shared_quality_rules::utility_code_duplication_detector::normalize_window(w);
-                let id = hash_key(&key);
-                global.entry(id).or_default().insert(fi);
-                file_hashes.insert(id);
+                global.entry(hash_key(&key)).or_default().insert(fi);
             }
-            file_unique_hashes.push(file_hashes.into_iter().collect());
         }
 
-        // Identify keys that appear in 2+ different files (P2.3: use u64 hash)
+        // Identify keys that appear in 2+ different files
         let shared_ids: HashSet<u64> = global
             .iter()
             .filter(|(_, file_indices)| file_indices.len() > 1)
             .map(|(id, _)| *id)
             .collect();
 
-        // Count shared windows per file using cached hashes (P2.1: no re-normalization)
+        // Count shared window OCCURRENCES per file: the numerator must reflect how
+        // many of a file's windows are shared, not just how many distinct shared
+        // hashes it has — otherwise repeated blocks deflate the similarity %.
+        // Import-only windows are excluded from both numerator and denominator
+        // so that mechanical scaffolding never counts toward duplication.
         let mut shared_counts: Vec<usize> = vec![0; entries.len()];
-        for fi in 0..entries.len() {
-            if entries[fi].1.len() < min_dup_lines {
+        let mut total_counts: Vec<usize> = vec![0; entries.len()];
+        for (fi, (_, content)) in entries.iter().enumerate() {
+            let lines: Vec<&str> = content.lines().collect();
+            if lines.len() < min_dup_lines {
                 continue;
             }
-            for hash in &file_unique_hashes[fi] {
-                if shared_ids.contains(hash) {
+            for w in lines.windows(min_dup_lines) {
+                if w.iter().all(|l| {
+                    let t = l.trim();
+                    !t.is_empty()
+                        && shared_quality_rules::utility_code_duplication_detector::is_import_line(
+                            t,
+                        )
+                }) {
+                    continue;
+                }
+                total_counts[fi] += 1;
+                let key =
+                    shared_quality_rules::utility_code_duplication_detector::normalize_window(w);
+                if shared_ids.contains(&hash_key(&key)) {
                     shared_counts[fi] += 1;
                 }
             }
@@ -159,10 +175,13 @@ impl CodeDuplicationAnalyzer {
             if lines.len() < min_dup_lines {
                 continue;
             }
-            let total_win = lines.len() - min_dup_lines + 1;
+            let total_non_import = total_counts[fi];
             let shared_count = shared_counts[fi];
 
-            let pct = shared_count as f64 / total_win as f64 * 100.0;
+            if total_non_import == 0 {
+                continue;
+            }
+            let pct = shared_count as f64 / total_non_import as f64 * 100.0;
             if pct > threshold_pct {
                 let other_indices = &file_to_others[fi];
                 let mut other_files: Vec<String> = other_indices
@@ -172,8 +191,8 @@ impl CodeDuplicationAnalyzer {
                 other_files.sort();
 
                 let mut msg = format!(
-                    "AES305: {:.0}% of this file's content appears in other files (threshold: {:.0}%). {} of {} windows are non-unique.",
-                    pct, threshold_pct, shared_count, total_win,
+                    "AES305: {:.0}% of this file's non-import content appears in other files (threshold: {:.0}%). {} of {} windows are non-unique.",
+                    pct, threshold_pct, shared_count, total_non_import,
                 );
                 if !other_files.is_empty() {
                     msg.push_str(&format!(

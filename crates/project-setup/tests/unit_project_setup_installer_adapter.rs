@@ -32,6 +32,25 @@ fn install_npm_packages_empty_with_sudo() {
 }
 
 #[test]
+fn failed_pip_retry_reports_retry_exit_code_not_first() {
+    // Exercises the PEP 668 path: first `pip install --user` fails (exit 1),
+    // the `--break-system-packages` retry also fails (no matching
+    // distribution for a bogus package). The error must carry the RETRY's
+    // exit code, not the first attempt's.
+    let adapter = SetupInstallerAdapter::new();
+    let res = adapter
+        .install_python_packages(&PatternList::new(vec!["definetly-not-a-real-package-xyz"]));
+    let Err(e) = res else {
+        return; // pip unexpectedly succeeded; nothing to assert
+    };
+    let msg = format!("{e}");
+    assert!(
+        msg.contains("--break-system-packages") && msg.contains("exited with status"),
+        "error must reference the retry attempt and its exit status, got: {msg}"
+    );
+}
+
+#[test]
 fn adapter_is_default_constructible() {
     let adapter = SetupInstallerAdapter::new();
     let result = adapter.install_python_packages(&PatternList::default());

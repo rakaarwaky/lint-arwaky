@@ -90,8 +90,8 @@ fn stats_test_ratio_between_0_and_1() {
     let path = FilePath::new(".").unwrap();
     let stats = checker.stats(&path);
     assert!(
-        stats.test_ratio.value >= 0.0 && stats.test_ratio.value <= 10.0,
-        "test_ratio should be reasonable, got {}",
+        stats.test_ratio.value >= 0.0 && stats.test_ratio.value <= 1.0,
+        "test_ratio counts source test files over all source files, so it must stay in [0, 1], got {}",
         stats.test_ratio.value
     );
 }

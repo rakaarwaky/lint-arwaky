@@ -43,9 +43,12 @@ impl IAdapterInstallationProtocol for SetupInstallerAdapter {
 
         match status2 {
             Ok(s) if s.success() => Ok(()),
-            _ => Err(SetupError::other(format!(
-                "pip install exited with status {:?}",
-                status.code()
+            Ok(s) => Err(SetupError::other(format!(
+                "pip install --break-system-packages exited with status {:?}",
+                s.code()
+            ))),
+            Err(e) => Err(SetupError::other(format!(
+                "pip install --break-system-packages spawn failed: {e}"
             ))),
         }
     }

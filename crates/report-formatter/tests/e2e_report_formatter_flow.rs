@@ -85,7 +85,9 @@ fn validate_full_report(format: Format, content: &str) {
     match format {
         Format::Json => {
             let v: serde_json::Value = serde_json::from_str(content).expect("JSON must parse");
-            assert_eq!(v["summary"]["total_violations"], 2);
+            // total_violations equals violations.len(): only the AES201 result
+            // lands in violations (ruff goes to external_results), so 1.
+            assert_eq!(v["summary"]["total_violations"], 1);
             assert_eq!(v["summary"]["score"], 61.5);
             assert_eq!(v["diagnostics"][0]["source"], "parser");
         }
