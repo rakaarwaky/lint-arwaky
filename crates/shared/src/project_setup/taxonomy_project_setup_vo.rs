@@ -3,7 +3,7 @@
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
-use shared_common::taxonomy_suggestion_vo::DescriptionVO;
+use shared_common::taxonomy_message_vo::DescriptionVO;
 
 // ─── Contract surface VOs ────────────────────────────────────────────
 

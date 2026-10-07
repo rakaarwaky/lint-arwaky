@@ -1,7 +1,7 @@
 // Unit tests for CapabilitiesToolResolution — FR-004: Tool Resolution.
 use filesystem_lint_arwaky::capabilities_tool_resolution::CapabilitiesToolResolution;
+use shared_common::taxonomy_adapter_name_vo::ToolName;
 use shared_common::taxonomy_path_vo::FilePath;
-use shared_common::taxonomy_tool_name_vo::ToolName;
 use shared_filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
 use tempfile::TempDir;
 

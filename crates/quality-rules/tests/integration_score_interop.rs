@@ -1,9 +1,9 @@
 // PURPOSE: Integration tests — shared VO interop that terminates in compute_score.
 use shared_common::taxonomy_adapter_name_vo::AdapterName;
 use shared_common::taxonomy_common_vo::{ColumnNumber, LineNumber};
-use shared_common::taxonomy_definition_vo::LayerMapVO;
 use shared_common::taxonomy_error_vo::ErrorCode;
-use shared_common::taxonomy_lint_result_vo::{LintResult, LintResultList};
+use shared_common::taxonomy_layer_vo::LayerMapVO;
+use shared_common::taxonomy_lint_vo::{LintResult, LintResultList};
 use shared_common::taxonomy_lint_vo::{LocationList, ScopeRef};
 use shared_common::taxonomy_message_vo::LintMessage;
 use shared_common::taxonomy_path_vo::FilePath;

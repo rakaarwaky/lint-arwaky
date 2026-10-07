@@ -10,12 +10,12 @@ mod mock_filesystem;
 
 use std::sync::Arc;
 
+use shared_common::taxonomy_adapter_error::LinterOperationError;
 use shared_common::taxonomy_adapter_name_vo::AdapterName;
-use shared_common::taxonomy_compliance_vo::ComplianceStatus;
-use shared_common::taxonomy_lint_result_vo::{LintResult, LintResultList};
-use shared_common::taxonomy_operation_error::LinterOperationError;
+use shared_common::taxonomy_job_vo::ResponseData;
+use shared_common::taxonomy_lint_vo::{LintResult, LintResultList};
+use shared_common::taxonomy_message_vo::ComplianceStatus;
 use shared_common::taxonomy_path_vo::FilePath;
-use shared_common::taxonomy_response_data_vo::ResponseData;
 use shared_common::taxonomy_severity_vo::Severity;
 use shared_external_lint::ICommandExecutorProtocol;
 use shared_external_lint::IJsToolResolutionProtocol;
@@ -48,7 +48,7 @@ impl ICommandExecutorProtocol for MockCmdExecutor {
         _: f64,
         _: Option<AdapterName>,
         _: &FilePath,
-    ) -> Result<ResponseData, shared_common::taxonomy_operation_error::LinterOperationError> {
+    ) -> Result<ResponseData, shared_common::taxonomy_adapter_error::LinterOperationError> {
         Ok(ResponseData::default())
     }
     fn exec_cmd_adapter(
@@ -57,7 +57,7 @@ impl ICommandExecutorProtocol for MockCmdExecutor {
         _: FilePath,
         _: f64,
         _: AdapterName,
-    ) -> Result<ResponseData, shared_common::taxonomy_operation_error::LinterOperationError> {
+    ) -> Result<ResponseData, shared_common::taxonomy_adapter_error::LinterOperationError> {
         Ok(ResponseData::default())
     }
 }
@@ -67,7 +67,7 @@ struct MockJsResolution;
 impl IJsToolResolutionProtocol for MockJsResolution {
     fn resolve_js_cmd(
         &self,
-        _: &shared_common::taxonomy_tool_name_vo::ToolName,
+        _: &shared_common::taxonomy_adapter_name_vo::ToolName,
         _: Vec<String>,
         _: &FilePath,
     ) -> Option<Vec<String>> {
@@ -79,13 +79,15 @@ impl IJsToolResolutionProtocol for MockJsResolution {
     fn js_apply_fix(
         &self,
         _: &FilePath,
-        _: &shared_common::taxonomy_tool_name_vo::ToolName,
+        _: &shared_common::taxonomy_adapter_name_vo::ToolName,
         _: &str,
     ) -> Result<
-        shared_common::taxonomy_compliance_vo::ComplianceStatus,
-        shared_common::taxonomy_operation_error::LinterOperationError,
+        shared_common::taxonomy_message_vo::ComplianceStatus,
+        shared_common::taxonomy_adapter_error::LinterOperationError,
     > {
-        Ok(shared_common::taxonomy_compliance_vo::ComplianceStatus::new(false))
+        Ok(shared_common::taxonomy_message_vo::ComplianceStatus::new(
+            false,
+        ))
     }
 }
 
@@ -468,7 +470,7 @@ fn output_normalizer_implements_protocol() {
     let _dyn: &dyn INormalizeProtocol = &normalizer;
     let root = FilePath::new("/tmp".to_string()).unwrap();
     let (results, warnings) = _dyn.normalize(
-        &shared_common::taxonomy_tool_name_vo::ToolName::new("clippy"),
+        &shared_common::taxonomy_adapter_name_vo::ToolName::new("clippy"),
         r#"[{"file":"main.rs","line":3,"column":1,"code":"dead_code","message":"unused","severity":"style"}]"#,
         &root,
     );
@@ -479,7 +481,7 @@ fn output_normalizer_implements_protocol() {
 
     // Malformed JSON yields no results plus a warning, never a panic.
     let (empty, warns) = _dyn.normalize(
-        &shared_common::taxonomy_tool_name_vo::ToolName::new("clippy"),
+        &shared_common::taxonomy_adapter_name_vo::ToolName::new("clippy"),
         "not json",
         &root,
     );
@@ -500,7 +502,7 @@ fn external_lint_executor_implements_js_resolution_protocol() {
         );
     let _dyn: &dyn IJsToolResolutionProtocol = &executor;
     let path = FilePath::new("/tmp".to_string()).unwrap();
-    let tool = shared_common::taxonomy_tool_name_vo::ToolName::new("eslint");
+    let tool = shared_common::taxonomy_adapter_name_vo::ToolName::new("eslint");
     // The mock filesystem holds no local `node_modules/.bin/eslint`.
     assert!(
         _dyn.resolve_js_cmd(&tool, vec!["file.js".into(), "--fix".into()], &path)

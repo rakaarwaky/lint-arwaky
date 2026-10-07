@@ -19,8 +19,8 @@ use shared_orphan_rules::{
 };
 
 use shared_common::taxonomy_common_vo::BooleanVO;
-use shared_common::taxonomy_definition_vo::LayerDefinition;
-use shared_common::taxonomy_definition_vo::OrphanRuleVO;
+use shared_common::taxonomy_layer_vo::LayerDefinition;
+use shared_common::taxonomy_layer_vo::OrphanRuleVO;
 use shared_common::{
     AdapterName, ColumnNumber, DescriptionVO, ErrorCode, LayerNameVO, LineNumber, LintMessage,
     LocationList, ScopeRef,
@@ -466,7 +466,7 @@ impl ArchOrphanAnalyzer {
     }
 
     fn _make_result(&self, file: &str, msg: &str, sev: Severity, code: &str) -> LintResult {
-        use shared_common::taxonomy_violation_message_vo::{
+        use shared_common::taxonomy_violation_item_vo::{
             parse_fix, parse_violation_name, parse_why,
         };
         LintResult {

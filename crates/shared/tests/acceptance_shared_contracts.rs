@@ -124,7 +124,7 @@ fn fr_002_core_value_objects_are_send_sync() {
     assert_send_sync::<ErrorCode>();
     assert_send_sync::<JobId>();
     assert_send_sync::<Language>();
-    assert_send_sync::<shared_common::taxonomy_config_language_vo::ConfigLanguage>();
+    assert_send_sync::<shared_common::taxonomy_language_vo::ConfigLanguage>();
     assert_send_sync::<Severity>();
     assert_send_sync::<Score>();
     assert_send_sync::<Threshold>();

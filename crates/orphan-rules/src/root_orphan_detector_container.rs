@@ -26,7 +26,7 @@ impl OrphanContainer {
         workspace: Arc<dyn IWorkspaceProtocol>,
     ) -> Self {
         let config = ArchitectureConfig {
-            ignored_paths: shared_common::taxonomy_paths_vo::FilePathList::new(
+            ignored_paths: shared_common::taxonomy_path_vo::FilePathList::new(
                 ignored_paths
                     .into_iter()
                     .filter_map(|p| shared_common::taxonomy_path_vo::FilePath::new(p).ok())

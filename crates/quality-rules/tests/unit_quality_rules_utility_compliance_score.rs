@@ -5,7 +5,7 @@ mod common;
 use shared_common::taxonomy_adapter_name_vo::AdapterName;
 use shared_common::taxonomy_common_vo::LineNumber;
 use shared_common::taxonomy_error_vo::ErrorCode;
-use shared_common::taxonomy_lint_result_vo::LintResult;
+use shared_common::taxonomy_lint_vo::LintResult;
 use shared_common::taxonomy_lint_vo::LocationList;
 use shared_common::taxonomy_message_vo::LintMessage;
 use shared_common::taxonomy_path_vo::FilePath;

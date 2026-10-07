@@ -1,6 +1,6 @@
 // PURPOSE: JunitFormatter — implements IJUnitFormatProtocol for JUnit XML output (FR-004).
 use shared_cli_commands::{Format, LintResult, ScanReport};
-use shared_common::taxonomy_display_content_vo::DisplayContent;
+use shared_common::taxonomy_message_vo::DisplayContent;
 use shared_report_formatter::contract_report_formatter_protocol::IJUnitFormatProtocol;
 
 // ─── Block 1: Struct Definition ───────────────────────────

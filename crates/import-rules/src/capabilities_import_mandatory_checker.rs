@@ -2,7 +2,7 @@
 // Uses ImportEntry fields directly — no text-based parsing, no bridge functions.
 
 use shared_cli_commands::{LintResult, LintResultList};
-use shared_common::taxonomy_definition_vo::LayerMapVO;
+use shared_common::taxonomy_layer_vo::LayerMapVO;
 use shared_common::taxonomy_layer_vo::LayerNameVO;
 use shared_common::utility_layer_detector;
 use shared_common::{FilePath, FilePathList, Identity, Severity};

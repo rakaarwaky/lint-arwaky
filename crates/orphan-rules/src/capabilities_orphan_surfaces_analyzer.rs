@@ -1,4 +1,4 @@
-use shared_common::taxonomy_definition_vo::LayerDefinition;
+use shared_common::taxonomy_layer_vo::LayerDefinition;
 use shared_common::taxonomy_path_vo::FilePath;
 use shared_common::taxonomy_severity_vo::Severity;
 use shared_orphan_rules::contract_orphan_protocol::ISurfacesOrphanProtocol;

@@ -29,7 +29,7 @@ use shared_quality_rules::contract_quality_protocol::IMandatoryClassProtocol;
 use shared_quality_rules::taxonomy_quality_rules_request::CodeAnalysisRequest;
 use shared_quality_rules::taxonomy_quality_rules_response::CodeAnalysisResponse;
 
-use shared_common::taxonomy_display_content_vo::DisplayContent;
+use shared_common::taxonomy_message_vo::DisplayContent;
 use shared_common::taxonomy_path_vo::FilePath;
 use shared_common::taxonomy_severity_vo::Severity;
 use shared_common::utility_layer_detector::{
@@ -230,11 +230,10 @@ impl CodeAnalysisOrchestrator {
                     continue;
                 }
                 let msg = format_code_analysis_violation(&aes_violation);
-                let vname = shared_common::taxonomy_violation_message_vo::parse_violation_name(
-                    "AES305", &msg,
-                );
-                let why = shared_common::taxonomy_violation_message_vo::parse_why(&msg);
-                let fix = shared_common::taxonomy_violation_message_vo::parse_fix(&msg);
+                let vname =
+                    shared_common::taxonomy_violation_item_vo::parse_violation_name("AES305", &msg);
+                let why = shared_common::taxonomy_violation_item_vo::parse_why(&msg);
+                let fix = shared_common::taxonomy_violation_item_vo::parse_fix(&msg);
                 violations.push(LintResult::new_arch_with_name(
                     &file_path,
                     1,

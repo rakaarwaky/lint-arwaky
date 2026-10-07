@@ -77,14 +77,14 @@ impl GitHooksOrchestrator {
     pub fn initialize_config(
         &self,
         path: &str,
-    ) -> shared_common::taxonomy_suggestion_vo::DescriptionVO {
+    ) -> shared_common::taxonomy_message_vo::DescriptionVO {
         self.config_init.initialize_config(path)
     }
 
     pub fn update_ignore_rule(
         &self,
         request: shared_git_hooks::HookIgnoreUpdateVO,
-    ) -> shared_common::taxonomy_suggestion_vo::DescriptionVO {
+    ) -> shared_common::taxonomy_message_vo::DescriptionVO {
         self.config_init.update_ignore_rule(request)
     }
 

@@ -1,8 +1,8 @@
 // PURPOSE: ConfigParserProvider — implements IConfigMergeProtocol (FR-003: Config Merger)
 use shared_common::taxonomy_common_vo::ErrorMessage;
+use shared_common::taxonomy_language_vo::ConfigLanguage;
 use shared_common::taxonomy_path_vo::FilePath;
 use shared_config_system::contract_config_protocol::IConfigMergeProtocol;
-use shared_config_system::taxonomy_config_language_vo::ConfigLanguage;
 use shared_config_system::taxonomy_config_system_error::ConfigError;
 use shared_config_system::taxonomy_config_system_vo::ArchitectureConfig;
 use shared_config_system::taxonomy_config_system_vo::ConfigKey;

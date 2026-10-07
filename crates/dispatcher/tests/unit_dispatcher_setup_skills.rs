@@ -1,8 +1,8 @@
 // Unit tests — skills language relevance and filtering for init command.
 use dispatcher_lint_arwaky::surface_setup_action::{collect_init, is_skill_relevant_for_languages};
 use shared_common::taxonomy_job_vo::{EnvContentVO, McpConfigVO, SuccessStatus};
-use shared_common::taxonomy_source_vo::ContentString;
-use shared_common::taxonomy_suggestion_vo::DescriptionVO;
+use shared_common::taxonomy_lint_vo::ContentString;
+use shared_common::taxonomy_message_vo::DescriptionVO;
 use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared_filesystem::taxonomy_filesystem_request::FilesystemRequest;
 use shared_filesystem::taxonomy_filesystem_response::FilesystemResponse;

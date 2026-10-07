@@ -2,8 +2,8 @@
 pub mod contract_code_analysis_aggregate;
 pub mod contract_quality_protocol;
 pub mod taxonomy_quality_rules_vo;
+pub use shared_common::taxonomy_adapter_error;
 pub use shared_common::taxonomy_code_analysis_vo;
-pub use shared_common::taxonomy_operation_error;
 pub mod taxonomy_quality_rules_request;
 pub mod taxonomy_quality_rules_response;
 pub mod utility_bypass_detector;
@@ -28,9 +28,9 @@ pub use taxonomy_quality_rules_request::CodeAnalysisRequest;
 pub use taxonomy_quality_rules_response::CodeAnalysisResponse;
 
 // ── Taxonomy types ──
+pub use shared_common::taxonomy_adapter_error::LinterOperationError;
 pub use taxonomy_code_analysis_vo::CodeAnalysisRuleVO;
 pub use taxonomy_code_analysis_vo::MandatoryImportRuleVO;
-pub use taxonomy_operation_error::LinterOperationError;
 pub use taxonomy_quality_rules_vo::AesCodeAnalysisViolation;
 pub use taxonomy_quality_rules_vo::GraphAnalysisContext;
 pub use taxonomy_quality_rules_vo::ImportGraph;

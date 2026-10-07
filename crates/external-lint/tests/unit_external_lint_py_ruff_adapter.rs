@@ -6,11 +6,11 @@ use external_lint_lint_arwaky::capabilities_py_ruff_adapter::RuffAdapter;
 mod mock_filesystem;
 
 use mock_filesystem::MockFilesystem;
+use shared_common::taxonomy_adapter_error::LinterOperationError;
 use shared_common::taxonomy_adapter_name_vo::AdapterName;
 use shared_common::taxonomy_common_vo::PatternList;
-use shared_common::taxonomy_operation_error::LinterOperationError;
+use shared_common::taxonomy_job_vo::ResponseData;
 use shared_common::taxonomy_path_vo::FilePath;
-use shared_common::taxonomy_response_data_vo::ResponseData;
 use shared_common::taxonomy_severity_vo::Severity;
 use shared_external_lint::ICommandExecutorProtocol;
 use shared_external_lint::taxonomy_duration_vo::Timeout;
@@ -136,10 +136,10 @@ fn unknown_code_defaults_to_medium() {
 /// `ruff::<code>` so `ignored_rules` can match them.
 #[test]
 fn scan_stores_tool_qualified_ruff_code() {
+    use shared_common::taxonomy_adapter_error::LinterOperationError;
     use shared_common::taxonomy_adapter_name_vo::AdapterName;
-    use shared_common::taxonomy_operation_error::LinterOperationError;
+    use shared_common::taxonomy_job_vo::ResponseData;
     use shared_common::taxonomy_path_vo::FilePath;
-    use shared_common::taxonomy_response_data_vo::ResponseData;
     use shared_external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
     use std::sync::Mutex;
 
@@ -215,10 +215,10 @@ fn scan_stores_tool_qualified_ruff_code() {
 /// as a command argument.
 #[test]
 fn relative_scan_target_is_canonicalized_to_absolute_in_cmd() {
+    use shared_common::taxonomy_adapter_error::LinterOperationError;
     use shared_common::taxonomy_adapter_name_vo::AdapterName;
-    use shared_common::taxonomy_operation_error::LinterOperationError;
+    use shared_common::taxonomy_job_vo::ResponseData;
     use shared_common::taxonomy_path_vo::FilePath;
-    use shared_common::taxonomy_response_data_vo::ResponseData;
     use shared_external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
     use std::sync::Mutex;
 

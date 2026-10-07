@@ -5,9 +5,9 @@ pub use shared_common::taxonomy_adapter_error::{AdapterError, ScanError, Validat
 /// `common::LinterOperationError` is used by the external-lint protocol seams.
 /// `quality_rules::LinterOperationError` is used by `ILinterAdapterProtocol`.
 pub(crate) fn convert_executor_error(
-    e: shared_common::taxonomy_operation_error::LinterOperationError,
+    e: shared_common::taxonomy_adapter_error::LinterOperationError,
 ) -> shared_quality_rules::LinterOperationError {
-    use shared_common::taxonomy_operation_error::LinterOperationError as CommonErr;
+    use shared_common::taxonomy_adapter_error::LinterOperationError as CommonErr;
     use shared_quality_rules::LinterOperationError as QaErr;
     match e {
         CommonErr::Scan(s) => QaErr::Scan(s),
@@ -20,10 +20,10 @@ pub(crate) fn map_scan_error(
     e: anyhow::Error,
     path: shared_common::taxonomy_path_vo::FilePath,
     adapter_name: Option<shared_common::taxonomy_adapter_name_vo::AdapterName>,
-) -> shared_common::taxonomy_operation_error::LinterOperationError {
+) -> shared_common::taxonomy_adapter_error::LinterOperationError {
     use shared_common::ScanError;
     use shared_common::taxonomy_common_vo::ErrorMessage;
-    shared_common::taxonomy_operation_error::LinterOperationError::Scan(ScanError {
+    shared_common::taxonomy_adapter_error::LinterOperationError::Scan(ScanError {
         path,
         message: ErrorMessage::new(e.to_string()),
         error_code: None,
@@ -37,10 +37,10 @@ pub(crate) fn map_scan_error(
 pub(crate) fn map_adapter_error(
     e: anyhow::Error,
     adapter_name: shared_common::taxonomy_adapter_name_vo::AdapterName,
-) -> shared_common::taxonomy_operation_error::LinterOperationError {
+) -> shared_common::taxonomy_adapter_error::LinterOperationError {
     use shared_common::taxonomy_adapter_error::AdapterError;
     use shared_common::taxonomy_common_vo::ErrorMessage;
-    shared_common::taxonomy_operation_error::LinterOperationError::Adapter(AdapterError::new(
+    shared_common::taxonomy_adapter_error::LinterOperationError::Adapter(AdapterError::new(
         adapter_name,
         ErrorMessage::new(e.to_string()),
     ))

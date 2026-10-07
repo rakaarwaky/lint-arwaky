@@ -1,7 +1,7 @@
 // PURPOSE: BooleanVO, ColumnNumber, Count, DataFlowList, LineContentList, LineNumber, PatternList, Score, Timestamp — common VOs
-use crate::taxonomy_job_id_vo::JobId;
+use crate::taxonomy_job_vo::JobId;
+use crate::taxonomy_job_vo::ResponseData;
 use crate::taxonomy_layer_vo::LineContentVO;
-use crate::taxonomy_response_data_vo::ResponseData;
 use crate::taxonomy_severity_vo::Severity;
 use serde::{Deserialize, Serialize};
 

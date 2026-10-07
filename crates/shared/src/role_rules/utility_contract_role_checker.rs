@@ -7,9 +7,9 @@
 // here and are shared by all three.
 
 use shared_common::FilePath;
-use shared_common::taxonomy_language_info_vo::LanguageInfo;
 use shared_common::taxonomy_language_vo::Language;
-use shared_common::taxonomy_lint_result_vo::LintResult;
+use shared_common::taxonomy_language_vo::LanguageInfo;
+use shared_common::taxonomy_lint_vo::LintResult;
 use shared_common::taxonomy_severity_vo::Severity;
 use shared_filesystem::taxonomy_filesystem_vo::FileEntry;
 

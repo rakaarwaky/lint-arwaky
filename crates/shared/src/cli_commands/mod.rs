@@ -7,14 +7,14 @@ pub use shared_common::taxonomy_format_vo;
 // Backward-compat alias: downstream crates (external-lint, etc.) import via
 // `shared::cli_commands::taxonomy_result_vo::LintResult`. The alias points
 // to the canonical module so both paths resolve to the same type.
-pub use shared_common::taxonomy_lint_result_vo as taxonomy_result_vo;
+pub use shared_common::taxonomy_lint_vo as taxonomy_result_vo;
 
 // ─── Re-exports ────────────────────────────────────────────
 // Barrel re-export pattern: allows consumers to import directly
 
 // ── Taxonomy types ──
-pub use shared_common::taxonomy_lint_result_vo::LintResult;
-pub use shared_common::taxonomy_lint_result_vo::LintResultList;
+pub use shared_common::taxonomy_lint_vo::LintResult;
+pub use shared_common::taxonomy_lint_vo::LintResultList;
 pub use taxonomy_action_vo::ActionName;
 pub use taxonomy_cli_commands_request::ScanMode;
 pub use taxonomy_cli_commands_request::ScanRequest;

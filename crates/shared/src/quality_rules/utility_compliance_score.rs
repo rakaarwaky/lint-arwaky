@@ -1,5 +1,5 @@
 // PURPOSE: Stateless utility functions for compliance score calculation
-use shared_common::taxonomy_lint_result_vo::LintResult;
+use shared_common::taxonomy_lint_vo::LintResult;
 
 /// Calculate compliance score from lint results.
 ///

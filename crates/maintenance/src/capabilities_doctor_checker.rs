@@ -1,7 +1,7 @@
 use shared_common::taxonomy_adapter_name_vo::AdapterName;
-use shared_common::taxonomy_compliance_vo::ComplianceStatus;
-use shared_common::taxonomy_paths_vo::FilePathList;
-use shared_common::taxonomy_suggestion_vo::DescriptionVO;
+use shared_common::taxonomy_message_vo::ComplianceStatus;
+use shared_common::taxonomy_message_vo::DescriptionVO;
+use shared_common::taxonomy_path_vo::FilePathList;
 use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared_maintenance::contract_maintenance_protocol::IDoctorProtocol;
 use shared_maintenance::taxonomy_maintenance_vo::{DoctorResultVO, ToolchainDiagnostics};

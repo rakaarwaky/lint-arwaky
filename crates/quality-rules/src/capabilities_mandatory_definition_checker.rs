@@ -1,7 +1,7 @@
 use shared_cli_commands::LintResult;
 use shared_quality_rules::contract_quality_protocol::IMandatoryClassProtocol;
 
-use shared_common::taxonomy_definition_vo::LayerDefinition;
+use shared_common::taxonomy_layer_vo::LayerDefinition;
 use shared_common::taxonomy_severity_vo::Severity;
 use shared_quality_rules::utility_mandatory_checker::rust_declares_type;
 

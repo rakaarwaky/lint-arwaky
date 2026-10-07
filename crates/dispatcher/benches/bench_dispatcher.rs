@@ -6,7 +6,7 @@ fn bench_output_json(c: &mut Criterion) {
     group.significance_level(0.05).confidence_level(0.95);
 
     let results: Vec<shared_common::LintResult> = (0..200)
-        .map(|i| shared_common::taxonomy_lint_result_vo::LintResult {
+        .map(|i| shared_common::taxonomy_lint_vo::LintResult {
             file: shared_common::FilePath::new(format!("src/module_{}.rs", i)).unwrap(),
             line: shared_common::LineNumber::new(i as i64),
             column: Default::default(),

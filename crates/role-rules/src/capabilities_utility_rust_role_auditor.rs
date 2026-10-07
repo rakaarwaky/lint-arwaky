@@ -10,7 +10,7 @@
 // macro-body stripper, and the forbidden-item detector — live in
 // utility_utility_role_checker.rs so the three auditors share one copy.
 
-use shared_common::taxonomy_lint_result_vo::LintResult;
+use shared_common::taxonomy_lint_vo::LintResult;
 use shared_filesystem::taxonomy_filesystem_vo::{FileEntry, ParseMetadata};
 use shared_role_rules::contract_role_protocol::IUtilityRoleProtocol;
 

@@ -2,8 +2,8 @@
 // Implements IToolResolutionProtocol by delegating to utility_tool_resolution stateless functions.
 // 3-block structure per AES skill.
 
+use shared_common::taxonomy_adapter_name_vo::ToolName;
 use shared_common::taxonomy_path_vo::FilePath;
-use shared_common::taxonomy_tool_name_vo::ToolName;
 use shared_filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
 use shared_filesystem::utility_tool_resolution;
 use std::path::Path;

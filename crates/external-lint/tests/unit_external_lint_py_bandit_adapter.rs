@@ -5,11 +5,11 @@ use external_lint_lint_arwaky::capabilities_py_bandit_adapter::BanditAdapter;
 #[path = "../../shared/tests/common/mock_filesystem.rs"]
 mod mock_filesystem;
 
+use shared_common::taxonomy_adapter_error::LinterOperationError;
 use shared_common::taxonomy_adapter_name_vo::AdapterName;
 use shared_common::taxonomy_common_vo::PatternList;
-use shared_common::taxonomy_operation_error::LinterOperationError;
+use shared_common::taxonomy_job_vo::ResponseData;
 use shared_common::taxonomy_path_vo::FilePath;
-use shared_common::taxonomy_response_data_vo::ResponseData;
 use shared_common::taxonomy_severity_vo::Severity;
 use shared_external_lint::ICommandExecutorProtocol;
 use shared_external_lint::taxonomy_duration_vo::Timeout;
@@ -102,10 +102,10 @@ fn unknown_severity_defaults_to_medium() {
 /// the tool-qualified `bandit::` code.
 #[test]
 fn scan_uses_column_default_and_qualified_code() {
+    use shared_common::taxonomy_adapter_error::LinterOperationError;
     use shared_common::taxonomy_common_vo::PatternList;
-    use shared_common::taxonomy_operation_error::LinterOperationError;
+    use shared_common::taxonomy_job_vo::ResponseData;
     use shared_common::taxonomy_path_vo::FilePath;
-    use shared_common::taxonomy_response_data_vo::ResponseData;
     use shared_external_lint::ICommandExecutorProtocol;
     use shared_external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
     use shared_external_lint::taxonomy_duration_vo::Timeout;

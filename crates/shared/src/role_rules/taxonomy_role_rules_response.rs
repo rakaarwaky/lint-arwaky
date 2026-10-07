@@ -1,6 +1,6 @@
 // PURPOSE: RoleResponse — response payload for the role aggregate
 
-use shared_common::taxonomy_lint_result_vo::LintResult;
+use shared_common::taxonomy_lint_vo::LintResult;
 
 pub enum RoleResponse {
     /// Violations found by the audit.

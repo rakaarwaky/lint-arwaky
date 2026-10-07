@@ -1,11 +1,11 @@
 // Acceptance tests — AES101 naming convention (map to FRD user stories).
 use naming_rules_lint_arwaky::capabilities_naming_convention_checker::NamingConventionChecker;
-use shared_common::taxonomy_definition_vo::LayerDefinition;
-use shared_common::taxonomy_definition_vo::LayerMapVO;
+use shared_common::taxonomy_layer_vo::LayerDefinition;
+use shared_common::taxonomy_layer_vo::LayerMapVO;
 use shared_common::taxonomy_layer_vo::LayerNameVO;
-use shared_common::taxonomy_lint_result_vo::LintResultList;
+use shared_common::taxonomy_lint_vo::LintResultList;
 use shared_common::taxonomy_path_vo::FilePath;
-use shared_common::taxonomy_paths_vo::FilePathList;
+use shared_common::taxonomy_path_vo::FilePathList;
 use shared_naming_rules::RULE_CODE_NAMING_CONVENTION;
 use std::collections::HashMap;
 

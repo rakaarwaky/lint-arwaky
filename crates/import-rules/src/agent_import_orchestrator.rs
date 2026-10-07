@@ -26,7 +26,7 @@ use shared_import_rules::contract_import_runner_aggregate::IImportRunnerAggregat
 use shared_import_rules::taxonomy_import_rules_request::ImportRequest;
 use shared_import_rules::taxonomy_import_rules_response::ImportResponse;
 
-use shared_common::taxonomy_definition_vo::LayerMapVO;
+use shared_common::taxonomy_layer_vo::LayerMapVO;
 use tracing::warn;
 
 // ─── Block 1: Struct Definition ───────────────────────────

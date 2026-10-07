@@ -3,8 +3,8 @@
 // Not a business capability; no corresponding FR.
 
 use crate::taxonomy_maintenance_vo::ToolOutput;
+use shared_common::taxonomy_adapter_name_vo::ToolName;
 use shared_common::taxonomy_path_vo::FilePath;
-use shared_common::taxonomy_tool_name_vo::ToolName;
 use std::process::Command;
 
 /// Run a tool from PATH and return its output.

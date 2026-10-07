@@ -14,10 +14,10 @@ use mock_filesystem::MockFilesystem;
 use std::collections::HashMap;
 use std::sync::Arc;
 
+use shared_common::taxonomy_adapter_error::LinterOperationError;
 use shared_common::taxonomy_adapter_name_vo::AdapterName;
-use shared_common::taxonomy_operation_error::LinterOperationError;
+use shared_common::taxonomy_job_vo::ResponseData;
 use shared_common::taxonomy_path_vo::FilePath;
-use shared_common::taxonomy_response_data_vo::ResponseData;
 use shared_external_lint::ICommandExecutorProtocol;
 use shared_external_lint::IJsToolResolutionProtocol;
 use shared_external_lint::contract_external_lint_protocol::IExternalLintSelectorProtocol;
@@ -70,7 +70,7 @@ struct MockJsResolution;
 impl IJsToolResolutionProtocol for MockJsResolution {
     fn resolve_js_cmd(
         &self,
-        _: &shared_common::taxonomy_tool_name_vo::ToolName,
+        _: &shared_common::taxonomy_adapter_name_vo::ToolName,
         _: Vec<String>,
         _: &FilePath,
     ) -> Option<Vec<String>> {
@@ -82,10 +82,12 @@ impl IJsToolResolutionProtocol for MockJsResolution {
     fn js_apply_fix(
         &self,
         _: &FilePath,
-        _: &shared_common::taxonomy_tool_name_vo::ToolName,
+        _: &shared_common::taxonomy_adapter_name_vo::ToolName,
         _: &str,
-    ) -> Result<shared_common::taxonomy_compliance_vo::ComplianceStatus, LinterOperationError> {
-        Ok(shared_common::taxonomy_compliance_vo::ComplianceStatus::new(false))
+    ) -> Result<shared_common::taxonomy_message_vo::ComplianceStatus, LinterOperationError> {
+        Ok(shared_common::taxonomy_message_vo::ComplianceStatus::new(
+            false,
+        ))
     }
 }
 

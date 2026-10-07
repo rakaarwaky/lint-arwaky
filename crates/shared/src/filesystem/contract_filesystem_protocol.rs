@@ -11,12 +11,12 @@ use crate::taxonomy_filesystem_vo::{
 use crate::taxonomy_filesystem_vo::{
     DefinitionEntry, FileEntry, ImplEntry, ImportEntry, ParseWarning, ProjectLanguagesVO,
 };
+use shared_common::taxonomy_adapter_name_vo::ToolName;
 use shared_common::taxonomy_common_vo::PatternList;
-use shared_common::taxonomy_config_language_vo::ConfigLanguage;
+use shared_common::taxonomy_language_vo::ConfigLanguage;
 use shared_common::taxonomy_language_vo::Language;
+use shared_common::taxonomy_lint_vo::ContentString;
 use shared_common::taxonomy_path_vo::FilePath;
-use shared_common::taxonomy_source_vo::ContentString;
-use shared_common::taxonomy_tool_name_vo::ToolName;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 

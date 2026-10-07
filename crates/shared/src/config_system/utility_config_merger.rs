@@ -1,7 +1,7 @@
 // PURPOSE: Config merger utility — pure function for merging rules into layer definitions
 use crate::taxonomy_config_system_vo::{ArchitectureConfig, ArchitectureRule};
 use shared_common::taxonomy_default_constant::DEFAULT_IGNORED_PATHS;
-use shared_common::taxonomy_definition_vo::LayerDefinition;
+use shared_common::taxonomy_layer_vo::LayerDefinition;
 use shared_common::taxonomy_layer_vo::LayerNameVO;
 use std::collections::{HashMap, HashSet};
 

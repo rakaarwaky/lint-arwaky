@@ -5,7 +5,7 @@
 // Utility: stateless standalone functions
 
 use crate::taxonomy_filesystem_vo::ProjectLanguagesVO;
-use shared_common::taxonomy_config_language_vo::ConfigLanguage;
+use shared_common::taxonomy_language_vo::ConfigLanguage;
 use std::path::{Path, PathBuf};
 
 // ─── IO primitives delegated to shared (AES201: utility cannot import utility) ───

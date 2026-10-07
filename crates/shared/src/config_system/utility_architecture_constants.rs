@@ -18,10 +18,10 @@
 use crate::taxonomy_config_system_vo::{ArchitectureConfig, ArchitectureRule};
 use shared_common::taxonomy_code_analysis_vo::CodeAnalysisRuleVO;
 use shared_common::taxonomy_common_vo::{BooleanVO, Count, PatternList, SuffixPolicyVO};
-use shared_common::taxonomy_definition_vo::{LayerDefinition, LayerNamingConfig, NamingConfig};
 use shared_common::taxonomy_error_vo::ErrorCode;
 use shared_common::taxonomy_layer_vo::LayerNameVO;
-use shared_common::taxonomy_suggestion_vo::DescriptionVO;
+use shared_common::taxonomy_layer_vo::{LayerDefinition, LayerNamingConfig, NamingConfig};
+use shared_common::taxonomy_message_vo::DescriptionVO;
 use std::collections::HashMap;
 
 // ─── Rule row layout ───────────────────────────────────────────────────────

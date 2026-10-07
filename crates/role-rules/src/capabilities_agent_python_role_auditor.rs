@@ -5,7 +5,7 @@
 // The language-specific checks (block order, I/O, constant placement,
 // stateless, free functions, abstract methods, computation) stay here.
 
-use shared_common::taxonomy_lint_result_vo::LintResult;
+use shared_common::taxonomy_lint_vo::LintResult;
 use shared_common::taxonomy_severity_vo::Severity;
 use shared_filesystem::taxonomy_filesystem_vo::{FileEntry, Language};
 use shared_role_rules::contract_role_protocol::IAgentRoleProtocol;

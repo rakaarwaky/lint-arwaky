@@ -9,12 +9,12 @@ use shared_config_system::utility_config_merger::merge_config;
 
 fn merged() -> std::collections::HashMap<
     shared_common::taxonomy_layer_vo::LayerNameVO,
-    shared_common::taxonomy_definition_vo::LayerDefinition,
+    shared_common::taxonomy_layer_vo::LayerDefinition,
 > {
     merge_config(&hardcoded_default_architecture()).0
 }
 
-fn layer(name: &str) -> shared_common::taxonomy_definition_vo::LayerDefinition {
+fn layer(name: &str) -> shared_common::taxonomy_layer_vo::LayerDefinition {
     merged()
         .get(&shared_common::taxonomy_layer_vo::LayerNameVO::new(name))
         .cloned()

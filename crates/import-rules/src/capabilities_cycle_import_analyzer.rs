@@ -2,7 +2,7 @@
 use rayon::iter::IntoParallelRefIterator;
 use rayon::iter::ParallelIterator;
 use shared_cli_commands::LintResult;
-use shared_common::taxonomy_definition_vo::LayerMapVO;
+use shared_common::taxonomy_layer_vo::LayerMapVO;
 use shared_common::taxonomy_layer_vo::LayerNameVO;
 use shared_common::taxonomy_name_vo::SymbolName;
 use shared_common::utility_layer_detector;

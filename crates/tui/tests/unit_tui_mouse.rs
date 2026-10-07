@@ -13,11 +13,11 @@ use std::sync::Arc;
 
 use dispatcher::surface_check_action::FilesystemSeam;
 use dispatcher::surface_orphan_action::OrphanFactory;
+use shared_common::taxonomy_adapter_name_vo::ToolName;
 use shared_common::taxonomy_common_vo::PatternList;
-use shared_common::taxonomy_config_language_vo::ConfigLanguage;
+use shared_common::taxonomy_language_vo::ConfigLanguage;
 use shared_common::taxonomy_language_vo::Language;
 use shared_common::taxonomy_path_vo::FilePath;
-use shared_common::taxonomy_tool_name_vo::ToolName;
 use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared_filesystem::contract_filesystem_protocol::{
     IParserProtocol, IToolResolutionProtocol, IWorkspaceProtocol,
