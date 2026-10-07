@@ -67,17 +67,17 @@ impl ICapabilitiesOrphanProtocol for CapabilitiesOrphanAnalyzer {
         // Build diagnostic message
         let reason = if !is_reachable && !is_wired {
             format!(
-                "WHY: '{}' is not reachable and not wired in any container.\nFIX: Ensure '{}' is imported by an entry file and wired in root_*_container.",
+                "AES503 CAPABILITIES_ORPHAN: '{}' is not reachable and not wired in any container.\nWHY: A capability without reachability or wiring cannot be invoked.\nFIX: Ensure '{}' is imported by an entry file and wired in root_*_container.",
                 stem, stem
             )
         } else if !is_reachable {
             format!(
-                "WHY: '{}' is not reachable from any entry point.\nFIX: Add an import from a surface, agent, or entry file.",
+                "AES503 CAPABILITIES_ORPHAN: '{}' is not reachable from any entry point.\nWHY: A capability must be reachable from an entry point to be invoked.\nFIX: Add an import from a surface, agent, or entry file.",
                 stem
             )
         } else {
             format!(
-                "WHY: '{}' is reachable but not wired in any container.\nFIX: Import and register '{}' in root_*_container.rs or root_*_container.py.",
+                "AES503 CAPABILITIES_ORPHAN: '{}' is reachable but not wired in any container.\nWHY: A wired capability is required for dependency injection resolution.\nFIX: Import and register '{}' in root_*_container.rs or root_*_container.py.",
                 stem, stem
             )
         };

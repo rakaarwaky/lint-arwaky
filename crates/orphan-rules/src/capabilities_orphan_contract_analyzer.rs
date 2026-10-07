@@ -72,7 +72,7 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
             return OrphanIndicatorResult::new(
                 true,
                 format!(
-                    "WHY: Contract '{}' is not wired by any container.\nFIX: Import and wire '{}' in root_*_container.",
+                    "AES502 CONTRACT_ORPHAN: Contract '{}' is not wired by any container.\nWHY: An unreachable contract cannot be consumed by any feature.\nFIX: Import and wire '{}' in root_*_container.",
                     trait_names.join(", "),
                     trait_names.join(", ")
                 ),
@@ -107,7 +107,7 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
                 return OrphanIndicatorResult::new(
                     true,
                     format!(
-                        "WHY: Protocol '{}' has no capability implementing it.\nFIX: Create a capability file implementing '{}'.",
+                        "AES502 CONTRACT_ORPHAN: Protocol '{}' has no capability implementing it.\nWHY: A protocol without an implementor cannot be used via dependency injection.\nFIX: Create a capability file implementing '{}'.",
                         unimplemented.join(", "),
                         unimplemented.join(", ")
                     ),
@@ -142,7 +142,7 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
                 return OrphanIndicatorResult::new(
                     true,
                     format!(
-                        "WHY: Aggregate '{}' has no agent implementing it.\nFIX: Create an agent file implementing '{}'.",
+                        "AES502 CONTRACT_ORPHAN: Aggregate '{}' has no agent implementing it.\nWHY: An aggregate without an implementor cannot be resolved from the container.\nFIX: Create an agent file implementing '{}'.",
                         unimplemented.join(", "),
                         unimplemented.join(", ")
                     ),
