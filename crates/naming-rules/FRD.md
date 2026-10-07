@@ -64,7 +64,7 @@ flowchart TD
 
   - Must be snake_case: lowercase ASCII letters (`a-z`), digits (`0-9`), and underscores only. No uppercase, no hyphens, no dots.
   - Must follow `prefix_concept_suffix` pattern with minimum N words (configurable via `config.naming.word_count.value`, default 3.
-  - Validation regex: `^[a-z0-9]+(_[a-z0-9]+){N-1,}$` — compiled once per word count and cached in a static `OnceLock` table (one slot per word count 1–10).
+  - Validation regex: `^[a-z0-9]+(_[a-z0-9]+){N-1,}$` — compiled once per word count and cached in a static `OnceLock` table for word counts 1–10; counts above 10 build the pattern on demand so the configured minimum is honored exactly.
   - Exceptions — three sources, evaluated in order; any match skips the file:
     1. **Barrel files and entry points** — module barrels, library roots, binary entries, package markers, and index barrels.
     2. **Rule-level exceptions** (`config.rules[].exceptions.values`) — global exceptions that apply to all layers for a given rule code.
@@ -192,7 +192,7 @@ flowchart TD
 | 1,000-file check | Under 1 s | Time a full walk and check over a 1,000-file workspace |
 | Per-file cost | O(n) in the file's content length | Scale one file's length tenfold and confirm linear growth |
 | Checker state | O(1) per file | Measure retained state during a scan and confirm it does not grow with file count |
-| Regex cache | One compiled slot per word count from 1 to 10, populated lazily | Read the cache size before and after a scan and confirm it matches the distinct word counts seen |
+| Regex cache | One compiled slot per word count from 1 to 10, populated lazily; word counts above 10 are built on demand (no clamp) | Read the cache size before and after a scan and confirm it matches the distinct word counts seen |
 | Naming accuracy | Zero false positives on correctly named files | Assert the good-workspace fixtures report zero violations |
 | Suffix-policy completeness | Zero false negatives against the configured suffix policy | Assert every file violating the configured policy is reported |
 | Determinism | Results depend only on file content, never on iteration order | Run the same scan twice and compare the finding sets byte for byte |
