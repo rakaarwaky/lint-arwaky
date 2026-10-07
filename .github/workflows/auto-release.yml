@@ -204,9 +204,11 @@ jobs:
           git add Cargo.toml Cargo.lock CHANGELOG.md
           git commit -m "chore(release): v${VERSION}"
 
-          # Create the release branch and push it.
+          # Create the release branch and push it. A previous failed run may
+          # have left a stale remote branch; delete it first so the push is
+          # a clean fast-forward rather than a non-fast-forward rejection.
           git switch -c "$BRANCH"
-          git push -u origin "$BRANCH"
+          git push --force-with-lease -u origin "$BRANCH"
 
           # Open a PR to main; the auto-merge workflow merges it once the
           # required checks pass. A failure here must fail the job.

@@ -8,6 +8,10 @@ on:
   schedule:
     # Run once per day so stale checks do not fire on every push.
     - cron: '0 2 * * *'
+  # Manual trigger for debugging. The `if:` guard below skips the job on
+  # non-schedule / non-dispatch events (e.g. the push that modifies this
+  # file itself, which GitHub Actions triggers all workflows on).
+  workflow_dispatch: {}
 
 # Updates issue state/comments and reads workflow-run state only.
 permissions:
@@ -19,6 +23,10 @@ jobs:
   close-stale:
     name: Close stale issues
     runs-on: ubuntu-latest
+    # Only run on scheduled or manual triggers. GitHub Actions also runs
+    # every workflow on the push that modifies the workflow file itself;
+    # that event has no schedule/dispatch context and would fail.
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     steps:
       - name: Mark stale issues
         uses: actions/stale@v11
