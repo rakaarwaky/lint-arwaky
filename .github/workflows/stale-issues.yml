@@ -20,6 +20,15 @@ permissions:
   actions: read
 
 jobs:
+  # No-op job that runs on every event so the workflow never has 0 jobs
+  # (which GitHub reports as "failure" when a workflow file is modified on
+  # a push and the real job's if: guard skips it).
+  validate:
+    name: Validate run
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "stale-issues triggered by ${GITHUB_EVENT_NAME} — no action needed."
+
   close-stale:
     name: Close stale issues
     runs-on: ubuntu-latest

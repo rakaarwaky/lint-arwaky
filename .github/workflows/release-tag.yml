@@ -24,6 +24,15 @@ permissions:
   contents: write
 
 jobs:
+  # No-op job that runs on every event so the workflow never has 0 jobs
+  # (which GitHub reports as "failure"). The real tag job skips on non-matching
+  # events; this job succeeds immediately so the run is always green.
+  validate:
+    name: Validate run
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "release-tag triggered by ${GITHUB_EVENT_NAME} — no action needed."
+
   tag:
     name: Create release tag
     runs-on: ubuntu-latest
