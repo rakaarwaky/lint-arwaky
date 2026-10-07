@@ -72,8 +72,9 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
             return OrphanIndicatorResult::new(
                 true,
                 format!(
-                    "Contract {} '{}' is not reachable.",
+                    "Contract {} '{}' is not reachable from any entry.\nWHY? Contract files must be imported by an entry point or have an alive implementor.\nFIX: Import '{}' from a root_*_entry.rs or ensure a capability implements it.",
                     suffix,
+                    trait_names.join(", "),
                     trait_names.join(", ")
                 ),
                 Severity::MEDIUM,
@@ -107,7 +108,8 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
                 return OrphanIndicatorResult::new(
                     true,
                     format!(
-                        "Contract protocol '{}' is not implemented.",
+                        "Contract protocol '{}' is not implemented.\nWHY? Protocol contracts must be implemented by a capability to satisfy the dependency injection pattern.\nFIX: Create a capability file that implements '{}'.",
+                        unimplemented.join(", "),
                         unimplemented.join(", ")
                     ),
                     Severity::MEDIUM,
@@ -141,7 +143,8 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
                 return OrphanIndicatorResult::new(
                     true,
                     format!(
-                        "Contract aggregate '{}' is not implemented.",
+                        "Contract aggregate '{}' is not implemented.\nWHY? Aggregate contracts must be implemented by an agent to provide the single entry point pattern.\nFIX: Create an agent file that implements '{}'.",
+                        unimplemented.join(", "),
                         unimplemented.join(", ")
                     ),
                     Severity::MEDIUM,
