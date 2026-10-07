@@ -14,7 +14,6 @@ pub mod taxonomy_job_vo;
 pub mod taxonomy_language_vo;
 pub mod taxonomy_layer_vo;
 pub mod taxonomy_lint_vo;
-pub mod taxonomy_logging_vo;
 pub mod taxonomy_message_vo;
 pub mod taxonomy_name_vo;
 pub mod taxonomy_path_vo;
