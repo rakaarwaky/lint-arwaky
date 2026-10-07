@@ -254,8 +254,8 @@ fn e2e_chained_python_import_graph_reaches_capabilities() {
     // so that BFS reachability marks the capabilities file alive.
     // This exercises resolve_import_target through the real pipeline,
     // not a hand-built graph.
-    use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
     use shared_filesystem::FilesystemRequest;
+    use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 
     let tmp = tempfile::TempDir::new().unwrap();
     let member_src = tmp.path().join("modules").join("image").join("src");

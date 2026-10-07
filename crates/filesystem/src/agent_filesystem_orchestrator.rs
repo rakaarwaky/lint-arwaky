@@ -1,11 +1,11 @@
 // Agent layer — orchestrates FR-001 through FR-005
 // Only orchestration: delegates to capabilities & utility
 use shared_common::{
+    DEFAULT_IGNORED_PATHS,
     taxonomy_common_vo::{FileContentPair, PatternList},
     taxonomy_config_language_vo::ConfigLanguage,
     taxonomy_path_vo::FilePath,
     taxonomy_source_vo::ContentString,
-    DEFAULT_IGNORED_PATHS,
 };
 use shared_filesystem::{
     contract_filesystem_aggregate::IFilesystemAggregate,
