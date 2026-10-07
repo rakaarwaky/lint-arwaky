@@ -1,7 +1,9 @@
 // PURPOSE: logging capability contracts — four capability seams plus the
 // aggregate entry the orchestrator exposes to the surface.
 
-use crate::taxonomy_logging_vo::{Count, DurationMs, FilterDirective, LogVerbosity, PhaseTimerVO, SkipReason};
+use crate::taxonomy_logging_vo::{
+    Count, DurationMs, FilterDirective, LogVerbosity, PhaseTimerVO, SkipReason,
+};
 
 /// FR-Logging-001: Build the filter directives.
 ///
@@ -28,7 +30,11 @@ pub trait ISubscriberInstallProtocol: Send + Sync {
 /// a scope guard — the end marker fires even if the phase panics.
 pub trait IPhaseTimerProtocol: Send + Sync {
     fn phase_started(&self, phase: &'static str) -> PhaseTimerVO;
-    fn phase_finished(&self, timer: &PhaseTimerVO, count: Option<usize>);
+    fn phase_finished(
+        &self,
+        timer: &PhaseTimerVO,
+        count: super::taxonomy_logging_vo::OptionalCount,
+    );
 }
 
 /// FR-Logging-004: Report walker progress.

@@ -82,3 +82,7 @@ pub struct Count {
 pub struct DurationMs {
     pub value: u64,
 }
+
+/// An optional count of items (e.g. results within a phase).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct OptionalCount(pub Option<usize>);

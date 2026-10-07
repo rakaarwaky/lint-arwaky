@@ -2,8 +2,8 @@
 // Pure config logic; no global state, no I/O. Testable in isolation.
 // The actual subscriber install is handled by `SubscriberInit`.
 
-use shared_logging::taxonomy_logging_vo::LogVerbosity;
 use shared_logging::contract_logging_protocol::IFilterBuildProtocol;
+use shared_logging::taxonomy_logging_vo::LogVerbosity;
 use tracing_subscriber::EnvFilter;
 
 // ─── Block 1: Struct Definition ───────────────────────────

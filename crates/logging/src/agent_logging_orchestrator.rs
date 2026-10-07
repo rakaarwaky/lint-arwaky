@@ -23,7 +23,10 @@ pub struct LoggingOrchestrator {
 impl ILoggingAggregate for LoggingOrchestrator {
     fn execute(&self, request: LoggingRequest) -> LoggingResponse {
         match request.kind {
-            LoggingRequestKind::InstallSubscriber { verbosity, with_ansi } => {
+            LoggingRequestKind::InstallSubscriber {
+                verbosity,
+                with_ansi,
+            } => {
                 let _ = verbosity;
                 self.subscriber.install(verbosity, with_ansi);
                 LoggingResponse {
@@ -37,7 +40,10 @@ impl ILoggingAggregate for LoggingOrchestrator {
                 }
             }
             LoggingRequestKind::PhaseFinished { timer, count } => {
-                self.timer.phase_finished(&timer, count);
+                self.timer.phase_finished(
+                    &timer,
+                    shared_logging::taxonomy_logging_vo::OptionalCount(count),
+                );
                 LoggingResponse {
                     kind: LoggingResponseKind::Done,
                 }

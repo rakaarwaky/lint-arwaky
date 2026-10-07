@@ -2,7 +2,7 @@
 // One capability seam that wraps any closure with elapsed_ms reporting.
 
 use shared_logging::contract_logging_protocol::IPhaseTimerProtocol;
-use shared_logging::taxonomy_logging_vo::PhaseTimerVO;
+use shared_logging::taxonomy_logging_vo::{OptionalCount, PhaseTimerVO};
 use tracing::info;
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -20,9 +20,9 @@ impl IPhaseTimerProtocol for PhaseTimerCapability {
         }
     }
 
-    fn phase_finished(&self, timer: &PhaseTimerVO, count: Option<usize>) {
+    fn phase_finished(&self, timer: &PhaseTimerVO, count: OptionalCount) {
         let elapsed_ms = timer.start.elapsed().as_millis() as u64;
-        match count {
+        match count.0 {
             Some(n) => {
                 info!(target: "lint_arwaky::audit", event = "phase_done", phase = timer.phase, elapsed_ms = elapsed_ms, count = n, "{:?} phase complete", timer.phase);
             }
