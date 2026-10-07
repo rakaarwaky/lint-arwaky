@@ -8,8 +8,8 @@
 // Root callers use these methods; the dispatcher will later use them via
 // the walker reporter and phase timer.
 
-use shared_common::taxonomy_logging_vo::LogVerbosity;
 use crate::taxonomy_logging_vo::SkipReason;
+use shared_common::taxonomy_logging_vo::LogVerbosity;
 
 /// Single entry point over the logging feature.
 pub trait ILoggingAggregate: Send + Sync {
