@@ -176,6 +176,48 @@ fn scan_directory_with_ignored_excludes() {
 }
 
 #[test]
+fn scan_directory_with_ignored_root_multi_segment_pattern() {
+    let tmp = TempDir::new().unwrap();
+    let internal = tmp.path().join("internal").join("lint-arwaky");
+    let wt = internal.join(".worktrees");
+    std::fs::create_dir_all(wt.join("feature-x")).unwrap();
+    std::fs::write(wt.join("feature-x").join("main.rs"), "fn main() {}").unwrap();
+    let src = internal.join("src");
+    std::fs::create_dir_all(&src).unwrap();
+    std::fs::write(src.join("lib.rs"), "fn lib() {}").unwrap();
+    let ignored = vec!["internal/lint-arwaky/.worktrees".to_string()];
+    let files = shared_filesystem::utility_filesystem_io::scan_directory_with_ignored_root(
+        tmp.path().join("internal").as_path(),
+        tmp.path(),
+        &ignored,
+    );
+    let names: Vec<String> = files
+        .iter()
+        .filter_map(|p| p.file_name().map(|n| n.to_string_lossy().to_string()))
+        .collect();
+    assert!(names.contains(&"lint-arwaky".to_string()));
+}
+
+#[test]
+fn scan_directory_with_ignored_root_excludes_matched_subtree() {
+    let tmp = TempDir::new().unwrap();
+    let internal = tmp.path().join("internal").join("lint-arwaky");
+    let wt = internal.join(".worktrees");
+    std::fs::create_dir_all(wt.join("feature-x")).unwrap();
+    std::fs::write(wt.join("feature-x").join("main.rs"), "fn main() {}").unwrap();
+    let ignored = vec!["internal/lint-arwaky/.worktrees".to_string()];
+    let files = shared_filesystem::utility_filesystem_io::scan_directory_with_ignored_root(
+        internal.as_path(),
+        tmp.path(),
+        &ignored,
+    );
+    let has_worktrees = files
+        .iter()
+        .any(|p| p.to_string_lossy().contains(".worktrees"));
+    assert!(!has_worktrees, ".worktrees subtree should be excluded");
+}
+
+#[test]
 fn read_dir_entries_as_pathbuf() {
     let tmp = TempDir::new().unwrap();
     std::fs::write(tmp.path().join("a.txt"), "a").unwrap();
