@@ -26,7 +26,7 @@ use shared_filesystem::{
 use std::{
     collections::{HashMap, HashSet},
     path::{Path, PathBuf},
-    sync::{Arc, OnceLock},
+    sync::{Arc, Mutex, OnceLock, RwLock},
 };
 
 // ─── Macros ────────────────────────────────────────────────────────────────
@@ -41,18 +41,24 @@ pub struct FilesystemOrchestratorDeps {
 }
 pub struct FilesystemOrchestrator {
     pub(crate) deps: FilesystemOrchestratorDeps,
-    pub(crate) files: OnceLock<Vec<FileEntry>>,
-    pub(crate) file_index: OnceLock<HashMap<PathBuf, usize>>,
-    pub(crate) imports: OnceLock<Vec<ImportEntry>>,
+    pub(crate) files: RwLock<Option<Vec<FileEntry>>>,
+    pub(crate) file_index: RwLock<Option<HashMap<PathBuf, usize>>>,
+    pub(crate) imports: RwLock<Option<Vec<ImportEntry>>>,
     /// Extra import cache entries not tied to `files` (dispatcher patches).
     pub(crate) imports_extra: std::sync::Mutex<Vec<ImportEntry>>,
     /// Snapshot of the import cache at the last `build_file_index_with_ignored`.
     pub(crate) imports_snapshot: std::sync::Mutex<Vec<ImportEntry>>,
     pub(crate) resolved_imports: OnceLock<Vec<ImportEntry>>,
-    pub(crate) warnings: OnceLock<Vec<ParseWarning>>,
-    pub(crate) cached_reverse_links: OnceLock<HashMap<PathBuf, Vec<PathBuf>>>,
-    pub(crate) cached_definitions: OnceLock<HashMap<String, Vec<PathBuf>>>,
-    pub(crate) cached_implementations: OnceLock<HashMap<String, Vec<PathBuf>>>,
+    pub(crate) warnings: RwLock<Option<Vec<ParseWarning>>>,
+    pub(crate) cached_reverse_links: RwLock<Option<HashMap<PathBuf, Vec<PathBuf>>>>,
+    pub(crate) cached_definitions: RwLock<Option<HashMap<String, Vec<PathBuf>>>>,
+    pub(crate) cached_implementations: RwLock<Option<HashMap<String, Vec<PathBuf>>>>,
+    /// The effective ignore set (defaults + extras) used for the current warm
+    /// index. A subsequent build with a *different* effective set triggers a
+    /// rebuild so the new patterns take effect; an identical set is a no-op.
+    pub(crate) index_ignored: Mutex<Option<Vec<String>>>,
+    /// Serializes concurrent rebuilds of the file index.
+    pub(crate) rebuild_lock: Mutex<()>,
 }
 
 // ─── Block 2: Aggregate Trait Implementation ──────────────
@@ -179,27 +185,22 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
                     .is_ok(),
             },
             FilesystemRequest::Canonicalize { path } => FilesystemResponse::Paths {
-                paths: self
-                    .deps
-                    .io
-                    .canonicalize(&path)
-                    .map(|p| vec![p.to_string_lossy().to_string()])
-                    .unwrap_or_default(),
+                paths: match self.deps.io.canonicalize(&path) {
+                    Ok(p) => vec![p.to_string_lossy().to_string()],
+                    Err(_) => Vec::new(),
+                },
             },
             FilesystemRequest::PathExists { path } => FilesystemResponse::PathExists {
                 exists: self.deps.io.path_exists(&path),
             },
             FilesystemRequest::ReadDirEntries { dir } => FilesystemResponse::Paths {
-                paths: self
-                    .deps
-                    .io
-                    .read_dir_entries_as_pathbuf(&dir)
-                    .map(|v| {
-                        v.into_iter()
-                            .map(|p| p.to_string_lossy().to_string())
-                            .collect()
-                    })
-                    .unwrap_or_default(),
+                paths: match self.deps.io.read_dir_entries_as_pathbuf(&dir) {
+                    Ok(v) => v
+                        .into_iter()
+                        .map(|p| p.to_string_lossy().to_string())
+                        .collect(),
+                    Err(_) => Vec::new(),
+                },
             },
         }
     }
@@ -207,24 +208,23 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
 
 // ─── Block 3: Constructors, Std Traits & Helpers ─────────
 impl FilesystemOrchestrator {
-    /// Builds a graph analysis context for the workspace rooted at the specified directory.
-    ///
-    /// The context includes resolved import links, inbound links, inheritance relationships,
-    /// implementation bridges, container wiring, and the workspace's discovered files.
-    ///
-    /// # Arguments
-    ///
-    /// * `root_dir` - Directory from which to determine the workspace and discover files.
-    ///
-    /// # Returns
-    ///
-    /// A graph analysis context containing workspace files and their dependency relationships.
-    ///
-    /// # Examples
-    ///
-    /// ```ignore
-    /// let context = orchestrator.build_orphan_graph_context(std::path::Path::new("."), &[]);
-    /// ```
+    /// Acquires a read guard on an `RwLock`, recovering from a poisoned lock.
+    fn read_guard<'a, T>(lock: &'a std::sync::RwLock<T>) -> std::sync::RwLockReadGuard<'a, T> {
+        match lock.read() {
+            Ok(g) => g,
+            Err(p) => p.into_inner(),
+        }
+    }
+    /// Acquires a write guard on an `RwLock`, recovering from a poisoned lock.
+    fn write_guard<'a, T>(lock: &'a std::sync::RwLock<T>) -> std::sync::RwLockWriteGuard<'a, T> {
+        match lock.write() {
+            Ok(g) => g,
+            Err(p) => p.into_inner(),
+        }
+    }
+    /// Builds a graph analysis context for the workspace rooted at `root_dir`,
+    /// including resolved import links, inbound links, inheritance relationships,
+    /// implementation bridges, container wiring, and discovered files.
     fn build_orphan_graph_context(
         &self,
         root_dir: &Path,
@@ -239,23 +239,28 @@ impl FilesystemOrchestrator {
                 &FilePath::new(root_dir.to_string_lossy().to_string()).unwrap_or_default(),
             )
             .unwrap_or_else(|| root_dir.to_path_buf());
-        let all_files: Vec<String> = self
-            .files
-            .get()
-            .map(|entries| {
-                entries
-                    .iter()
-                    .map(|e| {
-                        shared_filesystem::utility_container_wiring::path_to_relative(
-                            &e.path, &top_root,
-                        )
-                    })
-                    .collect()
-            })
-            .unwrap_or_default();
+        let all_files: Vec<String> = {
+            let guard = Self::read_guard(&self.files);
+            guard
+                .as_ref()
+                .map(|entries| {
+                    entries
+                        .iter()
+                        .map(|e| {
+                            shared_filesystem::utility_container_wiring::path_to_relative(
+                                &e.path, &top_root,
+                            )
+                        })
+                        .collect()
+                })
+                .unwrap_or_default()
+        };
         let all_files_set: HashSet<&str> = all_files.iter().map(|s| s.as_str()).collect();
         let stem_index = Self::build_stem_index(&all_files);
-        let imports = self.imports.get().cloned().unwrap_or_default();
+        let imports: Vec<ImportEntry> = {
+            let guard = Self::read_guard(&self.imports);
+            guard.as_ref().cloned().unwrap_or_default()
+        };
         let mut forward: HashMap<String, Vec<String>> = HashMap::new();
         let mut resolved_import_entries: Vec<ImportEntry> = Vec::with_capacity(imports.len());
         for imp in &imports {
@@ -365,7 +370,8 @@ impl FilesystemOrchestrator {
     }
     /// Returns a snapshot of all discovered source file entries.
     pub fn file_list_snapshot(&self) -> Vec<FileEntry> {
-        self.files.get().cloned().unwrap_or_default()
+        let guard = Self::read_guard(&self.files);
+        guard.as_ref().cloned().unwrap_or_default()
     }
     /// Reads a file's content from the bounded cache.
     pub fn read_cached(&self, path: &FilePath) -> ContentString {
@@ -376,17 +382,17 @@ impl FilesystemOrchestrator {
     }
     /// Returns a cached file's content by path.
     pub fn get_file_content(&self, path: &Path) -> Option<String> {
-        self.file_index
-            .get()
-            .and_then(|idx| idx.get(path))
-            .and_then(|&i| self.files.get()?.get(i))
+        let idx = Self::read_guard(&self.file_index);
+        let files_guard = Self::read_guard(&self.files);
+        idx.as_ref()
+            .and_then(|i| i.get(path))
+            .and_then(|&i| files_guard.as_ref()?.get(i))
             .map(|entry| entry.content.clone())
     }
     /// Reports whether a path is present in the cache.
     pub fn has_file(&self, path: &Path) -> bool {
-        self.file_index
-            .get()
-            .is_some_and(|idx| idx.contains_key(path))
+        let idx = Self::read_guard(&self.file_index);
+        idx.as_ref().is_some_and(|idx| idx.contains_key(path))
     }
     /// Collects (path, content) pairs for each lintable file in the pattern list.
     pub fn collect_file_entries(&self, files: &PatternList) -> Vec<FileContentPair> {
@@ -417,20 +423,7 @@ impl FilesystemOrchestrator {
             .map(|p| p.to_string_lossy().to_string())
             .collect()
     }
-    /// Discovers source files inside *directories* anywhere under *root*, with
-    /// those directories exempted from the default skip list.
-    ///
-    /// This is the one discovery that keeps `tests/` and `benches/`, which the
-    /// default walk prunes. AES103 needs them; every other auditor wants them
-    /// gone. The shared utility supplies the directory list and the ignore
-    /// patterns; reading them is this agent's job, so the split keeps AES201
-    /// satisfied — a utility never reaches for a contract.
-    ///
-    /// The walk is **recursive**, unlike `discover_source_files`. AES103's
-    /// flat-layout rule only means something if the nested files are read: a
-    /// shallow walk here would let `tests/inner/unit_x.rs` pass unnoticed,
-    /// which is exactly the file the rule exists to report. Depth is capped so a
-    /// symlinked directory cannot make the walk unbounded.
+    /// Discovers source files inside *directories* anywhere under *root*, with\n    /// those directories exempted from the default skip list (keeps `tests/`\n    /// and `benches/`). Recursive walk, depth-capped. AES103 needs these.
     pub fn discover_files_in_directories(
         &self,
         root: &Path,
@@ -460,24 +453,10 @@ impl FilesystemOrchestrator {
         found
     }
 
-    /// How deep the `tests/`/`benches/` walk descends.
-    ///
-    /// The flat-layout rule AES103 enforces means real suites are one level deep,
-    /// so this only needs to reach far enough to see an illegal nesting and report
-    /// it. The cap is what keeps a symlinked directory from making the walk
-    /// unbounded.
-    ///
-    /// Placed as an associated const inside the impl block so the linter treats
-    /// it as part of the agent's behaviour rather than a stray module-level
-    /// constant.
+    /// How deep the `tests/`/`benches/` walk descends (AES103 flat-layout rule).
     const MAX_TEST_WALK_DEPTH: usize = 4;
 
-    /// Recursive source-file collection under *dir*, depth-first.
-    ///
-    /// `DirEntry::file_type` reads the entry itself, so a symlinked directory is
-    /// never descended into — that keeps a link from turning this into an
-    /// unbounded walk. Depth is passed down rather than inferred so the caller
-    /// sets the cap.
+    /// Recursive source-file collection under *dir*, depth-first. Symlinked\n    /// directories are never descended into; depth is caller-capped.
     fn collect_source_files_recursive(
         &self,
         dir: &Path,
@@ -531,15 +510,7 @@ impl FilesystemOrchestrator {
             .map(|p| p.to_string_lossy().to_string())
             .collect()
     }
-    /// Discovers all files (source and non-source) under a root.
-    ///
-    /// Must stay recursive and file-only: this is the language-detection input
-    /// for the external-lint orchestrator. The previous `self.scan_directory`
-    /// delegation did a single depth-1 `read_dir` and returned directory
-    /// entries too, so a target whose sources sit two levels down (e.g.
-    /// `workspaces-bad/modules/<member>/src/*.py`) yielded no extension at
-    /// all, `has_python`/`has_js`/`has_rust` all came back false, and every
-    /// external adapter was silently skipped.
+    /// Discovers all files (source and non-source) under a root.\n    /// Recursive, file-only: language-detection input for the external-lint\n    /// orchestrator (keeps nested `src/*.py` visible to extension checks).
     pub fn discover_files(&self, root: &Path) -> Vec<String> {
         utility_workspace_detection::discover_files(root)
     }
@@ -565,10 +536,11 @@ impl FilesystemOrchestrator {
     }
     /// Returns tree-sitter-extracted used identifiers for a cached file.
     pub fn used_identifiers_for(&self, path: &Path) -> Vec<String> {
-        self.file_index
-            .get()
-            .and_then(|idx| idx.get(path))
-            .and_then(|&i| self.files.get()?.get(i))
+        let idx = Self::read_guard(&self.file_index);
+        let files_guard = Self::read_guard(&self.files);
+        idx.as_ref()
+            .and_then(|i| i.get(path))
+            .and_then(|&i| files_guard.as_ref()?.get(i))
             .and_then(|entry| entry.parse_metadata.as_ref())
             .map(|meta| match meta {
                 ParseMetadata::Rust(m) => m.used_identifiers.clone(),
@@ -581,8 +553,9 @@ impl FilesystemOrchestrator {
     }
     /// Returns every used identifier found across all cached parse metadata.
     pub fn used_identifiers_all(&self) -> Vec<String> {
-        self.files
-            .get()
+        let guard = Self::read_guard(&self.files);
+        guard
+            .as_ref()
             .map(|entries| {
                 entries
                     .iter()
@@ -601,7 +574,8 @@ impl FilesystemOrchestrator {
     /// Builds a cross-file trait-name to implementor map from cached parse metadata.
     pub fn implemented_traits_map(&self) -> HashMap<String, Vec<String>> {
         let mut map: HashMap<String, Vec<String>> = HashMap::new();
-        if let Some(files) = self.files.get() {
+        let guard = Self::read_guard(&self.files);
+        if let Some(files) = guard.as_ref() {
             for entry in files.iter() {
                 if let Some(ParseMetadata::Rust(meta)) = &entry.parse_metadata {
                     for impl_block in &meta.impl_blocks {
@@ -617,15 +591,15 @@ impl FilesystemOrchestrator {
         }
         map
     }
-    /// Builds the file index from a root, discovering, reading, and parsing.
+    /// Builds the file index from a root. Warm-index semantics apply: a\n    /// rebuild happens only when the effective ignore set changes.
     pub fn build_file_index(&self, root: &Path) {
         self.build_file_index_impl(root, &[]);
     }
-    /// Builds the file index with extra ignored patterns merged into the defaults.
+    /// Builds the file index with extra ignored patterns merged into the\n    /// defaults. Rebuilds when the effective ignore set differs from the\n    /// current warm index; no-op when it matches.
     pub fn build_file_index_with_ignored(&self, root: &Path, ignored: &[String]) {
         self.build_file_index_impl(root, ignored);
     }
-    /// Builds the file index and records an import-cache snapshot.
+    /// Builds the file index and records a snapshot of the parser's import cache.
     pub fn build_file_index_and_snapshot(&self, root: &Path, ignored: &[String]) {
         self.build_file_index_impl(root, ignored);
         if let Ok(mut snapshot) = self.imports_snapshot.lock() {
@@ -636,33 +610,21 @@ impl FilesystemOrchestrator {
     pub fn new(deps: FilesystemOrchestratorDeps) -> Self {
         Self {
             deps,
-            files: OnceLock::new(),
-            file_index: OnceLock::new(),
-            imports: OnceLock::new(),
+            files: RwLock::new(None),
+            file_index: RwLock::new(None),
+            imports: RwLock::new(None),
             imports_extra: std::sync::Mutex::new(Vec::new()),
             imports_snapshot: std::sync::Mutex::new(Vec::new()),
             resolved_imports: OnceLock::new(),
-            warnings: OnceLock::new(),
-            cached_reverse_links: OnceLock::new(),
-            cached_definitions: OnceLock::new(),
-            cached_implementations: OnceLock::new(),
+            warnings: RwLock::new(None),
+            cached_reverse_links: RwLock::new(None),
+            cached_definitions: RwLock::new(None),
+            cached_implementations: RwLock::new(None),
+            index_ignored: Mutex::new(None),
+            rebuild_lock: Mutex::new(()),
         }
     }
-    /// Resolves an import to a workspace-relative source file.
-    ///
-    /// Resolution supports Rust modules and external crates, relative imports, Python modules and packages, and TypeScript or JavaScript packages. Existing resolved paths are converted to paths relative to `top_root`.
-    ///
-    /// # Arguments
-    ///
-    /// * `imp` - Import metadata, including its raw path, language, and import type.
-    /// * `src_rel` - Workspace-relative path of the importing source file.
-    /// * `top_root` - Workspace root used to normalize resolved paths.
-    /// * `all_files_set` - Workspace-relative paths of all discovered files.
-    /// * `stem_index` - Index of file stems used for Python module matching.
-    ///
-    /// # Returns
-    ///
-    /// The workspace-relative target path when the import resolves to a discovered file; otherwise, `None`.
+    /// Resolves an import to a workspace-relative source file.\n    /// Supports Rust modules, external crates, relative imports, Python modules\n    /// and packages, and TypeScript/JavaScript packages.
     pub fn resolve_import_target(
         &self,
         imp: &ImportEntry,
@@ -766,16 +728,45 @@ impl FilesystemOrchestrator {
     }
 
     pub fn build_file_index_impl(&self, root: &Path, extra_ignored: &[String]) {
+        let effective_ignored: Vec<String> = {
+            let mut ig: Vec<String> = DEFAULT_IGNORED_PATHS
+                .iter()
+                .map(|s| format!("{}/", s))
+                .collect();
+            ig.extend_from_slice(extra_ignored);
+            ig
+        };
+        // Fast path: same ignore set as the current warm index — skip rebuild.
+        {
+            let tracked = match self.index_ignored.lock() {
+                Ok(g) => g,
+                Err(p) => p.into_inner(),
+            };
+            if tracked.as_ref() == Some(&effective_ignored) {
+                return;
+            }
+        }
+        let _rebuild_guard = match self.rebuild_lock.lock() {
+            Ok(g) => g,
+            Err(p) => p.into_inner(),
+        };
+        // Re-check under the rebuild lock in case another thread already
+        // rebuilt with the same ignore set while we were waiting.
+        {
+            let tracked = match self.index_ignored.lock() {
+                Ok(g) => g,
+                Err(p) => p.into_inner(),
+            };
+            if tracked.as_ref() == Some(&effective_ignored) {
+                return;
+            }
+        }
         let ws_root = self
             .deps
             .workspace
             .workspace_root(&FilePath::new(root.to_string_lossy().to_string()).unwrap_or_default())
             .unwrap_or_else(|| root.to_path_buf());
-        let mut ignored: Vec<String> = DEFAULT_IGNORED_PATHS
-            .iter()
-            .map(|s| format!("{}/", s))
-            .collect();
-        ignored.extend_from_slice(extra_ignored);
+        let ignored = effective_ignored.clone();
         let abs_root = self.deps.io.canonicalize(&ws_root).unwrap_or(ws_root);
         let member_dirs: Vec<&str> = ["crates", "packages", "modules"]
             .iter()
@@ -837,33 +828,70 @@ impl FilesystemOrchestrator {
         }
         self.deps.parser.parse_all(&mut entries);
         self.deps.parser.resolve_barrel_imports(&abs_root);
-        let _ = self.files.set(entries.clone());
         let parser_imports = self.deps.parser.import_list();
         // Snapshot before the parser cache gets overwritten by a scoped parse_all
         if let Ok(mut snap) = self.imports_snapshot.lock() {
             *snap = parser_imports.clone();
         }
-        let _ = self.imports.set(parser_imports);
-        let _ = self
-            .warnings
-            .set(self.deps.parser.parse_warnings().to_vec());
-        let _ = self.file_index.set(
-            entries
-                .iter()
-                .enumerate()
-                .map(|(i, e)| (e.path.clone(), i))
-                .collect(),
-        );
+        {
+            let mut w = Self::write_guard(&self.files);
+            *w = Some(entries.clone());
+        }
+        {
+            let mut w = Self::write_guard(&self.imports);
+            *w = Some(parser_imports);
+        }
+        {
+            let mut w = Self::write_guard(&self.file_index);
+            *w = Some(
+                entries
+                    .iter()
+                    .enumerate()
+                    .map(|(i, e)| (e.path.clone(), i))
+                    .collect(),
+            );
+        }
+        {
+            let mut w = Self::write_guard(&self.warnings);
+            *w = Some(self.deps.parser.parse_warnings().to_vec());
+        }
+        // Also clear the cached graph data so ensure_graph_built will rebuild it.
+        {
+            let mut w = Self::write_guard(&self.cached_reverse_links);
+            *w = None;
+        }
+        {
+            let mut w = Self::write_guard(&self.cached_definitions);
+            *w = None;
+        }
+        {
+            let mut w = Self::write_guard(&self.cached_implementations);
+            *w = None;
+        }
+        {
+            let mut w = match self.index_ignored.lock() {
+                Ok(g) => g,
+                Err(p) => p.into_inner(),
+            };
+            *w = Some(effective_ignored);
+        }
     }
     /// Builds and caches the dependency graph and its symbol relationships.
-    ///
-    /// Subsequent calls reuse the cached graph data.
     pub(crate) fn ensure_graph_built(&self) {
-        if self.cached_reverse_links.get().is_some() {
-            return;
+        {
+            let guard = Self::read_guard(&self.cached_reverse_links);
+            if guard.is_some() {
+                return;
+            }
         }
-        let files = self.files.get().cloned().unwrap_or_default();
-        let imports = self.imports.get().cloned().unwrap_or_default();
+        let files = {
+            let guard = Self::read_guard(&self.files);
+            guard.as_ref().cloned().unwrap_or_default()
+        };
+        let imports = {
+            let guard = Self::read_guard(&self.imports);
+            guard.as_ref().cloned().unwrap_or_default()
+        };
         let mut definitions: Vec<DefinitionEntry> = Vec::new();
         let mut implementations: Vec<ImplEntry> = Vec::new();
         for entry in &files {
@@ -952,10 +980,19 @@ impl FilesystemOrchestrator {
             .graph
             .build_graph(&imports, &files, &definitions, &implementations);
         let rl = self.deps.graph.reverse_links().clone();
-        let _ = self.cached_reverse_links.set(rl);
+        {
+            let mut w = Self::write_guard(&self.cached_reverse_links);
+            *w = Some(rl);
+        }
         let sd = self.deps.graph.symbol_definitions().clone();
-        let _ = self.cached_definitions.set(sd);
+        {
+            let mut w = Self::write_guard(&self.cached_definitions);
+            *w = Some(sd);
+        }
         let imp = self.deps.graph.implementations().clone();
-        let _ = self.cached_implementations.set(imp);
+        {
+            let mut w = Self::write_guard(&self.cached_implementations);
+            *w = Some(imp);
+        }
     }
 }
