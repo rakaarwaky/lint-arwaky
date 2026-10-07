@@ -116,27 +116,30 @@ flowchart TD
 
 ### FR-OrphanRules-003: Contract Orphan Detection (AES502)
 
-- **Description**: Check that contract files are both reachable from entry points and have implementations and callers, using trait extraction and whole-word content searching.
+- **Description**: Check that contract files are reachable from entry points and have implementations, using trait extraction and whole-word content searching.
 - **Input**: File path, all workspace files, content map, alive set.
 - **Output**: Orphan indicator result with `is_orphan` flag, reason, and severity.
 - **Business Rules**:
 
-  - **Reachability check first**: If file is not in the alive set, it is immediately orphan.
+  - **Reachability check first**: If file is not in the alive set (not reachable from any entry or container), it is immediately orphan.
   - **Protocol contracts** (`_protocol` files):
-    - Must have at least one implementation — checked by re-parsing capabilities/agent files for `impl <Trait> for ...` patterns.
-    - Must be called/referenced by at least one higher-layer file — checked via whole-word content search.
-    - Implementation without callers → orphan. Callers without implementation → orphan.
+    - Must have at least one implementation — checked by re-parsing capabilities files for `impl <Trait> for ...` patterns.
+    - No caller check — only implementation is verified.
+    - No implementation → orphan.
   - **Aggregate contracts** (`_aggregate` files):
-    - Same conditions as protocols.
+    - Same conditions as protocols — must have at least one implementation by agent files.
+    - No caller check — only implementation is verified.
   - **Barrel re-export check**: If any trait/interface name from the contract file appears in a barrel file's re-exports, the contract is considered used as public API and is NOT flagged.
   - Whole-word matching is used for all identifier checks.
   - Uses cached search file lists per workspace root for performance.
 - **Severity**: MEDIUM.
 - **Edge Cases**:
 
-  - Protocol with implementation but zero callers → orphan.
-  - Protocol with callers but no implementation → orphan.
-  - Aggregate re-exported in barrel → not orphan.
+  - Protocol with implementation but not wired → not orphan (if reachable via DI).
+  - Protocol with no implementation → orphan.
+  - Aggregate with implementation but not wired → not orphan (if reachable via DI).
+  - Aggregate with no implementation → orphan.
+  - Barrel re-exported contract → not orphan.
   - Contract file with no traits/interfaces (e.g., only type aliases) → not orphan (nothing to check).
 - **Error Handling**: Files with empty content or no trait names → not flagged (nothing to check).
 

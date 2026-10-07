@@ -45,11 +45,10 @@ Last Updated: 2026-09-17
 | Taxonomy file imported only by other taxonomy files | Orphan (no non-t… | Automated | `tests/orphan-rules/` | cargo test -p orphan_rules | `29c71083` |
 | Taxonomy file with no inbound links | Orphan | Automated | `tests/orphan-rules/` | cargo test -p orphan_rules | `29c71083` |
 | Taxonomy file imported by capabilities file | Not orphan | Automated | `tests/orphan-rules/` | cargo test -p orphan_rules | `29c71083` |
-| Protocol with implementation AND callers | Not orphan | Automated | `tests/orphan-rules/` | cargo test -p orphan_rules | `29c71083` |
-| Protocol with implementation but zero callers | Orphan | Automated | `tests/orphan-rules/` | cargo test -p orphan_rules | `29c71083` |
-| Protocol with callers but no implementation | Orphan | Automated | `tests/orphan-rules/` | cargo test -p orphan_rules | `29c71083` |
+| Protocol with implementation | Not orphan | Automated | `tests/orphan-rules/` | cargo test -p orphan_rules | `29c71083` |
+| Protocol with no implementation | Orphan | Automated | `tests/orphan-rules/` | cargo test -p orphan_rules | `29c71083` |
 | Aggregate re-exported in barrel file | Not orphan (public API) | Automated | `tests/orphan-rules/` | cargo test -p orphan_rules | `29c71083` |
-| Aggregate implemented by agent, called by surface | Not orphan | Automated | `tests/orphan-rules/` | cargo test -p orphan_rules | `29c71083` |
+| Aggregate implemented by agent | Not orphan | Automated | `tests/orphan-rules/` | cargo test -p orphan_rules | `29c71083` |
 | Contract file with no traits (only type aliases) | Not orphan (nothing… | Automated | `tests/orphan-rules/` | cargo test -p orphan_rules | `29c71083` |
 | Capability struct referenced in container file | Not orphan | Automated | `tests/orphan-rules/` | cargo test -p orphan_rules | `29c71083` |
 | Capability file transitively reachable from entry point | Not orphan | Automated | `tests/orphan-rules/` | cargo test -p orphan_rules | `29c71083` |
