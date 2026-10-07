@@ -4,13 +4,25 @@
 // taxonomy value used by the CLI entry point and every capability).
 // This file owns only the logging-feature-specific types.
 
+/// One timing scope for a scan phase. Created by `IPhaseTimerProtocol::phase_started`,
+/// consumed by `phase_finished` to emit the `phase_done` event.
+#[derive(Clone, Debug)]
+pub struct PhaseTimer {
+    pub phase: &'static str,
+    pub start: std::time::Instant,
+}
+
 /// The four reasons a walker can skip a directory. Reported verbatim in
 /// `walker_skip` events so a developer sees exactly why a dir was not entered.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum SkipReason {
+    /// The dir name is on the default skip list (e.g. `target`, `.git`).
     DefaultSkipDir,
+    /// The dir path matches a pattern in the config's `ignored_paths`.
     IgnoredPathPattern,
+    /// The dir sits at the workspace root and is not a member dir.
     NonMemberAtWorkspaceRoot,
+    /// The dir contains a `.git` file (nested worktree / submodule).
     NestedGitRepo,
 }
 
@@ -24,14 +36,6 @@ impl SkipReason {
             Self::NestedGitRepo => "nested_git_repo",
         }
     }
-}
-
-/// One timing scope for a scan phase. Created by `IPhaseTimerProtocol::phase_started`,
-/// consumed by `phase_finished` to emit the `phase_done` event.
-#[derive(Clone, Debug)]
-pub struct PhaseTimer {
-    pub phase: &'static str,
-    pub start: std::time::Instant,
 }
 
 /// The walker action that a `report_walk` call describes.

@@ -1,13 +1,6 @@
 // PURPOSE: shared-logging — taxonomy and contract types for the logging
 // feature (real-time scan feed: filter, subscriber install, phase timing,
 // walker reporting).
-//
-// LogVerbosity lives in shared-common (it's a true common taxonomy type
-// used by the CLI entry point and every capability). This crate owns:
-//   • the four capability protocols
-//   • the single aggregate trait
-//   • PhaseTimer + SkipReason (feature-specific taxonomy)
-//   • AUDIT_TARGET (feature-specific constant)
 
 pub mod contract_logging_aggregate;
 pub mod contract_logging_protocol;

@@ -1,23 +1,33 @@
 // PURPOSE: ILoggingAggregate — single entry point over the logging feature.
 //
-// The composition root's door. The agent behind the aggregate routes
-// `init` to the filter + subscriber seams, `time_phase` to the phase
-// timer, and `report_walk` to the walker reporter. Consumers never see
-// the individual protocols.
+// This is NOT a standard feature aggregate with execute(request) -> response.
+// Logging is cross-cutting infrastructure. The aggregate provides direct
+// methods that capabilities implement, similar to how ISubscriberInitProtocol
+// provides build_filter() and init().
+//
+// Root callers use these methods; the dispatcher will later use them via
+// the walker reporter and phase timer.
 
+use shared_common::taxonomy_logging_vo::LogVerbosity;
 use crate::taxonomy_logging_vo::SkipReason;
-use shared_common::LogVerbosity;
 
 /// Single entry point over the logging feature.
 pub trait ILoggingAggregate: Send + Sync {
     /// Install the global subscriber: build the filter, then install it.
     fn init(&self, verbosity: LogVerbosity, with_ansi: bool);
 
-    /// Run `f` with the phase timed; emits `phase_start` and `phase_done`.
-    fn time_phase<R>(&self, phase: &'static str, f: impl FnOnce() -> R) -> R;
+    /// Begin timing a phase; returns a PhaseTimer for the caller to hold.
+    fn phase_started(&self, phase: &'static str) -> crate::taxonomy_logging_vo::PhaseTimer;
 
-    /// Emit one walker event: enter, skip(reason), or files-discovered.
-    fn report_walk_enter(&self, dir: &str);
-    fn report_walk_skip(&self, dir: &str, reason: SkipReason);
-    fn report_files_discovered(&self, count: usize, elapsed_ms: u64);
+    /// End timing a phase; emit the elapsed_ms event.
+    fn phase_finished(&self, timer: &crate::taxonomy_logging_vo::PhaseTimer, count: Option<usize>);
+
+    /// Emit a walker-enter event.
+    fn walker_enter(&self, dir: &str);
+
+    /// Emit a walker-skip event with reason.
+    fn walker_skip(&self, dir: &str, reason: SkipReason);
+
+    /// Emit a files-discovered event with count and elapsed time.
+    fn files_discovered(&self, count: usize, elapsed_ms: u64);
 }
