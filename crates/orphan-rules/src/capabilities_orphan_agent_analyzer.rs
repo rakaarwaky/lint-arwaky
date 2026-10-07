@@ -83,11 +83,20 @@ impl IAgentOrphanProtocol for AgentOrphanAnalyzer {
         // Build diagnostic message
         let filename = shared_common::utility_layer_detector::extract_filename(fp);
         let reason = if !is_alive && !is_wired {
-            format!("'{}' is not reachable and not wired.", filename)
+            format!(
+                "WHY: '{}' is not reachable and not wired in any container.\nFIX: Import '{}' in a surface/entry file and wire it in root_*_container.",
+                filename, filename
+            )
         } else if !is_alive {
-            format!("'{}' is not reachable.", filename)
+            format!(
+                "WHY: '{}' is not reachable from any entry point.\nFIX: Import '{}' in a surface, capability, or entry file.",
+                filename, filename
+            )
         } else {
-            format!("'{}' is not wired.", filename)
+            format!(
+                "WHY: '{}' is reachable but not wired in any container.\nFIX: Register '{}' in root_*_container.rs or root_*_container.py.",
+                filename, filename
+            )
         };
 
         OrphanIndicatorResult::new(true, reason, Severity::HIGH)

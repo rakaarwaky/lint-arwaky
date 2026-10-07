@@ -139,15 +139,18 @@ impl IUtilityOrphanProtocol for UtilityOrphanAnalyzer {
 
         let reason = if !is_reachable && !has_consumer_importers {
             format!(
-                "'{}' is not reachable and not imported by a consumer layer{}.",
-                module_name, imported_by_str
+                "WHY: '{}' is not reachable and not imported by a consumer layer{}.\nFIX: Import '{}' in a consumer layer or remove the orphaned utility.",
+                module_name, imported_by_str, module_name
             )
         } else if !is_reachable {
-            format!("'{}' is not reachable.", module_name)
+            format!(
+                "WHY: '{}' is not reachable from any entry point.\nFIX: Import '{}' in a surface, capability, agent, or entry file.",
+                module_name, module_name
+            )
         } else {
             format!(
-                "'{}' is not imported by a consumer layer{}.",
-                module_name, imported_by_str
+                "WHY: '{}' is not imported by a consumer layer{}.\nFIX: Import '{}' in a capabilities, agent, or surface file.",
+                module_name, imported_by_str, module_name
             )
         };
 
