@@ -1,4 +1,4 @@
-// PURPOSE: CommandArgs, Location, LocationList, ScopeBounds, ScopeRef, ViolationConstraint — VOs for lint violations
+// PURPOSE: Location, LocationList, ScopeRef — VOs for lint violations
 use crate::string_value_object;
 use serde::{Deserialize, Serialize};
 
@@ -135,94 +135,9 @@ impl std::ops::Deref for LocationList {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct ViolationConstraint {
-    pub rule: DescriptionVO,
-    #[serde(default)]
-    pub min_value: DescriptionVO,
-    #[serde(default)]
-    pub max_value: DescriptionVO,
-}
-
-impl ViolationConstraint {
-    pub fn new(rule: impl Into<String>) -> Self {
-        Self {
-            rule: DescriptionVO::new(rule),
-            min_value: DescriptionVO::new(String::new()),
-            max_value: DescriptionVO::new(String::new()),
-        }
-    }
-}
-
-impl std::fmt::Display for ViolationConstraint {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.rule.value)
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct CommandArgs {
-    #[serde(default)]
-    pub args: Vec<ContentString>,
-}
-
-impl Default for CommandArgs {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl CommandArgs {
-    pub fn new() -> Self {
-        Self { args: Vec::new() }
-    }
-}
-
-impl std::fmt::Display for CommandArgs {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{}",
-            self.args
-                .iter()
-                .map(|a| a.value.as_str())
-                .collect::<Vec<_>>()
-                .join(" ")
-        )
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct ScopeBounds {
-    #[serde(default)]
-    pub start: Option<LineNumber>,
-    #[serde(default)]
-    pub end: Option<LineNumber>,
-}
-
 // ─── Merged from taxonomy_source_vo ───────────────────────────
 
 string_value_object!(ContentString);
-
-/// SourceContentVO — combines a file path, a ContentString payload, and a
-/// language marker. Carries three fields rather than one, so it does not fit
-/// the single-field string_value_object! macro; defined manually.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct SourceContentVO {
-    pub file_path: FilePath,
-    pub content: ContentString,
-    pub language: String,
-}
-
-impl SourceContentVO {
-    pub fn new(file_path: FilePath, content: ContentString, language: impl Into<String>) -> Self {
-        Self {
-            file_path,
-            content,
-            language: language.into(),
-        }
-    }
-}
 
 // ─── Merged from taxonomy_lint_result_vo ───────────────────
 

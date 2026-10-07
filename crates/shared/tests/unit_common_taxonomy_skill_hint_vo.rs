@@ -1,22 +1,6 @@
 // Unit tests — skill hint resolution: file layer → routing.
 // One rule: the file's layer determines the skill for every code.
-use shared_common::taxonomy_skill_hint_vo::{SkillHint, resolve_skill_hint, skill_of_layer};
-
-#[test]
-fn skill_of_layer_maps_each_layer() {
-    assert_eq!(skill_of_layer("taxonomy"), "aes-taxonomy");
-    assert_eq!(skill_of_layer("contract"), "aes-contract");
-    assert_eq!(skill_of_layer("capabilities"), "aes-capabilities");
-    assert_eq!(skill_of_layer("utility"), "aes-utility");
-    assert_eq!(skill_of_layer("agent"), "aes-agent");
-    assert_eq!(skill_of_layer("surfaces"), "aes-surface");
-    assert_eq!(skill_of_layer("root"), "aes-root");
-}
-
-#[test]
-fn skill_of_layer_falls_back_for_unknown() {
-    assert_eq!(skill_of_layer("nonexistent"), "aes-lint-arwaky");
-}
+use shared_common::taxonomy_skill_hint_vo::{SkillHint, resolve_skill_hint};
 
 // ─── resolve_skill_hint (code + layer) ───────────────────────────────────────
 

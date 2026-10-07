@@ -1,7 +1,6 @@
 // PURPOSE: File layer → skill routing, one rule for every violation code.
 // Pure data: the layer→skill table. No file I/O, no layer detection — callers
 // resolve the layer from the file path first (utility layer) and pass it here.
-use crate::taxonomy_error_vo::ErrorCode;
 
 /// Layer name (as the layer detector reports it) → skill name.
 const LAYER_SKILLS: &[(&str, &str)] = &[
@@ -34,15 +33,6 @@ impl SkillHint {
     }
 }
 
-/// Skill owning a layer, defaulting to `aes-lint-arwaky` for unknown layers.
-pub fn skill_of_layer(layer: &str) -> &'static str {
-    LAYER_SKILLS
-        .iter()
-        .find(|(name, _)| *name == layer)
-        .map(|(_, skill)| *skill)
-        .unwrap_or("aes-lint-arwaky")
-}
-
 /// Resolve the remediation for `code` in a file belonging to `layer`.
 ///
 /// One rule: the file's layer owns the skill, for every code. The only codes
@@ -60,15 +50,15 @@ pub fn resolve_skill_hint(code: &str, layer: Option<&str>) -> SkillHint {
             fix_command: Some("lint-arwaky-cli fix <path> --filter AES304"),
         },
         _ => SkillHint {
-            skill: layer.map(skill_of_layer),
+            skill: layer.and_then(|l| {
+                LAYER_SKILLS
+                    .iter()
+                    .find(|(name, _)| *name == l)
+                    .map(|(_, skill)| *skill)
+            }),
             fix_command: None,
         },
     }
-}
-
-/// Resolve a hint from an `ErrorCode` plus layer name.
-pub fn resolve_skill_hint_typed(code: &ErrorCode, layer: Option<&str>) -> SkillHint {
-    resolve_skill_hint(code.code(), layer)
 }
 
 /// Filename stem prefix → AES layer name. Mirrors the AES102 prefix convention;
