@@ -23,8 +23,11 @@ pub enum LogVerbosity {
 impl LogVerbosity {
     pub fn filter_directive(&self) -> &'static str {
         match self {
-            Self::Default => "warn,lint_arwaky::audit=info",
-            Self::Info => "info,lint_arwaky::audit=info",
+            // CLI is quiet by default — no audit events unless verbose.
+            Self::Default => "warn",
+            // Verbose (`-v`) enables the real-time scan feed on stderr.
+            Self::Info => "warn,lint_arwaky::audit=info",
+            // Extra verbose (`-vv`) enables debug-level tracing.
             Self::Debug => "debug,lint_arwaky::audit=debug",
         }
     }
