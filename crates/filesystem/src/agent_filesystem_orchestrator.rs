@@ -1,11 +1,11 @@
 // Agent layer — orchestrates FR-001 through FR-005
 // Only orchestration: delegates to capabilities & utility
 use shared_common::{
-    DEFAULT_IGNORED_PATHS,
     taxonomy_common_vo::{FileContentPair, PatternList},
     taxonomy_config_language_vo::ConfigLanguage,
     taxonomy_path_vo::FilePath,
     taxonomy_source_vo::ContentString,
+    DEFAULT_IGNORED_PATHS,
 };
 use shared_filesystem::{
     contract_filesystem_aggregate::IFilesystemAggregate,
@@ -707,7 +707,16 @@ impl FilesystemOrchestrator {
             if raw.starts_with("./") || raw.starts_with("../") {
                 let base = Path::new(&src_dir);
                 let rel = raw.strip_prefix("./").unwrap_or(raw);
-                let candidate = base.join(rel).to_string_lossy().to_string();
+                // When the source file is at the scan root (src_dir is empty),
+                // "../x" cannot mean "one level above the root" — treat it as
+                // a direct relative path so that root-level files with
+                // `import "../y"` resolve to "y" instead of "../y".
+                let rel = if src_dir.is_empty() && rel.starts_with("../") {
+                    rel.trim_start_matches("../").to_string()
+                } else {
+                    rel.to_string()
+                };
+                let candidate = base.join(&rel).to_string_lossy().to_string();
                 if all_files_set.contains(candidate.as_str()) {
                     Some(candidate)
                 } else if !candidate.contains('.') {
