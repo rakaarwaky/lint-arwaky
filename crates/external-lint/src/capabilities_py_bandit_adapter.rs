@@ -51,12 +51,15 @@ impl ILinterAdapterProtocol for BanditAdapter {
 
         let executable = self.resolve_executable();
         let abs_path = self.io.canonicalize_path_str(path);
+        // Exclude vendor and .venv directories to avoid scanning thousands of
+        // dependency files that slow bandit to 120s+ and exceed the timeout.
+        // Only 2,640 project Python files remain; vendor has 28,799.
         let cmd = vec![
             executable,
             "-r".to_string(),
             abs_path.value.to_string(),
             "--exclude".to_string(),
-            "tests".to_string(),
+            "tests,.venv,vendor".to_string(),
             "--format".to_string(),
             "json".to_string(),
             "--exit-zero".to_string(),
