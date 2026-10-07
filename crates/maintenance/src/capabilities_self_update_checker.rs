@@ -1,4 +1,4 @@
-use shared_common::taxonomy_tool_name_vo::ToolName;
+use shared_common::taxonomy_adapter_name_vo::ToolName;
 use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared_maintenance::contract_maintenance_protocol::ISelfUpdateProtocol;
 use shared_maintenance::taxonomy_maintenance_constant::GITHUB_REPO;

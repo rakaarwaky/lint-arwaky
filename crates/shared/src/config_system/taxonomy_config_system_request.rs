@@ -1,6 +1,6 @@
 // PURPOSE: ConfigRequest — request payload for the config aggregate
 
-use crate::taxonomy_config_language_vo::ConfigLanguage;
+use crate::taxonomy_language_vo::ConfigLanguage;
 use shared_common::taxonomy_path_vo::FilePath;
 
 pub enum ConfigRequest {

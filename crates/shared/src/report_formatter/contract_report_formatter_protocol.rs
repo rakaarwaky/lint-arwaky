@@ -8,7 +8,7 @@
 // directly through the specific protocol of the selected formatter.
 use shared_cli_commands::taxonomy_cli_commands_vo::ScanReport;
 use shared_cli_commands::taxonomy_format_vo::Format;
-use shared_common::taxonomy_display_content_vo::DisplayContent;
+use shared_common::taxonomy_message_vo::DisplayContent;
 
 /// FR-ReportFormatter-001: human-readable text output.
 ///

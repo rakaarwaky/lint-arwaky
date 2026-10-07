@@ -3,7 +3,7 @@
 use crate::taxonomy_git_hooks_error::GitHookError;
 use shared_common::taxonomy_job_vo::SuccessStatus;
 use shared_common::taxonomy_layer_vo::Identity;
-use shared_common::taxonomy_lint_result_vo::LintResultList;
+use shared_common::taxonomy_lint_vo::LintResultList;
 use shared_common::taxonomy_message_vo::LintMessage;
 
 pub enum GitHooksResponse {

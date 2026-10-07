@@ -4,7 +4,7 @@
 // Merged from the former taxonomy_config_system_vo, taxonomy_identifier_vo,
 // taxonomy_multi_project_workspace_info_vo, taxonomy_setting_vo,
 // taxonomy_source_vo, and taxonomy_validation_vo modules.
-use crate::taxonomy_config_language_vo::ConfigLanguage;
+use crate::taxonomy_language_vo::ConfigLanguage;
 use serde::{Deserialize, Serialize};
 use shared_common::string_value_object;
 use shared_common::taxonomy_adapter_name_vo::AdapterName;
@@ -13,14 +13,14 @@ use shared_common::taxonomy_common_vo::BooleanVO;
 use shared_common::taxonomy_common_vo::Count;
 use shared_common::taxonomy_common_vo::PatternList;
 use shared_common::taxonomy_common_vo::Score;
-pub use shared_common::taxonomy_definition_vo::LayerDefinition;
-use shared_common::taxonomy_definition_vo::NamingConfig;
-use shared_common::taxonomy_definition_vo::OrphanRuleVO;
 use shared_common::taxonomy_error_vo::ErrorCode;
+pub use shared_common::taxonomy_layer_vo::LayerDefinition;
 use shared_common::taxonomy_layer_vo::LayerNameVO;
+use shared_common::taxonomy_layer_vo::NamingConfig;
+use shared_common::taxonomy_layer_vo::OrphanRuleVO;
+use shared_common::taxonomy_message_vo::DescriptionVO;
 use shared_common::taxonomy_path_vo::FilePath;
-use shared_common::taxonomy_paths_vo::FilePathList;
-use shared_common::taxonomy_suggestion_vo::DescriptionVO;
+use shared_common::taxonomy_path_vo::FilePathList;
 use std::collections::HashMap;
 
 // ─── Architecture definition ─────────────────────────────────────────────

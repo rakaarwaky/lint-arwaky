@@ -6,8 +6,8 @@ use crate::taxonomy_common_error::ErrorMessage;
 use crate::taxonomy_common_error::ExitCode;
 use crate::taxonomy_common_error::FieldName;
 use crate::taxonomy_error_vo::ErrorCode;
+use crate::taxonomy_lint_vo::ContentString;
 use crate::taxonomy_path_vo::FilePath;
-use crate::taxonomy_source_vo::ContentString;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default, thiserror::Error)]
@@ -146,5 +146,43 @@ impl std::fmt::Display for ValidationError {
             "Validation failed on '{}': {}",
             self.field_name, self.message
         )
+    }
+}
+
+// ─── Merged from taxonomy_operation_error ─────────────────────
+
+/// LinterOperationError — unified error type for linter adapter operations.
+#[derive(Debug, Clone, Serialize, Deserialize, thiserror::Error)]
+pub enum LinterOperationError {
+    #[error("Scan error: {0}")]
+    Scan(ScanError),
+
+    #[error("Adapter error: {0}")]
+    Adapter(AdapterError),
+}
+
+impl LinterOperationError {
+    /// Stable numeric id for machine branching.
+    pub fn error_id(&self) -> u16 {
+        match self {
+            Self::Scan(_) => 4,
+            Self::Adapter(_) => 5,
+        }
+    }
+
+    pub fn message(&self) -> ErrorMessage {
+        ErrorMessage::new(self.to_string())
+    }
+}
+
+impl From<ScanError> for LinterOperationError {
+    fn from(e: ScanError) -> Self {
+        LinterOperationError::Scan(e)
+    }
+}
+
+impl From<AdapterError> for LinterOperationError {
+    fn from(e: AdapterError) -> Self {
+        LinterOperationError::Adapter(e)
     }
 }

@@ -6,14 +6,14 @@
 // severities follow the per-tool mapping in `crates/external-lint/FRD.md`.
 
 use shared_common::taxonomy_adapter_name_vo::AdapterName;
+use shared_common::taxonomy_adapter_name_vo::ToolName;
 use shared_common::taxonomy_common_vo::{ColumnNumber, LineNumber};
 use shared_common::taxonomy_error_vo::ErrorCode;
-use shared_common::taxonomy_lint_result_vo::{LintResult, LintResultList};
 use shared_common::taxonomy_lint_vo::LocationList;
+use shared_common::taxonomy_lint_vo::{LintResult, LintResultList};
 use shared_common::taxonomy_message_vo::LintMessage;
 use shared_common::taxonomy_path_vo::FilePath;
 use shared_common::taxonomy_severity_vo::Severity;
-use shared_common::taxonomy_tool_name_vo::ToolName;
 use shared_external_lint::contract_external_lint_protocol::INormalizeProtocol;
 use shared_external_lint::utility_path_normalization::{
     resolve_or_fallback, resolve_or_fallback_with_context,

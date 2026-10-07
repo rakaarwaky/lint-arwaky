@@ -1,5 +1,5 @@
 use shared_cli_commands::LintResult;
-use shared_common::taxonomy_definition_vo::LayerMapVO;
+use shared_common::taxonomy_layer_vo::LayerMapVO;
 use shared_common::{ContentString, FilePath, Identity, LanguageVO, LineNumber, Severity};
 use shared_filesystem::taxonomy_filesystem_vo::ImportEntry;
 

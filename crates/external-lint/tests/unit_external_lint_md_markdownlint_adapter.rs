@@ -6,14 +6,14 @@ use external_lint_lint_arwaky::capabilities_md_markdownlint_adapter::MarkdownLin
 mod mock_filesystem;
 
 use mock_filesystem::MockFilesystem;
+use shared_common::taxonomy_adapter_error::LinterOperationError;
 use shared_common::taxonomy_adapter_name_vo::AdapterName;
+use shared_common::taxonomy_adapter_name_vo::ToolName;
 use shared_common::taxonomy_common_vo::PatternList;
-use shared_common::taxonomy_compliance_vo::ComplianceStatus;
-use shared_common::taxonomy_operation_error::LinterOperationError;
+use shared_common::taxonomy_job_vo::ResponseData;
+use shared_common::taxonomy_message_vo::ComplianceStatus;
 use shared_common::taxonomy_path_vo::FilePath;
-use shared_common::taxonomy_response_data_vo::ResponseData;
 use shared_common::taxonomy_severity_vo::Severity;
-use shared_common::taxonomy_tool_name_vo::ToolName;
 use shared_external_lint::ICommandExecutorProtocol;
 use shared_external_lint::IJsToolResolutionProtocol;
 use shared_external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;

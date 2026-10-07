@@ -8,8 +8,8 @@ use naming_rules_lint_arwaky::capabilities_test_file_prefix_checker::TestFilePre
 use naming_rules_lint_arwaky::root_naming_rules_container::NamingContainer;
 use shared_common::PatternList;
 use shared_common::SuffixPolicyVO;
-use shared_common::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
 use shared_common::taxonomy_layer_vo::LayerNameVO;
+use shared_common::taxonomy_layer_vo::{LayerDefinition, LayerMapVO};
 use shared_config_system::taxonomy_config_system_vo::ArchitectureConfig;
 use shared_filesystem::taxonomy_filesystem_vo::{FileEntry, Language};
 use shared_naming_rules::INamingRunnerAggregate;
@@ -56,7 +56,7 @@ fn make_file_entries(dir: &std::path::Path, names: &[&str]) -> Vec<FileEntry> {
 fn run_audit(
     orch: &dyn INamingRunnerAggregate,
     entries: &[FileEntry],
-) -> Vec<shared_common::taxonomy_lint_result_vo::LintResult> {
+) -> Vec<shared_common::taxonomy_lint_vo::LintResult> {
     let request = NamingRequest::RunAuditWithEntries {
         files: entries.to_vec(),
     };
@@ -73,7 +73,7 @@ fn run_audit_with_tests(
     orch: &dyn INamingRunnerAggregate,
     source: &[FileEntry],
     tests: &[FileEntry],
-) -> Vec<shared_common::taxonomy_lint_result_vo::LintResult> {
+) -> Vec<shared_common::taxonomy_lint_vo::LintResult> {
     match orch.execute(NamingRequest::audit_with_tests(source, tests)) {
         NamingResponse::Audit { violations } => violations,
         NamingResponse::Name { .. } => panic!("expected an audit response"),
@@ -256,10 +256,10 @@ fn make_config_with_disabled_aes101() -> ArchitectureConfig {
 
     ArchitectureConfig {
         rules: vec![ArchitectureRule {
-            name: shared_common::taxonomy_suggestion_vo::DescriptionVO::new(
+            name: shared_common::taxonomy_message_vo::DescriptionVO::new(
                 "disable AES101".to_string(),
             ),
-            description: shared_common::taxonomy_suggestion_vo::DescriptionVO::new("".to_string()),
+            description: shared_common::taxonomy_message_vo::DescriptionVO::new("".to_string()),
             rule_type: ErrorCode::raw("AES101"),
             enabled: BooleanVO::new(false),
             ..Default::default()
@@ -305,7 +305,7 @@ fn e2e_aes101_disabled_skips_convention_check() {
 // ── AES103: the test-file prefix seam, end to end ──
 
 /// Count the findings carrying *code*, so a case asserts on which rule spoke.
-fn count_of(results: &[shared_common::taxonomy_lint_result_vo::LintResult], code: &str) -> usize {
+fn count_of(results: &[shared_common::taxonomy_lint_vo::LintResult], code: &str) -> usize {
     results.iter().filter(|r| r.code.code() == code).count()
 }
 
@@ -389,7 +389,7 @@ fn e2e_a_nested_test_file_fires_the_flatness_half_only() {
 fn e2e_aes103_disabled_in_config_skips_the_prefix_check() {
     use shared_common::taxonomy_common_vo::BooleanVO;
     use shared_common::taxonomy_error_vo::ErrorCode;
-    use shared_common::taxonomy_suggestion_vo::DescriptionVO;
+    use shared_common::taxonomy_message_vo::DescriptionVO;
     use shared_config_system::taxonomy_config_system_vo::ArchitectureRule;
 
     let tmp = TempDir::new().unwrap();

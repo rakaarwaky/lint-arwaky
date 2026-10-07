@@ -6,6 +6,6 @@
 //
 // JobId is re-exported from common for backward compatibility.
 use shared_common::string_value_object;
-pub use shared_common::taxonomy_job_id_vo::JobId;
+pub use shared_common::taxonomy_job_vo::JobId;
 
 string_value_object!(ActionName);

@@ -7,7 +7,7 @@
 // (text, json, sarif, junit) based on the requested format.
 use shared_cli_commands::taxonomy_cli_commands_vo::ScanReport;
 use shared_cli_commands::taxonomy_format_vo::Format;
-use shared_common::taxonomy_display_content_vo::DisplayContent;
+use shared_common::taxonomy_message_vo::DisplayContent;
 
 /// IReportFormatterAggregate — aggregate protocol for report formatting.
 ///

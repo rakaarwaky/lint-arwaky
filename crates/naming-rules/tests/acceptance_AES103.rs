@@ -5,7 +5,7 @@
 // fix is a rename or a move. A message that names only the file leaves the
 // author guessing which of the two it is.
 use naming_rules_lint_arwaky::capabilities_test_file_prefix_checker::TestFilePrefixChecker;
-use shared_common::taxonomy_lint_result_vo::LintResult;
+use shared_common::taxonomy_lint_vo::LintResult;
 
 /// Run the check the way the orchestrator does: the path plus its basename.
 fn audit(path: &str) -> Option<LintResult> {

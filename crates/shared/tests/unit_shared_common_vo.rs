@@ -7,23 +7,23 @@ use shared_common::taxonomy_common_vo::{
     BooleanVO, ColumnNumber, Count, ErrorMessage, LanguageVO, LineNumber, PatternList, Score,
     Timestamp,
 };
-use shared_common::taxonomy_config_language_vo::ConfigLanguage;
 use shared_common::taxonomy_error_vo::{
     ErrorCode, error_code_is_architecture, error_code_is_logic, error_code_is_security,
     error_code_is_style,
 };
 use shared_common::taxonomy_format_vo::Format;
-use shared_common::taxonomy_job_id_vo::JobId;
+use shared_common::taxonomy_job_vo::JobId;
 use shared_common::taxonomy_job_vo::{AdapterMetadata, McpConfigVO, SuccessStatus};
+use shared_common::taxonomy_language_vo::ConfigLanguage;
 use shared_common::taxonomy_language_vo::Language;
 use shared_common::taxonomy_layer_vo::{FileContentVO, Identity, LayerNameVO, LineContentVO};
 use shared_common::taxonomy_lint_vo::{Location, LocationList, ScopeRef};
-use shared_common::taxonomy_path_vo::{DirectoryPath, FilePath};
-use shared_common::taxonomy_paths_vo::{FilePathList, RenamedFile};
-use shared_common::taxonomy_severity_vo::Severity;
-use shared_common::taxonomy_suggestion_vo::{
+use shared_common::taxonomy_message_vo::{
     ClassPath, DescriptionVO, LogOutput, MetadataVO, StdError, StdOutput, Suggestion,
 };
+use shared_common::taxonomy_path_vo::{DirectoryPath, FilePath};
+use shared_common::taxonomy_path_vo::{FilePathList, RenamedFile};
+use shared_common::taxonomy_severity_vo::Severity;
 use shared_common::taxonomy_threshold_vo::Threshold;
 use shared_common::{ComplianceStatus, LintMessage};
 use shared_common::{LintResult, LintResultList};

@@ -4,8 +4,8 @@ use crate::taxonomy_filesystem_vo::FileEntry;
 use crate::taxonomy_filesystem_vo::GraphAnalysisContext;
 use crate::taxonomy_filesystem_vo::ImportEntry;
 use shared_common::taxonomy_common_vo::FileContentPair;
+use shared_common::taxonomy_lint_vo::ContentString;
 use shared_common::taxonomy_path_vo::FilePath;
-use shared_common::taxonomy_source_vo::ContentString;
 use std::collections::HashMap;
 use std::path::PathBuf;
 

@@ -8,9 +8,9 @@
 // All other methods are utility functions (no traits) in the shared crate.
 // `IConfigOrchestratorAggregate` is the entry point and does not count toward per-FR protocols.
 
-use crate::taxonomy_config_language_vo::ConfigLanguage;
 use crate::taxonomy_config_system_error::ConfigError;
 use crate::taxonomy_config_system_vo::{ArchitectureConfig, ConfigSource, ProjectConfig};
+use crate::taxonomy_language_vo::ConfigLanguage;
 use shared_common::taxonomy_path_vo::FilePath;
 // Re-exported so consumers keep one import path for the workspace enum the
 // FR-002 seam returns.

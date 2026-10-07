@@ -1,3 +1,4 @@
+use std::str::FromStr;
 // PURPOSE: Language — consolidated language enum for all feature crates
 // Merged from: common/taxonomy_language_vo.rs (original), filesystem/taxonomy_filesystem_vo.rs, code-analysis/taxonomy_violation_code_analysis_vo.rs
 
@@ -97,5 +98,72 @@ impl Language {
 impl std::fmt::Display for Language {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.as_str())
+    }
+}
+
+// ─── Merged from taxonomy_language_info_vo ────────────────────
+
+/// LanguageInfo — pre-computed language flags (is_rs, is_py, is_js, lang).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct LanguageInfo {
+    pub is_rs: bool,
+    pub is_py: bool,
+    pub is_js: bool,
+    pub lang: Language,
+}
+
+impl LanguageInfo {
+    pub fn new(is_rs: bool, is_py: bool, is_js: bool, lang: Language) -> Self {
+        Self {
+            is_rs,
+            is_py,
+            is_js,
+            lang,
+        }
+    }
+}
+
+// ─── Merged from taxonomy_config_language_vo ──────────────────
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum ConfigLanguage {
+    Rust,
+    Python,
+    TypeScript,
+}
+
+impl ConfigLanguage {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            ConfigLanguage::Rust => "rust",
+            ConfigLanguage::Python => "python",
+            ConfigLanguage::TypeScript => "typescript",
+        }
+    }
+
+    pub fn config_file_names(&self) -> &'static [&'static str] {
+        &["lint_arwaky.config.yaml"]
+    }
+}
+
+impl std::fmt::Display for ConfigLanguage {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.as_str())
+    }
+}
+
+impl FromStr for ConfigLanguage {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.trim().to_ascii_lowercase().as_str() {
+            "rust" => Ok(Self::Rust),
+            "python" => Ok(Self::Python),
+            "typescript" | "ts" => Ok(Self::TypeScript),
+            "javascript" | "js" => Ok(Self::TypeScript),
+            other => Err(format!(
+                "Unsupported language '{other}'. Supported: rust, python, typescript"
+            )),
+        }
     }
 }

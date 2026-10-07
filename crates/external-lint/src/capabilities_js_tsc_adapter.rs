@@ -14,12 +14,12 @@
 use regex::Regex;
 use shared_cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared_common::taxonomy_adapter_name_vo::AdapterName;
+use shared_common::taxonomy_adapter_name_vo::ToolName;
 use shared_common::taxonomy_common_vo::{ColumnNumber, LineNumber};
 use shared_common::taxonomy_error_vo::ErrorCode;
 use shared_common::taxonomy_lint_vo::LocationList;
 use shared_common::taxonomy_path_vo::FilePath;
 use shared_common::taxonomy_severity_vo::Severity;
-use shared_common::taxonomy_tool_name_vo::ToolName;
 use shared_common::{ComplianceStatus, LintMessage};
 use shared_external_lint::ICommandExecutorProtocol;
 use shared_external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;

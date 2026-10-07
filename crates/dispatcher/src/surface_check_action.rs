@@ -882,13 +882,13 @@ pub(crate) fn run_single_file_scan(
         .workspace
         .detect_language_from_path(scan_root.to_string_lossy().as_ref())
     {
-        shared_common::taxonomy_config_language_vo::ConfigLanguage::Rust => {
+        shared_common::taxonomy_language_vo::ConfigLanguage::Rust => {
             shared_filesystem::taxonomy_filesystem_vo::Language::Rust
         }
-        shared_common::taxonomy_config_language_vo::ConfigLanguage::Python => {
+        shared_common::taxonomy_language_vo::ConfigLanguage::Python => {
             shared_filesystem::taxonomy_filesystem_vo::Language::Python
         }
-        shared_common::taxonomy_config_language_vo::ConfigLanguage::TypeScript => {
+        shared_common::taxonomy_language_vo::ConfigLanguage::TypeScript => {
             shared_filesystem::taxonomy_filesystem_vo::Language::TypeScript
         }
     };
@@ -1245,13 +1245,13 @@ pub(crate) fn build_entries(
             .to_string();
         let language = seam.workspace.detect_language_from_path(file_path);
         let language = match language {
-            shared_common::taxonomy_config_language_vo::ConfigLanguage::Rust => {
+            shared_common::taxonomy_language_vo::ConfigLanguage::Rust => {
                 shared_filesystem::taxonomy_filesystem_vo::Language::Rust
             }
-            shared_common::taxonomy_config_language_vo::ConfigLanguage::Python => {
+            shared_common::taxonomy_language_vo::ConfigLanguage::Python => {
                 shared_filesystem::taxonomy_filesystem_vo::Language::Python
             }
-            shared_common::taxonomy_config_language_vo::ConfigLanguage::TypeScript => {
+            shared_common::taxonomy_language_vo::ConfigLanguage::TypeScript => {
                 shared_filesystem::taxonomy_filesystem_vo::Language::TypeScript
             }
         };

@@ -1,9 +1,9 @@
 // PURPOSE: TestFilePrefixChecker — AES103 test/bench file-prefix discipline
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
-use shared_common::taxonomy_definition_vo::LayerMapVO;
-use shared_common::taxonomy_lint_result_vo::{LintResult, LintResultList};
+use shared_common::taxonomy_layer_vo::LayerMapVO;
+use shared_common::taxonomy_lint_vo::{LintResult, LintResultList};
 use shared_common::taxonomy_path_vo::FilePath;
-use shared_common::taxonomy_paths_vo::FilePathList;
+use shared_common::taxonomy_path_vo::FilePathList;
 use shared_common::taxonomy_severity_vo::Severity;
 use shared_config_system::taxonomy_config_system_vo::ArchitectureConfig;
 use shared_naming_rules::TestSuiteSlot;

@@ -1,11 +1,10 @@
-// PURPOSE: PipelineJob, SuccessStatus, EnvContentVO, McpConfigVO — value objects for pipeline job lifecycle tracking
-// ResponseData is re-exported from common for backward compatibility
+// PURPOSE: SuccessStatus, AdapterMetadata, EnvContentVO, McpConfigVO, JobId,
+// ResponseData — value objects for pipeline job lifecycle tracking
+// Merged from: taxonomy_job_vo, taxonomy_job_id_vo, taxonomy_response_data_vo
 use crate::string_value_object;
 use crate::taxonomy_adapter_name_vo::AdapterName;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-
-pub use crate::taxonomy_response_data_vo::ResponseData;
 
 // Manual impl: `SuccessStatus` overrides `Display` to render "SUCCESS"/"FAILURE"
 // instead of `true`/`false`, and the macro does not currently support a clean
@@ -79,5 +78,53 @@ impl McpConfigVO {
     }
     pub fn value(&self) -> &HashMap<String, serde_json::Value> {
         &self.value
+    }
+}
+
+// ─── Merged from taxonomy_job_id_vo ───────────────────────────
+
+// JobId — value object for pipeline job identifiers.
+// Jobs represent discrete units of work (e.g. "scan", "watch", "check")
+// tracked by this ID throughout the system.
+string_value_object!(JobId);
+
+// ─── Merged from taxonomy_response_data_vo ────────────────────
+
+/// ResponseData — pipeline job response data value object.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct ResponseData {
+    #[serde(default)]
+    pub value: Option<serde_json::Value>,
+    #[serde(default)]
+    pub stdout: String,
+    #[serde(default)]
+    pub stderr: String,
+    #[serde(default)]
+    pub returncode: i64,
+    #[serde(default)]
+    pub metadata: HashMap<String, serde_json::Value>,
+}
+
+impl Default for ResponseData {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl ResponseData {
+    pub fn new() -> Self {
+        Self {
+            value: None,
+            stdout: String::new(),
+            stderr: String::new(),
+            returncode: 0,
+            metadata: HashMap::new(),
+        }
+    }
+    pub fn value(&self) -> Option<&serde_json::Value> {
+        self.value.as_ref()
+    }
+    pub fn get(&self, key: &str) -> Option<&serde_json::Value> {
+        self.value.as_ref().and_then(|v| v.get(key))
     }
 }

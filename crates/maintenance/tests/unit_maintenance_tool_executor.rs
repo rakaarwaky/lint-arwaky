@@ -1,6 +1,6 @@
 // Unit tests — tool-executor utility functions.
 use shared_common::FilePath;
-use shared_common::taxonomy_tool_name_vo::ToolName;
+use shared_common::taxonomy_adapter_name_vo::ToolName;
 use shared_maintenance::utility_tool_executor::{
     get_binary_path, run_tool, run_tool_in_dir, tool_exists,
 };

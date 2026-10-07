@@ -13,7 +13,7 @@ use shared_config_system::contract_config_protocol::{
 // - ignored_paths_from_config()
 // - default_config_for_language()
 // These are imported via their modules below.
-use shared_config_system::taxonomy_config_language_vo::ConfigLanguage;
+use shared_common::taxonomy_language_vo::ConfigLanguage;
 use shared_config_system::taxonomy_config_system_request::ConfigRequest;
 use shared_config_system::taxonomy_config_system_response::ConfigResponse;
 use shared_config_system::taxonomy_config_system_vo::ArchitectureConfig;

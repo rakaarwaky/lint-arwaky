@@ -7,10 +7,10 @@ use shared_common::taxonomy_adapter_name_vo::AdapterName;
 use shared_common::taxonomy_common_error::ErrorMessage;
 use shared_common::taxonomy_common_vo::Count;
 use shared_common::taxonomy_common_vo::Score;
-use shared_common::taxonomy_compliance_vo::ComplianceStatus;
+use shared_common::taxonomy_message_vo::ComplianceStatus;
+use shared_common::taxonomy_message_vo::DescriptionVO;
 use shared_common::taxonomy_path_vo::FilePath;
-use shared_common::taxonomy_paths_vo::FilePathList;
-use shared_common::taxonomy_suggestion_vo::DescriptionVO;
+use shared_common::taxonomy_path_vo::FilePathList;
 
 // ─── Doctor diagnostics ───────────────────────────────────────────────
 

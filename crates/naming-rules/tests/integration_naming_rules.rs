@@ -2,12 +2,12 @@
 use naming_rules_lint_arwaky::root_naming_rules_container::NamingContainer;
 use shared_common::PatternList;
 use shared_common::SuffixPolicyVO;
-use shared_common::taxonomy_definition_vo::LayerDefinition;
-use shared_common::taxonomy_definition_vo::LayerMapVO;
+use shared_common::taxonomy_layer_vo::LayerDefinition;
+use shared_common::taxonomy_layer_vo::LayerMapVO;
 use shared_common::taxonomy_layer_vo::LayerNameVO;
-use shared_common::taxonomy_lint_result_vo::LintResultList;
+use shared_common::taxonomy_lint_vo::LintResultList;
 use shared_common::taxonomy_path_vo::FilePath;
-use shared_common::taxonomy_paths_vo::FilePathList;
+use shared_common::taxonomy_path_vo::FilePathList;
 use shared_config_system::taxonomy_config_system_vo::ArchitectureConfig;
 use shared_naming_rules::SUFFIX_POLICY_STRICT;
 use shared_naming_rules::taxonomy_naming_rules_request::NamingRequest;

@@ -2,7 +2,7 @@
 use serde::{Deserialize, Serialize};
 
 use shared_common::taxonomy_common_error::ErrorMessage;
-use shared_common::taxonomy_suggestion_vo::DescriptionVO;
+use shared_common::taxonomy_message_vo::DescriptionVO;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct FixResult {

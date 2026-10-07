@@ -4,10 +4,10 @@
 // layer suffix; AES103 reads the *test-suite* prefix of files that live in
 // `tests/` and `benches/`, where the prefix is the virtual folder. Files outside
 // those two directories carry no test-type prefix, so this seam is silent for them.
-use shared_common::taxonomy_definition_vo::LayerMapVO;
-use shared_common::taxonomy_lint_result_vo::LintResultList;
+use shared_common::taxonomy_layer_vo::LayerMapVO;
+use shared_common::taxonomy_lint_vo::LintResultList;
 use shared_common::taxonomy_path_vo::FilePath;
-use shared_common::taxonomy_paths_vo::FilePathList;
+use shared_common::taxonomy_path_vo::FilePathList;
 use shared_config_system::taxonomy_config_system_vo::ArchitectureConfig;
 
 /// FR-NamingRules-003: check every file inside `tests/` and `benches/` against

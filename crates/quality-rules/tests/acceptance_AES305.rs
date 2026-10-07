@@ -16,7 +16,7 @@ fn analyzer_with_threshold(threshold: f64) -> CodeDuplicationAnalyzer {
     let mut config = ArchitectureConfig::default();
     // Add AES305 rule with custom threshold
     config.rules.push(shared_config_system::ArchitectureRule {
-        name: shared_common::taxonomy_suggestion_vo::DescriptionVO::new("AES305".to_string()),
+        name: shared_common::taxonomy_message_vo::DescriptionVO::new("AES305".to_string()),
         code_analysis: shared_quality_rules::CodeAnalysisRuleVO {
             duplication_threshold: Some(threshold),
             ..Default::default()

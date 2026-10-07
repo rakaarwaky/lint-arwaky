@@ -1,6 +1,6 @@
 // PURPOSE: PluginCommandsSurface — adapter/plugin listing business logic, no formatting.
 use shared_common::AdapterNameList;
-use shared_common::taxonomy_tool_name_vo::ToolName;
+use shared_common::taxonomy_adapter_name_vo::ToolName;
 use shared_external_lint::IExternalLintAggregate;
 use shared_filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
 use std::sync::Arc;

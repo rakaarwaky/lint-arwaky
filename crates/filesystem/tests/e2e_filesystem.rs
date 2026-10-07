@@ -252,7 +252,7 @@ fn e2e_workspace_detection_in_pipeline() {
     let lang = workspace.detect_language_from_path("src/main.rs");
     assert_eq!(
         lang,
-        shared_common::taxonomy_config_language_vo::ConfigLanguage::Rust
+        shared_common::taxonomy_language_vo::ConfigLanguage::Rust
     );
 
     // Source dir detection — look for crates/packages/modules, not src/

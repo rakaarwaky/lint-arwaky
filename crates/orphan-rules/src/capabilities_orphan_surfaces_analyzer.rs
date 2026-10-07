@@ -1,4 +1,4 @@
-use shared_common::taxonomy_definition_vo::LayerDefinition;
+use shared_common::taxonomy_layer_vo::LayerDefinition;
 use shared_common::taxonomy_path_vo::FilePath;
 use shared_common::taxonomy_severity_vo::Severity;
 use shared_orphan_rules::contract_orphan_protocol::ISurfacesOrphanProtocol;
@@ -48,7 +48,10 @@ impl ISurfacesOrphanProtocol for SurfacesOrphanAnalyzer {
 
         OrphanIndicatorResult::new(
             true,
-            format!("{} surface '{}' is not reachable.", category, stem),
+            format!(
+                "AES506 SURFACE_ORPHAN: {} surface '{}' is not reachable from any entry point.\nWHY: A surface without reachability cannot handle any command.\nFIX: Import '{}' in a root_*_entry file or ensure it's reachable via the import graph.",
+                category, stem, stem
+            ),
             severity,
         )
     }

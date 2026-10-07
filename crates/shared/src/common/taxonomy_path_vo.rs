@@ -1,4 +1,5 @@
 // PURPOSE: FilePath, DirectoryPath — value objects for validated file and directory paths
+use crate::list_wrapper_vo;
 use serde::{Deserialize, Serialize};
 use std::hash::{Hash, Hasher};
 
@@ -190,5 +191,30 @@ impl<'de> serde::Deserialize<'de> for DirectoryPath {
 impl Hash for DirectoryPath {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.value.hash(state);
+    }
+}
+
+// ─── Merged from taxonomy_paths_vo ─────────────────────────────
+
+/// RenamedFile — pair of old and new file paths for rename operations.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct RenamedFile {
+    pub old_path: FilePath,
+    pub new_path: FilePath,
+}
+
+impl RenamedFile {
+    pub fn new(old_path: FilePath, new_path: FilePath) -> Self {
+        Self { old_path, new_path }
+    }
+}
+
+list_wrapper_vo!(RenamedFileList, RenamedFile);
+list_wrapper_vo!(FilePathList, FilePath);
+
+impl std::ops::Deref for FilePathList {
+    type Target = Vec<FilePath>;
+    fn deref(&self) -> &Self::Target {
+        &self.values
     }
 }

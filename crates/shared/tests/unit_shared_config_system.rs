@@ -1,5 +1,5 @@
 // Unit tests — shared/config_system taxonomy types.
-use shared_config_system::taxonomy_config_language_vo::ConfigLanguage;
+use shared_common::taxonomy_language_vo::ConfigLanguage;
 use shared_config_system::taxonomy_config_system_error::ConfigError;
 use shared_config_system::taxonomy_config_system_vo::ConfigKey;
 use shared_config_system::taxonomy_config_system_vo::ValidationResult;

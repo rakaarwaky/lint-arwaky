@@ -7,7 +7,7 @@
 // protocol (AES405), so the classification lives in the `RoleClassifier`
 // capability and this agent holds it as a dependency and delegates to it.
 
-use shared_common::taxonomy_lint_result_vo::LintResult;
+use shared_common::taxonomy_lint_vo::LintResult;
 use shared_filesystem::taxonomy_filesystem_vo::FileEntry;
 use shared_role_rules::contract_role_protocol::IAgentRoleProtocol;
 use shared_role_rules::contract_role_protocol::ICapabilitiesRoleProtocol;
