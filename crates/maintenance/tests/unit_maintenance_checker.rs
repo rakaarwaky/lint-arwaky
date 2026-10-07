@@ -12,6 +12,55 @@ fn make_io()
     fc.io()
 }
 
+/// Regression test for #924: a non-source `test_*` file (e.g. `test_data.json`)
+/// must not inflate `test_files` or `test_ratio`. Only source files (rs/py/ts/
+/// js/jsx/tsx) whose names contain "test" or "spec" count into `test_files`,
+/// so `test_files <= source_count` always holds and the ratio stays in [0, 1].
+///
+/// Uses a real temp directory so the actual filesystem paths are visible to
+/// `ProjectStatsChecker`, exercising the full code path including the
+/// `is_file()` guard on each entry.
+#[test]
+fn stats_non_source_test_files_do_not_inflate_ratio() {
+    let dir = tempfile::tempdir().unwrap();
+    let root = dir.path();
+
+    // Source files (rs): 2 of them contain "test" in the name.
+    std::fs::write(root.join("a.rs"), "// src\n").unwrap();
+    std::fs::write(root.join("b.rs"), "// src\n").unwrap();
+    std::fs::write(root.join("unit_test.rs"), "// test\n").unwrap();
+
+    // Non-source files with test-ish names: must NOT inflate the count.
+    std::fs::write(root.join("test_data.json"), "{}").unwrap();
+    std::fs::write(root.join("c_spec.txt"), "text").unwrap();
+    std::fs::write(root.join("lib.md"), "# docs\n").unwrap();
+
+    let checker = maintenance_lint_arwaky::ProjectStatsChecker::new(make_io());
+    let path = FilePath::new(root.to_string_lossy().to_string()).unwrap();
+    let stats = checker.stats(&path);
+
+    assert_eq!(stats.rust_files.value, 3, "three .rs files");
+    assert_eq!(
+        stats.test_files.value, 1,
+        "only unit_test.rs (a source file) counts; test_data.json / c_spec.txt must not"
+    );
+    // test_files must never exceed source_count (denominator of the ratio).
+    assert!(
+        stats.test_files.value
+            <= stats.rust_files.value + stats.python_files.value + stats.js_files.value,
+        "test_files must not exceed source_count"
+    );
+    assert!(
+        (stats.test_ratio.value - 1.0_f64 / 3.0_f64).abs() < 1e-9,
+        "ratio should be 1/3, got {}",
+        stats.test_ratio.value
+    );
+    assert!(
+        stats.test_ratio.value <= 1.0,
+        "ratio must stay within [0.0, 1.0]"
+    );
+}
+
 #[test]
 fn diagnose_toolchain_returns_non_empty_lists() {
     let checker = maintenance_lint_arwaky::DoctorChecker::new(make_io());
