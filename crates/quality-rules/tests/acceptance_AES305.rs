@@ -140,7 +140,7 @@ fn repeated_block_counts_each_occurrence_not_one() {
         other => format!("{other:?}"),
     };
     assert!(
-        msg.contains("100% of this file's content"),
+        msg.contains("100% of this file's non-import content"),
         "every repeated occurrence must count toward the similarity percentage, got: {msg}"
     );
 }

@@ -45,7 +45,7 @@ impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
             .iter()
             .find(|r| r.name.value == "AES305")
             .and_then(|r| r.code_analysis.duplication_threshold)
-            .unwrap_or(50.0);
+            .unwrap_or(75.0);
 
         // Borrow path/content as &str instead of cloning into (String, String)
         let borrowed: Vec<(&str, &str)> = entries
@@ -100,7 +100,9 @@ impl CodeDuplicationAnalyzer {
                 if w.iter().all(|l| {
                     let t = l.trim();
                     !t.is_empty()
-                        && shared_quality_rules::utility_code_duplication_detector::is_import_line(t)
+                        && shared_quality_rules::utility_code_duplication_detector::is_import_line(
+                            t,
+                        )
                 }) {
                     continue;
                 }
@@ -133,7 +135,9 @@ impl CodeDuplicationAnalyzer {
                 if w.iter().all(|l| {
                     let t = l.trim();
                     !t.is_empty()
-                        && shared_quality_rules::utility_code_duplication_detector::is_import_line(t)
+                        && shared_quality_rules::utility_code_duplication_detector::is_import_line(
+                            t,
+                        )
                 }) {
                     continue;
                 }

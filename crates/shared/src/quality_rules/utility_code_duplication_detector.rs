@@ -47,8 +47,7 @@ pub fn is_import_line(trimmed: &str) -> bool {
     if (head == b'i' || head == b'e')
         && (trimmed.starts_with("import ")
             || trimmed.starts_with("import\t")
-            || trimmed.starts_with("export ")
-                && trimmed.starts_with("export"))
+            || trimmed.starts_with("export ") && trimmed.starts_with("export"))
     {
         if trimmed.starts_with("import ") || trimmed.starts_with("import\t") {
             return true;
