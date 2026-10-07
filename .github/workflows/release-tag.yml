@@ -8,9 +8,16 @@ name: Tag release PRs
 # workflows).
 
 on:
-  pull_request:
+  # pull_request_target instead of pull_request: the workflow only creates a
+  # tag and dispatches a release build — it does not need the PR's untrusted
+  # code context, and it avoids the "0 jobs on push" failure that occurs when
+  # GitHub triggers a pull_request workflow on the first push that modifies
+  # the workflow file itself.
+  pull_request_target:
     types: [closed]
     branches: [main]
+  # Manual trigger for debugging the tag path without waiting for a release PR.
+  workflow_dispatch: {}
 
 # Creates tags and dispatches the release workflow.
 permissions:
@@ -22,7 +29,11 @@ jobs:
     runs-on: ubuntu-latest
     # Only for release PRs: merged into main, authored by the release bot,
     # from a release/v* branch, with the chore(release): title prefix.
+    # The `github.event.pull_request.merged` check is false (not an error)
+    # on workflow_dispatch, so the guard is safe without an explicit
+    # event-name check.
     if: >
+      github.event_name == 'pull_request_target' &&
       github.event.pull_request.merged == true &&
       github.event.pull_request.base.ref == 'main' &&
       github.event.pull_request.user.login == 'github-actions[bot]' &&
