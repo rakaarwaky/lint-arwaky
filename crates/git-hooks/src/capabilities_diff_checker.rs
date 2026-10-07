@@ -170,7 +170,8 @@ impl IDiffDetectionProtocol for DiffChecker {
                 // the read failure is an analysis failure. Any other read
                 // failure is likewise reported distinctly.
                 Err(e)
-                    if e.kind() == std::io::ErrorKind::NotFound && !self.io.is_symlink(&joined) => {
+                    if e.kind() == std::io::ErrorKind::NotFound && !self.io.is_symlink(&joined) =>
+                {
                     // For files not found on disk, try to read from git base
                     if let Some(content) = self.read_from_git_base(path, fp, &default_branch) {
                         entries.push(FileEntry {
@@ -413,11 +414,12 @@ impl DiffChecker {
     ) -> Option<String> {
         let variants = [
             format!("origin/{}", base_branch),
-            format!("HEAD"),
+            "HEAD".to_string(),
             base_branch.to_string(),
         ];
         for variant in &variants {
-            let args = ["show", &format!("{}:{}", variant, file_path.value)];
+            let ref_spec = format!("{variant}:{}", file_path.value);
+            let args = ["show", &ref_spec];
             let result = self.io.run_git_command(&args, &project_path.value);
             if result.success {
                 return Some(result.stdout);
