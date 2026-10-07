@@ -1,6 +1,8 @@
 // PURPOSE: SharedPurityAuditor — AES701: shared/kernel folder purity and docs
 
-use shared_structure_rules::utility_structure_parsers::{self, sorted};
+use shared_structure_rules::utility_structure_parsers;
+
+use shared_structure_rules::utility_structure_parsers::{find_workspace_root, sorted};
 
 use shared_structure_rules::contract_structure_protocol::IStructureSharedPurityProtocol;
 use shared_structure_rules::taxonomy_structure_rules_constant as consts;
@@ -47,19 +49,10 @@ impl IStructureSharedPurityProtocol for SharedPurityAuditor {
 
 // ─── Block 3: Constructors, Std Traits, Helpers ────────────
 
-/// Resolve the workspace root: the nearest ancestor that contains one of the
-/// member directories. If *root* itself holds them, it is the root; if it is
-/// a member directory, its parent is.
+/// Resolve the workspace root by walking up from *root* until we find
+/// a directory that contains at least one of the member directories.
 fn workspace_root(root: &std::path::Path) -> std::path::PathBuf {
-    if root.join("crates").is_dir()
-        || root.join("modules").is_dir()
-        || root.join("packages").is_dir()
-    {
-        return root.to_path_buf();
-    }
-    root.parent()
-        .map(|p| p.to_path_buf())
-        .unwrap_or_else(|| root.to_path_buf())
+    find_workspace_root(root)
 }
 
 /// AES701 — a shared folder holds taxonomy, utility, and contract files. A

@@ -28,9 +28,8 @@ pub struct SurfaceRoleChecker {}
 // ─── Block 2: Protocol Trait Implementation ───────────────
 impl ISurfaceRoleProtocol for SurfaceRoleChecker {
     fn check_smart_surface(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
-        // Smart surfaces are exempt from the passive/utility method and
-        // control-flow limits; the function-count check runs in
-        // check_fn_count_limit for all tiers.
+        // FRD: smart surfaces are subject to no checks. The fn-count check
+        // runs only in the utility and passive arms of the orchestrator.
         let _ = (file, violations);
     }
 

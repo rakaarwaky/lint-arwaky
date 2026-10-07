@@ -3,6 +3,8 @@
 
 use shared_structure_rules::utility_structure_parsers;
 
+use shared_structure_rules::utility_structure_parsers::find_workspace_root;
+
 use shared_structure_rules::contract_structure_protocol::IStructureMemberRootProtocol;
 use shared_structure_rules::taxonomy_structure_rules_constant as consts;
 use shared_structure_rules::taxonomy_structure_rules_request::{
@@ -109,19 +111,8 @@ fn forbidden_prefix(
         .copied()
 }
 
-/// Resolve the workspace root: the nearest ancestor that holds a member dir.
+/// Resolve the workspace root by walking up from *root* until we find
+/// a directory that contains at least one of the member directories.
 fn workspace_root(root: &std::path::Path) -> std::path::PathBuf {
-    if consts::MEMBER_DIRS
-        .iter()
-        .any(|name| root.join(name).is_dir())
-    {
-        return root.to_path_buf();
-    }
-    root.parent()
-        .filter(|parent| {
-            consts::MEMBER_DIRS
-                .iter()
-                .any(|name| parent.join(name).is_dir())
-        })
-        .map_or_else(|| root.to_path_buf(), std::path::Path::to_path_buf)
+    find_workspace_root(root)
 }

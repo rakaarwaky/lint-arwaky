@@ -77,7 +77,7 @@ fn fn_count_under_smart_limit_no_violation() {
 
 #[test]
 fn fn_count_over_passive_limit_flagged() {
-    // 51 functions in an unknown-suffix file → passive → limit 25 → violation.
+    // 51 functions in an unknown-suffix file → passive → limit 50 → violation.
     let content = (0..51)
         .map(|i| format!("fn func_{}() {{}}", i))
         .collect::<Vec<_>>()
@@ -94,7 +94,7 @@ fn fn_count_over_passive_limit_flagged() {
 #[test]
 fn fn_count_over_passive_limit_metadata_flagged() {
     let meta = RustMetadata {
-        function_definitions: (0..26)
+        function_definitions: (0..51)
             .map(|i| shared_filesystem::taxonomy_filesystem_vo::RustFnItem {
                 name: format!("func_{}", i),
                 has_body: true,
@@ -102,13 +102,13 @@ fn fn_count_over_passive_limit_metadata_flagged() {
             .collect(),
         ..Default::default()
     };
-    // `_layout` is passive. 26 > 25.
+    // `_layout` is passive. 51 > 50.
     let f = make_file_with_rust_meta("src/surface_palette_layout.rs", meta);
     let mut v = Vec::new();
     checker().check_fn_count_limit(&f, &mut v);
     assert!(
         !v.is_empty(),
-        "26 functions in a passive-tier file (via AST) should flag AES406"
+        "51 functions in a passive-tier file (via AST) should flag AES406"
     );
 }
 
@@ -147,7 +147,7 @@ fn passive_surface_control_flow_flagged_fallback() {
 
 #[test]
 fn fn_count_python_over_passive_limit_flagged() {
-    // 51 def in an unknown-suffix file → passive → limit 25 → violation.
+    // 51 def in an unknown-suffix file → passive → limit 50 → violation.
     let content = (0..51)
         .map(|i| format!("def func_{}(): pass", i))
         .collect::<Vec<_>>()
@@ -178,9 +178,9 @@ fn fn_count_python_under_utility_limit_no_violation() {
 }
 
 #[test]
-fn fn_count_typescript_metadata_flagged() {
+fn fn_count_typescript_metadata_passive_51_flagged() {
     let meta = TypeScriptMetadata {
-        function_definitions: (0..26)
+        function_definitions: (0..51)
             .map(|i| shared_filesystem::taxonomy_filesystem_vo::TSFnItem {
                 name: format!("func_{}", i),
                 has_body: true,
@@ -188,19 +188,21 @@ fn fn_count_typescript_metadata_flagged() {
             .collect(),
         ..Default::default()
     };
-    // `_view` is passive. 26 > 25.
+    // `_view` is passive. 51 > 50.
     let f = make_file_with_ts_meta("src/surface_dashboard_view.ts", meta);
     let mut v = Vec::new();
     checker().check_fn_count_limit(&f, &mut v);
     assert!(
         !v.is_empty(),
-        "26 functions in a passive-tier TS surface (via AST) should flag AES406"
+        "51 functions in a passive-tier TS surface (via AST) should flag AES406"
     );
 }
 
 #[test]
-fn fn_count_typescript_smart_limit_50_no_violation_at_30() {
-    // `_command` is smart (limit 50). 30 functions stays clean.
+fn fn_count_typescript_smart_exempt_no_violation_at_30() {
+    // FRD: smart surfaces are subject to no checks. 30 functions in a
+    // smart-tier file stays clean regardless of the fn-count limit — the
+    // orchestrator skips check_fn_count_limit for the smart tier entirely.
     let meta = TypeScriptMetadata {
         function_definitions: (0..30)
             .map(|i| shared_filesystem::taxonomy_filesystem_vo::TSFnItem {
@@ -212,10 +214,52 @@ fn fn_count_typescript_smart_limit_50_no_violation_at_30() {
     };
     let f = make_file_with_ts_meta("src/surface_ci_command.ts", meta);
     let mut v = Vec::new();
+    checker().check_smart_surface(&f, &mut v);
+    assert!(
+        v.is_empty(),
+        "smart surfaces are exempt from all checks (FRD FR-RoleRules-007)"
+    );
+}
+
+#[test]
+fn fn_count_passive_26_functions_now_clean() {
+    // MAX_FN_COUNT_PASSIVE is 50; 26 functions in a passive-tier file is clean.
+    let meta = RustMetadata {
+        function_definitions: (0..26)
+            .map(|i| shared_filesystem::taxonomy_filesystem_vo::RustFnItem {
+                name: format!("func_{}", i),
+                has_body: true,
+            })
+            .collect(),
+        ..Default::default()
+    };
+    let f = make_file_with_rust_meta("src/surface_palette_layout.rs", meta);
+    let mut v = Vec::new();
     checker().check_fn_count_limit(&f, &mut v);
     assert!(
         v.is_empty(),
-        "30 functions in a smart-tier TS surface should be clean (smart limit 50)"
+        "26 functions is under the passive limit of 50"
+    );
+}
+
+#[test]
+fn fn_count_passive_51_functions_flagged() {
+    // 51 functions exceeds the passive limit of 50 → AES406.
+    let meta = RustMetadata {
+        function_definitions: (0..51)
+            .map(|i| shared_filesystem::taxonomy_filesystem_vo::RustFnItem {
+                name: format!("func_{}", i),
+                has_body: true,
+            })
+            .collect(),
+        ..Default::default()
+    };
+    let f = make_file_with_rust_meta("src/surface_palette_layout.rs", meta);
+    let mut v = Vec::new();
+    checker().check_fn_count_limit(&f, &mut v);
+    assert!(
+        !v.is_empty(),
+        "51 functions in a passive-tier file should flag AES406 (limit 50)"
     );
 }
 

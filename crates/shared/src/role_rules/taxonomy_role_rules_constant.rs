@@ -33,7 +33,7 @@ pub const MAX_FN_COUNT_UTILITY: usize = 25;
 
 /// Maximum functions in a passive surface (`_component` / `_view` / `_layout`).
 /// Passive surfaces only render.
-pub const MAX_FN_COUNT_PASSIVE: usize = 25;
+pub const MAX_FN_COUNT_PASSIVE: usize = 50;
 
 // ── Token tables (formerly taxonomy_role_rules_constant) ──
 // Used by: role-rules (AgentRustRoleAuditor, AgentPythonRoleAuditor, AgentTsRoleAuditor)

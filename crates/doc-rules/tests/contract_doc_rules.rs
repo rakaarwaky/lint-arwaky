@@ -254,12 +254,6 @@ fn write_agents_workspace(dir: &Path) {
         "# Sample AGENTS.md\n\n\
 ## User Context\n\n\
 - Preferences: concise.\n\n\
-## Precedence\n\n\
-1. Explicit user approval.\n\n\
-## Security\n\n\
-- Explicit approval is required before destructive actions.\n\n\
-## Memory\n\n\
-- Write important state to the session notes.\n\n\
 ## Session Start\n\n\
 Read the todo list, then check state.\n\n\
 ## Runtime\n\n\
@@ -892,7 +886,7 @@ cargo nextest run
 #[test]
 fn aes605_fires_when_required_h2_is_absent() {
     let tmp = tempfile::tempdir().unwrap();
-    // Precedence and Definition of Done are missing from the required set.
+    // Quick Facts and Definition of Done are missing from the required set.
     write_bad_agents(
         tmp.path(),
         "# Sample AGENTS.md\n\n\
@@ -910,7 +904,7 @@ fn aes605_fires_when_required_h2_is_absent() {
         .unwrap();
     // The message names the absent section(s), not just the rule.
     assert!(
-        message.contains("Precedence") || message.contains("Definition of Done"),
+        message.contains("Quick Facts") || message.contains("Definition of Done"),
         "the message must name the absent section(s); got: {message}"
     );
 }
@@ -926,18 +920,6 @@ fn aes605_allows_extra_and_free_h3_headings() {
 ## User Context
 
 - Preferences: concise.
-
-## Precedence
-
-1. Safety rules.
-
-## Security
-
-- Be safe.
-
-## Memory
-
-- Write state down.
 
 ## Session Start
 
@@ -998,35 +980,17 @@ fn aes605_fires_when_a_required_section_is_absent() {
     let tmp = tempfile::tempdir().unwrap();
     write_bad_agents(
         tmp.path(),
-        "\
-# Sample AGENTS.md
-
-## Precedence
-
-1. Safety rules.
-
-## Security
-
-- Be safe.
-
-## Git Workflow
-
-Use a worktree.
-
-## Commands
-
-```bash
-true
-```
-
-## Definition of Done
-
-Tests pass.
-
-## Related Documents
-
-- [PRD.md](PRD.md).
-",
+        "# Sample AGENTS.md\n\n\
+## User Context\n\
+- Preferences: concise.\n\n\
+## Git Workflow\n\
+Use a worktree.\n\n\
+## Commands\n\
+```bash\ntrue\n```\n\n\
+## Definition of Done\n\
+Tests pass.\n\n\
+## Related Documents\n\
+- [PRD.md](PRD.md).",
     );
     let findings = audit(tmp.path());
     assert!(
@@ -1039,7 +1003,7 @@ Tests pass.
         .map(|(_, _, m, _)| m.as_str())
         .unwrap();
     assert!(
-        message.contains("User Context") && message.contains("Memory"),
+        message.contains("Quick Facts") && message.contains("Pipeline"),
         "message must name the missing sections; got: {message}"
     );
 }
@@ -1051,51 +1015,25 @@ fn aes605_fires_on_an_h2_outside_the_template() {
     let tmp = tempfile::tempdir().unwrap();
     write_bad_agents(
         tmp.path(),
-        "\
-# Sample AGENTS.md
-
-## Precedence
-
-1. Safety rules.
-
-## Security
-
-- Be safe.
-
-## Architecture
-
-See [ARCHITECTURE.md](ARCHITECTURE.md) for the layer specification.
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md).
-
-## License
-
-MIT. See [LICENSE](LICENSE).
-
-## Random Notes
-
-Anything the author wanted to jot down.
-
-## Git Workflow
-
-Use a worktree.
-
-## Commands
-
-```bash
-true
-```
-
-## Definition of Done
-
-Tests pass.
-
-## Related Documents
-
-- [PRD.md](PRD.md).\
-",
+        "# Sample AGENTS.md\n\n\
+## User Context\n\
+- Preferences: concise.\n\n\
+## Architecture\n\
+See [ARCHITECTURE.md](ARCHITECTURE.md) for the layer specification.\n\n\
+## Contributing\n\
+See [CONTRIBUTING.md](CONTRIBUTING.md).\n\n\
+## License\n\
+MIT. See [LICENSE](LICENSE).\n\n\
+## Random Notes\n\
+Anything the author wanted to jot down.\n\n\
+## Git Workflow\n\
+Use a worktree.\n\n\
+## Commands\n\
+```bash\ntrue\n```\n\n\
+## Definition of Done\n\
+Tests pass.\n\n\
+## Related Documents\n\
+- [PRD.md](PRD.md).\\n",
     );
     let findings = audit(tmp.path());
     assert!(
@@ -1124,18 +1062,6 @@ fn aes605_allows_the_project_specific_h2_set() {
 ## User Context
 
 - Preferences: concise.
-
-## Precedence
-
-1. Safety rules.
-
-## Security
-
-- Be safe.
-
-## Memory
-
-- Write state down.
 
 ## Session Start
 

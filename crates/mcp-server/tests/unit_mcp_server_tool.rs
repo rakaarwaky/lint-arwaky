@@ -210,3 +210,76 @@ fn handle_read_skill_missing_documentation_fails_loudly() {
         );
     }
 }
+
+// ─── #927: read_skill section extraction respects heading levels ───
+
+// `extract_skill_section` is the pure boundary logic behind `read_skill`
+// section reads. It is exercised directly here because the handler's
+// filesystem candidates (`./.agents/skills/...`, the XDG tree) are not
+// available in the test environment.
+
+#[test]
+fn read_skill_section_nested_subheading_does_not_truncate() {
+    let doc = "# root\n## Alpha\nalpha body\n### Sub\nsub body\nstill alpha\n## Beta\nbeta\n";
+    let section =
+        mcp_server_lint_arwaky::surface_mcp_action_command::extract_skill_section(doc, "Alpha");
+    let content = section.expect("Alpha section must exist");
+    assert!(
+        content.contains("### Sub\nsub body"),
+        "nested sub-heading must remain inside the section: {content}"
+    );
+    assert!(
+        content.starts_with("## Alpha"),
+        "section must begin with its own heading: {content}"
+    );
+}
+
+#[test]
+fn read_skill_section_deep_headings_are_not_boundaries() {
+    let doc = "## One\nbody\n#### Deep\ndeep body\n## Two\ntwo\n";
+    let section =
+        mcp_server_lint_arwaky::surface_mcp_action_command::extract_skill_section(doc, "One");
+    let content = section.expect("One section must exist");
+    assert!(
+        content.contains("#### Deep\ndeep body"),
+        "deeper headings must not terminate the section: {content}"
+    );
+}
+
+#[test]
+fn read_skill_section_trailing_newlines_are_trimmed() {
+    let doc = "## Beta\nbeta body\n\n## Gamma\ngamma\n";
+    let section =
+        mcp_server_lint_arwaky::surface_mcp_action_command::extract_skill_section(doc, "Beta");
+    assert_eq!(
+        section.as_deref(),
+        Some("## Beta\nbeta body"),
+        "section body must carry no trailing newlines"
+    );
+    let last =
+        mcp_server_lint_arwaky::surface_mcp_action_command::extract_skill_section(doc, "Gamma");
+    assert_eq!(
+        last.as_deref(),
+        Some("## Gamma\ngamma"),
+        "last section must not inherit document trailing newlines"
+    );
+}
+
+#[test]
+fn read_skill_section_midline_mention_is_not_a_heading() {
+    let doc = "intro\nsee ## Ghost above\n## Real\nreal body\n";
+    assert_eq!(
+        mcp_server_lint_arwaky::surface_mcp_action_command::extract_skill_section(doc, "Ghost"),
+        None,
+        "a mid-line `## ` mention must not be treated as a section heading"
+    );
+}
+
+#[test]
+fn read_skill_missing_section_is_none() {
+    let doc = "## Alpha\nalpha\n";
+    assert_eq!(
+        mcp_server_lint_arwaky::surface_mcp_action_command::extract_skill_section(doc, "Nope"),
+        None
+    );
+}

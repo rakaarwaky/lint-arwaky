@@ -62,6 +62,11 @@ impl IHookInstallProtocol for HookInstaller {
         } else {
             &executable_path.value
         };
+        // #928: the executable path is client-supplied (MCP `install-hook`
+        // resolves a confined path, CLI/TUI pass typed paths). Embed it in the
+        // generated bash script shell-quoted so metacharacters (`$(`, quotes,
+        // spaces, backticks) cannot inject commands into every pre-commit run.
+        let exe_quoted = Self::shell_single_quote(exe_str);
         let hook_content = format!(
             "#!/bin/bash
 # managed-by: lint-arwaky
@@ -75,7 +80,7 @@ fi
 echo \"Linting passed.\"
 exit 0
 ",
-            exe_str
+            exe_quoted
         );
         // QA #640: never silently destroy a pre-existing custom hook — back it
         // up to `pre-commit.lint-arwaky.bak` before overwriting, unless the
@@ -110,6 +115,25 @@ exit 0
 impl HookInstaller {
     pub fn new(root_dir: FilePath, io: Arc<dyn IFileSystemIOProtocol>) -> Self {
         Self { root_dir, io }
+    }
+
+    /// Wrap `s` in single quotes so it is inert when embedded in a bash
+    /// script. Embedded single quotes are escaped with the standard
+    /// `'\''`-close-then-open sequence: `'a'b'` → `'a'\''b'` → the literal
+    /// `a'b`. No other character can break out of a single-quoted string,
+    /// so `$(`, backticks, `$VAR`, `|`, `;` and friends stay literal.
+    fn shell_single_quote(s: &str) -> String {
+        let mut out = String::with_capacity(s.len() + 2);
+        out.push('\'');
+        for c in s.chars() {
+            if c == '\'' {
+                out.push_str("'\\''");
+            } else {
+                out.push(c);
+            }
+        }
+        out.push('\'');
+        out
     }
 
     fn git_dir(&self) -> std::path::PathBuf {

@@ -279,7 +279,7 @@ impl DiffChecker {
         FilePathList::new(vec)
     }
 
-    /// Collect renamed files (diff-filter=R) and parse the `old -> new` output.
+    /// Collect renamed files (diff-filter=R) and parse the `R<score>\t<old>\t<new>` output.
     fn collect_by_filter_renamed(
         &self,
         project_path: &FilePath,
@@ -292,7 +292,7 @@ impl DiffChecker {
             "master...HEAD".to_string(),
         ];
         for variant in &variants {
-            let args = ["diff", "--name-only", "--diff-filter=R", variant];
+            let args = ["diff", "--name-status", "--diff-filter=R", variant];
             let result = self.io.run_git_command(&args, &project_path.value);
             if result.success && !result.stdout.trim().is_empty() {
                 let pairs: Vec<RenamedFile> = self
@@ -301,10 +301,10 @@ impl DiffChecker {
                     .lines
                     .iter()
                     .filter_map(|line| {
-                        let parts: Vec<&str> = line.splitn(2, " => ").collect();
-                        if parts.len() == 2 {
-                            let old_path = FilePath::new(parts[0].to_string()).ok()?;
-                            let new_path = FilePath::new(parts[1].to_string()).ok()?;
+                        let parts: Vec<&str> = line.splitn(3, '\t').collect();
+                        if parts.len() == 3 && parts[0].starts_with('R') {
+                            let old_path = FilePath::new(parts[1].to_string()).ok()?;
+                            let new_path = FilePath::new(parts[2].to_string()).ok()?;
                             Some(RenamedFile::new(old_path, new_path))
                         } else {
                             None
