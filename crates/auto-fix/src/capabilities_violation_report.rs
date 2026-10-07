@@ -13,7 +13,7 @@ use shared_auto_fix::contract_fix_protocol::{
 };
 use shared_auto_fix::{FIXABLE_CODES, FixOutcome, FixResult, RUST_KEYWORDS, SkipReason};
 use shared_common::taxonomy_common_error::ErrorMessage;
-use shared_common::taxonomy_lint_result_vo::LintResult;
+use shared_common::taxonomy_lint_vo::LintResult;
 use shared_common::taxonomy_message_vo::LintMessage;
 use shared_common::taxonomy_path_vo::FilePath;
 use shared_common::{AdapterName, Count, DescriptionVO, ErrorCode};

@@ -19,11 +19,11 @@ use external_lint_lint_arwaky::agent_external_lint_orchestrator::{
 use external_lint_lint_arwaky::capabilities_external_lint_selector::CapabilitiesExternalLintSelector;
 use mock_filesystem::MockFilesystem;
 use shared_cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
+use shared_common::taxonomy_adapter_error::LinterOperationError;
 use shared_common::taxonomy_adapter_name_vo::AdapterName;
 use shared_common::taxonomy_common_vo::{ColumnNumber, LineNumber};
 use shared_common::taxonomy_error_vo::ErrorCode;
 use shared_common::taxonomy_lint_vo::LocationList;
-use shared_common::taxonomy_operation_error::LinterOperationError;
 use shared_common::taxonomy_path_vo::FilePath;
 use shared_common::taxonomy_severity_vo::Severity;
 use shared_common::{ComplianceStatus, LintMessage};

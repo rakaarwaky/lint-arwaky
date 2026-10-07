@@ -5,7 +5,7 @@
 // a dedicated utility file also preserves the `shared/role_rules` utility
 // module size boundary.
 
-use shared_common::taxonomy_lint_result_vo::LintResult;
+use shared_common::taxonomy_lint_vo::LintResult;
 use shared_common::taxonomy_severity_vo::Severity;
 
 /// True when a line is a comment in any of the three languages.

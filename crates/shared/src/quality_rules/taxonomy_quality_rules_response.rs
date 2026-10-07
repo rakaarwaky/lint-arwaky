@@ -2,8 +2,8 @@
 
 use crate::taxonomy_code_analysis_vo::CodeAnalysisRuleVO;
 use shared_common::taxonomy_common_vo::{BooleanVO, Score};
-use shared_common::taxonomy_display_content_vo::DisplayContent;
-use shared_common::taxonomy_lint_result_vo::LintResult;
+use shared_common::taxonomy_lint_vo::LintResult;
+use shared_common::taxonomy_message_vo::DisplayContent;
 
 pub enum CodeAnalysisResponse {
     Analysis { violations: Vec<LintResult> },

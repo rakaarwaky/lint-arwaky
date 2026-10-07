@@ -9,11 +9,11 @@
 // #[allow(dead_code, unused_imports)] to its `mod mock_filesystem;` line
 // because not every target uses every symbol in this file.
 
+use shared_common::taxonomy_adapter_name_vo::ToolName as CommonToolName;
 use shared_common::taxonomy_common_vo::PatternList;
-use shared_common::taxonomy_config_language_vo::ConfigLanguage;
+use shared_common::taxonomy_language_vo::ConfigLanguage;
+use shared_common::taxonomy_lint_vo::ContentString;
 use shared_common::taxonomy_path_vo::FilePath;
-use shared_common::taxonomy_source_vo::ContentString;
-use shared_common::taxonomy_tool_name_vo::ToolName as CommonToolName;
 use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared_filesystem::contract_filesystem_protocol::IGraphProtocol;

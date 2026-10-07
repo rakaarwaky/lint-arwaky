@@ -10,7 +10,7 @@
 // the LintResult shape, the I/O exemption) live in
 // utility_contract_role_checker.rs so the three auditors share one copy.
 
-use shared_common::taxonomy_lint_result_vo::LintResult;
+use shared_common::taxonomy_lint_vo::LintResult;
 use shared_common::taxonomy_severity_vo::Severity;
 use shared_filesystem::taxonomy_filesystem_vo::FileEntry;
 use shared_role_rules::contract_role_protocol::IContractRoleProtocol;

@@ -7,16 +7,16 @@
 
 use crate::taxonomy_import_rules_error::ImportError;
 use crate::taxonomy_import_rules_vo::DependencyEdge;
-use shared_common::taxonomy_definition_vo::LayerMapVO;
 use shared_common::taxonomy_layer_vo::Identity;
+use shared_common::taxonomy_layer_vo::LayerMapVO;
 use shared_common::taxonomy_layer_vo::LayerNameVO;
-use shared_common::taxonomy_lint_result_vo::LintResult;
-use shared_common::taxonomy_lint_result_vo::LintResultList;
+use shared_common::taxonomy_lint_vo::ContentString;
+use shared_common::taxonomy_lint_vo::LintResult;
+use shared_common::taxonomy_lint_vo::LintResultList;
 use shared_common::taxonomy_message_vo::LintMessage;
 use shared_common::taxonomy_name_vo::SymbolName;
 use shared_common::taxonomy_path_vo::FilePath;
-use shared_common::taxonomy_paths_vo::FilePathList;
-use shared_common::taxonomy_source_vo::ContentString;
+use shared_common::taxonomy_path_vo::FilePathList;
 use shared_config_system::taxonomy_config_system_vo::ArchitectureConfig;
 use shared_filesystem::taxonomy_filesystem_vo::ImportEntry;
 use std::collections::HashMap;
@@ -36,7 +36,7 @@ pub trait ICycleImportProtocol: Send + Sync {
         &self,
         config: &ArchitectureConfig,
         layer_map: &LayerMapVO,
-        files: &shared_common::taxonomy_paths_vo::FilePathList,
+        files: &shared_common::taxonomy_path_vo::FilePathList,
         root_dir: &FilePath,
         content_map: &HashMap<String, String>,
         imports_map: &HashMap<String, Vec<ImportEntry>>,

@@ -1,4 +1,4 @@
-use shared_common::taxonomy_job_id_vo::JobId;
+use shared_common::taxonomy_job_vo::JobId;
 use shared_common::taxonomy_path_vo::FilePath;
 
 use shared_maintenance::contract_maintenance_aggregate::IMaintenanceAggregate;

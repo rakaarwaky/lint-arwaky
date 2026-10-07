@@ -3,9 +3,9 @@
 use shared_common::{
     DEFAULT_IGNORED_PATHS,
     taxonomy_common_vo::{FileContentPair, PatternList},
-    taxonomy_config_language_vo::ConfigLanguage,
+    taxonomy_language_vo::ConfigLanguage,
+    taxonomy_lint_vo::ContentString,
     taxonomy_path_vo::FilePath,
-    taxonomy_source_vo::ContentString,
 };
 use shared_filesystem::{
     contract_filesystem_aggregate::IFilesystemAggregate,

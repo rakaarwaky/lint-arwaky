@@ -71,8 +71,8 @@ fn no_op_executor() -> Arc<SurfaceLintExecutor> {
         fn detect_language_from_path(
             &self,
             _path: &str,
-        ) -> shared_common::taxonomy_config_language_vo::ConfigLanguage {
-            shared_common::taxonomy_config_language_vo::ConfigLanguage::Rust
+        ) -> shared_common::taxonomy_language_vo::ConfigLanguage {
+            shared_common::taxonomy_language_vo::ConfigLanguage::Rust
         }
         fn check_wired_in_container(
             &self,
@@ -129,26 +129,26 @@ fn no_op_executor() -> Arc<SurfaceLintExecutor> {
     impl IToolResolutionProtocol for T {
         fn is_executable_in_path(
             &self,
-            _executable: &shared_common::taxonomy_tool_name_vo::ToolName,
+            _executable: &shared_common::taxonomy_adapter_name_vo::ToolName,
         ) -> bool {
             false
         }
         fn is_binary_available(
             &self,
-            _bin_name: &shared_common::taxonomy_tool_name_vo::ToolName,
+            _bin_name: &shared_common::taxonomy_adapter_name_vo::ToolName,
         ) -> bool {
             false
         }
         fn has_local_bin(
             &self,
             _working_dir: &std::path::Path,
-            _executable: &shared_common::taxonomy_tool_name_vo::ToolName,
+            _executable: &shared_common::taxonomy_adapter_name_vo::ToolName,
         ) -> bool {
             false
         }
         fn resolve_js_cmd(
             &self,
-            _executable: &shared_common::taxonomy_tool_name_vo::ToolName,
+            _executable: &shared_common::taxonomy_adapter_name_vo::ToolName,
             _args: Vec<String>,
             _working_dir: &shared_common::taxonomy_path_vo::FilePath,
         ) -> Option<Vec<String>> {

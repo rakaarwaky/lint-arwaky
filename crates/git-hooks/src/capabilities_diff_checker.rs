@@ -15,7 +15,7 @@ use shared_common::taxonomy_git_vo::GitBranchName;
 use shared_common::taxonomy_lint_vo::LocationList;
 use shared_common::taxonomy_message_vo::LintMessage;
 use shared_common::taxonomy_path_vo::FilePath;
-use shared_common::taxonomy_paths_vo::{FilePathList, RenamedFile, RenamedFileList};
+use shared_common::taxonomy_path_vo::{FilePathList, RenamedFile, RenamedFileList};
 use shared_common::taxonomy_severity_vo::Severity;
 use shared_file_watch::GitDiffResultVO;
 use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;

@@ -7,7 +7,7 @@
 // US6: Container wiring check.
 
 use filesystem_lint_arwaky::capabilities_workspace_root_finder::CapabilitiesWorkspace;
-use shared_common::taxonomy_config_language_vo::ConfigLanguage;
+use shared_common::taxonomy_language_vo::ConfigLanguage;
 use shared_common::taxonomy_path_vo::FilePath;
 use shared_filesystem::contract_filesystem_protocol::IWorkspaceProtocol;
 use tempfile::TempDir;

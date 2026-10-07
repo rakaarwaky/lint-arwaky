@@ -6,7 +6,7 @@
 // and never carries unimplemented stubs. One trait per FR-RoleRules-001..007.
 
 use shared_common::taxonomy_layer_vo::LayerNameVO;
-use shared_common::taxonomy_lint_result_vo::LintResult;
+use shared_common::taxonomy_lint_vo::LintResult;
 use shared_filesystem::taxonomy_filesystem_vo::ExternalReferenceMap;
 use shared_filesystem::taxonomy_filesystem_vo::FileEntry;
 

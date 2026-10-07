@@ -13,16 +13,16 @@
 // `IExternalLintSelectorProtocol` below.
 
 use crate::taxonomy_duration_vo::Timeout;
-use shared_common::taxonomy_adapter_list_vo::AdapterNameList;
+use shared_common::taxonomy_adapter_error::LinterOperationError;
 use shared_common::taxonomy_adapter_name_vo::AdapterName;
+use shared_common::taxonomy_adapter_name_vo::AdapterNameList;
+use shared_common::taxonomy_adapter_name_vo::ToolName;
 use shared_common::taxonomy_common_vo::PatternList;
-use shared_common::taxonomy_compliance_vo::ComplianceStatus;
 use shared_common::taxonomy_error_vo::ErrorCode;
+use shared_common::taxonomy_job_vo::ResponseData;
+use shared_common::taxonomy_message_vo::ComplianceStatus;
 use shared_common::taxonomy_path_vo::FilePath;
-use shared_common::taxonomy_response_data_vo::ResponseData;
 use shared_common::taxonomy_severity_vo::Severity;
-use shared_common::taxonomy_tool_name_vo::ToolName;
-use shared_quality_rules::taxonomy_operation_error::LinterOperationError;
 use shared_quality_rules::taxonomy_quality_rules_vo::LintResultList;
 
 /// FR-ExternalLint-001: select the set of adapters to run given the detected

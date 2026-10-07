@@ -3,8 +3,8 @@ use serde::{Deserialize, Serialize};
 
 use shared_common::taxonomy_common_vo::Count;
 use shared_common::taxonomy_path_vo::FilePath;
-use shared_common::taxonomy_paths_vo::FilePathList;
-use shared_common::taxonomy_paths_vo::RenamedFileList;
+use shared_common::taxonomy_path_vo::FilePathList;
+use shared_common::taxonomy_path_vo::RenamedFileList;
 
 // ─── Watch configuration ──────────────────────────────────────────────
 

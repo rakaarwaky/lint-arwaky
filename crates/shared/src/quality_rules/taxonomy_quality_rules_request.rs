@@ -1,6 +1,6 @@
 // PURPOSE: CodeAnalysisRequest — request payload for the code_analysis aggregate
 
-use shared_common::taxonomy_lint_result_vo::LintResult;
+use shared_common::taxonomy_lint_vo::LintResult;
 use shared_common::taxonomy_path_vo::FilePath;
 use shared_filesystem::taxonomy_filesystem_vo::FileEntry;
 

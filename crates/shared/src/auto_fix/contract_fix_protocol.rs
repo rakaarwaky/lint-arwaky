@@ -11,7 +11,7 @@
 use crate::taxonomy_auto_fix_vo::FixOutcome;
 use crate::taxonomy_auto_fix_vo::FixResult;
 use shared_common::taxonomy_common_vo::LineNumber;
-use shared_common::taxonomy_lint_result_vo::LintResult;
+use shared_common::taxonomy_lint_vo::LintResult;
 use shared_common::taxonomy_message_vo::LintMessage;
 use shared_common::taxonomy_name_vo::SymbolName;
 use shared_common::taxonomy_path_vo::FilePath;

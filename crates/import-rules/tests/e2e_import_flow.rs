@@ -2,10 +2,10 @@
 use import_rules_lint_arwaky::root_import_rules_container::ImportContainer;
 use shared_common::NamingConfig;
 use shared_common::taxonomy_common_vo::{BooleanVO, Count, PatternList};
-use shared_common::taxonomy_definition_vo::LayerDefinition;
+use shared_common::taxonomy_layer_vo::LayerDefinition;
 use shared_common::taxonomy_layer_vo::LayerNameVO;
 use shared_common::taxonomy_path_vo::FilePath;
-use shared_common::taxonomy_paths_vo::FilePathList;
+use shared_common::taxonomy_path_vo::FilePathList;
 use shared_config_system::ArchitectureConfig;
 use shared_filesystem::FilesystemRequest;
 use shared_import_rules::IImportRunnerAggregate;

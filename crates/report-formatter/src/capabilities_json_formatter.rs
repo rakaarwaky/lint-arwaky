@@ -1,6 +1,6 @@
 // PURPOSE: JsonFormatter — implements IJsonFormatProtocol for JSON output (FR-002).
 use shared_cli_commands::{Format, ScanReport};
-use shared_common::taxonomy_display_content_vo::DisplayContent;
+use shared_common::taxonomy_message_vo::DisplayContent;
 use shared_report_formatter::contract_report_formatter_protocol::IJsonFormatProtocol;
 use shared_report_formatter::taxonomy_report_formatter_vo::{
     JsonDiagnostic, JsonReportDto, JsonSummary, JsonViolation,

@@ -3,16 +3,16 @@
 use std::collections::HashMap;
 
 use shared_common::taxonomy_common_vo::{BooleanVO, ColumnNumber, Count, LineNumber, Score};
-use shared_common::taxonomy_definition_vo::{LayerDefinition, LayerMapVO, NamingConfig};
 use shared_common::taxonomy_error_vo::ErrorCode;
 use shared_common::taxonomy_layer_vo::LayerNameVO;
-use shared_common::taxonomy_lint_result_vo::{LintResult, LintResultList};
+use shared_common::taxonomy_layer_vo::{LayerDefinition, LayerMapVO, NamingConfig};
+use shared_common::taxonomy_lint_vo::{LintResult, LintResultList};
 use shared_common::taxonomy_lint_vo::{Location, LocationList};
+use shared_common::taxonomy_message_vo::DescriptionVO;
 use shared_common::taxonomy_message_vo::LintMessage;
 use shared_common::taxonomy_path_vo::FilePath;
-use shared_common::taxonomy_paths_vo::FilePathList;
+use shared_common::taxonomy_path_vo::FilePathList;
 use shared_common::taxonomy_severity_vo::Severity;
-use shared_common::taxonomy_suggestion_vo::DescriptionVO;
 use shared_config_system::taxonomy_config_system_vo::ArchitectureConfig;
 
 /// Build a full lint result chain: Config → LayerMap → LintResult.

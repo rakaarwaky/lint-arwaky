@@ -162,7 +162,7 @@ architecture:
     );
     let (merged, _warnings) = make_parser().merge_config_with_defaults(
         &parsed,
-        shared_config_system::taxonomy_config_language_vo::ConfigLanguage::Python,
+        shared_common::taxonomy_language_vo::ConfigLanguage::Python,
     );
     let aes305 = merged
         .rules

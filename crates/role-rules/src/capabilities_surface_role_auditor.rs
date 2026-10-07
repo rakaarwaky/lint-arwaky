@@ -12,7 +12,7 @@
 //   4. `check_fn_count_limit` enforces a tier-specific function-count ceiling
 //      with an AST-to-lexical fallback.
 
-use shared_common::taxonomy_lint_result_vo::LintResult;
+use shared_common::taxonomy_lint_vo::LintResult;
 use shared_common::taxonomy_severity_vo::Severity;
 use shared_filesystem::taxonomy_filesystem_vo::{FileEntry, Language, ParseMetadata};
 use shared_role_rules::contract_role_protocol::ISurfaceRoleProtocol;

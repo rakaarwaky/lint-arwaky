@@ -2,10 +2,10 @@
 // Implements IFileSystemIOProtocol by delegating to utility_filesystem_io stateless functions.
 // 3-block structure per AES skill.
 
+use shared_common::taxonomy_adapter_name_vo::ToolName;
 use shared_common::taxonomy_common_vo::PatternList;
+use shared_common::taxonomy_lint_vo::ContentString;
 use shared_common::taxonomy_path_vo::FilePath;
-use shared_common::taxonomy_source_vo::ContentString;
-use shared_common::taxonomy_tool_name_vo::ToolName;
 use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared_filesystem::taxonomy_filesystem_vo::{
     ByteCount, FileExtension, FileMode, GitCommandResult, ParsedLines, ScanTiming,

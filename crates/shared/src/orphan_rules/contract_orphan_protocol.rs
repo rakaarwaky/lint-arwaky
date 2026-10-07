@@ -15,7 +15,7 @@
 // implementer — the agent — which is the shape the rule forbids.
 
 use crate::taxonomy_orphan_rules_vo::FileParseResultVO;
-use shared_common::taxonomy_definition_vo::LayerDefinition;
+use shared_common::taxonomy_layer_vo::LayerDefinition;
 use shared_common::taxonomy_path_vo::FilePath;
 use shared_quality_rules::taxonomy_quality_rules_vo::InheritanceMap;
 use shared_quality_rules::taxonomy_quality_rules_vo::{

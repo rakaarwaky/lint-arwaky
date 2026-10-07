@@ -5,7 +5,7 @@
 // violation counts grouped by rule code (descending), severity breakdown,
 // external lint results section, diagnostics section, and compliance score.
 use shared_cli_commands::{Format, LintResult, ScanReport};
-use shared_common::taxonomy_display_content_vo::DisplayContent;
+use shared_common::taxonomy_message_vo::DisplayContent;
 use shared_report_formatter::contract_report_formatter_protocol::ITextFormatProtocol;
 use std::collections::BTreeMap;
 

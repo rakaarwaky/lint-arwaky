@@ -8,11 +8,11 @@ use naming_rules_lint_arwaky::capabilities_suffix_policy_checker::SuffixPolicyCh
 use naming_rules_lint_arwaky::capabilities_test_file_prefix_checker::TestFilePrefixChecker;
 use shared_common::PatternList;
 use shared_common::SuffixPolicyVO;
-use shared_common::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
 use shared_common::taxonomy_layer_vo::LayerNameVO;
-use shared_common::taxonomy_lint_result_vo::LintResultList;
+use shared_common::taxonomy_layer_vo::{LayerDefinition, LayerMapVO};
+use shared_common::taxonomy_lint_vo::LintResultList;
 use shared_common::taxonomy_path_vo::FilePath;
-use shared_common::taxonomy_paths_vo::FilePathList;
+use shared_common::taxonomy_path_vo::FilePathList;
 use shared_config_system::taxonomy_config_system_vo::ArchitectureConfig;
 use shared_filesystem::taxonomy_filesystem_vo::{FileEntry, Language};
 use shared_naming_rules::INamingConventionProtocol;

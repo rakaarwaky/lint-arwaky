@@ -3,11 +3,11 @@
 
 use std::sync::Arc;
 
+use shared_common::taxonomy_adapter_error::LinterOperationError;
 use shared_common::taxonomy_adapter_name_vo::AdapterName;
-use shared_common::taxonomy_compliance_vo::ComplianceStatus;
-use shared_common::taxonomy_operation_error::LinterOperationError;
+use shared_common::taxonomy_adapter_name_vo::ToolName;
+use shared_common::taxonomy_message_vo::ComplianceStatus;
 use shared_common::taxonomy_path_vo::FilePath;
-use shared_common::taxonomy_tool_name_vo::ToolName;
 use shared_external_lint::ICommandExecutorProtocol;
 use shared_external_lint::IJsToolResolutionProtocol;
 use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;

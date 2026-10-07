@@ -6,11 +6,11 @@ use external_lint_lint_arwaky::capabilities_py_mypy_adapter::MyPyAdapter;
 mod mock_filesystem;
 
 use mock_filesystem::MockFilesystem;
+use shared_common::taxonomy_adapter_error::LinterOperationError;
 use shared_common::taxonomy_adapter_name_vo::AdapterName;
 use shared_common::taxonomy_common_vo::PatternList;
-use shared_common::taxonomy_operation_error::LinterOperationError;
+use shared_common::taxonomy_job_vo::ResponseData;
 use shared_common::taxonomy_path_vo::FilePath;
-use shared_common::taxonomy_response_data_vo::ResponseData;
 use shared_common::taxonomy_severity_vo::Severity;
 use shared_external_lint::ICommandExecutorProtocol;
 use shared_external_lint::taxonomy_duration_vo::Timeout;
@@ -101,9 +101,9 @@ fn errors_default_to_high() {
 /// `mypy::<code>` so tool-qualified `ignored_rules` entries match.
 #[test]
 fn scan_stores_tool_qualified_mypy_code() {
-    use shared_common::taxonomy_operation_error::LinterOperationError;
+    use shared_common::taxonomy_adapter_error::LinterOperationError;
+    use shared_common::taxonomy_job_vo::ResponseData;
     use shared_common::taxonomy_path_vo::FilePath;
-    use shared_common::taxonomy_response_data_vo::ResponseData;
     use shared_external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
     use std::sync::Mutex;
 

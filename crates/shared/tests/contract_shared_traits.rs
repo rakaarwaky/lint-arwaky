@@ -7,17 +7,17 @@ use shared_common::taxonomy_adapter_name_vo::AdapterName;
 use shared_common::taxonomy_common_vo::{
     BooleanVO, ColumnNumber, Count, LineNumber, PatternList, Score,
 };
-use shared_common::taxonomy_definition_vo::LayerMapVO;
 use shared_common::taxonomy_error_vo::{
     ErrorCode, error_code_is_architecture, error_code_is_logic, error_code_is_security,
     error_code_is_style,
 };
-use shared_common::taxonomy_lint_result_vo::{LintResult, LintResultList};
+use shared_common::taxonomy_layer_vo::LayerMapVO;
+use shared_common::taxonomy_lint_vo::{LintResult, LintResultList};
 use shared_common::taxonomy_lint_vo::{LocationList, ScopeRef};
+use shared_common::taxonomy_message_vo::DescriptionVO;
 use shared_common::taxonomy_message_vo::LintMessage;
 use shared_common::taxonomy_path_vo::{DirectoryPath, FilePath};
 use shared_common::taxonomy_severity_vo::Severity;
-use shared_common::taxonomy_suggestion_vo::DescriptionVO;
 use shared_config_system::taxonomy_config_system_vo::ArchitectureConfig;
 
 // ── FilePath ────────────────────────────────────────────────
@@ -305,14 +305,14 @@ fn architecture_config_custom() {
     let mut layers = HashMap::new();
     layers.insert(
         shared_common::taxonomy_layer_vo::LayerNameVO::new("surface"),
-        shared_common::taxonomy_definition_vo::LayerDefinition::default(),
+        shared_common::taxonomy_layer_vo::LayerDefinition::default(),
     );
     let config = ArchitectureConfig::new(
         BooleanVO::new(true),
         layers,
         Vec::new(),
-        shared_common::taxonomy_definition_vo::NamingConfig::new(Count::new(3)),
-        shared_common::taxonomy_paths_vo::FilePathList { values: vec![] },
+        shared_common::taxonomy_layer_vo::NamingConfig::new(Count::new(3)),
+        shared_common::taxonomy_path_vo::FilePathList { values: vec![] },
         BooleanVO::new(false),
     );
     assert_eq!(config.layers.len(), 1);

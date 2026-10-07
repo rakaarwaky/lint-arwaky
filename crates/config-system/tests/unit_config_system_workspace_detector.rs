@@ -3,10 +3,10 @@ mod common;
 
 use config_system_lint_arwaky::capabilities_workspace_detector::WorkspaceDetector;
 use shared_common::FilePath;
+use shared_common::taxonomy_adapter_name_vo::ToolName;
 use shared_common::taxonomy_common_vo::PatternList;
+use shared_common::taxonomy_lint_vo::ContentString;
 use shared_common::taxonomy_path_vo::FilePath as SharedFilePath;
-use shared_common::taxonomy_source_vo::ContentString;
-use shared_common::taxonomy_tool_name_vo::ToolName;
 use shared_config_system::{IWorkspaceMembersProtocol, WorkspaceType};
 use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared_filesystem::taxonomy_filesystem_vo::*;

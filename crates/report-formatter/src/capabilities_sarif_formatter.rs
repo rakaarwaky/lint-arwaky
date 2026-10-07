@@ -2,7 +2,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use shared_cli_commands::{Format, LintResult, ScanReport};
-use shared_common::taxonomy_display_content_vo::DisplayContent;
+use shared_common::taxonomy_message_vo::DisplayContent;
 use shared_report_formatter::contract_report_formatter_protocol::ISarifFormatProtocol;
 use shared_report_formatter::taxonomy_report_formatter_vo::{
     SarifArtifactLocation, SarifLocation, SarifPhysicalLocation, SarifRegion,

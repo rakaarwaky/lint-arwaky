@@ -42,7 +42,7 @@ fn workspace_capability_detects_language() {
     let lang = workspace.detect_language_from_path("src/main.rs");
     assert_eq!(
         lang,
-        shared_common::taxonomy_config_language_vo::ConfigLanguage::Rust
+        shared_common::taxonomy_language_vo::ConfigLanguage::Rust
     );
 }
 
@@ -50,7 +50,7 @@ fn workspace_capability_detects_language() {
 fn tool_resolution_capability_checks_path() {
     let container = FilesystemContainer::new();
     let tools = container.tool_resolution();
-    let name = shared_common::taxonomy_tool_name_vo::ToolName::new("sh");
+    let name = shared_common::taxonomy_adapter_name_vo::ToolName::new("sh");
     assert!(tools.is_binary_available(&name));
 }
 
