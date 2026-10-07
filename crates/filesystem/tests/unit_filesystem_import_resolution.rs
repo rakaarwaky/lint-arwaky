@@ -532,3 +532,63 @@ fn ast_parser_resolves_each_grouped_barrel_symbol_independently() {
         Some(&"modules/shared/src/taxonomy_core_error.py".to_string())
     );
 }
+
+// ─── Root-level relative-import tests (#921) ─────────────────────────────────
+
+#[test]
+fn test_root_relative_dot_slash_resolves() {
+    // Root-level main.js declares `import "./x"` → x.js must resolve.
+    // Regression: #921 — Path::new("").join("x") = "x" (works), but
+    // Path::new("").join("../y") = "../y" (never matches clean relative keys).
+    let orch = make_orchestrator();
+    let imp = ImportEntry {
+        source_file: PathBuf::from("main.js"),
+        raw_path: "./x".to_string(),
+        resolved_path: None,
+        import_type: ImportType::Import,
+        language: Language::JavaScript,
+        is_dynamic: false,
+        is_resolved: false,
+        symbols: vec![],
+        is_reexport: false,
+        is_wildcard: false,
+    };
+    let files: HashSet<&str> = build_file_set(&["main.js", "x.js"]);
+    let stem_index = build_stem_index(&["main.js", "x.js"]);
+    let root = PathBuf::from(".");
+    let result = orch.resolve_import_target(&imp, "main.js", &root, &files, &stem_index);
+    assert_eq!(
+        result,
+        Some("x.js".to_string()),
+        "root-level relative import ./x must resolve to x.js"
+    );
+}
+
+#[test]
+fn test_root_relative_dotdot_resolves() {
+    // Root-level main.js declares `import "../y"` → y.js must resolve.
+    // Regression: #921 — Path::new("").join("../y") = "../y", which never
+    // matches the clean key "y.js" in all_files_set.
+    let orch = make_orchestrator();
+    let imp = ImportEntry {
+        source_file: PathBuf::from("main.js"),
+        raw_path: "../y".to_string(),
+        resolved_path: None,
+        import_type: ImportType::Import,
+        language: Language::JavaScript,
+        is_dynamic: false,
+        is_resolved: false,
+        symbols: vec![],
+        is_reexport: false,
+        is_wildcard: false,
+    };
+    let files: HashSet<&str> = build_file_set(&["main.js", "y.js"]);
+    let stem_index = build_stem_index(&["main.js", "y.js"]);
+    let root = PathBuf::from(".");
+    let result = orch.resolve_import_target(&imp, "main.js", &root, &files, &stem_index);
+    assert_eq!(
+        result,
+        Some("y.js".to_string()),
+        "root-level relative import ../y must resolve to y.js (strip leading .. for root)"
+    );
+}
