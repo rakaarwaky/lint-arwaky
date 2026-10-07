@@ -1,5 +1,7 @@
 // PURPOSE: MCP binary entry point — wiring MCP-specific deps + rmcp stdio serve.
 use lint_arwaky::root_entry_container::CommonDeps;
+use logging::LogVerbosity;
+use logging::root_logging_container::LoggingContainer;
 use mcp_server::surface_mcp_action_command::{McpActionSurface, McpServerDependencies};
 use mcp_server::surface_mcp_tool_command::LintArwakyMcpServer;
 use rmcp::ServiceExt;
@@ -8,19 +10,10 @@ use rmcp::ServiceExt;
 use rmcp::transport::stdio;
 use shared_config_system::utility_config_parser::parse_config_yaml;
 use std::sync::Arc;
-use tracing_subscriber::prelude::*;
 
 fn init_tracing() {
-    tracing_subscriber::fmt()
-        .with_env_filter(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "warn,lint_arwaky::audit=info".into()),
-        )
-        .with_writer(std::io::stderr)
-        .with_ansi(false)
-        .finish()
-        .with(tracing_error::ErrorLayer::default())
-        .init();
+    // MCP is a machine-to-machine transport: no ANSI escapes on the wire.
+    LoggingContainer::new().init(LogVerbosity::default(), false);
 }
 
 #[tokio::main]

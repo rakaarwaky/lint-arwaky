@@ -11,6 +11,7 @@ members = [
     "crates/shared/src/filesystem",
     "crates/shared/src/git_hooks",
     "crates/shared/src/import_rules",
+    "crates/shared/src/logging",
     "crates/shared/src/maintenance",
     "crates/shared/src/naming_rules",
     "crates/shared/src/orphan_rules",
@@ -35,6 +36,7 @@ members = [
     "crates/auto-fix",
     "crates/git-hooks",
     "crates/file-watch",
+    "crates/logging",
     "crates/project-setup",
     "crates/maintenance",
     # Layer 3.5: Dispatcher
@@ -75,6 +77,7 @@ shared-file-watch = { package = "shared-file-watch-lint-arwaky", path = "crates/
 shared-filesystem = { package = "shared-filesystem-lint-arwaky", path = "crates/shared/src/filesystem" }
 shared-git-hooks = { package = "shared-git-hooks-lint-arwaky", path = "crates/shared/src/git_hooks" }
 shared-import-rules = { package = "shared-import-rules-lint-arwaky", path = "crates/shared/src/import_rules" }
+shared-logging = { package = "shared-logging-lint-arwaky", path = "crates/shared/src/logging" }
 shared-maintenance = { package = "shared-maintenance-lint-arwaky", path = "crates/shared/src/maintenance" }
 shared-naming-rules = { package = "shared-naming-rules-lint-arwaky", path = "crates/shared/src/naming_rules" }
 shared-orphan-rules = { package = "shared-orphan-rules-lint-arwaky", path = "crates/shared/src/orphan_rules" }
@@ -97,6 +100,7 @@ external-lint = { package = "external-lint-lint-arwaky", path = "crates/external
 auto-fix = { package = "auto-fix-lint-arwaky", path = "crates/auto-fix" }
 git-hooks = { package = "git-hooks-lint-arwaky", path = "crates/git-hooks" }
 file-watch = { package = "file-watch-lint-arwaky", path = "crates/file-watch" }
+logging = { package = "logging-lint-arwaky", path = "crates/logging" }
 project-setup = { package = "project-setup-lint-arwaky", path = "crates/project-setup" }
 maintenance = { package = "maintenance-lint-arwaky", path = "crates/maintenance" }
 dispatcher = { package = "dispatcher-lint-arwaky", path = "crates/dispatcher" }
@@ -191,6 +195,7 @@ shared-quality-rules.workspace = true
 shared-report-formatter.workspace = true
 shared-role-rules.workspace = true
 shared-structure-rules.workspace = true
+shared-logging.workspace = true
 filesystem.workspace = true
 config-system.workspace = true
 naming-rules.workspace = true
@@ -204,6 +209,7 @@ external-lint.workspace = true
 auto-fix.workspace = true
 git-hooks.workspace = true
 file-watch.workspace = true
+logging.workspace = true
 project-setup.workspace = true
 maintenance.workspace = true
 dispatcher.workspace = true

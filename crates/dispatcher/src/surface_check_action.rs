@@ -30,6 +30,7 @@ use shared_role_rules::taxonomy_role_rules_request::RoleRequest;
 use shared_structure_rules::IStructureAggregate;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
+use std::time::Instant;
 
 use crate::surface_ci_action::run_isolated;
 
@@ -285,6 +286,15 @@ fn run_all_linters_in_process(
     let target_canon =
         canonicalize_via(&seam.aggregate, target).unwrap_or_else(|| std::path::PathBuf::from(path));
     let target_canon_str = target_canon.to_string_lossy().to_string();
+    let target_canon_str_ref = target_canon_str.as_str();
+
+    tracing::info!(
+        target: "lint_arwaky::audit",
+        event = "scan_start",
+        path = target_canon_str_ref,
+        "scan starting"
+    );
+    let scan_start = Instant::now();
 
     // W10: build the in-process file index directly from the scan target so
     // member-scoped scans (e.g. `workspaces-bad/crates`) enumerate exactly the
@@ -303,6 +313,14 @@ fn run_all_linters_in_process(
         .iter()
         .map(|v| v.to_string())
         .collect::<Vec<String>>();
+
+    tracing::debug!(
+        target: "lint_arwaky::audit",
+        event = "ignored_paths_loaded",
+        count = ignored.len(),
+        patterns = ignored.join(","),
+        "config ignored_paths loaded"
+    );
 
     // Single-file target: build a one-entry index and run the auditors on it.
     if scan_root.is_file() {
@@ -334,17 +352,40 @@ fn run_all_linters_in_process(
     // An explicit scan of a fixture dir must not ignore the target itself —
     // `build_file_index_with_ignored` uses ignore::WalkBuilder, so an ignore
     // entry matching the scan root's own name suppresses its entire subtree.
+    let index_build_start = Instant::now();
     seam.aggregate
         .execute(FilesystemRequest::build_file_index_with_ignored(
             std::path::Path::new(&scan_root),
             &build_index_ignored(&ignored, &scan_root),
         ));
+    tracing::debug!(
+        target: "lint_arwaky::audit",
+        event = "file_index_built",
+        elapsed_ms = index_build_start.elapsed().as_millis() as u64,
+        "file index build complete"
+    );
 
+    let discover_start = Instant::now();
     let discovered = discover_lintable_files(&seam, &scan_root, &ignored);
     let total_files = discovered.len();
+    tracing::info!(
+        target: "lint_arwaky::audit",
+        event = "files_discovered",
+        count = total_files,
+        elapsed_ms = discover_start.elapsed().as_millis() as u64,
+        "lintable files discovered under scan root"
+    );
     on_progress("Files discovered".to_string(), 0, total_files);
+    let entries_start = Instant::now();
     let entries = build_entries(&seam, &discovered);
     let import_map = build_import_map(&seam, &entries);
+    tracing::info!(
+        target: "lint_arwaky::audit",
+        event = "index_built",
+        files = total_files,
+        elapsed_ms = entries_start.elapsed().as_millis() as u64,
+        "entry + import-map index built"
+    );
     on_progress("Index built".to_string(), 0, total_files);
 
     // AES103's subject is the files the default walk prunes, so they need their
@@ -370,6 +411,7 @@ fn run_all_linters_in_process(
     // failure is visible without inventing a rule code.
     let mut panics: Vec<String> = Vec::new();
 
+    let quality_start = Instant::now();
     all.extend(run_isolated("quality", &mut panics, || {
         agg.quality
             .execute(CodeAnalysisRequest::run_analysis(&entries))
@@ -378,11 +420,19 @@ fn run_all_linters_in_process(
             .map(ViolationItem::from_lint_result)
             .collect::<Vec<_>>()
     }));
+    tracing::info!(
+        target: "lint_arwaky::audit",
+        event = "quality_done",
+        violations = all.len(),
+        elapsed_ms = quality_start.elapsed().as_millis() as u64,
+        "quality linter complete"
+    );
     on_progress(
         "Quality checks complete".to_string(),
         total_files,
         total_files,
     );
+    let role_start = Instant::now();
     all.extend(run_isolated("role", &mut panics, || {
         agg.role
             .execute(RoleRequest::audit(&entries))
@@ -391,7 +441,14 @@ fn run_all_linters_in_process(
             .map(ViolationItem::from_lint_result)
             .collect::<Vec<_>>()
     }));
+    tracing::info!(
+        target: "lint_arwaky::audit",
+        event = "role_done",
+        elapsed_ms = role_start.elapsed().as_millis() as u64,
+        "role linter complete"
+    );
     on_progress("Role checks complete".to_string(), total_files, total_files);
+    let import_start = Instant::now();
     // Workspace-wide import map so AES201/202/203/205 see cross-member imports
     // (the dispatcher's fs instance differs from the import orchestrator's own).
     all.extend(run_isolated("import", &mut panics, || {
@@ -405,11 +462,18 @@ fn run_all_linters_in_process(
             .map(ViolationItem::from_lint_result)
             .collect::<Vec<_>>()
     }));
+    tracing::info!(
+        target: "lint_arwaky::audit",
+        event = "import_done",
+        elapsed_ms = import_start.elapsed().as_millis() as u64,
+        "import linter complete"
+    );
     on_progress(
         "Import checks complete".to_string(),
         total_files,
         total_files,
     );
+    let naming_start = Instant::now();
     all.extend(run_isolated("naming", &mut panics, || {
         agg.naming
             .execute(NamingRequest::audit_with_tests(&entries, &test_files))
@@ -418,11 +482,18 @@ fn run_all_linters_in_process(
             .map(ViolationItem::from_lint_result)
             .collect::<Vec<_>>()
     }));
+    tracing::info!(
+        target: "lint_arwaky::audit",
+        event = "naming_done",
+        elapsed_ms = naming_start.elapsed().as_millis() as u64,
+        "naming linter complete"
+    );
     on_progress(
         "Naming checks complete".to_string(),
         total_files,
         total_files,
     );
+    let orphan_start = Instant::now();
     all.extend(run_isolated("orphan", &mut panics, || {
         let (_graph_ctx, orphan_violations) = agg
             .orphan
@@ -436,6 +507,12 @@ fn run_all_linters_in_process(
             .map(ViolationItem::from_lint_result)
             .collect::<Vec<_>>()
     }));
+    tracing::info!(
+        target: "lint_arwaky::audit",
+        event = "orphan_done",
+        elapsed_ms = orphan_start.elapsed().as_millis() as u64,
+        "orphan linter complete"
+    );
     on_progress(
         "Orphan checks complete".to_string(),
         total_files,
@@ -484,6 +561,7 @@ fn run_all_linters_in_process(
             std::path::Path::new(&target_canon_str),
             seam.aggregate.as_ref(),
         );
+        let adapter_count = config_entries.len();
         let context = shared_external_lint::taxonomy_external_lint_vo::ExternalLintContext {
             has_rust,
             has_python,
@@ -496,6 +574,7 @@ fn run_all_linters_in_process(
             ),
             config_entries,
         };
+        let ext_start = Instant::now();
         let mut external: Vec<ViolationItem> = run_isolated("external", &mut panics, || {
             agg.external
                 .execute(
@@ -510,6 +589,13 @@ fn run_all_linters_in_process(
                 .map(ViolationItem::from_lint_result)
                 .collect::<Vec<_>>()
         });
+        tracing::info!(
+            target: "lint_arwaky::audit",
+            event = "external_done",
+            adapters = adapter_count,
+            elapsed_ms = ext_start.elapsed().as_millis() as u64,
+            "external adapters complete"
+        );
         external.retain(|v| {
             external_violation_in_scope(
                 v,
@@ -540,19 +626,40 @@ fn run_all_linters_in_process(
     // Structure — folder-layout audit (AES701–AES703). Its findings name a
     // folder or a file inside one, and a folder path is not itself a file, so
     // these are scoped separately and appended after the file-scope filter.
+    let structure_start = Instant::now();
     all.extend(run_isolated("structure", &mut panics, || {
         structure_violations_in_scope(&target_canon_str, agg)
     }));
+    tracing::info!(
+        target: "lint_arwaky::audit",
+        event = "structure_done",
+        elapsed_ms = structure_start.elapsed().as_millis() as u64,
+        "structure audit complete"
+    );
 
     // Doc invariants (AES601–AES605) audit the workspace document chain
     // (FRD/BACKLOG pairs, PRD, AGENTS, ...) which is not part of the
     // source-file index, so it runs against the scan target directly and its
     // findings are appended after the file-scope filter like structure does.
+    let doc_start = Instant::now();
     all.extend(run_isolated("doc", &mut panics, || {
         doc_violations_in_scope(&target_canon_str, agg)
     }));
+    tracing::info!(
+        target: "lint_arwaky::audit",
+        event = "doc_done",
+        elapsed_ms = doc_start.elapsed().as_millis() as u64,
+        "doc audit complete"
+    );
 
     on_progress("Scan complete".to_string(), total_files, total_files);
+    tracing::info!(
+        target: "lint_arwaky::audit",
+        event = "scan_complete",
+        total_violations = all.len(),
+        elapsed_ms = scan_start.elapsed().as_millis() as u64,
+        "scan finished"
+    );
     if !panics.is_empty() {
         for line in &panics {
             eprintln!("{line}");
@@ -899,6 +1006,12 @@ pub(crate) fn discover_lintable_files(
     scan_root: &std::path::Path,
     ignored: &[String],
 ) -> Vec<String> {
+    tracing::debug!(
+        target: "lint_arwaky::audit",
+        event = "walker_start",
+        root = scan_root.to_string_lossy().as_ref(),
+        "discovering lintable files"
+    );
     // Discover the target's own files with the config ignore list (a dir
     // named `workspaces-bad` never matches a file pattern, so fixture
     // targets are unaffected by the index build's fixture-dir exclusion).
@@ -906,6 +1019,12 @@ pub(crate) fn discover_lintable_files(
         .aggregate
         .execute(FilesystemRequest::discover_source_files(scan_root, ignored))
         .into_paths();
+    tracing::debug!(
+        target: "lint_arwaky::audit",
+        event = "walker_root_files",
+        count = discovered.len(),
+        "root-level source files discovered"
+    );
     // Recurse into subdirs so nested source trees (crates/<name>/src/*) are
     // fully covered, matching what the subprocess linters walk.
     let is_ws_root = ["crates", "packages", "modules"]
@@ -1002,10 +1121,24 @@ pub(crate) fn bfs_enter_subdirs(
                 .and_then(|n| n.to_str())
                 .unwrap_or("");
             if skip_dirs.contains(name) {
+                tracing::trace!(
+                    target: "lint_arwaky::audit",
+                    event = "walker_skip",
+                    reason = "default_skip_dir",
+                    dir = name,
+                    "skipping default-ignored directory"
+                );
                 continue;
             }
             let is_member_dir = member_names.contains(&name);
             if gate_members && !is_member_dir {
+                tracing::trace!(
+                    target: "lint_arwaky::audit",
+                    event = "walker_skip",
+                    reason = "non_member_at_ws_root",
+                    dir = name,
+                    "skipping non-member directory at workspace root"
+                );
                 continue;
             }
             // Multi-segment ignored_paths (e.g. `internal/lint-arwaky/.worktrees`)
@@ -1016,22 +1149,45 @@ pub(crate) fn bfs_enter_subdirs(
                 .map(|rel| rel.to_string_lossy().to_string())
                 .unwrap_or_else(|_| entry_path.to_string_lossy().to_string());
             if utility_path_filter::is_path_ignored(&rel_str, ignored) {
+                tracing::trace!(
+                    target: "lint_arwaky::audit",
+                    event = "walker_skip",
+                    reason = "ignored_path_pattern",
+                    dir = rel_str.as_str(),
+                    "skipping directory matched by config ignored_paths"
+                );
                 continue;
             }
             // Nested git repos (submodules / worktrees) carry their own `.git`
             // file (not directory) and are linted by their own config — skip them.
             if entry_path.join(".git").is_file() {
+                tracing::trace!(
+                    target: "lint_arwaky::audit",
+                    event = "walker_skip",
+                    reason = "nested_git_repo",
+                    dir = rel_str.as_str(),
+                    "skipping nested git repo (has .git file)"
+                );
                 continue;
             }
             if !seen.insert(entry_path.to_path_buf()) {
                 continue;
             }
+            let n_before = discovered.len();
             discovered.extend(
                 seam.aggregate
                     .execute(FilesystemRequest::discover_source_files(
                         entry_path, ignored,
                     ))
                     .into_paths(),
+            );
+            tracing::debug!(
+                target: "lint_arwaky::audit",
+                event = "walker_enter",
+                dir = entry_path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default().as_str(),
+                new_files = discovered.len() - n_before,
+                total_files = discovered.len(),
+                "entering subdirectory"
             );
             let next_depth = if is_ws_root && is_member_dir {
                 1
