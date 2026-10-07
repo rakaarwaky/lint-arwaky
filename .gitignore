@@ -65,3 +65,4 @@ serviceAccountKey
 # local-only. The shippable skill pack lives in crates/skills/ (see
 # crates/shared/build.rs), not here.
 .agents/
+
