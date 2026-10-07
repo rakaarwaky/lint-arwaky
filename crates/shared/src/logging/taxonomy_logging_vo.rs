@@ -1,0 +1,48 @@
+// PURPOSE: Taxonomy types for the logging feature.
+//
+// `LogVerbosity` lives in `shared_common` (it's a true cross-cutting
+// taxonomy value used by the CLI entry point and every capability).
+// This file owns only the logging-feature-specific types.
+
+/// The four reasons a walker can skip a directory. Reported verbatim in
+/// `walker_skip` events so a developer sees exactly why a dir was not entered.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum SkipReason {
+    DefaultSkipDir,
+    IgnoredPathPattern,
+    NonMemberAtWorkspaceRoot,
+    NestedGitRepo,
+}
+
+impl SkipReason {
+    /// The machine-readable reason string emitted in `walker_skip` events.
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::DefaultSkipDir => "default_skip_dir",
+            Self::IgnoredPathPattern => "ignored_path_pattern",
+            Self::NonMemberAtWorkspaceRoot => "non_member_at_ws_root",
+            Self::NestedGitRepo => "nested_git_repo",
+        }
+    }
+}
+
+/// One timing scope for a scan phase. Created by `IPhaseTimerProtocol::phase_started`,
+/// consumed by `phase_finished` to emit the `phase_done` event.
+#[derive(Clone, Debug)]
+pub struct PhaseTimer {
+    pub phase: &'static str,
+    pub start: std::time::Instant,
+}
+
+/// The walker action that a `report_walk` call describes.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum WalkAction {
+    /// The walker descended into `dir`.
+    Enter,
+    /// The walker skipped `dir` for the given reason.
+    Skip(SkipReason),
+}
+
+/// The tracing target name used by scan-phase, walker, and adapter events.
+/// All four capability protocols emit on this target.
+pub const AUDIT_TARGET: &str = "lint_arwaky::audit";

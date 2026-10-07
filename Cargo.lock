@@ -3084,6 +3084,7 @@ dependencies = [
  "futures",
  "git-hooks-lint-arwaky",
  "import-rules-lint-arwaky",
+ "logging-lint-arwaky",
  "maintenance-lint-arwaky",
  "mcp-server-lint-arwaky",
  "naming-rules-lint-arwaky",
@@ -3111,6 +3112,7 @@ dependencies = [
  "shared-filesystem-lint-arwaky",
  "shared-git-hooks-lint-arwaky",
  "shared-import-rules-lint-arwaky",
+ "shared-logging-lint-arwaky",
  "shared-maintenance-lint-arwaky",
  "shared-naming-rules-lint-arwaky",
  "shared-orphan-rules-lint-arwaky",
@@ -3161,6 +3163,18 @@ name = "log"
 version = "0.4.33"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0ceec5bc11778974d1bcb055b18002eba7f4b3518b6a0081b3af5f21666da9ad"
+
+[[package]]
+name = "logging-lint-arwaky"
+version = "3.8.1"
+dependencies = [
+ "criterion",
+ "shared-common-lint-arwaky",
+ "shared-logging-lint-arwaky",
+ "tempfile",
+ "tracing",
+ "tracing-subscriber",
+]
 
 [[package]]
 name = "lru"
@@ -4751,6 +4765,7 @@ dependencies = [
  "syn 3.0.6",
  "tempfile",
  "thiserror 2.0.21",
+ "tracing-subscriber",
 ]
 
 [[package]]
@@ -4829,6 +4844,15 @@ dependencies = [
  "shared-config-system-lint-arwaky",
  "shared-filesystem-lint-arwaky",
  "thiserror 2.0.21",
+]
+
+[[package]]
+name = "shared-logging-lint-arwaky"
+version = "3.8.1"
+dependencies = [
+ "shared-common-lint-arwaky",
+ "tracing",
+ "tracing-subscriber",
 ]
 
 [[package]]

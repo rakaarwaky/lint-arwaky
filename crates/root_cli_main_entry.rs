@@ -1,21 +1,17 @@
 // PURPOSE: CLI binary entry point — wiring all dependencies + arg dispatch.
 // Concrete container construction happens here; cli-commands surfaces
 // (surface_*_command) handle output formatting + exit-code mapping.
-use clap::{Parser, Subcommand};
+use clap::{ArgAction, Parser, Subcommand};
 use std::str::FromStr;
 use std::sync::Arc;
 
+use logging::LogVerbosity;
+use logging::root_logging_container::LoggingContainer;
 use shared_cli_commands::Format;
 use shared_common::{FilePath, GitBranchName, Threshold};
 
-fn init_tracing() {
-    tracing_subscriber::fmt()
-        .with_env_filter(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "warn,lint_arwaky::audit=info".into()),
-        )
-        .with_writer(std::io::stderr)
-        .init();
+fn init_tracing(verbosity: LogVerbosity) {
+    LoggingContainer::new().init(verbosity, true);
 }
 
 #[derive(Parser)]
@@ -25,8 +21,22 @@ fn init_tracing() {
     about = "Autonomous code quality and architecture enforcement"
 )]
 struct Cli {
+    /// Increase log verbosity (`-v` → info, `-vv` → debug; scan-phase
+    /// tracing emits real-time events on `lint_arwaky::audit`).
+    #[arg(short, long, global = true, action = ArgAction::Count)]
+    verbose: u8,
+
     #[command(subcommand)]
     command: Command,
+}
+
+/// Map the clap `-v` count to the logging crate's three-level enum.
+fn verbosity_from_flag(count: u8) -> LogVerbosity {
+    match count {
+        0 => LogVerbosity::Default,
+        1 => LogVerbosity::Info,
+        _ => LogVerbosity::Debug,
+    }
 }
 
 #[derive(Subcommand)]
@@ -315,8 +325,8 @@ fn parse_format(s: &str) -> Format {
 }
 
 fn main() {
-    init_tracing();
     let cli = Cli::parse();
+    init_tracing(verbosity_from_flag(cli.verbose));
 
     let fs_container = filesystem::root_filesystem_container::FilesystemContainer::new();
     let filesystem: Arc<

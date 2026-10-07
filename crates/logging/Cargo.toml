@@ -1,0 +1,26 @@
+[package]
+name = "logging-lint-arwaky"
+version.workspace = true
+edition = "2024"
+description = "Tracing subscriber init + verbose-flag plumbing for lint-arwaky entry points."
+license = "MIT"
+repository = "https://github.com/rakaarwaky/lint-arwaky"
+publish = true
+
+[lints]
+workspace = true
+
+[dependencies]
+shared-common.workspace = true
+shared-logging.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+
+[dev-dependencies]
+criterion = { version = "0.8.2", features = ["html_reports"] }
+tempfile = "3"
+
+[[bench]]
+name = "bench_logging"
+path = "benches/bench_logging.rs"
+harness = false

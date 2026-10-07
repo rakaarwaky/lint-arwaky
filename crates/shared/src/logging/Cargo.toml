@@ -1,0 +1,20 @@
+[package]
+name = "shared-logging-lint-arwaky"
+version.workspace = true
+edition = "2024"
+description = "AES logging foundation: taxonomy (`_vo`, `_constant`), contract (`_protocol`, `_aggregate`) for the real-time scan feed."
+license = "MIT"
+repository = "https://github.com/rakaarwaky/lint-arwaky"
+publish = true
+
+# The folder *is* the crate root, so the manifest lives beside `mod.rs`.
+[lib]
+path = "mod.rs"
+
+[lints]
+workspace = true
+
+[dependencies]
+shared-common.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true

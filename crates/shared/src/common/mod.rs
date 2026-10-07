@@ -21,9 +21,11 @@ pub mod taxonomy_language_vo;
 pub mod taxonomy_layer_vo;
 pub mod taxonomy_lint_result_vo;
 pub mod taxonomy_lint_vo;
+pub mod taxonomy_logging_vo;
 
 pub use taxonomy_lint_result_vo::LintResult;
 pub use taxonomy_lint_result_vo::LintResultList;
+pub use taxonomy_logging_vo::LogVerbosity;
 pub mod taxonomy_message_vo;
 pub mod taxonomy_name_vo;
 pub mod taxonomy_operation_error;

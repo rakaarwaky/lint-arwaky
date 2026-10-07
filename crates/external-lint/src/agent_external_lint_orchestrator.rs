@@ -12,6 +12,7 @@
 // with the remaining adapters.
 use std::collections::HashMap;
 use std::sync::Arc;
+use std::time::Instant;
 
 use shared_cli_commands::taxonomy_result_vo::LintResultList;
 use shared_common::AdapterNameList;
@@ -128,13 +129,39 @@ impl ExternalLintOrchestrator {
         // Run adapters sequentially (this is the actual orchestration work).
         let mut all = Vec::new();
         for name in &adapter_names {
-            if let Some(adapter) = self.deps.adapters.get(*name) {
+            let name_str = *name;
+            tracing::info!(
+                target: "lint_arwaky::audit",
+                event = "adapter_start",
+                adapter = name_str,
+                path = path.value.as_str(),
+                "starting external adapter"
+            );
+            let adapter_start = Instant::now();
+            if let Some(adapter) = self.deps.adapters.get(name_str) {
                 match adapter.scan(path) {
                     Ok(results) => {
+                        let n = results.len();
+                        tracing::info!(
+                            target: "lint_arwaky::audit",
+                            event = "adapter_done",
+                            adapter = name_str,
+                            findings = n,
+                            elapsed_ms = adapter_start.elapsed().as_millis() as u64,
+                            "external adapter complete"
+                        );
                         all.extend(results.values);
                     }
                     Err(e) => {
                         let err_msg = e.to_string();
+                        tracing::info!(
+                            target: "lint_arwaky::audit",
+                            event = "adapter_done",
+                            adapter = name_str,
+                            elapsed_ms = adapter_start.elapsed().as_millis() as u64,
+                            error = %err_msg,
+                            "external adapter failed or skipped"
+                        );
                         if err_msg.contains("No such file or directory")
                             || err_msg.contains("os error 2")
                         {
