@@ -259,12 +259,8 @@ INPUT  = sample input\n\
 OUTPUT = sample output\n\n\
 ## Pipeline\n\n\
 scan → check\n\n\
-## Git Conventions\n\n\
-- Default branch: main\n\n\
 ## Commands\n\n\
 ```bash\ncargo nextest run --workspace\n```\n\n\
-## Guided Skills\n\n\
-- Skill directory: .agents/skills\n\n\
 ## Related Documents\n\n\
 - [PRD.md](PRD.md): Product requirements.\n",
     )
@@ -894,7 +890,7 @@ fn aes605_fires_when_required_h2_is_absent() {
         .unwrap();
     // The message names the absent section(s), not just the rule.
     assert!(
-        message.contains("Project Quick Facts") || message.contains("Git Conventions"),
+        message.contains("Project Quick Facts") || message.contains("Pipeline"),
         "the message must name the absent section(s); got: {message}"
     );
 }
@@ -922,20 +918,11 @@ scan → check
 lint
 run by CI
 
-## Git Conventions
-
-- Default branch: main
-- Worktree directory: .worktrees/
-
 ## Commands
 
 ```bash
 true
 ```
-
-## Guided Skills
-
-- Skill directory: .agents/skills
 
 ## Related Documents
 
@@ -1020,7 +1007,7 @@ Anything the author wanted to jot down.\n\n\
 
 #[test]
 fn aes605_allows_the_project_specific_h2_set() {
-    // Only the 7 required H2 sections are enforced; no optional headings exist.
+    // Only the 5 required H2 sections are enforced; no optional headings exist.
     let tmp = tempfile::tempdir().unwrap();
     write_bad_agents(
         tmp.path(),
@@ -1041,19 +1028,11 @@ scan → check
 lint
 run by CI
 
-## Git Conventions
-
-- Default branch: main
-
 ## Commands
 
 ```bash
 true
 ```
-
-## Guided Skills
-
-- Skill directory: .agents/skills
 
 ## Related Documents
 

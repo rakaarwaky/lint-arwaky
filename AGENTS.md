@@ -26,43 +26,6 @@ OUTPUT = 0 violations from lint-arwaky-cli check ., docs ., and scripts/gates.sh
 
 scan → check → gates → publish
 
-## Git Conventions
-
-- Default branch: main
-- Worktree directory: .worktrees/
-- Branch pattern: <type>/<feature-x>
-- Branch prefixes: docs/, fix/, feat/, chore/, test/
-
-Create the working worktree:
-
-```bash
-git fetch origin main
-git worktree add -b docs/feature-x .worktrees/docs-feature-x origin/main
-cd .worktrees/docs-feature-x
-```
-
-After validation:
-
-```bash
-git add .
-git commit -m "docs: summary"
-git push -u origin docs/feature-x
-gh pr create --base main --head docs/feature-x \
-  --title "docs: summary" \
-  --body "$(cat <<'PRBODY'
-What changed:
-PRBODY
-)"
-```
-
-After merge:
-
-```bash
-cd ../..
-git worktree remove .worktrees/docs-feature-x
-git branch -d docs/feature-x
-```
-
 ## Commands
 
 Every command must match the exact CI gate.
@@ -78,10 +41,6 @@ CARGO_INCREMENTAL=0 cargo fmt --all -- --check                         # matches
 CARGO_INCREMENTAL=0 cargo clippy --all-targets -- -D warnings          # matches ci.yml "Clippy" job
 lint-arwaky-cli check .                                                # architecture scanner (self-lint)
 ```
-
-## Guided Skills
-
-- Skill directory: .agents/skills/
 
 ## Related Documents
 
