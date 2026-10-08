@@ -6,11 +6,6 @@
 use std::time::Instant;
 
 /// The filter directive string for `LogVerbosity::Default`.
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
-pub struct FilterDirective {
-    pub value: String,
-}
-
 /// The tracing filter level selected by the CLI `-v` / `--verbose` flag.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum LogVerbosity {
@@ -62,13 +57,6 @@ impl SkipReason {
             Self::NestedGitRepo => "nested_git_repo",
         }
     }
-}
-
-/// The walker action that a `report_walk` call describes.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum WalkAction {
-    Enter,
-    Skip(SkipReason),
 }
 
 /// The tracing target name used by scan-phase, walker, and adapter events.

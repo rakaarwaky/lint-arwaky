@@ -15,7 +15,7 @@ pub fn entry_module_path(entry: &ImportEntry) -> &str {
 }
 
 /// Get the symbols imported by an ImportEntry.
-pub fn entry_symbols(entry: &ImportEntry) -> Vec<&str> {
+fn entry_symbols(entry: &ImportEntry) -> Vec<&str> {
     if !entry.symbols.is_empty() {
         return entry.symbols.iter().map(|s| s.as_str()).collect();
     }

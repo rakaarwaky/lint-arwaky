@@ -67,15 +67,6 @@ impl Language {
         }
     }
 
-    pub fn type_kw(&self) -> &'static str {
-        match self {
-            Self::Rust => "type",
-            Self::JavaScript | Self::TypeScript => "interface/type",
-            Self::Python => "Protocol/type",
-            Self::Unknown => "type",
-        }
-    }
-
     pub fn interface_kw(&self) -> &'static str {
         match self {
             Self::Rust => "trait",
@@ -85,14 +76,6 @@ impl Language {
         }
     }
 
-    pub fn inherits_kw(&self) -> &'static str {
-        match self {
-            Self::Rust => "implements",
-            Self::JavaScript | Self::TypeScript => "implements/extends",
-            Self::Python => "implements/inherits",
-            Self::Unknown => "inherits",
-        }
-    }
 }
 
 impl std::fmt::Display for Language {

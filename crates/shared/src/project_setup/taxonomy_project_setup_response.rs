@@ -65,12 +65,6 @@ impl SetupResponse {
         }
     }
 
-    pub fn into_pre_flight(self) -> PreFlightResult {
-        match self {
-            Self::PreFlight { result } => result,
-            _ => Vec::new(),
-        }
-    }
 
     pub fn into_skills(self) -> Vec<EmbeddedSkillVO> {
         match self {
@@ -86,12 +80,6 @@ impl SetupResponse {
         }
     }
 
-    pub fn into_dir_result(self) -> CreateConfigDirResult {
-        match self {
-            Self::ConfigDir { result } => result,
-            _ => Err(SetupError::other("no config dir created")),
-        }
-    }
 
     pub fn into_exists(self) -> bool {
         match self {

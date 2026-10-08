@@ -114,32 +114,7 @@ impl ImportError {
         format!("{} {}: {}", self.error_id(), self.error_code(), self)
     }
 
-    /// Create a module resolution error.
-    pub fn module_resolution(module: impl Into<SymbolName>, reason: Option<ErrorMessage>) -> Self {
-        Self::ModuleResolution {
-            module: module.into(),
-            reason,
-        }
-    }
 
-    /// Create a symbol-not-found error.
-    pub fn symbol_not_found(module: impl Into<SymbolName>, symbol: impl Into<SymbolName>) -> Self {
-        Self::SymbolNotFound {
-            module: module.into(),
-            symbol: symbol.into(),
-        }
-    }
 
-    /// Create a circular dependency error.
-    pub fn circular_dependency(cycle: impl Into<SymbolName>, file: Option<FilePath>) -> Self {
-        Self::CircularDependency {
-            cycle: cycle.into(),
-            file,
-        }
-    }
 
-    /// Create an invalid configuration error.
-    pub fn invalid_configuration(layer: LayerNameVO, message: ErrorMessage) -> Self {
-        Self::InvalidConfiguration { layer, message }
-    }
 }

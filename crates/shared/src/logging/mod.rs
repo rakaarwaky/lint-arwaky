@@ -21,9 +21,7 @@ pub use contract_logging_protocol::{
 pub use contract_logging_protocol::ISubscriberInstallProtocol as ISubscriberInitProtocol;
 
 // Taxonomy types
-pub use taxonomy_logging_vo::{
-    AUDIT_TARGET, FilterDirective, LogVerbosity, PhaseTimerVO, SkipReason, WalkAction,
-};
+pub use taxonomy_logging_vo::{AUDIT_TARGET, LogVerbosity, PhaseTimerVO, SkipReason};
 
 // Request/Response types
 pub use taxonomy_logging_request::LoggingRequest;

@@ -9,7 +9,7 @@ use std::path::Path;
 /// or package import (e.g. `import { X } from "calculator-shared/src/foo"`)
 /// by scanning workspace member Cargo.toml / package.json files.
 /// Returns the relative path to the target file if found.
-pub fn resolve_external_crate_import(
+fn resolve_external_crate_import(
     crate_name: &str,
     sub_path: &str,
     top_root: &Path,

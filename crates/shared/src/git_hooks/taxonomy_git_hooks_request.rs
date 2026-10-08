@@ -28,7 +28,4 @@ impl GitHooksRequest {
         Self::Uninstall
     }
 
-    pub fn get_manager_identity() -> Self {
-        Self::GetManagerIdentity
-    }
 }

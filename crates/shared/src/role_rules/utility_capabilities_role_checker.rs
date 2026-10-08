@@ -19,13 +19,13 @@ pub fn is_capabilities_layer(layer: &str) -> bool {
 ///
 /// A capability implements a contract protocol, never an aggregate — aggregate
 /// traits belong to the agent layer (AES405).
-pub fn is_protocol_trait(trait_name: &str) -> bool {
+fn is_protocol_trait(trait_name: &str) -> bool {
     let base = trait_name.rsplit("::").next().unwrap_or(trait_name).trim();
     base.starts_with('I') && base.ends_with("Protocol") && !base.ends_with("Aggregate")
 }
 
 /// True when a Python base class names a contract protocol.
-pub fn is_protocol_base(base: &str) -> bool {
+fn is_protocol_base(base: &str) -> bool {
     let base = base.split('[').next().unwrap_or(base).trim();
     is_protocol_trait(base.rsplit('.').next().unwrap_or(base))
 }
@@ -33,7 +33,7 @@ pub fn is_protocol_base(base: &str) -> bool {
 /// True when a decorator claims protocol attachment: `@with_protocol`,
 /// `@with_adapter_protocol`, `@protocol`, `@protocol_impl("I...")`, …
 /// Matched by shape so renames (`@with_tools_protocol`) stay covered.
-pub fn is_protocol_decorator(name: &str) -> bool {
+fn is_protocol_decorator(name: &str) -> bool {
     let head = name
         .trim_start_matches('@')
         .split(|c: char| c.is_ascii_digit() || c == '(')

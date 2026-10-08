@@ -106,14 +106,6 @@ impl AstImportVO {
         }
     }
 
-    /// Get the name the code uses to refer to this import.
-    /// For renamed imports (e.g. `use foo as bar`), returns the alias `bar`.
-    /// Otherwise returns the last segment (e.g. `FilePath` from `use foo::FilePath`).
-    pub fn alias_name(&self) -> &str {
-        self.rename
-            .as_deref()
-            .unwrap_or_else(|| self.segments.last().map(|s| s.as_str()).unwrap_or(""))
-    }
 
     /// Get the last segment (typically the imported symbol name).
     pub fn last_segment(&self) -> Option<&str> {
@@ -246,20 +238,6 @@ impl RustParseResultVO {
             .collect()
     }
 
-    /// Check if an identifier is used anywhere in the file body.
-    pub fn is_identifier_used(&self, name: &str) -> bool {
-        self.used_identifiers.iter().any(|id| id == name)
-    }
-
-    /// Get all dummy trait implementations.
-    pub fn dummy_trait_impls(&self) -> Vec<&AstTraitImplVO> {
-        self.trait_impls.iter().filter(|ti| ti.is_dummy).collect()
-    }
-
-    /// Get all dummy functions.
-    pub fn dummy_functions(&self) -> Vec<&AstFnDefVO> {
-        self.functions.iter().filter(|f| f.is_dummy).collect()
-    }
 }
 
 impl PythonParseResultVO {

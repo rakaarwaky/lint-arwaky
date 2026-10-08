@@ -29,12 +29,6 @@ impl OrphanResponse {
         }
     }
 
-    pub fn into_entry_points(self) -> OrphanFileListVO {
-        match self {
-            Self::EntryPoints { files } => files,
-            _ => OrphanFileListVO::new(Vec::<String>::new()),
-        }
-    }
 
     /// Take the violations. Returns an empty list if a different verb was served.
     pub fn into_violations(self) -> Vec<LintResult> {

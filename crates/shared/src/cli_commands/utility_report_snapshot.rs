@@ -31,7 +31,7 @@ pub fn target_key(target: &str) -> String {
 ///
 /// The XDG data dir rather than the repository, so a scan does not leave a file
 /// behind that a contributor has to decide whether to commit.
-pub fn snapshot_path() -> PathBuf {
+fn snapshot_path() -> PathBuf {
     let base = std::env::var_os("XDG_DATA_HOME")
         .map(PathBuf::from)
         .filter(|p| !p.as_os_str().is_empty())

@@ -147,7 +147,7 @@ pub fn symbol_used_real(
 // ─── Private Helpers ───
 
 /// Check if `haystack` contains `needle` as a whole identifier (not a substring).
-pub fn contains_ident(haystack: &str, needle: &str) -> bool {
+fn contains_ident(haystack: &str, needle: &str) -> bool {
     if needle.is_empty() {
         return false;
     }
@@ -181,7 +181,7 @@ pub fn contains_ident(haystack: &str, needle: &str) -> bool {
 /// Check if all occurrences of `needle` in `haystack` appear strictly inside
 /// double-quoted string literals. Returns true when the symbol is never used
 /// as a code identifier (only inside strings, comments, or doc lines).
-pub fn is_symbol_only_in_strings(haystack: &str, needle: &str) -> bool {
+fn is_symbol_only_in_strings(haystack: &str, needle: &str) -> bool {
     if needle.is_empty() || !haystack.contains(needle) {
         return false;
     }
@@ -484,7 +484,7 @@ fn function_body_is_dummy(lines: &[&str]) -> bool {
     false
 }
 
-pub fn is_short_marker(inner: &str) -> bool {
+fn is_short_marker(inner: &str) -> bool {
     inner.starts_with("todo!(")
         || inner.starts_with("unimplemented!(")
         || inner.starts_with("panic!(")
