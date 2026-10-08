@@ -133,7 +133,7 @@ fn min_words_above_cache_table_is_honored_exactly() {
     let checker = checker();
     let mut config = shared_config_system::ArchitectureConfig::default();
     config.naming.word_count = shared_common::taxonomy_common_vo::Count::new(11);
-    let mut results = shared_common::LintResultList::new(Vec::new());
+    let mut results = Vec::<shared_common::ViolationItem>::new();
     let files = shared_common::FilePathList::new(vec![
         shared_common::FilePath::new("a_b_c_d_e_f_g_h_i_j").unwrap(),
     ]);
@@ -145,17 +145,17 @@ fn min_words_above_cache_table_is_honored_exactly() {
         &mut results,
     );
     assert!(
-        !results.values.is_empty(),
+        !results.is_empty(),
         "10-word stem must violate when min_words is 11"
     );
 }
 
-fn run_min_words(min_words: u64, files: &[&str]) -> Vec<shared_common::LintResult> {
+fn run_min_words(min_words: u64, files: &[&str]) -> Vec<shared_common::ViolationItem> {
     let checker = checker();
     let mut config = shared_config_system::ArchitectureConfig::default();
     config.naming.word_count =
         shared_common::taxonomy_common_vo::Count::new(min_words.try_into().unwrap());
-    let mut results = shared_common::LintResultList::new(Vec::new());
+    let mut results = Vec::<shared_common::ViolationItem>::new();
     let path_list = shared_common::FilePathList::new(
         files
             .iter()
@@ -169,7 +169,7 @@ fn run_min_words(min_words: u64, files: &[&str]) -> Vec<shared_common::LintResul
         &shared_common::FilePath::new(".").unwrap(),
         &mut results,
     );
-    results.values
+    results
 }
 
 #[test]

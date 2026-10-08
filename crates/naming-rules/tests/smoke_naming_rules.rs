@@ -6,9 +6,9 @@ use shared_common::SuffixPolicyVO;
 use shared_common::taxonomy_layer_vo::LayerDefinition;
 use shared_common::taxonomy_layer_vo::LayerMapVO;
 use shared_common::taxonomy_layer_vo::LayerNameVO;
-use shared_common::taxonomy_lint_vo::LintResultList;
 use shared_common::taxonomy_path_vo::FilePath;
 use shared_common::taxonomy_path_vo::FilePathList;
+use shared_common::taxonomy_violation_item_vo::ViolationItem;
 use shared_config_system::taxonomy_config_system_vo::ArchitectureConfig;
 use shared_naming_rules::SUFFIX_POLICY_STRICT;
 use shared_naming_rules::taxonomy_naming_rules_request::NamingRequest;
@@ -50,7 +50,7 @@ fn orchestrator_basic_check_smoke() {
         FilePath::new("src/capabilities_user_checker.rs".to_string()).unwrap(),
     ]);
     let root = FilePath::new(".".to_string()).unwrap();
-    let mut results = LintResultList::new(Vec::new());
+    let mut results: Vec<ViolationItem> = Vec::new();
 
     container.naming_convention().check_file_naming(
         &ArchitectureConfig::default(),

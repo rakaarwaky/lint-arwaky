@@ -1,16 +1,16 @@
 // PURPOSE: TestFilePrefixChecker — AES103 test/bench file-prefix discipline
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 use shared_common::taxonomy_layer_vo::LayerMapVO;
-use shared_common::taxonomy_lint_vo::{LintResult, LintResultList};
 use shared_common::taxonomy_path_vo::FilePath;
 use shared_common::taxonomy_path_vo::FilePathList;
 use shared_common::taxonomy_severity_vo::Severity;
+use shared_common::taxonomy_violation_item_vo::ViolationItem;
 use shared_config_system::taxonomy_config_system_vo::ArchitectureConfig;
 use shared_naming_rules::TestSuiteSlot;
 use shared_naming_rules::contract_test_file_prefix_protocol::ITestFilePrefixProtocol;
 use shared_naming_rules::taxonomy_naming_rules_constant::RULE_CODE_TEST_FILE_PREFIX;
 use shared_naming_rules::utility_naming_checker::{
-    basename_of, get_stem, rule_exception_set, string_filename_result,
+    basename_of, get_stem, rule_exception_set, string_filename_violation,
 };
 use shared_naming_rules::utility_test_prefix::{
     has_legal_prefix, matched_prefix, nested_under, prefix_list, prefixes_for, slot_of,
@@ -38,11 +38,11 @@ impl ITestFilePrefixProtocol for TestFilePrefixChecker {
         _layer_map: &LayerMapVO,
         files: &FilePathList,
         _root_dir: &FilePath,
-        results: &mut LintResultList,
+        results: &mut Vec<ViolationItem>,
     ) {
         let exceptions = rule_exception_set(config, RULE_CODE_TEST_FILE_PREFIX);
 
-        let violations: Vec<LintResult> = files
+        let violations: Vec<ViolationItem> = files
             .values
             .par_iter()
             .filter_map(|f| {
@@ -57,7 +57,7 @@ impl ITestFilePrefixProtocol for TestFilePrefixChecker {
             })
             .collect();
 
-        results.values.extend(violations);
+        results.extend(violations);
     }
 }
 
@@ -87,7 +87,7 @@ impl TestFilePrefixChecker {
         &self,
         file: &str,
         filename: &str,
-    ) -> Option<LintResult> {
+    ) -> Option<ViolationItem> {
         // A nested file is reported by the nesting rule alone: naming its stem
         // against the flat vocabulary would report the same defect twice.
         if let Some((directory, depth)) = nested_under(file) {
@@ -122,8 +122,8 @@ impl TestFilePrefixChecker {
         filename: &str,
         directory: &'static str,
         depth: usize,
-    ) -> LintResult {
-        string_filename_result(
+    ) -> ViolationItem {
+        string_filename_violation(
             file,
             RULE_CODE_TEST_FILE_PREFIX,
             format!(
@@ -154,7 +154,7 @@ impl TestFilePrefixChecker {
         filename: &str,
         stem: &str,
         slot: TestSuiteSlot,
-    ) -> LintResult {
+    ) -> ViolationItem {
         let directory = slot.directory_label();
         let legal = prefix_list(prefixes_for(slot));
 
@@ -202,7 +202,7 @@ impl TestFilePrefixChecker {
             ),
         };
 
-        string_filename_result(
+        string_filename_violation(
             file,
             RULE_CODE_TEST_FILE_PREFIX,
             message,

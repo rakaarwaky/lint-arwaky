@@ -1,8 +1,8 @@
 // PURPOSE: NamingOrchestrator — agent that orchestrates naming rule checks
 use shared_common::taxonomy_layer_vo::LayerMapVO;
-use shared_common::taxonomy_lint_vo::{LintResult, LintResultList};
 use shared_common::taxonomy_path_vo::FilePath;
 use shared_common::taxonomy_path_vo::FilePathList;
+use shared_common::taxonomy_violation_item_vo::ViolationItem;
 use shared_config_system::taxonomy_config_system_vo::ArchitectureConfig;
 use shared_filesystem::taxonomy_filesystem_vo::FileEntry;
 use shared_naming_rules::contract_naming_checker_protocol::{
@@ -63,7 +63,7 @@ impl NamingOrchestrator {
     }
 
     /// Run audit on pre-parsed file entries from the filesystem crate.
-    fn run_audit_with_entries(&self, files: &[FileEntry]) -> Vec<LintResult> {
+    fn run_audit_with_entries(&self, files: &[FileEntry]) -> Vec<ViolationItem> {
         self.run_audit_over(
             &FilePathList::new(Self::paths_of(files)),
             &FilePathList::default(),
@@ -73,7 +73,7 @@ impl NamingOrchestrator {
     /// AES101/AES102 read *source*; AES103 reads *tests*. Both file sets come
     /// from the caller because only the filesystem walk knows which directories
     /// the default skip list prunes.
-    fn run_audit_over(&self, source: &FilePathList, tests: &FilePathList) -> Vec<LintResult> {
+    fn run_audit_over(&self, source: &FilePathList, tests: &FilePathList) -> Vec<ViolationItem> {
         // Naming checks are path-only — do NOT skip parse failures.
         // `content.is_empty()` is used as a proxy for "unreadable" per the FRD glossary.
         // If the filesystem crate adds a separate error field in the future,
@@ -111,11 +111,11 @@ impl NamingOrchestrator {
         files: &FilePathList,
         test_files: &FilePathList,
         root_dir: &FilePath,
-    ) -> Vec<LintResult> {
-        let mut results: Vec<LintResult> = Vec::new();
+    ) -> Vec<ViolationItem> {
+        let mut results: Vec<ViolationItem> = Vec::new();
 
         if Self::is_rule_enabled(&self.deps.config, "AES101") {
-            let mut naming_results = LintResultList::new(Vec::new());
+            let mut naming_results = Vec::<ViolationItem>::new();
             self.deps.naming_convention.check_file_naming(
                 self.deps.config.as_ref(),
                 self.deps.layer_map.as_ref(),
@@ -123,11 +123,11 @@ impl NamingOrchestrator {
                 root_dir,
                 &mut naming_results,
             );
-            results.extend(naming_results.values);
+            results.extend(naming_results);
         }
 
         if Self::is_rule_enabled(&self.deps.config, "AES102") {
-            let mut suffix_results = LintResultList::new(Vec::new());
+            let mut suffix_results = Vec::<ViolationItem>::new();
             self.deps.suffix_policy.check_domain_suffixes(
                 self.deps.config.as_ref(),
                 self.deps.layer_map.as_ref(),
@@ -135,11 +135,11 @@ impl NamingOrchestrator {
                 root_dir,
                 &mut suffix_results,
             );
-            results.extend(suffix_results.values);
+            results.extend(suffix_results);
         }
 
         if Self::is_rule_enabled(&self.deps.config, "AES103") {
-            let mut prefix_results = LintResultList::new(Vec::new());
+            let mut prefix_results = Vec::<ViolationItem>::new();
             self.deps.test_file_prefix.check_test_file_prefixes(
                 self.deps.config.as_ref(),
                 self.deps.layer_map.as_ref(),
@@ -147,7 +147,7 @@ impl NamingOrchestrator {
                 root_dir,
                 &mut prefix_results,
             );
-            results.extend(prefix_results.values);
+            results.extend(prefix_results);
         }
 
         results

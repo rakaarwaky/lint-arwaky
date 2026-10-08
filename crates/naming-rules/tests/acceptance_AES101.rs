@@ -3,9 +3,9 @@ use naming_rules_lint_arwaky::capabilities_naming_convention_checker::NamingConv
 use shared_common::taxonomy_layer_vo::LayerDefinition;
 use shared_common::taxonomy_layer_vo::LayerMapVO;
 use shared_common::taxonomy_layer_vo::LayerNameVO;
-use shared_common::taxonomy_lint_vo::LintResultList;
 use shared_common::taxonomy_path_vo::FilePath;
 use shared_common::taxonomy_path_vo::FilePathList;
+use shared_common::taxonomy_violation_item_vo::ViolationItem;
 use shared_naming_rules::RULE_CODE_NAMING_CONVENTION;
 use std::collections::HashMap;
 
@@ -218,7 +218,7 @@ fn check_file_naming_via_trait_api() {
         FilePath::new("src/capabilities_good_file.rs".to_string()).unwrap(),
     ]);
     let root = FilePath::new(".".to_string()).unwrap();
-    let mut results = LintResultList::new(Vec::new());
+    let mut results: Vec<ViolationItem> = Vec::new();
 
     checker().check_file_naming(&config, &layer_map, &files, &root, &mut results);
 
@@ -227,7 +227,7 @@ fn check_file_naming_via_trait_api() {
         1,
         "only the bad file should produce a violation"
     );
-    assert_eq!(results.values[0].code.code(), RULE_CODE_NAMING_CONVENTION);
+    assert_eq!(results[0].code.code(), RULE_CODE_NAMING_CONVENTION);
 }
 
 // ── FR-AES101-09: Unknown-prefix files pass AES101 ────────

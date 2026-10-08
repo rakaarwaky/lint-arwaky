@@ -139,7 +139,31 @@ pub fn collect_ci(
             ))
             .into_violations()
     });
-    results.extend(naming_res);
+    // CI mixes all rule violations into one Vec<LintResult>; convert naming
+    // ViolationItems back — the scoring helpers only read code/severity/message.
+    results.extend(
+        naming_res
+            .into_iter()
+            .map(|v| {
+                use shared_common::taxonomy_adapter_name_vo::AdapterName;
+                use shared_common::taxonomy_lint_vo::{LintResult, LocationList};
+                LintResult {
+                    file: v.file,
+                    line: v.line,
+                    column: v.column,
+                    code: v.code,
+                    message: v.message,
+                    source: Some(AdapterName::raw("lint-arwaky")),
+                    severity: v.severity,
+                    enclosing_scope: None,
+                    related_locations: LocationList::new(),
+                    violation_name: v.violation_name,
+                    why: v.why,
+                    fix: v.fix,
+                }
+            })
+            .collect::<Vec<_>>(),
+    );
 
     // Orphan detection (sync) — reuse already-fetched ignored paths; isolated
     // like the other capabilities so one panic cannot take down the CI run.
