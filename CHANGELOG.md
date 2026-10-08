@@ -1,5 +1,68 @@
 # Changelog
 
+## 3.8.2 (2026-10-08)
+
+### Features
+
+- **Project Quick Facts is now a free-form slot in AGENTS.md.** The fixed
+  `INPUT = ...` / `OUTPUT = ...` template lines were replaced with a
+  single `{project quick facts}` placeholder, so AES605 no longer requires
+  two specific labels. AES605 now accepts any free-form content in the
+  Project Quick Facts section. (#1015)
+
+- **Logging split into 4 capability seams with real-time scan feed.**
+  The monolithic logging module was decomposed into focused capability
+  modules. The CLI is quiet by default and only produces output with
+  `-v`.
+
+### Fixes
+
+- **AES101 word_count values above 10** (#983) — `naming.word_count`
+  values greater than 10 now work without false positives.
+- **AES405 P14 protocol counting** — PEP 604 union types and
+  split-contract sibling files are now counted correctly (#896, #892).
+- **AES405 dynamic_any** — annotation positions are scanned instead of
+  whole-word matches (#894).
+- **Root-level relative import resolution** (#976) — relative imports
+  from the workspace root no longer fail to resolve.
+- **Config ignored paths in orphan graph** (#978) — `config.ignored`
+  paths are now honored when building the orphan graph.
+- **Test files counted among source files in project stats** (#980).
+- **Warm filesystem index respects ignore patterns** (#985).
+- **Bandit scan excludes `vendor/` and `.venv/`** to avoid timeout (#993).
+- **AES502 contract orphan messages** improved for clarity.
+- **Dispatcher passes real file lists** to `run_analysis` in git/fix/ci
+  surface actions (#952).
+- **Release pipeline** — duplicate env key in `release-tag.yml` and the
+  VERSION file bump in `auto-release.yml` are repaired; PR creation now
+  uses the REST API; a no-op validate job prevents 0-job failures on
+  push (#1011, #974, #972, #970).
+- **Git diff rename parser** handles `--name-status` output correctly
+  (#923, #939).
+- **Multi-segment ignored paths** and nested git repos are skipped in
+  BFS discovery (#962).
+- **Recursive workspace root discovery** for auditors (#929).
+- **Silent filesystem event discards** are now surfaced (#925).
+- **TUI help scroll and mouse fixes** (#945).
+- **MCP server bug fixes** (#944).
+- **Role-rules bug fixes** (#946).
+- **External-lint adapter fixes** (#947).
+- **Auto-fix engine fixes** (#953).
+- **Multiple bugs across 6 crates** (#956).
+
+### Chores
+
+- **AGENTS.md template** — Git Conventions and Guided Skills sections
+  removed from the H2 contract (#1013). AGENTS.md documentation is
+  simplified: Memory, Precedence, and Security sections removed; Writing
+  Style condensed; worktree-only branching enforced (#957, #960, #964).
+- **Naming-rules checkers** switched to `ViolationItem` end-to-end (#1006).
+- **Common taxonomy VOs** consolidated by domain; dead code and empty
+  stubs removed from shared sub-crates (#1004, #1002, #1008, #996).
+- **Orphan-rule violation messages** standardized for AES501–AES506
+  (#998).
+
+
 ## 3.8.1 (2026-10-06)
 
 ### Fixes
