@@ -378,8 +378,7 @@ description: "{Project} operational guide."
 
 ## Project Quick Facts
 
-INPUT  = {input artifact and what it carries}
-OUTPUT = {output artifact and locked spec values}
+{project quick facts}
 
 ## Pipeline
 
