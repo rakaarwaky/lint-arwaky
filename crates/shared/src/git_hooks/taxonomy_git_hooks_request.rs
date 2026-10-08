@@ -27,5 +27,4 @@ impl GitHooksRequest {
     pub fn uninstall() -> Self {
         Self::Uninstall
     }
-
 }

@@ -48,7 +48,6 @@ impl OrphanIndicatorResult {
 // Messages are written inline in each checker, not here.
 pub use shared_common::taxonomy_language_vo::Language;
 
-
 use shared_common::taxonomy_message_vo::LintMessage;
 
 pub const WORD_PATTERN_TOKENS: &[&str] = &[
@@ -82,4 +81,3 @@ pub enum AesCodeAnalysisViolation {
     DeadInheritance { reason: Option<LintMessage> },
     CodeDuplication { reason: Option<LintMessage> },
 }
-

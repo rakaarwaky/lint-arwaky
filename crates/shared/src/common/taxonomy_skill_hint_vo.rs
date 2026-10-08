@@ -83,4 +83,3 @@ pub fn layer_from_path(file_path: &str) -> Option<&'static str> {
         .find(|(prefix, _)| stem.starts_with(prefix))
         .map(|(_, layer)| *layer)
 }
-

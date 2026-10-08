@@ -106,7 +106,6 @@ impl FilesystemResponse {
         }
     }
 
-
     pub fn into_identifiers(self) -> Vec<String> {
         match self {
             Self::Identifiers { ids } => ids,

@@ -75,7 +75,6 @@ impl Language {
             Self::Unknown => "interface",
         }
     }
-
 }
 
 impl std::fmt::Display for Language {

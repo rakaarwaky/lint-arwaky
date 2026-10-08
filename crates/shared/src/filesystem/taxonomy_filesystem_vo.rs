@@ -584,7 +584,6 @@ impl ExternalReferenceMap {
         }
         any
     }
-
 }
 
 /// True when a path string points into a test or benchmark target directory.

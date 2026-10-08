@@ -65,7 +65,6 @@ impl SetupResponse {
         }
     }
 
-
     pub fn into_skills(self) -> Vec<EmbeddedSkillVO> {
         match self {
             Self::Skills { skills } => skills,
@@ -79,7 +78,6 @@ impl SetupResponse {
             _ => Err(SetupError::other("no config written")),
         }
     }
-
 
     pub fn into_exists(self) -> bool {
         match self {

@@ -106,7 +106,6 @@ impl AstImportVO {
         }
     }
 
-
     /// Get the last segment (typically the imported symbol name).
     pub fn last_segment(&self) -> Option<&str> {
         self.segments.last().map(|s| s.as_str())
@@ -237,7 +236,6 @@ impl RustParseResultVO {
             .map(|ti| ti.trait_name.clone())
             .collect()
     }
-
 }
 
 impl PythonParseResultVO {

@@ -29,7 +29,6 @@ impl OrphanResponse {
         }
     }
 
-
     /// Take the violations. Returns an empty list if a different verb was served.
     pub fn into_violations(self) -> Vec<LintResult> {
         match self {
