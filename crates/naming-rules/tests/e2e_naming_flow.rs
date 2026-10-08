@@ -56,7 +56,7 @@ fn make_file_entries(dir: &std::path::Path, names: &[&str]) -> Vec<FileEntry> {
 fn run_audit(
     orch: &dyn INamingRunnerAggregate,
     entries: &[FileEntry],
-) -> Vec<shared_common::taxonomy_lint_vo::LintResult> {
+) -> Vec<shared_common::taxonomy_violation_item_vo::ViolationItem> {
     let request = NamingRequest::RunAuditWithEntries {
         files: entries.to_vec(),
     };
@@ -73,7 +73,7 @@ fn run_audit_with_tests(
     orch: &dyn INamingRunnerAggregate,
     source: &[FileEntry],
     tests: &[FileEntry],
-) -> Vec<shared_common::taxonomy_lint_vo::LintResult> {
+) -> Vec<shared_common::taxonomy_violation_item_vo::ViolationItem> {
     match orch.execute(NamingRequest::audit_with_tests(source, tests)) {
         NamingResponse::Audit { violations } => violations,
         NamingResponse::Name { .. } => panic!("expected an audit response"),
@@ -305,7 +305,10 @@ fn e2e_aes101_disabled_skips_convention_check() {
 // ── AES103: the test-file prefix seam, end to end ──
 
 /// Count the findings carrying *code*, so a case asserts on which rule spoke.
-fn count_of(results: &[shared_common::taxonomy_lint_vo::LintResult], code: &str) -> usize {
+fn count_of(
+    results: &[shared_common::taxonomy_violation_item_vo::ViolationItem],
+    code: &str,
+) -> usize {
     results.iter().filter(|r| r.code.code() == code).count()
 }
 

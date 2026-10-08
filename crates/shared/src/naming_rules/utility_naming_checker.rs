@@ -1,14 +1,11 @@
 // PURPOSE: Shared helpers for naming checkers — stem/suffix extraction, result construction.
-use crate::taxonomy_naming_rules_constant::ADAPTER_NAME;
-use shared_common::taxonomy_adapter_name_vo::AdapterName;
 use shared_common::taxonomy_common_vo::ColumnNumber;
 use shared_common::taxonomy_common_vo::LineNumber;
 use shared_common::taxonomy_error_vo::ErrorCode;
-use shared_common::taxonomy_lint_vo::LintResult;
-use shared_common::taxonomy_lint_vo::LocationList;
 use shared_common::taxonomy_message_vo::LintMessage;
 use shared_common::taxonomy_path_vo::FilePath;
 use shared_common::taxonomy_severity_vo::Severity;
+use shared_common::taxonomy_violation_item_vo::ViolationItem;
 use shared_config_system::taxonomy_config_system_vo::ArchitectureConfig;
 
 /// Extract the file stem using the last dot (rfind), consistent across all checkers.
@@ -41,8 +38,8 @@ pub fn parse_path(filename: &str) -> Option<FilePath> {
     FilePath::new(filename.to_string()).ok()
 }
 
-/// Construct a file-level LintResult from a string filename.
-pub fn string_filename_result(
+/// Construct a file-level ViolationItem from a string filename.
+pub fn string_filename_violation(
     file: &str,
     code: &str,
     message: impl Into<String>,
@@ -50,18 +47,14 @@ pub fn string_filename_result(
     violation_name: &str,
     why: impl Into<String>,
     fix: impl Into<String>,
-) -> LintResult {
-    let file_path = FilePath::new(file).unwrap_or_default();
-    LintResult {
-        file: file_path,
+) -> ViolationItem {
+    ViolationItem {
+        code: ErrorCode::raw(code),
+        file: FilePath::new(file).unwrap_or_default(),
         line: LineNumber::new(1),
         column: ColumnNumber::new(0),
-        code: ErrorCode::raw(code),
         message: LintMessage::new(message),
-        source: Some(AdapterName::raw(ADAPTER_NAME)),
         severity,
-        enclosing_scope: None,
-        related_locations: LocationList::new(),
         violation_name: violation_name.to_string(),
         why: why.into(),
         fix: fix.into(),

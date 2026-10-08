@@ -478,9 +478,6 @@ fn run_all_linters_in_process(
         agg.naming
             .execute(NamingRequest::audit_with_tests(&entries, &test_files))
             .into_violations()
-            .iter()
-            .map(ViolationItem::from_lint_result)
-            .collect::<Vec<_>>()
     }));
     tracing::info!(
         target: "lint_arwaky::audit",
@@ -954,9 +951,6 @@ pub(crate) fn run_single_file_scan(
         agg.naming
             .execute(NamingRequest::audit_with_tests(&entries, &test_entries))
             .into_violations()
-            .iter()
-            .map(ViolationItem::from_lint_result)
-            .collect::<Vec<_>>()
     }));
     all.extend(run_isolated("orphan", &mut panics, || {
         let (_graph_ctx, orphan_violations) = agg
