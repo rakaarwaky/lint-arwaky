@@ -385,37 +385,6 @@ OUTPUT = {output artifact and locked spec values}
 
 {stage A} → {stage B} → {stage C} → {stage D}
 
-## Git Conventions
-
-- Default branch: {default branch}
-- Worktree directory: {worktree directory}
-- Branch pattern: {branch pattern}
-- Branch prefixes: {branch prefixes}
-
-Create the working worktree:
-
-```bash
-git fetch origin {default branch}
-{worktree creation command}
-cd {worktree path}
-```
-
-After validation:
-
-```bash
-git add {paths to stage}
-git commit -m "{commit type}: {short description}"
-git push -u origin {branch name}
-{pull request creation command}
-```
-
-After merge:
-
-```bash
-{worktree cleanup command}
-{branch cleanup command}
-```
-
 ## Commands
 
 Every command must match the exact CI gate.
@@ -431,10 +400,6 @@ Every command must match the exact CI gate.
 {type checker command}                              # exact config-file flags
 {architecture scanner command}
 ```
-
-## Guided Skills
-
-- Skill directory: {skill directory}
 
 ## Related Documents
 
