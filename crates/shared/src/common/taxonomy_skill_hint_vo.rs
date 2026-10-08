@@ -83,11 +83,3 @@ pub fn layer_from_path(file_path: &str) -> Option<&'static str> {
         .find(|(prefix, _)| stem.starts_with(prefix))
         .map(|(_, layer)| *layer)
 }
-
-/// Resolve the remediation for `code` in `file_path`, detecting the layer.
-///
-/// The convenience form of [`resolve_skill_hint`] for callers that hold a path
-/// rather than a pre-detected layer.
-pub fn resolve_skill_hint_for_path(code: &str, file_path: &str) -> SkillHint {
-    resolve_skill_hint(code, layer_from_path(file_path))
-}

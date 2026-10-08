@@ -43,11 +43,6 @@ pub fn count_fr_headings(text: &str) -> Option<usize> {
 }
 
 /// True when the text contains at least one requirement heading in the
-/// shared FR-ID shape; false otherwise.
-pub fn has_fr_headings(text: &str) -> bool {
-    fr_id_heading_re().is_some_and(|re| re.is_match(text))
-}
-
 /// The kernel `src` roots the shared contract modules live in: the feature's
 /// contract module is resolved against each documented workspace layout
 /// (`crates/shared`, `modules/shared`, `packages/shared`), so a feature in

@@ -19,7 +19,7 @@ pub fn parent_directory(path: &FilePath) -> Option<FilePath> {
 }
 
 /// Maximum time a clipboard helper is allowed to remain alive.
-pub const CLIPBOARD_FALLBACK_TIMEOUT: Duration = Duration::from_secs(2);
+const CLIPBOARD_FALLBACK_TIMEOUT: Duration = Duration::from_secs(2);
 
 /// Run the shell fallback with a hard deadline. `Child::wait` is deliberately
 /// avoided: xclip and wl-copy can wait forever for a display server in SSH or

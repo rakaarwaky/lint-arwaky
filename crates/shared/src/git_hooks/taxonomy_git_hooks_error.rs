@@ -1,10 +1,6 @@
 // PURPOSE: GitHookError — structured error type for git hook operation failures
 use shared_common::domain_error_vo;
 
-/// Domain error types for the git hooks subsystem.
-/// Uses the `domain_error_vo!` macro from `utility_value_object_generator`.
-pub fn _hook_error_anchor() {}
-
 domain_error_vo!(GitHookError, "Git Hook Error", "GIT_HOOK", 3001u16);
 
 #[cfg(test)]

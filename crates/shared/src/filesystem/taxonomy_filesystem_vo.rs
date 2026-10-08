@@ -548,13 +548,6 @@ pub struct ExternalReferenceMap {
 }
 
 impl ExternalReferenceMap {
-    /// True when `method` is referenced from any file other than `owning_file`.
-    pub fn referenced_externally(&self, owning_file: &str, method: &str) -> bool {
-        self.by_file
-            .iter()
-            .any(|(file, methods)| file != owning_file && methods.iter().any(|m| m == method))
-    }
-
     /// True when `method` is referenced from a non-test file, including
     /// `owning_file` itself. A helper called from inside its own module is
     /// live even when no other module names it, so a same-file call must
@@ -569,7 +562,7 @@ impl ExternalReferenceMap {
 
     /// True when `method` is referenced from a file other than `owning_file`
     /// that is not a test or bench target.
-    pub fn referenced_externally_from_production(&self, owning_file: &str, method: &str) -> bool {
+    fn referenced_externally_from_production(&self, owning_file: &str, method: &str) -> bool {
         self.by_file.iter().any(|(file, methods)| {
             file != owning_file
                 && methods.iter().any(|m| m == method)
@@ -590,15 +583,6 @@ impl ExternalReferenceMap {
             }
         }
         any
-    }
-
-    /// Referencing file paths for `method`, excluding `owning_file`.
-    pub fn referencing_files(&self, owning_file: &str, method: &str) -> Vec<String> {
-        self.by_file
-            .iter()
-            .filter(|(file, methods)| *file != owning_file && methods.iter().any(|m| m == method))
-            .map(|(file, _)| file.clone())
-            .collect()
     }
 }
 
