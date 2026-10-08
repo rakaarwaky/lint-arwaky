@@ -58,6 +58,7 @@ jobs:
         id: tag
         env:
           MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           VERSION=$(git log -1 --format=%s "$MERGE_SHA" \
             | sed -E 's/^chore\(release\): v//' | xargs)
@@ -80,8 +81,6 @@ jobs:
           git push origin "$TAG"
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "Pushed tag ${TAG}."
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Dispatch release build
         # GITHUB_TOKEN cannot trigger workflows via tag push, so dispatch

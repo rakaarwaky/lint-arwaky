@@ -127,6 +127,7 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           sed -i "s/^version = .*/version = \"${VERSION}\"/" Cargo.toml
+          echo "${VERSION}" > VERSION
           # Update ONLY the root package's version in Cargo.lock so the locked
           # dependency graph (which CI already tested) is untouched. A full
           # re-resolution here could pull untested dependency upgrades.
