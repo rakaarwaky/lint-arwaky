@@ -4,9 +4,9 @@ use shared_common::PatternList;
 use shared_common::SuffixPolicyVO;
 use shared_common::taxonomy_layer_vo::LayerNameVO;
 use shared_common::taxonomy_layer_vo::{LayerDefinition, LayerMapVO};
-use shared_common::taxonomy_lint_vo::LintResultList;
 use shared_common::taxonomy_path_vo::FilePath;
 use shared_common::taxonomy_path_vo::FilePathList;
+use shared_common::taxonomy_violation_item_vo::ViolationItem;
 use shared_naming_rules::RULE_CODE_SUFFIX_PREFIX;
 use shared_naming_rules::SUFFIX_POLICY_STRICT;
 use std::collections::HashMap;
@@ -250,7 +250,7 @@ fn check_domain_suffixes_via_trait_api() {
         FilePath::new("src/capabilities_user_checker.rs".to_string()).unwrap(),
     ]);
     let root = FilePath::new(".".to_string()).unwrap();
-    let mut results = LintResultList::new(Vec::new());
+    let mut results: Vec<ViolationItem> = Vec::new();
 
     checker().check_domain_suffixes(&config, &map, &files, &root, &mut results);
 
@@ -259,7 +259,7 @@ fn check_domain_suffixes_via_trait_api() {
         1,
         "only the forbidden-suffix file should produce a violation"
     );
-    assert_eq!(results.values[0].code.code(), RULE_CODE_SUFFIX_PREFIX);
+    assert_eq!(results[0].code.code(), RULE_CODE_SUFFIX_PREFIX);
 }
 
 // ── FR-AES102-15: Unknown-prefix files skipped by AES102 ──

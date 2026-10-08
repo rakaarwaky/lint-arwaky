@@ -10,9 +10,9 @@ use shared_common::PatternList;
 use shared_common::SuffixPolicyVO;
 use shared_common::taxonomy_layer_vo::LayerNameVO;
 use shared_common::taxonomy_layer_vo::{LayerDefinition, LayerMapVO};
-use shared_common::taxonomy_lint_vo::LintResultList;
 use shared_common::taxonomy_path_vo::FilePath;
 use shared_common::taxonomy_path_vo::FilePathList;
+use shared_common::taxonomy_violation_item_vo::ViolationItem;
 use shared_config_system::taxonomy_config_system_vo::ArchitectureConfig;
 use shared_filesystem::taxonomy_filesystem_vo::{FileEntry, Language};
 use shared_naming_rules::INamingConventionProtocol;
@@ -79,7 +79,7 @@ fn bench_naming_checker(c: &mut Criterion) {
         group.bench_with_input(BenchmarkId::new("valid_names", label), &n, |b, &n| {
             let files = generate_file_paths(n, "capabilities_user_checker");
             b.iter(|| {
-                let mut results = LintResultList::new(Vec::new());
+                let mut results: Vec<ViolationItem> = Vec::new();
                 convention_checker.check_file_naming(
                     &config,
                     &layer_map,
@@ -105,7 +105,7 @@ fn bench_naming_checker(c: &mut Criterion) {
             }
             let files = FilePathList::new(paths);
             b.iter(|| {
-                let mut results = LintResultList::new(Vec::new());
+                let mut results: Vec<ViolationItem> = Vec::new();
                 convention_checker.check_file_naming(
                     &config,
                     &layer_map,
@@ -122,7 +122,7 @@ fn bench_naming_checker(c: &mut Criterion) {
         group.bench_with_input(BenchmarkId::new("valid_suffixes", label), &n, |b, &n| {
             let files = generate_file_paths(n, "capabilities_user_checker");
             b.iter(|| {
-                let mut results = LintResultList::new(Vec::new());
+                let mut results: Vec<ViolationItem> = Vec::new();
                 suffix_checker.check_domain_suffixes(
                     &config,
                     &layer_map,
@@ -146,7 +146,7 @@ fn bench_naming_checker(c: &mut Criterion) {
             }
             let files = FilePathList::new(paths);
             b.iter(|| {
-                let mut results = LintResultList::new(Vec::new());
+                let mut results: Vec<ViolationItem> = Vec::new();
                 suffix_checker.check_domain_suffixes(
                     &config,
                     &layer_map,

@@ -2,10 +2,10 @@
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 use shared_common::taxonomy_layer_vo::LayerNameVO;
 use shared_common::taxonomy_layer_vo::{LayerDefinition, LayerMapVO};
-use shared_common::taxonomy_lint_vo::{LintResult, LintResultList};
 use shared_common::taxonomy_path_vo::FilePath;
 use shared_common::taxonomy_path_vo::FilePathList;
 use shared_common::taxonomy_severity_vo::Severity;
+use shared_common::taxonomy_violation_item_vo::ViolationItem;
 use shared_config_system::taxonomy_config_system_vo::ArchitectureConfig;
 use shared_naming_rules::contract_naming_checker_protocol::ISuffixPolicyProtocol;
 use shared_naming_rules::taxonomy_naming_rules_constant::{
@@ -13,7 +13,7 @@ use shared_naming_rules::taxonomy_naming_rules_constant::{
 };
 use shared_naming_rules::utility_naming_checker::{
     basename_of, detect_layer, get_stem, get_suffix, parse_path, rule_exception_set,
-    string_filename_result,
+    string_filename_violation,
 };
 
 use std::collections::HashMap;
@@ -40,13 +40,13 @@ impl ISuffixPolicyProtocol for SuffixPolicyChecker {
         layer_map: &LayerMapVO,
         files: &FilePathList,
         _root_dir: &FilePath,
-        results: &mut LintResultList,
+        results: &mut Vec<ViolationItem>,
     ) {
         let layer_keys: Vec<String> = layer_map.values.keys().map(|k| k.to_string()).collect();
         let suffix_to_layer = Self::build_suffix_to_layer_map(layer_map);
         let exceptions = rule_exception_set(config, RULE_CODE_SUFFIX_PREFIX);
 
-        let violations: Vec<LintResult> = files
+        let violations: Vec<ViolationItem> = files
             .values
             .par_iter()
             .filter_map(|f| {
@@ -74,7 +74,7 @@ impl ISuffixPolicyProtocol for SuffixPolicyChecker {
             })
             .collect();
 
-        results.values.extend(violations);
+        results.extend(violations);
     }
 }
 
@@ -121,7 +121,7 @@ impl SuffixPolicyChecker {
         definition: Option<&LayerDefinition>,
         layer_name: &Option<LayerNameVO>,
         suffix_to_layer: &HashMap<String, String>,
-    ) -> Option<LintResult> {
+    ) -> Option<ViolationItem> {
         let fp = parse_path(filename)?;
         if fp.is_barrel_file() || fp.is_entry_point() {
             return None;
@@ -143,7 +143,7 @@ impl SuffixPolicyChecker {
         if let Some(suf) = &suffix
             && def.naming.forbidden_suffix.values.iter().any(|v| v == *suf)
         {
-            return Some(string_filename_result(
+            return Some(string_filename_violation(
                 file,
                 RULE_CODE_SUFFIX_PREFIX,
                 format!(
@@ -172,7 +172,7 @@ impl SuffixPolicyChecker {
         {
             let current_base = base_layer_of(&layer_display);
             if suffix_belonging_layer != current_base {
-                return Some(string_filename_result(
+                return Some(string_filename_violation(
                     file,
                     RULE_CODE_SUFFIX_PREFIX,
                     format!(
@@ -207,7 +207,7 @@ impl SuffixPolicyChecker {
             if !valid {
                 let allowed_list = &def.naming.allowed_suffix.values;
                 let suffix_display = suffix.unwrap_or("(none)");
-                return Some(string_filename_result(
+                return Some(string_filename_violation(
                     file,
                     RULE_CODE_SUFFIX_PREFIX,
                     format!(

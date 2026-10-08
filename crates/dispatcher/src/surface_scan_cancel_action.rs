@@ -218,9 +218,7 @@ fn run_all_linters_in_process_cancel(
     all.extend(
         agg.naming
             .execute(NamingRequest::audit_with_tests(&entries, &test_files))
-            .into_violations()
-            .iter()
-            .map(ViolationItem::from_lint_result),
+            .into_violations(),
     );
     on_progress(
         "Naming checks complete".to_string(),

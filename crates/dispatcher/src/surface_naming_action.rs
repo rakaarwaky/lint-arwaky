@@ -4,7 +4,7 @@
 //   CLI → collect_naming → filesystem.execute(FilesystemRequest::FileList).into_file_list() → naming_orchestrator.execute → violations
 //
 // The naming-rules crate performs zero I/O — it receives &[FileEntry] and
-// returns LintResult violations. All filesystem access is handled by the
+// returns ViolationItem. All filesystem access is handled by the
 // filesystem aggregate.
 use std::sync::Arc;
 
@@ -63,11 +63,8 @@ pub fn collect_naming(
         return Err("naming audit returned an unexpected response".to_string());
     };
 
-    // 5. Convert LintResult to ViolationItem for output formatting
-    let mut violations: Vec<ViolationItem> = results
-        .iter()
-        .map(ViolationItem::from_lint_result)
-        .collect();
+    // 5. NamingResponse already carries ViolationItem end-to-end — no conversion.
+    let mut violations = results;
 
     // 6. Apply optional filter (by violation code)
     if let Some(ref filter_str) = filter {

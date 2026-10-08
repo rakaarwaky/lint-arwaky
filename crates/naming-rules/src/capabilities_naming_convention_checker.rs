@@ -3,17 +3,17 @@ use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 use regex::Regex;
 use shared_common::taxonomy_layer_vo::LayerNameVO;
 use shared_common::taxonomy_layer_vo::{LayerDefinition, LayerMapVO};
-use shared_common::taxonomy_lint_vo::{LintResult, LintResultList};
 use shared_common::taxonomy_path_vo::FilePath;
 use shared_common::taxonomy_path_vo::FilePathList;
 use shared_common::taxonomy_severity_vo::Severity;
+use shared_common::taxonomy_violation_item_vo::ViolationItem;
 use shared_config_system::taxonomy_config_system_vo::ArchitectureConfig;
 use shared_naming_rules::contract_naming_checker_protocol::INamingConventionProtocol;
 use shared_naming_rules::taxonomy_naming_rules_constant::{
     MIN_WORDS_DEFAULT, RULE_CODE_NAMING_CONVENTION,
 };
 use shared_naming_rules::utility_naming_checker::{
-    basename_of, detect_layer, get_stem, parse_path, rule_exception_set, string_filename_result,
+    basename_of, detect_layer, get_stem, parse_path, rule_exception_set, string_filename_violation,
 };
 
 use std::sync::OnceLock;
@@ -40,13 +40,13 @@ impl INamingConventionProtocol for NamingConventionChecker {
         layer_map: &LayerMapVO,
         files: &FilePathList,
         _root_dir: &FilePath,
-        results: &mut LintResultList,
+        results: &mut Vec<ViolationItem>,
     ) {
         let layer_keys: Vec<String> = layer_map.values.keys().map(|k| k.to_string()).collect();
         let min_words = Self::min_words_from_config(config);
         let exceptions = rule_exception_set(config, RULE_CODE_NAMING_CONVENTION);
 
-        let violations: Vec<LintResult> = files
+        let violations: Vec<ViolationItem> = files
             .values
             .par_iter()
             .filter_map(|f| {
@@ -63,7 +63,7 @@ impl INamingConventionProtocol for NamingConventionChecker {
             })
             .collect();
 
-        results.values.extend(violations);
+        results.extend(violations);
     }
 }
 
@@ -136,7 +136,7 @@ impl NamingConventionChecker {
         layer_name: &Option<LayerNameVO>,
         definition: Option<&LayerDefinition>,
         min_words: usize,
-    ) -> Option<LintResult> {
+    ) -> Option<ViolationItem> {
         let fp = parse_path(filename)?;
         if fp.is_barrel_file() || fp.is_entry_point() {
             return None;
@@ -155,7 +155,7 @@ impl NamingConventionChecker {
                 .as_ref()
                 .map(|l| format!(" (detected layer: '{}')", l.value()))
                 .unwrap_or_default();
-            return Some(string_filename_result(
+            return Some(string_filename_violation(
                 file,
                 RULE_CODE_NAMING_CONVENTION,
                 format!(
