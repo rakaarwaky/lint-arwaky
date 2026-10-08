@@ -72,37 +72,6 @@ OUTPUT = {output artifact and locked spec values}
 
 {stage A} → {stage B} → {stage C} → {stage D}
 
-## Git Conventions
-
-- Default branch: {default branch}
-- Worktree directory: {worktree directory}
-- Branch pattern: {branch pattern}
-- Branch prefixes: {branch prefixes}
-
-Create the working worktree:
-
-```bash
-git fetch origin {default branch}
-{worktree creation command}
-cd {worktree path}
-```
-
-After validation:
-
-```bash
-git add {paths to stage}
-git commit -m "{commit type}: {short description}"
-git push -u origin {branch name}
-{pull request creation command}
-```
-
-After merge:
-
-```bash
-{worktree cleanup command}
-{branch cleanup command}
-```
-
 ## Commands
 
 Every command must match the exact CI gate.
@@ -119,10 +88,6 @@ Every command must match the exact CI gate.
 {architecture scanner command}
 ```
 
-## Guided Skills
-
-- Skill directory: {skill directory}
-
 ## Related Documents
 
 - {link}: {what the document answers}
@@ -133,9 +98,9 @@ Every command must match the exact CI gate.
 ## Section Contract
 
 Every section is required unless marked optional. Each exists for one
-reason. The H2 set is closed by AES605: the seven required H2s are
-`Runtime`, `Project Quick Facts`, `Pipeline`, `Git Conventions`,
-`Commands`, `Guided Skills`, `Related Documents`. Global agent
+reason. The H2 set is closed by AES605: the five required H2s are
+`Runtime`, `Project Quick Facts`, `Pipeline`,
+`Commands`, `Related Documents`. Global agent
 behavior (autonomy, safety, work loop, merge guard) is carried in the
 global agent guide (`~/.qwen/QWEN.md` or equivalent) and is not
 repeated as H2s in `AGENTS.md`.
@@ -146,9 +111,7 @@ repeated as H2s in `AGENTS.md`.
 | Runtime             | Version pin + env isolation + package manager. Skip when nothing here is version-pinned.                     |
 | Project Quick Facts | One I/O contract with locked values. Skip when no fixed input/output artifact.                               |
 | Pipeline            | Stage order and controller in one glance. Skip when not pipeline-shaped.                                     |
-| Git Conventions     | Default branch, worktree dir, branch pattern, and the exact create/validate/merge command blocks. Skip when not a git-hosted repo. |
 | Commands            | The gates, verbatim as CI runs them. Highest-value section. Never skip.                                      |
-| Guided Skills       | Skill directory pointer. Skip when repo ships no skills.                                                     |
 | Related Documents   | One line per doc: what it answers. Never skip.                                                               |
 
 ---
