@@ -57,6 +57,12 @@
 - **Test files counted among source files in project stats** (#980).
 - **Warm filesystem index respects ignore patterns** (#985).
 - **Bandit scan excludes `vendor/` and `.venv/`** to avoid timeout (#993).
+- **Bandit scan also excludes `.worktrees/`, `site-packages`, `__pycache__`, and
+  `node_modules`** in addition to `tests`, `.venv`, and `vendor` (#993 follow-up).
+  Nested worktree venvs (which can contain full copies of dependency
+  site-packages, including bandit itself) and pyc caches pushed bandit past its
+  120s timeout, so the adapter silently reported zero findings; the expanded
+  exclude list keeps bandit within the default timeout budget.
 - **AES502 contract orphan messages** improved for clarity.
 - **Dispatcher passes real file lists** to `run_analysis` in git/fix/ci
   surface actions (#952).
