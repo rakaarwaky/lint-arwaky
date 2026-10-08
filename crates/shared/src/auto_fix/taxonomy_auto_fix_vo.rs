@@ -95,11 +95,6 @@ impl FixOutcome {
     pub fn failed(reason: FailReason) -> Self {
         Self::Failed(reason)
     }
-
-    /// Whether this outcome represents a successful fix.
-    pub fn is_applied(&self) -> bool {
-        matches!(self, Self::Applied { .. })
-    }
 }
 
 impl std::fmt::Display for SkipReason {

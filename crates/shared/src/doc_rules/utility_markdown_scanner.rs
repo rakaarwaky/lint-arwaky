@@ -78,7 +78,7 @@ pub fn doc_h2_contract(name: &str) -> Option<(&[&str], &[&str])> {
 }
 
 /// Bullet matcher.
-pub fn bullet_re() -> Option<&'static regex::Regex> {
+fn bullet_re() -> Option<&'static regex::Regex> {
     static PAT: OnceLock<Option<regex::Regex>> = OnceLock::new();
     PAT.get_or_init(|| regex::Regex::new(r"(?m)^\s*[-*]\s+\S").ok())
         .as_ref()

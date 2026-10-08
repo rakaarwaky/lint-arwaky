@@ -106,13 +106,6 @@ impl FilesystemResponse {
         }
     }
 
-    pub fn into_source_paths(self) -> Vec<FilePath> {
-        match self {
-            Self::SourcePaths { paths } => paths,
-            _ => Vec::new(),
-        }
-    }
-
     pub fn into_identifiers(self) -> Vec<String> {
         match self {
             Self::Identifiers { ids } => ids,

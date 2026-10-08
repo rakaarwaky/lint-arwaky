@@ -66,12 +66,6 @@ impl OrphanRequest {
             context: context.clone(),
         }
     }
-    pub fn check_with_entries(files: &[FileEntry], context: &GraphAnalysisContext) -> Self {
-        Self::CheckWithEntries {
-            files: files.to_vec(),
-            context: context.clone(),
-        }
-    }
     pub fn scan(root_dir: &FilePath, ignored: &PatternList) -> Self {
         Self::Scan {
             root_dir: root_dir.clone(),

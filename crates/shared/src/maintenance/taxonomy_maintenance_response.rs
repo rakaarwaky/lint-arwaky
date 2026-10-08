@@ -62,10 +62,6 @@ impl MaintenanceResponse {
     }
 
     /// Report whether a job was cancelled. Returns false for other verbs.
-    pub fn into_cancelled(self) -> bool {
-        matches!(self, Self::Cancelled)
-    }
-
     pub fn into_toolchain(self) -> ToolchainDiagnostics {
         match self {
             Self::Toolchain { diagnostics } => diagnostics,

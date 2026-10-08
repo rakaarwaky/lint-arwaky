@@ -2,12 +2,12 @@
 // Pure functions only — no domain types (enums, consts) belong here
 
 /// Returns true if byte is a valid identifier continuation character.
-pub fn is_ident_continue(b: u8) -> bool {
+fn is_ident_continue(b: u8) -> bool {
     b.is_ascii_alphanumeric() || b == b'_'
 }
 
 /// Returns true if byte can start an identifier.
-pub fn is_ident_start(b: u8) -> bool {
+fn is_ident_start(b: u8) -> bool {
     b.is_ascii_alphabetic() || b == b'_'
 }
 
@@ -201,42 +201,6 @@ pub fn matches_word_token(line: &str, token: &str, requires_method_call: bool) -
                         }
                     }
                 }
-            }
-        }
-
-        i += 1;
-    }
-
-    false
-}
-
-/// Word-boundary keyword token matcher.
-pub fn matches_keyword_token(line: &str, token: &str) -> bool {
-    let trimmed = line.trim_start();
-    if trimmed.starts_with("//") || trimmed.starts_with("/*") || trimmed.starts_with('*') {
-        return false;
-    }
-
-    let bytes = line.as_bytes();
-    let token_bytes = token.as_bytes();
-    let tlen = token_bytes.len();
-
-    if bytes.len() < tlen {
-        return false;
-    }
-
-    let mut i = 0;
-
-    while i + tlen <= bytes.len() {
-        if &bytes[i..i + tlen] == token_bytes {
-            let before_ok =
-                i == 0 || (!bytes[i - 1].is_ascii_alphanumeric() && bytes[i - 1] != b'_');
-
-            let after_ok = i + tlen == bytes.len()
-                || (!bytes[i + tlen].is_ascii_alphanumeric() && bytes[i + tlen] != b'_');
-
-            if before_ok && after_ok {
-                return true;
             }
         }
 

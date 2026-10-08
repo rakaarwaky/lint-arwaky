@@ -258,10 +258,6 @@ pub enum Commands {
     ConfigShow,
 }
 
-pub fn get_cli() -> Cli {
-    Cli::parse()
-}
-
 // ─── Transport / protocol VOs (from taxonomy_protocol_vo) ─────────────
 
 use shared_common::string_value_object;

@@ -23,7 +23,6 @@ pub mod taxonomy_threshold_vo;
 pub mod taxonomy_violation_item_vo;
 pub mod utility_layer_detector;
 pub mod utility_release_version;
-pub mod utility_subprocess_runner;
 pub mod utility_value_object_generator;
 
 // ─── Re-exports ────────────────────────────────────────────

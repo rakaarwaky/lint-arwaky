@@ -73,11 +73,6 @@ impl ResolvedImport {
         }
     }
 
-    /// Check if the resolved layer matches the expected layer.
-    pub fn matches_layer(&self, expected: &str) -> bool {
-        self.resolved_layer.as_deref() == Some(expected)
-    }
-
     /// Check if the resolved file name contains the given suffix.
     pub fn has_suffix(&self, suffix: &str) -> bool {
         self.resolved_file

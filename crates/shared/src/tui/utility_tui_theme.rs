@@ -17,7 +17,7 @@
 use ratatui::style::{Color, Modifier, Style};
 
 /// Environment variable that opts the TUI into the high-contrast rendering mode.
-pub const HIGH_CONTRAST_VAR: &str = "LINT_ARWAKY_TUI_HIGH_CONTRAST";
+const HIGH_CONTRAST_VAR: &str = "LINT_ARWAKY_TUI_HIGH_CONTRAST";
 
 /// TUI design tokens — central color palette (I7).
 pub const ACCENT: Color = Color::Cyan;
@@ -47,9 +47,6 @@ pub const HEADER: Color = Color::Cyan;
 pub const PANEL_FILE_LIST_WIDTH_PCT: u16 = 20;
 pub const PANEL_PREVIEW_WIDTH_PCT: u16 = 45;
 pub const PANEL_TREE_WIDTH_PCT: u16 = 35;
-pub const SHORTCUT_ROW_COUNT: u16 = 3;
-pub const STATUS_BAR_HEIGHT: u16 = 1;
-pub const HEADER_HEIGHT: u16 = 1;
 pub const MIN_TERMINAL_HEIGHT: u16 = 15;
 pub const MIN_TERMINAL_WIDTH: u16 = 40;
 pub const NARROW_BREAKPOINT_WIDTH: u16 = 100;
@@ -87,7 +84,7 @@ pub fn color_with_override(value: Color, no_color_requested: bool) -> Color {
 /// Opt-in only: `COLORFGBG` is absent on many terminals and misreports on some,
 /// so inferring the background would flip the selection band on an unknown
 /// basis. `NO_COLOR` wins over this mode; see [`highlight_style`].
-pub fn high_contrast() -> bool {
+fn high_contrast() -> bool {
     high_contrast_with_override(no_color(), std::env::var_os(HIGH_CONTRAST_VAR).is_some())
 }
 

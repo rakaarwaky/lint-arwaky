@@ -73,7 +73,7 @@ pub fn build_external_reference_map(files: &[FileEntry]) -> ExternalReferenceMap
 }
 
 /// Recursively harvest lower-case identifiers from a test/bench directory.
-pub fn collect_test_refs(dir: &Path, map: &mut ExternalReferenceMap, seen: &mut HashSet<String>) {
+fn collect_test_refs(dir: &Path, map: &mut ExternalReferenceMap, seen: &mut HashSet<String>) {
     fn walk(d: &Path, map: &mut ExternalReferenceMap, seen: &mut HashSet<String>) {
         let entries = match std::fs::read_dir(d) {
             Ok(e) => e,
@@ -112,7 +112,7 @@ pub fn collect_test_refs(dir: &Path, map: &mut ExternalReferenceMap, seen: &mut 
 /// identifiers. This is a coarse harvest on purpose: the role rules use the
 /// index only to tell "is this name mentioned anywhere else" apart from
 /// "is this name private to one file".
-pub fn harvest_identifiers(content: &str) -> Vec<String> {
+fn harvest_identifiers(content: &str) -> Vec<String> {
     content
         .lines()
         .filter(|l| {

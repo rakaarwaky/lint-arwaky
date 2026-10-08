@@ -385,7 +385,7 @@ pub fn discover_source_files(root: &Path, ignored: &[String]) -> Vec<String> {
 }
 
 /// Scan directory recursively for all paths as PathBuf.
-pub fn scan_directory_paths(root: &Path) -> Vec<PathBuf> {
+fn scan_directory_paths(root: &Path) -> Vec<PathBuf> {
     let walker = ignore::WalkBuilder::new(root)
         .hidden(false)
         .git_ignore(true)

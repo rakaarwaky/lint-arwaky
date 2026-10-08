@@ -7,9 +7,6 @@ pub const RULE_CODE_FR_FORMAT: &str = "AES601";
 /// FR-ID is bare (`FR-NNN`) without a feature prefix.
 pub const FR_ID_VIOLATION_MISSING_FEATURE_PREFIX: &str = "id_missing_feature_prefix";
 
-/// FR-ID does not read as an imperative action.
-pub const FR_ID_VIOLATION_NOT_IMPERATIVE: &str = "id_not_imperative";
-
 /// A required FR field is absent from a requirement block.
 pub const FR_FIELDS_VIOLATION_FIELD_MISSING: &str = "field_missing";
 
@@ -74,9 +71,6 @@ pub const CROSSLINKS_VIOLATION_NO_BACKLOG_LINK: &str = "no_backlog_link";
 
 /// An FRD does not link its PRD.md in the Reference section.
 pub const CROSSLINKS_VIOLATION_NO_PRD_LINK: &str = "no_prd_link";
-
-/// A scenario in the FRD has no corresponding evidence row in the backlog.
-pub const CROSSLINKS_VIOLATION_SCENARIO_NO_EVIDENCE: &str = "scenario_no_evidence";
 
 /// State vocabulary is restated in a sub-doc instead of living only in the master.
 pub const CROSSLINKS_VIOLATION_STATE_VOCAB_RESTATED: &str = "state_vocab_restated";

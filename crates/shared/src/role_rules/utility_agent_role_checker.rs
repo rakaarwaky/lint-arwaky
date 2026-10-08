@@ -239,7 +239,7 @@ pub fn count_protocol_fields(content: &str, language: Language) -> (usize, usize
 /// of some non-shared feature source file (the agent, the capabilities, the
 /// root container). Dead protocols not referenced by anything in the feature
 /// are excluded. Pass an empty slice to count every declaration.
-pub fn count_feature_protocol_traits_with(feature_dir: &Path, referenced: &[String]) -> usize {
+fn count_feature_protocol_traits_with(feature_dir: &Path, referenced: &[String]) -> usize {
     count_protocol_traits_in_dir_with_stem_filter(
         feature_dir,
         referenced,
@@ -731,7 +731,7 @@ fn dynamic_any(t: &str) -> bool {
 /// that is a capability's job. Std traits and aggregate traits are excluded so
 /// `impl Default for X` reads as nothing. Returns deduplicated names in
 /// declaration order.
-pub fn contract_protocol_impls(file: &FileEntry) -> Vec<String> {
+fn contract_protocol_impls(file: &FileEntry) -> Vec<String> {
     let mut out: Vec<String> = Vec::new();
     let mut push = |name: &str| {
         if !out.iter().any(|n| n == name) {

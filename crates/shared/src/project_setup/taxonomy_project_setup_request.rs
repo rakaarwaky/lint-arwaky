@@ -54,9 +54,6 @@ pub enum SetupRequest {
 }
 
 impl SetupRequest {
-    pub fn check_http(url: &TransportUrlVO) -> Self {
-        Self::CheckHttp { url: url.clone() }
-    }
     pub fn generate_env(home: &DirectoryPath) -> Self {
         Self::GenerateEnv { home: home.clone() }
     }
