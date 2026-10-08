@@ -255,8 +255,7 @@ fn write_agents_workspace(dir: &Path) {
 ## Runtime\n\n\
 - Language: Rust.\n\n\
 ## Project Quick Facts\n\n\
-INPUT  = sample input\n\
-OUTPUT = sample output\n\n\
+sample facts.\n\n\
 ## Pipeline\n\n\
 scan → check\n\n\
 ## Commands\n\n\
@@ -909,8 +908,7 @@ fn aes605_allows_extra_and_free_h3_headings() {
 
 ## Project Quick Facts
 
-INPUT  = sample
-OUTPUT = sample
+sample facts.
 
 ## Pipeline
 
@@ -1019,8 +1017,7 @@ fn aes605_allows_the_project_specific_h2_set() {
 
 ## Project Quick Facts
 
-INPUT  = sample
-OUTPUT = sample
+sample facts.
 
 ## Pipeline
 

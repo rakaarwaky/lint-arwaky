@@ -65,8 +65,7 @@ description: "{Project} operational guide."
 
 ## Project Quick Facts
 
-INPUT  = {input artifact and what it carries}
-OUTPUT = {output artifact and locked spec values}
+{project quick facts}
 
 ## Pipeline
 
@@ -109,7 +108,7 @@ repeated as H2s in `AGENTS.md`.
 | ------------------- | ------------------------------------------------------------------------------------------------------------ |
 | Frontmatter         | Loads the file unconditionally in rule-style harnesses. Skip when harness discovers plain `AGENTS.md`.       |
 | Runtime             | Version pin + env isolation + package manager. Skip when nothing here is version-pinned.                     |
-| Project Quick Facts | One I/O contract with locked values. Skip when no fixed input/output artifact.                               |
+| Project Quick Facts | Free-form slot: any facts the project wants to surface to the next session. Fill the `{project quick facts}` slot; leave one blank line if there are none. |
 | Pipeline            | Stage order and controller in one glance. Skip when not pipeline-shaped.                                     |
 | Commands            | The gates, verbatim as CI runs them. Highest-value section. Never skip.                                      |
 | Related Documents   | One line per doc: what it answers. Never skip.                                                               |
