@@ -125,22 +125,18 @@ copy_agents_to_config() {
     local agents_src="$project_root/.agents"
     local agents_dst="$config_dir/.agents"
 
+    # Prompts are intentionally NOT distributed: `init`'s copy_dir_all would
+    # leak the whole .agents/prompts/ tree into target projects.
+    # Stale prompt files from older installs are removed on every run.
+    rm -rf "$agents_dst/prompts"
     if [ -d "$agents_src" ]; then
-        mkdir -p "$agents_dst/skills" "$agents_dst/rules" "$agents_dst/prompts"
+        mkdir -p "$agents_dst/skills" "$agents_dst/rules"
 
         for SKILL_DIR in "$agents_src"/skills/*; do
             if [ -d "$SKILL_DIR" ]; then
                 SKILL_NAME=$(basename "$SKILL_DIR")
                 cp -r "$SKILL_DIR" "$agents_dst/skills/$SKILL_NAME"
                 echo "  .agents/skills/$SKILL_NAME -> $config_dir/.agents/skills/$SKILL_NAME"
-            fi
-        done
-
-        for PROMPT_FILE in "$agents_src"/prompts/*; do
-            if [ -f "$PROMPT_FILE" ]; then
-                PROMPT_NAME=$(basename "$PROMPT_FILE")
-                cp "$PROMPT_FILE" "$agents_dst/prompts/$PROMPT_NAME"
-                echo "  .agents/prompts/$PROMPT_NAME -> $config_dir/.agents/prompts/$PROMPT_NAME"
             fi
         done
     fi
