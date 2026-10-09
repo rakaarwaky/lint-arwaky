@@ -384,6 +384,10 @@ description: "{Project} operational guide."
 
 {stage A} → {stage B} → {stage C} → {stage D}
 
+## Project Structure
+
+{project structure}
+
 ## Commands
 
 Every command must match the exact CI gate.

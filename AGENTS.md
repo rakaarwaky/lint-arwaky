@@ -26,6 +26,34 @@ OUTPUT = 0 violations from lint-arwaky-cli check ., docs ., and scripts/gates.sh
 
 scan → check → gates → publish
 
+## Project Structure
+
+```text
+crates/
+├── shared/            # Taxonomy VOs, contracts, utilities
+│   └── skills/        # Embedded skill content (source for init)
+├── config-system/     # Config loading, merging, validation
+├── filesystem/        # File walking, AST parsing, graph construction
+├── naming-rules/      # AES101–102
+├── import-rules/      # AES201–205
+├── quality-rules/     # AES301–305
+├── role-rules/        # AES401–406
+├── orphan-rules/      # AES501–506
+├── doc-rules/         # AES601–605 (document invariants)
+├── structure-rules/   # AES701–705 (folder structure)
+├── external-lint/     # External linter adapters
+├── auto-fix/          # Mechanical fixes
+├── report-formatter/  # text/JSON/SARIF/JUnit output
+├── dispatcher/        # Utility Surface — business logic
+├── cli-commands/      # CLI surface
+├── mcp-server/        # MCP server
+├── git-hooks/         # Pre-commit / git-diff
+├── file-watch/        # Continuous lint
+├── project-setup/     # init / install / mcp-config
+├── maintenance/       # doctor / security / deps
+└── tui/               # Interactive terminal UI
+```
+
 ## Commands
 
 Every command must match the exact CI gate.
