@@ -71,6 +71,10 @@ description: "{Project} operational guide."
 
 {stage A} → {stage B} → {stage C} → {stage D}
 
+## Project Structure
+
+{project structure}
+
 ## Commands
 
 Every command must match the exact CI gate.
@@ -110,6 +114,7 @@ repeated as H2s in `AGENTS.md`.
 | Runtime             | Version pin + env isolation + package manager. Skip when nothing here is version-pinned.                     |
 | Project Quick Facts | Free-form slot: any facts the project wants to surface to the next session. Fill the `{project quick facts}` slot; leave one blank line if there are none. |
 | Pipeline            | Stage order and controller in one glance. Skip when not pipeline-shaped.                                     |
+| Project Structure   | {why: shows the crate/workspace layout one line per member, so the next session navigates the tree without crawling it. Watch for every generated file or scratch path listed; the tree must match the real layout} |
 | Commands            | The gates, verbatim as CI runs them. Highest-value section. Never skip.                                      |
 | Related Documents   | One line per doc: what it answers. Never skip.                                                               |
 
