@@ -599,7 +599,7 @@ Matching is by leading words after lowercasing and stripping punctuation, so `##
 
 | Document | Required H2s |
 | --- | --- |
-| `AGENTS.md` | Runtime, Project Quick Facts, Pipeline, Commands, Related Documents |
+| `AGENTS.md` | Runtime, Project Quick Facts, Pipeline, Commands, Related Documents (allowed: Project Structure) |
 | `ARCHITECTURE.md` | Purpose, Workspace Organization, Naming Convention, Vertical Slicing Layout, Taxonomy Layer, Contract Layer, Utility Layer, Capabilities Layer, Agent Layer, Surface Layer, Root Layer |
 | `CONTRIBUTING.md` | Principles, Development Setup, Feature Change, Documentation Change, Quality Verification & PR Process |
 | `PRD.md` | Problem Statement, Goals & Success Metrics, User Personas, Scope, Feature Requirements, Non-functional Requirements, Open Questions / Risks |

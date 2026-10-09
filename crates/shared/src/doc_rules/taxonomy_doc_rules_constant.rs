@@ -245,7 +245,7 @@ pub const DOC_HEADING_CONTRACTS: &[DocH2Contract] = &[
             "Commands",
             "Related Documents",
         ],
-        &[],
+        &["Project Structure"],
     ),
     (
         ARCHITECTURE_DOC,
