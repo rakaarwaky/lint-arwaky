@@ -20,6 +20,7 @@ die()  { fail "$1"; exit 1; }
 COMMIT_MSG=""
 TARGET="lint-arwaky-cli"
 SKIP_BUILD=false
+SKIP_INSTALL=false
 FAST=false
 AUTO=false
 
@@ -28,6 +29,7 @@ while [[ $# -gt 0 ]]; do
     -m|--message) COMMIT_MSG="$2"; shift 2 ;;
     --target) TARGET="$2"; shift 2 ;;
     --no-build) SKIP_BUILD=true; shift ;;
+    --no-install) SKIP_INSTALL=true; shift ;;
     --fast) FAST=true; shift ;;
     -y|--yes) AUTO=true; shift ;;
     -h|--help)
@@ -35,6 +37,7 @@ while [[ $# -gt 0 ]]; do
       echo "  -m, --message MSG   Commit message (interactive if omitted)"
       echo "  --target TARGET      Binary to build (default: lint-arwaky-cli)"
       echo "  --no-build           Skip build step"
+      echo "  --no-install         Skip installing the built binary to PATH"
       echo "  --fast               Skip fmt + clippy"
       echo "  -y, --yes            Auto-confirm"
       exit 0 ;;
@@ -64,6 +67,24 @@ else
   ci_step "cargo build --bin $TARGET" "cargo build --bin '$TARGET' 2>&1"
   [ $CI_EXIT -ne 0 ] && die "Build failed."
   pass "Build OK"
+
+  # Install the freshly built binary over the one on PATH. Without this the
+  # CLI some other tool (or a shell) resolves keeps whatever it was built from,
+  # and it reports violations from a contract that has since changed — a stale
+  # `lint-arwaky-cli` once flagged an AGENTS.md that the current rules accept.
+  if $SKIP_INSTALL; then
+    warn "Install skipped"
+  else
+    install_dir="${LINT_ARWAKY_INSTALL_BIN:-${XDG_BIN_HOME:-$HOME/.local/bin}}"
+    if [ -x "$install_dir/$TARGET" ]; then
+      ci_step "install $TARGET -> $install_dir" \
+        "install -m 0755 './target/debug/$TARGET' '$install_dir/$TARGET'"
+      [ $CI_EXIT -ne 0 ] && die "Install failed."
+      pass "Installed to PATH: $install_dir/$TARGET"
+    else
+      warn "No $TARGET on PATH at $install_dir — skipping install"
+    fi
+  fi
 fi
 
 # ── 2. Lint ──
