@@ -173,11 +173,23 @@ fi
 #    package name, so each carries its own `version` entry. Bump all of
 #    them to the new release version; registry-sourced dependencies keep
 #    their pinned versions untouched.
+#
+#    Members are matched against the live manifest set from `cargo
+#    metadata`, never a name substring: most publish as
+#    `<crate>-lint-arwaky`, but `cli-commands` carries the bare name and a
+#    substring match silently left it behind at the previous version.
 if [[ -f "$CARGO_LOCK" ]]; then
   python3 - "$CARGO_LOCK" "$CALCULATED_VERSION" <<'PYEOF'
-import re, sys
+import json, re, subprocess, sys
 
 lockfile, new_version = sys.argv[1], sys.argv[2]
+meta = json.loads(
+    subprocess.run(
+        ["cargo", "metadata", "--no-deps", "--format-version", "1"],
+        capture_output=True, text=True, check=True,
+    ).stdout
+)
+ours = {p["name"] for p in meta["packages"]}
 with open(lockfile) as f:
     lines = f.readlines()
 
@@ -186,13 +198,13 @@ in_ours = False
 touched = 0
 for line in lines:
     stripped = line.strip()
-    name_m = re.match(r'name = "([^"]+)"', stripped)
-    if name_m:
-        in_ours = ("lint-arwaky" in name_m.group(1)) or ("lint_arwaky" in name_m.group(1))
-        out.append(line)
-        continue
     if stripped.startswith("[[package]]"):
         in_ours = False
+        out.append(line)
+        continue
+    name_m = re.match(r'name = "([^"]+)"', stripped)
+    if name_m:
+        in_ours = name_m.group(1) in ours
         out.append(line)
         continue
     if in_ours and stripped.startswith("version = "):
@@ -203,6 +215,11 @@ for line in lines:
 
 if touched < 2:
     sys.exit("only %d version entries rewritten in %s — expected ~40" % (touched, lockfile))
+if touched != len(ours):
+    sys.exit(
+        "rewrote %d of %d workspace members in %s — a member name no longer "
+        "matches its lock entry" % (touched, len(ours), lockfile)
+    )
 
 with open(lockfile, "w") as f:
     f.writelines(out)
