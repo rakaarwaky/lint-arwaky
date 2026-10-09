@@ -8,7 +8,7 @@
 // The surface layer performs all pre-computation (language detection, config
 // loading) and passes an `ExternalLintContext` to the orchestrator, which
 // runs adapters with zero filesystem I/O.
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use shared_common::FilePath;
@@ -77,16 +77,42 @@ pub fn collect_external_direct(
         config_entries,
     };
 
-    let scan_results = external_lint
-        .execute(
-            shared_external_lint::ExternalLintRequest::scan_all_with_context(&root_fp, &context),
-        )
-        .into_violations();
-    let mut violations: Vec<ViolationItem> = scan_results
-        .values
-        .iter()
-        .map(ViolationItem::from_lint_result)
+    // The external adapters shell out to project-wide tools that recursively
+    // walk every directory they are handed. When the target is a workspace
+    // root, handing them the whole root makes bandit/ruff/mypy walk sibling
+    // agent repos and vendored trees that `filter_outside_member_dirs` drops
+    // afterwards — pure wasted time (the bandit bottleneck). Instead, hand
+    // each adapter the member dirs directly. The post-scan filter still runs:
+    // it is the single source of truth for which files count as in scope, and
+    // it protects the non-workspace-root path where the target is used as-is.
+    let member_dirs: Vec<PathBuf> = ["crates", "packages", "modules"]
+        .into_iter()
+        .map(|n| root_path.join(n))
+        .filter(|p| p.is_dir())
         .collect();
+    let targets: Vec<FilePath> = if member_dirs.is_empty() {
+        vec![root_fp.clone()]
+    } else {
+        member_dirs
+            .iter()
+            .filter_map(|m| FilePath::new(m.to_string_lossy().to_string()).ok())
+            .collect()
+    };
+
+    let mut violations: Vec<ViolationItem> = Vec::new();
+    for target in &targets {
+        let scan_results = external_lint
+            .execute(
+                shared_external_lint::ExternalLintRequest::scan_all_with_context(target, &context),
+            )
+            .into_violations();
+        violations.extend(
+            scan_results
+                .values
+                .iter()
+                .map(ViolationItem::from_lint_result),
+        );
+    }
 
     // External tools (bandit, ruff, ...) scan the whole target tree, including
     // files outside the workspace member dirs (crates/ packages/ modules/).
