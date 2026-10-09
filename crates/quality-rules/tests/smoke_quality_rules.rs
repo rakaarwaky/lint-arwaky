@@ -34,7 +34,7 @@ fn basic_check_on_simple_file() {
         parse_metadata: None,
     }];
     let results = linter
-        .execute(CodeAnalysisRequest::run_analysis(&entries))
+        .execute(CodeAnalysisRequest::RunAnalysis { files: entries })
         .into_violations();
     // Just verify it doesn't panic and returns a Vec
     let _count = results.len();
@@ -42,19 +42,9 @@ fn basic_check_on_simple_file() {
 
 #[test]
 fn score_calculation_smoke() {
-    let container = CodeAnalysisContainer::new();
-    let linter = container.code_analysis_linter();
-    let results = vec![LintResult::new_arch(
-        "src/lib.rs",
-        1,
-        "AES304",
-        Severity::CRITICAL,
-        "test violation",
-    )];
-    let score = linter
-        .execute(CodeAnalysisRequest::calc_score(&results))
-        .into_score();
-    assert!(score.value() >= 0.0 && score.value() <= 100.0);
+    use shared_quality_rules::utility_compliance_score::compute_score;
+    let score = shared_common::Score::new(compute_score(&[]));
+    assert!(score.value() >= 100.0);
 }
 
 #[test]

@@ -46,7 +46,9 @@ impl IViolationReportProtocol for ViolationReport {
         let entries = self.build_entries(path);
         let analysis = self
             .linter
-            .execute(CodeAnalysisRequest::run_analysis(&entries))
+            .execute(CodeAnalysisRequest::RunAnalysis {
+                files: entries.clone(),
+            })
             .into_violations();
         let results = &analysis;
 
@@ -208,7 +210,9 @@ impl IViolationReportProtocol for ViolationReport {
         let remaining = if !dry_run && fixed_count > 0 {
             let after_results = self
                 .linter
-                .execute(CodeAnalysisRequest::run_analysis(&entries))
+                .execute(CodeAnalysisRequest::RunAnalysis {
+                    files: entries.clone(),
+                })
                 .into_violations();
             after_results.len()
         } else {

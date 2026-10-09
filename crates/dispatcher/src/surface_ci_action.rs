@@ -2,7 +2,7 @@
 use std::sync::Arc;
 
 use crate::surface_test_entries;
-use shared_common::{FilePath, Severity, Threshold};
+use shared_common::{BooleanVO, FilePath, Score, Severity, Threshold};
 use shared_config_system::{ConfigRequest, IConfigOrchestratorAggregate};
 use shared_filesystem::FilesystemRequest;
 use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
@@ -107,7 +107,9 @@ pub fn collect_ci(
         .into_file_list();
     let mut results = run_isolated("quality", &mut panics, || {
         deps.code_analysis_linter
-            .execute(CodeAnalysisRequest::run_analysis(&file_list))
+            .execute(CodeAnalysisRequest::RunAnalysis {
+                files: file_list.clone(),
+            })
             .into_violations()
     });
 
@@ -175,14 +177,10 @@ pub fn collect_ci(
     });
     results.extend(orphan_res);
 
-    let score = deps
-        .code_analysis_linter
-        .execute(CodeAnalysisRequest::calc_score(&results))
-        .into_score();
-    let has_crit = deps
-        .code_analysis_linter
-        .execute(CodeAnalysisRequest::check_critical(&results))
-        .into_is_critical();
+    let score = Score::new(shared_quality_rules::utility_compliance_score::compute_score(&results));
+    let has_crit = BooleanVO::new(
+        shared_quality_rules::utility_compliance_checker::contains_critical_severity(&results),
+    );
     let below_threshold = score.value() < threshold.value() as f64;
 
     let mut reasons: Vec<String> = Vec::new();
