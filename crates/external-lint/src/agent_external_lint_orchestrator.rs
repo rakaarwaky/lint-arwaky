@@ -7,11 +7,14 @@
 // agent asks the `filesystem` aggregate for the flags — it never walks the tree
 // itself (FR-Filesystem-005).
 //
-// Adapters are run sequentially. If an adapter's binary
-// is not installed, a warning is printed (not an error) — the scan continues
-// with the remaining adapters.
+// Adapters are run in parallel: each is an independent I/O-bound subprocess
+// (bandit, ruff, eslint, ...) with no shared state, so wall time is the
+// slowest adapter rather than the sum. If an adapter's binary is not
+// installed, a warning is printed (not an error) — the scan continues with
+// the remaining adapters.
 use std::collections::HashMap;
 use std::sync::Arc;
+use std::thread;
 use std::time::Instant;
 
 use shared_cli_commands::taxonomy_result_vo::LintResultList;
@@ -29,6 +32,78 @@ use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared_filesystem::taxonomy_filesystem_vo::ProjectLanguagesVO;
 use tracing::warn;
+
+// ─── Adapter thread result ─────────────────────────────────
+
+/// Result of running one adapter in its worker thread.
+enum AdapterOutcome {
+    Results(Vec<shared_cli_commands::taxonomy_result_vo::LintResult>),
+    Skipped,
+}
+
+impl AdapterOutcome {
+    /// Run one adapter synchronously and log the per-adapter start/complete
+    /// events.
+    fn run(
+        name: &str,
+        adapter: &Arc<dyn ILinterAdapterProtocol>,
+        path: &FilePath,
+        start: Instant,
+    ) -> Self {
+        tracing::info!(
+            target: "lint_arwaky::audit",
+            event = "adapter_start",
+            adapter = name,
+            path = path.value.as_str(),
+            "starting external adapter"
+        );
+        match adapter.scan(path) {
+            Ok(results) => {
+                let n = results.len();
+                tracing::info!(
+                    target: "lint_arwaky::audit",
+                    event = "adapter_done",
+                    adapter = name,
+                    findings = n,
+                    elapsed_ms = start.elapsed().as_millis() as u64,
+                    "external adapter complete"
+                );
+                AdapterOutcome::Results(results.values)
+            }
+            Err(e) => {
+                let err_msg = e.to_string();
+                tracing::info!(
+                    target: "lint_arwaky::audit",
+                    event = "adapter_done",
+                    adapter = name,
+                    elapsed_ms = start.elapsed().as_millis() as u64,
+                    error = %err_msg,
+                    "external adapter failed or skipped"
+                );
+                if err_msg.contains("No such file or directory") || err_msg.contains("os error 2") {
+                    warn!(
+                        adapter = name,
+                        "is not installed or not in system PATH. Skipping."
+                    );
+                } else {
+                    warn!(
+                        adapter = name,
+                        error = %err_msg,
+                        "adapter failed"
+                    );
+                }
+                AdapterOutcome::Skipped
+            }
+        }
+    }
+
+    fn into_results(self) -> Vec<shared_cli_commands::taxonomy_result_vo::LintResult> {
+        match self {
+            AdapterOutcome::Results(r) => r,
+            AdapterOutcome::Skipped => Vec::new(),
+        }
+    }
+}
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -126,59 +201,35 @@ impl ExternalLintOrchestrator {
                 .collect()
         };
 
-        // Run adapters sequentially (this is the actual orchestration work).
+        // Run adapters in parallel. Each adapter is an independent I/O-bound
+        // subprocess (bandit, ruff, eslint, ...) with no shared state, so the
+        // wall time is the slowest adapter rather than the sum. Results are
+        // collected per-adapter and concatenated in `adapter_names` order to
+        // keep the violation list deterministic across runs.
+        let jobs: Vec<(String, Arc<dyn ILinterAdapterProtocol>)> = adapter_names
+            .iter()
+            .filter_map(|name_str| {
+                self.deps
+                    .adapters
+                    .get(*name_str)
+                    .map(|a| (name_str.to_string(), a.clone()))
+            })
+            .collect();
+
+        let path_for_threads = path.clone();
+        let mut handles: Vec<thread::JoinHandle<AdapterOutcome>> = Vec::new();
+        for (name, adapter) in &jobs {
+            let name = name.clone();
+            let adapter = adapter.clone();
+            let path = path_for_threads.clone();
+            handles.push(thread::spawn(move || {
+                AdapterOutcome::run(&name, &adapter, &path, Instant::now())
+            }));
+        }
         let mut all = Vec::new();
-        for name in &adapter_names {
-            let name_str = *name;
-            tracing::info!(
-                target: "lint_arwaky::audit",
-                event = "adapter_start",
-                adapter = name_str,
-                path = path.value.as_str(),
-                "starting external adapter"
-            );
-            let adapter_start = Instant::now();
-            if let Some(adapter) = self.deps.adapters.get(name_str) {
-                match adapter.scan(path) {
-                    Ok(results) => {
-                        let n = results.len();
-                        tracing::info!(
-                            target: "lint_arwaky::audit",
-                            event = "adapter_done",
-                            adapter = name_str,
-                            findings = n,
-                            elapsed_ms = adapter_start.elapsed().as_millis() as u64,
-                            "external adapter complete"
-                        );
-                        all.extend(results.values);
-                    }
-                    Err(e) => {
-                        let err_msg = e.to_string();
-                        tracing::info!(
-                            target: "lint_arwaky::audit",
-                            event = "adapter_done",
-                            adapter = name_str,
-                            elapsed_ms = adapter_start.elapsed().as_millis() as u64,
-                            error = %err_msg,
-                            "external adapter failed or skipped"
-                        );
-                        if err_msg.contains("No such file or directory")
-                            || err_msg.contains("os error 2")
-                        {
-                            warn!(
-                                adapter = name,
-                                "is not installed or not in system PATH. Skipping."
-                            );
-                        } else {
-                            warn!(
-                                adapter = name,
-                                error = %err_msg,
-                                "adapter failed"
-                            );
-                        }
-                    }
-                }
-            }
+        for handle in handles {
+            let outcome = handle.join().unwrap_or(AdapterOutcome::Skipped);
+            all.extend(outcome.into_results());
         }
 
         // Post-processing: filter violations by pre-computed ignored paths.
