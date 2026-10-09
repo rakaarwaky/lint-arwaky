@@ -11,7 +11,10 @@ use shared_quality_rules::CodeAnalysisRequest;
 fn default_container_creates_successfully() {
     let container = CodeAnalysisContainer::new();
     let linter = container.code_analysis_linter();
-    assert_eq!(linter.execute(CodeAnalysisRequest::name()).into_name(), "quality-rules");
+    assert_eq!(
+        linter.execute(CodeAnalysisRequest::name()).into_name(),
+        "quality-rules"
+    );
 }
 
 #[test]
@@ -20,7 +23,10 @@ fn container_with_custom_config_creates_successfully() {
     let layer_map = shared_common::LayerMapVO::new(std::collections::HashMap::new());
     let container = CodeAnalysisContainer::new_with_config(config, layer_map);
     let linter = container.code_analysis_linter();
-    assert_eq!(linter.execute(CodeAnalysisRequest::name()).into_name(), "quality-rules");
+    assert_eq!(
+        linter.execute(CodeAnalysisRequest::name()).into_name(),
+        "quality-rules"
+    );
 }
 
 // ── Orchestrator run_analysis_with_entries ────────────────────

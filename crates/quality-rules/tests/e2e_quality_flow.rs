@@ -53,13 +53,17 @@ fn e2e_detects_all_violation_types() {
     let score = shared_common::Score::new(
         shared_quality_rules::utility_compliance_score::compute_score(&results),
     );
-    assert!(score.value() < 100.0,
+    assert!(
+        score.value() < 100.0,
         "Score should be < 100 when violations exist, got {}",
         score.value()
     );
 
     // Report should contain violation data
-    assert!(results.iter().any(|r| r.code.code().starts_with("AES")), "expected at least one AES violation");
+    assert!(
+        results.iter().any(|r| r.code.code().starts_with("AES")),
+        "expected at least one AES violation"
+    );
 }
 
 #[test]

@@ -107,7 +107,9 @@ pub fn collect_ci(
         .into_file_list();
     let mut results = run_isolated("quality", &mut panics, || {
         deps.code_analysis_linter
-            .execute(CodeAnalysisRequest::RunAnalysis { files: file_list.clone() })
+            .execute(CodeAnalysisRequest::RunAnalysis {
+                files: file_list.clone(),
+            })
             .into_violations()
     });
 
@@ -175,12 +177,10 @@ pub fn collect_ci(
     });
     results.extend(orphan_res);
 
-    let score =
-        Score::new(shared_quality_rules::utility_compliance_score::compute_score(&results));
-    let has_crit =
-        BooleanVO::new(shared_quality_rules::utility_compliance_checker::contains_critical_severity(
-            &results,
-        ));
+    let score = Score::new(shared_quality_rules::utility_compliance_score::compute_score(&results));
+    let has_crit = BooleanVO::new(
+        shared_quality_rules::utility_compliance_checker::contains_critical_severity(&results),
+    );
     let below_threshold = score.value() < threshold.value() as f64;
 
     let mut reasons: Vec<String> = Vec::new();
