@@ -221,12 +221,11 @@ Symbol is imported but never used in file scope. Detected via AST analysis acros
 
 **Severity:** HIGH
 
-Import statement matches a forbidden dummy pattern. Used to detect fake/redundant imports that exist only to satisfy the linter but serve no real purpose. Includes four sub-checks:
+Import statement matches a forbidden dummy pattern. Used to detect fake/redundant imports that exist only to satisfy the linter but serve no real purpose. Includes three sub-checks:
 
 1. **Dummy imports** — imported symbols only used inside `_use_mandatory_imports` dummy functions (dead code to silence import warnings)
 2. **Dummy functions** — `_use_mandatory_imports` function ranges flagged as dead code
 3. **Dummy trait impls** — trait implementations with empty/todo bodies that violate contract abstraction
-4. **Surface logic bypass** — surface-layer code calling domain logic directly (`lint_path(`, `compute_score(`, `has_critical(`, `walk_rs_files(`) — `Severity: MEDIUM`
 
 **FIX:** Use imported symbols in real logic, remove `_use_mandatory_imports` functions, implement contract methods with real behavior.
 
@@ -416,6 +415,7 @@ Checks:
 
 - **File > 15 functions** — surface file has too many responsibilities
 - **Active domain logic in passive surface** — passive surfaces (`_component`, `_view`, `_layout`) must not contain business logic
+- **Surface logic bypass** — surface-layer code calling domain logic directly (`lint_path(`, `walk_rs_files(`) — `Severity: MEDIUM`
 - **Role boundary violation** — surface enters forbidden territory (e.g. importing capabilities or non-aggregate contracts directly)
 
 ---

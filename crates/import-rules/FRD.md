@@ -220,10 +220,6 @@ flowchart TD
   - **Taxonomy intent checking**:
 
     - If a file has dummy functions AND imports taxonomy VOs (`taxonomy_*`), but those VOs are used only inside dummy functions (not in real logic), flag as intent violation.
-  - **Surface logic checking**:
-
-    - Surface files must not call business logic functions directly (e.g., `lint_path(`, `compute_score(`, `has_critical(`, `walk_rs_files(`).
-    - These must be delegated to the aggregate layer.
   - **Barrel file exemption**: Barrel files are skipped for all dummy checks.
   - **`__future__` import exemption**: Python `from __future__ import ...` is skipped.
 - **Relationship with AES203**: AES203 and AES204 are **independent rules without deduplication**.
@@ -276,7 +272,6 @@ flowchart TD
 | `check_dummy_functions` | &FilePath, &ContentString, &FilePath, &LayerMapVO | `Vec<LintResult>` | `ImportError` | — | Check dummy functions. |
 | `check_dummy_impls` | &FilePath, &ContentString, &FilePath, &LayerMapVO | `Vec<LintResult>` | `ImportError` | — | Check dummy impls. |
 | `check_taxonomy_intent` | &FilePath, &ContentString, &FilePath, &LayerMapVO, &[ImportEntry] | `Vec<LintResult>` | `ImportError` | — | Check taxonomy intent. |
-| `check_surface_logic` | &FilePath, &ContentString, &FilePath, &LayerMapVO | `Vec<LintResult>` | `ImportError` | — | Check surface logic. |
 | `check_all_dummy` | &FilePath, &ContentString, &FilePath, &LayerMapVO, &HashMap<String, Vec<ImportEntry>> | `Result<Vec<LintResult>, ImportError> { let import_entries = imports_map .get(file.value()) .map(\|v\| v.as_slice()) .unwrap_or(&[])` | — | — | Check all dummy. |
 | `check_forbidden_imports` | &ArchitectureConfig, &LayerMapVO, &FilePathList, &FilePath, &HashMap<String, String>, &HashMap<String, Vec<ImportEntry>> | `LintResultList` | `ImportError` | — | Check forbidden imports. |
 | `run_mandatory_imports` | &ArchitectureConfig, &LayerMapVO, &FilePathList, &FilePath, &HashMap<String, String>, &HashMap<String, Vec<ImportEntry>> | `LintResultList` | `ImportError` | — | Run mandatory imports. |
@@ -375,8 +370,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | 6 | Import`Bar` referenced in `_use_bar()` AND in real function | No violation (real usage exists) |
 | 7 | `pub use` re-export | No violation (public API) |
 | 8 | Taxonomy file has`_use_vo()` referencing taxonomy VO, VO not used in real logic | AES204 violation (taxonomy intent) |
-| 9 | Surface file calls`lint_path(` directly | AES204 violation (surface logic bypass) |
-| 10 | Rust module barrel with re-exports | No violation (exempt) |
+| 9 | Rust module barrel with re-exports | No violation (exempt) |
 
 - **AES205 — Circular Dependency**
 

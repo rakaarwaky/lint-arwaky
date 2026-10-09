@@ -285,3 +285,49 @@ fn tier_classification_for_entry_is_not_smart() {
         SurfaceTier::Passive
     );
 }
+
+// ── Surface logic bypass checks ───────────────────────────
+
+#[test]
+fn surface_calling_lint_path_flagged() {
+    let content = "fn handle() {\n    lint_path(\"some/path\");\n}";
+    let f = make_file("src/surface_dashboard_view.rs", Language::Rust, content);
+    let mut v = Vec::new();
+    checker().check_passive_surface(&f, &mut v);
+    assert_eq!(v.len(), 1);
+    assert_eq!(v[0].code.code(), "AES406");
+    assert_eq!(v[0].violation_name.as_str(), "SURFACE_ROLE");
+}
+
+#[test]
+fn surface_calling_walk_rs_files_flagged() {
+    let content = "fn handle() {\n    walk_rs_files(\"dir\");\n}";
+    let f = make_file("src/surface_dashboard_action.rs", Language::Rust, content);
+    let mut v = Vec::new();
+    checker().check_utility_surface(&f, &mut v);
+    assert_eq!(v.len(), 1);
+    assert_eq!(v[0].code.code(), "AES406");
+}
+
+#[test]
+fn surface_calling_compute_score_not_flagged() {
+    // compute_score is a stateless utility, not domain logic that requires aggregate routing
+    let content =
+        "fn handle() {\n    compute_score(&results);\n    contains_critical_severity(&results);\n}";
+    let f = make_file("src/surface_ci_action.rs", Language::Rust, content);
+    let mut v = Vec::new();
+    checker().check_utility_surface(&f, &mut v);
+    assert!(
+        v.is_empty(),
+        "utility functions compute_score and contains_critical_severity must not trigger AES406"
+    );
+}
+
+#[test]
+fn surface_comments_and_strings_not_flagged() {
+    let content = "// lint_path(\"some/path\");\nlet msg = \"lint_path(\";";
+    let f = make_file("src/surface_dashboard_view.rs", Language::Rust, content);
+    let mut v = Vec::new();
+    checker().check_passive_surface(&f, &mut v);
+    assert!(v.is_empty(), "comments and strings must not trigger AES406");
+}

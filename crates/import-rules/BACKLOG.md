@@ -53,7 +53,6 @@ Last Updated: 2026-09-17
 | Import referenced in both a dummy function and real logic | No violation (real usage exists) | Automated | `tests/import-rules/` | cargo test -p import_rules | `29c71083` |
 | `pub use` re-export | No violation (public API) | Automated | `tests/import-rules/` | cargo test -p import_rules | `29c71083` |
 | Taxonomy file with `_use_vo()` referencing taxonomy VO unused in real logic | AES204 violation (taxonomy intent) | Automated | `tests/import-rules/` | cargo test -p import_rules | `29c71083` |
-| Surface file calling business logic function directly | AES204 violation (surface logic bypass) | Automated | `tests/import-rules/` | cargo test -p import_rules | `29c71083` |
 | Barrel file with re-exports | No violation (exempt) | Automated | `tests/import-rules/` | cargo test -p import_rules | `29c71083` |
 | Two layers importing each other | AES205 violation | Automated | `tests/import-rules/` | cargo test -p import_rules | `29c71083` |
 | Linear dependency chain | No violation | Automated | `tests/import-rules/` | cargo test -p import_rules | `29c71083` |

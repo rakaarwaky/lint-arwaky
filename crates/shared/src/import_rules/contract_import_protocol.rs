@@ -83,14 +83,6 @@ pub trait IDummyImportCheckerProtocol: Send + Sync {
         import_entries: &[ImportEntry],
     ) -> Result<Vec<LintResult>, ImportError>;
 
-    fn check_surface_logic(
-        &self,
-        file: &FilePath,
-        content: &ContentString,
-        root_dir: &FilePath,
-        layer_map: &LayerMapVO,
-    ) -> Result<Vec<LintResult>, ImportError>;
-
     /// Run all dummy checks in one call, pre-computing shared data once.
     fn check_all_dummy(
         &self,
@@ -115,7 +107,6 @@ pub trait IDummyImportCheckerProtocol: Send + Sync {
             layer_map,
             import_entries,
         )?);
-        all.extend(self.check_surface_logic(file, content, root_dir, layer_map)?);
         Ok(all)
     }
 }
