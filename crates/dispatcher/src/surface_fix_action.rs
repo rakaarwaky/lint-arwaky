@@ -73,7 +73,7 @@ fn run_analysis_with_fix_entries(
 ) -> Vec<LintResult> {
     let entries = build_fix_entries(root);
     code_analysis_linter
-        .execute(CodeAnalysisRequest::run_analysis(&entries))
+        .execute(CodeAnalysisRequest::RunAnalysis { files: entries })
         .into_violations()
 }
 

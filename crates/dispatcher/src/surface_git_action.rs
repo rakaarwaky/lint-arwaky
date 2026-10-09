@@ -63,7 +63,7 @@ pub fn collect_git_diff(
             }
         }
         let r = code_analysis_linter
-            .execute(CodeAnalysisRequest::run_analysis(&entries))
+            .execute(CodeAnalysisRequest::RunAnalysis { files: entries })
             .into_violations();
         results.extend(r);
     }

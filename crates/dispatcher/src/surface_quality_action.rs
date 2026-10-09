@@ -40,7 +40,7 @@ pub fn collect_quality(
     // Pass pre-fetched FileEntry data to quality orchestrator
     let file_list = fs_agg.execute(FilesystemRequest::FileList).into_file_list();
     let results = code_analysis_linter
-        .execute(CodeAnalysisRequest::run_analysis(&file_list))
+        .execute(CodeAnalysisRequest::RunAnalysis { files: file_list })
         .into_violations();
     let mut violations: Vec<ViolationItem> = results
         .iter()
