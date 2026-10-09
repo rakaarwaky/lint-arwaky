@@ -170,7 +170,9 @@ fn run_all_linters_in_process_cancel(
 
     all.extend(
         agg.quality
-            .execute(CodeAnalysisRequest::run_analysis(&entries))
+            .execute(CodeAnalysisRequest::RunAnalysis {
+                files: entries.clone(),
+            })
             .into_violations()
             .iter()
             .map(ViolationItem::from_lint_result),

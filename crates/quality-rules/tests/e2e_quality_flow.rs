@@ -42,7 +42,7 @@ fn e2e_detects_all_violation_types() {
     ];
 
     let results = linter
-        .execute(CodeAnalysisRequest::run_analysis(&entries))
+        .execute(CodeAnalysisRequest::RunAnalysis { files: entries })
         .into_violations();
 
     // Should find AES304 violations
@@ -50,9 +50,9 @@ fn e2e_detects_all_violation_types() {
     assert!(has_aes304, "Expected AES304 bypass violations");
 
     // Score should be less than 100 with violations present
-    let score = linter
-        .execute(CodeAnalysisRequest::calc_score(&results))
-        .into_score();
+    let score = shared_common::Score::new(
+        shared_quality_rules::utility_compliance_score::compute_score(&results),
+    );
     assert!(
         score.value() < 100.0,
         "Score should be < 100 when violations exist, got {}",
@@ -60,15 +60,10 @@ fn e2e_detects_all_violation_types() {
     );
 
     // Report should contain violation data
-    let results_list = shared_cli_commands::LintResultList::new(results);
-    let root = FilePath::new("/project".to_string()).unwrap();
-    let report = linter
-        .execute(CodeAnalysisRequest::format_report(
-            &results_list.values,
-            &root,
-        ))
-        .into_content();
-    assert!(report.value().contains("AES"));
+    assert!(
+        results.iter().any(|r| r.code.code().starts_with("AES")),
+        "expected at least one AES violation"
+    );
 }
 
 #[test]
@@ -96,7 +91,7 @@ fn e2e_disabled_config_returns_empty() {
     }];
 
     let results = linter
-        .execute(CodeAnalysisRequest::run_analysis(&entries))
+        .execute(CodeAnalysisRequest::RunAnalysis { files: entries })
         .into_violations();
     assert!(
         results.is_empty(),
@@ -122,7 +117,7 @@ fn e2e_bypass_patterns_in_comment_detected() {
     }];
 
     let results = linter
-        .execute(CodeAnalysisRequest::run_analysis(&entries))
+        .execute(CodeAnalysisRequest::RunAnalysis { files: entries })
         .into_violations();
     let has_aes304 = results.iter().any(|r| r.code.code().contains("AES304"));
     assert!(has_aes304, "Expected AES304 for FIXME/HACK in comments");

@@ -63,12 +63,11 @@ impl WatchOrchestrator {
     fn run_initial_lint(&self) {
         let results = self
             .linter
-            .execute(CodeAnalysisRequest::run_analysis(&[]))
+            .execute(CodeAnalysisRequest::RunAnalysis { files: vec![] })
             .into_violations();
-        let score = self
-            .linter
-            .execute(CodeAnalysisRequest::calc_score(&results))
-            .into_score();
+        let score = shared_common::Score::new(
+            shared_quality_rules::utility_compliance_score::compute_score(&results),
+        );
         info!(
             violations = results.len(),
             score = score.value(),

@@ -15,4 +15,3 @@ pub use agent_quality_orchestrator::CodeAnalysisOrchestrator;
 pub mod root_quality_rules_container;
 pub use root_quality_rules_container::CodeAnalysisContainer;
 pub use shared_quality_rules::utility_compliance_checker::contains_critical_severity;
-pub use shared_quality_rules::utility_violation_formatter::format_code_analysis_violation;

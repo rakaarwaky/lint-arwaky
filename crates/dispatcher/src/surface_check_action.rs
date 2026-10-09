@@ -414,7 +414,9 @@ fn run_all_linters_in_process(
     let quality_start = Instant::now();
     all.extend(run_isolated("quality", &mut panics, || {
         agg.quality
-            .execute(CodeAnalysisRequest::run_analysis(&entries))
+            .execute(CodeAnalysisRequest::RunAnalysis {
+                files: entries.clone(),
+            })
             .into_violations()
             .iter()
             .map(ViolationItem::from_lint_result)
@@ -909,7 +911,9 @@ pub(crate) fn run_single_file_scan(
     let mut panics: Vec<String> = Vec::new();
     all.extend(run_isolated("quality", &mut panics, || {
         agg.quality
-            .execute(CodeAnalysisRequest::run_analysis(&entries))
+            .execute(CodeAnalysisRequest::RunAnalysis {
+                files: entries.clone(),
+            })
             .into_violations()
             .iter()
             .map(ViolationItem::from_lint_result)
