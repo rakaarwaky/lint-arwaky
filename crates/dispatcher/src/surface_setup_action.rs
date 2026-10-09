@@ -116,7 +116,9 @@ pub fn collect_init(
             }
         }
 
-        // Copy .agents/ from XDG config to current project (skips skills - embedded binary constants used)
+        // Copy .agents/ from XDG config to current project.
+        // skills are embedded binary constants (installed separately below);
+        // prompts are intentionally not distributed to target projects.
         let xdg_agents = xdg_base.join(".agents");
         if xdg_agents.exists() && xdg_agents.is_dir() {
             let target_agents = std::path::Path::new(".agents");
@@ -253,7 +255,7 @@ fn copy_dir_all(
     let mut count = 0;
     for entry in entries {
         let file_name = entry.file_name().unwrap_or_default();
-        if file_name == "skills" {
+        if file_name == "skills" || file_name == "prompts" {
             continue;
         }
         let dst_path = dst.join(file_name);
