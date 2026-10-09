@@ -51,13 +51,12 @@ defaults:
 
 merge_queue:
   # Serial mode: PRs tested one at a time against the latest main tip.
-  mode: serial
   # In-place checks: Mergify updates the PR branch with a merge commit (not a
   # rebase) because the GitHub Ruleset enforces strict_required_status_checks
   # and rejects force-pushes without an update_bot_account. The merge commit
   # is squashed away on merge, so main's history stays linear. Also one CI run
   # instead of two.
-  max_parallel_checks: 1
+  max_parallel_checks: 10
   # Only post comments for terminal outcomes (merged or dequeued).
   status_comments: outcomes
   # Show a "Queue this pull request" checkbox so you can click instead of typing.
@@ -116,9 +115,7 @@ pull_request_rules:
     actions:
       comment:
         message: >
-          This PR has been open for 30 days with no commits for 14.
-          If you're still working on it, push a commit or leave a comment.
-          Otherwise, this PR will auto-close in 7 days.
+          This PR has been open for 30 days with no commits for 14. If you're still working on it, push a commit or leave a comment. Otherwise, this PR will auto-close in 7 days.
       label:
         add:
           - stale
@@ -149,8 +146,7 @@ pull_request_rules:
     actions:
       comment:
         message: >
-          Thanks for the PR! CI is running — the merge queue will pick it up
-          automatically once all 6 quality gates pass.
+          Thanks for the PR! CI is running — the merge queue will pick it up automatically once all 6 quality gates pass.
 
   # ── Notify when a PR merges ───────────────────────────────────────────
   - name: merged-notification
@@ -160,3 +156,6 @@ pull_request_rules:
     actions:
       comment:
         message: Merged via the merge queue. Thanks for the contribution!
+scopes:
+  source:
+    files: {}
