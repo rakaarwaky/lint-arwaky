@@ -259,6 +259,9 @@ flowchart TD
 
     - Max 50 control-flow statements (`if`, `else`, `for`, `while`, `match`, `switch`, `try:`, `except`, `catch`) per file.
     - Exceeding flagged as domain logic violation — surface files should delegate logic to lower layers.
+  - **Surface logic bypass check**:
+
+    - Surface files must not call business logic functions directly (e.g., `lint_path(`, `walk_rs_files(`). These must be delegated to the aggregate layer.
   - **Smart surface exemption**: Smart surfaces are exempted from all checks (hierarchy, domain logic) — no violations produced for Smart surfaces.
   - Detection uses AST parse metadata for function definition counts; control-flow check uses line-based scanning on all files.
 - **Edge Cases**:
@@ -416,6 +419,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | 5 | Passive surface with 51 control-flow statements (max=50) | AES406 — DomainLogic |
 | 6 | Utility surface with 40 control-flow statements | No violation (below threshold) |
 | 7 | Surface file with unclassifiable suffix | Treated as Passive |
+| 8 | Surface file calls business logic directly (`lint_path(`, `walk_rs_files(`) | AES406 — Surface logic bypass |
 
 - **Classification & Configuration**
 

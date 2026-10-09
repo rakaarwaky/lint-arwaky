@@ -93,6 +93,7 @@ Last Updated: 2026-09-28
 | Smart surface with 100 functions | No violation (exempt) | Automated | `tests/role-rules/` | cargo test -p role_rules | `29c71083` |
 | Smart surface with control-flow statements | No violation (exempt from… | Automated | `tests/role-rules/` | cargo test -p role_rules | `29c71083` |
 | Passive surface with 51 control-flow statements (max=50) | AES406 — Do… | Automated | `tests/role-rules/` | cargo test -p role_rules | `29c71083` |
+| Surface file calling business logic function directly | AES406 — Surface logic bypass | Automated | `tests/role-rules/` | cargo test -p role_rules | `29c71083` |
 | Utility surface with 40 control-flow statements | No violation (below … | Automated | `tests/role-rules/` | cargo test -p role_rules | `29c71083` |
 | Surface file with unclassifiable suffix | Treated as Passive | Automated | `tests/role-rules/` | cargo test -p role_rules | `29c71083` |
 | Root layer file (`root_app_entry`) | Completely skipped, zero violatio… | Automated | `tests/role-rules/` | cargo test -p role_rules | `29c71083` |

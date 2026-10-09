@@ -36,11 +36,13 @@ impl ISurfaceRoleProtocol for SurfaceRoleChecker {
     fn check_utility_surface(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
         self._check_passive_with_metadata(file, violations);
         self._check_domain_logic(file, violations);
+        self._check_surface_logic(file, violations);
     }
 
     fn check_passive_surface(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
         self._check_passive_with_metadata(file, violations);
         self._check_domain_logic(file, violations);
+        self._check_surface_logic(file, violations);
     }
 
     fn check_fn_count_limit(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
@@ -147,6 +149,49 @@ impl SurfaceRoleChecker {
                 ),
                 "Move the complex domain/control logic into capabilities or orchestrator components.",
             ));
+        }
+    }
+
+    // ── Surface logic bypass check ──
+
+    pub fn check_surface_logic(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
+        self._check_surface_logic(file, violations);
+    }
+
+    fn _check_surface_logic(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
+        let path_str = file.path.to_string_lossy();
+        let lines: Vec<&str> = file.content.lines().collect();
+        let logic_patterns = ["lint_path(", "walk_rs_files("];
+
+        for (i, line) in lines.iter().enumerate() {
+            let trimmed = line.trim();
+            let is_skip = match file.language {
+                Language::Rust => trimmed.starts_with("//") || trimmed.starts_with("fn _use_"),
+                Language::Python => trimmed.starts_with("#") || trimmed.starts_with("def _use_"),
+                Language::TypeScript | Language::JavaScript => {
+                    trimmed.starts_with("//") || trimmed.starts_with("function _use")
+                }
+                _ => false,
+            };
+            if is_skip {
+                continue;
+            }
+            for pattern in &logic_patterns {
+                let is_string_lit = trimmed.contains(&format!("\"{}", pattern))
+                    || trimmed.contains(&format!("'{}", pattern));
+                if trimmed.contains(pattern) && !is_string_lit {
+                    violations.push(LintResult::new_arch_with_name(
+                        &path_str,
+                        i + 1,
+                        "AES406",
+                        Severity::MEDIUM,
+                        "Business logic in surface layer".to_string(),
+                        "SURFACE_ROLE",
+                        "Surface-layer code must delegate business logic to the aggregate layer.",
+                        "Move the logic to a capabilities module and call it through a contract aggregate.",
+                    ));
+                }
+            }
         }
     }
 }
