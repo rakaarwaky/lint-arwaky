@@ -18,8 +18,8 @@ Before making changes, observe these non-negotiable rules:
 1. **7-layer architecture**: every file belongs to a layer, named
    `layer_concern_role`, and obeys the layer's dependency rules. Read
    [ARCHITECTURE.md](ARCHITECTURE.md) before placing a new file.
-2. **Worktree discipline**: a feature or fix branch is worked in a git worktree
-   under `.worktree/<branch>`, never by switching branches in the main checkout.
+2. **Worktree discipline**: a feature or fix branch is worked in a git worktree,
+   never by switching branches in the main checkout.
 3. **No async runtime in the core**: the linter core uses `std::thread` and
    `rayon`; `tokio` is confined to `file-watch` and `mcp-server`.
 4. **No bypasses**: `#[allow]`, `// eslint-disable`, and `# noqa` are not
@@ -105,8 +105,8 @@ A new rule, a fix to an existing rule, or a change to crate behaviour.
 2. Create a worktree:
 
    ```bash
-   git worktree add -b <branch-name> .worktree/<branch-name> origin/main
-   cd .worktree/<branch-name>
+   git worktree add -b <branch-name> <worktree-path> origin/main
+   cd <worktree-path>
    ```
 
 3. Write the test first in the owning crate's `tests/` directory, named after the
