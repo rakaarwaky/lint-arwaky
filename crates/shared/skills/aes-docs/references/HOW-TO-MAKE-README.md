@@ -6,8 +6,9 @@
 > **Audience**: A developer who just cloned the repo, possibly you in six
 > months.
 >
-> **Scope**: Onboarding: prerequisites, quick start, structure, commands.
-> Exactly one per project root.
+> **Scope**: Onboarding: prerequisites, quick start, commands.
+> Exactly one per project root. Workspace layout is documented in
+> `AGENTS.md`, not here.
 >
 > **Location**: Project root.
 >
@@ -56,10 +57,6 @@ Copy, fill, delete nothing.
 
 <see per-language table below — then make it self-confirming>
 
-## Project Structure
-
-<see per-language block below>
-
 ## Architecture
 
 See `ARCHITECHTURE.md`.
@@ -100,7 +97,7 @@ reason.
 | Prerequisites              | Prevents a build failure with no cause. Watch for optional tooling listed as required. |
 | Quick Start                | The 10-minute promise. Watch for steps that assume state the reader lacks.             |
 | Architecture               | Delegate to \`ARCHITECHTURE.md\` file                                                  |
-| Project Structure          | Teaches where specs and backlogs live. Watch for every generated file listed.          |
+| Project Structure          | **Forbidden.** Layout belongs in `AGENTS.md`; a README that repeats it becomes a second source of truth. |
 | Available Scripts/Commands | The daily loop, as CI runs it. Watch for flags that differ from the CI job.            |
 | Configuration              | What to set before the first run. Watch for values, secrets, or real hostnames.        |
 | Testing                    | Delegate to \`TESTING.md\` file                                                        |

@@ -603,7 +603,7 @@ Matching is by leading words after lowercasing and stripping punctuation, so `##
 | `ARCHITECTURE.md` | Purpose, Workspace Organization, Naming Convention, Vertical Slicing Layout, Taxonomy Layer, Contract Layer, Utility Layer, Capabilities Layer, Agent Layer, Surface Layer, Root Layer |
 | `CONTRIBUTING.md` | Principles, Development Setup, Feature Change, Documentation Change, Quality Verification & PR Process |
 | `PRD.md` | Problem Statement, Goals & Success Metrics, User Personas, Scope, Feature Requirements, Non-functional Requirements, Open Questions / Risks |
-| `README.md` | Prerequisites, Quick Start, Architecture, Project Structure, Available Scripts/Commands, Configuration, Testing, Contributing, License |
+| `README.md` | Prerequisites, Quick Start, Architecture, Available Scripts/Commands, Configuration, Testing, Contributing, License (forbidden: Project Structure — that section belongs to `AGENTS.md`) |
 | `ROADMAP.md` | Current Condition, State Definitions, Status Policy, Feature Roll-up, Branches in Flight, Risk Register |
 
 Each document also carries an agreed set of project-specific H2s that are accepted without violation; see the constants in `taxonomy_doc_constant.rs` for the full per-document lists.

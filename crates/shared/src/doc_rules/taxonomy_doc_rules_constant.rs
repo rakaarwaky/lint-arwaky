@@ -303,12 +303,16 @@ pub const DOC_HEADING_CONTRACTS: &[DocH2Contract] = &[
         ],
     ),
     (
+        // `allowed` is empty on purpose: `Project Structure` belongs to the
+        // AGENTS.md contract, and a README that repeats it must be reported
+        // rather than passed as a second source of layout truth. An empty
+        // `allowed` makes the set closed, so the heading fires
+        // `h2_unexpected` and has to be demoted or deleted.
         README_DOC,
         &[
             "Prerequisites",
             "Quick Start",
             "Architecture",
-            "Project Structure",
             "Available Scripts/Commands",
             "Configuration",
             "Testing",
