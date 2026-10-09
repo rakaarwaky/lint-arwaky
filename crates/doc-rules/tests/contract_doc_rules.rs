@@ -1085,10 +1085,6 @@ Run it.
 
 Delegate to ARCHITECTURE.md.
 
-## Project Structure
-
-Where things live.
-
 ## Available Scripts/Commands
 
 The daily loop.
@@ -1123,6 +1119,89 @@ Off-template.
     assert!(
         message.contains("random extra") && fix.contains("level-3"),
         "message must name the heading and the fix must name the remedy; got: {message} / {fix}"
+    );
+}
+
+/// Layout is documented in AGENTS.md. A README that repeats it is a second
+/// source of truth, so the section is off-template and must be reported even
+/// though it is a real section of this project.
+#[test]
+fn aes605_rejects_project_structure_in_a_readme() {
+    let text = r#"# Sample README
+
+## Prerequisites
+
+- A toolchain.
+
+## Quick Start
+
+Run it.
+
+## Architecture
+
+Delegate to ARCHITECTURE.md.
+
+## Project Structure
+
+Where things live.
+
+## Available Scripts/Commands
+
+The daily loop.
+
+## Configuration
+
+What to set.
+
+## Testing
+
+Run the tests.
+
+## Contributing
+
+Read CONTRIBUTING.md.
+
+## License
+
+MIT.
+"#;
+    let findings = audit_root_doc("README.md", text);
+    assert!(
+        has(&findings, "AES605", "h2_unexpected"),
+        "Project Structure belongs to AGENTS.md, not README.md; got: {findings:#?}"
+    );
+    let (message, fix) = findings
+        .iter()
+        .find(|(c, v, _, _)| c == "AES605" && v == "h2_unexpected")
+        .map(|(_, _, m, fix)| (m.as_str(), fix.as_str()))
+        .unwrap_or_default();
+    assert!(
+        message.contains("project structure") && fix.contains("level-3"),
+        "message must name the heading and the fix must name the remedy; got: {message} / {fix}"
+    );
+    assert!(
+        !has(&findings, "AES605", "h2_missing"),
+        "every remaining README section is present; got: {findings:#?}"
+    );
+}
+
+/// The README contract is read from the rule itself, so a future edit to
+/// `DOC_HEADING_CONTRACTS` cannot silently leave a shipped section required
+/// while the template omits it.
+#[test]
+fn aes605_accepts_a_readme_with_the_contract_sections_only() {
+    let (_, required, _) = shared_doc_rules::taxonomy_doc_rules_constant::DOC_HEADING_CONTRACTS
+        .iter()
+        .find(|(name, _, _)| *name == "README.md")
+        .expect("README.md must have a heading contract");
+    let mut readme = String::from("# Sample README\n\n");
+    for heading in *required {
+        readme.push_str(&format!("## {heading}\n\nBody.\n\n"));
+    }
+    let findings = audit_root_doc("README.md", &readme);
+    assert!(
+        !has(&findings, "AES605", "h2_missing") && !has(&findings, "AES605", "h2_unexpected"),
+        "a README built from the contract must be accepted; got: {findings:#?}"
     );
 }
 

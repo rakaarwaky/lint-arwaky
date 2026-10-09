@@ -78,15 +78,7 @@ See [DEPLOY.md](DEPLOY.md) for client setup.
 
 ### Integrate as a CI Gate
 
-Lint Arwaky drops into any Rust/Python/TS project. Structure code in `crates/`, `packages/`, `modules/`, then:
-
-```bash
-lint-arwaky-cli init      # creates lint_arwaky.config.yaml
-lint-arwaky-cli install   # installs external linter deps
-lint-arwaky-cli doctor    # verify toolchain health
-```
-
-Add a CI job running `lint-arwaky-cli check .` (exit 1 on any violation), make it a required status check, and add `lint-arwaky-cli ci . --threshold <score>` for score-based release gating. Full blueprint: [DEPLOY.md](DEPLOY.md) and [crates/shared/skills/aes-testing-suite/SKILL.md](crates/shared/skills/aes-testing-suite/SKILL.md).
+Add a CI job running `lint-arwaky-cli check .` (exit 1 on any violation), make it a required status check, and add `lint-arwaky-cli ci . --threshold <score>` for score-based release gating.
 
 ## Architecture
 
@@ -95,34 +87,6 @@ see  [ARCHITECTURE.md](ARCHITECTURE.md).
 ## Testing
 
 see : [TEST.md](TEST.md).
-
-## Project Structure
-
-```text
-crates/
-├── shared/            # Taxonomy VOs, contracts, utilities
-│   └── skills/        # Embedded skill content (source for init)
-├── config-system/     # Config loading, merging, validation
-├── filesystem/        # File walking, AST parsing, graph construction
-├── naming-rules/      # AES101–102
-├── import-rules/      # AES201–205
-├── quality-rules/     # AES301–305
-├── role-rules/        # AES401–406
-├── orphan-rules/      # AES501–506
-├── doc-rules/         # AES601–605 (document invariants)
-├── structure-rules/   # AES701–705 (folder structure)
-├── external-lint/     # External linter adapters
-├── auto-fix/          # Mechanical fixes
-├── report-formatter/  # text/JSON/SARIF/JUnit output
-├── dispatcher/        # Utility Surface — business logic
-├── cli-commands/      # CLI surface
-├── mcp-server/        # MCP server
-├── git-hooks/         # Pre-commit / git-diff
-├── file-watch/        # Continuous lint
-├── project-setup/     # init / install / mcp-config
-├── maintenance/       # doctor / security / deps
-└── tui/               # Interactive terminal UI
-```
 
 ## Contributing
 
