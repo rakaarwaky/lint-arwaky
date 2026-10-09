@@ -1,4 +1,53 @@
 # Changelog
+## 3.9.0 (2026-10-09)
+
+### Features
+
+- feat: move AES204 surface logic bypass check to AES406 in role-rules (#1026)
+- feat: make Project Quick Facts a free-form template slot (#1015)
+- feat: make Project Quick Facts a free-form template slot
+- feat(logging): split into 4 capability seams with real-time scan feed
+
+### Bug Fixes
+
+- fix(install): stop distributing .agents/prompts in install.sh and init (#1047)
+- fix: bandit excludes heavy dependency and worktree trees (#1019)
+- fix: repair release-tag duplicate env key and VERSION file bump (#1011)
+- fix(lint): exclude vendor and .venv from bandit scan to fix timeout (#993)
+- fix(orphan): improve AES502 contract orphan messages clarity
+- fix(logging): make CLI quiet by default, verbose only with -v
+- fix: support naming.word_count values above 10 in AES101 (#926) (#983)
+- fix: count test files among source files only in project stats (#924) (#980)
+- fix: honor config ignored paths in build_orphan_graph_context (#920) (#978)
+- fix: use REST API for PR creation in auto-release workflow (#974)
+- fix: add no-op validate job to prevent 0-jobs failures on push (#972)
+- fix: resolve release-tag.yml, stale-issues.yml, and auto-release.yml workflow failures (#970)
+- fix(auto-fix): address #934 #935 #937 #938 (#953)
+- fix(dispatcher): pass real file lists to run_analysis in git/fix/ci surface actions (#952)
+- fix(external-lint): address #913 #914 #918 #919 (#947)
+- fix(role-rules): address #930 #932 #933 #936 (#946)
+- fix(mcp-server): address #927 #928 (#944)
+- fix(tui): address #909 #911 (#945)
+- fix: count PEP 604 union protocol params in AES405 P14 (#891) (#896)
+- fix: scan annotation positions not whole words in AES405 dynamic_any (#889) (#894)
+
+### Maintenance
+
+- perf(external-lint): scope adapter input to workspace member dirs (#1045)
+- docs: forbid Project Structure in README.md (#1041)
+- docs: generalize ARCHITECTURE.md across Rust, Python, and TypeScript (#1037)
+- docs: add Project Structure to the AGENTS.md contract and templates (#1034)
+- docs: remove hardcoded .worktree/<branch> path from CONTRIBUTING.md (#1021)
+- chore: drop Git Conventions and Guided Skills from AGENTS.md H2 contract (#1013)
+- chore: switch naming-rules checkers to ViolationItem end-to-end (#1006)
+- chore: consolidate common taxonomy VOs (#1004)
+- chore(shared): remove empty taxonomy_logging_vo stub from common (#1002)
+- chore(shared): split ComplianceStatus into dedicated taxonomy_compliance_vo (#996)
+- docs: restructure AGENTS.md template to 7-H2 layout (Runtime, Project Quick Facts, Pipeline, Git Conventions, Commands, Guided Skills, Related Documents) (#967)
+- docs: fold global agent rules into AGENTS.md template and local guide (#964)
+- docs: remove Precedence and Security sections, drop generated-output DoD bullet (#960)
+- docs: remove Memory section, condense Writing Style, enforce worktree-only branching (#957)
+
 ## 3.8.2 (2026-10-07)
 
 ### Bug Fixes
