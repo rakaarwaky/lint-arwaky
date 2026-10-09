@@ -1,9 +1,8 @@
 # Contributing to Lint Arwaky
 
-> This guide covers the contribution paths this project supports: shipping a
-> change, from setup to merge.
+Welcome. This document covers the contribution paths below. Only the paths
+this project actually supports are present.
 
-- [Principles](#principles)
 - [Development Setup](#development-setup)
 - [Feature Change](#feature-change)
 - [Documentation Change](#documentation-change)
@@ -11,9 +10,10 @@
 
 ---
 
-## Principles
+## Principles to Keep in Mind
 
-Before making changes, observe these non-negotiable rules:
+Before making changes, observe these non-negotiable rules. Each rule states
+the constraint, not the tool that enforces it:
 
 1. **7-layer architecture**: every file belongs to a layer, named
    `layer_concern_role`, and obeys the layer's dependency rules. Read
@@ -27,9 +27,9 @@ Before making changes, observe these non-negotiable rules:
 5. **Single source of truth**: `crates/shared/skills/` holds the skill markdown;
    `crates/shared/src/project_setup/taxonomy_project_setup_constant.rs` embeds
    it into the binary and is maintained manually — update
-   file is added, removed, or renamed. The `catalog_matches_the_skills_directory`
-   or renamed. The `catalog_matches_the_skills_directory` test fails when the
-   two disagree, so commit the regenerated constant with the skill change.
+   it when a skill file is added, removed, or renamed. The
+   `catalog_matches_the_skills_directory` test fails when the two disagree,
+   so commit the regenerated constant with the skill change.
 
 ---
 
@@ -145,7 +145,7 @@ A change to Markdown only, with no code edit.
 
 3. If a skill file changed, update the derived constant manually:
 
-    The embedded constant in `crates/shared/src/project_setup/taxonomy_project_setup_constant.rs` is maintained by hand — edit it after any skill file is added, removed, or renamed. The `catalog_matches_the_skills_directory` test fails when the two disagree.
+   The embedded constant in `crates/shared/src/project_setup/taxonomy_project_setup_constant.rs` is maintained by hand — edit it after any skill file is added, removed, or renamed. The `catalog_matches_the_skills_directory` test fails when the two disagree.
 
 4. Commit with `docs:` and open a PR.
 
@@ -161,7 +161,9 @@ Before restructuring a shared document contract enforced by AES605 (such as `AGE
 
 ## Quality Verification & PR Process
 
-### 1. Run the verification commands
+Before committing or opening a PR, clear every gate below.
+
+### 1. Run the Verification Commands
 
 ```bash
 bash scripts/gates.sh
@@ -174,14 +176,7 @@ pre-commit hook: **GitHub is the enforcement point.** Branch protection on
 manually when you want a full local pass before pushing; commits themselves
 stay fast.
 
-### 2. Code style
-
-```bash
-cargo fmt --all
-CARGO_INCREMENTAL=0 cargo clippy --all-targets -- -D warnings
-```
-
-### 3. Conventional commit guidelines
+### 2. Conventional Commit Guidelines
 
 | Prefix      | Usage                                  |
 | ----------- | -------------------------------------- |
@@ -191,13 +186,13 @@ CARGO_INCREMENTAL=0 cargo clippy --all-targets -- -D warnings
 | `docs:`     | Documentation changes                  |
 | `refactor:` | Refactoring without behavioral change  |
 
-### 4. Pull request checklist
+### 3. Pull Request Checklist
 
-- All local verification commands pass.
-- New files follow the project's naming and directory conventions.
-- Any registry or manifest the project keeps is updated.
-- No absolute paths, secrets, or machine-specific values leaked into the diff.
-- The PR description names the contribution path and links the issue.
+- [ ] All local verification commands pass.
+- [ ] New files follow the project's naming and directory conventions.
+- [ ] Any registry or manifest the project keeps is updated.
+- [ ] No absolute paths, secrets, or machine-specific values leaked into the diff.
+- [ ] The PR description names the contribution path and links the issue.
 
 ### Issue Title Convention
 
