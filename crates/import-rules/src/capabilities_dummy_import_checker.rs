@@ -89,18 +89,6 @@ impl IDummyImportCheckerProtocol for DummyImportChecker {
         Ok(violations)
     }
 
-    fn check_surface_logic(
-        &self,
-        file: &FilePath,
-        content: &ContentString,
-        _root_dir: &FilePath,
-        _layer_map: &LayerMapVO,
-    ) -> Result<Vec<LintResult>, ImportError> {
-        let mut violations = Vec::new();
-        Self::_check_surface_logic(file.value(), content.value(), &mut violations);
-        Ok(violations)
-    }
-
     fn check_all_dummy(
         &self,
         file: &FilePath,
@@ -127,7 +115,6 @@ impl IDummyImportCheckerProtocol for DummyImportChecker {
         Self::_check_dummy_functions(file.value(), &ctx, &mut violations);
         Self::_check_dummy_impls(file.value(), &ctx, &mut violations);
         Self::_check_taxonomy_intent(file.value(), &ctx, &mut violations, import_entries);
-        Self::_check_surface_logic(file.value(), content.value(), &mut violations);
         Ok(violations)
     }
 }
@@ -313,52 +300,6 @@ impl DummyImportChecker {
                     "Taxonomy VOs encode domain concepts — using raw primitives defeats the purpose.",
                     "Use taxonomy VOs (taxonomy_*.rs) instead of raw primitives like String or i32.",
                 ));
-            }
-        }
-    }
-
-    fn _check_surface_logic(file: &str, content: &str, violations: &mut Vec<LintResult>) {
-        let basename = std::path::Path::new(file)
-            .file_name()
-            .and_then(|n| n.to_str())
-            .unwrap_or("");
-        let layer = shared_common::utility_layer_detector::detect_layer_from_prefix(basename);
-        if layer.as_deref() != Some(shared_role_rules::LAYER_SURFACES) {
-            return;
-        }
-        let lines: Vec<&str> = content.lines().collect();
-        let ext = file.rsplit('.').next().unwrap_or("");
-        let lang = Language::from_extension(ext).unwrap_or(Language::Unknown);
-        let logic_patterns = [
-            "lint_path(",
-            "compute_score(",
-            "contains_critical_severity(",
-            "walk_rs_files(",
-        ];
-
-        for (i, line) in lines.iter().enumerate() {
-            let trimmed = line.trim();
-            let is_skip = match lang {
-                Language::Rust => trimmed.starts_with("//") || trimmed.starts_with("fn _use_"),
-                Language::Python => trimmed.starts_with("#") || trimmed.starts_with("def _use_"),
-                Language::JavaScript | Language::TypeScript => {
-                    trimmed.starts_with("//") || trimmed.starts_with("function _use")
-                }
-                Language::Unknown => false,
-            };
-            if is_skip {
-                continue;
-            }
-            for pattern in &logic_patterns {
-                let is_string_lit = trimmed.contains(&format!("\"{}", pattern))
-                    || trimmed.contains(&format!("'{}", pattern));
-                if trimmed.contains(pattern) && !is_string_lit {
-                    violations.push(LintResult::new_arch_with_name(file, i + 1, "AES204", Severity::MEDIUM,"Business logic in surface layer".to_string(),
-                        "DUMMY_IMPORT",
-                        "Surface-layer code must delegate business logic to the aggregate layer.",
-                        "Move the logic to a capabilities module and call it through a contract aggregate.",
-                    ));
-                }
             }
         }
     }

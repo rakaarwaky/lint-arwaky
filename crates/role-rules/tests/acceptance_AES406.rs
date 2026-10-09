@@ -164,3 +164,41 @@ fn aes406_non_surface_file_ignored() {
         "non-surface file should not trigger AES406"
     );
 }
+
+// ── Surface logic bypass → AES406 ──
+
+#[test]
+fn aes406_surface_logic_bypass_flagged() {
+    let file = make_file(
+        "src/surface_report_view.rs",
+        Language::Rust,
+        "pub fn render() {\n    lint_path(\"some/path\");\n}\n",
+    );
+    let results = run_audit(vec![file]);
+    let aes406: Vec<_> = results
+        .iter()
+        .filter(|r| r.code.code() == "AES406")
+        .collect();
+    assert!(
+        !aes406.is_empty(),
+        "surface calling lint_path directly should trigger AES406"
+    );
+}
+
+#[test]
+fn aes406_surface_utility_calls_not_flagged() {
+    let file = make_file(
+        "src/surface_ci_action.rs",
+        Language::Rust,
+        "pub fn run() {\n    compute_score(&results);\n    contains_critical_severity(&results);\n}\n",
+    );
+    let results = run_audit(vec![file]);
+    let aes406: Vec<_> = results
+        .iter()
+        .filter(|r| r.code.code() == "AES406")
+        .collect();
+    assert!(
+        aes406.is_empty(),
+        "surface calling compute_score and contains_critical_severity must not trigger AES406"
+    );
+}
