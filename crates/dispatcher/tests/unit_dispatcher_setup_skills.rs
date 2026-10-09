@@ -301,6 +301,84 @@ struct RecordingFilesystem {
     written_files: Mutex<HashMap<String, String>>,
 }
 
+/// Like `RecordingFilesystem`, but also records `CopyFile` requests and
+/// serves a fake `.agents` directory listing for the XDG config path so
+/// `collect_init` exercises its `copy_dir_all` branch.
+#[derive(Default)]
+struct RecordingCopyFilesystem {
+    written_files: Mutex<HashMap<String, String>>,
+    copied_files: Mutex<Vec<(String, String)>>,
+}
+
+impl IFilesystemAggregate for RecordingCopyFilesystem {
+    fn execute(&self, request: FilesystemRequest) -> FilesystemResponse {
+        match request {
+            FilesystemRequest::WriteFile { path, content } => {
+                let mut map = self.written_files.lock().unwrap();
+                map.insert(path.to_string_lossy().to_string(), content);
+                FilesystemResponse::OpOk { ok: true }
+            }
+            FilesystemRequest::CopyFile { src, dst } => {
+                let mut copies = self.copied_files.lock().unwrap();
+                copies.push((
+                    src.to_string_lossy().to_string(),
+                    dst.to_string_lossy().to_string(),
+                ));
+                FilesystemResponse::OpOk { ok: true }
+            }
+            FilesystemRequest::ReadDirEntries { dir } => {
+                // Only the XDG .agents dir has entries; nested dirs report none.
+                let base = dir
+                    .to_string_lossy()
+                    .strip_suffix("/.agents")
+                    .map(|b| b.to_string());
+                if base.is_some() {
+                    let paths = [
+                        format!("{}/skills", dir.display()),
+                        format!("{}/prompts", dir.display()),
+                        format!("{}/research", dir.display()),
+                    ]
+                    .into_iter()
+                    .collect();
+                    FilesystemResponse::Paths { paths }
+                } else {
+                    FilesystemResponse::OpOk { ok: true }
+                }
+            }
+            _ => FilesystemResponse::OpOk { ok: true },
+        }
+    }
+}
+
+#[test]
+fn test_collect_init_copies_agents_dirs_but_skips_skills_and_prompts() {
+    let mock_orch = Arc::new(MockSetupOrchestrator {
+        detected: ProjectLanguagesVO::new(vec![ProjectLanguageVO::new("python")]),
+    });
+    let mock_fs = Arc::new(RecordingCopyFilesystem::default());
+
+    let items = collect_init(mock_orch, mock_fs.clone());
+    assert!(!items.is_empty());
+
+    let copied = mock_fs.copied_files.lock().unwrap();
+    // `copy_dir_all` reports zero copied files when every listed entry is a
+    // directory, so the XDG-copy step must not record a failure.
+    assert!(
+        !items.iter().any(|i| i.message.contains("copy error")),
+        "XDG .agents copy must succeed, got: {items:?}"
+    );
+    assert!(
+        !copied.iter().any(|(src, _)| src.contains("/prompts/")),
+        "no .agents/prompts/ file may be copied into the target project: {copied:?}"
+    );
+    assert!(
+        !copied
+            .iter()
+            .any(|(_, dst)| dst.contains("/prompts/") || dst.contains("/skills/")),
+        "prompts and skills dirs are skipped: {copied:?}"
+    );
+}
+
 impl IFilesystemAggregate for RecordingFilesystem {
     fn execute(&self, request: FilesystemRequest) -> FilesystemResponse {
         match request {
