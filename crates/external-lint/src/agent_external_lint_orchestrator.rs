@@ -33,78 +33,6 @@ use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared_filesystem::taxonomy_filesystem_vo::ProjectLanguagesVO;
 use tracing::warn;
 
-// ─── Adapter thread result ─────────────────────────────────
-
-/// Result of running one adapter in its worker thread.
-enum AdapterOutcome {
-    Results(Vec<shared_cli_commands::taxonomy_result_vo::LintResult>),
-    Skipped,
-}
-
-impl AdapterOutcome {
-    /// Run one adapter synchronously and log the per-adapter start/complete
-    /// events.
-    fn run(
-        name: &str,
-        adapter: &Arc<dyn ILinterAdapterProtocol>,
-        path: &FilePath,
-        start: Instant,
-    ) -> Self {
-        tracing::info!(
-            target: "lint_arwaky::audit",
-            event = "adapter_start",
-            adapter = name,
-            path = path.value.as_str(),
-            "starting external adapter"
-        );
-        match adapter.scan(path) {
-            Ok(results) => {
-                let n = results.len();
-                tracing::info!(
-                    target: "lint_arwaky::audit",
-                    event = "adapter_done",
-                    adapter = name,
-                    findings = n,
-                    elapsed_ms = start.elapsed().as_millis() as u64,
-                    "external adapter complete"
-                );
-                AdapterOutcome::Results(results.values)
-            }
-            Err(e) => {
-                let err_msg = e.to_string();
-                tracing::info!(
-                    target: "lint_arwaky::audit",
-                    event = "adapter_done",
-                    adapter = name,
-                    elapsed_ms = start.elapsed().as_millis() as u64,
-                    error = %err_msg,
-                    "external adapter failed or skipped"
-                );
-                if err_msg.contains("No such file or directory") || err_msg.contains("os error 2") {
-                    warn!(
-                        adapter = name,
-                        "is not installed or not in system PATH. Skipping."
-                    );
-                } else {
-                    warn!(
-                        adapter = name,
-                        error = %err_msg,
-                        "adapter failed"
-                    );
-                }
-                AdapterOutcome::Skipped
-            }
-        }
-    }
-
-    fn into_results(self) -> Vec<shared_cli_commands::taxonomy_result_vo::LintResult> {
-        match self {
-            AdapterOutcome::Results(r) => r,
-            AdapterOutcome::Skipped => Vec::new(),
-        }
-    }
-}
-
 // ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct ExternalLintDeps {
@@ -300,6 +228,80 @@ impl ExternalLintOrchestrator {
             // empty here means "report everything the tools found".
             ignored_rules: Vec::new(),
             config_entries: Vec::new(),
+        }
+    }
+}
+
+// ─── Adapter thread helper (Block 3) ───────────────────────
+
+/// Result of running one adapter in its worker thread. Private helper type:
+/// it carries the per-adapter results back to the orchestrator and is only
+/// used inside `scan_all_with_context`'s parallel loop.
+enum AdapterOutcome {
+    Results(Vec<shared_cli_commands::taxonomy_result_vo::LintResult>),
+    Skipped,
+}
+
+impl AdapterOutcome {
+    /// Run one adapter synchronously and log the per-adapter start/complete
+    /// events.
+    fn run(
+        name: &str,
+        adapter: &Arc<dyn ILinterAdapterProtocol>,
+        path: &FilePath,
+        start: Instant,
+    ) -> Self {
+        tracing::info!(
+            target: "lint_arwaky::audit",
+            event = "adapter_start",
+            adapter = name,
+            path = path.value.as_str(),
+            "starting external adapter"
+        );
+        match adapter.scan(path) {
+            Ok(results) => {
+                let n = results.len();
+                tracing::info!(
+                    target: "lint_arwaky::audit",
+                    event = "adapter_done",
+                    adapter = name,
+                    findings = n,
+                    elapsed_ms = start.elapsed().as_millis() as u64,
+                    "external adapter complete"
+                );
+                AdapterOutcome::Results(results.values)
+            }
+            Err(e) => {
+                let err_msg = e.to_string();
+                tracing::info!(
+                    target: "lint_arwaky::audit",
+                    event = "adapter_done",
+                    adapter = name,
+                    elapsed_ms = start.elapsed().as_millis() as u64,
+                    error = %err_msg,
+                    "external adapter failed or skipped"
+                );
+                if err_msg.contains("No such file or directory") || err_msg.contains("os error 2") {
+                    warn!(
+                        adapter = name,
+                        "is not installed or not in system PATH. Skipping."
+                    );
+                } else {
+                    warn!(
+                        adapter = name,
+                        error = %err_msg,
+                        "adapter failed"
+                    );
+                }
+                AdapterOutcome::Skipped
+            }
+        }
+    }
+
+    fn into_results(self) -> Vec<shared_cli_commands::taxonomy_result_vo::LintResult> {
+        match self {
+            AdapterOutcome::Results(r) => r,
+            AdapterOutcome::Skipped => Vec::new(),
         }
     }
 }
