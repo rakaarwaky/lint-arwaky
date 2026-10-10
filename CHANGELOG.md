@@ -1,4 +1,8 @@
 # Changelog
+## 3.9.1 (2026-10-09)
+
+- No significant changes
+
 ## 3.9.0 (2026-10-09)
 
 ### Features
