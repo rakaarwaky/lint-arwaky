@@ -41,9 +41,16 @@ MockIssueDiscovery ──► SupervisorOrchestrator ──► SupervisorCycleRep
 - **Output**: `Vec<GitHubIssueVo>`, capped at `max`, in ascending
   engagement order.
 - **Business Rules**:
-  - The mock ships exactly 5 hardcoded, realistic-looking issues with
-    plausible issue numbers, labels (`bug`, `enhancement`,
-    `good first issue`, ...), comment counts, and reaction counts.
+  - The mock ships exactly 5 clearly-SYNTHETIC issues (issue numbers in
+    the 9000s, title-prefixed `[SYNTHETIC-MOCK]`, out of range of any
+    real `rakaarwaky/lint-arwaky` identifier — verified as of
+    2026-10-10 the repo has 0 open issues, so no live issue number can
+    collide with the mock's 9001-9005 range).
+  - The real GitHub REST API (used by a future reqwest-backed
+    implementation) currently returns 0 open issues for this repo;
+    when that happens, this crate's contract is to fall back to the
+    synthetic set — the "use mock when live API unavailable" path from
+    the goal plan.
   - `max` truncates the ranked list from the head; selection is stable
     so equal-engagement issues keep their input order.
 - **Edge Cases**:
@@ -200,8 +207,12 @@ FRD Ref: FR-SupervisorWorkflow-001
 
 ## Assumptions & Constraints
 
-- The mock issue list is hardcoded and realistic-looking; it is a
-  stand-in for a real `reqwest`-based GitHub API client.
+- The mock issue list is hardcoded and clearly synthetic (9000s,
+  `[SYNTHETIC-MOCK]` title prefix, `mock-user` login); it is a
+  stand-in for a real `reqwest`-based GitHub API client. As of
+  2026-10-10 the live `rakaarwaky/lint-arwaky` API returns 0 open
+  issues, so the synthetic fallback is exercised as the only data
+  source today.
 - The mock worktree manager is pure: no subprocess, no filesystem.
   A real implementation will shell out to `orca worktree create`.
 - The mock PR monitor cycles through a caller-seeded status sequence

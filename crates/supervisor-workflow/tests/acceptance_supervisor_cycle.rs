@@ -62,7 +62,7 @@ fn make_orch(issues: Vec<GitHubIssueVo>, ci_sequence: Vec<CIStatus>) -> Supervis
 #[test]
 fn acceptance_flaky_ci_recovers_on_third_poll_and_merges() {
     let report = make_orch(
-        vec![one_issue(1053)],
+        vec![one_issue(9001)],
         vec![CIStatus::Failing, CIStatus::Failing, CIStatus::Passing],
     );
     let o = &report.outcomes[0];
@@ -77,7 +77,7 @@ fn acceptance_flaky_ci_recovers_on_third_poll_and_merges() {
 #[test]
 fn acceptance_give_up_after_three_consecutive_failures() {
     let report = make_orch(
-        vec![one_issue(1044)],
+        vec![one_issue(9002)],
         vec![CIStatus::Failing, CIStatus::Failing, CIStatus::Failing],
     );
     let o = &report.outcomes[0];
