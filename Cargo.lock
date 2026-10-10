@@ -4929,15 +4929,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "shared-supervisor-lint-arwaky"
-version = "3.9.0"
-dependencies = [
- "serde",
- "shared-common-lint-arwaky",
- "thiserror 2.0.21",
-]
-
-[[package]]
 name = "shared-tui-lint-arwaky"
 version = "3.9.0"
 dependencies = [
@@ -5110,20 +5101,6 @@ name = "subtle"
 version = "2.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "13c2bddecc57b384dee18652358fb23172facb8a2c51ccc10d74c157bdea3292"
-
-[[package]]
-name = "supervisor-workflow-lint-arwaky"
-version = "3.9.0"
-dependencies = [
- "criterion",
- "serde",
- "serde_json",
- "shared-common-lint-arwaky",
- "shared-supervisor-lint-arwaky",
- "tempfile",
- "thiserror 2.0.21",
- "tracing",
-]
 
 [[package]]
 name = "symlink"
