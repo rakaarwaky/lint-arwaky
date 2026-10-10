@@ -20,7 +20,6 @@ members = [
     "crates/shared/src/report_formatter",
     "crates/shared/src/role_rules",
     "crates/shared/src/structure_rules",
-    "crates/shared/src/supervisor",
     "crates/shared/src/tui",
     "crates/filesystem",
     "crates/config-system",
@@ -42,8 +41,6 @@ members = [
     "crates/maintenance",
     # Layer 3.5: Dispatcher
     "crates/dispatcher",
-    # Layer 3.5: Supervisor workflow (GitHub issue selection + subagent delegation)
-    "crates/supervisor-workflow",
     # Layer 4: Surface
     "crates/report-formatter",
     "crates/cli-commands",
@@ -89,7 +86,6 @@ shared-quality-rules = { package = "shared-quality-rules-lint-arwaky", path = "c
 shared-report-formatter = { package = "shared-report-formatter-lint-arwaky", path = "crates/shared/src/report_formatter" }
 shared-role-rules = { package = "shared-role-rules-lint-arwaky", path = "crates/shared/src/role_rules" }
 shared-structure-rules = { package = "shared-structure-rules-lint-arwaky", path = "crates/shared/src/structure_rules" }
-shared-supervisor = { package = "shared-supervisor-lint-arwaky", path = "crates/shared/src/supervisor" }
 shared-tui = { package = "shared-tui-lint-arwaky", path = "crates/shared/src/tui" }
 filesystem = { package = "filesystem-lint-arwaky", path = "crates/filesystem" }
 config-system = { package = "config-system-lint-arwaky", path = "crates/config-system" }
@@ -112,7 +108,6 @@ report-formatter = { package = "report-formatter-lint-arwaky", path = "crates/re
 cli-commands = { path = "crates/cli-commands" }
 mcp-server = { package = "mcp-server-lint-arwaky", path = "crates/mcp-server" }
 tui = { package = "tui-lint-arwaky", path = "crates/tui" }
-supervisor-workflow = { package = "supervisor-workflow-lint-arwaky", path = "crates/supervisor-workflow" }
 
 # External dependencies (pinned versions - all crates inherit from here)
 serde = { version = "1.0.229", features = ["derive"] }
