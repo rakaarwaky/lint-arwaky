@@ -579,9 +579,8 @@ impl McpActionSurface {
             Err(error) => return error,
         };
         let doc = self.deps.doc_orchestrator.clone();
-        let fs_seam = self.deps.fs_seam.clone();
         let result = match Self::run_blocking(move || {
-            dispatcher::surface_docs_action::collect_docs(fp.value(), doc, &fs_seam)
+            dispatcher::surface_docs_action::collect_docs(fp.value(), doc)
         })
         .await
         {

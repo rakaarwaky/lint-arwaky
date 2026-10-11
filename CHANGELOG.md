@@ -1,4 +1,10 @@
 # Changelog
+## 3.10.0 (2026-10-10)
+
+### Features
+
+- feat(supervisor-workflow): add mock-based supervisor workflow crate (#1055)
+
 ## 3.9.0 (2026-10-09)
 
 ### Features

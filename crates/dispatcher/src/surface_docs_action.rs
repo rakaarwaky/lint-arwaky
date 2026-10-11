@@ -50,26 +50,16 @@ impl DocsFinding {
 }
 
 /// Run the doc invariant audit over *root*, returning structured findings.
-///
-/// Findings whose rule code is suppressed by `lint_arwaky.config.yaml`
-/// (`architecture.rules.<CODE>.enabled: false` or `ignored_rules: [CODE]`)
-/// are dropped before the result is returned, so `docs .` honours the same
-/// config surface as `scan .`.
 pub fn collect_docs(
     root: &str,
     doc_orchestrator: Arc<dyn IDocRunnerAggregate>,
-    fs_seam: &crate::surface_check_action::FilesystemSeam,
 ) -> Result<Vec<DocsFinding>, String> {
     if !std::path::Path::new(root).is_dir() {
         return Err(format!("Error: path '{root}' does not exist"));
     }
-    let suppressed = crate::surface_rule_suppression::load_suppressed_rule_codes(root, fs_seam);
     let DocResponse::Findings { findings } = doc_orchestrator.execute(DocRequest::audit_all(root));
     Ok(findings
         .into_iter()
-        .filter(|finding| {
-            !crate::surface_rule_suppression::is_rule_suppressed(&suppressed, finding.code)
-        })
         .map(|finding| {
             // Doc checkers report some findings on a line offset inside the
             // document (the message carries it, e.g. "line N heading ...");

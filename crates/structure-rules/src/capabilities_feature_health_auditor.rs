@@ -37,15 +37,10 @@ impl IStructureFeatureHealthProtocol for FeatureHealthAuditor {
                 };
                 if inventory.has_capabilities || inventory.has_orchestrator {
                     check_feature_folder(&folder, &folder_rel, &ws_root, &inventory, &mut findings);
-                    // Reverse check: a folder that is a real feature (holds
-                    // agent_* or capabilities_* files) and carries a doc pair
-                    // must hold an orchestrator. Surface-only or non-agent
-                    // member folders (TS packages, CLI/API surfaces) that
-                    // merely carry FRD.md + BACKLOG.md without any AES-named
-                    // source are not feature folders and are skipped, matching
-                    // the forward-direction gate above.
-                    check_reverse_doc_orchestrator(&folder, &folder_rel, &mut findings);
                 }
+                // Reverse check: any non-shared folder with a doc pair must
+                // have an orchestrator.
+                check_reverse_doc_orchestrator(&folder, &folder_rel, &mut findings);
             }
         }
 
@@ -161,12 +156,9 @@ fn check_feature_docs(folder: &std::path::Path, rel: &str, findings: &mut Vec<St
     }
 }
 
-/// Reverse direction of AES702: a feature folder holding a feature doc pair
+/// Reverse direction of AES702: any non-shared folder holding a feature doc pair
 /// must hold an orchestrator. A surface folder carrying DESIGN.md + BACKLOG.md
-/// is not subject to this check. Called only for folders that pass the
-/// feature-folder gate (hold at least one `capabilities_*` or `agent_*`
-/// file), so a non-agent surface or TS package folder that merely carries
-/// FRD.md + BACKLOG.md is never reached.
+/// is not subject to this check.
 fn check_reverse_doc_orchestrator(
     folder: &std::path::Path,
     rel: &str,

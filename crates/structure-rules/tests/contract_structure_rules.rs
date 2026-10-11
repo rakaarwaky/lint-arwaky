@@ -636,9 +636,6 @@ fn aes703_does_not_fire_on_a_feature_folder_that_holds_a_surface() {
 
 // ─── AES702: feature folder health + docs ─────────────────────────────────
 
-/// AES702 reverse direction: a feature folder (one that holds a capabilities
-/// or agent file) that carries a doc pair but no orchestrator. A folder with
-/// no AES-named source files at all is not a feature folder and is skipped.
 #[test]
 fn aes702_fires_when_a_doc_pair_folder_has_no_orchestrator() {
     let tmp = tempfile::tempdir().unwrap();
@@ -647,17 +644,11 @@ fn aes702_fires_when_a_doc_pair_folder_has_no_orchestrator() {
     fs::create_dir_all(feature.join("src")).unwrap();
     fs::write(feature.join("FRD.md"), "# FRD\n").unwrap();
     fs::write(feature.join("BACKLOG.md"), "# BACKLOG\n").unwrap();
-    // A capabilities file so the folder passes the feature-folder gate;
-    // the orchestrator is deliberately omitted.
-    fs::write(
-        feature.join("src/capabilities_sample_analyzer.rs"),
-        "//! capability\n",
-    )
-    .unwrap();
+    // deliberately omit the orchestrator file
     let findings = audit(root);
     assert!(
-        has(&findings, "AES702", "feature_missing_agent"),
-        "a feature folder with capabilities but no orchestrator must fire; got: {findings:#?}"
+        has(&findings, "AES702", "doc_pair_without_orchestrator"),
+        "expected doc_pair_without_orchestrator, got: {findings:#?}"
     );
 }
 
@@ -678,53 +669,6 @@ fn aes702_silent_when_doc_pair_folder_has_orchestrator() {
     assert!(
         !has(&findings, "AES702", "doc_pair_without_orchestrator"),
         "should be silent when orchestrator is present; got: {findings:#?}"
-    );
-}
-
-/// A non-agent surface/TS package folder (no capabilities_* or agent_*
-/// files) that carries FRD.md + BACKLOG.md must not fire AES702.
-/// The reverse doc-pair check is gated on the folder holding at least one
-/// AES-named source file, so a surface-only member is skipped entirely.
-#[test]
-fn aes702_stays_silent_when_a_packages_member_has_no_agent_files() {
-    let tmp = tempfile::tempdir().unwrap();
-    let root = tmp.path();
-    let pkg = root.join("packages/auth");
-    fs::create_dir_all(pkg.join("src")).unwrap();
-    fs::write(&pkg.join("FRD.md"), "# FRD\n").unwrap();
-    fs::write(&pkg.join("BACKLOG.md"), "# BACKLOG\n").unwrap();
-    // TS source files — no AES-named (capabilities_*/agent_*) files.
-    fs::write(pkg.join("src").join("index.ts"), "export const x = 1;\n").unwrap();
-    let findings = audit(root);
-    assert!(
-        !has(&findings, "AES702", "doc_pair_without_orchestrator"),
-        "a TS package folder with no agent files must not fire AES702; got: {findings:#?}"
-    );
-    assert!(
-        !has(&findings, "AES702", "feature_missing_agent"),
-        "a TS package folder with no agent files must not fire feature_missing_agent; got: {findings:#?}"
-    );
-}
-
-/// A `modules/` surface folder (e.g. `modules/api`) with no agent files of
-/// its own must not fire the AES702 reverse doc-pair check.
-#[test]
-fn aes702_stays_silent_when_a_modules_surface_has_no_agent_files() {
-    let tmp = tempfile::tempdir().unwrap();
-    let root = tmp.path();
-    let surface = root.join("modules/api");
-    fs::create_dir_all(surface.join("src")).unwrap();
-    fs::write(&surface.join("FRD.md"), "# FRD\n").unwrap();
-    fs::write(&surface.join("BACKLOG.md"), "# BACKLOG\n").unwrap();
-    fs::write(
-        surface.join("src").join("surface_api_command.py"),
-        "def run(): ...\n",
-    )
-    .unwrap();
-    let findings = audit(root);
-    assert!(
-        !has(&findings, "AES702", "doc_pair_without_orchestrator"),
-        "a surface module with no agent files must not fire AES702; got: {findings:#?}"
     );
 }
 

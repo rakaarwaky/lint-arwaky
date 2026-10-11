@@ -712,7 +712,7 @@ pub(crate) fn structure_violations_in_scope(
             .unwrap_or_else(|| target_path.to_path_buf())
     };
 
-    crate::surface_structure_action::collect_structure(target, agg.structure.clone(), &agg.fs_seam)
+    crate::surface_structure_action::collect_structure(target, agg.structure.clone())
         .unwrap_or_default()
         .into_iter()
         .filter(|v| {
@@ -737,24 +737,14 @@ pub(crate) fn structure_violations_in_scope(
 /// scan target; a finding names a document that must exist inside the target,
 /// so out-of-scope or stale findings are dropped like structure findings.
 /// All doc rules are HIGH-severity invariant failures → `Severity::HIGH`.
-///
-/// Findings whose rule code is suppressed by `lint_arwaky.config.yaml`
-/// (`architecture.rules.<CODE>.enabled: false` or `ignored_rules: [CODE]`)
-/// are dropped before conversion, so `scan .` honours the same config
-/// surface as `docs .`.
 pub(crate) fn doc_violations_in_scope(target: &str, agg: &ScanAggregates) -> Vec<ViolationItem> {
     let target_path = std::path::Path::new(target);
     let target_canon = canonicalize_via(&agg.fs_seam.aggregate, target_path)
         .unwrap_or_else(|| target_path.to_path_buf());
 
-    let suppressed =
-        crate::surface_rule_suppression::load_suppressed_rule_codes(target, &agg.fs_seam);
     let DocResponse::Findings { findings } = agg.doc.execute(DocRequest::audit_all(&target_canon));
     findings
         .into_iter()
-        .filter(|finding| {
-            !crate::surface_rule_suppression::is_rule_suppressed(&suppressed, finding.code)
-        })
         .filter_map(|finding| {
             let doc_path = target_canon.join(&finding.doc);
             // Store the resolved path, not `finding.doc`. A bare relative name

@@ -738,7 +738,6 @@ fn main() {
                 format: parse_format(&format),
                 doc_orchestrator:
                     doc_rules::root_doc_rules_container::RootDocRulesContainer::orchestrator(),
-                fs_seam: fs_seam.clone(),
             },
         ),
         Command::Structure {

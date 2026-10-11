@@ -15,25 +15,17 @@ use shared_structure_rules::taxonomy_structure_rules_request::StructureRequest;
 use shared_structure_rules::taxonomy_structure_rules_response::StructureResponse;
 
 /// Run the folder-layout audit over *root*, returning the violations.
-///
-/// Findings whose rule code is suppressed by `lint_arwaky.config.yaml`
-/// (`architecture.rules.<CODE>.enabled: false` or `ignored_rules: [CODE]`)
-/// are dropped before the result is returned, so `structure .` honours the
-/// same config surface as `scan .`.
 pub fn collect_structure(
     root: &str,
     structure_orchestrator: Arc<dyn IStructureAggregate>,
-    fs_seam: &crate::surface_check_action::FilesystemSeam,
 ) -> Result<Vec<ViolationItem>, String> {
     if !std::path::Path::new(root).is_dir() {
         return Err(format!("Error: path '{root}' does not exist"));
     }
-    let suppressed = crate::surface_rule_suppression::load_suppressed_rule_codes(root, fs_seam);
     let StructureResponse::Findings { findings } =
         structure_orchestrator.execute(StructureRequest::audit_all(root));
     Ok(findings
         .into_iter()
-        .filter(|f| !crate::surface_rule_suppression::is_rule_suppressed(&suppressed, &f.code))
         .map(|f| {
             let code = shared_common::ErrorCode::raw(f.code.clone());
             // Structure findings carry paths relative to the audited root. Resolve them
