@@ -1,4 +1,9 @@
 # Changelog
+## 3.10.1 (2026-10-12)
+
+- No significant changes
+- Lockstep version bump to repair release-order inversion from #1054/#1057 (see #1068): `main` carried the `v3.10.0` bump underneath a `v3.9.1` bump, pinning the workspace at 3.9.1. This release re-establishes a clean single release commit on top of `main`.
+
 ## 3.9.1 (2026-10-09)
 
 - No significant changes
