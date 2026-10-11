@@ -1,4 +1,8 @@
 # Changelog
+## 3.10.2 (2026-10-12)
+
+- No significant code changes; lockstep version bump to advance past `3.10.1`.
+
 ## 3.10.1 (2026-10-12)
 
 - fix: correct AES601 protocol-count miscount and AES702 surface/TS false positives; add config-driven rule suppression (#1064, #1062, #1063)
