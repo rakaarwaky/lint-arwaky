@@ -2110,6 +2110,156 @@ fn aes601_root_level_frd_is_audited() {
     );
 }
 
+// ── AES601: Python shared-tree layout (issue #1062) ─────────────────────
+
+/// A Python monorepo keeps every feature's protocol ABCs in a shared tree
+/// (`modules/shared/src/<feature>/contract_*.py`), not in a per-feature
+/// crate. The detector must count `@abc.abstractmethod` classes there so
+/// the FRD requirement count matches the code count instead of reading as
+/// 0.
+#[test]
+fn aes601_counts_python_abc_classes_in_a_subfeature_shared_tree() {
+    let tmp = tempfile::tempdir().unwrap();
+    let root = tmp.path();
+    // Feature folder: `modules/animator/` with FRD + BACKLOG + agent file.
+    let feature = root.join("modules").join("animator");
+    fs::create_dir_all(feature.join("src")).unwrap();
+    let frd = frd_with_fr_count(3).replace("FR-SAMPLE-", "FR-ANIMATOR-");
+    fs::write(feature.join("FRD.md"), &frd).unwrap();
+    fs::write(feature.join("BACKLOG.md"), conforming_backlog()).unwrap();
+    fs::write(
+        feature.join("src").join("agent_animator_orchestrator.py"),
+        "class AnimatorOrchestrator: ...\n",
+    )
+    .unwrap();
+    // Subfeature-keyed shared tree: `modules/shared/src/animator/`.
+    let module = root
+        .join("modules")
+        .join("shared")
+        .join("src")
+        .join("animator");
+    fs::create_dir_all(&module).unwrap();
+    fs::write(
+        module.join("contract_animator_protocol.py"),
+        "import abc\n\
+         \n\
+         @abc.abstractmethod\n\
+         class IAnimatorOneProtocol(abc.ABC):\n\
+             @abc.abstractmethod\n\
+             def animate(self) -> None: ...\n\
+         \n\
+         @abc.abstractmethod\n\
+         class IAnimatorTwoProtocol(abc.ABC):\n\
+             @abc.abstractmethod\n\
+             def animate(self) -> None: ...\n\
+         \n\
+         @abc.abstractmethod\n\
+         class IAnimatorThreeProtocol(abc.ABC):\n\
+             @abc.abstractmethod\n\
+             def animate(self) -> None: ...\n\
+         \n\
+         class IAnimatorAggregate:\n\
+             def execute(self) -> None: ...\n",
+    )
+    .unwrap();
+    let findings = audit(root);
+    assert!(
+        !has(&findings, "AES601", "protocol_count_mismatch"),
+        "3 requirements and 3 Python ABC protocol classes + 1 aggregate must align; \
+         got: {findings:#?}"
+    );
+}
+
+/// A Python shared tree with fewer ABC classes than the FRD declares must
+/// still fire `protocol_count_mismatch` in the "code has fewer" direction.
+#[test]
+fn aes601_fires_when_python_abc_count_is_below_the_fr_count() {
+    let tmp = tempfile::tempdir().unwrap();
+    let root = tmp.path();
+    let feature = root.join("modules").join("animator");
+    fs::create_dir_all(feature.join("src")).unwrap();
+    let frd = frd_with_fr_count(3).replace("FR-SAMPLE-", "FR-ANIMATOR-");
+    fs::write(feature.join("FRD.md"), &frd).unwrap();
+    fs::write(feature.join("BACKLOG.md"), conforming_backlog()).unwrap();
+    fs::write(
+        feature.join("src").join("agent_animator_orchestrator.py"),
+        "class AnimatorOrchestrator: ...\n",
+    )
+    .unwrap();
+    let module = root
+        .join("modules")
+        .join("shared")
+        .join("src")
+        .join("animator");
+    fs::create_dir_all(&module).unwrap();
+    fs::write(
+        module.join("contract_animator_protocol.py"),
+        "import abc\n\
+         \n\
+         @abc.abstractmethod\n\
+         class IAnimatorOneProtocol(abc.ABC):\n\
+             @abc.abstractmethod\n\
+             def animate(self) -> None: ...\n\
+         \n\
+         @abc.abstractmethod\n\
+         class IAnimatorTwoProtocol(abc.ABC):\n\
+             @abc.abstractmethod\n\
+             def animate(self) -> None: ...\n",
+    )
+    .unwrap();
+    let findings = audit(root);
+    assert!(
+        has(&findings, "AES601", "protocol_count_mismatch"),
+        "3 requirements against 2 Python ABC protocol classes must fire; \
+         got: {findings:#?}"
+    );
+}
+
+// ── AES601: config suppression (issue #1062) ───────────────────────────
+
+/// `architecture.rules.AES601.enabled: false` must put `AES601` in the
+/// suppressed set the dispatcher's exact-match helper consults, so the doc
+/// audit's AES601 findings are dropped when the rule is disabled.
+#[test]
+fn architecture_rules_disabled_code_enters_the_suppressed_set() {
+    let content = "architecture:\n  rules:\n    AES601:\n      enabled: false\n";
+    let (config, _) =
+        shared_config_system::utility_config_parser::parse_config_yaml_with_warnings(content);
+    let suppressed = dispatcher::surface_rule_suppression::collect_suppressed_codes(&config);
+    assert!(
+        dispatcher::surface_rule_suppression::is_rule_suppressed(&suppressed, "AES601"),
+        "AES601 must be suppressed when architecture.rules.AES601.enabled is false; got: {suppressed:#?}"
+    );
+}
+
+/// `ignored_rules: [AES601]` in `lint_arwaky.config.yaml` must put `AES601`
+/// in the suppressed set via the shared YAML parser, exactly as the external
+/// lint path consumes the same key.
+#[test]
+fn ignored_rules_entry_enters_the_suppressed_set() {
+    let content = "ignored_rules:\n  - AES601\n";
+    let suppressed =
+        shared_config_system::utility_config_parser::parse_ignored_rules_from_yaml(content);
+    assert!(
+        dispatcher::surface_rule_suppression::is_rule_suppressed(&suppressed, "AES601"),
+        "AES601 must appear in the suppressed set when ignored_rules lists it; got: {suppressed:#?}"
+    );
+}
+
+/// `architecture.rules.AES702.enabled: false` must put `AES702` in the
+/// suppressed set so the structure audit can suppress AES702 findings.
+#[test]
+fn architecture_rules_disabled_code_aes702_enters_the_suppressed_set() {
+    let content = "architecture:\n  rules:\n    AES702:\n      enabled: false\n";
+    let (config, _) =
+        shared_config_system::utility_config_parser::parse_config_yaml_with_warnings(content);
+    let suppressed = dispatcher::surface_rule_suppression::collect_suppressed_codes(&config);
+    assert!(
+        dispatcher::surface_rule_suppression::is_rule_suppressed(&suppressed, "AES702"),
+        "AES702 must appear in the suppressed set when disabled; got: {suppressed:#?}"
+    );
+}
+
 // ── AES605: DESIGN.md heading structure ─────────────────────────────────
 
 /// A DESIGN.md whose H2 set is exactly the template's, so AES605 accepts it.

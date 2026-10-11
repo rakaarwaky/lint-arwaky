@@ -105,6 +105,7 @@ pub struct DocsCommandParams {
     pub path: Option<FilePath>,
     pub format: Format,
     pub doc_orchestrator: Arc<dyn shared_doc_rules::IDocRunnerAggregate>,
+    pub fs_seam: FilesystemSeam,
 }
 
 /// Parameters for the `structure` command.
@@ -294,7 +295,11 @@ pub fn handle_layer_scan(
 /// and calls the doc orchestrator directly on the target path.
 pub fn handle_docs(params: DocsCommandParams) -> ExitCode {
     let root = resolve_root(&params.path);
-    match dispatcher::surface_docs_action::collect_docs(&root, params.doc_orchestrator) {
+    match dispatcher::surface_docs_action::collect_docs(
+        &root,
+        params.doc_orchestrator,
+        &params.fs_seam,
+    ) {
         Ok(findings) => {
             let violations =
                 dispatcher::surface_docs_action::docs_findings_to_violations(&findings);
@@ -394,6 +399,7 @@ pub fn handle_structure(params: StructureCommandParams) -> ExitCode {
     match dispatcher::surface_structure_action::collect_structure(
         &root,
         params.structure_orchestrator,
+        &params.filesystem_seam,
     ) {
         Ok(mut violations) => {
             if let Some(ref filter_str) = params.filter {
