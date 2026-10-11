@@ -1,4 +1,23 @@
 # Changelog
+## 3.10.2 (2026-10-12)
+
+### Features
+
+- feat(supervisor-workflow): add mock-based supervisor workflow crate (#1055)
+
+### Bug Fixes
+
+- fix: correct AES601 protocol-count miscount and AES702 surface/TS false positives; add config-driven rule suppression (#1064)
+
+### Maintenance
+
+- chore(release): v3.10.1 — manual-only auto-release trigger + release notes (#1073)
+- chore(release): v3.10.1 — repair inverted release order from #1054/#1057 (#1068) (#1070)
+- chore(release): v3.9.1 (#1054)
+- chore(release): v3.10.0
+- chore: remove supervisor-workflow crate and its shared kernel support (#1060)
+- refactor(supervisor-workflow): make mock issue data explicitly synthetic (#1058)
+
 ## 3.10.1 (2026-10-12)
 
 - fix: correct AES601 protocol-count miscount and AES702 surface/TS false positives; add config-driven rule suppression (#1064, #1062, #1063)
