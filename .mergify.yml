@@ -56,7 +56,7 @@ merge_queue:
   # and rejects force-pushes without an update_bot_account. The merge commit
   # is squashed away on merge, so main's history stays linear. Also one CI run
   # instead of two.
-  max_parallel_checks: 10
+  max_parallel_checks: 1
   # Only post comments for terminal outcomes (merged or dequeued).
   status_comments: outcomes
   # Show a "Queue this pull request" checkbox so you can click instead of typing.
