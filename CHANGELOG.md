@@ -1,8 +1,12 @@
 # Changelog
 ## 3.10.1 (2026-10-12)
 
-- No significant changes
-- Lockstep version bump to repair release-order inversion from #1054/#1057 (see #1068): `main` carried the `v3.10.0` bump underneath a `v3.9.1` bump, pinning the workspace at 3.9.1. This release re-establishes a clean single release commit on top of `main`.
+- fix: correct AES601 protocol-count miscount and AES702 surface/TS false positives; add config-driven rule suppression (#1064, #1062, #1063)
+- fix: make `architecture.rules.<CODE>.enabled: false` and `ignored_rules: [CODE]` actually silence AES601/AES702 across `check .`, `docs .`, `structure .`, and `scan .` (#1062, #1063)
+- fix: AES702 no longer fires `doc_pair_without_orchestrator` for surface-only or TypeScript package folders that carry `FRD.md` + `BACKLOG.md` but hold no AES-named source files (#1063)
+- chore(mergify): cap merge-queue parallel checks at 1 (#1067)
+- chore(release): v3.10.1 — repair inverted release order from #1054/#1057 (#1068)
+- refactor: release timing is now a manual decision — the `Auto-Release` workflow no longer auto-opens a release PR after every successful CI on `main`; it runs only on `workflow_dispatch` (this change)
 
 ## 3.9.1 (2026-10-09)
 
