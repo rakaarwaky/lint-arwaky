@@ -43,6 +43,7 @@ pub fn count_fr_headings(text: &str) -> Option<usize> {
 }
 
 /// True when the text contains at least one requirement heading in the
+///
 /// The kernel `src` roots the shared contract modules live in: the feature's
 /// contract module is resolved against each documented workspace layout
 /// (`crates/shared`, `modules/shared`, `packages/shared`), so a feature in
@@ -56,28 +57,68 @@ pub fn locate_kernel_srcs(root: &Path) -> Vec<PathBuf> {
         .collect()
 }
 
-/// Number of `pub trait I*Protocol` declarations in the feature's shared
-/// module, walking the module recursively.
+/// Number of capability-seam classes in the feature's shared module,
+/// walking the module recursively.
 ///
-/// A protocol file may declare many classes, so every `.rs` file in the
+/// A protocol file may declare many classes, so every source file in the
 /// module tree is scanned; a class organized in a subdirectory is counted
-/// like one at the top level. `I*Aggregate` traits are composite entry
-/// points rather than capability seams and are excluded. A module that
-/// cannot be read returns `None`, which leaves the caller with nothing to
-/// compare against.
+/// like one at the top level. `I*Aggregate` traits / `*Aggregate` classes
+/// are composite entry points rather than capability seams and are
+/// excluded. A module that cannot be read returns `None`, which leaves
+/// the caller with nothing to compare against.
 ///
-/// Only `.rs` files are read, so an FRD that writes `### IParserProtocol`
-/// as a heading can never be counted as a class; the count is always a
-/// property of the code, never of the document that describes it.
+/// `.rs` and `.py` sources are both read so a Python shared tree counts
+/// identically to a Rust one; documents (FRDs) are never read.
 pub fn count_protocol_traits(module_dir: &Path) -> Option<usize> {
     let mut count = 0;
-    walk_rs_files(module_dir, &mut |_path, text| {
-        count += text
-            .lines()
-            .filter(|line| line.trim().starts_with("pub trait I") && is_protocol_decl(line))
-            .count();
+    walk_source_files(module_dir, &mut |path, text| {
+        count += count_protocol_decls_in_text(path, text);
     })?;
     Some(count)
+}
+
+/// Capability-seam declarations in one source file: Rust `pub trait
+/// I*Protocol` or a Python `I*Protocol` class (the name contract mirrors the
+/// Rust side, so a Python shared tree counts identically to a Rust one).
+/// Python protocol classes only matter in `contract_*` files — a domain model
+/// or aggregate in a non-contract module is not a capability seam.
+fn count_protocol_decls_in_text(path: &Path, text: &str) -> usize {
+    let ext = path.extension().and_then(|e| e.to_str());
+    if ext == Some("py") {
+        let is_contract = path
+            .file_name()
+            .and_then(|n| n.to_str())
+            .is_some_and(|n| n.starts_with("contract_"));
+        if !is_contract {
+            return 0;
+        }
+        count_python_protocol_classes(text)
+    } else {
+        count_rust_protocol_traits(text)
+    }
+}
+
+/// Count `pub trait I*Protocol` capability seams in Rust source text.
+fn count_rust_protocol_traits(text: &str) -> usize {
+    text.lines()
+        .filter(|line| line.trim().starts_with("pub trait I") && is_protocol_decl(line))
+        .count()
+}
+
+/// Count Python `I*Protocol` capability-seam classes in `contract_*` source
+/// text. Matched on the class name alone — symmetric with the Rust counter's
+/// `is_protocol_decl` — never on a stray decorator line.
+fn count_python_protocol_classes(text: &str) -> usize {
+    text.lines()
+        .filter_map(|line| line.trim().strip_prefix("class "))
+        .filter(|rest| {
+            let name: String = rest
+                .chars()
+                .take_while(|c| c.is_alphanumeric() || *c == '_')
+                .collect();
+            name.starts_with('I') && name.ends_with("Protocol") && !name.contains("Aggregate")
+        })
+        .count()
 }
 
 /// Is this line a `pub trait I*Protocol` capability seam?
@@ -100,53 +141,77 @@ fn is_protocol_decl(line: &str) -> bool {
 /// Method names declared anywhere in the feature's contract module, or
 /// `None` when the module cannot be read.
 ///
-/// A method exists when some `fn <name>` it names occurs in one of the
-/// module's `.rs` files — a protocol seam or aggregate trait that carries the
-/// method satisfies the name, and so does its implementation. The walk reuses
-/// the same `.rs`-only recursion as the protocol-class counter, so a method
-/// invented only inside prose keeps reading as missing.
+/// A method exists when some `fn <name>` (Rust) or `def <name>` (Python)
+/// declaration site occurs in one of the module's source files — a protocol
+/// seam or aggregate class that carries the method satisfies the name, and so
+/// does its implementation. The walk reuses the same source-only recursion
+/// as the protocol-class counter, so a method invented only inside prose
+/// keeps reading as missing.
 pub fn contract_method_names(module_dir: &Path) -> Option<HashSet<String>> {
     let mut names = HashSet::new();
-    walk_rs_files(module_dir, &mut |_path, text| {
+    walk_source_files(module_dir, &mut |path, text| {
+        let is_python = path.extension().and_then(|e| e.to_str()) == Some("py");
         for line in text.lines() {
             let trimmed = line.trim();
-            // Only a real declaration site satisfies the name: `fn` must open
-            // the statement after any visibility or async qualifier. A doc
-            // comment mentioning `fn name` is prose, not a declaration.
-            let after_vis = trimmed
-                .strip_prefix("pub ")
-                .or_else(|| trimmed.strip_prefix("pub(crate) "))
-                .unwrap_or(trimmed);
-            let after_async = after_vis.strip_prefix("async ").unwrap_or(after_vis);
-            let Some(rest) = after_async.strip_prefix("fn ") else {
-                continue;
-            };
-            let name: String = rest
-                .chars()
-                .take_while(|c| c.is_alphanumeric() || *c == '_')
-                .collect();
-            if !name.is_empty() {
-                names.insert(name);
+            if is_python {
+                // Python: `def <name>` opens a declaration site after any
+                // decorator/qualifier on the same line (rare but valid in
+                // generated stubs). A docstring line is prose.
+                let Some(rest) = trimmed.strip_prefix("def ") else {
+                    continue;
+                };
+                let name: String = rest
+                    .chars()
+                    .take_while(|c| c.is_alphanumeric() || *c == '_')
+                    .collect();
+                if !name.is_empty() {
+                    names.insert(name);
+                }
+            } else {
+                // Only a real declaration site satisfies the name: `fn` must
+                // open the statement after any visibility or async qualifier.
+                // A doc comment mentioning `fn name` is prose, not a
+                // declaration.
+                let after_vis = trimmed
+                    .strip_prefix("pub ")
+                    .or_else(|| trimmed.strip_prefix("pub(crate) "))
+                    .unwrap_or(trimmed);
+                let after_async = after_vis.strip_prefix("async ").unwrap_or(after_vis);
+                let Some(rest) = after_async.strip_prefix("fn ") else {
+                    continue;
+                };
+                let name: String = rest
+                    .chars()
+                    .take_while(|c| c.is_alphanumeric() || *c == '_')
+                    .collect();
+                if !name.is_empty() {
+                    names.insert(name);
+                }
             }
         }
     })?;
     Some(names)
 }
 
-/// Recursively walk `dir` applying *visit* to every readable `.rs` file.
+/// Recursively walk `dir` applying *visit* to every readable source file
+/// (`.rs` or `.py`).
 ///
 /// `None` is returned only when the starting directory itself cannot be
 /// read; unreadable entries deeper in the walk are skipped, matching the
 /// parse-skip convention.
-fn walk_rs_files(dir: &Path, visit: &mut dyn FnMut(&Path, &str)) -> Option<()> {
+fn walk_source_files(dir: &Path, visit: &mut dyn FnMut(&Path, &str)) -> Option<()> {
     let entries = fs::read_dir(dir).ok()?;
     for entry in entries.flatten() {
         let path = entry.path();
         if path.is_dir() {
-            if walk_rs_files(&path, visit).is_none() {
+            // An unreadable subtree returns None; skip it (parse-skip convention).
+            if walk_source_files(&path, visit).is_none() {
                 continue;
             }
-        } else if path.extension().and_then(|e| e.to_str()) == Some("rs") {
+        } else if matches!(
+            path.extension().and_then(|e| e.to_str()),
+            Some("rs") | Some("py")
+        ) {
             let Ok(text) = fs::read_to_string(&path) else {
                 continue;
             };
