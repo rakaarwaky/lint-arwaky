@@ -236,7 +236,7 @@ pub fn load_ignored_rules(
 }
 
 /// Read the first `lint_arwaky.config.yaml` found walking up from `root_path`.
-fn find_config_content(
+pub fn find_config_content(
     root_path: &std::path::Path,
     fs: &dyn IFilesystemAggregate,
 ) -> Option<String> {
