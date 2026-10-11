@@ -1110,9 +1110,11 @@ name = "doc-rules-lint-arwaky"
 version = "3.9.0"
 dependencies = [
  "criterion",
+ "dispatcher-lint-arwaky",
  "regex",
  "serde_json",
  "shared-common-lint-arwaky",
+ "shared-config-system-lint-arwaky",
  "shared-doc-rules-lint-arwaky",
  "tempfile",
 ]
