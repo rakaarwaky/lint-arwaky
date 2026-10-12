@@ -29,6 +29,11 @@ pub const FEATURE_HEALTH_VIOLATION_FORBIDDEN_FILES: &str = "feature_has_forbidde
 /// A feature folder lacks its FRD.md + BACKLOG.md doc pair.
 pub const FEATURE_HEALTH_VIOLATION_NO_DOC_PAIR: &str = "feature_missing_doc_pair";
 
+/// A feature folder is not mirrored as a `shared/src/<feature>/` subfolder in
+/// its member's kernel, so its contract and taxonomy modules have no home.
+pub const FEATURE_HEALTH_VIOLATION_MISSING_SHARED_SUBFOLDER: &str =
+    "feature_missing_shared_subfolder";
+
 /// A folder carries a doc pair but holds no orchestrator; reverse-direction check.
 pub const FEATURE_HEALTH_VIOLATION_REVERSE_MISSING_ORCHESTRATOR: &str =
     "doc_pair_without_orchestrator";
