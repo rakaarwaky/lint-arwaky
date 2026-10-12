@@ -448,6 +448,12 @@ fn conforming_workspace_reports_no_findings() {
         root.join("crates/calculator/BACKLOG.md").as_path(),
         "# Calculator — BACKLOG",
     );
+    // the shared kernel mirror that a complete feature owes (AES702).
+    write(
+        root.join("crates/shared/src/calculator/contract_calculator_protocol.rs")
+            .as_path(),
+        "pub trait CalculatorProtocol {}",
+    );
     for prefix in [
         "contract_",
         "unit_",
@@ -794,6 +800,117 @@ fn aes702_stays_silent_when_only_capabilities_and_agents_are_present() {
     assert!(
         !has(&findings, "AES702", "feature_has_forbidden_files"),
         "a clean feature folder must not fire; got: {findings:#?}"
+    );
+}
+
+/// AES702 shared mirror: a feature folder must have a mirror subfolder in
+/// the member's shared/src/. Missing it fires feature_missing_shared_subfolder.
+#[test]
+fn aes702_fires_when_feature_lacks_shared_mirror() {
+    let tmp = tempfile::tempdir().unwrap();
+    let root = tmp.path();
+    // Feature folder under crates/
+    write(
+        root.join("crates/calc/src/agent_calc_orchestrator.rs")
+            .as_path(),
+        "pub struct CalcOrchestrator;",
+    );
+    write(
+        root.join("crates/calc/src/capabilities_add_analyzer.rs")
+            .as_path(),
+        "pub struct AddAnalyzer;",
+    );
+    // No crates/shared/src/calc/ subfolder exists.
+    let findings = audit(root);
+    assert!(
+        has(&findings, "AES702", "feature_missing_shared_subfolder"),
+        "expected feature_missing_shared_subfolder, got: {findings:#?}"
+    );
+}
+
+/// AES702 shared mirror stays silent when the shared/src/<feature>/ subfolder
+/// exists for the feature.
+#[test]
+fn aes702_stays_silent_when_feature_has_shared_mirror() {
+    let tmp = tempfile::tempdir().unwrap();
+    let root = tmp.path();
+    write(
+        root.join("crates/calc/src/agent_calc_orchestrator.rs")
+            .as_path(),
+        "pub struct CalcOrchestrator;",
+    );
+    write(
+        root.join("crates/calc/src/capabilities_add_analyzer.rs")
+            .as_path(),
+        "pub struct AddAnalyzer;",
+    );
+    // Shared mirror exists (empty dir is enough for presence check)
+    fs::create_dir_all(root.join("crates/shared/src/calc")).unwrap();
+    let findings = audit(root);
+    assert!(
+        !has(&findings, "AES702", "feature_missing_shared_subfolder"),
+        "a mirrored feature must not fire; got: {findings:#?}"
+    );
+}
+
+/// AES702 shared mirror respects member scope: feature under modules/
+/// mirrors into modules/shared/src/, not crates/shared/src/.
+#[test]
+fn aes702_shared_mirror_member_scoped() {
+    let tmp = tempfile::tempdir().unwrap();
+    let root = tmp.path();
+    // Feature under modules/
+    write(
+        root.join("modules/add/src/agent_add_orchestrator.rs")
+            .as_path(),
+        "pub struct AddOrchestrator;",
+    );
+    write(
+        root.join("modules/add/src/capabilities_sum_analyzer.rs")
+            .as_path(),
+        "pub struct SumAnalyzer;",
+    );
+    // Only modules/shared/src/add/ exists; crates/shared/src/add/ does not.
+    fs::create_dir_all(root.join("modules/shared/src/add")).unwrap();
+    let findings = audit(root);
+    assert!(
+        !has(&findings, "AES702", "feature_missing_shared_subfolder"),
+        "member-scoped mirror must pass; got: {findings:#?}"
+    );
+}
+
+/// AES702 shared mirror does not fire for surface folders — they are not
+/// feature folders and owe no shared mirror.
+#[test]
+fn aes702_shared_mirror_silent_for_surface_folder() {
+    let tmp = tempfile::tempdir().unwrap();
+    let root = tmp.path();
+    // Surface-dominated folder under crates/ (5 surface files, 0 capabilities/agent)
+    write(
+        root.join("crates/cli/surface_scan_command.rs").as_path(),
+        "pub fn scan() {}",
+    );
+    write(
+        root.join("crates/cli/surface_fix_command.rs").as_path(),
+        "pub fn fix() {}",
+    );
+    write(
+        root.join("crates/cli/surface_git_command.rs").as_path(),
+        "pub fn git() {}",
+    );
+    write(
+        root.join("crates/cli/surface_ci_command.rs").as_path(),
+        "pub fn ci() {}",
+    );
+    write(
+        root.join("crates/cli/surface_docs_command.rs").as_path(),
+        "pub fn docs() {}",
+    );
+    // No shared/src/cli/ needed.
+    let findings = audit(root);
+    assert!(
+        !has(&findings, "AES702", "feature_missing_shared_subfolder"),
+        "surface folder must not fire feature_missing_shared_subfolder; got: {findings:#?}"
     );
 }
 

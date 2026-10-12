@@ -111,6 +111,23 @@ pub fn feature_dirs(member: &Path) -> Vec<PathBuf> {
     dirs
 }
 
+/// The subdirectory names under *dir*, empty when the directory is unreadable.
+/// `SKIPPED_DIRS` are excluded, so test/build artefacts never read as a
+/// mirrored feature subfolder.
+pub fn subdirectory_names(dir: &Path) -> Vec<String> {
+    let Ok(entries) = std::fs::read_dir(dir) else {
+        return Vec::new();
+    };
+    let mut names: Vec<String> = entries
+        .flatten()
+        .filter(|entry| entry.path().is_dir())
+        .filter_map(|entry| entry.file_name().to_str().map(|s| s.to_string()))
+        .filter(|name| !SKIPPED_DIRS.contains(&name.as_str()))
+        .collect();
+    names.sort();
+    names
+}
+
 /// Collect unique findings, sorted for stable output.
 pub fn sorted(findings: Vec<StructureFinding>) -> Vec<StructureFinding> {
     let mut seen = std::collections::BTreeSet::new();

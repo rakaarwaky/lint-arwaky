@@ -38,7 +38,8 @@ fn has(findings: &[(String, String)], code: &str, violation_type: &str) -> bool 
         .any(|(c, v)| c == code && v == violation_type)
 }
 
-/// A complete feature folder: both layers plus its doc pair.
+/// A complete feature folder: both layers plus its doc pair, and the shared
+/// kernel subfolder that mirrors the feature.
 fn write_feature(root: &Path, layout: &str, name: &str) {
     let feature = root.join(layout).join(name);
     write(
@@ -51,6 +52,16 @@ fn write_feature(root: &Path, layout: &str, name: &str) {
     );
     write(&feature.join("FRD.md"), "# FRD\n");
     write(&feature.join("BACKLOG.md"), "# BACKLOG\n");
+    // The shared kernel mirror: every feature owes a `<layout>/shared/src/<name>/`
+    // subfolder (AES702 feature_missing_shared_subfolder), so the conforming
+    // feature must create it.
+    write(
+        &root
+            .join(layout)
+            .join("shared")
+            .join(format!("src/{name}/contract_{name}_protocol.rs")),
+        &format!("pub trait {}Protocol {{}}\n", name.to_ascii_uppercase()),
+    );
 }
 
 /// A feature folder whose test suite carries one file per AES704 category.
@@ -83,6 +94,10 @@ fn container_orchestrator_answers_a_request_over_a_workspace() {
     let root = tmp.path();
     write_feature(root, "crates", "calc");
     write_complete_test_suite(root, "crates", "calc");
+    // write_feature creates the shared mirror subfolder, so the kernel now owes
+    // its doc pair; a complete workspace supplies it.
+    write(&root.join("crates/shared/DATA.md"), "# DATA\n");
+    write(&root.join("crates/shared/BACKLOG.md"), "# BACKLOG\n");
 
     assert_eq!(
         audit(root),

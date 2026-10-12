@@ -47,7 +47,8 @@ fn matching<'a>(
         .collect()
 }
 
-/// A complete feature folder with a complete eight-category test suite.
+/// A complete feature folder with a complete eight-category test suite and the
+/// shared kernel subfolder that mirrors the feature.
 fn write_conforming_feature(root: &Path, layout: &str, name: &str) {
     let feature = root.join(layout).join(name);
     write(
@@ -60,6 +61,16 @@ fn write_conforming_feature(root: &Path, layout: &str, name: &str) {
     );
     write(&feature.join("FRD.md"), "# FRD\n");
     write(&feature.join("BACKLOG.md"), "# BACKLOG\n");
+    // The shared kernel mirror: every feature owes a `<layout>/shared/src/<name>/`
+    // subfolder (AES702 feature_missing_shared_subfolder), so the conforming
+    // feature must create it.
+    write(
+        &root
+            .join(layout)
+            .join("shared")
+            .join(format!("src/{name}/contract_{name}_protocol.rs")),
+        &format!("pub trait {}Protocol {{}}\n", name.to_ascii_uppercase()),
+    );
     for prefix in [
         "contract_",
         "unit_",

@@ -59,7 +59,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the full 7-layer specification.
 | Code   | Name               | Severity | Group     | Description                                                                                |
 | -------- | -------------------- | ---------- | ----------- | ---------------------------------------------------------------------------------------------- |
 | AES701 | Shared Folder Purity | HIGH     | Structure | A `shared` folder holds a `capabilities_*`, `agent_*`, or `surface_*` file.                  |
-| AES702 | Feature Folder Health | MEDIUM   | Structure | A feature folder lacks an `agent_*_orchestrator` or a `capabilities_*` file, holds foreign layer files, or lacks its doc pair.                                  |
+| AES702 | Feature Folder Health | MEDIUM   | Structure | A feature folder lacks an `agent_*_orchestrator` or a `capabilities_*` file, holds foreign layer files, lacks its doc pair, or is not mirrored as a `shared/src/<feature>/` subfolder.                                  |
 | AES703 | Surface Folder Purity | MEDIUM   | Structure | A surface folder holds a `capabilities_*`, `agent_*`, or `utility_*` file, or lacks DESIGN.md.              |
 | AES704 | Test Suite Coverage | MEDIUM   | Structure | A feature folder lacks a `tests/` category or its `benches/` benchmark.                                      |
 | AES705 | Member-Root Placement | MEDIUM   | Structure | A `crates/`, `modules/`, or `packages/` root holds a loose `capabilities_*`, `agent_*`, `surface_*`, or `utility_*` file. |
@@ -638,10 +638,13 @@ A feature folder is a member subdirectory (under `crates/`, `modules/`, or `pack
 
 The check is per folder. A member-level orchestrator — one sitting directly under `crates/`, `modules/`, or `packages/` rather than inside a feature — does **not** answer for the folders beneath it. Each feature owns its own orchestration, so a member-level orchestrator is a routing aggregate over the features, and a feature folder missing its own agent is still a split feature.
 
+**Shared kernel mirror.** A feature folder is also mirrored in its member's kernel: the subfolder `shared/src/<feature>/` must exist, where `<feature>` is the folder name with `-` replaced by `_` (the module name). The kernel holds the feature's contract and taxonomy modules, so a feature without that subfolder has no home for them. The mirror is required only for feature folders; a surface folder's shared subfolder is optional and never fires this check.
+
 | Violation type                    | Fires when                                                                    |
 | ------------------------------------ | ------------------------------------------------------------------------------- |
 | `feature_missing_agent`       | The folder holds capabilities but no `agent_*_orchestrator` file of its own. |
 | `feature_missing_capability` | The folder holds an agent orchestrator but no `capabilities_*` file.        |
+| `feature_missing_shared_subfolder` | The feature has no `shared/src/<feature>/` mirror subfolder in its member's kernel. |
 
 ---
 

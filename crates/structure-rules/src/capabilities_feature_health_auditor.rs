@@ -37,6 +37,7 @@ impl IStructureFeatureHealthProtocol for FeatureHealthAuditor {
                 };
                 if inventory.has_capabilities || inventory.has_orchestrator {
                     check_feature_folder(&folder, &folder_rel, &ws_root, &inventory, &mut findings);
+                    check_feature_shared_mirror(&folder, &folder_rel, &member, &mut findings);
                     // Reverse check: a folder that is a real feature (holds
                     // agent_* or capabilities_* files) and carries a doc pair
                     // must hold an orchestrator. Surface-only or non-agent
@@ -203,6 +204,41 @@ fn missing_docs<'a>(folder: &std::path::Path, names: &'a [&'a str]) -> Vec<&'a s
         .collect();
     missing.sort_unstable();
     missing
+}
+
+/// AES702 mirror check: a feature folder's module name must exist as a
+/// subfolder under its member's `shared/src/`. The shared kernel holds the
+/// feature's contract and taxonomy modules, so a feature with no kernel
+/// subfolder has no home for them. Surface folders never reach this check —
+/// their shared subfolders are optional.
+fn check_feature_shared_mirror(
+    folder: &std::path::Path,
+    rel: &str,
+    member: &std::path::Path,
+    findings: &mut Vec<StructureFinding>,
+) {
+    let module = folder_name(folder).replace('-', "_");
+    let kernel_src = member.join(consts::KERNEL_DIR).join("src");
+    // A missing kernel (`shared/src/`) means no mirror can exist for the
+    // feature, so the finding fires rather than the check skipping.
+    if utility_structure_parsers::subdirectory_names(&kernel_src)
+        .into_iter()
+        .any(|name| name == module)
+    {
+        return;
+    }
+    findings.push(
+        StructureFinding::new(
+            consts::RULE_CODE_FEATURE_HEALTH,
+            consts::FEATURE_HEALTH_VIOLATION_MISSING_SHARED_SUBFOLDER,
+            rel.to_string(),
+            format!("feature folder '{rel}' has no mirror subfolder '{module}' in the shared kernel"),
+        )
+        .with_reason(
+            "A feature folder's contract and taxonomy modules live in the shared kernel under a subfolder named after the feature, so a feature without that subfolder has no home for its kernel modules.",
+            format!("Create the '{module}/' subfolder under '{member_display}/shared/src/'.", member_display = member.display()),
+        ),
+    );
 }
 
 /// Recursively check whether *dir* (or a subdirectory) holds a file whose stem
