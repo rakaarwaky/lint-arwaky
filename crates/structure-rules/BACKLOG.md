@@ -7,6 +7,7 @@ Last Updated: 2026-10-02
 
 ## Current Condition
 
+- Done: AES702 shared-kernel mirror check added: a feature folder must be mirrored as a `shared/src/<feature>/` subfolder in its member's kernel. New violation type `feature_missing_shared_subfolder`; surface folders are exempt. `cargo nextest run -p structure-rules-lint-arwaky --lib --tests` → 0 failures. Per-scenario evidence below.
 - Done: AES704 (test-suite coverage) added; the two contract files were renamed to `contract_`/`unit_` prefixes so AES103 passes, and `unit_`, `integration_`, `dogfood_`, `smoke_`, `e2e_`, `acceptance_`, and `benches/bench_structure_rules.rs` were added to satisfy AES704. `cargo nextest run -p structure-rules-lint-arwaky --lib --tests` → 0 failures. Per-scenario evidence below.
 - In Progress: None
 - Blocked: None
@@ -20,6 +21,7 @@ Last Updated: 2026-10-02
 | STRUC-02 | P0 | Done | On Track | None | — | 2026-09-29  |
 | STRUC-03 | P0 | Done | On Track | None | — | 2026-09-29  |
 | STRUC-04 | P0 | Done | On Track | None | — | 2026-10-02  |
+| STRUC-05 | P0 | Done | On Track | None | — | 2026-10-13  |
 
 ## Scenario Evidence
 
@@ -36,6 +38,10 @@ Last Updated: 2026-10-02
 | Feature holds forbidden taxonomy file | AES702 CRITICAL | Automated | `tests/contract_structure_rules.rs::aes702_fires_when_a_feature_folder_holds_forbidden_files` | `d3366d3b` |
 | Feature holds forbidden utility file | AES702 CRITICAL | Automated | `tests/contract_structure_rules.rs::aes702_fires_when_a_feature_folder_holds_forbidden_files` (same test) | `d3366d3b` |
 | Feature holds only capabilities and agents | AES702 silent | Automated | `tests/contract_structure_rules.rs::aes702_stays_silent_when_only_capabilities_and_agents_are_present` | `d3366d3b` |
+| Feature holds no `shared/src/<feature>/` mirror | AES702 CRITICAL | Automated | `tests/contract_structure_rules.rs::aes702_fires_when_feature_lacks_shared_mirror` | `HEAD` |
+| Feature has `shared/src/<feature>/` mirror | AES702 silent | Automated | `tests/contract_structure_rules.rs::aes702_stays_silent_when_feature_has_shared_mirror` | `HEAD` |
+| Feature mirror is member-scoped | AES702 silent | Automated | `tests/contract_structure_rules.rs::aes702_shared_mirror_member_scoped` | `HEAD` |
+| Surface folder has no mirror | AES702 silent | Automated | `tests/contract_structure_rules.rs::aes702_shared_mirror_silent_for_surface_folder` | `HEAD` |
 | Doc pair without orchestrator (reverse) | AES702 CRITICAL | Automated | `tests/contract_structure_rules.rs::aes702_fires_when_a_doc_pair_folder_has_no_orchestrator` | `d3366d3b` |
 | Doc pair with orchestrator present | AES702 silent | Automated | `tests/contract_structure_rules.rs::aes702_silent_when_doc_pair_folder_has_orchestrator` | `d3366d3b` |
 | Utility-only folder (not a feature) | AES702 silent | Automated | `tests/contract_structure_rules.rs::aes702_stays_silent_for_a_folder_carrying_no_feature_files` | `d3366d3b` |
@@ -83,3 +89,4 @@ None
 | 2026-09-29 | Consolidated AES704 into AES702 (feature_missing_doc_pair sub-check) and AES705 into AES703 (surface_missing_design_md sub-check); added feature forbidden-files check; rewrote FRD with 3 FRs | @raka |
 | 2026-09-29 | Aligned BACKLOG.md and FRD.md to HOW-TO templates (AES605 H2 contracts) | @raka |
 | 2026-10-02 | Published **AES704** (test-suite category coverage): a feature folder owning source owes one file per test type in `tests/` plus one `bench_` file. Added `capabilities_test_suite_coverage_auditor.rs`, the `IStructureTestSuiteProtocol` seam, and the four test files plus a criterion bench that AES704 required. Renamed the two pre-existing contract files to `contract_`/`unit_` prefixes so AES103 passes | @raka |
+| 2026-10-13 | Published **AES702 shared-kernel mirror check**: a feature folder must be mirrored as a `shared/src/<feature>/` subfolder in its member's kernel. Added `feature_missing_shared_subfolder` violation type, the `subdirectory_names` parser helper, the `check_feature_shared_mirror` helper in the feature-health auditor, four contract tests, and the RULES_AES.md / FRD / BACKLOG updates. Surface folders are exempt; qwen-web-arwaky's flat `contract_*.py` layout migrates separately | @raka |
