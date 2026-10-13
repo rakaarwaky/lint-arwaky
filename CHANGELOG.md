@@ -1,4 +1,10 @@
 # Changelog
+## 3.11.0 (2026-10-13)
+
+### Features
+
+- feat(structure-rules): AES702 feature_missing_shared_subfolder (#1082)
+
 ## 3.10.3 (2026-10-12)
 
 - No significant changes
