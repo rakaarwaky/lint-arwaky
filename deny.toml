@@ -16,6 +16,10 @@ ignore = [
     # rmcp 3.5.0 and construct only rmcp::transport::stdio in
     # crates/root_mcp_main_entry.rs. Re-review if HTTP/SSE transport is added.
     "RUSTSEC-2026-0189",
+    # unsafe-libyaml is unmaintained (archived) but only a transitive dep via
+    # serde_yaml_ng (YAML config parsing); no safe upstream replacement.
+    # Re-review if a safe YAML parser (saphyr/serde-saphyr) replaces it.
+    "RUSTSEC-2024-0449",
 ]
 yanked = "warn"
 
