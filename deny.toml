@@ -6,7 +6,7 @@ version = 2
 # A stale `ignore` entry that no longer matches any crate in the lock must not
 # hard-fail the advisory gate; report it as a warning so the entry can be
 # cleaned up, but don't block the release on it.
-unencountered-ignored = "warn"
+unused-ignored-advisory = "warn"
 unmaintained = "all"
 ignore = [
     # paste is unmaintained but only a transitive dep via ratatui; no direct usage.
