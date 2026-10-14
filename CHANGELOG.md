@@ -1,4 +1,10 @@
 # Changelog
+## 3.11.1 (2026-10-14)
+
+### Bug Fixes
+
+- fix(report): canonicalize target before deriving the snapshot key (#1088)
+
 ## 3.11.0 (2026-10-13)
 
 ### Features
