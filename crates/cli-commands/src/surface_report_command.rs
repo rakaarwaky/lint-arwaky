@@ -6,7 +6,9 @@ use shared_cli_commands::utility_report_delta::compare;
 use shared_cli_commands::utility_report_renderer::render_report;
 use shared_cli_commands::utility_report_snapshot::{read_store, target_key, write_store};
 use shared_common::{ExitCode, FilePath};
+use shared_filesystem::FilesystemRequest;
 use std::collections::BTreeMap;
+use std::path::Path;
 use std::sync::Arc;
 use tracing::error;
 
@@ -93,11 +95,24 @@ pub fn handle_report(params: ReportCommandParams) -> ExitCode {
         filesystem: Arc::new(params.filesystem_seam.clone()),
         scan_aggregates: params.scan_aggregates.clone(),
     };
-    let target = params
+    let raw_target = params
         .path
         .as_ref()
         .map(|p| p.value.clone())
         .unwrap_or_else(|| ".".to_string());
+    // Canonicalize before deriving the snapshot key: the store is shared by
+    // every project, and `target_key(".")` slugs to "workspace" for all of
+    // them, so a relative target would make each project read and overwrite
+    // the others' baselines. Falling back to the raw string keeps the report
+    // printing when canonicalization fails (e.g. a path that does not exist).
+    let target = params
+        .filesystem_seam
+        .aggregate
+        .execute(FilesystemRequest::canonicalize(Path::new(&raw_target)))
+        .into_paths()
+        .into_iter()
+        .next()
+        .unwrap_or(raw_target);
 
     let violations = match dispatcher::surface_check_action::collect_scan(opts) {
         Ok(v) => v,
