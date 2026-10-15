@@ -8,7 +8,7 @@ pub const LAYER_PREFIXES: &[(&str, &str)] = &[
     ("utility_", "utility"),
     ("capabilities_", "capabilities"),
     ("agent_", "agent"),
-    ("surface_", "surfaces"),
+    ("surface_", "surface"),
     ("root_", "root"),
 ];
 

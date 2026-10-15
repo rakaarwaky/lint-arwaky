@@ -101,7 +101,7 @@ pub fn detect_layer(file: &str, layer_keys: &[String]) -> Option<String> {
         ("capabilities_", "capabilities"),
         ("utility_", "utility"),
         ("agent_", "agent"),
-        ("surface_", "surfaces"),
+        ("surface_", "surface"),
         ("root_", "root"),
     ];
 

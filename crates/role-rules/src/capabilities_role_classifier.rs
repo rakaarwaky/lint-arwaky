@@ -40,7 +40,7 @@ impl IClassificationProtocol for RoleClassifier {
             "capabilities" | "capability" => Some(LayerNameVO::new("capabilities")),
             "utility" => Some(LayerNameVO::new("utility")),
             "agent" => Some(LayerNameVO::new("agent")),
-            "surface" | "surfaces" => Some(LayerNameVO::new("surfaces")),
+            "surface" | "surfaces" => Some(LayerNameVO::new("surface")),
             // `root` is pure DI wiring; unrecognised prefixes are skipped.
             _ => None,
         }

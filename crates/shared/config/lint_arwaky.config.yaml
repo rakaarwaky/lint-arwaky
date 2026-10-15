@@ -194,3 +194,6 @@ architecture:
     AES704:
       enabled: true
       exceptions: []
+    AES705:
+      enabled: true
+      exceptions: []

@@ -219,8 +219,8 @@ fn role_classifier_maps_every_layer_prefix() {
     assert_eq!(layer("capability_x.rs").as_deref(), Some("capabilities"));
     assert_eq!(layer("utility_x.rs").as_deref(), Some("utility"));
     assert_eq!(layer("agent_x.rs").as_deref(), Some("agent"));
-    assert_eq!(layer("surface_x.rs").as_deref(), Some("surfaces"));
-    assert_eq!(layer("surfaces_x.rs").as_deref(), Some("surfaces"));
+    assert_eq!(layer("surface_x.rs").as_deref(), Some("surface"));
+    assert_eq!(layer("surfaces_x.rs").as_deref(), Some("surface"));
 }
 
 #[test]

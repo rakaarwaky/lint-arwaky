@@ -78,7 +78,7 @@ fn each_layer_command_keeps_only_its_own_findings() {
             "agent",
             "crates/orphan-rules/src/agent_orphan_orchestrator.rs",
         ),
-        ("surfaces", "crates/dispatcher/src/surface_check_action.rs"),
+        ("surface", "crates/dispatcher/src/surface_check_action.rs"),
     ];
     for (layer, expected_file) in cases {
         let kept = retain_violations_for_layer(one_per_layer(), layer);
@@ -133,7 +133,7 @@ fn findings_outside_every_layer_are_dropped_by_layer_commands() {
         "capabilities",
         "utility",
         "agent",
-        "surfaces",
+        "surface",
         "root",
     ] {
         let kept = retain_violations_for_layer(mixed.clone(), layer);
@@ -154,7 +154,7 @@ fn an_empty_scan_stays_empty_for_every_layer() {
         "capabilities",
         "utility",
         "agent",
-        "surfaces",
+        "surface",
     ] {
         assert!(
             retain_violations_for_layer(Vec::new(), layer).is_empty(),

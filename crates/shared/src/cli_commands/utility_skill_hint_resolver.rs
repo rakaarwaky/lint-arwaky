@@ -7,14 +7,14 @@ use shared_common::taxonomy_skill_hint_vo::SkillHint;
 use shared_common::taxonomy_skill_hint_vo::resolve_skill_hint;
 
 /// Filename stem prefix → layer name. Mirrors the AES102 prefix convention;
-/// `surfaces` is the layer name the taxonomy routing table uses.
+/// `surface` is the layer name the taxonomy routing table uses.
 const LAYER_PREFIXES: &[(&str, &str)] = &[
     ("taxonomy_", "taxonomy"),
     ("contract_", "contract"),
     ("capabilities_", "capabilities"),
     ("utility_", "utility"),
     ("agent_", "agent"),
-    ("surface_", "surfaces"),
+    ("surface_", "surface"),
     ("root_", "root"),
 ];
 
