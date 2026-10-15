@@ -8,13 +8,13 @@ use shared_config_system::ArchitectureConfig;
 use std::collections::HashMap;
 
 /// Build a minimal ArchitectureConfig with a capabilities layer that forbids
-/// importing from the "agent" and "surfaces" layers.
+/// importing from the "agent" and "surface" layers.
 fn test_config() -> (ArchitectureConfig, LayerMapVO) {
     let mut layers = HashMap::new();
     layers.insert(
         LayerNameVO::new("capabilities"),
         LayerDefinition {
-            forbidden: PatternList::new(vec!["agent", "surfaces"]),
+            forbidden: PatternList::new(vec!["agent", "surface"]),
             allowed: PatternList::new(vec!["taxonomy", "contract", "utility"]),
             ..Default::default()
         },
@@ -53,10 +53,10 @@ fn detects_forbidden_agent_import() {
 }
 
 #[test]
-fn detects_forbidden_surfaces_import() {
+fn detects_forbidden_surface_import() {
     let checker = ArchImportForbiddenChecker::new();
     let (config, layer_map) = test_config();
-    let content = "use surfaces::ui_component;\n";
+    let content = "use surface::ui_component;\n";
     let result = checker
         .check_single_file(
             "/tmp/project/capabilities_service.rs",
@@ -68,7 +68,7 @@ fn detects_forbidden_surfaces_import() {
         .unwrap();
     assert!(
         !result.values.is_empty(),
-        "Should detect forbidden 'surfaces' import from capabilities layer"
+        "Should detect forbidden 'surface' import from capabilities layer"
     );
 }
 

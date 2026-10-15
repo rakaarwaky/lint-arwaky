@@ -187,10 +187,10 @@ impl ArchImportForbiddenChecker {
             .values
             .get(&layer_name_vo)
             .map(|def| {
-                let is_surfaces = layer_name == "surfaces" || layer_name.starts_with("surfaces(");
+                let is_surface = layer_name == "surface" || layer_name.starts_with("surface(");
                 if !def.forbidden.values.is_empty() {
                     def.forbidden.values.clone()
-                } else if is_surfaces {
+                } else if is_surface {
                     vec!["agent".into(), "capabilities".into(), "utility".into()]
                 } else {
                     vec![]

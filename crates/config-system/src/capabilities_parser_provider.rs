@@ -153,10 +153,10 @@ impl IConfigMergeProtocol for ConfigParserProvider {
 /// lock keeps only the embedded rule set.
 fn fold_user_rule_toggles(merged: &mut ArchitectureConfig, user: &ArchitectureConfig) {
     for user_rule in &user.rules {
-        if let Some(embedded) = merged
+        for embedded in merged
             .rules
             .iter_mut()
-            .find(|r| r.rule_type == user_rule.rule_type)
+            .filter(|r| r.rule_type == user_rule.rule_type)
         {
             embedded.enabled = user_rule.enabled.clone();
             for val in &user_rule.exceptions.values {

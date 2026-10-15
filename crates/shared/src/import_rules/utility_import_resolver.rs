@@ -155,7 +155,7 @@ pub fn extract_layer_from_import(segment: &Identity) -> Option<LayerNameVO> {
         "capabilities" => Some(LayerNameVO::new("capabilities")),
         "utility" => Some(LayerNameVO::new("utility")),
         "agent" => Some(LayerNameVO::new("agent")),
-        "surfaces" | "surface" => Some(LayerNameVO::new("surfaces")),
+        "surfaces" | "surface" => Some(LayerNameVO::new("surface")),
         "root" => Some(LayerNameVO::new("root")),
         _ => None,
     }

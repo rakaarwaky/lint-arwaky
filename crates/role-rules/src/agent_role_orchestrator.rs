@@ -169,7 +169,7 @@ impl RoleOrchestrator {
                     );
                 }
                 "root" => {}
-                "surfaces" | "surface"
+                "surface" | "surfaces"
                     if self.is_rule_enabled("AES406") && !self.is_exception("AES406", filename) =>
                 {
                     match shared_role_rules::taxonomy_role_rules_vo::classify_surface_tier(basename)

@@ -242,7 +242,7 @@ impl SuffixPolicyChecker {
 }
 
 /// Extract the base layer name from a potentially specialized layer display string.
-/// e.g. `"surfaces(command)"` → `"surfaces"`, `"utility"` → `"utility"`.
+/// e.g. `"surface(command)"` → `"surface"`, `"utility"` → `"utility"`.
 /// `split('(')` always yields at least one element, so `unwrap_or` is unreachable
 /// but satisfies the linter's no-unwrap policy.
 fn base_layer_of(layer_display: &str) -> &str {

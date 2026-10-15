@@ -166,6 +166,10 @@ fn hardcoded_layers() -> HashMap<LayerNameVO, LayerDefinition> {
                 ]),
                 forbidden_suffix: list(&[]),
             },
+            allowed: list(&["taxonomy", "contract(aggregate)", "utility"]),
+            mandatory: PatternList::default(),
+            forbidden: list(&["agent", "capabilities", "contract(protocol)", "root"]),
+            exceptions: PatternList::default(),
             ..Default::default()
         },
     );

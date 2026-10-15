@@ -2,4 +2,4 @@
 // Used by: orphan-rules (UtilityOrphanAnalyzer) to identify layers that consume utilities
 
 /// Layers that are valid consumers of utility files.
-pub const CONSUMER_LAYERS: &[&str] = &["capabilities", "agent", "surface", "surfaces", "root"];
+pub const CONSUMER_LAYERS: &[&str] = &["capabilities", "agent", "surface", "root"];
