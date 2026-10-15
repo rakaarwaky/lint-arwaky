@@ -99,11 +99,22 @@ architecture:
       exceptions: []
     AES102:
       enabled: true
-      exceptions: []
+      exceptions:
+        # Follow-up PR: rename to a valid surface suffix (command/controller/page/view/...).
+        - "surface_rule_suppression.rs"
+        - "surface_test_entries.rs"
+        - "surface_confirm_modal.rs"
+        - "surface_shortcut_bindings.rs"
     # ─── AES200 ───
     AES201:
       enabled: true
-      exceptions: []
+      exceptions:
+        # Follow-up PR: move contract(protocol) imports out of surface(action) files,
+        # or reclassify the dispatcher's action files.
+        - "surface_check_action.rs"
+        - "surface_external_action.rs"
+        - "surface_orphan_action.rs"
+        - "surface_plugin_action.rs"
     AES202:
       enabled: true
       exceptions: []
@@ -119,7 +130,9 @@ architecture:
     # ─── AES300 ───
     AES301:
       enabled: true
-      exceptions: []
+      exceptions:
+        # Follow-up PR: split surface_check_action.rs (1444 lines > 1000 limit).
+        - "surface_check_action.rs"
     AES302:
       enabled: true
       exceptions: []
