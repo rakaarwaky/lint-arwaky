@@ -19,7 +19,7 @@ fn full_config() -> ArchitectureConfig {
     layers.insert(
         LayerNameVO::new("capabilities"),
         LayerDefinition {
-            forbidden: PatternList::new(vec!["agent", "surfaces"]),
+            forbidden: PatternList::new(vec!["agent", "surface"]),
             allowed: PatternList::new(vec!["taxonomy", "contract", "utility"]),
             ..Default::default()
         },
@@ -27,7 +27,7 @@ fn full_config() -> ArchitectureConfig {
     layers.insert(
         LayerNameVO::new("taxonomy"),
         LayerDefinition {
-            forbidden: PatternList::new(vec!["capabilities", "agent", "surfaces"]),
+            forbidden: PatternList::new(vec!["capabilities", "agent", "surface"]),
             allowed: PatternList::new(vec!["utility"]),
             ..Default::default()
         },
@@ -35,7 +35,7 @@ fn full_config() -> ArchitectureConfig {
     layers.insert(
         LayerNameVO::new("agent"),
         LayerDefinition {
-            forbidden: PatternList::new(vec!["surfaces"]),
+            forbidden: PatternList::new(vec!["surface"]),
             allowed: PatternList::new(vec!["taxonomy", "contract", "utility", "capabilities"]),
             ..Default::default()
         },

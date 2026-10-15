@@ -20,8 +20,8 @@ use shared_common::taxonomy_layer_vo::{Identity, LayerNameVO};
 /// use shared_import_rules_lint_arwaky::utility_scope_matcher::file_belongs_to_scope;
 /// use shared_common::taxonomy_layer_vo::Identity;
 ///
-/// // "surfaces_auth.rs" belongs to layer "surfaces" (no suffix constraint)
-/// let result = file_belongs_to_scope("surfaces_auth.rs", &Identity::new("surfaces"));
+/// // "surface_auth.rs" belongs to layer "surface" (no suffix constraint)
+/// let result = file_belongs_to_scope("surface_auth.rs", &Identity::new("surface"));
 /// assert!(result.is_some());
 /// ```
 fn resolve_scope(scope: &Identity) -> (LayerNameVO, Vec<Identity>) {
@@ -98,7 +98,7 @@ pub fn extract_file_stem(basename: &str) -> &str {
 /// ```rust
 /// use shared_import_rules_lint_arwaky::utility_scope_matcher::extract_layer_prefix;
 ///
-/// assert_eq!(extract_layer_prefix("surfaces_auth"), "surfaces");
+/// assert_eq!(extract_layer_prefix("surface_auth"), "surface");
 /// assert_eq!(extract_layer_prefix("utility_parser"), "utility");
 /// assert_eq!(extract_layer_prefix("unknown_file"), "unknown");
 /// ```

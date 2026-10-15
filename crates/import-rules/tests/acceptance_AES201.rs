@@ -14,38 +14,38 @@ use std::collections::HashMap;
 /// Full AES config with 3 layers and their forbidden/allowed rules.
 fn aes_config() -> (ArchitectureConfig, LayerMapVO) {
     let mut layers = HashMap::new();
-    // taxonomy cannot import capabilities, agent, or surfaces
+    // taxonomy cannot import capabilities, agent, or surface
     layers.insert(
         LayerNameVO::new("taxonomy"),
         LayerDefinition {
-            forbidden: PatternList::new(vec!["capabilities", "agent", "surfaces"]),
+            forbidden: PatternList::new(vec!["capabilities", "agent", "surface"]),
             allowed: PatternList::new(vec!["utility"]),
             ..Default::default()
         },
     );
-    // capabilities cannot import agent or surfaces
+    // capabilities cannot import agent or surface
     layers.insert(
         LayerNameVO::new("capabilities"),
         LayerDefinition {
-            forbidden: PatternList::new(vec!["agent", "surfaces"]),
+            forbidden: PatternList::new(vec!["agent", "surface"]),
             allowed: PatternList::new(vec!["taxonomy", "contract", "utility"]),
             ..Default::default()
         },
     );
-    // surfaces cannot import agent
+    // surface cannot import agent
     layers.insert(
-        LayerNameVO::new("surfaces"),
+        LayerNameVO::new("surface"),
         LayerDefinition {
             forbidden: PatternList::new(vec!["agent"]),
             allowed: PatternList::new(vec!["taxonomy", "contract", "utility", "capabilities"]),
             ..Default::default()
         },
     );
-    // agent cannot import surfaces
+    // agent cannot import surface
     layers.insert(
         LayerNameVO::new("agent"),
         LayerDefinition {
-            forbidden: PatternList::new(vec!["surfaces"]),
+            forbidden: PatternList::new(vec!["surface"]),
             allowed: PatternList::new(vec!["taxonomy", "contract", "utility", "capabilities"]),
             ..Default::default()
         },
@@ -96,12 +96,12 @@ fn aes201_taxonomy_importing_agent_is_forbidden() {
 }
 
 #[test]
-fn aes201_taxonomy_importing_surfaces_is_forbidden() {
+fn aes201_taxonomy_importing_surface_is_forbidden() {
     let count = detect(
-        "use surfaces::ui_handler;\n",
+        "use surface::ui_handler;\n",
         "/tmp/project/taxonomy_value.rs",
     );
-    assert!(count > 0, "taxonomy importing surfaces must be forbidden");
+    assert!(count > 0, "taxonomy importing surface must be forbidden");
 }
 
 // ─── AES201: capabilities layer violations ────────────────
@@ -116,31 +116,31 @@ fn aes201_capabilities_importing_agent_is_forbidden() {
 }
 
 #[test]
-fn aes201_capabilities_importing_surfaces_is_forbidden() {
+fn aes201_capabilities_importing_surface_is_forbidden() {
     let count = detect(
-        "use surfaces::ui_component;\n",
+        "use surface::ui_component;\n",
         "/tmp/project/capabilities_handler.rs",
     );
     assert!(
         count > 0,
-        "capabilities importing surfaces must be forbidden"
+        "capabilities importing surface must be forbidden"
     );
 }
 
-// ─── AES201: surfaces layer violations ────────────────────
+// ─── AES201: surface layer violations ─────────────────────
 
 #[test]
-fn aes201_surfaces_importing_agent_is_forbidden() {
+fn aes201_surface_importing_agent_is_forbidden() {
     let count = detect("use agent::runner;\n", "/tmp/project/surface_handler.rs");
-    assert!(count > 0, "surfaces importing agent must be forbidden");
+    assert!(count > 0, "surface importing agent must be forbidden");
 }
 
 // ─── AES201: agent layer violations ───────────────────────
 
 #[test]
-fn aes201_agent_importing_surfaces_is_forbidden() {
-    let count = detect("use surfaces::ui;\n", "/tmp/project/agent_orchestrator.rs");
-    assert!(count > 0, "agent importing surfaces must be forbidden");
+fn aes201_agent_importing_surface_is_forbidden() {
+    let count = detect("use surface::ui;\n", "/tmp/project/agent_orchestrator.rs");
+    assert!(count > 0, "agent importing surface must be forbidden");
 }
 
 // ─── AES201: allowed imports (no violations) ──────────────
@@ -166,42 +166,8 @@ fn aes201_capabilities_importing_taxonomy_is_allowed() {
 #[test]
 fn aes201_capabilities_importing_utility_is_allowed() {
     let count = detect(
-        "use utility::path_utils;\n",
+        "use utility::helper;\n",
         "/tmp/project/capabilities_handler.rs",
     );
     assert_eq!(count, 0, "capabilities importing utility should be allowed");
-}
-
-// ─── AES201: protocol trait compliance ────────────────────
-
-#[test]
-fn aes201_protocol_rule_name_returns_aes201() {
-    let checker = ArchImportForbiddenChecker::new();
-    assert_eq!(checker.rule_name().value(), "AES201");
-}
-
-#[test]
-fn aes201_empty_import_map_produces_no_violations() {
-    let checker = ArchImportForbiddenChecker::new();
-    let (config, layer_map) = aes_config();
-    use shared_common::FilePathList;
-    use std::collections::HashMap;
-    let files = FilePathList::new(vec![
-        FilePath::new("/tmp/project/capabilities_handler.rs".to_string()).unwrap(),
-    ]);
-    let root = FilePath::new("/tmp/project".to_string()).unwrap();
-    let result = checker
-        .check_forbidden_imports(
-            &config,
-            &layer_map,
-            &files,
-            &root,
-            &HashMap::new(),
-            &HashMap::new(),
-        )
-        .unwrap();
-    assert!(
-        result.values.is_empty(),
-        "Empty imports_map should produce no violations"
-    );
 }

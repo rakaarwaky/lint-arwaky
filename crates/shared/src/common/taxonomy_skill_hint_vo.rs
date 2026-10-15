@@ -9,7 +9,7 @@ const LAYER_SKILLS: &[(&str, &str)] = &[
     ("capabilities", "aes-capabilities"),
     ("utility", "aes-utility"),
     ("agent", "aes-agent"),
-    ("surfaces", "aes-surface"),
+    ("surface", "aes-surface"),
     ("root", "aes-root"),
 ];
 
@@ -62,7 +62,7 @@ pub fn resolve_skill_hint(code: &str, layer: Option<&str>) -> SkillHint {
 }
 
 /// Filename stem prefix → AES layer name. Mirrors the AES102 prefix convention;
-/// `surfaces` is the layer name the taxonomy routing table uses.
+/// `surface` is the layer name the taxonomy routing table uses.
 ///
 /// Lives here, beside the routing table, so every utility resolves the layer
 /// from the shared data instead of importing another utility module (AES201).
@@ -73,7 +73,7 @@ pub fn layer_from_path(file_path: &str) -> Option<&'static str> {
         ("capabilities_", "capabilities"),
         ("utility_", "utility"),
         ("agent_", "agent"),
-        ("surface_", "surfaces"),
+        ("surface_", "surface"),
         ("root_", "root"),
     ];
     let filename = file_path.rsplit(['/', '\\']).next().unwrap_or(file_path);
