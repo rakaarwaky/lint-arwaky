@@ -4,7 +4,7 @@
 
 use ratatui::Terminal;
 use ratatui::backend::TestBackend;
-use tui_lint_arwaky::surface_confirm_modal::ConfirmModal;
+use tui_lint_arwaky::surface_confirm_component::ConfirmModal;
 use tui_lint_arwaky::surface_file_list_view::FileListView;
 use tui_lint_arwaky::surface_path_screen::PathScreen;
 use tui_lint_arwaky::surface_preview_view::PreviewView;

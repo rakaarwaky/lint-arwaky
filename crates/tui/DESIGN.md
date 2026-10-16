@@ -252,11 +252,11 @@ events, not a repainted framebuffer, so the TUI is not reliably
 interpretable by assistive technology. This is a known, accepted
 trade-off of the terminal surface; the help overlay carries the pointer:
 "For screen readers, use `lint-arwaky-cli` instead"
-(`surface_shortcut_bindings.rs::help_text`).
+(`surface_bindings_store.rs::help_text`).
 
 Keyboard-only operation. Every action has a key; no mouse is required.
 The single source of truth is the `SHORTCUTS` table in
-`crates/tui/src/surface_shortcut_bindings.rs`:
+`crates/tui/src/surface_bindings_store.rs`:
 
 | Key            | Action                                          |
 | -------------- | ----------------------------------------------- |

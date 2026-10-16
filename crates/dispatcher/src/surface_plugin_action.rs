@@ -1,8 +1,8 @@
 // PURPOSE: PluginCommandsSurface — adapter/plugin listing business logic, no formatting.
 use shared_common::AdapterNameList;
-use shared_common::taxonomy_adapter_name_vo::ToolName;
 use shared_external_lint::IExternalLintAggregate;
-use shared_filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
+use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared_filesystem::FilesystemRequest;
 use std::sync::Arc;
 
 pub fn collect_adapters(external_lint: Arc<dyn IExternalLintAggregate>) -> AdapterNameList {
@@ -21,7 +21,7 @@ pub struct AdapterDetail {
 
 /// Discover all known adapters and check binary availability via filesystem aggregate.
 pub fn collect_adapters_detailed(
-    tool_resolution: &dyn IToolResolutionProtocol,
+    filesystem: &dyn IFilesystemAggregate,
 ) -> Vec<AdapterDetail> {
     let mut list = vec![
         ("ast_rust_scanner", "Rust AST (built-in)", true),
@@ -49,7 +49,9 @@ pub fn collect_adapters_detailed(
         list.push(AdapterDetail {
             name: b.into(),
             label: l.into(),
-            installed: tool_resolution.is_binary_available(&ToolName::new(b)),
+            installed: filesystem
+                .execute(FilesystemRequest::binary_available(b))
+                .into_binary_available(),
         });
     }
     list

@@ -2,11 +2,12 @@ use crate::agent_config_orchestrator::{ConfigOrchestrator, ConfigOrchestratorDep
 use crate::capabilities_parser_provider::ConfigParserProvider;
 use crate::capabilities_workspace_detector::WorkspaceDetector;
 use crate::capabilities_yaml_reader::ConfigYamlReader;
+use crate::agent_config_file_orchestrator::ConfigFileReader;
 // Utility module wired into entry for orphan reachability (AES504)
 use shared_config_system::utility_config_parser;
 use shared_config_system::{
-    IConfigMergeProtocol, IConfigOrchestratorAggregate, IConfigReadProtocol,
-    IWorkspaceMembersProtocol,
+    IConfigFileReaderAggregate, IConfigMergeProtocol, IConfigOrchestratorAggregate,
+    IConfigReadProtocol, IWorkspaceMembersProtocol,
 };
 use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
@@ -18,6 +19,7 @@ pub struct ConfigContainer {
     reader: Arc<dyn IConfigReadProtocol>,
     parser: Arc<dyn IConfigMergeProtocol>,
     detector: Arc<dyn IWorkspaceMembersProtocol>,
+    file_reader: Arc<dyn IConfigFileReaderAggregate>,
 }
 
 impl ConfigContainer {
@@ -28,7 +30,12 @@ impl ConfigContainer {
     ) -> Self {
         let workspace_detector = Arc::new(WorkspaceDetector::new(io.clone()));
         let yaml_reader = Arc::new(ConfigYamlReader::new(io.clone()));
-        let parser = Arc::new(ConfigParserProvider::new(io));
+        let parser = Arc::new(ConfigParserProvider::new(io.clone()));
+        let file_reader = Arc::new(ConfigFileReader::new(
+            io.clone(),
+            yaml_reader.clone(),
+            Some(filesystem.clone()),
+        ));
 
         Self {
             orchestrator: Arc::new(ConfigOrchestrator::new(ConfigOrchestratorDeps {
@@ -40,6 +47,7 @@ impl ConfigContainer {
             reader: yaml_reader,
             parser,
             detector: workspace_detector,
+            file_reader,
         }
     }
 
@@ -61,6 +69,10 @@ impl ConfigContainer {
 
     pub fn detector(&self) -> Arc<dyn IWorkspaceMembersProtocol> {
         self.detector.clone()
+    }
+
+    pub fn file_reader(&self) -> Arc<dyn IConfigFileReaderAggregate> {
+        self.file_reader.clone()
     }
 
     /// Get default AES configuration (from shared parser).

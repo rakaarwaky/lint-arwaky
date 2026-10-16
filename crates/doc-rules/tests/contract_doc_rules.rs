@@ -2225,9 +2225,9 @@ fn architecture_rules_disabled_code_enters_the_suppressed_set() {
     let content = "architecture:\n  rules:\n    AES601:\n      enabled: false\n";
     let (config, _) =
         shared_config_system::utility_config_parser::parse_config_yaml_with_warnings(content);
-    let suppressed = dispatcher::surface_rule_suppression::collect_suppressed_codes(&config);
+    let suppressed = dispatcher::surface_suppression_hook::collect_suppressed_codes(&config);
     assert!(
-        dispatcher::surface_rule_suppression::is_rule_suppressed(&suppressed, "AES601"),
+        dispatcher::surface_suppression_hook::is_rule_suppressed(&suppressed, "AES601"),
         "AES601 must be suppressed when architecture.rules.AES601.enabled is false; got: {suppressed:#?}"
     );
 }
@@ -2241,7 +2241,7 @@ fn ignored_rules_entry_enters_the_suppressed_set() {
     let suppressed =
         shared_config_system::utility_config_parser::parse_ignored_rules_from_yaml(content);
     assert!(
-        dispatcher::surface_rule_suppression::is_rule_suppressed(&suppressed, "AES601"),
+        dispatcher::surface_suppression_hook::is_rule_suppressed(&suppressed, "AES601"),
         "AES601 must appear in the suppressed set when ignored_rules lists it; got: {suppressed:#?}"
     );
 }
@@ -2253,9 +2253,9 @@ fn architecture_rules_disabled_code_aes702_enters_the_suppressed_set() {
     let content = "architecture:\n  rules:\n    AES702:\n      enabled: false\n";
     let (config, _) =
         shared_config_system::utility_config_parser::parse_config_yaml_with_warnings(content);
-    let suppressed = dispatcher::surface_rule_suppression::collect_suppressed_codes(&config);
+    let suppressed = dispatcher::surface_suppression_hook::collect_suppressed_codes(&config);
     assert!(
-        dispatcher::surface_rule_suppression::is_rule_suppressed(&suppressed, "AES702"),
+        dispatcher::surface_suppression_hook::is_rule_suppressed(&suppressed, "AES702"),
         "AES702 must appear in the suppressed set when disabled; got: {suppressed:#?}"
     );
 }

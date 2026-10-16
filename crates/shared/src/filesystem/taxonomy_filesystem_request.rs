@@ -81,6 +81,14 @@ pub enum FilesystemRequest {
     ReadDirEntries { dir: PathBuf },
     /// Check whether a filesystem path exists.
     PathExists { path: PathBuf },
+    /// Check whether a named binary is available on the system PATH.
+    BinaryAvailable { bin_name: String },
+    /// Check whether a path belongs to a workspace member.
+    IsMemberPath { path: shared_common::FilePath },
+    /// Parse a batch of file entries and fill `parse_metadata` in place.
+    ParseAll { entries: Vec<crate::FileEntry> },
+    /// Return the cached imports for a single source file.
+    ImportsFor { path: std::path::PathBuf },
 }
 
 impl FilesystemRequest {
@@ -250,5 +258,20 @@ impl FilesystemRequest {
         Self::PathExists {
             path: path.to_path_buf(),
         }
+    }
+
+    pub fn binary_available(bin_name: &str) -> Self {
+        Self::BinaryAvailable {
+            bin_name: bin_name.to_string(),
+        }
+    }
+    pub fn is_member_path(path: shared_common::FilePath) -> Self {
+        Self::IsMemberPath { path }
+    }
+    pub fn parse_all(entries: Vec<crate::FileEntry>) -> Self {
+        Self::ParseAll { entries }
+    }
+    pub fn imports_for(path: &std::path::Path) -> Self {
+        Self::ImportsFor { path: path.to_path_buf() }
     }
 }

@@ -18,6 +18,7 @@ pub mod capabilities_workspace_root_finder; // FR-005
 
 // ── Agent (orchestration) ──
 pub mod agent_filesystem_orchestrator;
+pub mod agent_filesystem_pipeline_orchestrator;
 
 // ── Root (composition, wiring) ──
 pub mod root_filesystem_container;

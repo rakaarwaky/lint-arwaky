@@ -22,12 +22,10 @@ use shared_structure_rules::contract_structure_aggregate::IStructureAggregate;
 pub struct CommonDeps {
     pub filesystem: Arc<dyn IFilesystemAggregate>,
     pub filesystem_io: Arc<dyn shared_filesystem::IFileSystemIOProtocol>,
-    pub filesystem_workspace: Arc<dyn shared_filesystem::IWorkspaceProtocol>,
-    pub filesystem_tool_resolution: Arc<dyn shared_filesystem::IToolResolutionProtocol>,
     pub filesystem_parser: Arc<dyn shared_filesystem::IParserProtocol>,
     pub fs_seam: Arc<dispatcher::surface_check_action::FilesystemSeam>,
     pub config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
-    pub config_parser: Arc<dyn shared_config_system::IConfigMergeProtocol>,
+    pub config_file_reader: Arc<dyn shared_config_system::IConfigFileReaderAggregate>,
     pub config_reader: Arc<dyn shared_config_system::IConfigReadProtocol>,
     pub code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
     pub import_orchestrator: Arc<dyn IImportRunnerAggregate>,
@@ -51,12 +49,11 @@ impl CommonDeps {
         let fs_container = filesystem::root_filesystem_container::FilesystemContainer::new();
         let filesystem: Arc<dyn IFilesystemAggregate> = fs_container.orchestrator();
         let filesystem_io = fs_container.io();
-        let filesystem_workspace = fs_container.workspace();
         let filesystem_tool_resolution = fs_container.tool_resolution();
         let filesystem_parser = fs_container.parser();
         let fs_seam = Arc::new(dispatcher::surface_check_action::FilesystemSeam {
-            workspace: filesystem_workspace.clone(),
-            parser: filesystem_parser.clone(),
+            workspace: filesystem.clone(),
+            parser: filesystem.clone(),
             aggregate: filesystem.clone(),
         });
 
@@ -65,6 +62,7 @@ impl CommonDeps {
             filesystem_io.clone(),
         );
         let config_orchestrator = config_container.orchestrator();
+        let config_file_reader = config_container.file_reader();
 
         let code_analysis_linter =
             quality_rules::root_quality_rules_container::CodeAnalysisContainer::from_orchestrator(
@@ -79,7 +77,7 @@ impl CommonDeps {
                 ".",
                 filesystem.clone(),
                 filesystem_io.clone(),
-                filesystem_workspace.clone(),
+                fs_container.workspace(),
                 filesystem_parser.clone(),
             );
         let import_orchestrator = import_container.orchestrator();
@@ -109,7 +107,7 @@ impl CommonDeps {
                 &config_orchestrator,
                 ".",
                 filesystem.clone(),
-                filesystem_workspace.clone(),
+                fs_container.workspace(),
             );
         let orphan_orchestrator = orphan_container.analyzer();
 
@@ -151,15 +149,23 @@ impl CommonDeps {
             dyn Fn() -> dispatcher::surface_check_action::FilesystemSeam + Send + Sync,
         > = Arc::new(|| {
             let c = filesystem::root_filesystem_container::FilesystemContainer::new();
+            let orchestrator = c.orchestrator();
             dispatcher::surface_check_action::FilesystemSeam {
-                workspace: c.workspace(),
-                parser: c.parser(),
-                aggregate: c.orchestrator(),
+                workspace: orchestrator.clone(),
+                parser: orchestrator.clone(),
+                aggregate: orchestrator,
             }
         });
-        let orphan_factory: Arc<OrphanFactory> = Arc::new(|config, fs, ws| {
+        let orphan_factory: Arc<OrphanFactory> = Arc::new(|config, fs, _fs2| {
             orphan_rules::root_orphan_detector_container::OrphanContainer::new_with_config(
-                config, fs, ws,
+                config,
+                fs.clone(),
+                // The workspace protocol is still required internally by the
+                // orphan detector; it is not exposed through the surface layer.
+                {
+                    let c = filesystem::root_filesystem_container::FilesystemContainer::new();
+                    c.workspace()
+                },
             )
             .analyzer()
         });
@@ -186,13 +192,11 @@ impl CommonDeps {
         CommonDeps {
             filesystem,
             filesystem_io,
-            filesystem_workspace,
-            filesystem_tool_resolution,
             filesystem_parser,
             fs_seam,
             config_orchestrator,
-            config_parser: config_container.parser(),
-            config_reader: config_container.lister(),
+            config_file_reader,
+                        config_reader: config_container.lister(),
             code_analysis_linter,
             import_orchestrator,
             naming_orchestrator,

@@ -19,14 +19,15 @@ pub fn build_scan_aggregates(
     let fs_container = filesystem::root_filesystem_container::FilesystemContainer::new();
     let filesystem = fs_container.orchestrator();
     let fs_io = fs_container.io();
+    let fs_orchestrator = fs_container.orchestrator();
+    let fs_tool_resolution = fs_container.tool_resolution();
     let fs_workspace = fs_container.workspace();
     let fs_parser = fs_container.parser();
-    let fs_tool_resolution = fs_container.tool_resolution();
 
     let fs_seam = std::sync::Arc::new(
         dispatcher_lint_arwaky::surface_check_action::FilesystemSeam {
-            workspace: fs_workspace.clone(),
-            parser: fs_parser.clone(),
+            workspace: fs_orchestrator.clone(),
+            parser: fs_orchestrator.clone(),
             aggregate: filesystem.clone(),
         },
     );
@@ -99,6 +100,7 @@ pub fn build_scan_aggregates(
         naming,
         external,
         orphan,
+        config_file_reader: config_container.file_reader(),
         config: config_orchestrator,
         structure,
         doc,

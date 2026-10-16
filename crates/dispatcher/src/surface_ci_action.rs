@@ -1,7 +1,7 @@
 // PURPOSE: CI entry point — CI threshold validation business logic, no formatting.
 use std::sync::Arc;
 
-use crate::surface_test_entries;
+use crate::surface_entries_store;
 use shared_common::{BooleanVO, FilePath, Score, Severity, Threshold};
 use shared_config_system::{ConfigRequest, IConfigOrchestratorAggregate};
 use shared_filesystem::FilesystemRequest;
@@ -132,7 +132,7 @@ pub fn collect_ci(
         .execute(FilesystemRequest::FileList)
         .into_file_list();
     let naming_tests =
-        surface_test_entries::build_test_entries(&deps.filesystem, root_path, &ignored.values);
+        surface_entries_store::build_test_entries(&deps.filesystem, root_path, &ignored.values);
     let naming_res = run_isolated("naming", &mut panics, || {
         deps.naming_orchestrator
             .execute(NamingRequest::audit_with_tests(

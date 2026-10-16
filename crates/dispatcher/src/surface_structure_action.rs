@@ -24,16 +24,22 @@ pub fn collect_structure(
     root: &str,
     structure_orchestrator: Arc<dyn IStructureAggregate>,
     fs_seam: &crate::surface_check_action::FilesystemSeam,
+    config_file_reader: &dyn shared_config_system::IConfigFileReaderAggregate,
 ) -> Result<Vec<ViolationItem>, String> {
     if !std::path::Path::new(root).is_dir() {
         return Err(format!("Error: path '{root}' does not exist"));
     }
-    let suppressed = crate::surface_rule_suppression::load_suppressed_rule_codes(root, fs_seam);
+    let suppressed =
+        crate::surface_suppression_hook::load_suppressed_rule_codes(
+            root,
+            fs_seam,
+            config_file_reader,
+        );
     let StructureResponse::Findings { findings } =
         structure_orchestrator.execute(StructureRequest::audit_all(root));
     Ok(findings
         .into_iter()
-        .filter(|f| !crate::surface_rule_suppression::is_rule_suppressed(&suppressed, &f.code))
+        .filter(|f| !crate::surface_suppression_hook::is_rule_suppressed(&suppressed, &f.code))
         .map(|f| {
             let code = shared_common::ErrorCode::raw(f.code.clone());
             // Structure findings carry paths relative to the audited root. Resolve them

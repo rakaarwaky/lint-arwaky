@@ -34,6 +34,11 @@ pub trait IConfigReadProtocol: Send + Sync {
         &self,
         project_root: &FilePath,
     ) -> Result<Vec<(ConfigLanguage, FilePath)>, ConfigError>;
+
+    /// Parse a raw YAML config string into its `adapters:` entry list.
+    /// Returns an empty vector when the string carries no `adapters:` key,
+    /// so callers can fall back to the built-in default adapter set.
+    fn read_config_from_content(&self, content: &str) -> Vec<crate::AdapterEntry>;
 }
 
 /// FR-002: Discover all workspace member directories under crates/packages/modules.

@@ -15,15 +15,17 @@ fn main() -> anyhow::Result<()> {
         dyn Fn() -> dispatcher::surface_check_action::FilesystemSeam + Send + Sync,
     > = Arc::new(|| {
         let c = filesystem::root_filesystem_container::FilesystemContainer::new();
+        let orchestrator = c.orchestrator();
         dispatcher::surface_check_action::FilesystemSeam {
-            workspace: c.workspace(),
-            parser: c.parser(),
-            aggregate: c.orchestrator(),
+            workspace: orchestrator.clone(),
+            parser: orchestrator.clone(),
+            aggregate: orchestrator,
         }
     });
-    let orphan_factory: Arc<OrphanFactory> = Arc::new(|config, fs, ws| {
+    let orphan_factory: Arc<OrphanFactory> = Arc::new(|config, fs, _fs2| {
+        let c = filesystem::root_filesystem_container::FilesystemContainer::new();
         orphan_rules::root_orphan_detector_container::OrphanContainer::new_with_config(
-            config, fs, ws,
+            config, fs, c.workspace(),
         )
         .analyzer()
     });
@@ -33,8 +35,6 @@ fn main() -> anyhow::Result<()> {
         tui::surface_lint_action::SurfaceLintExecutor::new(
             deps.code_analysis_linter,
             deps.filesystem.clone(),
-            deps.filesystem_workspace.clone(),
-            deps.filesystem_tool_resolution.clone(),
             deps.fs_seam.clone(),
             fs_factory,
             orphan_factory,
@@ -43,7 +43,7 @@ fn main() -> anyhow::Result<()> {
         .with_setup(deps.setup_orchestrator)
         .with_maintenance(deps.maintenance_orchestrator)
         .with_hook_port(deps.git_hooks_aggregate)
-        .with_config(deps.config_orchestrator)
+        .with_config(deps.config_orchestrator, deps.config_file_reader)
         .with_external_lint(deps.external_lint)
         .with_orphan(deps.orphan_orchestrator)
         .with_import_orchestrator(deps.import_orchestrator)

@@ -423,7 +423,11 @@ impl IFilesystemAggregate for RecordingFilesystem {
             | FilesystemRequest::ExtendImportCache { .. }
             | FilesystemRequest::ImportListSnapshot
             | FilesystemRequest::UsedIdentifiersAll
-            | FilesystemRequest::DetectProjectLanguages { .. } => {
+            | FilesystemRequest::DetectProjectLanguages { .. }
+            | FilesystemRequest::BinaryAvailable { .. }
+            | FilesystemRequest::IsMemberPath { .. }
+            | FilesystemRequest::ParseAll { .. }
+            | FilesystemRequest::ImportsFor { .. } => {
                 FilesystemResponse::OpOk { ok: true }
             }
         }
