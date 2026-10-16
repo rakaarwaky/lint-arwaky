@@ -10,6 +10,9 @@ thresholds:
 
 # ─── Adapters ─────────────────────────────────────────────────────────
 # All adapters listed. The system auto-filters by detected language.
+# This list is also authoritative: `scan`/`check`/`external` only run the
+# adapters named here, so an adapter that is not listed is never invoked —
+# CI and TEST.md §1 install exactly this set.
 adapters:
   # Rust
   - name: "clippy"
@@ -32,7 +35,7 @@ adapters:
     weight: 1.0
   - name: "prettier"
     weight: 1.0
-  # Markdown — needs `markdownlint-cli2` (or `markdownlint-cli`) on PATH.
+  # Markdown
   - name: "markdownlint"
     weight: 1.0
   # Internal
@@ -41,30 +44,35 @@ adapters:
 
 ignored_rules:
   # Rule-level suppressions, applied to every linter's findings. Matched as a
-  # case-insensitive substring of the violation code: a bare `MD013` silences
-  # every adapter's MD013, `AES2` silences a whole AES range.
+  # case-insensitive substring of the violation code, so `MD013` silences every
+  # adapter's MD013 and `AES2` silences a whole AES range.
   #
-  # External-tool rules go here too, which is why this file needs no per-tool
-  # companion config: a project's markdownlint policy is the `markdownlint::`
-  # entries below. Add `markdownlint` to `adapters:` above to switch the adapter
-  # on, then silence individual rules by their reported code:
-  #   ignored_rules:
-  #     - "markdownlint::MD013"
-  #
-  # Off by default, because most projects write documentation the way this
-  # tool's own docs are written:
-  #   MD013 line-length - spec tables carry a full rule code, a path and a
-  #     command on one row so each table stays scannable as a single unit.
-  #   MD060 table-column-style - tables are written compact (pipes tight
-  #     against the cell text), not column-aligned.
-  #   MD033 inline HTML - `<Type>` is Rust/TS generic notation in prose and
-  #     code spans, not markup.
-  #   MD024 duplicate heading - per-layer Purpose/Components sections and
-  #     per-version CHANGELOG entries repeat headings on purpose.
+  # The markdownlint policy lives here rather than in a separate
+  # `.markdownlint-cli2.jsonc`: `markdownlint-cli2` reads policy only from the
+  # directory it runs in and never walks up, so a tool-specific file would have
+  # to be duplicated into every scan root in the repo. Keeping it beside
+  # `adapters:` makes this file the single source of truth for what runs and
+  # what is reported.
   #
   # The structural rules (MD012, MD022, MD031, MD032, MD040, MD047, MD056,
-  # MD058) deliberately stay enabled - they catch malformed tables and
-  # unlabelled code fences, which have surfaced real defects.
+  # MD058) deliberately stay enabled — they are what catches a malformed table
+  # or an unlabelled code fence. Enabling markdownlint surfaced real defects
+  # through them, including ten BACKLOG.md tables whose header declared 5
+  # columns against 6-cell rows.
+  #
+  # These four are off because this repository's documentation style collides
+  # with them:
+  #   MD013 line-length — spec tables carry a full rule code, a path and a
+  #     command on one row so each table stays scannable as a single unit.
+  #   MD060 table-column-style — tables are written compact (pipes tight
+  #     against the cell text), not column-aligned.
+  #   MD033 inline HTML — `<Type>` is Rust/TS generic notation in prose and
+  #     code spans, not markup.
+  #   MD024 duplicate heading — ARCHITECTURE.md repeats Purpose/Components/
+  #     Dependencies/Special Rules once per AES layer, by design, and CHANGELOG.md
+  #     repeats Added/Changed/Fixed per version entry. This silences the rule
+  #     outright, so a genuine duplicate heading under one parent is
+  #     no longer reported; nothing in this repo currently relies on that.
   - "markdownlint::MD013"
   - "markdownlint::MD060"
   - "markdownlint::MD033"
@@ -78,9 +86,6 @@ ignored_paths: []
 # policies, code-quality limits — are fixed in the tool, not configurable. They
 # live in `crates/shared/src/config_system/utility_architecture_constants.rs` and
 # are compiled into the binary, so every project enforces the same architecture.
-#
-# This section carries only what a project may change: whether a rule runs and
-# which files it skips.
 architecture:
   enabled: true
   rules:
@@ -89,9 +94,6 @@ architecture:
       enabled: true
       exceptions: []
     AES102:
-      enabled: true
-      exceptions: []
-    AES103:
       enabled: true
       exceptions: []
     # ─── AES200 ───
@@ -189,11 +191,5 @@ architecture:
       enabled: true
       exceptions: []
     AES703:
-      enabled: true
-      exceptions: []
-    AES704:
-      enabled: true
-      exceptions: []
-    AES705:
       enabled: true
       exceptions: []
