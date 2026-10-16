@@ -337,7 +337,7 @@ static RULES: &[&[&str]] = &[
     &[
         "AES201",
         "surface(hook|store|action|screen|router)",
-        "taxonomy",
+        "taxonomy,contract(aggregate),utility",
         "",
         "agent,capabilities,contract(protocol),surface(command|controller|page|entry),root",
         "",
@@ -346,7 +346,7 @@ static RULES: &[&[&str]] = &[
     &[
         "AES201",
         "surface(component|view|layout)",
-        "taxonomy",
+        "taxonomy,contract(aggregate),utility",
         "",
         "agent,contract,capabilities,surface(command|controller|page|entry|hook|store|action|screen|router),root",
         "",
@@ -454,7 +454,7 @@ static RULES: &[&[&str]] = &[
     &[
         "AES202",
         "surface(hook|store|action|screen|router)",
-        "taxonomy",
+        "taxonomy,contract(aggregate),utility",
         "",
         "agent,capabilities,contract(protocol),surface(command|controller|page|entry),root",
         "",
@@ -463,7 +463,7 @@ static RULES: &[&[&str]] = &[
     &[
         "AES202",
         "surface(component|view|layout)",
-        "taxonomy",
+        "taxonomy,contract(aggregate),utility",
         "",
         "agent,contract,capabilities,surface(command|controller|page|entry|hook|store|action|screen|router),root",
         "",

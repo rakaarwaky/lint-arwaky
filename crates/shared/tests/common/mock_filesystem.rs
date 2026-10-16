@@ -469,6 +469,18 @@ impl IFilesystemAggregate for MockFilesystem {
             | FilesystemRequest::SetPermissions { .. }
             | FilesystemRequest::Canonicalize { .. }
             | FilesystemRequest::ReadDirEntries { .. } => FilesystemResponse::OpOk { ok: false },
+            FilesystemRequest::BinaryAvailable { .. } => {
+                FilesystemResponse::BinaryAvailable { available: false }
+            }
+            FilesystemRequest::IsMemberPath { .. } => {
+                FilesystemResponse::IsMember { is_member: false }
+            }
+            FilesystemRequest::ParseAll { entries } => {
+                FilesystemResponse::ParsedEntries { entries }
+            }
+            FilesystemRequest::ImportsFor { .. } => FilesystemResponse::Imports {
+                entries: Vec::new(),
+            },
         }
     }
 }

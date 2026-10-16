@@ -32,92 +32,6 @@ use tui_lint_arwaky::{AppState, PanelFocus};
 
 // ─── Stub filesystem aggregates (never touched by a mouse click) ──
 #[derive(Debug)]
-struct StubWorkspace;
-
-impl IWorkspaceProtocol for StubWorkspace {
-    fn workspace_root(&self, _start: &FilePath) -> Option<std::path::PathBuf> {
-        None
-    }
-
-    fn find_workspace_root_from_path(
-        &self,
-        _start: &std::path::Path,
-    ) -> Result<std::path::PathBuf, std::io::Error> {
-        Err(std::io::Error::new(std::io::ErrorKind::NotFound, "stub"))
-    }
-
-    fn is_member_path(&self, _path: &FilePath) -> bool {
-        false
-    }
-
-    fn is_leaf_member_path(&self, _path: &FilePath) -> bool {
-        false
-    }
-
-    fn detect_source_dir(&self, _project_root: &std::path::Path) -> std::path::PathBuf {
-        std::path::PathBuf::new()
-    }
-
-    fn detect_language_from_path(&self, _path: &str) -> ConfigLanguage {
-        ConfigLanguage::Rust
-    }
-
-    fn check_wired_in_container(
-        &self,
-        _workspace_root: &std::path::Path,
-        _identifiers: &PatternList,
-    ) -> bool {
-        false
-    }
-
-    fn detect_project_languages(&self, _root: &std::path::Path) -> ProjectLanguagesVO {
-        ProjectLanguagesVO::default()
-    }
-
-    fn resolve_orphan_module_path(
-        &self,
-        _root: &std::path::Path,
-        _base_dir: &std::path::Path,
-        _module_path: &str,
-    ) -> Option<std::path::PathBuf> {
-        None
-    }
-}
-
-#[derive(Debug)]
-struct StubParser;
-
-impl IParserProtocol for StubParser {
-    fn parse_warnings(&self) -> &[ParseWarning] {
-        &[]
-    }
-
-    fn import_list(&self) -> Vec<shared_filesystem::taxonomy_filesystem_vo::ImportEntry> {
-        Vec::new()
-    }
-
-    fn parse_all(&self, _files: &mut [shared_filesystem::taxonomy_filesystem_vo::FileEntry]) {}
-
-    fn imports_for(
-        &self,
-        _path: &std::path::Path,
-    ) -> Vec<shared_filesystem::taxonomy_filesystem_vo::ImportEntry> {
-        Vec::new()
-    }
-
-    fn extract(
-        &self,
-        _path: &std::path::Path,
-        _content: &str,
-        _language: Language,
-    ) -> Vec<shared_filesystem::taxonomy_filesystem_vo::ImportEntry> {
-        Vec::new()
-    }
-
-    fn resolve_barrel_imports(&self, _root_dir: &std::path::Path) {}
-}
-
-#[derive(Debug)]
 struct StubFilesystemAggregate;
 
 impl IFilesystemAggregate for StubFilesystemAggregate {
@@ -126,64 +40,6 @@ impl IFilesystemAggregate for StubFilesystemAggregate {
         _request: shared_filesystem::taxonomy_filesystem_request::FilesystemRequest,
     ) -> shared_filesystem::taxonomy_filesystem_response::FilesystemResponse {
         unimplemented!("mouse click tests never invoke the filesystem aggregate")
-    }
-}
-
-#[derive(Debug)]
-struct StubToolResolution;
-
-impl IToolResolutionProtocol for StubToolResolution {
-    fn is_executable_in_path(&self, _executable: &ToolName) -> bool {
-        false
-    }
-
-    fn is_binary_available(&self, _bin_name: &ToolName) -> bool {
-        false
-    }
-
-    fn has_local_bin(&self, _working_dir: &std::path::Path, _executable: &ToolName) -> bool {
-        false
-    }
-
-    fn resolve_js_cmd(
-        &self,
-        _executable: &ToolName,
-        _args: Vec<String>,
-        _working_dir: &FilePath,
-    ) -> Option<Vec<String>> {
-        None
-    }
-
-    fn resolve_js_working_dir(&self, path: &FilePath) -> FilePath {
-        path.clone()
-    }
-
-    fn resolve_cargo_working_dir(&self, path: &FilePath) -> FilePath {
-        path.clone()
-    }
-
-    fn resolve_cargo_lock_working_dir(&self, path: &FilePath) -> FilePath {
-        path.clone()
-    }
-
-    fn has_config_file(&self, _dir: &std::path::Path) -> bool {
-        false
-    }
-
-    fn has_cargo_toml(&self, _path: &FilePath) -> Option<FilePath> {
-        None
-    }
-
-    fn has_cargo_lock(&self, _path: &FilePath) -> Option<FilePath> {
-        None
-    }
-
-    fn is_python_file_recursive(&self, _path: &FilePath) -> bool {
-        false
-    }
-
-    fn default_working_dir(&self, path: &FilePath) -> FilePath {
-        path.clone()
     }
 }
 
@@ -199,20 +55,17 @@ impl ICodeAnalysisAggregate for StubCodeAnalysis {
 // ─── Handler wiring ─────────────────────────────────────────────────
 
 fn handler() -> SurfaceActionHandler {
-    let workspace = Arc::new(StubWorkspace);
-    let parser = Arc::new(StubParser);
-    let tool_resolution = Arc::new(StubToolResolution);
     let fs_agg = Arc::new(StubFilesystemAggregate);
     let code_analysis = Arc::new(StubCodeAnalysis);
 
     let fs_seam = Arc::new(FilesystemSeam {
-        workspace: workspace.clone(),
-        parser: parser.clone(),
+        workspace: fs_agg.clone(),
+        parser: fs_agg.clone(),
         aggregate: fs_agg.clone(),
     });
     let inner_seam = FilesystemSeam {
-        workspace: workspace.clone(),
-        parser: parser.clone(),
+        workspace: fs_agg.clone(),
+        parser: fs_agg.clone(),
         aggregate: fs_agg.clone(),
     };
     let fs_factory = Arc::new(move || inner_seam.clone());
@@ -224,8 +77,6 @@ fn handler() -> SurfaceActionHandler {
     let executor = Arc::new(SurfaceLintExecutor::new(
         code_analysis,
         fs_agg.clone(),
-        workspace,
-        tool_resolution,
         fs_seam,
         fs_factory,
         orphan_factory,

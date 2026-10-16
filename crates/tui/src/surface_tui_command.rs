@@ -1,4 +1,4 @@
-use crate::surface_confirm_modal::ConfirmModal;
+use crate::surface_confirm_component::ConfirmModal;
 use crate::surface_event_action::SurfaceActionHandler;
 use crate::surface_file_list_view::FileListView;
 use crate::surface_path_screen::PathScreen;
@@ -301,8 +301,8 @@ fn from_key_event(key: KeyEvent, state: &AppState) -> TuiEvent {
     // Normal mode is resolved from the shared shortcut table. Contextual
     // dialog/search/help bindings above remain explicit because they shadow
     // normal actions while those overlays are active.
-    crate::surface_shortcut_bindings::action_for(&key)
-        .map(crate::surface_shortcut_bindings::ShortcutAction::to_event)
+    crate::surface_bindings_store::action_for(&key)
+        .map(crate::surface_bindings_store::ShortcutAction::to_event)
         .unwrap_or(TuiEvent::None)
 }
 

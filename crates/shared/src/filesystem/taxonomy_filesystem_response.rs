@@ -58,6 +58,16 @@ pub enum FilesystemResponse {
     PathExists {
         exists: bool,
     },
+    /// Result of a binary-availability check on the system PATH.
+    BinaryAvailable {
+        available: bool,
+    },
+    IsMember {
+        is_member: bool,
+    },
+    ParsedEntries {
+        entries: Vec<crate::taxonomy_filesystem_vo::FileEntry>,
+    },
 }
 
 impl FilesystemResponse {
@@ -160,6 +170,28 @@ impl FilesystemResponse {
     pub fn into_path_exists(self) -> bool {
         match self {
             Self::PathExists { exists } => exists,
+            _ => false,
+        }
+    }
+
+    /// Whether a binary-availability check passed.
+    pub fn into_parsed_entries(self) -> Vec<crate::taxonomy_filesystem_vo::FileEntry> {
+        match self {
+            Self::ParsedEntries { entries } => entries,
+            _ => Vec::new(),
+        }
+    }
+
+    pub fn into_is_member(self) -> bool {
+        match self {
+            Self::IsMember { is_member } => is_member,
+            _ => false,
+        }
+    }
+
+    pub fn into_binary_available(self) -> bool {
+        match self {
+            Self::BinaryAvailable { available } => available,
             _ => false,
         }
     }

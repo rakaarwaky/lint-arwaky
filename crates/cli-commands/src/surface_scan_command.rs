@@ -8,7 +8,7 @@ use tracing::error;
 use dispatcher::surface_check_action::FilesystemSeam;
 use shared_cli_commands::Format;
 use shared_common::FilePath;
-use shared_config_system::{IConfigMergeProtocol, IConfigOrchestratorAggregate};
+use shared_config_system::IConfigOrchestratorAggregate;
 use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared_quality_rules::ICodeAnalysisAggregate;
 use shared_structure_rules::IStructureAggregate;
@@ -87,7 +87,7 @@ pub struct ExternalCommandParams {
     pub report_formatter: Arc<dyn shared_report_formatter::IReportFormatterAggregate>,
     pub filesystem: Arc<dyn IFilesystemAggregate>,
     pub filesystem_seam: FilesystemSeam,
-    pub config_parser: Arc<dyn IConfigMergeProtocol>,
+    pub config_file_reader: Arc<dyn shared_config_system::IConfigFileReaderAggregate>,
     pub filter: Option<String>,
     pub ignored_paths: Vec<String>,
 }
@@ -106,6 +106,7 @@ pub struct DocsCommandParams {
     pub format: Format,
     pub doc_orchestrator: Arc<dyn shared_doc_rules::IDocRunnerAggregate>,
     pub fs_seam: FilesystemSeam,
+    pub config_file_reader: Arc<dyn shared_config_system::IConfigFileReaderAggregate>,
 }
 
 /// Parameters for the `structure` command.
@@ -116,6 +117,7 @@ pub struct StructureCommandParams {
     pub report_formatter: Arc<dyn shared_report_formatter::IReportFormatterAggregate>,
     pub filesystem: Arc<dyn IFilesystemAggregate>,
     pub filesystem_seam: FilesystemSeam,
+    pub config_file_reader: Arc<dyn shared_config_system::IConfigFileReaderAggregate>,
     pub filter: Option<String>,
     pub ignored_paths: Vec<String>,
 }
@@ -299,6 +301,7 @@ pub fn handle_docs(params: DocsCommandParams) -> ExitCode {
         &root,
         params.doc_orchestrator,
         &params.fs_seam,
+        params.config_file_reader.as_ref(),
     ) {
         Ok(findings) => {
             let violations =
@@ -349,7 +352,7 @@ pub fn handle_orphan(params: OrphanCommandParams) -> ExitCode {
             params.orphan_orchestrator,
             params.config_orchestrator,
             params.filesystem.clone(),
-            params.filesystem_seam.workspace.clone(),
+            params.filesystem.clone(),
             params.fs_factory,
             params.orphan_factory,
         ),
@@ -378,7 +381,7 @@ pub fn handle_external(params: ExternalCommandParams) -> ExitCode {
         params.path.clone(),
         params.external_lint,
         params.filesystem,
-        params.config_parser,
+        params.config_file_reader.as_ref(),
         params.filter,
         &params.ignored_paths,
     ) {
@@ -400,6 +403,7 @@ pub fn handle_structure(params: StructureCommandParams) -> ExitCode {
         &root,
         params.structure_orchestrator,
         &params.filesystem_seam,
+        params.config_file_reader.as_ref(),
     ) {
         Ok(mut violations) => {
             if let Some(ref filter_str) = params.filter {

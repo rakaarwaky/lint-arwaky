@@ -10,7 +10,6 @@ use shared_config_system::{
     ArchitectureConfig, ConfigLanguage, ConfigRequest, IConfigOrchestratorAggregate,
 };
 use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared_filesystem::contract_filesystem_protocol::IWorkspaceProtocol;
 use shared_filesystem::taxonomy_filesystem_request::FilesystemRequest;
 
 use crate::surface_check_action::FilesystemSeam;
@@ -26,7 +25,7 @@ pub type FilesystemFactory = dyn Fn() -> FilesystemSeam + Send + Sync;
 pub type OrphanFactory = dyn Fn(
         ArchitectureConfig,
         Arc<dyn IFilesystemAggregate>,
-        Arc<dyn IWorkspaceProtocol>,
+        Arc<dyn IFilesystemAggregate>,
     ) -> Arc<dyn IOrphanAggregate>
     + Send
     + Sync;
@@ -36,7 +35,7 @@ pub struct OrphanScanDeps {
     pub orphan_orchestrator: Arc<dyn IOrphanAggregate>,
     pub config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
     pub fs_agg: Arc<dyn IFilesystemAggregate>,
-    pub fs_workspace: Arc<dyn IWorkspaceProtocol>,
+    pub fs_workspace: Arc<dyn IFilesystemAggregate>,
     /// Factory for creating fresh filesystem instances (multi-workspace / single-root).
     pub fs_factory: Arc<FilesystemFactory>,
     /// Factory for creating orphan aggregate from config + filesystem.
@@ -48,7 +47,7 @@ impl OrphanScanDeps {
         orphan_orchestrator: Arc<dyn IOrphanAggregate>,
         config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
         fs_agg: Arc<dyn IFilesystemAggregate>,
-        fs_workspace: Arc<dyn IWorkspaceProtocol>,
+        fs_workspace: Arc<dyn IFilesystemAggregate>,
         fs_factory: Arc<FilesystemFactory>,
         orphan_factory: Arc<OrphanFactory>,
     ) -> Self {
@@ -155,7 +154,7 @@ pub fn collect_orphan(
     let unified_orchestrator: Arc<dyn IOrphanAggregate> = (deps.orphan_factory)(
         first_ws.config.clone(),
         unified_fs.clone(),
-        unified_seam.workspace.clone(),
+        unified_fs.clone(),
     );
 
     // Build unified file list from all members
@@ -163,9 +162,9 @@ pub fn collect_orphan(
         .execute(FilesystemRequest::FileList)
         .into_file_list();
     let root_abs = std::env::current_dir().unwrap_or_default().join(&root);
-    let ws_top_root = unified_seam
-        .workspace
-        .workspace_root(&FilePath::new(root_abs.to_string_lossy().to_string()).unwrap_or_default());
+    let ws_top_root = unified_fs
+        .execute(FilesystemRequest::find_workspace_root(&root_abs))
+        .into_root();
     let top_root = ws_top_root.unwrap_or_else(|| root_abs.clone());
     let top_root_str = top_root.to_string_lossy().to_string();
     let all_file_paths: Vec<String> = all_file_list
@@ -291,13 +290,15 @@ fn scan_single_root(
         &ignored_strs,
     ));
     let ws_orchestrator: Arc<dyn IOrphanAggregate> =
-        orphan_factory(ws_config, ws_filesystem.clone(), ws_seam.workspace.clone());
+        orphan_factory(ws_config, ws_filesystem.clone(), ws_filesystem.clone());
 
     // Build OrphanFileListVO — paths relative to workspace root (top_root)
     let file_list = ws_filesystem
         .execute(FilesystemRequest::FileList)
         .into_file_list();
-    let ws_top_root = ws_seam.workspace.workspace_root(&scan_root_fp);
+    let ws_top_root = ws_filesystem
+        .execute(FilesystemRequest::find_workspace_root(&scan_root))
+        .into_root();
     let top_root = ws_top_root.unwrap_or_else(|| scan_root.clone());
     let top_root_str = top_root.to_string_lossy().to_string();
     let file_paths: Vec<String> = file_list

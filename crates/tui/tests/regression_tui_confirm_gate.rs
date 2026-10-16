@@ -63,8 +63,6 @@ impl IOrphanAggregate for NoopOrphan {
 fn executor() -> Arc<SurfaceLintExecutor> {
     let mock = Arc::new(MockFilesystem::new());
     let code_analysis: Arc<dyn ICodeAnalysisAggregate> = Arc::new(NoopQuality);
-    let workspace: Arc<dyn shared_filesystem::IWorkspaceProtocol> = mock.clone();
-    let tool_resolution: Arc<dyn shared_filesystem::IToolResolutionProtocol> = mock.clone();
     let seam = Arc::new(FilesystemSeam {
         workspace: mock.clone(),
         parser: mock.clone(),
@@ -83,8 +81,6 @@ fn executor() -> Arc<SurfaceLintExecutor> {
     Arc::new(SurfaceLintExecutor::new(
         code_analysis,
         mock.clone(),
-        workspace,
-        tool_resolution,
         seam,
         fs_factory,
         orphan_factory,

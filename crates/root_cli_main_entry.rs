@@ -337,8 +337,8 @@ fn main() {
     let filesystem_tool_resolution = fs_container.tool_resolution();
     let filesystem_parser = fs_container.parser();
     let fs_seam = dispatcher::surface_check_action::FilesystemSeam {
-        workspace: filesystem_workspace.clone(),
-        parser: filesystem_parser.clone(),
+        workspace: filesystem.clone(),
+        parser: filesystem.clone(),
         aggregate: filesystem.clone(),
     };
 
@@ -488,6 +488,7 @@ fn main() {
         config: config_orchestrator.clone(),
         structure: structure_orchestrator.clone(),
         doc: doc_orchestrator.clone(),
+        config_file_reader: config_container.file_reader(),
         fs_seam: Arc::new(fs_seam.clone()),
     };
 
@@ -610,33 +611,39 @@ fn main() {
             format,
             filter,
             member,
-        } => cli_commands::surface_scan_command::handle_orphan(
-            cli_commands::surface_scan_command::OrphanCommandParams {
-                path: Some(FilePath::new(path).unwrap_or_default()),
-                member,
-                format: parse_format(&format),
-                orphan_orchestrator: orphan_orchestrator.clone(),
-                config_orchestrator: config_orchestrator.clone(),
-                report_formatter: report_formatter.clone(),
-                filesystem: filesystem.clone(),
-                filesystem_seam: fs_seam.clone(),
-                filter,
-                fs_factory: Arc::new(|| {
-                    let c = filesystem::root_filesystem_container::FilesystemContainer::new();
-                    dispatcher::surface_check_action::FilesystemSeam {
-                        workspace: c.workspace(),
-                        parser: c.parser(),
-                        aggregate: c.orchestrator(),
-                    }
-                }),
-                orphan_factory: Arc::new(|config, fs, ws| {
-                    orphan_rules::root_orphan_detector_container::OrphanContainer::new_with_config(
-                        config, fs, ws,
+        } => {
+            cli_commands::surface_scan_command::handle_orphan(
+                cli_commands::surface_scan_command::OrphanCommandParams {
+                    path: Some(FilePath::new(path).unwrap_or_default()),
+                    member,
+                    format: parse_format(&format),
+                    orphan_orchestrator: orphan_orchestrator.clone(),
+                    config_orchestrator: config_orchestrator.clone(),
+                    report_formatter: report_formatter.clone(),
+                    filesystem: filesystem.clone(),
+                    filesystem_seam: fs_seam.clone(),
+                    filter,
+                    fs_factory: Arc::new(|| {
+                        let c = filesystem::root_filesystem_container::FilesystemContainer::new();
+                        {
+                            let orchestrator = c.orchestrator();
+                            dispatcher::surface_check_action::FilesystemSeam {
+                                workspace: orchestrator.clone(),
+                                parser: orchestrator.clone(),
+                                aggregate: orchestrator,
+                            }
+                        }
+                    }),
+                    orphan_factory: Arc::new(|config, fs, _fs2| {
+                        let c = filesystem::root_filesystem_container::FilesystemContainer::new();
+                        orphan_rules::root_orphan_detector_container::OrphanContainer::new_with_config(
+                        config, fs, c.workspace(),
                     )
                     .analyzer()
-                }),
-            },
-        ),
+                    }),
+                },
+            )
+        }
         Command::Taxonomy {
             path,
             format,
@@ -727,7 +734,7 @@ fn main() {
                 report_formatter: report_formatter.clone(),
                 filesystem: filesystem.clone(),
                 filesystem_seam: fs_seam.clone(),
-                config_parser: config_container.parser(),
+                config_file_reader: config_container.file_reader(),
                 filter,
                 ignored_paths: ignored_paths.clone(),
             },
@@ -739,6 +746,7 @@ fn main() {
                 doc_orchestrator:
                     doc_rules::root_doc_rules_container::RootDocRulesContainer::orchestrator(),
                 fs_seam: fs_seam.clone(),
+                config_file_reader: config_container.file_reader(),
             },
         ),
         Command::Structure {
@@ -753,6 +761,7 @@ fn main() {
                 report_formatter: report_formatter.clone(),
                 filesystem: filesystem.clone(),
                 filesystem_seam: fs_seam.clone(),
+                config_file_reader: config_container.file_reader(),
                 filter,
                 ignored_paths: ignored_paths.clone(),
             },

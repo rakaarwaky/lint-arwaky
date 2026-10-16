@@ -214,23 +214,16 @@ fn no_op_executor() -> Arc<SurfaceLintExecutor> {
     }
 
     let ca: Arc<CA> = Arc::new(CA);
-    let ws: Arc<dyn shared_filesystem::contract_filesystem_protocol::IWorkspaceProtocol> =
-        Arc::new(Ws);
-    let p: Arc<dyn shared_filesystem::contract_filesystem_protocol::IParserProtocol> = Arc::new(P);
-    let t: Arc<dyn shared_filesystem::contract_filesystem_protocol::IToolResolutionProtocol> =
-        Arc::new(T);
     let fs_agg: Arc<dyn IFilesystemAggregate> = no_op_fs_aggregate();
     let fs_seam = Arc::new(FilesystemSeam {
-        workspace: Arc::clone(&ws),
-        parser: Arc::clone(&p),
+        workspace: fs_agg.clone(),
+        parser: fs_agg.clone(),
         aggregate: Arc::clone(&fs_agg),
     });
-    let ws_f = Arc::clone(&ws);
-    let p_f = Arc::clone(&p);
     let fs_agg_f = Arc::clone(&fs_agg);
     let fs_factory = Arc::new(move || FilesystemSeam {
-        workspace: Arc::clone(&ws_f),
-        parser: Arc::clone(&p_f),
+        workspace: fs_agg_f.clone(),
+        parser: fs_agg_f.clone(),
         aggregate: Arc::clone(&fs_agg_f),
     });
     let orphan_factory: Arc<OrphanFactory> = Arc::new(move |_config, _fs, _ws| {
@@ -239,8 +232,6 @@ fn no_op_executor() -> Arc<SurfaceLintExecutor> {
     Arc::new(SurfaceLintExecutor::new(
         ca,
         fs_agg,
-        ws,
-        t,
         fs_seam,
         fs_factory,
         orphan_factory,

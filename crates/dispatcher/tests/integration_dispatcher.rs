@@ -17,11 +17,12 @@ fn dispatcher_check_action_on_clean_project() {
     let root_str = root.to_string_lossy().to_string();
     let fs = {
         let c = filesystem::root_filesystem_container::FilesystemContainer::new();
+        let orch = c.orchestrator();
         std::sync::Arc::new(
             dispatcher_lint_arwaky::surface_check_action::FilesystemSeam {
-                workspace: c.workspace(),
-                parser: c.parser(),
-                aggregate: c.orchestrator(),
+                workspace: orch.clone(),
+                parser: orch.clone(),
+                aggregate: orch.clone(),
             },
         )
     };

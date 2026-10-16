@@ -365,7 +365,11 @@ impl IFilesystemAggregate for MockFilesystem {
             | FilesystemRequest::RemoveFile { .. }
             | FilesystemRequest::SetPermissions { .. }
             | FilesystemRequest::Canonicalize { .. }
-            | FilesystemRequest::ReadDirEntries { .. } => FilesystemResponse::OpOk { ok: false },
+            | FilesystemRequest::ReadDirEntries { .. }
+            | FilesystemRequest::BinaryAvailable { .. }
+            | FilesystemRequest::IsMemberPath { .. }
+            | FilesystemRequest::ParseAll { .. }
+            | FilesystemRequest::ImportsFor { .. } => FilesystemResponse::OpOk { ok: false },
         }
     }
 }

@@ -18,11 +18,12 @@ fn opts_without_aggregates() -> dispatcher_lint_arwaky::surface_check_action::Sc
         member: None,
         filesystem: {
             let c = filesystem::root_filesystem_container::FilesystemContainer::new();
+            let orch = c.orchestrator();
             std::sync::Arc::new(
                 dispatcher_lint_arwaky::surface_check_action::FilesystemSeam {
-                    workspace: c.workspace(),
-                    parser: c.parser(),
-                    aggregate: c.orchestrator(),
+                    workspace: orch.clone(),
+                    parser: orch.clone(),
+                    aggregate: orch.clone(),
                 },
             )
         },
@@ -68,6 +69,7 @@ fn collect_scan_with_aggregates_runs_in_memory() {
 #[test]
 fn collect_role_missing_path_errors() {
     let c = filesystem::root_filesystem_container::FilesystemContainer::new();
+    let orch = c.orchestrator();
     let role = role_rules::root_role_rules_container::RoleContainer::new_with_config(
         shared_config_system::taxonomy_config_system_vo::ArchitectureConfig::default(),
     )
@@ -86,6 +88,7 @@ fn collect_role_missing_path_errors() {
 #[test]
 fn collect_external_missing_path_errors() {
     let c = filesystem::root_filesystem_container::FilesystemContainer::new();
+    let orch = c.orchestrator();
     let fs = c.orchestrator();
     let fs_io = c.io();
     let fs_tools = c.tool_resolution();
@@ -102,7 +105,7 @@ fn collect_external_missing_path_errors() {
         external,
         None,
         fs,
-        config_container.parser(),
+        config_container.file_reader().as_ref(),
     );
     assert!(result.is_err());
     assert!(result.unwrap_err().contains("does not exist"));

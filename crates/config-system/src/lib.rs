@@ -5,6 +5,8 @@ pub mod capabilities_workspace_detector;
 pub use capabilities_workspace_detector::WorkspaceDetector;
 pub mod capabilities_parser_provider;
 pub use capabilities_parser_provider::ConfigParserProvider;
+pub mod agent_config_file_orchestrator;
 pub mod capabilities_yaml_reader;
+pub use agent_config_file_orchestrator::ConfigFileReader;
 pub use capabilities_yaml_reader::ConfigYamlReader;
 pub mod root_config_system_container;
