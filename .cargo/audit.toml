@@ -5,4 +5,7 @@ ignore = [
     "RUSTSEC-2024-0436",
     # Applies to rmcp's HTTP transport; this project constructs stdio only.
     "RUSTSEC-2026-0189",
+    # unsafe-libyaml is unmaintained (archived) but only a transitive dep via
+    # serde_yaml; no direct usage. Mirrors the reviewed exception in deny.toml.
+    "RUSTSEC-2024-0449",
 ]
