@@ -219,9 +219,67 @@ impl ArchImportForbiddenChecker {
             file,
             &layer_name,
             &forbidden_list,
+            layer_keys,
             entries,
             violations,
         );
+    }
+
+    /// Compute which layers are allowed for `source_layer` to import from.
+    ///
+    /// Allowed = every active layer minus the source layer itself and minus the
+    /// layers in `forbidden_list` (matched by base name so that a
+    /// specialized-forbidden entry like `contract(protocol)` still blocks the
+    /// whole `contract` base layer from the allowed list).
+    ///
+    /// Deduplication: for each base layer, if any specialized variant of that
+    /// base is present in the allowed set, the bare base entry is dropped —
+    /// the specialized layers are the ones the user should actually import.
+    fn compute_allowed_layers(
+        source_layer: &str,
+        forbidden_list: &[String],
+        layer_keys: &[String],
+    ) -> Vec<String> {
+        let source_base = source_layer.split('(').next().unwrap_or(source_layer).trim();
+        let forbidden_base_names: Vec<&str> = forbidden_list
+            .iter()
+            .map(|f| f.split('(').next().unwrap_or(f.as_str()).trim())
+            .collect();
+
+        let mut kept: Vec<String> = layer_keys
+            .iter()
+            .filter(|k| {
+                let k_base = k.split('(').next().unwrap_or(k.as_str()).trim();
+                k_base != source_base
+                    && !forbidden_base_names.iter().any(|fb| *fb == k_base)
+                    && !k.is_empty()
+            })
+            .cloned()
+            .collect();
+
+        // Drop a bare base layer entry if at least one specialized variant of
+        // that base is also kept (e.g. drop `taxonomy` when `taxonomy(vo)` is
+        // present) so the user is pointed at the specialized layer that the
+        // forbidden rule actually allows.
+        let specialized_bases: std::collections::HashSet<String> = kept
+            .iter()
+            .filter(|k| k.contains('('))
+            .map(|k| k.split('(').next().unwrap_or("").trim().to_string())
+            .collect();
+        kept.retain(|k| !specialized_bases.contains(k.as_str()));
+        kept
+    }
+
+    /// Format the allowed-layer list for a human-readable FIX message.
+    ///
+    /// Returns e.g. `"taxonomy, contract(aggregate)"` or the empty string when
+    /// the list is empty (the caller then falls back to a generic hint).
+    fn format_allowed_layers(allowed: &[String]) -> String {
+        allowed
+            .iter()
+            .map(|s| s.as_str())
+            .collect::<Vec<_>>()
+            .join(", ")
     }
 
     /// Find config rules that override the default forbidden list for a layer.
@@ -260,9 +318,24 @@ impl ArchImportForbiddenChecker {
         file: &str,
         source_layer: &str,
         forbidden_list: &[String],
+        layer_keys: &[String],
         entries: &[ImportEntry],
         violations: &mut Vec<LintResult>,
     ) {
+        // Pre-compute which layers are allowed for this source layer so the FIX
+        // message can name them explicitly instead of saying "one of the
+        // allowed layers" without telling the user what those are.
+        let allowed_layers =
+            Self::compute_allowed_layers(source_layer, forbidden_list, layer_keys);
+        let allowed_layers_str = Self::format_allowed_layers(&allowed_layers);
+        let allowed_hint = if allowed_layers.is_empty() {
+            String::new()
+        } else {
+            format!(
+                " Allowed layers for '{}': [{}].",
+                source_layer, allowed_layers_str
+            )
+        };
         // Pre-resolve all forbidden scopes once (not per entry)
         let resolved_forbidden: Vec<(&str, LayerNameVO, Vec<Identity>)> = forbidden_list
             .iter()
@@ -345,29 +418,47 @@ impl ArchImportForbiddenChecker {
                             source_layer, forbidden
                         )
                     };
-                    let fix = match (source_layer, forbidden) {
+                    let forbidden_base = forbidden.split('(').next().unwrap_or(forbidden).trim();
+                    let fix = match (source_layer, forbidden_base) {
                         ("utility", "utility") => {
-                            "Inline small functions, consolidate tightly coupled utilities, extract shared data to taxonomy VO, or move the function into this file."
+                            "Inline small functions, consolidate tightly coupled utilities, extract shared data to taxonomy VO, or move the function into this file.".to_string()
                         }
                         ("capabilities", "capabilities") => {
-                            "Define a contract protocol (contract_*_protocol.rs) and use dependency injection to wire the capability implementation."
+                            "Define a contract protocol (contract_*_protocol.rs) and use dependency injection to wire the capability implementation.".to_string()
                         }
                         ("agent", "agent") => {
-                            "Define a contract aggregate (contract_*_aggregate.rs) and use dependency injection to wire the agent implementation."
+                            "Define a contract aggregate (contract_*_aggregate.rs) and use dependency injection to wire the agent implementation.".to_string()
                         }
                         ("utility", "contract") => {
-                            "Utility layer cannot use contract traits. If this function needs DI (trait param), move it to capabilities layer. If it only uses data from the contract, extract the data to a taxonomy VO instead."
+                            "Utility layer cannot use contract traits. If this function needs DI (trait param), move it to capabilities layer. If it only uses data from the contract, extract the data to a taxonomy VO instead.".to_string()
                         }
                         ("agent", "capabilities") => {
-                            "Agent orchestrator must not import capabilities directly. Define a contract protocol and use dependency injection."
+                            "Agent orchestrator must not import capabilities directly. Define a contract protocol and use dependency injection.".to_string()
                         }
                         ("surface", "capabilities") => {
-                            "Surface must delegate through aggregates, not import capabilities directly. Route: surface → contract(aggregate) → capabilities."
+                            format!(
+                                "Surface must delegate through aggregates, not import capabilities directly. Route: surface → contract(aggregate) → capabilities.{hint}",
+                                hint = allowed_hint
+                            )
                         }
                         ("surface", "agent") => {
-                            "Surface must not import agent orchestrators. Route: surface → contract(aggregate) → agent."
+                            format!(
+                                "Surface must not import agent orchestrators. Route: surface → contract(aggregate) → agent.{hint}",
+                                hint = allowed_hint
+                            )
                         }
-                        _ => "Remove the import or refactor to use one of the allowed layers.",
+                        ("surface", "contract") => {
+                            format!(
+                                "Surface must not import contract traits directly; the contract layer is internal to capabilities/agent. If you need a capability, go through its aggregate or protocol.{hint}",
+                                hint = allowed_hint
+                            )
+                        }
+                        _ => {
+                            format!(
+                                "Remove the import or route through an allowed layer instead.{hint}",
+                                hint = allowed_hint
+                            )
+                        }
                     };
                     let message = format!(
                         "Layer '{}' is importing from forbidden layer '{}'.",
