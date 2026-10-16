@@ -240,7 +240,11 @@ impl ArchImportForbiddenChecker {
         forbidden_list: &[String],
         layer_keys: &[String],
     ) -> Vec<String> {
-        let source_base = source_layer.split('(').next().unwrap_or(source_layer).trim();
+        let source_base = source_layer
+            .split('(')
+            .next()
+            .unwrap_or(source_layer)
+            .trim();
         let forbidden_base_names: Vec<&str> = forbidden_list
             .iter()
             .map(|f| f.split('(').next().unwrap_or(f.as_str()).trim())
@@ -325,8 +329,7 @@ impl ArchImportForbiddenChecker {
         // Pre-compute which layers are allowed for this source layer so the FIX
         // message can name them explicitly instead of saying "one of the
         // allowed layers" without telling the user what those are.
-        let allowed_layers =
-            Self::compute_allowed_layers(source_layer, forbidden_list, layer_keys);
+        let allowed_layers = Self::compute_allowed_layers(source_layer, forbidden_list, layer_keys);
         let allowed_layers_str = Self::format_allowed_layers(&allowed_layers);
         let allowed_hint = if allowed_layers.is_empty() {
             String::new()
