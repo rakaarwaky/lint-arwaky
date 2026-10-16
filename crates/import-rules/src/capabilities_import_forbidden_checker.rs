@@ -218,58 +218,50 @@ impl ArchImportForbiddenChecker {
         self.check_imports_against_forbidden(
             file,
             &layer_name,
+            basename,
             &forbidden_list,
-            layer_keys,
+            layer_map,
+            config,
             entries,
             violations,
         );
     }
 
-    /// Compute which layers are allowed for `source_layer` to import from.
-    ///
-    /// Allowed = every active layer minus the source layer itself and minus the
-    /// layers in `forbidden_list` (matched by base name so that a
-    /// specialized-forbidden entry like `contract(protocol)` still blocks the
-    /// whole `contract` base layer from the allowed list).
-    ///
-    /// Deduplication: for each base layer, if any specialized variant of that
-    /// base is present in the allowed set, the bare base entry is dropped —
-    /// the specialized layers are the ones the user should actually import.
-    fn compute_allowed_layers(
+    /// Get the explicit `allowed` list for `source_layer` from the layer-map
+    /// definition and config rules. Returns the list as it is configured —
+    /// this is authoritative and avoids the "all layers minus forbidden"
+    /// inference that produced misleading results.
+    fn get_explicit_allowed_layers(
         source_layer: &str,
-        forbidden_list: &[String],
-        layer_keys: &[String],
+        basename: &str,
+        config: &ArchitectureConfig,
+        layer_map: &LayerMapVO,
     ) -> Vec<String> {
-        let source_base = source_layer
-            .split('(')
-            .next()
-            .unwrap_or(source_layer)
-            .trim();
-        let forbidden_base_names: Vec<&str> = forbidden_list
-            .iter()
-            .map(|f| f.split('(').next().unwrap_or(f.as_str()).trim())
-            .collect();
-
-        let mut kept: Vec<String> = layer_keys
-            .iter()
-            .filter(|k| {
-                let k_base = k.split('(').next().unwrap_or(k.as_str()).trim();
-                k_base != source_base && !forbidden_base_names.contains(&k_base) && !k.is_empty()
-            })
-            .cloned()
-            .collect();
-
-        // Drop a bare base layer entry if at least one specialized variant of
-        // that base is also kept (e.g. drop `taxonomy` when `taxonomy(vo)` is
-        // present) so the user is pointed at the specialized layer that the
-        // forbidden rule actually allows.
-        let specialized_bases: std::collections::HashSet<String> = kept
-            .iter()
-            .filter(|k| k.contains('('))
-            .map(|k| k.split('(').next().unwrap_or("").trim().to_string())
-            .collect();
-        kept.retain(|k| !specialized_bases.contains(k.as_str()));
-        kept
+        // 1. Config rule that overrides for this layer (highest priority)
+        for rule in &config.rules {
+            if rule.name.value != AES201_RULE_CODE {
+                continue;
+            }
+            if rule.allowed.values.is_empty() {
+                continue;
+            }
+            if let Some((rule_layer, _)) =
+                shared_import_rules::utility_scope_matcher::file_belongs_to_scope(
+                    basename,
+                    &Identity::new(&rule.scope.value),
+                )
+            {
+                if rule_layer == source_layer {
+                    return rule.allowed.values.clone();
+                }
+            }
+        }
+        // 2. Layer map definition
+        layer_map
+            .values
+            .get(&LayerNameVO::new(source_layer))
+            .map(|def| def.allowed.values.clone())
+            .unwrap_or_default()
     }
 
     /// Format the allowed-layer list for a human-readable FIX message.
@@ -319,15 +311,18 @@ impl ArchImportForbiddenChecker {
         &self,
         file: &str,
         source_layer: &str,
+        basename: &str,
         forbidden_list: &[String],
-        layer_keys: &[String],
+        layer_map: &LayerMapVO,
+        config: &ArchitectureConfig,
         entries: &[ImportEntry],
         violations: &mut Vec<LintResult>,
     ) {
         // Pre-compute which layers are allowed for this source layer so the FIX
         // message can name them explicitly instead of saying "one of the
         // allowed layers" without telling the user what those are.
-        let allowed_layers = Self::compute_allowed_layers(source_layer, forbidden_list, layer_keys);
+        let allowed_layers =
+            Self::get_explicit_allowed_layers(source_layer, basename, config, layer_map);
         let allowed_layers_str = Self::format_allowed_layers(&allowed_layers);
         let allowed_hint = if allowed_layers.is_empty() {
             String::new()
@@ -414,6 +409,7 @@ impl ArchImportForbiddenChecker {
                             source_layer, source_layer
                         )
                     } else {
+                        // WHY states the rule that was broken — no remediation advice here.
                         format!(
                             "Layer '{}' must not depend on '{}' to maintain architectural boundaries.",
                             source_layer, forbidden
@@ -438,25 +434,25 @@ impl ArchImportForbiddenChecker {
                         }
                         ("surface", "capabilities") => {
                             format!(
-                                "Surface must delegate through aggregates, not import capabilities directly. Route: surface → contract(aggregate) → capabilities.{hint}",
+                                "Route the call through a contract(aggregate) — do not reference capabilities types in surface code.{hint}",
                                 hint = allowed_hint
                             )
                         }
                         ("surface", "agent") => {
                             format!(
-                                "Surface must not import agent orchestrators. Route: surface → contract(aggregate) → agent.{hint}",
+                                "Route the call through a contract(aggregate) — agent orchestrators are internal.{hint}",
                                 hint = allowed_hint
                             )
                         }
                         ("surface", "contract") => {
                             format!(
-                                "Surface must not import contract traits directly; the contract layer is internal to capabilities/agent. If you need a capability, go through its aggregate or protocol.{hint}",
+                                "Import the contract(aggregate) instead of the contract(protocol) — surface code wires DI, not the concrete trait.{hint}",
                                 hint = allowed_hint
                             )
                         }
                         _ => {
                             format!(
-                                "Remove the import or route through an allowed layer instead.{hint}",
+                                "Replace with an import from one of the allowed layers.{hint}",
                                 hint = allowed_hint
                             )
                         }
