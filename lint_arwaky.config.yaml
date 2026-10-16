@@ -119,11 +119,7 @@ architecture:
     # ─── AES300 ───
     AES301:
       enabled: true
-      exceptions:
-        # AES301: surface_check_action.rs is 1444 lines (> 1000 limit).
-        # Split into surface_check_scope.rs + surface_check_discovery.rs
-        # in a follow-up PR once the scope/discovery helpers are extracted.
-        - "surface_check_action.rs"
+      exceptions: []
     AES302:
       enabled: true
       exceptions: []
