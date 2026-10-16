@@ -254,9 +254,7 @@ impl ArchImportForbiddenChecker {
             .iter()
             .filter(|k| {
                 let k_base = k.split('(').next().unwrap_or(k.as_str()).trim();
-                k_base != source_base
-                    && !forbidden_base_names.iter().any(|fb| *fb == k_base)
-                    && !k.is_empty()
+                k_base != source_base && !forbidden_base_names.contains(&k_base) && !k.is_empty()
             })
             .cloned()
             .collect();
