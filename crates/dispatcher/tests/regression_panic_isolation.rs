@@ -187,6 +187,7 @@ impl shared_doc_rules::IDocRunnerAggregate for CleanDoc {
 
 /// Config aggregate — reports no ignored paths and no workspaces.
 struct CleanConfig;
+
 impl shared_config_system::IConfigOrchestratorAggregate for CleanConfig {
     fn execute(
         &self,
@@ -209,10 +210,11 @@ impl shared_config_system::IConfigOrchestratorAggregate for CleanConfig {
 
 fn build_seam() -> Arc<FilesystemSeam> {
     let c = filesystem::root_filesystem_container::FilesystemContainer::new();
+    let orch = c.orchestrator();
     Arc::new(FilesystemSeam {
-        workspace: c.workspace(),
-        parser: c.parser(),
-        aggregate: c.orchestrator(),
+        workspace: orch.clone(),
+        parser: orch.clone(),
+        aggregate: orch.clone(),
     })
 }
 
@@ -228,6 +230,11 @@ fn scan_target() -> std::path::PathBuf {
 
 /// `ScanAggregates` with every capability clean; tests swap one slot at a time.
 fn clean_aggregates(fs_seam: Arc<FilesystemSeam>) -> ScanAggregates {
+    let fs_container = filesystem::root_filesystem_container::FilesystemContainer::new();
+    let config_reader = config_system::root_config_system_container::ConfigContainer::new(
+        fs_container.orchestrator(),
+        fs_container.io(),
+    );
     ScanAggregates {
         quality: Arc::new(CleanQuality),
         role: Arc::new(CleanRole),
@@ -238,6 +245,7 @@ fn clean_aggregates(fs_seam: Arc<FilesystemSeam>) -> ScanAggregates {
         config: Arc::new(CleanConfig),
         structure: Arc::new(CleanStructure),
         doc: Arc::new(CleanDoc),
+        config_file_reader: config_reader.file_reader(),
         fs_seam,
     }
 }

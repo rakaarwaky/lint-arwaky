@@ -7,12 +7,13 @@
 //
 // The surface layer performs all pre-computation (language detection, config
 // loading) and passes an `ExternalLintContext` to the orchestrator, which
-// runs adapters with zero filesystem I/O.
+// runs adapters with zero filesystem I/O. Config file reading goes through the
+// `IConfigFileReaderAggregate` contract (config-system crate) so this surface
+// file only imports `contract(aggregate)` traits (AES201).
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use shared_common::FilePath;
-use shared_config_system::contract_config_protocol::IConfigMergeProtocol;
 use shared_config_system::taxonomy_config_system_vo::AdapterEntry;
 use shared_external_lint::ExternalLintRequest;
 use shared_external_lint::IExternalLintAggregate;
@@ -28,7 +29,7 @@ pub fn collect_external_direct(
     path: Option<FilePath>,
     external_lint: Arc<dyn IExternalLintAggregate>,
     filesystem: Arc<dyn IFilesystemAggregate>,
-    _config_parser: Arc<dyn IConfigMergeProtocol>,
+    config_file_reader: &dyn shared_config_system::IConfigFileReaderAggregate,
     filter: Option<String>,
     ignored_paths: &[String],
 ) -> Result<Vec<ViolationItem>, String> {
@@ -65,7 +66,7 @@ pub fn collect_external_direct(
         .any(|f| f.ends_with(".md") || f.ends_with(".markdown"));
 
     // Load adapter entries from config (pre-computed, no orchestrator I/O)
-    let config_entries = load_config_entries(root_path, &*filesystem);
+    let config_entries = load_config_entries(root_path, &*filesystem, config_file_reader);
 
     let context = ExternalLintContext {
         has_rust,
@@ -73,7 +74,7 @@ pub fn collect_external_direct(
         has_js,
         has_markdown,
         ignored_paths: ignored_paths.to_vec(),
-        ignored_rules: load_ignored_rules(root_path, &*filesystem),
+        ignored_rules: load_ignored_rules(root_path, &*filesystem, config_file_reader),
         config_entries,
     };
 
@@ -176,66 +177,25 @@ pub fn filter_outside_member_dirs(
 /// Walk up from `root_path` looking for lint_arwaky.config.*.yaml files.
 /// Returns parsed adapter entries if any config file is found, else empty vec.
 ///
-/// Shared by the `external` subcommand and `scan`/`check` (`collect_scan`),
-/// so both paths select adapters from the same `adapters:` SSOT — without
-/// this, `scan` ran *every* language adapter and reported findings from
-/// tools the project's config does not enable (e.g. markdownlint on a repo
-/// that never opted into it).
+/// Delegates to the config-system `IConfigFileReaderAggregate` — the surface
+/// layer only imports `contract(aggregate)` traits (AES201), so the walk and
+/// parse live in the config-system crate, not here.
 pub fn load_config_entries(
     root_path: &std::path::Path,
     fs: &dyn IFilesystemAggregate,
+    reader: &dyn shared_config_system::IConfigFileReaderAggregate,
 ) -> Vec<AdapterEntry> {
-    let config_names = vec!["lint_arwaky.config.yaml"];
-    let start = if root_path.is_file() {
-        root_path.parent().unwrap_or(root_path)
-    } else {
-        root_path
-    };
-    let mut current: Option<&std::path::Path> = Some(start);
-    while let Some(dir) = current {
-        for cfg_name in &config_names {
-            let cfg_path = dir.join(cfg_name);
-            let exists = fs
-                .execute(FilesystemRequest::path_exists(&cfg_path))
-                .into_path_exists();
-            if exists {
-                if let Some(content) = fs
-                    .execute(FilesystemRequest::read_file_result(&cfg_path))
-                    .into_content_opt()
-                {
-                    let entries =
-                        shared_config_system::utility_config_parser::parse_adapter_entries_from_yaml(
-                            &content,
-                        );
-                    if !entries.is_empty() {
-                        return entries;
-                    }
-                }
-            }
-        }
-        current = dir.parent().filter(|&p| p != dir);
-    }
-    Vec::new()
+    reader
+        .read_config_files(root_path, &FsView { fs })
+        .adapter_entries
 }
 
 /// Find the nearest `lint_arwaky.config.yaml` at or above `root_path` and
 /// return its `ignored_rules` list.
 ///
-/// Same walk-up contract as `load_config_entries` so both settings come from
-/// one file. Unlike the adapter list, an empty result here is not a fallback to
-/// "run everything" — it means the project declared no rule suppressions.
-pub fn load_ignored_rules(
-    root_path: &std::path::Path,
-    fs: &dyn IFilesystemAggregate,
-) -> Vec<String> {
-    find_config_content(root_path, fs)
-        .map(|content| {
-            shared_config_system::utility_config_parser::parse_ignored_rules_from_yaml(&content)
-        })
-        .unwrap_or_default()
-}
-
-/// Read the first `lint_arwaky.config.yaml` found walking up from `root_path`.
+/// Delegates to the config-system `IConfigFileReaderAggregate` (AES201).
+/// Read the first `lint_arwaky.config.yaml` found walking up from `root_path`
+/// and return its raw content (or `None` when no non-empty config is found).
 pub fn find_config_content(
     root_path: &std::path::Path,
     fs: &dyn IFilesystemAggregate,
@@ -247,20 +207,48 @@ pub fn find_config_content(
     let mut current: Option<&std::path::Path> = Some(start);
     while let Some(dir) = current {
         let cfg_path = dir.join("lint_arwaky.config.yaml");
-        // Keep walking when the file is missing or empty. A `?` here would
-        // bail out of the whole lookup on the first miss and silently drop
-        // every `ignored_rules` entry, which main's `if let Ok(..)` avoids.
         let content = fs
             .execute(FilesystemRequest::read_file_result(&cfg_path))
             .into_content_opt();
-        if let Some(content) = content {
-            if !content.is_empty() {
-                return Some(content);
-            }
+        if let Some(content) = content
+            && !content.is_empty()
+        {
+            return Some(content);
         }
         current = dir.parent().filter(|&p| p != dir);
     }
     None
+}
+
+pub fn load_ignored_rules(
+    root_path: &std::path::Path,
+    fs: &dyn IFilesystemAggregate,
+    reader: &dyn shared_config_system::IConfigFileReaderAggregate,
+) -> Vec<String> {
+    reader
+        .read_config_files(root_path, &FsView { fs })
+        .ignored_rules
+}
+
+/// Adapts an `IFilesystemAggregate` to the `IConfigFileReadFs` view the
+/// config reader needs, so surface callers keep passing the aggregate they
+/// already hold.
+struct FsView<'a> {
+    fs: &'a dyn IFilesystemAggregate,
+}
+
+impl shared_config_system::IConfigFileReadFs for FsView<'_> {
+    fn path_exists(&self, path: &std::path::Path) -> bool {
+        self.fs
+            .execute(FilesystemRequest::path_exists(path))
+            .into_path_exists()
+    }
+
+    fn read_file(&self, path: &std::path::Path) -> Option<String> {
+        self.fs
+            .execute(FilesystemRequest::read_file_result(path))
+            .into_content_opt()
+    }
 }
 
 pub fn collect_external(
@@ -268,14 +256,14 @@ pub fn collect_external(
     external_lint: Arc<dyn IExternalLintAggregate>,
     filter: Option<String>,
     filesystem: Arc<dyn IFilesystemAggregate>,
-    config_parser: Arc<dyn IConfigMergeProtocol>,
+    config_file_reader: &dyn shared_config_system::IConfigFileReaderAggregate,
 ) -> Result<Vec<ViolationItem>, String> {
     let ignored: Vec<String> = Vec::new();
     collect_external_direct(
         path,
         external_lint,
         filesystem,
-        config_parser,
+        config_file_reader,
         filter,
         &ignored,
     )
@@ -294,12 +282,13 @@ pub fn collect_single_file_external(
     external_lint: &Arc<dyn IExternalLintAggregate>,
     config_entries: Vec<AdapterEntry>,
     fs: &dyn IFilesystemAggregate,
+    config_file_reader: &dyn shared_config_system::IConfigFileReaderAggregate,
 ) -> Vec<ViolationItem> {
     let context = single_file_external_context(
         scan_root,
         ignored,
         config_entries,
-        load_ignored_rules(scan_root, fs),
+        load_ignored_rules(scan_root, fs, config_file_reader),
     );
     let Ok(target) = FilePath::new(scan_root.to_string_lossy().to_string()) else {
         return Vec::new();

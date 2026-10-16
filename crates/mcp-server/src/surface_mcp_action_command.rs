@@ -11,9 +11,7 @@ use shared_auto_fix::IFixAggregate;
 use shared_common::Threshold;
 use shared_common::taxonomy_path_vo::FilePath;
 use shared_config_system::taxonomy_config_system_vo::ArchitectureConfig;
-use shared_config_system::{
-    IConfigMergeProtocol, IConfigOrchestratorAggregate, IConfigReadProtocol,
-};
+use shared_config_system::{IConfigOrchestratorAggregate, IConfigReadProtocol};
 use shared_doc_rules::IDocRunnerAggregate;
 use shared_external_lint::IExternalLintAggregate;
 use shared_filesystem::FilesystemRequest;
@@ -41,7 +39,7 @@ pub struct McpServerDependencies {
     pub git_hooks_aggregate: Arc<dyn IGitHooksAggregate>,
     pub setup_orchestrator: Arc<dyn ISetupAggregate>,
     pub config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
-    pub config_parser: Arc<dyn IConfigMergeProtocol>,
+    pub config_file_reader: Arc<dyn shared_config_system::IConfigFileReaderAggregate>,
     pub config_reader: Arc<dyn IConfigReadProtocol>,
     pub external_lint: Arc<dyn IExternalLintAggregate>,
     pub import_orchestrator: Arc<dyn IImportRunnerAggregate>,
@@ -50,8 +48,6 @@ pub struct McpServerDependencies {
     pub doc_orchestrator: Arc<dyn IDocRunnerAggregate>,
     pub structure_orchestrator: Arc<dyn shared_structure_rules::IStructureAggregate>,
     pub filesystem: Arc<dyn IFilesystemAggregate>,
-    pub filesystem_workspace: Arc<dyn shared_filesystem::IWorkspaceProtocol>,
-    pub filesystem_tool_resolution: Arc<dyn shared_filesystem::IToolResolutionProtocol>,
     pub filesystem_parser: Arc<dyn shared_filesystem::IParserProtocol>,
     pub fs_seam: Arc<dispatcher::surface_check_action::FilesystemSeam>,
     pub fs_factory: Arc<dyn Fn() -> dispatcher::surface_check_action::FilesystemSeam + Send + Sync>,
@@ -133,6 +129,7 @@ impl McpActionSurface {
                 config: self.deps.config_orchestrator.clone(),
                 structure: self.deps.structure_orchestrator.clone(),
                 doc: self.deps.doc_orchestrator.clone(),
+                config_file_reader: self.deps.config_file_reader.clone(),
                 fs_seam: self.deps.fs_seam.clone(),
             }),
         };
@@ -237,6 +234,7 @@ impl McpActionSurface {
                 config: self.deps.config_orchestrator.clone(),
                 structure: self.deps.structure_orchestrator.clone(),
                 doc: self.deps.doc_orchestrator.clone(),
+                config_file_reader: self.deps.config_file_reader.clone(),
                 fs_seam: self.deps.fs_seam.clone(),
             }),
         };
@@ -410,7 +408,7 @@ impl McpActionSurface {
                 self.deps.orphan_orchestrator.clone(),
                 self.deps.config_orchestrator.clone(),
                 self.deps.filesystem.clone(),
-                self.deps.filesystem_workspace.clone(),
+                self.deps.filesystem.clone(),
                 self.deps.fs_factory.clone(),
                 self.deps.orphan_factory.clone(),
             ),
@@ -441,7 +439,7 @@ impl McpActionSurface {
             Some(fp),
             self.deps.external_lint.clone(),
             self.deps.filesystem.clone(),
-            self.deps.config_parser.clone(),
+            self.deps.config_file_reader.as_ref(),
             None,
             &[],
         ) {
@@ -580,8 +578,14 @@ impl McpActionSurface {
         };
         let doc = self.deps.doc_orchestrator.clone();
         let fs_seam = self.deps.fs_seam.clone();
+        let config_file_reader = self.deps.config_file_reader.clone();
         let result = match Self::run_blocking(move || {
-            dispatcher::surface_docs_action::collect_docs(fp.value(), doc, &fs_seam)
+            dispatcher::surface_docs_action::collect_docs(
+                fp.value(),
+                doc,
+                &fs_seam,
+                config_file_reader.as_ref(),
+            )
         })
         .await
         {

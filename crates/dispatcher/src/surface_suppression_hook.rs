@@ -1,7 +1,9 @@
 // PURPOSE: Config resolution is scoped to the discovered workspace root,
 // never the raw CLI target, so a member-scoped scan can't bind to a foreign
 // parent project's config.
-use shared_config_system::taxonomy_config_system_vo::ArchitectureConfig;
+use shared_config_system::{
+    IConfigFileReaderAggregate, taxonomy_config_system_vo::ArchitectureConfig,
+};
 
 use crate::surface_check_action::FilesystemSeam;
 
@@ -13,7 +15,16 @@ use crate::surface_check_action::FilesystemSeam;
 /// resolves, then reads the nearest `lint_arwaky.config.yaml` at or above it
 /// through the filesystem seam; an empty or missing config yields an empty
 /// set (report everything).
-pub fn load_suppressed_rule_codes(root: &str, fs: &FilesystemSeam) -> Vec<String> {
+///
+/// `reader` is the `IConfigFileReaderAggregate` that performs the
+/// `ignored_rules` walk (AES201: surface layer only imports
+/// `contract(aggregate)` traits); the raw-content read for disabled rules is
+/// local to this hook.
+pub fn load_suppressed_rule_codes(
+    root: &str,
+    fs: &FilesystemSeam,
+    reader: &dyn IConfigFileReaderAggregate,
+) -> Vec<String> {
     let root_path = std::path::Path::new(root);
     let fs_ref = fs.aggregate.as_ref();
     let ws_root = fs_ref
@@ -26,7 +37,7 @@ pub fn load_suppressed_rule_codes(root: &str, fs: &FilesystemSeam) -> Vec<String
     let mut codes = collect_suppressed_codes_from_content(content.as_deref());
     // `ignored_rules` is the top-level list; read it from the same config file
     // the rules came from so both keys stay in lockstep.
-    let ignored = crate::surface_external_action::load_ignored_rules(&ws_root, fs_ref);
+    let ignored = crate::surface_external_action::load_ignored_rules(&ws_root, fs_ref, reader);
     codes.extend(ignored);
     codes
 }
@@ -94,6 +105,16 @@ mod tests {
     #[test]
     fn load_suppressed_rule_codes_reads_both_keys_from_a_config_fixture() {
         let fixture = tempfile::tempdir().expect("tempdir");
+        // A Cargo workspace marker (Cargo.toml + crates/ dir) lets
+        // find_workspace_root detect the fixture as a workspace root,
+        // so the config-file reader's workspace-boundary gate does not
+        // short-circuit the walk.
+        std::fs::create_dir_all(fixture.path().join("crates")).unwrap();
+        std::fs::write(
+            fixture.path().join("Cargo.toml"),
+            "[workspace]\nmembers = [\"crates/*\"]\n",
+        )
+        .unwrap();
         std::fs::write(
             fixture
                 .path()
@@ -103,13 +124,22 @@ mod tests {
         .expect("write fixture config");
 
         let c = filesystem::root_filesystem_container::FilesystemContainer::new();
+        let orchestrator = c.orchestrator();
         let fs_seam = crate::surface_check_action::FilesystemSeam {
-            workspace: c.workspace(),
-            parser: c.parser(),
-            aggregate: c.orchestrator(),
+            workspace: orchestrator.clone(),
+            parser: orchestrator.clone(),
+            aggregate: orchestrator,
         };
+        let config_file_reader = config_system::root_config_system_container::ConfigContainer::new(
+            fs_seam.aggregate.clone(),
+            c.io(),
+        );
 
-        let codes = load_suppressed_rule_codes(fixture.path().to_string_lossy().as_ref(), &fs_seam);
+        let codes = load_suppressed_rule_codes(
+            fixture.path().to_string_lossy().as_ref(),
+            &fs_seam,
+            config_file_reader.file_reader().as_ref(),
+        );
         assert!(
             codes.iter().any(|c| c.eq_ignore_ascii_case("AES601")),
             "AES601 (disabled via architecture.rules) must be suppressed: {codes:?}"

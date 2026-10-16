@@ -17,7 +17,7 @@ use shared_naming_rules::taxonomy_naming_rules_response::NamingResponse;
 
 use shared_common::ViolationItem;
 
-use crate::surface_test_entries;
+use crate::surface_entries_store;
 
 pub fn collect_naming(
     path: Option<FilePath>,
@@ -54,7 +54,7 @@ pub fn collect_naming(
     //    files, which the index build above prunes, so they are discovered
     //    separately rather than read from the file list.
     let source_files = fs_agg.execute(FilesystemRequest::FileList).into_file_list();
-    let test_files = surface_test_entries::build_test_entries(&fs_agg, root_path, ignored_paths);
+    let test_files = surface_entries_store::build_test_entries(&fs_agg, root_path, ignored_paths);
     let request = NamingRequest::audit_with_tests(&source_files, &test_files);
     let NamingResponse::Audit {
         violations: results,

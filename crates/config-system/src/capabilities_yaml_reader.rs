@@ -120,6 +120,10 @@ impl IConfigReadProtocol for ConfigYamlReader {
         }
         Ok(found)
     }
+
+    fn read_config_from_content(&self, content: &str) -> Vec<shared_config_system::AdapterEntry> {
+        shared_config_system::utility_config_parser::parse_adapter_entries_from_yaml(content)
+    }
 }
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────

@@ -113,10 +113,11 @@ stub_aggregate!(
 
 fn make_fs_seam() -> dispatcher::surface_check_action::FilesystemSeam {
     let c = filesystem::root_filesystem_container::FilesystemContainer::new();
+    let orchestrator = c.orchestrator();
     dispatcher::surface_check_action::FilesystemSeam {
-        workspace: c.workspace(),
-        parser: c.parser(),
-        aggregate: c.orchestrator(),
+        workspace: orchestrator.clone(),
+        parser: orchestrator.clone(),
+        aggregate: orchestrator,
     }
 }
 
@@ -141,9 +142,6 @@ fn make_action_surface_with(allow_mutations: bool) -> McpActionSurface {
     let fs_container = filesystem::root_filesystem_container::FilesystemContainer::new();
     let fs_aggregate = fs_container.orchestrator();
     let fs_io = fs_container.io();
-    let fs_workspace = fs_container.workspace();
-    let fs_tool_resolution = fs_container.tool_resolution();
-    let fs_parser = fs_container.parser();
 
     let config_container = config_system::root_config_system_container::ConfigContainer::new(
         fs_aggregate.clone(),
@@ -161,7 +159,6 @@ fn make_action_surface_with(allow_mutations: bool) -> McpActionSurface {
         git_hooks_aggregate: Arc::new(GitHooksStub),
         setup_orchestrator: Arc::new(SetupStub),
         config_orchestrator: config_container.orchestrator(),
-        config_parser: config_container.parser(),
         config_reader: config_container.reader(),
         external_lint: Arc::new(ExternalLintStub),
         import_orchestrator: Arc::new(ImportStub),
@@ -170,9 +167,8 @@ fn make_action_surface_with(allow_mutations: bool) -> McpActionSurface {
         doc_orchestrator: Arc::new(DocStub),
         structure_orchestrator: Arc::new(StructureStub),
         filesystem: fs_aggregate,
-        filesystem_workspace: fs_workspace,
-        filesystem_tool_resolution: fs_tool_resolution,
-        filesystem_parser: fs_parser,
+        filesystem_parser: fs_container.parser(),
+        config_file_reader: config_container.file_reader(),
         fs_seam,
         fs_factory: Arc::new(make_fs_seam),
         orphan_factory: Arc::new(|_config, _fs, _ws| -> Arc<dyn IOrphanAggregate> {

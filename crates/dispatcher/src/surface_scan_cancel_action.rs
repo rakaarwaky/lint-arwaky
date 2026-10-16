@@ -283,6 +283,7 @@ fn run_all_linters_in_process_cancel(
         let config_entries = crate::surface_external_action::load_config_entries(
             std::path::Path::new(&target_canon_str),
             seam.aggregate.as_ref(),
+            agg.config_file_reader.as_ref(),
         );
         let context = shared_external_lint::taxonomy_external_lint_vo::ExternalLintContext {
             has_rust,
@@ -293,6 +294,7 @@ fn run_all_linters_in_process_cancel(
             ignored_rules: crate::surface_external_action::load_ignored_rules(
                 std::path::Path::new(&target_canon_str),
                 seam.aggregate.as_ref(),
+                agg.config_file_reader.as_ref(),
             ),
             config_entries,
         };
