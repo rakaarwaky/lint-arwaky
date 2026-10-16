@@ -226,7 +226,8 @@ pub(crate) fn apply_filter(
 
 /// Check if a path belongs to a workspace member.
 pub fn is_member_path(path: &FilePath, ws: &dyn IFilesystemAggregate) -> bool {
-    ws.execute(FilesystemRequest::is_member_path(path.clone())).into_is_member()
+    ws.execute(FilesystemRequest::is_member_path(path.clone()))
+        .into_is_member()
 }
 
 /// Run all 6 linters in-memory for a given path; return violations.
@@ -688,11 +689,12 @@ pub(crate) fn run_all_linters_in_process(
 // Re-export scope and discovery helpers so existing call sites keep their
 // import paths unchanged.
 pub(crate) use crate::surface_check_discovery_action::{
-    build_entries, build_import_map, build_index_ignored, discover_lintable_files, discover_test_suite_files, run_all_linters_json,
+    build_entries, build_import_map, build_index_ignored, discover_lintable_files,
+    discover_test_suite_files, run_all_linters_json,
 };
 pub(crate) use crate::surface_check_scope_action::{
-    doc_violations_in_scope, external_violation_in_scope,
-    run_single_file_scan, structure_violations_in_scope, violation_in_scan_scope,
+    doc_violations_in_scope, external_violation_in_scope, run_single_file_scan,
+    structure_violations_in_scope, violation_in_scan_scope,
 };
 
 #[cfg(test)]
@@ -774,7 +776,9 @@ mod bfs_tests {
 }
 /// Detect the source language from a file path extension. This is a
 /// surface-layer helper that avoids importing IWorkspaceProtocol (AES201).
-pub(crate) fn detect_language_from_path(path: &str) -> shared_filesystem::taxonomy_filesystem_vo::Language {
+pub(crate) fn detect_language_from_path(
+    path: &str,
+) -> shared_filesystem::taxonomy_filesystem_vo::Language {
     let ext = std::path::Path::new(path)
         .extension()
         .map(|e| e.to_str().unwrap_or(""))
@@ -788,5 +792,3 @@ pub(crate) fn detect_language_from_path(path: &str) -> shared_filesystem::taxono
         _ => shared_filesystem::taxonomy_filesystem_vo::Language::Unknown,
     }
 }
-
-

@@ -2,7 +2,7 @@
 // never the raw CLI target, so a member-scoped scan can't bind to a foreign
 // parent project's config.
 use shared_config_system::{
-    taxonomy_config_system_vo::ArchitectureConfig, IConfigFileReaderAggregate,
+    IConfigFileReaderAggregate, taxonomy_config_system_vo::ArchitectureConfig,
 };
 
 use crate::surface_check_action::FilesystemSeam;
@@ -37,8 +37,7 @@ pub fn load_suppressed_rule_codes(
     let mut codes = collect_suppressed_codes_from_content(content.as_deref());
     // `ignored_rules` is the top-level list; read it from the same config file
     // the rules came from so both keys stay in lockstep.
-    let ignored =
-        crate::surface_external_action::load_ignored_rules(&ws_root, fs_ref, reader);
+    let ignored = crate::surface_external_action::load_ignored_rules(&ws_root, fs_ref, reader);
     codes.extend(ignored);
     codes
 }
@@ -111,7 +110,11 @@ mod tests {
         // so the config-file reader's workspace-boundary gate does not
         // short-circuit the walk.
         std::fs::create_dir_all(fixture.path().join("crates")).unwrap();
-        std::fs::write(fixture.path().join("Cargo.toml"), "[workspace]\nmembers = [\"crates/*\"]\n").unwrap();
+        std::fs::write(
+            fixture.path().join("Cargo.toml"),
+            "[workspace]\nmembers = [\"crates/*\"]\n",
+        )
+        .unwrap();
         std::fs::write(
             fixture
                 .path()
@@ -127,11 +130,10 @@ mod tests {
             parser: orchestrator.clone(),
             aggregate: orchestrator,
         };
-        let config_file_reader =
-            config_system::root_config_system_container::ConfigContainer::new(
-                fs_seam.aggregate.clone(),
-                c.io(),
-            );
+        let config_file_reader = config_system::root_config_system_container::ConfigContainer::new(
+            fs_seam.aggregate.clone(),
+            c.io(),
+        );
 
         let codes = load_suppressed_rule_codes(
             fixture.path().to_string_lossy().as_ref(),

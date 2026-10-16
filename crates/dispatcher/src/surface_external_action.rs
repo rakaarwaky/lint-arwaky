@@ -185,7 +185,9 @@ pub fn load_config_entries(
     fs: &dyn IFilesystemAggregate,
     reader: &dyn shared_config_system::IConfigFileReaderAggregate,
 ) -> Vec<AdapterEntry> {
-    reader.read_config_files(root_path, &FsView { fs }).adapter_entries
+    reader
+        .read_config_files(root_path, &FsView { fs })
+        .adapter_entries
 }
 
 /// Find the nearest `lint_arwaky.config.yaml` at or above `root_path` and
@@ -223,7 +225,9 @@ pub fn load_ignored_rules(
     fs: &dyn IFilesystemAggregate,
     reader: &dyn shared_config_system::IConfigFileReaderAggregate,
 ) -> Vec<String> {
-    reader.read_config_files(root_path, &FsView { fs }).ignored_rules
+    reader
+        .read_config_files(root_path, &FsView { fs })
+        .ignored_rules
 }
 
 /// Adapts an `IFilesystemAggregate` to the `IConfigFileReadFs` view the

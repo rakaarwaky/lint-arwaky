@@ -25,7 +25,9 @@ fn main() -> anyhow::Result<()> {
     let orphan_factory: Arc<OrphanFactory> = Arc::new(|config, fs, _fs2| {
         let c = filesystem::root_filesystem_container::FilesystemContainer::new();
         orphan_rules::root_orphan_detector_container::OrphanContainer::new_with_config(
-            config, fs, c.workspace(),
+            config,
+            fs,
+            c.workspace(),
         )
         .analyzer()
     });

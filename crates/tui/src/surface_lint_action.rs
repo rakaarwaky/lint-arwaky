@@ -553,7 +553,7 @@ impl SurfaceLintExecutor {
     pub fn new(
         code_analysis: Arc<dyn ICodeAnalysisAggregate>,
         filesystem: Arc<dyn IFilesystemAggregate>,
-            fs_seam: Arc<dispatcher::surface_check_action::FilesystemSeam>,
+        fs_seam: Arc<dispatcher::surface_check_action::FilesystemSeam>,
         fs_factory: Arc<dyn Fn() -> dispatcher::surface_check_action::FilesystemSeam + Send + Sync>,
         orphan_factory: Arc<OrphanFactory>,
     ) -> Self {

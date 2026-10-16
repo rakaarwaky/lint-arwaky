@@ -16,7 +16,7 @@ fn e2e_check_action_full_flow() {
     let root = fixture_path("workspaces-good/crates/calculator");
     let path = FilePath::new(root.to_string_lossy().to_string()).unwrap();
     let c = filesystem::root_filesystem_container::FilesystemContainer::new();
-        let orch = c.orchestrator();
+    let orch = c.orchestrator();
     let opts = dispatcher_lint_arwaky::surface_check_action::ScanOptions {
         path: Some(path),
         multi_project_orchestrator: None,
@@ -24,7 +24,9 @@ fn e2e_check_action_full_flow() {
         member: None,
         filesystem: std::sync::Arc::new(
             dispatcher_lint_arwaky::surface_check_action::FilesystemSeam {
-                workspace: orch.clone(), parser: orch.clone(), aggregate: orch.clone(),
+                workspace: orch.clone(),
+                parser: orch.clone(),
+                aggregate: orch.clone(),
             },
         ),
         scan_aggregates: Some(common::build_scan_aggregates(

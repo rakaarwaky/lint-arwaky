@@ -196,7 +196,7 @@ impl CommonDeps {
             fs_seam,
             config_orchestrator,
             config_file_reader,
-                        config_reader: config_container.lister(),
+            config_reader: config_container.lister(),
             code_analysis_linter,
             import_orchestrator,
             naming_orchestrator,

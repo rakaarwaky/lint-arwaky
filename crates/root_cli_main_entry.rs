@@ -611,37 +611,39 @@ fn main() {
             format,
             filter,
             member,
-        } => cli_commands::surface_scan_command::handle_orphan(
-            cli_commands::surface_scan_command::OrphanCommandParams {
-                path: Some(FilePath::new(path).unwrap_or_default()),
-                member,
-                format: parse_format(&format),
-                orphan_orchestrator: orphan_orchestrator.clone(),
-                config_orchestrator: config_orchestrator.clone(),
-                report_formatter: report_formatter.clone(),
-                filesystem: filesystem.clone(),
-                filesystem_seam: fs_seam.clone(),
-                filter,
-                fs_factory: Arc::new(|| {
-                    let c = filesystem::root_filesystem_container::FilesystemContainer::new();
-                    {
-                        let orchestrator = c.orchestrator();
-                        dispatcher::surface_check_action::FilesystemSeam {
-                            workspace: orchestrator.clone(),
-                            parser: orchestrator.clone(),
-                            aggregate: orchestrator,
+        } => {
+            cli_commands::surface_scan_command::handle_orphan(
+                cli_commands::surface_scan_command::OrphanCommandParams {
+                    path: Some(FilePath::new(path).unwrap_or_default()),
+                    member,
+                    format: parse_format(&format),
+                    orphan_orchestrator: orphan_orchestrator.clone(),
+                    config_orchestrator: config_orchestrator.clone(),
+                    report_formatter: report_formatter.clone(),
+                    filesystem: filesystem.clone(),
+                    filesystem_seam: fs_seam.clone(),
+                    filter,
+                    fs_factory: Arc::new(|| {
+                        let c = filesystem::root_filesystem_container::FilesystemContainer::new();
+                        {
+                            let orchestrator = c.orchestrator();
+                            dispatcher::surface_check_action::FilesystemSeam {
+                                workspace: orchestrator.clone(),
+                                parser: orchestrator.clone(),
+                                aggregate: orchestrator,
+                            }
                         }
-                    }
-                }),
-                orphan_factory: Arc::new(|config, fs, _fs2| {
-                    let c = filesystem::root_filesystem_container::FilesystemContainer::new();
-                    orphan_rules::root_orphan_detector_container::OrphanContainer::new_with_config(
+                    }),
+                    orphan_factory: Arc::new(|config, fs, _fs2| {
+                        let c = filesystem::root_filesystem_container::FilesystemContainer::new();
+                        orphan_rules::root_orphan_detector_container::OrphanContainer::new_with_config(
                         config, fs, c.workspace(),
                     )
                     .analyzer()
-                }),
-            },
-        ),
+                    }),
+                },
+            )
+        }
         Command::Taxonomy {
             path,
             format,
@@ -732,7 +734,7 @@ fn main() {
                 report_formatter: report_formatter.clone(),
                 filesystem: filesystem.clone(),
                 filesystem_seam: fs_seam.clone(),
-                                config_file_reader: config_container.file_reader(),
+                config_file_reader: config_container.file_reader(),
                 filter,
                 ignored_paths: ignored_paths.clone(),
             },

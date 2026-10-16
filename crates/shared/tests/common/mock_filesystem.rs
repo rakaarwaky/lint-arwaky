@@ -472,7 +472,9 @@ impl IFilesystemAggregate for MockFilesystem {
             FilesystemRequest::BinaryAvailable { .. } => {
                 FilesystemResponse::BinaryAvailable { available: false }
             }
-            FilesystemRequest::IsMemberPath { .. } => FilesystemResponse::IsMember { is_member: false },
+            FilesystemRequest::IsMemberPath { .. } => {
+                FilesystemResponse::IsMember { is_member: false }
+            }
             FilesystemRequest::ParseAll { entries } => {
                 FilesystemResponse::ParsedEntries { entries }
             }

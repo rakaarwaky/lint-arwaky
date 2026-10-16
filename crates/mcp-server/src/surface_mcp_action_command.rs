@@ -11,9 +11,7 @@ use shared_auto_fix::IFixAggregate;
 use shared_common::Threshold;
 use shared_common::taxonomy_path_vo::FilePath;
 use shared_config_system::taxonomy_config_system_vo::ArchitectureConfig;
-use shared_config_system::{
-    IConfigOrchestratorAggregate, IConfigReadProtocol,
-};
+use shared_config_system::{IConfigOrchestratorAggregate, IConfigReadProtocol};
 use shared_doc_rules::IDocRunnerAggregate;
 use shared_external_lint::IExternalLintAggregate;
 use shared_filesystem::FilesystemRequest;

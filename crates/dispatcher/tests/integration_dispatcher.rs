@@ -20,7 +20,9 @@ fn dispatcher_check_action_on_clean_project() {
         let orch = c.orchestrator();
         std::sync::Arc::new(
             dispatcher_lint_arwaky::surface_check_action::FilesystemSeam {
-                workspace: orch.clone(), parser: orch.clone(), aggregate: orch.clone(),
+                workspace: orch.clone(),
+                parser: orch.clone(),
+                aggregate: orch.clone(),
             },
         )
     };

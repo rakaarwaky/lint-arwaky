@@ -216,18 +216,25 @@ fn no_op_executor() -> Arc<SurfaceLintExecutor> {
     let ca: Arc<CA> = Arc::new(CA);
     let fs_agg: Arc<dyn IFilesystemAggregate> = no_op_fs_aggregate();
     let fs_seam = Arc::new(FilesystemSeam {
-        workspace: fs_agg.clone(), parser: fs_agg.clone(),
+        workspace: fs_agg.clone(),
+        parser: fs_agg.clone(),
         aggregate: Arc::clone(&fs_agg),
     });
     let fs_agg_f = Arc::clone(&fs_agg);
     let fs_factory = Arc::new(move || FilesystemSeam {
-        workspace: fs_agg_f.clone(), parser: fs_agg_f.clone(),
+        workspace: fs_agg_f.clone(),
+        parser: fs_agg_f.clone(),
         aggregate: Arc::clone(&fs_agg_f),
     });
     let orphan_factory: Arc<OrphanFactory> = Arc::new(move |_config, _fs, _ws| {
         unimplemented!("MoveBottom tests never invoke orphan scanning")
     });
-    Arc::new(SurfaceLintExecutor::new(ca, fs_agg, fs_seam, fs_factory, orphan_factory,
+    Arc::new(SurfaceLintExecutor::new(
+        ca,
+        fs_agg,
+        fs_seam,
+        fs_factory,
+        orphan_factory,
     ))
 }
 

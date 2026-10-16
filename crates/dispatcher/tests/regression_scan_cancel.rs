@@ -28,10 +28,12 @@ fn many_file_fixture() -> std::path::PathBuf {
 
 fn seam() -> std::sync::Arc<dispatcher_lint_arwaky::surface_check_action::FilesystemSeam> {
     let c = filesystem::root_filesystem_container::FilesystemContainer::new();
-        let orch = c.orchestrator();
+    let orch = c.orchestrator();
     std::sync::Arc::new(
         dispatcher_lint_arwaky::surface_check_action::FilesystemSeam {
-            workspace: orch.clone(), parser: orch.clone(), aggregate: orch.clone(),
+            workspace: orch.clone(),
+            parser: orch.clone(),
+            aggregate: orch.clone(),
         },
     )
 }

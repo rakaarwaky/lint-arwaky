@@ -427,9 +427,7 @@ impl IFilesystemAggregate for RecordingFilesystem {
             | FilesystemRequest::BinaryAvailable { .. }
             | FilesystemRequest::IsMemberPath { .. }
             | FilesystemRequest::ParseAll { .. }
-            | FilesystemRequest::ImportsFor { .. } => {
-                FilesystemResponse::OpOk { ok: true }
-            }
+            | FilesystemRequest::ImportsFor { .. } => FilesystemResponse::OpOk { ok: true },
         }
     }
 }

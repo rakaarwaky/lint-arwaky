@@ -11,19 +11,29 @@ use tui_lint_arwaky::surface_lint_action::SurfaceLintExecutor;
 fn build_executor() -> Arc<SurfaceLintExecutor> {
     let code_container = CodeAnalysisContainer::new();
     let fs = FilesystemContainer::new();
-    let fs_seam = Arc::new(dispatcher::surface_check_action::FilesystemSeam { workspace: fs.orchestrator().clone(), parser: fs.orchestrator().clone(), aggregate: fs.orchestrator() });
+    let fs_seam = Arc::new(dispatcher::surface_check_action::FilesystemSeam {
+        workspace: fs.orchestrator().clone(),
+        parser: fs.orchestrator().clone(),
+        aggregate: fs.orchestrator(),
+    });
     let fs_factory: Arc<
         dyn Fn() -> dispatcher::surface_check_action::FilesystemSeam + Send + Sync,
     > = Arc::new(|| {
         let c = FilesystemContainer::new();
-        dispatcher::surface_check_action::FilesystemSeam { workspace: c.orchestrator().clone(), parser: c.orchestrator().clone(), aggregate: c.orchestrator() }
+        dispatcher::surface_check_action::FilesystemSeam {
+            workspace: c.orchestrator().clone(),
+            parser: c.orchestrator().clone(),
+            aggregate: c.orchestrator(),
+        }
     });
     // The executor under test always has orphan_aggregate unset, so the factory
     // is never invoked by the fallback paths tested here.
     let orphan_factory: Arc<OrphanFactory> = Arc::new(|config, fs, _fs2| {
         let ws = filesystem::root_filesystem_container::FilesystemContainer::new();
         orphan_rules::root_orphan_detector_container::OrphanContainer::new_with_config(
-            config, fs, ws.workspace(),
+            config,
+            fs,
+            ws.workspace(),
         )
         .analyzer()
     });

@@ -1,12 +1,12 @@
 // PURPOSE: File discovery, BFS subdirectory walker, index-build helpers, and
 // in-memory linter runner for the check action.
 use crate::surface_check_action::{
-    detect_language_from_path, run_all_linters_in_process, FilesystemSeam, ScanAggregates,
+    FilesystemSeam, ScanAggregates, detect_language_from_path, run_all_linters_in_process,
 };
-use shared_naming_rules::TESTS_DIR;
 use shared_common::ViolationItem;
 use shared_filesystem::FilesystemRequest;
 use shared_filesystem::utility_path_filter;
+use shared_naming_rules::TESTS_DIR;
 
 const BENCHES_DIR: &str = "benches";
 
@@ -296,9 +296,7 @@ pub(crate) fn build_import_map(
     for entry in entries {
         for imp in seam
             .parser
-            .execute(FilesystemRequest::imports_for(
-                &entry.path,
-            ))
+            .execute(FilesystemRequest::imports_for(&entry.path))
             .into_imports()
         {
             import_map
@@ -342,4 +340,3 @@ pub(crate) fn run_all_linters_json(
 }
 
 // ─── BFS unit tests ──────────────────────────────────────────────
-

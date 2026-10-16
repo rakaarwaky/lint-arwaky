@@ -1,8 +1,8 @@
+use crate::agent_config_file_orchestrator::ConfigFileReader;
 use crate::agent_config_orchestrator::{ConfigOrchestrator, ConfigOrchestratorDeps};
 use crate::capabilities_parser_provider::ConfigParserProvider;
 use crate::capabilities_workspace_detector::WorkspaceDetector;
 use crate::capabilities_yaml_reader::ConfigYamlReader;
-use crate::agent_config_file_orchestrator::ConfigFileReader;
 // Utility module wired into entry for orphan reachability (AES504)
 use shared_config_system::utility_config_parser;
 use shared_config_system::{

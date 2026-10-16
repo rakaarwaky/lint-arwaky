@@ -3,18 +3,17 @@
 // Converts raw linter output into scan-scoped violation items and runs the
 // single-file scan path that builds a one-entry index.
 use crate::surface_check_action::{
-    canonicalize_via, detect_language_from_path, FilesystemSeam,
-    ScanAggregates,
+    FilesystemSeam, ScanAggregates, canonicalize_via, detect_language_from_path,
 };
 use crate::surface_ci_action::run_isolated;
+use shared_common::ViolationItem;
 use shared_doc_rules::taxonomy_doc_rules_request::DocRequest;
 use shared_doc_rules::taxonomy_doc_rules_response::DocResponse;
-use shared_import_rules::taxonomy_import_rules_request::ImportRequest;
-use shared_naming_rules::{taxonomy_naming_rules_request::NamingRequest, BENCHES_DIR, TESTS_DIR};
-use shared_orphan_rules::OrphanRequest;
-use shared_filesystem::utility_test_file_discovery;
-use shared_common::ViolationItem;
 use shared_filesystem::FilesystemRequest;
+use shared_filesystem::utility_test_file_discovery;
+use shared_import_rules::taxonomy_import_rules_request::ImportRequest;
+use shared_naming_rules::{BENCHES_DIR, TESTS_DIR, taxonomy_naming_rules_request::NamingRequest};
+use shared_orphan_rules::OrphanRequest;
 use shared_quality_rules::CodeAnalysisRequest;
 use shared_role_rules::taxonomy_role_rules_request::RoleRequest;
 pub(crate) fn structure_violations_in_scope(
@@ -36,24 +35,29 @@ pub(crate) fn structure_violations_in_scope(
             .unwrap_or_else(|| target_path.to_path_buf())
     };
 
-    crate::surface_structure_action::collect_structure(target, agg.structure.clone(), &agg.fs_seam, agg.config_file_reader.as_ref())
-        .unwrap_or_default()
-        .into_iter()
-        .filter(|v| {
-            // A finding names a folder (AES702) or a file (AES701/AES703); both
-            // resolve under the workspace root. The audit always walks every
-            // member dir under that root, so a member-dir scan target must
-            // additionally keep only the findings inside itself.
-            let resolved = ws_root.join(&v.file.value);
-            let exists = resolved.is_dir()
-                || agg
-                    .fs_seam
-                    .aggregate
-                    .execute(FilesystemRequest::path_exists(&resolved))
-                    .into_path_exists();
-            exists && resolved.starts_with(target_path)
-        })
-        .collect::<Vec<_>>()
+    crate::surface_structure_action::collect_structure(
+        target,
+        agg.structure.clone(),
+        &agg.fs_seam,
+        agg.config_file_reader.as_ref(),
+    )
+    .unwrap_or_default()
+    .into_iter()
+    .filter(|v| {
+        // A finding names a folder (AES702) or a file (AES701/AES703); both
+        // resolve under the workspace root. The audit always walks every
+        // member dir under that root, so a member-dir scan target must
+        // additionally keep only the findings inside itself.
+        let resolved = ws_root.join(&v.file.value);
+        let exists = resolved.is_dir()
+            || agg
+                .fs_seam
+                .aggregate
+                .execute(FilesystemRequest::path_exists(&resolved))
+                .into_path_exists();
+        exists && resolved.starts_with(target_path)
+    })
+    .collect::<Vec<_>>()
 }
 
 /// Run the doc-invariant audit (AES601–AES605) and convert its findings into
@@ -71,8 +75,11 @@ pub(crate) fn doc_violations_in_scope(target: &str, agg: &ScanAggregates) -> Vec
     let target_canon = canonicalize_via(&agg.fs_seam.aggregate, target_path)
         .unwrap_or_else(|| target_path.to_path_buf());
 
-    let suppressed =
-        crate::surface_suppression_hook::load_suppressed_rule_codes(target, &agg.fs_seam, agg.config_file_reader.as_ref());
+    let suppressed = crate::surface_suppression_hook::load_suppressed_rule_codes(
+        target,
+        &agg.fs_seam,
+        agg.config_file_reader.as_ref(),
+    );
     let DocResponse::Findings { findings } = agg.doc.execute(DocRequest::audit_all(&target_canon));
     findings
         .into_iter()
@@ -346,4 +353,3 @@ pub(crate) fn run_single_file_scan(
     }
     all
 }
-

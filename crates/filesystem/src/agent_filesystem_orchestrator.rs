@@ -191,11 +191,14 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
             FilesystemRequest::PathExists { path } => FilesystemResponse::PathExists {
                 exists: self.deps.io.path_exists(&path),
             },
-            FilesystemRequest::BinaryAvailable { bin_name } => FilesystemResponse::BinaryAvailable {
-                available: self.deps.tool_resolution.is_binary_available(
-                    &shared_common::ToolName::new(bin_name.clone()),
-                ),
-            },
+            FilesystemRequest::BinaryAvailable { bin_name } => {
+                FilesystemResponse::BinaryAvailable {
+                    available: self
+                        .deps
+                        .tool_resolution
+                        .is_binary_available(&shared_common::ToolName::new(bin_name.clone())),
+                }
+            }
             FilesystemRequest::IsMemberPath { path } => FilesystemResponse::IsMember {
                 is_member: self.deps.workspace.is_member_path(&path),
             },
@@ -203,11 +206,9 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
                 self.deps.parser.parse_all(&mut entries);
                 FilesystemResponse::ParsedEntries { entries }
             }
-            FilesystemRequest::ImportsFor { path } => {
-                FilesystemResponse::Imports {
-                    entries: self.deps.parser.imports_for(&path),
-                }
-            }
+            FilesystemRequest::ImportsFor { path } => FilesystemResponse::Imports {
+                entries: self.deps.parser.imports_for(&path),
+            },
             FilesystemRequest::ReadDirEntries { dir } => FilesystemResponse::Paths {
                 paths: match self.deps.io.read_dir_entries_as_pathbuf(&dir) {
                     Ok(v) => v
@@ -224,14 +225,18 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
 // ─── Block 3: Constructors, Std Traits & Helpers ─────────
 impl FilesystemOrchestrator {
     /// Acquires a read guard on an `RwLock`, recovering from a poisoned lock.
-    pub(crate) fn read_guard<'a, T>(lock: &'a std::sync::RwLock<T>) -> std::sync::RwLockReadGuard<'a, T> {
+    pub(crate) fn read_guard<'a, T>(
+        lock: &'a std::sync::RwLock<T>,
+    ) -> std::sync::RwLockReadGuard<'a, T> {
         match lock.read() {
             Ok(g) => g,
             Err(p) => p.into_inner(),
         }
     }
     /// Acquires a write guard on an `RwLock`, recovering from a poisoned lock.
-    pub(crate) fn write_guard<'a, T>(lock: &'a std::sync::RwLock<T>) -> std::sync::RwLockWriteGuard<'a, T> {
+    pub(crate) fn write_guard<'a, T>(
+        lock: &'a std::sync::RwLock<T>,
+    ) -> std::sync::RwLockWriteGuard<'a, T> {
         match lock.write() {
             Ok(g) => g,
             Err(p) => p.into_inner(),

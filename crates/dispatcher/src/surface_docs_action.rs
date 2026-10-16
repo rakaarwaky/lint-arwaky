@@ -64,12 +64,11 @@ pub fn collect_docs(
     if !std::path::Path::new(root).is_dir() {
         return Err(format!("Error: path '{root}' does not exist"));
     }
-    let suppressed =
-        crate::surface_suppression_hook::load_suppressed_rule_codes(
-            root,
-            fs_seam,
-            config_file_reader,
-        );
+    let suppressed = crate::surface_suppression_hook::load_suppressed_rule_codes(
+        root,
+        fs_seam,
+        config_file_reader,
+    );
     let DocResponse::Findings { findings } = doc_orchestrator.execute(DocRequest::audit_all(root));
     Ok(findings
         .into_iter()

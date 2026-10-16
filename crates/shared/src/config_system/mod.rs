@@ -1,6 +1,6 @@
 // config-system — taxonomy and contract types
-pub mod contract_config_orchestrator_aggregate;
 pub mod contract_config_file_reader_aggregate;
+pub mod contract_config_orchestrator_aggregate;
 pub mod contract_config_protocol;
 pub mod taxonomy_config_system_error;
 pub mod taxonomy_config_system_request;

@@ -4,11 +4,8 @@
 // These are the `pub` pipeline entry points called by other subsystems;
 // they live in a second agent file so the primary agent file stays under the size limit.
 use crate::agent_filesystem_orchestrator::FilesystemOrchestrator;
-use shared_common::{
-    DEFAULT_IGNORED_PATHS,
-    taxonomy_language_vo::ConfigLanguage,
-};
 use shared_common::taxonomy_path_vo::FilePath;
+use shared_common::{DEFAULT_IGNORED_PATHS, taxonomy_language_vo::ConfigLanguage};
 use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared_filesystem::taxonomy_filesystem_vo::{
     DefinitionEntry, FileEntry, ImplEntry, Language, ParseMetadata,

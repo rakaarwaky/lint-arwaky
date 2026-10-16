@@ -29,12 +29,11 @@ pub fn collect_structure(
     if !std::path::Path::new(root).is_dir() {
         return Err(format!("Error: path '{root}' does not exist"));
     }
-    let suppressed =
-        crate::surface_suppression_hook::load_suppressed_rule_codes(
-            root,
-            fs_seam,
-            config_file_reader,
-        );
+    let suppressed = crate::surface_suppression_hook::load_suppressed_rule_codes(
+        root,
+        fs_seam,
+        config_file_reader,
+    );
     let StructureResponse::Findings { findings } =
         structure_orchestrator.execute(StructureRequest::audit_all(root));
     Ok(findings

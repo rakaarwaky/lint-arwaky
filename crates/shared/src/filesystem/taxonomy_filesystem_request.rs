@@ -272,6 +272,8 @@ impl FilesystemRequest {
         Self::ParseAll { entries }
     }
     pub fn imports_for(path: &std::path::Path) -> Self {
-        Self::ImportsFor { path: path.to_path_buf() }
+        Self::ImportsFor {
+            path: path.to_path_buf(),
+        }
     }
 }

@@ -210,9 +210,11 @@ impl shared_config_system::IConfigOrchestratorAggregate for CleanConfig {
 
 fn build_seam() -> Arc<FilesystemSeam> {
     let c = filesystem::root_filesystem_container::FilesystemContainer::new();
-        let orch = c.orchestrator();
+    let orch = c.orchestrator();
     Arc::new(FilesystemSeam {
-        workspace: orch.clone(), parser: orch.clone(), aggregate: orch.clone(),
+        workspace: orch.clone(),
+        parser: orch.clone(),
+        aggregate: orch.clone(),
     })
 }
 
