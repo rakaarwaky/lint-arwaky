@@ -1,4 +1,22 @@
 # Changelog
+## 3.11.3 (2026-10-18)
+
+### Bug Fixes
+
+- fix(import-rules): report source line instead of import index for AES201 (#1105) (#1106)
+- fix(aes201-ux): use authoritative allowed list; separate WHY from FIX (#1103)
+- fix(aes201-ux): include explicit allowed layers in AES201 FIX messages (#1101)
+
+### Features
+
+- feat(structure-rules): enforce surface-layer protocol boundary via aggregate traits (#1097)
+- feat(import-rules): align surface layer key with filename prefix detector (#1095)
+
+### Maintenance
+
+- deps: bump rustls to 0.23.46 and align audit.toml with deny.toml (#1099)
+- deps: bump the cargo-dependencies group with 6 updates (#1093)
+
 ## 3.11.1 (2026-10-14)
 
 ### Bug Fixes
