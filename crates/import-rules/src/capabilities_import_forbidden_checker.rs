@@ -118,6 +118,7 @@ pub fn build_test_import_entries(file_path: &str, content: &str) -> Vec<ImportEn
             symbols: Vec::new(),
             is_reexport: imp.is_reexport,
             is_wildcard: imp.is_glob,
+            line: imp.line,
         });
     };
     match parse_file_content(file_path, content) {
@@ -461,16 +462,20 @@ impl ArchImportForbiddenChecker {
                         "Layer '{}' is importing from forbidden layer '{}'.",
                         source_layer, forbidden
                     );
-                    violations.push(LintResult::new_arch_with_name(
+                    let line = if entry.line > 0 { entry.line } else { idx + 1 };
+                    let violation = LintResult::new_arch_with_name(
                         file,
-                        idx + 1,
+                        line,
                         "AES201",
                         Severity::CRITICAL,
                         message,
                         "FORBIDDEN_IMPORT",
                         why,
                         fix,
-                    ));
+                    );
+                    if !violations.contains(&violation) {
+                        violations.push(violation);
+                    }
                 }
             }
         }
