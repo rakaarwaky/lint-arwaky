@@ -42,6 +42,7 @@ fn make_import(source: &str, target: &str, import_type: ImportType) -> ImportEnt
         symbols: vec![],
         is_reexport: false,
         is_wildcard: false,
+        line: 0,
     }
 }
 
@@ -228,6 +229,7 @@ fn us5_barrel_reexport_resolved_to_source() {
         symbols: vec!["Foo".to_string()],
         is_reexport: true,
         is_wildcard: false,
+        line: 0,
     }];
     // A consumer imports from lib.rs
     imports.push(ImportEntry {
@@ -241,6 +243,7 @@ fn us5_barrel_reexport_resolved_to_source() {
         symbols: vec!["Foo".to_string()],
         is_reexport: false,
         is_wildcard: false,
+        line: 0,
     });
     graph.build_graph(&imports, &files, &[], &[]);
 
