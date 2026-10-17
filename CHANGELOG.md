@@ -1,4 +1,21 @@
 # Changelog
+## 3.11.2 (2026-10-17)
+
+### Bug Fixes
+
+- fix(aes201-ux): use authoritative allowed list; separate WHY from FIX (#1103)
+- fix(report): canonicalize target before deriving the snapshot key (#1088)
+
+### Features
+
+- feat(structure-rules): Enforce surface-layer protocol boundary via aggregate traits (#1097)
+- feat(import-rules): Align surface layer key with filename prefix detector (#1095)
+
+### Maintenance
+
+- deps: bump the cargo-dependencies group with 6 updates (#1093)
+- Bump rustls to 0.23.46 and align audit.toml with deny.toml (#1099)
+
 ## 3.11.1 (2026-10-14)
 
 ### Bug Fixes
