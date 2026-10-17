@@ -297,6 +297,9 @@ pub struct ImportEntry {
     pub is_reexport: bool,
     /// Is this a wildcard import? (`use foo::*`, `export * from`)
     pub is_wildcard: bool,
+    /// Line number (1-based) where this import appears in source (0 if unknown).
+    #[serde(default)]
+    pub line: usize,
 }
 
 // ═══════════════════════════════════════════════════════════════

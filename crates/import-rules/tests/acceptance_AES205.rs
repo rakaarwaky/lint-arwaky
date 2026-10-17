@@ -170,6 +170,7 @@ fn aes205_scan_cross_layer_dependency_detected() {
         symbols: Vec::new(),
         is_reexport: false,
         is_wildcard: false,
+        line: 0,
     };
     imports_map.insert(file_path.to_string(), vec![entry]);
 
@@ -218,6 +219,7 @@ fn aes205_scan_mutual_cross_layer_cycle() {
             symbols: Vec::new(),
             is_reexport: false,
             is_wildcard: false,
+            line: 0,
         }],
     );
 
@@ -240,6 +242,7 @@ fn aes205_scan_mutual_cross_layer_cycle() {
             symbols: Vec::new(),
             is_reexport: false,
             is_wildcard: false,
+            line: 0,
         }],
     );
 

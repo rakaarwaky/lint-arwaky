@@ -198,6 +198,7 @@ fn extract_rust_imports(
     imports: &mut Vec<ImportEntry>,
 ) {
     let kind = node.kind();
+    let line = node.start_position().row + 1;
 
     if kind == "use_declaration" {
         let is_pub = {
@@ -225,6 +226,7 @@ fn extract_rust_imports(
                     symbols: alias.map(|a| vec![a]).unwrap_or_default(),
                     is_reexport: is_pub,
                     is_wildcard: false,
+                    line,
                 });
             }
         } else if let Some(path_str) = extract_use_path(node, content) {
@@ -245,6 +247,7 @@ fn extract_rust_imports(
                     .unwrap_or_default(),
                 is_reexport: is_pub,
                 is_wildcard: is_glob,
+                line,
             });
         }
     } else if kind == "mod_item"
@@ -261,6 +264,7 @@ fn extract_rust_imports(
             symbols: Vec::new(),
             is_reexport: false,
             is_wildcard: false,
+            line,
         });
     }
 }
@@ -272,6 +276,7 @@ fn extract_python_imports(
     imports: &mut Vec<ImportEntry>,
 ) {
     let kind = node.kind();
+    let line = node.start_position().row + 1;
 
     if kind == "import_statement" {
         let text = text_of(node, content);
@@ -290,6 +295,7 @@ fn extract_python_imports(
                 symbols: extract_python_import_bindings(node, content),
                 is_reexport: false,
                 is_wildcard: false,
+                line,
             });
         }
     } else if kind == "import_from_statement"
@@ -310,6 +316,7 @@ fn extract_python_imports(
             symbols: extract_python_from_names(node, content),
             is_reexport: false,
             is_wildcard,
+            line,
         });
     }
 }
@@ -392,6 +399,7 @@ fn extract_js_imports(
     imports: &mut Vec<ImportEntry>,
 ) {
     let kind = node.kind();
+    let line = node.start_position().row + 1;
 
     if kind == "import_statement" {
         if let Some(source) = extract_js_string_child(node, content) {
@@ -419,6 +427,7 @@ fn extract_js_imports(
                 symbols,
                 is_reexport: false,
                 is_wildcard: text.contains("* as"),
+                line,
             });
         }
     } else if kind == "export_statement" {
@@ -436,6 +445,7 @@ fn extract_js_imports(
                 symbols: Vec::new(),
                 is_reexport: true,
                 is_wildcard,
+                line,
             });
         }
     } else if kind == "call_expression" {
@@ -451,6 +461,7 @@ fn extract_js_imports(
                 symbols: Vec::new(),
                 is_reexport: false,
                 is_wildcard: false,
+                line,
             });
         }
     } else if kind == "lexical_declaration" || kind == "variable_declaration" {
@@ -473,6 +484,7 @@ fn extract_js_imports(
                             symbols: Vec::new(),
                             is_reexport: false,
                             is_wildcard: false,
+                            line: inner.start_position().row + 1,
                         });
                     }
                 }

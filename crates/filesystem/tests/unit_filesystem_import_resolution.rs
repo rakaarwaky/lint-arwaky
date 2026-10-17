@@ -34,6 +34,7 @@ fn make_python_import(raw: &str, resolved: Option<&str>) -> ImportEntry {
         symbols: vec![],
         is_reexport: false,
         is_wildcard: false,
+        line: 0,
     }
 }
 
@@ -397,6 +398,7 @@ from .taxonomy_core_error import (
             symbols: vec![symbol.to_string()],
             is_reexport: false,
             is_wildcard: false,
+            line: 0,
         };
         let resolved = resolve_single_import(entry, temp.path());
         assert_eq!(
@@ -451,6 +453,7 @@ fn test_python_relative_barrel_preserves_parent_depth() {
         symbols: vec!["SharedType".to_string()],
         is_reexport: false,
         is_wildcard: false,
+        line: 0,
     };
 
     let resolved = resolve_single_import(entry, temp.path());
@@ -552,6 +555,7 @@ fn test_root_relative_dot_slash_resolves() {
         symbols: vec![],
         is_reexport: false,
         is_wildcard: false,
+        line: 0,
     };
     let files: HashSet<&str> = build_file_set(&["main.js", "x.js"]);
     let stem_index = build_stem_index(&["main.js", "x.js"]);
@@ -581,6 +585,7 @@ fn test_root_relative_dotdot_resolves() {
         symbols: vec![],
         is_reexport: false,
         is_wildcard: false,
+        line: 0,
     };
     let files: HashSet<&str> = build_file_set(&["main.js", "y.js"]);
     let stem_index = build_stem_index(&["main.js", "y.js"]);
