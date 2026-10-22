@@ -96,7 +96,7 @@ cargo run --bin lint-arwaky-mcp
 
 ---
 
-## Feature Change
+### Feature Change
 
 A new rule, a fix to an existing rule, or a change to crate behaviour.
 
@@ -131,7 +131,7 @@ A new rule, a fix to an existing rule, or a change to crate behaviour.
 
 6. Commit with a conventional prefix (`feat:`, `fix:`, `refactor:`) and open a PR.
 
-## Documentation Change
+### Documentation Change
 
 A change to Markdown only, with no code edit.
 
@@ -214,14 +214,14 @@ with the fix.
 
 ---
 
-## Branch Management
+### Branch Management
 
 - Allowed branch naming: `main`, `develop`. Feature/fix branches are merged into
   `develop` via PR, then promoted to `main`.
 - Use `--delete-branch` when merging feature/fix PRs; never delete `develop`
   when merging to `main`.
 
-## Versioning Policy
+### Versioning Policy
 
 All lint-arwaky workspace crates are published in **lockstep** under a single
 version number (see `[workspace.dependencies]` in the root `Cargo.toml`). This
@@ -240,7 +240,7 @@ is a deliberate trade-off, not an accident:
 When bumping the version, every `[workspace.dependencies]` entry, every member
 crate `version`, and `CHANGELOG.md` must move together in the same change.
 
-## Issue Closure Policy
+### Issue Closure Policy
 
 A **defect/bug issue must not be closed without a PR that includes a regression
 test** demonstrating the reported behavior no longer reproduces. Link the test
@@ -254,7 +254,7 @@ must mean "verified fixed", not "worked on".
 Feature/enhancement issues are exempt (there is no defect to reproduce), but
 their acceptance criteria must still be verifiably met before closure.
 
-## Why Contribute
+### Why Contribute
 
 | Aspect                     | Benefit                                                        |
 | -------------------------- | -------------------------------------------------------------- |
@@ -264,6 +264,6 @@ their acceptance criteria must still be verifiably met before closure.
 | **Community**              | Join a project where every PR is checked by the rules it adds  |
 | **Learning opportunity**   | Study a codebase that passes its own architecture linter       |
 
-## Questions?
+### Questions?
 
 Open an issue on GitHub or contact the maintainer.

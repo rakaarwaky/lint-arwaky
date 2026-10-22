@@ -320,10 +320,11 @@ pub const DOC_HEADING_CONTRACTS: &[DocH2Contract] = &[
             "Runtime",
             "Project Quick Facts",
             "Pipeline",
+            "Project Structure",
             "Commands",
             "Related Documents",
         ],
-        &["Project Structure"],
+        &[],
     ),
     (
         ARCHITECTURE_DOC,
@@ -340,26 +341,16 @@ pub const DOC_HEADING_CONTRACTS: &[DocH2Contract] = &[
             "Surface Layer",
             "Root Layer",
         ],
-        &["Dependency Policy"],
+        &[],
     ),
     (
         CONTRIBUTING_DOC,
         &[
             "Principles",
             "Development Setup",
-            "Feature Change",
-            "Documentation Change",
             "Quality Verification & PR Process",
         ],
-        &[
-            "Prerequisites",
-            "Running the binaries",
-            "Branch Management",
-            "Versioning Policy",
-            "Issue Closure Policy",
-            "Why Contribute",
-            "Questions?",
-        ],
+        &[],
     ),
     (
         PRD_DOC,
@@ -372,13 +363,7 @@ pub const DOC_HEADING_CONTRACTS: &[DocH2Contract] = &[
             "Non-functional Requirements",
             "Open Questions / Risks",
         ],
-        &[
-            "Product Decisions",
-            "Exit Code Contract",
-            "AES Rule Summary",
-            "Feature Map",
-            "Reference",
-        ],
+        &[],
     ),
     (
         // `allowed` is empty on purpose: `Project Structure` belongs to the
@@ -408,7 +393,7 @@ pub const DOC_HEADING_CONTRACTS: &[DocH2Contract] = &[
             "Feature Roll-up",
             "Risk Register",
         ],
-        &["Backlog", "Blockers", "Release Readiness", "Deferred"],
+        &[],
     ),
     (
         FRD_DOC,

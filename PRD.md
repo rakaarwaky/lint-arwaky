@@ -30,7 +30,7 @@ Developers, AI agents, and DevOps engineers on multi-language monorepos (Rust/Py
 - **In scope**: CLI binary, MCP server, TUI, 34 AES rules across seven groups, external linter adapters, SARIF/JUnit/JSON reports, git hooks, auto-fix (remove + replace + rename).
 - **Out of scope**: IDE plugins, web dashboard, cloud SaaS, non-Rust implementation, structural/multi-file semantic refactors in auto-fix, Windows runtime support (deferred to post-v3.x pending dedicated runner ROI; cross-compilation target available but runtime unvalidated; estimated cost of Windows CI matrix exceeds current adoption demand where >92% of target developer/CI environments are Linux/macOS).
 
-## Product Decisions (locked)
+### Product Decisions (locked)
 
 | Topic | Decision |
 |-------|----------|
@@ -46,7 +46,7 @@ Developers, AI agents, and DevOps engineers on multi-language monorepos (Rust/Py
 | Integration resilience | External lint adapters (clippy, ruff, eslint, …): one attempt per scan, skip-and-log on timeout or spawn failure — a retried tool run can report against a different tool state and mask the real result. Git diff resolution: a multi-strategy fallback chain, because every strategy queries the same trusted local repository and a fallback still yields a correct, if broader, file list. Retry/fallback is added only where a fallback still produces a materially useful and safe result. |
 | MCP tool-call duration | Unbounded: no server-side timeout and no cancellation method. The client owns the timeout and must set it above the documented worst-case chain |
 
-## Exit Code Contract
+### Exit Code Contract
 
 | Code | Name | When |
 |------|------|------|
@@ -79,7 +79,7 @@ response envelope is specified in the MCP surface's design document.
   - If violations remain that auto-fix cannot resolve (e.g. manual-only rules) → Exit Code `1` (Policy fail), consistent with `scan`.
 - `fix --dry-run` and live `fix` share identical exit-code aggregation semantics. A dry-run never writes files, so it exits `0` unless an attempt itself produced `Failed(reason)`.
 
-## AES Rule Summary (32 Rules)
+### AES Rule Summary (32 Rules)
 
 Seven groups: **Naming** (AES101–103, 3), **Import** (AES201–205, 5), **Quality** (AES301–305, 5), **Role** (AES401–406, 6), **Orphan** (AES501–506, 6), **Doc** (AES601–606, 6), and **Structure** (AES701–704, 4). The `scan`/`check` command runs the six code linters plus structure; **Doc** rules are audited over the document chain via the `docs` command. Full rule definitions: [RULES_AES.md](RULES_AES.md).
 
@@ -143,10 +143,10 @@ Traceability flows through four standardized layers:
 | Parsing | Full AST via tree-sitter; no regex fallback | `filesystem/FRD.md` |
 | Diagnostics | `PARSE_WARN` for files that fail to parse | `filesystem/FRD.md` |
 
-## Feature Map
+### Feature Map
 
 Crate responsibilities are listed in [README.md](README.md#project-structure) and each crate's `FRD.md` under `crates/`.
 
-## Reference
+### Reference
 
 - Architecture: [ARCHITECTURE.md](ARCHITECTURE.md) · Testing: [TEST.md](TEST.md) · Contributing: [CONTRIBUTING.md](CONTRIBUTING.md) · Roadmap: [ROADMAP.md](ROADMAP.md)
