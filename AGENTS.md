@@ -39,7 +39,7 @@ crates/
 ├── quality-rules/     # AES301–305
 ├── role-rules/        # AES401–406
 ├── orphan-rules/      # AES501–506
-├── doc-rules/         # AES601–605 (document invariants)
+├── doc-rules/         # AES601–606 (document invariants)
 ├── structure-rules/   # AES701–705 (folder structure)
 ├── external-lint/     # External linter adapters
 ├── auto-fix/          # Mechanical fixes

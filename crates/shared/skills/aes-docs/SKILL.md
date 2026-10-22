@@ -93,7 +93,7 @@ Doc comments on every public item are the sixth deliverable, in the language's n
 
 ## Invariants
 
-Every rule is machine-checked by `lint-arwaky-cli docs` (crate `doc-rules`, AES601–AES605).
+Every rule is machine-checked by `lint-arwaky-cli docs` (crate `doc-rules`, AES601–AES606).
 A rule cannot drift from the gate. Cite the code, not this file, when pointing at a rule.
 Each document's required section set is cross-checked against its reference's contract table, so a
 row that stops being enforced is a test failure rather than a silent edit.
@@ -118,6 +118,7 @@ row that stops being enforced is a test failure rather than a silent edit.
 | `absolute-path` / `secret-in-docs`                                       | No machine-specific path and no credential literal in any document.                                                                                                                   |
 | `ci-command-drift`                                                       | AGENTS.md commands match CI exactly or are labelled advisory.                                                                                                                        |
 | `doc-length` / `doc-thin`                                                | Each document stays inside the size its audience can read.                                                                                                                            |
+| `section_not_table` / `table_missing_columns` / `missing_required_doc`  | AES606: mandated BACKLOG/ROADMAP table sections carry their template tables; the six required root docs exist at a real workspace root.                                                  |
 
 ### Unchecked Invariants (Language Rules)
 

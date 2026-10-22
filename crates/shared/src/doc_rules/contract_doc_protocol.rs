@@ -1,5 +1,5 @@
-// PURPOSE: The five capability seams of the doc-rules feature — one protocol
-// trait per AES document rule (AES601–AES605).
+// PURPOSE: The six capability seams of the doc-rules feature — one protocol
+// trait per AES document rule (AES601–AES606).
 //
 // Each trait answers exactly one rule and carries exactly one method, so a
 // requirement maps to a seam one-for-one and the parity check can hold. The
@@ -44,4 +44,19 @@ pub trait IDocHeadingProtocol: Send + Sync {
     /// Report every heading-count and heading-contract violation in the
     /// documents of *context*.
     fn audit_doc_heading(&self, context: &DocAuditContext) -> Vec<DocFinding>;
+}
+
+/// AES606 (first half) — template body-shape conformance: every mandated
+/// section that carries a table in the HOW-TO template must actually be a
+/// table with the required columns.
+pub trait ITemplateConformanceProtocol: Send + Sync {
+    /// Report every section that is present but carries the wrong body shape.
+    fn audit_template_conformance(&self, context: &DocAuditContext) -> Vec<DocFinding>;
+}
+
+/// AES606 (second half) — required-document presence: every document the
+/// template requires at the workspace root must exist.
+pub trait IRequiredDocProtocol: Send + Sync {
+    /// Report one finding per required root document that does not exist.
+    fn audit_required_docs(&self, context: &DocAuditContext) -> Vec<DocFinding>;
 }

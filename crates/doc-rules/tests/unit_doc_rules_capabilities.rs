@@ -1,4 +1,4 @@
-// PURPOSE: unit tests for the doc-rules capabilities — AES601–AES605 seams
+// PURPOSE: unit tests for the doc-rules capabilities — AES601–AES606 seams
 //
 // Each case exercises the smallest input that decides its rule: a heading that
 // must be counted, a section that must be found, a shape that must be rejected.

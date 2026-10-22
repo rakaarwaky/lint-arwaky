@@ -81,7 +81,7 @@ response envelope is specified in the MCP surface's design document.
 
 ## AES Rule Summary (32 Rules)
 
-Seven groups: **Naming** (AES101–103, 3), **Import** (AES201–205, 5), **Quality** (AES301–305, 5), **Role** (AES401–406, 6), **Orphan** (AES501–506, 6), **Doc** (AES601–605, 5), and **Structure** (AES701–704, 4). The `scan`/`check` command runs the six code linters plus structure; **Doc** rules are audited over the document chain via the `docs` command. Full rule definitions: [RULES_AES.md](RULES_AES.md).
+Seven groups: **Naming** (AES101–103, 3), **Import** (AES201–205, 5), **Quality** (AES301–305, 5), **Role** (AES401–406, 6), **Orphan** (AES501–506, 6), **Doc** (AES601–606, 6), and **Structure** (AES701–704, 4). The `scan`/`check` command runs the six code linters plus structure; **Doc** rules are audited over the document chain via the `docs` command. Full rule definitions: [RULES_AES.md](RULES_AES.md).
 
 ## Feature Requirements (Prioritized)
 

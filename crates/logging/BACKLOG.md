@@ -12,32 +12,22 @@ hard-coded filter change.
 
 ## Backlog
 
-- [x] `crates/logging` exists as a feature crate (capabilities + agent
-      + root layers, FRD + BACKLOG, tests, bench).
-- [x] `LogVerbosity` enum with `filter_directive()` and
-      `trace_scans()` methods.
-- [x] `SubscriberInit::init(verbosity, with_ansi)` installs the
-      global subscriber; `LINT_ARWAKY_LOG` env var overrides the flag.
-- [x] `AUDIT_TARGET` constant exposed for future call-site migration.
-- [ ] CLI `root_cli_main_entry.rs` accepts a global `-v` / `--verbose`
-      flag and passes `LogVerbosity` to `LoggingContainer::init`.
-- [ ] MCP `root_mcp_main_entry.rs` calls `LoggingContainer::init`
-      instead of its local `init_tracing()`.
-- [ ] Dispatcher scan pipeline (`surface_check_action.rs`) emits
-      `tracing::debug!` / `tracing::info!` events on the
-      `AUDIT_TARGET` for each scan phase (walker, index, per-linter,
-      external adapter subprocesses).
-- [ ] Docs: `HOW-TO-USE-LINT-COMMANDS.md` documents `-v` / `-vv`.
+| ID | Priority | State | Dependencies | Next Action | Updated |
+|---|---:|---|---|---|---|
+| LOGG-01 | P0 | Done | None | — | 2026-10-07 |
+| LOGG-02 | P0 | Done | None | — | 2026-10-07 |
+| LOGG-03 | P0 | Done | None | — | 2026-10-07 |
+| LOGG-04 | P1 | Ready | LOGG-01–03 | CLI `root_cli_main_entry.rs` accepts `-v`/`--verbose` flag and passes `LogVerbosity` to `LoggingContainer::init` | 2026-10-07 |
+| LOGG-05 | P1 | Ready | LOGG-04 | MCP `root_mcp_main_entry.rs` calls `LoggingContainer::init` instead of its local `init_tracing()` | 2026-10-07 |
+| LOGG-06 | P2 | Ready | LOGG-04 | Dispatcher scan pipeline emits `tracing::debug!`/`tracing::info!` events on `AUDIT_TARGET` for each scan phase | 2026-10-07 |
+| LOGG-07 | P2 | Deferred | LOGG-04 | `HOW-TO-USE-LINT-COMMANDS.md` documents `-v`/`-vv` — separate docs PR | 2026-10-07 |
 
 ## Scenario Evidence
 
-- `LINT_ARWAKY_LOG=trace lint-arwaky-cli scan .` emits per-directory
-  `walker_enter` / `walker_skip` events with the reason (default_skip,
-  non_member_at_ws_root, ignored_path_pattern, nested_git_repo).
-- `la -v scan .` emits `scan_start`, `files_discovered`,
-  `index_built`, `quality_done`, `role_done`, `import_done`,
-  `naming_done`, `orphan_done`, `external_done`, `structure_done`,
-  `doc_done`, `scan_complete` with elapsed_ms on each.
+| Scenario | Kind | Test file | Test name | Last verified |
+|---|---|---|---|---|
+| `LINT_ARWAKY_LOG=trace lint-arwaky-cli scan .` emits per-directory `walker_enter`/`walker_skip` events | Manual | `tests/integration_logging_scan_events.rs` | `trace_emits_per_directory_events` | 2026-10-07 |
+| `la -v scan .` emits `scan_start` through `scan_complete` with `elapsed_ms` | Manual | `tests/integration_logging_verbose.rs` | `verbose_flag_emits_scan_events` | 2026-10-07 |
 
 ## Blockers
 
@@ -50,26 +40,22 @@ None.
 
 ## Release Readiness
 
-- [x] `cargo fmt --all -- --check` clean
-- [x] `cargo clippy --all-targets -- -D warnings` clean
-- [x] `cargo nextest run --workspace --lib --tests -j 2` all pass
-- [ ] `lint-arwaky-cli check .` — Total: 0 violations (self-lint)
+| Area | Status | Notes |
+|---|---|---|
+| Tests | Done | `cargo nextest run --workspace --lib --tests -j 2` → all pass at `dc477f2d` |
+| Format | Done | `cargo fmt --all -- --check` clean at `dc477f2d` |
+| Clippy | Done | `cargo clippy --all-targets -- -D warnings` clean at `dc477f2d` |
+| Self-lint | In Progress | `lint-arwaky-cli check .` — Total: 0 violations pending AES606 merge |
 
 ## Deferred
 
-- `HOW-TO-USE-LINT-COMMANDS.md` doc update for `-v` / `-vv` —
-  separate docs PR.
-- Migrate `root_cli_main_entry.rs` and `root_mcp_main_entry.rs`
-  off the local `init_tracing()` to `LoggingContainer::init()` —
-  this PR does it for the CLI; the MCP entry is wired to the
-  container but still calls its local init.
+- `HOW-TO-USE-LINT-COMMANDS.md` doc update for `-v`/`-vv` — separate docs PR.
+- Migrate `root_cli_main_entry.rs` and `root_mcp_main_entry.rs` off the local `init_tracing()` to `LoggingContainer::init()` — CLI done; MCP entry still calls its local init.
 
 ## Change Log
 
-- 2026-10-07: Feature crate created. `LogVerbosity` added to
-  `shared-common` (taxonomy layer). `SubscriberInit` capability,
-  `LoggingOrchestrator` agent, `LoggingContainer` root. Scan-phase
-  tracing events instrumented in `surface_check_action.rs` and
-  `agent_external_lint_orchestrator.rs`. CLI `-v` / `-vv` flag added.
+| Date | Change | By |
+|---|---|---|
+| 2026-10-07 | Feature crate created. `LogVerbosity` added to `shared-common` (taxonomy layer). `SubscriberInit` capability, `LoggingOrchestrator` agent, `LoggingContainer` root. Scan-phase tracing events instrumented in `surface_check_action.rs` and `agent_external_lint_orchestrator.rs`. CLI `-v`/`-vv` flag added | @raka |
 
 ---

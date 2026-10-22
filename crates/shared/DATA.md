@@ -73,7 +73,7 @@ rule crates can report without depending on the common taxonomy.
 
 | Field | Type | Description |
 |---|---|---|
-| code | Text | The document invariant that fired (AES601–AES605) |
+| code | Text | The document invariant that fired (AES601–AES606) |
 | violation_type | Text | Machine-parseable subtype, so a consumer routes without reading prose |
 | doc | Text | The document the finding belongs to, relative to the audit root |
 | message | Text | Human-readable detail about what drifted |

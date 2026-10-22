@@ -24,45 +24,45 @@ Last Updated: 2026-09-29
 
 ## Scenario Evidence
 
-| Scenario | Kind | Test file | Last verified |
-|---|---|---|---|
-| Config exists at project root | Automated | acceptance_FR_001.rs | current |
-| Config not at root, exists at parent (depth 1) | Automated | acceptance_FR_001.rs | current |
-| Config not at root/parent, exists at XDG user | Automated | acceptance_FR_001.rs | current |
-| Config only at XDG system dir | Automated | acceptance_FR_001.rs | current |
-| No config anywhere | Automated | acceptance_FR_001.rs | current |
-| Symlink pointing outside project root | Automated | acceptance_FR_001.rs | current |
-| YAML parse failure at priority 1 | Automated | acceptance_FR_001.rs | current |
-| Permission denied at priority 1 | Automated | acceptance_FR_001.rs | current |
-| TOML with `[tool.lint-arwaky]` | Automated | acceptance_FR_009.rs | current |
-| TOML without `[tool]` section | Automated | acceptance_FR_009.rs | current |
-| Invalid TOML syntax | Automated | acceptance_FR_009.rs | current |
-| Rust/Python/TypeScript workspace detection | Automated | acceptance_FR_002.rs | current |
-| Unknown language | Automated | acceptance_FR_002.rs | current |
-| Directory with Cargo.toml | Automated | acceptance_FR_002.rs | current |
-| Directory with pyproject.toml | Automated | acceptance_FR_002.rs | current |
-| Directory with package.json | Automated | acceptance_FR_002.rs | current |
-| Parent dir is `crates/`/`packages/`/`modules/` | Automated | acceptance_FR_002.rs | current |
-| No markers anywhere | Automated | acceptance_FR_002.rs | current |
-| Both Cargo.toml and package.json | Automated | acceptance_FR_002.rs | current |
-| Directory with `__init__.py` only | Automated | acceptance_FR_002.rs | current |
-| Root with crates/foo, crates/bar | Automated | acceptance_FR_004.rs | current |
-| Root with no workspace dirs | Automated | acceptance_FR_004.rs | current |
-| Root is `crates/` itself | Automated | acceptance_FR_004.rs | current |
-| I/O error on one member dir | Automated | acceptance_FR_004.rs | current |
-| Config with empty layers array | Automated | acceptance_FR_005.rs | current |
-| Duplicate rule values | Automated | acceptance_FR_005.rs | current |
-| Config error during load | Automated | acceptance_FR_005.rs | current |
-| Empty ignored_paths in config | Automated | acceptance_FR_005.rs | current |
-| Scoped rule `agent(container\|registry)` | Automated | acceptance_FR_005.rs | current |
-| Score threshold 50.0 | Automated | acceptance_FR_006.rs | current |
-| Score threshold 0.0 / 100.0 | Automated | acceptance_FR_006.rs | current |
-| Score threshold -1.0 / 101.0 | Automated | acceptance_FR_006.rs | current |
-| Unknown adapter name | Automated | acceptance_FR_006.rs | current |
-| No config ignored paths | Automated | acceptance_FR_008.rs | current |
-| Config adds "tests" | Automated | acceptance_FR_008.rs | current |
-| Config adds ".git" (already default) | Automated | acceptance_FR_008.rs | current |
-| Config adds empty string | Automated | acceptance_FR_008.rs | current |
+| Scenario | Kind | Test file | Test name | Last verified |
+|---|---|---|---|---|
+| Config exists at project root | Automated | acceptance_FR_001.rs | us1_config_in_project_root_is_found | current |
+| Config not at root, exists at parent (depth 1) | Automated | acceptance_FR_001.rs | us1_config_in_parent_directory_is_found | current |
+| Config not at root/parent, exists at XDG user | Gap | — | — | 2026-10-23 |
+| Config only at XDG system dir | Gap | — | — | 2026-10-23 |
+| No config anywhere | Automated | acceptance_FR_001.rs | — | current |
+| Symlink pointing outside project root | Automated | acceptance_FR_001.rs | — | current |
+| YAML parse failure at priority 1 | Automated | acceptance_FR_001.rs | — | current |
+| Permission denied at priority 1 | Automated | acceptance_FR_001.rs | — | current |
+| TOML with `[tool.lint-arwaky]` | Automated | acceptance_FR_009.rs | — | current |
+| TOML without `[tool]` section | Automated | acceptance_FR_009.rs | — | current |
+| Invalid TOML syntax | Automated | acceptance_FR_009.rs | — | current |
+| Rust/Python/TypeScript workspace detection | Automated | acceptance_FR_002.rs | — | current |
+| Unknown language | Automated | acceptance_FR_002.rs | — | current |
+| Directory with Cargo.toml | Automated | acceptance_FR_002.rs | — | current |
+| Directory with pyproject.toml | Automated | acceptance_FR_002.rs | — | current |
+| Directory with package.json | Automated | acceptance_FR_002.rs | — | current |
+| Parent dir is `crates/`/`packages/`/`modules/` | Automated | acceptance_FR_002.rs | — | current |
+| No markers anywhere | Automated | acceptance_FR_002.rs | — | current |
+| Both Cargo.toml and package.json | Automated | acceptance_FR_002.rs | — | current |
+| Directory with `__init__.py` only | Automated | acceptance_FR_002.rs | — | current |
+| Root with crates/foo, crates/bar | Automated | acceptance_FR_004.rs | — | current |
+| Root with no workspace dirs | Automated | acceptance_FR_004.rs | — | current |
+| Root is `crates/` itself | Automated | acceptance_FR_004.rs | — | current |
+| I/O error on one member dir | Automated | acceptance_FR_004.rs | — | current |
+| Config with empty layers array | Automated | acceptance_FR_005.rs | — | current |
+| Duplicate rule values | Automated | acceptance_FR_005.rs | — | current |
+| Config error during load | Automated | acceptance_FR_005.rs | — | current |
+| Empty ignored_paths in config | Automated | acceptance_FR_005.rs | — | current |
+| Scoped rule `agent(container\|registry)` | Automated | acceptance_FR_005.rs | — | current |
+| Score threshold 50.0 | Automated | acceptance_FR_006.rs | — | current |
+| Score threshold 0.0 / 100.0 | Automated | acceptance_FR_006.rs | — | current |
+| Score threshold -1.0 / 101.0 | Automated | acceptance_FR_006.rs | — | current |
+| Unknown adapter name | Automated | acceptance_FR_006.rs | — | current |
+| No config ignored paths | Automated | acceptance_FR_008.rs | — | current |
+| Config adds "tests" | Automated | acceptance_FR_008.rs | — | current |
+| Config adds ".git" (already default) | Automated | acceptance_FR_008.rs | — | current |
+| Config adds empty string | Automated | acceptance_FR_008.rs | — | current |
 
 ## Blockers
 

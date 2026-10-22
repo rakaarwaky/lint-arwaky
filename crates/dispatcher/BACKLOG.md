@@ -38,7 +38,10 @@ None.
 
 ## Release Readiness
 
-Done.
+| Area | Status | Notes |
+|---|---|---|
+| Tests | Done | `cargo nextest run -p dispatcher-lint-arwaky` → 0 failures at `ec7e16a7` |
+| Docs | Done | [FRD.md](FRD.md) is specification-only; status lives in this file |
 
 ## Deferred
 
@@ -46,8 +49,8 @@ Done.
 
 ## Change Log
 
-| Date | Change |
-|---|---|
-| 2026-09-29 | Created backlog entry for dispatcher surface crate |
-| 2026-10-02 | `collect_single_file_external` routes a one-file scan target through the external adapters; language flags derive from the file extension instead of a project walk |
-| 2026-10-02 | `scan <file.md>` now runs the external adapters: the single-file path derives its language flags from the file extension, so the markdownlint adapter fires on a lone Markdown target |
+| Date | Change | By |
+|---|---|---|
+| 2026-09-29 | Created backlog entry for dispatcher surface crate | @raka |
+| 2026-10-02 | `collect_single_file_external` routes a one-file scan target through the external adapters; language flags derive from the file extension instead of a project walk | @raka |
+| 2026-10-02 | `scan <file.md>` now runs the external adapters: the single-file path derives its language flags from the file extension, so the markdownlint adapter fires on a lone Markdown target | @raka |
