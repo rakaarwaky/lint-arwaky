@@ -1,4 +1,10 @@
 # Changelog
+## 3.11.4 (2026-10-22)
+
+### Bug Fixes
+
+- fix(doc-rules): remove Health column + vocabulary from doc contract (#1113)
+
 ## 3.11.3 (2026-10-18)
 
 ### Bug Fixes
