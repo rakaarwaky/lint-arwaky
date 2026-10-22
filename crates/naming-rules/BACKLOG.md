@@ -2,7 +2,7 @@
 
 FRD: [FRD.md](FRD.md)
 Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
-State / Health: defined in root [ROADMAP.md](../../ROADMAP.md) — cited here, not restated
+State: defined in root [ROADMAP.md](../../ROADMAP.md) — cited here, not restated
 Last Updated: 2026-10-02
 
 ## Current Condition
@@ -14,11 +14,11 @@ Last Updated: 2026-10-02
 
 ## Backlog
 
-| ID | Priority | State | Health | Dependencies | Next Action | Updated |
-|---|---:|---|---|---|---|---|
-| NAMI-01 | P0 | Done | On Track | None | — | 2026-09-29  |
-| NAMI-02 | P0 | Done | On Track | None | — | 2026-09-29  |
-| NAMI-03 | P0 | Done | On Track | None | — | 2026-10-02  |
+| ID | Priority | State| Dependencies | Next Action | Updated |
+|---:|---|---|---|---|---|
+| NAMI-01 | P0 | Done | None | — | 2026-09-29  |
+| NAMI-02 | P0 | Done | None | — | 2026-09-29  |
+| NAMI-03 | P0 | Done | None | — | 2026-10-02  |
 
 ## Scenario Evidence
 

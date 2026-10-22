@@ -2,7 +2,7 @@
 
 FRD: [FRD.md](FRD.md)
 Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
-State / Health: defined in root [ROADMAP.md](../../ROADMAP.md) — cited here, not restated
+State: defined in root [ROADMAP.md](../../ROADMAP.md) — cited here, not restated
 Last Updated: 2026-10-02
 
 ## Current Condition
@@ -15,13 +15,13 @@ Last Updated: 2026-10-02
 
 ## Backlog
 
-| ID | Priority | State | Health | Dependencies | Next Action | Updated |
-|---|---:|---|---|---|---|---|
-| STRUC-01 | P0 | Done | On Track | None | — | 2026-09-29  |
-| STRUC-02 | P0 | Done | On Track | None | — | 2026-09-29  |
-| STRUC-03 | P0 | Done | On Track | None | — | 2026-09-29  |
-| STRUC-04 | P0 | Done | On Track | None | — | 2026-10-02  |
-| STRUC-05 | P0 | Done | On Track | None | — | 2026-10-13  |
+| ID | Priority | State| Dependencies | Next Action | Updated |
+|---:|---|---|---|---|---|
+| STRUC-01 | P0 | Done | None | — | 2026-09-29  |
+| STRUC-02 | P0 | Done | None | — | 2026-09-29  |
+| STRUC-03 | P0 | Done | None | — | 2026-09-29  |
+| STRUC-04 | P0 | Done | None | — | 2026-10-02  |
+| STRUC-05 | P0 | Done | None | — | 2026-10-13  |
 
 ## Scenario Evidence
 

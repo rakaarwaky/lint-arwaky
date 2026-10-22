@@ -2,7 +2,7 @@
 
 FRD: —
 Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
-State / Health: defined in root [ROADMAP.md](../../ROADMAP.md) — cited here, not restated
+State: defined in root [ROADMAP.md](../../ROADMAP.md) — cited here, not restated
 Last Updated: 2026-09-29
 
 ## Current Condition
@@ -14,9 +14,9 @@ Last Updated: 2026-09-29
 
 ## Backlog
 
-| ID | Priority | State | Health | Dependencies | Next Action | Updated |
-|---|---:|---|---|---|---|---|
-| TUIC-01 | P2 | Done | On Track | None | — | 2026-09-29  |
+| ID | Priority | State| Dependencies | Next Action | Updated |
+|---:|---|---|---|---|---|
+| TUIC-01 | P2 | Done | None | — | 2026-09-29  |
 
 ## Scenario Evidence
 

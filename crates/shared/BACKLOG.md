@@ -2,7 +2,7 @@
 
 FRD: —
 Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
-State / Health: defined in root [ROADMAP.md](../../ROADMAP.md) — cited here, not restated
+State: defined in root [ROADMAP.md](../../ROADMAP.md) — cited here, not restated
 Last Updated: 2026-10-05
 
 ## Current Condition
@@ -14,10 +14,10 @@ Last Updated: 2026-10-05
 
 ## Backlog
 
-| ID | Priority | State | Health | Dependencies | Next Action | Updated |
-|---|---:|---|---|---|---|---|
-| SHAR-01 | P0 | Done | On Track | None | — | 2026-09-29 |
-| SHAR-02 | P1 | Open | Defect | None | Stabilize the AES205 cycle findings at the kernel's edge set | 2026-10-05 |
+| ID | Priority | State| Dependencies | Next Action | Updated |
+|---:|---|---|---|---|---|
+| SHAR-01 | P0 | Done | None | — | 2026-09-29 |
+| SHAR-02 | P1 | Open | None | Stabilize the AES205 cycle findings at the kernel's edge set | 2026-10-05 |
 
 SHAR-02: the kernel's shared cycle-detection helper walks its edge set without
 a stable order, so the AES205 (circular import) findings flip-flop by a
