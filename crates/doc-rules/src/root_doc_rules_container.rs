@@ -1,6 +1,6 @@
 // PURPOSE: root container — doc-rules DI composition root
 //
-// Wires the five capability seams into the agent behind the contract trait.
+// Wires the six capability seams into the agent behind the contract trait.
 // The container is where concrete capability types are named — the agent and
 // the capabilities never see each other, only the protocols. No business logic
 // lives here.
@@ -8,12 +8,14 @@ use crate::agent_doc_orchestrator::DocOrchestrator;
 use crate::capabilities_doc_crosslink_checker::CrosslinkChecker;
 use crate::capabilities_doc_fr_format_checker::FrFormatChecker;
 use crate::capabilities_doc_heading_structure_checker::HeadingStructureChecker;
+use crate::capabilities_doc_required_doc_checker::RequiredDocChecker;
 use crate::capabilities_doc_section_structure_checker::SectionStructureChecker;
 use crate::capabilities_doc_spec_purity_checker::SpecPurityChecker;
+use crate::capabilities_doc_template_conformance_checker::TemplateConformanceChecker;
 use shared_doc_rules::contract_doc_aggregate::IDocRunnerAggregate;
 use shared_doc_rules::contract_doc_protocol::{
-    ICrosslinkProtocol, IDocHeadingProtocol, IFrFormatProtocol, ISectionStructureProtocol,
-    ISpecPurityProtocol,
+    ICrosslinkProtocol, IDocHeadingProtocol, IFrFormatProtocol, IRequiredDocProtocol,
+    ISectionStructureProtocol, ISpecPurityProtocol, ITemplateConformanceProtocol,
 };
 use std::sync::Arc;
 
@@ -29,12 +31,17 @@ impl RootDocRulesContainer {
         let spec_purity: Arc<dyn ISpecPurityProtocol> = Arc::new(SpecPurityChecker::new());
         let crosslink: Arc<dyn ICrosslinkProtocol> = Arc::new(CrosslinkChecker::new());
         let doc_heading: Arc<dyn IDocHeadingProtocol> = Arc::new(HeadingStructureChecker::new());
+        let template_conformance: Arc<dyn ITemplateConformanceProtocol> =
+            Arc::new(TemplateConformanceChecker::new());
+        let required_doc: Arc<dyn IRequiredDocProtocol> = Arc::new(RequiredDocChecker::new());
         Arc::new(DocOrchestrator::new(
             fr_format,
             section_structure,
             spec_purity,
             crosslink,
             doc_heading,
+            template_conformance,
+            required_doc,
         ))
     }
 }

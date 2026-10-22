@@ -104,7 +104,7 @@ lint-arwaky-cli fix modules/ --dry-run --filter AES101
 # A group command narrows *which linter runs*; a layer command narrows *what is
 # reported* — an import cycle or an orphan is a workspace-wide fact, so the
 # analysis still sees every file. `root_*` has no subcommand (use `scan`), and
-# findings that name no layer file (AES702 folder findings, AES601–605 doc
+# findings that name no layer file (AES702 folder findings, AES601–606 doc
 # invariants) stay with `structure` and `docs`.
 lint-arwaky-cli taxonomy .
 lint-arwaky-cli capabilities . --format json

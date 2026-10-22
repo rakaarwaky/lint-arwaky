@@ -99,6 +99,18 @@ pub const DOC_STRUCTURE_VIOLATION_FRONTMATTER_MISSING: &str = "frontmatter_missi
 /// contract module declares protocol classes. (Merged into AES601.)
 pub const FR_PROTOCOL_PARITY_VIOLATION_COUNT_MISMATCH: &str = "protocol_count_mismatch";
 
+/// ─── AES606 — Template conformance + required document ────────────────────
+pub const RULE_CODE_TEMPLATE_CONFORMANCE: &str = "AES606";
+
+/// A section that must carry a table in the template does not.
+pub const TEMPLATE_CONFORMANCE_VIOLATION_SECTION_NOT_TABLE: &str = "section_not_table";
+
+/// A table is present but is missing one or more required columns.
+pub const TEMPLATE_CONFORMANCE_VIOLATION_TABLE_MISSING_COLUMNS: &str = "table_missing_columns";
+
+/// A required root document does not exist at the audit root.
+pub const MISSING_DOC_VIOLATION: &str = "missing_required_doc";
+
 /// ─── Shape constants ────────────────────────────────────────────────────────
 /// Adapter name the doc checker reports under.
 pub const ADAPTER_NAME: &str = "architecture";
@@ -209,6 +221,72 @@ pub const NFR_COLUMNS: &[&str] = &["Metric", "Target", "Measurement method"];
 
 /// File extensions a spec must never name, per HOW-TO-MAKE-FRD Rule 9.
 pub const SOURCE_EXTENSIONS: &[&str] = &["py", "rs", "ts", "tsx"];
+
+// ─── AES606 — Template body-shape conformance ──────────────────────────────
+// The columns each mandated section must carry, transcribed verbatim from
+// the fenced templates in `HOW-TO-MAKE-BACKLOG.md` and `HOW-TO-MAKE-ROADMAP.md`.
+// These are the table shapes AES606 enforces: a section present but carrying
+// the wrong body shape (bullets, prose, or a table missing a required column)
+// reports `section_not_table` or `table_missing_columns`.
+
+/// The `## Backlog` table of a BACKLOG.md.
+pub const BACKLOG_TABLE_COLUMNS: &[&str] = &[
+    "ID",
+    "Priority",
+    "State",
+    "Dependencies",
+    "Next Action",
+    "Updated",
+];
+
+/// The `## Scenario Evidence` table of a BACKLOG.md.
+pub const SCENARIO_EVIDENCE_COLUMNS: &[&str] = &[
+    "Scenario",
+    "Kind",
+    "Test file",
+    "Test name",
+    "Last verified",
+];
+
+/// The `## Release Readiness` table of a BACKLOG.md.
+pub const RELEASE_READINESS_COLUMNS: &[&str] = &["Area", "Status", "Notes"];
+
+/// The `## Change Log` table of a BACKLOG.md.
+pub const CHANGE_LOG_COLUMNS: &[&str] = &["Date", "Change", "By"];
+
+/// The `## State Definitions` table of a ROADMAP.md.
+pub const STATE_DEFINITIONS_COLUMNS: &[&str] = &["State", "Meaning"];
+
+/// The `## Feature Roll-up` table of a ROADMAP.md. Columns:
+/// ID | Feature | Priority | State | Dependencies | Next Action | Updated.
+/// PR #1113 removed the `Health` column and dropped `Spec`/`Backlog` in
+/// favor of `Feature`, `Dependencies`, and `Next Action`, so the enforced
+/// shape is the seven-column one, not the ten-column template shape.
+pub const FEATURE_ROLLUP_COLUMNS: &[&str] = &[
+    "ID",
+    "Feature",
+    "Priority",
+    "State",
+    "Dependencies",
+    "Next Action",
+    "Updated",
+];
+
+/// The documents the template requires at the workspace root. `DESIGN.md`,
+/// `FRD.md`, `DATA.md`, and root `BACKLOG.md` are intentionally absent: the
+/// three are per-feature files, and the root master is `ROADMAP.md`.
+pub const REQUIRED_ROOT_DOCS: &[&str] = &[
+    PRD_DOC,
+    ROADMAP_DOC,
+    README_DOC,
+    AGENTS_DOC,
+    ARCHITECTURE_DOC,
+    CONTRIBUTING_DOC,
+];
+
+/// A marker file whose presence at an audit root identifies it as a real
+/// workspace root rather than a sub-directory the user is auditing alone.
+pub const WORKSPACE_ROOT_MARKERS: &[&str] = &["Cargo.toml", "pyproject.toml", "package.json"];
 
 /// ─── AES605 — Document heading structure ──────────────────────────────
 /// Mapping from root-document filename to the H2 contracts derived from
@@ -330,14 +408,7 @@ pub const DOC_HEADING_CONTRACTS: &[DocH2Contract] = &[
             "Feature Roll-up",
             "Risk Register",
         ],
-        &[
-            "Backlog",
-            "Blockers",
-            "Dependencies",
-            "Release Readiness",
-            "Deferred",
-            "Change Log",
-        ],
+        &["Backlog", "Blockers", "Release Readiness", "Deferred"],
     ),
     (
         FRD_DOC,

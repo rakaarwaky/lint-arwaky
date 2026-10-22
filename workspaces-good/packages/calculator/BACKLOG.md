@@ -42,6 +42,6 @@ Nothing deferred.
 
 ## Change Log
 
-| Date | Change |
-|------|--------|
-| 2026-10-03 | Backlog opened with the contract sections. |
+| Date | Change | By |
+|------|--------|----|
+| 2026-10-03 | Backlog opened with the contract sections. | @raka |

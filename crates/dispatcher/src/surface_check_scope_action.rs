@@ -60,7 +60,7 @@ pub(crate) fn structure_violations_in_scope(
     .collect::<Vec<_>>()
 }
 
-/// Run the doc-invariant audit (AES601–AES605) and convert its findings into
+/// Run the doc-invariant audit (AES601–AES606) and convert its findings into
 /// violation items. Findings carry relative doc paths and resolve against the
 /// scan target; a finding names a document that must exist inside the target,
 /// so out-of-scope or stale findings are dropped like structure findings.

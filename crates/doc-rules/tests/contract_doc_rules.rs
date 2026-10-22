@@ -1,6 +1,6 @@
 // PURPOSE: contract tests for doc-rules — each invariant must fire on a bad
 // document and stay silent on a conforming one. Findings carry a code
-// (AES601–AES605) plus a violation_type, and both are asserted.
+// (AES601–AES606) plus a violation_type, and both are asserted.
 use doc_rules_lint_arwaky::root_doc_rules_container::RootDocRulesContainer;
 use shared_doc_rules::taxonomy_doc_rules_request::DocRequest;
 use shared_doc_rules::taxonomy_doc_rules_response::DocResponse;
@@ -130,9 +130,9 @@ fn conforming_roadmap() -> &'static str {
 
 ## Feature Roll-up
 
-| ID | Item |
-|---|---|
-| WS-1 | Docs. |
+| ID | Feature | Priority | State | Dependencies | Next Action | Updated |
+|---|---|---|---|---|---|---|
+| WS-1 | Docs | P0 | Done | — | — | 2026-09-29 |
 
 ## Status Policy
 

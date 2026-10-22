@@ -6,7 +6,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the full 7-layer specification.
 
 ## Summary
 
-**35 rules across 7 groups:** Naming (AES101–103), Import (AES201–205), Quality (AES301–305), Role (AES401–406), Orphan (AES501–506), Doc (AES601–605), and Structure (AES701–705). The `scan`/`check` command runs the six code linters plus structure and the doc-audit pass (which surfaces AES601–AES605 inside `scan`); Doc rules additionally read Markdown and are audited over the document chain via the `docs` command. External adapters (Clippy, Ruff, ESLint, …) run alongside via `external` and emit tool-native codes.
+**36 rules across 7 groups:** Naming (AES101–103), Import (AES201–205), Quality (AES301–305), Role (AES401–406), Orphan (AES501–506), Doc (AES601–606), and Structure (AES701–705). The `scan`/`check` command runs the six code linters plus structure and the doc-audit pass (which surfaces AES601–AES606 inside `scan`); Doc rules additionally read Markdown and are audited over the document chain via the `docs` command. External adapters (Clippy, Ruff, ESLint, …) run alongside via `external` and emit tool-native codes.
 
 | Code   | Name                | Severity | Group  | Description                                                                                |
 | -------- | --------------------- | ---------- | -------- | -------------------------------------------------------------------------------------------- |
@@ -55,6 +55,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the full 7-layer specification.
 | AES603 | Spec Purity           | HIGH     | Doc    | Specs never name source files and never carry implementation state.                              |
 | AES604 | Crosslinks            | HIGH     | Doc    | An FRD crosslinks its PRD and backlog; a feature backlog never restates master sections.         |
 | AES605 | Doc Heading Structure | HIGH     | Doc    | Every root document carries one H1 and its own template-derived H2 set; off-template H2s are reported. |
+| AES606 | Doc Template Conformance | HIGH     | Doc    | BACKLOG and ROADMAP table-shaped sections carry their template tables (bullets or prose fire `section_not_table`; a table missing a required column fires `table_missing_columns`). The six required root documents (`PRD.md`, `ROADMAP.md`, `README.md`, `AGENTS.md`, `ARCHITECTURE.md`, `CONTRIBUTING.md`) exist at a real workspace root; a missing one fires `missing_required_doc`. |
 
 | Code   | Name               | Severity | Group     | Description                                                                                |
 | -------- | -------------------- | ---------- | ----------- | ---------------------------------------------------------------------------------------------- |
@@ -604,7 +605,7 @@ Matching is by leading words after lowercasing and stripping punctuation, so `##
 | `CONTRIBUTING.md` | Principles, Development Setup, Feature Change, Documentation Change, Quality Verification & PR Process |
 | `PRD.md` | Problem Statement, Goals & Success Metrics, User Personas, Scope, Feature Requirements, Non-functional Requirements, Open Questions / Risks |
 | `README.md` | Prerequisites, Quick Start, Architecture, Available Scripts/Commands, Configuration, Testing, Contributing, License (forbidden: Project Structure — that section belongs to `AGENTS.md`) |
-| `ROADMAP.md` | Current Condition, State Definitions, Status Policy, Feature Roll-up, Branches in Flight, Risk Register |
+| `ROADMAP.md` | Current Condition, State Definitions, Status Policy, Feature Roll-up, Risk Register |
 
 Each document also carries an agreed set of project-specific H2s that are accepted without violation; see the constants in `taxonomy_doc_constant.rs` for the full per-document lists.
 
@@ -613,6 +614,35 @@ Each document also carries an agreed set of project-specific H2s that are accept
 | `h1_count`          | The document has zero or more than one level-1 heading.                              |
 | `h2_missing`        | One or more of the required H2 sections is absent; the message names each one.         |
 | `h2_unexpected`     | A level-2 heading is outside the required and allowed sets; the message asks for demotion to H3 or removal. |
+
+---
+
+### AES606 — Doc Template Conformance
+
+**Severity:** HIGH
+
+Two checks answer one question: does the document body carry the table shape its HOW-TO template mandates?
+
+**Template body-shape conformance.** The `HOW-TO-MAKE-BACKLOG` and `HOW-TO-MAKE-ROADMAP` templates each mandate a specific table under a specific H2 section. A section that is present but carrying the wrong body — bullets, prose, or a table missing a required column — is a violation. AES605 sees the H2 heading is present but says nothing about what the section body must look like; this rule closes that gap.
+
+**Required-document presence.** The six root documents the templates require — `PRD.md`, `ROADMAP.md`, `README.md`, `AGENTS.md`, `ARCHITECTURE.md`, `CONTRIBUTING.md` — must exist at a real workspace root (detected by `Cargo.toml`, `pyproject.toml`, or `package.json` at the audit root). A sub-directory audit is self-contained and does not owe the root document set. `DESIGN.md`, `FRD.md`, `DATA.md`, and root `BACKLOG.md` are per-feature files and are not required at the root.
+
+| Violation type             | Fires when                                                          |
+| ------------------------- | ------------------------------------------------------------------- |
+| `section_not_table`       | A mandated section (e.g. `## Backlog`, `## State Definitions`) carries bullets or prose instead of a markdown table. |
+| `table_missing_columns`   | A mandated section carries a table, but one or more required columns are absent. |
+| `missing_required_doc`    | A required root document does not exist at a real workspace root.  |
+
+The enforced column sets are transcribed from the shipped templates:
+
+| Document | Section        | Required columns |
+| -------- | -------------- | ---------------- |
+| `BACKLOG.md` | Backlog | ID, Priority, State, Dependencies, Next Action, Updated |
+| `BACKLOG.md` | Scenario Evidence | Scenario, Kind, Test file, Test name, Last verified |
+| `BACKLOG.md` | Release Readiness | Area, Status, Notes |
+| `BACKLOG.md` | Change Log | Date, Change, By |
+| `ROADMAP.md` | State Definitions | State, Meaning |
+| `ROADMAP.md` | Feature Roll-up | ID, Feature, Priority, State, Dependencies, Next Action, Updated |
 
 ---
 

@@ -8,9 +8,9 @@
 
 ## System Overview
 
-The doc-rules crate enforces the AES document-invariant contract across the workspace. It audits every recognized `.md` document against five rules (AES601–AES605): FR-ID format and field completeness with FR/protocol class parity, section structure shape, spec purity, crosslink integrity, and document heading structure. Findings carry a machine-readable `violation_type` so consumers can route on them without parsing prose.
+The doc-rules crate enforces the AES document-invariant contract across the workspace. It audits every recognized `.md` document against six rules (AES601–AES606): FR-ID format and field completeness with FR/protocol class parity, section structure shape, spec purity, crosslink integrity, document heading structure, and template body-shape conformance with required-document presence. AES606 is answered by two capability seams — one for table-shape conformance, one for required-document presence — so this document declares seven requirements against seven protocol classes. Findings carry a machine-readable `violation_type` so consumers can route on them without parsing prose.
 
-Each rule is one capability behind one protocol seam, so the five requirements below map one-for-one onto the five capability seams the agent coordinates. The agent walks the document chain once, hands every capability the same audit context, and merges what they report; the filesystem walk itself lives in the shared utility layer, because an agent may not perform I/O. No external tool is involved.
+Each rule is one capability behind one protocol seam; AES606 carries two seams, so the seven requirements below map one-for-one onto the seven capability seams the agent coordinates. The agent walks the document chain once, hands every capability the same audit context, and merges what they report; the filesystem walk itself lives in the shared utility layer, because an agent may not perform I/O. No external tool is involved.
 
 **Path scoping.** The audit request carries one path, and that path is the **audit root**, not a filter. This differs from `scan`/`check`, which index the whole workspace and then narrow the findings to the target: `docs <path>` discovers the document chain starting at `<path>` and audits only what it finds there. Two consequences follow for a sub-directory run. First, root-level documents outside `<path>` are not audited at all. Second, crosslink and master-document invariants (AES604) resolve against `<path>` — a crate directory has no sibling `PRD.md`/`ROADMAP.md`, so the invariants that look for them behave as they would in a workspace that has none. A whole-workspace audit is the intended default; a sub-directory run is a narrower, self-contained audit, not a filtered view of the full one.
 
@@ -92,6 +92,31 @@ Each rule is one capability behind one protocol seam, so the five requirements b
 - **Edge Cases**: Level-3 and deeper headings are free-form per project and are never reported.
 - **Error Handling**: Heading counts are document-level findings and anchor to line 0, because a missing heading has no single line to blame.
 
+### FR-DOC-006: Template Body-Shape Conformance (AES606)
+
+- **Description**: Every table-shaped section the HOW-TO templates mandate in `BACKLOG.md` and `ROADMAP.md` carries its template table.
+- **Input**: Every `BACKLOG.md` and `ROADMAP.md` inside the audit context.
+- **Output**: A list of `DocFinding` values, each carrying `AES606` and one of `section_not_table` or `table_missing_columns`.
+- **Business Rules**:
+  - The six mandated BACKLOG/ROADMAP table sections are checked for a table carrying every required column; a section carrying bullets or prose fires `section_not_table`, and a table missing one or more required columns fires `table_missing_columns`.
+  - A section absent from the document is a missing-H2 question answered by AES605, so this rule only fires when the section is present but wrong-shaped.
+  - The enforced column sets are transcribed from the shipped `HOW-TO-MAKE-BACKLOG.md` and `HOW-TO-MAKE-ROADMAP.md` templates so the linter cannot reject a document that copied the template verbatim.
+  - The ROADMAP checks cover `State Definitions` and `Feature Roll-up` only; `Change Log` and `Dependencies` are BACKLOG sections and are not checked on a ROADMAP.
+- **Edge Cases**: A `ROADMAP.md` carrying no `## State Definitions` section at all raises no AES606 finding (the section is absent, not wrong-shaped).
+- **Error Handling**: An unreadable document yields no findings rather than a false violation.
+
+### FR-DOC-007: Required-Document Presence (AES606)
+
+- **Description**: The six required root documents exist at a real workspace root.
+- **Input**: The audit context's document set and the audit root, for the workspace-root marker check.
+- **Output**: A list of `DocFinding` values, each carrying `AES606` and `missing_required_doc`.
+- **Business Rules**:
+  - The required-document set is `PRD.md`, `ROADMAP.md`, `README.md`, `AGENTS.md`, `ARCHITECTURE.md`, and `CONTRIBUTING.md`; each missing one fires `missing_required_doc` anchored to line 0.
+  - The check is root-gated: it fires only when the audit root carries `Cargo.toml`, `pyproject.toml`, or `package.json`; a sub-directory audit is self-contained and does not owe the root document set.
+  - `DESIGN.md`, `FRD.md`, `DATA.md`, and root `BACKLOG.md` are per-feature files and are intentionally absent from the required set.
+- **Edge Cases**: A workspace root with no marker files is treated as a sub-directory audit and the check stays silent.
+- **Error Handling**: An unreadable document yields no findings rather than a false violation.
+
 ## API Contract
 
 ### Protocol API
@@ -103,12 +128,14 @@ Each rule is one capability behind one protocol seam, so the five requirements b
 | `audit_spec_purity` | `DocAuditContext` | `Vec<DocFinding>` | — | — | Status leaks and source-file names in a specification (AES603). |
 | `audit_crosslinks` | `DocAuditContext` | `Vec<DocFinding>` | — | — | Reference crosslinks and state-vocabulary placement (AES604). |
 | `audit_doc_heading` | `DocAuditContext` | `Vec<DocFinding>` | — | — | H1 count and closed H2 set per document template (AES605). |
+| `audit_template_conformance` | `DocAuditContext` | `Vec<DocFinding>` | — | — | BACKLOG/ROADMAP table-shape conformance (AES606). |
+| `audit_required_docs` | `DocAuditContext` | `Vec<DocFinding>` | — | — | Required root-document presence (AES606). |
 
 ### Aggregate API
 
 | Method | Input | Output | Error | Event | Description |
 |--------|-------|--------|-------|-------|-------------|
-| `execute` | `DocRequest` | `DocResponse` | — | — | Walks the document chain once, fans out to the five protocol seams, and returns the merged, deduplicated, stable-sorted findings. |
+| `execute` | `DocRequest` | `DocResponse` | — | — | Walks the document chain once, fans out to the seven protocol seams, and returns the merged, deduplicated, stable-sorted findings. |
 
 ## Integration Points
 
@@ -143,8 +170,11 @@ Each rule is one capability behind one protocol seam, so the five requirements b
 - A conforming workspace produces 0 doc findings on `lint-arwaky-cli docs .` → exit code 0.
 - `docs` run against a single crate directory → only that directory's documents are audited, and the crosslink invariants resolve against that directory as the root, not against the workspace root.
 - `docs` run against a directory holding no recognized document → 0 findings and exit code 0, the same as a clean audit; the target being empty is not itself a finding.
-- Each of the five protocol seams has its own capability, injected into the agent → the aggregate reaches all five rules through one `execute` call, and no capability is wired directly into the agent.
+- Each of the seven protocol seams has its own capability, injected into the agent → the aggregate reaches all six rules through one `execute` call, and no capability is wired directly into the agent.
 - A document that violates two rules at once → both rule codes appear in one response, proving the agent merges rather than short-circuits on the first capability that reports.
+- A BACKLOG.md carrying checkbox bullets under `## Backlog` → AES606 fires `section_not_table` naming the section and the required columns.
+- A ROADMAP.md whose `## State Definitions` table is missing the `Meaning` column → AES606 fires `table_missing_columns` naming the missing column.
+- A workspace root missing `PRD.md` → AES606 fires `missing_required_doc` naming the file.
 
 ## Assumptions & Constraints
 
@@ -152,7 +182,7 @@ Each rule is one capability behind one protocol seam, so the five requirements b
 - H2 matching is case-insensitive and uses leading-word comparison, so `## API Contract` and `## API contract:` both match.
 - The FR/protocol parity check and the API-method check only apply to features that have a corresponding shared contract module (`crates/shared/src/<feature-module>/`).
 - Aggregate traits are always excluded from the protocol class count regardless of naming.
-- One protocol class is one capability seam is one requirement: the five doc rules declare five seams, so this document declares five requirements and the two counts stay equal.
+- One protocol class is one capability seam is one requirement: the six doc rules declare seven seams (AES606 has two), so this document declares seven requirements and the two counts stay equal.
 - The document walk is shared utility work, not agent work: an agent coordinates in-memory protocols and may not touch the filesystem.
 - Fenced code blocks are stripped before H1 counting so shell comments like `# Tests (matches CI "Tests" job)` do not count as headings.
 - The root master document is `ROADMAP.md`; a legacy root `BACKLOG.md` is accepted during migration.
