@@ -1,0 +1,14 @@
+# ROADMAP
+
+## Current Condition
+
+State machine restated here.
+
+## State Definitions
+
+State machine restated here.
+
+## Feature Roll-up
+
+- FR-SHAR: shared kernel feature
+- FR-CONF: config-system feature
