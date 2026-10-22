@@ -331,7 +331,6 @@ pub const DOC_HEADING_CONTRACTS: &[DocH2Contract] = &[
             "Risk Register",
         ],
         &[
-            "Health Definitions",
             "Backlog",
             "Blockers",
             "Dependencies",

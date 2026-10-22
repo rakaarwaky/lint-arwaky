@@ -57,7 +57,7 @@ Copy, fill, delete nothing.
 
 FRD: [FRD.md](FRD.md)
 Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md), if applicable
-State / Health: values from root [ROADMAP.md](../../ROADMAP.md) — do not redefine here.
+State: values from root [ROADMAP.md](../../ROADMAP.md) — do not redefine here.
 Last Updated: <YYYY-MM-DD>
 
 ## Current Condition
@@ -69,9 +69,9 @@ Last Updated: <YYYY-MM-DD>
 
 ## Backlog
 
-| ID | Priority | State | Health | Dependencies | Next Action | Updated |
-|---|---:|---|---|---|---|---|
-| <SCOPE>-01 | P0 | Done | On Track | — | — | <YYYY-MM-DD> |
+| ID | Priority | State | Dependencies | Next Action | Updated |
+|---|---:|---|---|---|---|
+| <SCOPE>-01 | P0 | Done | — | — | <YYYY-MM-DD> |
 
 ## Scenario Evidence
 
