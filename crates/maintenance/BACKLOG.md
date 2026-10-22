@@ -2,7 +2,7 @@
 
 FRD: [FRD.md](FRD.md)
 Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
-State / Health: defined in root [ROADMAP.md](../../ROADMAP.md) — cited here, not restated
+State: defined in root [ROADMAP.md](../../ROADMAP.md) — cited here, not restated
 Last Updated: 2026-09-30
 
 ## Current Condition
@@ -14,16 +14,16 @@ Last Updated: 2026-09-30
 
 ## Backlog
 
-| ID | Priority | State | Health | Dependencies | Next Action | Updated |
-|---|---:|---|---|---|---|---|
-| MAIN-01 | P0 | Done | On Track | None | — | 2026-09-30 |
-| MAIN-02 | P0 | Done | On Track | None | — | 2026-09-30 |
-| MAIN-03 | P0 | Done | On Track | None | — | 2026-09-30 |
-| MAIN-04 | P0 | Done | On Track | None | — | 2026-09-30 |
-| MAIN-05 | P0 | Done | On Track | None | — | 2026-09-30 |
-| MAIN-06 | P0 | Done | On Track | None | — | 2026-09-30 |
-| MAIN-07 | P0 | Done | On Track | None | — | 2026-09-30 |
-| MAIN-08 | P0 | Done | On Track | None | — | 2026-09-30 |
+| ID | Priority | State| Dependencies | Next Action | Updated |
+|---:|---|---|---|---|---|
+| MAIN-01 | P0 | Done | None | — | 2026-09-30 |
+| MAIN-02 | P0 | Done | None | — | 2026-09-30 |
+| MAIN-03 | P0 | Done | None | — | 2026-09-30 |
+| MAIN-04 | P0 | Done | None | — | 2026-09-30 |
+| MAIN-05 | P0 | Done | None | — | 2026-09-30 |
+| MAIN-06 | P0 | Done | None | — | 2026-09-30 |
+| MAIN-07 | P0 | Done | None | — | 2026-09-30 |
+| MAIN-08 | P0 | Done | None | — | 2026-09-30 |
 
 ## Scenario Evidence
 

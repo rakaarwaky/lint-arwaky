@@ -7,9 +7,9 @@ the four operation logs into the history the caller reads.
 
 ## Backlog
 
-| ID | Priority | State | Health | Dependencies | Next Action | Updated |
-|---|---:|---|---|---|---|---|
-| BLK-CALC-001 | P1 | Planned | On Track | — | Cache the merged history per session | 2026-10-03 |
+| ID | Priority | State| Dependencies | Next Action | Updated |
+|---:|---|---|---|---|---|
+| BLK-CALC-001 | P1 | Planned | — | Cache the merged history per session | 2026-10-03 |
 
 ## Scenario Evidence
 

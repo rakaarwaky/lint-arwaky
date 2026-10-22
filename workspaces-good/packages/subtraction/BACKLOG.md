@@ -6,9 +6,9 @@ Subtraction is implemented, tested, and gated. Nothing is blocked.
 
 ## Backlog
 
-| ID | Priority | State | Health | Dependencies | Next Action | Updated |
-|---|---:|---|---|---|---|---|
-| BLK-001 | P1 | Planned | On Track | — | Document the aggregate boundary | 2026-10-03 |
+| ID | Priority | State| Dependencies | Next Action | Updated |
+|---:|---|---|---|---|---|
+| BLK-001 | P1 | Planned | — | Document the aggregate boundary | 2026-10-03 |
 
 ## Scenario Evidence
 
