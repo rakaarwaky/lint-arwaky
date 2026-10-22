@@ -144,12 +144,6 @@ A row is Done with a command.
 |---|---|
 | Done | Shipped. |
 
-## Health Definitions
-
-| Health | Meaning |
-|---|---|
-| On Track | No threat. |
-
 ## Risk Register
 
 | Risk | Mitigation |
@@ -164,7 +158,7 @@ fn conforming_backlog() -> &'static str {
 
 FRD: [FRD.md](FRD.md)
 Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
-State / Health: values from root [ROADMAP.md](../../ROADMAP.md) — do not redefine here.
+State: values from root [ROADMAP.md](../../ROADMAP.md) — do not redefine here.
 Last Updated: 2026-09-29
 
 ## Current Condition
@@ -176,9 +170,9 @@ Last Updated: 2026-09-29
 
 ## Backlog
 
-| ID | Priority | State | Health | Dependencies | Next Action | Updated |
-|---|---:|---|---|---|---|---|
-| SAM-01 | P0 | Ready | On Track | — | — | 2026-09-29 |
+| ID | Priority | State | Dependencies | Next Action | Updated |
+|---|---:|---|---|---|---|
+| SAM-01 | P0 | Ready | — | — | 2026-09-29 |
 
 ## Scenario Evidence
 
@@ -743,9 +737,9 @@ fn aes604_fires_when_a_feature_backlog_restates_master_sections() {
 ## Current Condition\n\n\
 - Done: nothing\n\n\
 ## Backlog\n\n\
-| ID | Priority | State | Health | Dependencies | Next Action | Updated |\n\
-|---|---:|---|---|---|---|---|\n\
-| SAM-01 | P0 | Ready | On Track | — | — | 2026-09-29 |\n\n\
+| ID | Priority | State | Dependencies | Next Action | Updated |\n\
+|---|---:|---|---|---|---|\n\
+| SAM-01 | P0 | Ready | — | — | 2026-09-29 |\n\n\
 ## Scenario Evidence\n\n\
 | Scenario | Kind | Test file | Test name | Last verified |\n\
 |---|---|---|---|---|\n\

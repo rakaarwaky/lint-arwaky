@@ -166,4 +166,4 @@ Each rule is one capability behind one protocol seam, so the five requirements b
 - **Audit context**: The shared per-run state every capability receives — the recognised documents, the audit root, and the root master text.
 - **Aggregate trait**: A composite entry-point trait (e.g., `IScannerAggregate`) that is not a capability seam.
 - **Parse skip**: A file that cannot be read or parsed is silently excluded; it is never counted as a violation.
-- **State vocabulary**: Sections that define `State`, `Health`, or progress markers and belong only in the root master document.
+- **State vocabulary**: Sections that define `State` or progress markers and belong only in the root master document.

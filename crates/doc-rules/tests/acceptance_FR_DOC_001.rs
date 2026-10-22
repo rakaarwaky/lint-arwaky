@@ -40,7 +40,7 @@ fn conforming_backlog() -> &'static str {
 
 FRD: [FRD.md](FRD.md)
 Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
-State / Health: values from root [ROADMAP.md](../../ROADMAP.md) — do not redefine here.
+State: values from root [ROADMAP.md](../../ROADMAP.md) — do not redefine here.
 Last Updated: 2026-09-29
 
 ## Current Condition
@@ -52,9 +52,9 @@ Last Updated: 2026-09-29
 
 ## Backlog
 
-| ID | Priority | State | Health | Dependencies | Next Action | Updated |
-|---|---:|---|---|---|---|---|
-| SAM-01 | P0 | Ready | On Track | — | — | 2026-09-29 |
+| ID | Priority | State | Dependencies | Next Action | Updated |
+|---|---:|---|---|---|---|
+| SAM-01 | P0 | Ready | — | — | 2026-09-29 |
 
 ## Scenario Evidence
 

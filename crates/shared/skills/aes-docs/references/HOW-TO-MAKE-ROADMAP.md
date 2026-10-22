@@ -20,8 +20,8 @@
 
 Four rules. Each one prevents a specific failure mode.
 
-1. **Single source of truth.** State vocabulary, Health vocabulary, and
- Status Policy live here and nowhere else. Feature backlogs cite them.
+1. **Single source of truth.** State vocabulary and Status Policy live
+ here and nowhere else. Feature backlogs cite them.
 2. **Index every feature.** Every feature directory must appear in the
  Feature Index table, linking to its FRD.md and BACKLOG.md
  (`no-master-roadmap`).
@@ -47,7 +47,7 @@ Copy, fill, delete nothing.
 ```markdown
 # ROADMAP — <workspace name>
 
-State / Health: vocabulary below. Last Updated: <YYYY-MM-DD>
+State: vocabulary below. Last Updated: <YYYY-MM-DD>
 
 ## Current Condition
 
@@ -69,15 +69,6 @@ State / Health: vocabulary below. Last Updated: <YYYY-MM-DD>
 | Released | Shipped. |
 | Deferred | Out of scope; reason in Actual Condition. |
 
-| Health | Meaning |
-|---|---|
-| On Track | No threat to the gate. |
-| At Risk | Gaps may miss the gate. |
-| Blocked | Cannot proceed. |
-| Ready for QA | Open rows clear; sweep left. |
-| Ready for Release | Evidence recorded. |
-| Released | Shipped. |
-
 ## Status Policy
 
 - Verified, not self-reported: re-run command; cite commit hash (not "today").
@@ -88,9 +79,9 @@ State / Health: vocabulary below. Last Updated: <YYYY-MM-DD>
 
 One table: every feature. Feature detail stays in each feature's BACKLOG.
 
-| ID | Item | Priority | Spec | Backlog | State | Health | Owner | Next | Updated |
-|---|---|---|---|---|---|---|---|---|---|
-| modules/<a> | Feature | P0 | [FRD](modules/<a>/FRD.md) | [BACKLOG](modules/<a>/BACKLOG.md) | In Progress | On Track | — | <SCOPE>-01 | <YYYY-MM-DD> |
+| ID | Item | Priority | Spec | Backlog | State | Owner | Next | Updated |
+|---|---|---|---|---|---|---|---|---|
+| modules/<a> | Feature | P0 | [FRD](modules/<a>/FRD.md) | [BACKLOG](modules/<a>/BACKLOG.md) | In Progress | — | <SCOPE>-01 | <YYYY-MM-DD> |
 
 ## Branches in Flight
 
@@ -113,7 +104,7 @@ reason.
 | Section            | Why it belongs here                                                |
 | ------------------ | ------------------------------------------------------------------ |
 | Current Condition  | Workspace truth in one glance.                                     |
-| State Definitions  | SSOT for state + health vocabulary. Feature backlogs cite it.      |
+| State Definitions  | SSOT for state vocabulary. Feature backlogs cite it.            |
 | Status Policy      | SSOT for verification + ID prefixes.                               |
 | Feature Roll-up    | Index + state + `WS-*` in one place; feature rows stay in BACKLOG. |
 | Branches in Flight | Active branches and the rows they own.                             |
