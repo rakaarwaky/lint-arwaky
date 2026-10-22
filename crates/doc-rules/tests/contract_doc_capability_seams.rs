@@ -157,7 +157,7 @@ fn write_feature(root: &Path) {
     std::fs::create_dir_all(feature.join("src")).unwrap();
     std::fs::write(
         feature.join("BACKLOG.md"),
-        "# Feature Backlog: Sample\n\n## Current Condition\n\n- Done: nothing yet\n\n## Backlog\n\n| ID | Priority | State | Health | Dependencies | Next Action | Updated |\n|---|---:|---|---|---|---|---|\n| SAM-01 | P0 | Ready | On Track | — | — | 2026-09-29 |\n\n## Scenario Evidence\n\n| Scenario | Kind | Test file | Test name | Last verified |\n|---|---|---|---|---|\n| nothing yet | Automated | tests/ | test_nothing | 2026-09-29 |\n\n## Blockers\n\nNone\n\n## Dependencies\n\nNone\n\n## Release Readiness\n\n| Area | Status | Notes |\n|---|---|---|\n| Tests | Done | nothing |\n\n## Deferred\n\nNone\n\n## Change Log\n\n| Date | Change | By |\n|---|---|---|\n| 2026-09-29 | init | @raka |\n",
+        "# Feature Backlog: Sample\n\n## Current Condition\n\n- Done: nothing yet\n\n## Backlog\n\n| ID | Priority | State | Dependencies | Next Action | Updated |\n|---|---:|---|---|---|---|\n| SAM-01 | P0 | Ready | — | — | 2026-09-29 |\n\n## Scenario Evidence\n\n| Scenario | Kind | Test file | Test name | Last verified |\n|---|---|---|---|---|\n| nothing yet | Automated | tests/ | test_nothing | 2026-09-29 |\n\n## Blockers\n\nNone\n\n## Dependencies\n\nNone\n\n## Release Readiness\n\n| Area | Status | Notes |\n|---|---|---|\n| Tests | Done | nothing |\n\n## Deferred\n\nNone\n\n## Change Log\n\n| Date | Change | By |\n|---|---|---|\n| 2026-09-29 | init | @raka |\n",
     )
     .unwrap();
     std::fs::write(
@@ -338,7 +338,7 @@ fn the_spec_purity_seam_answers_specs_only_and_never_a_backlog() {
     .unwrap();
     std::fs::write(
         feature.join("BACKLOG.md"),
-        "# Feature Backlog: Sample\n\n## Current Condition\n\n- [x] the FR-ID rule landed\n- SAM-01 is 90% complete and shipped in v3.7\n\n## Backlog\n\n| ID | Priority | State | Health | Dependencies | Next Action | Updated |\n|---|---:|---|---|---|---|---|\n| SAM-02 | P0 | Ready | On Track | — | — | 2026-09-29 |\n\n## Scenario Evidence\n\n| Scenario | Kind | Test file | Test name | Last verified |\n|---|---|---|---|---|\n| nothing yet | Automated | tests/ | test_nothing | 2026-09-29 |\n\n## Blockers\n\nNone\n\n## Dependencies\n\nNone\n\n## Release Readiness\n\n| Area | Status | Notes |\n|---|---|---|\n| Tests | Done | nothing |\n\n## Deferred\n\nNone\n\n## Change Log\n\n| Date | Change | By |\n|---|---|---|\n| 2026-09-29 | init | @raka |\n",
+        "# Feature Backlog: Sample\n\n## Current Condition\n\n- [x] the FR-ID rule landed\n- SAM-01 is 90% complete and shipped in v3.7\n\n## Backlog\n\n| ID | Priority | State | Dependencies | Next Action | Updated |\n|---|---:|---|---|---|---|\n| SAM-02 | P0 | Ready | — | — | 2026-09-29 |\n\n## Scenario Evidence\n\n| Scenario | Kind | Test file | Test name | Last verified |\n|---|---|---|---|---|\n| nothing yet | Automated | tests/ | test_nothing | 2026-09-29 |\n\n## Blockers\n\nNone\n\n## Dependencies\n\nNone\n\n## Release Readiness\n\n| Area | Status | Notes |\n|---|---|---|\n| Tests | Done | nothing |\n\n## Deferred\n\nNone\n\n## Change Log\n\n| Date | Change | By |\n|---|---|---|\n| 2026-09-29 | init | @raka |\n",
     )
     .unwrap();
     std::fs::write(
