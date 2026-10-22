@@ -26,7 +26,9 @@ code changing. The delta is the visible symptom of a non-deterministic scan.
 
 ## Scenario Evidence
 
-—
+| Scenario | Kind | Test file | Test name | Last verified |
+|---|---|---|---|---|
+| CLIC-02 AES205 count non-determinism | Gap | `tests/unit_cli_commands_report.rs` | `report_delta_is_deterministic` | working-tree |
 
 ## Blockers
 
@@ -38,8 +40,11 @@ None.
 
 ## Release Readiness
 
-Done. CLIC-02 is a scan-side defect, not a ship blocker: the report stays
-useful while the AES205 count is pinned down.
+| Area | Status | Notes |
+|---|---|---|
+| Tests | Done | `cargo nextest run -p cli-commands-lint-arwaky` → 0 failures |
+| Docs | Done | [FRD.md](FRD.md) is specification-only; status lives in this file |
+| CLIC-02 | In Progress | AES205 count non-determinism; report stays useful while pinned down |
 
 ## Deferred
 
@@ -47,7 +52,7 @@ useful while the AES205 count is pinned down.
 
 ## Change Log
 
-| Date | Change |
-|---|---|
-| 2026-10-05 | Shipped the `report` command, the folder-tree scan output with per-violation WHY/FIX, path semantics (a path narrows the report, the scan walks the member), and the JSON/SARIF/JUnit fields matching the text report. Opened CLIC-02 for the AES205 count non-determinism that moves the report's delta |
-| 2026-09-29 | Created backlog entry for CLI commands surface crate |
+| Date | Change | By |
+|---|---|---|
+| 2026-10-05 | Shipped the `report` command, the folder-tree scan output with per-violation WHY/FIX, path semantics (a path narrows the report, the scan walks the member), and the JSON/SARIF/JUnit fields matching the text report. Opened CLIC-02 for the AES205 count non-determinism that moves the report's delta | @raka |
+| 2026-09-29 | Created backlog entry for CLI commands surface crate | @raka |

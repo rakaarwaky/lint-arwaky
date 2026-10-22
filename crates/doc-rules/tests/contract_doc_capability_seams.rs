@@ -1,4 +1,4 @@
-// PURPOSE: contract tests for the five capability seams — each answers exactly
+// PURPOSE: contract tests for the six capability seams — each answers exactly
 // one AES doc rule, and each is reachable only through its own protocol trait.
 //
 // The aggregate tests in `contract_doc_rules.rs` prove the rules fire end to
@@ -8,11 +8,13 @@
 use doc_rules_lint_arwaky::capabilities_doc_crosslink_checker::CrosslinkChecker;
 use doc_rules_lint_arwaky::capabilities_doc_fr_format_checker::FrFormatChecker;
 use doc_rules_lint_arwaky::capabilities_doc_heading_structure_checker::HeadingStructureChecker;
+use doc_rules_lint_arwaky::capabilities_doc_required_doc_checker::RequiredDocChecker;
 use doc_rules_lint_arwaky::capabilities_doc_section_structure_checker::SectionStructureChecker;
 use doc_rules_lint_arwaky::capabilities_doc_spec_purity_checker::SpecPurityChecker;
+use doc_rules_lint_arwaky::capabilities_doc_template_conformance_checker::TemplateConformanceChecker;
 use shared_doc_rules::contract_doc_protocol::{
-    ICrosslinkProtocol, IDocHeadingProtocol, IFrFormatProtocol, ISectionStructureProtocol,
-    ISpecPurityProtocol,
+    ICrosslinkProtocol, IDocHeadingProtocol, IFrFormatProtocol, IRequiredDocProtocol,
+    ISectionStructureProtocol, ISpecPurityProtocol, ITemplateConformanceProtocol,
 };
 use shared_doc_rules::taxonomy_doc_audit_context_vo::DocAuditContext;
 use shared_doc_rules::taxonomy_doc_rules_request::DocFinding;
@@ -28,7 +30,7 @@ fn context_for(root: &Path) -> DocAuditContext {
     DocAuditContext::new(root, documents, master)
 }
 
-/// The five capabilities as one uniform callable, so a test can run every
+/// The six capabilities as one uniform callable, so a test can run every
 /// seam over one document set and attribute each finding to its owner.
 fn codes_from_all(root: &Path) -> Vec<&'static str> {
     let context = context_for(root);
@@ -38,6 +40,8 @@ fn codes_from_all(root: &Path) -> Vec<&'static str> {
     findings.extend(SpecPurityChecker::new().audit_spec_purity(&context));
     findings.extend(CrosslinkChecker::new().audit_crosslinks(&context));
     findings.extend(HeadingStructureChecker::new().audit_doc_heading(&context));
+    findings.extend(TemplateConformanceChecker::new().audit_template_conformance(&context));
+    findings.extend(RequiredDocChecker::new().audit_required_docs(&context));
     findings.into_iter().map(|f| f.code).collect()
 }
 
@@ -304,9 +308,9 @@ A row is Done with a command.
 
 ## Feature Roll-up
 
-| ID | Item |
-|---|---|
-| WS-1 | Docs. |
+| ID | Feature | Priority | State | Dependencies | Next Action | Updated |
+|---|---|---|---|---|---|---|
+| WS-1 | Docs | P0 | Done | — | — | 2026-09-29 |
 
 ## Risk Register
 
@@ -319,7 +323,7 @@ A row is Done with a command.
 
     assert!(
         codes_from_all(tmp.path()).is_empty(),
-        "five seams over a conforming workspace must report nothing"
+        "six seams over a conforming workspace must report nothing"
     );
 }
 

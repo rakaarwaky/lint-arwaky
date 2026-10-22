@@ -654,7 +654,7 @@ pub(crate) fn run_all_linters_in_process(
         "structure audit complete"
     );
 
-    // Doc invariants (AES601–AES605) audit the workspace document chain
+    // Doc invariants (AES601–AES606) audit the workspace document chain
     // (FRD/BACKLOG pairs, PRD, AGENTS, ...) which is not part of the
     // source-file index, so it runs against the scan target directly and its
     // findings are appended after the file-scope filter like structure does.

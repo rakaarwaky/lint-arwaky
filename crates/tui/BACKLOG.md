@@ -20,7 +20,9 @@ Last Updated: 2026-09-29
 
 ## Scenario Evidence
 
-—
+| Scenario | Kind | Test file | Test name | Last verified |
+|---|---|---|---|---|
+| TUI renders scan progress without blocking main thread | Gap | `tests/unit_tui_progress_callback.rs` | `progress_callback_updates_progress_bar` | 2026-09-29 |
 
 ## Blockers
 
@@ -32,7 +34,10 @@ None.
 
 ## Release Readiness
 
-Done.
+| Area | Status | Notes |
+|---|---|---|
+| Tests | Done | `cargo test -p tui --lib --tests` → 0 failures |
+| Docs | Done | [DESIGN.md](DESIGN.md) defines the TUI surface contract; status lives in this file |
 
 ## Deferred
 
@@ -40,6 +45,6 @@ Done.
 
 ## Change Log
 
-| Date | Change |
-|---|---|
-| 2026-09-29 | Created backlog entry for TUI surface crate |
+| Date | Change | By |
+|---|---|---|
+| 2026-09-29 | Created backlog entry for TUI surface crate | @raka |

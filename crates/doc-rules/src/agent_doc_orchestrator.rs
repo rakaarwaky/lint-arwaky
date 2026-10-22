@@ -2,14 +2,14 @@
 //
 // The single entry point over the doc-rules feature. Consumers call
 // `execute(DocRequest)`; the agent collects the document chain once, builds
-// the shared audit context, and fans the request out to the five AES doc-rule
+// the shared audit context, and fans the request out to the six AES doc-rule
 // capabilities through their protocol traits. It holds the capabilities only as
 // `Arc<dyn I*Protocol>` trait objects, so the agent never names a concrete
 // capability and stays free of capability imports.
 use shared_doc_rules::contract_doc_aggregate::IDocRunnerAggregate;
 use shared_doc_rules::contract_doc_protocol::{
-    ICrosslinkProtocol, IDocHeadingProtocol, IFrFormatProtocol, ISectionStructureProtocol,
-    ISpecPurityProtocol,
+    ICrosslinkProtocol, IDocHeadingProtocol, IFrFormatProtocol, IRequiredDocProtocol,
+    ISectionStructureProtocol, ISpecPurityProtocol, ITemplateConformanceProtocol,
 };
 use shared_doc_rules::taxonomy_doc_audit_context_vo::DocAuditContext;
 use shared_doc_rules::taxonomy_doc_rules_request::DocRequest;
@@ -20,13 +20,15 @@ use std::sync::Arc;
 // ─── Block 1: Struct Definition ────────────────────────────
 
 /// Holds one injected capability per AES doc rule, keyed by the rule each
-/// answers. The agent is the only place that knows all five exist.
+/// answers. The agent is the only place that knows all six exist.
 pub struct DocOrchestrator {
     fr_format: Arc<dyn IFrFormatProtocol>,
     section_structure: Arc<dyn ISectionStructureProtocol>,
     spec_purity: Arc<dyn ISpecPurityProtocol>,
     crosslink: Arc<dyn ICrosslinkProtocol>,
     doc_heading: Arc<dyn IDocHeadingProtocol>,
+    template_conformance: Arc<dyn ITemplateConformanceProtocol>,
+    required_doc: Arc<dyn IRequiredDocProtocol>,
 }
 
 // ─── Block 2: Protocol Trait Implementation ────────────────
@@ -37,8 +39,8 @@ impl IDocRunnerAggregate for DocOrchestrator {
     fn execute(&self, request: DocRequest) -> DocResponse {
         let DocRequest::AuditAll { root } = request;
         // The chain is walked once here rather than once per capability: the
-        // five rules read the same documents, so collecting per rule would
-        // re-read the same files five times.
+        // six rules read the same documents, so collecting per rule would
+        // re-read the same files six times.
         let documents = utility_doc_collector::collect_documents(&root);
         let master = utility_doc_collector::master_text(&documents);
         let context = DocAuditContext::new(&root, documents, master);
@@ -49,6 +51,11 @@ impl IDocRunnerAggregate for DocOrchestrator {
         findings.extend(self.spec_purity.audit_spec_purity(&context));
         findings.extend(self.crosslink.audit_crosslinks(&context));
         findings.extend(self.doc_heading.audit_doc_heading(&context));
+        findings.extend(
+            self.template_conformance
+                .audit_template_conformance(&context),
+        );
+        findings.extend(self.required_doc.audit_required_docs(&context));
 
         DocResponse::Findings {
             findings: utility_doc_collector::sorted(findings),
@@ -65,6 +72,8 @@ impl DocOrchestrator {
         spec_purity: Arc<dyn ISpecPurityProtocol>,
         crosslink: Arc<dyn ICrosslinkProtocol>,
         doc_heading: Arc<dyn IDocHeadingProtocol>,
+        template_conformance: Arc<dyn ITemplateConformanceProtocol>,
+        required_doc: Arc<dyn IRequiredDocProtocol>,
     ) -> Self {
         Self {
             fr_format,
@@ -72,6 +81,8 @@ impl DocOrchestrator {
             spec_purity,
             crosslink,
             doc_heading,
+            template_conformance,
+            required_doc,
         }
     }
 }

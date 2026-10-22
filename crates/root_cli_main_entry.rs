@@ -190,7 +190,7 @@ enum Command {
         #[arg(long)]
         filter: Option<String>,
     },
-    /// Doc invariants audit (AES601–AES605) over the document chain
+    /// Doc invariants audit (AES601–AES606) over the document chain
     Docs {
         #[arg(value_name = "PATH", default_value = ".")]
         path: String,

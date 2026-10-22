@@ -19,6 +19,7 @@ Last Updated: 2026-09-29
 | DOC-01 | P0 | Done | None | — | 2026-09-29  |
 | DOC-02 | P0 | Done | None | — | 2026-09-29  |
 | DOC-03 | P0 | Done | None | — | 2026-10-02  |
+| DOC-06 | P0 | In Progress | None | — | 2026-10-23 |
 
 ## Scenario Evidence
 
@@ -61,6 +62,10 @@ Last Updated: 2026-09-29
 | Five seams over a conforming workspace report nothing | No violation | Automated | `tests/contract_doc_capability_seams.rs` | `cargo nextest run -p doc-rules-lint-arwaky` | working-tree |
 | A document violating two rules reports both rule codes | Fan-out completeness | Automated | `tests/contract_doc_capability_seams.rs` | `cargo nextest run -p doc-rules-lint-arwaky` | working-tree |
 | Conforming workspace reports 0 doc findings on `docs .` | No violation | Automated | Self-lint | `lint-arwaky-cli docs .` | `926bd34a` |
+| BACKLOG checkbox bullets under `## Backlog` | AES606 `section_not_table` | Automated | `tests/unit_doc_template_conformance.rs` | `cargo nextest run -p doc-rules-lint-arwaky` | working-tree |
+| ROADMAP `## State Definitions` missing `Meaning` column | AES606 `table_missing_columns` | Automated | `tests/unit_doc_template_conformance.rs` | `cargo nextest run -p doc-rules-lint-arwaky` | working-tree |
+| Workspace root missing `PRD.md` | AES606 `missing_required_doc` | Automated | `tests/unit_doc_template_conformance.rs` | `cargo nextest run -p doc-rules-lint-arwaky` | working-tree |
+| All six required root docs present | AES606 accepts | Automated | `tests/unit_doc_template_conformance.rs` | `cargo nextest run -p doc-rules-lint-arwaky` | working-tree |
 
 ## Blockers
 

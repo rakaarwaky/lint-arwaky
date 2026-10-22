@@ -26,7 +26,9 @@ directly: a progress table moves without any code changing.
 
 ## Scenario Evidence
 
-—
+| Scenario | Kind | Test file | Test name | Last verified |
+|---|---|---|---|---|
+| SHAR-02 AES205 edge-set ordering | Gap | `tests/unit_shared_common_report.rs` | `report_delta_is_deterministic` | working-tree |
 
 ## Blockers
 
@@ -38,8 +40,11 @@ None.
 
 ## Release Readiness
 
-Done. SHAR-02 is a scan-side defect, not a ship blocker: the kernel's new
-snapshot types are deterministic; only the AES205 edge walk behind them is not.
+| Area | Status | Notes |
+|---|---|---|
+| Tests | Done | `cargo nextest run --workspace` → 0 failures |
+| Docs | Done | [DATA.md](DATA.md) is specification-only; status lives in this file |
+| SHAR-02 | In Progress | AES205 edge walk behind `ReportDelta` is non-deterministic; pinned in place |
 
 ## Deferred
 
@@ -47,8 +52,8 @@ snapshot types are deterministic; only the AES205 edge walk behind them is not.
 
 ## Change Log
 
-| Date | Change |
-|---|---|
-| 2026-10-05 | Gained `ReportSnapshot`, `SnapshotStore`, `MemberDelta`, and `ReportDelta` for the `report` command's per-member counts and their comparison. Opened SHAR-02 for the AES205 edge-set ordering the report's delta depends on |
-| 2026-10-01 | Evidence command retargeted: `shared-lint-arwaky` was split into 20 packages, so the suite is verified workspace-wide |
-| 2026-09-29 | Created backlog entry for shared kernel folder |
+| Date | Change | By |
+|---|---|---|
+| 2026-10-05 | Gained `ReportSnapshot`, `SnapshotStore`, `MemberDelta`, and `ReportDelta` for the `report` command's per-member counts and their comparison. Opened SHAR-02 for the AES205 edge-set ordering the report's delta depends on | @raka |
+| 2026-10-01 | Evidence command retargeted: `shared-lint-arwaky` was split into 20 packages, so the suite is verified workspace-wide | @raka |
+| 2026-09-29 | Created backlog entry for shared kernel folder | @raka |

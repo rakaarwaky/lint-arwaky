@@ -46,9 +46,9 @@ workspaces-good/
 
 | Workspace | Language | Files | Violations | False Positives | Expected AES Codes |
 | --------- | -------- | ----- | ---------- | --------------- | ------------------ |
-| bad       | Rust     | 156   | ≥ 100 (non-regressing floor) | — | 35 unique codes |
-| bad       | Python   | 160   | ≥ 100 (non-regressing floor) | — | 35 unique codes |
-| bad       | JS/TS    | 114   | ≥ 100 (non-regressing floor) | — | 35 unique codes |
+| bad       | Rust     | 156   | ≥ 100 (non-regressing floor) | — | 36 unique codes |
+| bad       | Python   | 160   | ≥ 100 (non-regressing floor) | — | 36 unique codes |
+| bad       | JS/TS    | 114   | ≥ 100 (non-regressing floor) | — | 36 unique codes |
 | good      | Rust     | 35    | 0          | 0               | —                  |
 | good      | Python   | 42    | 0          | 0               | —                  |
 | good      | JS/TS    | 33    | 0          | 0               | —                  |
@@ -58,10 +58,10 @@ workspaces-good/
 > below the documented ≥ 100 violation floor per language.
 >
 > **Reconciled rule count (single source of truth — §3.2):** the product
-> enforces **35 AES rules** total (per RULES_AES.md and the §3.2 Per-Rule
-> Detection Matrix). `scan` now surfaces **all 35** — including the five
-> doc-invariant codes AES601–AES605, which the doc-audit pass folds into
-> every scan target. The CI "AES Codes Check" gate enforces all 35 unique
+> enforces **36 AES rules** total (per RULES_AES.md and the §3.2 Per-Rule
+> Detection Matrix). `scan` now surfaces **all 36** — including the six
+> doc-invariant codes AES601–AES606, which the doc-audit pass folds into
+> every scan target. The CI "AES Codes Check" gate enforces all 36 unique
 > codes per scan — no safety margin (QA #636).
 >
 > **External tools prerequisite**: Python & JS/TS scans require external tools
@@ -97,7 +97,7 @@ cd <repo-root>
 cargo run --bin lint-arwaky-cli -- scan .
 ```
 
-> `scan .` runs ALL 7 code linters (naming, import, quality, role, orphan, structure, external) on the lint-arwaky codebase itself. Expected: **0 violations**. Document invariants (AES601–AES605) are audited separately with `docs .`.
+> `scan .` runs ALL 7 code linters (naming, import, quality, role, orphan, structure, external) on the lint-arwaky codebase itself. Expected: **0 violations**. Document invariants (AES601–AES606) are audited separately with `docs .`.
 
 
 
@@ -175,7 +175,7 @@ Pass/fail criteria:
 | `taxonomy` on `workspaces-bad/crates` | > 0 violations, all in `taxonomy_*` files |
 | Each of the six layer commands on `workspaces-good/crates` | **0** violations |
 | `root_*` files | reported by `scan` / `check` only — `root` has no subcommand |
-| A folder-level structure finding (AES702) or a doc invariant (AES601–605) | absent from all six layer commands; reported by `structure` / `docs` |
+| A folder-level structure finding (AES702) or a doc invariant (AES601–606) | absent from all six layer commands; reported by `structure` / `docs` |
 
 ```bash
 # Assert no layer command reports a foreign layer on the good workspace.
@@ -225,17 +225,17 @@ Thresholds match the §1 Expected Violation Counts table (≥ 100 violations flo
 | Total violations (Rust scan)   | >= 100 | < 100 or 0 |
 | Total violations (Python scan) | >= 100 | < 100 or 0 |
 | Total violations (JS/TS scan)  | >= 100 | < 100 or 0 |
-| Unique AES codes (Rust)        | >= 35  | < 35       |
-| Unique AES codes (Python)      | >= 35  | < 35       |
-| Unique AES codes (JS/TS)       | >= 35  | < 35       |
+| Unique AES codes (Rust)        | >= 36  | < 36       |
+| Unique AES codes (Python)      | >= 36  | < 36       |
+| Unique AES codes (JS/TS)       | >= 36  | < 36       |
 | Self-lint violations           | 0      | > 0        |
 | Doc-consistency gate failures  | 0      | > 0        |
 
 > The "Unique AES codes" threshold is the reconciled scan-visible count from
-> §1/§3.2 (all 35 AES rules; AES601–AES605 are now surfaced by the doc-audit
-> pass inside `scan`). The CI "AES Codes Check" step enforces exactly 35
+> §1/§3.2 (all 36 AES rules; AES601–AES606 are now surfaced by the doc-audit
+> pass inside `scan`). The CI "AES Codes Check" step enforces exactly 36
 > with no lower safety margin, so a detection regression in any one of the
-> 35 rules fails CI (QA #636). When rules are added/removed, update §3.2, this table,
+> 36 rules fails CI (QA #636). When rules are added/removed, update §3.2, this table,
 > §1, and the `ci.yml` threshold in lockstep.
 
 ### 3.2 Per-Rule Detection Matrix
@@ -276,6 +276,7 @@ If any rule produces 0 violations, the test project is missing a trigger file.
 | AES603 | Spec Purity                            | ✓   |       |      |
 | AES604 | Crosslinks                             | ✓   |       |      |
 | AES605 | Doc Heading Structure                  | ✓   |       |      |
+| AES606 | Doc Template Conformance               | ✓   |       |      |
 | AES701 | Shared folder purity                   | ✓   | ✓     | ✓    |
 | AES702 | Feature folder health                  | ✓   | ✓     | ✓    |
 | AES703 | Surface folder purity                  | ✓   | ✓     | ✓    |
@@ -376,7 +377,8 @@ Persona-level end-to-end acceptance scenarios verifying business outcomes beyond
 ## 5. Release Eligibility Checklist
 
 The product-engineering release gate lives in this checklist (5.1-5.8); the dependency
-map and risk tracking live in `ROADMAP.md`'s Dependencies and Risk Register sections;
+map and risk tracking live in `ROADMAP.md`'s Risk Register section; per-feature
+dependency detail lives in each feature's BACKLOG.md;
 role sign-offs and the rollback record live in `DEPLOY.md`'s Release Sign-off Checklist
 and Rollback Record. This section cross-references all three rather than restating them.
 
@@ -425,7 +427,7 @@ The base codebase must be clean of internal architecture rule violations.
 
 - [ ] **Criteria**: Bad workspaces meet aggregate thresholds (Section 3.1).
 - [ ] **Criteria**: Good workspaces produce 0 violations (false positive test).
-- [ ] **Criteria**: All 35 unique AES codes detected per language (Section 3.2).
+- [ ] **Criteria**: All 36 unique AES codes detected per language (Section 3.2).
 - [ ] **Criteria**: All negative tests pass (Section 3.3).
 - [ ] **Criteria**: All exit code tests pass (Section 3.4).
 
@@ -519,7 +521,7 @@ Engineering, QA, Documentation, Operations domains), not duplicated here. See PE
 ### 5.8 Dependency Map
 
 The crate-to-crate and crate-to-external-client dependency map is tracked in
-`ROADMAP.md`'s Dependencies section, not duplicated here. See PE-2-01 (#620) and
+each feature's `BACKLOG.md` Dependencies section, not duplicated here. See PE-2-01 (#620) and
 PE-2-03 (#622).
 
 ---
