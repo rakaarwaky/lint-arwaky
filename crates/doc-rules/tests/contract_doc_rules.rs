@@ -252,6 +252,8 @@ fn write_agents_workspace(dir: &Path) {
 sample facts.\n\n\
 ## Pipeline\n\n\
 scan → check\n\n\
+## Project Structure\n\n\
+one crate.\n\n\
 ## Commands\n\n\
 ```bash\ncargo nextest run --workspace\n```\n\n\
 ## Related Documents\n\n\
@@ -890,7 +892,7 @@ fn aes605_fires_when_required_h2_is_absent() {
 
 #[test]
 fn aes605_allows_extra_and_free_h3_headings() {
-    // Extra H3 headings are allowed; only required H2s are enforced.
+    // Extra H3 headings are allowed; required H2s must still be present.
     let tmp = tempfile::tempdir().unwrap();
     write_bad_agents(
         tmp.path(),
@@ -909,6 +911,10 @@ sample facts.
 scan → check
 lint
 run by CI
+
+## Project Structure
+
+one crate.
 
 ## Commands
 
@@ -999,7 +1005,7 @@ Anything the author wanted to jot down.\n\n\
 
 #[test]
 fn aes605_allows_the_project_specific_h2_set() {
-    // Only the 5 required H2 sections are enforced; no optional headings exist.
+    // The AGENTS H2 set is closed: the template's exact H2s and nothing else.
     let tmp = tempfile::tempdir().unwrap();
     write_bad_agents(
         tmp.path(),
@@ -1018,6 +1024,10 @@ sample facts.
 scan → check
 lint
 run by CI
+
+## Project Structure
+
+one crate.
 
 ## Commands
 
