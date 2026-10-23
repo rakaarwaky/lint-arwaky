@@ -20,7 +20,6 @@ hard-coded filter change.
 | LOGG-04 | P1 | Ready | LOGG-01–03 | CLI `root_cli_main_entry.rs` accepts `-v`/`--verbose` flag and passes `LogVerbosity` to `LoggingContainer::init` | 2026-10-07 |
 | LOGG-05 | P1 | Ready | LOGG-04 | MCP `root_mcp_main_entry.rs` calls `LoggingContainer::init` instead of its local `init_tracing()` | 2026-10-07 |
 | LOGG-06 | P2 | Ready | LOGG-04 | Dispatcher scan pipeline emits `tracing::debug!`/`tracing::info!` events on `AUDIT_TARGET` for each scan phase | 2026-10-07 |
-| LOGG-07 | P2 | Deferred | LOGG-04 | `HOW-TO-USE-LINT-COMMANDS.md` documents `-v`/`-vv` — separate docs PR | 2026-10-07 |
 
 ## Scenario Evidence
 
