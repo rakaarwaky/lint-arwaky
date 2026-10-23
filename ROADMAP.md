@@ -37,7 +37,7 @@ One unified table: every feature + cross-cutting items, sorted by priority.
 | FR-PRJS | `crates/project-setup` | P1 | Done | — | — | 2026-09-30 |
 | FR-MAINT | `crates/maintenance` | P1 | Done | — | — | 2026-09-30 |
 | FR-TUIC | `crates/tui` | P2 | Done | #552, #606, #611, #608 | Re-verify after UX confirm-gate and FE main-thread/path-validation CRITICAL findings close | 2026-10-01 |
-| FR-SECR | Hardcoded-secret detection | P3 | Deferred | Dedicated scanners are more suitable | Keep out of AES rules; recommend gitleaks/TruffleHog in README | 2026-10-01 |
+| FR-SECR | Hardcoded-secret detection | P3 | Done | Dedicated scanners are more suitable | — | 2026-10-23 |
 
 
 ## Status Policy
@@ -52,16 +52,10 @@ One unified table: every feature + cross-cutting items, sorted by priority.
 
 | State       | Meaning                                                     |
 | ----------- | ----------------------------------------------------------- |
-| Idea        | Captured, not yet examined; no spec exists for it.          |
-| Refinement  | Being specced; a spec or product decision is needed first.  |
 | Ready       | Specified enough to start; nobody has started it.           |
 | In Progress | Someone is in it now.                                       |
-| Blocked     | Cannot proceed; name the blocker in `Actual Condition`.     |
 | In Review   | PR open, awaiting review/CI.                                |
-| QA          | Implemented; awaiting a verification pass against evidence. |
 | Done        | Evidenced complete — cites the command/commit/PR.           |
-| Released    | Done and shipped in a release.                              |
-| Deferred    | Intentionally out of current scope; reason in Next Action.  |
 
 
 ## Risk Register

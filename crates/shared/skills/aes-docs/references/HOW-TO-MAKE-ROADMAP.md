@@ -58,16 +58,10 @@ State: vocabulary below. Last Updated: <YYYY-MM-DD>
 
 | State | Meaning |
 |---|---|
-| Idea | Not examined; no spec. |
-| Refinement | Being specced. |
 | Ready | Specified; not started. |
 | In Progress | Active now. |
-| Blocked | Name the blocker in Actual Condition. |
 | In Review | PR open. |
-| QA | Awaiting verification pass. |
 | Done | Command + commit evidence. |
-| Released | Shipped. |
-| Deferred | Out of scope; reason in Actual Condition. |
 
 ## Status Policy
 
