@@ -31,8 +31,10 @@ pub struct DocFinding {
     pub severity: Severity,
     /// Why the invariant matters. Rendered on its own line in the report, so
     /// it holds the reason and not a restatement of `message`.
+    #[serde(default)]
     pub why: String,
     /// What to do about it. Rendered on its own line under `why`.
+    #[serde(default)]
     pub fix: String,
 }
 
@@ -93,8 +95,8 @@ impl DocFinding {
             message: LintMessage::new(self.message.clone()),
             severity: self.severity.clone(),
             violation_name: self.violation_type.to_string(),
-            why: String::new(),
-            fix: String::new(),
+            why: self.why.clone(),
+            fix: self.fix.clone(),
         }
     }
 }
