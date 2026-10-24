@@ -16,6 +16,7 @@ use shared_doc_rules::taxonomy_doc_rules_request::DocFinding;
 use shared_doc_rules::utility_markdown_scanner::{
     matches_placeholder_catalog, normalize_heading, sections,
 };
+use std::collections::BTreeSet;
 
 // ─── Block 1: Struct Definition ────────────────────────────
 
@@ -49,7 +50,7 @@ impl ITemplateBodyProtocol for TemplateBodyChecker {
             // 1. Deleted required sections check:
             // Non-deletable H2 sections must not be omitted entirely.
             let doc_sections = sections(&document.text);
-            let present_h2s: Vec<String> = doc_sections
+            let present_h2s: BTreeSet<String> = doc_sections
                 .iter()
                 .filter(|s| s.level == 2)
                 .map(|s| normalize_heading(&s.title))
@@ -64,9 +65,7 @@ impl ITemplateBodyProtocol for TemplateBodyChecker {
                         return false;
                     }
                     let norm_req = normalize_heading(req_h2);
-                    !present_h2s
-                        .iter()
-                        .any(|h| *h == norm_req || h.starts_with(&norm_req))
+                    !present_h2s.contains(&norm_req)
                 })
                 .collect();
 

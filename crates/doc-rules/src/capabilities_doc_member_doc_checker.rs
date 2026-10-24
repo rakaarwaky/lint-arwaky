@@ -35,7 +35,7 @@ impl IMemberDocProtocol for MemberDocChecker {
         }
 
         // Root-gate: only fire when the audit root is a real workspace root.
-        if !is_workspace_root(context.root()) {
+        if !context.is_workspace_root() {
             return Vec::new();
         }
 
@@ -47,11 +47,8 @@ impl IMemberDocProtocol for MemberDocChecker {
         let mut findings = Vec::new();
 
         for member in context.members() {
-            let member_path_str = member.path.to_string_lossy();
             if exempt_members.iter().any(|exempt| {
-                member_path_str == *exempt
-                    || member_path_str.ends_with(exempt)
-                    || member.path.ends_with(exempt)
+                member.path == Path::new(exempt) || member.path.ends_with(Path::new(exempt))
             }) {
                 continue;
             }
@@ -127,11 +124,4 @@ impl MemberDocChecker {
     pub fn new() -> Self {
         Self
     }
-}
-
-/// True when *root* carries at least one workspace-root marker file.
-fn is_workspace_root(root: &Path) -> bool {
-    consts::WORKSPACE_ROOT_MARKERS
-        .iter()
-        .any(|marker| root.join(marker).exists())
 }
