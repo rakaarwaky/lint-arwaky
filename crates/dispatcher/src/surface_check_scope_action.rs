@@ -85,6 +85,9 @@ pub(crate) fn doc_violations_in_scope(target: &str, agg: &ScanAggregates) -> Vec
         &agg.fs_seam,
         agg.config_file_reader.as_ref(),
     );
+    // check . uses config-file strictness; --strict is an audit-surface knob
+    // only, so the check surface hardcodes UseConfigFile and never forces
+    // strictness on.
     let doc_cfg = crate::surface_docs_action::load_doc_rules_config_from_yaml(target, &agg.fs_seam)
         .unwrap_or_else(shared_doc_rules::DocRulesConfig::staged);
     let DocResponse::Findings { findings } = agg.doc.execute(DocRequest::audit_all(

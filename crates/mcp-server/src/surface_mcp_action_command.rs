@@ -107,6 +107,20 @@ impl McpActionSurface {
         }
     }
 
+    /// Authorize a mutating action, but allow `dry_run` previews to pass
+    /// through unblocked since no files are written. Delegates to
+    /// `authorize_action` when `dry_run` is false; a no-op otherwise.
+    fn authorize_action_allow_dry_run(
+        &self,
+        action: &str,
+        dry_run: bool,
+    ) -> Result<(), serde_json::Value> {
+        if dry_run {
+            return Ok(());
+        }
+        self.authorize_action(action)
+    }
+
     /// Run check/scan — all linters combined via dispatcher.
     pub async fn execute_check(&self, path: &str) -> serde_json::Value {
         let fp = match self.to_fp(path) {
@@ -635,11 +649,8 @@ impl McpActionSurface {
         member: Option<&str>,
         dry_run: bool,
     ) -> serde_json::Value {
-        // dry_run bypasses the read-only gate because no files are written.
-        if !dry_run {
-            if let Err(error) = self.authorize_action("docs_scaffold") {
-                return error;
-            }
+        if let Err(error) = self.authorize_action_allow_dry_run("docs_scaffold", dry_run) {
+            return error;
         }
         let fp = match self.to_fp(path) {
             Ok(fp) => fp,

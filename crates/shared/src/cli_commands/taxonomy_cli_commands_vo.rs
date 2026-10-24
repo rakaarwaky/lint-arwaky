@@ -204,9 +204,6 @@ pub enum Commands {
         /// Path to audit or scaffold [default: .]
         #[arg(value_name = "PATH", default_value = ".")]
         path: String,
-        /// Force strict mode for this run (overrides config defaults)
-        #[arg(long, default_value_t = false)]
-        strict: bool,
     },
 
     /// Scan for security vulnerabilities
@@ -284,6 +281,9 @@ pub enum DocsAction {
         /// Output format: text, json, sarif, junit
         #[arg(long, default_value_t = Format::Text)]
         format: Format,
+        /// Force strict doc-rules enforcement for this run (overrides config).
+        #[arg(long, default_value_t = false)]
+        strict: bool,
     },
     /// Generate documentation templates from embedded skills, in place
     Scaffold {

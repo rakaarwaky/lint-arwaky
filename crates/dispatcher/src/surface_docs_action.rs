@@ -173,7 +173,13 @@ pub fn load_doc_rules_config_from_yaml(
         .into_root()
         .unwrap_or_else(|| root_path.to_path_buf());
     let content = crate::surface_external_action::find_config_content(&ws_root, fs_ref)?;
-    let value = serde_yaml_ng::from_str::<serde_yaml_ng::Value>(&content).ok()?;
+    let value = match serde_yaml_ng::from_str::<serde_yaml_ng::Value>(&content) {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::warn!("docs: config block malformed; falling back to staged defaults: {e}");
+            return None;
+        }
+    };
     let docs_block = value.get("docs")?.clone();
 
     let mut cfg = DocRulesConfig::staged();
@@ -208,9 +214,8 @@ pub fn load_doc_rules_config_from_yaml(
 /// writes any missing documents — root-level master docs plus per-member
 /// docs — so the tree passes FR-DOC-008/009 immediately after the call.
 ///
-/// `strict_override` controls whether strictness flags are forced on for this
-/// run (Decision Q4); `dry_run` prints what would be written without touching
-/// disk. Existing files are never overwritten (data-loss guard).
+/// `dry_run` prints what would be written without touching disk. Existing
+/// files are never overwritten (data-loss guard).
 ///
 /// The `member` filter, when present, limits per-member writes to that one
 /// member; root-level docs are always written when missing.

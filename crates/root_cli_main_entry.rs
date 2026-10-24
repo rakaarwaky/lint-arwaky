@@ -775,7 +775,8 @@ fn main() {
         ),
         Command::Docs { action, path } => {
             // `subcommand_required = false` lets a bare `docs` or `docs <path>`
-            // fall through to the audit default; `--strict` applies to both.
+            // fall through to the audit default; `--strict` applies to the audit
+            // path only (the scaffold path never gates on strictness).
             match action {
                 Some(DocsAction::Audit {
                     path: audit_path,

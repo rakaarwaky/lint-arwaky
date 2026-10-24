@@ -196,7 +196,8 @@ architecture:
 
 # ─── Doc rules strictness (Decision Q4) ──────────────────────────────────
 # Staged `false` in Stages 1–2 (migration window); flip to `true` in Stage 3.
-# The `--strict` CLI flag forces both to `true` for that invocation.
+# The `docs audit --strict` flag forces both toggles on for that single audit
+# invocation without modifying this file.
 docs:
   strict_member_docs: false
   strict_placeholders: false

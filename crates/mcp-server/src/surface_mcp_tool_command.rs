@@ -129,7 +129,8 @@ impl LintArwakyMcpServer {
     }
 
     /// Write missing template files in place from embedded skills.
-    /// `dry_run` previews without touching disk; `strict` forces strict mode.
+    /// `dry_run` previews without touching disk. Strictness only affects the
+    /// audit path, not scaffolding.
     pub async fn handle_docs_scaffold(
         &self,
         Parameters(args): Parameters<DocsScaffoldArgs>,
