@@ -93,8 +93,8 @@ impl DocFinding {
             message: LintMessage::new(self.message.clone()),
             severity: self.severity.clone(),
             violation_name: self.violation_type.to_string(),
-            why: String::new(),
-            fix: String::new(),
+            why: self.why.clone(),
+            fix: self.fix.clone(),
         }
     }
 }
