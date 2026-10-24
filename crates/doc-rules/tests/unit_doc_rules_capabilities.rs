@@ -20,7 +20,15 @@ fn context(name: &str, text: &str) -> DocAuditContext {
         text: text.to_string(),
     }];
     let master = documents[0].text.clone();
-    DocAuditContext::new(Path::new("/repo"), documents, Some(master))
+    let members = Vec::new();
+    DocAuditContext::new(
+        Path::new("/repo"),
+        documents,
+        Some(master),
+        members,
+        None,
+        shared_doc_rules::taxonomy_doc_audit_context_vo::StrictModeOverride::UseConfigFile,
+    )
 }
 
 /// The distinct codes reported for one document, so a test asserts on the set of

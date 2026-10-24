@@ -18,7 +18,15 @@ fn context(name: &str, text: &str) -> DocAuditContext {
         text: text.to_string(),
     }];
     let master = documents[0].text.clone();
-    DocAuditContext::new(Path::new("/repo"), documents, Some(master))
+    let members = Vec::new();
+    DocAuditContext::new(
+        Path::new("/repo"),
+        documents,
+        Some(master),
+        members,
+        None,
+        shared_doc_rules::taxonomy_doc_audit_context_vo::StrictModeOverride::UseConfigFile,
+    )
 }
 
 /// A BACKLOG.md in which every table-shaped section carries its template table.
@@ -153,7 +161,15 @@ fn aes606_reports_a_missing_required_root_doc() {
     let tmp = tempfile::tempdir().unwrap();
     write_root(tmp.path(), Some("PRD.md"));
     let documents = shared_doc_rules::utility_doc_collector::collect_documents(tmp.path());
-    let context = DocAuditContext::new(tmp.path(), documents, None);
+    let members = shared_doc_rules::utility_doc_collector::collect_members(tmp.path());
+    let context = DocAuditContext::new(
+        tmp.path(),
+        documents,
+        None,
+        members,
+        None,
+        shared_doc_rules::taxonomy_doc_audit_context_vo::StrictModeOverride::UseConfigFile,
+    );
     let findings = RequiredDocChecker::new().audit_required_docs(&context);
     assert!(
         findings
@@ -168,7 +184,15 @@ fn aes606_stays_silent_for_required_docs_when_the_root_is_present() {
     let tmp = tempfile::tempdir().unwrap();
     write_root(tmp.path(), None);
     let documents = shared_doc_rules::utility_doc_collector::collect_documents(tmp.path());
-    let context = DocAuditContext::new(tmp.path(), documents, None);
+    let members = shared_doc_rules::utility_doc_collector::collect_members(tmp.path());
+    let context = DocAuditContext::new(
+        tmp.path(),
+        documents,
+        None,
+        members,
+        None,
+        shared_doc_rules::taxonomy_doc_audit_context_vo::StrictModeOverride::UseConfigFile,
+    );
     let findings = RequiredDocChecker::new().audit_required_docs(&context);
     assert!(
         findings.is_empty(),

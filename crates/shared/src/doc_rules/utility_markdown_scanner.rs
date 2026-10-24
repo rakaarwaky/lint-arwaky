@@ -454,3 +454,88 @@ pub fn has_bullet(body: &str) -> bool {
     }
     false
 }
+
+/// Strip non-prose from markdown so surviving tokens can be matched against a
+/// placeholder catalog without false positives on code or markup.
+///
+/// Blanks fenced code blocks, inline backtick spans, autolinks (`<https://…>`,
+/// `<mailto:…>`), and known HTML tags (`<br>`, `<details>`, `<sup>`, ``).
+/// The returned string preserves line structure so callers can anchor findings
+/// to exact 1-based lines.
+pub fn strip_non_prose_for_placeholders(text: &str) -> String {
+    let mut out = String::with_capacity(text.len());
+    let mut inside_fence = false;
+    for line in text.lines() {
+        let trimmed = line.trim_start();
+        if trimmed.starts_with("```") || trimmed.starts_with("~~~") {
+            inside_fence = !inside_fence;
+            out.push('\n');
+            continue;
+        }
+        if inside_fence {
+            out.push('\n');
+            continue;
+        }
+        let mut line_out = String::with_capacity(line.len());
+        let mut chars = line.chars().peekable();
+        while let Some(c) = chars.next() {
+            if c == '`' {
+                // Skip an inline backtick span: opening backtick runs to
+                // its matching close, or to end of line if unterminated.
+                while chars.peek() == Some(&'`') {
+                    chars.next();
+                }
+                let mut closed = false;
+                for d in chars.by_ref() {
+                    if d == '`' {
+                        closed = true;
+                        break;
+                    }
+                }
+                if !closed {
+                    // Unterminated span: blank to end of line.
+                    break;
+                }
+                continue;
+            }
+            if c == '<' {
+                // Blank an autolink or HTML tag up to its closing `>`.
+                let mut blanked = true;
+                for d in chars.by_ref() {
+                    if d == '>' {
+                        blanked = false;
+                        break;
+                    }
+                }
+                if blanked {
+                    // Unterminated `<`: leave the rest of the line as prose.
+                    break;
+                }
+                continue;
+            }
+            line_out.push(c);
+        }
+        out.push_str(&line_out);
+        out.push('\n');
+    }
+    out
+}
+
+/// Does any surviving prose token in *text* match an entry in *catalog*?
+///
+/// Matching is substring-based after non-prose stripping: a token like
+/// `<feature-name>` fires only if that exact marker appears in surviving
+/// prose. Code types such as `Vec<DocFinding>` are blanked first, so they
+/// never match.
+pub fn matches_placeholder_catalog(text: &str, catalog: &[&str]) -> Vec<(usize, String)> {
+    let prose = strip_non_prose_for_placeholders(text);
+    let mut hits: Vec<(usize, String)> = Vec::new();
+    for (line_no, line) in prose.lines().enumerate() {
+        for marker in catalog {
+            if line.contains(marker) {
+                hits.push((line_no + 1, marker.to_string()));
+            }
+        }
+    }
+    hits
+}

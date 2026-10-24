@@ -13,10 +13,13 @@ pub mod utility_protocol_counter;
 // ─── Re-exports ────────────────────────────────────────────
 pub use contract_doc_aggregate::IDocRunnerAggregate;
 pub use contract_doc_protocol::{
-    ICrosslinkProtocol, IDocHeadingProtocol, IFrFormatProtocol, IRequiredDocProtocol,
-    ISectionStructureProtocol, ISpecPurityProtocol, ITemplateConformanceProtocol,
+    ICrosslinkProtocol, IDocHeadingProtocol, IFrFormatProtocol, IMemberDocProtocol,
+    IRequiredDocProtocol, ISectionStructureProtocol, ISpecPurityProtocol, ITemplateBodyProtocol,
+    ITemplateConformanceProtocol,
 };
-pub use taxonomy_doc_audit_context_vo::DocAuditContext;
+pub use taxonomy_doc_audit_context_vo::{
+    DocAuditContext, DocRulesConfig, MemberDescriptor, MemberRole, StrictModeOverride,
+};
 pub use taxonomy_doc_rules_constant::*;
 pub use taxonomy_doc_rules_request::{DocFinding, DocRequest, DocSource};
 pub use taxonomy_doc_rules_response::DocResponse;

@@ -6,6 +6,7 @@
 // may not perform I/O itself. `sorted` sits beside the collector for the same
 // reason — it is a pure reduction over findings, not a decision about what a
 // finding means.
+use crate::taxonomy_doc_audit_context_vo::{MemberDescriptor, MemberRole};
 use crate::taxonomy_doc_rules_constant as consts;
 use crate::taxonomy_doc_rules_request::{DocFinding, DocSource};
 
@@ -155,4 +156,183 @@ fn collect_surface_docs(base: &Path, out: &mut Vec<DocSource>) {
             out.push(source);
         }
     }
+}
+
+/// Collect every classified member folder under *root*.
+///
+/// Classification keys on objective crate structure — never on the document
+/// under audit — so a new surface crate that forgets `DESIGN.md` still owes
+/// it.
+pub fn collect_members(root: &Path) -> Vec<MemberDescriptor> {
+    let mut out = Vec::new();
+    for layout in FEATURE_LAYOUTS {
+        let base = root.join(layout);
+        let Ok(entries) = fs::read_dir(base) else {
+            continue;
+        };
+        for entry in entries.flatten() {
+            let folder = entry.path();
+            if !folder.is_dir() {
+                continue;
+            }
+            let role = classify_member(&folder);
+            if role == MemberRole::None {
+                continue;
+            }
+            let present_docs = present_docs(&folder);
+            out.push(MemberDescriptor {
+                path: folder,
+                role,
+                present_docs,
+            });
+        }
+    }
+    out
+}
+
+/// Classify one folder by objective crate structure.
+///
+/// Kernel: directory named `shared` or `kernel`.
+/// Feature: contains `*agent_*_orchestrator*.rs` or exposes capability/agent
+///   in Cargo.toml.
+/// Surface: contains `surface_*` files or surface crate dependencies, not
+///   kernel/feature.
+/// None: anything else.
+fn classify_member(folder: &Path) -> MemberRole {
+    let name = folder.file_name().and_then(|n| n.to_str()).unwrap_or("");
+    if name == "shared" || name == "kernel" {
+        return MemberRole::Kernel;
+    }
+    if has_orchestrator_file(folder) || exposes_capability_in_cargo_toml(folder) {
+        return MemberRole::Feature;
+    }
+    if has_surface_files(folder) || has_surface_cargo_deps(folder) {
+        return MemberRole::Surface;
+    }
+    MemberRole::None
+}
+
+/// Does the folder's source tree contain an orchestrator file matching
+/// `*agent_*_orchestrator*.rs`?
+fn has_orchestrator_file(folder: &Path) -> bool {
+    let Ok(entries) = fs::read_dir(folder) else {
+        return false;
+    };
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if path.is_file() {
+            if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
+                if name.contains("agent_")
+                    && name.contains("_orchestrator")
+                    && name.ends_with(".rs")
+                {
+                    return true;
+                }
+            }
+        }
+        if path.is_dir() {
+            if let Some(src) = path.file_name().and_then(|n| n.to_str()) {
+                if src == "src" {
+                    if let Ok(inner) = fs::read_dir(&path) {
+                        for entry in inner.flatten() {
+                            let p = entry.path();
+                            if p.is_file() {
+                                if let Some(n) = p.file_name().and_then(|n| n.to_str()) {
+                                    if n.contains("agent_")
+                                        && n.contains("_orchestrator")
+                                        && n.ends_with(".rs")
+                                    {
+                                        return true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    false
+}
+
+/// Does the folder's Cargo.toml expose a capability/agent module?
+fn exposes_capability_in_cargo_toml(folder: &Path) -> bool {
+    let cargo_path = folder.join("Cargo.toml");
+    let Some(cargo) = cargo_path.to_str() else {
+        return false;
+    };
+    let Ok(text) = fs::read_to_string(cargo) else {
+        return false;
+    };
+    text.contains("agent_") || text.contains("capability") || text.contains("orchestrator")
+}
+
+/// Does the folder contain `surface_*` files?
+fn has_surface_files(folder: &Path) -> bool {
+    let Ok(entries) = fs::read_dir(folder) else {
+        return false;
+    };
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if path.is_file() {
+            if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
+                if name.starts_with("surface_") {
+                    return true;
+                }
+            }
+        }
+        if path.is_dir() {
+            if let Some(src) = path.file_name().and_then(|n| n.to_str()) {
+                if src == "src" {
+                    if let Ok(inner) = fs::read_dir(&path) {
+                        for entry in inner.flatten() {
+                            if let Some(n) = entry.path().file_name().and_then(|n| n.to_str()) {
+                                if n.starts_with("surface_") {
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    false
+}
+
+/// Does the folder's Cargo.toml depend on surface crates?
+fn has_surface_cargo_deps(folder: &Path) -> bool {
+    let cargo_path = folder.join("Cargo.toml");
+    let Some(cargo) = cargo_path.to_str() else {
+        return false;
+    };
+    let Ok(text) = fs::read_to_string(cargo) else {
+        return false;
+    };
+    text.contains("cli-commands")
+        || text.contains("mcp-server")
+        || text.contains("tui")
+        || text.contains("dispatcher")
+}
+
+/// Document names actually present on disk in one folder.
+fn present_docs(folder: &Path) -> BTreeSet<String> {
+    let mut docs = BTreeSet::new();
+    for name in [
+        consts::FRD_DOC,
+        consts::BACKLOG_DOC,
+        consts::DATA_DOC,
+        consts::DESIGN_DOC,
+        consts::PRD_DOC,
+        consts::ROADMAP_DOC,
+        consts::README_DOC,
+        consts::AGENTS_DOC,
+        consts::ARCHITECTURE_DOC,
+        consts::CONTRIBUTING_DOC,
+    ] {
+        if folder.join(name).is_file() {
+            docs.insert(name.to_string());
+        }
+    }
+    docs
 }
