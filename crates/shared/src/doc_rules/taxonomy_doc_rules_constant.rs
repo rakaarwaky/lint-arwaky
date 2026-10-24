@@ -389,7 +389,6 @@ pub const DOC_HEADING_CONTRACTS: &[DocH2Contract] = &[
         &[
             "Current Condition",
             "State Definitions",
-            "Status Policy",
             "Feature Roll-up",
             "Risk Register",
         ],
