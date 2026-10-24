@@ -171,9 +171,9 @@ build_from_source() {
     fi
 
     if $DRY_RUN; then
-        echo "  [dry-run] RUST_MIN_STACK=33554432 cargo build --release"
+        echo "  [dry-run] RUST_MIN_STACK=33554432 cargo build --release --bin lint-arwaky-cli --bin lint-arwaky-mcp --bin lint-arwaky-tui"
     else
-        RUST_MIN_STACK=33554432 cargo build --release
+        RUST_MIN_STACK=33554432 cargo build --release --bin lint-arwaky-cli --bin lint-arwaky-mcp --bin lint-arwaky-tui
     fi
 }
 
