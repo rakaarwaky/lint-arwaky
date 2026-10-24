@@ -37,6 +37,12 @@ pub struct DocsFinding {
     pub location: String,
     /// Severity bucket used for JSON's `"severity"` and SARIF's `"level"`.
     pub severity: Severity,
+    /// Why the invariant matters, rendered on its own line in the report.
+    #[serde(default)]
+    pub why: String,
+    /// What to do about it, rendered on its own line under `why`.
+    #[serde(default)]
+    pub fix: String,
 }
 
 impl DocsFinding {
@@ -102,6 +108,8 @@ pub fn collect_docs(
                 message: finding.message.clone(),
                 location,
                 severity: Severity::HIGH,
+                why: finding.why.clone(),
+                fix: finding.fix.clone(),
             }
         })
         .collect())
@@ -130,9 +138,72 @@ pub fn docs_findings_to_violations(findings: &[DocsFinding]) -> Vec<ViolationIte
                 message: LintMessage::new(f.message.clone()),
                 severity: f.severity.clone(),
                 violation_name: f.violation_type.to_string(),
-                why: String::new(),
-                fix: String::new(),
+                why: f.why.clone(),
+                fix: f.fix.clone(),
             }
         })
         .collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use shared_doc_rules::taxonomy_doc_rules_request::DocFinding;
+
+    #[test]
+    fn docs_finding_keeps_why_and_fix_through_violation_item() {
+        let f = DocsFinding {
+            code: "AES601".into(),
+            doc: "README.md".into(),
+            violation_type: "missing-prd".into(),
+            message: "PRD.md is missing".into(),
+            location: "README.md".into(),
+            severity: Severity::HIGH,
+            why: "the PRD is the source of truth for scope".into(),
+            fix: "add a PRD.md file".into(),
+        };
+        let items = docs_findings_to_violations(std::slice::from_ref(&f));
+        assert_eq!(items.len(), 1);
+        assert_eq!(items[0].why, "the PRD is the source of truth for scope");
+        assert_eq!(items[0].fix, "add a PRD.md file");
+    }
+
+    #[test]
+    fn empty_why_and_fix_stay_empty_not_padded() {
+        let f = DocsFinding {
+            code: "AES602".into(),
+            doc: "README.md".into(),
+            violation_type: "no-test-file".into(),
+            message: "TEST.md is missing".into(),
+            location: "README.md".into(),
+            severity: Severity::HIGH,
+            why: String::new(),
+            fix: String::new(),
+        };
+        let items = docs_findings_to_violations(std::slice::from_ref(&f));
+        assert!(items[0].why.is_empty());
+        assert!(items[0].fix.is_empty());
+    }
+
+    #[test]
+    fn doc_finding_to_violation_item_propagates_reasons() {
+        let f =
+            DocFinding::new_with_line("PRD.md", 0, "AES602", "no-test-file", "TEST.md is missing")
+                .with_reason(
+                    "TEST.md documents what a green CI proves",
+                    "create TEST.md at the workspace root",
+                );
+        let item = f.to_violation_item(std::path::Path::new("/opt/root"));
+        assert_eq!(item.why, "TEST.md documents what a green CI proves");
+        assert_eq!(item.fix, "create TEST.md at the workspace root");
+    }
+
+    #[test]
+    fn doc_finding_without_reason_produces_empty_why_and_fix() {
+        let f =
+            DocFinding::new_with_line("PRD.md", 0, "AES602", "no-test-file", "TEST.md is missing");
+        let item = f.to_violation_item(std::path::Path::new("/opt/root"));
+        assert!(item.why.is_empty());
+        assert!(item.fix.is_empty());
+    }
 }
