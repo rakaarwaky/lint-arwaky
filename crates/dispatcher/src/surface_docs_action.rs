@@ -38,8 +38,10 @@ pub struct DocsFinding {
     /// Severity bucket used for JSON's `"severity"` and SARIF's `"level"`.
     pub severity: Severity,
     /// Why the invariant matters, rendered on its own line in the report.
+    #[serde(default)]
     pub why: String,
     /// What to do about it, rendered on its own line under `why`.
+    #[serde(default)]
     pub fix: String,
 }
 
@@ -194,5 +196,14 @@ mod tests {
         let item = f.to_violation_item(std::path::Path::new("/opt/root"));
         assert_eq!(item.why, "TEST.md documents what a green CI proves");
         assert_eq!(item.fix, "create TEST.md at the workspace root");
+    }
+
+    #[test]
+    fn doc_finding_without_reason_produces_empty_why_and_fix() {
+        let f =
+            DocFinding::new_with_line("PRD.md", 0, "AES602", "no-test-file", "TEST.md is missing");
+        let item = f.to_violation_item(std::path::Path::new("/opt/root"));
+        assert!(item.why.is_empty());
+        assert!(item.fix.is_empty());
     }
 }
