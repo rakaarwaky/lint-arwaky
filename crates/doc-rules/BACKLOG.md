@@ -7,7 +7,7 @@ Last Updated: 2026-10-25
 
 ## Current Condition
 
-- Done: `cargo nextest run -p doc-rules-lint-arwaky` → 79 passed, 0 failed. Per-scenario evidence below.
+- Done: `cargo nextest run -p doc-rules-lint-arwaky` → 144 passed, 0 failed. Per-scenario evidence below.
 - Done: FR-DOC-008 (Member-Folder Document Presence) and FR-DOC-009 (Template Body & Placeholder Conformance) implemented and wired into the orchestrator; 9-seam parity holds (FRD headings = protocol traits = API table rows).
 - In Progress: None
 - Blocked: None
@@ -87,8 +87,8 @@ None
 
 | Area | Status | Notes |
 |---|---|---|
-| Tests | Done | `cargo nextest run -p doc-rules-lint-arwaky` → 79 passed, 0 failed |
-| Scenario evidence | Done | 39 scenarios mapped; all Automated |
+| Tests | Done | `cargo nextest run -p doc-rules-lint-arwaky` → 144 passed, 0 failed |
+| Scenario evidence | Done | 47 scenarios mapped; all Automated |
 | Docs | Done | [FRD.md](FRD.md) is specification-only; status lives in this file |
 
 ## Deferred
