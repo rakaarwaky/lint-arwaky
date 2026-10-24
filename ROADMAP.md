@@ -40,13 +40,6 @@ One unified table: every feature + cross-cutting items, sorted by priority.
 | FR-SECR | Hardcoded-secret detection | P3 | Done | Dedicated scanners are more suitable | — | 2026-10-23 |
 
 
-## Status Policy
-
-- Status is **verified, not self-reported**. A row reaches `Done` only after someone re-ran the evidence command and read its output.
-- A recorded verification names a **commit hash**, not "today".
-- A PR that merges a fix updates **every** row that fix invalidates, in the same PR.
-- Business outcome metrics (PRD.md Section 2) are audited per release cycle against recorded git commits.
-
 ## State Definitions
 
 

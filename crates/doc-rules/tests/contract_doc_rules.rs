@@ -134,10 +134,6 @@ fn conforming_roadmap() -> &'static str {
 |---|---|---|---|---|---|---|
 | WS-1 | Docs | P0 | Done | — | — | 2026-09-29 |
 
-## Status Policy
-
-A row is Done with a command.
-
 ## State Definitions
 
 | State | Meaning |
