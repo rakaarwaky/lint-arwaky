@@ -174,6 +174,13 @@ run_gate "Self-Lint (check .)" bash -c '
 ' &
 SELF_LINT_PID=$!
 
+run_gate "Document Gate (docs .)" bash -c '
+    output=$($CLI docs . 2>&1) || exit_code=$?
+    echo "$output" | tail -3
+    exit ${exit_code:-0}
+' &
+DOCS_PID=$!
+
 run_gate "False Negatives (workspaces-bad >= 29)" bash -c '
     codes_rust=$($CLI scan workspaces-bad/crates 2>&1 | grep -oP "AES\d+" | sort -u | wc -l)
     codes_python=$($CLI scan workspaces-bad/modules 2>&1 | grep -oP "AES\d+" | sort -u | wc -l)
@@ -202,7 +209,7 @@ run_gate "False Positives (workspaces-good == 0)" bash -c '
 ' &
 FP_PID=$!
 
-wait_and_report $SELF_LINT_PID $FN_PID $FP_PID
+wait_and_report $SELF_LINT_PID $DOCS_PID $FN_PID $FP_PID
 echo "Phase 3 duration: $((SECONDS - ph3_start))s"
 
 TOTAL_TIME=$((SECONDS - START_TIME))

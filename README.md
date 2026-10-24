@@ -45,7 +45,9 @@ lint-arwaky-cli fix . --dry-run      # preview auto-fixes
 | ------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | `scan` / `check` \[path\]                                                            | Run all 8 linters (naming, import, quality, role, orphan, structure, docs, external)                                                          |
 | `report` \[path\]                                                                    | Progress report: per-member violation counts with the change against the last run; exits success whenever it prints                           |
-| `naming` / `import` / `quality` / `role` / `orphan` / `structure` / `docs` \[path\]  | Individual rule groups (AES101–102, 201–205, 301–305, 401–406, 501–506, 601–605, 701–703)                                                     |
+| `docs` \[path\]                                                                     | Audit doc invariants AES601–606 (default action) — see `docs audit` / `docs scaffold` (below)                                          |
+| `docs audit` \[path\] `--strict`                                                     | Run the doc invariants audit (explicit form of the default)                                                                               |
+| `docs scaffold` \[path\] `--member <name>` `--dry-run`                               | Scaffold missing template docs in place from embedded HOW-TO templates; `--dry-run` previews without writing                                |
 | `taxonomy` / `contract` / `capabilities` / `utility` / `agents` / `surface` \[path\] | All rule groups, reported for one AES layer only (files prefixed `taxonomy_`, `contract_`, `capabilities_`, `utility_`, `agent_`, `surface_`) |
 | `external` \[path\]                                                                  | External linters (Clippy, Ruff, ESLint, tool-native codes)                                                                                    |
 | `fix` \[path\]                                                                       | Apply safe fixes (`--dry-run` previews)                                                                                                       |
@@ -64,6 +66,19 @@ lint-arwaky-cli fix . --dry-run      # preview auto-fixes
 ## Configuration
 
 YAML with a 5-level priority chain: project root `lint_arwaky.config.yaml` → parent dirs (3 levels) → XDG user `~/.config/lint-arwaky/` → XDG system `/etc/xdg/lint-arwaky/` → embedded defaults. Generate with `lint-arwaky-cli init`; inspect with `config`.
+
+### Document rules (`doc_rules` section)
+
+`strict_member_docs: false` / `strict_placeholders: false` (default in the current migration window; both flip to `true` in Stage 3). `exempt_members` lists member paths out of scope for FR-DOC-008. A `--strict` flag on `docs` forces both checks on for a single run without editing the config file.
+
+- **FR-DOC-008** (AES606): missing member docs — each member owes a doc pair by role (`FRD.md` + `BACKLOG.md` feature; `DATA.md` + `BACKLOG.md` kernel; `DESIGN.md` + `BACKLOG.md` surface) — enforced under `strict_member_docs`.
+- **FR-DOC-009** (AES606): unfilled template placeholders (`<feature-name>`, `{...}` slots) and deleted non-optional sections — placeholder findings enforced under `strict_placeholders`; deleted sections always fire.
+
+```bash
+lint-arwaky-cli docs .                    # audit (default action)
+lint-arwaky-cli docs audit --strict .     # force strict for this run
+lint-arwaky-cli docs scaffold --dry-run   # preview; in-place writes by default
+```
 
 ### MCP Server
 
