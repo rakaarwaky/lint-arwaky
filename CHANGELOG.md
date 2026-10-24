@@ -1,4 +1,23 @@
 # Changelog
+## 3.12.0 (2026-10-24)
+
+### Features
+
+- feat(doc-rules): enforce closed H2 sets for all document templates (#1121)
+
+### Bug Fixes
+
+- fix(doc-rules): remove Status Policy from ROADMAP required H2 headings
+- fix(docs): remove Health column from remaining crate + fixture BACKLOGs (#1116)
+- fix(security): bump rustls-webpki and webpki-root-certs to clear RUSTSEC-2026-0382/0383 (#1117)
+
+### Maintenance
+
+- test(doc-rules): remove Status Policy from conforming ROADMAP test fixtures
+- docs(aes-docs): align HOW-TO-MAKE-ROADMAP template with the 4-section ROADMAP structure
+- docs(roadmap): drop Status Policy section to keep H2 count at 4
+- docs(roadmap): simplify State Definitions to four pipeline states (#1123)
+
 ## 3.11.4 (2026-10-22)
 
 ### Bug Fixes
