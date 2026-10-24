@@ -175,7 +175,7 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 
 | Method | Input | Output | Error | Event | Description |
 |--------|-------|--------|-------|-------|-------------|
-| `execute` | `DocRequest` | `DocResponse` | — | — | Walks the document chain once, fans out to the seven protocol seams, and returns the merged, deduplicated, stable-sorted findings. |
+| `execute` | `DocRequest` | `DocResponse` | — | — | Walks the document chain once, fans out to the nine protocol seams, and returns the merged, deduplicated, stable-sorted findings. |
 
 ## Integration Points
 

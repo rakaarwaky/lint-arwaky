@@ -70,3 +70,38 @@ impl RootDocRulesContainer {
         ))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// MemberDocStub returns `vec![]` for any context.
+    #[test]
+    fn member_doc_stub_returns_empty() {
+        let stub = MemberDocStub;
+        let context = DocAuditContext::new(
+            std::path::Path::new("/repo"),
+            Vec::new(),
+            None,
+            Vec::new(),
+            None,
+            shared_doc_rules::taxonomy_doc_audit_context_vo::StrictModeOverride::UseConfigFile,
+        );
+        assert!(stub.audit_member_docs(&context).is_empty());
+    }
+
+    /// TemplateBodyStub returns `vec![]` for any context.
+    #[test]
+    fn template_body_stub_returns_empty() {
+        let stub = TemplateBodyStub;
+        let context = DocAuditContext::new(
+            std::path::Path::new("/repo"),
+            Vec::new(),
+            None,
+            Vec::new(),
+            None,
+            shared_doc_rules::taxonomy_doc_audit_context_vo::StrictModeOverride::UseConfigFile,
+        );
+        assert!(stub.audit_template_body(&context).is_empty());
+    }
+}
