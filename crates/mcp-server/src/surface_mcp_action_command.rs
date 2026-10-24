@@ -596,12 +596,99 @@ impl McpActionSurface {
             Ok(findings) => {
                 let exit_code = if findings.is_empty() { 0 } else { 1 };
                 let results: Vec<String> = findings.iter().map(|f| f.summary()).collect();
+                // Surface `why`/`fix` when non-empty so agent-driven audits
+                // carry the same remediation hints as the CLI.
+                let rich: Vec<serde_json::Value> = findings
+                    .iter()
+                    .filter(|f| !f.why.is_empty() || !f.fix.is_empty())
+                    .map(|f| {
+                        serde_json::json!({
+                            "location": f.location,
+                            "code": f.code,
+                            "violation_type": f.violation_type,
+                            "why": f.why,
+                            "fix": f.fix,
+                        })
+                    })
+                    .collect();
                 serde_json::json!({
                     "status": if exit_code == 0 { "ok" } else { "warning" },
                     "result": if exit_code == 0 { "clean" } else { "violations" },
                     "action": "docs",
                     "exit_code": exit_code,
                     "finding_count": findings.len(),
+                    "results": results,
+                    "why_fix": rich,
+                })
+            }
+            Err(e) => serde_json::json!({"error": e, "exit_code": 2}),
+        }
+    }
+
+    /// Run `docs scaffold` — write missing template files in place from
+    /// embedded skills. `dry_run` previews without touching disk; `strict`
+    /// forces strict mode on for this run (Decision Q4). Mutating, so it
+    /// requires `allow_mutations` to be true.
+    pub async fn execute_docs_scaffold(
+        &self,
+        path: &str,
+        member: Option<&str>,
+        dry_run: bool,
+        strict: bool,
+    ) -> serde_json::Value {
+        if !self.deps.allow_mutations && !dry_run {
+            return error_response("Action 'docs_scaffold' is disabled: MCP server is read-only");
+        }
+        let fp = match self.to_fp(path) {
+            Ok(fp) => fp,
+            Err(error) => return error,
+        };
+        let fs_seam = self.deps.fs_seam.clone();
+        let config_file_reader = self.deps.config_file_reader.clone();
+        let strict_override = if strict {
+            shared_doc_rules::StrictModeOverride::ForceStrict
+        } else {
+            shared_doc_rules::StrictModeOverride::UseConfigFile
+        };
+        let member_owned = member.map(String::from);
+        let result = match Self::run_blocking(move || {
+            dispatcher::surface_docs_action::collect_scaffold(
+                fp.value(),
+                member_owned.as_deref(),
+                dry_run,
+                strict_override,
+                &fs_seam,
+                config_file_reader.as_ref(),
+            )
+        })
+        .await
+        {
+            Ok(result) => result,
+            Err(e) => return e,
+        };
+        match result {
+            Ok(items) => {
+                let any_error = items.iter().any(|i| !i.ok);
+                let exit_code = if any_error { 2 } else { 0 };
+                let results: Vec<serde_json::Value> = items
+                    .iter()
+                    .map(|i| {
+                        serde_json::json!({
+                            "path": i.path,
+                            "created": i.created,
+                            "skipped_existing": i.skipped_existing,
+                            "ok": i.ok,
+                            "message": i.message,
+                        })
+                    })
+                    .collect();
+                serde_json::json!({
+                    "status": if any_error { "error" } else { "ok" },
+                    "result": if dry_run { "preview" } else { "scaffold" },
+                    "action": "docs_scaffold",
+                    "path": path,
+                    "exit_code": exit_code,
+                    "item_count": items.len(),
                     "results": results,
                 })
             }
@@ -965,7 +1052,7 @@ pub fn resolve_confined_path(root: &Path, requested: &str) -> Result<PathBuf, se
 pub fn is_mutating_action(action: &str) -> bool {
     matches!(
         action,
-        "fix" | "install-hook" | "uninstall-hook" | "init" | "install"
+        "fix" | "install-hook" | "uninstall-hook" | "init" | "install" | "docs_scaffold"
     )
 }
 

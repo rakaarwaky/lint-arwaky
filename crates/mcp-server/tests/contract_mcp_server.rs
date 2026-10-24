@@ -37,12 +37,12 @@ fn get_info_advertises_tools_capability() {
     );
 }
 
-// ─── Protocol contract: exactly the documented 5 tools ─────────────
+// ─── Protocol contract: exactly the documented 6 tools ─────────────
 
 #[test]
-fn tool_router_registers_exactly_the_documented_five_tools() {
-    // TEST.md §5.3 promises exactly 5 tools: execute_command, list_commands,
-    // read_skill, health_check, get_config.
+fn tool_router_registers_exactly_the_documented_six_tools() {
+    // TEST.md §5.3 promises exactly 6 tools: execute_command, list_commands,
+    // read_skill, health_check, get_config, docs_scaffold.
     let mut names: Vec<String> = server()
         .router()
         .list_all()
@@ -53,13 +53,14 @@ fn tool_router_registers_exactly_the_documented_five_tools() {
     assert_eq!(
         names,
         vec![
+            "docs_scaffold",
             "execute_command",
             "get_config",
             "health_check",
             "list_commands",
             "read_skill"
         ],
-        "MCP tool surface drifted from the documented 5-tool contract"
+        "MCP tool surface drifted from the documented 6-tool contract"
     );
 }
 

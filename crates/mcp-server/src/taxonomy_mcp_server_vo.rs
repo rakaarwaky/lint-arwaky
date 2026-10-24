@@ -31,3 +31,16 @@ pub struct GetConfigArgs {
     /// Optional language hint (rust, python, javascript)
     pub language: Option<String>,
 }
+
+#[derive(Debug, Deserialize, JsonSchema)]
+// ─── Docs scaffold args ────────────────────────────────────────────────
+pub struct DocsScaffoldArgs {
+    /// Project path to scaffold docs into
+    pub path: Option<String>,
+    /// Scope to a specific member crate (e.g. `billing`). Omit to scaffold all.
+    pub member: Option<String>,
+    /// Preview what would be written without modifying the filesystem
+    pub dry_run: Option<bool>,
+    /// Force strict mode for this run
+    pub strict: Option<bool>,
+}

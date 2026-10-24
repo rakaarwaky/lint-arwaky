@@ -109,6 +109,19 @@ pub struct DocsCommandParams {
     pub config_file_reader: Arc<dyn shared_config_system::IConfigFileReaderAggregate>,
 }
 
+/// Parameters for the `docs scaffold` subcommand.
+pub struct DocsScaffoldCommandParams {
+    pub path: Option<FilePath>,
+    /// Scope to a specific member crate. `None` scaffolds every member.
+    pub member: Option<String>,
+    /// Preview without writing to disk.
+    pub dry_run: bool,
+    /// Force strict mode for this run (Decision Q4).
+    pub strict: bool,
+    pub fs_seam: FilesystemSeam,
+    pub config_file_reader: Arc<dyn shared_config_system::IConfigFileReaderAggregate>,
+}
+
 /// Parameters for the `structure` command.
 pub struct StructureCommandParams {
     pub path: Option<FilePath>,
@@ -308,6 +321,43 @@ pub fn handle_docs(params: DocsCommandParams) -> ExitCode {
                 dispatcher::surface_docs_action::docs_findings_to_violations(&findings);
             output_violations(&violations, &root, params.format, false);
             exit_for(violations.len())
+        }
+        Err(e) => {
+            error!(error = %e, "operation failed");
+            ExitCode::RUNTIME_ERROR
+        }
+    }
+}
+
+/// `docs scaffold` — write missing template files in place from embedded
+/// skills. `dry_run` prints the planned writes without touching disk.
+/// `strict` forces strict mode on for this run (Decision Q4).
+pub fn handle_docs_scaffold(params: DocsScaffoldCommandParams) -> ExitCode {
+    let root = resolve_root(&params.path);
+    let strict_override = if params.strict {
+        shared_doc_rules::StrictModeOverride::ForceStrict
+    } else {
+        shared_doc_rules::StrictModeOverride::UseConfigFile
+    };
+    match dispatcher::surface_docs_action::collect_scaffold(
+        &root,
+        params.member.as_deref(),
+        params.dry_run,
+        strict_override,
+        &params.fs_seam,
+        params.config_file_reader.as_ref(),
+    ) {
+        Ok(items) => {
+            let lines = dispatcher::surface_docs_action::scaffold_items_to_report_lines(&items);
+            for line in &lines {
+                println!("{line}");
+            }
+            let any_error = items.iter().any(|i| !i.ok);
+            if any_error {
+                ExitCode::RUNTIME_ERROR
+            } else {
+                ExitCode::OK
+            }
         }
         Err(e) => {
             error!(error = %e, "operation failed");

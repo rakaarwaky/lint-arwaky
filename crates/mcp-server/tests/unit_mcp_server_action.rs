@@ -152,3 +152,31 @@ fn execute_command_path_traversal_documents_current_normalization_gap() {
         .expect("documented gap: traversal paths are accepted today, not rejected");
     assert_eq!(normalized.value, "../../etc/passwd");
 }
+
+// ─── docs_scaffold ─────────────────────────────────────────────────────────
+
+/// A read-only MCP surface must refuse `docs_scaffold` without `dry_run: true`.
+#[tokio::test]
+async fn execute_docs_scaffold_denied_on_read_only_surface() {
+    let result = surface()
+        .execute_docs_scaffold(".", None, /* dry_run */ false, /* strict */ false)
+        .await;
+    assert_eq!(result["exit_code"], 2);
+    assert_eq!(
+        result["error"],
+        "Action 'docs_scaffold' is disabled: MCP server is read-only"
+    );
+}
+
+/// `dry_run: true` bypasses the read-only gate because no files are written.
+#[tokio::test]
+async fn execute_docs_scaffold_dry_run_allowed_on_read_only_surface() {
+    let result = surface()
+        .execute_docs_scaffold(".", None, /* dry_run */ true, /* strict */ false)
+        .await;
+    // dry_run never writes; the read-only gate only blocks mutating runs.
+    assert_ne!(
+        result["exit_code"], 2,
+        "dry_run must not be blocked: {result}"
+    );
+}

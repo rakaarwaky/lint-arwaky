@@ -67,7 +67,7 @@ YAML with a 5-level priority chain: project root `lint_arwaky.config.yaml` → p
 
 ### MCP Server
 
-A [Model Context Protocol](https://modelcontextprotocol.io) with  5 tools: `execute_command`, `list_commands`, `read_skill`, `health_check`, `get_config`.
+A [Model Context Protocol](https://modelcontextprotocol.io) with 6 tools: `execute_command`, `list_commands`, `read_skill`, `health_check`, `get_config`, `docs_scaffold`.
 
 ```bash
 cargo run --bin lint-arwaky-mcp

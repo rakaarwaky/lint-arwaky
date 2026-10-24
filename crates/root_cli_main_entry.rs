@@ -190,12 +190,15 @@ enum Command {
         #[arg(long)]
         filter: Option<String>,
     },
-    /// Doc invariants audit (AES601–AES606) over the document chain
+    /// Doc invariants audit (AES601–AES606) and template scaffolding
+    #[command(name = "docs", subcommand_required = false)]
     Docs {
+        #[command(subcommand)]
+        action: Option<DocsAction>,
         #[arg(value_name = "PATH", default_value = ".")]
         path: String,
-        #[arg(long, default_value = "text")]
-        format: String,
+        #[arg(long, default_value_t = false)]
+        strict: bool,
     },
     /// Structure rules scan (AES701–AES703)
     Structure {
@@ -294,6 +297,29 @@ enum SkillSubCommand {
     },
     /// List all embedded skills
     List,
+}
+
+/// Subcommands of `docs` (audit default, scaffold writes missing templates).
+#[derive(Subcommand)]
+enum DocsAction {
+    /// Run the doc invariants audit (AES601–AES606)
+    #[command(name = "audit")]
+    Audit {
+        #[arg(value_name = "PATH", default_value = ".")]
+        path: String,
+        #[arg(long, default_value = "text")]
+        format: String,
+    },
+    /// Generate documentation templates from embedded skills, in place
+    #[command(name = "scaffold")]
+    Scaffold {
+        /// Scope to a specific member crate (e.g. `billing`). Omit to scaffold all.
+        #[arg(long)]
+        member: Option<String>,
+        /// Preview what would be written without modifying the filesystem
+        #[arg(long)]
+        dry_run: bool,
+    },
 }
 
 /// Dispatch one of the six layer-scoped subcommands. Every layer reuses the
@@ -739,16 +765,56 @@ fn main() {
                 ignored_paths: ignored_paths.clone(),
             },
         ),
-        Command::Docs { path, format } => cli_commands::surface_scan_command::handle_docs(
-            cli_commands::surface_scan_command::DocsCommandParams {
-                path: Some(FilePath::new(path).unwrap_or_default()),
-                format: parse_format(&format),
-                doc_orchestrator:
-                    doc_rules::root_doc_rules_container::RootDocRulesContainer::orchestrator(),
-                fs_seam: fs_seam.clone(),
-                config_file_reader: config_container.file_reader(),
-            },
-        ),
+        Command::Docs {
+            action,
+            path,
+            strict,
+        } => {
+            // `subcommand_required = false` lets a bare `docs` or `docs <path>`
+            // fall through to the audit default; `--strict` applies to both.
+            match action {
+                Some(DocsAction::Audit {
+                    path: audit_path,
+                    format,
+                }) => {
+                    let audit_root = audit_path;
+                    cli_commands::surface_scan_command::handle_docs(
+                        cli_commands::surface_scan_command::DocsCommandParams {
+                            path: Some(FilePath::new(audit_root).unwrap_or_default()),
+                            format: parse_format(&format),
+                            doc_orchestrator:
+                                doc_rules::root_doc_rules_container::RootDocRulesContainer::orchestrator(),
+                            fs_seam: fs_seam.clone(),
+                            config_file_reader: config_container.file_reader(),
+                        },
+                    )
+                }
+                Some(DocsAction::Scaffold { member, dry_run }) => {
+                    cli_commands::surface_scan_command::handle_docs_scaffold(
+                        cli_commands::surface_scan_command::DocsScaffoldCommandParams {
+                            path: Some(FilePath::new(path).unwrap_or_default()),
+                            member,
+                            dry_run,
+                            strict,
+                            fs_seam: fs_seam.clone(),
+                            config_file_reader: config_container.file_reader(),
+                        },
+                    )
+                }
+                // Bare `docs` or `docs <path>` with no subcommand verb.
+                None => cli_commands::surface_scan_command::handle_docs(
+                    cli_commands::surface_scan_command::DocsCommandParams {
+                        path: Some(FilePath::new(path).unwrap_or_default()),
+                        format: Format::Text,
+                        doc_orchestrator:
+                            doc_rules::root_doc_rules_container::RootDocRulesContainer::orchestrator(
+                            ),
+                        fs_seam: fs_seam.clone(),
+                        config_file_reader: config_container.file_reader(),
+                    },
+                ),
+            }
+        }
         Command::Structure {
             path,
             format,

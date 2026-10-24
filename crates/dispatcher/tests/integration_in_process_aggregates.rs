@@ -18,6 +18,7 @@ use dispatcher_lint_arwaky::surface_check_action::{
 };
 use shared_common::ViolationItem;
 use shared_common::taxonomy_path_vo::FilePath;
+use shared_doc_rules::taxonomy_doc_rules_constant::{MEMBER_DOC_VIOLATION, MISSING_DOC_VIOLATION};
 
 // ── Container wiring — mirrors crates/root_cli_main_entry.rs ──────────────
 
@@ -197,7 +198,12 @@ fn in_process_bad_rust_subfolder_has_many_violations() {
 }
 
 /// Clean fixture: `workspaces-good/crates/calculator` must produce 0
-/// violations through the in-process path (no false positives).
+/// non-doc violations through the in-process path (no false positives).
+///
+/// The fixture lacks the six root-level master docs (`PRD.md`, `ROADMAP.md`,
+/// `README.md`, `AGENTS.md`, `ARCHITECTURE.md`, `CONTRIBUTING.md`), so the
+/// `missing_required_doc` findings that now surface in `check .` (Decision Q2)
+/// are expected and filtered out here.
 #[test]
 fn in_process_clean_fixture_yields_zero_violations() {
     let root = fixture_path("workspaces-good/crates/calculator")
@@ -206,9 +212,15 @@ fn in_process_clean_fixture_yields_zero_violations() {
     let agg = build_scan_aggregates(&root);
     let violations = in_process_scan(&agg, "workspaces-good/crates/calculator")
         .expect("in-process scan of clean fixture must succeed");
+    let non_missing_doc: Vec<_> = violations
+        .iter()
+        .filter(|v| {
+            v.violation_name != *MISSING_DOC_VIOLATION && v.violation_name != *MEMBER_DOC_VIOLATION
+        })
+        .collect();
     assert!(
-        violations.is_empty(),
-        "clean fixture must produce 0 in-process violations, got: {violations:?}",
+        non_missing_doc.is_empty(),
+        "clean fixture must produce 0 non-doc-presence in-process violations, got: {non_missing_doc:?}",
     );
 }
 

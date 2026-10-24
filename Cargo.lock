@@ -1072,6 +1072,7 @@ dependencies = [
  "role-rules-lint-arwaky",
  "serde",
  "serde_json",
+ "serde_yaml_ng",
  "shared-auto-fix-lint-arwaky",
  "shared-cli-commands-lint-arwaky",
  "shared-common-lint-arwaky",
