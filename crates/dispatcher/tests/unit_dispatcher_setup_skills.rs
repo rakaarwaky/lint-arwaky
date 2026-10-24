@@ -154,7 +154,8 @@ fn test_embedded_skills_constants_catalog() {
 
     // A skill is a folder, and a folder holds exactly one SKILL.md. Any name
     // appearing in the catalog without a SKILL.md is either the pack README or
-    // a reference file that escaped its skill folder.
+    // the category DESCRIPTION.md or a reference file that escaped its skill
+    // folder.
     let catalogued_names: std::collections::BTreeSet<&str> =
         EMBEDDED_SKILLS.iter().map(|s| s.name()).collect();
     let names_without_skill_md: std::collections::BTreeSet<&str> = catalogued_names
@@ -163,8 +164,8 @@ fn test_embedded_skills_constants_catalog() {
         .collect();
     assert_eq!(
         names_without_skill_md,
-        std::collections::BTreeSet::from(["README"]),
-        "only the skills README may be catalogued without a SKILL.md"
+        std::collections::BTreeSet::from(["README", "description"]),
+        "only the skills README and DESCRIPTION may be catalogued without a SKILL.md"
     );
 
     // The three language columns are symmetric — a language with fewer
