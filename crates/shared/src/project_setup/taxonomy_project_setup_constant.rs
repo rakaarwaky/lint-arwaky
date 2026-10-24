@@ -14,13 +14,19 @@ use crate::taxonomy_project_setup_vo::EmbeddedSkillVO;
 /// renaming a skill file —
 /// `catalog_matches_the_skills_directory` in
 /// `crates/dispatcher/tests/unit_dispatcher_setup_skills.rs` fails otherwise.
-pub const EMBEDDED_SKILLS_COUNT: usize = 57;
+pub const EMBEDDED_SKILLS_COUNT: usize = 58;
 
 pub const EMBEDDED_SKILLS: &[EmbeddedSkillVO] = &[
     EmbeddedSkillVO::new(
         "README",
         "README.md",
         include_str!(concat!(env!("OUT_DIR"), "/skills/README.md")),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "description",
+        "DESCRIPTION.md",
+        include_str!(concat!(env!("OUT_DIR"), "/skills/DESCRIPTION.md")),
         None,
     ),
     EmbeddedSkillVO::new(
