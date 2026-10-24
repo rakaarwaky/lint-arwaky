@@ -1,6 +1,6 @@
 # HOW TO MAKE ROADMAP.md
 
-> **Purpose**: Index features, own shared policy, and record
+> **Purpose**: Index features, own the state vocabulary, and record
 > workspace-level condition.
 >
 > **Audience**: Tech Lead, PM, Engineers.
@@ -20,25 +20,26 @@
 
 Four rules. Each one prevents a specific failure mode.
 
-1. **Single source of truth.** State vocabulary and Status Policy live
-   here and nowhere else. Feature backlogs cite them.
+1. **Single source of truth.** State vocabulary lives here and nowhere
+   else. Feature backlogs cite it; they never redefine it.
 2. **Index every feature.** Every feature directory must appear in the
-   Feature Index table, linking to its FRD.md and BACKLOG.md
+   Feature Roll-up table, linking to its FRD.md and BACKLOG.md
    (`no-master-roadmap`).
-3. **Cross-cutting rows only.** The workspace backlog is for items that
+3. **Cross-cutting rows only.** The workspace table is for items that
    span multiple features or infrastructure.
 4. **ID scopes are explicit.** The root file uses a workspace prefix
-   (`WS-01`). Feature prefixes are documented in the Status Policy table.
+   (`WS-01`); feature rows keep their `<SCOPE>-` prefix and stay in
+   their own BACKLOG.md.
 
 ---
 
 ## Workflow
 
 1. **Create file** → `ROADMAP.md` at repo root.
-2. **Section: Current State** — where we are now.
-3. **Section: Roadmap** — phased milestones with dates.
-4. **Section: Status Policy** — how to update progress.
-5. **Verify** → `lint-arwaky-cli docs` passes; all phases have status.
+2. **Section: Current Condition** — where we are now.
+3. **Section: State Definitions** — the SSOT for state vocabulary.
+4. **Section: Feature Roll-up** — phased milestones with dates.
+5. **Verify** → `lint-arwaky-cli docs` passes; every required section is present.
 
 ## Template
 
@@ -63,12 +64,6 @@ State: vocabulary below. Last Updated: <YYYY-MM-DD>
 | In Review | PR open. |
 | Done | Command + commit evidence. |
 
-## Status Policy
-
-- Verified, not self-reported: re-run command; cite commit hash (not "today").
-- Same PR updates every backlog row the change invalidates.
-- Prefixes: workspace `WS-` · feature `<SCOPE>-` (feature rows stay in their BACKLOG).
-
 ## Feature Roll-up
 
 One table: every feature. Feature detail stays in each feature's BACKLOG.
@@ -86,14 +81,12 @@ One table: every feature. Feature detail stays in each feature's BACKLOG.
 
 ## Section Contract
 
-Every section is required unless marked optional. Each exists for one
-reason.
+Every section is required. Each exists for one reason.
 
 | Section            | Why it belongs here                                                |
 | ------------------ | ------------------------------------------------------------------ |
 | Current Condition  | Workspace truth in one glance.                                     |
 | State Definitions  | SSOT for state vocabulary. Feature backlogs cite it.            |
-| Status Policy      | SSOT for verification + ID prefixes.                               |
 | Feature Roll-up    | Index + state + `WS-*` in one place; feature rows stay in BACKLOG. |
 | Risk Register      | Workspace-level what-could-ship-broken.                            |
 
