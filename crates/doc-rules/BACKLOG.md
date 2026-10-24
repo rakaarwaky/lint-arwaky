@@ -3,11 +3,12 @@
 FRD: [FRD.md](FRD.md)
 Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
 State: defined in root [ROADMAP.md](../../ROADMAP.md) — cited here, not restated
-Last Updated: 2026-09-29
+Last Updated: 2026-10-25
 
 ## Current Condition
 
 - Done: `cargo nextest run -p doc-rules-lint-arwaky` → 79 passed, 0 failed. Per-scenario evidence below.
+- Done: FR-DOC-008 (Member-Folder Document Presence) and FR-DOC-009 (Template Body & Placeholder Conformance) implemented and wired into the orchestrator; 9-seam parity holds (FRD headings = protocol traits = API table rows).
 - In Progress: None
 - Blocked: None
 - Next Action: Re-run `cargo nextest run -p doc-rules-lint-arwaky` after any code change to this crate
@@ -20,6 +21,8 @@ Last Updated: 2026-09-29
 | DOC-02 | P0 | Done | None | — | 2026-09-29  |
 | DOC-03 | P0 | Done | None | — | 2026-10-02  |
 | DOC-06 | P0 | In Progress | None | — | 2026-10-23 |
+| DOC-08 | P0 | Done | DOC-06 | FR-DOC-008 implemented; `missing_member_doc` fires under `strict_member_docs` | 2026-10-25 |
+| DOC-09 | P0 | Done | DOC-08 | FR-DOC-009 implemented; `unfilled_placeholder` / `section_deleted` fire under `strict_placeholders` | 2026-10-25 |
 
 ## Scenario Evidence
 
@@ -62,6 +65,11 @@ Last Updated: 2026-09-29
 | Five seams over a conforming workspace report nothing | No violation | Automated | `tests/contract_doc_capability_seams.rs` | `cargo nextest run -p doc-rules-lint-arwaky` | working-tree |
 | A document violating two rules reports both rule codes | Fan-out completeness | Automated | `tests/contract_doc_capability_seams.rs` | `cargo nextest run -p doc-rules-lint-arwaky` | working-tree |
 | Conforming workspace reports 0 doc findings on `docs .` | No violation | Automated | Self-lint | `lint-arwaky-cli docs .` | `926bd34a` |
+| Member folder missing its doc pair (feature/kernel/surface) | AES606 `missing_member_doc` (FR-DOC-008) | Automated | `tests/unit_doc_member_and_template_body.rs` | `cargo nextest run -p doc-rules-lint-arwaky` | working-tree |
+| Exempt member path suppressed from FR-DOC-008 | AES606 `missing_member_doc` absent | Automated | `tests/unit_doc_member_and_template_body.rs` | `cargo nextest run -p doc-rules-lint-arwaky` | working-tree |
+| Unfilled placeholder token fires when strict on | AES606 `unfilled_placeholder` (FR-DOC-009) | Automated | `tests/unit_doc_member_and_template_body.rs` | `cargo nextest run -p doc-rules-lint-arwaky` | working-tree |
+| Placeholder inside fenced code not detected | No violation | Automated | `tests/unit_doc_member_and_template_body.rs` | `cargo nextest run -p doc-rules-lint-arwaky` | working-tree |
+| Deleted non-deletable template section fires | AES606 `section_deleted` (FR-DOC-009) | Automated | `tests/unit_doc_member_and_template_body.rs` | `cargo nextest run -p doc-rules-lint-arwaky` | working-tree |
 | BACKLOG checkbox bullets under `## Backlog` | AES606 `section_not_table` | Automated | `tests/unit_doc_template_conformance.rs` | `cargo nextest run -p doc-rules-lint-arwaky` | working-tree |
 | ROADMAP `## State Definitions` missing `Meaning` column | AES606 `table_missing_columns` | Automated | `tests/unit_doc_template_conformance.rs` | `cargo nextest run -p doc-rules-lint-arwaky` | working-tree |
 | Workspace root missing `PRD.md` | AES606 `missing_required_doc` | Automated | `tests/unit_doc_template_conformance.rs` | `cargo nextest run -p doc-rules-lint-arwaky` | working-tree |
@@ -80,7 +88,7 @@ None
 | Area | Status | Notes |
 |---|---|---|
 | Tests | Done | `cargo nextest run -p doc-rules-lint-arwaky` → 79 passed, 0 failed |
-| Scenario evidence | Done | 34 scenarios mapped; all Automated |
+| Scenario evidence | Done | 39 scenarios mapped; all Automated |
 | Docs | Done | [FRD.md](FRD.md) is specification-only; status lives in this file |
 
 ## Deferred
@@ -91,6 +99,7 @@ None
 
 | Date | Change | By |
 |---|---|---|
+| 2026-10-25 | Implemented FR-DOC-008 / FR-DOC-009 (member-doc presence + template body / placeholder conformance); marked DOC-08/DOC-09 Done; added 5 scenario rows | @raka |
 | 2026-10-02 | Closed the FRD level-3 set document-wide: new AES602 `h3_off_template`, because `api_h3_unexpected` reads only the `## API Contract` subtree and a per-protocol table parked under another section escaped it. Migrated 117 off-template H3 headings across 14 FRDs | @raka |
 | 2026-10-02 | Split the 876-line invariant auditor into five capability seams, one per AES doc rule | @raka |
 | 2026-09-29 | Aligned BACKLOG.md and FRD.md to HOW-TO templates (AES605 H2 contracts); expanded scenario evidence table; merged AES607 into AES601; removed AES605 | @raka |
