@@ -302,10 +302,6 @@ In scope: the checker.
 |---|---|
 | Done | Shipped. |
 
-## Status Policy
-
-A row is Done with a command.
-
 ## Feature Roll-up
 
 | ID | Feature | Priority | State | Dependencies | Next Action | Updated |
