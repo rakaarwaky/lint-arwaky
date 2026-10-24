@@ -85,7 +85,13 @@ pub(crate) fn doc_violations_in_scope(target: &str, agg: &ScanAggregates) -> Vec
         &agg.fs_seam,
         agg.config_file_reader.as_ref(),
     );
-    let DocResponse::Findings { findings } = agg.doc.execute(DocRequest::audit_all(&target_canon));
+    let doc_cfg = crate::surface_docs_action::load_doc_rules_config_from_yaml(target, &agg.fs_seam)
+        .unwrap_or_else(shared_doc_rules::DocRulesConfig::staged);
+    let DocResponse::Findings { findings } = agg.doc.execute(DocRequest::audit_all(
+        &target_canon,
+        Some(doc_cfg),
+        shared_doc_rules::StrictModeOverride::UseConfigFile,
+    ));
     findings
         .into_iter()
         .filter(|finding| {

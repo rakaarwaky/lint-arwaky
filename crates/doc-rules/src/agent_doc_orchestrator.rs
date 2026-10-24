@@ -40,21 +40,19 @@ impl IDocRunnerAggregate for DocOrchestrator {
     /// Audit the document chain under the request's root and merge what each
     /// capability reports into one ordered list.
     fn execute(&self, request: DocRequest) -> DocResponse {
-        let DocRequest::AuditAll { root } = request;
+        let DocRequest::AuditAll {
+            root,
+            config,
+            strict_override,
+        } = request;
         // The chain is walked once here rather than once per capability: the
         // rules read the same documents, so collecting per rule would
         // re-read the same files multiple times.
         let documents = utility_doc_collector::collect_documents(&root);
         let master = utility_doc_collector::master_text(&documents);
         let members = utility_doc_collector::collect_members(&root);
-        let context = DocAuditContext::new(
-            &root,
-            documents,
-            master,
-            members,
-            None,
-            shared_doc_rules::taxonomy_doc_audit_context_vo::StrictModeOverride::UseConfigFile,
-        );
+        let context =
+            DocAuditContext::new(&root, documents, master, members, config, strict_override);
 
         let mut findings = Vec::new();
         findings.extend(self.fr_format.audit_fr_format(&context));

@@ -41,6 +41,4 @@ pub struct DocsScaffoldArgs {
     pub member: Option<String>,
     /// Preview what would be written without modifying the filesystem
     pub dry_run: Option<bool>,
-    /// Force strict mode for this run
-    pub strict: Option<bool>,
 }

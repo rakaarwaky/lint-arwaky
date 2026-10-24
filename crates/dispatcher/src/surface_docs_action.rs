@@ -82,6 +82,7 @@ pub fn collect_docs(
     doc_orchestrator: Arc<dyn IDocRunnerAggregate>,
     fs_seam: &crate::surface_check_action::FilesystemSeam,
     config_file_reader: &dyn shared_config_system::IConfigFileReaderAggregate,
+    strict_override: StrictModeOverride,
 ) -> Result<Vec<DocsFinding>, String> {
     if !std::path::Path::new(root).is_dir() {
         return Err(format!("Error: path '{root}' does not exist"));
@@ -93,39 +94,24 @@ pub fn collect_docs(
     );
     // Parse the docs: config block from the workspace-root config file so the
     // audit honours `strict_member_docs` / `strict_placeholders` (Decision Q4).
-    // The orchestrator hardcodes `UseConfigFile` + `config: None` today; this
-    // plumbing keeps the config parse reachable from the dispatcher surface so
-    // a future orchestrator that threads `DocRulesConfig` through
-    // `IDocRunnerAggregate` can consume it without a dispatcher API change.
+    // The config and `--strict` override are now consumed by DocRequest and
+    // reach MemberDocChecker / TemplateBodyChecker through DocAuditContext.
     let doc_cfg =
         load_doc_rules_config_from_yaml(root, fs_seam).unwrap_or_else(DocRulesConfig::staged);
-    let _ = doc_cfg;
-    let DocResponse::Findings { findings } = doc_orchestrator.execute(DocRequest::audit_all(root));
+    let DocResponse::Findings { findings } =
+        doc_orchestrator.execute(DocRequest::audit_all(root, Some(doc_cfg), strict_override));
     Ok(findings
         .into_iter()
         .filter(|finding| {
             !crate::surface_suppression_hook::is_rule_suppressed(&suppressed, finding.code)
         })
         .map(|finding| {
-            // Doc checkers report some findings on a line offset inside the
-            // document (the message carries it, e.g. "line N heading ...");
-            // others are document-level and fall back to the doc path.
             let doc_path = finding.doc.clone();
-            let location = finding
-                .message
-                .find("line ")
-                .and_then(|idx| {
-                    let n = finding.message[idx + 5..]
-                        .chars()
-                        .take_while(|c| c.is_ascii_digit())
-                        .collect::<String>();
-                    if n.is_empty() {
-                        None
-                    } else {
-                        Some(format!("{doc_path}:{n}"))
-                    }
-                })
-                .unwrap_or(doc_path);
+            let location = if finding.line > 0 {
+                format!("{doc_path}:{}", finding.line)
+            } else {
+                doc_path
+            };
             DocsFinding {
                 code: finding.code.to_string(),
                 doc: finding.doc.clone(),
@@ -232,9 +218,7 @@ pub fn collect_scaffold(
     root: &str,
     member_filter: Option<&str>,
     dry_run: bool,
-    strict_override: StrictModeOverride,
     fs_seam: &crate::surface_check_action::FilesystemSeam,
-    _config_file_reader: &dyn shared_config_system::IConfigFileReaderAggregate,
 ) -> Result<Vec<ScaffoldWriteItem>, String> {
     use shared_doc_rules::MemberRole;
 
@@ -326,10 +310,7 @@ pub fn collect_scaffold(
 
     // ── Per-member docs ──────────────────────────────────────────────────
     let members = shared_doc_rules::utility_doc_collector::collect_members(&base_dir);
-    // `strict_override` and the config-file strictness apply to the audit
-    // checkers (FR-DOC-008/009) — scaffolding always writes missing docs
-    // regardless of strictness, so no gating here.
-    let _ = strict_override;
+    // strictness gates the audit, not the scaffold — scaffold always writes missing docs.
 
     for member in &members {
         // Skip kernel members (shared/kernel) unless explicitly requested.
@@ -440,11 +421,30 @@ pub fn collect_scaffold(
 /// the lookup key is `HOW-TO-MAKE-FRD.md`. Returns `None` when no matching
 /// template is embedded.
 fn embedded_template_content(doc_name: &str) -> Option<String> {
+    // Exact match on known template filenames (not a glob ends_with) so two
+    // skill files ending with the same suffix in different subdirectories
+    // cannot silently collide. Compares against the file-name component of the
+    // embedded skill's relative_path.
+    let key = match doc_name {
+        "PRD.md" => "HOW-TO-MAKE-PRD.md",
+        "ROADMAP.md" => "HOW-TO-MAKE-ROADMAP.md",
+        "README.md" => "HOW-TO-MAKE-README.md",
+        "AGENTS.md" => "HOW-TO-MAKE-AGENTS.md",
+        "ARCHITECTURE.md" => "HOW-TO-MAKE-ARCHITECTURE.md",
+        "CONTRIBUTING.md" => "HOW-TO-MAKE-CONTRIBUTING.md",
+        "FRD.md" => "HOW-TO-MAKE-FRD.md",
+        "BACKLOG.md" => "HOW-TO-MAKE-BACKLOG.md",
+        "DATA.md" => "HOW-TO-MAKE-DATA.md",
+        "DESIGN.md" => "HOW-TO-MAKE-DESIGN.md",
+        _ => return None,
+    };
     EMBEDDED_SKILLS
         .iter()
         .find(|s| {
             s.relative_path
-                .ends_with(&format!("HOW-TO-MAKE-{doc_name}"))
+                .rsplit_once('/')
+                .map(|(_, name)| name == key)
+                .unwrap_or(s.relative_path == key)
         })
         .map(|s| s.content.to_string())
 }
@@ -525,18 +525,11 @@ mod tests {
             parser: orchestrator.clone(),
             aggregate: orchestrator,
         };
-        let config_reader = config_system::root_config_system_container::ConfigContainer::new(
-            fs_seam.aggregate.clone(),
-            container.io(),
-        );
-
         let result = collect_scaffold(
             root.to_string_lossy().as_ref(),
             None,
             /* dry_run */ true,
-            StrictModeOverride::UseConfigFile,
             &fs_seam,
-            config_reader.file_reader().as_ref(),
         )
         .expect("dry-run scaffold of a fixture root must succeed");
 
@@ -570,18 +563,7 @@ mod tests {
             parser: orchestrator.clone(),
             aggregate: orchestrator,
         };
-        let config_reader = config_system::root_config_system_container::ConfigContainer::new(
-            fs_seam.aggregate.clone(),
-            container.io(),
-        );
-        let result = collect_scaffold(
-            "/definitely/does/not/exist",
-            None,
-            false,
-            StrictModeOverride::UseConfigFile,
-            &fs_seam,
-            config_reader.file_reader().as_ref(),
-        );
+        let result = collect_scaffold("/definitely/does/not/exist", None, false, &fs_seam);
         assert!(result.is_err(), "missing path must return Err: {result:?}");
     }
 

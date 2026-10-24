@@ -585,6 +585,7 @@ impl McpActionSurface {
                 doc,
                 &fs_seam,
                 config_file_reader.as_ref(),
+                shared_doc_rules::StrictModeOverride::UseConfigFile,
             )
         })
         .await
@@ -626,39 +627,32 @@ impl McpActionSurface {
     }
 
     /// Run `docs scaffold` — write missing template files in place from
-    /// embedded skills. `dry_run` previews without touching disk; `strict`
-    /// forces strict mode on for this run (Decision Q4). Mutating, so it
-    /// requires `allow_mutations` to be true.
+    /// embedded skills. `dry_run` previews without touching disk. Strictness
+    /// only affects the audit path, not scaffolding.
     pub async fn execute_docs_scaffold(
         &self,
         path: &str,
         member: Option<&str>,
         dry_run: bool,
-        strict: bool,
     ) -> serde_json::Value {
-        if !self.deps.allow_mutations && !dry_run {
-            return error_response("Action 'docs_scaffold' is disabled: MCP server is read-only");
+        // dry_run bypasses the read-only gate because no files are written.
+        if !dry_run {
+            if let Err(error) = self.authorize_action("docs_scaffold") {
+                return error;
+            }
         }
         let fp = match self.to_fp(path) {
             Ok(fp) => fp,
             Err(error) => return error,
         };
         let fs_seam = self.deps.fs_seam.clone();
-        let config_file_reader = self.deps.config_file_reader.clone();
-        let strict_override = if strict {
-            shared_doc_rules::StrictModeOverride::ForceStrict
-        } else {
-            shared_doc_rules::StrictModeOverride::UseConfigFile
-        };
         let member_owned = member.map(String::from);
         let result = match Self::run_blocking(move || {
             dispatcher::surface_docs_action::collect_scaffold(
                 fp.value(),
                 member_owned.as_deref(),
                 dry_run,
-                strict_override,
                 &fs_seam,
-                config_file_reader.as_ref(),
             )
         })
         .await

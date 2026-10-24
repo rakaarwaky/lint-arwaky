@@ -197,8 +197,6 @@ enum Command {
         action: Option<DocsAction>,
         #[arg(value_name = "PATH", default_value = ".")]
         path: String,
-        #[arg(long, default_value_t = false)]
-        strict: bool,
     },
     /// Structure rules scan (AES701–AES703)
     Structure {
@@ -300,6 +298,13 @@ enum SkillSubCommand {
 }
 
 /// Subcommands of `docs` (audit default, scaffold writes missing templates).
+///
+/// This binary-level `DocsAction` is separate from the shared VO
+/// (`shared_cli_commands::taxonomy_cli_commands_vo::DocsAction`) because the
+/// binary needs raw `String`/`&str` clap fields for `path`/`format` while the
+/// shared VO uses `Option<String>` and `Format` for transport/schema
+/// purposes. The two enums mirror each other structurally but live at
+/// different layers.
 #[derive(Subcommand)]
 enum DocsAction {
     /// Run the doc invariants audit (AES601–AES606)
@@ -309,6 +314,9 @@ enum DocsAction {
         path: String,
         #[arg(long, default_value = "text")]
         format: String,
+        /// Force strict doc-rules enforcement for this run (overrides config).
+        #[arg(long, default_value_t = false)]
+        strict: bool,
     },
     /// Generate documentation templates from embedded skills, in place
     #[command(name = "scaffold")]
@@ -765,17 +773,14 @@ fn main() {
                 ignored_paths: ignored_paths.clone(),
             },
         ),
-        Command::Docs {
-            action,
-            path,
-            strict,
-        } => {
+        Command::Docs { action, path } => {
             // `subcommand_required = false` lets a bare `docs` or `docs <path>`
             // fall through to the audit default; `--strict` applies to both.
             match action {
                 Some(DocsAction::Audit {
                     path: audit_path,
                     format,
+                    strict,
                 }) => {
                     let audit_root = audit_path;
                     cli_commands::surface_scan_command::handle_docs(
@@ -786,6 +791,7 @@ fn main() {
                                 doc_rules::root_doc_rules_container::RootDocRulesContainer::orchestrator(),
                             fs_seam: fs_seam.clone(),
                             config_file_reader: config_container.file_reader(),
+                            strict,
                         },
                     )
                 }
@@ -795,7 +801,6 @@ fn main() {
                             path: Some(FilePath::new(path).unwrap_or_default()),
                             member,
                             dry_run,
-                            strict,
                             fs_seam: fs_seam.clone(),
                             config_file_reader: config_container.file_reader(),
                         },
@@ -811,6 +816,7 @@ fn main() {
                             ),
                         fs_seam: fs_seam.clone(),
                         config_file_reader: config_container.file_reader(),
+                        strict: false,
                     },
                 ),
             }

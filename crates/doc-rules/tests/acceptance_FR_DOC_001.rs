@@ -136,7 +136,11 @@ fn write_contract_module(root: &Path, classes: usize) {
 /// Run the audit and return `(code, violation_type, message, fix)` tuples.
 fn audit(root: &Path) -> Vec<(String, String, String, String)> {
     let orchestrator = RootDocRulesContainer::orchestrator();
-    match orchestrator.execute(DocRequest::audit_all(root)) {
+    match orchestrator.execute(DocRequest::audit_all(
+        root,
+        None,
+        shared_doc_rules::StrictModeOverride::UseConfigFile,
+    )) {
         DocResponse::Findings { findings } => findings
             .into_iter()
             .map(|f| {

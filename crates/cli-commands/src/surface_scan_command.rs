@@ -107,6 +107,7 @@ pub struct DocsCommandParams {
     pub doc_orchestrator: Arc<dyn shared_doc_rules::IDocRunnerAggregate>,
     pub fs_seam: FilesystemSeam,
     pub config_file_reader: Arc<dyn shared_config_system::IConfigFileReaderAggregate>,
+    pub strict: bool,
 }
 
 /// Parameters for the `docs scaffold` subcommand.
@@ -116,8 +117,6 @@ pub struct DocsScaffoldCommandParams {
     pub member: Option<String>,
     /// Preview without writing to disk.
     pub dry_run: bool,
-    /// Force strict mode for this run (Decision Q4).
-    pub strict: bool,
     pub fs_seam: FilesystemSeam,
     pub config_file_reader: Arc<dyn shared_config_system::IConfigFileReaderAggregate>,
 }
@@ -310,11 +309,17 @@ pub fn handle_layer_scan(
 /// and calls the doc orchestrator directly on the target path.
 pub fn handle_docs(params: DocsCommandParams) -> ExitCode {
     let root = resolve_root(&params.path);
+    let strict_override = if params.strict {
+        shared_doc_rules::StrictModeOverride::ForceStrict
+    } else {
+        shared_doc_rules::StrictModeOverride::UseConfigFile
+    };
     match dispatcher::surface_docs_action::collect_docs(
         &root,
         params.doc_orchestrator,
         &params.fs_seam,
         params.config_file_reader.as_ref(),
+        strict_override,
     ) {
         Ok(findings) => {
             let violations =
@@ -331,21 +336,14 @@ pub fn handle_docs(params: DocsCommandParams) -> ExitCode {
 
 /// `docs scaffold` — write missing template files in place from embedded
 /// skills. `dry_run` prints the planned writes without touching disk.
-/// `strict` forces strict mode on for this run (Decision Q4).
+/// Strictness gates the audit path, not scaffolding.
 pub fn handle_docs_scaffold(params: DocsScaffoldCommandParams) -> ExitCode {
     let root = resolve_root(&params.path);
-    let strict_override = if params.strict {
-        shared_doc_rules::StrictModeOverride::ForceStrict
-    } else {
-        shared_doc_rules::StrictModeOverride::UseConfigFile
-    };
     match dispatcher::surface_docs_action::collect_scaffold(
         &root,
         params.member.as_deref(),
         params.dry_run,
-        strict_override,
         &params.fs_seam,
-        params.config_file_reader.as_ref(),
     ) {
         Ok(items) => {
             let lines = dispatcher::surface_docs_action::scaffold_items_to_report_lines(&items);

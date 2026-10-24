@@ -1,7 +1,7 @@
 // Contract tests — MCP protocol surface (QA #641).
 //
 // Pins the externally-visible contract an out-of-repo MCP client (Claude
-// Desktop, VS Code, Hermes) depends on: server identity, the exact 5-tool
+// Desktop, VS Code, Hermes) depends on: server identity, the exact 6-tool
 // surface, and the tool-argument schema boundary for untrusted JSON input.
 mod common;
 

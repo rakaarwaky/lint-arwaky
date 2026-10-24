@@ -23,7 +23,11 @@ fn write(path: &Path, contents: &str) {
 /// Audit *root* through the public container and return the findings.
 fn audit(root: &Path) -> Vec<(String, String, String)> {
     let aggregate = RootDocRulesContainer::orchestrator();
-    match aggregate.execute(DocRequest::audit_all(root)) {
+    match aggregate.execute(DocRequest::audit_all(
+        root,
+        None,
+        shared_doc_rules::StrictModeOverride::UseConfigFile,
+    )) {
         DocResponse::Findings { findings } => findings
             .into_iter()
             .map(|f| {

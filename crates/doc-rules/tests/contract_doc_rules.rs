@@ -265,7 +265,11 @@ fn write_bad_agents(dir: &Path, agent_text: &str) {
 
 fn audit(root: &Path) -> Vec<(String, String, String, String)> {
     let orchestrator = RootDocRulesContainer::orchestrator();
-    match orchestrator.execute(DocRequest::audit_all(root)) {
+    match orchestrator.execute(DocRequest::audit_all(
+        root,
+        None,
+        shared_doc_rules::StrictModeOverride::UseConfigFile,
+    )) {
         DocResponse::Findings { findings } => findings
             .into_iter()
             .map(|f| {
@@ -1894,7 +1898,11 @@ fn aes601_anchors_the_method_finding_to_the_table_row() {
 /// Run the audit and keep the raw findings so schema fields are inspectable.
 fn audit_findings(root: &Path) -> Vec<shared_doc_rules::DocFinding> {
     let orchestrator = RootDocRulesContainer::orchestrator();
-    match orchestrator.execute(DocRequest::audit_all(root)) {
+    match orchestrator.execute(DocRequest::audit_all(
+        root,
+        None,
+        shared_doc_rules::StrictModeOverride::UseConfigFile,
+    )) {
         DocResponse::Findings { findings } => findings,
     }
 }

@@ -137,12 +137,7 @@ impl LintArwakyMcpServer {
         let path = args.path.unwrap_or_else(|| ".".to_string());
         let result = self
             .action
-            .execute_docs_scaffold(
-                &path,
-                args.member.as_deref(),
-                args.dry_run.unwrap_or(false),
-                args.strict.unwrap_or(false),
-            )
+            .execute_docs_scaffold(&path, args.member.as_deref(), args.dry_run.unwrap_or(false))
             .await;
         serde_json::to_string(&result).unwrap_or_else(|e| {
             serde_json::json!({"error": format!("Serialization failed: {e}"), "exit_code": 2})
@@ -200,7 +195,7 @@ impl LintArwakyMcpServer {
     }
 
     #[tool(
-        description = "Scaffold missing documentation templates in place from embedded skills. Use `dry_run` to preview without writing; `strict` forces strict doc-rules enforcement."
+        description = "Scaffold missing documentation templates in place from embedded skills. Use `dry_run` to preview without writing. `strict` only affects the audit path."
     )]
     pub async fn docs_scaffold(&self, args: Parameters<DocsScaffoldArgs>) -> String {
         LintArwakyMcpServer::handle_docs_scaffold(self, args).await
