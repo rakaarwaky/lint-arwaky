@@ -1,4 +1,8 @@
 # Changelog
+## 3.12.1 (2026-10-25)
+
+- No significant changes
+
 ## 3.12.0 (2026-10-24)
 
 ### Features
