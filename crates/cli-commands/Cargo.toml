@@ -8,6 +8,7 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
+clap.workspace = true
 shared-auto-fix.workspace = true
 shared-cli-commands.workspace = true
 shared-common.workspace = true

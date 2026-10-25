@@ -13,6 +13,7 @@ use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared_quality_rules::ICodeAnalysisAggregate;
 use shared_structure_rules::IStructureAggregate;
 
+use shared_cli_commands::taxonomy_cli_commands_vo::DocsAction;
 use shared_cli_commands::utility_output_text_formatter::output_violations;
 
 /// Parameters for the `scan` command.
@@ -465,5 +466,56 @@ pub fn handle_structure(params: StructureCommandParams) -> ExitCode {
             error!(error = %e, "operation failed");
             ExitCode::RUNTIME_ERROR
         }
+    }
+}
+
+// ─── Docs dispatch ─────────────────────────────────────────────────────────
+
+/// Dispatch one of the docs subcommands. Every path reuses the shared
+/// `handle_docs` / `handle_docs_scaffold` helpers and differs only in which
+/// subcommand variant is routed.
+///
+/// `action` is the parsed `DocsAction` (or `None` for a bare `docs` / `docs <path>`),
+/// which falls through to the audit default. `--strict` applies to the audit
+/// path only; the scaffold path never gates on strictness.
+pub fn handle_docs_dispatch(
+    action: &Option<DocsAction>,
+    path: &str,
+    doc_orchestrator: Arc<dyn shared_doc_rules::IDocRunnerAggregate>,
+    fs_seam: FilesystemSeam,
+    config_file_reader: Arc<dyn shared_config_system::IConfigFileReaderAggregate>,
+) -> ExitCode {
+    match action {
+        Some(DocsAction::Audit {
+            path: audit_path,
+            format,
+            strict,
+        }) => handle_docs(DocsCommandParams {
+            path: audit_path
+                .clone()
+                .map(|p| FilePath::new(p).unwrap_or_default()),
+            format: *format,
+            doc_orchestrator,
+            fs_seam,
+            config_file_reader,
+            strict: *strict,
+        }),
+        Some(DocsAction::Scaffold { member, dry_run }) => {
+            handle_docs_scaffold(DocsScaffoldCommandParams {
+                path: Some(FilePath::new(path).unwrap_or_default()),
+                member: member.clone(),
+                dry_run: *dry_run,
+                fs_seam,
+                config_file_reader,
+            })
+        }
+        None => handle_docs(DocsCommandParams {
+            path: Some(FilePath::new(path).unwrap_or_default()),
+            format: Format::Text,
+            doc_orchestrator,
+            fs_seam,
+            config_file_reader,
+            strict: false,
+        }),
     }
 }

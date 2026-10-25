@@ -10,6 +10,9 @@ use logging::root_logging_container::LoggingContainer;
 use shared_cli_commands::Format;
 use shared_common::{FilePath, GitBranchName, Threshold};
 
+use cli_commands::surface_scan_command::handle_docs_dispatch;
+use shared_cli_commands::taxonomy_cli_commands_vo::DocsAction;
+
 fn init_tracing(verbosity: LogVerbosity) {
     LoggingContainer::new().init(verbosity, true);
 }
@@ -295,39 +298,6 @@ enum SkillSubCommand {
     },
     /// List all embedded skills
     List,
-}
-
-/// Subcommands of `docs` (audit default, scaffold writes missing templates).
-///
-/// This binary-level `DocsAction` is separate from the shared VO
-/// (`shared_cli_commands::taxonomy_cli_commands_vo::DocsAction`) because the
-/// binary needs raw `String`/`&str` clap fields for `path`/`format` while the
-/// shared VO uses `Option<String>` and `Format` for transport/schema
-/// purposes. The two enums mirror each other structurally but live at
-/// different layers.
-#[derive(Subcommand)]
-enum DocsAction {
-    /// Run the doc invariants audit (AES601–AES606)
-    #[command(name = "audit")]
-    Audit {
-        #[arg(value_name = "PATH", default_value = ".")]
-        path: String,
-        #[arg(long, default_value = "text")]
-        format: String,
-        /// Force strict doc-rules enforcement for this run (overrides config).
-        #[arg(long, default_value_t = false)]
-        strict: bool,
-    },
-    /// Generate documentation templates from embedded skills, in place
-    #[command(name = "scaffold")]
-    Scaffold {
-        /// Scope to a specific member crate (e.g. `billing`). Omit to scaffold all.
-        #[arg(long)]
-        member: Option<String>,
-        /// Preview what would be written without modifying the filesystem
-        #[arg(long)]
-        dry_run: bool,
-    },
 }
 
 /// Dispatch one of the six layer-scoped subcommands. Every layer reuses the
@@ -773,55 +743,13 @@ fn main() {
                 ignored_paths: ignored_paths.clone(),
             },
         ),
-        Command::Docs { action, path } => {
-            // `subcommand_required = false` lets a bare `docs` or `docs <path>`
-            // fall through to the audit default; `--strict` applies to the audit
-            // path only (the scaffold path never gates on strictness).
-            match action {
-                Some(DocsAction::Audit {
-                    path: audit_path,
-                    format,
-                    strict,
-                }) => {
-                    let audit_root = audit_path;
-                    cli_commands::surface_scan_command::handle_docs(
-                        cli_commands::surface_scan_command::DocsCommandParams {
-                            path: Some(FilePath::new(audit_root).unwrap_or_default()),
-                            format: parse_format(&format),
-                            doc_orchestrator:
-                                doc_rules::root_doc_rules_container::RootDocRulesContainer::orchestrator(),
-                            fs_seam: fs_seam.clone(),
-                            config_file_reader: config_container.file_reader(),
-                            strict,
-                        },
-                    )
-                }
-                Some(DocsAction::Scaffold { member, dry_run }) => {
-                    cli_commands::surface_scan_command::handle_docs_scaffold(
-                        cli_commands::surface_scan_command::DocsScaffoldCommandParams {
-                            path: Some(FilePath::new(path).unwrap_or_default()),
-                            member,
-                            dry_run,
-                            fs_seam: fs_seam.clone(),
-                            config_file_reader: config_container.file_reader(),
-                        },
-                    )
-                }
-                // Bare `docs` or `docs <path>` with no subcommand verb.
-                None => cli_commands::surface_scan_command::handle_docs(
-                    cli_commands::surface_scan_command::DocsCommandParams {
-                        path: Some(FilePath::new(path).unwrap_or_default()),
-                        format: Format::Text,
-                        doc_orchestrator:
-                            doc_rules::root_doc_rules_container::RootDocRulesContainer::orchestrator(
-                            ),
-                        fs_seam: fs_seam.clone(),
-                        config_file_reader: config_container.file_reader(),
-                        strict: false,
-                    },
-                ),
-            }
-        }
+        Command::Docs { action, path } => handle_docs_dispatch(
+            &action,
+            &path,
+            doc_orchestrator.clone(),
+            fs_seam.clone(),
+            config_container.file_reader(),
+        ),
         Command::Structure {
             path,
             format,
