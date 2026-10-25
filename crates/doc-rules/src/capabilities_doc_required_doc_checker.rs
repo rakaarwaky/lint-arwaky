@@ -15,8 +15,6 @@ use shared_doc_rules::taxonomy_doc_audit_context_vo::DocAuditContext;
 use shared_doc_rules::taxonomy_doc_rules_constant as consts;
 use shared_doc_rules::taxonomy_doc_rules_request::DocFinding;
 
-use std::path::Path;
-
 // ─── Block 1: Struct Definition ────────────────────────────
 
 /// The AES606 required-document auditor: every root document the template
@@ -29,7 +27,7 @@ impl IRequiredDocProtocol for RequiredDocChecker {
     /// Report one finding per required root document that does not exist.
     fn audit_required_docs(&self, context: &DocAuditContext) -> Vec<DocFinding> {
         // Root-gate: only fire when the audit root is a real workspace root.
-        if !is_workspace_root(context.root()) {
+        if !context.is_workspace_root() {
             return Vec::new();
         }
         // Find which required docs are absent from the collected document set.
@@ -77,13 +75,6 @@ impl RequiredDocChecker {
     pub fn new() -> Self {
         Self {}
     }
-}
-
-/// True when *root* carries at least one workspace-root marker file.
-fn is_workspace_root(root: &Path) -> bool {
-    consts::WORKSPACE_ROOT_MARKERS
-        .iter()
-        .any(|marker| root.join(marker).exists())
 }
 
 /// Strip the `.md` extension so `PRD.md` → `PRD` for the template name.

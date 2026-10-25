@@ -443,5 +443,15 @@ pub const DOC_HEADING_CONTRACTS: &[DocH2Contract] = &[
 // ─── AES606 (expanded) — member docs & template body ─────────────────────
 /// Missing FRD.md / BACKLOG.md / DATA.md / DESIGN.md in a member folder.
 pub const MEMBER_DOC_VIOLATION: &str = "missing_member_doc";
+
+/// A template placeholder token survived non-prose stripping on a document.
+pub const TEMPLATE_BODY_VIOLATION_UNFILLED_PLACEHOLDER: &str = "unfilled_placeholder";
+
 /// A non-deletable template section is entirely absent from a document.
 pub const TEMPLATE_BODY_VIOLATION_DELETED_SECTION: &str = "section_deleted";
+
+// Re-export template conformance types from the template module so that
+// `shared_doc_rules::taxonomy_doc_rules_constant` remains the canonical import.
+pub use crate::taxonomy_doc_rules_template_vo::{
+    PlaceholderStyle, TEMPLATE_PROFILES, TemplateProfile,
+};

@@ -200,6 +200,14 @@ impl DocAuditContext {
         }
     }
 
+    /// True when the audit root carries at least one workspace-root marker file
+    /// (e.g. `Cargo.toml`, `package.json`, `pyproject.toml`).
+    pub fn is_workspace_root(&self) -> bool {
+        crate::taxonomy_doc_rules_constant::WORKSPACE_ROOT_MARKERS
+            .iter()
+            .any(|marker| self.root.join(marker).exists())
+    }
+
     /// Stamp every finding in *findings* with the document it came from, so a
     /// consumer can group the report by file without re-deriving the path.
     pub fn stamp(&self, document: &DocSource, findings: &mut [DocFinding]) {
