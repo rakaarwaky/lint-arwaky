@@ -5,6 +5,7 @@ pub mod taxonomy_doc_audit_context_vo;
 pub mod taxonomy_doc_rules_constant;
 pub mod taxonomy_doc_rules_request;
 pub mod taxonomy_doc_rules_response;
+pub mod taxonomy_doc_rules_template_vo;
 pub mod taxonomy_doc_section_vo;
 pub mod utility_doc_collector;
 pub mod utility_markdown_scanner;
@@ -23,4 +24,5 @@ pub use taxonomy_doc_audit_context_vo::{
 pub use taxonomy_doc_rules_constant::*;
 pub use taxonomy_doc_rules_request::{DocFinding, DocRequest, DocSource};
 pub use taxonomy_doc_rules_response::DocResponse;
+pub use taxonomy_doc_rules_template_vo::{PlaceholderStyle, TemplateProfile, TEMPLATE_PROFILES};
 pub use taxonomy_doc_section_vo::Section;

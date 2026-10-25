@@ -122,11 +122,11 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 
 - **Description**: Every workspace member folder contains its mandated documentation pair based on its architectural role, classified by objective crate structure.
 - **Input**: The `members: Vec<MemberDescriptor>` field of `DocAuditContext`, pre-populated by the shared utility collector (no I/O inside the capability), plus the audit root for the workspace-root / member-root / sub-folder gating decision.
-- **Output**: A list of `DocFinding` values, each carrying `AES606` and `missing_member_doc`. Surfaced in **both** `lint-arwaky-cli docs .` and `lint-arwaky-cli check .` (via the adjusted scope filter in `surface_check_scope_action.rs`; Decision Q2).
+- **Output**: A list of `DocFinding` values, each carrying `AES606` and `missing_member_doc`. Surfaced in **both** `lint-arwaky-cli docs .` and `lint-arwaky-cli check .` (via the adjusted scope filter in the surface check action; Decision Q2).
 - **Business Rules**:
   - A member's role is derived from *crate structure*, never from the presence of the document under audit:
     1. **Kernel** — a directory named `shared` (or `kernel`). Owes `DATA.md` + `BACKLOG.md`.
-    2. **Feature** — the folder contains an orchestrator file matching `*agent_*_orchestrator*.rs`, or its `Cargo.toml`/source tree exposes a capability/agent module. Owes `FRD.md` + `BACKLOG.md`.
+    2. **Feature** — the folder contains an orchestrator file matching the feature orchestrator pattern, or its `Cargo.toml`/source tree exposes a capability/agent module. Owes `FRD.md` + `BACKLOG.md`.
     3. **Surface** — the folder is surface-dominated (contains `surface_*` files and/or its `Cargo.toml` dependencies are dominated by the surface crate set) and is neither kernel nor feature. Owes `DESIGN.md` + `BACKLOG.md`.
     4. **None** — anything else (benchmarks, examples, a workspace-only root crate) owes no doc pair.
   - The audit is root-gated by the same `WORKSPACE_ROOT_MARKERS` / `is_workspace_root()` model as FR-DOC-007, with three explicit cases:
@@ -145,7 +145,7 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 - **Input**: Every recognized document in the audit context, compared against the corresponding `TemplateProfile` and embedded template text.
 - **Output**: A list of `DocFinding` values, each carrying `AES606` and one of `unfilled_placeholder` or `section_deleted`.
 - **Business Rules**:
-  - The placeholder scan is performed by the structured scanner in `crates/shared/src/doc_rules/utility_markdown_scanner.rs`, which first blanks fenced code blocks, inline backtick spans, autolinks (`<https://…>`, `<mailto:…>`), and known HTML tags; surviving prose is matched against the template's hard-coded `placeholder_catalog` (Decision Q3).
+  - The placeholder scan is performed by the structured scanner in the shared markdown utility, which first blanks fenced code blocks, inline backtick spans, autolinks (`<https://…>`, `<mailto:…>`), and known HTML tags; surviving prose is matched against the template's hard-coded `placeholder_catalog` (Decision Q3).
   - An unfilled placeholder token from the catalog (e.g. `<feature-name>`, `<YYYY-MM-DD>`, `<link to root PRD.md>`, `<N>`, or curly slots like `{architecture scanner command}`) that survives non-prose stripping fires `unfilled_placeholder`, anchored to the exact 1-based line.
   - A token that is a *filled* value is not in the catalog and will not be flagged.
   - If a non-deletable template section (per the `TemplateProfile`) is entirely missing from the document body, the checker fires `section_deleted` (complementing AES605's `h2_missing` by anchoring to template fidelity). Deletable sections may be removed without a finding.

@@ -25,7 +25,9 @@ use std::sync::Arc;
 // Stub implementations returning `vec![]` until PR-3 implements the real
 // checkers (capabilities_doc_member_doc_checker.rs and
 // capabilities_doc_template_body_checker.rs).
+#[derive(Debug)]
 struct MemberDocStub;
+#[derive(Debug)]
 struct TemplateBodyStub;
 
 impl IMemberDocProtocol for MemberDocStub {
