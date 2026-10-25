@@ -168,7 +168,8 @@ Last Updated: 2026-09-29
 
 | ID | Priority | State | Dependencies | Next Action | Updated |
 |---|---:|---|---|---|---|
-| SAM-01 | P0 | Ready | — | — | 2026-09-29 |
+| FR-SAMPLE-001 | P0 | Ready | — | — | 2026-09-29 |
+| FR-SAMPLE-002 | P0 | Ready | — | — | 2026-09-29 |
 
 ## Scenario Evidence
 
@@ -2383,6 +2384,111 @@ fn aes605_fires_when_design_carries_off_template_h2() {
     assert!(
         message.contains("history"),
         "must name the unexpected section; got: {message}"
+    );
+}
+
+// ── AES601: FR-ID ↔ BACKLOG ID alignment ────────────────────────────────
+
+#[test]
+fn aes601_accepts_aligned_backlog_ids() {
+    let tmp = tempfile::tempdir().unwrap();
+    write_workspace(tmp.path(), &conforming_frd());
+    let findings = audit(tmp.path());
+    assert!(
+        !has(&findings, "AES601", "backlog_id_not_fr")
+            && !has(&findings, "AES601", "backlog_id_missing"),
+        "aligned FRD/BACKLOG must report nothing; got: {findings:#?}"
+    );
+}
+
+#[test]
+fn aes601_fires_backlog_id_not_fr_when_backlog_id_is_not_a_fr_id() {
+    let tmp = tempfile::tempdir().unwrap();
+    let backlog = conforming_backlog().replace("| FR-SAMPLE-001 |", "| BAD-999 |");
+    write_workspace(tmp.path(), &conforming_frd());
+    fs::write(tmp.path().join("crates/sample/BACKLOG.md"), backlog).unwrap();
+    let findings = audit(tmp.path());
+    assert!(
+        has(&findings, "AES601", "backlog_id_not_fr"),
+        "expected backlog_id_not_fr, got: {findings:#?}"
+    );
+}
+
+#[test]
+fn aes601_fires_backlog_id_missing_when_fr_id_has_no_backlog_row() {
+    let tmp = tempfile::tempdir().unwrap();
+    let backlog =
+        conforming_backlog().replace("| FR-SAMPLE-001 | P0 | Ready | — | — | 2026-09-29 |\n", "");
+    write_workspace(tmp.path(), &conforming_frd());
+    fs::write(tmp.path().join("crates/sample/BACKLOG.md"), backlog).unwrap();
+    let findings = audit(tmp.path());
+    assert!(
+        has(&findings, "AES601", "backlog_id_missing"),
+        "expected backlog_id_missing, got: {findings:#?}"
+    );
+}
+
+#[test]
+fn aes601_stays_silent_when_frd_declares_no_fr_ids() {
+    let tmp = tempfile::tempdir().unwrap();
+    let frd = conforming_frd()
+        .replace(
+            "### FR-SAMPLE-001: Document Invariant Enforcement",
+            "### Something Else",
+        )
+        .replace(
+            "### FR-SAMPLE-002: Audit Orchestration",
+            "### Another Thing",
+        );
+    write_workspace(tmp.path(), &frd);
+    let findings = audit(tmp.path());
+    assert!(
+        !has(&findings, "AES601", "backlog_id_not_fr")
+            && !has(&findings, "AES601", "backlog_id_missing"),
+        "an FRD with no FR-IDs must stay silent; got: {findings:#?}"
+    );
+}
+
+#[test]
+fn aes601_stays_silent_when_no_backlog_document() {
+    let tmp = tempfile::tempdir().unwrap();
+    let feature = tmp.path().join("crates/sample");
+    fs::create_dir_all(feature.join("src")).unwrap();
+    fs::write(feature.join("FRD.md"), conforming_frd()).unwrap();
+    // No BACKLOG.md in the feature folder → the alignment check stays out of the way.
+    fs::write(
+        feature.join("src/agent_sample_orchestrator.rs"),
+        "//! sample orchestrator\n",
+    )
+    .unwrap();
+    fs::write(tmp.path().join("PRD.md"), conforming_prd()).unwrap();
+    fs::write(tmp.path().join("ROADMAP.md"), conforming_roadmap()).unwrap();
+    let findings = audit(tmp.path());
+    assert!(
+        !has(&findings, "AES601", "backlog_id_not_fr")
+            && !has(&findings, "AES601", "backlog_id_missing"),
+        "no BACKLOG document must stay silent; got: {findings:#?}"
+    );
+}
+
+#[test]
+fn aes601_reports_both_directions_for_one_misaligned_pair() {
+    let tmp = tempfile::tempdir().unwrap();
+    let frd = conforming_frd().replace("### FR-SAMPLE-002:", "### FR-SAMPLE-003:");
+    let backlog = conforming_backlog().replace(
+        "| FR-SAMPLE-001 | P0 | Ready | — | — | 2026-09-29 |",
+        "| BAD-999 | P0 | Ready | — | — | 2026-09-29 |",
+    );
+    write_workspace(tmp.path(), &frd);
+    fs::write(tmp.path().join("crates/sample/BACKLOG.md"), backlog).unwrap();
+    let findings = audit(tmp.path());
+    assert!(
+        has(&findings, "AES601", "backlog_id_not_fr"),
+        "expected backlog_id_not_fr, got: {findings:#?}"
+    );
+    assert!(
+        has(&findings, "AES601", "backlog_id_missing"),
+        "expected backlog_id_missing, got: {findings:#?}"
     );
 }
 

@@ -13,7 +13,12 @@ use shared_doc_rules::taxonomy_doc_audit_context_vo::DocAuditContext;
 use shared_doc_rules::taxonomy_doc_rules_constant as consts;
 use shared_doc_rules::taxonomy_doc_rules_request::{DocFinding, DocSource};
 
-use shared_doc_rules::utility_markdown_scanner::{api_contract_methods, fr_id_bare_re};
+use std::collections::{BTreeMap, HashSet};
+use std::path::PathBuf;
+
+use shared_doc_rules::utility_markdown_scanner::{
+    api_contract_methods, fr_id_bare_re, normalize_heading, sections,
+};
 use shared_doc_rules::utility_protocol_counter::{
     contract_method_names, count_fr_headings, count_protocol_traits, fr_id_heading_re,
     locate_kernel_srcs,
@@ -28,28 +33,54 @@ pub struct FrFormatChecker {}
 // ─── Block 2: Protocol Trait Implementation ────────────────
 
 impl IFrFormatProtocol for FrFormatChecker {
-    /// Report every FR-ID, FR-field, and parity violation in the documents of
-    /// *context*.
+    /// Report every FR-ID, FR-field, parity, and promised-method violation in
+    /// the documents of *context*.
+    ///
+    /// Documents are grouped by parent folder so the FRD/BACKLOG alignment
+    /// sub-check can read both members of a feature folder together. DATA
+    /// documents keep their own FR-ID and field checks outside pairing.
     fn audit_fr_format(&self, context: &DocAuditContext) -> Vec<DocFinding> {
         let mut findings = Vec::new();
+        let mut by_folder: BTreeMap<PathBuf, Vec<&DocSource>> = BTreeMap::new();
         for document in context.documents() {
-            let name = context.document_name(document);
-            // An FRD and a DATA document state requirements under the same ID
-            // and field rules; parity is an FRD-only question because only an
-            // FRD names a feature's contract module.
-            let is_requirement_doc = name == consts::FRD_DOC || name == consts::DATA_DOC;
-            if !is_requirement_doc {
-                continue;
+            by_folder
+                .entry(
+                    document
+                        .path
+                        .parent()
+                        .map_or_else(PathBuf::new, |p| p.to_path_buf()),
+                )
+                .or_default()
+                .push(document);
+        }
+        for documents in by_folder.values() {
+            let frd = documents
+                .iter()
+                .find(|d| context.document_name(d) == consts::FRD_DOC);
+            let backlog = documents
+                .iter()
+                .find(|d| context.document_name(d) == consts::BACKLOG_DOC);
+            if let Some(frd) = frd {
+                let mut own = Vec::new();
+                self.check_fr_id_format(frd, &mut own);
+                self.check_fr_fields(frd, &mut own);
+                self.check_fr_protocol_parity(frd, context, &mut own);
+                self.check_api_method_existence(frd, context, &mut own);
+                if let Some(backlog) = backlog {
+                    self.check_backlog_fr_id_alignment(frd, backlog, &mut own);
+                }
+                context.stamp(frd, &mut own);
+                findings.extend(own);
             }
-            let mut own = Vec::new();
-            self.check_fr_id_format(document, &mut own);
-            self.check_fr_fields(document, &mut own);
-            if name == consts::FRD_DOC {
-                self.check_fr_protocol_parity(document, context, &mut own);
-                self.check_api_method_existence(document, context, &mut own);
+            for document in documents {
+                if context.document_name(document) == consts::DATA_DOC {
+                    let mut own = Vec::new();
+                    self.check_fr_id_format(document, &mut own);
+                    self.check_fr_fields(document, &mut own);
+                    context.stamp(document, &mut own);
+                    findings.extend(own);
+                }
             }
-            context.stamp(document, &mut own);
-            findings.extend(own);
         }
         findings
     }
@@ -288,5 +319,155 @@ impl FrFormatChecker {
                 ),
             );
         }
+    }
+
+    /// FR-ID ↔ BACKLOG ID alignment for one feature folder.
+    ///
+    /// Groups the FRD's accepted FR-ID set against the BACKLOG `## Backlog`
+    /// table's ID column and reports each mismatch in both directions. Silent
+    /// when the FRD declares no FR-IDs or the BACKLOG has no `## Backlog`
+    /// section.
+    fn check_backlog_fr_id_alignment(
+        &self,
+        frd: &DocSource,
+        backlog: &DocSource,
+        findings: &mut Vec<DocFinding>,
+    ) {
+        let Some(fr_ids) = Self::collect_fr_id_set(frd) else {
+            return;
+        };
+        let backlog_ids = Self::parse_backlog_id_column(backlog);
+        let backlog_section_line = Self::backlog_section_line_or_zero(backlog);
+
+        let backlog_id_set: HashSet<&str> = backlog_ids.iter().map(|(id, _)| id.as_str()).collect();
+
+        // (a) FR-ID present in FRD, absent from BACKLOG → backlog_id_missing.
+        for fr_id in &fr_ids {
+            if !backlog_id_set.contains(fr_id.as_str()) {
+                Self::push_backlog_id_missing(backlog_section_line, fr_id, findings);
+            }
+        }
+
+        // (b) BACKLOG ID not a valid FRD FR-ID → backlog_id_not_fr.
+        for (id, line) in &backlog_ids {
+            if !fr_ids.contains(id.as_str()) {
+                Self::push_backlog_id_not_fr(*line, id, &fr_ids, findings);
+            }
+        }
+    }
+
+    /// Accepted FR-ID set from an FRD's `FR-<feature>-NNN:` headings.
+    ///
+    /// Returns `None` when the FRD declares no FR-IDs, leaving the alignment
+    /// check silent rather than flagging every BACKLOG row.
+    fn collect_fr_id_set(frd: &DocSource) -> Option<HashSet<String>> {
+        let re = fr_id_heading_re()?;
+        let ids: HashSet<String> = re
+            .captures_iter(&frd.text)
+            .filter_map(|caps| caps.name("id").map(|m| m.as_str().to_string()))
+            .collect();
+        if ids.is_empty() { None } else { Some(ids) }
+    }
+
+    /// ID column of the `## Backlog` table, scoped to that section.
+    ///
+    /// Walks the section's body lines, keeping data rows only: skips the
+    /// header row, the separator row, and non-pipe lines. Returns
+    /// `(id_cell, doc_absolute_line)` per data row.
+    fn parse_backlog_id_column(backlog: &DocSource) -> Vec<(String, usize)> {
+        let parsed = sections(&backlog.text);
+        let Some(section) = parsed
+            .iter()
+            .find(|s| s.level == 2 && normalize_heading(&s.title) == "backlog")
+        else {
+            return Vec::new();
+        };
+
+        let mut rows = Vec::new();
+        let mut header_seen = false;
+        for (offset, raw) in section.body.lines().enumerate() {
+            let trimmed = raw.trim();
+            if !trimmed.starts_with('|') {
+                continue;
+            }
+            let cells: Vec<&str> = trimmed
+                .trim_matches('|')
+                .split('|')
+                .map(str::trim)
+                .collect();
+            if !header_seen {
+                header_seen = true;
+                continue;
+            }
+            // Separator row: every cell is dashes, colons, or whitespace.
+            if cells
+                .iter()
+                .all(|c| c.chars().all(|c| c == '-' || c == ':' || c.is_whitespace()))
+            {
+                continue;
+            }
+            let id = cells.first().copied().unwrap_or("").to_string();
+            if id.is_empty() {
+                continue;
+            }
+            // Body line at `offset` sits on document line `section.line + offset + 1`.
+            rows.push((id, section.line + offset + 1));
+        }
+        rows
+    }
+
+    /// Anchored to the bad BACKLOG row; lists the FRD's valid FR-IDs as the remedy.
+    fn push_backlog_id_not_fr(
+        line: usize,
+        id: &str,
+        fr_ids: &HashSet<String>,
+        findings: &mut Vec<DocFinding>,
+    ) {
+        let mut valid: Vec<String> = fr_ids.iter().cloned().collect();
+        valid.sort();
+        findings.push(
+            DocFinding::new_with_line(
+                "",
+                line,
+                consts::RULE_CODE_FR_FORMAT,
+                consts::FR_BACKLOG_ID_NOT_FR,
+                format!(
+                    "line {line} BACKLOG row id `{id}` is not a valid FRD FR-ID"
+                ),
+            )
+            .with_reason(
+                "Every BACKLOG `## Backlog` row must carry an FRD FR-ID so the backlog stays traceable to a requirement.",
+                format!("Replace `{id}` with one of the FRD FR-IDs: {}.", valid.join(", ")),
+            ),
+        );
+    }
+
+    /// Anchored to the `## Backlog` section heading (line 0 when absent).
+    fn push_backlog_id_missing(line: usize, fr_id: &str, findings: &mut Vec<DocFinding>) {
+        findings.push(
+            DocFinding::new_with_line(
+                "",
+                line,
+                consts::RULE_CODE_FR_FORMAT,
+                consts::FR_BACKLOG_ID_MISSING,
+                format!(
+                    "FR-ID `{fr_id}` declared in the FRD has no BACKLOG `## Backlog` row"
+                ),
+            )
+            .with_reason(
+                "Every FRD FR-ID must appear in the BACKLOG `## Backlog` table so the backlog tracks every requirement.",
+                format!(
+                    "Add a BACKLOG `## Backlog` row whose ID cell is `{fr_id}`."
+                ),
+            ),
+        );
+    }
+
+    /// Line of the `## Backlog` heading, or `0` when the section is absent.
+    fn backlog_section_line_or_zero(backlog: &DocSource) -> usize {
+        sections(&backlog.text)
+            .iter()
+            .find(|s| s.level == 2 && normalize_heading(&s.title) == "backlog")
+            .map_or(0, |s| s.line)
     }
 }

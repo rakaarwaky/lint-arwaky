@@ -14,6 +14,12 @@ pub const FR_FIELDS_VIOLATION_FIELD_MISSING: &str = "field_missing";
 /// matching declaration in the feature's contract module.
 pub const FR_API_METHOD_VIOLATION_NOT_FOUND: &str = "api_method_not_found";
 
+/// A BACKLOG `## Backlog` row whose ID cell is not a valid FRD FR-ID.
+pub const FR_BACKLOG_ID_NOT_FR: &str = "backlog_id_not_fr";
+
+/// An FRD FR-ID that has no corresponding BACKLOG `## Backlog` row.
+pub const FR_BACKLOG_ID_MISSING: &str = "backlog_id_missing";
+
 /// ─── AES602 — Section structure ─────────────────────────────────────────────
 pub const RULE_CODE_SECTION_STRUCTURE: &str = "AES602";
 
