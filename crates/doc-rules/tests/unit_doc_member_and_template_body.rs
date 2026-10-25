@@ -452,6 +452,40 @@ fn template_body_checker_deletable_section_absent_no_finding() {
     );
 }
 
+/// A section heading that extends the required title (prefix match)
+/// satisfies the requirement; only an entire omission fires `section_deleted`.
+#[test]
+fn template_body_checker_extended_heading_satisfies_required_section() {
+    let config = DocRulesConfig {
+        strict_member_docs: false,
+        strict_placeholders: false,
+        exempt_members: Vec::new(),
+    };
+    // "Feature Requirements (Prioritized)" extends "Feature Requirements".
+    let text = "# PRD\n\n## Problem Statement\n\nx\n\n## Goals & Success Metrics\n\nx\n\n\
+         ## User Personas\n\nx\n\n## Scope\n\nx\n\n## Feature Requirements (Prioritized)\n\nx\n\n\
+         ## Non-functional Requirements (High-level)\n\nx\n\n## Open Questions / Risks\n\nx\n";
+    let documents = vec![DocSource {
+        path: PathBuf::from("/repo/PRD.md"),
+        text: text.to_string(),
+    }];
+    let context = DocAuditContext::new(
+        Path::new("/repo"),
+        documents,
+        None,
+        Vec::new(),
+        Some(config),
+        StrictModeOverride::UseConfigFile,
+    );
+    let findings = TemplateBodyChecker::new().audit_template_body(&context);
+    assert!(
+        !findings
+            .iter()
+            .any(|f| f.violation_type == "section_deleted"),
+        "extended headings must satisfy their required section; got {findings:?}"
+    );
+}
+
 /// `ForceStrict` makes placeholder findings fire even when config is off.
 #[test]
 fn template_body_checker_force_strict_enables_placeholder_check() {

@@ -53,19 +53,16 @@ impl IMemberDocProtocol for MemberDocChecker {
                 continue;
             }
 
-            let required_docs: &'static [&'static str] = match member.role {
-                MemberRole::Feature => &[consts::FRD_DOC, consts::BACKLOG_DOC],
-                MemberRole::Kernel => &[consts::DATA_DOC, consts::BACKLOG_DOC],
-                MemberRole::Surface => &[consts::DESIGN_DOC, consts::BACKLOG_DOC],
-                MemberRole::None => continue,
-            };
-
-            let role_name = match member.role {
-                MemberRole::Feature => "feature",
-                MemberRole::Kernel => "kernel",
-                MemberRole::Surface => "surface",
-                MemberRole::None => unreachable!(),
-            };
+            let (required_docs, role_name): (&'static [&'static str], &'static str) =
+                match member.role {
+                    MemberRole::Feature => (&[consts::FRD_DOC, consts::BACKLOG_DOC], "feature"),
+                    MemberRole::Kernel => (&[consts::DATA_DOC, consts::BACKLOG_DOC], "kernel"),
+                    MemberRole::Surface => (&[consts::DESIGN_DOC, consts::BACKLOG_DOC], "surface"),
+                    // A `None` member owes no doc pair; the first match
+                    // already carries the decision, so the tuple below only
+                    // ever describes a doc-owing role.
+                    MemberRole::None => continue,
+                };
 
             let member_name = member
                 .path
