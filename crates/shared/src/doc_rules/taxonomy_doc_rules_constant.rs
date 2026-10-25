@@ -453,5 +453,5 @@ pub const TEMPLATE_BODY_VIOLATION_DELETED_SECTION: &str = "section_deleted";
 // Re-export template conformance types from the template module so that
 // `shared_doc_rules::taxonomy_doc_rules_constant` remains the canonical import.
 pub use crate::taxonomy_doc_rules_template_vo::{
-    PlaceholderStyle, TemplateProfile, TEMPLATE_PROFILES,
+    PlaceholderStyle, TEMPLATE_PROFILES, TemplateProfile,
 };
