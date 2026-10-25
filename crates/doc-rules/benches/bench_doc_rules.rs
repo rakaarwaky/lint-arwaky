@@ -37,7 +37,15 @@ fn heading_context(sections: usize) -> DocAuditContext {
         text,
     }];
     let master = documents[0].text.clone();
-    DocAuditContext::new(std::path::Path::new("/repo"), documents, Some(master))
+    let members = Vec::new();
+    DocAuditContext::new(
+        std::path::Path::new("/repo"),
+        documents,
+        Some(master),
+        members,
+        None,
+        shared_doc_rules::taxonomy_doc_audit_context_vo::StrictModeOverride::UseConfigFile,
+    )
 }
 
 criterion_group!(benches, bench_doc_heading_audit);

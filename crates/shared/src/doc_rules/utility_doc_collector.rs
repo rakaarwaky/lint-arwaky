@@ -6,6 +6,7 @@
 // may not perform I/O itself. `sorted` sits beside the collector for the same
 // reason — it is a pure reduction over findings, not a decision about what a
 // finding means.
+use crate::taxonomy_doc_audit_context_vo::{MemberDescriptor, MemberRole};
 use crate::taxonomy_doc_rules_constant as consts;
 use crate::taxonomy_doc_rules_request::{DocFinding, DocSource};
 
@@ -154,5 +155,293 @@ fn collect_surface_docs(base: &Path, out: &mut Vec<DocSource>) {
         if let Some(source) = read_source(&folder.join(consts::BACKLOG_DOC)) {
             out.push(source);
         }
+    }
+}
+
+/// Collect every classified member folder under *root*.
+///
+/// Classification keys on objective crate structure — never on the document
+/// under audit — so a new surface crate that forgets `DESIGN.md` still owes
+/// it.
+pub fn collect_members(root: &Path) -> Vec<MemberDescriptor> {
+    let mut out = Vec::new();
+    for layout in FEATURE_LAYOUTS {
+        let base = root.join(layout);
+        let Ok(entries) = fs::read_dir(base) else {
+            continue;
+        };
+        for entry in entries.flatten() {
+            let folder = entry.path();
+            if !folder.is_dir() {
+                continue;
+            }
+            let role = classify_member(&folder);
+            if role == MemberRole::None {
+                continue;
+            }
+            let present_docs = present_docs(&folder);
+            out.push(MemberDescriptor {
+                path: folder,
+                role,
+                present_docs,
+            });
+        }
+    }
+    out
+}
+
+/// Classify one folder by objective crate structure.
+///
+/// Kernel: directory named `shared` or `kernel`.
+/// Feature: contains `*agent_*_orchestrator*.rs` or exposes capability/agent
+///   in Cargo.toml.
+/// Surface: contains `surface_*` files or surface crate dependencies, not
+///   kernel/feature.
+/// None: anything else.
+fn classify_member(folder: &Path) -> MemberRole {
+    let name = folder.file_name().and_then(|n| n.to_str()).unwrap_or("");
+    if name == "shared" || name == "kernel" {
+        return MemberRole::Kernel;
+    }
+    if has_orchestrator_file(folder) || exposes_capability_in_cargo_toml(folder) {
+        return MemberRole::Feature;
+    }
+    if has_surface_files(folder) || has_surface_cargo_deps(folder) {
+        return MemberRole::Surface;
+    }
+    MemberRole::None
+}
+
+/// Does the folder's source tree contain an orchestrator file matching
+/// `*agent_*_orchestrator*.rs`?
+fn has_orchestrator_file(folder: &Path) -> bool {
+    let Ok(entries) = fs::read_dir(folder) else {
+        return false;
+    };
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if path.is_file() {
+            if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
+                if name.contains("agent_")
+                    && name.contains("_orchestrator")
+                    && name.ends_with(".rs")
+                {
+                    return true;
+                }
+            }
+        }
+        if path.is_dir() {
+            if let Some(src) = path.file_name().and_then(|n| n.to_str()) {
+                if src == "src" {
+                    if let Ok(inner) = fs::read_dir(&path) {
+                        for entry in inner.flatten() {
+                            let p = entry.path();
+                            if p.is_file() {
+                                if let Some(n) = p.file_name().and_then(|n| n.to_str()) {
+                                    if n.contains("agent_")
+                                        && n.contains("_orchestrator")
+                                        && n.ends_with(".rs")
+                                    {
+                                        return true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    false
+}
+
+/// Does the folder's Cargo.toml expose a capability/agent module?
+fn exposes_capability_in_cargo_toml(folder: &Path) -> bool {
+    let cargo_path = folder.join("Cargo.toml");
+    let Some(cargo) = cargo_path.to_str() else {
+        return false;
+    };
+    let Ok(text) = fs::read_to_string(cargo) else {
+        return false;
+    };
+    text.contains("agent_") || text.contains("capability") || text.contains("orchestrator")
+}
+
+/// Does the folder contain `surface_*` files?
+fn has_surface_files(folder: &Path) -> bool {
+    let Ok(entries) = fs::read_dir(folder) else {
+        return false;
+    };
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if path.is_file() {
+            if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
+                if name.starts_with("surface_") {
+                    return true;
+                }
+            }
+        }
+        if path.is_dir() {
+            if let Some(src) = path.file_name().and_then(|n| n.to_str()) {
+                if src == "src" {
+                    if let Ok(inner) = fs::read_dir(&path) {
+                        for entry in inner.flatten() {
+                            if let Some(n) = entry.path().file_name().and_then(|n| n.to_str()) {
+                                if n.starts_with("surface_") {
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    false
+}
+
+/// Does the folder's Cargo.toml depend on surface crates?
+fn has_surface_cargo_deps(folder: &Path) -> bool {
+    let cargo_path = folder.join("Cargo.toml");
+    let Some(cargo) = cargo_path.to_str() else {
+        return false;
+    };
+    let Ok(text) = fs::read_to_string(cargo) else {
+        return false;
+    };
+    text.contains("cli-commands")
+        || text.contains("mcp-server")
+        || text.contains("tui")
+        || text.contains("dispatcher")
+}
+
+/// Document names actually present on disk in one folder.
+fn present_docs(folder: &Path) -> BTreeSet<String> {
+    let mut docs = BTreeSet::new();
+    for name in [
+        consts::FRD_DOC,
+        consts::BACKLOG_DOC,
+        consts::DATA_DOC,
+        consts::DESIGN_DOC,
+        consts::PRD_DOC,
+        consts::ROADMAP_DOC,
+        consts::README_DOC,
+        consts::AGENTS_DOC,
+        consts::ARCHITECTURE_DOC,
+        consts::CONTRIBUTING_DOC,
+    ] {
+        if folder.join(name).is_file() {
+            docs.insert(name.to_string());
+        }
+    }
+    docs
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+
+    /// Writes a Cargo.toml at *folder*.
+    fn write_cargo(folder: &std::path::Path, contents: &str) {
+        fs::create_dir_all(folder).unwrap();
+        fs::write(folder.join("Cargo.toml"), contents).unwrap();
+    }
+
+    /// A kernel folder: directory named `shared`.
+    #[test]
+    fn classify_member_is_kernel_for_shared_dir() {
+        let tmp = tempfile::tempdir().unwrap();
+        let folder = tmp.path().join("shared");
+        fs::create_dir_all(&folder).unwrap();
+        assert_eq!(classify_member(&folder), MemberRole::Kernel);
+    }
+
+    /// A kernel folder: directory named `kernel`.
+    #[test]
+    fn classify_member_is_kernel_for_kernel_dir() {
+        let tmp = tempfile::tempdir().unwrap();
+        let folder = tmp.path().join("kernel");
+        fs::create_dir_all(&folder).unwrap();
+        assert_eq!(classify_member(&folder), MemberRole::Kernel);
+    }
+
+    /// A feature folder: contains an orchestrator file `*agent_*_orchestrator*.rs`.
+    #[test]
+    fn classify_member_is_feature_for_orchestrator_file() {
+        let tmp = tempfile::tempdir().unwrap();
+        let folder = tmp.path().join("crates/sample");
+        fs::create_dir_all(folder.join("src")).unwrap();
+        fs::write(
+            folder.join("src/agent_sample_orchestrator.rs"),
+            "//! sample\n",
+        )
+        .unwrap();
+        assert_eq!(classify_member(&folder), MemberRole::Feature);
+    }
+
+    /// A surface folder: contains `surface_*` files.
+    #[test]
+    fn classify_member_is_surface_for_surface_files() {
+        let tmp = tempfile::tempdir().unwrap();
+        let folder = tmp.path().join("crates/cli-commands");
+        fs::create_dir_all(&folder).unwrap();
+        fs::write(folder.join("surface_scan.rs"), "// scan\n").unwrap();
+        assert_eq!(classify_member(&folder), MemberRole::Surface);
+    }
+
+    /// `collect_members` skips `None` roles (build-only folders).
+    #[test]
+    fn collect_members_skips_none_roles() {
+        let tmp = tempfile::tempdir().unwrap();
+        let bench = tmp.path().join("crates/bench");
+        fs::create_dir_all(&bench).unwrap();
+        write_cargo(&bench, "[package]\nname = \"bench\"\n");
+
+        let members = collect_members(tmp.path());
+        assert!(
+            members.iter().all(|m| m.role != MemberRole::None),
+            "None-role members must be skipped by collect_members"
+        );
+    }
+
+    /// `collect_members` classifies a shared kernel as Kernel and a surface crate as Surface.
+    #[test]
+    fn collect_members_classifies_kernel_and_surface() {
+        let tmp = tempfile::tempdir().unwrap();
+        let kernel = tmp.path().join("crates/shared");
+        fs::create_dir_all(&kernel).unwrap();
+        fs::write(kernel.join("DATA.md"), "# Data\n").unwrap();
+        fs::write(kernel.join("BACKLOG.md"), "# Backlog\n").unwrap();
+
+        let surface = tmp.path().join("crates/cli-commands");
+        fs::create_dir_all(&surface).unwrap();
+        fs::write(surface.join("DESIGN.md"), "# Design\n").unwrap();
+        fs::write(surface.join("BACKLOG.md"), "# Backlog\n").unwrap();
+        fs::write(surface.join("surface_cli.rs"), "// cli\n").unwrap();
+
+        let members = collect_members(tmp.path());
+        let kernel_member = members.iter().find(|m| m.role == MemberRole::Kernel);
+        let surface_member = members.iter().find(|m| m.role == MemberRole::Surface);
+        assert!(
+            kernel_member.is_some(),
+            "the shared kernel must be classified Kernel"
+        );
+        assert!(
+            surface_member.is_some(),
+            "the surface crate must be classified Surface"
+        );
+        assert!(
+            kernel_member
+                .map(|m| m.present_docs.contains("DATA.md"))
+                .unwrap_or(false),
+            "kernel member must report DATA.md as present"
+        );
+        assert!(
+            surface_member
+                .map(|m| m.present_docs.contains("DESIGN.md"))
+                .unwrap_or(false),
+            "surface member must report DESIGN.md as present"
+        );
     }
 }

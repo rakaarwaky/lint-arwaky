@@ -2,14 +2,15 @@
 //
 // The single entry point over the doc-rules feature. Consumers call
 // `execute(DocRequest)`; the agent collects the document chain once, builds
-// the shared audit context, and fans the request out to the six AES doc-rule
+// the shared audit context, and fans the request out to the nine AES doc-rule
 // capabilities through their protocol traits. It holds the capabilities only as
 // `Arc<dyn I*Protocol>` trait objects, so the agent never names a concrete
 // capability and stays free of capability imports.
 use shared_doc_rules::contract_doc_aggregate::IDocRunnerAggregate;
 use shared_doc_rules::contract_doc_protocol::{
-    ICrosslinkProtocol, IDocHeadingProtocol, IFrFormatProtocol, IRequiredDocProtocol,
-    ISectionStructureProtocol, ISpecPurityProtocol, ITemplateConformanceProtocol,
+    ICrosslinkProtocol, IDocHeadingProtocol, IFrFormatProtocol, IMemberDocProtocol,
+    IRequiredDocProtocol, ISectionStructureProtocol, ISpecPurityProtocol, ITemplateBodyProtocol,
+    ITemplateConformanceProtocol,
 };
 use shared_doc_rules::taxonomy_doc_audit_context_vo::DocAuditContext;
 use shared_doc_rules::taxonomy_doc_rules_request::DocRequest;
@@ -17,10 +18,10 @@ use shared_doc_rules::taxonomy_doc_rules_response::DocResponse;
 use shared_doc_rules::utility_doc_collector;
 use std::sync::Arc;
 
-// ─── Block 1: Struct Definition ────────────────────────────
+// ─── Block 1: Struct Definition ──────────────────────────────────────────
 
 /// Holds one injected capability per AES doc rule, keyed by the rule each
-/// answers. The agent is the only place that knows all six exist.
+/// answers. The agent is the only place that knows all nine exist.
 pub struct DocOrchestrator {
     fr_format: Arc<dyn IFrFormatProtocol>,
     section_structure: Arc<dyn ISectionStructureProtocol>,
@@ -29,9 +30,11 @@ pub struct DocOrchestrator {
     doc_heading: Arc<dyn IDocHeadingProtocol>,
     template_conformance: Arc<dyn ITemplateConformanceProtocol>,
     required_doc: Arc<dyn IRequiredDocProtocol>,
+    member_doc: Arc<dyn IMemberDocProtocol>,
+    template_body: Arc<dyn ITemplateBodyProtocol>,
 }
 
-// ─── Block 2: Protocol Trait Implementation ────────────────
+// ─── Block 2: Protocol Trait Implementation ──────────────────────────────
 
 impl IDocRunnerAggregate for DocOrchestrator {
     /// Audit the document chain under the request's root and merge what each
@@ -39,11 +42,19 @@ impl IDocRunnerAggregate for DocOrchestrator {
     fn execute(&self, request: DocRequest) -> DocResponse {
         let DocRequest::AuditAll { root } = request;
         // The chain is walked once here rather than once per capability: the
-        // six rules read the same documents, so collecting per rule would
-        // re-read the same files six times.
+        // rules read the same documents, so collecting per rule would
+        // re-read the same files multiple times.
         let documents = utility_doc_collector::collect_documents(&root);
         let master = utility_doc_collector::master_text(&documents);
-        let context = DocAuditContext::new(&root, documents, master);
+        let members = utility_doc_collector::collect_members(&root);
+        let context = DocAuditContext::new(
+            &root,
+            documents,
+            master,
+            members,
+            None,
+            shared_doc_rules::taxonomy_doc_audit_context_vo::StrictModeOverride::UseConfigFile,
+        );
 
         let mut findings = Vec::new();
         findings.extend(self.fr_format.audit_fr_format(&context));
@@ -56,6 +67,8 @@ impl IDocRunnerAggregate for DocOrchestrator {
                 .audit_template_conformance(&context),
         );
         findings.extend(self.required_doc.audit_required_docs(&context));
+        findings.extend(self.member_doc.audit_member_docs(&context));
+        findings.extend(self.template_body.audit_template_body(&context));
 
         DocResponse::Findings {
             findings: utility_doc_collector::sorted(findings),
@@ -63,7 +76,7 @@ impl IDocRunnerAggregate for DocOrchestrator {
     }
 }
 
-// ─── Block 3: Constructors, Std Traits, Helpers ────────────
+// ─── Block 3: Constructors, Std Traits, Helpers ──────────────────────────
 
 impl DocOrchestrator {
     pub fn new(
@@ -74,6 +87,8 @@ impl DocOrchestrator {
         doc_heading: Arc<dyn IDocHeadingProtocol>,
         template_conformance: Arc<dyn ITemplateConformanceProtocol>,
         required_doc: Arc<dyn IRequiredDocProtocol>,
+        member_doc: Arc<dyn IMemberDocProtocol>,
+        template_body: Arc<dyn ITemplateBodyProtocol>,
     ) -> Self {
         Self {
             fr_format,
@@ -83,6 +98,8 @@ impl DocOrchestrator {
             doc_heading,
             template_conformance,
             required_doc,
+            member_doc,
+            template_body,
         }
     }
 }

@@ -439,3 +439,9 @@ pub const DOC_HEADING_CONTRACTS: &[DocH2Contract] = &[
         &[],
     ),
 ];
+
+// ─── AES606 (expanded) — member docs & template body ─────────────────────
+/// Missing FRD.md / BACKLOG.md / DATA.md / DESIGN.md in a member folder.
+pub const MEMBER_DOC_VIOLATION: &str = "missing_member_doc";
+/// A non-deletable template section is entirely absent from a document.
+pub const TEMPLATE_BODY_VIOLATION_DELETED_SECTION: &str = "section_deleted";
