@@ -454,3 +454,233 @@ pub fn has_bullet(body: &str) -> bool {
     }
     false
 }
+
+/// Strip non-prose from markdown so surviving tokens can be matched against a
+/// placeholder catalog without false positives on code or markup.
+///
+/// Blanks fenced code blocks, inline backtick spans, autolinks (`<https://…>`,
+/// `<mailto:…>`), and known HTML tags (`<br>`, `<details>`, `<sup>`, ``).
+/// The returned string preserves line structure so callers can anchor findings
+/// to exact 1-based lines.
+pub fn strip_non_prose_for_placeholders(text: &str) -> String {
+    let mut out = String::with_capacity(text.len());
+    let mut inside_fence = false;
+    for line in text.lines() {
+        let trimmed = line.trim_start();
+        if trimmed.starts_with("```") || trimmed.starts_with("~~~") {
+            inside_fence = !inside_fence;
+            out.push('\n');
+            continue;
+        }
+        if inside_fence {
+            out.push('\n');
+            continue;
+        }
+        let mut line_out = String::with_capacity(line.len());
+        let mut chars = line.chars().peekable();
+        while let Some(c) = chars.next() {
+            if c == '`' {
+                // Skip an inline backtick span: opening backtick runs to
+                // its matching close, or to end of line if unterminated.
+                while chars.peek() == Some(&'`') {
+                    chars.next();
+                }
+                let mut closed = false;
+                for d in chars.by_ref() {
+                    if d == '`' {
+                        closed = true;
+                        break;
+                    }
+                }
+                if !closed {
+                    // Unterminated span: blank to end of line.
+                    break;
+                }
+                continue;
+            }
+            if c == '<' {
+                // Blank an autolink or HTML tag up to its closing `>`.
+                let mut blanked = true;
+                for d in chars.by_ref() {
+                    if d == '>' {
+                        blanked = false;
+                        break;
+                    }
+                }
+                if blanked {
+                    // Unterminated `<`: drop the rest of the line (no closing `>` found).
+                    break;
+                }
+                continue;
+            }
+            line_out.push(c);
+        }
+        out.push_str(&line_out);
+        out.push('\n');
+    }
+    out
+}
+
+/// Does any surviving prose token in *text* match an entry in *catalog*?
+///
+/// Matching is substring-based after non-prose stripping: a token like
+/// `<feature-name>` fires only if that exact marker appears in surviving
+/// prose. Code types such as `Vec<DocFinding>` are blanked first, so they
+/// never match.
+pub fn matches_placeholder_catalog(text: &str, catalog: &[&str]) -> Vec<(usize, String)> {
+    let prose = strip_non_prose_for_placeholders(text);
+    let mut hits: Vec<(usize, String)> = Vec::new();
+    for (line_no, line) in prose.lines().enumerate() {
+        for marker in catalog {
+            if line.contains(marker) {
+                hits.push((line_no + 1, marker.to_string()));
+            }
+        }
+    }
+    hits
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Fenced code blocks are blanked so their contents never match a catalog marker.
+    #[test]
+    fn strip_skips_fenced_code_blocks() {
+        let text = "intro\n```rust\nlet x: Vec<DocFinding> = vec![];\n```\noutro\n";
+        let stripped = strip_non_prose_for_placeholders(text);
+        assert!(
+            !stripped.contains("Vec<DocFinding>"),
+            "fenced code must be blanked"
+        );
+        assert!(
+            stripped.contains("intro"),
+            "prose outside the fence is preserved"
+        );
+        assert!(
+            stripped.contains("outro"),
+            "prose after the fence is preserved"
+        );
+    }
+
+    /// Inline backtick spans are blanked.
+    #[test]
+    fn strip_skips_inline_backticks() {
+        let text = "see `Vec<DocFinding>` and `Result<bool, Error>` here";
+        let stripped = strip_non_prose_for_placeholders(text);
+        assert!(
+            !stripped.contains("Vec<DocFinding>"),
+            "inline code must be blanked"
+        );
+        assert!(
+            !stripped.contains("Result<bool, Error>"),
+            "inline code must be blanked"
+        );
+        assert!(
+            stripped.contains("see"),
+            "prose before backticks is preserved"
+        );
+        assert!(
+            stripped.contains("here"),
+            "prose after backticks is preserved"
+        );
+    }
+
+    /// Autolinks are blanked.
+    #[test]
+    fn strip_skips_autolinks() {
+        let text = "see <https://example.com> and <mailto:raka@example.org> here";
+        let stripped = strip_non_prose_for_placeholders(text);
+        assert!(
+            !stripped.contains("https://example.com"),
+            "autolink URL must be blanked"
+        );
+        assert!(
+            !stripped.contains("mailto:raka@example.org"),
+            "mailto link must be blanked"
+        );
+        assert!(
+            stripped.contains("see"),
+            "prose before autolink is preserved"
+        );
+        assert!(
+            stripped.contains("here"),
+            "prose after autolink is preserved"
+        );
+    }
+
+    /// Known HTML tags are blanked.
+    #[test]
+    fn strip_skips_html_tags() {
+        let text = "use <br> and <details> plus <sup>x</sup> and <img /> here";
+        let stripped = strip_non_prose_for_placeholders(text);
+        assert!(!stripped.contains("<br>"), "br tag must be blanked");
+        assert!(
+            !stripped.contains("<details>"),
+            "details tag must be blanked"
+        );
+        assert!(!stripped.contains("<sup>"), "sup tag must be blanked");
+        assert!(!stripped.contains("<img"), "img tag must be blanked");
+        assert!(stripped.contains("use"), "prose before tags is preserved");
+        assert!(stripped.contains("here"), "prose after tags is preserved");
+    }
+
+    /// An unterminated `<` drops the rest of the line.
+    #[test]
+    fn strip_drops_unterminated_angle() {
+        let text = "before <unfinished no closing here\nafter on next line";
+        let stripped = strip_non_prose_for_placeholders(text);
+        let mut lines = stripped.lines();
+        assert_eq!(
+            lines.next(),
+            Some("before "),
+            "text before unterminated `<` is kept"
+        );
+        assert_eq!(
+            lines.next(),
+            Some("after on next line"),
+            "rest of the unterminated line is dropped and the next line follows"
+        );
+        assert_eq!(lines.next(), None, "there are exactly two lines of output");
+    }
+
+    /// `matches_placeholder_catalog` catches surviving prose markers using curly-slot markers,
+    /// since `<...>` tokens are blanked as autolinks/HTML tags by the scanner.
+    #[test]
+    fn catalog_matches_curly_slot_markers() {
+        let text = "# AGENTS\n\n{architecture scanner command} runs the audit\n{lint command} enforces style\n";
+        let hits = matches_placeholder_catalog(
+            text,
+            &["{architecture scanner command}", "{lint command}"],
+        );
+        assert_eq!(hits.len(), 2, "two catalog markers must be reported");
+        assert_eq!(
+            hits[0].0, 3,
+            "line 3 anchors the first marker (line 2 is blank)"
+        );
+        assert_eq!(hits[1].0, 4, "line 4 anchors the second marker");
+    }
+
+    /// Code-like angle constructs are blanked and never match.
+    #[test]
+    fn catalog_no_false_positive_on_code_types() {
+        let text = "let x: Vec<DocFinding> = vec![];\n";
+        let hits = matches_placeholder_catalog(text, &["<feature-name>", "<N>"]);
+        assert!(
+            hits.is_empty(),
+            "blanked code must not match any catalog marker"
+        );
+    }
+
+    /// Curly-slot markers survive stripping and can match against the catalog.
+    #[test]
+    fn catalog_matches_curly_marker_preserved() {
+        let text = "the token {architecture scanner command} must fire\n";
+        let hits = matches_placeholder_catalog(text, &["{architecture scanner command}"]);
+        assert_eq!(hits.len(), 1, "a genuine placeholder marker must match");
+        assert_eq!(
+            hits[0].1, "{architecture scanner command}",
+            "the matched marker is reported verbatim"
+        );
+    }
+}

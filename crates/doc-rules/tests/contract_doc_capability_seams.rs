@@ -27,7 +27,15 @@ use std::path::Path;
 fn context_for(root: &Path) -> DocAuditContext {
     let documents = utility_doc_collector::collect_documents(root);
     let master = utility_doc_collector::master_text(&documents);
-    DocAuditContext::new(root, documents, master)
+    let members = utility_doc_collector::collect_members(root);
+    DocAuditContext::new(
+        root,
+        documents,
+        master,
+        members,
+        None,
+        shared_doc_rules::taxonomy_doc_audit_context_vo::StrictModeOverride::UseConfigFile,
+    )
 }
 
 /// The six capabilities as one uniform callable, so a test can run every

@@ -4790,6 +4790,7 @@ dependencies = [
  "regex",
  "serde",
  "shared-common-lint-arwaky",
+ "tempfile",
 ]
 
 [[package]]

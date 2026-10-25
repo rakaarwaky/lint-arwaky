@@ -1,9 +1,11 @@
-// PURPOSE: The six capability seams of the doc-rules feature — one protocol
-// trait per AES document rule (AES601–AES606).
+// PURPOSE: The nine capability seams of the doc-rules feature — one protocol
+// trait per AES document rule (AES601–AES606), expanded from seven to nine
+// by AES606's two new seams (member-document presence and template-body
+// placeholder conformance).
 //
 // Each trait answers exactly one rule and carries exactly one method, so a
 // requirement maps to a seam one-for-one and the parity check can hold. The
-// agent behind the aggregate injects all five, hands each the same audit
+// agent behind the aggregate injects all nine, hands each the same audit
 // context, and merges what they report; no consumer ever sees a protocol.
 use crate::taxonomy_doc_audit_context_vo::DocAuditContext;
 use crate::taxonomy_doc_rules_request::DocFinding;
@@ -59,4 +61,21 @@ pub trait ITemplateConformanceProtocol: Send + Sync {
 pub trait IRequiredDocProtocol: Send + Sync {
     /// Report one finding per required root document that does not exist.
     fn audit_required_docs(&self, context: &DocAuditContext) -> Vec<DocFinding>;
+}
+
+/// AES606 (expanded) — member-folder document-pair existence. Reports missing
+/// FRD.md / BACKLOG.md / DATA.md / DESIGN.md per member folder, classified by
+/// objective crate structure (kernel, feature, surface, or none).
+pub trait IMemberDocProtocol: Send + Sync {
+    /// Report one finding per member folder that lacks its mandated doc pair.
+    fn audit_member_docs(&self, context: &DocAuditContext) -> Vec<DocFinding>;
+}
+
+/// AES606 (expanded) — template body conformance and unfilled placeholder
+/// detection. Reports generic template drift (unfilled `<...>` / `{...}`
+/// placeholders, deleted non-deletable sections).
+pub trait ITemplateBodyProtocol: Send + Sync {
+    /// Report one finding per unfilled placeholder or deleted section in a
+    /// document whose template profile is registered.
+    fn audit_template_body(&self, context: &DocAuditContext) -> Vec<DocFinding>;
 }
