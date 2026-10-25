@@ -1,6 +1,8 @@
 ---
 name: aes-migration
-description: AES architecture migration workflow for Python Rust TS. Use when migrating legacy codebases to AES layered architecture.
+description: Guide a phased migration of legacy Python, Rust, and TypeScript codebases into AES layered architecture. Use when migrating to AES, refactoring to AES, or auditing AES compliance.
+when-to-use: Use when planning or executing a phased migration of a legacy Python, Rust, or TypeScript codebase into AES layered architecture, or when auditing AES compliance.
+argument-hint: <project-root>
 metadata:
   tags:
     - python

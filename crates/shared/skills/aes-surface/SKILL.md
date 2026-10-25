@@ -1,6 +1,8 @@
 ---
 name: aes-surface
-description: AES surface command and UI scaffolding for Python Rust TS. Use when creating surface files.
+description: Scaffold AES surface commands, controllers, and components for Python, Rust, and TypeScript. Use when creating surface files or fixing surface structure.
+when-to-use: Use when scaffolding AES surface files (Python, Rust, or TypeScript), creating commands/controllers/components, or fixing surface structure.
+argument-hint: <layer-path>
 metadata:
   tags:
     - python

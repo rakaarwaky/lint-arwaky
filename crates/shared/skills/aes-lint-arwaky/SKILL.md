@@ -1,6 +1,8 @@
 ---
 name: aes-lint-arwaky
-description: "AES architecture linter for Python Rust TS. Use when scanning, fixing AES101-AES506 violations."
+description: Scan, diagnose, and fix AES101-AES506 architecture violations for Python, Rust, and TypeScript. Use when scanning for violations, fixing AES findings, auditing compliance, or running the CI quality gate.
+when-to-use: Use when scanning for AES violations, diagnosing findings, fixing AES101-AES506 issues, auditing architecture compliance, or running the CI quality gate.
+argument-hint: <target-path> [--format json] [--filter <code>] [--dry-run]
 metadata:
   tags:
     - python

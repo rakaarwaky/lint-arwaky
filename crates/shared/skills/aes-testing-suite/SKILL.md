@@ -1,6 +1,8 @@
 ---
 name: aes-testing-suite
-description: Generates contract to E2E suites plus benches. Use when adding package tests, coverage, perf.
+description: Generate contract-to-E2E test suites and benchmarks for Python, Rust, and TypeScript packages. Use when adding package tests, coverage, or performance benchmarks.
+when-to-use: Use when generating contract-to-E2E test suites and benchmarks for Python, Rust, or TypeScript packages, adding tests, improving coverage, or adding performance benchmarks.
+argument-hint: <path>
 metadata:
   tags:
 

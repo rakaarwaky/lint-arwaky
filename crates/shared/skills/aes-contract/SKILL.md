@@ -1,6 +1,8 @@
 ---
 name: aes-contract
-description: AES contract protocol scaffolding for Python Rust TS. Use when creating contract ABC trait files.
+description: Scaffold contract_<concept>_<suffix> protocol/aggregate files for Python, Rust, and TypeScript. Use when creating contract ABC/trait files, adding protocols or aggregates, or checking contract compliance.
+when-to-use: Use when scaffolding contract_<concept>_<suffix> files (Python, Rust, or TypeScript), creating protocol or aggregate contracts, or validating contract compliance.
+argument-hint: <contract-dir>
 metadata:
   tags:
     - python

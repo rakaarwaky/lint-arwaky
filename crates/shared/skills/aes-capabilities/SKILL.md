@@ -1,6 +1,8 @@
 ---
 name: aes-capabilities
-description: AES capability implementation scaffolding for Python Rust TS. Use when creating capability files.
+description: Scaffold a capabilities_<domain>_<role> file implementing one protocol for Python, Rust, and TypeScript. Use when creating capability files, adding a protocol, or checking capabilities compliance.
+when-to-use: Use when scaffolding a capabilities_<domain>_<role> file (Python, Rust, or TypeScript), creating protocol implementations, or validating capabilities compliance.
+argument-hint: <layer-path>
 metadata:
   tags:
     - python

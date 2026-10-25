@@ -1,6 +1,8 @@
 ---
 name: aes-root
-description: AES composition root and entry wiring for Python Rust TS. Use when creating container entry files.
+description: Scaffold AES composition roots and entry wiring for Python, Rust, and TypeScript. Use when creating container/entry files or wiring dependencies.
+when-to-use: Use when scaffolding AES composition roots and entry wiring (Python, Rust, or TypeScript), creating container or entry files, or wiring dependencies.
+argument-hint: <layer-path>
 metadata:
   tags:
     - python

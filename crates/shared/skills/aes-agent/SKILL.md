@@ -1,6 +1,8 @@
 ---
 name: aes-agent
-description: AES agent orchestrator scaffolding for Python Rust TS. Use when creating agent files.
+description: Scaffold an agent_<domain>_orchestrator file for Python, Rust, and TypeScript. Use when creating agent orchestrators, adding an agent, fixing agent structure, or checking agent compliance.
+when-to-use: Use when scaffolding an agent_<domain>_orchestrator file (Python, Rust, or TypeScript), adding an agent to a feature folder, fixing agent structure, or validating agent compliance.
+argument-hint: <layer-path>
 metadata:
   tags:
     - python

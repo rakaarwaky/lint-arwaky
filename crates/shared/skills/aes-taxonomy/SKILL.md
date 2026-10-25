@@ -1,6 +1,8 @@
 ---
 name: aes-taxonomy
-description: AES taxonomy VO and domain type scaffolding for Python Rust TS. Use when creating taxonomy files.
+description: Scaffold AES taxonomy VO/entity/error/event/constant/request/response files for Python, Rust, and TypeScript. Use when creating taxonomy files or moving dataclasses into the shared domain.
+when-to-use: Use when scaffolding AES taxonomy files (Python, Rust, or TypeScript), creating VOs/entities/errors/events/constants, or moving dataclasses into the shared domain.
+argument-hint: <layer-path>
 metadata:
   tags:
     - python

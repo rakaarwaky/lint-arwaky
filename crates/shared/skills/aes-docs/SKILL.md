@@ -1,6 +1,8 @@
 ---
 name: aes-docs
-description: Adds docstrings, doc comments, JSDoc, types and PRD/ROADMAP/FRD/README/BACKLOG/DESIGN/AGENTS docs. Use when documenting Python, Rust, TS modules, or splitting spec from status backlog.
+description: Add docstrings, doc comments, JSDoc, types, and PRD/ROADMAP/FRD/README/BACKLOG/DESIGN/AGENTS docs for Python, Rust, and TypeScript modules. Use when documenting public APIs or splitting spec from status backlog.
+when-to-use: Use when adding docstrings, doc comments, JSDoc, or type annotations to public code, or when creating PRD, ROADMAP, FRD, README, BACKLOG, DESIGN, or AGENTS documents, or splitting spec from status backlog.
+argument-hint: <path>
 metadata:
   tags:
     - python

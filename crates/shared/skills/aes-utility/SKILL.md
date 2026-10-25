@@ -1,6 +1,8 @@
 ---
 name: aes-utility
-description: AES stateless utility scaffolding for Python Rust TS. Use when creating utility helper files.
+description: Scaffold AES stateless utility free functions for Python, Rust, and TypeScript. Use when creating utility helper files or extracting shared helpers.
+when-to-use: Use when scaffolding AES stateless utility free functions (Python, Rust, or TypeScript), creating utility helper files, or extracting shared helpers into the shared domain.
+argument-hint: <layer-path>
 metadata:
   tags:
     - python
