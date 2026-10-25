@@ -10,6 +10,9 @@ use logging::root_logging_container::LoggingContainer;
 use shared_cli_commands::Format;
 use shared_common::{FilePath, GitBranchName, Threshold};
 
+use cli_commands::surface_scan_command::handle_docs_dispatch;
+use shared_cli_commands::taxonomy_cli_commands_vo::DocsAction;
+
 fn init_tracing(verbosity: LogVerbosity) {
     LoggingContainer::new().init(verbosity, true);
 }
@@ -190,12 +193,13 @@ enum Command {
         #[arg(long)]
         filter: Option<String>,
     },
-    /// Doc invariants audit (AES601–AES606) over the document chain
+    /// Doc invariants audit (AES601–AES606) and template scaffolding
+    #[command(name = "docs", subcommand_required = false)]
     Docs {
+        #[command(subcommand)]
+        action: Option<DocsAction>,
         #[arg(value_name = "PATH", default_value = ".")]
         path: String,
-        #[arg(long, default_value = "text")]
-        format: String,
     },
     /// Structure rules scan (AES701–AES703)
     Structure {
@@ -739,15 +743,12 @@ fn main() {
                 ignored_paths: ignored_paths.clone(),
             },
         ),
-        Command::Docs { path, format } => cli_commands::surface_scan_command::handle_docs(
-            cli_commands::surface_scan_command::DocsCommandParams {
-                path: Some(FilePath::new(path).unwrap_or_default()),
-                format: parse_format(&format),
-                doc_orchestrator:
-                    doc_rules::root_doc_rules_container::RootDocRulesContainer::orchestrator(),
-                fs_seam: fs_seam.clone(),
-                config_file_reader: config_container.file_reader(),
-            },
+        Command::Docs { action, path } => handle_docs_dispatch(
+            &action,
+            &path,
+            doc_orchestrator.clone(),
+            fs_seam.clone(),
+            config_container.file_reader(),
         ),
         Command::Structure {
             path,

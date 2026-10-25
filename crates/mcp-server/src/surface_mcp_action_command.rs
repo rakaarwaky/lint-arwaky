@@ -14,7 +14,6 @@ use shared_config_system::taxonomy_config_system_vo::ArchitectureConfig;
 use shared_config_system::{IConfigOrchestratorAggregate, IConfigReadProtocol};
 use shared_doc_rules::IDocRunnerAggregate;
 use shared_external_lint::IExternalLintAggregate;
-use shared_filesystem::FilesystemRequest;
 use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared_git_hooks::IGitHooksAggregate;
 use shared_import_rules::IImportRunnerAggregate;
@@ -75,7 +74,7 @@ impl McpActionSurface {
     /// Run a CPU-bound closure on a blocking thread pool so it never blocks
     /// the async Tokio reactor. `JoinError` is mapped to a JSON error envelope
     /// with `exit_code: 2`, identical to other dispatch failures.
-    async fn run_blocking<T, F>(f: F) -> Result<T, serde_json::Value>
+    pub async fn run_blocking<T, F>(f: F) -> Result<T, serde_json::Value>
     where
         T: Send + 'static,
         F: FnOnce() -> T + Send + 'static,
@@ -88,7 +87,7 @@ impl McpActionSurface {
         })
     }
 
-    fn to_fp(&self, path: &str) -> Result<FilePath, serde_json::Value> {
+    pub fn to_fp(&self, path: &str) -> Result<FilePath, serde_json::Value> {
         resolve_confined_path(&self.deps.workspace_root, path).and_then(|resolved| {
             FilePath::new(resolved.to_string_lossy().to_string())
                 .map_err(|_| error_response("Invalid path"))
@@ -105,6 +104,20 @@ impl McpActionSurface {
         } else {
             Ok(())
         }
+    }
+
+    /// Authorize a mutating action, but allow `dry_run` previews to pass
+    /// through unblocked since no files are written. Delegates to
+    /// `authorize_action` when `dry_run` is false; a no-op otherwise.
+    pub fn authorize_action_allow_dry_run(
+        &self,
+        action: &str,
+        dry_run: bool,
+    ) -> Result<(), serde_json::Value> {
+        if dry_run {
+            return Ok(());
+        }
+        self.authorize_action(action)
     }
 
     /// Run check/scan — all linters combined via dispatcher.
@@ -570,45 +583,6 @@ impl McpActionSurface {
         serde_json::json!({"error": "watch is not supported via MCP", "exit_code": 2})
     }
 
-    /// Run docs audit via dispatcher.
-    pub async fn execute_docs(&self, path: &str) -> serde_json::Value {
-        let fp = match self.to_fp(path) {
-            Ok(fp) => fp,
-            Err(error) => return error,
-        };
-        let doc = self.deps.doc_orchestrator.clone();
-        let fs_seam = self.deps.fs_seam.clone();
-        let config_file_reader = self.deps.config_file_reader.clone();
-        let result = match Self::run_blocking(move || {
-            dispatcher::surface_docs_action::collect_docs(
-                fp.value(),
-                doc,
-                &fs_seam,
-                config_file_reader.as_ref(),
-            )
-        })
-        .await
-        {
-            Ok(result) => result,
-            Err(e) => return e,
-        };
-        match result {
-            Ok(findings) => {
-                let exit_code = if findings.is_empty() { 0 } else { 1 };
-                let results: Vec<String> = findings.iter().map(|f| f.summary()).collect();
-                serde_json::json!({
-                    "status": if exit_code == 0 { "ok" } else { "warning" },
-                    "result": if exit_code == 0 { "clean" } else { "violations" },
-                    "action": "docs",
-                    "exit_code": exit_code,
-                    "finding_count": findings.len(),
-                    "results": results,
-                })
-            }
-            Err(e) => serde_json::json!({"error": e, "exit_code": 2}),
-        }
-    }
-
     /// Dispatch execute_command actions.
     pub async fn execute_command(
         &self,
@@ -710,6 +684,31 @@ impl McpActionSurface {
         normalize_response(response)
     }
 
+    /// Run docs audit via dispatcher (delegates to the docs-scaffold action module).
+    pub async fn execute_docs(&self, path: &str) -> serde_json::Value {
+        crate::surface_mcp_docs_scaffold_command::McpDocsScaffoldSurface
+            .execute_docs(self, path)
+            .await
+    }
+
+    /// Run `docs scaffold` (delegates to the docs-scaffold action module).
+    pub async fn execute_docs_scaffold(
+        &self,
+        path: &str,
+        member: Option<&str>,
+        dry_run: bool,
+    ) -> serde_json::Value {
+        crate::surface_mcp_docs_scaffold_command::McpDocsScaffoldSurface
+            .execute_docs_scaffold(self, path, member, dry_run)
+            .await
+    }
+
+    /// Read skill documentation by section (delegates to the docs-scaffold action module).
+    pub fn handle_read_skill(&self, section: Option<String>) -> serde_json::Value {
+        crate::surface_mcp_docs_scaffold_command::McpDocsScaffoldSurface
+            .handle_read_skill(self, section)
+    }
+
     // ─── Non-dispatcher MCP business logic ────────────────────
 
     /// Health check: adapter availability from maintenance aggregate.
@@ -760,49 +759,6 @@ impl McpActionSurface {
             })
             .collect();
         serde_json::json!({ "status": "ok", "commands": commands, "total": commands.len(), "exit_code": 0 })
-    }
-
-    /// Read skill documentation by section.
-    pub fn handle_read_skill(&self, section: Option<String>) -> serde_json::Value {
-        let skills = ["lint-arwaky"];
-        let mut candidates: Vec<String> = skills
-            .iter()
-            .flat_map(|s| vec![format!(".agents/skills/{}/SKILL.md", s)])
-            .collect();
-        if let Some(config_dir) = dirs::config_dir() {
-            let xdg = config_dir
-                .join("lint-arwaky")
-                .join(".agents")
-                .join("skills");
-            for s in &skills {
-                candidates.push(xdg.join(s).join("SKILL.md").to_string_lossy().to_string());
-            }
-        }
-        let content = candidates
-            .iter()
-            .map(std::path::Path::new)
-            .find(|p| p.exists())
-            .and_then(|p| {
-                self.deps
-                    .filesystem
-                    .execute(FilesystemRequest::read_file(p))
-                    .into_content_opt()
-            });
-        let content = match content {
-            Some(c) => c,
-            None => {
-                return serde_json::json!({"error": "Skill documentation not found", "searched": candidates, "exit_code": 2});
-            }
-        };
-        match section.as_deref() {
-            Some(s) if !s.is_empty() => match extract_skill_section(&content, s) {
-                Some(body) => serde_json::json!({"section": s, "content": body, "exit_code": 0}),
-                None => {
-                    serde_json::json!({"error": format!("Section '{s}' not found"), "exit_code": 2})
-                }
-            },
-            _ => serde_json::json!({"content": content, "exit_code": 0}),
-        }
     }
 
     /// Effective architecture configuration for a target path/language.
@@ -876,26 +832,6 @@ impl McpActionSurface {
     }
 }
 
-/// Extract one top-level (`## `) section from a skill document.
-///
-/// #927: the section heading must sit at the start of a line (or the start of
-/// the document) to count; a mid-line `## {section}` mention is not a heading.
-/// The section ends at the next top-level H2 heading that begins its own line.
-/// `\n## ` cannot match `###`/`####` headings (their third char is `#`, not a
-/// space), so deeper headings are not boundaries. Trailing newlines are
-/// trimmed so the body matches the heading's exact text.
-pub fn extract_skill_section(content: &str, section: &str) -> Option<String> {
-    let header = format!("## {section}");
-    let start = if content.starts_with(&header) {
-        0usize
-    } else {
-        content.find(&format!("\n{header}"))? + 1
-    };
-    let remaining = &content[start..];
-    let end = remaining.find("\n## ").unwrap_or(remaining.len());
-    Some(remaining[..end].trim_end_matches('\n').to_string())
-}
-
 /// Serialize violations to JSON (mirrors old execute_* shape + severity).
 fn violations_to_json(violations: &[ViolationItem]) -> Vec<serde_json::Value> {
     violations
@@ -965,7 +901,7 @@ pub fn resolve_confined_path(root: &Path, requested: &str) -> Result<PathBuf, se
 pub fn is_mutating_action(action: &str) -> bool {
     matches!(
         action,
-        "fix" | "install-hook" | "uninstall-hook" | "init" | "install"
+        "fix" | "install-hook" | "uninstall-hook" | "init" | "install" | "docs_scaffold"
     )
 }
 
@@ -990,3 +926,5 @@ fn normalize_response(mut response: serde_json::Value) -> serde_json::Value {
 fn error_response(message: &str) -> serde_json::Value {
     serde_json::json!({"status": "error", "error": message, "exit_code": 2})
 }
+
+pub use crate::surface_mcp_docs_scaffold_command::extract_skill_section;

@@ -13,6 +13,7 @@ use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared_quality_rules::ICodeAnalysisAggregate;
 use shared_structure_rules::IStructureAggregate;
 
+use shared_cli_commands::taxonomy_cli_commands_vo::DocsAction;
 use shared_cli_commands::utility_output_text_formatter::output_violations;
 
 /// Parameters for the `scan` command.
@@ -105,6 +106,18 @@ pub struct DocsCommandParams {
     pub path: Option<FilePath>,
     pub format: Format,
     pub doc_orchestrator: Arc<dyn shared_doc_rules::IDocRunnerAggregate>,
+    pub fs_seam: FilesystemSeam,
+    pub config_file_reader: Arc<dyn shared_config_system::IConfigFileReaderAggregate>,
+    pub strict: bool,
+}
+
+/// Parameters for the `docs scaffold` subcommand.
+pub struct DocsScaffoldCommandParams {
+    pub path: Option<FilePath>,
+    /// Scope to a specific member crate. `None` scaffolds every member.
+    pub member: Option<String>,
+    /// Preview without writing to disk.
+    pub dry_run: bool,
     pub fs_seam: FilesystemSeam,
     pub config_file_reader: Arc<dyn shared_config_system::IConfigFileReaderAggregate>,
 }
@@ -297,17 +310,53 @@ pub fn handle_layer_scan(
 /// and calls the doc orchestrator directly on the target path.
 pub fn handle_docs(params: DocsCommandParams) -> ExitCode {
     let root = resolve_root(&params.path);
+    let strict_override = if params.strict {
+        shared_doc_rules::StrictModeOverride::ForceStrict
+    } else {
+        shared_doc_rules::StrictModeOverride::UseConfigFile
+    };
     match dispatcher::surface_docs_action::collect_docs(
         &root,
         params.doc_orchestrator,
         &params.fs_seam,
         params.config_file_reader.as_ref(),
+        strict_override,
     ) {
         Ok(findings) => {
             let violations =
                 dispatcher::surface_docs_action::docs_findings_to_violations(&findings);
             output_violations(&violations, &root, params.format, false);
             exit_for(violations.len())
+        }
+        Err(e) => {
+            error!(error = %e, "operation failed");
+            ExitCode::RUNTIME_ERROR
+        }
+    }
+}
+
+/// `docs scaffold` — write missing template files in place from embedded
+/// skills. `dry_run` prints the planned writes without touching disk.
+/// Strictness gates the audit path, not scaffolding.
+pub fn handle_docs_scaffold(params: DocsScaffoldCommandParams) -> ExitCode {
+    let root = resolve_root(&params.path);
+    match dispatcher::surface_docs_action::collect_scaffold(
+        &root,
+        params.member.as_deref(),
+        params.dry_run,
+        &params.fs_seam,
+    ) {
+        Ok(items) => {
+            let lines = dispatcher::surface_docs_action::scaffold_items_to_report_lines(&items);
+            for line in &lines {
+                println!("{line}");
+            }
+            let any_error = items.iter().any(|i| !i.ok);
+            if any_error {
+                ExitCode::RUNTIME_ERROR
+            } else {
+                ExitCode::OK
+            }
         }
         Err(e) => {
             error!(error = %e, "operation failed");
@@ -417,5 +466,56 @@ pub fn handle_structure(params: StructureCommandParams) -> ExitCode {
             error!(error = %e, "operation failed");
             ExitCode::RUNTIME_ERROR
         }
+    }
+}
+
+// ─── Docs dispatch ─────────────────────────────────────────────────────────
+
+/// Dispatch one of the docs subcommands. Every path reuses the shared
+/// `handle_docs` / `handle_docs_scaffold` helpers and differs only in which
+/// subcommand variant is routed.
+///
+/// `action` is the parsed `DocsAction` (or `None` for a bare `docs` / `docs <path>`),
+/// which falls through to the audit default. `--strict` applies to the audit
+/// path only; the scaffold path never gates on strictness.
+pub fn handle_docs_dispatch(
+    action: &Option<DocsAction>,
+    path: &str,
+    doc_orchestrator: Arc<dyn shared_doc_rules::IDocRunnerAggregate>,
+    fs_seam: FilesystemSeam,
+    config_file_reader: Arc<dyn shared_config_system::IConfigFileReaderAggregate>,
+) -> ExitCode {
+    match action {
+        Some(DocsAction::Audit {
+            path: audit_path,
+            format,
+            strict,
+        }) => handle_docs(DocsCommandParams {
+            path: audit_path
+                .clone()
+                .map(|p| FilePath::new(p).unwrap_or_default()),
+            format: *format,
+            doc_orchestrator,
+            fs_seam,
+            config_file_reader,
+            strict: *strict,
+        }),
+        Some(DocsAction::Scaffold { member, dry_run }) => {
+            handle_docs_scaffold(DocsScaffoldCommandParams {
+                path: Some(FilePath::new(path).unwrap_or_default()),
+                member: member.clone(),
+                dry_run: *dry_run,
+                fs_seam,
+                config_file_reader,
+            })
+        }
+        None => handle_docs(DocsCommandParams {
+            path: Some(FilePath::new(path).unwrap_or_default()),
+            format: Format::Text,
+            doc_orchestrator,
+            fs_seam,
+            config_file_reader,
+            strict: false,
+        }),
     }
 }

@@ -101,18 +101,32 @@ impl DocFinding {
     }
 }
 
+/// Doc-rules configuration loaded from `lint_arwaky.config.yaml`.
+pub type DocRulesConfigRef = crate::taxonomy_doc_audit_context_vo::DocRulesConfig;
+pub type StrictModeOverrideRef = crate::taxonomy_doc_audit_context_vo::StrictModeOverride;
+
 /// The verb set the document chain supports today.
 pub enum DocRequest {
     /// Audit every document under *root* that the document chain recognizes.
     /// Returns an array of findings across all inspected documents.
-    AuditAll { root: PathBuf },
+    AuditAll {
+        root: PathBuf,
+        config: Option<DocRulesConfigRef>,
+        strict_override: StrictModeOverrideRef,
+    },
 }
 
 impl DocRequest {
     /// Build the audit-all request.
-    pub fn audit_all(root: impl AsRef<Path>) -> Self {
+    pub fn audit_all(
+        root: impl AsRef<Path>,
+        config: Option<DocRulesConfigRef>,
+        strict_override: StrictModeOverrideRef,
+    ) -> Self {
         Self::AuditAll {
             root: root.as_ref().to_path_buf(),
+            config,
+            strict_override,
         }
     }
 }

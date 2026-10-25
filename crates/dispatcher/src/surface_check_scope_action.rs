@@ -70,6 +70,11 @@ pub(crate) fn structure_violations_in_scope(
 /// (`architecture.rules.<CODE>.enabled: false` or `ignored_rules: [CODE]`)
 /// are dropped before conversion, so `scan .` honours the same config
 /// surface as `docs .`.
+///
+/// Missing-doc findings (`missing_required_doc`, `missing_member_doc`) —
+/// whose very premise is that the file does not yet exist on disk — bypass
+/// the existence guard so they surface in `check .` as well (Decision Q2);
+/// all other doc findings still require the named file to exist.
 pub(crate) fn doc_violations_in_scope(target: &str, agg: &ScanAggregates) -> Vec<ViolationItem> {
     let target_path = std::path::Path::new(target);
     let target_canon = canonicalize_via(&agg.fs_seam.aggregate, target_path)
@@ -80,7 +85,16 @@ pub(crate) fn doc_violations_in_scope(target: &str, agg: &ScanAggregates) -> Vec
         &agg.fs_seam,
         agg.config_file_reader.as_ref(),
     );
-    let DocResponse::Findings { findings } = agg.doc.execute(DocRequest::audit_all(&target_canon));
+    // check . uses config-file strictness; --strict is an audit-surface knob
+    // only, so the check surface hardcodes UseConfigFile and never forces
+    // strictness on.
+    let doc_cfg = crate::surface_docs_action::load_doc_rules_config_from_yaml(target, &agg.fs_seam)
+        .unwrap_or_else(shared_doc_rules::DocRulesConfig::staged);
+    let DocResponse::Findings { findings } = agg.doc.execute(DocRequest::audit_all(
+        &target_canon,
+        Some(doc_cfg),
+        shared_doc_rules::StrictModeOverride::UseConfigFile,
+    ));
     findings
         .into_iter()
         .filter(|finding| {
@@ -93,13 +107,21 @@ pub(crate) fn doc_violations_in_scope(target: &str, agg: &ScanAggregates) -> Vec
             // back to the scan root and appear to belong to no member.
             let file =
                 shared_common::FilePath::new(doc_path.to_string_lossy().into_owned()).ok()?;
+            // Missing-doc findings (missing_required_doc / missing_member_doc)
+            // describe a file that does not yet exist on disk — the existence
+            // guard must not drop them (Decision Q2). All other doc findings
+            // still require the named file to exist.
+            let is_missing_doc = finding.violation_type
+                == shared_doc_rules::taxonomy_doc_rules_constant::MISSING_DOC_VIOLATION
+                || finding.violation_type
+                    == shared_doc_rules::taxonomy_doc_rules_constant::MEMBER_DOC_VIOLATION;
             let exists = doc_path.is_file()
                 || agg
                     .fs_seam
                     .aggregate
                     .execute(FilesystemRequest::path_exists(&doc_path))
                     .into_path_exists();
-            if !exists {
+            if !exists && !is_missing_doc {
                 return None;
             }
             let message = shared_common::LintMessage::new(format!(
@@ -352,4 +374,258 @@ pub(crate) fn run_single_file_scan(
         }
     }
     all
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use shared_doc_rules::IDocRunnerAggregate;
+    use shared_doc_rules::taxonomy_doc_rules_request::DocFinding;
+    use shared_doc_rules::taxonomy_doc_rules_response::DocResponse;
+    use std::sync::Arc;
+
+    /// Stub doc aggregate: every `audit_all` request returns the injected
+    /// findings regardless of root, so the scope filter is tested in isolation.
+    struct StubDoc {
+        findings: Vec<DocFinding>,
+    }
+
+    impl IDocRunnerAggregate for StubDoc {
+        fn execute(&self, _request: DocRequest) -> DocResponse {
+            DocResponse::Findings {
+                findings: self.findings.clone(),
+            }
+        }
+    }
+
+    /// Clean no-op aggregates: each returns empty responses, so
+    /// `doc_violations_in_scope` only exercises the injected `StubDoc` slot.
+    struct NoopQuality;
+    impl shared_quality_rules::ICodeAnalysisAggregate for NoopQuality {
+        fn execute(
+            &self,
+            _: shared_quality_rules::CodeAnalysisRequest,
+        ) -> shared_quality_rules::CodeAnalysisResponse {
+            shared_quality_rules::CodeAnalysisResponse::Analysis {
+                violations: Vec::new(),
+            }
+        }
+    }
+    struct NoopRole;
+    impl shared_role_rules::IRoleRunnerAggregate for NoopRole {
+        fn execute(&self, _: shared_role_rules::RoleRequest) -> shared_role_rules::RoleResponse {
+            shared_role_rules::RoleResponse::Audit {
+                violations: Vec::new(),
+            }
+        }
+    }
+    struct NoopImport;
+    impl shared_import_rules::IImportRunnerAggregate for NoopImport {
+        fn execute(
+            &self,
+            _: shared_import_rules::ImportRequest,
+        ) -> shared_import_rules::ImportResponse {
+            shared_import_rules::ImportResponse::AuditEntries {
+                violations: Vec::new(),
+            }
+        }
+    }
+    struct NoopNaming;
+    impl shared_naming_rules::INamingRunnerAggregate for NoopNaming {
+        fn execute(
+            &self,
+            _: shared_naming_rules::NamingRequest,
+        ) -> shared_naming_rules::NamingResponse {
+            shared_naming_rules::NamingResponse::Audit {
+                violations: Vec::new(),
+            }
+        }
+    }
+    struct NoopExternal;
+    impl shared_external_lint::IExternalLintAggregate for NoopExternal {
+        fn execute(
+            &self,
+            _: shared_external_lint::ExternalLintRequest,
+        ) -> shared_external_lint::ExternalLintResponse {
+            shared_external_lint::ExternalLintResponse::Scan {
+                violations: Default::default(),
+            }
+        }
+    }
+    struct NoopOrphan;
+    impl shared_orphan_rules::IOrphanAggregate for NoopOrphan {
+        fn execute(
+            &self,
+            _: shared_orphan_rules::OrphanRequest,
+        ) -> shared_orphan_rules::OrphanResponse {
+            shared_orphan_rules::OrphanResponse::ScanOutcome {
+                context: Default::default(),
+                violations: Vec::new(),
+            }
+        }
+    }
+    struct NoopConfig;
+    impl shared_config_system::IConfigOrchestratorAggregate for NoopConfig {
+        fn execute(
+            &self,
+            _: shared_config_system::ConfigRequest,
+        ) -> shared_config_system::ConfigResponse {
+            shared_config_system::ConfigResponse::DiscoverWorkspaces {
+                workspaces: Vec::new(),
+            }
+        }
+    }
+    struct NoopStructure;
+    impl shared_structure_rules::IStructureAggregate for NoopStructure {
+        fn execute(
+            &self,
+            _: shared_structure_rules::StructureRequest,
+        ) -> shared_structure_rules::StructureResponse {
+            shared_structure_rules::StructureResponse::Findings {
+                findings: Vec::new(),
+            }
+        }
+    }
+
+    fn build_aggregates(
+        fs_seam: &FilesystemSeam,
+        doc_aggregate: Arc<dyn IDocRunnerAggregate>,
+        config_reader: Arc<dyn shared_config_system::IConfigFileReaderAggregate>,
+    ) -> ScanAggregates {
+        ScanAggregates {
+            quality: Arc::new(NoopQuality),
+            role: Arc::new(NoopRole),
+            import: Arc::new(NoopImport),
+            naming: Arc::new(NoopNaming),
+            external: Arc::new(NoopExternal),
+            orphan: Arc::new(NoopOrphan),
+            config: Arc::new(NoopConfig),
+            structure: Arc::new(NoopStructure),
+            doc: doc_aggregate,
+            config_file_reader: config_reader,
+            fs_seam: Arc::new(fs_seam.clone()),
+        }
+    }
+
+    fn fs_seam() -> FilesystemSeam {
+        let container = filesystem::root_filesystem_container::FilesystemContainer::new();
+        let orchestrator = container.orchestrator();
+        FilesystemSeam {
+            workspace: orchestrator.clone(),
+            parser: orchestrator.clone(),
+            aggregate: orchestrator,
+        }
+    }
+
+    fn doc_finding(doc: &str, violation_type: &'static str, message: &str) -> DocFinding {
+        DocFinding::new_with_line(
+            doc,
+            0,
+            shared_doc_rules::RULE_CODE_TEMPLATE_CONFORMANCE,
+            violation_type,
+            message,
+        )
+    }
+
+    /// Missing-doc findings bypass the existence guard and surface in
+    /// `check .` even when the named document does not yet exist on disk.
+    #[test]
+    fn missing_doc_findings_pass_through_scope_guard() {
+        let tmp = tempfile::TempDir::new().unwrap();
+        let root = tmp.path();
+        // Workspace marker so `find_workspace_root` and the root gate are honest.
+        std::fs::write(root.join("Cargo.toml"), "[package]\nname = \"fixture\"\n").unwrap();
+        // Confirm the missing files do not exist yet.
+        assert!(!root.join("PRD.md").exists());
+
+        let seam = fs_seam();
+        let config_container = config_system::root_config_system_container::ConfigContainer::new(
+            seam.aggregate.clone(),
+            {
+                let c = filesystem::root_filesystem_container::FilesystemContainer::new();
+                c.io()
+            },
+        );
+
+        let missing_required = doc_finding(
+            "PRD.md",
+            shared_doc_rules::MISSING_DOC_VIOLATION,
+            "PRD.md is missing",
+        );
+        let missing_member = doc_finding(
+            "crates/foo/FRD.md",
+            shared_doc_rules::MEMBER_DOC_VIOLATION,
+            "FRD.md is missing in member foo",
+        );
+        let agg = build_aggregates(
+            &seam,
+            Arc::new(StubDoc {
+                findings: vec![missing_required, missing_member],
+            }),
+            config_container.file_reader(),
+        );
+
+        let violations = doc_violations_in_scope(root.to_string_lossy().as_ref(), &agg);
+        assert_eq!(
+            violations.len(),
+            2,
+            "both missing-doc findings must surface: {violations:?}"
+        );
+        let names: Vec<&str> = violations
+            .iter()
+            .map(|v| v.violation_name.as_str())
+            .collect();
+        assert!(
+            names
+                .iter()
+                .any(|n| **n == *shared_doc_rules::MISSING_DOC_VIOLATION),
+            "missing_required_doc must surface: {names:?}"
+        );
+        assert!(
+            names
+                .iter()
+                .any(|n| **n == *shared_doc_rules::MEMBER_DOC_VIOLATION),
+            "missing_member_doc must surface: {names:?}"
+        );
+    }
+
+    /// A non-missing-doc finding for a document that does not exist on disk is
+    /// still dropped by the scope guard — stale-format findings for a deleted
+    /// file must not leak into `check .` output.
+    #[test]
+    fn stale_format_finding_for_nonexistent_file_is_dropped() {
+        let tmp = tempfile::TempDir::new().unwrap();
+        let root = tmp.path();
+        std::fs::write(root.join("Cargo.toml"), "[package]\nname = \"fixture\"\n").unwrap();
+
+        let seam = fs_seam();
+        let config_container = config_system::root_config_system_container::ConfigContainer::new(
+            seam.aggregate.clone(),
+            {
+                let c = filesystem::root_filesystem_container::FilesystemContainer::new();
+                c.io()
+            },
+        );
+
+        // A `section_not_table` finding names `GONE.md`, which does not exist.
+        let stale = doc_finding(
+            "GONE.md",
+            "section_not_table",
+            "Section 'State Definitions' is not a table",
+        );
+        let agg = build_aggregates(
+            &seam,
+            Arc::new(StubDoc {
+                findings: vec![stale],
+            }),
+            config_container.file_reader(),
+        );
+
+        let violations = doc_violations_in_scope(root.to_string_lossy().as_ref(), &agg);
+        assert_eq!(
+            violations.len(),
+            0,
+            "non-missing-doc finding for a nonexistent file must be dropped: {violations:?}"
+        );
+    }
 }

@@ -195,6 +195,17 @@ pub enum Commands {
         format: Format,
     },
 
+    /// Doc invariants audit (AES601–AES606) and template scaffolding
+    #[command(name = "docs", subcommand_required = false)]
+    Docs {
+        /// Subcommand: `audit` (default) or `scaffold`
+        #[command(subcommand)]
+        action: Option<DocsAction>,
+        /// Path to audit or scaffold [default: .]
+        #[arg(value_name = "PATH", default_value = ".")]
+        path: String,
+    },
+
     /// Scan for security vulnerabilities
     Security {
         /// Path to scan
@@ -256,6 +267,33 @@ pub enum Commands {
 
     /// Show active configuration
     ConfigShow,
+}
+
+/// Subcommands of `docs`. `audit` is the default; `scaffold` writes missing
+/// template files in place unless `--dry-run` is passed (Decision Q1).
+#[derive(Subcommand, Debug)]
+pub enum DocsAction {
+    /// Run the doc invariants audit (AES601–AES606)
+    Audit {
+        /// Path to audit
+        #[arg(value_name = "PATH", default_value = ".")]
+        path: Option<String>,
+        /// Output format: text, json, sarif, junit
+        #[arg(long, default_value_t = Format::Text)]
+        format: Format,
+        /// Force strict doc-rules enforcement for this run (overrides config).
+        #[arg(long, default_value_t = false)]
+        strict: bool,
+    },
+    /// Generate documentation templates from embedded skills, in place
+    Scaffold {
+        /// Scope to a specific member crate (e.g. `billing`). Omit to scaffold all.
+        #[arg(long)]
+        member: Option<String>,
+        /// Preview what would be written without modifying the filesystem
+        #[arg(long)]
+        dry_run: bool,
+    },
 }
 
 // ─── Transport / protocol VOs (from taxonomy_protocol_vo) ─────────────

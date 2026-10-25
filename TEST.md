@@ -451,9 +451,9 @@ The base codebase must be clean of internal architecture rule violations.
   echo '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | lint-arwaky-mcp
   ```
 
-  **Criteria**: Responds in < 2 seconds with complete list of 5 registered
+  **Criteria**: Responds in < 2 seconds with complete list of 6 registered
   MCP tools (`execute_command`, `list_commands`, `read_skill`, `health_check`,
-  `get_config`).
+  `get_config`, `docs_scaffold`).
 
 ### 5.4 Report Format Verification
 

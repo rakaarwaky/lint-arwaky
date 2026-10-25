@@ -17,7 +17,11 @@ fn doc_rules_boots_and_answers_a_request_within_the_smoke_budget() {
     let aggregate = RootDocRulesContainer::orchestrator();
     // An empty workspace is the cheapest request that still exercises the whole
     // chain: container, orchestrator, document collector, every capability.
-    let response = aggregate.execute(DocRequest::audit_all("."));
+    let response = aggregate.execute(DocRequest::audit_all(
+        ".",
+        None,
+        shared_doc_rules::StrictModeOverride::UseConfigFile,
+    ));
     // `DocResponse` has one variant, so this binding is exhaustive. It is read
     // rather than discarded so a second variant added later becomes a compile
     // error here instead of a silently unasserted answer.
