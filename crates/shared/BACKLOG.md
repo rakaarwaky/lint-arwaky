@@ -14,15 +14,16 @@ Last Updated: 2026-10-05
 
 ## Backlog
 
-| ID | Priority | State| Dependencies | Next Action | Updated |
+| ID | Priority | State | Dependencies | Next Action | Updated |
 |---:|---|---|---|---|---|
-| SHAR-01 | P0 | Done | None | — | 2026-09-29 |
-| SHAR-02 | P1 | Open | None | Stabilize the AES205 cycle findings at the kernel's edge set | 2026-10-05 |
-
-SHAR-02: the kernel's shared cycle-detection helper walks its edge set without
-a stable order, so the AES205 (circular import) findings flip-flop by a
-couple of violations between runs on identical files. `report` shows this
-directly: a progress table moves without any code changing.
+| DT-SHAR-001 | P0 | Done | None | — | 2026-09-29 |
+| DT-SHAR-002 | P0 | Done | None | — | 2026-09-29 |
+| DT-SHAR-003 | P0 | Done | None | — | 2026-09-29 |
+| DT-SHAR-004 | P0 | Done | None | — | 2026-09-29 |
+| DT-SHAR-005 | P0 | Done | None | — | 2026-09-29 |
+| DT-SHAR-006 | P1 | Done | None | — | 2026-09-29 |
+| DT-SHAR-007 | P1 | Done | None | — | 2026-09-29 |
+| DT-SHAR-008 | P1 | Done | None | — | 2026-09-29 |
 
 ## Scenario Evidence
 
@@ -48,12 +49,18 @@ None.
 
 ## Deferred
 
-—
+### SHAR-02: AES205 edge-ordering (Open — in progress)
+
+The kernel's shared cycle-detection helper walks its edge set without a stable
+order, so the AES205 (circular import) findings flip-flop by a couple of
+violations between runs on identical files. `report` shows this directly: a
+progress table moves without any code changing.
 
 ## Change Log
 
 | Date | Change | By |
 |---|---|---|
+| 2026-10-26 | Qualified the Backlog ids to the SHAR data-item scheme for the DESIGN/DATA template redesign; SHAR-02 moved under Deferred | @raka |
 | 2026-10-05 | Gained `ReportSnapshot`, `SnapshotStore`, `MemberDelta`, and `ReportDelta` for the `report` command's per-member counts and their comparison. Opened SHAR-02 for the AES205 edge-set ordering the report's delta depends on | @raka |
 | 2026-10-01 | Evidence command retargeted: `shared-lint-arwaky` was split into 20 packages, so the suite is verified workspace-wide | @raka |
 | 2026-09-29 | Created backlog entry for shared kernel folder | @raka |

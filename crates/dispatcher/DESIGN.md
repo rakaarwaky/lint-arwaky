@@ -5,14 +5,36 @@
 > Condition: [ROADMAP.md](../../ROADMAP.md) (workspace) +
 > [BACKLOG.md](BACKLOG.md).
 
-## Brand & Style
+## Design Overview
 
 This surface draws nothing, so it has no palette. What it owns instead is the
 **outcome vocabulary** every renderer must honour: a collector never decides
 that a run is acceptable, it only reports what the groups found and lets the
 surface map that onto the process exit-code contract.
 
-### Outcome Vocabulary
+## Design Requirements
+
+| Component            | File                     | Serves    | States                  |
+| -------------------- | ------------------------ | --------- | ----------------------- |
+| Naming collector     | `surface_naming_action.rs`  | AES101–102 | collected / scoped  |
+| Import collector     | `surface_import_action.rs`  | AES201–205 | collected / scoped  |
+| Quality collector    | `surface_quality_action.rs` | AES301–305 | collected / scoped  |
+| Role collector       | `surface_role_action.rs`   | AES401–406 | collected / scoped  |
+| Orphan collector     | `surface_orphan_action.rs` | AES501–506 | collected / scoped  |
+| Structure collector  | `surface_structure_action.rs` | AES701–704 | collected / scoped  |
+| Check entry          | `surface_check_action.rs`  | `check`   | exit-code shaped over all groups |
+| Layer entry          | `surface_layer_scan_action.rs` | `taxonomy`, `contract`, `capabilities`, `utility`, `agents`, `surface` | every group, findings narrowed to one layer |
+| CI entry             | `surface_ci_action.rs`     | `ci`      | the same groups with thresholds   |
+| Fix entry            | `surface_fix_action.rs`    | `fix`     | aggregates every `FixOutcome` into the run-level outcome |
+| Docs entry           | `surface_docs_action.rs`   | `docs`    | audit root, not a filter          |
+| Watch entry          | `surface_watch_action.rs`  | `watch`   | repeated scans over changed files |
+| Config entry         | `surface_config_action.rs` | `config`  | effective configuration           |
+| Git entry            | `surface_git_action.rs`    | `git`     | hook installation and checks      |
+| Supporting surfaces  | `surface_version_action.rs`, `surface_plugin_action.rs`, `surface_setup_action.rs`, `surface_maintenance_action.rs`, `surface_external_action.rs` | `version`, `plugin`, `setup`, `doctor`/`security`/`deps`, `external` | pass-through |
+
+Every collector has the same shape: `collect_<group>(target, aggregates) -> Vec<Finding>`.
+
+### DS-DISP-001: Outcome Vocabulary
 
 | Outcome      | Condition                                        | Who grades it   |
 | ------------ | ------------------------------------------------ | --------------- |
@@ -24,7 +46,7 @@ The three are not interchangeable. A group that fails is never silently treated
 as clean — a scan that could not complete reports the failure, because a clean
 result the user did not earn is worse than a visible error.
 
-### Kind
+### DS-DISP-002: Kind
 
 `api` — the single boundary where every rule group meets the surfaces. One
 `surface_<group>_action.rs` file per group, each collecting that group's
@@ -32,7 +54,7 @@ findings from the shared `ScanAggregates` and narrowing them to the requested
 target. The CLI, the MCP server, and the TUI all reach rule behavior through
 here and nowhere else.
 
-### Request Shape
+### DS-DISP-003: Request Shape
 
 A collector receives the requested target as a string and the shared aggregates
 as an immutable borrow. It never reads the filesystem to decide scope; the scan
@@ -83,7 +105,7 @@ contract (a `Failed` present → `RuntimeError` (2); otherwise `Ok` (0), or
 re-derives the aggregation — per the CLI's own invariant, "a surface file
 computes nothing about the codebase."
 
-### Invariants
+### DS-DISP-004: Invariants
 
 - A collector filters, it does not re-derive. Rule decisions belong to the rule
   crates; this layer only scopes and shapes their output.
@@ -91,11 +113,11 @@ computes nothing about the codebase."
   which the pipeline built.
 - Adding a rule group means adding one collector here and registering it in
   `ScanAggregates`; no surface needs to change.
-- The rule-code range in the Entry Points table is a copy of the range
+- The rule-code range in the inventory table at the top of `## Design Requirements` is a copy of the range
   `RULES_AES.md` publishes for that group. The two must agree; a rule
   renumbering or consolidation edits both in the same change.
 
-### Change Checklist
+### DS-DISP-005: Change Checklist
 
 A new group: create `surface_<group>_action.rs`, add its findings to the
 aggregates in the scan pipeline, and register the group in the config. The CLI,
@@ -104,29 +126,7 @@ MCP, and TUI surfaces pick it up with no edit.
 Renumbering, adding, or consolidating a rule code: update `RULES_AES.md` first,
 then the matching row here.
 
-## Components
-
-| Component            | File                     | Serves    | States                  |
-| -------------------- | ------------------------ | --------- | ----------------------- |
-| Naming collector     | `surface_naming_action.rs`  | AES101–102 | collected / scoped  |
-| Import collector     | `surface_import_action.rs`  | AES201–205 | collected / scoped  |
-| Quality collector    | `surface_quality_action.rs` | AES301–305 | collected / scoped  |
-| Role collector       | `surface_role_action.rs`   | AES401–406 | collected / scoped  |
-| Orphan collector     | `surface_orphan_action.rs` | AES501–506 | collected / scoped  |
-| Structure collector  | `surface_structure_action.rs` | AES701–704 | collected / scoped  |
-| Check entry          | `surface_check_action.rs`  | `check`   | exit-code shaped over all groups |
-| Layer entry          | `surface_layer_scan_action.rs` | `taxonomy`, `contract`, `capabilities`, `utility`, `agents`, `surface` | every group, findings narrowed to one layer |
-| CI entry             | `surface_ci_action.rs`     | `ci`      | the same groups with thresholds   |
-| Fix entry            | `surface_fix_action.rs`    | `fix`     | aggregates every `FixOutcome` into the run-level outcome |
-| Docs entry           | `surface_docs_action.rs`   | `docs`    | audit root, not a filter          |
-| Watch entry          | `surface_watch_action.rs`  | `watch`   | repeated scans over changed files |
-| Config entry         | `surface_config_action.rs` | `config`  | effective configuration           |
-| Git entry            | `surface_git_action.rs`    | `git`     | hook installation and checks      |
-| Supporting surfaces  | `surface_version_action.rs`, `surface_plugin_action.rs`, `surface_setup_action.rs`, `surface_maintenance_action.rs`, `surface_external_action.rs` | `version`, `plugin`, `setup`, `doctor`/`security`/`deps`, `external` | pass-through |
-
-Every collector has the same shape: `collect_<group>(target, aggregates) -> Vec<Finding>`.
-
-### States
+### DS-DISP-006: States
 
 | State        | Condition                                                    |
 | ------------ | ------------------------------------------------------------ |
@@ -134,7 +134,7 @@ Every collector has the same shape: `collect_<group>(target, aggregates) -> Vec<
 | `violations` | One or more groups returned findings                          |
 | `error`      | A group failed to run; the dispatcher reports it rather than reporting a clean scan |
 
-### Error States
+### DS-DISP-007: Error States
 
 | Condition                        | Behaviour                                                                                   |
 | -------------------------------- | ------------------------------------------------------------------------------------------- |
@@ -146,5 +146,6 @@ Every collector has the same shape: `collect_<group>(target, aggregates) -> Vec<
 
 - PRD: [PRD.md](../../PRD.md)
 - Backlog: [BACKLOG.md](BACKLOG.md)
+- ROADMAP: [ROADMAP.md](../../ROADMAP.md)
 - Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
 - Rules: [RULES_AES.md](../../RULES_AES.md)

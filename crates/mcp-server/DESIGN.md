@@ -4,14 +4,25 @@
 > clients consume the response vocabulary below; the wire format is the design.
 > Condition: [ROADMAP.md](../../ROADMAP.md) (workspace).
 
-## Brand & Style
+## Design Overview
 
 This surface writes JSON-RPC frames, not pixels, so it has no palette. What it
 owns is the **response vocabulary** a client must branch on — and the single
 rule that governs it: a client branches on `exit_code`, never on JSON-RPC
 success/failure.
 
-### Outcome Vocabulary
+## Design Requirements
+
+| Tool             | File                              | Purpose                                                          | States                     |
+| ---------------- | --------------------------------- | ---------------------------------------------------------------- | -------------------------- |
+| `execute_command`| `surface_mcp_tool_command.rs`     | Run any CLI command. The primary tool.                            | ok / warning / error       |
+| `list_commands`  | `surface_mcp_tool_command.rs`     | List available commands, optionally filtered by domain.           | rendered / error           |
+| `read_skill`     | `surface_mcp_tool_command.rs`     | Read a skill's documentation by section.                          | rendered / not-found       |
+| `health_check`   | `surface_mcp_tool_command.rs`     | Report adapter availability and system state.                     | rendered / degraded        |
+| `get_config`     | `surface_mcp_tool_command.rs`     | Return the effective architecture config for a path and language. | rendered / error           |
+| Request loop     | `surface_mcp_action_command.rs`   | The JSON-RPC request loop: parse, route, respond.                 | uninitialized / ready / busy / error |
+
+### DS-MCPS-001: Outcome Vocabulary
 
 | Field       | Type    | Meaning                                                                                 |
 | ----------- | ------- | --------------------------------------------------------------------------------------- |
@@ -30,13 +41,13 @@ MCP responses.
 stdout carries protocol frames only. Diagnostics go to stderr, so a stray log
 line cannot corrupt a response — that is the surface's one hard constraint.
 
-### Kind
+### DS-MCPS-002: Kind
 
 `mcp` — the Model Context Protocol surface. Exposes the lint toolset to an MCP
 client over JSON-RPC 2.0 on stdin/stdout, so an agent can run scans, read
 configuration, and pull skill documentation without shelling out.
 
-### Request Shape
+### DS-MCPS-003: Request Shape
 
 A request arrives as one JSON-RPC 2.0 message on stdin. The action command
 parses it, matches the method against the tool router, and returns a response on
@@ -83,7 +94,7 @@ dispatcher, CLI, MCP — imposes a budget of its own, so the per-adapter ceiling
 adapter running to its ceiling: 180 + 120 + 120 + (7 × 60) ≈ **840 s (~14
 minutes)** for one `execute_command` call. See the timeout rows under States.
 
-### Invariants
+### DS-MCPS-004: Invariants
 
 - Tools reach lint behavior through the CLI command layer, never by importing a
   capabilities file directly.
@@ -98,26 +109,17 @@ minutes)** for one `execute_command` call. See the timeout rows under States.
   `LINT_ARWAKY_MCP_ALLOW_MUTATIONS=true` to permit `fix`, hook changes, or
   project initialization.
 
-### Change Checklist
+### DS-MCPS-005: Change Checklist
 
 Adding a tool means adding one `#[tool]` method with its `Parameters<T>` args
-struct, registering it in the tool router, and adding a row to the Components
-table below. Changing the transport touches `surface_mcp_action_command.rs`
+struct, registering it in the tool router, and adding a row to the tool-inventory
+table at the top of `## Design Requirements`. Changing the transport touches `surface_mcp_action_command.rs`
 only. Changing any response field touches the Outcome Vocabulary table above,
 which every client reads.
 
-## Components
+### DS-MCPS-006: States
 
-| Tool             | File                              | Purpose                                                          | States                     |
-| ---------------- | --------------------------------- | ---------------------------------------------------------------- | -------------------------- |
-| `execute_command`| `surface_mcp_tool_command.rs`     | Run any CLI command. The primary tool.                            | ok / warning / error       |
-| `list_commands`  | `surface_mcp_tool_command.rs`     | List available commands, optionally filtered by domain.           | rendered / error           |
-| `read_skill`     | `surface_mcp_tool_command.rs`     | Read a skill's documentation by section.                          | rendered / not-found       |
-| `health_check`   | `surface_mcp_tool_command.rs`     | Report adapter availability and system state.                     | rendered / degraded        |
-| `get_config`     | `surface_mcp_tool_command.rs`     | Return the effective architecture config for a path and language. | rendered / error           |
-| Request loop     | `surface_mcp_action_command.rs`   | The JSON-RPC request loop: parse, route, respond.                 | uninitialized / ready / busy / error |
-
-### States
+#### States (run-time)
 
 | State          | Condition                                                       | Response                                                                 |
 | -------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------ |
@@ -129,7 +131,7 @@ which every client reads.
 The server never terminates on a client error. A malformed request is answered
 and the loop continues, because an MCP client may recover and retry.
 
-### Error States
+### DS-MCPS-007: Error States
 
 | Condition | Behaviour |
 | --- | --- |
@@ -148,6 +150,8 @@ overall timeout above the documented worst case.
 ## Reference
 
 - PRD: [PRD.md](../../PRD.md)
+- Backlog: [BACKLOG.md](BACKLOG.md)
+- ROADMAP: [ROADMAP.md](../../ROADMAP.md)
 - Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
 - Rules: [RULES_AES.md](../../RULES_AES.md)
 - Deploy: [DEPLOY.md](../../DEPLOY.md)
