@@ -20,7 +20,7 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 
 - **Description**: Every requirement heading states its feature prefix and all six contract fields, an FRD declares exactly as many requirements as its feature's contract module declares capability seams, and every method its API tables promise is one the contract module declares.
 - **Input**: An `FRD.md` or `DATA.md` inside the audit context, plus the audit root for resolving the feature's shared contract module.
-- **Output**: A list of `DocFinding` values, each carrying `AES601` and one of `id_missing_feature_prefix`, `field_missing`, `protocol_count_mismatch`, or `api_method_not_found`.
+- **Output**: A list of `DocFinding` values, each carrying `AES601` and one of `id_missing_feature_prefix`, `field_missing`, `protocol_count_mismatch`, `api_method_not_found`, `backlog_id_not_fr`, or `backlog_id_missing`.
 - **Business Rules**:
   - A requirement ID must read `FR-<FEATURE>-NNN: <imperative name>`; a bare `FR-NNN` reports `id_missing_feature_prefix`.
   - The same shared FR-ID pattern drives the ID check, the field check, and the parity counter, so an accepted ID set cannot drift between them.
@@ -32,6 +32,7 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
   - Only the first cell of a table row is a promise. A method named in a row's prose or in a body paragraph is not one, so a doc that discusses a name the code never declares stays silent.
   - The finding anchors to its own table row's line, not to the enclosing heading, so a report points at the row a reader has to fix.
   - The check applies to `FRD.md` and `DATA.md`; parity and the method check apply to `FRD.md` alone, because only an FRD names a feature's contract module.
+  - A BACKLOG `## Backlog` row whose ID cell is not one of the FRD's accepted FR-IDs reports `backlog_id_not_fr` anchored to the row; an FRD FR-ID with no BACKLOG `## Backlog` row reports `backlog_id_missing` anchored to the `## Backlog` heading. Both directions keep the backlog traceable to the requirements one row at a time; either direction absent from both sides is silent.
 - **Edge Cases**: A feature crate whose name uses `-` is resolved to the `_` spelling of its shared module. A feature with no shared contract module cannot mismatch and cannot owe a method, so both checks stay silent. A method declared on any trait in the module satisfies a row, so a seam's declaration and the aggregate's `execute` are read the same way.
 - **Error Handling**: An unreadable contract module yields no parity or method finding rather than a false violation. The parity finding is anchored to the requirements section, falling back to the first line when the document has none; a method finding is anchored to its own row.
 
@@ -197,6 +198,7 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 ## Test Scenarios
 
 - A document misses a mandatory H2 → AES605 fires naming the missing headings.
+- A feature BACKLOG row carries an ID the FRD never declares, or an FRD FR-ID has no BACKLOG row → AES601 fires `backlog_id_not_fr` / `backlog_id_missing`, one finding per direction, named row or heading.
 - Requirement count drifts from the contract seams → AES601 fires stating both counts and both fix directions.
 - An FRD carries a bare FR-ID without a feature prefix → AES601 fires naming the line and missing prefix.
 - An FRD requirement is missing a required field → AES601 fires naming the field and the line.
