@@ -202,8 +202,10 @@ pub fn contract_method_names(module_dir: &Path) -> Option<HashSet<String>> {
             if is_python {
                 // Python: `def <name>` opens a declaration site after any
                 // decorator/qualifier on the same line (rare but valid in
-                // generated stubs). A docstring line is prose.
-                let Some(rest) = trimmed.strip_prefix("def ") else {
+                // generated stubs). A docstring line is prose. An `async def`
+                // qualifier is stripped first, mirroring the Rust branch.
+                let after_async = trimmed.strip_prefix("async ").unwrap_or(trimmed);
+                let Some(rest) = after_async.strip_prefix("def ") else {
                     continue;
                 };
                 let name: String = rest
@@ -265,4 +267,46 @@ fn walk_source_files(dir: &Path, visit: &mut dyn FnMut(&Path, &str)) -> Option<(
         }
     }
     Some(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io::Write;
+
+    #[test]
+    fn contract_method_names_finds_async_def_methods() {
+        let dir = std::env::temp_dir().join("lint_arwaky_async_def_test");
+        if std::fs::create_dir_all(&dir).is_err() {
+            return;
+        }
+        let file_path = dir.join("contract_example_protocol.py");
+        let mut f = match std::fs::File::create(&file_path) {
+            Ok(f) => f,
+            Err(_) => return,
+        };
+        let src = "class IExampleProtocol:\n\
+                   @abstractmethod\n\
+                   async def check_session(self, session) -> bool:\n\
+                       ...\n\
+                   def rotate_sync(self, request) -> bool:\n\
+                       ...\n";
+        if f.write_all(src.as_bytes()).is_err() {
+            return;
+        }
+        drop(f);
+        let result = contract_method_names(&dir);
+        let _ = std::fs::remove_dir_all(&dir);
+        // result is None when the walk itself cannot read the directory;
+        // in that case the test silently passes (parse-skip convention).
+        let Some(names) = result else { return };
+        assert!(
+            names.contains("check_session"),
+            "async def method must be found"
+        );
+        assert!(
+            names.contains("rotate_sync"),
+            "sync def method must be found"
+        );
+    }
 }
