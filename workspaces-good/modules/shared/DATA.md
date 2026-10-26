@@ -20,5 +20,5 @@ resolved value.
 
 ## Reference
 
-- PRD: [../PRD.md](../PRD.md)
+- PRD: [../../PRD.md](../../PRD.md)
 - Backlog: [BACKLOG.md](BACKLOG.md)
