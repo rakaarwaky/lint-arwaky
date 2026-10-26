@@ -241,8 +241,14 @@ class IExampleProtocol:
 "#;
         std::fs::write(dir.join("contract_example_protocol.py"), src).unwrap();
         let names = contract_method_names(&dir).expect("walk to succeed");
-        std::assert!(names.contains("check_session"), "async def method must be found");
-        std::assert!(names.contains("rotate_sync"), "sync def method must be found");
+        std::assert!(
+            names.contains("check_session"),
+            "async def method must be found"
+        );
+        std::assert!(
+            names.contains("rotate_sync"),
+            "sync def method must be found"
+        );
         std::fs::remove_dir_all(&dir).ok();
     }
 }
