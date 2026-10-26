@@ -53,7 +53,11 @@ fn write_workspace(root: &Path) {
     );
     write(
         &feature.join("BACKLOG.md"),
-        "# Feature Backlog: Sample\n\nFRD: [FRD.md](FRD.md)\n",
+        "# Feature Backlog: Sample\n\nFRD: [FRD.md](FRD.md)\n\n\
+## Backlog\n\n\
+| ID | Priority | State | Dependencies | Next Action | Updated |\n\
+|---|---:|---|---|---|---|\n\
+| FR-SAMPLE-001 | P0 | Ready | — | — | 2026-09-29 |\n",
     );
     write(&root.join("PRD.md"), "# PRD\n");
     write(&root.join("ROADMAP.md"), "# ROADMAP\n");

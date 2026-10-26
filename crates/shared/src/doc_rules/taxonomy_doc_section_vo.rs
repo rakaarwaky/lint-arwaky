@@ -1,5 +1,5 @@
 // PURPOSE: Section — the value object describing one parsed Markdown heading.
-/// A markdown heading with its body and 1-based start line.
+/// A markdown heading with its body and 0-based start line.
 #[derive(Clone, Debug)]
 pub struct Section {
     /// Heading depth: 1 for `#`, 2 for `##`, and so on.
@@ -8,7 +8,7 @@ pub struct Section {
     pub title: String,
     /// Text between this heading and the next heading of the same or higher rank.
     pub body: String,
-    /// 1-based line the heading starts on.
+    /// 0-based line the heading starts on (a heading on the first line reports 1).
     pub line: usize,
 }
 
@@ -38,7 +38,7 @@ impl Section {
         &self.body
     }
 
-    /// The 1-based line the heading starts on.
+    /// The 0-based line the heading starts on (a heading on the first line reports 1).
     pub fn line(&self) -> usize {
         self.line
     }

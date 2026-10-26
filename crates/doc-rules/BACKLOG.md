@@ -7,7 +7,7 @@ Last Updated: 2026-09-29
 
 ## Current Condition
 
-- Done: `cargo nextest run -p doc-rules-lint-arwaky` → 79 passed, 0 failed. Per-scenario evidence below.
+- Done: `cargo nextest run -p doc-rules-lint-arwaky` → 149 passed, 0 failed. Per-scenario evidence below.
 - In Progress: None
 - Blocked: None
 - Next Action: Re-run `cargo nextest run -p doc-rules-lint-arwaky` after any code change to this crate
@@ -16,10 +16,15 @@ Last Updated: 2026-09-29
 
 | ID | Priority | State | Dependencies | Next Action | Updated |
 |---|---:|---|---|---|---|
-| DOC-01 | P0 | Done | None | — | 2026-09-29  |
-| DOC-02 | P0 | Done | None | — | 2026-09-29  |
-| DOC-03 | P0 | Done | None | — | 2026-10-02  |
-| DOC-06 | P0 | In Progress | None | — | 2026-10-23 |
+| FR-DOC-001 | P0 | Done | None | — | 2026-10-26 |
+| FR-DOC-002 | P0 | Done | None | — | 2026-10-26 |
+| FR-DOC-003 | P0 | Done | None | — | 2026-10-26 |
+| FR-DOC-004 | P0 | Done | None | — | 2026-10-26 |
+| FR-DOC-005 | P0 | Done | None | — | 2026-10-26 |
+| FR-DOC-006 | P0 | Done | None | — | 2026-10-26 |
+| FR-DOC-007 | P0 | Done | None | — | 2026-10-26 |
+| FR-DOC-008 | P0 | Done | None | — | 2026-10-26 |
+| FR-DOC-009 | P0 | Done | None | — | 2026-10-26 |
 
 ## Scenario Evidence
 
@@ -79,7 +84,7 @@ None
 
 | Area | Status | Notes |
 |---|---|---|
-| Tests | Done | `cargo nextest run -p doc-rules-lint-arwaky` → 79 passed, 0 failed |
+| Tests | Done | `cargo nextest run -p doc-rules-lint-arwaky` → 149 passed, 0 failed |
 | Scenario evidence | Done | 34 scenarios mapped; all Automated |
 | Docs | Done | [FRD.md](FRD.md) is specification-only; status lives in this file |
 
@@ -91,6 +96,7 @@ None
 
 | Date | Change | By |
 |---|---|---|
+| 2026-10-26 | Aligned BACKLOG ID column to FRD FR-IDs (AES601); added backlog_id_not_fr / backlog_id_missing | @raka |
 | 2026-10-02 | Closed the FRD level-3 set document-wide: new AES602 `h3_off_template`, because `api_h3_unexpected` reads only the `## API Contract` subtree and a per-protocol table parked under another section escaped it. Migrated 117 off-template H3 headings across 14 FRDs | @raka |
 | 2026-10-02 | Split the 876-line invariant auditor into five capability seams, one per AES doc rule | @raka |
 | 2026-09-29 | Aligned BACKLOG.md and FRD.md to HOW-TO templates (AES605 H2 contracts); expanded scenario evidence table; merged AES607 into AES601; removed AES605 | @raka |

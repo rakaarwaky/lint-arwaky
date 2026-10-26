@@ -16,10 +16,10 @@ Last Updated: 2026-09-29
 
 | ID | Priority | State| Dependencies | Next Action | Updated |
 |---:|---|---|---|---|---|
-| AUTO-01 | P0 | Done | None | — | 2026-09-29  |
-| AUTO-02 | P0 | Done | None | — | 2026-09-29  |
-| AUTO-03 | P0 | Done | None | — | 2026-09-29  |
-| AUTO-04 | P0 | Done | None | — | 2026-09-29  |
+| FR-AutoFix-001 | P0 | Done | None | — | 2026-09-29 |
+| FR-AutoFix-002 | P0 | Done | None | — | 2026-09-29 |
+| FR-AutoFix-003 | P0 | Done | None | — | 2026-09-29 |
+| FR-AutoFix-004 | P0 | Done | None | — | 2026-09-29 |
 
 ## Scenario Evidence
 
@@ -82,5 +82,6 @@ None
 
 | Date | Change | By |
 |---|---|---|
+| 2026-10-26 | Aligned BACKLOG ID column to FRD FR-IDs (AES601) | @raka |
 | 2026-09-29 | Removed FileAdapter capability; capabilities now use `IFileSystemIOProtocol` directly from filesystem feature. Reduced to exactly 4 protocols / 4 capabilities. | @raka |
 | 2026-09-17 | Initial backlog created from FRD test-scenario mapping | @raka |

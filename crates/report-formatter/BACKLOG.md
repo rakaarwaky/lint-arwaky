@@ -16,11 +16,10 @@ Last Updated: 2026-09-29
 
 | ID | Priority | State| Dependencies | Next Action | Updated |
 |---:|---|---|---|---|---|
-| REPO-01 | P0 | Done | None | — | 2026-09-29  |
-| REPO-02 | P0 | Done | None | — | 2026-09-29  |
-| REPO-03 | P0 | Done | None | — | 2026-09-29  |
-| REPO-04 | P0 | Done | None | — | 2026-09-29  |
-| REPO-05 | P0 | Done | None | — | 2026-09-29  |
+| FR-ReportFormatter-001 | P0 | Done | None | — | 2026-09-29 |
+| FR-ReportFormatter-002 | P0 | Done | None | — | 2026-09-29 |
+| FR-ReportFormatter-003 | P0 | Done | None | — | 2026-09-29 |
+| FR-ReportFormatter-004 | P0 | Done | None | — | 2026-09-29 |
 
 ## Scenario Evidence
 
@@ -78,5 +77,6 @@ None
 
 | Date | Change | By |
 |---|---|---|
+| 2026-10-26 | Aligned BACKLOG ID column to FRD FR-IDs (AES601) | @raka |
 | 2026-09-17 | Initial backlog created from FRD test-scenario mapping | @raka |
 | 2026-09-29 | Removed FR-005/006/007 (delegation, fallback, xml-escape). 4 FRs = 4 protocols = 4 capabilities. Orchestrator routes directly. | @raka |

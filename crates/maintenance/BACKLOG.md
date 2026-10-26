@@ -16,14 +16,14 @@ Last Updated: 2026-09-30
 
 | ID | Priority | State| Dependencies | Next Action | Updated |
 |---:|---|---|---|---|---|
-| MAIN-01 | P0 | Done | None | — | 2026-09-30 |
-| MAIN-02 | P0 | Done | None | — | 2026-09-30 |
-| MAIN-03 | P0 | Done | None | — | 2026-09-30 |
-| MAIN-04 | P0 | Done | None | — | 2026-09-30 |
-| MAIN-05 | P0 | Done | None | — | 2026-09-30 |
-| MAIN-06 | P0 | Done | None | — | 2026-09-30 |
-| MAIN-07 | P0 | Done | None | — | 2026-09-30 |
-| MAIN-08 | P0 | Done | None | — | 2026-09-30 |
+| FR-Maintenance-001 | P0 | Done | None | — | 2026-09-30 |
+| FR-Maintenance-002 | P0 | Done | None | — | 2026-09-30 |
+| FR-Maintenance-003 | P0 | Done | None | — | 2026-09-30 |
+| FR-Maintenance-004 | P0 | Done | None | — | 2026-09-30 |
+| FR-Maintenance-005 | P0 | Done | None | — | 2026-09-30 |
+| FR-Maintenance-006 | P0 | Done | None | — | 2026-09-30 |
+| FR-Maintenance-007 | P0 | Done | None | — | 2026-09-30 |
+| FR-Maintenance-008 | P0 | Done | None | — | 2026-09-30 |
 
 ## Scenario Evidence
 
@@ -86,6 +86,7 @@ None
 ## Change Log
 
 | Date | Change | By |
-|---|---:|---|---|
+|---|---|---|
+| 2026-10-26 | Aligned BACKLOG ID column to FRD FR-IDs (AES601) | @raka |
 | 2026-09-30 | Merged FR-Maintenance-005 (Diagnose Toolchain) into FR-Maintenance-001; renumbered FRs 006-009 to 005-008; removed ToolchainDiagnosticChecker; unified IDoctorProtocol implementation | @raka |
 | 2026-09-27 | Added FR-MAINTENANCE-009: self-update — GitHub release query + binary install | @raka |
