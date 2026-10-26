@@ -28,7 +28,7 @@ Last Updated: 2026-10-24
 
 | Scenario | Kind | Test file | Test name | Last verified |
 |---|---|---|---|---|
-| MCPS-01 JSON-RPC loop and tool dispatch | Automated | `tests/unit_mcp_server_action.rs` | `dispatch_routes_execute_command` | working-tree |
+| DS-MCPS-001 JSON-RPC loop and tool dispatch | Automated | `tests/unit_mcp_server_action.rs` | `dispatch_routes_execute_command` | working-tree |
 
 ## Blockers
 

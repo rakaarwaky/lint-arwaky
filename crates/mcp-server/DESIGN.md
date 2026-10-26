@@ -13,6 +13,15 @@ success/failure.
 
 ## Design Requirements
 
+| Tool             | File                              | Purpose                                                          | States                     |
+| ---------------- | --------------------------------- | ---------------------------------------------------------------- | -------------------------- |
+| `execute_command`| `surface_mcp_tool_command.rs`     | Run any CLI command. The primary tool.                            | ok / warning / error       |
+| `list_commands`  | `surface_mcp_tool_command.rs`     | List available commands, optionally filtered by domain.           | rendered / error           |
+| `read_skill`     | `surface_mcp_tool_command.rs`     | Read a skill's documentation by section.                          | rendered / not-found       |
+| `health_check`   | `surface_mcp_tool_command.rs`     | Report adapter availability and system state.                     | rendered / degraded        |
+| `get_config`     | `surface_mcp_tool_command.rs`     | Return the effective architecture config for a path and language. | rendered / error           |
+| Request loop     | `surface_mcp_action_command.rs`   | The JSON-RPC request loop: parse, route, respond.                 | uninitialized / ready / busy / error |
+
 ### DS-MCPS-001: Outcome Vocabulary
 
 | Field       | Type    | Meaning                                                                                 |
@@ -103,21 +112,12 @@ minutes)** for one `execute_command` call. See the timeout rows under States.
 ### DS-MCPS-005: Change Checklist
 
 Adding a tool means adding one `#[tool]` method with its `Parameters<T>` args
-struct, registering it in the tool router, and adding a row to the Components
-table below. Changing the transport touches `surface_mcp_action_command.rs`
+struct, registering it in the tool router, and adding a row to the tool-inventory
+table at the top of `## Design Requirements`. Changing the transport touches `surface_mcp_action_command.rs`
 only. Changing any response field touches the Outcome Vocabulary table above,
 which every client reads.
 
 ### DS-MCPS-006: States
-
-| Tool             | File                              | Purpose                                                          | States                     |
-| ---------------- | --------------------------------- | ---------------------------------------------------------------- | -------------------------- |
-| `execute_command`| `surface_mcp_tool_command.rs`     | Run any CLI command. The primary tool.                            | ok / warning / error       |
-| `list_commands`  | `surface_mcp_tool_command.rs`     | List available commands, optionally filtered by domain.           | rendered / error           |
-| `read_skill`     | `surface_mcp_tool_command.rs`     | Read a skill's documentation by section.                          | rendered / not-found       |
-| `health_check`   | `surface_mcp_tool_command.rs`     | Report adapter availability and system state.                     | rendered / degraded        |
-| `get_config`     | `surface_mcp_tool_command.rs`     | Return the effective architecture config for a path and language. | rendered / error           |
-| Request loop     | `surface_mcp_action_command.rs`   | The JSON-RPC request loop: parse, route, respond.                 | uninitialized / ready / busy / error |
 
 #### States (run-time)
 

@@ -113,7 +113,7 @@ computes nothing about the codebase."
   which the pipeline built.
 - Adding a rule group means adding one collector here and registering it in
   `ScanAggregates`; no surface needs to change.
-- The rule-code range in the Entry Points table is a copy of the range
+- The rule-code range in the inventory table at the top of `## Design Requirements` is a copy of the range
   `RULES_AES.md` publishes for that group. The two must agree; a rule
   renumbering or consolidation edits both in the same change.
 

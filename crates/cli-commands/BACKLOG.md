@@ -58,5 +58,5 @@ None.
 | Date | Change | By |
 |---|---|---|
 | 2026-10-26 | Qualified the Backlog ids to the CLIC design-item scheme for the DESIGN/DATA template redesign | @raka |
-| 2026-10-05 | Shipped the `report` command, the folder-tree scan output with per-violation WHY/FIX, path semantics (a path narrows the report, the scan walks the member), and the JSON/SARIF/JUnit fields matching the text report. Opened CLIC-02 for the AES205 count non-determinism that moves the report's delta | @raka |
+| 2026-10-05 | Shipped the `report` command, the folder-tree scan output with per-violation WHY/FIX, path semantics (a path narrows the report, the scan walks the member), and the JSON/SARIF/JUnit fields matching the text report. Opened DS-CLIC-004 for the AES205 count non-determinism that moves the report's delta | @raka |
 | 2026-09-29 | Created backlog entry for CLI commands surface crate | @raka |

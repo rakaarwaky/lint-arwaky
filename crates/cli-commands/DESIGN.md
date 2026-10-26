@@ -152,7 +152,7 @@ group never has to know the process's working directory.
 Changing a subcommand's arguments touches the surface file and its contract.
 Adding a new rule group touches `crates/dispatcher/src/surface_<group>_action.rs`
 so the existing subcommands pick it up. Adding a new subcommand touches one
-surface file, the CLI wiring, and the Entry Points table below.
+surface file, the CLI wiring, and the inventory table at the top of `## Design Requirements`.
 
 ### DS-CLIC-009: States
 

@@ -49,7 +49,7 @@ ordering comparison is a subtraction.
 | line | LineNumber | 1-based source line; zero when the finding is file-level |
 | column | ColumnNumber | 1-based source column; zero when the rule reports no column |
 | message | LintMessage | Human-readable violation detail |
-| severity | Severity | DO-001 rank carried through to every output format |
+| severity | Severity | DT-SHAR-001 rank carried through to every output format |
 
 ## DT-SHAR-003: StructureFinding
 
@@ -65,9 +65,9 @@ ordering comparison is a subtraction.
 | message | Text | Human-readable detail about what drifted |
 
 A structure finding carries no line, no column, and no severity of its own: a
-folder-layout breach has no source position, and the projection to DO-002
+folder-layout breach has no source position, and the projection to DT-SHAR-002
 assigns MEDIUM. "Text" here means a plain string, not a typed value object:
-DO-003 and DO-004 predate the DO-002 value-object set and stay primitive so the
+DT-SHAR-003 and DT-SHAR-004 predate the DT-SHAR-002 value-object set and stay primitive so the
 rule crates can report without depending on the common taxonomy.
 
 ## DT-SHAR-004: DocFinding
@@ -104,7 +104,7 @@ rule crates can report without depending on the common taxonomy.
 
 | Field | Type | Description |
 |---|---|---|
-| entries | map (Text → DO-005 ReportSnapshot) | One entry per target; one file holds the last snapshot of every target scanned |
+| entries | map (Text → DT-SHAR-005 ReportSnapshot) | One entry per target; one file holds the last snapshot of every target scanned |
 
 ## DT-SHAR-007: MemberDelta
 
@@ -126,7 +126,7 @@ rule crates can report without depending on the common taxonomy.
 
 | Field | Type | Description |
 |---|---|---|
-| members | list (DO-007 MemberDelta) | One row per member, heaviest member first, so the work in front of the reader is at the top |
+| members | list (DT-SHAR-007 MemberDelta) | One row per member, heaviest member first, so the work in front of the reader is at the top |
 | total_now | Count | The current scan's total violation count |
 | total_before | optional Count | The baseline scan's total; empty when there is no baseline |
 | since | optional Count | The baseline's taken_at, so a reader knows how old the comparison is |
