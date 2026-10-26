@@ -44,6 +44,13 @@
 8. **Component anatomy is a table, not a paragraph.** Each row covers
    Variant, Use case, States, and Token mapping. Paragraph prose hides
    states and invites inconsistency.
+9. **Requirement IDs are `DS-NNN: <title>`.** Every item heading must be H2–H4
+   (`### DS-001: Primary Button`), colon-terminated — a heading without the
+   colon, or with a non-numeric suffix such as `DS-001a`, is not an item.
+   Each declared DS-ID must have a matching row in the same folder's
+   `## Backlog` table, and every BACKLOG row ID must be a declared DS-ID.
+   The same-folder `DESIGN.md`+`BACKLOG.md` pairing drives AES601 backlog
+   alignment; a folder holding only one of the pair stays silent.
 
 ---
 

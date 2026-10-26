@@ -435,11 +435,13 @@ impl FrFormatChecker {
             if id.is_empty() {
                 continue;
             }
-            // `+2` because the body skips the heading line and the offset is 0-based.
+            // `+2`: `section.line` is the 0-based heading index, and the first
+            // body line (the table header) sits one line below it, so the
+            // 0-based row offset needs +2 to yield the 1-based row line.
             rows.push((id, section.line + offset + 2));
         }
-        // `+1`: `section.line` is 0-based, so the heading's 1-based document
-        // line matches the 1-based row lines above.
+        // `+1` converts the 0-based heading index to the 1-based document line
+        // of the `## Backlog` heading, matching the 1-based row lines above.
         (rows, section.line + 1)
     }
 

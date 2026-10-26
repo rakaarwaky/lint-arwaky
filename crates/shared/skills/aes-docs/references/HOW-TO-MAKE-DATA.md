@@ -30,7 +30,13 @@
    document is too implementation-bound.
 4. **Cross-link to BACKLOG.md** in `## Reference`. A reader landing on DATA.md
    must immediately see the tracking claim.
-5. **Keep it minimal.** Only four sections are required: Reference, Data
+5. **Requirement IDs are `DT-NNN: <title>`.** Every item heading must be H2–H4
+   (`### DT-001: Severity`), colon-terminated — `DO-` headings are **not**
+   accepted; only `DT-\d+` is. Each declared DT-ID must have a matching row in
+   the same folder's `## Backlog` table, and every BACKLOG row ID must be a
+   declared DT-ID. The same-folder `DATA.md`+`BACKLOG.md` pairing drives
+   AES601 backlog alignment; a folder holding only one of the pair stays silent.
+6. **Keep it minimal.** Only four sections are required: Reference, Data
    Overview, Data Domain, Assumptions & Constraints.
 
 ---
