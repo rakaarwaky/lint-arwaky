@@ -1,0 +1,34 @@
+"""Addition feature shared mirror (AES101 `_aggregate` / AES102 `_protocol`).
+
+Mirror of the `modules/addition` feature into the `modules/shared` kernel.
+Two FR requirements (FR-ADDITION-001, FR-ADDITION-002) map to two protocol
+classes here.
+"""
+
+from abc import ABC, abstractmethod
+
+from ..taxonomy_expression_vo import ExpressionVO
+from ..taxonomy_result_vo import ResultVO
+
+
+class ICheckProtocol(ABC):
+    """Check operands capability (FR-ADDITION-001)."""
+
+    @abstractmethod
+    def check(self, expr: ExpressionVO) -> ResultVO | None:
+        """Validate the operands."""
+        ...
+
+
+class IRunProtocol(ABC):
+    """Run computation capability (FR-ADDITION-002)."""
+
+    @abstractmethod
+    def run(self, expr: ExpressionVO) -> ResultVO | None:
+        """Return the sum."""
+        ...
+
+
+__all__ = ["ICheckProtocol", "IRunProtocol"]
+
+_layer_symbols = {"ICheckProtocol": ICheckProtocol, "IRunProtocol": IRunProtocol}
