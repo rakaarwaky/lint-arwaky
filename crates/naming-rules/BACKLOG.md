@@ -16,9 +16,9 @@ Last Updated: 2026-10-02
 
 | ID | Priority | State| Dependencies | Next Action | Updated |
 |---:|---|---|---|---|---|
-| NAMI-01 | P0 | Done | None | — | 2026-09-29  |
-| NAMI-02 | P0 | Done | None | — | 2026-09-29  |
-| NAMI-03 | P0 | Done | None | — | 2026-10-02  |
+| FR-NamingRules-001 | P0 | Done | None | — | 2026-09-29 |
+| FR-NamingRules-002 | P0 | Done | None | — | 2026-09-29 |
+| FR-NamingRules-003 | P0 | Done | None | — | 2026-10-02 |
 
 ## Scenario Evidence
 
@@ -91,6 +91,7 @@ None
 
 | Date | Change | By |
 |---|---|---|
+| 2026-10-26 | Aligned BACKLOG ID column to FRD FR-IDs (AES601) | @raka |
 | 2026-09-17 | Initial backlog created from FRD test-scenario mapping | @raka |
 | 2026-09-29 | Split `capabilities_naming_checker` into `capabilities_naming_convention_checker` (AES101) and `capabilities_suffix_policy_checker` (AES102); removed AES403 exception | @raka |
 | 2026-10-02 | Published **AES103** (test/bench file-prefix discipline). Added `capabilities_test_file_prefix_checker.rs`, the `ITestFilePrefixProtocol` seam, the shared prefix vocabulary (`taxonomy_naming_rules_constant.rs` + `utility_test_prefix.rs`), and a `tests/`+`benches/`-aware discovery walk in the filesystem foundation so the rule sees the files the default walk prunes. Renamed `utility_config_merger_tests.rs` to a `unit_` prefix | @raka |

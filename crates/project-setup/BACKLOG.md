@@ -14,15 +14,16 @@ Last Updated: 2026-09-29
 
 ## Backlog
 
-| ID | Priority | State| Dependencies | Next Action | Updated |
+| ID | Priority | State | Dependencies | Next Action | Updated |
 |---:|---|---|---|---|---|
-| PROJ-01 | P0 | Done | None | — | 2026-09-17  |
-| PROJ-02 | P0 | Done | None | — | 2026-09-17  |
-| PROJ-03 | P0 | Done | None | — | 2026-09-17  |
-| PROJ-04 | P0 | Done | None | — | 2026-09-17  |
-| PROJ-05 | P0 | Done | None | — | 2026-09-17  |
-| PROJ-06 | P0 | Done | None | — | 2026-09-17  |
-| PROJ-07 | P0 | Done | None | — | 2026-09-17  |
+| FR-ProjectSetup-001 | P0 | Done | None | — | 2026-09-17 |
+| FR-ProjectSetup-002 | P0 | Done | None | — | 2026-09-17 |
+| FR-ProjectSetup-003 | P0 | Done | None | — | 2026-09-17 |
+| FR-ProjectSetup-004 | P0 | Done | None | — | 2026-09-17 |
+| FR-ProjectSetup-005 | P0 | Done | None | — | 2026-09-17 |
+| FR-ProjectSetup-006 | P0 | Done | None | — | 2026-09-17 |
+| FR-ProjectSetup-007 | P0 | Done | None | — | 2026-09-17 |
+| FR-ProjectSetup-008 | P0 | Done | None | — | 2026-09-17 |
 
 ## Scenario Evidence
 
@@ -87,5 +88,6 @@ None
 
 | Date | Change | By |
 |---|---|---|
+| 2026-10-26 | Aligned BACKLOG ID column to FRD FR-IDs (AES601) | @raka |
 | 2026-09-29 | Split multi-protocol SetupManagementProcessor into 3 single-protocol capability structs (AES403); moved utility_project_setup_file_helpers to shared crate (AES404); updated FRD to 4 capability FRs only | @raka |
 | 2026-09-17 | Initial backlog created from FRD test-scenario mapping | @raka |
