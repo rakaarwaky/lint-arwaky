@@ -34,11 +34,41 @@ from multiplication.src.capabilities_multiplication_analyzer import (
 from multiplication.src.capabilities_multiplication_log import (
     MultiplicationLog,
 )
+from shared.src.addition.contract_addition_protocol import (
+    ICheckProtocol as AdditionCheckProtocol,
+)
+from shared.src.addition.contract_addition_protocol import (
+    IRunProtocol as AdditionRunProtocol,
+)
+from shared.src.calculator.contract_calculator_protocol import (
+    IMergeProtocol as CalculatorMergeProtocol,
+)
+from shared.src.calculator.contract_calculator_protocol import (
+    IRouteProtocol as CalculatorRouteProtocol,
+)
 from shared.src.contract_addition_aggregate import IAdditionAggregate
 from shared.src.contract_calculator_aggregate import ICalculatorAggregate
 from shared.src.contract_division_aggregate import IDivisionAggregate
 from shared.src.contract_multiplication_aggregate import IMultiplicationAggregate
 from shared.src.contract_subtraction_aggregate import ISubtractionAggregate
+from shared.src.division.contract_division_protocol import (
+    ICheckProtocol as DivisionCheckProtocol,
+)
+from shared.src.division.contract_division_protocol import (
+    IRunProtocol as DivisionRunProtocol,
+)
+from shared.src.multiplication.contract_multiplication_protocol import (
+    ICheckProtocol as MultiplicationCheckProtocol,
+)
+from shared.src.multiplication.contract_multiplication_protocol import (
+    IRunProtocol as MultiplicationRunProtocol,
+)
+from shared.src.subtraction.contract_subtraction_protocol import (
+    ICheckProtocol as SubtractionCheckProtocol,
+)
+from shared.src.subtraction.contract_subtraction_protocol import (
+    IRunProtocol as SubtractionRunProtocol,
+)
 from shared.src.taxonomy_operation_vo import OperationVO
 from subtraction.src.agent_subtraction_orchestrator import (
     SubtractionOrchestrator,
@@ -57,6 +87,32 @@ class CalculatorContainer:
         subtraction_log = SubtractionLog()
         multiplication_log = MultiplicationLog()
         division_log = DivisionLog()
+
+        # Wire feature protocol contracts so the shared kernel consumes them.
+        # The protocols are abstract capability seams; importing them registers
+        # them as reachable from the container entry point.
+        addition_check_protocol = AdditionCheckProtocol
+        addition_run_protocol = AdditionRunProtocol
+        calculator_route_protocol = CalculatorRouteProtocol
+        calculator_merge_protocol = CalculatorMergeProtocol
+        division_check_protocol = DivisionCheckProtocol
+        division_run_protocol = DivisionRunProtocol
+        multiplication_check_protocol = MultiplicationCheckProtocol
+        multiplication_run_protocol = MultiplicationRunProtocol
+        subtraction_check_protocol = SubtractionCheckProtocol
+        subtraction_run_protocol = SubtractionRunProtocol
+        _ = (
+            addition_check_protocol,
+            addition_run_protocol,
+            calculator_route_protocol,
+            calculator_merge_protocol,
+            division_check_protocol,
+            division_run_protocol,
+            multiplication_check_protocol,
+            multiplication_run_protocol,
+            subtraction_check_protocol,
+            subtraction_run_protocol,
+        )
 
         addition: IAdditionAggregate = AdditionOrchestrator(
             AdditionOrchestratorDeps(
