@@ -336,22 +336,26 @@ impl FrFormatChecker {
         let Some(fr_ids) = Self::collect_fr_id_set(frd) else {
             return;
         };
-        let backlog_ids = Self::parse_backlog_id_column(backlog);
-        let backlog_section_line = Self::backlog_section_line_or_zero(backlog);
+        let (backlog_ids, section_line) = Self::parse_backlog_id_column(backlog);
+        if section_line == 0 {
+            return;
+        }
 
         let backlog_id_set: HashSet<&str> = backlog_ids.iter().map(|(id, _)| id.as_str()).collect();
 
         // (a) FR-ID present in FRD, absent from BACKLOG → backlog_id_missing.
         for fr_id in &fr_ids {
             if !backlog_id_set.contains(fr_id.as_str()) {
-                Self::push_backlog_id_missing(backlog_section_line, fr_id, findings);
+                Self::push_backlog_id_missing(section_line, fr_id, findings);
             }
         }
 
         // (b) BACKLOG ID not a valid FRD FR-ID → backlog_id_not_fr.
+        let mut valid: Vec<&str> = fr_ids.iter().map(String::as_str).collect();
+        valid.sort();
         for (id, line) in &backlog_ids {
             if !fr_ids.contains(id.as_str()) {
-                Self::push_backlog_id_not_fr(*line, id, &fr_ids, findings);
+                Self::push_backlog_id_not_fr(*line, id, &valid, findings);
             }
         }
     }
@@ -373,14 +377,15 @@ impl FrFormatChecker {
     ///
     /// Walks the section's body lines, keeping data rows only: skips the
     /// header row, the separator row, and non-pipe lines. Returns
-    /// `(id_cell, doc_absolute_line)` per data row.
-    fn parse_backlog_id_column(backlog: &DocSource) -> Vec<(String, usize)> {
+    /// `((id_cell, doc_absolute_line) rows, heading line)` with the heading
+    /// line `0` when no `## Backlog` section exists.
+    fn parse_backlog_id_column(backlog: &DocSource) -> (Vec<(String, usize)>, usize) {
         let parsed = sections(&backlog.text);
         let Some(section) = parsed
             .iter()
             .find(|s| s.level == 2 && normalize_heading(&s.title) == "backlog")
         else {
-            return Vec::new();
+            return (Vec::new(), 0);
         };
 
         let mut rows = Vec::new();
@@ -410,21 +415,19 @@ impl FrFormatChecker {
             if id.is_empty() {
                 continue;
             }
-            // Body line at `offset` sits on document line `section.line + offset + 1`.
-            rows.push((id, section.line + offset + 1));
+            // Body lines follow the heading, so document line = heading + offset + 2.
+            rows.push((id, section.line + offset + 2));
         }
-        rows
+        (rows, section.line)
     }
 
     /// Anchored to the bad BACKLOG row; lists the FRD's valid FR-IDs as the remedy.
     fn push_backlog_id_not_fr(
         line: usize,
         id: &str,
-        fr_ids: &HashSet<String>,
+        fr_ids: &[&str],
         findings: &mut Vec<DocFinding>,
     ) {
-        let mut valid: Vec<String> = fr_ids.iter().cloned().collect();
-        valid.sort();
         findings.push(
             DocFinding::new_with_line(
                 "",
@@ -437,12 +440,12 @@ impl FrFormatChecker {
             )
             .with_reason(
                 "Every BACKLOG `## Backlog` row must carry an FRD FR-ID so the backlog stays traceable to a requirement.",
-                format!("Replace `{id}` with one of the FRD FR-IDs: {}.", valid.join(", ")),
+                format!("Replace `{id}` with one of the FRD FR-IDs: {}.", fr_ids.join(", ")),
             ),
         );
     }
 
-    /// Anchored to the `## Backlog` section heading (line 0 when absent).
+    /// Anchored to the `## Backlog` section heading.
     fn push_backlog_id_missing(line: usize, fr_id: &str, findings: &mut Vec<DocFinding>) {
         findings.push(
             DocFinding::new_with_line(
@@ -461,13 +464,5 @@ impl FrFormatChecker {
                 ),
             ),
         );
-    }
-
-    /// Line of the `## Backlog` heading, or `0` when the section is absent.
-    fn backlog_section_line_or_zero(backlog: &DocSource) -> usize {
-        sections(&backlog.text)
-            .iter()
-            .find(|s| s.level == 2 && normalize_heading(&s.title) == "backlog")
-            .map_or(0, |s| s.line)
     }
 }
