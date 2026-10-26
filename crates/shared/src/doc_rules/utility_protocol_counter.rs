@@ -156,8 +156,10 @@ pub fn contract_method_names(module_dir: &Path) -> Option<HashSet<String>> {
             if is_python {
                 // Python: `def <name>` opens a declaration site after any
                 // decorator/qualifier on the same line (rare but valid in
-                // generated stubs). A docstring line is prose.
-                let Some(rest) = trimmed.strip_prefix("def ") else {
+                // generated stubs). A docstring line is prose. An `async def`
+                // qualifier is stripped first, mirroring the Rust branch.
+                let after_async = trimmed.strip_prefix("async ").unwrap_or(trimmed);
+                let Some(rest) = after_async.strip_prefix("def ") else {
                     continue;
                 };
                 let name: String = rest
@@ -219,4 +221,28 @@ fn walk_source_files(dir: &Path, visit: &mut dyn FnMut(&Path, &str)) -> Option<(
         }
     }
     Some(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn contract_method_names_finds_async_def_methods() {
+        let dir = std::env::temp_dir().join("lint_arwaky_async_def_test");
+        std::fs::create_dir_all(&dir).unwrap();
+        let src = r#"
+class IExampleProtocol:
+    @abstractmethod
+    async def check_session(self, session) -> bool:
+        ...
+    def rotate_sync(self, request) -> bool:
+        ...
+"#;
+        std::fs::write(dir.join("contract_example_protocol.py"), src).unwrap();
+        let names = contract_method_names(&dir).expect("walk to succeed");
+        std::assert!(names.contains("check_session"), "async def method must be found");
+        std::assert!(names.contains("rotate_sync"), "sync def method must be found");
+        std::fs::remove_dir_all(&dir).ok();
+    }
 }
