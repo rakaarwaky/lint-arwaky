@@ -16,16 +16,13 @@ Last Updated: 2026-09-17
 
 | ID | Priority | State| Dependencies | Next Action | Updated |
 |---:|---|---|---|---|---|
-| ORPH-01 | P0 | Done | None | — | 2026-09-17  |
-| ORPH-02 | P0 | Done | None | — | 2026-09-17  |
-| ORPH-03 | P0 | Done | None | — | 2026-09-17  |
-| ORPH-04 | P0 | Done | None | — | 2026-09-17  |
-| ORPH-05 | P0 | Done | None | — | 2026-09-17  |
-| ORPH-06 | P0 | Done | None | — | 2026-09-17  |
-| ORPH-07 | P0 | Done | None | — | 2026-09-17  |
-| ORPH-08 | P0 | Done | None | — | 2026-09-17  |
-| ORPH-09 | P0 | Done | None | — | 2026-09-17  |
-| ORPH-10 | P0 | Done | None | — | 2026-09-17  |
+| FR-OrphanRules-001 | P0 | Done | None | — | 2026-09-17 |
+| FR-OrphanRules-002 | P0 | Done | None | — | 2026-09-17 |
+| FR-OrphanRules-003 | P0 | Done | None | — | 2026-09-17 |
+| FR-OrphanRules-004 | P0 | Done | None | — | 2026-09-17 |
+| FR-OrphanRules-005 | P0 | Done | None | — | 2026-09-17 |
+| FR-OrphanRules-006 | P0 | Done | None | — | 2026-09-17 |
+| FR-OrphanRules-007 | P0 | Done | None | — | 2026-09-17 |
 
 ## Scenario Evidence
 
@@ -101,4 +98,5 @@ None
 
 | Date | Change | By |
 |---|---|---|
+| 2026-10-26 | Aligned BACKLOG ID column to FRD FR-IDs (AES601) | @raka |
 | 2026-09-17 | Initial backlog created from FRD test-scenario mapping | @raka |

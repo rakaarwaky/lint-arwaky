@@ -16,13 +16,13 @@ Last Updated: 2026-09-28
 
 | ID | Priority | State| Dependencies | Next Action | Updated |
 |---:|---|---|---|---|---|
-| ROLE-01 | P0 | Done | None | — | 2026-09-17  |
-| ROLE-02 | P0 | Done | None | — | 2026-09-17  |
-| ROLE-03 | P0 | Done | None | — | 2026-09-17  |
-| ROLE-04 | P0 | Done | None | — | 2026-09-17  |
-| ROLE-05 | P0 | Done | None | — | 2026-09-28  |
-| ROLE-06 | P0 | Done | None | — | 2026-09-17  |
-| ROLE-07 | P0 | Done | None | — | 2026-09-17  |
+| FR-RoleRules-001 | P0 | Done | None | — | 2026-09-17 |
+| FR-RoleRules-002 | P0 | Done | None | — | 2026-09-17 |
+| FR-RoleRules-003 | P0 | Done | None | — | 2026-09-17 |
+| FR-RoleRules-004 | P0 | Done | None | — | 2026-09-17 |
+| FR-RoleRules-005 | P0 | Done | None | — | 2026-09-28 |
+| FR-RoleRules-006 | P0 | Done | None | — | 2026-09-17 |
+| FR-RoleRules-007 | P0 | Done | None | — | 2026-09-17 |
 
 ## Scenario Evidence
 
@@ -130,4 +130,5 @@ None
 
 | Date | Change | By |
 |---|---|---|
+| 2026-10-26 | Aligned BACKLOG ID column to FRD FR-IDs (AES601) | @raka |
 | 2026-09-17 | Initial backlog created from FRD test-scenario mapping | @raka |

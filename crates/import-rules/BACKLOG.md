@@ -16,10 +16,11 @@ Last Updated: 2026-09-17
 
 | ID | Priority | State| Dependencies | Next Action | Updated |
 |---:|---|---|---|---|---|
-| IMPO-01 | P0 | Done | None | — | 2026-09-17  |
-| IMPO-02 | P0 | Done | None | — | 2026-09-17  |
-| IMPO-03 | P0 | Done | None | — | 2026-09-17  |
-| IMPO-04 | P0 | Done | None | — | 2026-09-17  |
+| FR-ImportRules-001 | P0 | Done | None | — | 2026-09-17 |
+| FR-ImportRules-002 | P0 | Done | None | — | 2026-09-17 |
+| FR-ImportRules-003 | P0 | Done | None | — | 2026-09-17 |
+| FR-ImportRules-004 | P0 | Done | None | — | 2026-09-17 |
+| FR-ImportRules-005 | P0 | Done | None | — | 2026-09-17 |
 
 ## Scenario Evidence
 
@@ -86,4 +87,5 @@ None
 
 | Date | Change | By |
 |---|---|---|
+| 2026-10-26 | Aligned BACKLOG ID column to FRD FR-IDs (AES601) | @raka |
 | 2026-09-17 | Initial backlog created from FRD test-scenario mapping | @raka |

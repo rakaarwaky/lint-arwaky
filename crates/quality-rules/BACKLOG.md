@@ -16,11 +16,11 @@ Last Updated: 2026-09-17
 
 | ID | Priority | State| Dependencies | Next Action | Updated |
 |---:|---|---|---|---|---|
-| QUAL-01 | P0 | Done | None | — | 2026-09-17  |
-| QUAL-02 | P0 | Done | None | — | 2026-09-17  |
-| QUAL-03 | P0 | Done | None | — | 2026-09-17  |
-| QUAL-04 | P0 | Done | None | — | 2026-09-17  |
-| QUAL-05 | P0 | Done | None | — | 2026-09-17  |
+| FR-QualityRules-001 | P0 | Done | None | — | 2026-09-17 |
+| FR-QualityRules-002 | P0 | Done | None | — | 2026-09-17 |
+| FR-QualityRules-003 | P0 | Done | None | — | 2026-09-17 |
+| FR-QualityRules-004 | P0 | Done | None | — | 2026-09-17 |
+| FR-QualityRules-005 | P0 | Done | None | — | 2026-09-17 |
 
 ## Scenario Evidence
 
@@ -106,4 +106,5 @@ None
 
 | Date | Change | By |
 |---|---|---|
+| 2026-10-26 | Aligned BACKLOG ID column to FRD FR-IDs (AES601) | @raka |
 | 2026-09-17 | Initial backlog created from FRD test-scenario mapping | @raka |

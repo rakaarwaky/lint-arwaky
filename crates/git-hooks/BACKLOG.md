@@ -17,10 +17,10 @@ Last Updated: 2026-09-29
 
 | ID | Priority | State| Dependencies | Next Action | Updated |
 |---:|---|---|---|---|---|
-| GITH-01 | P0 | Done | None | — | 2026-09-29  |
-| GITH-02 | P0 | Done | None | — | 2026-09-29  |
-| GITH-03 | P0 | Done | None | — | 2026-09-29  |
-| GITH-04 | P0 | Done | None | — | 2026-09-29  |
+| FR-GitHooks-001 | P0 | Done | None | — | 2026-09-29 |
+| FR-GitHooks-002 | P0 | Done | None | — | 2026-09-29 |
+| FR-GitHooks-003 | P0 | Done | None | — | 2026-09-29 |
+| FR-GitHooks-004 | P0 | Done | None | — | 2026-09-29 |
 
 ## Scenario Evidence
 
@@ -82,5 +82,6 @@ None
 
 | Date | Change | By |
 |---|---|---|
+| 2026-10-26 | Aligned BACKLOG ID column to FRD FR-IDs (AES601) | @raka |
 | 2026-09-29 | Restructured FRD: 7 utility/mixed FRs → 4 business-capability FRs. Removed FR-005 (Diff Data Comparison), FR-006 (Ignore Rule Management), FR-007 (Config Initialization). Merged FR-001 + FR-004 → single IDiffDetectionProtocol seam. Merged FR-006 + FR-007 → single IConfigInitProtocol seam. Removed IDiffDataProtocol, IIgnoreRuleProtocol, IHookCheckProtocol from shared contract. | @raka |
 | 2026-09-17 | Initial backlog created from FRD test-scenario mapping | @raka |

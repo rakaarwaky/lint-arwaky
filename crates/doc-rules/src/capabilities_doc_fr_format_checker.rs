@@ -377,8 +377,8 @@ impl FrFormatChecker {
     ///
     /// Walks the section's body lines, keeping data rows only: skips the
     /// header row, the separator row, and non-pipe lines. Returns
-    /// `((id_cell, doc_absolute_line) rows, heading line)` with the heading
-    /// line `0` when no `## Backlog` section exists.
+    /// `((id_cell, 1-based row line) rows, 1-based heading line)`; the
+    /// heading line is `0` only when no `## Backlog` section exists.
     fn parse_backlog_id_column(backlog: &DocSource) -> (Vec<(String, usize)>, usize) {
         let parsed = sections(&backlog.text);
         let Some(section) = parsed
@@ -418,7 +418,9 @@ impl FrFormatChecker {
             // `+2` because the body skips the heading line and the offset is 0-based.
             rows.push((id, section.line + offset + 2));
         }
-        (rows, section.line)
+        // `+1`: `section.line` is 0-based, so the heading's 1-based document
+        // line matches the 1-based row lines above.
+        (rows, section.line + 1)
     }
 
     /// Anchored to the bad BACKLOG row; lists the FRD's valid FR-IDs as the remedy.

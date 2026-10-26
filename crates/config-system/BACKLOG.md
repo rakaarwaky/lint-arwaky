@@ -16,11 +16,9 @@ Last Updated: 2026-09-29
 
 | ID | Priority | State| Dependencies | Next Action | Updated |
 |---:|---|---|---|---|---|
-| CONF-01 | P0 | Done | None | — | 2026-09-29  |
-| CONF-02 | P0 | Done | None | — | 2026-09-29  |
-| CONF-03 | P0 | Done | None | — | 2026-09-29  |
-| CONF-04 | P0 | Done | None | — | 2026-09-29  |
-| CONF-05 | P0 | Done | None | — | 2026-09-29  |
+| FR-ConfigSystem-001 | P0 | Done | None | — | 2026-09-29 |
+| FR-ConfigSystem-002 | P0 | Done | None | — | 2026-09-29 |
+| FR-ConfigSystem-003 | P0 | Done | None | — | 2026-09-29 |
 
 ## Scenario Evidence
 
@@ -88,5 +86,6 @@ None
 
 | Date | Change | By |
 |---|---|---|
+| 2026-10-26 | Aligned BACKLOG ID column to FRD FR-IDs (AES601) | @raka |
 | 2026-09-29 | Rewrote FRD: consolidated 10 mixed FRs into 5 pure business capabilities; moved utility concerns (caching, language mapping, TOML parsing) out of FR scope | @raka |
 | 2026-09-17 | Initial backlog created from FRD test-scenario mapping | @raka |
