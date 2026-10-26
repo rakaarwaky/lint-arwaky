@@ -20,6 +20,18 @@ pub const FR_BACKLOG_ID_NOT_FR: &str = "backlog_id_not_fr";
 /// An FRD FR-ID that has no corresponding BACKLOG `## Backlog` row.
 pub const FR_BACKLOG_ID_MISSING: &str = "backlog_id_missing";
 
+/// A DESIGN.md DS-ID that has no corresponding BACKLOG `## Backlog` row.
+pub const DS_BACKLOG_ID_MISSING: &str = "ds_backlog_id_missing";
+
+/// A BACKLOG `## Backlog` row whose ID cell is not a valid DESIGN.md DS-ID.
+pub const DS_BACKLOG_ID_NOT_DS: &str = "ds_backlog_id_not_ds";
+
+/// A DATA.md DT-ID that has no corresponding BACKLOG `## Backlog` row.
+pub const DT_BACKLOG_ID_MISSING: &str = "dt_backlog_id_missing";
+
+/// A BACKLOG `## Backlog` row whose ID cell is not a valid DATA.md DT-ID.
+pub const DT_BACKLOG_ID_NOT_DT: &str = "dt_backlog_id_not_dt";
+
 /// ─── AES602 — Section structure ─────────────────────────────────────────────
 pub const RULE_CODE_SECTION_STRUCTURE: &str = "AES602";
 
@@ -306,7 +318,13 @@ pub const WORKSPACE_ROOT_MARKERS: &[&str] = &["Cargo.toml", "pyproject.toml", "p
 /// Every heading inside `required` but absent from the file fires
 /// `h2_missing`. A file with zero or more-than-one H1 fires `h1_count`.
 ///
-/// The `DESIGN_DOC` entry is transcribed verbatim from the fenced template in
+/// The `DATA_DOC` entry allows item H2s carrying a `DT-` prefix
+/// (`## DT-<NAME>-NNN: <title>`); any other H2 is `h2_unexpected`. `allowed`
+/// entries are leading-word prefixes, so the `DT-` allowed entry admits ANY H2
+/// whose normalized title starts with `dt` — a deliberately looser gate:
+/// AES605 only polices H2 shape, while AES601's qualified `DT-<NAME>-NNN`
+/// regex is the authority on which H2s count as item ids. The
+/// `DESIGN_DOC` entry is transcribed verbatim from the fenced template in
 /// `skills/aes-docs/references/HOW-TO-MAKE-DESIGN.md`, and `allowed` is empty
 /// on purpose: copying that template must produce a file AES605 accepts with
 /// no edit. An empty `allowed` makes the set closed, so a DESIGN.md carrying an
@@ -429,19 +447,10 @@ pub const DOC_HEADING_CONTRACTS: &[DocH2Contract] = &[
         ],
         &[],
     ),
-    (
-        DATA_DOC,
-        &[
-            "Reference",
-            "Data Overview",
-            "Data Domain",
-            "Assumptions & Constraints",
-        ],
-        &[],
-    ),
+    (DATA_DOC, &["Data Overview", "Reference"], &["DT-"]),
     (
         DESIGN_DOC,
-        &["Brand & Style", "Components", "Reference"],
+        &["Design Overview", "Design Requirements", "Reference"],
         &[],
     ),
 ];

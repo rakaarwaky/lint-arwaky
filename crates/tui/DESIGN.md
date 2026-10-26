@@ -5,14 +5,32 @@
 > Condition: [ROADMAP.md](../../ROADMAP.md) (workspace) +
 > [BACKLOG.md](BACKLOG.md).
 
-## Brand & Style
+## Design Overview
 
 `utility_tui_theme.rs` is the single source of truth for every token below. A
 renderer resolves a token through the `color()` helper rather than applying a
 palette constant, so `NO_COLOR` collapses the whole surface to the terminal's
 monochrome default in one place.
 
-### Contrast Ownership
+## Design Requirements
+
+| Component                   | File                              | States                                    | Token map                             |
+| --------------------------- | --------------------------------- | ----------------------------------------- | ------------------------------------- |
+| Event loop and app state    | `surface_tui_command.rs`          | running / idle                            | `BACKGROUND`                         |
+| Action handler              | `surface_lint_action.rs`          | running / results / clean / error         | —                                     |
+| Keystroke mapping           | `surface_event_action.rs`         | idle / ignored-while-running              | `KEY`                                |
+| Path-entry screen           | `surface_path_screen.rs`          | empty / filled / focused / confirmed      | `PATH_INPUT`, `FOCUS_CONFIRM`         |
+| File-tree pane              | `surface_tree_view.rs`            | browsing / selected                       | `DIRECTORY`, `LABEL`, `HIGHLIGHT`     |
+| File-list pane              | `surface_file_list_view.rs`       | browsing / selected                       | `LABEL`, `HIGHLIGHT`                 |
+| Findings preview pane       | `surface_preview_view.rs`         | results / clean / error                   | `VIOLATIONS`, `CLEAN`                 |
+| Status line                 | `surface_status_component.rs`     | idle / busy / clean / error               | `PENDING`, `CLEAN`, `VIOLATIONS`      |
+| Shortcut hint bar           | `surface_shortcut_component.rs`   | idle / busy-acknowledgement               | `LABEL`, `SEPARATOR`, `KEY`           |
+| Log controller              | `surface_log_controller.rs`       | streaming / idle                          | `SEPARATOR`                          |
+| Theme and colour resolution | `utility_tui_theme.rs`           | colour / no-colour                        | all tokens                           |
+| Report rendering            | `utility_report_formatter.rs`     | rendered                                 | `LABEL`                              |
+| Directory listing           | `utility_file_system.rs`          | ok / error                                | —                                     |
+
+### DS-TUIC-001: Contrast Ownership
 
 Every token names an ANSI colour, and the terminal emulator decides the RGB each
 name renders to. This application cannot sample the user's palette or override
@@ -36,7 +54,7 @@ Structural chrome (`SEPARATOR`, `SCROLLBAR`) stays out of the mode. Those
 elements are meant to recede behind the data; raising their contrast would make
 the layout compete with the content.
 
-### Colors
+### DS-TUIC-002: Colors
 
 Every token is a **role**, not a palette entry. There are three accent roles
 (`ACCENT`, `KEY`, `CAPABILITIES_BADGE`) and four diagnostic roles
@@ -85,7 +103,7 @@ neutral.
 the field awaiting one, and work in progress are the same class of "the user
 acts here" signal.
 
-### Typography
+### DS-TUIC-003: Typography
 
 There is no size scale. A terminal cell has one font and one size, so hierarchy
 comes from colour role and emphasis, never from a point size — a larger stop
@@ -97,7 +115,7 @@ cannot map to anything, so the rule is dropped rather than faked.
 | Emphasis  | `ACCENT`, `VIOLATIONS`| header, and the row the user must read |
 | De-emphasis| `SEPARATOR`          | rules, scrollbars, inactive chrome     |
 
-### Layout & Spacing
+### DS-TUIC-004: Layout & Spacing
 
 Layout is percentage-constrained rather than spaced in multiples of one unit,
 because the three panes share a width the user chooses. The pane split is the
@@ -132,31 +150,31 @@ a 20-character filename without truncation after border overhead.
 The pane widths live here so the mouse hit-map and the split can never drift
 apart.
 
-### Elevation & Depth
+### DS-TUIC-005: Elevation & Depth
 
 No elevation ladder. A terminal cell has no shadow and no z-order; overlay is
 expressed by which pane owns the region. `surface-elevated` is therefore the
 preview pane drawn over the file list, not a raised surface.
 
-### Shapes
+### DS-TUIC-006: Shapes
 
 No radius tokens. Terminals offer no rounded corners, and inventing a glyph set
 for them would make the surface depend on fonts the user may not have.
 
-### Kind
+### DS-TUIC-007: Kind
 
 `tui` — the terminal surface a developer drives when they want to browse
 findings rather than read a report. It renders a file tree, runs lint actions
 from a keystroke, and shows results without leaving the terminal.
 
-### Request Shape
+### DS-TUIC-008: Request Shape
 
 The user picks an action in the UI, `surface_event_action.rs` turns that into a
 typed action, and `surface_lint_action.rs` receives it together with the current
 `AppState`. A run's findings are written back into the state; the views render
 from the state and hold none of their own.
 
-### Invariants
+### DS-TUIC-009: Invariants
 
 - Views render from `AppState` and never call a lint aggregate directly. An
   action goes through `surface_lint_action.rs`.
@@ -168,7 +186,7 @@ from the state and hold none of their own.
 - The selection band resolves through `highlight_style()`, not a raw
   `HIGHLIGHT` background, so `LINT_ARWAKY_TUI_HIGH_CONTRAST` reaches it.
 
-### Change Checklist
+### DS-TUIC-010: Change Checklist
 
 A new colour is a new token in `utility_tui_theme.rs` with one role, then a row
 in the Colors table above. A new keystroke touches
@@ -176,25 +194,7 @@ in the Colors table above. A new keystroke touches
 `surface_lint_action.rs` and the command entry. A new pane touches its view, its
 width in the Layout & Spacing table, and `root_tui_container.rs`.
 
-## Components
-
-| Component                   | File                              | States                                    | Token map                             |
-| --------------------------- | --------------------------------- | ----------------------------------------- | ------------------------------------- |
-| Event loop and app state    | `surface_tui_command.rs`          | running / idle                            | `BACKGROUND`                         |
-| Action handler              | `surface_lint_action.rs`          | running / results / clean / error         | —                                     |
-| Keystroke mapping           | `surface_event_action.rs`         | idle / ignored-while-running              | `KEY`                                |
-| Path-entry screen           | `surface_path_screen.rs`          | empty / filled / focused / confirmed      | `PATH_INPUT`, `FOCUS_CONFIRM`         |
-| File-tree pane              | `surface_tree_view.rs`            | browsing / selected                       | `DIRECTORY`, `LABEL`, `HIGHLIGHT`     |
-| File-list pane              | `surface_file_list_view.rs`       | browsing / selected                       | `LABEL`, `HIGHLIGHT`                 |
-| Findings preview pane       | `surface_preview_view.rs`         | results / clean / error                   | `VIOLATIONS`, `CLEAN`                 |
-| Status line                 | `surface_status_component.rs`     | idle / busy / clean / error               | `PENDING`, `CLEAN`, `VIOLATIONS`      |
-| Shortcut hint bar           | `surface_shortcut_component.rs`   | idle / busy-acknowledgement               | `LABEL`, `SEPARATOR`, `KEY`           |
-| Log controller              | `surface_log_controller.rs`       | streaming / idle                          | `SEPARATOR`                          |
-| Theme and colour resolution | `utility_tui_theme.rs`           | colour / no-colour                        | all tokens                           |
-| Report rendering            | `utility_report_formatter.rs`     | rendered                                 | `LABEL`                              |
-| Directory listing           | `utility_file_system.rs`          | ok / error                                | —                                     |
-
-### States
+### DS-TUIC-011: States
 
 | State        | Condition                        | What the user sees                    |
 | ------------ | -------------------------------- | ------------------------------------- |
@@ -235,7 +235,7 @@ the second action is deliberately not the contract — a queued run would start
 against a tree the user has since navigated away from, which is the "stale
 results across navigation" failure this surface already has history with.
 
-### Error States
+### DS-TUIC-012: Error States
 
 | Condition                              | Behaviour                                                   |
 | -------------------------------------- | ----------------------------------------------------------- |
@@ -244,7 +244,7 @@ results across navigation" failure this surface already has history with.
 | A run returns findings above threshold | Show the findings and the threshold                          |
 | The terminal is too small to draw      | Degrade to the status line alone rather than panicking       |
 
-### Accessibility
+### DS-TUIC-013: Accessibility
 
 The full-screen surface redraws every tick with cursor-addressed terminal
 output. Screen readers (NVDA, JAWS, VoiceOver, Orca) read discrete text
@@ -301,5 +301,6 @@ alternative, and the help overlay says so.
 
 - PRD: [PRD.md](../../PRD.md)
 - Backlog: [BACKLOG.md](BACKLOG.md)
+- ROADMAP: [ROADMAP.md](../../ROADMAP.md)
 - Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
 - Rules: [RULES_AES.md](../../RULES_AES.md)

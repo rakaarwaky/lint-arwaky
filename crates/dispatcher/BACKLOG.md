@@ -15,10 +15,15 @@ Last Updated: 2026-10-02
 
 ## Backlog
 
-| ID | Priority | State| Dependencies | Next Action | Updated |
+| ID | Priority | State | Dependencies | Next Action | Updated |
 |---:|---|---|---|---|---|
-| DISP-01 | P0 | Done | None | — | 2026-09-29  |
-| DISP-02 | P0 | Done | None | — | 2026-10-02  |
+| DS-DISP-001 | P0 | Done | None | — | 2026-10-02  |
+| DS-DISP-002 | P0 | Done | None | — | 2026-10-02  |
+| DS-DISP-003 | P0 | Done | None | — | 2026-10-02  |
+| DS-DISP-004 | P0 | Done | None | — | 2026-10-02  |
+| DS-DISP-005 | P1 | Done | None | — | 2026-10-02  |
+| DS-DISP-006 | P1 | Done | None | — | 2026-10-02  |
+| DS-DISP-007 | P1 | Done | None | — | 2026-10-02  |
 
 ## Scenario Evidence
 
@@ -51,6 +56,7 @@ None.
 
 | Date | Change | By |
 |---|---|---|
+| 2026-10-26 | Qualified the Backlog ids to the DISP design-item scheme for the DESIGN/DATA template redesign | @raka |
 | 2026-09-29 | Created backlog entry for dispatcher surface crate | @raka |
 | 2026-10-02 | `collect_single_file_external` routes a one-file scan target through the external adapters; language flags derive from the file extension instead of a project walk | @raka |
 | 2026-10-02 | `scan <file.md>` now runs the external adapters: the single-file path derives its language flags from the file extension, so the markdownlint adapter fires on a lone Markdown target | @raka |

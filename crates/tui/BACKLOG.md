@@ -14,9 +14,21 @@ Last Updated: 2026-09-29
 
 ## Backlog
 
-| ID | Priority | State| Dependencies | Next Action | Updated |
+| ID | Priority | State | Dependencies | Next Action | Updated |
 |---:|---|---|---|---|---|
-| TUIC-01 | P2 | Done | None | — | 2026-09-29  |
+| DS-TUIC-001 | P2 | Done | None | — | 2026-09-29  |
+| DS-TUIC-002 | P2 | Done | None | — | 2026-09-29  |
+| DS-TUIC-003 | P2 | Done | None | — | 2026-09-29  |
+| DS-TUIC-004 | P2 | Done | None | — | 2026-09-29  |
+| DS-TUIC-005 | P2 | Done | None | — | 2026-09-29  |
+| DS-TUIC-006 | P2 | Done | None | — | 2026-09-29  |
+| DS-TUIC-007 | P2 | Done | None | — | 2026-09-29  |
+| DS-TUIC-008 | P2 | Done | None | — | 2026-09-29  |
+| DS-TUIC-009 | P2 | Done | None | — | 2026-09-29  |
+| DS-TUIC-010 | P2 | Done | None | — | 2026-09-29  |
+| DS-TUIC-011 | P2 | Done | None | — | 2026-09-29  |
+| DS-TUIC-012 | P2 | Done | None | — | 2026-09-29  |
+| DS-TUIC-013 | P2 | Done | None | — | 2026-09-29  |
 
 ## Scenario Evidence
 
@@ -47,4 +59,5 @@ None.
 
 | Date | Change | By |
 |---|---|---|
+| 2026-10-26 | Qualified the Backlog ids to the TUIC design-item scheme for the DESIGN/DATA template redesign | @raka |
 | 2026-09-29 | Created backlog entry for TUI surface crate | @raka |

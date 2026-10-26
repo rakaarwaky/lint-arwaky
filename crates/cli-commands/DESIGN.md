@@ -5,14 +5,46 @@
 > Condition: [ROADMAP.md](../../ROADMAP.md) (workspace) +
 > [BACKLOG.md](BACKLOG.md).
 
-## Brand & Style
+## Design Overview
 
 This surface writes text, not pixels, so it has no palette. What it owns is the
 **outcome vocabulary** a caller branches on — the exit code, and nothing else.
 Findings are rendered by `utility_output_text_formatter.rs`; the exit code is
 the machine signal, and it is the only one.
 
-### Outcome Vocabulary
+## Design Requirements
+
+| Subcommand | File                              | Aggregates reached | States                                    |
+| ---------- | --------------------------------- | ----------------- | ----------------------------------------- |
+| `scan <path>` | `surface_scan_command.rs`      | naming, import, quality, role, orphan, structure | clean / violations / error |
+| `docs <path>` | `surface_scan_command.rs`      | doc-rules aggregate | clean / violations / error                |
+| `check <path>` | `surface_check_action.rs` (dispatcher) | the same group as `scan` | exit-code shaped |
+| `taxonomy` / `contract` / `capabilities` / `utility` / `agents` / `surface` | `surface_scan_command.rs` | every group, narrowed to one layer by `surface_layer_scan_action.rs` (dispatcher) | clean / violations / error |
+| `ci`          | `surface_ci_command.rs`          | every group, with thresholds | pass / fail |
+| `fix <path>`  | `surface_fix_command.rs`         | auto-fix aggregate | clean / violations / error                |
+| `config`      | `surface_config_command.rs`      | config-system aggregate | rendered / error                       |
+| `git`         | `surface_git_command.rs`         | git-hooks aggregate | rendered / error                         |
+| `doctor`, `security`, `deps`, `self-update` | `surface_maintenance_command.rs` | maintenance aggregate | rendered / error |
+| `init`, `install`, `mcp-config` | `surface_setup_command.rs`     | project-setup aggregate | rendered / error                         |
+| `watch`       | `surface_watch_command.rs`       | file-watch aggregate | streaming / error                         |
+| `plugin`      | `surface_plugin_command.rs`      | plugin registry     | rendered / error                          |
+| `report [path]` | `surface_report_command.rs` | the same groups as `scan`; prints counts, not violations | clean / error |
+| `skill`       | `surface_skill_command.rs`       | skill registry      | rendered / error                          |
+| Findings rendering | `utility_output_text_formatter.rs` | — | rendered                                |
+
+`docs <path>` takes the **audit root, not a filter** — unlike every other
+path-taking subcommand here, which scopes a workspace-wide run down to the
+target. Pointing `docs` at a sub-directory audits that sub-tree as its own
+document chain, so crosslink checks (AES604) that expect root-level
+`PRD.md`/`ROADMAP.md` siblings behave differently than in a whole-workspace run.
+See `crates/doc-rules/FRD.md`.
+
+The `report` command never prints findings. It counts the scan's violations
+per member and shows each count's change against the last run for that target.
+A first run has no baseline, so it shows absolute counts and a note that the
+next run will show the delta.
+
+### DS-CLIC-001: Outcome Vocabulary
 
 | Outcome               | Condition                                     | Exit code                     |
 | --------------------- | --------------------------------------------- | ----------------------------- |
@@ -24,7 +56,7 @@ the machine signal, and it is the only one.
 Every failure path returns an `ExitCode`, so the process ends through one place.
 A caller must branch on the exit code; the rendered text is for a human.
 
-### Path Semantics
+### DS-CLIC-002: Path Semantics
 
 A path decides what the report shows, not what the scan covers. The
 architecture rules read sibling files, so the scan always walks the whole
@@ -38,7 +70,7 @@ member dir. The target classifies into four scopes:
 - `report [path]` runs the same scan as `scan <path>`; it changes only the
   report shape, so it narrows the result the same way a subfolder or file target does.
 
-### Output Shapes
+### DS-CLIC-003: Output Shapes
 
 Three report shapes, one field set. Every violation carries `code`,
 `violation_name`, `file`, `line`, `column`, `severity`, `why`, and `fix`.
@@ -77,7 +109,7 @@ A violation's `msg` argument states the fact and the subject only. It carries
 no `AES### NAME:` prefix and no embedded `WHY:` or `FIX:` clauses, because
 those now travel in the three dedicated fields.
 
-### Report
+### DS-CLIC-004: Report
 
 `report [path]` runs the same scan as `scan`, counts violations per member,
 and prints the count and its change against the last run for the target,
@@ -89,25 +121,24 @@ becomes the baseline of another. The command exits success whenever it prints
 a report: a first run with no baseline prints absolute counts and a note that
 the next run will show the delta.
 
-### Kind
+### DS-CLIC-005: Kind
 
 `cli` — the process surface a user types into. Each `surface_*_command.rs` file
 parses one subcommand's arguments, calls the aggregate behind it, and turns the
 result into output plus an exit code. No rule logic lives here.
 
-### Request Shape
+### DS-CLIC-006: Request Shape
 
 A subcommand receives its arguments as parsed values, never as raw `argv`. The
 surface resolves a path to an absolute path before any aggregate sees it, so a
 group never has to know the process's working directory.
 
-### Invariants
+### DS-CLIC-007: Invariants
 
 - A surface file computes nothing about the codebase. It renders what an
   aggregate returns and maps the outcome to an exit code. The exception is
   `report`: it counts violations per member and reads a snapshot, because a
   progress table is data, not rendering.
-
 - A surface may not import a capabilities file directly. It reaches behavior
   through the aggregate seam (`crates/dispatcher`).
 - A surface holds no state across invocations; each subcommand is a fresh call.
@@ -116,46 +147,14 @@ group never has to know the process's working directory.
 - Every subcommand path ends in exactly one `ExitCode`. There is no second
   place the process can terminate.
 
-### Change Checklist
+### DS-CLIC-008: Change Checklist
 
 Changing a subcommand's arguments touches the surface file and its contract.
 Adding a new rule group touches `crates/dispatcher/src/surface_<group>_action.rs`
 so the existing subcommands pick it up. Adding a new subcommand touches one
-surface file, the CLI wiring, and the Entry Points table below.
+surface file, the CLI wiring, and the inventory table at the top of `## Design Requirements`.
 
-## Components
-
-| Subcommand | File                              | Aggregates reached | States                                    |
-| ---------- | --------------------------------- | ----------------- | ----------------------------------------- |
-| `scan <path>` | `surface_scan_command.rs`      | naming, import, quality, role, orphan, structure | clean / violations / error |
-| `docs <path>` | `surface_scan_command.rs`      | doc-rules aggregate | clean / violations / error                |
-| `check <path>` | `surface_check_action.rs` (dispatcher) | the same group as `scan` | exit-code shaped |
-| `taxonomy` / `contract` / `capabilities` / `utility` / `agents` / `surface` | `surface_scan_command.rs` | every group, narrowed to one layer by `surface_layer_scan_action.rs` (dispatcher) | clean / violations / error |
-| `ci`          | `surface_ci_command.rs`          | every group, with thresholds | pass / fail |
-| `fix <path>`  | `surface_fix_command.rs`         | auto-fix aggregate | clean / violations / error                |
-| `config`      | `surface_config_command.rs`      | config-system aggregate | rendered / error                       |
-| `git`         | `surface_git_command.rs`         | git-hooks aggregate | rendered / error                         |
-| `doctor`, `security`, `deps`, `self-update` | `surface_maintenance_command.rs` | maintenance aggregate | rendered / error |
-| `init`, `install`, `mcp-config` | `surface_setup_command.rs`     | project-setup aggregate | rendered / error                         |
-| `watch`       | `surface_watch_command.rs`       | file-watch aggregate | streaming / error                         |
-| `plugin`      | `surface_plugin_command.rs`      | plugin registry     | rendered / error                          |
-| `report [path]` | `surface_report_command.rs` | the same groups as `scan`; prints counts, not violations | clean / error |
-| `skill`       | `surface_skill_command.rs`       | skill registry      | rendered / error                          |
-| Findings rendering | `utility_output_text_formatter.rs` | — | rendered                                |
-
-`docs <path>` takes the **audit root, not a filter** — unlike every other
-path-taking subcommand here, which scopes a workspace-wide run down to the
-target. Pointing `docs` at a sub-directory audits that sub-tree as its own
-document chain, so crosslink checks (AES604) that expect root-level
-`PRD.md`/`ROADMAP.md` siblings behave differently than in a whole-workspace run.
-See `crates/doc-rules/FRD.md`.
-
-The `report` command never prints findings. It counts the scan's violations
-per member and shows each count's change against the last run for that target.
-A first run has no baseline, so it shows absolute counts and a note that the
-next run will show the delta.
-
-### States
+### DS-CLIC-009: States
 
 | State                   | Condition                                                     | Output                                     |
 | ----------------------- | ------------------------------------------------------------- | ------------------------------------------ |
@@ -165,7 +164,7 @@ next run will show the delta.
 | `prerequisite_missing`  | A required external tool is absent                             | The tool name and an install hint plus `PrerequisiteMissing` |
 | `error`                 | The path is missing, arguments are invalid, or I/O failed      | The cause plus `RuntimeError`               |
 
-### Error States
+### DS-CLIC-010: Error States
 
 | Condition                                    | Surface                                       | Exit code                     |
 | -------------------------------------------- | --------------------------------------------- | ----------------------------- |
@@ -180,5 +179,6 @@ Surfaces report; they never raise.
 
 - PRD: [PRD.md](../../PRD.md)
 - Backlog: [BACKLOG.md](BACKLOG.md)
+- ROADMAP: [ROADMAP.md](../../ROADMAP.md)
 - Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
 - Rules: [RULES_AES.md](../../RULES_AES.md)

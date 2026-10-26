@@ -22,77 +22,86 @@
 1. **Data contracts, not code.** State the shape, invariants, and relationships
    of every value object the kernel exposes. Never name a source file, class,
    type signature, or programming-language syntax.
-2. **One contract per row.** Each table row describes one data concept — a value
-   object, entity, event, request, or response. Give it an ID, a field name, a
-   type label, and what it represents.
-3. **No implementation state.** The document must survive every refactor. If
+2. **Requirement IDs are `DT-<DATANAME>-NNN: <title>`.** Every item heading is
+   H2 (`## DT-SHAR-001: Severity`), colon-terminated, and carries the
+   folder's DATANAME qualifier between the `DT-` prefix and the number — a
+   bare `DT-001` (digits only, no NAME token) is **not** accepted; `DO-`
+   headings are **not** accepted. Each declared DT-ID must have a matching
+   row in the same folder's `## Backlog` table, and every BACKLOG row ID must
+   be a declared DT-ID. The same-folder `DATA.md`+`BACKLOG.md` pairing drives
+   AES601 backlog alignment; a folder holding only one of the pair stays
+   silent.
+3. **Items are H2.** `## DT-<DATANAME>-NNN: <short imperative name>` headings
+   sit at the top level of the document body; each item owns its
+   Type/Description table.
+4. **No implementation state.** The document must survive every refactor. If
    renaming a struct or moving a module would require updating DATA.md, the
    document is too implementation-bound.
-4. **Cross-link to BACKLOG.md** in `## Reference`. A reader landing on DATA.md
+5. **Cross-link to BACKLOG.md** in `## Reference`. A reader landing on DATA.md
    must immediately see the tracking claim.
-5. **Keep it minimal.** Only four sections are required: Reference, Data
-   Overview, Data Domain, Assumptions & Constraints.
+6. **Keep it minimal.** Only two sections are required: Data Overview,
+   Reference. The `DT-` item headings are allowed H2s.
 
 ---
 
 ## Workflow
 
 1. **Create file** → `DATA.md` in the shared/ directory.
-2. **Section: Reference** — link to BACKLOG.md.
-3. **Section: Data Overview** — one paragraph: what the kernel manages, who reads/writes it.
-4. **Section: Data Domain** — a table with ID, Field, Type, Description columns.
-5. **Section: Assumptions & Constraints** — name any implicit data requirements.
-6. **Verify** → `lint-arwaky-cli docs` passes; section order is correct.
+2. **Section: Data Overview** — one paragraph: what the kernel manages, who
+   reads/writes it.
+3. **Items: `## DT-<DATANAME>-NNN: <short imperative name>`** — one H2 per
+   data concept; fill the item's Type/Description table.
+4. **Section: Reference** — link to PRD.md, BACKLOG.md, ROADMAP.md,
+   ARCHITECTURE.md.
+5. **Verify** → `lint-arwaky-cli docs` passes; section order is correct.
 
 ## Template
 
 Copy, fill, delete nothing.
 
 ```markdown
-# DATA — <shared-folder-name>
-
-## Reference
-
-- PRD: <link to root PRD.md>
-- Backlog: [BACKLOG.md](BACKLOG.md)
+# DATA Requirements
 
 ## Data Overview
 
 <One paragraph: what data shapes this kernel manages, who reads/writes them,
 what business domain they serve. No code.>
 
-## Data Domain
+## DT-<DATANAME>-001: <Short imperative name>
+| Type  | Description |
+|-------|-------------|
 
-| ID | Field | Type | Description |
-|---|---|---|---|
-| DO-001 | <field-name> | vo/event/entity/request/response | <what this shape represents> |
-| DO-002 | <field-name> | vo/event/entity/request/response | <what this shape represents> |
+## DT-<DATANAME>-002: <Short imperative name>
+## DT-<DATANAME>-003: <Short imperative name>
+## DT-<DATANAME>-004: <Short imperative name>
+## DT-<DATANAME>-005: <Short imperative name>
+## DT-<DATANAME>-006: <Short imperative name>
 
-## Assumptions & Constraints
+## Reference
 
-- <Assumption or constraint — name it, scope it, date it if it expires.>
+- PRD: <link to root PRD.md>
+- Backlog: [BACKLOG.md](BACKLOG.md)
+- ROADMAP: [ROADMAP.md](ROADMAP.md)
+- Architecture: [ARCHITECTURE.md](ARCHITECTURE.md)
 ```
 
 ---
 
 ## Section Contract
 
-Every section is required. Each exists for one reason.
+Only the two H2s above are required. Each exists for one reason.
 
-| Section | Why it belongs here |
+| Section        | Why it belongs here                                        |
 |---|---|
-| Reference | Separates spec promise from backlog claim. |
-| Data Overview | Orients the reader before details begin. |
-| Data Domain | The conceptual shapes the kernel manages. |
-| Assumptions & Constraints | Implicit data requirements made explicit. |
+| Data Overview  | Orients the reader before the data items begin.            |
+| Reference      | Separates spec promise from backlog claim.                 |
 
 ---
 
 ## Verify
 
 ```bash
-lint-arwaky-cli docs
-# path form: lint-arwaky-cli docs .
+lint-arwaky-cli docs .
 # Checks: IDs, orphan refs, section order, status leak, links.
 ```
 
