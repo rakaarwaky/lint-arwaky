@@ -336,14 +336,14 @@ impl FrFormatChecker {
         let Some(fr_ids) = Self::collect_fr_id_set(frd) else {
             return;
         };
-        let (backlog_ids, section_line) = Self::parse_backlog_id_column(backlog);
+        let (backlog_rows, section_line) = Self::parse_backlog_id_column(backlog);
         if section_line == 0 {
             return;
         }
 
-        let backlog_id_set: HashSet<&str> = backlog_ids.iter().map(|(id, _)| id.as_str()).collect();
-
         // (a) FR-ID present in FRD, absent from BACKLOG → backlog_id_missing.
+        let backlog_id_set: HashSet<&str> =
+            backlog_rows.iter().map(|(id, _)| id.as_str()).collect();
         for fr_id in &fr_ids {
             if !backlog_id_set.contains(fr_id.as_str()) {
                 Self::push_backlog_id_missing(section_line, fr_id, findings);
@@ -353,7 +353,7 @@ impl FrFormatChecker {
         // (b) BACKLOG ID not a valid FRD FR-ID → backlog_id_not_fr.
         let mut valid: Vec<&str> = fr_ids.iter().map(String::as_str).collect();
         valid.sort();
-        for (id, line) in &backlog_ids {
+        for (id, line) in &backlog_rows {
             if !fr_ids.contains(id.as_str()) {
                 Self::push_backlog_id_not_fr(*line, id, &valid, findings);
             }
