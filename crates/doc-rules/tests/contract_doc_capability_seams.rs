@@ -387,16 +387,16 @@ fn a_document_violating_two_rules_reports_both_codes() {
     );
 }
 
-/// A DESIGN.md declaring a `DS-001` heading with a conforming BACKLOG.
+/// A DESIGN.md declaring a qualified `DS-DISP-001` heading with a
+/// conforming BACKLOG.
 fn conforming_design() -> String {
-    "# UI — DESIGN\n\n\
-     ## Brand & Style\n\n\
-     | Token | Value | Usage |\n|---|---|---|\n\
-     | `--surface-base` | `#000000` | default background |\n\n\
-     ## Components\n\n\
-     ### DS-001: Primary Button\n\n\
-     | Variant | Use case | States | Token map |\n|---|---|---|---|\n\
-     | `primary` | main action | default / focus | `--color-primary` |\n\n\
+    "# Design — ui\n\n\
+     ## Design Overview\n\n\
+     The surface is a terminal UI built on token rows.\n\n\
+     ## Design Requirements\n\n\
+     ### DS-DISP-001: Primary Button\n\n\
+     | Variant | Use case | Token | Value |\n|---|---|---|---|\n\
+     | `primary` | main action | `--color-primary` | `#000000` |\n\n\
      ## Reference\n\n\
      - Backlog: [BACKLOG.md](BACKLOG.md)\n"
         .to_string()
@@ -421,8 +421,13 @@ fn the_fr_format_seam_is_the_only_one_answering_a_ds_backlog_mismatch() {
     let feature = tmp.path().join("crates/sample");
     std::fs::create_dir_all(feature.join("src")).unwrap();
     std::fs::write(feature.join("DESIGN.md"), conforming_design()).unwrap();
-    // BACKLOG carries a bogus DS-002 row and omits DS-001 → both directions.
-    std::fs::write(feature.join("BACKLOG.md"), backlog_with_rows(&["DS-002"])).unwrap();
+    // BACKLOG carries a bogus DS-DISP-002 row and omits DS-DISP-001: both
+    // directions must fire.
+    std::fs::write(
+        feature.join("BACKLOG.md"),
+        backlog_with_rows(&["DS-DISP-002"]),
+    )
+    .unwrap();
     std::fs::write(
         feature.join("src/agent_sample_orchestrator.rs"),
         "//! sample orchestrator\n",
@@ -455,7 +460,11 @@ fn the_fr_format_seam_stays_silent_when_ds_backlog_is_aligned() {
     let feature = tmp.path().join("crates/sample");
     std::fs::create_dir_all(feature.join("src")).unwrap();
     std::fs::write(feature.join("DESIGN.md"), conforming_design()).unwrap();
-    std::fs::write(feature.join("BACKLOG.md"), backlog_with_rows(&["DS-001"])).unwrap();
+    std::fs::write(
+        feature.join("BACKLOG.md"),
+        backlog_with_rows(&["DS-DISP-001"]),
+    )
+    .unwrap();
     std::fs::write(
         feature.join("src/agent_sample_orchestrator.rs"),
         "//! sample orchestrator\n",

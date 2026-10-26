@@ -2273,13 +2273,13 @@ fn architecture_rules_disabled_code_aes702_enters_the_suppressed_set() {
 
 /// A DESIGN.md whose H2 set is exactly the template's, so AES605 accepts it.
 fn conforming_design() -> String {
-    "# UI — DESIGN\n\n\
-     ## Brand & Style\n\n\
-     | Token | Value | Usage |\n|---|---|---|\n\
-     | `--surface-base` | `#000000` | default background |\n\n\
-     ## Components\n\n\
-     | Variant | Use case | States | Token map |\n|---|---|---|---|\n\
-     | `primary` | main action | default / focus | `--color-primary` |\n\n\
+    "# Design — ui\n\n\
+     ## Design Overview\n\n\
+     The surface is a terminal UI built on token rows.\n\n\
+     ## Design Requirements\n\n\
+     ### DS-DISP-001: Primary Button\n\n\
+     | Variant | Use case | Token | Value |\n|---|---|---|---|\n\
+     | `primary` | main action | `--color-primary` | `#000000` |\n\n\
      ## Reference\n\n\
      - Backlog: [BACKLOG.md](BACKLOG.md)\n"
         .to_string()
@@ -2362,7 +2362,7 @@ fn aes605_fires_when_required_design_headings_are_absent() {
         .map(|(_, _, m, _)| m.as_str())
         .unwrap();
     assert!(
-        message.contains("Brand & Style") && message.contains("Components"),
+        message.contains("Design Overview") && message.contains("Design Requirements"),
         "message must name the missing DESIGN sections; got: {message}"
     );
 }
@@ -2515,35 +2515,32 @@ fn backlog_without_backlog_section_is_silent() {
 
 // ── AES601: DS/DT ↔ BACKLOG ID alignment ─────────────────────────────────
 
-/// A DESIGN.md carrying a `DS-NNN:` heading in its Components table region.
+/// A DESIGN.md carrying a qualified `DS-DISP-NNN:` heading under
+/// `## Design Requirements`.
 fn conforming_design_with_ds() -> String {
-    "# UI — DESIGN\n\n\
-     ## Brand & Style\n\n\
-     | Token | Value | Usage |\n|---|---|---|\n\
-     | `--surface-base` | `#000000` | default background |\n\n\
-     ## Components\n\n\
-     ### DS-001: Primary Button\n\n\
-     | Variant | Use case | States | Token map |\n|---|---|---|---|\n\
-     | `primary` | main action | default / focus | `--color-primary` |\n\n\
+    "# Design — ui\n\n\
+     ## Design Overview\n\n\
+     The surface is a terminal UI built on token rows.\n\n\
+     ## Design Requirements\n\n\
+     ### DS-DISP-001: Primary Button\n\n\
+     | Variant | Use case | Token | Value |\n|---|---|---|---|\n\
+     | `primary` | main action | `--color-primary` | `#000000` |\n\n\
      ## Reference\n\n\
      - Backlog: [BACKLOG.md](BACKLOG.md)\n"
         .to_string()
 }
 
-/// A DATA.md carrying a `DT-NNN:` heading.
+/// A DATA.md carrying a qualified H2 `## DT-SHAR-NNN: <title>` item.
 fn conforming_data_with_dt() -> String {
     "# DATA — shared\n\n\
-     ## Reference\n\n\
-     - PRD: [PRD.md](../../PRD.md)\n\
-     - Backlog: [BACKLOG.md](BACKLOG.md)\n\n\
      ## Data Overview\n\n\
      The shared kernel manages value objects.\n\n\
-     ## Data Domain\n\n\
-     ### DT-001: Severity\n\n\
-     | Field | Type | Description |\n|---|---|---|\n\
-     | severity | vo | Lint finding severity level |\n\n\
-     ## Assumptions & Constraints\n\n\
-     - none\n"
+     ## DT-SHAR-001: Severity\n\n\
+     | Type  | Description |\n|-------|-------------|\n\
+     | vo    | Lint finding severity level |\n\n\
+     ## Reference\n\n\
+     - PRD: [PRD.md](../../PRD.md)\n\
+     - Backlog: [BACKLOG.md](BACKLOG.md)\n"
         .to_string()
 }
 
@@ -2592,7 +2589,7 @@ fn write_data_backlog_pair(dir: &Path, data: &str, backlog: Option<&str>) {
 fn ds_full_coverage_reports_nothing() {
     let tmp = tempfile::tempdir().unwrap();
     let design = conforming_design_with_ds();
-    let backlog = backlog_with_rows(&["DS-001"]);
+    let backlog = backlog_with_rows(&["DS-DISP-001"]);
     write_design_backlog_pair(tmp.path(), &design, Some(&backlog));
     let findings = audit(tmp.path());
     assert!(
@@ -2605,12 +2602,13 @@ fn ds_full_coverage_reports_nothing() {
 #[test]
 fn ds_mismatch_reports_both_directions() {
     let tmp = tempfile::tempdir().unwrap();
-    // DESIGN declares DS-001 and DS-003; BACKLOG carries DS-001 and a bogus DS-002.
+    // DESIGN declares DS-DISP-001 and DS-DISP-003; BACKLOG carries DS-DISP-001
+    // and a bogus DS-DISP-002.
     let design = conforming_design_with_ds().replace(
-        "### DS-001: Primary Button\n\n",
-        "### DS-001: Primary Button\n\n### DS-003: Card\n\n",
+        "### DS-DISP-001: Primary Button\n\n",
+        "### DS-DISP-001: Primary Button\n\n### DS-DISP-003: Card\n\n",
     );
-    let backlog = backlog_with_rows(&["DS-001", "DS-002"]);
+    let backlog = backlog_with_rows(&["DS-DISP-001", "DS-DISP-002"]);
     write_design_backlog_pair(tmp.path(), &design, Some(&backlog));
     let findings = audit(tmp.path());
     assert!(
@@ -2624,7 +2622,7 @@ fn ds_mismatch_reports_both_directions() {
 fn ds_empty_heading_set_fires_not_ds_on_every_legacy_row() {
     let tmp = tempfile::tempdir().unwrap();
     // DESIGN declares no DS-IDs; every legacy BACKLOG row must fire ds_backlog_id_not_ds.
-    let design = "# UI — DESIGN\n\n## Brand & Style\n\n- base\n\n## Reference\n\n- Backlog: [BACKLOG.md](BACKLOG.md)\n";
+    let design = "# Design — ui\n\n## Design Overview\n\n- base\n\n## Reference\n\n- Backlog: [BACKLOG.md](BACKLOG.md)\n";
     let backlog = backlog_with_rows(&["DISP-01", "DISP-02"]);
     write_design_backlog_pair(tmp.path(), design, Some(&backlog));
     let findings = audit(tmp.path());
@@ -2642,7 +2640,7 @@ fn ds_empty_heading_set_fires_not_ds_on_every_legacy_row() {
 fn ds_backlog_without_backlog_section_is_silent() {
     let tmp = tempfile::tempdir().unwrap();
     let design = conforming_design_with_ds();
-    let backlog = backlog_with_rows(&["DS-001"]).replace("## Backlog\n", "## Other\n");
+    let backlog = backlog_with_rows(&["DS-DISP-001"]).replace("## Backlog\n", "## Other\n");
     write_design_backlog_pair(tmp.path(), &design, Some(&backlog));
     let findings = audit(tmp.path());
     assert!(
@@ -2656,7 +2654,7 @@ fn ds_backlog_without_backlog_section_is_silent() {
 fn dt_full_coverage_reports_nothing() {
     let tmp = tempfile::tempdir().unwrap();
     let data = conforming_data_with_dt();
-    let backlog = backlog_with_rows(&["DT-001"]);
+    let backlog = backlog_with_rows(&["DT-SHAR-001"]);
     write_data_backlog_pair(tmp.path(), &data, Some(&backlog));
     let findings = audit(tmp.path());
     assert!(
@@ -2670,10 +2668,10 @@ fn dt_full_coverage_reports_nothing() {
 fn dt_mismatch_reports_both_directions() {
     let tmp = tempfile::tempdir().unwrap();
     let data = conforming_data_with_dt().replace(
-        "### DT-001: Severity\n\n",
-        "### DT-001: Severity\n\n### DT-003: MemberDelta\n\n",
+        "## DT-SHAR-001: Severity\n\n",
+        "## DT-SHAR-001: Severity\n\n## DT-SHAR-003: MemberDelta\n\n",
     );
-    let backlog = backlog_with_rows(&["DT-001", "DT-002"]);
+    let backlog = backlog_with_rows(&["DT-SHAR-001", "DT-SHAR-002"]);
     write_data_backlog_pair(tmp.path(), &data, Some(&backlog));
     let findings = audit(tmp.path());
     assert!(
@@ -2688,12 +2686,7 @@ fn dt_rejects_do_headings() {
     let tmp = tempfile::tempdir().unwrap();
     // `DO-001` is not an accepted DT-ID; the DATA doc declares no DT headings,
     // so the legacy DO row fires dt_backlog_id_not_dt.
-    let data = conforming_data_with_dt()
-        .replace("### DT-001: Severity\n\n", "")
-        .replace(
-            "| Field | Type | Description |\n|---|---|---|\n| severity | vo | Lint finding severity level |\n",
-            "| ID | Field | Type | Description |\n|---|---|---|---|\n| DO-001 | Severity | vo | Lint finding severity level |\n",
-        );
+    let data = conforming_data_with_dt().replace("## DT-SHAR-001: Severity\n\n", "");
     let backlog = backlog_with_rows(&["DO-001"]);
     write_data_backlog_pair(tmp.path(), &data, Some(&backlog));
     let findings = audit(tmp.path());
@@ -2717,6 +2710,80 @@ fn dt_empty_heading_set_fires_not_dt_on_every_legacy_row() {
     assert_eq!(
         count, 2,
         "every legacy row fires dt_backlog_id_not_dt; got: {findings:#?}"
+    );
+}
+
+/// A bare `DS-001:` heading (digits only, no NAME qualifier) is no longer an
+/// accepted DS-ID, so the legacy BACKLOG row is not a valid item ID and the
+/// document declares no item at all.
+#[test]
+fn ds_bare_id_heading_is_no_longer_accepted() {
+    let tmp = tempfile::tempdir().unwrap();
+    let design = "# Design — ui\n\n\
+     ## Design Overview\n\n\
+     The surface is a terminal UI built on token rows.\n\n\
+     ## Design Requirements\n\n\
+     ### DS-001: Primary Button\n\n\
+     | Variant | Use case | Token | Value |\n|---|---|---|---|\n\
+     | `primary` | main action | `--color-primary` | `#000000` |\n\n\
+     ## Reference\n\n\
+     - Backlog: [BACKLOG.md](BACKLOG.md)\n";
+    let backlog = backlog_with_rows(&["DS-001"]);
+    write_design_backlog_pair(tmp.path(), design, Some(&backlog));
+    let findings = audit(tmp.path());
+    // The bare heading is not collected, so the `DS-001` BACKLOG row is not a
+    // valid item ID (direction b) and no item ID owes a BACKLOG row (no (a)).
+    assert!(
+        has(&findings, "AES601", "ds_backlog_id_not_ds"),
+        "a bare `DS-001:` heading must not be accepted, so the row fires ds_backlog_id_not_ds; got: {findings:#?}"
+    );
+}
+
+/// A bare `DT-001:` heading (digits only, no NAME qualifier) is no longer an
+/// accepted DT-ID.
+#[test]
+fn dt_bare_id_heading_is_no_longer_accepted() {
+    let tmp = tempfile::tempdir().unwrap();
+    let data = "# DATA — shared\n\n\
+     ## Data Overview\n\n\
+     The shared kernel manages value objects.\n\n\
+     ## DT-001: Severity\n\n\
+     | Type  | Description |\n|-------|-------------|\n\
+     | vo    | Lint finding severity level |\n\n\
+     ## Reference\n\n\
+     - Backlog: [BACKLOG.md](BACKLOG.md)\n";
+    let backlog = backlog_with_rows(&["DT-001"]);
+    write_data_backlog_pair(tmp.path(), data, Some(&backlog));
+    let findings = audit(tmp.path());
+    assert!(
+        has(&findings, "AES601", "dt_backlog_id_not_dt"),
+        "a bare `DT-001:` heading must not be accepted, so the row fires dt_backlog_id_not_dt; got: {findings:#?}"
+    );
+}
+
+/// The DATA_DOC H2 contract now requires `Data Overview` + `Reference` and
+/// allows only `DT-` item H2s, so a DATA.md without those required H2s fires
+/// `h2_missing`.
+#[test]
+fn aes605_data_doc_requires_data_overview_and_reference() {
+    let tmp = tempfile::tempdir().unwrap();
+    let kernel = tmp.path().join("crates/shared");
+    fs::create_dir_all(kernel.join("src")).unwrap();
+    fs::write(
+        kernel.join("DATA.md"),
+        "# DATA — shared\n\n## Data Domain\n\n\
+         ## Assumptions & Constraints\n\n- none\n",
+    )
+    .unwrap();
+    let findings = audit(tmp.path());
+    let message = findings
+        .iter()
+        .find(|(c, v, _, _)| c == "AES605" && v == "h2_missing")
+        .map(|(_, _, m, _)| m.as_str())
+        .expect("the DATA doc must owe its required H2s");
+    assert!(
+        message.contains("Data Overview") && message.contains("Reference"),
+        "the DATA doc must owe Data Overview and Reference; got: {message}"
     );
 }
 

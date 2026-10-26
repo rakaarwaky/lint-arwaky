@@ -272,16 +272,15 @@ fn e2e_a_requirement_id_without_its_feature_prefix_is_rejected_by_the_fr_format_
 
 const DESIGN_PATH: &str = "crates/sample/DESIGN.md";
 
-/// A DESIGN.md with a single `DS-001` heading.
+/// A DESIGN.md with a single qualified `DS-DISP-001` heading.
 fn design_with_ds() -> String {
-    "# UI — DESIGN\n\n\
-     ## Brand & Style\n\n\
-     | Token | Value | Usage |\n|---|---|---|\n\
-     | `--surface-base` | `#000000` | default background |\n\n\
-     ## Components\n\n\
-     ### DS-001: Primary Button\n\n\
-     | Variant | Use case | States | Token map |\n|---|---|---|---|\n\
-     | `primary` | main action | default / focus | `--color-primary` |\n\n\
+    "# Design — ui\n\n\
+     ## Design Overview\n\n\
+     The surface is a terminal UI built on token rows.\n\n\
+     ## Design Requirements\n\n\
+     ### DS-DISP-001: Primary Button\n\n\
+     | Variant | Use case | Token | Value |\n|---|---|---|---|\n\
+     | `primary` | main action | `--color-primary` | `#000000` |\n\n\
      ## Reference\n\n\
      - Backlog: [BACKLOG.md](BACKLOG.md)\n"
         .to_string()
@@ -295,7 +294,7 @@ fn e2e_a_design_backlog_pair_with_no_ds_headings_fires_not_ds_on_every_legacy_ro
     // DESIGN.md declares no DS headings; the legacy BACKLOG rows are not DS-IDs.
     write(
         &root.join(DESIGN_PATH),
-        &design_with_ds().replace("### DS-001: Primary Button\n\n", ""),
+        &design_with_ds().replace("### DS-DISP-001: Primary Button\n\n", ""),
     );
     let findings = audit(root);
     let count = for_document(&findings, DESIGN_PATH)
@@ -315,8 +314,8 @@ fn e2e_a_design_backlog_pair_with_aligned_ds_ids_reports_nothing() {
     let root = tmp.path();
     write_workspace(root);
     write(&root.join(DESIGN_PATH), &design_with_ds());
-    // Point the BACKLOG at DS-001 so the pair is aligned.
-    let backlog = write_workspace_root().replace("FR-SAMPLE-001", "DS-001");
+    // Point the BACKLOG at DS-DISP-001 so the pair is aligned.
+    let backlog = write_workspace_root().replace("FR-SAMPLE-001", "DS-DISP-001");
     write(&root.join("crates/sample/BACKLOG.md"), &backlog);
     let findings = audit(root);
     assert!(
@@ -343,20 +342,17 @@ fn write_workspace_root() -> String {
 
 const DATA_PATH: &str = "crates/shared/DATA.md";
 
-/// A DATA.md with a single `DT-001` heading.
+/// A DATA.md with a single qualified H2 `## DT-SHAR-001` item.
 fn data_with_dt() -> String {
     "# DATA — shared\n\n\
-     ## Reference\n\n\
-     - PRD: [PRD.md](../../PRD.md)\n\
-     - Backlog: [BACKLOG.md](BACKLOG.md)\n\n\
      ## Data Overview\n\n\
      The shared kernel manages value objects.\n\n\
-     ## Data Domain\n\n\
-     ### DT-001: Severity\n\n\
-     | Field | Type | Description |\n|---|---|---|\n\
-     | severity | vo | Lint finding severity level |\n\n\
-     ## Assumptions & Constraints\n\n\
-     - none\n"
+     ## DT-SHAR-001: Severity\n\n\
+     | Type  | Description |\n|-------|-------------|\n\
+     | vo    | Lint finding severity level |\n\n\
+     ## Reference\n\n\
+     - PRD: [PRD.md](../../PRD.md)\n\
+     - Backlog: [BACKLOG.md](BACKLOG.md)\n"
         .to_string()
 }
 
@@ -365,10 +361,11 @@ fn e2e_a_data_backlog_pair_with_no_dt_headings_fires_not_dt_on_every_legacy_row(
     let tmp = tempfile::tempdir().expect("temp dir must be creatable");
     let root = tmp.path();
     write_workspace(root);
-    // DATA.md in the kernel folder with no DT headings; legacy SHAR rows are not DT-IDs.
+    // DATA.md in the kernel folder with no DT headings; legacy SHAR rows are
+    // not DT-IDs.
     write(
         &root.join(DATA_PATH),
-        &data_with_dt().replace("### DT-001: Severity\n\n", ""),
+        &data_with_dt().replace("## DT-SHAR-001: Severity\n\n", ""),
     );
     let backlog = write_workspace_root().replace("FR-SAMPLE-001", "SHAR-01");
     write(&root.join("crates/shared/BACKLOG.md"), &backlog);
@@ -389,15 +386,11 @@ fn e2e_a_data_backlog_pair_rejects_do_headings() {
     let tmp = tempfile::tempdir().expect("temp dir must be creatable");
     let root = tmp.path();
     write_workspace(root);
-    // DATA.md declares no DT headings, and the BACKLOG row is DO-001, not DT-001.
+    // DATA.md declares no DT headings, and the BACKLOG row is DO-001, not
+    // DT-SHAR-001.
     write(
         &root.join(DATA_PATH),
-        &data_with_dt()
-            .replace("### DT-001: Severity\n\n", "")
-            .replace(
-                "| severity | vo | Lint finding severity level |\n",
-                "| DO-001 | severity | vo | Lint finding severity level |\n",
-            ),
+        &data_with_dt().replace("## DT-SHAR-001: Severity\n\n", ""),
     );
     let backlog = write_workspace_root().replace("FR-SAMPLE-001", "DO-001");
     write(&root.join("crates/shared/BACKLOG.md"), &backlog);

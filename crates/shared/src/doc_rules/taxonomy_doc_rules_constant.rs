@@ -318,7 +318,9 @@ pub const WORKSPACE_ROOT_MARKERS: &[&str] = &["Cargo.toml", "pyproject.toml", "p
 /// Every heading inside `required` but absent from the file fires
 /// `h2_missing`. A file with zero or more-than-one H1 fires `h1_count`.
 ///
-/// The `DESIGN_DOC` entry is transcribed verbatim from the fenced template in
+/// The `DATA_DOC` entry allows item H2s carrying a `DT-` prefix
+/// (`## DT-<NAME>-NNN: <title>`); any other H2 is `h2_unexpected`. The
+/// `DESIGN_DOC` entry is transcribed verbatim from the fenced template in
 /// `skills/aes-docs/references/HOW-TO-MAKE-DESIGN.md`, and `allowed` is empty
 /// on purpose: copying that template must produce a file AES605 accepts with
 /// no edit. An empty `allowed` makes the set closed, so a DESIGN.md carrying an
@@ -441,19 +443,10 @@ pub const DOC_HEADING_CONTRACTS: &[DocH2Contract] = &[
         ],
         &[],
     ),
-    (
-        DATA_DOC,
-        &[
-            "Reference",
-            "Data Overview",
-            "Data Domain",
-            "Assumptions & Constraints",
-        ],
-        &[],
-    ),
+    (DATA_DOC, &["Data Overview", "Reference"], &["DT-"]),
     (
         DESIGN_DOC,
-        &["Brand & Style", "Components", "Reference"],
+        &["Design Overview", "Design Requirements", "Reference"],
         &[],
     ),
 ];

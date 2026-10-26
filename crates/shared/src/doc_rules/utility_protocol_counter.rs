@@ -33,8 +33,11 @@ pub fn fr_id_heading_re() -> Option<&'static regex::Regex> {
         .as_ref()
 }
 
-/// A DESIGN.md DS-ID heading (`### DS-001: <title>`), H2–H4, colon-terminated.
-const DS_ID_HEADING_PATTERN: &str = r"(?m)^#{2,4}\s+(?P<id>DS-\d+):";
+/// A DESIGN.md DS-ID heading (`### DS-DISP-001: <title>`), H2–H4,
+/// colon-terminated. The NAME token (e.g. DISP, CLIC, MCPS, TUIC) is a
+/// per-folder qualifier, so the qualified `DS-<NAME>-NNN` form is mandatory;
+/// a bare `DS-001` (digits only after the prefix, no NAME) no longer matches.
+const DS_ID_HEADING_PATTERN: &str = r"(?m)^#{2,4}\s+(?P<id>DS-[A-Za-z0-9_]+-\d+):";
 
 /// The shared DS-ID heading pattern, compiled once.
 pub fn ds_id_heading_re() -> Option<&'static regex::Regex> {
@@ -43,7 +46,7 @@ pub fn ds_id_heading_re() -> Option<&'static regex::Regex> {
         .as_ref()
 }
 
-/// Accepted DS-ID set from a DESIGN.md's `DS-NNN:` headings.
+/// Accepted DS-ID set from a DESIGN.md's `DS-<NAME>-NNN:` headings.
 pub fn collect_ds_id_set(text: &str) -> Option<Vec<String>> {
     let re = ds_id_heading_re()?;
     let ids: Vec<String> = re
@@ -53,8 +56,11 @@ pub fn collect_ds_id_set(text: &str) -> Option<Vec<String>> {
     if ids.is_empty() { None } else { Some(ids) }
 }
 
-/// A DATA.md DT-ID heading (`### DT-001: <title>`), H2–H4, colon-terminated.
-const DT_ID_HEADING_PATTERN: &str = r"(?m)^#{2,4}\s+(?P<id>DT-\d+):";
+/// A DATA.md DT-ID heading (`## DT-SHAR-001: <title>`), H2–H4,
+/// colon-terminated. The NAME token (e.g. SHAR, MCPS, TUIC) is a per-folder
+/// qualifier, so the qualified `DT-<NAME>-NNN` form is mandatory; a bare
+/// `DT-001` (digits only after the prefix, no NAME) no longer matches.
+const DT_ID_HEADING_PATTERN: &str = r"(?m)^#{2,4}\s+(?P<id>DT-[A-Za-z0-9_]+-\d+):";
 
 /// The shared DT-ID heading pattern, compiled once.
 pub fn dt_id_heading_re() -> Option<&'static regex::Regex> {
@@ -63,7 +69,7 @@ pub fn dt_id_heading_re() -> Option<&'static regex::Regex> {
         .as_ref()
 }
 
-/// Accepted DT-ID set from a DATA.md's `DT-NNN:` headings.
+/// Accepted DT-ID set from a DATA.md's `DT-<NAME>-NNN:` headings.
 pub fn collect_dt_id_set(text: &str) -> Option<Vec<String>> {
     let re = dt_id_heading_re()?;
     let ids: Vec<String> = re
