@@ -8,7 +8,8 @@ Calculator is implemented, tested, and gated. Nothing is blocked.
 
 | ID | Priority | State| Dependencies | Next Action | Updated |
 |---:|---|---|---|---|---|
-| BLK-001 | P1 | Planned | — | Document the aggregate boundary | 2026-10-03 |
+| FR-CALCULATOR-001 | P1 | Planned | — | Document the aggregate boundary | 2026-10-03 |
+| FR-CALCULATOR-002 | P2 | Planned | — | Run the request | 2026-10-03 |
 
 ## Scenario Evidence
 
@@ -43,3 +44,4 @@ Nothing deferred.
 | Date | Change | By |
 |------|--------|----|
 | 2026-10-03 | Backlog opened with the contract sections. | @raka |
+| 2026-10-26 | Aligned Backlog row IDs to FRD FR-IDs (AES601). | @raka |
