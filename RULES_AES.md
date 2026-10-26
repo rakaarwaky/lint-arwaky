@@ -502,13 +502,19 @@ These rules audit the AES document chain — `PRD.md`, `ROADMAP.md`, `README.md`
 
 **Severity:** HIGH
 
-Requirement IDs follow `FR-<FEATURE>-NNN: <imperative name>`, and every requirement states all six fields: Description, Input, Output, Business Rules, Edge Cases, Error Handling. The FRD's requirement count must also equal the count of `pub trait I*Protocol` declarations in the feature's shared contract module.
+Requirement IDs follow `FR-<FEATURE>-NNN: <imperative name>`, and every requirement states all six fields: Description, Input, Output, Business Rules, Edge Cases, Error Handling. The FRD's requirement count must also equal the count of `pub trait I*Protocol` declarations in the feature's shared contract module. DESIGN.md item IDs follow `DS-<DESIGNNAME>-NNN: <title>` (item headings at H2–H4 (`### DS-<DESIGNNAME>-NNN:` in the shipped template)); DATA.md item IDs follow `DT-<DATANAME>-NNN: <title>` as item H2s. A bare `DS-001`/`DT-001` (digits only, no NAME qualifier) is not an accepted item ID.
 
 | Violation type                  | Fires when                                                              |
 | ------------------------------- | ------------------------------------------------------------------------ |
 | `id_missing_feature_prefix`     | An ID reads `FR-NNN` with no feature prefix.                            |
 | `field_missing`                 | A requirement omits one or more of the six fields; the message names each. |
 | `protocol_count_mismatch`       | The FRD heading count and the module's `I*Protocol` class count differ; the message states both counts. |
+| `backlog_id_not_fr`             | A BACKLOG `## Backlog` row's ID cell is not a valid FRD FR-ID.          |
+| `backlog_id_missing`            | An FRD FR-ID has no corresponding BACKLOG `## Backlog` row.             |
+| `ds_backlog_id_not_ds`          | A BACKLOG `## Backlog` row's ID cell is not a valid DESIGN.md `DS-<DESIGNNAME>-NNN` ID.    |
+| `ds_backlog_id_missing`         | A DESIGN.md `DS-<DESIGNNAME>-NNN` ID has no corresponding BACKLOG `## Backlog` row.        |
+| `dt_backlog_id_not_dt`          | A BACKLOG `## Backlog` row's ID cell is not a valid DATA.md `DT-<DATANAME>-NNN` ID.      |
+| `dt_backlog_id_missing`         | A DATA.md `DT-<DATANAME>-NNN` ID has no corresponding BACKLOG `## Backlog` row.          |
 
 One protocol class is one capability seam, and one seam is one requirement. Aggregate traits (`I*Aggregate`) are excluded from the count. The crate folder name is translated to the module name by replacing `-` with `_`. A feature with no shared contract module is left alone. The message names both fix directions: either merge/split requirements or merge/split protocol classes — see the four-direction table in `HOW-TO-MAKE-FRD.md`.
 
@@ -606,8 +612,10 @@ Matching is by leading words after lowercasing and stripping punctuation, so `##
 | `PRD.md` | Problem Statement, Goals & Success Metrics, User Personas, Scope, Feature Requirements, Non-functional Requirements, Open Questions / Risks |
 | `README.md` | Prerequisites, Quick Start, Architecture, Available Scripts/Commands, Configuration, Testing, Contributing, License (forbidden: Project Structure — that section belongs to `AGENTS.md`) |
 | `ROADMAP.md` | Current Condition, State Definitions, Status Policy, Feature Roll-up, Risk Register |
+| `DATA.md` | Data Overview, Reference (allowed: `DT-` item H2s) |
+| `DESIGN.md` | Design Overview, Design Requirements, Reference |
 
-Each document also carries an agreed set of project-specific H2s that are accepted without violation; see the constants in `taxonomy_doc_constant.rs` for the full per-document lists.
+Each document also carries an agreed set of project-specific H2s that are accepted without violation; see the constants in `taxonomy_doc_rules_constant.rs` for the full per-document lists.
 
 | Violation type     | Fires when                                                                            |
 | ------------------- | ------------------------------------------------------------------------------------- |

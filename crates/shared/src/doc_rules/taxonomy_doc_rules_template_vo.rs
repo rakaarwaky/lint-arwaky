@@ -173,25 +173,24 @@ pub const TEMPLATE_PROFILES: &[TemplateProfile] = &[
         ],
         placeholder_catalog: &["<YYYY-MM-DD>", "<link to CODEOWNERS>", "<N>"],
     },
+    // The DATA and DESIGN templates ship their only placeholders inside H2/H3
+    // heading text, where the angle-token strip blanks them, so their
+    // placeholder catalog is intentionally empty: AES606 section-deletion plus
+    // the AES605 H2 contract enforce template fidelity for these two docs.
     TemplateProfile {
         doc_name: DATA_DOC,
         template_file: "HOW-TO-MAKE-DATA.md",
         placeholder_style: PlaceholderStyle::AngleToken,
         deletable_sections: &[],
-        required_h2s: &[
-            "Reference",
-            "Data Overview",
-            "Data Domain",
-            "Assumptions & Constraints",
-        ],
-        placeholder_catalog: &["<feature-name>", "<YYYY-MM-DD>", "<one line>"],
+        required_h2s: &["Data Overview", "Reference"],
+        placeholder_catalog: &[],
     },
     TemplateProfile {
         doc_name: DESIGN_DOC,
         template_file: "HOW-TO-MAKE-DESIGN.md",
         placeholder_style: PlaceholderStyle::AngleToken,
         deletable_sections: &[],
-        required_h2s: &["Brand & Style", "Components", "Reference"],
-        placeholder_catalog: &["<feature-name>", "<YYYY-MM-DD>", "<one line>"],
+        required_h2s: &["Design Overview", "Design Requirements", "Reference"],
+        placeholder_catalog: &[],
     },
 ];

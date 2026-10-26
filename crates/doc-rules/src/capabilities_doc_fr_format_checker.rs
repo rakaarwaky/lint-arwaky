@@ -20,8 +20,8 @@ use shared_doc_rules::utility_markdown_scanner::{
     api_contract_methods, fr_id_bare_re, normalize_heading, sections,
 };
 use shared_doc_rules::utility_protocol_counter::{
-    contract_method_names, count_fr_headings, count_protocol_traits, fr_id_heading_re,
-    locate_kernel_srcs,
+    collect_ds_id_set, collect_dt_id_set, contract_method_names, count_fr_headings,
+    count_protocol_traits, fr_id_heading_re, locate_kernel_srcs,
 };
 
 // ─── Block 1: Struct Definition ────────────────────────────
@@ -60,6 +60,12 @@ impl IFrFormatProtocol for FrFormatChecker {
             let backlog = documents
                 .iter()
                 .find(|d| context.document_name(d) == consts::BACKLOG_DOC);
+            let design = documents
+                .iter()
+                .find(|d| context.document_name(d) == consts::DESIGN_DOC);
+            let data = documents
+                .iter()
+                .find(|d| context.document_name(d) == consts::DATA_DOC);
             if let Some(frd) = frd {
                 let mut own = Vec::new();
                 self.check_fr_id_format(frd, &mut own);
@@ -71,6 +77,20 @@ impl IFrFormatProtocol for FrFormatChecker {
                 }
                 context.stamp(frd, &mut own);
                 findings.extend(own);
+            }
+            // The DS/DT sub-checks pair the folder's DESIGN/DATA doc with its
+            // own BACKLOG and stamp findings to the document being checked.
+            if let (Some(design), Some(backlog)) = (design, backlog) {
+                let mut own_ds = Vec::new();
+                self.check_backlog_ds_id_alignment(design, backlog, &mut own_ds);
+                context.stamp(design, &mut own_ds);
+                findings.extend(own_ds);
+            }
+            if let (Some(data), Some(backlog)) = (data, backlog) {
+                let mut own_dt = Vec::new();
+                self.check_backlog_dt_id_alignment(data, backlog, &mut own_dt);
+                context.stamp(data, &mut own_dt);
+                findings.extend(own_dt);
             }
             for document in documents {
                 if context.document_name(document) == consts::DATA_DOC {
@@ -415,11 +435,13 @@ impl FrFormatChecker {
             if id.is_empty() {
                 continue;
             }
-            // `+2` because the body skips the heading line and the offset is 0-based.
+            // `+2`: `section.line` is the 0-based heading index, and the first
+            // body line (the table header) sits one line below it, so the
+            // 0-based row offset needs +2 to yield the 1-based row line.
             rows.push((id, section.line + offset + 2));
         }
-        // `+1`: `section.line` is 0-based, so the heading's 1-based document
-        // line matches the 1-based row lines above.
+        // `+1` converts the 0-based heading index to the 1-based document line
+        // of the `## Backlog` heading, matching the 1-based row lines above.
         (rows, section.line + 1)
     }
 
@@ -465,6 +487,112 @@ impl FrFormatChecker {
                     "Add a BACKLOG `## Backlog` row whose ID cell is `{fr_id}`."
                 ),
             ),
+        );
+    }
+
+    /// DESIGN/DATA ↔ BACKLOG ID alignment for one folder, parameterized by the
+    /// family's ID-set collector and its two violation codes.
+    ///
+    /// Direction (b) fires on every BACKLOG row whose ID is not a valid item
+    /// ID, even when the document declares zero item IDs — an empty heading
+    /// set is therefore not silent for legacy rows. Direction (a) fires for
+    /// each item ID with no matching BACKLOG row. Silent when the BACKLOG has
+    /// no `## Backlog` section.
+    fn check_backlog_id_alignment(
+        &self,
+        document: &DocSource,
+        backlog: &DocSource,
+        collect_id_set: fn(&str) -> Option<Vec<String>>,
+        not_code: &'static str,
+        missing_code: &'static str,
+        findings: &mut Vec<DocFinding>,
+    ) {
+        let item_ids: Vec<String> = collect_id_set(&document.text).unwrap_or_default();
+        let (backlog_rows, section_line) = Self::parse_backlog_id_column(backlog);
+        if section_line == 0 {
+            return;
+        }
+
+        let item_set: HashSet<&str> = item_ids.iter().map(String::as_str).collect();
+
+        // (b) BACKLOG row id is not a valid item ID.
+        for (id, line) in &backlog_rows {
+            if !item_set.contains(id.as_str()) {
+                findings.push(
+                    DocFinding::new_with_line(
+                        "",
+                        *line,
+                        consts::RULE_CODE_FR_FORMAT,
+                        not_code,
+                        format!(
+                            "line {line} BACKLOG row id `{id}` is not a valid item ID"
+                        ),
+                    )
+                    .with_reason(
+                        "Every BACKLOG `## Backlog` row must carry an item ID the document declares so the backlog stays traceable to a requirement.",
+                        format!("Replace `{id}` with one of the document's item IDs."),
+                    ),
+                );
+            }
+        }
+
+        // (a) item ID declared in the document has no BACKLOG row.
+        let backlog_id_set: HashSet<&str> =
+            backlog_rows.iter().map(|(id, _)| id.as_str()).collect();
+        for item_id in &item_ids {
+            if !backlog_id_set.contains(item_id.as_str()) {
+                findings.push(
+                    DocFinding::new_with_line(
+                        "",
+                        section_line,
+                        consts::RULE_CODE_FR_FORMAT,
+                        missing_code,
+                        format!(
+                            "item ID `{item_id}` declared in the document has no BACKLOG `## Backlog` row"
+                        ),
+                    )
+                    .with_reason(
+                        "Every item ID declared in the document must appear in the BACKLOG `## Backlog` table so the backlog tracks every requirement.",
+                        format!(
+                            "Add a BACKLOG `## Backlog` row whose ID cell is `{item_id}`."
+                        ),
+                    ),
+                );
+            }
+        }
+    }
+
+    /// DESIGN.md DS-IDs ↔ BACKLOG `## Backlog` rows, 1:1.
+    fn check_backlog_ds_id_alignment(
+        &self,
+        design: &DocSource,
+        backlog: &DocSource,
+        findings: &mut Vec<DocFinding>,
+    ) {
+        self.check_backlog_id_alignment(
+            design,
+            backlog,
+            collect_ds_id_set,
+            consts::DS_BACKLOG_ID_NOT_DS,
+            consts::DS_BACKLOG_ID_MISSING,
+            findings,
+        );
+    }
+
+    /// DATA.md DT-IDs ↔ BACKLOG `## Backlog` rows, 1:1.
+    fn check_backlog_dt_id_alignment(
+        &self,
+        data: &DocSource,
+        backlog: &DocSource,
+        findings: &mut Vec<DocFinding>,
+    ) {
+        self.check_backlog_id_alignment(
+            data,
+            backlog,
+            collect_dt_id_set,
+            consts::DT_BACKLOG_ID_NOT_DT,
+            consts::DT_BACKLOG_ID_MISSING,
+            findings,
         );
     }
 }
