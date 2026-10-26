@@ -509,6 +509,12 @@ Requirement IDs follow `FR-<FEATURE>-NNN: <imperative name>`, and every requirem
 | `id_missing_feature_prefix`     | An ID reads `FR-NNN` with no feature prefix.                            |
 | `field_missing`                 | A requirement omits one or more of the six fields; the message names each. |
 | `protocol_count_mismatch`       | The FRD heading count and the module's `I*Protocol` class count differ; the message states both counts. |
+| `backlog_id_not_fr`             | A BACKLOG `## Backlog` row's ID cell is not a valid FRD FR-ID.          |
+| `backlog_id_missing`            | An FRD FR-ID has no corresponding BACKLOG `## Backlog` row.             |
+| `ds_backlog_id_not_ds`          | A BACKLOG `## Backlog` row's ID cell is not a valid DESIGN.md DS-ID.    |
+| `ds_backlog_id_missing`         | A DESIGN.md DS-ID has no corresponding BACKLOG `## Backlog` row.        |
+| `dt_backlog_id_not_dt`          | A BACKLOG `## Backlog` row's ID cell is not a valid DATA.md DT-ID.      |
+| `dt_backlog_id_missing`         | A DATA.md DT-ID has no corresponding BACKLOG `## Backlog` row.          |
 
 One protocol class is one capability seam, and one seam is one requirement. Aggregate traits (`I*Aggregate`) are excluded from the count. The crate folder name is translated to the module name by replacing `-` with `_`. A feature with no shared contract module is left alone. The message names both fix directions: either merge/split requirements or merge/split protocol classes — see the four-direction table in `HOW-TO-MAKE-FRD.md`.
 

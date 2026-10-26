@@ -20,6 +20,18 @@ pub const FR_BACKLOG_ID_NOT_FR: &str = "backlog_id_not_fr";
 /// An FRD FR-ID that has no corresponding BACKLOG `## Backlog` row.
 pub const FR_BACKLOG_ID_MISSING: &str = "backlog_id_missing";
 
+/// A DESIGN.md DS-ID that has no corresponding BACKLOG `## Backlog` row.
+pub const DS_BACKLOG_ID_MISSING: &str = "ds_backlog_id_missing";
+
+/// A BACKLOG `## Backlog` row whose ID cell is not a valid DESIGN.md DS-ID.
+pub const DS_BACKLOG_ID_NOT_DS: &str = "ds_backlog_id_not_ds";
+
+/// A DATA.md DT-ID that has no corresponding BACKLOG `## Backlog` row.
+pub const DT_BACKLOG_ID_MISSING: &str = "dt_backlog_id_missing";
+
+/// A BACKLOG `## Backlog` row whose ID cell is not a valid DATA.md DT-ID.
+pub const DT_BACKLOG_ID_NOT_DT: &str = "dt_backlog_id_not_dt";
+
 /// ─── AES602 — Section structure ─────────────────────────────────────────────
 pub const RULE_CODE_SECTION_STRUCTURE: &str = "AES602";
 

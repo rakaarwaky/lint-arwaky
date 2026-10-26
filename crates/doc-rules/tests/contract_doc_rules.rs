@@ -2513,6 +2513,213 @@ fn backlog_without_backlog_section_is_silent() {
     );
 }
 
+// ── AES601: DS/DT ↔ BACKLOG ID alignment ─────────────────────────────────
+
+/// A DESIGN.md carrying a `DS-NNN:` heading in its Components table region.
+fn conforming_design_with_ds() -> String {
+    "# UI — DESIGN\n\n\
+     ## Brand & Style\n\n\
+     | Token | Value | Usage |\n|---|---|---|\n\
+     | `--surface-base` | `#000000` | default background |\n\n\
+     ## Components\n\n\
+     ### DS-001: Primary Button\n\n\
+     | Variant | Use case | States | Token map |\n|---|---|---|---|\n\
+     | `primary` | main action | default / focus | `--color-primary` |\n\n\
+     ## Reference\n\n\
+     - Backlog: [BACKLOG.md](BACKLOG.md)\n"
+        .to_string()
+}
+
+/// A DATA.md carrying a `DT-NNN:` heading.
+fn conforming_data_with_dt() -> String {
+    "# DATA — shared\n\n\
+     ## Reference\n\n\
+     - PRD: [PRD.md](../../PRD.md)\n\
+     - Backlog: [BACKLOG.md](BACKLOG.md)\n\n\
+     ## Data Overview\n\n\
+     The shared kernel manages value objects.\n\n\
+     ## Data Domain\n\n\
+     ### DT-001: Severity\n\n\
+     | Field | Type | Description |\n|---|---|---|\n\
+     | severity | vo | Lint finding severity level |\n\n\
+     ## Assumptions & Constraints\n\n\
+     - none\n"
+        .to_string()
+}
+
+/// A BACKLOG whose `## Backlog` table carries the given row ids.
+fn backlog_with_rows(rows: &[&str]) -> String {
+    let rows = rows
+        .iter()
+        .map(|id| format!("| {id} | P0 | Ready | — | — | 2026-09-29 |"))
+        .collect::<Vec<_>>()
+        .join("\n");
+    format!(
+        "# Feature Backlog: Sample\n\n## Backlog\n\n\
+         | ID | Priority | State | Dependencies | Next Action | Updated |\n\
+         |---|---:|---|---|---|---|\n{rows}\n"
+    )
+}
+
+/// Write a surface folder `crates/sample` holding `design` and `backlog`,
+/// so only the DESIGN/BACKLOG pair contributes findings.
+fn write_design_backlog_pair(dir: &Path, design: &str, backlog: Option<&str>) {
+    let feature = dir.join("crates/sample");
+    fs::create_dir_all(feature.join("src")).unwrap();
+    fs::write(feature.join("DESIGN.md"), design).unwrap();
+    fs::write(
+        feature.join("src/agent_sample_orchestrator.rs"),
+        "//! sample orchestrator\n",
+    )
+    .unwrap();
+    if let Some(backlog) = backlog {
+        fs::write(feature.join("BACKLOG.md"), backlog).unwrap();
+    }
+}
+
+/// Write a kernel folder `crates/shared` holding `data` and `backlog`,
+/// so only the DATA/BACKLOG pair contributes findings.
+fn write_data_backlog_pair(dir: &Path, data: &str, backlog: Option<&str>) {
+    let kernel = dir.join("crates/shared");
+    fs::create_dir_all(kernel.join("src")).unwrap();
+    fs::write(kernel.join("DATA.md"), data).unwrap();
+    if let Some(backlog) = backlog {
+        fs::write(kernel.join("BACKLOG.md"), backlog).unwrap();
+    }
+}
+
+#[test]
+fn ds_full_coverage_reports_nothing() {
+    let tmp = tempfile::tempdir().unwrap();
+    let design = conforming_design_with_ds();
+    let backlog = backlog_with_rows(&["DS-001"]);
+    write_design_backlog_pair(tmp.path(), &design, Some(&backlog));
+    let findings = audit(tmp.path());
+    assert!(
+        !has(&findings, "AES601", "ds_backlog_id_not_ds")
+            && !has(&findings, "AES601", "ds_backlog_id_missing"),
+        "every DS-ID has a BACKLOG row and every row is a DS-ID; got: {findings:#?}"
+    );
+}
+
+#[test]
+fn ds_mismatch_reports_both_directions() {
+    let tmp = tempfile::tempdir().unwrap();
+    // DESIGN declares DS-001 and DS-003; BACKLOG carries DS-001 and a bogus DS-002.
+    let design = conforming_design_with_ds().replace(
+        "### DS-001: Primary Button\n\n",
+        "### DS-001: Primary Button\n\n### DS-003: Card\n\n",
+    );
+    let backlog = backlog_with_rows(&["DS-001", "DS-002"]);
+    write_design_backlog_pair(tmp.path(), &design, Some(&backlog));
+    let findings = audit(tmp.path());
+    assert!(
+        has(&findings, "AES601", "ds_backlog_id_not_ds")
+            && has(&findings, "AES601", "ds_backlog_id_missing"),
+        "one misaligned DS pair reports both directions; got: {findings:#?}"
+    );
+}
+
+#[test]
+fn ds_empty_heading_set_fires_not_ds_on_every_legacy_row() {
+    let tmp = tempfile::tempdir().unwrap();
+    // DESIGN declares no DS-IDs; every legacy BACKLOG row must fire ds_backlog_id_not_ds.
+    let design = "# UI — DESIGN\n\n## Brand & Style\n\n- base\n\n## Reference\n\n- Backlog: [BACKLOG.md](BACKLOG.md)\n";
+    let backlog = backlog_with_rows(&["DISP-01", "DISP-02"]);
+    write_design_backlog_pair(tmp.path(), design, Some(&backlog));
+    let findings = audit(tmp.path());
+    let count = findings
+        .iter()
+        .filter(|(c, v, _, _)| c == "AES601" && v == "ds_backlog_id_not_ds")
+        .count();
+    assert_eq!(
+        count, 2,
+        "every legacy row fires ds_backlog_id_not_ds; got: {findings:#?}"
+    );
+}
+
+#[test]
+fn ds_backlog_without_backlog_section_is_silent() {
+    let tmp = tempfile::tempdir().unwrap();
+    let design = conforming_design_with_ds();
+    let backlog = backlog_with_rows(&["DS-001"]).replace("## Backlog\n", "## Other\n");
+    write_design_backlog_pair(tmp.path(), &design, Some(&backlog));
+    let findings = audit(tmp.path());
+    assert!(
+        !has(&findings, "AES601", "ds_backlog_id_not_ds")
+            && !has(&findings, "AES601", "ds_backlog_id_missing"),
+        "a BACKLOG without a `## Backlog` section stays silent; got: {findings:#?}"
+    );
+}
+
+#[test]
+fn dt_full_coverage_reports_nothing() {
+    let tmp = tempfile::tempdir().unwrap();
+    let data = conforming_data_with_dt();
+    let backlog = backlog_with_rows(&["DT-001"]);
+    write_data_backlog_pair(tmp.path(), &data, Some(&backlog));
+    let findings = audit(tmp.path());
+    assert!(
+        !has(&findings, "AES601", "dt_backlog_id_not_dt")
+            && !has(&findings, "AES601", "dt_backlog_id_missing"),
+        "every DT-ID has a BACKLOG row and every row is a DT-ID; got: {findings:#?}"
+    );
+}
+
+#[test]
+fn dt_mismatch_reports_both_directions() {
+    let tmp = tempfile::tempdir().unwrap();
+    let data = conforming_data_with_dt().replace(
+        "### DT-001: Severity\n\n",
+        "### DT-001: Severity\n\n### DT-003: MemberDelta\n\n",
+    );
+    let backlog = backlog_with_rows(&["DT-001", "DT-002"]);
+    write_data_backlog_pair(tmp.path(), &data, Some(&backlog));
+    let findings = audit(tmp.path());
+    assert!(
+        has(&findings, "AES601", "dt_backlog_id_not_dt")
+            && has(&findings, "AES601", "dt_backlog_id_missing"),
+        "one misaligned DT pair reports both directions; got: {findings:#?}"
+    );
+}
+
+#[test]
+fn dt_rejects_do_headings() {
+    let tmp = tempfile::tempdir().unwrap();
+    // `DO-001` is not an accepted DT-ID; the DATA doc declares no DT headings,
+    // so the legacy DO row fires dt_backlog_id_not_dt.
+    let data = conforming_data_with_dt()
+        .replace("### DT-001: Severity\n\n", "")
+        .replace(
+            "| Field | Type | Description |\n|---|---|---|\n| severity | vo | Lint finding severity level |\n",
+            "| ID | Field | Type | Description |\n|---|---|---|---|\n| DO-001 | Severity | vo | Lint finding severity level |\n",
+        );
+    let backlog = backlog_with_rows(&["DO-001"]);
+    write_data_backlog_pair(tmp.path(), &data, Some(&backlog));
+    let findings = audit(tmp.path());
+    assert!(
+        has(&findings, "AES601", "dt_backlog_id_not_dt"),
+        "a DO-001 BACKLOG row with no DT heading must fire dt_backlog_id_not_dt; got: {findings:#?}"
+    );
+}
+
+#[test]
+fn dt_empty_heading_set_fires_not_dt_on_every_legacy_row() {
+    let tmp = tempfile::tempdir().unwrap();
+    let data = "# DATA — shared\n\n## Reference\n\n- Backlog: [BACKLOG.md](BACKLOG.md)\n\n## Data Overview\n\nnone.\n";
+    let backlog = backlog_with_rows(&["SHAR-01", "SHAR-02"]);
+    write_data_backlog_pair(tmp.path(), data, Some(&backlog));
+    let findings = audit(tmp.path());
+    let count = findings
+        .iter()
+        .filter(|(c, v, _, _)| c == "AES601" && v == "dt_backlog_id_not_dt")
+        .count();
+    assert_eq!(
+        count, 2,
+        "every legacy row fires dt_backlog_id_not_dt; got: {findings:#?}"
+    );
+}
+
 /// The H2 set is closed, so the surface-behaviour headings an earlier revision
 /// of the contract required are now off-template and must be reported.
 #[test]

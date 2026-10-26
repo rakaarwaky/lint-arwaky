@@ -269,3 +269,146 @@ fn e2e_a_requirement_id_without_its_feature_prefix_is_rejected_by_the_fr_format_
         for_document(&findings, FRD_PATH)
     );
 }
+
+const DESIGN_PATH: &str = "crates/sample/DESIGN.md";
+
+/// A DESIGN.md with a single `DS-001` heading.
+fn design_with_ds() -> String {
+    "# UI — DESIGN\n\n\
+     ## Brand & Style\n\n\
+     | Token | Value | Usage |\n|---|---|---|\n\
+     | `--surface-base` | `#000000` | default background |\n\n\
+     ## Components\n\n\
+     ### DS-001: Primary Button\n\n\
+     | Variant | Use case | States | Token map |\n|---|---|---|---|\n\
+     | `primary` | main action | default / focus | `--color-primary` |\n\n\
+     ## Reference\n\n\
+     - Backlog: [BACKLOG.md](BACKLOG.md)\n"
+        .to_string()
+}
+
+#[test]
+fn e2e_a_design_backlog_pair_with_no_ds_headings_fires_not_ds_on_every_legacy_row() {
+    let tmp = tempfile::tempdir().expect("temp dir must be creatable");
+    let root = tmp.path();
+    write_workspace(root);
+    // DESIGN.md declares no DS headings; the legacy BACKLOG rows are not DS-IDs.
+    write(
+        &root.join(DESIGN_PATH),
+        &design_with_ds().replace("### DS-001: Primary Button\n\n", ""),
+    );
+    let findings = audit(root);
+    let count = for_document(&findings, DESIGN_PATH)
+        .iter()
+        .filter(|(code, violation, _)| code == "AES601" && violation == "ds_backlog_id_not_ds")
+        .count();
+    assert!(
+        count >= 1,
+        "legacy BACKLOG rows must fire ds_backlog_id_not_ds; got {:?}",
+        for_document(&findings, DESIGN_PATH)
+    );
+}
+
+#[test]
+fn e2e_a_design_backlog_pair_with_aligned_ds_ids_reports_nothing() {
+    let tmp = tempfile::tempdir().expect("temp dir must be creatable");
+    let root = tmp.path();
+    write_workspace(root);
+    write(&root.join(DESIGN_PATH), &design_with_ds());
+    // Point the BACKLOG at DS-001 so the pair is aligned.
+    let backlog = write_workspace_root().replace("FR-SAMPLE-001", "DS-001");
+    write(&root.join("crates/sample/BACKLOG.md"), &backlog);
+    let findings = audit(root);
+    assert!(
+        !for_document(&findings, DESIGN_PATH)
+            .iter()
+            .any(|(code, violation, _)| {
+                code == "AES601"
+                    && (violation == "ds_backlog_id_not_ds" || violation == "ds_backlog_id_missing")
+            }),
+        "an aligned DS pair must report no ds_* findings; got {:?}",
+        for_document(&findings, DESIGN_PATH)
+    );
+}
+
+/// A minimal BACKLOG whose single row carries *id* in the ID cell.
+fn write_workspace_root() -> String {
+    "# Feature Backlog: Sample\n\nFRD: [FRD.md](FRD.md)\n\n\
+     ## Backlog\n\n\
+     | ID | Priority | State | Dependencies | Next Action | Updated |\n\
+     |---|---:|---|---|---|---|\n\
+     | FR-SAMPLE-001 | P0 | Ready | — | — | 2026-09-29 |\n"
+        .to_string()
+}
+
+const DATA_PATH: &str = "crates/shared/DATA.md";
+
+/// A DATA.md with a single `DT-001` heading.
+fn data_with_dt() -> String {
+    "# DATA — shared\n\n\
+     ## Reference\n\n\
+     - PRD: [PRD.md](../../PRD.md)\n\
+     - Backlog: [BACKLOG.md](BACKLOG.md)\n\n\
+     ## Data Overview\n\n\
+     The shared kernel manages value objects.\n\n\
+     ## Data Domain\n\n\
+     ### DT-001: Severity\n\n\
+     | Field | Type | Description |\n|---|---|---|\n\
+     | severity | vo | Lint finding severity level |\n\n\
+     ## Assumptions & Constraints\n\n\
+     - none\n"
+        .to_string()
+}
+
+#[test]
+fn e2e_a_data_backlog_pair_with_no_dt_headings_fires_not_dt_on_every_legacy_row() {
+    let tmp = tempfile::tempdir().expect("temp dir must be creatable");
+    let root = tmp.path();
+    write_workspace(root);
+    // DATA.md in the kernel folder with no DT headings; legacy SHAR rows are not DT-IDs.
+    write(
+        &root.join(DATA_PATH),
+        &data_with_dt().replace("### DT-001: Severity\n\n", ""),
+    );
+    let backlog = write_workspace_root().replace("FR-SAMPLE-001", "SHAR-01");
+    write(&root.join("crates/shared/BACKLOG.md"), &backlog);
+    let findings = audit(root);
+    assert!(
+        for_document(&findings, DATA_PATH)
+            .iter()
+            .any(|(code, violation, _)| {
+                code == "AES601" && violation == "dt_backlog_id_not_dt"
+            }),
+        "legacy BACKLOG rows must fire dt_backlog_id_not_dt; got {:?}",
+        for_document(&findings, DATA_PATH)
+    );
+}
+
+#[test]
+fn e2e_a_data_backlog_pair_rejects_do_headings() {
+    let tmp = tempfile::tempdir().expect("temp dir must be creatable");
+    let root = tmp.path();
+    write_workspace(root);
+    // DATA.md declares no DT headings, and the BACKLOG row is DO-001, not DT-001.
+    write(
+        &root.join(DATA_PATH),
+        &data_with_dt()
+            .replace("### DT-001: Severity\n\n", "")
+            .replace(
+                "| severity | vo | Lint finding severity level |\n",
+                "| DO-001 | severity | vo | Lint finding severity level |\n",
+            ),
+    );
+    let backlog = write_workspace_root().replace("FR-SAMPLE-001", "DO-001");
+    write(&root.join("crates/shared/BACKLOG.md"), &backlog);
+    let findings = audit(root);
+    assert!(
+        for_document(&findings, DATA_PATH)
+            .iter()
+            .any(|(code, violation, _)| {
+                code == "AES601" && violation == "dt_backlog_id_not_dt"
+            }),
+        "a DO-001 row with no DT heading must fire dt_backlog_id_not_dt; got {:?}",
+        for_document(&findings, DATA_PATH)
+    );
+}

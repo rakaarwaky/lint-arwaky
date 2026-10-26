@@ -33,6 +33,46 @@ pub fn fr_id_heading_re() -> Option<&'static regex::Regex> {
         .as_ref()
 }
 
+/// A DESIGN.md DS-ID heading (`### DS-001: <title>`), H2–H4, colon-terminated.
+const DS_ID_HEADING_PATTERN: &str = r"(?m)^#{2,4}\s+(?P<id>DS-\d+):";
+
+/// The shared DS-ID heading pattern, compiled once.
+pub fn ds_id_heading_re() -> Option<&'static regex::Regex> {
+    static PAT: OnceLock<Option<regex::Regex>> = OnceLock::new();
+    PAT.get_or_init(|| regex::Regex::new(DS_ID_HEADING_PATTERN).ok())
+        .as_ref()
+}
+
+/// Accepted DS-ID set from a DESIGN.md's `DS-NNN:` headings.
+pub fn collect_ds_id_set(text: &str) -> Option<Vec<String>> {
+    let re = ds_id_heading_re()?;
+    let ids: Vec<String> = re
+        .captures_iter(text)
+        .filter_map(|caps| caps.name("id").map(|m| m.as_str().to_string()))
+        .collect();
+    if ids.is_empty() { None } else { Some(ids) }
+}
+
+/// A DATA.md DT-ID heading (`### DT-001: <title>`), H2–H4, colon-terminated.
+const DT_ID_HEADING_PATTERN: &str = r"(?m)^#{2,4}\s+(?P<id>DT-\d+):";
+
+/// The shared DT-ID heading pattern, compiled once.
+pub fn dt_id_heading_re() -> Option<&'static regex::Regex> {
+    static PAT: OnceLock<Option<regex::Regex>> = OnceLock::new();
+    PAT.get_or_init(|| regex::Regex::new(DT_ID_HEADING_PATTERN).ok())
+        .as_ref()
+}
+
+/// Accepted DT-ID set from a DATA.md's `DT-NNN:` headings.
+pub fn collect_dt_id_set(text: &str) -> Option<Vec<String>> {
+    let re = dt_id_heading_re()?;
+    let ids: Vec<String> = re
+        .captures_iter(text)
+        .filter_map(|caps| caps.name("id").map(|m| m.as_str().to_string()))
+        .collect();
+    if ids.is_empty() { None } else { Some(ids) }
+}
+
 /// Number of `FR-<Feature>-NNN:` requirement headings in the document.
 ///
 /// The same heading shape the FR-ID rule accepts, so a requirement nested

@@ -386,3 +386,88 @@ fn a_document_violating_two_rules_reports_both_codes() {
         "the missing PRD H2 must be reported; got: {codes:?}"
     );
 }
+
+/// A DESIGN.md declaring a `DS-001` heading with a conforming BACKLOG.
+fn conforming_design() -> String {
+    "# UI — DESIGN\n\n\
+     ## Brand & Style\n\n\
+     | Token | Value | Usage |\n|---|---|---|\n\
+     | `--surface-base` | `#000000` | default background |\n\n\
+     ## Components\n\n\
+     ### DS-001: Primary Button\n\n\
+     | Variant | Use case | States | Token map |\n|---|---|---|---|\n\
+     | `primary` | main action | default / focus | `--color-primary` |\n\n\
+     ## Reference\n\n\
+     - Backlog: [BACKLOG.md](BACKLOG.md)\n"
+        .to_string()
+}
+
+fn backlog_with_rows(rows: &[&str]) -> String {
+    let rows = rows
+        .iter()
+        .map(|id| format!("| {id} | P0 | Ready | — | — | 2026-09-29 |"))
+        .collect::<Vec<_>>()
+        .join("\n");
+    format!(
+        "# Feature Backlog: Sample\n\n## Backlog\n\n\
+         | ID | Priority | State | Dependencies | Next Action | Updated |\n\
+         |---|---:|---|---|---|---|\n{rows}\n"
+    )
+}
+
+#[test]
+fn the_fr_format_seam_is_the_only_one_answering_a_ds_backlog_mismatch() {
+    let tmp = tempfile::tempdir().unwrap();
+    let feature = tmp.path().join("crates/sample");
+    std::fs::create_dir_all(feature.join("src")).unwrap();
+    std::fs::write(feature.join("DESIGN.md"), conforming_design()).unwrap();
+    // BACKLOG carries a bogus DS-002 row and omits DS-001 → both directions.
+    std::fs::write(feature.join("BACKLOG.md"), backlog_with_rows(&["DS-002"])).unwrap();
+    std::fs::write(
+        feature.join("src/agent_sample_orchestrator.rs"),
+        "//! sample orchestrator\n",
+    )
+    .unwrap();
+
+    let context = context_for(tmp.path());
+    let fr_findings = FrFormatChecker::new().audit_fr_format(&context);
+    let ds_codes: Vec<&str> = fr_findings
+        .iter()
+        .filter(|f| {
+            f.violation_type == "ds_backlog_id_not_ds"
+                || f.violation_type == "ds_backlog_id_missing"
+        })
+        .map(|f| f.code)
+        .collect();
+    assert!(
+        !ds_codes.is_empty(),
+        "the AES601 seam must answer a DS BACKLOG mismatch; got: {fr_findings:#?}"
+    );
+    assert!(
+        ds_codes.iter().all(|code| *code == "AES601"),
+        "DS alignment findings must carry AES601; got: {ds_codes:?}"
+    );
+}
+
+#[test]
+fn the_fr_format_seam_stays_silent_when_ds_backlog_is_aligned() {
+    let tmp = tempfile::tempdir().unwrap();
+    let feature = tmp.path().join("crates/sample");
+    std::fs::create_dir_all(feature.join("src")).unwrap();
+    std::fs::write(feature.join("DESIGN.md"), conforming_design()).unwrap();
+    std::fs::write(feature.join("BACKLOG.md"), backlog_with_rows(&["DS-001"])).unwrap();
+    std::fs::write(
+        feature.join("src/agent_sample_orchestrator.rs"),
+        "//! sample orchestrator\n",
+    )
+    .unwrap();
+
+    let fr_findings = FrFormatChecker::new().audit_fr_format(&context_for(tmp.path()));
+    assert!(
+        fr_findings
+            .iter()
+            .all(|f| f.violation_type != "ds_backlog_id_not_ds"
+                && f.violation_type != "ds_backlog_id_missing"),
+        "an aligned DS pair must report no ds_* findings; got: {fr_findings:#?}"
+    );
+}
