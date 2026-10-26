@@ -1,8 +1,13 @@
 # DESIGN — Cli
 
-## Brand & Style
+## Design Overview
 
-### Colors
+The fixture models a minimal terminal surface with a small token set and no
+pixel-level tokens.
+
+## Design Requirements
+
+### DS-CLI-001: Colors
 
 | Role | Value | Use |
 |------|-------|-----|
@@ -11,7 +16,7 @@
 | Secondary accent | gray | Inactive rows. |
 | Tertiary accent | yellow | A violation the user must act on. |
 
-### Typography
+### DS-CLI-002: Typography
 
 | Level | Weight | Use |
 |-------|--------|-----|
@@ -19,9 +24,7 @@
 | Body | normal | A file row. |
 | Muted | dim | A path hint. |
 
-## Components
-
-### Pane
+### DS-CLI-003: Pane
 
 | Part | Role |
 |------|------|
@@ -29,7 +32,7 @@
 | Body | Lists the rows the pane owns. |
 | Status row | Reports counts. |
 
-### Row
+### DS-CLI-004: Row
 
 | Part | Role |
 |------|------|
