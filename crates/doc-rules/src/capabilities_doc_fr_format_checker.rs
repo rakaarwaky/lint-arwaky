@@ -415,7 +415,7 @@ impl FrFormatChecker {
             if id.is_empty() {
                 continue;
             }
-            // Body lines follow the heading, so document line = heading + offset + 2.
+            // `+2` because the body skips the heading line and the offset is 0-based.
             rows.push((id, section.line + offset + 2));
         }
         (rows, section.line)

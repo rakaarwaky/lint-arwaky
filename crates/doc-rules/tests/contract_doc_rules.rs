@@ -2472,6 +2472,22 @@ fn aes601_stays_silent_when_no_backlog_document() {
 }
 
 #[test]
+fn aes601_stays_silent_when_backlog_has_no_backlog_section() {
+    let tmp = tempfile::tempdir().unwrap();
+    write_workspace(tmp.path(), &conforming_frd());
+    let backlog = conforming_backlog()
+        .replace("## Backlog\n", "## Other Section\n")
+        .replace("| FR-SAMPLE-001 | P0 | Ready | — | — | 2026-09-29 |\n", "");
+    fs::write(tmp.path().join("crates/sample/BACKLOG.md"), backlog).unwrap();
+    let findings = audit(tmp.path());
+    assert!(
+        !has(&findings, "AES601", "backlog_id_not_fr")
+            && !has(&findings, "AES601", "backlog_id_missing"),
+        "BACKLOG without a `## Backlog` section must stay silent; got: {findings:#?}"
+    );
+}
+
+#[test]
 fn aes601_reports_both_directions_for_one_misaligned_pair() {
     let tmp = tempfile::tempdir().unwrap();
     let frd = conforming_frd().replace("### FR-SAMPLE-002:", "### FR-SAMPLE-003:");
