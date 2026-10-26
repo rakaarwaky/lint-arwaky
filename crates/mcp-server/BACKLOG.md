@@ -16,7 +16,13 @@ Last Updated: 2026-10-24
 
 | ID | Priority | State | Dependencies | Next Action | Updated |
 |---:|---|---|---|---|---|
-| MCPS-01 | P0 | Done | None | — | 2026-10-24 |
+| DS-MCPS-001 | P0 | Done | None | — | 2026-10-24 |
+| DS-MCPS-002 | P1 | Done | None | — | 2026-10-24 |
+| DS-MCPS-003 | P1 | Done | None | — | 2026-10-24 |
+| DS-MCPS-004 | P1 | Done | None | — | 2026-10-24 |
+| DS-MCPS-005 | P1 | Done | None | — | 2026-10-24 |
+| DS-MCPS-006 | P1 | Done | None | — | 2026-10-24 |
+| DS-MCPS-007 | P1 | Done | None | — | 2026-10-24 |
 
 ## Scenario Evidence
 
@@ -47,4 +53,5 @@ None.
 
 | Date | Change | By |
 |---|---|---|
+| 2026-10-26 | Qualified the Backlog ids to the MCPS design-item scheme for the DESIGN/DATA template redesign | @raka |
 | 2026-10-24 | Initialized BACKLOG.md for mcp-server surface crate | @raka |

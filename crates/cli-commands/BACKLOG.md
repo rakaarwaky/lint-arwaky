@@ -14,21 +14,24 @@ Last Updated: 2026-10-05
 
 ## Backlog
 
-| ID | Priority | State| Dependencies | Next Action | Updated |
+| ID | Priority | State | Dependencies | Next Action | Updated |
 |---:|---|---|---|---|---|
-| CLIC-01 | P0 | Done | None | — | 2026-09-29 |
-| CLIC-02 | P1 | Open | None | Stabilize the AES205 count the report command shows as a delta | 2026-10-05 |
-
-CLIC-02: `report` compares this run's per-member counts against the last run's.
-AES205 (circular import) findings flip-flop by a couple of violations between
-runs on identical files, so a progress report can move up or down without any
-code changing. The delta is the visible symptom of a non-deterministic scan.
+| DS-CLIC-001 | P0 | Done | None | — | 2026-09-29 |
+| DS-CLIC-002 | P0 | Done | None | — | 2026-09-29 |
+| DS-CLIC-003 | P0 | Done | None | — | 2026-09-29 |
+| DS-CLIC-004 | P1 | Open | None | Stabilize the AES205 count the report command shows as a delta | 2026-10-05 |
+| DS-CLIC-005 | P0 | Done | None | — | 2026-09-29 |
+| DS-CLIC-006 | P1 | Done | None | — | 2026-09-29 |
+| DS-CLIC-007 | P1 | Done | None | — | 2026-09-29 |
+| DS-CLIC-008 | P1 | Done | None | — | 2026-09-29 |
+| DS-CLIC-009 | P1 | Done | None | — | 2026-09-29 |
+| DS-CLIC-010 | P1 | Done | None | — | 2026-09-29 |
 
 ## Scenario Evidence
 
 | Scenario | Kind | Test file | Test name | Last verified |
 |---|---|---|---|---|
-| CLIC-02 AES205 count non-determinism | Gap | `tests/unit_cli_commands_report.rs` | `report_delta_is_deterministic` | working-tree |
+| DS-CLIC-004 AES205 count non-determinism | Gap | `tests/unit_cli_commands_report.rs` | `report_delta_is_deterministic` | working-tree |
 
 ## Blockers
 
@@ -44,7 +47,7 @@ None.
 |---|---|---|
 | Tests | Done | `cargo nextest run -p cli-commands-lint-arwaky` → 0 failures |
 | Docs | Done | [FRD.md](FRD.md) is specification-only; status lives in this file |
-| CLIC-02 | In Progress | AES205 count non-determinism; report stays useful while pinned down |
+| DS-CLIC-004 | In Progress | AES205 count non-determinism; report stays useful while pinned down |
 
 ## Deferred
 
@@ -54,5 +57,6 @@ None.
 
 | Date | Change | By |
 |---|---|---|
+| 2026-10-26 | Qualified the Backlog ids to the CLIC design-item scheme for the DESIGN/DATA template redesign | @raka |
 | 2026-10-05 | Shipped the `report` command, the folder-tree scan output with per-violation WHY/FIX, path semantics (a path narrows the report, the scan walks the member), and the JSON/SARIF/JUnit fields matching the text report. Opened CLIC-02 for the AES205 count non-determinism that moves the report's delta | @raka |
 | 2026-09-29 | Created backlog entry for CLI commands surface crate | @raka |
