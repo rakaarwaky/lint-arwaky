@@ -319,7 +319,11 @@ pub const WORKSPACE_ROOT_MARKERS: &[&str] = &["Cargo.toml", "pyproject.toml", "p
 /// `h2_missing`. A file with zero or more-than-one H1 fires `h1_count`.
 ///
 /// The `DATA_DOC` entry allows item H2s carrying a `DT-` prefix
-/// (`## DT-<NAME>-NNN: <title>`); any other H2 is `h2_unexpected`. The
+/// (`## DT-<NAME>-NNN: <title>`); any other H2 is `h2_unexpected`. `allowed`
+/// entries are leading-word prefixes, so the `DT-` allowed entry admits ANY H2
+/// whose normalized title starts with `dt` — a deliberately looser gate:
+/// AES605 only polices H2 shape, while AES601's qualified `DT-<NAME>-NNN`
+/// regex is the authority on which H2s count as item ids. The
 /// `DESIGN_DOC` entry is transcribed verbatim from the fenced template in
 /// `skills/aes-docs/references/HOW-TO-MAKE-DESIGN.md`, and `allowed` is empty
 /// on purpose: copying that template must produce a file AES605 accepts with

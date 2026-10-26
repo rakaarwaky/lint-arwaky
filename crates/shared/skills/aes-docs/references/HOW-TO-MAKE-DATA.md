@@ -60,14 +60,12 @@
 Copy, fill, delete nothing.
 
 ```markdown
-# Data Requirements
+# DATA Requirements
 
 ## Data Overview
 
 <One paragraph: what data shapes this kernel manages, who reads/writes them,
 what business domain they serve. No code.>
-
-## Data Requirements
 
 ## DT-<DATANAME>-001: <Short imperative name>
 | Type  | Description |

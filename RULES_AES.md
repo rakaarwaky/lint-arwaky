@@ -502,7 +502,7 @@ These rules audit the AES document chain — `PRD.md`, `ROADMAP.md`, `README.md`
 
 **Severity:** HIGH
 
-Requirement IDs follow `FR-<FEATURE>-NNN: <imperative name>`, and every requirement states all six fields: Description, Input, Output, Business Rules, Edge Cases, Error Handling. The FRD's requirement count must also equal the count of `pub trait I*Protocol` declarations in the feature's shared contract module. DESIGN.md item IDs follow `DS-<DESIGNNAME>-NNN: <title>` (H3 under `## Design Requirements`); DATA.md item IDs follow `DT-<DATANAME>-NNN: <title>` as item H2s. A bare `DS-001`/`DT-001` (digits only, no NAME qualifier) is not an accepted item ID.
+Requirement IDs follow `FR-<FEATURE>-NNN: <imperative name>`, and every requirement states all six fields: Description, Input, Output, Business Rules, Edge Cases, Error Handling. The FRD's requirement count must also equal the count of `pub trait I*Protocol` declarations in the feature's shared contract module. DESIGN.md item IDs follow `DS-<DESIGNNAME>-NNN: <title>` (item headings at H2–H4 (`### DS-<DESIGNNAME>-NNN:` in the shipped template)); DATA.md item IDs follow `DT-<DATANAME>-NNN: <title>` as item H2s. A bare `DS-001`/`DT-001` (digits only, no NAME qualifier) is not an accepted item ID.
 
 | Violation type                  | Fires when                                                              |
 | ------------------------------- | ------------------------------------------------------------------------ |
