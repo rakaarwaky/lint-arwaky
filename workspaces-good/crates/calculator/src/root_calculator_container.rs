@@ -1,9 +1,10 @@
 use crate::agent_calculator_orchestrator::{CalculatorOrchestrator, CalculatorOrchestratorDeps};
 use crate::capabilities_addition_analyzer::AdditionAnalyzer;
+use crate::capabilities_calculator_resolve::CalculatorResolveCapability;
 use crate::capabilities_division_analyzer::DivisionAnalyzer;
 use crate::capabilities_multiplication_analyzer::MultiplicationAnalyzer;
 use crate::capabilities_subtraction_analyzer::SubtractionAnalyzer;
-use calculator_shared::contract_calculator_aggregate::ICalculatorAggregate;
+use calculator_shared::calculator::contract_calculator_aggregate::ICalculatorAggregate;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -15,6 +16,7 @@ pub struct CalculatorContainer {
 
 impl CalculatorContainer {
     pub fn new() -> Self {
+        let _resolve = CalculatorResolveCapability;
         let orchestrator = CalculatorOrchestrator::new(CalculatorOrchestratorDeps {
             addition: Box::new(AdditionAnalyzer),
             subtraction: Box::new(SubtractionAnalyzer),

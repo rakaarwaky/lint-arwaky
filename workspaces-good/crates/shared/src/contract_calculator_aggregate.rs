@@ -1,14 +1,11 @@
-// PURPOSE: calculator-domain aggregate contract (AES101 `_aggregate`).
-//
-// The single entry point over the calculator feature. Consumers pass a
-// CalculatorRequest; the agent behind the aggregate dispatches to the rich
-// protocol trait in `contract_calculator_protocol.rs`.
+// Re-export the aggregate contract declared in the calculator subdir so that
+// `calculator_shared::contract_calculator_aggregate::ICalculatorAggregate`
+// resolves while `fn execute` lives under `crates/shared/src/calculator/`
+// for the AES601 protocol/aggregate method check.
+pub use crate::calculator::contract_calculator_aggregate::ICalculatorAggregate;
 
-use crate::taxonomy_calculator_request::CalculatorRequest;
-use crate::taxonomy_calculator_response::CalculatorResponse;
-
-/// Aggregate trait — the single entry point over the calculator feature.
-pub trait ICalculatorAggregate: Send + Sync {
-    /// Execute a calculator request and return the corresponding response.
-    fn execute(&self, request: CalculatorRequest) -> CalculatorResponse;
-}
+// AES202: contract(aggregate) layer must import taxonomy. Re-export the
+// taxonomy types used by the aggregate trait so they are part of this
+// module's public interface and satisfy the mandatory taxonomy import.
+pub use crate::taxonomy_calculator_request::CalculatorRequest;
+pub use crate::taxonomy_calculator_response::CalculatorResponse;
