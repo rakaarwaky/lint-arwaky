@@ -2389,23 +2389,16 @@ fn aes605_fires_when_design_carries_off_template_h2() {
 
 // ── AES601: FR-ID ↔ BACKLOG ID alignment ────────────────────────────────
 
-/// Write `frd` and `backlog` into `crates/sample` with the feature's
-/// orchestrator file and the root documents the audit expects, so only the
+/// Set up a conforming `crates/sample` workspace carrying `frd`, then point
+/// its BACKLOG at `backlog` (removing the file when `None`), so only the
 /// pair under test contributes findings.
 fn write_frd_backlog_pair(dir: &Path, frd: &str, backlog: Option<&str>) {
-    let feature = dir.join("crates/sample");
-    fs::create_dir_all(feature.join("src")).unwrap();
-    fs::write(feature.join("FRD.md"), frd).unwrap();
-    if let Some(backlog) = backlog {
-        fs::write(feature.join("BACKLOG.md"), backlog).unwrap();
+    write_workspace_in_layout("crates", dir, frd);
+    let backlog_path = dir.join("crates/sample/BACKLOG.md");
+    match backlog {
+        Some(backlog) => fs::write(&backlog_path, backlog).unwrap(),
+        None => fs::remove_file(&backlog_path).unwrap(),
     }
-    fs::write(
-        feature.join("src/agent_sample_orchestrator.rs"),
-        "//! sample orchestrator\n",
-    )
-    .unwrap();
-    fs::write(dir.join("PRD.md"), conforming_prd()).unwrap();
-    fs::write(dir.join("ROADMAP.md"), conforming_roadmap()).unwrap();
 }
 
 #[test]
@@ -2432,10 +2425,15 @@ fn backlog_id_mismatch_reports_both_directions() {
         .iter()
         .find(|f| f.violation_type == "backlog_id_not_fr")
         .expect("the non-FR row must fire");
-    let row_line = fs::read_to_string(tmp.path().join("crates/sample/BACKLOG.md"))
-        .unwrap()
+    let backlog_text = fs::read_to_string(tmp.path().join("crates/sample/BACKLOG.md")).unwrap();
+    let row_line = backlog_text
         .lines()
         .position(|l| l.starts_with("| FR-SAMPLE-002"))
+        .unwrap()
+        + 1;
+    let heading_line = backlog_text
+        .lines()
+        .position(|l| l.starts_with("## Backlog"))
         .unwrap()
         + 1;
     assert_eq!(
@@ -2453,16 +2451,8 @@ fn backlog_id_mismatch_reports_both_directions() {
         .iter()
         .find(|f| f.violation_type == "backlog_id_missing" && f.message.contains("FR-SAMPLE-003"))
         .expect("the untracked FR-ID must fire");
-    // The section parser reports the heading's 0-based line index (see
-    // `text[..start].lines().count()`), so the anchor is the index itself,
-    // not index + 1.
-    let heading_idx = fs::read_to_string(tmp.path().join("crates/sample/BACKLOG.md"))
-        .unwrap()
-        .lines()
-        .position(|l| l.starts_with("## Backlog"))
-        .unwrap();
     assert_eq!(
-        missing.line, heading_idx,
+        missing.line, heading_line,
         "`backlog_id_missing` anchors to the `## Backlog` heading; got {}",
         missing.line
     );

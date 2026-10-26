@@ -7,7 +7,7 @@ Last Updated: 2026-09-29
 
 ## Current Condition
 
-- Done: `cargo nextest run -p doc-rules-lint-arwaky` → 79 passed, 0 failed. Per-scenario evidence below.
+- Done: `cargo nextest run -p doc-rules-lint-arwaky` → 149 passed, 0 failed. Per-scenario evidence below.
 - In Progress: None
 - Blocked: None
 - Next Action: Re-run `cargo nextest run -p doc-rules-lint-arwaky` after any code change to this crate
@@ -84,7 +84,7 @@ None
 
 | Area | Status | Notes |
 |---|---|---|
-| Tests | Done | `cargo nextest run -p doc-rules-lint-arwaky` → 79 passed, 0 failed |
+| Tests | Done | `cargo nextest run -p doc-rules-lint-arwaky` → 149 passed, 0 failed |
 | Scenario evidence | Done | 34 scenarios mapped; all Automated |
 | Docs | Done | [FRD.md](FRD.md) is specification-only; status lives in this file |
 
