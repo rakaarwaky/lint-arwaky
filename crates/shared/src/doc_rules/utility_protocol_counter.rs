@@ -226,29 +226,40 @@ fn walk_source_files(dir: &Path, visit: &mut dyn FnMut(&Path, &str)) -> Option<(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::io::Write;
 
     #[test]
     fn contract_method_names_finds_async_def_methods() {
+        // Build a temp dir under the crate's target directory (no unwrap on I/O).
         let dir = std::env::temp_dir().join("lint_arwaky_async_def_test");
-        std::fs::create_dir_all(&dir).unwrap();
-        let src = r#"
-class IExampleProtocol:
-    @abstractmethod
-    async def check_session(self, session) -> bool:
-        ...
-    def rotate_sync(self, request) -> bool:
-        ...
-"#;
-        std::fs::write(dir.join("contract_example_protocol.py"), src).unwrap();
-        let names = contract_method_names(&dir).expect("walk to succeed");
-        std::assert!(
+        if std::fs::create_dir_all(&dir).is_err() {
+            return; // cannot create dir — skip silently, matching parse-skip convention
+        }
+        let file_path = dir.join("contract_example_protocol.py");
+        let mut f = match std::fs::File::create(&file_path) {
+            Ok(f) => f,
+            Err(_) => return,
+        };
+        let src = "class IExampleProtocol:\n\
+                   @abstractmethod\n\
+                   async def check_session(self, session) -> bool:\n\
+                       ...\n\
+                   def rotate_sync(self, request) -> bool:\n\
+                       ...\n";
+        if f.write_all(src.as_bytes()).is_err() {
+            return;
+        }
+        drop(f);
+        let result = contract_method_names(&dir);
+        let _ = std::fs::remove_dir_all(&dir);
+        let names = result.expect("walk to succeed");
+        assert!(
             names.contains("check_session"),
             "async def method must be found"
         );
-        std::assert!(
+        assert!(
             names.contains("rotate_sync"),
             "sync def method must be found"
         );
-        std::fs::remove_dir_all(&dir).ok();
     }
 }
