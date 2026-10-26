@@ -14,12 +14,10 @@ hard-coded filter change.
 
 | ID | Priority | State | Dependencies | Next Action | Updated |
 |---|---:|---|---|---|---|
-| LOGG-01 | P0 | Done | None | — | 2026-10-07 |
-| LOGG-02 | P0 | Done | None | — | 2026-10-07 |
-| LOGG-03 | P0 | Done | None | — | 2026-10-07 |
-| LOGG-04 | P1 | Ready | LOGG-01–03 | CLI `root_cli_main_entry.rs` accepts `-v`/`--verbose` flag and passes `LogVerbosity` to `LoggingContainer::init` | 2026-10-07 |
-| LOGG-05 | P1 | Ready | LOGG-04 | MCP `root_mcp_main_entry.rs` calls `LoggingContainer::init` instead of its local `init_tracing()` | 2026-10-07 |
-| LOGG-06 | P2 | Ready | LOGG-04 | Dispatcher scan pipeline emits `tracing::debug!`/`tracing::info!` events on `AUDIT_TARGET` for each scan phase | 2026-10-07 |
+| FR-Logging-001 | P0 | Done | None | — | 2026-10-07 |
+| FR-Logging-002 | P0 | Done | None | — | 2026-10-07 |
+| FR-Logging-003 | P0 | Done | None | — | 2026-10-07 |
+| FR-Logging-004 | P0 | Done | None | — | 2026-10-07 |
 
 ## Scenario Evidence
 
@@ -55,6 +53,7 @@ None.
 
 | Date | Change | By |
 |---|---|---|
+| 2026-10-26 | Aligned BACKLOG ID column to FRD FR-IDs (AES601) | @raka |
 | 2026-10-07 | Feature crate created. `LogVerbosity` added to `shared-common` (taxonomy layer). `SubscriberInit` capability, `LoggingOrchestrator` agent, `LoggingContainer` root. Scan-phase tracing events instrumented in `surface_check_action.rs` and `agent_external_lint_orchestrator.rs`. CLI `-v`/`-vv` flag added | @raka |
 
 ---

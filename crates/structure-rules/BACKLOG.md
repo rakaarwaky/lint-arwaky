@@ -17,11 +17,11 @@ Last Updated: 2026-10-02
 
 | ID | Priority | State| Dependencies | Next Action | Updated |
 |---:|---|---|---|---|---|
-| STRUC-01 | P0 | Done | None | — | 2026-09-29  |
-| STRUC-02 | P0 | Done | None | — | 2026-09-29  |
-| STRUC-03 | P0 | Done | None | — | 2026-09-29  |
-| STRUC-04 | P0 | Done | None | — | 2026-10-02  |
-| STRUC-05 | P0 | Done | None | — | 2026-10-13  |
+| FR-STR-001 | P0 | Done | None | — | 2026-09-29 |
+| FR-STR-002 | P0 | Done | None | — | 2026-09-29 |
+| FR-STR-003 | P0 | Done | None | — | 2026-09-29 |
+| FR-STR-004 | P0 | Done | None | — | 2026-10-02 |
+| FR-STR-005 | P0 | Done | None | — | 2026-10-13 |
 
 ## Scenario Evidence
 
@@ -86,6 +86,7 @@ None
 
 | Date | Change | By |
 |---|---|---|
+| 2026-10-26 | Aligned BACKLOG ID column to FRD FR-IDs (AES601) | @raka |
 | 2026-09-29 | Consolidated AES704 into AES702 (feature_missing_doc_pair sub-check) and AES705 into AES703 (surface_missing_design_md sub-check); added feature forbidden-files check; rewrote FRD with 3 FRs | @raka |
 | 2026-09-29 | Aligned BACKLOG.md and FRD.md to HOW-TO templates (AES605 H2 contracts) | @raka |
 | 2026-10-02 | Published **AES704** (test-suite category coverage): a feature folder owning source owes one file per test type in `tests/` plus one `bench_` file. Added `capabilities_test_suite_coverage_auditor.rs`, the `IStructureTestSuiteProtocol` seam, and the four test files plus a criterion bench that AES704 required. Renamed the two pre-existing contract files to `contract_`/`unit_` prefixes so AES103 passes | @raka |

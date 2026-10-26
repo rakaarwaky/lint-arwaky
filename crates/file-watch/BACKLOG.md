@@ -16,9 +16,9 @@ Last Updated: 2026-09-29
 
 | ID | Priority | State| Dependencies | Next Action | Updated |
 |---:|---|---|---|---|---|
-| FILE-01 | P0 | Done | None | — | 2026-09-29  |
-| FILE-02 | P0 | Done | None | — | 2026-09-29  |
-| FILE-03 | P0 | Done | None | — | 2026-09-29  |
+| FR-FileWatch-001 | P0 | Done | None | — | 2026-09-29 |
+| FR-FileWatch-002 | P0 | Done | None | — | 2026-09-29 |
+| FR-FileWatch-003 | P0 | Done | None | — | 2026-09-29 |
 
 ## Scenario Evidence
 
@@ -61,5 +61,6 @@ None
 
 | Date | Change | By |
 |---|---|---|
+| 2026-10-26 | Aligned BACKLOG ID column to FRD FR-IDs (AES601) | @raka |
 | 2026-09-29 | Restructured FRD from 6 mixed utility/capability FRs to 3 clean business-capability FRs; merged IWatchStartBroadcastShutdown into IWatchLifecycleProtocol, merged ILintableFilter+IEventDedup into IChangeFilterProtocol, promoted ChangeLintHandler to standalone capability | @raka |
 | 2026-09-17 | Initial backlog created from FRD test-scenario mapping | @raka |
