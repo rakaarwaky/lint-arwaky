@@ -160,6 +160,55 @@ pub const ORCHESTRATOR_SUFFIX: &str = "_orchestrator";
 /// Kernel folders are not features and carry DATA.md + BACKLOG.md.
 pub const KERNEL_DIR: &str = "shared";
 
+// Required H2 sets by document — one canonical list per doc. The AES605
+// `DOC_HEADING_CONTRACTS` entries and the AES606 `TemplateProfile`s both
+// read these, so a template change lands in one place. Each set is
+// transcribed from the Section Contract table of its HOW-TO-MAKE-*.md
+// reference template.
+
+/// AGENTS required H2s, per HOW-TO-MAKE-AGENTS.md.
+pub const AGENTS_REQUIRED_H2S: &[&str] = &[
+    "Agent Overview",
+    "Runtime",
+    "Project Structure",
+    "Commands",
+    "Documentation Awareness",
+    "Reference",
+];
+
+/// ARCHITECTURE required H2s, per HOW-TO-MAKE-ARCHITECTURE.md.
+pub const ARCHITECTURE_REQUIRED_H2S: &[&str] = &[
+    "Purpose",
+    "Workspace Organization",
+    "Naming Convention",
+    "Vertical Slicing Layout",
+    "Taxonomy Layer",
+    "Contract Layer",
+    "Utility Layer",
+    "Capabilities Layer",
+    "Agent Layer",
+    "Surface Layer",
+    "Root Layer",
+];
+
+/// Per-crate BACKLOG section order, per HOW-TO-MAKE-BACKLOG.
+pub const BACKLOG_REQUIRED_H2S: &[&str] = &["Progress Overview", "Backlog Status", "Reference"];
+
+/// CONTRIBUTING required H2s, per HOW-TO-MAKE-CONTRIBUTING.md.
+pub const CONTRIBUTING_REQUIRED_H2S: &[&str] = &[
+    "Contribution Overview",
+    "Contribution Guidelines",
+    "Workflow",
+    "Commit Convention",
+    "Reference",
+];
+
+/// DATA required H2s, per HOW-TO-MAKE-DATA.md.
+pub const DATA_REQUIRED_H2S: &[&str] = &["Data Overview", "Data Requirements", "Reference"];
+
+/// DESIGN required H2s, per HOW-TO-MAKE-DESIGN.md.
+pub const DESIGN_REQUIRED_H2S: &[&str] = &["Design Overview", "Design Requirements", "Reference"];
+
 /// Per-crate FRD section order, per HOW-TO-MAKE-FRD.
 pub const FRD_REQUIRED_H2S: &[&str] = &[
     "Feature Overview",
@@ -168,26 +217,36 @@ pub const FRD_REQUIRED_H2S: &[&str] = &[
     "Reference",
 ];
 
-/// Per-crate BACKLOG section order, per HOW-TO-MAKE-BACKLOG.
-pub const BACKLOG_REQUIRED_H2S: &[&str] = &["Progress Overview", "Backlog Status", "Reference"];
+/// PRD required H2s, per HOW-TO-MAKE-PRD.md.
+pub const PRD_REQUIRED_H2S: &[&str] = &["Problem Statement", "Project Requirements", "Reference"];
 
-/// Template section order, per HOW-TO-MAKE-FRD.
-pub const FRD_SECTION_ORDER: &[&str] = &[
-    "Feature Overview",
-    "Functional Requirements",
-    "Public Interface",
+/// README required H2s, per HOW-TO-MAKE-README.md.
+pub const README_REQUIRED_H2S: &[&str] = &[
+    "Project Overview",
+    "Prerequisites",
+    "Quick Start",
     "Reference",
 ];
 
-/// The only level-3 headings `HOW-TO-MAKE-FRD.md` sanctions, by literal
-/// title. A requirement heading (`### FR-<FEATURENAME>-NNN: <name>`) is the
-/// third sanctioned shape and is matched by the shared FR-ID pattern rather
-/// than listed here, so the accepted set cannot drift between AES601 and
-/// AES602 — the same reason `fr_id_heading_re` is shared.
+/// ROADMAP required H2s, per HOW-TO-MAKE-ROADMAP.md.
+pub const ROADMAP_REQUIRED_H2S: &[&str] = &["Progress Overview", "Roadmap Status", "Reference"];
+
+/// Template section order, per HOW-TO-MAKE-FRD. Alias: AES602's order check
+/// and the required-H2 set read the same four headings under two names.
+pub const FRD_SECTION_ORDER: &[&str] = FRD_REQUIRED_H2S;
+
+/// Legacy: the only level-3 headings the pre-9-doc `HOW-TO-MAKE-FRD.md`
+/// sanctioned, by literal title. A requirement heading
+/// (`### FR-<FEATURENAME>-NNN: <name>`) is the third sanctioned shape and is
+/// matched by the shared FR-ID pattern rather than listed here, so the
+/// accepted set cannot drift between AES601 and AES602 — the same reason
+/// `fr_id_heading_re` is shared.
 ///
-/// The set is closed: an FRD level-3 heading outside these two titles and the
-/// FR-ID shape fires `h3_off_template`. Level-4 and deeper stay free-form,
-/// which is where an author puts detail that must not become a section.
+/// The 9-doc FRD template has no `Protocol API` / `Aggregate API` H3s; this
+/// set empties when the AES602 section-structure checker migrates off the
+/// old FRD shape. Until then the set is closed against the structure the
+/// checker still enforces: an H3 outside these two titles and the FR-ID
+/// shape fires `h3_off_template`. Level-4 and deeper stay free-form.
 pub const FRD_H3_TITLES: &[&str] = &["Protocol API", "Aggregate API"];
 
 /// The twelve row labels every FRD `Functional Requirements` entry table
@@ -207,33 +266,45 @@ pub const FR_FIELDS: &[&str] = &[
     "Metric",
 ];
 
-/// Columns the API Contract tables must carry.
+/// Legacy columns of the retired `## API Contract` tables. The 9-doc FRD
+/// template has no API Contract section; kept read-only until the AES602
+/// section-structure checker migrates off the old FRD shape. Do not cite in
+/// new checks.
 pub const API_COLUMNS: &[&str] = &["Method", "Input", "Output", "Error", "Event", "Description"];
 
-/// The two level-3 subsections `## API Contract` must carry, in order, and
-/// nothing else. `Protocol API` lists every protocol method; `Aggregate API`
-/// lists the single `execute` entry point. A FRD that invents a third H3 —
-/// one per protocol class — is the shape `api_h3_unexpected` reports.
+/// Legacy: the two level-3 subsections the retired `## API Contract`
+/// sections had to carry, in order, and nothing else. `Protocol API` listed
+/// every protocol method; `Aggregate API` listed the single `execute` entry
+/// point. A third H3 — one per protocol class — was the shape
+/// `api_h3_unexpected` reported. Still read by the API-contract checks until
+/// the AES602 checker migration removes them.
 pub const API_CONTRACT_SUBSECTIONS: &[&str] = &["Protocol API", "Aggregate API"];
 
-/// Columns Integration Points must carry.
+/// Legacy columns of the retired `## Integration Points` table; still read
+/// by the AES602 integration-shape check until that check is removed with
+/// the rest of the old FRD shape.
 pub const INTEGRATION_COLUMNS: &[&str] = &["System", "Direction", "Purpose", "Failure mode"];
 
-/// Columns Non-functional Requirements must carry.
+/// Legacy columns of the retired `## Non-functional Requirements` table;
+/// still read by the AES602 NFR-shape check until that check is removed with
+/// the rest of the old FRD shape.
 pub const NFR_COLUMNS: &[&str] = &["Metric", "Target", "Measurement method"];
 
 /// File extensions a spec must never name, per HOW-TO-MAKE-FRD Rule 9.
 pub const SOURCE_EXTENSIONS: &[&str] = &["py", "rs", "ts", "tsx"];
 
 // ─── AES606 — Template body-shape conformance ──────────────────────────────
-// Table shapes enforced by AES606 under the new 9-doc layout. `ASPECT_DETAIL_COLUMNS`
-// is the shared `| Aspect | Detail |` header; per-doc row-label sets below are
-// enforced via `entry_missing_row` on each entry's entry table.
+// Table shapes of the 9-doc layout, transcribed from the fenced template of
+// each `HOW-TO-MAKE-*.md`. `ASPECT_DETAIL_COLUMNS` is the shared
+// `| Aspect | Detail |` header; the per-doc sets below are its fixed rows
+// and the per-section headers. The AES606 entry-table checks that consume
+// them arrive with the checker migration; the tests at the bottom of this
+// module pin each set to its source template until then.
 
 /// Shared `| Aspect | Detail |` header of every entry table.
 pub const ASPECT_DETAIL_COLUMNS: &[&str] = &["Aspect", "Detail"];
 
-/// PRD `Project Requirements` entry row labels — 6 per the target spec.
+/// PRD `Project Requirements` entry row labels — 6, per HOW-TO-MAKE-PRD.md.
 pub const PRD_ROW_LABELS: &[&str] = &[
     "Description",
     "User Story",
@@ -243,10 +314,10 @@ pub const PRD_ROW_LABELS: &[&str] = &[
     "Success Metric",
 ];
 
-/// ROADMAP `Roadmap Status` entry row labels — 4 per the target spec.
+/// ROADMAP `Roadmap Status` entry row labels — 4, per HOW-TO-MAKE-ROADMAP.md.
 pub const ROADMAP_ROW_LABELS: &[&str] = &["Priority", "State", "Dependencies", "Updated"];
 
-/// BACKLOG `Backlog Status` entry row labels — 7 per the target spec.
+/// BACKLOG `Backlog Status` entry row labels — 7, per HOW-TO-MAKE-BACKLOG.md.
 pub const BACKLOG_ROW_LABELS: &[&str] = &[
     "State",
     "Done",
@@ -257,23 +328,12 @@ pub const BACKLOG_ROW_LABELS: &[&str] = &[
     "Updated",
 ];
 
-/// FRD `Functional Requirements` entry row labels — 12 per the target spec.
-pub const FRD_ROW_LABELS: &[&str] = &[
-    "Description",
-    "Business Rules",
-    "Edge Cases",
-    "Capability",
-    "Protocol",
-    "Method",
-    "Input",
-    "Output",
-    "Error",
-    "Event",
-    "Test",
-    "Metric",
-];
+/// FRD `Functional Requirements` entry row labels — 12. Alias of `FR_FIELDS`:
+/// both are the same twelve labels the entry table in HOW-TO-MAKE-FRD.md
+/// ships, so the AES601 field list and the AES606 row check cannot drift.
+pub const FRD_ROW_LABELS: &[&str] = FR_FIELDS;
 
-/// AGENTS `Runtime` entry row labels — 7 per the target spec.
+/// AGENTS `Runtime` entry row labels — 7, per HOW-TO-MAKE-AGENTS.md.
 pub const AGENTS_RUNTIME_ROW_LABELS: &[&str] = &[
     "Language",
     "Environment",
@@ -342,51 +402,10 @@ pub type DocH2Contract = (
 );
 
 pub const DOC_HEADING_CONTRACTS: &[DocH2Contract] = &[
-    (
-        AGENTS_DOC,
-        &[
-            "Agent Overview",
-            "Runtime",
-            "Project Structure",
-            "Commands",
-            "Documentation Awareness",
-            "Reference",
-        ],
-        &[],
-    ),
-    (
-        ARCHITECTURE_DOC,
-        &[
-            "Purpose",
-            "Workspace Organization",
-            "Naming Convention",
-            "Vertical Slicing Layout",
-            "Taxonomy Layer",
-            "Contract Layer",
-            "Utility Layer",
-            "Capabilities Layer",
-            "Agent Layer",
-            "Surface Layer",
-            "Root Layer",
-        ],
-        &[],
-    ),
-    (
-        CONTRIBUTING_DOC,
-        &[
-            "Contribution Overview",
-            "Contribution Guidelines",
-            "Workflow",
-            "Commit Convention",
-            "Reference",
-        ],
-        &[],
-    ),
-    (
-        PRD_DOC,
-        &["Problem Statement", "Project Requirements", "Reference"],
-        &[],
-    ),
+    (AGENTS_DOC, AGENTS_REQUIRED_H2S, &[]),
+    (ARCHITECTURE_DOC, ARCHITECTURE_REQUIRED_H2S, &[]),
+    (CONTRIBUTING_DOC, CONTRIBUTING_REQUIRED_H2S, &[]),
+    (PRD_DOC, PRD_REQUIRED_H2S, &[]),
     (
         // `allowed` is empty on purpose: `Project Structure` belongs to the
         // AGENTS.md contract, and a README that repeats it must be reported
@@ -394,44 +413,14 @@ pub const DOC_HEADING_CONTRACTS: &[DocH2Contract] = &[
         // `allowed` makes the set closed, so the heading fires
         // `h2_unexpected` and has to be demoted or deleted.
         README_DOC,
-        &[
-            "Project Overview",
-            "Prerequisites",
-            "Quick Start",
-            "Reference",
-        ],
+        README_REQUIRED_H2S,
         &[],
     ),
-    (
-        ROADMAP_DOC,
-        &["Progress Overview", "Roadmap Status", "Reference"],
-        &[],
-    ),
-    (
-        FRD_DOC,
-        &[
-            "Feature Overview",
-            "Functional Requirements",
-            "Public Interface",
-            "Reference",
-        ],
-        &[],
-    ),
-    (
-        BACKLOG_DOC,
-        &["Progress Overview", "Backlog Status", "Reference"],
-        &[],
-    ),
-    (
-        DATA_DOC,
-        &["Data Overview", "Data Requirements", "Reference"],
-        &["DT-"],
-    ),
-    (
-        DESIGN_DOC,
-        &["Design Overview", "Design Requirements", "Reference"],
-        &[],
-    ),
+    (ROADMAP_DOC, ROADMAP_REQUIRED_H2S, &[]),
+    (FRD_DOC, FRD_REQUIRED_H2S, &[]),
+    (BACKLOG_DOC, BACKLOG_REQUIRED_H2S, &[]),
+    (DATA_DOC, DATA_REQUIRED_H2S, &["DT-"]),
+    (DESIGN_DOC, DESIGN_REQUIRED_H2S, &[]),
 ];
 
 // ─── AES606 (expanded) — member docs & template body ─────────────────────
@@ -446,6 +435,70 @@ pub const TEMPLATE_BODY_VIOLATION_DELETED_SECTION: &str = "section_deleted";
 
 // Re-export template conformance types from the template module so that
 // `shared_doc_rules::taxonomy_doc_rules_constant` remains the canonical import.
-pub use crate::taxonomy_doc_rules_template_vo::{
-    PlaceholderStyle, TEMPLATE_PROFILES, TemplateProfile,
-};
+pub use crate::taxonomy_doc_rules_template_vo::{TEMPLATE_PROFILES, TemplateProfile};
+
+/// A reference template from `crates/shared/skills/aes-docs/references/`,
+/// for the tests that pin constants and catalogs to their source templates.
+#[cfg(test)]
+pub fn load_reference_template(file: &str) -> String {
+    let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../skills/aes-docs/references")
+        .join(file);
+    std::fs::read_to_string(&path).unwrap_or_else(|e| {
+        panic!(
+            "reference template {} must be readable: {e}",
+            path.display()
+        )
+    })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// *columns* must all appear somewhere in the reference template *file*.
+    fn ships_columns(file: &str, columns: &[&str]) {
+        let text = load_reference_template(file);
+        for column in columns {
+            assert!(
+                text.contains(*column),
+                "{file} must ship the `{column}` label"
+            );
+        }
+    }
+
+    /// The 14 AES606 row-label / column constants must map to a live
+    /// reference template: each set transcribes a table the shipped
+    /// HOW-TO-MAKE template actually contains, so a constant with no
+    /// template behind it fails here instead of silently drifting.
+    #[test]
+    fn row_label_sets_transcribe_their_reference_templates() {
+        ships_columns("HOW-TO-MAKE-PRD.md", PRD_ROW_LABELS);
+        ships_columns("HOW-TO-MAKE-ROADMAP.md", ROADMAP_ROW_LABELS);
+        ships_columns("HOW-TO-MAKE-BACKLOG.md", BACKLOG_ROW_LABELS);
+        ships_columns("HOW-TO-MAKE-FRD.md", FRD_ROW_LABELS);
+        ships_columns("HOW-TO-MAKE-FRD.md", ASPECT_DETAIL_COLUMNS);
+        ships_columns("HOW-TO-MAKE-AGENTS.md", AGENTS_RUNTIME_ROW_LABELS);
+    }
+
+    #[test]
+    fn header_column_sets_transcribe_their_reference_templates() {
+        ships_columns("HOW-TO-MAKE-AGENTS.md", AGENTS_PATH_PURPOSE_COLUMNS);
+        ships_columns("HOW-TO-MAKE-AGENTS.md", AGENTS_COMMAND_COLUMNS);
+        ships_columns("HOW-TO-MAKE-AGENTS.md", AGENTS_DOCUMENT_AGENT_COLUMNS);
+        ships_columns("HOW-TO-MAKE-README.md", README_QUICK_START_COLUMNS);
+        ships_columns("HOW-TO-MAKE-CONTRIBUTING.md", CONTRIBUTING_WORKFLOW_COLUMNS);
+        ships_columns("HOW-TO-MAKE-CONTRIBUTING.md", CONTRIBUTING_COMMIT_COLUMNS);
+        ships_columns("HOW-TO-MAKE-DATA.md", DATA_TYPE_DESCRIPTION_COLUMNS);
+        ships_columns("HOW-TO-MAKE-DESIGN.md", DESIGN_VARIANT_VALUE_COLUMNS);
+    }
+
+    /// The FRD row labels are one list under two names (FR_FIELDS serves the
+    /// AES601 field check, FRD_ROW_LABELS the AES606 row check); value
+    /// equality here documents the alias the type system cannot.
+    #[test]
+    fn frd_row_labels_are_the_fr_fields() {
+        assert_eq!(FRD_ROW_LABELS, FR_FIELDS, "must stay byte-identical");
+        assert_eq!(FRD_ROW_LABELS.len(), 12, "twelve labels, one per row");
+    }
+}
