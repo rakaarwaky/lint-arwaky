@@ -150,12 +150,9 @@ pub const CONTRIBUTING_DOC: &str = "CONTRIBUTING.md";
 pub const MASTER_DOC_CANDIDATES: &[&str] = &[ROADMAP_DOC, BACKLOG_DOC];
 
 /// Sections that exist only in the root master, per HOW-TO-MAKE-ROADMAP.
-pub const MASTER_ONLY_SECTIONS: &[&str] = &[
-    "State Definitions",
-    "Status Policy",
-    "Feature Roll-up",
-    "Risk Register",
-];
+/// `Roadmap Status` is root-only: feature backlogs carry `Backlog Status`
+/// and legitimately reuse `Progress Overview`.
+pub const MASTER_ONLY_SECTIONS: &[&str] = &["Roadmap Status"];
 
 /// A folder is a feature folder only when it holds an orchestrator.
 pub const ORCHESTRATOR_SUFFIX: &str = "_orchestrator";
@@ -163,42 +160,23 @@ pub const ORCHESTRATOR_SUFFIX: &str = "_orchestrator";
 /// Kernel folders are not features and carry DATA.md + BACKLOG.md.
 pub const KERNEL_DIR: &str = "shared";
 
-/// Per-crate section order for `##` headings, per HOW-TO-MAKE-FRD.
+/// Per-crate FRD section order, per HOW-TO-MAKE-FRD.
 pub const FRD_REQUIRED_H2S: &[&str] = &[
-    "Reference",
-    "System Overview",
+    "Feature Overview",
     "Functional Requirements",
-    "API Contract",
-    "Integration Points",
-    "Non-functional Requirements",
-    "Test Scenarios",
-    "Assumptions & Constraints",
-    "Glossary",
+    "Public Interface",
+    "Reference",
 ];
 
 /// Per-crate BACKLOG section order, per HOW-TO-MAKE-BACKLOG.
-pub const BACKLOG_REQUIRED_H2S: &[&str] = &[
-    "Current Condition",
-    "Backlog",
-    "Scenario Evidence",
-    "Blockers",
-    "Dependencies",
-    "Release Readiness",
-    "Deferred",
-    "Change Log",
-];
+pub const BACKLOG_REQUIRED_H2S: &[&str] = &["Progress Overview", "Backlog Status", "Reference"];
 
 /// Template section order, per HOW-TO-MAKE-FRD.
 pub const FRD_SECTION_ORDER: &[&str] = &[
-    "Reference",
-    "System Overview",
+    "Feature Overview",
     "Functional Requirements",
-    "API Contract",
-    "Integration Points",
-    "Non-functional",
-    "Test Scenarios",
-    "Assumptions",
-    "Glossary",
+    "Public Interface",
+    "Reference",
 ];
 
 /// The only level-3 headings `HOW-TO-MAKE-FRD.md` sanctions, by literal
@@ -212,14 +190,21 @@ pub const FRD_SECTION_ORDER: &[&str] = &[
 /// which is where an author puts detail that must not become a section.
 pub const FRD_H3_TITLES: &[&str] = &["Protocol API", "Aggregate API"];
 
-/// The six fields every requirement must state, per HOW-TO-MAKE-FRD Rule 2.
+/// The twelve row labels every FRD `Functional Requirements` entry table
+/// carries under its `Aspect | Detail` header, per HOW-TO-MAKE-FRD.
 pub const FR_FIELDS: &[&str] = &[
     "Description",
-    "Input",
-    "Output",
     "Business Rules",
     "Edge Cases",
-    "Error Handling",
+    "Capability",
+    "Protocol",
+    "Method",
+    "Input",
+    "Output",
+    "Error",
+    "Event",
+    "Test",
+    "Metric",
 ];
 
 /// Columns the API Contract tables must carry.
@@ -241,54 +226,73 @@ pub const NFR_COLUMNS: &[&str] = &["Metric", "Target", "Measurement method"];
 pub const SOURCE_EXTENSIONS: &[&str] = &["py", "rs", "ts", "tsx"];
 
 // ─── AES606 — Template body-shape conformance ──────────────────────────────
-// The columns each mandated section must carry, transcribed verbatim from
-// the fenced templates in `HOW-TO-MAKE-BACKLOG.md` and `HOW-TO-MAKE-ROADMAP.md`.
-// These are the table shapes AES606 enforces: a section present but carrying
-// the wrong body shape (bullets, prose, or a table missing a required column)
-// reports `section_not_table` or `table_missing_columns`.
+// Table shapes enforced by AES606 under the new 9-doc layout. `ASPECT_DETAIL_COLUMNS`
+// is the shared `| Aspect | Detail |` header; per-doc row-label sets below are
+// enforced via `entry_missing_row` on each entry's entry table.
 
-/// The `## Backlog` table of a BACKLOG.md.
-pub const BACKLOG_TABLE_COLUMNS: &[&str] = &[
-    "ID",
-    "Priority",
+/// Shared `| Aspect | Detail |` header of every entry table.
+pub const ASPECT_DETAIL_COLUMNS: &[&str] = &["Aspect", "Detail"];
+
+/// PRD `Project Requirements` entry row labels — 6 per the target spec.
+pub const PRD_ROW_LABELS: &[&str] = &[
+    "Description",
+    "User Story",
+    "In Scope",
+    "Out of Scope",
+    "Acceptance",
+    "Success Metric",
+];
+
+/// ROADMAP `Roadmap Status` entry row labels — 4 per the target spec.
+pub const ROADMAP_ROW_LABELS: &[&str] = &["Priority", "State", "Dependencies", "Updated"];
+
+/// BACKLOG `Backlog Status` entry row labels — 7 per the target spec.
+pub const BACKLOG_ROW_LABELS: &[&str] = &[
     "State",
-    "Dependencies",
-    "Next Action",
+    "Done",
+    "In Progress",
+    "Blocked",
+    "Next",
+    "Risk",
     "Updated",
 ];
 
-/// The `## Scenario Evidence` table of a BACKLOG.md.
-pub const SCENARIO_EVIDENCE_COLUMNS: &[&str] = &[
-    "Scenario",
-    "Kind",
-    "Test file",
-    "Test name",
-    "Last verified",
+/// FRD `Functional Requirements` entry row labels — 12 per the target spec.
+pub const FRD_ROW_LABELS: &[&str] = &[
+    "Description",
+    "Business Rules",
+    "Edge Cases",
+    "Capability",
+    "Protocol",
+    "Method",
+    "Input",
+    "Output",
+    "Error",
+    "Event",
+    "Test",
+    "Metric",
 ];
 
-/// The `## Release Readiness` table of a BACKLOG.md.
-pub const RELEASE_READINESS_COLUMNS: &[&str] = &["Area", "Status", "Notes"];
-
-/// The `## Change Log` table of a BACKLOG.md.
-pub const CHANGE_LOG_COLUMNS: &[&str] = &["Date", "Change", "By"];
-
-/// The `## State Definitions` table of a ROADMAP.md.
-pub const STATE_DEFINITIONS_COLUMNS: &[&str] = &["State", "Meaning"];
-
-/// The `## Feature Roll-up` table of a ROADMAP.md. Columns:
-/// ID | Feature | Priority | State | Dependencies | Next Action | Updated.
-/// PR #1113 removed the `Health` column and dropped `Spec`/`Backlog` in
-/// favor of `Feature`, `Dependencies`, and `Next Action`, so the enforced
-/// shape is the seven-column one, not the ten-column template shape.
-pub const FEATURE_ROLLUP_COLUMNS: &[&str] = &[
-    "ID",
-    "Feature",
-    "Priority",
-    "State",
-    "Dependencies",
-    "Next Action",
-    "Updated",
+/// AGENTS `Runtime` entry row labels — 7 per the target spec.
+pub const AGENTS_RUNTIME_ROW_LABELS: &[&str] = &[
+    "Language",
+    "Environment",
+    "Artifacts",
+    "Package Manager",
+    "Version Probe",
+    "Setup",
+    "Activation",
 ];
+
+/// Header-based table sets per document (AES606 header checks, not row checks).
+pub const AGENTS_PATH_PURPOSE_COLUMNS: &[&str] = &["Path", "Purpose"];
+pub const AGENTS_COMMAND_COLUMNS: &[&str] = &["Category", "Command", "Scope", "CI Gate"];
+pub const AGENTS_DOCUMENT_AGENT_COLUMNS: &[&str] = &["Document", "Agent Must"];
+pub const README_QUICK_START_COLUMNS: &[&str] = &["Step", "Action", "Command"];
+pub const CONTRIBUTING_WORKFLOW_COLUMNS: &[&str] = &["Step", "Action", "Detail"];
+pub const CONTRIBUTING_COMMIT_COLUMNS: &[&str] = &["Type", "Usage", "Example"];
+pub const DATA_TYPE_DESCRIPTION_COLUMNS: &[&str] = &["Type", "Description"];
+pub const DESIGN_VARIANT_VALUE_COLUMNS: &[&str] = &["Variant", "Use case", "Token", "Value"];
 
 /// The documents the template requires at the workspace root. `DESIGN.md`,
 /// `FRD.md`, `DATA.md`, and root `BACKLOG.md` are intentionally absent: the
@@ -341,12 +345,12 @@ pub const DOC_HEADING_CONTRACTS: &[DocH2Contract] = &[
     (
         AGENTS_DOC,
         &[
+            "Agent Overview",
             "Runtime",
-            "Project Quick Facts",
-            "Pipeline",
             "Project Structure",
             "Commands",
-            "Related Documents",
+            "Documentation Awareness",
+            "Reference",
         ],
         &[],
     ),
@@ -370,23 +374,17 @@ pub const DOC_HEADING_CONTRACTS: &[DocH2Contract] = &[
     (
         CONTRIBUTING_DOC,
         &[
-            "Principles",
-            "Development Setup",
-            "Quality Verification & PR Process",
+            "Contribution Overview",
+            "Contribution Guidelines",
+            "Workflow",
+            "Commit Convention",
+            "Reference",
         ],
         &[],
     ),
     (
         PRD_DOC,
-        &[
-            "Problem Statement",
-            "Goals & Success Metrics",
-            "User Personas",
-            "Scope",
-            "Feature Requirements",
-            "Non-functional Requirements",
-            "Open Questions / Risks",
-        ],
+        &["Problem Statement", "Project Requirements", "Reference"],
         &[],
     ),
     (
@@ -397,57 +395,38 @@ pub const DOC_HEADING_CONTRACTS: &[DocH2Contract] = &[
         // `h2_unexpected` and has to be demoted or deleted.
         README_DOC,
         &[
+            "Project Overview",
             "Prerequisites",
             "Quick Start",
-            "Architecture",
-            "Available Scripts/Commands",
-            "Configuration",
-            "Testing",
-            "Contributing",
-            "License",
+            "Reference",
         ],
         &[],
     ),
     (
         ROADMAP_DOC,
-        &[
-            "Current Condition",
-            "State Definitions",
-            "Feature Roll-up",
-            "Risk Register",
-        ],
+        &["Progress Overview", "Roadmap Status", "Reference"],
         &[],
     ),
     (
         FRD_DOC,
         &[
-            "Reference",
-            "System Overview",
+            "Feature Overview",
             "Functional Requirements",
-            "API Contract",
-            "Integration Points",
-            "Non-functional Requirements",
-            "Test Scenarios",
-            "Assumptions & Constraints",
-            "Glossary",
+            "Public Interface",
+            "Reference",
         ],
         &[],
     ),
     (
         BACKLOG_DOC,
-        &[
-            "Current Condition",
-            "Backlog",
-            "Scenario Evidence",
-            "Blockers",
-            "Dependencies",
-            "Release Readiness",
-            "Deferred",
-            "Change Log",
-        ],
+        &["Progress Overview", "Backlog Status", "Reference"],
         &[],
     ),
-    (DATA_DOC, &["Data Overview", "Reference"], &["DT-"]),
+    (
+        DATA_DOC,
+        &["Data Overview", "Data Requirements", "Reference"],
+        &["DT-"],
+    ),
     (
         DESIGN_DOC,
         &["Design Overview", "Design Requirements", "Reference"],
