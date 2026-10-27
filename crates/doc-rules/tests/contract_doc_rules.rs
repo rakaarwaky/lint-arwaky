@@ -2461,10 +2461,8 @@ fn backlog_stray_id_in_next_fires_not_fr() {
     let tmp = tempfile::tempdir().unwrap();
     // BACKLOG entry {SAMPLE} `Next` cites FR-OTHER-001, which the FRD never
     // declares → backlog_id_not_fr anchored to the entry H3.
-    let backlog = backlog_with_entries(&["SAMPLE"]).replace(
-        "| Next        | —      |",
-        "| Next        | FR-OTHER-001 |",
-    );
+    let backlog = backlog_with_entries(&["SAMPLE"])
+        .replace("| Next        | —      |", "| Next        | FR-OTHER-001 |");
     write_frd_backlog_pair(tmp.path(), &conforming_frd(), Some(&backlog));
     let findings = audit(tmp.path());
     assert!(
@@ -2563,11 +2561,7 @@ fn write_pr_roadmap_pair(dir: &Path, prd: &str, roadmap: &str) {
     // Feature folder so AES604/605 crosslink and heading checks have a target.
     let feature = dir.join("crates/sample");
     fs::create_dir_all(feature.join("src")).unwrap();
-    fs::write(
-        feature.join("FRD.md"),
-        conforming_frd(),
-    )
-    .unwrap();
+    fs::write(feature.join("FRD.md"), conforming_frd()).unwrap();
     fs::write(feature.join("BACKLOG.md"), conforming_backlog()).unwrap();
     fs::write(
         feature.join("src/agent_sample_orchestrator.rs"),
@@ -2870,10 +2864,8 @@ fn dt_stray_id_in_next_fires_not_dt() {
     // DATA declares DT-SHAR-001; BACKLOG entry `Next` cites DT-MCPS-002, which
     // the DATA doc does not declare → dt_backlog_id_not_dt anchored to H3.
     let data = conforming_data_with_dt();
-    let backlog = backlog_with_entries(&["SHAR"]).replace(
-        "| Next        | —      |",
-        "| Next        | DT-MCPS-002 |",
-    );
+    let backlog = backlog_with_entries(&["SHAR"])
+        .replace("| Next        | —      |", "| Next        | DT-MCPS-002 |");
     write_data_backlog_pair(tmp.path(), &data, Some(&backlog));
     let findings = audit(tmp.path());
     assert!(

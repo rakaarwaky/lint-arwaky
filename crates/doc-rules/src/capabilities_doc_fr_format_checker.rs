@@ -86,8 +86,11 @@ impl IFrFormatProtocol for FrFormatChecker {
                 // Root/legacy BACKLOG pairs with the root ROADMAP/PRD union
                 // (Decision 9 pairing table).
                 if let Some(backlog) = backlog {
-                    let union =
-                        Self::collect_union_id_set(collect_pr_id_set, roadmap.copied(), prd.copied());
+                    let union = Self::collect_union_id_set(
+                        collect_pr_id_set,
+                        roadmap.copied(),
+                        prd.copied(),
+                    );
                     let mut own = Vec::new();
                     self.check_backlog_qualifier_alignment(
                         backlog,
@@ -124,30 +127,23 @@ impl IFrFormatProtocol for FrFormatChecker {
                         specs.get(1).copied(),
                     );
                     // The not-code / missing-code pair is chosen by the
-                    // family the BACKLOG entry set is aligned against: a
-                    // DATA-only folder uses DT codes, a DESIGN-led folder
-                    // uses DS codes, and a plain FRD folder uses FR codes.
+                    // pairing table (Decision 9): feature BACKLOG aligns with
+                    // its FRD (+ DESIGN if present) → FR codes; kernel → DATA
+                    // → DT codes; surface → DESIGN → DS codes. FRD takes
+                    // priority so a feature folder carrying both FRD and
+                    // DESIGN still reports FR codes.
                     let (missing_code, not_code) = if specs
-                        .first()
-                        .is_some_and(|d| context.document_name(d) == consts::DATA_DOC)
+                        .iter()
+                        .any(|d| context.document_name(d) == consts::FRD_DOC)
                     {
-                        (
-                            consts::DT_BACKLOG_ID_MISSING,
-                            consts::DT_BACKLOG_ID_NOT_DT,
-                        )
+                        (consts::FR_BACKLOG_ID_MISSING, consts::FR_BACKLOG_ID_NOT_FR)
                     } else if specs
-                        .last()
-                        .is_some_and(|d| context.document_name(d) == consts::DESIGN_DOC)
+                        .iter()
+                        .any(|d| context.document_name(d) == consts::DATA_DOC)
                     {
-                        (
-                            consts::DS_BACKLOG_ID_MISSING,
-                            consts::DS_BACKLOG_ID_NOT_DS,
-                        )
+                        (consts::DT_BACKLOG_ID_MISSING, consts::DT_BACKLOG_ID_NOT_DT)
                     } else {
-                        (
-                            consts::FR_BACKLOG_ID_MISSING,
-                            consts::FR_BACKLOG_ID_NOT_FR,
-                        )
+                        (consts::DS_BACKLOG_ID_MISSING, consts::DS_BACKLOG_ID_NOT_DS)
                     };
                     let mut own = Vec::new();
                     self.check_backlog_qualifier_alignment(
@@ -481,7 +477,9 @@ impl FrFormatChecker {
     ///
     /// Returns `(entries, section_line)`; `section_line` is `0` only when no
     /// `## Backlog Status` section exists, which makes the caller silent.
-    pub(crate) fn parse_backlog_entries(backlog: &DocSource) -> (Vec<(String, usize, Vec<String>)>, usize) {
+    pub(crate) fn parse_backlog_entries(
+        backlog: &DocSource,
+    ) -> (Vec<(String, usize, Vec<String>)>, usize) {
         let parsed = sections(&backlog.text);
         let Some(section) = parsed
             .iter()
@@ -489,8 +487,7 @@ impl FrFormatChecker {
         else {
             return (Vec::new(), 0);
         };
-        let Some(stray_re) =
-            regex::Regex::new(r"\b((?:PR|FR|DS|DT)-[A-Za-z0-9_]+-\d+)").ok()
+        let Some(stray_re) = regex::Regex::new(r"\b((?:PR|FR|DS|DT)-[A-Za-z0-9_]+-\d+)").ok()
         else {
             return (Vec::new(), section.line + 1);
         };
@@ -500,15 +497,21 @@ impl FrFormatChecker {
                 continue;
             };
             let mut stray_ids = Vec::new();
-            let label_row: BTreeSet<&str> =
-                consts::BACKLOG_ROW_LABELS.iter().filter(|l| **l != "State").cloned().collect();
+            let label_row: BTreeSet<&str> = consts::BACKLOG_ROW_LABELS
+                .iter()
+                .filter(|l| **l != "State")
+                .cloned()
+                .collect();
             for raw in sub.body.lines() {
                 let trimmed = raw.trim();
                 if !trimmed.starts_with('|') {
                     continue;
                 }
-                let cells: Vec<&str> =
-                    trimmed.trim_matches('|').split('|').map(str::trim).collect();
+                let cells: Vec<&str> = trimmed
+                    .trim_matches('|')
+                    .split('|')
+                    .map(str::trim)
+                    .collect();
                 let Some(label) = cells.first().copied() else {
                     continue;
                 };
@@ -530,15 +533,23 @@ impl FrFormatChecker {
     }
 
     /// The single brace-wrapped qualifier token of a BACKLOG entry H3 title
-    /// (`{SAMPLE}` → `SAMPLE`), or `None` for any other shape.
+    /// (`{SAMPLE}` → `SAMPLE`), or `None` for any other shape. Braces, pipes,
+    /// and surrounding whitespace are stripped per Decision 9.
     fn extract_qualifier(title: &str) -> Option<String> {
-        let inner = title.trim().strip_prefix('{')?.strip_suffix('}')?;
-        let q = inner.trim();
-        if q.is_empty() {
-            None
-        } else {
-            Some(q.to_string())
-        }
+        let inner = title
+            .trim()
+            .strip_prefix('{')
+            .and_then(|s| s.strip_suffix('}'))
+            .map(str::trim)
+            .filter(|s| !s.is_empty())?;
+        Some(
+            inner
+                .chars()
+                .filter(|c| *c != '|')
+                .collect::<String>()
+                .trim()
+                .to_string(),
+        )
     }
 
     /// Union of the accepted ID sets of up to two documents under a shared
@@ -587,8 +598,10 @@ impl FrFormatChecker {
     /// *not_code* (analog of `backlog_id_not_fr`), anchored to the
     /// entry's H3 line.
     ///
-    /// Silent when the BACKLOG has no `## Backlog Status` section, when the
-    /// union is empty or missing, or when an entry has no qualifier.
+    /// Silent when the BACKLOG has no `## Backlog Status` section, or when an
+    /// entry has no qualifier. Direction (a) qualifier consistency and
+    /// direction (b) missing are silent when the paired spec declares no IDs;
+    /// direction (c) stray-ID still fires against an empty declared set.
     fn check_backlog_qualifier_alignment(
         &self,
         backlog: &DocSource,
@@ -597,10 +610,10 @@ impl FrFormatChecker {
         not_code: &'static str,
         findings: &mut Vec<DocFinding>,
     ) {
-        let Some(union) = union else {
-            return;
+        let (ids, quals) = match union {
+            Some((ids, quals)) => (ids.to_vec(), quals.to_vec()),
+            None => (Vec::new(), Vec::new()),
         };
-        let (ids, quals) = union;
         let id_set: HashSet<&str> = ids.iter().map(String::as_str).collect();
         let qual_set: HashSet<&str> = quals.iter().map(String::as_str).collect();
         let (entries, section_line) = Self::parse_backlog_entries(backlog);
@@ -609,52 +622,60 @@ impl FrFormatChecker {
         }
 
         // (a) entry qualifier not carried by any declared ID.
-        for (qualifier, line, _) in &entries {
-            if !qual_set.contains(qualifier.as_str()) {
-                findings.push(
-                    DocFinding::new_with_line(
-                        "",
-                        *line,
-                        consts::RULE_CODE_FR_FORMAT,
-                        consts::BACKLOG_QUALIFIER_MISMATCH,
-                        format!(
-                            "line {line} BACKLOG entry `{{{qualifier}}}` has no matching ID in the paired spec"
+        // Silent when the union declares no IDs — nothing can carry a qualifier.
+        if !quals.is_empty() {
+            for (qualifier, line, _) in &entries {
+                if !qual_set.contains(qualifier.as_str()) {
+                    findings.push(
+                        DocFinding::new_with_line(
+                            "",
+                            *line,
+                            consts::RULE_CODE_FR_FORMAT,
+                            consts::BACKLOG_QUALIFIER_MISMATCH,
+                            format!(
+                                "line {line} BACKLOG entry `{{{qualifier}}}` has no matching ID in the paired spec"
+                            ),
+                        )
+                        .with_reason(
+                            "A BACKLOG entry traces to its spec through the qualifier, so a qualifier no spec ID carries cannot be aligned.",
+                            format!(
+                                "Rename the entry to a qualifier the spec declares: {}.",
+                                quals.join(", ")
+                            ),
                         ),
-                    )
-                    .with_reason(
-                        "A BACKLOG entry traces to its spec through the qualifier, so a qualifier no spec ID carries cannot be aligned.",
-                        format!(
-                            "Rename the entry to a qualifier the spec declares: {}.",
-                            quals.join(", ")
-                        ),
-                    ),
-                );
+                    );
+                }
             }
         }
 
         // (b) declared qualifier with no BACKLOG entry.
-        let entry_set: HashSet<&str> = entries.iter().map(|(q, _, _)| q.as_str()).collect();
-        for qual in quals {
-            if !entry_set.contains(qual.as_str()) {
-                findings.push(
-                    DocFinding::new_with_line(
-                        "",
-                        section_line,
-                        consts::RULE_CODE_FR_FORMAT,
-                        missing_code,
-                        format!(
-                            "qualifier `{qual}` declared in the paired spec has no BACKLOG `## Backlog Status` entry"
+        // Silent when the union declares no IDs — nothing is declared to track.
+        if !quals.is_empty() {
+            let entry_set: HashSet<&str> = entries.iter().map(|(q, _, _)| q.as_str()).collect();
+            for qual in quals {
+                if !entry_set.contains(qual.as_str()) {
+                    findings.push(
+                        DocFinding::new_with_line(
+                            "",
+                            section_line,
+                            consts::RULE_CODE_FR_FORMAT,
+                            missing_code,
+                            format!(
+                                "qualifier `{qual}` declared in the paired spec has no BACKLOG `## Backlog Status` entry"
+                            ),
+                        )
+                        .with_reason(
+                            "Every spec-declared qualifier must have a BACKLOG entry so the backlog tracks every requirement family.",
+                            format!("Add a BACKLOG entry `### {{{qual}}}` under `## Backlog Status`."),
                         ),
-                    )
-                    .with_reason(
-                        "Every spec-declared qualifier must have a BACKLOG entry so the backlog tracks every requirement family.",
-                        format!("Add a BACKLOG entry `### {{{qual}}}` under `## Backlog Status`."),
-                    ),
-                );
+                    );
+                }
             }
         }
 
         // (c) stray id token in an entry's Next/Done/Blocked row.
+        // Runs even when the union declares no IDs: every cited token is then
+        // untraceable because nothing is declared.
         for (qualifier, line, stray_ids) in &entries {
             for id in stray_ids {
                 if id_set.contains(id.as_str()) {
@@ -681,4 +702,3 @@ impl FrFormatChecker {
         }
     }
 }
-

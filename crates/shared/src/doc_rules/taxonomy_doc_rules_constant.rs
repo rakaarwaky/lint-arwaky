@@ -7,9 +7,6 @@ pub const RULE_CODE_FR_FORMAT: &str = "AES601";
 /// FR-ID is bare (`FR-NNN`) without a feature prefix.
 pub const FR_ID_VIOLATION_MISSING_FEATURE_PREFIX: &str = "id_missing_feature_prefix";
 
-/// A required FR field is absent from a requirement block.
-pub const FR_FIELDS_VIOLATION_FIELD_MISSING: &str = "field_missing";
-
 /// A method named in the FRD's Protocol API / Aggregate API table has no
 /// matching declaration in the feature's contract module.
 pub const FR_API_METHOD_VIOLATION_NOT_FOUND: &str = "api_method_not_found";
