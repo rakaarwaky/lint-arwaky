@@ -59,6 +59,10 @@ fn write_conforming_feature(root: &Path, layout: &str, name: &str) {
         &feature.join(format!("src/agent_{name}_orchestrator.rs")),
         "pub struct Orchestrator;\n",
     );
+    write(
+        &feature.join(format!("src/root_{name}_container.rs")),
+        "pub struct Container;\n",
+    );
     write(&feature.join("FRD.md"), "# FRD\n");
     write(&feature.join("BACKLOG.md"), "# BACKLOG\n");
     // The shared kernel mirror: every feature owes a `<layout>/shared/src/<name>/`

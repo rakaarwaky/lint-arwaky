@@ -7,6 +7,7 @@ Last Updated: 2026-10-02
 
 ## Current Condition
 
+- Done: AES702 root-container enforcement added: a feature folder must hold a `root_<concept>_container` or `root_<concept>_entry` file under it, in its `src/` subfolder, or at the member root (a member-root composition file answers for the features beneath it). New violation type `feature_missing_root_container`. `cargo test -p structure-rules-lint-arwaky --lib --tests` → 0 failures. Per-scenario evidence below.
 - Done: AES702 shared-kernel mirror check added: a feature folder must be mirrored as a `shared/src/<feature>/` subfolder in its member's kernel. New violation type `feature_missing_shared_subfolder`; surface folders are exempt. `cargo nextest run -p structure-rules-lint-arwaky --lib --tests` → 0 failures. Per-scenario evidence below.
 - Done: AES704 (test-suite coverage) added; the two contract files were renamed to `contract_`/`unit_` prefixes so AES103 passes, and `unit_`, `integration_`, `dogfood_`, `smoke_`, `e2e_`, `acceptance_`, and `benches/bench_structure_rules.rs` were added to satisfy AES704. `cargo nextest run -p structure-rules-lint-arwaky --lib --tests` → 0 failures. Per-scenario evidence below.
 - In Progress: None
@@ -18,7 +19,7 @@ Last Updated: 2026-10-02
 | ID | Priority | State| Dependencies | Next Action | Updated |
 |---:|---|---|---|---|---|
 | FR-STR-001 | P0 | Done | None | — | 2026-09-29 |
-| FR-STR-002 | P0 | Done | None | — | 2026-09-29 |
+| FR-STR-002 | P0 | Done | None | — | 2026-10-27 |
 | FR-STR-003 | P0 | Done | None | — | 2026-09-29 |
 | FR-STR-004 | P0 | Done | None | — | 2026-10-02 |
 | FR-STR-005 | P0 | Done | None | — | 2026-10-13 |
@@ -42,6 +43,11 @@ Last Updated: 2026-10-02
 | Feature has `shared/src/<feature>/` mirror | AES702 silent | Automated | `tests/contract_structure_rules.rs::aes702_stays_silent_when_feature_has_shared_mirror` | `HEAD` |
 | Feature mirror is member-scoped | AES702 silent | Automated | `tests/contract_structure_rules.rs::aes702_shared_mirror_member_scoped` | `HEAD` |
 | Surface folder has no mirror | AES702 silent | Automated | `tests/contract_structure_rules.rs::aes702_shared_mirror_silent_for_surface_folder` | `HEAD` |
+| Feature holds no `root_*` file under it, in `src/`, or at the member root | AES702 CRITICAL | Automated | `tests/contract_structure_rules.rs::aes702_fires_when_feature_lacks_root_container` | `HEAD` |
+| Feature holds a `root_*_container` file in its `src/` subfolder | AES702 silent | Automated | `tests/contract_structure_rules.rs::aes702_stays_silent_when_feature_has_root_container_in_src` | `HEAD` |
+| Feature holds a `root_*_container` file at the feature root | AES702 silent | Automated | `tests/contract_structure_rules.rs::aes702_stays_silent_when_feature_has_root_container_at_root` | `HEAD` |
+| Member-root `root_*` composition file answers for feature folders | AES702 silent | Automated | `tests/contract_structure_rules.rs::aes702_stays_silent_when_feature_has_root_container_at_member_root` | `HEAD` |
+| A Python feature holds no `root_*` composition file | AES702 CRITICAL | Automated | `tests/contract_structure_rules.rs::aes702_root_container_fires_when_python_feature_lacks_container` | `HEAD` |
 | Doc pair without orchestrator (reverse) | AES702 CRITICAL | Automated | `tests/contract_structure_rules.rs::aes702_fires_when_a_doc_pair_folder_has_no_orchestrator` | `d3366d3b` |
 | Doc pair with orchestrator present | AES702 silent | Automated | `tests/contract_structure_rules.rs::aes702_silent_when_doc_pair_folder_has_orchestrator` | `d3366d3b` |
 | Utility-only folder (not a feature) | AES702 silent | Automated | `tests/contract_structure_rules.rs::aes702_stays_silent_for_a_folder_carrying_no_feature_files` | `d3366d3b` |
@@ -74,8 +80,8 @@ None
 
 | Area | Status | Notes |
 |---|---|---|
-| Tests | Done | 41 tests, 0 failures at `HEAD` (2026-10-02) |
-| Scenario evidence | Done | 30 scenarios mapped; all Automated |
+| Tests | Done | 42 tests, 0 failures at `HEAD` (2026-10-27) |
+| Scenario evidence | Done | 36 scenarios mapped; all Automated |
 | Docs | Done | [FRD.md](FRD.md) is specification-only; status lives in this file |
 
 ## Deferred
@@ -86,6 +92,8 @@ None
 
 | Date | Change | By |
 |---|---|---|
+| 2026-10-27 | Reconciled **AES702 root-container enforcement** with #1156: a feature folder now satisfies the check with a `root_` file anywhere under the folder, in its `src/` subfolder, or directly at the member root (one composition file at the member root answers for the features beneath it). `FolderInventory.has_root` keeps the recursive `root_` classification; the feature-health auditor credits a member-root `root_{rs,py,ts}` file. Six contract tests and the RULES_AES.md / FRD / BACKLOG updates ship with the check | @raka |
+| 2026-10-27 | Published **AES702 root-container enforcement**: a feature folder must hold a `root_<concept>_container` or `root_<concept>_entry` file. Added the `feature_missing_root_container` violation type, the `FolderInventory.has_root` field with `root_` classification in the shared parser, the per-folder check in the feature-health auditor, six contract tests, and the RULES_AES.md / FRD / BACKLOG updates. A `root_` file at the member level does not answer for the feature folders beneath it | @raka |
 | 2026-10-26 | Aligned BACKLOG ID column to FRD FR-IDs (AES601) | @raka |
 | 2026-09-29 | Consolidated AES704 into AES702 (feature_missing_doc_pair sub-check) and AES705 into AES703 (surface_missing_design_md sub-check); added feature forbidden-files check; rewrote FRD with 3 FRs | @raka |
 | 2026-09-29 | Aligned BACKLOG.md and FRD.md to HOW-TO templates (AES605 H2 contracts) | @raka |

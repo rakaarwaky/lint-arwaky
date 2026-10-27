@@ -453,6 +453,11 @@ fn conforming_workspace_reports_no_findings() {
         "pub struct AddAnalyzer;",
     );
     write(
+        root.join("crates/calculator/src/root_calculator_container.rs")
+            .as_path(),
+        "pub struct CalculatorContainer;",
+    );
+    write(
         root.join("crates/calculator/FRD.md").as_path(),
         "# Calculator — FRD",
     );
