@@ -18,8 +18,6 @@
 
 ## Rules
 
-Four rules. Each one prevents a specific failure mode.
-
 1. **Single source of truth.** State vocabulary lives here and nowhere
    else. Feature backlogs cite it; they never redefine it.
 2. **Index every feature.** Every feature directory must appear in the
@@ -36,9 +34,10 @@ Four rules. Each one prevents a specific failure mode.
 ## Workflow
 
 1. **Create file** → `ROADMAP.md` at repo root.
-2. **Section: Current Condition** — where we are now.
-3. **Section: State Definitions** — the SSOT for state vocabulary.
-4. **Section: Feature Roll-up** — phased milestones with dates.
+2. **Section: Progress Overview** — one paragraph of progress summary.
+3. **Section: Roadmap Status** — `PR-<PROJECT-NAME-ID>-NNN` items,
+   each carrying Priority / State / Dependencies / Updated.
+4. **Section: Reference** — link to PRD.md and ARCHITECTURE.md.
 5. **Verify** → `lint-arwaky-cli docs` passes; every required section is present.
 
 ## Template
@@ -48,51 +47,45 @@ Copy, fill, delete nothing.
 ```markdown
 # ROADMAP — <workspace name>
 
-State: vocabulary below. Last Updated: <YYYY-MM-DD>
+## Progress Overview
 
-## Current Condition
+<One paragraph of progress summary.>
 
-- Done: <evidence> · In Progress: <None | item> · Blocked: <None | item>
-- Next: <open row IDs>
+## Roadmap Status 
 
-## State Definitions
+### PR-<PROJECT-NAME-ID>-001: <Short imperative name>
 
-| State | Meaning |
-|---|---|
-| Ready | Specified; not started. |
-| In Progress | Active now. |
-| In Review | PR open. |
-| Done | Command + commit evidence. |
+| Aspect       | Detail                                      |
+|--------------|---------------------------------------------|
+| Priority     | P0 / P1 / P2                                |
+| State        | Ready / In Progress / In Review / Done      |
+| Dependencies | <DATA-NAME-ID> / <FEATURE-NAME-ID> / <DESIGN-NAME-ID> |
+| Updated      | <YYYY-MM-DD>                                |
 
-## Feature Roll-up
+### PR-<PROJECT-NAME-ID>-002: <Short imperative name>
+### PR-<PROJECT-NAME-ID>-003: <Short imperative name>
+### PR-<PROJECT-NAME-ID>-004: <Short imperative name>
 
-One table: every feature. Feature detail stays in each feature's BACKLOG.
+## Reference
 
-| ID | Feature | Priority | State | Dependencies | Next Action | Updated |
-|---|---|---|---|---|---|---|
-| <SCOPE>-01 | Feature | P0 | In Progress | — | <next row ID> | <YYYY-MM-DD> |
-
-## Risk Register
-
-- Risk: <what ships broken>. Mitigation: <row ID>.
+| Artifact     | Purpose                                          | Link |
+|--------------|--------------------------------------------------|------|
+| PRD          | <Business goals, user stories, and scope>        | [PRD.md](PRD.md) |
+| Architecture | <System boundaries, tech stack, and infra>       | [ARCHITECTURE.md](ARCHITECTURE.md) | 
 ```
 
 ---
 
 ## Section Contract
 
-Every section is required. Each exists for one reason.
+Every section is required unless marked optional. Each exists for one
+reason.
 
-| Section            | Why it belongs here                                                |
-| ------------------ | ------------------------------------------------------------------ |
-| Current Condition  | Workspace truth in one glance.                                     |
-| State Definitions  | SSOT for state vocabulary. Feature backlogs cite it.            |
-| Feature Roll-up    | Index + state + `WS-*` in one place; feature rows stay in BACKLOG. |
-| Risk Register      | Workspace-level what-could-ship-broken.                            |
-
-Per-feature dependency detail belongs in each feature's BACKLOG.md, and
-workspace-level release history belongs in CHANGELOG.md; the ROADMAP
-carries neither.
+| Section          | Why it belongs here                                                     |
+| ---------------- | ----------------------------------------------------------------------- |
+| Progress Overview| Workspace progress summary in one paragraph.                            |
+| Roadmap Status   | `PR-<PROJECT-NAME-ID>-NNN` items with Priority / State / Dependencies / Updated. |
+| Reference        | Connects the roadmap to the problem spec and the layer contract.       |
 
 ---
 
