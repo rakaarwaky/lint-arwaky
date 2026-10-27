@@ -227,6 +227,26 @@ fn write_workspace_in_layout(layout: &str, dir: &Path, frd: &str) {
     fs::write(dir.join("ROADMAP.md"), conforming_roadmap()).unwrap();
 }
 
+/// A feature BACKLOG whose `Progress Overview` section restates the root-only
+/// `Roadmap Status` section — the negative case `state_vocab_restated` must
+/// catch.
+fn roadmap_status_backlog() -> &'static str {
+    r"# BACKLOG — sample
+
+## Progress Overview
+
+- Done: nothing
+- In Progress: None
+- Blocked: None
+
+## Roadmap Status
+
+| Priority | State | Dependencies | Updated |
+|---|---|---|---|
+| P0 | Ready | — | 2026-09-29 |
+"
+}
+
 /// Build a workspace with a conforming AGENTS.md so AES605 stays silent.
 fn write_agents_workspace(dir: &Path) {
     let feature = dir.join("crates/sample");
@@ -765,6 +785,21 @@ None\n\n\
 | 2026-09-29 | init | @raka |\n\n\
 ## Risk Register\n\n\
 - A risk.\n",
+    )
+    .unwrap();
+    assert!(has(&audit(tmp.path()), "AES604", "state_vocab_restated"));
+}
+
+#[test]
+fn aes604_fires_when_a_feature_backlog_restates_roadmap_status() {
+    // A feature BACKLOG that restates the root-only `Roadmap Status` section
+    // must fire `state_vocab_restated` even though `Progress Overview` is a
+    // legitimate feature-backlog H2.
+    let tmp = tempfile::tempdir().unwrap();
+    write_workspace(tmp.path(), &conforming_frd());
+    fs::write(
+        tmp.path().join("crates/sample/BACKLOG.md"),
+        roadmap_status_backlog(),
     )
     .unwrap();
     assert!(has(&audit(tmp.path()), "AES604", "state_vocab_restated"));
