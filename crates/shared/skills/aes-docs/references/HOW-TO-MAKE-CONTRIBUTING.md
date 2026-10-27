@@ -51,14 +51,14 @@
    vendored/upstream dependency, a tooling change, or a docs-only update.
    One section per path. Delete the ones that do not apply.
 2. **Create file** → `CONTRIBUTING.md` at repo root.
-3. **Section: Principles** — the non-negotiable constraints every change must
-   respect (architecture, storage, single source of truth).
-4. **Section: Development Setup** — clone, prerequisites, install, verify.
-5. **Section per contribution path** — each as a numbered, self-contained
-   step pipeline.
-6. **Section: Quality Verification & PR Process** — local gates, CI, PR
-   checklist.
-7. **Verify** → `lint-arwaky-cli docs` passes; every command block runs without
+3. **Section: Contribution Overview** — how to contribute, what mindset
+   contributors should have, and what "ready to merge" looks like.
+4. **Section: Contribution Guidelines** — contribution rules.
+5. **Section: Workflow** — `Step | Action | Detail` contribution pipeline.
+6. **Section: Commit Convention** — `Type | Usage | Example` conventional
+   commit prefixes.
+7. **Section: Reference** — link to PRD.md and ARCHITECTURE.md.
+8. **Verify** → `lint-arwaky-cli docs` passes; every command block runs without
    absolute personal paths; templates use placeholders.
 
 ## Template
@@ -66,126 +66,58 @@
 Copy, fill, delete what does not apply to the project.
 
 ```markdown
-# Contributing to <project-name>
+# CONTRIBUTING — <project-name>
 
-Welcome. This document covers the contribution paths below. Only the paths
-this project actually supports are present.
+## Contribution Overview
 
-- [Development Setup](#development-setup)
-- [<Path 1 name>](#<path-1-anchor>)
-- [<Path 2 name>](#<path-2-anchor>)
-- [Quality Verification & PR Process](#quality-verification--pr-process)
+<One paragraph: how to contribute, what mindset contributors should have, and what "ready to merge" looks like.>
 
----
+## Contribution Guidelines
 
-## Principles to Keep in Mind
+## Workflow
 
-Before making changes, observe these non-negotiable rules. Each rule states
-the constraint, not the tool that enforces it:
+| Step | Action | Detail |
+|------|--------|--------|
+| 1 | Fork / Branch | `<branch-naming-convention>` |
+| 2 | Implement | Follow FRD spec, write tests |
+| 3 | Self-review | Check against acceptance criteria in PRD |
+| 4 | Submit PR | Link to BACKLOG ID, describe what changed |
+| 5 | Review | <reviewer / approval criteria> |
+| 6 | Merge | <merge strategy: squash / rebase / merge> |
 
-1. **<Architecture model>**: <the structural rule every change must respect,
-   e.g., layer boundaries, directory ownership, module placement>.
-2. **<Storage / path compliance>**: <where persistent data and caches belong,
-   and where they must never be written>.
-3. **<Single source of truth>**: <the manifest, registry, or index that is the
-   definitive record; every add/delete must update it>.
+## Commit Convention
 
----
+| Type | Usage | Example |
+|------|-------|---------|
+| `feat` | New feature | `feat(auth): add login endpoint` |
+| `fix` | Bug fix | `fix(auth): handle expired token` |
+| `docs` | Documentation only | `docs(frd): update FR-AUTH-001` |
+| `test` | Adding/updating tests | `test(auth): add edge case for timeout` |
+| `refactor` | Code refactor, no behaviour change | `refactor(auth): extract middleware` |
+| `chore` | Maintenance, deps, config | `chore: bump dependencies` |
 
-## Development Setup
+## Reference
 
-1. Clone the repository:
-   ```bash
-   git clone <repo-url>
-   cd <repo>
-   ```
-
-   Add `--recurse-submodules` only if the project has submodules.
-2. Verify host prerequisites:
-
-   ```bash
-   <prerequisite-check command>
-   ```
-
-1. Provision the environment:
-
-   ```bash
-   <install command>
-   ```
-
-1. Verify installation:
-
-   ```bash
-   <status command>
-   ```
-
----
-
-## <Contribution Path 1>
-
-<One line: what this path covers and when to use it.>
-
-1. <Step: the first concrete action, with the exact command.>
-2. <Step: the next action that depends on the previous one.>
-3. <Step: the verification command that proves the change took effect.>
-4. <Step: how to commit, including the conventional-commit prefix.>
-
-Delete this whole section if the path does not exist in the project.
-
----
-
-## <Contribution Path 2>
-
-<Repeat the shape of Path 1 for the next distinct kind of change.>
-
----
-
-## Quality Verification & PR Process
-
-Before committing or opening a PR, clear every gate below.
-
-### 1. Run the Verification Commands
-
-```bash
-<check command>
+| Artifact | Purpose | Link |
+|----------|---------|------|
+| PRD | <Business goals, user stories, and scope> | [PRD.md](PRD.md) |
+| Architecture | <System boundaries, tech stack, and infra> | [ARCHITECTURE.md](ARCHITECTURE.md) |
 ```
-
-<One line naming what this runs: test suite, linter, type check, architecture
-scanner.> CI mirrors this check on every push via `.github/workflows/ci.yml`.
-
-### 2. Conventional Commit Guidelines
-
-| Prefix      | Usage                                      |
-| ----------- | ------------------------------------------ |
-| `feat:`     | New feature or capability                  |
-| `fix:`      | Bug fix                                    |
-| `chore:`    | Maintenance, dependency bump, cleanup      |
-| `docs:`     | Documentation changes                      |
-| `refactor:` | Refactoring without behavioral change      |
-
-### 3. Pull Request Checklist
-
-- [ ] All local verification commands pass.
-- [ ] New files follow the project's naming and directory conventions.
-- [ ] Any registry or manifest the project keeps is updated.
-- [ ] No absolute paths, secrets, or machine-specific values leaked into the diff.
-- [ ] The PR description names the contribution path and links the issue.
-
-```text
 
 ---
 
 ## Section Contract
 
-Every section is required unless marked optional. Each exists for one reason.
+Every section is required unless marked optional. Each exists for one
+reason.
 
-| Section                   | Why it belongs here                                                    |
-| ------------------------- | -------------------------------------------------------------------- |
-| Intro / Table of Contents | Lets contributors jump to their path. Watch for a wall of text with no navigation. |
-| Principles                | Sets the non-negotiable boundary before any code is touched. Watch for rules that name tools instead of constraints. |
-| Development Setup         | The 10-minute promise — clone, install, verify. Watch for steps that assume prior state. |
-| One section per contribution path | Each names a distinct kind of change with a self-contained step pipeline. Watch for paths this project does not actually support. |
-| Quality Verification & PR Process | The gate that protects CI. Watch for commands that differ from the CI job. |
+| Section              | Why it belongs here                                                     |
+| -------------------- | ----------------------------------------------------------------------- |
+| Contribution Overview| Sets contributor mindset and "ready to merge" definition.               |
+| Contribution Guidelines | The contribution rules every change must respect.                      |
+| Workflow             | `Step | Action | Detail` contribution pipeline.                             |
+| Commit Convention    | `Type | Usage | Example` conventional-commit prefixes.                         |
+| Reference            | Connects contribution policy to PRD and Architecture.                   |
 
 ---
 
