@@ -63,7 +63,7 @@ fn frd_violating_only_spec_purity() -> String {
 - PRD: [PRD.md](../../PRD.md)
 - Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature.
 
-## System Overview
+## Feature Overview
 
 The feature reads its settings from main.rs at startup.
 
@@ -87,43 +87,11 @@ The feature reads its settings from main.rs at startup.
 - **Edge Cases**: A request with an empty root produces no findings rather than an error.
 - **Error Handling**: Failures inside the checker are propagated as `DocResponse::Findings` with no partial results.
 
-## API Contract
+## Public Interface
 
-### Protocol API
-
-| Method | Input | Output | Error | Event | Description |
-| --- | --- | --- | --- | --- | --- |
-| `audit` | `DocRequest` | `DocResponse` | Reason-coded | — | Single composite entry point. |
-
-### Aggregate API
-
-| Method | Input | Output | Error | Event | Description |
-| --- | --- | --- | --- | --- | --- |
-| `execute` | `DocRequest` | `DocResponse` | Reason-coded | — | Routes to the capability. |
-
-## Integration Points
-
-| System | Direction | Purpose | Failure mode |
-| --- | --- | --- | --- |
-| Shared domain | in | Supplies value objects | None — types only |
-
-## Non-functional Requirements
-
-| Metric | Target | Measurement method |
-| --- | --- | --- |
-| Dispatch cost | One call per request | Read the dispatch table |
-
-## Test Scenarios
-
-- A conforming request produces a conforming response.
-
-## Assumptions & Constraints
-
-- The capability is stateless.
-
-## Glossary
-
-- **Sample**: A value object used in this example.
+| Aspect | Detail |
+| --- | --- |
+| Method | `execute` |
 "
     .to_string()
 }
@@ -195,10 +163,18 @@ fn the_spec_purity_seam_is_the_only_one_answering_a_source_file_reference() {
         purity.iter().any(|f| f.code == "AES603"),
         "the AES603 seam answers a source-file reference; got: {purity:#?}"
     );
-    // Every other seam must stay silent: the document satisfies all of them.
-    for finding in FrFormatChecker::new().audit_fr_format(&context) {
-        assert_eq!(finding.code, "AES601", "an FR-ID finding: {finding:#?}");
-    }
+    // The AES601 seam may answer a BACKLOG ID misalignment on the fixture
+    // backlog; no FR-format finding is owed for the document itself.
+    let fr_findings = FrFormatChecker::new().audit_fr_format(&context);
+    assert!(
+        fr_findings
+            .iter()
+            .all(|f| f.violation_type != "id_missing_feature_prefix"
+                && f.violation_type != "field_missing"
+                && f.violation_type != "protocol_count_mismatch"
+                && f.violation_type != "api_method_not_found"),
+        "the AES601 seam must stay silent on the FR document; got: {fr_findings:#?}"
+    );
     assert!(
         SectionStructureChecker::new()
             .audit_section_structure(&context)

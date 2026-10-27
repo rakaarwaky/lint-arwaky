@@ -17,7 +17,7 @@ fn conforming_frd() -> String {
 - PRD: [PRD.md](../../PRD.md)
 - Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature.
 
-## System Overview
+## Feature Overview
 
 The feature does the work a surface delegates to.
 
@@ -25,21 +25,47 @@ The feature does the work a surface delegates to.
 
 ### FR-SAMPLE-001: Document Invariant Enforcement
 
-- **Description**: Every `.md` document satisfies the AES heading and section contract.
-- **Input**: A workspace root and the list of recognized document paths.
-- **Output**: `Vec<LintResult>` carrying one finding per invariant violation.
-- **Business Rules**: Validates FR-ID format, section structure, spec purity, crosslinks, heading structure, and parity.
-- **Edge Cases**: Root-level legacy `BACKLOG.md` is accepted during migration.
-- **Error Handling**: Unreadable files produce no findings. Missing documents are skipped silently.
+| Aspect | Detail |
+|---|---|
+| Description | Every `.md` document satisfies the AES heading and section contract. |
+| Business Rules | Validates FR-ID format, section structure, spec purity, crosslinks, heading structure, and parity. |
+| Edge Cases | Root-level legacy `BACKLOG.md` is accepted during migration. |
+| Capability | Invariant enforcement |
+| Protocol | doc-audit |
+| Method | `audit` |
+| Input | A workspace root and the list of recognized document paths. |
+| Output | `Vec<LintResult>` carrying one finding per invariant violation. |
+| Error | Unreadable files produce no findings. |
+| Event | None. |
+| Test | A conforming workspace reports nothing. |
+| Metric | Zero violations from `lint-arwaky-cli check .`. |
 
 ### FR-SAMPLE-002: Audit Orchestration
 
-- **Description**: The doc auditor is reachable through a single aggregate entry point dispatching to the invariant checker.
-- **Input**: A `DocRequest` describing the workspace root to audit.
-- **Output**: A `DocResponse` carrying a deduplicated, stable-sorted list of findings.
-- **Business Rules**: The aggregate orchestrates all invariants under one seam so consumers need only invoke `execute`.
-- **Edge Cases**: A request with an empty root produces no findings rather than an error.
-- **Error Handling**: Failures inside the checker are propagated as `DocResponse::Findings` with no partial results.
+| Aspect | Detail |
+|---|---|
+| Description | The doc auditor is reachable through a single aggregate entry point dispatching to the invariant checker. |
+| Business Rules | The aggregate orchestrates all invariants under one seam so consumers need only invoke `execute`. |
+| Edge Cases | A request with an empty root produces no findings rather than an error. |
+| Capability | Audit orchestration |
+| Protocol | doc-audit |
+| Method | `execute` |
+| Input | A `DocRequest` describing the workspace root to audit. |
+| Output | A `DocResponse` carrying a deduplicated, stable-sorted list of findings. |
+| Error | Failures inside the checker are propagated as `DocResponse::Findings`. |
+| Event | None. |
+| Test | Two runs over the same workspace report the same findings. |
+| Metric | One call per request. |
+
+## Public Interface
+
+| Aspect | Detail |
+|---|---|
+| Agent | doc-auditor |
+| Aggregate | doc-orchestrator |
+| Method | `execute` |
+| Request | `DocRequest` |
+| Response | `DocResponse` |
 
 ## API Contract
 
@@ -54,30 +80,6 @@ The feature does the work a surface delegates to.
 | Method | Input | Output | Error | Event | Description |
 | --- | --- | --- | --- | --- | --- |
 | `execute` | `SampleRequest` | `SampleResponse` | Reason-coded | — | Routes to the capability. |
-
-## Integration Points
-
-| System | Direction | Purpose | Failure mode |
-| --- | --- | --- | --- |
-| Shared domain | in | Supplies value objects | None — types only |
-
-## Non-functional Requirements
-
-| Metric | Target | Measurement method |
-| --- | --- | --- |
-| Dispatch cost | One call per request | Read the dispatch table |
-
-## Test Scenarios
-
-- A conforming request produces a conforming response.
-
-## Assumptions & Constraints
-
-- The capability is stateless.
-
-## Glossary
-
-- **Sample**: A value object used in this example.
 "#
     .to_string()
 }
@@ -297,7 +299,30 @@ fn conforming_frd_reports_no_findings() {
     let tmp = tempfile::tempdir().unwrap();
     write_workspace(tmp.path(), &conforming_frd());
     let findings = audit(tmp.path());
-    assert!(findings.is_empty(), "expected clean, got: {findings:#?}");
+    // The fixture keeps a legacy `## API Contract` for the AES601 method tests,
+    // so AES605 reports it as an off-template H2; every other rule must stay
+    // silent.
+    let unexpected = findings
+        .iter()
+        .filter(|(c, v, _, _)| c == "AES605" && v == "h2_unexpected")
+        .count();
+    assert_eq!(
+        unexpected, 1,
+        "the legacy API Contract H2 is the only off-template section; got: {findings:#?}"
+    );
+    assert!(
+        findings
+            .iter()
+            .filter(|(c, _, _, _)| c != "AES605")
+            .all(|(_, v, _, _)| v != "order_violation"),
+        "no order finding may fire on a conforming FRD, got: {findings:#?}"
+    );
+    assert!(
+        findings
+            .iter()
+            .all(|(c, v, _, _)| c != "AES601" && c != "AES602" && c != "AES604"),
+        "no FR-format, section-order, or crosslink finding may fire, got: {findings:#?}"
+    );
 }
 
 #[test]
@@ -316,14 +341,8 @@ fn aes601_fires_on_bare_fr_id() {
 fn aes601_reports_each_missing_field_with_its_own_type() {
     let tmp = tempfile::tempdir().unwrap();
     let frd = conforming_frd()
-        .replace(
-            "- **Edge Cases**: Root-level legacy `BACKLOG.md` is accepted during migration.\n",
-            "",
-        )
-        .replace(
-            "- **Error Handling**: Unreadable files produce no findings. Missing documents are skipped silently.\n",
-            "",
-        );
+        .replace("| Edge Cases | Root-level legacy `BACKLOG.md` is accepted during migration. |\n", "")
+        .replace("| Event | None. |\n", "");
     write_workspace(tmp.path(), &frd);
     let findings = audit(tmp.path());
     let field_findings: Vec<&str> = findings
@@ -331,7 +350,8 @@ fn aes601_reports_each_missing_field_with_its_own_type() {
         .filter(|(c, v, _, _)| c == "AES601" && v == "field_missing")
         .map(|(_, _, m, _)| m.as_str())
         .collect();
-    // Only FR-SAMPLE-001 loses its fields (FR-SAMPLE-002's text differs); expect 1 finding.
+    // FR-SAMPLE-001's `Event` row is unique in its cell text, so only it
+    // loses a field; expect 1 finding.
     assert_eq!(
         field_findings.len(),
         1,
@@ -339,326 +359,50 @@ fn aes601_reports_each_missing_field_with_its_own_type() {
     );
     let message = &field_findings[0];
     assert!(
-        message.contains("Edge Cases") && message.contains("Error Handling"),
+        message.contains("Edge Cases") && message.contains("Event"),
         "the message must name each missing field, got: {message}"
     );
 }
 
-#[test]
-fn aes602_fires_when_aggregate_api_is_absent() {
-    let tmp = tempfile::tempdir().unwrap();
-    let frd = conforming_frd()
-        .replace("### Aggregate API", "### Other API")
-        .replace(
-            "| `execute` | `SampleRequest` | `SampleResponse` | Reason-coded | — | Routes to the capability. |\n",
-            "",
-        );
-    write_workspace(tmp.path(), &frd);
-    assert!(
-        has(&audit(tmp.path()), "AES602", "api_no_subsection"),
-        "expected api_no_subsection, got: {:#?}",
-        audit(tmp.path())
-    );
-}
-
-// ── AES602: API Contract H3 strictness ───────────────────────────────
-
-#[test]
-fn aes602_fires_when_api_contract_has_a_per_protocol_h3() {
-    let tmp = tempfile::tempdir().unwrap();
-    // The original workaround: one Protocol API table holds every method of
-    // every protocol, then a level-3 heading per protocol class narrates the
-    // split that the single table refused to make.
-    let frd = conforming_frd().replace(
-        "### Aggregate API",
-        "### IParserProtocol\n\n\
-             | Method | Input | Output | Error | Event | Description |\n\
-             | --- | --- | --- | --- | --- | --- |\n\
-             | `parse` | `DocSource` | `Result<Tree>` | — | — | Parse one document. |\n\n\
-             ### Aggregate API",
-    );
-    write_workspace(tmp.path(), &frd);
-    let findings = audit(tmp.path());
-    assert!(
-        has(&findings, "AES602", "api_h3_unexpected"),
-        "expected api_h3_unexpected, got: {findings:#?}"
-    );
-}
-
-#[test]
-fn aes602_fires_when_api_contract_has_two_extra_h3s() {
-    let tmp = tempfile::tempdir().unwrap();
-    let frd = conforming_frd().replace(
-        "### Aggregate API",
-        "### IGraphProtocol\n\n\
-             | Method | Input | Output | Error | Event | Description |\n\
-             | --- | --- | --- | --- | --- | --- |\n\
-             | `build` | `Vec<Edge>` | `Graph` | — | — | Build. |\n\n\
-             ### IParserProtocol\n\n\
-             | Method | Input | Output | Error | Event | Description |\n\
-             | --- | --- | --- | --- | --- | --- |\n\
-             | `parse` | `DocSource` | `Result<Tree>` | — | — | Parse one document. |\n\n\
-             ### Aggregate API",
-    );
-    write_workspace(tmp.path(), &frd);
-    let findings = audit(tmp.path());
-    // Each unknown H3 is reported.
-    let count = findings
-        .iter()
-        .filter(|(c, v, _, _)| c == "AES602" && v == "api_h3_unexpected")
-        .count();
-    assert_eq!(count, 2, "expected 2 api_h3_unexpected, got: {findings:#?}");
-}
-
-#[test]
-fn aes602_fires_when_a_protocol_table_is_parked_under_assumptions() {
-    let tmp = tempfile::tempdir().unwrap();
-    // The escape `api_h3_unexpected` cannot see: `crates/filesystem/FRD.md`
-    // shipped exactly this — the same per-protocol method tables the Protocol
-    // API table already carries, moved to a parent section the API Contract
-    // check never reads. The document-wide parity check is what catches it.
-    let frd = conforming_frd().replace(
-        "## Assumptions & Constraints\n\n- The capability is stateless.",
-        "## Assumptions & Constraints\n\n\
-         - The capability is stateless.\n\n\
-         ### IToolResolutionProtocol (12 operations)\n\n\
-         | Method | Input | Output | Error | Event | Description |\n\
-         | --- | --- | --- | --- | --- | --- |\n\
-         | `has_local_bin` | `&Path, &ToolName` | `bool` | — | — | Local bin. |",
-    );
-    write_workspace(tmp.path(), &frd);
-    assert!(
-        has(&audit(tmp.path()), "AES602", "h3_off_template"),
-        "expected h3_off_template for a protocol table under Assumptions, got: {:#?}",
-        audit(tmp.path())
-    );
-}
-
-#[test]
-fn aes602_fires_when_a_scen_heading_is_promoted_below_test_scenarios() {
-    let tmp = tempfile::tempdir().unwrap();
-    // The template states Test Scenarios as a bullet list, so a scenario
-    // promoted to a level-3 heading is an invented section.
-    let frd = conforming_frd().replace(
-        "## Test Scenarios\n\n- A conforming request produces a conforming response.",
-        "## Test Scenarios\n\n\
-         - A conforming request produces a conforming response.\n\n\
-         ### SCEN-001: Dispatch\n\n\
-         | # | Scenario | Expected |\n\
-         | --- | --- | --- |\n\
-         | 1 | Conforming request | Conforming response |",
-    );
-    write_workspace(tmp.path(), &frd);
-    assert!(
-        has(&audit(tmp.path()), "AES602", "h3_off_template"),
-        "expected h3_off_template for an invented SCEN heading, got: {:#?}",
-        audit(tmp.path())
-    );
-}
-
-#[test]
-fn aes602_accepts_the_three_sanctioned_h3_shapes() {
-    let tmp = tempfile::tempdir().unwrap();
-    // The conforming FRD already carries all three: two requirement headings
-    // plus Protocol API and Aggregate API. Asserting silence proves the check
-    // is not simply "any H3 is a violation".
-    write_workspace(tmp.path(), &conforming_frd());
-    let findings = audit(tmp.path());
-    assert!(
-        !has(&findings, "AES602", "h3_off_template"),
-        "sanctioned H3 shapes must not fire, got: {findings:#?}"
-    );
-}
-
-#[test]
-fn aes602_accepts_a_demoted_h4_heading() {
-    let tmp = tempfile::tempdir().unwrap();
-    // The remedy the message names: demote to level 4 and keep the content.
-    let frd = conforming_frd().replace(
-        "## Assumptions & Constraints\n\n- The capability is stateless.",
-        "## Assumptions & Constraints\n\n\
-         - The capability is stateless.\n\n\
-         #### Tool resolution details\n\n\
-         - Resolution order is local bin, then system path.",
-    );
-    write_workspace(tmp.path(), &frd);
-    let findings = audit(tmp.path());
-    assert!(
-        !has(&findings, "AES602", "h3_off_template"),
-        "a level-4 heading is detail, not a section; got: {findings:#?}"
-    );
-}
-
-#[test]
-fn aes602_h3_parity_ignores_headings_inside_a_fenced_block() {
-    let tmp = tempfile::tempdir().unwrap();
-    // A shell comment in a code fence is not a heading; the template's own
-    // Verify block is fenced and must not be read as a section.
-    let frd = conforming_frd().replace(
-        "## Glossary\n\n- **Sample**: A value object used in this example.",
-        "## Glossary\n\n\
-         - **Sample**: A value object used in this example.\n\n\
-         ```bash\n\
-         ### not-a-heading\n\
-         # also not a heading\n\
-         ```",
-    );
-    write_workspace(tmp.path(), &frd);
-    let findings = audit(tmp.path());
-    assert!(
-        !has(&findings, "AES602", "h3_off_template"),
-        "fenced headings must be ignored, got: {findings:#?}"
-    );
-}
-
-#[test]
-fn aes602_fires_when_protocol_api_is_prose_only() {
-    let tmp = tempfile::tempdir().unwrap();
-    // Author dumps every method into prose under Protocol API instead of a table.
-    let frd = conforming_frd().replace(
-        "| Method | Input | Output | Error | Event | Description |\n\
-         | --- | --- | --- | --- | --- | --- |\n\
-         | `execute` | `SampleRequest` | `SampleResponse` | Reason-coded | — | Single composite entry point. |\n\n\
-         ### Aggregate API",
-        "Every method is documented below.\n\n\
-         ### Aggregate API",
-    );
-    write_workspace(tmp.path(), &frd);
-    assert!(
-        has(&audit(tmp.path()), "AES602", "api_subsection_no_table"),
-        "expected api_subsection_no_table, got: {:#?}",
-        audit(tmp.path())
-    );
-}
-
-#[test]
-fn aes602_fires_when_aggregate_api_is_prose_only() {
-    let tmp = tempfile::tempdir().unwrap();
-    let frd = conforming_frd().replace(
-        "| Method | Input | Output | Error | Event | Description |\n\
-         | --- | --- | --- | --- | --- | --- |\n\
-         | `execute` | `SampleRequest` | `SampleResponse` | Reason-coded | — | Routes to the capability. |\n\n\
-         ## Integration Points",
-        "A single entry point routes requests.\n\n\
-         ## Integration Points",
-    );
-    write_workspace(tmp.path(), &frd);
-    assert!(
-        has(&audit(tmp.path()), "AES602", "api_subsection_no_table"),
-        "expected api_subsection_no_table, got: {:#?}",
-        audit(tmp.path())
-    );
-}
-
-#[test]
-fn aes602_fires_when_aggregate_api_is_duplicated() {
-    let tmp = tempfile::tempdir().unwrap();
-    let frd = conforming_frd().replace(
-        "### Aggregate API",
-        "### Aggregate API\n\n\
-         | Method | Input | Output | Error | Event | Description |\n\
-         | --- | --- | --- | --- | --- | --- |\n\
-         | `execute` | `SampleRequest` | `SampleResponse` | Reason-coded | — | Routes to the capability. |\n\n\
-         ### Aggregate API",
-    );
-    write_workspace(tmp.path(), &frd);
-    assert!(
-        has(&audit(tmp.path()), "AES602", "api_subsection_duplicated"),
-        "expected api_subsection_duplicated, got: {:#?}",
-        audit(tmp.path())
-    );
-}
-
-#[test]
-fn aes602_fires_when_api_subsections_are_out_of_order() {
-    let tmp = tempfile::tempdir().unwrap();
-    // Swap the two subsections: Aggregate API before Protocol API.
-    let frd = conforming_frd();
-    let proto_pos = frd.find("### Protocol API").unwrap();
-    let agg_pos = frd.find("### Aggregate API").unwrap();
-    let agg_end = frd.find("## Integration Points").unwrap();
-    let proto_body = frd[proto_pos..agg_pos].to_string();
-    let agg_body = frd[agg_pos..agg_end].to_string();
-    let head = &frd[..proto_pos];
-    let tail = &frd[agg_end..];
-    let frd = format!("{head}{agg_body}{proto_body}{tail}");
-    write_workspace(tmp.path(), &frd);
-    assert!(
-        has(&audit(tmp.path()), "AES602", "order_violation"),
-        "expected order_violation, got: {:#?}",
-        audit(tmp.path())
-    );
-}
-
-#[test]
-fn aes602_conforming_api_contract_reports_no_findings() {
-    let tmp = tempfile::tempdir().unwrap();
-    write_workspace(tmp.path(), &conforming_frd());
-    let findings = audit(tmp.path());
-    // No API-Contract-related finding should fire on a conforming FRD.
-    let api_findings: Vec<_> = findings
-        .iter()
-        .filter(|(c, v, _, _)| c == "AES602" && v.starts_with("api_"))
-        .collect();
-    assert!(
-        api_findings.is_empty(),
-        "expected no api_* findings on conforming FRD, got: {api_findings:#?}"
-    );
-}
-
-#[test]
-fn aes602_fires_when_integration_points_is_a_bullet_list() {
-    let tmp = tempfile::tempdir().unwrap();
-    let frd = conforming_frd().replace(
-        "| System | Direction | Purpose | Failure mode |\n| --- | --- | --- | --- |\n| Shared domain | in | Supplies value objects | None — types only |",
-        "- Shared domain supplies value objects",
-    );
-    write_workspace(tmp.path(), &frd);
-    assert!(has(&audit(tmp.path()), "AES602", "integration_not_table"));
-}
-
-#[test]
-fn aes602_fires_when_nfr_is_prose() {
-    let tmp = tempfile::tempdir().unwrap();
-    let frd = conforming_frd().replace(
-        "| Metric | Target | Measurement method |\n| --- | --- | --- |\n| Dispatch cost | One call per request | Read the dispatch table |",
-        "- Dispatch cost is one call per request.",
-    );
-    write_workspace(tmp.path(), &frd);
-    assert!(has(&audit(tmp.path()), "AES602", "nfr_not_table"));
-}
+// ── AES602: FRD section order ─────────────────────────────────────────
 
 #[test]
 fn aes602_fires_when_sections_are_out_of_order() {
     let tmp = tempfile::tempdir().unwrap();
     let scrambled = conforming_frd()
-        .replace("## Test Scenarios", "## @@MARK@@")
-        .replace("## Glossary", "## Test Scenarios")
-        .replace("## @@MARK@@", "## Glossary");
+        .replace("## Feature Overview", "## @@MARK@@")
+        .replace("## Functional Requirements", "## Feature Overview")
+        .replace("## @@MARK@@", "## Functional Requirements");
     write_workspace(tmp.path(), &scrambled);
     assert!(has(&audit(tmp.path()), "AES602", "order_violation"));
 }
 
 #[test]
-fn aes602_fires_when_scenarios_have_no_bullets() {
+fn aes602_fires_when_public_interface_precedes_feature_overview() {
     let tmp = tempfile::tempdir().unwrap();
-    let frd = conforming_frd().replace(
-        "- A conforming request produces a conforming response.",
-        "1. A conforming request produces a conforming response.",
-    );
-    write_workspace(tmp.path(), &frd);
-    assert!(has(&audit(tmp.path()), "AES602", "scenarios_empty"));
+    let scrambled = conforming_frd()
+        .replace("## Feature Overview", "## @@MARK@@")
+        .replace("## Public Interface", "## Feature Overview")
+        .replace("## @@MARK@@", "## Public Interface");
+    write_workspace(tmp.path(), &scrambled);
+    assert!(has(&audit(tmp.path()), "AES602", "order_violation"));
 }
 
 #[test]
-fn aes602_fires_when_glossary_has_no_bullets() {
-    let tmp = tempfile::tempdir().unwrap();
+fn aes602_accepts_free_form_h3_headings() {
+    // H3s are free-form under the new layout: the order check reads level-2
+    // headings only, so an invented H3 is not a section-structure defect.
     let frd = conforming_frd().replace(
-        "- **Sample**: A value object used in this example.",
-        "| Sample | A value object |",
+        "## Public Interface",
+        "### Dispatch details\n\nProse about the dispatch.\n\n## Public Interface",
     );
+    let tmp = tempfile::tempdir().unwrap();
     write_workspace(tmp.path(), &frd);
-    assert!(has(&audit(tmp.path()), "AES602", "glossary_empty"));
+    let findings = audit(tmp.path());
+    assert!(
+        !has(&findings, "AES602", "order_violation"),
+        "a free-form H3 must not fire AES602, got: {findings:#?}"
+    );
 }
 
 #[test]
@@ -1424,12 +1168,11 @@ fn frd_with_fr_count(count: usize) -> String {
     for n in (existing + 1)..=count {
         frd.push_str(&format!(
             "\n### FR-SAMPLE-{n:03}: Do Another Thing\n\n\
-             - **Description**: The feature performs a second responsibility.\n\
-             - **Input**: A request value object.\n\
-             - **Output**: A response value object.\n\
-             - **Business Rules**: The capability is stateless.\n\
-             - **Edge Cases**: An absent input yields a default.\n\
-             - **Error Handling**: Failures surface as a reason-coded outcome.\n"
+             | Aspect | Detail |\n\
+             |---|---|\n\
+             | Description | The feature performs a second responsibility. |\n\
+             | Business Rules | The capability is stateless. |\n\
+             | Edge Cases | An absent input yields a default. |\n"
         ));
     }
     frd
@@ -1525,7 +1268,7 @@ fn aes607_ignores_doc_h3_headings_that_look_like_protocols() {
 - PRD: [PRD.md](../../PRD.md)
 - Backlog: [BACKLOG.md](BACKLOG.md).
 
-## System Overview
+## Feature Overview
 
 The feature does the work.
 
@@ -1533,59 +1276,19 @@ The feature does the work.
 
 ### FR-SAMPLE-001: Document one thing
 
-- **Description**: Count the first.
-- **Input**: Nothing.
-- **Output**: One.
-- **Business Rules**: Always one.
-- **Edge Cases**: None.
-- **Error Handling**: None.
+| Aspect | Detail |
+|---|---|
+| Description | Count the first. |
+| Business Rules | Always one. |
+| Edge Cases | None. |
 
 ### FR-SAMPLE-002: Document two things
 
-- **Description**: Count the second.
-- **Input**: Nothing.
-- **Output**: Two.
-- **Business Rules**: Always two.
-- **Edge Cases**: None.
-- **Error Handling**: None.
-
-## API Contract
-
-### Protocol API
-
-| Method | Input | Output | Error | Event | Description |
-| --- | --- | --- | --- | --- | --- |
-| `execute` | SampleRequest | SampleResponse | — | — | Routes. |
-
-### Aggregate API
-
-| Method | Input | Output | Error | Event | Description |
-| --- | --- | --- | --- | --- | --- |
-| `execute` | SampleRequest | SampleResponse | Reason-coded | — | Routes to the capability. |
-
-## Integration Points
-
-| System | Direction | Purpose | Failure mode |
-| --- | --- | --- | --- |
-| Shared domain | in | Supplies value objects | None — types only |
-
-## Non-functional Requirements
-
-| Metric | Target | Measurement method |
-| --- | --- | --- |
-| Dispatch cost | One call per request | Read the dispatch table |
-
-## Test Scenarios
-
-- A conforming request produces a conforming response.
-
-## Assumptions & Constraints
-
-- The capability is stateless.
-
-## Glossary
-
-- **Sample**: A value object used in this example.
+| Aspect | Detail |
+|---|---|
+| Description | Count the second. |
+| Business Rules | Always two. |
+| Edge Cases | None. |
 
 ### IParserProtocol (6 operations)
 

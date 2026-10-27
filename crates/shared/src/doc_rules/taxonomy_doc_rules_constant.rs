@@ -38,40 +38,6 @@ pub const RULE_CODE_SECTION_STRUCTURE: &str = "AES602";
 /// Sections appear in an order that does not match the template.
 pub const SECTION_STRUCTURE_VIOLATION_ORDER: &str = "order_violation";
 
-/// The API Contract section is missing one of its required subsections.
-pub const SECTION_STRUCTURE_VIOLATION_API_SUBSECTION: &str = "api_no_subsection";
-
-/// API Contract carries a level-3 heading outside the fixed pair
-/// (`Protocol API`, `Aggregate API`). Authoring one H3 per protocol — or any
-/// other invented subsection — is the shape this closes.
-pub const SECTION_STRUCTURE_VIOLATION_API_H3_UNEXPECTED: &str = "api_h3_unexpected";
-
-/// A required API Contract subsection does not carry its own column-complete
-/// table, so the seam was described in prose or folded into its sibling.
-pub const SECTION_STRUCTURE_VIOLATION_API_SUBSECTION_NO_TABLE: &str = "api_subsection_no_table";
-
-/// A required API Contract subsection is duplicated, so the fixed H3 pair
-/// (`Protocol API`, `Aggregate API`) no longer appears exactly once each.
-pub const SECTION_STRUCTURE_VIOLATION_API_SUBSECTION_DUPLICATED: &str = "api_subsection_duplicated";
-
-/// An FRD carries a level-3 heading the template does not sanction. The
-/// template's level-3 set is exactly a requirement heading
-/// (`### FR-<FEATURENAME>-NNN:`), `Protocol API`, and `Aggregate API`; every
-/// other level-3 heading is an invented section.
-pub const SECTION_STRUCTURE_VIOLATION_H3_OFF_TEMPLATE: &str = "h3_off_template";
-
-/// Integration Points is present but is not a table with the required columns.
-pub const SECTION_STRUCTURE_VIOLATION_INTEGRATION_NOT_TABLE: &str = "integration_not_table";
-
-/// Non-functional Requirements is present but is not a table with the required columns.
-pub const SECTION_STRUCTURE_VIOLATION_NFR_NOT_TABLE: &str = "nfr_not_table";
-
-/// Test Scenarios has no bullet items.
-pub const SECTION_STRUCTURE_VIOLATION_SCENARIOS_EMPTY: &str = "scenarios_empty";
-
-/// Glossary has no bullet items.
-pub const SECTION_STRUCTURE_VIOLATION_GLOSSARY_EMPTY: &str = "glossary_empty";
-
 /// ─── AES603 — Spec purity ───────────────────────────────────────────────────
 pub const RULE_CODE_SPEC_PURITY: &str = "AES603";
 
@@ -235,19 +201,10 @@ pub const ROADMAP_REQUIRED_H2S: &[&str] = &["Progress Overview", "Roadmap Status
 /// and the required-H2 set read the same four headings under two names.
 pub const FRD_SECTION_ORDER: &[&str] = FRD_REQUIRED_H2S;
 
-/// Legacy: the only level-3 headings the pre-9-doc `HOW-TO-MAKE-FRD.md`
-/// sanctioned, by literal title. A requirement heading
-/// (`### FR-<FEATURENAME>-NNN: <name>`) is the third sanctioned shape and is
-/// matched by the shared FR-ID pattern rather than listed here, so the
-/// accepted set cannot drift between AES601 and AES602 — the same reason
-/// `fr_id_heading_re` is shared.
-///
-/// The 9-doc FRD template has no `Protocol API` / `Aggregate API` H3s; this
-/// set empties when the AES602 section-structure checker migrates off the
-/// old FRD shape. Until then the set is closed against the structure the
-/// checker still enforces: an H3 outside these two titles and the FR-ID
-/// shape fires `h3_off_template`. Level-4 and deeper stay free-form.
-pub const FRD_H3_TITLES: &[&str] = &["Protocol API", "Aggregate API"];
+/// No level-3 headings are whitelisted by title under the 9-doc layout: the
+/// only sanctioned H3s are `FR-<FEATURE>-NNN:` requirement headings, matched
+/// by the shared FR-ID pattern (`fr_id_heading_re`) rather than listed here.
+pub const FRD_H3_TITLES: &[&str] = &[];
 
 /// The twelve row labels every FRD `Functional Requirements` entry table
 /// carries under its `Aspect | Detail` header, per HOW-TO-MAKE-FRD.
@@ -266,29 +223,13 @@ pub const FR_FIELDS: &[&str] = &[
     "Metric",
 ];
 
-/// Legacy columns of the retired `## API Contract` tables. The 9-doc FRD
-/// template has no API Contract section; kept read-only until the AES602
-/// section-structure checker migrates off the old FRD shape. Do not cite in
-/// new checks.
-pub const API_COLUMNS: &[&str] = &["Method", "Input", "Output", "Error", "Event", "Description"];
-
-/// Legacy: the two level-3 subsections the retired `## API Contract`
-/// sections had to carry, in order, and nothing else. `Protocol API` listed
-/// every protocol method; `Aggregate API` listed the single `execute` entry
-/// point. A third H3 — one per protocol class — was the shape
-/// `api_h3_unexpected` reported. Still read by the API-contract checks until
-/// the AES602 checker migration removes them.
+/// Legacy: the two level-3 subsections of the retired `## API Contract`
+/// sections. `Protocol API` listed every protocol method; `Aggregate API`
+/// listed the single `execute` entry point. Still read by the shared
+/// `api_contract_methods` scanner, which powers AES601's method-existence
+/// check: a retired API Contract section in a legacy FRD is still a promise
+/// to the integrator.
 pub const API_CONTRACT_SUBSECTIONS: &[&str] = &["Protocol API", "Aggregate API"];
-
-/// Legacy columns of the retired `## Integration Points` table; still read
-/// by the AES602 integration-shape check until that check is removed with
-/// the rest of the old FRD shape.
-pub const INTEGRATION_COLUMNS: &[&str] = &["System", "Direction", "Purpose", "Failure mode"];
-
-/// Legacy columns of the retired `## Non-functional Requirements` table;
-/// still read by the AES602 NFR-shape check until that check is removed with
-/// the rest of the old FRD shape.
-pub const NFR_COLUMNS: &[&str] = &["Metric", "Target", "Measurement method"];
 
 /// File extensions a spec must never name, per HOW-TO-MAKE-FRD Rule 9.
 pub const SOURCE_EXTENSIONS: &[&str] = &["py", "rs", "ts", "tsx"];
