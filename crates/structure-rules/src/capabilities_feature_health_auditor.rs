@@ -38,7 +38,7 @@ impl IStructureFeatureHealthProtocol for FeatureHealthAuditor {
                 if inventory.has_capabilities || inventory.has_orchestrator {
                     check_feature_folder(&folder, &folder_rel, &ws_root, &inventory, &mut findings);
                     check_feature_shared_mirror(&folder, &folder_rel, &member, &mut findings);
-                    check_feature_root_container(&folder, &folder_rel, &mut findings);
+                    check_feature_root_container(&folder, &folder_rel, &member, &mut findings);
                     // Reverse check: a folder that is a real feature (holds
                     // agent_* or capabilities_* files) and carries a doc pair
                     // must hold an orchestrator. Surface-only or non-agent
@@ -242,27 +242,31 @@ fn check_feature_shared_mirror(
     );
 }
 
-/// AES702 root-container check: a feature folder must hold a root feature
-/// container (`root_<module>_container.<ext>`) so the composition layer that
-/// wires the feature's capabilities to its contracts has a home. A feature
-/// without one has no entry point into the system.
+/// AES702 root-container check: `root_<module>_container.{rs,py,ts}` at member
+/// root, feature root, or feature `src/`.
 fn check_feature_root_container(
     folder: &std::path::Path,
     rel: &str,
+    member: &std::path::Path,
     findings: &mut Vec<StructureFinding>,
 ) {
     let module = folder_name(folder).replace('-', "_");
     let container = format!("root_{module}_container");
+    let candidates: Vec<String> = consts::ROOT_CONTAINER_EXTENSIONS
+        .iter()
+        .map(|ext| format!("{container}.{ext}"))
+        .collect();
     let has_container = |dir: &std::path::Path| {
-        ["rs", "py", "ts"]
+        candidates
             .iter()
-            .any(|ext| dir.join(format!("{container}.{ext}")).is_file())
+            .any(|name| dir.join(name.as_str()).is_file())
     };
-    // The container lives at the feature folder root or one level down in
-    // `src/`, mirroring where the orchestrator lives.
-    if has_container(folder) || has_container(&folder.join("src")) {
+    // A single container composes every feature folder in the member, so a
+    // container at the member root answers for the sibling feature folders.
+    if has_container(member) || has_container(folder) || has_container(&folder.join("src")) {
         return;
     }
+    let extensions = candidates.join("', '");
     findings.push(
         StructureFinding::new(
             consts::RULE_CODE_FEATURE_HEALTH,
@@ -272,9 +276,7 @@ fn check_feature_root_container(
         )
         .with_reason(
             "A feature folder's composition layer lives in a root container that wires its capabilities to the contract protocols. Without it the feature has no entry point and nothing composes it.",
-            format!(
-                "Add '{container}.rs', '{container}.py', or '{container}.ts' to the feature folder or its 'src/' subfolder."
-            ),
+            format!("Add '{extensions}' to the feature folder, its 'src/' subfolder, or the member root."),
         ),
     );
 }

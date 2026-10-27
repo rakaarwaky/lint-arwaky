@@ -56,6 +56,18 @@ fn has(findings: &[(String, String, String)], code: &str, violation_type: &str) 
         .any(|(c, v, _)| c == code && v == violation_type)
 }
 
+/// Does any finding carry this (code, violation_type, file) triple?
+fn has_at(
+    findings: &[(String, String, String)],
+    code: &str,
+    violation_type: &str,
+    file: &str,
+) -> bool {
+    findings
+        .iter()
+        .any(|(c, v, f)| c == code && v == violation_type && f == file)
+}
+
 // ─── AES701: shared purity ─────────────────────────────────────────────────
 
 #[test]
@@ -454,7 +466,7 @@ fn conforming_workspace_reports_no_findings() {
             .as_path(),
         "pub trait CalculatorProtocol {}",
     );
-    // the root container that a complete feature owes (AES702).
+    // the root container a complete feature owes (AES702)
     write(
         root.join("crates/calculator/src/root_calculator_container.rs")
             .as_path(),
@@ -920,9 +932,9 @@ fn aes702_shared_mirror_silent_for_surface_folder() {
     );
 }
 
-/// AES702 root container: a feature folder must hold a
-/// `root_<module>_container.<ext>` at the folder root or in its `src/`
-/// subfolder. Missing it fires feature_missing_root_container.
+/// AES702 root container: a feature folder must hold
+/// `root_<module>_container.<ext>`. Missing it fires
+/// feature_missing_root_container.
 #[test]
 fn aes702_fires_when_feature_lacks_root_container() {
     let tmp = tempfile::tempdir().unwrap();
@@ -937,11 +949,15 @@ fn aes702_fires_when_feature_lacks_root_container() {
             .as_path(),
         "pub struct AddAnalyzer;",
     );
-    // No root_calc_container.rs anywhere in the feature folder.
     let findings = audit(root);
     assert!(
-        has(&findings, "AES702", "feature_missing_root_container"),
-        "expected feature_missing_root_container, got: {findings:#?}"
+        has_at(
+            &findings,
+            "AES702",
+            "feature_missing_root_container",
+            "crates/calc"
+        ),
+        "expected feature_missing_root_container at crates/calc, got: {findings:#?}"
     );
 }
 
@@ -968,7 +984,12 @@ fn aes702_stays_silent_when_feature_has_root_container_in_src() {
     );
     let findings = audit(root);
     assert!(
-        !has(&findings, "AES702", "feature_missing_root_container"),
+        !has_at(
+            &findings,
+            "AES702",
+            "feature_missing_root_container",
+            "crates/calc"
+        ),
         "a feature with a root container in src/ must not fire; got: {findings:#?}"
     );
 }
@@ -990,19 +1011,57 @@ fn aes702_stays_silent_when_feature_has_root_container_at_root() {
         "pub struct AddAnalyzer;",
     );
     write(
-        root.join("crates/calc/root_calc_container.rs")
-            .as_path(),
+        root.join("crates/calc/root_calc_container.rs").as_path(),
         "pub struct CalcContainer;",
     );
     let findings = audit(root);
     assert!(
-        !has(&findings, "AES702", "feature_missing_root_container"),
+        !has_at(
+            &findings,
+            "AES702",
+            "feature_missing_root_container",
+            "crates/calc"
+        ),
         "a feature with a root container at the folder root must not fire; got: {findings:#?}"
     );
 }
 
+/// AES702 root container stays silent when the container sits at the
+/// member root, beside the feature folder (the TS/Python member-root layout
+/// workspaces-good uses).
+#[test]
+fn aes702_stays_silent_when_feature_has_root_container_at_member_root() {
+    let tmp = tempfile::tempdir().unwrap();
+    let root = tmp.path();
+    write(
+        root.join("modules/calc/src/agent_calc_orchestrator.py")
+            .as_path(),
+        "class CalcOrchestrator: pass\n",
+    );
+    write(
+        root.join("modules/calc/src/capabilities_add_analyzer.py")
+            .as_path(),
+        "class AddAnalyzer: pass\n",
+    );
+    write(
+        root.join("modules/root_calc_container.py").as_path(),
+        "class CalcContainer: pass\n",
+    );
+    let findings = audit(root);
+    assert!(
+        !has_at(
+            &findings,
+            "AES702",
+            "feature_missing_root_container",
+            "modules/calc"
+        ),
+        "a feature with a root container at the member root must not fire; got: {findings:#?}"
+    );
+}
+
 /// AES702 root container respects the language extension: a Python feature
-/// satisfies the check with `root_<module>_container.py`.
+/// satisfies the check with `root_<module>_container.py`, and the same
+/// feature with no container fires.
 #[test]
 fn aes702_root_container_accepts_language_extension() {
     let tmp = tempfile::tempdir().unwrap();
@@ -1024,8 +1083,41 @@ fn aes702_root_container_accepts_language_extension() {
     );
     let findings = audit(root);
     assert!(
-        !has(&findings, "AES702", "feature_missing_root_container"),
+        !has_at(
+            &findings,
+            "AES702",
+            "feature_missing_root_container",
+            "modules/calc"
+        ),
         "a Python feature with a .py root container must not fire; got: {findings:#?}"
+    );
+}
+
+/// A Python feature with no root container fires the check, so the extension
+/// probe discriminates rather than merely tolerating.
+#[test]
+fn aes702_root_container_fires_when_python_feature_lacks_container() {
+    let tmp = tempfile::tempdir().unwrap();
+    let root = tmp.path();
+    write(
+        root.join("modules/calc/src/agent_calc_orchestrator.py")
+            .as_path(),
+        "class CalcOrchestrator: pass\n",
+    );
+    write(
+        root.join("modules/calc/src/capabilities_add_analyzer.py")
+            .as_path(),
+        "class AddAnalyzer: pass\n",
+    );
+    let findings = audit(root);
+    assert!(
+        has_at(
+            &findings,
+            "AES702",
+            "feature_missing_root_container",
+            "modules/calc"
+        ),
+        "expected feature_missing_root_container for a Python feature without a container; got: {findings:#?}"
     );
 }
 
@@ -1057,7 +1149,12 @@ fn aes702_root_container_silent_for_surface_folder() {
     );
     let findings = audit(root);
     assert!(
-        !has(&findings, "AES702", "feature_missing_root_container"),
+        !has_at(
+            &findings,
+            "AES702",
+            "feature_missing_root_container",
+            "crates/cli"
+        ),
         "surface folder must not fire feature_missing_root_container; got: {findings:#?}"
     );
 }
