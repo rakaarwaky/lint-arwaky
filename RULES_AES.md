@@ -569,7 +569,7 @@ stay free-form — that is where detail that must not become a section belongs.
 
 **Severity:** HIGH
 
-A spec promises; it never reports state. Applies to every promise-bearing document: PRD, FRD, ROADMAP, ARCHITECTURE, CONTRIBUTING.
+A spec promises; it never reports state. Applies to exactly four promise-bearing documents: PRD, FRD, DATA, ROADMAP. ARCHITECTURE and CONTRIBUTING are not in this set: ARCHITECTURE.md names source-file patterns by design, CONTRIBUTING.md carries checklists by design, and applying the spec-purity check to them would fire false positives. The code's `is_spec` never included ARCHITECTURE or CONTRIBUTING, so the text is corrected to match the code. DESIGN is a visual contract, not a promise-bearing spec, and is also excluded.
 
 | Violation type         | Fires when                                                              |
 | ------------------------ | ------------------------------------------------------------------------ |
