@@ -16,15 +16,14 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 
 ## Functional Requirements
 
-### FR-DOC-001: FR Format, Protocol-Class Parity, and API-Method Existence (AES601)
+### FR-DOC-001: FR Format, PR-ID Family, Protocol-Class Parity, and BACKLOG Qualifier Alignment (AES601)
 
-- **Description**: Every requirement heading states its feature prefix and all six contract fields, an FRD declares exactly as many requirements as its feature's contract module declares capability seams, and every method its API tables promise is one the contract module declares.
-- **Input**: An `FRD.md` or `DATA.md` inside the audit context, plus the audit root for resolving the feature's shared contract module.
-- **Output**: A list of `DocFinding` values, each carrying `AES601` and one of `id_missing_feature_prefix`, `field_missing`, `protocol_count_mismatch`, `api_method_not_found`, `backlog_id_not_fr`, `backlog_id_missing`, `ds_backlog_id_not_ds`, `ds_backlog_id_missing`, `dt_backlog_id_not_dt`, or `dt_backlog_id_missing`.
+- **Description**: Every requirement heading states its feature prefix, a PRD and its ROADMAP agree on the `PR-<PROJECT>-NNN` item set, an FRD declares exactly as many requirements as its feature's contract module declares capability seams, every method its API tables promise is one the contract module declares, and every BACKLOG entry qualifier aligns with the qualifier of at least one ID declared by its paired spec.
+- **Input**: An `FRD.md`, `DATA.md`, `PRD.md`, `ROADMAP.md`, or `BACKLOG.md` inside the audit context, plus the audit root for resolving the feature's shared contract module.
+- **Output**: A list of `DocFinding` values, each carrying `AES601` and one of `id_missing_feature_prefix`, `protocol_count_mismatch`, `api_method_not_found`, `pr_roadmap_id_missing`, `roadmap_pr_id_not_pr`, `backlog_id_not_fr`, `backlog_id_missing`, `ds_backlog_id_not_ds`, `ds_backlog_id_missing`, `dt_backlog_id_not_dt`, `dt_backlog_id_missing`, `backlog_qualifier_mismatch`, `pr_backlog_id_missing`, or `backlog_id_not_pr`.
 - **Business Rules**:
   - A requirement ID must read `FR-<FEATURE>-NNN: <imperative name>`; a bare `FR-NNN` reports `id_missing_feature_prefix`.
-  - The same shared FR-ID pattern drives the ID check, the field check, and the parity counter, so an accepted ID set cannot drift between them.
-  - Every requirement states all six fields: Description, Input, Output, Business Rules, Edge Cases, Error Handling.
+  - The same shared FR-ID pattern drives the ID check and the parity counter, so an accepted ID set cannot drift between them. Entry row-label validation (`field_missing`-class defects) is owned by AES606 `entry_missing_row`, never by AES601.
   - One protocol class is one capability seam and one seam is one requirement, so the FRD's requirement count must equal the feature's `I*Protocol` count; aggregate traits are not seams and are excluded.
   - The mismatch message names both counts and both fix directions.
   - Each row of the `Protocol API` and `Aggregate API` tables promises a method to an integrator; a method no protocol or aggregate trait declares reports `api_method_not_found`.
@@ -32,10 +31,9 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
   - Only the first cell of a table row is a promise. A method named in a row's prose or in a body paragraph is not one, so a doc that discusses a name the code never declares stays silent.
   - The finding anchors to its own table row's line, not to the enclosing heading, so a report points at the row a reader has to fix.
   - The check applies to `FRD.md` and `DATA.md`; parity and the method check apply to `FRD.md` alone, because only an FRD names a feature's contract module.
-  - A BACKLOG `## Backlog` row whose ID cell is not one of the FRD's accepted FR-IDs reports `backlog_id_not_fr` anchored to the row; an FRD FR-ID with no BACKLOG `## Backlog` row reports `backlog_id_missing` anchored to the `## Backlog` heading. Both directions keep the backlog traceable to the requirements one row at a time; either direction absent from both sides is silent.
-  - A DESIGN.md `DS-<DESIGNNAME>-NNN:` heading (H2–H4, colon-terminated; the NAME qualifier is mandatory, so a bare `DS-001` is not accepted) is accepted only when the same folder holds a `BACKLOG.md`; a BACKLOG row whose ID cell is not a valid DS-ID reports `ds_backlog_id_not_ds` anchored to the row, and a DS-ID with no BACKLOG row reports `ds_backlog_id_missing` anchored to the `## Backlog` heading.
-  - A DATA.md `DT-<DATANAME>-NNN:` item H2 (H2–H4, colon-terminated; the NAME qualifier is mandatory, so a bare `DT-001` is not accepted) is accepted only when the same folder holds a `BACKLOG.md`; a BACKLOG row whose ID cell is not a valid DT-ID reports `dt_backlog_id_not_dt` anchored to the row, and a DT-ID with no BACKLOG row reports `dt_backlog_id_missing` anchored to the `## Backlog` heading. `DO-` headings are not accepted by the DT check — only the qualified `DT-<DATANAME>-NNN` shape is.
-- **Edge Cases**: A feature crate whose name uses `-` is resolved to the `_` spelling of its shared module. A feature with no shared contract module cannot mismatch and cannot owe a method, so both checks stay silent. A method declared on any trait in the module satisfies a row, so a seam's declaration and the aggregate's `execute` are read the same way.
+  - **PR-ID family.** A `PR-<PROJECT>-NNN:` heading (H2–H4, colon-terminated) in the PRD's `Project Requirements` must have a matching ROADMAP `Roadmap Status` entry; a PRD item absent from the ROADMAP reports `pr_roadmap_id_missing` anchored to the ROADMAP's `## Roadmap Status` heading, and a ROADMAP item absent from the PRD reports `roadmap_pr_id_not_pr` anchored to the item's own heading line.
+  - **BACKLOG qualifier alignment.** A BACKLOG entry's H3 title is a qualifier token `{Q}` where Q is one of `PROJECT-NAME-ID`, `FEATURE-NAME-ID`, `DESIGN-NAME-ID`; the paired spec (FRD, DESIGN, DATA, or PRD+ROADMAP depending on location) declares IDs `<PREFIX>-<QUALIFIER>-NNN`, so alignment is qualifier-level. A BACKLOG entry whose qualifier no paired-spec ID carries reports `backlog_qualifier_mismatch` anchored to the entry's H3 line. A paired-spec qualifier with no BACKLOG entry reports the family's missing-code (`backlog_id_missing` / `ds_backlog_id_missing` / `dt_backlog_id_missing` / `pr_backlog_id_missing`) anchored to `## Backlog Status`. A `PR-`/`FR-`/`DS-`/`DT-` token in an entry's `Next`/`Done`/`Blocked` row that the paired spec does not declare reports the family's not-code (`backlog_id_not_fr` / `ds_backlog_id_not_ds` / `dt_backlog_id_not_dt` / `backlog_id_not_pr`) anchored to the entry's H3 line.
+- **Edge Cases**: A feature crate whose name uses `-` is resolved to the `_` spelling of its shared module. A feature with no shared contract module cannot mismatch and cannot owe a method, so both checks stay silent. A method declared on any trait in the module satisfies a row, so a seam's declaration and the aggregate's `execute` are read the same way. A BACKLOG entry whose H3 title is not a single brace-wrapped token is skipped (malformed entries are silent). A paired spec that declares no IDs makes the missing-direction silent for that pair; the stray-ID direction still fires on every token.
 - **Error Handling**: An unreadable contract module yields no parity or method finding rather than a false violation. The parity finding is anchored to the requirements section, falling back to the first line when the document has none; a method finding is anchored to its own row.
 
 ### FR-DOC-002: Section Structure (AES602)
@@ -200,10 +198,12 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 ## Test Scenarios
 
 - A document misses a mandatory H2 → AES605 fires naming the missing headings.
+- A BACKLOG entry qualifier has no paired-spec ID, a paired-spec qualifier has no BACKLOG entry, or an entry's `Next`/`Done`/`Blocked` row cites an ID the paired spec never declares → AES601 fires `backlog_qualifier_mismatch` / the family's missing-code / the family's not-code, anchored to the entry H3 or `## Backlog Status`.
+- A PRD item is missing from the ROADMAP or a ROADMAP item is not declared in the PRD → AES601 fires `pr_roadmap_id_missing` / `roadmap_pr_id_not_pr`.
 - A feature BACKLOG row carries an ID the FRD never declares, or an FRD FR-ID has no BACKLOG row → AES601 fires `backlog_id_not_fr` / `backlog_id_missing`, one finding per direction, named row or heading.
 - Requirement count drifts from the contract seams → AES601 fires stating both counts and both fix directions.
 - An FRD carries a bare FR-ID without a feature prefix → AES601 fires naming the line and missing prefix.
-- An FRD requirement is missing a required field → AES601 fires naming the field and the line.
+- An FRD requirement block is missing row labels → AES606 fires `entry_missing_row` (AES601 no longer owns row-label validation).
 - An FRD API table promises a method no protocol or aggregate trait declares → AES601 fires naming the method, the table, and both remedies.
 - A spec names a concrete source-file path → AES603 fires naming the line and the reference.
 - A spec carries a status leak (checkbox item, an implementation-state claim, or a progress percentage) → AES603 fires naming the pattern.
