@@ -21,19 +21,14 @@ pub struct ReportFormatterContainer {
 impl ReportFormatterContainer {
     /// Create with the default formatter capabilities wired in.
     pub fn new() -> Self {
-        Self::from_orchestrator(Arc::new(ReportFormatterOrchestrator::new(
-            ReportFormatterDeps {
+        Self {
+            orchestrator: Arc::new(ReportFormatterOrchestrator::new(ReportFormatterDeps {
                 text: Arc::new(TextFormatter::new()),
                 json: Arc::new(JsonFormatter::new()),
                 sarif: Arc::new(SarifFormatter::new()),
                 junit: Arc::new(JunitFormatter::new()),
-            },
-        )))
-    }
-
-    /// Create from a pre-built orchestrator — the canonical way per AES architecture.
-    pub fn from_orchestrator(orchestrator: Arc<dyn IReportFormatterAggregate>) -> Self {
-        Self { orchestrator }
+            })),
+        }
     }
 
     pub fn orchestrator(&self) -> Arc<dyn IReportFormatterAggregate> {
