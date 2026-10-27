@@ -89,6 +89,12 @@ fn write_conforming_feature(root: &Path, layout: &str, name: &str) {
         &feature.join(format!("benches/bench_{name}.rs")),
         "fn b() {}\n",
     );
+    // The root container every feature owes (AES702
+    // feature_missing_root_container), so a conforming feature carries one.
+    write(
+        &feature.join(format!("src/root_{name}_container.rs")),
+        "pub struct Container;\n",
+    );
 }
 
 #[test]

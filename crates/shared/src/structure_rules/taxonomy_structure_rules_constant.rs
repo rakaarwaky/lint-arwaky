@@ -38,6 +38,9 @@ pub const FEATURE_HEALTH_VIOLATION_MISSING_SHARED_SUBFOLDER: &str =
 pub const FEATURE_HEALTH_VIOLATION_REVERSE_MISSING_ORCHESTRATOR: &str =
     "doc_pair_without_orchestrator";
 
+/// A feature folder holds no root feature container (`root_<module>_container.<ext>`).
+pub const FEATURE_HEALTH_VIOLATION_MISSING_ROOT_CONTAINER: &str = "feature_missing_root_container";
+
 /// ─── AES703 — Surface folder rules ─────────────────────────────────────────
 /// A surface-dominated folder carries surface files only (plus permitted
 /// utility/root/barrel support) and records its shape in DESIGN.md.

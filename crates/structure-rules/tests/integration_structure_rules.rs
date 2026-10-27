@@ -62,6 +62,13 @@ fn write_feature(root: &Path, layout: &str, name: &str) {
             .join(format!("src/{name}/contract_{name}_protocol.rs")),
         &format!("pub trait {}Protocol {{}}\n", name.to_ascii_uppercase()),
     );
+    // The root container: every feature owes a `root_<name>_container.<ext>`
+    // (AES702 feature_missing_root_container), so the conforming feature
+    // must create it.
+    write(
+        &feature.join(format!("src/root_{name}_container.rs")),
+        "pub struct Container;\n",
+    );
 }
 
 /// A feature folder whose test suite carries one file per AES704 category.

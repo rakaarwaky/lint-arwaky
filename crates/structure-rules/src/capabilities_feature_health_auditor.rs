@@ -38,6 +38,7 @@ impl IStructureFeatureHealthProtocol for FeatureHealthAuditor {
                 if inventory.has_capabilities || inventory.has_orchestrator {
                     check_feature_folder(&folder, &folder_rel, &ws_root, &inventory, &mut findings);
                     check_feature_shared_mirror(&folder, &folder_rel, &member, &mut findings);
+                    check_feature_root_container(&folder, &folder_rel, &mut findings);
                     // Reverse check: a folder that is a real feature (holds
                     // agent_* or capabilities_* files) and carries a doc pair
                     // must hold an orchestrator. Surface-only or non-agent
@@ -237,6 +238,43 @@ fn check_feature_shared_mirror(
         .with_reason(
             "A feature folder's contract and taxonomy modules live in the shared kernel under a subfolder named after the feature, so a feature without that subfolder has no home for its kernel modules.",
             format!("Create the '{module}/' subfolder under '{member_display}/shared/src/'.", member_display = member.display()),
+        ),
+    );
+}
+
+/// AES702 root-container check: a feature folder must hold a root feature
+/// container (`root_<module>_container.<ext>`) so the composition layer that
+/// wires the feature's capabilities to its contracts has a home. A feature
+/// without one has no entry point into the system.
+fn check_feature_root_container(
+    folder: &std::path::Path,
+    rel: &str,
+    findings: &mut Vec<StructureFinding>,
+) {
+    let module = folder_name(folder).replace('-', "_");
+    let container = format!("root_{module}_container");
+    let has_container = |dir: &std::path::Path| {
+        ["rs", "py", "ts"]
+            .iter()
+            .any(|ext| dir.join(format!("{container}.{ext}")).is_file())
+    };
+    // The container lives at the feature folder root or one level down in
+    // `src/`, mirroring where the orchestrator lives.
+    if has_container(folder) || has_container(&folder.join("src")) {
+        return;
+    }
+    findings.push(
+        StructureFinding::new(
+            consts::RULE_CODE_FEATURE_HEALTH,
+            consts::FEATURE_HEALTH_VIOLATION_MISSING_ROOT_CONTAINER,
+            rel.to_string(),
+            format!("feature folder '{rel}' holds no root feature container '{container}.<ext>'"),
+        )
+        .with_reason(
+            "A feature folder's composition layer lives in a root container that wires its capabilities to the contract protocols. Without it the feature has no entry point and nothing composes it.",
+            format!(
+                "Add '{container}.rs', '{container}.py', or '{container}.ts' to the feature folder or its 'src/' subfolder."
+            ),
         ),
     );
 }
