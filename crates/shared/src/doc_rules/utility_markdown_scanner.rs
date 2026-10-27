@@ -531,8 +531,8 @@ pub fn strip_non_prose_for_placeholders(text: &str) -> String {
 /// backticks stays out of reach — and markers outside the catalog are
 /// stripped as before.
 pub fn matches_placeholder_catalog(text: &str, catalog: &[&str]) -> Vec<(usize, String)> {
-    // Longest first so a marker containing another (`<None / item name>`, `<N>`)
-    // is protected intact.
+    // Longest first so an inner marker is not consumed by an outer one
+    // (e.g. `<request>` inside `<request shape>`).
     let mut markers: Vec<&str> = catalog.to_vec();
     markers.sort_by_key(|marker| std::cmp::Reverse(marker.len()));
     let mut protected = text.to_string();

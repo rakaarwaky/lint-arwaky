@@ -43,6 +43,8 @@ pub const TEMPLATE_PROFILES: &[TemplateProfile] = &[
         required_h2s: FRD_REQUIRED_H2S,
         placeholder_catalog: &[
             "<feature-name>",
+            "<FEATURE-NAME-ID>",
+            "<Short imperative name>",
             "<One diagram or ≤ 3 sentences: where this feature sits, what calls it, what it calls.>",
             "<what it does — one sentence>",
             "<validation logic, constraints>",
@@ -67,6 +69,10 @@ pub const TEMPLATE_PROFILES: &[TemplateProfile] = &[
             "<System boundaries, tech stack, and infra>",
         ],
     },
+    // The BACKLOG H3 title line ships the whole `{<PROJECT-NAME-ID> |
+    // <FEATURE-NAME-ID> | DESIGN-NAME-ID}` qualifier line, so the two
+    // angle-bracketed members of it are catalogued; `DESIGN-NAME-ID` is
+    // bare (no angle brackets) and never fires.
     TemplateProfile {
         doc_name: BACKLOG_DOC,
         template_file: "HOW-TO-MAKE-BACKLOG.md",
@@ -74,6 +80,8 @@ pub const TEMPLATE_PROFILES: &[TemplateProfile] = &[
         required_h2s: BACKLOG_REQUIRED_H2S,
         placeholder_catalog: &[
             "<feature-name>",
+            "<PROJECT-NAME-ID>",
+            "<FEATURE-NAME-ID>",
             "<One paragraph of progress summary.>",
             "<evidence>",
             "<None / item name>",
@@ -86,9 +94,10 @@ pub const TEMPLATE_PROFILES: &[TemplateProfile] = &[
             "<System boundaries, tech stack, and infra>",
         ],
     },
-    // The migrated template ships its tokens as angle brackets (the target
-    // spec's form), not `{...}` slots; command cells stay backtick-wrapped
-    // in the template and are therefore not catalogued.
+    // The migrated HOW-TO-MAKE-AGENTS.md ships its tokens as angle
+    // brackets — the form that reference ships — not `{...}` slots;
+    // command cells stay backtick-wrapped in the template and are
+    // therefore not catalogued.
     TemplateProfile {
         doc_name: AGENTS_DOC,
         template_file: "HOW-TO-MAKE-AGENTS.md",
@@ -118,6 +127,8 @@ pub const TEMPLATE_PROFILES: &[TemplateProfile] = &[
         required_h2s: PRD_REQUIRED_H2S,
         placeholder_catalog: &[
             "<project-name>",
+            "<PROJECT-NAME-ID>",
+            "<Short imperative name>",
             "<one behaviour — what it does>",
             "<as a..., I want..., so that...>",
             "<boundary — what this project will deliver>",
@@ -135,6 +146,7 @@ pub const TEMPLATE_PROFILES: &[TemplateProfile] = &[
         required_h2s: ROADMAP_REQUIRED_H2S,
         placeholder_catalog: &[
             "<workspace name>",
+            "<PROJECT-NAME-ID>",
             "<One paragraph of progress summary.>",
             "<Short imperative name>",
             "<DATA-NAME-ID> / <FEATURE-NAME-ID> / <DESIGN-NAME-ID>",
@@ -150,6 +162,11 @@ pub const TEMPLATE_PROFILES: &[TemplateProfile] = &[
         required_h2s: README_REQUIRED_H2S,
         placeholder_catalog: &["<project-name>", "<requiretment>"],
     },
+    // `feature-name` is intentionally uncatalogued for ARCHITECTURE: the
+    // reference file's bare ``` fence at line 95 closes the markdown block
+    // opened at line 60, so `modules/<feature-name>/src/` (line 96) is loose
+    // prose outside the verbatim_copy extraction (lines 61-94) and never
+    // reaches the catalog matcher.
     TemplateProfile {
         doc_name: ARCHITECTURE_DOC,
         template_file: "HOW-TO-MAKE-ARCHITECTURE.md",
@@ -170,23 +187,44 @@ pub const TEMPLATE_PROFILES: &[TemplateProfile] = &[
             "<System boundaries, tech stack, and infra>",
         ],
     },
-    // The DATA and DESIGN templates ship their only placeholders inside H2/H3
-    // heading text, where the angle-token strip blanks them, so their
-    // placeholder catalog is intentionally empty: AES606 section-deletion plus
-    // the AES605 H2 contract enforce template fidelity for these two docs.
+    // The DATA and DESIGN catalogs carry the single-line tokens their
+    // fenced templates ship unfilled: the H1 `<project-name>`, the
+    // H3 item-title tokens (`<Short imperative name>`, the `-NNN: `
+    // ID qualifiers `<DATA-NAME-ID>` / `<DESIGN-NAME-ID>`), and the
+    // Reference-table purpose cells. The multi-line overview
+    // placeholders (`<One paragraph: ...>` in DATA, `<One paragraph of
+    // what the design looks like.>` in DESIGN) stay uncatalogued: their
+    // angle spans run across a line break, and the line-scoped matcher
+    // only sees single-line substrings.
     TemplateProfile {
         doc_name: DATA_DOC,
         template_file: "HOW-TO-MAKE-DATA.md",
         deletable_sections: &[],
         required_h2s: DATA_REQUIRED_H2S,
-        placeholder_catalog: &[],
+        placeholder_catalog: &[
+            "<project-name>",
+            "<Short imperative name>",
+            "<DATA-NAME-ID>",
+            "<Business goals, user stories, and scope>",
+            "<Task tracking, epics, and implementation status>",
+            "<Timeline, phasing, and dependencies>",
+            "<System boundaries, tech stack, and infra>",
+        ],
     },
     TemplateProfile {
         doc_name: DESIGN_DOC,
         template_file: "HOW-TO-MAKE-DESIGN.md",
         deletable_sections: &[],
         required_h2s: DESIGN_REQUIRED_H2S,
-        placeholder_catalog: &[],
+        placeholder_catalog: &[
+            "<project-name>",
+            "<Short imperative name>",
+            "<DESIGN-NAME-ID>",
+            "<Business goals, user stories, and scope>",
+            "<Task tracking, epics, and implementation status>",
+            "<Timeline, phasing, and dependencies>",
+            "<System boundaries, tech stack, and infra>",
+        ],
     },
 ];
 
