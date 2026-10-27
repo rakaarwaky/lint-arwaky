@@ -7,7 +7,8 @@
 use std::path::{Path, PathBuf};
 
 use super::taxonomy_structure_rules_constant::{
-    AGENT_PREFIX, CAPABILITIES_PREFIX, ORCHESTRATOR_SUFFIX, SKIPPED_DIRS, SURFACE_PREFIX,
+    AGENT_PREFIX, CAPABILITIES_PREFIX, ORCHESTRATOR_SUFFIX, ROOT_PREFIX, SKIPPED_DIRS,
+    SURFACE_PREFIX,
 };
 use super::taxonomy_structure_rules_request::StructureFinding;
 use super::taxonomy_structure_rules_vo::{FolderInventory, LayerFile};
@@ -56,10 +57,12 @@ fn collect_files(dir: &Path, inventory: &mut FolderInventory, depth: usize) {
         let is_orchestrator = stem.starts_with(AGENT_PREFIX) && stem.ends_with(ORCHESTRATOR_SUFFIX);
         let is_capability = stem.starts_with(CAPABILITIES_PREFIX);
         let is_surface = stem.starts_with(SURFACE_PREFIX);
+        let is_root = stem.starts_with(ROOT_PREFIX);
 
         inventory.has_orchestrator |= is_orchestrator;
         inventory.has_capabilities |= is_capability;
         inventory.has_surfaces |= is_surface;
+        inventory.has_root |= is_root;
         inventory.surface_count += usize::from(is_surface);
         inventory.total_count += 1;
         inventory.files.push(LayerFile {

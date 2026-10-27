@@ -114,6 +114,27 @@ fn check_feature_folder(
         _ => {}
     }
 
+    // Root container: a feature owes its composition wiring — a
+    // root_<concept>_container file, or a root_<concept>_entry file when the
+    // feature is an entry point. The root layer is the only layer that may
+    // instantiate and wire the feature's components.
+    if !inventory.has_root {
+        findings.push(
+            StructureFinding::new(
+                consts::RULE_CODE_FEATURE_HEALTH,
+                consts::FEATURE_HEALTH_VIOLATION_MISSING_ROOT_CONTAINER,
+                rel.to_string(),
+                format!(
+                    "feature folder '{rel}' holds no root_ file (root_<concept>_container or root_<concept>_entry)"
+                ),
+            )
+            .with_reason(
+                "The root container wires the feature's capabilities to contracts and is the only layer that may depend on everything below; without it the feature has no composition home.",
+                "Add a root_<concept>_container file that wires the folder's capabilities to their contracts.",
+            ),
+        );
+    }
+
     // Forbidden files: feature folders hold only capabilities and agents.
     for file in &inventory.files {
         let foreign = consts::FEATURE_FORBIDDEN_PREFIXES
