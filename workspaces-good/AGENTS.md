@@ -52,3 +52,10 @@ lint-arwaky-cli check .                                                # archite
 - [README.md](README.md): what the tool does, every command, and how to install it
 - [ROADMAP.md](ROADMAP.md): what ships next, in order
 ---
+
+## Reference
+| Prd | {Link to PRD.md} | [{link}](PRD.md) |
+| Frd | {Link to FRD.md} | [{link}](FRD.md) |
+| Data | {Link to DATA.md} | [{link}](DATA.md) |
+| Design | {Link to DESIGN.md} | [{link}](DESIGN.md) |
+| Architecture | {Link to ARCHITECTURE.md} | [{link}](ARCHITECTURE.md) |

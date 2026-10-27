@@ -1,11 +1,6 @@
 # FRD — file-watch
 
-## Reference
-
-- PRD: [PRD.md](../../PRD.md)
-- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this crate; this file is specification only.
-
-## System Overview
+## Feature Overview
 
 The file-watch crate provides a filesystem monitoring system that detects file
 changes in real time and re-triggers analysis via an injected
@@ -127,7 +122,7 @@ flowchart TD
 
 ---
 
-## API Contract
+## Public Interface
 
 ### Protocol API
 
@@ -143,66 +138,10 @@ flowchart TD
 |---|---|---|---|---|---|
 | `execute` | `WatchRequest` | `WatchResponse` | — | — | Single composite entry point over the feature. |
 
-## Integration Points
+## Reference
 
-| System | Direction | Purpose | Failure mode |
-|---|---|---|---|
-| Code analysis aggregate | in | Re-run analysis over a changed file; injected at runtime rather than compiled against | Analysis fails for a file → the failure is reported and the watch loop continues with the next event |
-| Watch lifecycle protocol | out (internal) | Define the interface the OS event provider implements | The OS watch limit is reached → the watch call reports failure instead of silently watching a subset |
-| Change filter protocol | out (internal) | Decide which events are worth processing | An event cannot be classified → it is treated as a change, so a lint run is spent rather than a change missed |
-| Change lint protocol | out (internal) | Run the lint pipeline for a single event | A lint failure is non-fatal; the loop continues |
-| Watch aggregate | out (internal) | Expose the single composite entry point the surface calls | The watched path does not exist → a watch error is returned and no loop is started |
-| `notify` | in | Deliver OS-level filesystem events | The kernel watch descriptor limit is hit → events stop arriving and the provider surfaces the error |
-| `notify-debouncer-mini` | in | Coalesce bursts of events into one, so one save does not trigger many analyses | A burst never settles → the debounce window elapses and the pending change is analysed once |
-| Async runtime | in | Drive the event loop and the broadcast channel | The loop task is cancelled → subscribers are notified and shutdown proceeds |
+- PRD: [PRD.md](../../PRD.md)
+- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this crate; this file is specification only.
 
-## Non-functional Requirements
-
-| Metric | Target | Measurement method |
-|---|---|---|
-| Detection latency | A change is reported within the 200 ms debounce window | Touch a file and time from the write to the delivered event |
-| Idle polling | The event loop polls at 100 ms when idle | Measure the loop's wake interval while no events occur |
-| Burst coalescing | One save burst produces exactly one analysis run | Issue N writes inside one debounce window and count the analysis runs |
-| Non-lintable files | A change to a non-lintable file triggers no analysis | Modify a non-source file and assert no analysis run is started |
-| Ignored paths | A change under an ignored path triggers no analysis | Modify a file matching an ignore pattern and assert no analysis run is started |
-| Recursion | Changes in watched subdirectories are reported when recursive, and are not when non-recursive | Modify a nested file under both watch modes and compare delivered events |
-| Subscriber fan-out | Every subscriber receives the same event sequence | Attach two subscribers, trigger one change, and compare both received sequences |
-| Overflow | A lagging broadcast channel does not crash the event loop | Overflow the channel while the loop runs and assert it continues and reports the drop |
-| Shutdown | Interrupt during a run stops the watcher cleanly | Send an interrupt mid-run and assert the process exits without a panic |
-
-## Test Scenarios
-
-- Start watcher on existing directory — events received within debounce window.
-- Start watcher on non-existent path — returns watch error.
-- Modify a `.rs` file — lint triggered, violations reported.
-- Modify a `.txt` file — lint not triggered (non-lintable extension).
-- Rapid modifications to same file — only one lint run after debounce.
-- File matching ignore pattern — event skipped, no lint run.
-- Ctrl+C during watch — graceful shutdown, watcher stopped.
-- Multiple subscribers — all receive the same events.
-- Broadcast channel lagged — event loop continues without crash.
-- Initial lint on startup — baseline violations and score printed.
-- Recursive watch — subdirectory changes detected.
-- Non-recursive watch — subdirectory changes ignored.
-- Config file edited mid-session — the session keeps using the configuration parsed at startup; the edit takes effect only after a restart.
-
-## Assumptions & Constraints
-
-- OS must support `notify` crate's recommended watcher (inotify on Linux,
-  FSEvents on macOS).
-- Maximum inotify watch limit depends on system configuration (default varies by
-  distro).
-- The watch feature is feature-gated; availability check returns true when the
-  feature is enabled.
-- The crate runs on the Tokio async runtime; must be compatible with both
-  single-threaded and multi-threaded runtimes.
-
-## Glossary
-
-- **Debounce**: Coalesce multiple rapid events into a single event after a quiet
-  period.
-- **Lintable**: A file whose extension matches one of the supported linting
-  targets.
-- **File Change Event**: A structured representation of a filesystem change
-  event.
-- **inotify**: Linux kernel subsystem for filesystem event monitoring.
+| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md) |
+| Architecture | {Link to ARCHITECTURE.md} | [{link}](ARCHITECTURE.md) |

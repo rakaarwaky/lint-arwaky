@@ -29,3 +29,7 @@ State: vocabulary below. Last Updated: 2026-10-26
 ## Risk Register
 
 - Risk: <what ships broken>. Mitigation: <row ID>.
+
+## Reference
+| Prd | {Link to PRD.md} | [{link}](PRD.md) |
+| Architecture | {Link to ARCHITECTURE.md} | [{link}](ARCHITECTURE.md) |

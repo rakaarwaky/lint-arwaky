@@ -2,14 +2,7 @@
 
 ---
 
-## Reference
-
-- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature; this file is specification only.
-- PRD: [PRD.md](../../PRD.md)
-- Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
-- Maintenance FRD: `crates/maintenance/FRD.md` (doctor, diagnose)
-
-## System Overview
+## Feature Overview
 
 The project-setup crate provides scaffolding facilities and adapter installation
 for new and existing projects. It detects project languages (Rust, Python,
@@ -282,7 +275,7 @@ flowchart TD
 
 ---
 
-## API Contract
+## Public Interface
 
 ### Protocol API
 
@@ -311,113 +304,11 @@ flowchart TD
 |---|---|---|---|---|---|
 | `execute` | SetupRequest | `SetupResponse` | — | — | Single composite entry point over the feature. |
 
-## Integration Points
+## Reference
 
-| System | Direction | Purpose | Failure mode |
-| --- | --- | --- | --- |
-| `shared` crate | in | Supply value objects plus the setup-management, installer, and aggregate contracts | A contract is missing at compile time → the build fails before setup runs |
-| `pip` / `python3 -m pip` | in | Install the Python adapter | The interpreter is managed by the OS and refuses the install → the retry adds the system-packages override |
-| `npm` | in | Install the JavaScript adapter | Node.js is absent → the JavaScript adapter install is reported as skipped and the rest of setup continues |
-| `dirs` crate | in | Resolve the per-user configuration directory | The platform has no such convention → setup falls back to the project-local configuration path |
-| Embedded configuration templates | in | Provide the default per-language configuration, compiled into the binary so nothing is downloaded | A language has no embedded template → that language's configuration is skipped and reported |
+- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature; this file is specification only.
+- PRD: [PRD.md](../../PRD.md)
+- Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
+- Maintenance FRD: `crates/maintenance/FRD.md` (doctor, diagnose)
 
-## Non-functional Requirements
-
-| Metric | Target | Measurement method |
-| --- | --- | --- |
-| Language detection | Scans to depth 4 at most, stopping early once every language is found | Instrument the walk and assert it stops at the first directory containing all markers |
-| Detection memory | Detection uses scalar flags rather than collections | Inspect the detection state for the absence of allocated collections |
-| Template residency | Configuration templates are compiled in, so nothing is downloaded at run time | Assert the binary carries the templates and that a run performs no template fetch |
-| Install latency | Installation cost is dominated by network and subprocess time, not by local work | Time a run with adapters already present and compare against a cold run |
-| MCP config fidelity | Every supported client receives the config shape that client expects | Diff the generated config against each client's documented schema |
-| Binary resolution | The MCP server binary is found at the expected install path | Install to a custom prefix and assert the resolved path matches |
-| Managed-interpreter retry | A system-managed interpreter refusal is retried with the system-packages override | Run the install against a managed interpreter and assert the retry happens and is reported |
-| Portability | Install succeeds on Linux, macOS, and Windows, with npm gated on Node.js presence | Run the installer on each platform and assert the JavaScript step is skipped where Node is absent |
-
-## Test Scenarios
-
-Each scenario is stated below as a table of cases: the input condition and the expected result.
-
-- **SCEN-001 — MCP Config** — e.g. Claude config → `mcpServers` wrapper with `lint-arwaky` entry
-- **SCEN-002 — Env File** — e.g. Normal home path → Correct PHANTOM_ROOT value
-- **SCEN-003 — Language Detection** — e.g. Cargo.toml exists → Rust detected
-- **SCEN-004 — Adapter Installation** — e.g. Python install → pip install --user ruff mypy bandit
-
-- **SCEN-001 — MCP Config**
-
-FRD Ref: FR-ProjectSetup-001
-
-| # | Scenario | Expected |
-| - | - | - |
-| 1 | Claude config | `mcpServers` wrapper with `lint-arwaky` entry |
-| 2 | Cursor config | `mcpServers` wrapper |
-| 3 | Windsurf config | `mcpServers` wrapper |
-| 4 | Copilot config | `mcpServers` wrapper |
-| 5 | Hermes config | Base config without wrapper |
-| 6 | VS Code config | `mcp.servers` wrapper |
-| 7 | `all` client | All client formats in one JSON |
-| 8 | Binary in CARGO_HOME/bin | Resolved path used |
-| 9 | Binary not found anywhere | Bare name `lint-arwaky-mcp` |
-| 10 | LINT_ARWAKY_MCP_BIN set | Env var path used |
-
-- **SCEN-002 — Env File**
-
-FRD Ref: FR-ProjectSetup-002
-
-| # | Scenario | Expected |
-| - | - | - |
-| 1 | Normal home path | Correct PHANTOM_ROOT value |
-| 2 | Empty home path | PHANTOM_ROOT=/ |
-
-- **SCEN-003 — Language Detection**
-
-FRD Ref: FR-ProjectSetup-003
-
-| # | Scenario | Expected |
-| - | - | - |
-| 1 | Cargo.toml exists | Rust detected |
-| 2 | pyproject.toml exists | Python detected |
-| 3 | package.json exists | JavaScript detected |
-| 4 | Empty directory | Empty list (no default) |
-| 5 | Multi-language project | All detected languages |
-| 6 | target/, node_modules/ dirs | Skipped |
-
-- **SCEN-004 — Adapter Installation**
-
-FRD Ref: FR-ProjectSetup-004
-
-| # | Scenario | Expected |
-| - | - | - |
-| 1 | Python install | pip install --user ruff mypy bandit |
-| 2 | Python PEP 668 retry | --break-system-packages on failure |
-| 3 | JS install | npm install -g eslint prettier typescript |
-| 4 | JS install with sudo | sudo npm install -g |
-| 5 | Rust tools | Suggestion message (not installed) |
-| 6 | Empty package list | Ok(()) without spawning |
-
----
-
-## Assumptions & Constraints
-
-- `pip` and `npm` are available on the system when adapter installation is
-  requested.
-- The working directory is the project root when language detection runs.
-- Embedded YAML config templates are valid and complete at compile time.
-- XDG config directory is available on the target platform (Linux, macOS).
-- The `dirs` crate correctly resolves the config directory.
-- Rust tools (clippy, rustfmt, cargo-audit) are managed via `rustup`, not
-  by project-setup.
-- Full toolchain diagnostics (`doctor`, `diagnose`) are handled by the
-  maintenance crate, not project-setup.
-- No async runtime dependency.
-
----
-
-## Glossary
-
-- **AES**: Agentic Engineering System — the 7-layer coding convention
-- **MCP**: Model Context Protocol — JSON-RPC standard for AI agent tool integration
-- **Adapter**: External linter binary (ruff, mypy, clippy, eslint, etc.)
-- **PEP 668**: Python enhancement proposal marking system-managed Python environments; requires `--break-system-packages` for `pip install`
-- **XDG**: X Desktop Group base directory specification (`~/.config`, `~/.local/share`, etc.)
-- **PHANTOM_ROOT**: Environment variable used by JS/TS linters to resolve project root
+| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md) |

@@ -1,13 +1,6 @@
 # FRD — orphan-rules (v2.0.0)
 
-## Reference
-
-- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature; this file is specification only.
-- PRD: [PRD.md](../../PRD.md)
-- Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
-- Filesystem crate FRD: `../filesystem/FRD.md`
-
-## System Overview
+## Feature Overview
 
 The orphan-rules crate identifies dead, unused, or unreachable code components across the 7-layer AES architecture. It receives a pre-built `GraphAnalysisContext` from the external `filesystem` crate and performs layer-specific orphan analysis starting from valid entry points (containers, binary entries, main files).
 
@@ -225,7 +218,7 @@ flowchart TD
   - Surface file with unclassifiable suffix → skipped entirely (no violation, no error).
 - **Error Handling**: Files that fail to parse → orphan (fail-strict). Unclassifiable suffix → skip.
 
-## API Contract
+## Public Interface
 
 FR-OrphanRules-001's graph-context, entry-point, and reachability steps have **no trait** in the shared contract module. They are orchestration the orphan-rules agent owns: it receives the graph context from the filesystem aggregate and delegates the pure work to the shared orphan/quality utilities. An agent must never implement a contract protocol (AES405), and no other feature consumes these steps, so a seam would have exactly one implementer — the agent — which is the shape the rule forbids. They are therefore inherent methods on the aggregate:
 
@@ -254,204 +247,11 @@ FR-OrphanRules-001's graph-context, entry-point, and reachability steps have **n
 |---|---|---|---|---|---|
 | `execute` | OrphanRequest | `OrphanResponse` | — | — | Single composite entry point over the feature. |
 
-## Integration Points
+## Reference
 
-| System | Direction | Purpose | Failure mode |
-| --- | --- | --- | --- |
-| Orphan aggregate contract | out (internal) | Expose the single composite entry point the surface calls | A request supplies no graph context → the orchestrator returns an empty result set and performs no I/O of its own |
-| Layer-specific orphan indicator protocols | out (internal) | Define the shape each of the six per-layer orphan checks implements | An indicator does not satisfy its protocol → it is not wired, and the layer's check is reported as not run |
-| Filename analysis utility | out (internal) | Identify entry points and split a name into base, stem, and suffix | A name has no suffix → the file is classified as a barrel or entry point and skipped |
-| Reachability utility | out (internal) | Trace import edges from entry points to mark reachable files | The graph is empty → every file is reported as an orphan, which is fail-strict rather than a false pass |
-| `filesystem` aggregate | in | Build the graph context, detect the workspace root, apply ignore filters, and resolve module paths | Building the graph fails → the scan reports the failure and produces no orphan claims |
-| `shared` crate | in | Supply the parser contract, graph context, indicator results, reachability results, and the import graph | Parsing fails for a file → the file is reported as an orphan, because failing open would hide dead code |
-| `rayon` | in (internal) | Parallelize the per-file analyzer checks | A worker is interrupted → the parallel iterator yields only the results it completed, and the run is reported as partial |
+- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature; this file is specification only.
+- PRD: [PRD.md](../../PRD.md)
+- Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
+- Filesystem crate FRD: `../filesystem/FRD.md`
 
-## Non-functional Requirements
-
-| Metric | Target | Measurement method |
-| --- | --- | --- |
-| 1,000 files | Under 500 ms | Time a full orphan analysis over a 1,000-file workspace |
-| 5,000 files | Under 2 s | Time a full orphan analysis over a 5,000-file workspace |
-| 10,000 files | Under 5 s | Time a full orphan analysis over a 10,000-file workspace |
-| Reachability | O(V + E) breadth-first traversal | Scale the graph tenfold and confirm linear growth |
-| Cached lookups | Per-analyzer checks use cached file lists and whole-word content lookups rather than re-reading | Count filesystem reads during analysis and confirm it does not grow with analyzer count |
-| Memory | The graph context and file contents are resident once, contents via a bounded cache | Measure retained memory against workspace size for two sizes |
-| Parallel checks | File-level analysis is parallelized | Assert the parallel iterator is used for file-level analysis |
-| Reachability accuracy | Zero false positives on transitively reachable code | Assert the good-workspace fixtures report zero orphans |
-| Parse failure | A file that cannot be parsed is reported as an orphan | Feed an unparseable file and assert it is reported rather than silently passed |
-| Macro limitation | Macro-generated code is invisible to the detector; fail-strict on parse error is deliberate | Record the limitation in the rule description, since it cannot be measured from outside |
-| Graph read-only | Graph analysis performs no mutation after construction | Assert the analysis phase takes the graph by shared reference and mutates nothing |
-
-## Test Scenarios
-
-Each scenario is stated below as a table of cases: the input condition and the expected result.
-
-- **Core Detection** — e.g. Workspace with 100 files, 5 orphans across 3 layers → All 5 detected, 0 false positives
-- **Barrel files** — e.g. a Python package marker → Skipped, not flagged
-- **AES501 — Taxonomy Orphan** — e.g. Taxonomy file imported by a contract file → Not orphan
-- **AES502 — Contract Orphan** — e.g. Protocol with implementation AND callers → Not orphan
-- **AES503 — Capabilities Orphan** — e.g. Capability struct referenced in container file → Not orphan
-- **AES504 — Utility Orphan** — e.g. Utility imported by a capabilities file → Not orphan
-- **AES505 — Agent Orphan** — e.g. Agent aggregate called by container file → Not orphan
-- **AES506 — Surface Orphan** — e.g. Smart surface (`_command`) reachable from entry point → Not orphan
-- **Configuration** — e.g. Config `check_orphan: false` for a layer → No violations for that layer
-- **Performance** — e.g. 10,000 file workspace → Completes in under 5 seconds
-
-- **Core Detection**
-
-| # | Scenario | Expected |
-| - | - | - |
-| 1 | Workspace with 100 files, 5 orphans across 3 layers | All 5 detected, 0 false positives |
-| 2 | Circular imports between two capabilities | Both reachable, neither flagged |
-| 3 | Workspace with zero entry points | All non-barrel files flagged as orphans |
-| 4 | Cross-crate imports (crate A imports from crate B) | Graph resolves correctly |
-| 5 | Configuration disabled | Full orphan scan returns empty immediately |
-| 6 | File with parse failure | Flagged as orphan (fail-strict) |
-
-- **Barrel Files**
-
-| # | Scenario | Expected |
-| - | - | - |
-| 1 | Python package marker | Skipped, not flagged |
-| 2 | TypeScript barrel re-exports | Skipped, not flagged |
-| 3 | Rust module barrel re-exports | Skipped, not flagged |
-| 4 | Rust library root | Skipped, not flagged |
-
-- **AES501 — Taxonomy Orphan**
-
-| # | Scenario | Expected |
-| - | - | - |
-| 1 | Taxonomy file imported by a contract file | Not orphan |
-| 2 | Taxonomy file imported only by other taxonomy files | Orphan (no non-taxonomy consumer) |
-| 3 | Taxonomy file with no inbound links | Orphan |
-| 4 | Taxonomy file imported by capabilities file | Not orphan |
-
-- **AES502 — Contract Orphan**
-
-| # | Scenario | Expected |
-| - | - | - |
-| 1 | Protocol with implementation AND callers | Not orphan |
-| 2 | Protocol with implementation but zero callers | Orphan |
-| 3 | Protocol with callers but no implementation | Orphan |
-| 4 | Aggregate re-exported in barrel file | Not orphan (public API) |
-| 5 | Aggregate behind an agent, called by surface | Not orphan |
-| 6 | Contract file with no traits (only type aliases) | Not orphan (nothing to check) |
-
-- **AES503 — Capabilities Orphan**
-
-| # | Scenario | Expected |
-| - | - | - |
-| 1 | Capability struct referenced in container file | Not orphan |
-| 2 | Capability file transitively reachable from entry point | Not orphan |
-| 3 | Capability file not in alive set, not in any container | Orphan |
-| 4 | Capability imported by other capabilities, chain reaches container | Not orphan (chain alive) |
-
-- **AES504 — Utility Orphan**
-
-| # | Scenario | Expected |
-| - | - | - |
-| 1 | Utility imported by a capabilities file | Not orphan |
-| 2 | Utility imported only by other utilities | Orphan (utility chain = dead code) |
-| 3 | Utility with no inbound links | Orphan |
-| 4 | Utility imported by agent file | Not orphan |
-
-- **AES505 — Agent Orphan**
-
-| # | Scenario | Expected |
-| - | - | - |
-| 1 | Agent aggregate called by container file | Not orphan |
-| 2 | Agent aggregate not called by any container/lib | Orphan (HIGH) |
-| 3 | Agent with no aggregate implementation | Not orphan (skip check) |
-| 4 | Agent with aggregate traits, none found in containers | Orphan (HIGH) |
-
-- **AES506 — Surface Orphan**
-
-| # | Scenario | Expected |
-| - | - | - |
-| 1 | Smart surface (`_command`) reachable from entry point | Not orphan |
-| 2 | Smart surface not reachable from any entry point | Orphan (HIGH) |
-| 3 | Utility surface (`_hook`) reachable from entry point | Not orphan |
-| 4 | Utility surface not reachable from any entry point | Orphan (MEDIUM) |
-| 5 | Passive surface (`_component`) reachable from entry point | Not orphan |
-| 6 | Passive surface not reachable from any entry point | Orphan (LOW) |
-| 7 | Surface file with unclassifiable suffix | Skipped (no check) |
-
-- **Configuration**
-
-| # | Scenario | Expected |
-| - | - | - |
-| 1 | Config `check_orphan: false` for a layer | No violations for that layer |
-| 2 | Config with exceptions list | Excepted files produce no violations |
-| 3 | Config with `ignored_paths: ["tests"]` | `tests/` segment files produce no violations |
-| 4 | Config with AES501 disabled | No taxonomy orphan violations |
-| 5 | Config with custom entry point patterns | Additional entry points recognized |
-
-- **Performance**
-
-| # | Scenario | Expected |
-| - | - | - |
-| 1 | 10,000 file workspace | Completes in under 5 seconds |
-| 2 | Contract analyzer with 50 traits × 500 files | Completes in under 2 seconds (map lookups) |
-
-## Assumptions & Constraints
-
-- Workspace follows AES convention with `crates/`, `packages/`, `modules/` directories.
-- Naming convention validation is handled by the naming-rules crate; orphan-rules assumes filenames are correctly named.
-- Entry points are identified by filename suffix patterns (default: `_entry.*`), configurable via YAML.
-- Graph construction (file discovery, AST parsing, import resolution, inheritance mapping) is performed by the external `filesystem` crate. orphan-rules receives a pre-built `GraphAnalysisContext` and performs zero I/O.
-- Parsing in the filesystem crate: Rust via `syn` (shared parser), Python/TS via tree-sitter AST. orphan-rules itself does not parse files.
-- No network calls are required; all analysis is local.
-- Configuration is loaded once and reused across all checks in a scan.
-- Macro-generated code (Rust `macro_rules!`, proc macros) is not expanded — trait implementations inside macros are invisible to the detector.
-- Parse failure → orphan (fail-strict). Files that fail to parse are flagged as orphans because reachability cannot be verified.
-- Surface files with unclassifiable suffixes are skipped (no orphan check performed).
-
-## Glossary
-
-- **AES**: Agentic Engineering System — the 7-layer coding convention
-- **Orphan**: A source file not transitively reachable from any entry point, or failing layer-specific consumer requirements
-- **Entry point**: A file that anchors the reachability graph (main, lib, container, entry, root)
-- **Barrel file**: A package marker or re-export file whose role is to re-export a package's public surface
-- **Alive file**: A file reachable via BFS from any entry point through the import graph
-- **DI**: Dependency Injection — wiring implementations to trait/interface contracts
-- **Inbound link**: A file that imports the target file (reverse import edge)
-- **AST**: Abstract Syntax Tree — structured representation of source code produced by a parser
-- **GraphAnalysisContext**: Pre-built analysis context from the filesystem crate containing file list, import graph, inbound links, and inheritance map
-- **ImportGraph**: Forward import graph (file → file edges) used for BFS reachability tracing
-- **InboundLinkMap**: Map of file path to list of files that import it
-- **InheritanceMap**: Map of file to trait, class, or interface names it inherits
-- **ReachabilityResult**: Set of files reachable from entry points (the alive set)
-- **Segment matching**: Path matching by splitting on `/` and comparing individual segments (not substring containment)
-- **Filesystem crate**: External crate providing graph construction, file walking, AST parsing, and content reads to orphan-rules.
-
-- **Appendix A: YAML Configuration Schema**
-
-- **Top-Level Structure**
-
-```yaml
-architecture:
-  enabled: true
-  rules:
-    AES501: { ... }
-    AES502: { ... }
-    AES503: { ... }
-    AES504: { ... }
-    AES505: { ... }
-    AES506: { ... }
-  layers:
-    <layer_name>:
-      orphan:
-        check_orphan: true
-        orphan_entry_points:
-          - "*_container.*"
-          - a binary-entry filename
-          - a library-root filename
-```
-
-- **Per-Rule Configuration**
-
-```yaml
-AES50X:
-  enabled: true
-  exceptions: []
-```
+| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md) |

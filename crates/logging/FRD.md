@@ -2,13 +2,7 @@
 
 ---
 
-## Reference
-
-- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature; this file is specification only.
-- PRD: [PRD.md](../../PRD.md)
-- Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
-
-## System Overview
+## Feature Overview
 
 The logging crate gives a developer running `lint-arwaky scan -v` a
 real-time feed on stderr of what the scan is doing: which directories
@@ -147,7 +141,7 @@ flowchart TD
 
 ---
 
-## API Contract
+## Public Interface
 
 ### Protocol API
 
@@ -169,60 +163,10 @@ flowchart TD
 
 ---
 
-## Integration Points
+## Reference
 
-| System | Direction | Purpose | Failure mode |
-| --- | --- | --- | --- |
-| `tracing` crate | in | Provide the event macros the phases and walker emit through | A missing subscriber in a non-CLI context (e.g. test) → events are dropped silently |
-| `tracing_subscriber` crate | in | Build the fmt layer + env filter | A malformed `LINT_ARWAKY_LOG` value → tracing falls back to the flag's directive |
-| CLI entry point | out | The `-v` / `--verbose` flag selects `LogVerbosity` | Flag absent at runtime → `Default` level, no feed emitted |
-| Scan pipeline (dispatcher) | out | Emits the phase and walker events this feature reports | No events emitted → the feed is silent even when the subscriber is installed |
-| MCP entry point | out | Installs the subscriber with `with_ansi = false` | ANSI escapes leaking into the stdio transport → MCP client framing breaks |
+- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature; this file is specification only.
+- PRD: [PRD.md](../../PRD.md)
+- Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
 
-## Non-functional Requirements
-
-| Metric | Target | Measurement method |
-| --- | --- | --- |
-| Init cost | < 1 ms (one-time, process start) | Time `install` in a microbench |
-| No duplicate install | A second `install` call is a no-op, no panic, no log output | Call `install` twice in a test and assert no error |
-| Env override | Setting `LINT_ARWAKY_LOG` before `install` takes precedence over the flag | Export the env, call `install`, assert the filter is the env value |
-| Feed overhead | The phase + walker event emission adds < 5% wall-clock time to a full scan | Time a scan with and without the feed enabled, at `-v` |
-
-## Test Scenarios
-
-- **SCEN-001 — filter directives**: `build_filter(Default)` → `warn,lint_arwaky::audit=info`; `build_filter(Info)` → `info,lint_arwaky::audit=info`; `build_filter(Debug)` → `debug,lint_arwaky::audit=debug`.
-- **SCEN-002 — install**: `install(Default, true)` → subscriber installed, no panic; `install(Debug, false)` → installed with ANSI off; a second `install` call → no-op, no panic.
-- **SCEN-003 — env override**: `LINT_ARWAKY_LOG=trace` + `install(Default)` → the effective filter is `trace`; env unset + `install(Debug)` → the filter is `debug,lint_arwaky::audit=debug`.
-- **SCEN-004 — phase timing**: a timed closure of 20 ms under `time_phase("quality")` emits `phase_start{quality}` and `phase_done{quality, elapsed_ms≈20, count}`.
-- **SCEN-005 — walker events**: `report_walk("crates/logging", Enter)` emits `walker_enter{crates/logging}`; `report_walk("benches", Skip(IgnoredPathPattern))` emits `walker_skip{benches, reason=ignored_path_pattern}`; `files_discovered(250, 38)` emits `files_discovered{count=250, elapsed_ms=38}`.
-
----
-
-## Assumptions & Constraints
-
-- `tracing_subscriber`'s global subscriber is set-once; the process
-  must call `install` exactly once, before any event is emitted.
-- The TUI uses a file-appender subscriber with its own controller and
-  does not call this feature's `install`.
-- No async runtime dependency: all four capabilities are synchronous.
-- The feed is real-time: events are emitted as the scan progresses,
-  not batched at the end.
-
----
-
-## Glossary
-
-- **EnvFilter**: the `tracing_subscriber` filter directive language;
-  the directive string controls which event levels are emitted.
-- **AUDIT_TARGET**: the tracing target name
-  (`"lint_arwaky::audit"`) used by scan-phase, walker, and adapter
-  events.
-- **LogVerbosity**: the three-level enum (`Default`, `Info`, `Debug`)
-  that the `-v` flag maps to filter directives.
-- **PhaseTimer**: the timing scope a scan phase runs inside; it
-  carries the phase name and start instant.
-- **SkipReason**: the four-reason enum (`default_skip_dir`,
-  `ignored_path_pattern`, `non_member_at_ws_root`,
-  `nested_git_repo`) a `walker_skip` event carries.
-
----
+| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md) |

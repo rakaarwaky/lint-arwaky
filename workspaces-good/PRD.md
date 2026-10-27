@@ -54,3 +54,7 @@ A small multi-language calculator demo needs a single, clear specification of wh
 | # | Question / Risk              | Owner | Deadline | Status |
 |---|------------------------------|-------|----------|--------|
 | 1 | None                         | —     | —        | open   |
+
+## Reference
+| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md) |
+| Architecture | {Link to ARCHITECTURE.md} | [{link}](ARCHITECTURE.md) |

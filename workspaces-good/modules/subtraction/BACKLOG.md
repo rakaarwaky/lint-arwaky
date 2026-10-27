@@ -1,45 +1,26 @@
 # BACKLOG — Subtraction
 
-## Current Condition
+## Progress Overview
 
 Subtraction is implemented, tested, and gated. Nothing is blocked.
 
-## Backlog
+## Backlog Status
 
-| ID | Priority | State| Dependencies | Next Action | Updated |
-|---:|---|---|---|---|---|
-| BLK-001 | P1 | Planned | — | Document the aggregate boundary | 2026-10-03 |
+### {FR-SAMPLE-001}
 
-## Scenario Evidence
+| Aspect       | Detail                                      |
+|--------------|---------------------------------------------|
+| State        | Ready                                       |
+| Done         | FR-SAMPLE-001                                       |
+| In Progress  | None                                        |
+| Blocked      | None                                        |
+| Next         | Ship                                        |
+| Risk         | None                                        |
+| Updated      | 2026-09-29                                  |
 
-| Scenario | Kind | Test file | Test name | Last verified |
-|---|---|---|---|---|
-| A valid request resolves | Automated | tests/orchestrator.rs | test_resolves | 08a3f424 |
+## Reference
 
-## Blockers
-
-None.
-
-## Dependencies
-
-| Dependency | Why |
-|------------|-----|
-| Shared contract crate | Supplies the protocols this feature implements. |
-
-## Release Readiness
-
-| Area | Status | Notes |
-|---|---|---|
-| Build | Ready | Builds on the pinned toolchain. |
-| Tests | Ready | Full suite passes. |
-| Gates | Ready | `lint-arwaky-cli check .` reports 0 violations. |
-
-## Deferred
-
-Nothing deferred.
-
-## Change Log
-
-| Date | Change | By |
-|------|--------|----|
-| 2026-10-03 | Backlog opened with the contract sections. | @raka |
+| Prd | {Link to PRD.md} | [{link}](PRD.md) |
+| Frd | {Link to FRD.md} | [{link}](FRD.md) |
+| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md) |
+| Architecture | {Link to ARCHITECTURE.md} | [{link}](ARCHITECTURE.md) |

@@ -8,15 +8,7 @@
 
 ---
 
-## Reference
-
-- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature; this file is specification only.
-- PRD: [PRD.md](../../PRD.md)
-- Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
-- Filesystem crate
-- Shared crate
-
-## System Overview
+## Feature Overview
 
 The naming-rules crate enforces strict naming conventions across the codebase to ensure consistency, readability, and adherence to the 7-layer AES architecture. It validates that files conform to structural naming patterns (AES101) and that file prefixes/suffixes are consistent with their architectural layer (AES102), preventing naming chaos and ensuring every file can be correctly assigned to an architectural layer.
 
@@ -158,7 +150,7 @@ flowchart TD
 
 ---
 
-## API Contract
+## Public Interface
 
 ### Protocol API
 
@@ -174,141 +166,12 @@ flowchart TD
 |---|---|---|---|---|---|
 | `execute` | NamingRequest | `NamingResponse` | — | — | Single composite entry point over the feature. |
 
-## Integration Points
+## Reference
 
-| System | Direction | Purpose | Failure mode |
-| --- | --- | --- | --- |
-| `shared` config module | in | Supply layer definitions, naming rules, exceptions, and ignored paths | A layer is absent from config → files under that prefix are validated structurally only |
-| `shared` taxonomy module | in | Supply the layer map and layer-name value objects | A prefix maps to no layer → the file is skipped by the suffix policy and checked structurally |
-| `shared` path module | in | Supply barrel and entry-point detection used by the exception list | A path cannot be classified → the default exception list applies |
-| `filesystem` aggregate | in | Walk the workspace, filter by extension, and apply ignore rules | A file cannot be read → it is excluded from the discovered set and the rest of the walk proceeds |
-| Surface layer | in | Hand over the pre-fetched file entries | The caller supplies no entries → the orchestrator returns an empty result set and performs no I/O of its own |
-| Layer prefix map | out (internal) | Map a filename prefix to its architectural layer | A prefix is unknown → the file is skipped by the suffix policy rather than misclassified |
+- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature; this file is specification only.
+- PRD: [PRD.md](../../PRD.md)
+- Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
+- Filesystem crate
+- Shared crate
 
-## Non-functional Requirements
-
-| Metric | Target | Measurement method |
-| --- | --- | --- |
-| 1,000-file check | Under 1 s | Time a full walk and check over a 1,000-file workspace |
-| Per-file cost | O(n) in the file's content length | Scale one file's length tenfold and confirm linear growth |
-| Checker state | O(1) per file | Measure retained state during a scan and confirm it does not grow with file count |
-| Regex cache | One compiled slot per word count from 1 to 10, populated lazily; word counts above 10 are built on demand (no clamp) | Read the cache size before and after a scan and confirm it matches the distinct word counts seen |
-| Naming accuracy | Zero false positives on correctly named files | Assert the good-workspace fixtures report zero violations |
-| Suffix-policy completeness | Zero false negatives against the configured suffix policy | Assert every file violating the configured policy is reported |
-| Determinism | Results depend only on file content, never on iteration order | Run the same scan twice and compare the finding sets byte for byte |
-| Zero I/O | The rule performs no filesystem access of its own | Run the check with filesystem access denied and assert it still produces findings |
-
-## Test Scenarios
-
-Each scenario is stated below as a table of cases: the input condition and the expected result.
-
-- **AES101 — Naming Convention** — e.g. Valid snake_case file, 3+ words, recognized layer prefix (`taxonomy_user_vo`) → No violation
-- **AES102 — Suffix/Prefix Validation** — e.g. `taxonomy_user_vo` — prefix taxonomy, suffix vo (in strict allow-list) → No violation
-- **Configuration** — e.g. Rule AES101 disabled in config → No AES101 violations
-
-- **AES101 — Naming Convention**
-
-| # | Input Scenario | Expected Output |
-| - | - | - |
-| 1 | Valid snake_case file, 3+ words, recognized layer prefix (`taxonomy_user_vo`) | No violation |
-| 2 | File with uppercase characters in stem (`Taxonomy_User_Vo`) | AES101 — invalid snake_case |
-| 3 | File with only 2 words (`taxonomy_user`) | AES101 — too few words |
-| 4 | File with hyphens (`taxonomy-user-vo`) | AES101 — invalid separator |
-| 5 | File with dots (`taxonomy.user.vo`) | AES101 — invalid character |
-| 6 | Barrel file (module barrel, package marker, or index barrel) | No violation — exception |
-| 7 | File in exception list (binary entry or library root) | No violation — exception |
-| 8 | Valid file but`min_words` config set to 5, file has 3 words | AES101 — below configured min |
-| 9 | File with unrecognized prefix (`foobar_user_vo`) | No violation — unknown prefix out of scope (AES101 pass, AES102 skip) |
-| 10 | File with digits in segment (`taxonomy_v2_vo`) | No violation (digits allowed) |
-
-- **AES102 — Suffix/Prefix Validation**
-
-| # | Input Scenario | Expected Output |
-| - | - | - |
-| 1 | `taxonomy_user_vo` — prefix taxonomy, suffix vo (in strict allow-list) | No violation |
-| 2 | `taxonomy_user_protocol` — prefix taxonomy, suffix protocol (belongs to contract) | AES102 — prefix-suffix mismatch |
-| 3 | `contract_user_vo` — prefix contract, suffix vo (belongs to taxonomy) | AES102 — prefix-suffix mismatch |
-| 4 | `agent_user_helper` — prefix agent, suffix helper (not in strict allow-list) | AES102 — suffix mismatch (agent requires`orchestrator`) |
-| 5 | `utility_user_helper` — prefix utility, suffix helper (flexible, not forbidden) | No violation |
-| 6 | `utility_user_protocol` — prefix utility, suffix protocol (in forbidden list) | AES102 — forbidden suffix |
-| 7 | `capabilities_user_vo` — prefix capabilities, suffix vo (in forbidden list) | AES102 — forbidden suffix |
-| 8 | `capabilities_user_checker` — prefix capabilities, suffix checker (flexible, not forbidden) | No violation |
-| 9 | `surface_user_command` — prefix surface, suffix command (in strict allow-list) | No violation |
-| 10 | `surface_user_helper` — prefix surface, suffix helper (not in strict allow-list) | AES102 — suffix mismatch |
-| 11 | `root_app_entry` — prefix root, suffix entry (in strict allow-list) | No violation |
-| 12 | `root_app_helper` — prefix root, suffix helper (not in strict allow-list) | AES102 — suffix mismatch |
-| 13 | Packaging build script | No violation — exception |
-| 14 | File in exception list for its layer | No violation — exception |
-| 15 | `taxonomy_user` — no suffix (single word after prefix) | AES102 — suffix mismatch (strict policy requires suffix) |
-
-- **Configuration**
-
-| # | Scenario | Expected |
-| - | - | - |
-| 1 | Rule AES101 disabled in config | No AES101 violations |
-| 2 | Rule AES102 disabled in config | No AES102 violations |
-| 3 | File in exceptions list | No violation for that file |
-
-> **Per-rule toggling:** Each rule can be enabled/disabled via `config.rules[].enabled` (boolean, default `true`). The orchestrator checks this field via `is_rule_enabled()` before invoking the corresponding checker. When `enabled: false`, the checker is not called and zero violations are emitted for that rule.
-
----
-
-## Assumptions & Constraints
-
-- Layer hierarchy and naming policies are defined in the architecture configuration YAML.
-- File naming follows AES conventions (`prefix_concept_suffix` pattern).
-- Exceptions are configurable per rule in the rule's `exceptions` list.
-- Ignored paths (`node_modules`, `.git`, `target`) are excluded from scanning by the filesystem crate.
-- The crate receives pre-populated `&[FileEntry]` from the surface layer (which fetches from `filesystem.file_list()`). No file walking, directory traversal, or filesystem I/O is performed internally.
-- Layer detection is based on filename prefix (hardcoded AES convention: `taxonomy_*`, `contract_*`, `utility_*`, `capabilities_*`, `agent_*`, `surface_*`, `root_*`).
-- Naming validation is a prerequisite for import-rules layer detection. Files that fail naming validation may cause incorrect layer assignment in downstream crates.
-
----
-
-## Glossary
-
-- **AES**: Agentic Engineering System — the 7-layer architecture framework
-- **Layer**: Architectural boundary (taxonomy, contract, utility, capabilities, agent, surface, root)
-- **Suffix**: Last underscore-separated token in the filename indicating role (`vo`, `protocol`, `orchestrator`, `checker`, etc.)
-- **Prefix**: First underscore-separated token in the filename identifying the architectural layer (`taxonomy`, `contract`, `utility`, etc.)
-- **Stem**: Filename without extension (e.g.,`capabilities_user_checker`)
-- **Strict suffix policy**: Layer requires suffix to be in an explicit allow-list. Any other suffix is rejected.
-- **Flexible suffix policy**: Layer allows any suffix EXCEPT those in the forbidden list.
-- **Forbidden suffix**: Suffix explicitly banned for a layer (belongs to another layer's domain)
-- **Prefix-suffix mismatch**: File prefix indicates one layer but suffix belongs to a different layer's suffix set
-- **Filesystem crate**: External crate that handles file walking, directory traversal, and file filtering. Caches`FileEntry[]` in `OnceLock`. Surface layer fetches via `file_list()` and passes to naming-rules.
-- **Unreadable skip**: Files with empty content (parse failures from the filesystem crate) are skipped silently; no separate warning diagnostic is emitted.
-
----
-
-- **Appendix A: YAML Configuration Schema**
-
-- **Top-Level Structure**
-
-```yaml
-architecture:
-  enabled: true
-  rules:
-    AES101: { ... }
-    AES102: { ... }
-```
-
-- **Suffix Policy Schema**
-
-```yaml
-layers:
-  <layer_name>:
-    suffix:
-      - strict: ["<suffix>", ...]      # Only these suffixes allowed
-      # OR
-      - flexible: []                    # Any suffix allowed (except forbidden)
-      - forbidden: ["<suffix>", ...]   # These suffixes are banned
-```
-
-**Policy semantics**:
-
-- `strict`: Whitelist. Suffix MUST be in the list. Anything else → AES102 `SuffixMismatch`.
-- `flexible`: Open. Any suffix allowed UNLESS in `forbidden` list. Forbidden → AES102 `SuffixForbidden`.
-- `strict` and `flexible` are mutually exclusive per layer. `forbidden` can coexist with `flexible`.
-
----
+| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md) |

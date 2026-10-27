@@ -1,11 +1,6 @@
 # FRD — Addition
 
-## Reference
-
-- PRD: [../PRD.md](../PRD.md)
-- Backlog: [BACKLOG.md](BACKLOG.md)
-
-## System Overview
+## Feature Overview
 
 Addition is one layer inside the shared contract. The caller supplies a request,
 the orchestrator applies the capability, and the result returns to the caller.
@@ -13,6 +8,12 @@ the orchestrator applies the capability, and the result returns to the caller.
 ## Functional Requirements
 
 ### FR-ADDITION-001: Check the request
+
+| Aspect         | Detail                                      |
+|----------------|---------------------------------------------|
+| Description    | {FR-ADDITION-001 description}                     |
+| Business Rules | {business rules}                          |
+| Edge Cases     | {edge cases}                              |
 
 - **Description**: The feature validates the operands and returns the result.
 - **Input**: A request supplied by the caller.
@@ -23,6 +24,12 @@ the orchestrator applies the capability, and the result returns to the caller.
 
 ### FR-ADDITION-002: Run the request
 
+| Aspect         | Detail                                      |
+|----------------|---------------------------------------------|
+| Description    | {FR-ADDITION-002 description}                     |
+| Business Rules | {business rules}                          |
+| Edge Cases     | {edge cases}                              |
+
 - **Description**: The feature returns the sum and returns the result.
 - **Input**: A request supplied by the caller.
 - **Output**: The resolved value, or an error.
@@ -30,7 +37,7 @@ the orchestrator applies the capability, and the result returns to the caller.
 - **Edge Cases**: An empty request is rejected before any work runs.
 - **Error Handling**: Returns an error; never panics.
 
-## API Contract
+## Public Interface
 
 ### Protocol API
 
@@ -45,30 +52,10 @@ the orchestrator applies the capability, and the result returns to the caller.
 |--------|-------|--------|-------|-------|-------------|
 | execute | request | response | error | — | The feature's single entry point. |
 
-## Integration Points
+## Reference
 
-| System | Direction | Purpose | Failure mode |
-|--------|-----------|---------|--------------|
-| Caller | in | Supplies the request | Invalid request -> returns an error |
-| Shared contract crate | in | Injects the protocols | Compile error at build time |
+- PRD: [../PRD.md](../PRD.md)
+- Backlog: [BACKLOG.md](BACKLOG.md)
 
-## Non-functional Requirements
-
-| Metric | Target | Measurement method |
-|--------|--------|---------------------|
-| No I/O outside the aggregate boundary | 0 calls | `grep -c "std::fs" src/` |
-
-## Test Scenarios
-
-- A valid request resolves to the expected value.
-- An empty request returns an error instead of a partial result.
-
-## Assumptions & Constraints
-
-- I/O stays outside the aggregate boundary.
-- The pinned toolchain builds the crate without warnings.
-
-## Glossary
-
-- **Aggregate**: The layer that owns the state and the rules.
-- **Protocol**: A trait the shared crate declares and a feature implements.
+| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md) |
+| Architecture | {Link to ARCHITECTURE.md} | [{link}](ARCHITECTURE.md) |

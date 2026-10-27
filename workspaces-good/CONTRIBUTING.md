@@ -81,3 +81,7 @@ lint-arwaky-cli check .
 - [ ] Any registry or manifest the project keeps is updated.
 - [ ] No absolute paths, secrets, or machine-specific values leaked into the diff.
 - [ ] The PR description names the contribution path and links the issue.
+
+## Reference
+| Prd | {Link to PRD.md} | [{link}](PRD.md) |
+| Architecture | {Link to ARCHITECTURE.md} | [{link}](ARCHITECTURE.md) |

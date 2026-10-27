@@ -1,47 +1,27 @@
 # BACKLOG — Calculator
 
-## Current Condition
+## Progress Overview
 
 Calculator routes a request to the operation feature that owns it and merges
 the four operation logs into the history the caller reads.
 
-## Backlog
+## Backlog Status
 
-| ID | Priority | State| Dependencies | Next Action | Updated |
-|---:|---|---|---|---|---|
-| BLK-CALC-001 | P1 | Planned | — | Cache the merged history per session | 2026-10-03 |
+### {FR-SAMPLE-001}
 
-## Scenario Evidence
+| Aspect       | Detail                                      |
+|--------------|---------------------------------------------|
+| State        | Ready                                       |
+| Done         | FR-SAMPLE-001                                       |
+| In Progress  | None                                        |
+| Blocked      | None                                        |
+| Next         | Ship                                        |
+| Risk         | None                                        |
+| Updated      | 2026-09-29                                  |
 
-| Scenario | Kind | Test file | Test name | Last verified |
-|---|---|---|---|---|
-| A request reaches its feature | Automated | tests/e2e_calculator.py | test_e2e_calculator | 6f498ff7 |
-| Merging four logs returns one history | Automated | tests/unit_calculator.py | test_unit_calculator | 6f498ff7 |
+## Reference
 
-## Blockers
-
-None.
-
-## Dependencies
-
-| Dependency | Why |
-|------------|-----|
-| Addition, division, multiplication, subtraction | Each owns one operation. |
-
-## Release Readiness
-
-| Area | Status | Notes |
-|---|---|---|
-| Build | Ready | Builds on the pinned toolchain. |
-| Tests | Ready | Seven test types plus a benchmark. |
-| Gates | Ready | `lint-arwaky-cli check .` reports 0 violations. |
-
-## Deferred
-
-Nothing deferred.
-
-## Change Log
-
-| Date | Change | By |
-|------|--------|----|
-| 2026-10-03 | Backlog opened with the contract sections. | @raka |
+| Prd | {Link to PRD.md} | [{link}](PRD.md) |
+| Frd | {Link to FRD.md} | [{link}](FRD.md) |
+| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md) |
+| Architecture | {Link to ARCHITECTURE.md} | [{link}](ARCHITECTURE.md) |

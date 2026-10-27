@@ -12,12 +12,7 @@ use std::path::Path;
 fn conforming_frd() -> String {
     r#"# FRD — sample
 
-## Reference
-
-- PRD: [PRD.md](../../PRD.md)
-- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature.
-
-## System Overview
+## Feature Overview
 
 The feature does the work a surface delegates to.
 
@@ -25,59 +20,54 @@ The feature does the work a surface delegates to.
 
 ### FR-SAMPLE-001: Document Invariant Enforcement
 
-- **Description**: Every `.md` document satisfies the AES heading and section contract.
-- **Input**: A workspace root and the list of recognized document paths.
-- **Output**: `Vec<LintResult>` carrying one finding per invariant violation.
-- **Business Rules**: Validates FR-ID format, section structure, spec purity, crosslinks, heading structure, and parity.
-- **Edge Cases**: Root-level legacy `BACKLOG.md` is accepted during migration.
-- **Error Handling**: Unreadable files produce no findings. Missing documents are skipped silently.
+| Aspect         | Detail                                      |
+|----------------|---------------------------------------------|
+| Description    | Every `.md` document satisfies the AES heading and section contract. |
+| Business Rules | Validates FR-ID format, section structure, spec purity, crosslinks, heading structure, and parity. |
+| Edge Cases     | Root-level legacy `BACKLOG.md` is accepted during migration. |
+| Capability     | doc_rules::DocStructure                     |
+| Protocol       | doc_rules::DocStructure                     |
+| Method         | check_doc_heading                           |
+| Input          | A workspace root and the list of recognized document paths. |
+| Output         | `Vec<LintResult>` carrying one finding per invariant violation. |
+| Error          | Unreadable files produce no findings.        |
+| Event          | Finding emitted                               |
+| Test           | `lint-arwaky-cli docs .` reports 0 findings |
+| Metric         | 0 doc-rule findings                         |
 
 ### FR-SAMPLE-002: Audit Orchestration
 
-- **Description**: The doc auditor is reachable through a single aggregate entry point dispatching to the invariant checker.
-- **Input**: A `DocRequest` describing the workspace root to audit.
-- **Output**: A `DocResponse` carrying a deduplicated, stable-sorted list of findings.
-- **Business Rules**: The aggregate orchestrates all invariants under one seam so consumers need only invoke `execute`.
-- **Edge Cases**: A request with an empty root produces no findings rather than an error.
-- **Error Handling**: Failures inside the checker are propagated as `DocResponse::Findings` with no partial results.
+| Aspect         | Detail                                      |
+|----------------|---------------------------------------------|
+| Description    | The doc auditor is reachable through a single aggregate entry point dispatching to the invariant checker. |
+| Business Rules | The aggregate orchestrates all invariants under one seam so consumers need only invoke `execute`. |
+| Edge Cases     | A request with an empty root produces no findings rather than an error. |
+| Capability     | doc_rules::DocStructure                     |
+| Protocol       | doc_rules::DocStructure                     |
+| Method         | execute                                     |
+| Input          | A `DocRequest` describing the workspace root to audit. |
+| Output         | A `DocResponse` carrying a deduplicated, stable-sorted list of findings. |
+| Error          | Failures inside the checker are propagated as `DocResponse::Findings` with no partial results. |
+| Event          | Finding emitted                               |
+| Test           | `lint-arwaky-cli docs .` reports 0 findings |
+| Metric         | Deterministic finding order                 |
 
-## API Contract
+## Public Interface
 
-### Protocol API
+| Aspect     | Detail            |
+|------------|-------------------|
+| Agent      | doc_rules::Agent  |
+| Aggregate  | doc_rules::DocStructure |
+| Method     | execute           |
+| Request    | `DocRequest`      |
+| Response   | `DocResponse`     |
 
-| Method | Input | Output | Error | Event | Description |
-| --- | --- | --- | --- | --- | --- |
-| `execute` | `SampleRequest` | `SampleResponse` | Reason-coded | — | Single composite entry point. |
+## Reference
 
-### Aggregate API
-
-| Method | Input | Output | Error | Event | Description |
-| --- | --- | --- | --- | --- | --- |
-| `execute` | `SampleRequest` | `SampleResponse` | Reason-coded | — | Routes to the capability. |
-
-## Integration Points
-
-| System | Direction | Purpose | Failure mode |
-| --- | --- | --- | --- |
-| Shared domain | in | Supplies value objects | None — types only |
-
-## Non-functional Requirements
-
-| Metric | Target | Measurement method |
-| --- | --- | --- |
-| Dispatch cost | One call per request | Read the dispatch table |
-
-## Test Scenarios
-
-- A conforming request produces a conforming response.
-
-## Assumptions & Constraints
-
-- The capability is stateless.
-
-## Glossary
-
-- **Sample**: A value object used in this example.
+| Artifact     | Purpose                                    | Link |
+|--------------|--------------------------------------------|------|
+| PRD          | {Business goals, user stories, and scope}  | [PRD.md](../../PRD.md) |
+| Backlog      | {Task tracking, epics, and implementation status} | [BACKLOG.md](BACKLOG.md) |
 "#
     .to_string()
 }
@@ -90,31 +80,13 @@ fn conforming_prd() -> &'static str {
 
 The problem.
 
-## Goals & Success Metrics
+## Project Requirements
 
 - Fewer defects.
 
-## User Personas
+## Reference
 
-- A maintainer.
-
-## Scope
-
-In scope: the checker.
-
-## Feature Requirements
-
-- P0 — the checker reports every violation.
-
-## Non-functional Requirements
-
-| Metric | Target |
-| --- | --- |
-| Dispatch | One call |
-
-## Open Questions / Risks
-
-- None.
+- PRD goals and success metrics.
 "
 }
 
@@ -122,29 +94,21 @@ In scope: the checker.
 fn conforming_roadmap() -> &'static str {
     r"# ROADMAP — sample
 
-## Current Condition
+## Progress Overview
 
 - Todo: none
 - In Progress: None
 - Blocked: None
 
-## Feature Roll-up
+## Roadmap Status
 
 | ID | Feature | Priority | State | Dependencies | Next Action | Updated |
 |---|---|---|---|---|---|---|
 | WS-1 | Docs | P0 | Done | — | — | 2026-09-29 |
 
-## State Definitions
+## Reference
 
-| State | Meaning |
-|---|---|
-| Done | Shipped. |
-
-## Risk Register
-
-| Risk | Mitigation |
-|---|---|
-| None | — |
+- Done: Shipped.
 "
 }
 
@@ -157,51 +121,35 @@ Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
 State: values from root [ROADMAP.md](../../ROADMAP.md) — do not redefine here.
 Last Updated: 2026-09-29
 
-## Current Condition
+## Progress Overview
 
 - Done: nothing yet
 - In Progress: None
 - Blocked: None
 - Next Action: get started
 
-## Backlog
+## Backlog Status
 
-| ID | Priority | State | Dependencies | Next Action | Updated |
-|---|---:|---|---|---|---|
-| FR-SAMPLE-001 | P0 | Ready | — | — | 2026-09-29 |
-| FR-SAMPLE-002 | P0 | Ready | — | — | 2026-09-29 |
+### {FR-SAMPLE | sample}
 
-## Scenario Evidence
+| Aspect       | Detail                                      |
+|--------------|---------------------------------------------|
+| State        | Ready                                       |
+| Done         | FR-SAMPLE-001                               |
+| In Progress  | None                                        |
+| Blocked      | None                                        |
+| Next         | Ship FR-SAMPLE-001                          |
+| Risk         | None                                        |
+| Updated      | 2026-09-29                                  |
 
-| Scenario | Kind | Test file | Test name | Last verified |
-|---|---|---|---|---|
-| nothing yet | Automated | tests/ | test_nothing | 2026-09-29 |
+## Reference
 
-## Blockers
-
-None
-
-## Dependencies
-
-None
-
-## Release Readiness
-
-| Area | Status | Notes |
-|---|---|---|
-| Tests | Done | nothing |
-| Scenario evidence | Done | nothing |
-| Docs | Done | [FRD.md](FRD.md) is specification-only. |
-
-## Deferred
-
-None
-
-## Change Log
-
-| Date | Change | By |
-|---|---|---|
-| 2026-09-29 | init | @raka |
+| Artifact     | Purpose                                    | Link |
+|--------------|--------------------------------------------|------|
+| PRD          | {Business goals, user stories, and scope}  | [PRD.md](../../PRD.md) |
+| FRD          | {Functional requirements specification}    | [FRD.md](FRD.md) |
+| Roadmap      | {Timeline, phasing, and dependencies}      | [ROADMAP.md](../../ROADMAP.md) |
+| Architecture | {System boundaries, tech stack, and infra} | [ARCHITECTURE.md](../../ARCHITECTURE.md) |
 "
 }
 
@@ -262,19 +210,53 @@ fn write_agents_workspace(dir: &Path) {
     fs::write(dir.join("ROADMAP.md"), conforming_roadmap()).unwrap();
     fs::write(
         dir.join("AGENTS.md"),
-        "# Sample AGENTS.md\n\n\
+        "---\n\
+trigger: always\n\
+description: \"Sample.\"\n\
+---\n\
+# Sample AGENTS.md\n\n\
+## Agent Overview\n\n\
+{One paragraph: what AI agents must know before generating code, docs, or suggestions in this workspace.}\n\n\
 ## Runtime\n\n\
-- Language: Rust.\n\n\
-## Project Quick Facts\n\n\
-sample facts.\n\n\
-## Pipeline\n\n\
-scan → check\n\n\
+| Aspect          | Detail                                          |\n\
+|-----------------|-------------------------------------------------|\n\
+| Language        | {language and pinned version}                   |\n\
+| Environment     | {environment manager and creation method}       |\n\
+| Artifacts       | {reviewable artifact location}                  |\n\
+| Package Manager | {package manager and lockfile}                  |\n\
+| Version Probe   | `{version probe command}`                       |\n\
+| Setup           | `{environment setup command}`                    |\n\
+| Activation      | `{optional environment activation command}`      |\n\n\
 ## Project Structure\n\n\
-one crate.\n\n\
+| Path       | Purpose              |\n\
+|------------|----------------------|\n\
+| {path}     | {what lives here}    |\n\n\
 ## Commands\n\n\
-```bash\ncargo nextest run --workspace\n```\n\n\
-## Related Documents\n\n\
-- [PRD.md](PRD.md): Product requirements.\n",
+| Category    | Command                              | Scope      | CI Gate              |\n\
+|-------------|--------------------------------------|------------|----------------------|\n\
+| Test (all)  | `{whole-workspace test command}`     | All        | ci.yml: {job name}   |\n\
+| Test (unit) | `{single-package test command}`      | One unit   | ci.yml: {job name}   |\n\
+| Test (file) | `{single-file test command}`         | One file   | ci.yml: {job name}   |\n\
+| Lint        | `{formatter or linter command}`      | All        | ci.yml: {job name}   |\n\
+| Type Check  | `{type checker command}`             | All        | ci.yml: {job name}   |\n\
+| Arch Scan   | `{architecture scanner command}`     | All        | ci.yml: {job name}   |\n\n\
+## Documentation Awareness\n\n\
+| Document | Agent Must                              |\n\
+|----------|-----------------------------------------|\n\
+| PRD      | Read before implementing any `PR-` item |\n\
+| FRD      | Follow `FR-` spec exactly               |\n\
+| DATA     | Respect `DT-` shapes and types          |\n\
+| DESIGN   | Use `DS-` tokens and variants           |\n\
+| ROADMAP  | Check `State` before starting work      |\n\
+| BACKLOG  | Update status after each task           |\n\n\
+## Reference\n\n\
+| Artifact     | Purpose                                    | Link |\n\
+|--------------|--------------------------------------------|------|\n\
+| PRD          | {Business goals, user stories, and scope}  | [PRD.md](PRD.md) |\n\
+| FRD          | {Functional requirements specification}    | [FRD.md](FRD.md) |\n\
+| DATA         | {Data shapes and kernel definitions}        | [DATA.md](DATA.md) |\n\
+| DESIGN       | {UI/UX and visual system}                  | [DESIGN.md](DESIGN.md) |\n\
+| Architecture | {System boundaries, tech stack, and infra} | [ARCHITECTURE.md](ARCHITECTURE.md) |\n",
     )
     .unwrap();
 }
@@ -2703,11 +2685,15 @@ fn conforming_data_with_dt() -> String {
     "# DATA — shared\n\n\
      ## Data Overview\n\n\
      The shared kernel manages value objects.\n\n\
+     ## Data Requirements\n\n\
+     | Type     | Description                                  |\n\
+     |----------|----------------------------------------------|\n\
+     | vo       | Lint finding severity level                  |\n\n\
      ## DT-SHAR-001: Severity\n\n\
      | Type  | Description |\n|-------|-------------|\n\
      | vo    | Lint finding severity level |\n\n\
      ## Reference\n\n\
-     | Artifact | Purpose | Link |\n|---|---|---|\n\
+     | Artifact | Purpose | Link |\n|---|---|---|\
      | Backlog | [BACKLOG.md](BACKLOG.md) |\n"
         .to_string()
 }

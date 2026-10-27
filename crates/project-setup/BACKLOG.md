@@ -5,89 +5,114 @@ Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
 State: defined in root [ROADMAP.md](../../ROADMAP.md) — cited here, not restated
 Last Updated: 2026-09-29
 
-## Current Condition
+## Progress Overview
 
 - Done: `cargo nextest run --workspace --lib --tests` → 2035 passed at `72d98f50` (2026-09-29). Per-scenario evidence below.
 - In Progress: None
 - Blocked: None
 - Next Action: Re-run `cargo nextest run --workspace --lib --tests` after any code change to this crate
 
-## Backlog
+## Backlog Status
 
-| ID | Priority | State | Dependencies | Next Action | Updated |
-|---:|---|---|---|---|---|
-| FR-ProjectSetup-001 | P0 | Done | None | — | 2026-09-17 |
-| FR-ProjectSetup-002 | P0 | Done | None | — | 2026-09-17 |
-| FR-ProjectSetup-003 | P0 | Done | None | — | 2026-09-17 |
-| FR-ProjectSetup-004 | P0 | Done | None | — | 2026-09-17 |
-| FR-ProjectSetup-005 | P0 | Done | None | — | 2026-09-17 |
-| FR-ProjectSetup-006 | P0 | Done | None | — | 2026-09-17 |
-| FR-ProjectSetup-007 | P0 | Done | None | — | 2026-09-17 |
-| FR-ProjectSetup-008 | P0 | Done | None | — | 2026-09-17 |
+### {FR-ProjectSetup-001}
 
-## Scenario Evidence
+| Aspect       | Detail                                      |
+|--------------|---------------------------------------------|
+| State        | Ready                                       |
+| Done         | FR-ProjectSetup-001                                       |
+| In Progress  | None                                        |
+| Blocked      | None                                        |
+| Next         | Ship                                        |
+| Risk         | None                                        |
+| Updated      | 2026-09-29                                  |
 
-| Scenario | Rule / expected | Kind | Test file | Test name | Last verified |
-|---|---|---|---|---|---|
-| Claude config | `mcpServers` wrapper with `lint-arwaky` entry | Automated | `tests/project-setup/` | cargo test -p project_setup | `29c71083` |
-| Cursor config | `mcpServers` wrapper | Automated | `tests/project-setup/` | cargo test -p project_setup | `29c71083` |
-| Windsurf config | `mcpServers` wrapper | Automated | `tests/project-setup/` | cargo test -p project_setup | `29c71083` |
-| Copilot config | `mcpServers` wrapper | Automated | `tests/project-setup/` | cargo test -p project_setup | `29c71083` |
-| Hermes config | Base config without wrapper | Automated | `tests/project-setup/` | cargo test -p project_setup | `29c71083` |
-| VS Code config | `mcp.servers` wrapper | Automated | `tests/project-setup/` | cargo test -p project_setup | `29c71083` |
-| `all` client | All client formats in one JSON | Automated | `tests/project-setup/` | cargo test -p project_setup | `29c71083` |
-| Binary in CARGO_HOME/bin | Resolved path used | Automated | `tests/project-setup/` | cargo test -p project_setup | `29c71083` |
-| Binary not found anywhere | Bare name`lint-arwaky-mcp` | Automated | `tests/project-setup/` | cargo test -p project_setup | `29c71083` |
-| LINT_ARWAKY_MCP_BIN set | Env var path used | Automated | `tests/project-setup/` | cargo test -p project_setup | `29c71083` |
-| Normal home path | Correct PHANTOM_ROOT value | Automated | `tests/project-setup/` | cargo test -p project_setup | `29c71083` |
-| Empty home path | PHANTOM_ROOT=/ | Automated | `tests/project-setup/` | cargo test -p project_setup | `29c71083` |
-| Cargo.toml exists | Rust detected | Automated | `tests/project-setup/` | cargo test -p project_setup | `29c71083` |
-| pyproject.toml exists | Python detected | Automated | `tests/project-setup/` | cargo test -p project_setup | `29c71083` |
-| package.json exists | JavaScript detected | Automated | `tests/project-setup/` | cargo test -p project_setup | `29c71083` |
-| Empty directory | Empty list (no default) | Automated | `tests/project-setup/` | cargo test -p project_setup | `29c71083` |
-| Multi-language project | All detected languages | Automated | `tests/project-setup/` | cargo test -p project_setup | `29c71083` |
-| target/, node_modules/ dirs | Skipped | Automated | `tests/project-setup/` | cargo test -p project_setup | `29c71083` |
-| Python install | pip install --user ruff mypy bandit | Automated | `tests/project-setup/` | cargo test -p project_setup | `29c71083` |
-| Python PEP 668 retry | --break-system-packages on failure | Automated | `tests/project-setup/` | cargo test -p project_setup | `29c71083` |
-| JS install | npm install -g eslint prettier typescript | Automated | `tests/project-setup/` | cargo test -p project_setup | `29c71083` |
-| JS install with sudo | sudo npm install -g | Automated | `tests/project-setup/` | cargo test -p project_setup | `29c71083` |
-| Rust tools | Suggestion message (not installed) | Automated | `tests/project-setup/` | cargo test -p project_setup | `29c71083` |
-| Empty package list | Ok(()) without spawning | Automated | `tests/project-setup/` | cargo test -p project_setup | `29c71083` |
-| "rust" | Rust config template | Automated | `tests/project-setup/` | cargo test -p project_setup | `29c71083` |
-| "python" | Python config template | Automated | `tests/project-setup/` | cargo test -p project_setup | `29c71083` |
-| "typescript" | TypeScript config template | Automated | `tests/project-setup/` | cargo test -p project_setup | `29c71083` |
-| Unknown language | Error with supported languages list | Automated | `tests/project-setup/` | cargo test -p project_setup | `29c71083` |
-| "Rust" (case mismatch) | Normalized to "rust" | Automated | `tests/project-setup/` | cargo test -p project_setup | `29c71083` |
-| Write config file | Byte count in description | Automated | `tests/project-setup/` | cargo test -p project_setup | `29c71083` |
-| Create global config dir | ~/.config/lint-arwaky/ created | Automated | `tests/project-setup/` | cargo test -p project_setup | `29c71083` |
-| Dir already exists | Idempotent | Automated | `tests/project-setup/` | cargo test -p project_setup | `29c71083` |
-| pip available | status "ok" | Automated | `tests/project-setup/` | cargo test -p project_setup | `29c71083` |
-| npm not found | status "not_found" | Automated | `tests/project-setup/` | cargo test -p project_setup | `29c71083` |
+### {FR-ProjectSetup-002}
 
-## Blockers
+| Aspect       | Detail                                      |
+|--------------|---------------------------------------------|
+| State        | Ready                                       |
+| Done         | FR-ProjectSetup-002                                       |
+| In Progress  | None                                        |
+| Blocked      | None                                        |
+| Next         | Ship                                        |
+| Risk         | None                                        |
+| Updated      | 2026-09-29                                  |
 
-None
+### {FR-ProjectSetup-003}
 
-## Dependencies
+| Aspect       | Detail                                      |
+|--------------|---------------------------------------------|
+| State        | Ready                                       |
+| Done         | FR-ProjectSetup-003                                       |
+| In Progress  | None                                        |
+| Blocked      | None                                        |
+| Next         | Ship                                        |
+| Risk         | None                                        |
+| Updated      | 2026-09-29                                  |
 
-None
+### {FR-ProjectSetup-004}
 
-## Release Readiness
+| Aspect       | Detail                                      |
+|--------------|---------------------------------------------|
+| State        | Ready                                       |
+| Done         | FR-ProjectSetup-004                                       |
+| In Progress  | None                                        |
+| Blocked      | None                                        |
+| Next         | Ship                                        |
+| Risk         | None                                        |
+| Updated      | 2026-09-29                                  |
 
-| Area | Status | Notes |
-|---|---|---|
-| Tests | Done | `cargo nextest run --workspace --lib --tests` → 2035 passed at `72d98f50` (2026-09-29) |
-| Scenario evidence | Done | 34 scenarios mapped; all Automated via `cargo nextest run --workspace` |
-| Docs | Done | [FRD.md](FRD.md) is specification-only; status lives in this file |
+### {FR-ProjectSetup-005}
 
-## Deferred
+| Aspect       | Detail                                      |
+|--------------|---------------------------------------------|
+| State        | Ready                                       |
+| Done         | FR-ProjectSetup-005                                       |
+| In Progress  | None                                        |
+| Blocked      | None                                        |
+| Next         | Ship                                        |
+| Risk         | None                                        |
+| Updated      | 2026-09-29                                  |
 
-None
+### {FR-ProjectSetup-006}
 
-## Change Log
+| Aspect       | Detail                                      |
+|--------------|---------------------------------------------|
+| State        | Ready                                       |
+| Done         | FR-ProjectSetup-006                                       |
+| In Progress  | None                                        |
+| Blocked      | None                                        |
+| Next         | Ship                                        |
+| Risk         | None                                        |
+| Updated      | 2026-09-29                                  |
 
-| Date | Change | By |
-|---|---|---|
-| 2026-10-26 | Aligned BACKLOG ID column to FRD FR-IDs (AES601) | @raka |
-| 2026-09-29 | Split multi-protocol SetupManagementProcessor into 3 single-protocol capability structs (AES403); moved utility_project_setup_file_helpers to shared crate (AES404); updated FRD to 4 capability FRs only | @raka |
-| 2026-09-17 | Initial backlog created from FRD test-scenario mapping | @raka |
+### {FR-ProjectSetup-007}
+
+| Aspect       | Detail                                      |
+|--------------|---------------------------------------------|
+| State        | Ready                                       |
+| Done         | FR-ProjectSetup-007                                       |
+| In Progress  | None                                        |
+| Blocked      | None                                        |
+| Next         | Ship                                        |
+| Risk         | None                                        |
+| Updated      | 2026-09-29                                  |
+
+### {FR-ProjectSetup-008}
+
+| Aspect       | Detail                                      |
+|--------------|---------------------------------------------|
+| State        | Ready                                       |
+| Done         | FR-ProjectSetup-008                                       |
+| In Progress  | None                                        |
+| Blocked      | None                                        |
+| Next         | Ship                                        |
+| Risk         | None                                        |
+| Updated      | 2026-09-29                                  |
+
+## Reference
+
+| Prd | {Link to PRD.md} | [{link}](PRD.md) |
+| Frd | {Link to FRD.md} | [{link}](FRD.md) |
+| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md) |
+| Architecture | {Link to ARCHITECTURE.md} | [{link}](ARCHITECTURE.md) |

@@ -1,12 +1,6 @@
 # Doc Rules — FRD
 
-## Reference
-
-- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature; this file is specification only.
-- PRD: [PRD.md](../../PRD.md)
-- Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
-
-## System Overview
+## Feature Overview
 
 The doc-rules crate enforces the AES document-invariant contract across the workspace. It audits every recognized `.md` document against six rules (AES601–AES606): FR-ID format and field completeness with FR/protocol class parity, section structure shape, spec purity, crosslink integrity, document heading structure, and template body-shape conformance with required-document presence. AES606 is answered by four capability seams — table-shape conformance, required-document presence, member-document presence, and template-body placeholder conformance — so this document declares nine requirements against nine protocol classes. Findings carry a machine-readable `violation_type` so consumers can route on them without parsing prose.
 
@@ -17,6 +11,12 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 ## Functional Requirements
 
 ### FR-DOC-001: FR Format, PR-ID Family, Protocol-Class Parity, and BACKLOG Qualifier Alignment (AES601)
+
+| Aspect         | Detail                                      |
+|----------------|---------------------------------------------|
+| Description    | {FR-DOC-001 description}                     |
+| Business Rules | {business rules}                          |
+| Edge Cases     | {edge cases}                              |
 
 - **Description**: Every requirement heading states its feature prefix, a PRD and its ROADMAP agree on the `PR-<PROJECT>-NNN` item set, an FRD declares exactly as many requirements as its feature's contract module declares capability seams, every method its API tables promise is one the contract module declares, and every BACKLOG entry qualifier aligns with the qualifier of at least one ID declared by its paired spec.
 - **Input**: An `FRD.md`, `DATA.md`, `PRD.md`, `ROADMAP.md`, or `BACKLOG.md` inside the audit context, plus the audit root for resolving the feature's shared contract module.
@@ -38,6 +38,12 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 
 ### FR-DOC-002: Section Structure (AES602)
 
+| Aspect         | Detail                                      |
+|----------------|---------------------------------------------|
+| Description    | {FR-DOC-002 description}                     |
+| Business Rules | {business rules}                          |
+| Edge Cases     | {edge cases}                              |
+
 - **Description**: A requirement document reads in template order: FRD and DATA H2 sections must follow the shared template H2 set.
 - **Input**: An `FRD.md` or `DATA.md` inside the audit context, parsed into its level-1 and level-2 sections once per document.
 - **Output**: A list of `DocFinding` values, each carrying `AES602` and `order_violation`.
@@ -49,6 +55,12 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 - **Error Handling**: A document whose parse yields no sections produces no findings; an unparseable document is a parse skip, never a violation.
 
 ### FR-DOC-003: Spec Purity (AES603)
+
+| Aspect         | Detail                                      |
+|----------------|---------------------------------------------|
+| Description    | {FR-DOC-003 description}                     |
+| Business Rules | {business rules}                          |
+| Edge Cases     | {edge cases}                              |
 
 - **Description**: A specification carries no implementation state and names no source file.
 - **Input**: Every promise-bearing document inside the audit context — `FRD.md`, `DATA.md`, `PRD.md`, `ROADMAP.md`.
@@ -64,6 +76,12 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 
 ### FR-DOC-004: Crosslinks and State-Vocabulary Placement (AES604)
 
+| Aspect         | Detail                                      |
+|----------------|---------------------------------------------|
+| Description    | {FR-DOC-004 description}                     |
+| Business Rules | {business rules}                          |
+| Edge Cases     | {edge cases}                              |
+
 - **Description**: A requirement document links the documents it depends on, and the state vocabulary lives once, in the root master.
 - **Input**: The requirement documents plus the root master text carried by the audit context, and each document's position relative to the audit root.
 - **Output**: A list of `DocFinding` values, each carrying `AES604` and one of `no_backlog_link`, `no_prd_link`, or `state_vocab_restated`.
@@ -75,6 +93,12 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 - **Error Handling**: A document with no Reference section is silent on crosslinks rather than reported for a section it never claimed to carry.
 
 ### FR-DOC-005: Document Heading Structure (AES605)
+
+| Aspect         | Detail                                      |
+|----------------|---------------------------------------------|
+| Description    | {FR-DOC-005 description}                     |
+| Business Rules | {business rules}                          |
+| Edge Cases     | {edge cases}                              |
 
 - **Description**: A recognized document opens with exactly one level-1 heading, carries every required level-2 section, and holds no level-2 heading outside its template.
 - **Input**: Every document inside the audit context that has a registered H2 contract.
@@ -91,6 +115,12 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 
 ### FR-DOC-006: Template Body-Shape Conformance (AES606)
 
+| Aspect         | Detail                                      |
+|----------------|---------------------------------------------|
+| Description    | {FR-DOC-006 description}                     |
+| Business Rules | {business rules}                          |
+| Edge Cases     | {edge cases}                              |
+
 - **Description**: Every table-shaped section the HOW-TO templates mandate in `BACKLOG.md` and `ROADMAP.md` carries its template table, and no non-deletable template section has been removed.
 - **Input**: Every `BACKLOG.md` and `ROADMAP.md` inside the audit context.
 - **Output**: A list of `DocFinding` values, each carrying `AES606` and one of `section_not_table`, `table_missing_columns`, or `section_deleted`.
@@ -105,6 +135,12 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 
 ### FR-DOC-007: Required-Document Presence (AES606)
 
+| Aspect         | Detail                                      |
+|----------------|---------------------------------------------|
+| Description    | {FR-DOC-007 description}                     |
+| Business Rules | {business rules}                          |
+| Edge Cases     | {edge cases}                              |
+
 - **Description**: The six required root documents exist at a real workspace root.
 - **Input**: The audit context's document set and the audit root, for the workspace-root marker check.
 - **Output**: A list of `DocFinding` values, each carrying `AES606` and `missing_required_doc`.
@@ -116,6 +152,12 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 - **Error Handling**: An unreadable document yields no findings rather than a false violation.
 
 ### FR-DOC-008: Member-Folder Document Presence (AES606)
+
+| Aspect         | Detail                                      |
+|----------------|---------------------------------------------|
+| Description    | {FR-DOC-008 description}                     |
+| Business Rules | {business rules}                          |
+| Edge Cases     | {edge cases}                              |
 
 - **Description**: Every workspace member folder contains its mandated documentation pair based on its architectural role, classified by objective crate structure.
 - **Input**: The `members: Vec<MemberDescriptor>` field of `DocAuditContext`, pre-populated by the shared utility collector (no I/O inside the capability), plus the audit root for the workspace-root / member-root / sub-folder gating decision.
@@ -138,6 +180,12 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 
 ### FR-DOC-009: Template Body & Placeholder Conformance (AES606)
 
+| Aspect         | Detail                                      |
+|----------------|---------------------------------------------|
+| Description    | {FR-DOC-009 description}                     |
+| Business Rules | {business rules}                          |
+| Edge Cases     | {edge cases}                              |
+
 - **Description**: Every recognized document whose headings and sections follow the shipped HOW-TO template carries no unfilled placeholder tokens, and no non-deletable template section has been removed.
 - **Input**: Every recognized document in the audit context, compared against the corresponding `TemplateProfile` and embedded template text.
 - **Output**: A list of `DocFinding` values, each carrying `AES606` and one of `unfilled_placeholder` or `section_deleted`.
@@ -152,7 +200,7 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
   - Code or types that look like angle tokens (`Vec<DocFinding>`, `Result<bool, Error>`, `<br>`) are blanked by the non-prose strip and never flagged.
 - **Error Handling**: The scanner is pure string matching against the catalog; absent catalog entries leave prose unflagged (fail-safe).
 
-## API Contract
+## Public Interface
 
 ### Protocol API
 
@@ -174,66 +222,10 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 |--------|-------|--------|-------|-------|-------------|
 | `execute` | `DocRequest` | `DocResponse` | — | — | Walks the document chain once, fans out to the nine protocol seams, and returns the merged, deduplicated, stable-sorted findings. |
 
-## Integration Points
+## Reference
 
-| System | Direction | Purpose | Failure mode |
-|--------|-----------|---------|--------------|
-| `dispatcher` | in | Aggregates the doc audit and surfaces it through the `docs` subcommand | A missing dispatcher hook drops the entire doc group silently |
-| `filesystem` | in | Supplies file entries for all `.md` documents under the workspace root | File-walk failures produce no findings rather than crashing the audit |
-| `shared::taxonomy` | in | Supplies violation types, rule codes, heading contracts, and document name constants | A missing constant causes a compile-time failure at the aggregate boundary |
+- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature; this file is specification only.
+- PRD: [PRD.md](../../PRD.md)
+- Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
 
-## Non-functional Requirements
-
-| Metric | Target | Measurement method |
-|--------|--------|---------------------|
-| Read scope | Doc rules read the documents under audit plus, for the parity check only, the audited feature's shared contract module, read-only | Run a scan and confirm the group opens only `.md` files and the contract source files in `crates/shared/src/<module>/` |
-| Finding precision | Every finding names a file and a line number | Invoke the docs command and confirm each finding resolves to a line |
-| Schema completeness | Every finding carries a 1-based `line` (0 for document-level findings), a HIGH `severity` per RULES_AES, and maps to a shared `ViolationItem` | Call `DocFinding::to_violation_item` and confirm the `line` and `severity` fields survive the JSON round trip |
-| Determinism | Two runs over the same tree report the same findings in the same order | Run the docs command twice and compare the outputs |
-
-## Test Scenarios
-
-- A document misses a mandatory H2 → AES605 fires naming the missing headings.
-- A BACKLOG entry qualifier has no paired-spec ID, a paired-spec qualifier has no BACKLOG entry, or an entry's `Next`/`Done`/`Blocked` row cites an ID the paired spec never declares → AES601 fires `backlog_qualifier_mismatch` / the family's missing-code / the family's not-code, anchored to the entry H3 or `## Backlog Status`.
-- A PRD item is missing from the ROADMAP or a ROADMAP item is not declared in the PRD → AES601 fires `pr_roadmap_id_missing` / `roadmap_pr_id_not_pr`.
-- A feature BACKLOG row carries an ID the FRD never declares, or an FRD FR-ID has no BACKLOG row → AES601 fires `backlog_id_not_fr` / `backlog_id_missing`, one finding per direction, named row or heading.
-- Requirement count drifts from the contract seams → AES601 fires stating both counts and both fix directions.
-- An FRD carries a bare FR-ID without a feature prefix → AES601 fires naming the line and missing prefix.
-- An FRD requirement block is missing row labels → AES606 fires `entry_missing_row` (AES601 no longer owns row-label validation).
-- An FRD API table promises a method no protocol or aggregate trait declares → AES601 fires naming the method, the table, and both remedies.
-- A spec names a concrete source-file path → AES603 fires naming the line and the reference.
-- A spec carries a status leak (checkbox item, an implementation-state claim, or a progress percentage) → AES603 fires naming the pattern.
-- An FRD omits its BACKLOG.md link in Reference → AES604 fires.
-- An FRD omits its PRD.md link in Reference → AES604 fires.
-- An FRD's line-anchored finding maps to a `ViolationItem` with matching `line` and `severity` → `DocFinding::to_violation_item` preserves both fields through the JSON/SARIF round trip.
-- A feature backlog restates a root-state section → AES604 fires.
-- A conforming workspace produces 0 doc findings on `lint-arwaky-cli docs .` → exit code 0.
-- `docs` run against a single crate directory → only that directory's documents are audited, and the crosslink invariants resolve against that directory as the root, not against the workspace root.
-- `docs` run against a directory holding no recognized document → 0 findings and exit code 0, the same as a clean audit; the target being empty is not itself a finding.
-- Each of the nine protocol seams has its own capability, injected into the agent → the aggregate reaches all six rules through one `execute` call, and no capability is wired directly into the agent.
-- A document that violates two rules at once → both rule codes appear in one response, proving the agent merges rather than short-circuits on the first capability that reports.
-- A BACKLOG.md carrying checkbox bullets under `## Backlog` → AES606 fires `section_not_table` naming the section and the required columns.
-- A ROADMAP.md whose `## State Definitions` table is missing the `Meaning` column → AES606 fires `table_missing_columns` naming the missing column.
-- A workspace root missing `PRD.md` → AES606 fires `missing_required_doc` naming the file.
-
-## Assumptions & Constraints
-
-- Document recognition is limited to the known set (`FRD.md`, `BACKLOG.md`, `PRD.md`, `ROADMAP.md`, `README.md`, `AGENTS.md`, `ARCHITECTURE.md`, `CONTRIBUTING.md`). Unknown documents are ignored.
-- H2 matching is case-insensitive and uses leading-word comparison, so `## API Contract` and `## API contract:` both match.
-- The FR/protocol parity check and the API-method check only apply to features that have a corresponding shared contract module (`crates/shared/src/<feature-module>/`).
-- Aggregate traits are always excluded from the protocol class count regardless of naming.
-- One protocol class is one capability seam is one requirement: the six doc rules declare nine seams (AES606 has four), so this document declares nine requirements and the two counts stay equal.
-- The document walk is shared utility work, not agent work: an agent coordinates in-memory protocols and may not touch the filesystem.
-- Fenced code blocks are stripped before H1 counting so shell comments like `# Tests (matches CI "Tests" job)` do not count as headings.
-- The root master document is `ROADMAP.md`; a legacy root `BACKLOG.md` is accepted during migration.
-
-## Glossary
-
-- **Spec document**: A promise-bearing document (FRD, PRD, ROADMAP) that must be stateless and not name source files.
-- **Status document**: A report-bearing document (BACKLOG, ROADMAP) that records real workspace condition with re-runnable evidence.
-- **Feature folder**: A directory under `crates/`, `modules/`, or `packages/` that contains an `agent_*_orchestrator` file plus its doc pair.
-- **Protocol class**: A capability-seam trait declared as `pub trait I*Protocol: Send + Sync`.
-- **Audit context**: The shared per-run state every capability receives — the recognised documents, the audit root, and the root master text.
-- **Aggregate trait**: A composite entry-point trait (e.g., `IScannerAggregate`) that is not a capability seam.
-- **Parse skip**: A file that cannot be read or parsed is silently excluded; it is never counted as a violation.
-- **State vocabulary**: Sections that define `State` or progress markers and belong only in the root master document.
+| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md) |

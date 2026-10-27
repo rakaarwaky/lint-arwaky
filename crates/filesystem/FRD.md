@@ -2,13 +2,7 @@
 
 ---
 
-## Reference
-
-- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature; this file is specification only.
-- PRD: [PRD.md](../../PRD.md)
-- Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
-
-## System Overview
+## Feature Overview
 
 The filesystem crate produces filesystem data for all feature crates.
 
@@ -267,7 +261,7 @@ flowchart TD
 
 ---
 
-## API Contract
+## Public Interface
 
 ### Protocol API
 
@@ -343,121 +337,10 @@ flowchart TD
 |---|---|---|---|---|---|
 | `execute` | FilesystemRequest | `FilesystemResponse` | — | — | Single composite entry point over the feature. |
 
-## Integration Points
+## Reference
 
-| System | Direction | Purpose | Failure mode |
-|--------|-----------|---------|--------------|
-| tree-sitter | in | Parse Rust / Python / TS source into ASTs | parse warnings; file skipped, not failed |
-| rayon (or std::thread pool) | in | Parallelise per-file parse and graph construction | work cancelled mid-scan; partial graph |
-| caller aggregate (e.g. naming / import / quality rules) | out | Consume `GraphAnalysisContext` produced here | caller sees stale or partial context if a walk was interrupted |
+- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature; this file is specification only.
+- PRD: [PRD.md](../../PRD.md)
+- Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
 
-## Non-functional Requirements
-
-| Metric | Target | Measurement method |
-| --- | --- | --- |
-| Pipeline throughput (indexing scope) | 1,000 files in under 2 s; 10,000 files in under 10 s — this crate's own build-index run: discovery, read, parse | Time a full build-index run over workspaces of each size, with the Criterion benches under this crate; the recorded figure is the evidence for the matching row in `PRD.md` |
-| Pipeline throughput (full-pipeline scope) | 1,000 files in under 5 s; 10,000 files in under 15 s — indexing plus every rule group, external adapters excluded | Time a `check` run over workspaces of each size; the indexing budget above is the lower bound inside it |
-| Accessor cost | Cache accessors are O(1) | Call an accessor repeatedly and confirm constant time across cache sizes |
-| Cache bound | The content cache is capped at 20,000 entries | Inspect the cap and assert insertion beyond it does not grow the cache |
-| Memory | Bounded by total workspace size | Measure retained memory against two workspace sizes |
-| Parsing accuracy | Full AST parsing for all supported languages, with no regex fallback | Assert the parse path is the only path, and that identifier extraction from a string literal yields nothing |
-| Parse-failure handling | A parse warning never aborts a scan; the file is treated as best-effort | Feed an unparseable file and assert the scan completes and reports a warning |
-| Concurrency | The pipeline is parallel and the aggregate is `Send + Sync` | Assert the bounds at compile time and share one aggregate across threads in a test |
-| Configuration | Workspace layout and extensions are compiled-in; ignored paths and workspace directories are configurable | Assert a configured ignore path excludes a file from the walk |
-| Dependency injection | No layer imports a concrete implementation; every dependency arrives through a protocol | Assert the agent module has no concrete capability imports |
-
-## Test Scenarios
-
-Each scenario is stated below as a table of cases: the input condition and the expected result.
-
-- **SCEN-001: AST Parsing & Import Extraction** — e.g. Valid Rust file → parse_ok = true, full metadata
-- **SCEN-002: Dependency Graph Construction** — e.g. A imports B → Edge A → B
-- **SCEN-003: File I/O & Directory Operations** — e.g. Workspace with 100 .rs files → All 100 discovered
-- **SCEN-004: Tool Resolution** — e.g. node_modules/.bin/eslint exists → Command resolved
-- **SCEN-005: Workspace & Project Language Detection** — e.g. Start from crates/some-crate/src → Finds workspace root; a root of `.rs` + `.md` sets `has_rust` + `has_markdown` only
-
-- **SCEN-001: AST Parsing & Import Extraction**
-
-| # | Scenario | Expected |
-| --- | --- | --- |
-| 1 | Valid Rust file | parse_ok = true, full metadata |
-| 2 | Rust file with syntax error | parse_ok = false, warning |
-| 3 | Empty file | parse_ok = true, empty metadata |
-| 4 | `use crate::foo::Bar` | Resolved import entry |
-| 5 | `use foo::*` | Wildcard import entry |
-| 6 | `#[cfg(test)] use foo::Bar` | Not extracted |
-| 7 | External dependency | Not extracted |
-| 8 | Barrel re-export through a Rust module barrel | Resolved to original source |
-| 9 | 1,000 files parsed in parallel | Completes in under 1 s |
-
-- **SCEN-002: Dependency Graph Construction**
-
-| # | Scenario | Expected |
-| --- | --- | --- |
-| 1 | A imports B | Edge A → B |
-| 2 | Circular imports | Both edges exist |
-| 3 | `struct Foo` in A | Definition: "Foo" → A |
-| 4 | `impl IBar for Foo` | Implementation: "IBar" → [A] |
-| 5 | Barrel re-export | Resolved to original source |
-| 6 | File with no incoming edges | Identified as orphan |
-| 7 | Circular dependency chain | Cycle detected via SCC |
-
-- **SCEN-003: File I/O & Directory Operations**
-
-| # | Scenario | Expected |
-| --- | --- | --- |
-| 1 | Workspace with 100 .rs files | All 100 discovered |
-| 2 | File in .gitignore | Not discovered |
-| 3 | Symlink pointing outside workspace | Skipped |
-| 4 | Empty directory | Empty list |
-| 5 | Non-UTF-8 file | Skipped with warning |
-| 6 | Read existing file | Returns content |
-| 7 | Write + read back | Content matches |
-| 8 | Scan with ignored patterns | Ignored files excluded |
-
-- **SCEN-004: Tool Resolution**
-
-| # | Scenario | Expected |
-| --- | --- | --- |
-| 1 | node_modules/.bin/eslint exists | Command resolved |
-| 2 | Binary in system PATH | Available = true |
-| 3 | Config file present | Detected = true |
-| 4 | Cargo.toml in ancestor | Found |
-
-- **SCEN-005: Workspace & Project Language Detection**
-
-| # | Scenario | Expected |
-| --- | --- | --- |
-| 1 | Start from crates/some-crate/src | Finds workspace root |
-| 2 | Path with Cargo.toml (no workspace) | is_member = true |
-| 3 | Path with Cargo.toml nearby | language = Rust |
-| 4 | Leaf member detection | No sub-members |
-| 5 | Project root containing `.rs` and `.md` files only | `has_rust` + `has_markdown` true; `has_python` + `has_js` false (FR-005B) |
-| 6 | Project root with source files only under `target/` | All four flags false — `DEFAULT_IGNORED_PATHS` skipped (FR-005B) |
-| 7 | Project root containing a symlink to a directory outside it | Outside files do not set any flag (FR-005B) |
-| 8 | Single file passed as root | Only that file's extension is classified (FR-005B) |
-
----
-
-## Assumptions & Constraints
-
-- One workspace root; paths passed in are relative to it and contain no `..` escapes.
-- tree-sitter grammars for the three supported languages are always available at parse time.
-- A parse warning (see `IParserProtocol::parse_warnings`) never aborts a scan; the file is treated as best-effort.
-- `IGraphProtocol` results are not persisted; they live for the duration of one scan and are discarded after the caller reports.
-
-## Glossary
-
-- **IFilesystemAggregate**: Composed trait: all 5 protocols + cache/orchestration accessors = 81 methods
-- **IParserProtocol**: AST parse results and import extraction queries
-- **IGraphProtocol**: Dependency graph, definitions, implementations, reachability, cycles, orphans
-- **IFileSystemIOProtocol**: Low-level file I/O, path ops, directory ops, process execution
-- **IToolResolutionProtocol**: External tool availability and command resolution
-- **IWorkspaceProtocol**: Workspace structure detection and navigation
-- **Container**: Composition root — creates capabilities, injects via `Arc<dyn Trait>`
-- **OrchestratorDeps**: DI struct — holds `Arc<dyn ProtocolTrait>` for agent injection
-- **FileEntry**: Value object: path + content + language + extension + parse metadata
-- **ImportEntry**: Value object: source file + target module + symbols + resolution status
-- **ParseWarning**: Diagnostic for files that failed to parse
-
----
+| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md) |

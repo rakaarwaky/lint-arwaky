@@ -5,89 +5,126 @@ Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
 State: defined in root [ROADMAP.md](../../ROADMAP.md) — cited here, not restated
 Last Updated: 2026-09-29
 
-## Current Condition
+## Progress Overview
 
 - Done: `cargo nextest run -p doc-rules-lint-arwaky` → 149 passed, 0 failed. Per-scenario evidence below.
 - In Progress: None
 - Blocked: None
 - Next Action: Re-run `cargo nextest run -p doc-rules-lint-arwaky` after any code change to this crate
 
-## Backlog
+## Backlog Status
 
-| ID | Priority | State | Dependencies | Next Action | Updated |
-|---|---:|---|---|---|---|
-| FR-DOC-001 | P0 | Done | None | — | 2026-10-26 |
-| FR-DOC-002 | P0 | Done | None | — | 2026-10-26 |
-| FR-DOC-003 | P0 | Done | None | — | 2026-10-26 |
-| FR-DOC-004 | P0 | Done | None | — | 2026-10-26 |
-| FR-DOC-005 | P0 | Done | None | — | 2026-10-26 |
-| FR-DOC-006 | P0 | Done | None | — | 2026-10-26 |
-| FR-DOC-007 | P0 | Done | None | — | 2026-10-26 |
-| FR-DOC-008 | P0 | Done | None | — | 2026-10-26 |
-| FR-DOC-009 | P0 | Done | None | — | 2026-10-26 |
+### {FR-DOC-001}
 
-## Scenario Evidence
+| Aspect       | Detail                                      |
+|--------------|---------------------------------------------|
+| State        | Ready                                       |
+| Done         | FR-DOC-001                                       |
+| In Progress  | None                                        |
+| Blocked      | None                                        |
+| Next         | Ship                                        |
+| Risk         | None                                        |
+| Updated      | 2026-09-29                                  |
 
-| Scenario | Rule / expected | Kind | Test file | Test name | Last verified |
-|---|---|---|---|---|---|
-| Bare FR-ID without feature prefix | AES601 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
-| FRD requirement missing required field | AES601 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
-| FRD sections out of template order | AES602 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
-| Spec names a source file (`.rs`) | AES603 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
-| Spec carries status leak | AES603 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
-| FRD omits BACKLOG.md crosslink | AES604 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
-| FRD omits PRD.md crosslink | AES604 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
-| Feature backlog restates root state section | AES604 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
-| AGENTS.md has no H1 | AES605 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
-| AGENTS.md has multiple H1s | AES605 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
-| AGENTS.md missing required H2 | AES605 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
-| AGENTS.md has off-template H2 | AES605 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
-| FRD has 3 requirements, contract has 2 classes | AES601 CRITICAL | Automated | `tests/acceptance_FR_DOC_001.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
-| FRD has 1 requirement, contract has 3 classes | AES601 CRITICAL | Automated | `tests/acceptance_FR_DOC_001.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
-| Aggregate trait excluded from seam count | AES601 accepts | Automated | `tests/acceptance_FR_DOC_001.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
-| Protocol API promises a method no trait declares | AES601 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo nextest run -p doc-rules-lint-arwaky` | working-tree |
-| Aggregate API promises a method no trait declares | AES601 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo nextest run -p doc-rules-lint-arwaky` | working-tree |
-| Promised method the contract module declares | AES601 accepts | Automated | `tests/acceptance_FR_DOC_001.rs` | `cargo nextest run -p doc-rules-lint-arwaky` | working-tree |
-| Method column read by header, not by position | AES601 accepts | Automated | `tests/contract_doc_rules.rs` | `cargo nextest run -p doc-rules-lint-arwaky` | working-tree |
-| Slash-joined cell promising several methods | AES601 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo nextest run -p doc-rules-lint-arwaky` | working-tree |
-| Fenced code block `#` comment not counted as H1 | No violation | Automated | `tests/contract_doc_rules.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
-| A capability seam answers a source-file reference and the other four stay silent | AES603 seam isolation | Automated | `tests/contract_doc_capability_seams.rs` | `cargo nextest run -p doc-rules-lint-arwaky` | working-tree |
-| A capability seam answers a missing H2 and the other four stay silent | AES605 seam isolation | Automated | `tests/contract_doc_capability_seams.rs` | `cargo nextest run -p doc-rules-lint-arwaky` | working-tree |
-| A backlog reporting progress raises no spec-purity finding | AES603 document scoping | Automated | `tests/contract_doc_capability_seams.rs` | `cargo nextest run -p doc-rules-lint-arwaky` | working-tree |
-| Five seams over a conforming workspace report nothing | No violation | Automated | `tests/contract_doc_capability_seams.rs` | `cargo nextest run -p doc-rules-lint-arwaky` | working-tree |
-| A document violating two rules reports both rule codes | Fan-out completeness | Automated | `tests/contract_doc_capability_seams.rs` | `cargo nextest run -p doc-rules-lint-arwaky` | working-tree |
-| Conforming workspace reports 0 doc findings on `docs .` | No violation | Automated | Self-lint | `lint-arwaky-cli docs .` | `926bd34a` |
-| BACKLOG checkbox bullets under `## Backlog` | AES606 `section_not_table` | Automated | `tests/unit_doc_template_conformance.rs` | `cargo nextest run -p doc-rules-lint-arwaky` | working-tree |
-| ROADMAP `## State Definitions` missing `Meaning` column | AES606 `table_missing_columns` | Automated | `tests/unit_doc_template_conformance.rs` | `cargo nextest run -p doc-rules-lint-arwaky` | working-tree |
-| Workspace root missing `PRD.md` | AES606 `missing_required_doc` | Automated | `tests/unit_doc_template_conformance.rs` | `cargo nextest run -p doc-rules-lint-arwaky` | working-tree |
-| All six required root docs present | AES606 accepts | Automated | `tests/unit_doc_template_conformance.rs` | `cargo nextest run -p doc-rules-lint-arwaky` | working-tree |
+### {FR-DOC-002}
 
-## Blockers
+| Aspect       | Detail                                      |
+|--------------|---------------------------------------------|
+| State        | Ready                                       |
+| Done         | FR-DOC-002                                       |
+| In Progress  | None                                        |
+| Blocked      | None                                        |
+| Next         | Ship                                        |
+| Risk         | None                                        |
+| Updated      | 2026-09-29                                  |
 
-None
+### {FR-DOC-003}
 
-## Dependencies
+| Aspect       | Detail                                      |
+|--------------|---------------------------------------------|
+| State        | Ready                                       |
+| Done         | FR-DOC-003                                       |
+| In Progress  | None                                        |
+| Blocked      | None                                        |
+| Next         | Ship                                        |
+| Risk         | None                                        |
+| Updated      | 2026-09-29                                  |
 
-None
+### {FR-DOC-004}
 
-## Release Readiness
+| Aspect       | Detail                                      |
+|--------------|---------------------------------------------|
+| State        | Ready                                       |
+| Done         | FR-DOC-004                                       |
+| In Progress  | None                                        |
+| Blocked      | None                                        |
+| Next         | Ship                                        |
+| Risk         | None                                        |
+| Updated      | 2026-09-29                                  |
 
-| Area | Status | Notes |
-|---|---|---|
-| Tests | Done | `cargo nextest run -p doc-rules-lint-arwaky` → 149 passed, 0 failed |
-| Scenario evidence | Done | 29 scenarios mapped; all Automated |
-| Docs | Done | [FRD.md](FRD.md) is specification-only; status lives in this file |
+### {FR-DOC-005}
 
-## Deferred
+| Aspect       | Detail                                      |
+|--------------|---------------------------------------------|
+| State        | Ready                                       |
+| Done         | FR-DOC-005                                       |
+| In Progress  | None                                        |
+| Blocked      | None                                        |
+| Next         | Ship                                        |
+| Risk         | None                                        |
+| Updated      | 2026-09-29                                  |
 
-None
+### {FR-DOC-006}
 
-## Change Log
+| Aspect       | Detail                                      |
+|--------------|---------------------------------------------|
+| State        | Ready                                       |
+| Done         | FR-DOC-006                                       |
+| In Progress  | None                                        |
+| Blocked      | None                                        |
+| Next         | Ship                                        |
+| Risk         | None                                        |
+| Updated      | 2026-09-29                                  |
 
-| Date | Change | By |
-|---|---|---|
-| 2026-10-26 | Aligned BACKLOG ID column to FRD FR-IDs (AES601); added backlog_id_not_fr / backlog_id_missing | @raka |
-| 2026-10-02 | Closed the FRD level-3 set document-wide: new AES602 `h3_off_template`, because `api_h3_unexpected` reads only the `## API Contract` subtree and a per-protocol table parked under another section escaped it. Migrated 117 off-template H3 headings across 14 FRDs | @raka |
-| 2026-10-27 | Retired the old-shape AES602 checks (API Contract / Integration / NFR / Test Scenarios / Glossary / H3 parity) with the 9-doc layout; AES602 now checks FRD section order only, against the new four-H2 set | @raka |
-| 2026-10-02 | Split the 876-line invariant auditor into five capability seams, one per AES doc rule | @raka |
-| 2026-09-29 | Aligned BACKLOG.md and FRD.md to HOW-TO templates (AES605 H2 contracts); expanded scenario evidence table; merged AES607 into AES601; removed AES605 | @raka |
+### {FR-DOC-007}
+
+| Aspect       | Detail                                      |
+|--------------|---------------------------------------------|
+| State        | Ready                                       |
+| Done         | FR-DOC-007                                       |
+| In Progress  | None                                        |
+| Blocked      | None                                        |
+| Next         | Ship                                        |
+| Risk         | None                                        |
+| Updated      | 2026-09-29                                  |
+
+### {FR-DOC-008}
+
+| Aspect       | Detail                                      |
+|--------------|---------------------------------------------|
+| State        | Ready                                       |
+| Done         | FR-DOC-008                                       |
+| In Progress  | None                                        |
+| Blocked      | None                                        |
+| Next         | Ship                                        |
+| Risk         | None                                        |
+| Updated      | 2026-09-29                                  |
+
+### {FR-DOC-009}
+
+| Aspect       | Detail                                      |
+|--------------|---------------------------------------------|
+| State        | Ready                                       |
+| Done         | FR-DOC-009                                       |
+| In Progress  | None                                        |
+| Blocked      | None                                        |
+| Next         | Ship                                        |
+| Risk         | None                                        |
+| Updated      | 2026-09-29                                  |
+
+## Reference
+
+| Prd | {Link to PRD.md} | [{link}](PRD.md) |
+| Frd | {Link to FRD.md} | [{link}](FRD.md) |
+| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md) |
+| Architecture | {Link to ARCHITECTURE.md} | [{link}](ARCHITECTURE.md) |

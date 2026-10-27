@@ -2,13 +2,7 @@
 
 ---
 
-## Reference
-
-- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature; this file is specification only.
-- PRD: [PRD.md](../../PRD.md)
-- Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
-
-## System Overview
+## Feature Overview
 
 The external-lint crate is an aggregate bridge to external, industry-standard linters and formatters. It coordinates and executes Cargo Clippy, Rustfmt, cargo-audit, Ruff, Mypy, Bandit, ESLint, Prettier, TSC, and markdownlint-cli on Rust, Python, JS/TS, and Markdown files. It normalizes their JSON/text reports into the unified lint-arwaky violation format using **tool-native rule codes** (e.g., `clippy::needless_return`, `ruff::E501`, `markdownlint::MD041`) and integrates them into the compliance report.
 
@@ -240,7 +234,7 @@ flowchart TD
 
 ---
 
-## API Contract
+## Public Interface
 
 ### Protocol API
 
@@ -259,137 +253,10 @@ flowchart TD
 |---|---|---|---|---|---|
 | `execute` | ExternalLintRequest | `ExternalLintResponse` | — | — | Single composite entry point over the feature. |
 
-## Integration Points
+## Reference
 
-| System | Direction | Purpose | Failure mode |
-| --- | --- | --- | --- |
-| Linter adapter protocol | out (internal) | Define the shape every tool adapter implements for scanning and fixing | An adapter omits a required operation → it does not satisfy the protocol and is never selected |
-| External lint aggregate | out (internal) | Expose the single composite entry point the surface calls | A request selects a language with no registered adapter → the response reports that no adapter is available for that language |
-| External lint selector protocol | out (internal) | Choose the adapter matching a file's language | A file's language maps to no adapter → the file is skipped and reported as uncovered |
-| Command executor protocol | out (internal) | Spawn the external tool and capture its output | The executable is missing from PATH → the adapter reports the tool as unavailable and the scan continues |
-| `filesystem` aggregate | in | Resolve which language groups are present (`DetectProjectLanguages`), resolve tool working directories, and filter ignored paths | Tool resolution fails for a workspace member → that member is skipped, and the rest of the scan proceeds |
-| `cargo clippy` | in | Lint Rust idiom, performance, and style, and apply its fixes | The tool exits non-zero on findings → the exit status is read as "findings present", not as a crash; a spawn failure is reported as an adapter error |
-| `cargo fmt` / `rustfmt --check` | in | Verify or apply Rust formatting | Formatting diverges → `--check` reports the files to reformat; `--write` rewrites them |
-| `cargo audit --json` | in | Audit Rust dependency vulnerabilities | The advisory database is unreachable → the audit reports that it could not run, never that no vulnerabilities exist |
-| `ruff check` | in | Lint and fix Python code | The tool is not installed → the adapter reports it as unavailable and the Python slice is skipped |
-| `mypy` | in | Type-check Python code | Type errors are found → each is mapped to the unified finding shape with the tool-native code preserved |
-| `bandit -r` | in | Scan Python for security issues | The scan finds nothing → an empty result set, which is a pass rather than a skipped run |
-| `eslint` | in | Lint and fix JavaScript and TypeScript | The tool is not installed → the adapter reports it as unavailable and the slice is skipped |
-| `prettier --check` / `--write` | in | Verify or apply JavaScript and TypeScript formatting | Formatting diverges → `--check` lists the files; `--write` rewrites them |
-| `tsc --noEmit` | in | Type-check TypeScript without emitting output | The compiler fails to start → the adapter reports the failure and the type-check slice is skipped |
-| `markdownlint-cli --json`, else `markdownlint-cli2 <glob>` | in | Lint Markdown style and structure | The tool is not installed → the adapter reports it as unavailable and the Markdown slice is skipped |
+- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature; this file is specification only.
+- PRD: [PRD.md](../../PRD.md)
+- Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
 
-## Non-functional Requirements
-
-| Metric | Target | Measurement method |
-| --- | --- | --- |
-| Scan time | Total scan time is the sum of adapter times plus the one delegated language query; the extension walk itself is O(file count) and owned by the filesystem aggregate | Time each adapter separately and confirm the total matches the sum within measurement noise |
-| Language flags | One `FilesystemRequest::DetectProjectLanguages` per scan with no caller-supplied context; this crate performs no extension walk of its own | Count filesystem-aggregate calls per scan and confirm exactly one, and assert this crate contains no directory-walking code |
-| Adapter memory | One result vector per adapter; JSON parsing loads one tool's full output at a time | Measure peak memory while running the adapter that produces the largest output |
-| Severity mapping | Every tool severity maps to a known level; an unknown level defaults to MEDIUM | Feed one diagnostic per severity level per tool and assert the mapped level |
-| Code preservation | The tool-native rule code is preserved verbatim in the normalized finding | Assert the original code appears unchanged in the formatted output for each adapter |
-| Coverage | Every supported language is served by exactly one selected adapter | Scan a workspace containing all supported languages and assert no file is left uncovered |
-| Concurrency | Adapters run sequentially with no threads and no async runtime | Inspect the scan's thread count during a run and assert it stays at the caller level |
-| Worst-case adapter phase | Per-adapter ceilings sum with no overall budget: ~840 s (~14 minutes) with all 10 adapters present and each at its ceiling | Compute the sum of the configured ceilings for the selected adapter set and assert the documented bound; callers above this crate set their own timeout against it |
-| Resilience posture | One attempt per adapter per scan; a timeout or spawn failure skips that adapter and logs, and never retries | Force a timeout in one adapter and assert exactly one spawn occurred and the remaining adapters still completed |
-| Missing tool | A tool absent from PATH is reported as unavailable, and the scan continues | Run with one adapter's executable removed from PATH and assert the remaining adapters still complete |
-
-## Test Scenarios
-
-Each scenario is stated below as a table of cases: the input condition and the expected result.
-
-- **SCEN-001 — Language Flags** — e.g. Rust-only project → the filesystem aggregate reports `has_rust = true`, and only clippy, rustfmt, cargo-audit run
-- **SCEN-002 — Adapter Selection** — e.g. Multi-language project → All 10 adapters selected
-- **SCEN-003 — Scan Execution** — e.g. One adapter fails → Other adapters still run
-- **SCEN-004 — Auto-Fix** — e.g. ESLint fix → `eslint --fix` executed
-- **SCEN-005 — Normalization** — e.g. Clippy `correctness` lint → Severity CRITICAL, code `clippy::<name>`
-
-- **SCEN-001 — Language Flags**
-
-Project-level language detection is owned by the `filesystem` aggregate (FR-Filesystem-005). This scenario verifies only that external-lint consumes the flags it receives and selects adapters accordingly.
-
-| # | Scenario | Expected |
-| - | - | - |
-| 1 | Flags `has_rust = true`, rest false | Only clippy, rustfmt, cargo-audit run |
-| 2 | Flags `has_python = true`, rest false | Only ruff, mypy, bandit run |
-| 3 | Flags `has_js = true`, rest false | Only eslint, prettier, tsc run |
-| 4 | All four flags true | All 10 adapters run |
-| 5 | Flags `has_markdown = true`, rest false | Only markdownlint runs |
-| 6 | All flags false | No adapters run, empty result list |
-| 7 | No caller-supplied context | Exactly one `FilesystemRequest::DetectProjectLanguages` is issued to the filesystem aggregate |
-| 8 | Single-file target `README.md` (flags derived from its extension) | Only markdownlint runs |
-
-- **SCEN-002 — Adapter Selection**
-
-| # | Scenario | Expected |
-| - | - | - |
-| 1 | No languages detected | Empty adapter list |
-| 2 | All languages detected | 10 adapters selected |
-
-- **SCEN-003 — Scan Execution**
-
-| # | Scenario | Expected |
-| - | - | - |
-| 1 | Adapter binary not installed | Warning printed, other adapters continue |
-| 2 | Adapter produces JSON output | Correctly parsed into LintResult |
-| 3 | Adapter produces empty output | Empty result list |
-| 4 | All adapters fail | Returns empty result list with warnings |
-| 5 | One adapter fails | Other adapters still run |
-| 6 | Timeout exceeded | Adapter returns error, others continue |
-| 7 | Sequential execution | Adapters run one after another |
-
-- **SCEN-004 — Auto-Fix**
-
-| # | Scenario | Expected |
-| - | - | - |
-| 1 | ESLint fix | `eslint --fix` executed |
-| 2 | Prettier fix | `prettier --write` executed |
-| 3 | Ruff fix | `ruff check --fix` executed |
-| 4 | Clippy fix | `cargo clippy --fix` executed |
-| 5 | Rustfmt fix | `cargo fmt` executed |
-| 6 | TSC/MyPy/Bandit/audit fix | No-op (no auto-fix capability) |
-| 7 | markdownlint fix | `<target> --fix` executed against the first resolvable CLI variant (`markdownlint-cli`, then `markdownlint-cli2`) |
-| 8 | No markdownlint CLI installed | No-op status, no command spawned |
-
-- **SCEN-005 — Normalization**
-
-| # | Scenario | Expected |
-| - | - | - |
-| 1 | Clippy `correctness` lint | Severity CRITICAL, code `clippy::<name>` |
-| 2 | Clippy `style` lint | Severity MEDIUM |
-| 3 | Ruff `E501` (line too long) | Severity LOW, code `ruff::E501` |
-| 4 | Ruff `S105` (hardcoded password) | Severity CRITICAL, code `ruff::S105` |
-| 5 | ESLint severity 2 (error) | Severity HIGH, code `eslint::<rule>` |
-| 6 | cargo-audit critical vulnerability | Severity CRITICAL, code `cargo-audit::RUSTSEC-*` |
-| 7 | markdownlint `MD041` | Severity MEDIUM, code `markdownlint::MD041` |
-| 8 | Tool produces invalid JSON | Empty results, warning logged |
-| 9 | Relative file path in tool output | Canonicalized to absolute path |
-
----
-
-## Assumptions & Constraints
-
-- External linter tools must be installed in the system PATH or in `node_modules/.bin/` for their respective adapters to produce results.
-- Missing tools produce warnings, not errors — the scan continues with available adapters.
-- Subprocess timeout defaults to 60 seconds for Python/JS adapters; Rust adapters use 120-180 seconds.
-- The crate assumes the project root contains appropriate config files for each language's tools.
-- JSON parsing of tool output is lenient; malformed output results in empty results rather than crashes.
-- Language detection is delegated to the filesystem aggregate's `DetectProjectLanguages` request; this crate performs no extension walk.
-- Execution is sequential (no threads). No async runtime dependency.
-- Rule codes use tool-native identifiers. No new naming scheme is imposed.
-
----
-
-## Glossary
-
-- **AES**: Agentic Engineering System — the 7-layer coding convention
-- **Adapter**: A wrapper around an external linter tool that normalizes its output to the unified LintResult format
-- **Language Detection**: Lightweight filesystem scan to determine which programming languages are present
-- **Canonicalize**: Resolve a relative file path to its absolute path
-- **Normalization**: Convert tool-specific severity/message/line/code format to the unified LintResult format
-- **Tool-native code**: Rule identifier using the original tool's naming (e.g., `clippy::needless_return`, `ruff::E501`)
-- **Subprocess**: External process spawned via `std::process::Command` to run a linter tool
-- **Auto-fix**: Running an external tool's native fix command to automatically correct violations
-- **Utility**: A stateless, reusable technical function (e.g., subprocess execution, path resolution) that capabilities depend on but is not itself a business capability
-
----
+| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md) |

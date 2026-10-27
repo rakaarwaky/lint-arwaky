@@ -5,7 +5,7 @@ Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
 State: defined in root [ROADMAP.md](../../ROADMAP.md) — cited here, not restated
 Last Updated: 2026-10-02
 
-## Current Condition
+## Progress Overview
 
 - Done: `cargo test -p dispatcher --lib --tests` → 0 failures
 - Done: single-file scan reaches the external adapters (`collect_single_file_external`)
@@ -13,50 +13,23 @@ Last Updated: 2026-10-02
 - Blocked: None
 - Next Action: —
 
-## Backlog
+## Backlog Status
 
-| ID | Priority | State | Dependencies | Next Action | Updated |
-|---:|---|---|---|---|---|
-| DS-DISP-001 | P0 | Done | None | — | 2026-10-02  |
-| DS-DISP-002 | P0 | Done | None | — | 2026-10-02  |
-| DS-DISP-003 | P0 | Done | None | — | 2026-10-02  |
-| DS-DISP-004 | P0 | Done | None | — | 2026-10-02  |
-| DS-DISP-005 | P1 | Done | None | — | 2026-10-02  |
-| DS-DISP-006 | P1 | Done | None | — | 2026-10-02  |
-| DS-DISP-007 | P1 | Done | None | — | 2026-10-02  |
+### {FR-SAMPLE-001}
 
-## Scenario Evidence
+| Aspect       | Detail                                      |
+|--------------|---------------------------------------------|
+| State        | Ready                                       |
+| Done         | FR-SAMPLE-001                                       |
+| In Progress  | None                                        |
+| Blocked      | None                                        |
+| Next         | Ship                                        |
+| Risk         | None                                        |
+| Updated      | 2026-09-29                                  |
 
-| Scenario | Rule / expected | Kind | Test file | Test name | Last verified |
-|---|---|---|---|---|---|
-| Single-file `.md` target selects the markdown adapter | `has_markdown` true, all other language flags false | Automated | `tests/unit_dispatcher_check_action.rs` | `markdown_file_context_selects_the_markdown_adapter` | `ec7e16a7` |
-| Single-file source target selects only its own language | `has_markdown` false for `.rs`/`.py`/`.ts`/`.tsx` | Automated | `tests/unit_dispatcher_check_action.rs` | `source_file_context_selects_only_its_own_language` | `ec7e16a7` |
-| Extensionless single-file target selects no adapter | All four language flags false | Automated | `tests/unit_dispatcher_check_action.rs` | `extensionless_file_context_selects_no_adapter` | `ec7e16a7` |
+## Reference
 
-## Blockers
-
-None.
-
-## Dependencies
-
-None.
-
-## Release Readiness
-
-| Area | Status | Notes |
-|---|---|---|
-| Tests | Done | `cargo nextest run -p dispatcher-lint-arwaky` → 0 failures at `ec7e16a7` |
-| Docs | Done | [FRD.md](FRD.md) is specification-only; status lives in this file |
-
-## Deferred
-
-—
-
-## Change Log
-
-| Date | Change | By |
-|---|---|---|
-| 2026-10-26 | Qualified the Backlog ids to the DISP design-item scheme for the DESIGN/DATA template redesign | @raka |
-| 2026-09-29 | Created backlog entry for dispatcher surface crate | @raka |
-| 2026-10-02 | `collect_single_file_external` routes a one-file scan target through the external adapters; language flags derive from the file extension instead of a project walk | @raka |
-| 2026-10-02 | `scan <file.md>` now runs the external adapters: the single-file path derives its language flags from the file extension, so the markdownlint adapter fires on a lone Markdown target | @raka |
+| Prd | {Link to PRD.md} | [{link}](PRD.md) |
+| Frd | {Link to FRD.md} | [{link}](FRD.md) |
+| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md) |
+| Architecture | {Link to ARCHITECTURE.md} | [{link}](ARCHITECTURE.md) |

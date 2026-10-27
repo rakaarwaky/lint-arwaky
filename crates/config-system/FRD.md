@@ -2,13 +2,7 @@
 
 ---
 
-## Reference
-
-- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature; this file is specification only.
-- PRD: [PRD.md](../../PRD.md)
-- Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
-
-## System Overview
+## Feature Overview
 
 The config-system crate manages lint-arwaky configuration as a business capability: discovering projects, loading and merging configuration, validating thresholds, and determining which paths the linter should ignore. It is an **infrastructure crate** — at compile time it depends only on `shared` and `filesystem` (for config file I/O via `IFileSystemIOProtocol`). Other crates receive config at runtime via DI (aggregate trait injection through `shared` re-exports).
 
@@ -152,7 +146,7 @@ Loaded config is merged with embedded defaults via rule-based layer merging (FR-
 
 ---
 
-## API Contract
+## Public Interface
 
 ### Protocol API
 
@@ -173,156 +167,10 @@ Loaded config is merged with embedded defaults via rule-based layer merging (FR-
 |---|---|---|---|---|---|
 | `execute` | ConfigRequest | ConfigResponse | — | — | Single composite entry point over the feature. |
 
-## Integration Points
+## Reference
 
-| System | Direction | Purpose | Failure mode |
-| --- | --- | --- | --- |
-| `shared` crate | in | Supply value objects, contract traits, and utility functions | A type or trait is missing at compile time → the build fails; no partial config is loaded |
-| `filesystem` aggregate | in | Read config files and probe candidate paths during workspace discovery | A candidate path is unreadable → that candidate is skipped and discovery walks upward |
-| XDG config directory resolver | in | Resolve the user and system config locations for a platform | The environment variable is unset or relative → the location is dropped rather than resolved from an untrusted path |
-| YAML deserialization library | in | Parse YAML configuration bodies | The body is malformed → a warning is emitted and the embedded defaults are used, never a silent default |
-| TOML parsing library | in | Parse the `[tool.lint-arwaky]` section of a packaging manifest | The section is absent or malformed → the section is ignored and the rest of the manifest still applies |
-| Root composition root | out (internal) | Wire reader, parser, and orchestrator by injection | Wiring is incomplete → construction fails and no config is served |
-| Rule-crate consumers | out | Receive the configuration aggregate through injection, with no compile-time dependency on this crate | A consumer asks for a language that was never detected → it receives the embedded defaults for that language |
+- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature; this file is specification only.
+- PRD: [PRD.md](../../PRD.md)
+- Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
 
-## Non-functional Requirements
-
-| Metric | Target | Measurement method |
-| --- | --- | --- |
-| Project-root config read | Under 50 ms | Time repeated reads of a warm project-root config file |
-| XDG config read | Under 100 ms | Time repeated reads of a user-level config file, excluding first-call process start-up |
-| Workspace discovery | Under 500 ms for 10 members, sequentially | Time discovery over a 10-member workspace and record the per-member cost |
-| Concurrency | Workspace discovery sequential; orchestrator is thread-safe | Run concurrent readers against one configuration and assert every reader observes a complete parse |
-| Symlink safety | Path resolution is an O(1) canonical check | Audit the resolution path for a readlink loop and confirm the loop is bounded |
-| Path injection | Language input is restricted to the typed enum; XDG directory lists are capped at 8 absolute entries | Assert that a relative path or an over-long directory list is rejected before any file is opened |
-| Parse-failure reporting | A YAML parse failure produces a warning, never a silent default | Feed a malformed configuration and assert a warning is present in the result |
-
-## Test Scenarios
-
-- **SCEN-001 — Config Discovery** — e.g. Config exists at project root → Loaded from project root
-- **SCEN-002 — Multi-Workspace** — e.g. Directory with Cargo.toml → Rust
-- **SCEN-003 — Config Merger** — e.g. Config with empty layers array → Defaults injected + warning
-
----
-
-- **SCEN-001 — Config Discovery**
-
-FRD Ref: FR-ConfigSystem-001
-
-| # | Scenario | Expected |
-| - | - | - |
-| 1 | Config exists at project root | Loaded from project root |
-| 2 | Config not at root, exists at parent (depth 1) | Loaded from parent |
-| 3 | Config not at root/parent, exists at XDG user | Loaded from XDG user |
-| 4 | Config only at XDG system dir | Loaded from XDG system |
-| 5 | No config anywhere | Embedded defaults used |
-| 6 | Symlink pointing outside project root | Rejected |
-| 7 | YAML parse failure at priority 1 | Warning logged, priority 2 searched |
-| 8 | Permission denied at priority 1 | Warning logged, priority 2 searched |
-| 9 | TOML with `[tool.lint-arwaky]` | Parsed correctly |
-| 10 | TOML without `[tool]` section | Returns None |
-| 11 | Invalid TOML syntax | ConfigError returned |
-| 12 | Rust workspace (Cargo.toml) | Language resolved to Rust |
-| 13 | Python workspace (pyproject.toml) | Language resolved to Python |
-| 14 | TypeScript workspace (package.json) | Language resolved to TypeScript |
-| 15 | Unknown language | Empty config file names, embedded defaults |
-| 16 | Root with one unified config | Listed once, deduplicated |
-| 17 | Root with no config files | Empty list |
-
-- **SCEN-002 — Multi-Workspace**
-
-FRD Ref: FR-ConfigSystem-002
-
-| # | Scenario | Expected |
-| - | - | - |
-| 1 | Directory with Cargo.toml | Rust |
-| 2 | Directory with pyproject.toml | Python |
-| 3 | Directory with package.json | TypeScript |
-| 4 | Parent dir is `crates/` | Rust |
-| 5 | Parent dir is `packages/` | TypeScript |
-| 6 | Parent dir is `modules/` | Python |
-| 7 | No markers anywhere | Unknown |
-| 8 | Both Cargo.toml and package.json | First match wins |
-| 9 | Directory with Python package markers only | Python |
-| 10 | Root with crates/foo, crates/bar | [crates/foo, crates/bar] |
-| 11 | Root with no workspace dirs | Empty vec + warning |
-| 12 | Root is `crates/` itself | Direct subdirectories returned |
-| 13 | I/O error on one member dir | Warning logged, other members returned |
-
-- **SCEN-003 — Config Merger**
-
-FRD Ref: FR-ConfigSystem-003
-
-| # | Scenario | Expected |
-| - | - | - |
-| 1 | Config with empty layers array | Defaults injected + warning |
-| 2 | Duplicate rule values | Deduplicated by value containment |
-| 3 | Config error during load | Defaults used + warning |
-| 4 | Empty ignored_paths in config | Defaults preserved (not overridden) |
-| 5 | Scoped rule `agent(container\|registry)` | Sub-layers created |
-| 6 | Score threshold 50.0 | Valid |
-| 7 | Score threshold 0.0 | Valid |
-| 8 | Score threshold 100.0 | Valid |
-| 9 | Score threshold -1.0 | Invalid |
-| 10 | Score threshold 101.0 | Invalid |
-| 11 | Unknown adapter name | Enabled (default true) |
-| 12 | No config ignored paths | 8 universal defaults returned |
-| 13 | Config adds ".git" (already default) | Deduplicated, not added twice |
-| 14 | Same config path read twice | Second read served from cache |
-| 15 | Config file edited on disk between two reads of the same path, same process | Second read still served from the cache — the edit is not observed |
-| 16 | Same config path read from a fresh orchestrator (new process) after an edit | The edited file is parsed; the cache does not outlive the process |
-
----
-
-## Assumptions & Constraints
-
-- `ConfigLanguage` enum restricts input to exactly Rust, Python, TypeScript — no arbitrary strings allowed.
-- Config file naming follows a unified convention: `lint_arwaky.config.yaml` for all languages.
-- Workspace structure must follow `crates/`, `packages/`, `modules/` convention.
-- Maximum 8 XDG_CONFIG_DIRS entries; only absolute paths accepted.
-- No config file size limit.
-- Workspace discovery runs sequentially.
-- YAML parsing uses `serde_yaml_ng`.
-- TOML parsing reads only the `[tool]` section, not full TOML config.
-- Default ignored paths are universal only — no project-specific paths hardcoded.
-
----
-
-## Glossary
-
-- **AES**: Agentic Engineering System — the 7-layer coding convention
-- **ConfigLanguage**: Typed enum restricting language input to Rust, Python, TypeScript
-- **WorkspaceType**: Enum identifying project language from marker files
-- **ArchitectureConfig**: Parsed configuration containing layers, rules, naming, and thresholds
-- **ConfigSource**: Metadata about a loaded config file (language, path, raw content)
-- **ConfigResult**: Merged config + source info + warnings from the loading process
-- **XDG**: XDG Base Directory Specification — standard for user/system config paths
-- **Embedded defaults**: Configuration compiled into the binary, used when no config file is found
-- **Scoped rule**: A rule with a parenthesized scope (e.g., `agent(container|registry)`) that creates specialized sub-layers
-
----
-
-- **Appendix A: Top-Level Config Schema**
-
-- **File Naming Convention**
-
-```text
-lint_arwaky.config.yaml  — unified config for all languages (Rust, Python, TypeScript)
-```
-
-- **Default Ignored Paths (Hardcoded, Universal)**
-
-These are always included regardless of config:
-
-```text
-.git
-node_modules
-target
-dist
-build
-coverage
-.venv
-__pycache__
-```
-
-Config-specified `ignored_paths` are **appended** to these defaults with deduplication.
+| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md) |

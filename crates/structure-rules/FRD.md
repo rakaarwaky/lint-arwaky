@@ -1,17 +1,18 @@
 # FRD — Structure Rules (AES701–AES705)
 
-## Reference
-
-- PRD: [PRD.md](../../PRD.md)
-- Backlog: [BACKLOG.md](BACKLOG.md)
-
-## System Overview
+## Feature Overview
 
 The structure-rules crate enforces the 7-layer AES folder discipline by auditing the layout of every workspace. It checks that shared, feature, and surface folders obey their shape contracts — shared folders carry DATA.md + BACKLOG.md, feature folders carry FRD.md + BACKLOG.md, and surface folders carry DESIGN.md + BACKLOG.md — and that every feature folder carries a complete test suite. It returns findings as workspace-root-relative paths so a member-directory scan resolves them correctly.
 
 ## Functional Requirements
 
 ### FR-STR-001: Shared Folder Purity and Documentation (AES701)
+
+| Aspect         | Detail                                      |
+|----------------|---------------------------------------------|
+| Description    | {FR-STR-001 description}                     |
+| Business Rules | {business rules}                          |
+| Edge Cases     | {edge cases}                              |
 
 - **Description**: Audit shared/kernel folders for forbidden file types and require the doc pair.
 - **Input**: An audit root path and the filesystem inventory of each shared folder.
@@ -24,6 +25,12 @@ The structure-rules crate enforces the 7-layer AES folder discipline by auditing
 - **Error Handling**: If the shared folder path cannot be read, the auditor skips it silently.
 
 ### FR-STR-002: Feature Folder Health and Documentation (AES702)
+
+| Aspect         | Detail                                      |
+|----------------|---------------------------------------------|
+| Description    | {FR-STR-002 description}                     |
+| Business Rules | {business rules}                          |
+| Edge Cases     | {edge cases}                              |
 
 - **Description**: Audit feature folders for completeness (capabilities + orchestrator + root composition wiring), forbid foreign layer files, and require the doc pair.
 - **Input**: An audit root path and the filesystem inventory of each candidate feature folder.
@@ -41,6 +48,12 @@ The structure-rules crate enforces the 7-layer AES folder discipline by auditing
 
 ### FR-STR-003: Surface Folder Purity and Documentation (AES703)
 
+| Aspect         | Detail                                      |
+|----------------|---------------------------------------------|
+| Description    | {FR-STR-003 description}                     |
+| Business Rules | {business rules}                          |
+| Edge Cases     | {edge cases}                              |
+
 - **Description**: Audit surface-dominated folders for misplaced files and require DESIGN.md + BACKLOG.md.
 - **Input**: An audit root path and the filesystem inventory of each surface-dominated folder.
 - **Output**: `Vec<LintResult>` carrying one finding per structural defect found in a surface folder.
@@ -54,6 +67,12 @@ The structure-rules crate enforces the 7-layer AES folder discipline by auditing
 - **Error Handling**: If the folder path cannot be read, the auditor skips it silently.
 
 ### FR-STR-004: Test Suite Category Coverage (AES704)
+
+| Aspect         | Detail                                      |
+|----------------|---------------------------------------------|
+| Description    | {FR-STR-004 description}                     |
+| Business Rules | {business rules}                          |
+| Edge Cases     | {edge cases}                              |
 
 - **Description**: Require every feature folder that owns source to carry one file per test type in `tests/` and at least one benchmark in `benches/`.
 - **Input**: An audit root path and the filesystem inventory of each candidate feature folder.
@@ -71,6 +90,12 @@ The structure-rules crate enforces the 7-layer AES folder discipline by auditing
 
 ### FR-STR-005: Member-Root File Placement (AES705)
 
+| Aspect         | Detail                                      |
+|----------------|---------------------------------------------|
+| Description    | {FR-STR-005 description}                     |
+| Business Rules | {business rules}                          |
+| Edge Cases     | {edge cases}                              |
+
 - **Description**: Require `crates/`, `modules/`, and `packages/` to hold folders and wiring only; a layer file loose at a member root belongs inside the folder that owns it.
 - **Input**: An audit root path and the top-level entries of every member dir.
 - **Output**: `Vec<LintResult>` carrying one finding per misplaced file.
@@ -82,7 +107,7 @@ The structure-rules crate enforces the 7-layer AES folder discipline by auditing
 - **Edge Cases**: A member dir holding every forbidden prefix reports one finding per file. A member dir holding only `root_*` wiring and a barrel module is clean. A member dir with no files at all is clean.
 - **Error Handling**: If a member dir cannot be read, it reports nothing rather than failing the audit.
 
-## API Contract
+## Public Interface
 
 ### Protocol API
 
@@ -99,65 +124,10 @@ The structure-rules crate enforces the 7-layer AES folder discipline by auditing
 |--------|-------|--------|-------|-------|-------------|
 | `execute` | `StructureRequest` | `StructureResponse` | I/O error on path read | — | Public aggregate entry point; routes to the appropriate auditor |
 
-## Integration Points
+## Reference
 
-| System | Direction | Purpose | Failure mode |
-|--------|-----------|---------|--------------|
-| Filesystem crate | Inbound | Provides file inventory (paths, stems, extensions) for each folder | Missing files or unreadable directories → folder skipped |
-| Shared VOs | Inbound | `FolderInventory`, `LayerFile`, `StructureFinding`, `StructureRequest`, `StructureResponse` | Type mismatch → compile error |
-| CLI `check` / `scan` commands | Outbound | Receives findings and renders them to the user | Formatting error → finding dropped |
+- PRD: [PRD.md](../../PRD.md)
+- Backlog: [BACKLOG.md](BACKLOG.md)
 
-## Non-functional Requirements
-
-| Metric | Target | Measurement method |
-|--------|--------|-------------------|
-| Audit latency per folder | < 10 ms | Benchmark on `workspaces-good` and `workspaces-bad` |
-| Finding determinism | Identical output across runs on same tree | Run audit twice, compare sorted findings |
-| Path resolution | Workspace-root-relative paths in all findings | Inspect `finding.file` field |
-
-## Test Scenarios
-
-- A shared folder holds a `capabilities_*` file → AES701 fires `shared_has_forbidden_files`.
-- A shared folder holds both `capabilities_*` and `agent_*` files → AES701 fires once per forbidden file.
-- A shared folder holds only `taxonomy_*`, `utility_*`, `contract_*` → AES701 silent on purity.
-- A shared folder lacks `DATA.md` or `BACKLOG.md` → AES701 fires `shared_missing_doc_pair`.
-- A shared folder carries `DATA.md` and `BACKLOG.md` → AES701 silent.
-- A feature folder holds capabilities but no orchestrator → AES702 fires `feature_missing_agent`.
-- A feature folder holds an orchestrator but no capabilities → AES702 fires `feature_missing_capability`.
-- A feature folder holds both capabilities and orchestrator but no docs → AES702 fires `feature_missing_doc_pair`.
-- A feature folder holds capabilities, orchestrator, and both docs → AES702 silent.
-- A feature folder holds a `taxonomy_*` file alongside capabilities → AES702 fires `feature_has_forbidden_files`.
-- A feature folder holds a `utility_*` file alongside capabilities → AES702 fires `feature_has_forbidden_files`.
-- A feature folder holds no `shared/src/<feature>/` mirror subfolder in its member's kernel → AES702 fires `feature_missing_shared_subfolder`.
-- A surface folder holds no `shared/src/<surface>/` mirror subfolder → AES702 silent (surfaces owe no mirror).
-- A feature folder holds no `root_*` file under it, in its `src/` subfolder, or at the member root → AES702 fires `feature_missing_root_container`.
-- A feature folder holds a `root_<concept>_container` or `root_<concept>_entry` file → AES702 silent on the root-container check.
-- A member root holds a `root_*` composition file but a feature folder holds none of its own → AES702 stays silent on that folder (the member-root composition file answers for the features beneath it).
-- A folder carries `FRD.md` and `BACKLOG.md` but no orchestrator → AES702 fires `doc_pair_without_orchestrator`.
-- A folder carries `FRD.md` and `BACKLOG.md` and an orchestrator → AES702 silent on reverse check.
-- A utility-only folder (no capabilities, no orchestrator) → AES702 silent.
-- A surface-dominated folder holds a `capabilities_*` file → AES703 fires `surface_has_misplaced_files`.
-- A surface-dominated folder holds an `agent_*` file → AES703 fires `surface_has_misplaced_files`.
-- A surface-dominated folder lacks `DESIGN.md` → AES703 fires `surface_missing_design_md`.
-- A surface-dominated folder lacks `BACKLOG.md` → AES703 fires `surface_missing_backlog_md`.
-- A surface-dominated folder holds utilities, barrels, `DESIGN.md`, and `BACKLOG.md` → AES703 silent.
-- A feature-dominated folder that also holds one surface file is checked under AES702, not AES703.
-- A conforming workspace (shared has DATA+BACKLOG, features have FRD+BACKLOG, surfaces have DESIGN+BACKLOG) → 0 structure violations on `lint-arwaky-cli check .`.
-
-## Assumptions & Constraints
-
-- The audit walks exactly three member directories: `crates/`, `modules/`, `packages/`.
-- Directory depth is capped at 3 levels to avoid scanning test/bench/build artifacts.
-- Skipped directories (`benches`, `tests`, `target`, `node_modules`, `__pycache__`) are never audited.
-- A folder is classified as "surface-dominated" when `surface_count * 2 >= total_count`.
-- The reverse doc-pair check applies to all non-shared folders, not only feature-dominated ones.
-- Findings are deduplicated by `(code, violation_type, file, message)` and sorted stably.
-- Shared folders require `DATA.md` (spec) + `BACKLOG.md` (tracking) — not `FRD.md`.
-
-## Glossary
-
-- **Shared / kernel**: The cross-cutting folder (`shared/`) holding taxonomy, utility, and contract files; carries `DATA.md` + `BACKLOG.md`.
-- **Feature folder**: A subdirectory of a member dir that holds at least one `capabilities_*` or `agent_*_orchestrator` file; carries `FRD.md` + `BACKLOG.md`.
-- **Surface-dominated folder**: A folder where `surface_*` files constitute more than half of all classified files; carries `DESIGN.md` + `BACKLOG.md`.
-- **Doc pair**: The two-doc file pair required by each folder kind (FRD+BACKLOG for features, DESIGN+BACKLOG for surfaces, DATA+BACKLOG for shared).
-- **Foreign file**: A file whose layer prefix does not belong in the current folder's allowed set.
+| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md) |
+| Architecture | {Link to ARCHITECTURE.md} | [{link}](ARCHITECTURE.md) |

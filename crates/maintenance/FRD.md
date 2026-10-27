@@ -2,13 +2,7 @@
 
 ---
 
-## Reference
-
-- PRD: [PRD.md](../../PRD.md)
-- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature; this file is specification only.
-- Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
-
-## System Overview
+## Feature Overview
 
 The maintenance crate provides operational health and upkeep commands for the
 lint-arwaky system: environment diagnostics, toolchain verification, adapter
@@ -270,7 +264,7 @@ flowchart TD
 
 ---
 
-## API Contract
+## Public Interface
 
 ### Protocol API
 
@@ -292,172 +286,10 @@ flowchart TD
 |---|---|---|---|---|---|
 | `execute` | MaintenanceRequest | `MaintenanceResponse` | — | — | Single composite entry point over the feature. |
 
-## Integration Points
+## Reference
 
-| System | Direction | Purpose | Failure mode |
-| --- | --- | --- | --- |
-| `shared` crate | in | Supply value objects plus the checker, installer, and aggregate contracts | A contract is missing at compile time → the build fails before any command runs |
-| `filesystem` aggregate | in | Read, write, and delete files, list directories, and run external commands | A file operation fails → the command reports the failing path and stops rather than continuing on a partial state |
-| Maintenance checker protocol | out (internal) | Define the shape every individual check implements | A check fails mid-run → the diagnostic reports that specific check as failed and the rest still run |
-| Maintenance commands aggregate | out (internal) | Expose the single composite entry point the surface calls | An unknown subcommand is requested → an invalid-argument error is returned |
-| `cargo audit --json` | in | Audit Rust dependencies for vulnerabilities | The advisory database is unreachable → the audit reports that it could not run, never that no vulnerabilities exist |
-| `pip` | in | Upgrade the Python tooling | The interpreter is managed by the OS and refuses the install → the retry adds the system-packages override |
-| `curl` | in | Query the GitHub releases API and download the release asset | The download fails or the checksum does not match → the running binary is left in place and the failure is reported |
-| `mv` / `chmod` | in | Replace the binary atomically and set its executable bit | The replacement fails → the previous binary is still in place and the failure is reported |
-| `which` | in | Detect whether a tool is on PATH | The tool is not on PATH → it is reported as missing, and the doctor diagnostic says so explicitly |
-| `sha256sum` | in | Verify the integrity of a downloaded binary | The checksum does not match → the download is discarded and the existing binary is untouched |
+- PRD: [PRD.md](../../PRD.md)
+- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature; this file is specification only.
+- Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
 
-## Non-functional Requirements
-
-| Metric | Target | Measurement method |
-| --- | --- | --- |
-| Doctor latency | Under 2 s for 10 tool checks plus 3 language version checks | Time a full doctor run and record the per-check cost |
-| Stats scan | O(n) in top-level file count | Scale the top-level file count and confirm linear growth |
-| Cache cleanup | A fixed directory list is checked; cost is independent of workspace size | Time cache cleanup against two workspace sizes of very different sizes |
-| Dependency report memory | The full dependency lockfile is resident, suited to projects under 10,000 dependencies | Measure retained size at 10,000 dependencies and assert the report still completes |
-| Tool availability | Availability reflects the exact PATH state at invocation | Remove a tool from PATH and assert doctor reports it missing on the same run |
-| Update integrity | A downloaded binary is verified by checksum before it replaces the running one | Corrupt a download and assert the existing binary is retained and the mismatch is reported |
-| Update atomicity | Replacement is atomic; a failed replacement leaves the previous binary runnable | Interrupt a replacement and assert the previous binary still runs |
-| Concurrency | All subprocess work is synchronous; no async runtime dependency | Inspect the dependency tree for an async runtime and assert it is absent |
-
-## Test Scenarios
-
-Each scenario is stated below as a table of cases: the input condition and the expected result.
-
-- **SCEN-001 — Doctor** — e.g. All required tools OK → healthy: true, all statuses "OK"
-- **SCEN-002 — Stats** — e.g. Directory with mixed files → Per-language counts + overall totals
-- **SCEN-003 — Clean** — e.g. Project with .pytest_cache, **pycache** → Directories removed
-- **SCEN-004 — Update** — e.g. Python tools upgrade → pip install --upgrade per tool
-- **SCEN-005 — Diagnose** — e.g. cargo + rustc installed → Status "OK"
-- **SCEN-006 — Security** — e.g. Rust project with Cargo.lock → Runs cargo-audit
-- **SCEN-007 — Dependencies** — e.g. Rust project with Cargo.lock → Parses all packages
-- **SCEN-008 — Adapter Health Check** — e.g. All 9 adapters installed → All available: true
-- **SCEN-009 — Self-Update** — e.g. GitHub reachable, same version → already_up_to_date=true, upgraded=false
-
-- **SCEN-001 — Doctor**
-
-FRD Ref: FR-Maintenance-001
-
-| # | Scenario | Expected |
-| - | - | - |
-| 1 | All required tools OK | healthy: true, all statuses "OK" |
-| 2 | Missing rustc (required) | healthy: false |
-| 3 | Missing ruff (optional) | Status "WARN" in adapter_statuses |
-| 4 | Language runtimes installed | Versions reported (rustc, python3, node) |
-| 5 | Language runtime missing | Version "NOT FOUND" |
-
-- **SCEN-002 — Stats**
-
-FRD Ref: FR-Maintenance-002
-
-| # | Scenario | Expected |
-| - | - | - |
-| 1 | Directory with mixed files | Per-language counts + overall totals |
-| 2 | Python project with test files | Correct test ratio |
-| 3 | Directory with no source files | All zeros, ratio 0.0 |
-| 4 | Empty directory | All zeros, ratio 0.0 |
-
-- **SCEN-003 — Clean**
-
-FRD Ref: FR-Maintenance-003
-
-| # | Scenario | Expected |
-| - | - | - |
-| 1 | Project with .pytest_cache, **pycache** | Directories removed |
-| 2 | Project with target/ | Directory removed |
-| 3 | No cache directories | No-op |
-
-- **SCEN-004 — Update**
-
-FRD Ref: FR-Maintenance-004
-
-| # | Scenario | Expected |
-| - | - | - |
-| 1 | Python tools upgrade | pip install --upgrade per tool |
-| 2 | pip not installed | Warning, no crash |
-
-- **SCEN-005 — Diagnose**
-
-FRD Ref: FR-Maintenance-001
-
-| # | Scenario | Expected |
-| - | - | - |
-| 1 | cargo + rustc installed | Status "OK" |
-| 2 | Missing clippy (required) | Status "FAIL" |
-| 3 | Missing mypy (optional) | Status "WARN" |
-| 4 | Missing eslint (optional) | Status "WARN" |
-
-- **SCEN-006 — Security**
-
-FRD Ref: FR-Maintenance-005
-
-| # | Scenario | Expected |
-| - | - | - |
-| 1 | Rust project with Cargo.lock | Runs cargo-audit |
-| 2 | No Cargo.lock | tool_installed: false, empty findings |
-| 3 | cargo-audit not installed | tool_installed: false, empty findings |
-| 4 | No vulnerabilities | Empty findings, success |
-
-- **SCEN-007 — Dependencies**
-
-FRD Ref: FR-Maintenance-006
-
-| # | Scenario | Expected |
-| - | - | - |
-| 1 | Rust project with Cargo.lock | Parses all packages |
-| 2 | No Cargo.lock | Returns error |
-| 3 | Empty Cargo.lock | Empty dependency list |
-
-- **SCEN-008 — Adapter Health Check**
-
-FRD Ref: FR-Maintenance-007
-
-| # | Scenario | Expected |
-| - | - | - |
-| 1 | All 9 adapters installed | All available: true |
-| 2 | Missing ruff | ruff available: false |
-| 3 | No adapters installed | All available: false |
-
-- **SCEN-009 — Self-Update**
-
-FRD Ref: FR-Maintenance-008
-
-| # | Scenario | Expected |
-| - | - | - |
-| 1 | GitHub reachable, same version | already_up_to_date=true, upgraded=false |
-| 2 | GitHub reachable, newer version | latest_version set, upgraded=true (when not check-only) |
-| 3 | check_only=true | No download performed; status reports current tag |
-| 4 | Network unavailable | latest_version empty, status starts with "Error:" |
-| 5 | Local version ahead of release | already_up_to_date=true (local > released) |
-
----
-
-## Assumptions & Constraints
-
-- The crate assumes `pip`, `cargo`, `npm`, `which`, `curl`, `mv`, and
-  `chmod` are available in the system PATH when invoked.
-- Security scanning requires `cargo-audit` to be installed for Rust projects.
-- Dependency parsing is line-based (not full TOML/lockfile parsing); may
-  miss edge cases in complex manifests.
-- Cache cleanup operates on CWD; the caller must ensure the correct working
-  directory.
-- All subprocess operations use `std::process::Command` (synchronous).
-  No async runtime dependency.
-- The maintenance crate performs its own file walking for ops purposes
-  (stats, clean). This is distinct from source code analysis walking
-  handled by the filesystem crate.
-- Security scanning and dependency reporting currently cover Rust projects only.
-  Python and JS/TS support is planned; see BACKLOG.md for status.
-
----
-
-## Glossary
-
-- **AES**: Agentic Engineering System — the 7-layer coding convention
-- **Toolchain**: The set of programming language tools (compilers, linters, formatters) installed on the system
-- **Dependency Report**: A listing of all project dependencies with name, version, and classification
-- **Cache Directory**: Temporary build/lint output directories that can be safely deleted
-- **Self-Update**: Process of downloading the latest release binary from GitHub and replacing the running executable
-- **Security Finding**: A vulnerability detected by cargo-audit in project dependencies
-
----
+| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md) |

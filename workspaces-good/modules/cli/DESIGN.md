@@ -44,3 +44,6 @@ pixel-level tokens.
 - PRD.md — what the product does and why
 - ARCHITECTURE.md — the layer contract this design follows
 - FRD.md — the requirements the interface serves
+
+| Backlog | {Link to BACKLOG.md} | [{link}](BACKLOG.md) |
+| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md) |
