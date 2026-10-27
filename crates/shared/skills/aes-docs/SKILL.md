@@ -96,13 +96,16 @@ Doc comments on every public item are the sixth deliverable, in the language's n
 Every rule is machine-checked by `lint-arwaky-cli docs` (crate `doc-rules`, AES601–AES606).
 A rule cannot drift from the gate. Cite the code, not this file, when pointing at a rule.
 Each document's required section set is cross-checked against its reference's contract table, so a
-row that stops being enforced is a test failure rather than a silent edit.
+row that stops being enforced is a test failure rather than a silent edit. (Until the PR-2
+constant migration lands, the enforced closed H2 sets in
+`taxonomy_doc_rules_constant.rs` still name the pre-migration sections; the rows below
+describe the target layout the templates now ship.)
 
 | Code                                                                     | Rule                                                                                                                                                                                  |
 | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `status-in-spec` / `spec-source-path`                                       | Spec and status never share a file. Specs promise; backlogs report. Specs are stateless — no `.py`/`.rs`/`.ts` file names (HOW-TO Rule 9). |
 | `spec-without-backlog` / `backlog-without-spec` / `feature-doc-in-shared` | An **FRD** and its backlog are a pair in the same **feature** directory (root PRD pairs with root ROADMAP, not a sibling BACKLOG). Kernel folders (`modules/shared`) are not features: either file under `shared/` fails with `feature-doc-in-shared` (HOW-TO-MAKE-FRD § Scope). |
-| `no-master-backlog` / `undefined-state-vocab` / `master-section-missing` | One root master owns the `State` vocabulary, the status policy, and the roll-up (`ROADMAP.md` `Roadmap Status`; legacy root `BACKLOG.md` accepted during migration). |
+| `no-master-backlog` / `undefined-state-vocab` / `master-section-missing` | One root master owns the `State` vocabulary and the roll-up (`ROADMAP.md` `Roadmap Status`; legacy root `BACKLOG.md` accepted during migration). |
 | `state-vocab-restated`                                                   | Definitions live once. Feature backlogs cite `Roadmap Status`, never restate it under `Backlog Status`.                                                                                                                    |
 | `done-without-evidence` / `unknown-state`                                | Every backlog `Done` row is re-runnable: command + counts + commit hash, and what it excludes.                                                                                             |
 | `duplicate-fr-id` / `orphan-fr-ref`                                      | Requirement IDs are unique, stable, and the only thing a backlog row may cite.                                                                                                        |
@@ -156,7 +159,7 @@ Ask these questions in order. The first "No" dictates your next action.
 ```text
 project-root/
 ├── PRD.md          # stakeholder alignment (what/why) — 1 per project
-├── ROADMAP.md      # feature index, shared policy, workspace condition — 1 per project
+├── ROADMAP.md      # progress overview + feature status, shared policy, cross-cutting links — 1 per project
 ├── README.md       # developer onboarding (how to use) — 1 per project
 ├── AGENTS.md       # operational guide (how the agent works here) — 1 per project
 ├── ARCHITECTURE.md # layer boundaries and allowed dependencies — 1 per project
@@ -258,7 +261,7 @@ The invariant codes above cover the machine-checkable ones. These need a reader:
 
 **Checker false-freights to dodge when authoring specs** (these bite at draft time, before you run the gate):
 
-- **The word "implemented" in a spec file.** `status-in-spec` matches `\b(impl|un)plemented\b` case-insensitively across the *whole* FRD/PRD — so the reference template's `| As Implemented / As Intended |` column and any `implemented` cell header/cell are auto-flagged. Name the column `impl / intended` and use `impl` for the cell. (Same class: `shipped`/`released in v…`, checkbox items, status markers checkmark / cross status markers, progress `%` all trip it.)
+- **The word "implemented" in a spec file.** `status-in-spec` matches `\b(impl|un)plemented\b` case-insensitively across the *whole* FRD/PRD — so any `Implemented` / `Shipped` status-style cell header or cell is auto-flagged. Name status-style columns `impl / intended` and use `impl` for the cell. (Same class: `shipped` / `released in v…`, checkbox items, status markers checkmark / cross status markers, progress `%` all trip it.)
 - **Entry-table rows without a header + separator.** AES606's `section_not_table` parser reads `| Aspect | … |` rows via a markdown-table parser that needs the header row + a `|---|` separator line; a headerless block of `| … |` rows parses as **0 rows**. Always emit the header row; keep exactly one row per fixed `Aspect` label, in template order.
 
 ---

@@ -54,8 +54,9 @@
 Every row names a concrete subject, a measurable outcome, and a test
 that could falsify it.
 
-**Pairing.** Every `PR-` item in the PRD must be reachable from the root
-`ROADMAP.md` Roadmap Status. A `PR-` item needs its own
+**Pairing.** Every `PR-` item declared in the PRD's `Project Requirements`
+must have a matching `PR-<PROJECT-NAME-ID>-NNN` entry in the root
+`ROADMAP.md` `Roadmap Status` section. A `PR-` item needs its own
 `FRD.md` + `BACKLOG.md` pair. An out-of-scope item is marked `Won't Do`
 in the root or simply absent.
 
