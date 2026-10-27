@@ -126,6 +126,9 @@ pub const TEMPLATE_CONFORMANCE_VIOLATION_SECTION_NOT_TABLE: &str = "section_not_
 /// A table is present but is missing one or more required columns.
 pub const TEMPLATE_CONFORMANCE_VIOLATION_TABLE_MISSING_COLUMNS: &str = "table_missing_columns";
 
+/// An entry table's first-column row labels do not match the template's fixed set.
+pub const TEMPLATE_CONFORMANCE_VIOLATION_ENTRY_MISSING_ROW: &str = "entry_missing_row";
+
 /// A required root document does not exist at the audit root.
 pub const MISSING_DOC_VIOLATION: &str = "missing_required_doc";
 
