@@ -521,14 +521,37 @@ pub fn strip_non_prose_for_placeholders(text: &str) -> String {
     out
 }
 
-/// Does any surviving prose token in *text* match an entry in *catalog*?
+/// Does any token in *text* match an entry in *catalog*?
 ///
-/// Matching is substring-based after non-prose stripping: a token like
-/// `<feature-name>` fires only if that exact marker appears in surviving
-/// prose. Code types such as `Vec<DocFinding>` are blanked first, so they
-/// never match.
+/// Each catalog marker is swapped for a private-use sentinel before
+/// non-prose stripping and restored afterwards, so a marker the template
+/// ships is exempt from the `<...>` rule that blanks autolinks, HTML tags,
+/// and code types such as `Vec<DocFinding>`. Fenced blocks and inline
+/// backtick spans are still blanked — a placeholder the document wraps in
+/// backticks stays out of reach — and markers outside the catalog are
+/// stripped as before.
 pub fn matches_placeholder_catalog(text: &str, catalog: &[&str]) -> Vec<(usize, String)> {
-    let prose = strip_non_prose_for_placeholders(text);
+    // Longest first so a marker containing another (e.g. `<DATA-NAME-ID>` in
+    // the ROADMAP shipped cell `<DATA-NAME-ID> / <FEATURE-NAME-ID> /
+    // <DESIGN-NAME-ID>`) is protected intact: the containing marker is
+    // swapped first, so its `<...>` span is not shattered by an inner
+    // sentinel before the outer one is matched.
+    let mut markers: Vec<&str> = catalog.to_vec();
+    markers.sort_by_key(|marker| std::cmp::Reverse(marker.len()));
+    let mut protected = text.to_string();
+    let mut placed: Vec<(String, String)> = Vec::new();
+    for (index, marker) in markers.iter().enumerate() {
+        if !protected.contains(marker) {
+            continue;
+        }
+        let sentinel = format!("\u{E000}{index}\u{E001}");
+        protected = protected.replace(marker, &sentinel);
+        placed.push((sentinel, (*marker).to_string()));
+    }
+    let mut prose = strip_non_prose_for_placeholders(&protected);
+    for (sentinel, marker) in &placed {
+        prose = prose.replace(sentinel.as_str(), marker.as_str());
+    }
     let mut hits: Vec<(usize, String)> = Vec::new();
     for (line_no, line) in prose.lines().enumerate() {
         for marker in catalog {
@@ -644,8 +667,8 @@ mod tests {
         assert_eq!(lines.next(), None, "there are exactly two lines of output");
     }
 
-    /// `matches_placeholder_catalog` catches surviving prose markers using curly-slot markers,
-    /// since `<...>` tokens are blanked as autolinks/HTML tags by the scanner.
+    /// `matches_placeholder_catalog` catches curly-slot markers verbatim; a
+    /// `{}` span is never blanked by the strip, so no exemption is needed.
     #[test]
     fn catalog_matches_curly_slot_markers() {
         let text = "# AGENTS\n\n{architecture scanner command} runs the audit\n{lint command} enforces style\n";
@@ -682,5 +705,19 @@ mod tests {
             hits[0].1, "{architecture scanner command}",
             "the matched marker is reported verbatim"
         );
+    }
+
+    /// Catalog-shaped angle markers are exempt from the `<...>` strip and
+    /// fire in surviving prose (Issue 5: angle catalogs must be observable).
+    #[test]
+    fn catalog_matches_angle_markers_exempt_from_strip() {
+        let text = "# ROADMAP — <workspace name>\n";
+        let hits = matches_placeholder_catalog(text, &["<workspace name>"]);
+        assert_eq!(hits.len(), 1, "an angle catalog marker must fire");
+        assert_eq!(
+            hits[0].1, "<workspace name>",
+            "the marker is reported verbatim"
+        );
+        assert_eq!(hits[0].0, 1, "the hit anchors to its line");
     }
 }
