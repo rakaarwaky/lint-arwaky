@@ -32,15 +32,15 @@ impl ICrosslinkProtocol for CrosslinkChecker {
             // allowed to carry those sections; a feature backlog restating them
             // is the violation.
             let is_root = context.is_root_document(document);
-            let carries_reference = name == consts::FRD_DOC || name == consts::DATA_DOC;
+            let required = Self::required_links(name);
             let restates_master = name == consts::BACKLOG_DOC && !is_root;
-            if !carries_reference && !restates_master {
+            if required.is_empty() && !restates_master {
                 continue;
             }
             let parsed = sections(&document.text);
             let mut own = Vec::new();
-            if carries_reference {
-                self.check_reference_crosslink(&parsed, &mut own);
+            if !required.is_empty() {
+                self.check_reference_crosslink(name, required, &parsed, &mut own);
             }
             if restates_master {
                 self.check_state_vocab_restated(&parsed, context, &mut own);
@@ -49,6 +49,67 @@ impl ICrosslinkProtocol for CrosslinkChecker {
             findings.extend(own);
         }
         findings
+    }
+}
+
+impl CrosslinkChecker {
+    /// The mandatory reference links per document, one entry per the AES604
+    /// target state; empty for README, which carries a placeholder table.
+    fn required_links(name: &str) -> &'static [&'static str] {
+        match name {
+            consts::AGENTS_DOC => &[
+                consts::PRD_DOC,
+                consts::FRD_DOC,
+                consts::DATA_DOC,
+                consts::DESIGN_DOC,
+                consts::ARCHITECTURE_DOC,
+            ],
+            consts::PRD_DOC => &[consts::ROADMAP_DOC, consts::ARCHITECTURE_DOC],
+            consts::ROADMAP_DOC => &[consts::PRD_DOC, consts::ARCHITECTURE_DOC],
+            consts::BACKLOG_DOC => &[
+                consts::PRD_DOC,
+                consts::FRD_DOC,
+                consts::ROADMAP_DOC,
+                consts::ARCHITECTURE_DOC,
+            ],
+            consts::FRD_DOC => &[
+                consts::PRD_DOC,
+                consts::BACKLOG_DOC,
+                consts::ROADMAP_DOC,
+                consts::ARCHITECTURE_DOC,
+            ],
+            consts::DATA_DOC => &[
+                consts::PRD_DOC,
+                consts::BACKLOG_DOC,
+                consts::ROADMAP_DOC,
+                consts::ARCHITECTURE_DOC,
+            ],
+            consts::DESIGN_DOC => &[
+                consts::PRD_DOC,
+                consts::BACKLOG_DOC,
+                consts::ROADMAP_DOC,
+                consts::ARCHITECTURE_DOC,
+            ],
+            consts::CONTRIBUTING_DOC => &[consts::PRD_DOC, consts::ARCHITECTURE_DOC],
+            // README.md mandates no links; its Reference section is a
+            // placeholder table. ARCHITECTURE.md is out of scope for AES604.
+            _ => &[],
+        }
+    }
+
+    fn missing_link_violation_type(link: &str) -> &'static str {
+        match link {
+            consts::BACKLOG_DOC => consts::CROSSLINKS_VIOLATION_NO_BACKLOG_LINK,
+            consts::PRD_DOC => consts::CROSSLINKS_VIOLATION_NO_PRD_LINK,
+            // No dedicated shared constant exists yet for these artifacts;
+            // one of the next AES604 PRs adds them.
+            consts::ROADMAP_DOC => "no_roadmap_link",
+            consts::ARCHITECTURE_DOC => "no_architecture_link",
+            consts::FRD_DOC => "no_frd_link",
+            consts::DATA_DOC => "no_data_link",
+            consts::DESIGN_DOC => "no_design_link",
+            _ => "no_required_link",
+        }
     }
 }
 
@@ -65,51 +126,40 @@ impl CrosslinkChecker {
         Self {}
     }
 
-    /// A requirement document must link its BACKLOG and PRD in the Reference
-    /// section, or a reader cannot reach the report that says whether the
-    /// promise was kept.
-    fn check_reference_crosslink(&self, parsed: &[Section], findings: &mut Vec<DocFinding>) {
+    /// A document must link every artifact in its required set in the
+    /// Reference section, or a reader cannot reach the document that carries
+    /// the detail it depends on.
+    fn check_reference_crosslink(
+        &self,
+        name: &str,
+        required: &[&str],
+        parsed: &[Section],
+        findings: &mut Vec<DocFinding>,
+    ) {
         let Some(section) = parsed
             .iter()
             .find(|s| normalize_heading(&s.title) == "reference")
         else {
             return;
         };
-        if !section.body.contains(consts::BACKLOG_DOC) {
+        for link in required {
+            if section.body.contains(link) {
+                continue;
+            }
             findings.push(
                 DocFinding::new_with_line(
                     "",
                     section.line,
                     consts::RULE_CODE_CROSSLINKS,
-                    consts::CROSSLINKS_VIOLATION_NO_BACKLOG_LINK,
+                    Self::missing_link_violation_type(link),
                     format!(
-                        "line {} Reference section must link {}",
-                        section.line,
-                        consts::BACKLOG_DOC
+                        "line {} Reference section of {} must link {}",
+                        section.line, name, link
                     ),
                 )
                 .with_reason(
-                    "A reader of the requirement cannot reach the report that says whether the promise was kept without the backlog link.",
-                    format!("Add a link to {} in the Reference section.", consts::BACKLOG_DOC),
-                ),
-            );
-        }
-        if !section.body.contains(consts::PRD_DOC) {
-            findings.push(
-                DocFinding::new_with_line(
-                    "",
-                    section.line,
-                    consts::RULE_CODE_CROSSLINKS,
-                    consts::CROSSLINKS_VIOLATION_NO_PRD_LINK,
-                    format!(
-                        "line {} Reference section must link {}",
-                        section.line,
-                        consts::PRD_DOC
-                    ),
-                )
-                .with_reason(
-                    "A reader of the requirement cannot reach the product intent that justifies it without the PRD link.",
-                    format!("Add a link to {} in the Reference section.", consts::PRD_DOC),
+                    "A reader cannot reach the artifact this document depends on without the link.",
+                    format!("Add a link to {} in the Reference section.", link),
                 ),
             );
         }
@@ -128,7 +178,7 @@ impl CrosslinkChecker {
     ) {
         let Some(section) = parsed
             .iter()
-            .find(|s| normalize_heading(&s.title) == "current condition")
+            .find(|s| normalize_heading(&s.title) == "progress overview")
         else {
             return;
         };
