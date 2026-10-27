@@ -92,6 +92,9 @@ pub const TEMPLATE_CONFORMANCE_VIOLATION_SECTION_NOT_TABLE: &str = "section_not_
 /// A table is present but is missing one or more required columns.
 pub const TEMPLATE_CONFORMANCE_VIOLATION_TABLE_MISSING_COLUMNS: &str = "table_missing_columns";
 
+/// An entry table's first-column row labels do not match the template's fixed set.
+pub const TEMPLATE_CONFORMANCE_VIOLATION_ENTRY_MISSING_ROW: &str = "entry_missing_row";
+
 /// A required root document does not exist at the audit root.
 pub const MISSING_DOC_VIOLATION: &str = "missing_required_doc";
 
@@ -239,6 +242,10 @@ pub const SOURCE_EXTENSIONS: &[&str] = &["py", "rs", "ts", "tsx"];
 
 /// Shared `| Aspect | Detail |` header of every entry table.
 pub const ASPECT_DETAIL_COLUMNS: &[&str] = &["Aspect", "Detail"];
+
+/// Shared `| Artifact | Purpose | Link |` header of every document's
+/// `## Reference` table, per the HOW-TO-MAKE templates.
+pub const REFERENCE_COLUMNS: &[&str] = &["Artifact", "Purpose", "Link"];
 
 /// PRD `Project Requirements` entry row labels — 6, per HOW-TO-MAKE-PRD.md.
 pub const PRD_ROW_LABELS: &[&str] = &[
@@ -427,6 +434,7 @@ mod tests {
         ships_columns("HOW-TO-MAKE-CONTRIBUTING.md", CONTRIBUTING_COMMIT_COLUMNS);
         ships_columns("HOW-TO-MAKE-DATA.md", DATA_TYPE_DESCRIPTION_COLUMNS);
         ships_columns("HOW-TO-MAKE-DESIGN.md", DESIGN_VARIANT_VALUE_COLUMNS);
+        ships_columns("HOW-TO-MAKE-AGENTS.md", REFERENCE_COLUMNS);
     }
 
     /// The FRD row labels are one list under two names (FR_FIELDS serves the
