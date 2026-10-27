@@ -68,6 +68,10 @@ fn write_faulty_workspace(root: &Path) {
         &root.join("crates/calc/src/agent_calc_orchestrator.rs"),
         "pub struct CalcOrchestrator;\n",
     );
+    write(
+        &root.join("crates/calc/src/root_calc_container.rs"),
+        "pub struct CalcContainer;\n",
+    );
     write(&root.join("crates/calc/FRD.md"), "# FRD\n");
     write(&root.join("crates/calc/BACKLOG.md"), "# BACKLOG\n");
 }

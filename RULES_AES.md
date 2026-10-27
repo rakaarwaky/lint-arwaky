@@ -674,6 +674,8 @@ A workspace holds a locked `shared` folder that contains only taxonomy, utility,
 
 A feature folder is a member subdirectory (under `crates/`, `modules/`, or `packages/`) that carries business logic. It must hold at least one `agent_*_orchestrator` file AND at least one `capabilities_*` file. A folder with only one side of that pair is incomplete and should be split or merged into the correct home.
 
+It must also hold its composition wiring: a `root_<concept>_container` file, or a `root_<concept>_entry` file when the feature's root is an entry point. The root layer is the only layer that may instantiate and wire the feature's components, so a feature without that file has no home for its wiring and nothing below it can reach it.
+
 The check is per folder. A member-level orchestrator — one sitting directly under `crates/`, `modules/`, or `packages/` rather than inside a feature — does **not** answer for the folders beneath it. Each feature owns its own orchestration, so a member-level orchestrator is a routing aggregate over the features, and a feature folder missing its own agent is still a split feature.
 
 **Shared kernel mirror.** A feature folder is also mirrored in its member's kernel: the subfolder `shared/src/<feature>/` must exist, where `<feature>` is the folder name with `-` replaced by `_` (the module name). The kernel holds the feature's contract and taxonomy modules, so a feature without that subfolder has no home for them. The mirror is required only for feature folders; a surface folder's shared subfolder is optional and never fires this check.
@@ -683,6 +685,7 @@ The check is per folder. A member-level orchestrator — one sitting directly un
 | `feature_missing_agent`       | The folder holds capabilities but no `agent_*_orchestrator` file of its own. |
 | `feature_missing_capability` | The folder holds an agent orchestrator but no `capabilities_*` file.        |
 | `feature_missing_shared_subfolder` | The feature has no `shared/src/<feature>/` mirror subfolder in its member's kernel. |
+| `feature_missing_root_container` | The feature holds no `root_*_container` or `root_*_entry` file. |
 
 ---
 

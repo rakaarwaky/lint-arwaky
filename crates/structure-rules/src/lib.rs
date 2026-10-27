@@ -1,5 +1,6 @@
-// PURPOSE: structure-rules — AES701 shared purity, AES702 feature health,
-// AES703 surface purity, AES704 test-suite coverage, AES705 member-root placement
+// PURPOSE: structure-rules — AES701 shared purity, AES702 feature health
+// (capabilities + orchestrator + root-container wiring), AES703 surface purity,
+// AES704 test-suite coverage, AES705 member-root placement
 
 pub mod agent_structure_orchestrator;
 pub use agent_structure_orchestrator::StructureOrchestrator;

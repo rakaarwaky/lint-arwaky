@@ -25,17 +25,18 @@ The structure-rules crate enforces the 7-layer AES folder discipline by auditing
 
 ### FR-STR-002: Feature Folder Health and Documentation (AES702)
 
-- **Description**: Audit feature folders for completeness (capabilities + orchestrator), forbid foreign layer files, and require the doc pair.
+- **Description**: Audit feature folders for completeness (capabilities + orchestrator + root composition wiring), forbid foreign layer files, and require the doc pair.
 - **Input**: An audit root path and the filesystem inventory of each candidate feature folder.
 - **Output**: `Vec<LintResult>` carrying one finding per structural defect found in a feature folder.
 - **Business Rules**:
   - A feature folder must hold at least one `capabilities_*` file AND at least one `agent_*_orchestrator` file. Missing capabilities produces `feature_missing_capability`; missing orchestrator produces `feature_missing_agent`.
+  - A feature folder must hold its composition wiring: a `root_<concept>_container` file, or a `root_<concept>_entry` file when the feature's root is an entry point. The root layer is the only layer that may instantiate and wire the feature's components. Absence produces one `feature_missing_root_container` finding.
   - A feature folder must not hold `utility_*`, `surface_*`, `taxonomy_*`, or `contract_*` files — those belong elsewhere. Each foreign file produces one `feature_has_forbidden_files` finding.
   - A feature folder must carry `FRD.md` and `BACKLOG.md` at its root. Missing either produces one `feature_missing_doc_pair` finding listing the missing files.
   - Reverse direction: any folder (including non-feature) that carries both `FRD.md` and `BACKLOG.md` must also hold at least one `*_orchestrator` file. Absence produces one `doc_pair_without_orchestrator` finding.
   - A folder with no capabilities and no orchestrator is not a feature and owes no document pair.
   - A feature folder is mirrored in its member's kernel: the subfolder `shared/src/<feature>/` (folder name, `-` → `_`) must exist. Its absence produces one `feature_missing_shared_subfolder` finding. The mirror is member-scoped — a feature under `crates/` mirrors into `crates/shared/src/`, one under `modules/` into `modules/shared/src/` — and is required only for feature folders. A surface folder's shared subfolder is optional and never fires this check.
-- **Edge Cases**: A folder with capabilities but no orchestrator and no docs reports both `feature_missing_agent` and `feature_missing_doc_pair`. A folder with only an orchestrator and no capabilities reports `feature_missing_capability`. A utility-only folder is skipped entirely.
+- **Edge Cases**: A folder with capabilities but no orchestrator and no docs reports both `feature_missing_agent` and `feature_missing_doc_pair`. A folder with only an orchestrator and no capabilities reports `feature_missing_capability`. A utility-only folder is skipped entirely. A folder with a complete pair but no `root_` file reports `feature_missing_root_container` alongside any missing-side findings.
 - **Error Handling**: If the folder path cannot be read, the auditor skips it silently.
 
 ### FR-STR-003: Surface Folder Purity and Documentation (AES703)
@@ -129,6 +130,9 @@ The structure-rules crate enforces the 7-layer AES folder discipline by auditing
 - A feature folder holds a `utility_*` file alongside capabilities → AES702 fires `feature_has_forbidden_files`.
 - A feature folder holds no `shared/src/<feature>/` mirror subfolder in its member's kernel → AES702 fires `feature_missing_shared_subfolder`.
 - A surface folder holds no `shared/src/<surface>/` mirror subfolder → AES702 silent (surfaces owe no mirror).
+- A feature folder holds no `root_*` file → AES702 fires `feature_missing_root_container`.
+- A feature folder holds a `root_<concept>_container` or `root_<concept>_entry` file → AES702 silent on the root-container check.
+- A member root holds an `root_*` file but a feature folder holds none of its own → AES702 fires `feature_missing_root_container` for that folder (the check is per folder).
 - A folder carries `FRD.md` and `BACKLOG.md` but no orchestrator → AES702 fires `doc_pair_without_orchestrator`.
 - A folder carries `FRD.md` and `BACKLOG.md` and an orchestrator → AES702 silent on reverse check.
 - A utility-only folder (no capabilities, no orchestrator) → AES702 silent.
