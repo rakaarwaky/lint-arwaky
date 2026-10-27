@@ -29,8 +29,8 @@ pub const FEATURE_HEALTH_VIOLATION_FORBIDDEN_FILES: &str = "feature_has_forbidde
 /// A feature folder lacks its FRD.md + BACKLOG.md doc pair.
 pub const FEATURE_HEALTH_VIOLATION_NO_DOC_PAIR: &str = "feature_missing_doc_pair";
 
-/// A feature folder has no root feature container (`root_<module>_container.<ext>`) at either
-/// the member root or inside the feature's `src/`.
+/// A feature folder has no `root_*` composition file inside it and the
+/// member root holds none on its behalf either.
 pub const FEATURE_HEALTH_VIOLATION_MISSING_ROOT_CONTAINER: &str = "feature_missing_root_container";
 
 /// A feature folder is not mirrored as a `shared/src/<feature>/` subfolder in

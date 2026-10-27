@@ -130,9 +130,9 @@ The structure-rules crate enforces the 7-layer AES folder discipline by auditing
 - A feature folder holds a `utility_*` file alongside capabilities → AES702 fires `feature_has_forbidden_files`.
 - A feature folder holds no `shared/src/<feature>/` mirror subfolder in its member's kernel → AES702 fires `feature_missing_shared_subfolder`.
 - A surface folder holds no `shared/src/<surface>/` mirror subfolder → AES702 silent (surfaces owe no mirror).
-- A feature folder holds no `root_*` file → AES702 fires `feature_missing_root_container`.
+- A feature folder holds no `root_*` file under it, in its `src/` subfolder, or at the member root → AES702 fires `feature_missing_root_container`.
 - A feature folder holds a `root_<concept>_container` or `root_<concept>_entry` file → AES702 silent on the root-container check.
-- A member root holds an `root_*` file but a feature folder holds none of its own → AES702 fires `feature_missing_root_container` for that folder (the check is per folder).
+- A member root holds a `root_*` composition file but a feature folder holds none of its own → AES702 stays silent on that folder (the member-root composition file answers for the features beneath it).
 - A folder carries `FRD.md` and `BACKLOG.md` but no orchestrator → AES702 fires `doc_pair_without_orchestrator`.
 - A folder carries `FRD.md` and `BACKLOG.md` and an orchestrator → AES702 silent on reverse check.
 - A utility-only folder (no capabilities, no orchestrator) → AES702 silent.

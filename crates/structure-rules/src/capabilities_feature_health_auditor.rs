@@ -36,7 +36,14 @@ impl IStructureFeatureHealthProtocol for FeatureHealthAuditor {
                     Err(_) => folder.to_string_lossy().replace('\\', "/"),
                 };
                 if inventory.has_capabilities || inventory.has_orchestrator {
-                    check_feature_folder(&folder, &folder_rel, &ws_root, &inventory, &mut findings);
+                    check_feature_folder(
+                        &folder,
+                        &folder_rel,
+                        &member,
+                        &ws_root,
+                        &inventory,
+                        &mut findings,
+                    );
                     check_feature_shared_mirror(&folder, &folder_rel, &member, &mut findings);
                     // Reverse check: a folder that is a real feature (holds
                     // agent_* or capabilities_* files) and carries a doc pair
@@ -81,6 +88,7 @@ fn folder_name(folder: &std::path::Path) -> String {
 fn check_feature_folder(
     folder: &std::path::Path,
     rel: &str,
+    member: &std::path::Path,
     ws_root: &std::path::Path,
     inventory: &shared_structure_rules::taxonomy_structure_rules_vo::FolderInventory,
     findings: &mut Vec<StructureFinding>,
@@ -117,8 +125,10 @@ fn check_feature_folder(
     // Root container: a feature owes its composition wiring — a
     // root_<concept>_container file, or a root_<concept>_entry file when the
     // feature is an entry point. The root layer is the only layer that may
-    // instantiate and wire the feature's components.
-    if !inventory.has_root {
+    // instantiate and wire the feature's components. A single container at
+    // the member root composes every feature folder in the member, so it
+    // answers for the folders beneath it.
+    if !inventory.has_root && !member_root_has_root(member) {
         findings.push(
             StructureFinding::new(
                 consts::RULE_CODE_FEATURE_HEALTH,
@@ -130,7 +140,7 @@ fn check_feature_folder(
             )
             .with_reason(
                 "The root container wires the feature's capabilities to contracts and is the only layer that may depend on everything below; without it the feature has no composition home.",
-                "Add a root_<concept>_container file that wires the folder's capabilities to their contracts.",
+                "Add a root_<concept>_container file to the feature folder, its 'src/' subfolder, or the member root that wires the folder's capabilities to their contracts.",
             ),
         );
     }
@@ -260,6 +270,33 @@ fn check_feature_shared_mirror(
             format!("Create the '{module}/' subfolder under '{member_display}/shared/src/'.", member_display = member.display()),
         ),
     );
+}
+
+/// The member root holds a composition file that answers for the feature
+/// folders beneath it: a file named `root_*` with a Rust, Python, or
+/// TypeScript extension.
+fn member_root_has_root(member: &std::path::Path) -> bool {
+    use std::fs;
+    let Ok(entries) = fs::read_dir(member) else {
+        return false;
+    };
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if !path.is_file() {
+            continue;
+        }
+        let stem = path
+            .file_stem()
+            .and_then(|n| n.to_str())
+            .unwrap_or_default();
+        let ext = path.extension().and_then(|n| n.to_str());
+        if stem.starts_with(consts::ROOT_PREFIX)
+            && matches!(ext, Some("rs") | Some("py") | Some("ts"))
+        {
+            return true;
+        }
+    }
+    false
 }
 
 /// Recursively check whether *dir* (or a subdirectory) holds a file whose stem
