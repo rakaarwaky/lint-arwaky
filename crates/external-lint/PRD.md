@@ -82,7 +82,7 @@ Developers, AI agents, and DevOps engineers on multi-language monorepos (Rust/Py
 
 | Aspect       | Detail                                                                                   |
 |--------------|------------------------------------------------------------------------------------------|
-| Description  | `--format sarif|junit|json` produces three report formats alongside the default text.   |
+| Description  | `--format sarif/junit/json` produces three report formats alongside the default text. |
 | User Story   | As a CI engineer, I want SARIF/JUnit/JSON so I can pipe results into external dashboards. |
 | In Scope     | SARIF 2.1.0, JUnit XML, and JSON report writers.                                        |
 | Out of Scope | SARIF import (write-only).                                                              |

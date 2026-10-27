@@ -14,17 +14,17 @@ Last Updated: 2026-10-28
 
 ## Backlog Status
 
-### {LA}
+### {ExternalLint}
 
-| Aspect       | Detail |
-|--------------|--------|
-| State        | Ready  |
-| Done         | —      |
-| In Progress  | None   |
-| Blocked      | None   |
-| Next         | —      |
-| Risk         | None   |
-| Updated      | 2026-10-28 |
+| Aspect       | Detail                                  |
+|--------------|-----------------------------------------|
+| State        | Ready                                   |
+| Done         | All FR-ExternalLint requirements shipped |
+| In Progress  | None                                    |
+| Blocked      | None                                    |
+| Next         | Ship                                    |
+| Risk         | None                                    |
+| Updated      | 2026-10-28                              |
 
 ## Reference
 
