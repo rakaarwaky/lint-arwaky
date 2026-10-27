@@ -32,12 +32,7 @@ Last Updated: 2026-09-29
 |---|---|---|---|---|---|
 | Bare FR-ID without feature prefix | AES601 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
 | FRD requirement missing required field | AES601 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
-| API Contract missing Aggregate API subsection | AES602 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
-| Integration Points not a markdown table | AES602 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
-| NFR section not a markdown table | AES602 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
 | FRD sections out of template order | AES602 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
-| Test Scenarios has no bullet items | AES602 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
-| Glossary has no bullet items | AES602 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
 | Spec names a source file (`.rs`) | AES603 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
 | Spec carries status leak | AES603 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
 | FRD omits BACKLOG.md crosslink | AES604 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
@@ -98,5 +93,6 @@ None
 |---|---|---|
 | 2026-10-26 | Aligned BACKLOG ID column to FRD FR-IDs (AES601); added backlog_id_not_fr / backlog_id_missing | @raka |
 | 2026-10-02 | Closed the FRD level-3 set document-wide: new AES602 `h3_off_template`, because `api_h3_unexpected` reads only the `## API Contract` subtree and a per-protocol table parked under another section escaped it. Migrated 117 off-template H3 headings across 14 FRDs | @raka |
+| 2026-10-27 | Retired the old-shape AES602 checks (API Contract / Integration / NFR / Test Scenarios / Glossary / H3 parity) with the 9-doc layout; AES602 now checks FRD section order only, against the new four-H2 set | @raka |
 | 2026-10-02 | Split the 876-line invariant auditor into five capability seams, one per AES doc rule | @raka |
 | 2026-09-29 | Aligned BACKLOG.md and FRD.md to HOW-TO templates (AES605 H2 contracts); expanded scenario evidence table; merged AES607 into AES601; removed AES605 | @raka |
