@@ -56,15 +56,18 @@ fn write_feature(root: &Path, layout: &str, name: &str) {
     );
     write(&feature.join("FRD.md"), "# FRD\n");
     write(&feature.join("BACKLOG.md"), "# BACKLOG\n");
-    // The shared kernel mirror: every feature owes a `<layout>/shared/src/<name>/`
-    // subfolder (AES702 feature_missing_shared_subfolder), so the conforming
-    // feature must create it.
+    // The shared kernel mirror every feature owes (AES702)
     write(
         &root
             .join(layout)
             .join("shared")
             .join(format!("src/{name}/contract_{name}_protocol.rs")),
         &format!("pub trait {}Protocol {{}}\n", name.to_ascii_uppercase()),
+    );
+    // The root container every feature owes (AES702)
+    write(
+        &feature.join(format!("src/root_{name}_container.rs")),
+        "pub struct Container;\n",
     );
 }
 
