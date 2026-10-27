@@ -23,8 +23,9 @@ types, utilities, and interface definitions that other layers depend on.
 
 ## Reference
 
-- PRD: [PRD.md](../../PRD.md)
-- Backlog: [BACKLOG.md](BACKLOG.md)
-- ROADMAP: [ROADMAP.md](../../ROADMAP.md)
-
-| Architecture | {Link to ARCHITECTURE.md} | [{link}](ARCHITECTURE.md) |
+| Artifact | Purpose | Link |
+|----------|---------|------|
+| PRD.md | Product requirements | [PRD.md](../../PRD.md) |
+| BACKLOG.md | Backlog tracking | [BACKLOG.md](BACKLOG.md) |
+| ROADMAP.md | Roadmap status | [ROADMAP.md](../../ROADMAP.md) |
+| ARCHITECTURE.md | Layer contract | [ARCHITECTURE.md](../../ARCHITECTURE.md) |
