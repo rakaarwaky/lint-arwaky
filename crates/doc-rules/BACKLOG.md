@@ -32,12 +32,7 @@ Last Updated: 2026-09-29
 |---|---|---|---|---|---|
 | Bare FR-ID without feature prefix | AES601 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
 | FRD requirement missing required field | AES601 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
-| API Contract missing Aggregate API subsection | AES602 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
-| Integration Points not a markdown table | AES602 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
-| NFR section not a markdown table | AES602 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
 | FRD sections out of template order | AES602 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
-| Test Scenarios has no bullet items | AES602 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
-| Glossary has no bullet items | AES602 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
 | Spec names a source file (`.rs`) | AES603 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
 | Spec carries status leak | AES603 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
 | FRD omits BACKLOG.md crosslink | AES604 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
@@ -56,11 +51,6 @@ Last Updated: 2026-09-29
 | Method column read by header, not by position | AES601 accepts | Automated | `tests/contract_doc_rules.rs` | `cargo nextest run -p doc-rules-lint-arwaky` | working-tree |
 | Slash-joined cell promising several methods | AES601 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo nextest run -p doc-rules-lint-arwaky` | working-tree |
 | Fenced code block `#` comment not counted as H1 | No violation | Automated | `tests/contract_doc_rules.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
-| Per-protocol method table parked under Assumptions | AES602 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo nextest run -p doc-rules-lint-arwaky` | working-tree |
-| Scenario promoted from bullet to an H3 heading | AES602 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo nextest run -p doc-rules-lint-arwaky` | working-tree |
-| The three sanctioned H3 shapes | No violation | Automated | `tests/contract_doc_rules.rs` | `cargo nextest run -p doc-rules-lint-arwaky` | working-tree |
-| Detail demoted to an H4 heading | No violation | Automated | `tests/contract_doc_rules.rs` | `cargo nextest run -p doc-rules-lint-arwaky` | working-tree |
-| Heading-shaped line inside a fenced block | No violation | Automated | `tests/contract_doc_rules.rs` | `cargo nextest run -p doc-rules-lint-arwaky` | working-tree |
 | A capability seam answers a source-file reference and the other four stay silent | AES603 seam isolation | Automated | `tests/contract_doc_capability_seams.rs` | `cargo nextest run -p doc-rules-lint-arwaky` | working-tree |
 | A capability seam answers a missing H2 and the other four stay silent | AES605 seam isolation | Automated | `tests/contract_doc_capability_seams.rs` | `cargo nextest run -p doc-rules-lint-arwaky` | working-tree |
 | A backlog reporting progress raises no spec-purity finding | AES603 document scoping | Automated | `tests/contract_doc_capability_seams.rs` | `cargo nextest run -p doc-rules-lint-arwaky` | working-tree |
@@ -85,7 +75,7 @@ None
 | Area | Status | Notes |
 |---|---|---|
 | Tests | Done | `cargo nextest run -p doc-rules-lint-arwaky` → 149 passed, 0 failed |
-| Scenario evidence | Done | 34 scenarios mapped; all Automated |
+| Scenario evidence | Done | 29 scenarios mapped; all Automated |
 | Docs | Done | [FRD.md](FRD.md) is specification-only; status lives in this file |
 
 ## Deferred
@@ -98,5 +88,6 @@ None
 |---|---|---|
 | 2026-10-26 | Aligned BACKLOG ID column to FRD FR-IDs (AES601); added backlog_id_not_fr / backlog_id_missing | @raka |
 | 2026-10-02 | Closed the FRD level-3 set document-wide: new AES602 `h3_off_template`, because `api_h3_unexpected` reads only the `## API Contract` subtree and a per-protocol table parked under another section escaped it. Migrated 117 off-template H3 headings across 14 FRDs | @raka |
+| 2026-10-27 | Retired the old-shape AES602 checks (API Contract / Integration / NFR / Test Scenarios / Glossary / H3 parity) with the 9-doc layout; AES602 now checks FRD section order only, against the new four-H2 set | @raka |
 | 2026-10-02 | Split the 876-line invariant auditor into five capability seams, one per AES doc rule | @raka |
 | 2026-09-29 | Aligned BACKLOG.md and FRD.md to HOW-TO templates (AES605 H2 contracts); expanded scenario evidence table; merged AES607 into AES601; removed AES605 | @raka |

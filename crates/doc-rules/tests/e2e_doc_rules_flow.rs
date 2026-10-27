@@ -107,9 +107,6 @@ fn frd_without(dropped: &str) -> String {
 }
 
 /// The body each mandated section carries, keyed by its heading.
-///
-/// Only the sections whose *shape* a rule judges have a specific body; the rest
-/// carry a single bullet, which satisfies the rules that only ask for content.
 fn section_bodies() -> std::collections::HashMap<&'static str, String> {
     let mut bodies = std::collections::HashMap::new();
     bodies.insert(
@@ -117,7 +114,7 @@ fn section_bodies() -> std::collections::HashMap<&'static str, String> {
         String::from("- PRD: [PRD.md](../../PRD.md)\n- Backlog: [BACKLOG.md](BACKLOG.md)\n\n"),
     );
     bodies.insert(
-        "System Overview",
+        "Feature Overview",
         String::from("- delegates to a capability\n\n"),
     );
     bodies.insert(
@@ -125,42 +122,12 @@ fn section_bodies() -> std::collections::HashMap<&'static str, String> {
         format!("{}\n", requirement("FR-SAMPLE-001", "Do The Thing")),
     );
     bodies.insert(
-        "API Contract",
+        "Public Interface",
         String::from(
-            "### Protocol API\n\n\
-             | Method | Input | Output | Error | Event | Description |\n\
-             | --- | --- | --- | --- | --- | --- |\n\
-             | execute | request | response | none | none | single entry |\n\n\
-             ### Aggregate API\n\n\
-             | Method | Input | Output | Error | Event | Description |\n\
-             | --- | --- | --- | --- | --- | --- |\n\
-             | execute | request | response | none | none | routes to capability |\n\n",
+            "| Aspect | Detail |\n\
+             | --- | --- |\n\
+             | Method | `execute` |\n\n",
         ),
-    );
-    bodies.insert(
-        "Integration Points",
-        String::from(
-            "| System | Direction | Purpose | Failure mode |\n\
-             | --- | --- | --- | --- |\n\
-             | filesystem | out | read source | missing path |\n\n",
-        ),
-    );
-    bodies.insert(
-        "Non-functional Requirements",
-        String::from(
-            "| Metric | Target | Measurement method |\n\
-             | --- | --- | --- |\n\
-             | audit time | under 1s | wall clock |\n\n",
-        ),
-    );
-    bodies.insert(
-        "Test Scenarios",
-        String::from("- audits a clean workspace\n\n"),
-    );
-    bodies.insert("Assumptions & Constraints", String::from("- none\n\n"));
-    bodies.insert(
-        "Glossary",
-        String::from("- **Finding**: a rule violation\n\n"),
     );
     bodies
 }
@@ -200,7 +167,11 @@ fn e2e_a_missing_mandated_section_surfaces_as_a_heading_finding_on_that_document
     // there rather than by the shape rules — a shape rule judges a section that
     // is present. Each case drops a different one to prove the rule names the
     // section the template lost.
-    for section in ["API Contract", "Integration Points", "Glossary"] {
+    for section in [
+        "Feature Overview",
+        "Functional Requirements",
+        "Public Interface",
+    ] {
         let tmp = tempfile::tempdir().expect("temp dir must be creatable");
         let root = tmp.path();
         write_workspace(root);
@@ -217,37 +188,6 @@ fn e2e_a_missing_mandated_section_surfaces_as_a_heading_finding_on_that_document
             for_document(&findings, FRD_PATH)
         );
     }
-}
-
-#[test]
-fn e2e_a_malformed_section_body_surfaces_as_a_shape_finding_on_that_document() {
-    // The section is present but its body is the wrong shape: a bullet list
-    // where the template demands a table. This is AES602's question, and it is
-    // the half AES605 cannot see.
-    let tmp = tempfile::tempdir().expect("temp dir must be creatable");
-    let root = tmp.path();
-    write_workspace(root);
-    let conforming = frd_without("");
-    let table = "| System | Direction | Purpose | Failure mode |\n\
-         | --- | --- | --- | --- |\n\
-         | filesystem | out | read source | missing path |";
-    let frd = conforming.replace(table, "- filesystem, outbound, reads source");
-    assert_ne!(
-        frd, conforming,
-        "the table under test must actually differ; a no-op replace would make this \
-         case assert the conforming document and pass for the wrong reason"
-    );
-    write(&root.join(FRD_PATH), &frd);
-
-    let findings = audit(root);
-    assert!(
-        for_document(&findings, FRD_PATH)
-            .iter()
-            .any(|(code, violation, _)| code == "AES602" && violation == "integration_not_table"),
-        "a bullet list under Integration Points must fire AES602/integration_not_table \
-         on the FRD; got {:?}",
-        for_document(&findings, FRD_PATH)
-    );
 }
 
 #[test]

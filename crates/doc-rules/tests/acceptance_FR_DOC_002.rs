@@ -60,16 +60,16 @@ fn write_faulty_workspace(root: &Path) {
     write(&root.join("PRD.md"), "# PRD\n");
     write(&root.join("ROADMAP.md"), "# ROADMAP\n");
     // Four independent defects in one document: an FR-ID missing its feature
-    // prefix (AES601), Test Scenarios placed after Glossary so the sections are
-    // out of template order (AES602), a spec naming a source file (AES603), and
-    // PRD.md carrying no mandated H2 (AES605).
+    // prefix (AES601), Public Interface placed before Feature Overview so the
+    // sections are out of template order (AES602), a spec naming a source file
+    // (AES603), and PRD.md carrying no mandated H2 (AES605).
     write(
         &feature.join("FRD.md"),
         "# FRD — sample\n\n\
          ## Reference\n\n\
          - PRD: [PRD.md](../../PRD.md)\n\
          - Backlog: [BACKLOG.md](BACKLOG.md)\n\n\
-         ## System Overview\n\n\
+         ## Public Interface\n\n\
          Implemented in `src/capabilities_sample_checker.rs`.\n\n\
          ## Functional Requirements\n\n\
          ### FR-001: Do The Thing\n\n\
@@ -79,29 +79,8 @@ fn write_faulty_workspace(root: &Path) {
          - **Business Rules**: The capability is stateless.\n\
          - **Edge Cases**: An absent input yields a default.\n\
          - **Error Handling**: Failures surface as a reason-coded outcome.\n\n\
-         ## API Contract\n\n\
-         ### Protocol API\n\n\
-         | Method | Input | Output | Error | Event | Description |\n\
-         | --- | --- | --- | --- | --- | --- |\n\
-         | execute | request | response | none | none | single entry |\n\n\
-         ### Aggregate API\n\n\
-         | Method | Input | Output | Error | Event | Description |\n\
-         | --- | --- | --- | --- | --- | --- |\n\
-         | execute | request | response | none | none | routes to capability |\n\n\
-         ## Integration Points\n\n\
-         | System | Direction | Purpose | Failure mode |\n\
-         | --- | --- | --- | --- |\n\
-         | filesystem | out | read source | missing path |\n\n\
-         ## Non-functional Requirements\n\n\
-         | Metric | Target | Measurement method |\n\
-         | --- | --- | --- |\n\
-         | audit time | under 1s | wall clock |\n\n\
-         ## Assumptions & Constraints\n\n\
-         - none\n\n\
-         ## Glossary\n\n\
-         - **Finding**: a rule violation\n\n\
-         ## Test Scenarios\n\n\
-         - audits a clean workspace\n",
+         ## Feature Overview\n\n\
+         - One overview.\n",
     );
 }
 

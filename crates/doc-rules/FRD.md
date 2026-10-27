@@ -40,18 +40,14 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 
 ### FR-DOC-002: Section Structure (AES602)
 
-- **Description**: A requirement document reads in template order, and every section the template mandates carries the body shape the template promises.
+- **Description**: A requirement document reads in template order: FRD and DATA H2 sections must follow the shared template H2 set.
 - **Input**: An `FRD.md` or `DATA.md` inside the audit context, parsed into its level-1 and level-2 sections once per document.
-- **Output**: A list of `DocFinding` values, each carrying `AES602` and one of `order_violation`, `api_no_subsection`, `api_h3_unexpected`, `api_subsection_no_table`, `api_subsection_duplicated`, `integration_not_table`, `nfr_not_table`, `scenarios_empty`, or `glossary_empty`.
+- **Output**: A list of `DocFinding` values, each carrying `AES602` and `order_violation`.
 - **Business Rules**:
   - Sections must appear in the FRD template order; a reordering reports `order_violation` anchored to the first out-of-order section.
-  - API Contract carries exactly `### Protocol API` then `### Aggregate API`, once each, in that order, and no other level-3 heading.
-  - Each of the two API Contract subsections must own its own column-complete table; describing the seam in prose is not an answer.
-  - Integration Points and Non-functional Requirements must be tables with their required columns.
-  - Test Scenarios and Glossary must each carry at least one bullet item.
-  - The section tree is parsed once per document and read by all six checks, because re-parsing per check was the cost this rule used to pay.
-  - The full shape applies to `FRD.md`; `DATA.md` is held to the order rule only.
-- **Edge Cases**: A document with no API Contract section is silent on the API subsections rather than reported for a section the template left optional. A duplicated subsection is reported once per extra occurrence.
+  - The section tree is parsed once per document.
+  - The full order set applies to `FRD.md`; `DATA.md` is held to the same order rule.
+- **Edge Cases**: A document whose parse yields no sections produces no findings; level-3 headings are free-form and outside this rule's scope.
 - **Error Handling**: A document whose parse yields no sections produces no findings; an unparseable document is a parse skip, never a violation.
 
 ### FR-DOC-003: Spec Purity (AES603)
