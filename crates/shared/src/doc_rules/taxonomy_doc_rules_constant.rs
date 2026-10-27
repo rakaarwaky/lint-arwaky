@@ -7,9 +7,6 @@ pub const RULE_CODE_FR_FORMAT: &str = "AES601";
 /// FR-ID is bare (`FR-NNN`) without a feature prefix.
 pub const FR_ID_VIOLATION_MISSING_FEATURE_PREFIX: &str = "id_missing_feature_prefix";
 
-/// A required FR field is absent from a requirement block.
-pub const FR_FIELDS_VIOLATION_FIELD_MISSING: &str = "field_missing";
-
 /// A method named in the FRD's Protocol API / Aggregate API table has no
 /// matching declaration in the feature's contract module.
 pub const FR_API_METHOD_VIOLATION_NOT_FOUND: &str = "api_method_not_found";
@@ -31,6 +28,26 @@ pub const DT_BACKLOG_ID_MISSING: &str = "dt_backlog_id_missing";
 
 /// A BACKLOG `## Backlog` row whose ID cell is not a valid DATA.md DT-ID.
 pub const DT_BACKLOG_ID_NOT_DT: &str = "dt_backlog_id_not_dt";
+
+/// A PRD `PR-<PROJECT>-NNN` item that has no ROADMAP `Roadmap Status` entry.
+pub const PR_ROADMAP_ID_MISSING: &str = "pr_roadmap_id_missing";
+
+/// A ROADMAP `Roadmap Status` `PR-<PROJECT>-NNN` item that is not
+/// declared in the PRD's `Project Requirements`.
+pub const ROADMAP_PR_ID_NOT_PR: &str = "roadmap_pr_id_not_pr";
+
+/// A BACKLOG entry whose H3 qualifier does not equal the qualifier of
+/// any ID declared by the paired spec, so the entry cannot be traced
+/// back to the spec it is supposed to mirror.
+pub const BACKLOG_QUALIFIER_MISMATCH: &str = "backlog_qualifier_mismatch";
+
+/// A BACKLOG `## Backlog Status` entry H3 whose qualifier has no matching
+/// PR-ID in the root ROADMAP/PRD pair (root/legacy BACKLOG).
+pub const PR_BACKLOG_ID_MISSING: &str = "pr_backlog_id_missing";
+
+/// A token in a BACKLOG entry's `Next`/`Done`/`Blocked` row that is not a
+/// valid PR-ID of the root ROADMAP/PRD pair.
+pub const BACKLOG_ID_NOT_PR: &str = "backlog_id_not_pr";
 
 /// ─── AES602 — Section structure ─────────────────────────────────────────────
 pub const RULE_CODE_SECTION_STRUCTURE: &str = "AES602";
@@ -435,6 +452,36 @@ mod tests {
         ships_columns("HOW-TO-MAKE-DATA.md", DATA_TYPE_DESCRIPTION_COLUMNS);
         ships_columns("HOW-TO-MAKE-DESIGN.md", DESIGN_VARIANT_VALUE_COLUMNS);
         ships_columns("HOW-TO-MAKE-AGENTS.md", REFERENCE_COLUMNS);
+    }
+
+    /// The AES601 new violation codes added by the PR-ID family and the
+    /// BACKLOG qualifier-alignment decisions must map to templates that
+    /// ship the corresponding ID / qualifier shapes, so a code with no
+    /// template behind it fails here instead of silently drifting.
+    #[test]
+    fn pr_id_and_backlog_alignment_codes_map_to_their_templates() {
+        let prd = load_reference_template("HOW-TO-MAKE-PRD.md");
+        let roadmap = load_reference_template("HOW-TO-MAKE-ROADMAP.md");
+        let backlog = load_reference_template("HOW-TO-MAKE-BACKLOG.md");
+        assert!(
+            prd.contains("PR-<PROJECT-NAME-ID>"),
+            "HOW-TO-MAKE-PRD.md ships the `PR-` item shape"
+        );
+        assert!(
+            roadmap.contains("PR-<PROJECT-NAME-ID>"),
+            "HOW-TO-MAKE-ROADMAP.md ships the `PR-` item shape"
+        );
+        assert!(
+            backlog.contains("PROJECT-NAME-ID")
+                && backlog.contains("FEATURE-NAME-ID")
+                && backlog.contains("DESIGN-NAME-ID"),
+            "HOW-TO-MAKE-BACKLOG.md ships the qualifier disjunction"
+        );
+        assert_eq!(PR_ROADMAP_ID_MISSING, "pr_roadmap_id_missing");
+        assert_eq!(ROADMAP_PR_ID_NOT_PR, "roadmap_pr_id_not_pr");
+        assert_eq!(BACKLOG_QUALIFIER_MISMATCH, "backlog_qualifier_mismatch");
+        assert_eq!(PR_BACKLOG_ID_MISSING, "pr_backlog_id_missing");
+        assert_eq!(BACKLOG_ID_NOT_PR, "backlog_id_not_pr");
     }
 
     /// The FRD row labels are one list under two names (FR_FIELDS serves the

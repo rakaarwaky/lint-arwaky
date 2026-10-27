@@ -12,7 +12,12 @@ use std::path::Path;
 fn conforming_frd() -> String {
     r#"# FRD — sample
 
-## Feature Overview
+## Reference
+
+- PRD: [PRD.md](../../PRD.md)
+- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature.
+
+## System Overview
 
 The feature does the work a surface delegates to.
 
@@ -20,52 +25,21 @@ The feature does the work a surface delegates to.
 
 ### FR-SAMPLE-001: Document Invariant Enforcement
 
-| Aspect | Detail |
-|---|---|
-| Description | Every `.md` document satisfies the AES heading and section contract. |
-| Business Rules | Validates FR-ID format, section structure, spec purity, crosslinks, heading structure, and parity. |
-| Edge Cases | Root-level legacy `BACKLOG.md` is accepted during migration. |
-| Capability | Invariant enforcement |
-| Protocol | doc-audit |
-| Method | `audit` |
-| Input | A workspace root and the list of recognized document paths. |
-| Output | `Vec<LintResult>` carrying one finding per invariant violation. |
-| Error | Unreadable files produce no findings. |
-| Event | None. |
-| Test | A conforming workspace reports nothing. |
-| Metric | Zero violations from `lint-arwaky-cli check .`. |
+- **Description**: Every `.md` document satisfies the AES heading and section contract.
+- **Input**: A workspace root and the list of recognized document paths.
+- **Output**: `Vec<LintResult>` carrying one finding per invariant violation.
+- **Business Rules**: Validates FR-ID format, section structure, spec purity, crosslinks, heading structure, and parity.
+- **Edge Cases**: Root-level legacy `BACKLOG.md` is accepted during migration.
+- **Error Handling**: Unreadable files produce no findings. Missing documents are skipped silently.
 
 ### FR-SAMPLE-002: Audit Orchestration
 
-| Aspect | Detail |
-|---|---|
-| Description | The doc auditor is reachable through a single aggregate entry point dispatching to the invariant checker. |
-| Business Rules | The aggregate orchestrates all invariants under one seam so consumers need only invoke `execute`. |
-| Edge Cases | A request with an empty root produces no findings rather than an error. |
-| Capability | Audit orchestration |
-| Protocol | doc-audit |
-| Method | `execute` |
-| Input | A `DocRequest` describing the workspace root to audit. |
-| Output | A `DocResponse` carrying a deduplicated, stable-sorted list of findings. |
-| Error | Failures inside the checker are propagated as `DocResponse::Findings`. |
-| Event | None. |
-| Test | Two runs over the same workspace report the same findings. |
-| Metric | One call per request. |
-
-## Public Interface
-
-| Aspect | Detail |
-|---|---|
-| Agent | doc-auditor |
-| Aggregate | doc-orchestrator |
-| Method | `execute` |
-| Request | `DocRequest` |
-| Response | `DocResponse` |
-
-## Reference
-
-- PRD: [PRD.md](../../PRD.md)
-- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature.
+- **Description**: The doc auditor is reachable through a single aggregate entry point dispatching to the invariant checker.
+- **Input**: A `DocRequest` describing the workspace root to audit.
+- **Output**: A `DocResponse` carrying a deduplicated, stable-sorted list of findings.
+- **Business Rules**: The aggregate orchestrates all invariants under one seam so consumers need only invoke `execute`.
+- **Edge Cases**: A request with an empty root produces no findings rather than an error.
+- **Error Handling**: Failures inside the checker are propagated as `DocResponse::Findings` with no partial results.
 
 ## API Contract
 
@@ -80,6 +54,30 @@ The feature does the work a surface delegates to.
 | Method | Input | Output | Error | Event | Description |
 | --- | --- | --- | --- | --- | --- |
 | `execute` | `SampleRequest` | `SampleResponse` | Reason-coded | — | Routes to the capability. |
+
+## Integration Points
+
+| System | Direction | Purpose | Failure mode |
+| --- | --- | --- | --- |
+| Shared domain | in | Supplies value objects | None — types only |
+
+## Non-functional Requirements
+
+| Metric | Target | Measurement method |
+| --- | --- | --- |
+| Dispatch cost | One call per request | Read the dispatch table |
+
+## Test Scenarios
+
+- A conforming request produces a conforming response.
+
+## Assumptions & Constraints
+
+- The capability is stateless.
+
+## Glossary
+
+- **Sample**: A value object used in this example.
 "#
     .to_string()
 }
@@ -299,30 +297,7 @@ fn conforming_frd_reports_no_findings() {
     let tmp = tempfile::tempdir().unwrap();
     write_workspace(tmp.path(), &conforming_frd());
     let findings = audit(tmp.path());
-    // The fixture keeps a legacy `## API Contract` for the AES601 method tests,
-    // so AES605 reports it as an off-template H2; every other rule must stay
-    // silent.
-    let unexpected = findings
-        .iter()
-        .filter(|(c, v, _, _)| c == "AES605" && v == "h2_unexpected")
-        .count();
-    assert_eq!(
-        unexpected, 1,
-        "the legacy API Contract H2 is the only off-template section; got: {findings:#?}"
-    );
-    assert!(
-        findings
-            .iter()
-            .filter(|(c, _, _, _)| c != "AES605")
-            .all(|(_, v, _, _)| v != "order_violation"),
-        "no order finding may fire on a conforming FRD, got: {findings:#?}"
-    );
-    assert!(
-        findings
-            .iter()
-            .all(|(c, v, _, _)| c != "AES601" && c != "AES602" && c != "AES604"),
-        "no FR-format, section-order, or crosslink finding may fire, got: {findings:#?}"
-    );
+    assert!(findings.is_empty(), "expected clean, got: {findings:#?}");
 }
 
 #[test]
@@ -338,75 +313,346 @@ fn aes601_fires_on_bare_fr_id() {
 }
 
 #[test]
-fn aes601_reports_each_missing_field_with_its_own_type() {
+fn aes601_does_not_validate_fr_row_labels() {
+    // AES601 retired `field_missing` (Decision 9): entry row-label
+    // validation belongs to AES606 `entry_missing_row`. A requirement block
+    // missing all of its rows must therefore not fire an AES601 finding.
     let tmp = tempfile::tempdir().unwrap();
     let frd = conforming_frd()
         .replace(
-            "| Edge Cases | Root-level legacy `BACKLOG.md` is accepted during migration. |\n",
+            "- **Description**: Every `.md` document satisfies the AES heading and section contract.\n\
+             - **Input**: A workspace root and the list of recognized document paths.\n\
+             - **Output**: `Vec<LintResult>` carrying one finding per invariant violation.\n\
+             - **Business Rules**: Validates FR-ID format, section structure, spec purity, crosslinks, heading structure, and parity.\n\
+             - **Edge Cases**: Root-level legacy `BACKLOG.md` is accepted during migration.\n\
+             - **Error Handling**: Unreadable files produce no findings. Missing documents are skipped silently.\n",
             "",
-        )
-        .replace("| Event | None. |\n", "");
+        );
     write_workspace(tmp.path(), &frd);
     let findings = audit(tmp.path());
-    let field_findings: Vec<&str> = findings
-        .iter()
-        .filter(|(c, v, _, _)| c == "AES601" && v == "field_missing")
-        .map(|(_, _, m, _)| m.as_str())
-        .collect();
-    // The table-form fixture has no bold `**{field}**` markers, so every FR
-    // heading reports all twelve FR_FIELDS missing; one finding per FR.
-    assert_eq!(
-        field_findings.len(),
-        2,
-        "one finding per FR heading with missing fields: {findings:#?}"
+    assert!(
+        !findings
+            .iter()
+            .any(|(c, v, _, _)| c == "AES601" && v == "field_missing"),
+        "AES601 no longer owns row-label validation; got: {findings:#?}"
     );
-    for message in &field_findings {
-        assert!(
-            message.contains("Edge Cases") && message.contains("Event"),
-            "each finding must name every missing field, got: {message}"
-        );
-    }
 }
 
-// ── AES602: FRD section order ─────────────────────────────────────────
+#[test]
+fn aes602_fires_when_aggregate_api_is_absent() {
+    let tmp = tempfile::tempdir().unwrap();
+    let frd = conforming_frd()
+        .replace("### Aggregate API", "### Other API")
+        .replace(
+            "| `execute` | `SampleRequest` | `SampleResponse` | Reason-coded | — | Routes to the capability. |\n",
+            "",
+        );
+    write_workspace(tmp.path(), &frd);
+    assert!(
+        has(&audit(tmp.path()), "AES602", "api_no_subsection"),
+        "expected api_no_subsection, got: {:#?}",
+        audit(tmp.path())
+    );
+}
+
+// ── AES602: API Contract H3 strictness ───────────────────────────────
+
+#[test]
+fn aes602_fires_when_api_contract_has_a_per_protocol_h3() {
+    let tmp = tempfile::tempdir().unwrap();
+    // The original workaround: one Protocol API table holds every method of
+    // every protocol, then a level-3 heading per protocol class narrates the
+    // split that the single table refused to make.
+    let frd = conforming_frd().replace(
+        "### Aggregate API",
+        "### IParserProtocol\n\n\
+             | Method | Input | Output | Error | Event | Description |\n\
+             | --- | --- | --- | --- | --- | --- |\n\
+             | `parse` | `DocSource` | `Result<Tree>` | — | — | Parse one document. |\n\n\
+             ### Aggregate API",
+    );
+    write_workspace(tmp.path(), &frd);
+    let findings = audit(tmp.path());
+    assert!(
+        has(&findings, "AES602", "api_h3_unexpected"),
+        "expected api_h3_unexpected, got: {findings:#?}"
+    );
+}
+
+#[test]
+fn aes602_fires_when_api_contract_has_two_extra_h3s() {
+    let tmp = tempfile::tempdir().unwrap();
+    let frd = conforming_frd().replace(
+        "### Aggregate API",
+        "### IGraphProtocol\n\n\
+             | Method | Input | Output | Error | Event | Description |\n\
+             | --- | --- | --- | --- | --- | --- |\n\
+             | `build` | `Vec<Edge>` | `Graph` | — | — | Build. |\n\n\
+             ### IParserProtocol\n\n\
+             | Method | Input | Output | Error | Event | Description |\n\
+             | --- | --- | --- | --- | --- | --- |\n\
+             | `parse` | `DocSource` | `Result<Tree>` | — | — | Parse one document. |\n\n\
+             ### Aggregate API",
+    );
+    write_workspace(tmp.path(), &frd);
+    let findings = audit(tmp.path());
+    // Each unknown H3 is reported.
+    let count = findings
+        .iter()
+        .filter(|(c, v, _, _)| c == "AES602" && v == "api_h3_unexpected")
+        .count();
+    assert_eq!(count, 2, "expected 2 api_h3_unexpected, got: {findings:#?}");
+}
+
+#[test]
+fn aes602_fires_when_a_protocol_table_is_parked_under_assumptions() {
+    let tmp = tempfile::tempdir().unwrap();
+    // The escape `api_h3_unexpected` cannot see: `crates/filesystem/FRD.md`
+    // shipped exactly this — the same per-protocol method tables the Protocol
+    // API table already carries, moved to a parent section the API Contract
+    // check never reads. The document-wide parity check is what catches it.
+    let frd = conforming_frd().replace(
+        "## Assumptions & Constraints\n\n- The capability is stateless.",
+        "## Assumptions & Constraints\n\n\
+         - The capability is stateless.\n\n\
+         ### IToolResolutionProtocol (12 operations)\n\n\
+         | Method | Input | Output | Error | Event | Description |\n\
+         | --- | --- | --- | --- | --- | --- |\n\
+         | `has_local_bin` | `&Path, &ToolName` | `bool` | — | — | Local bin. |",
+    );
+    write_workspace(tmp.path(), &frd);
+    assert!(
+        has(&audit(tmp.path()), "AES602", "h3_off_template"),
+        "expected h3_off_template for a protocol table under Assumptions, got: {:#?}",
+        audit(tmp.path())
+    );
+}
+
+#[test]
+fn aes602_fires_when_a_scen_heading_is_promoted_below_test_scenarios() {
+    let tmp = tempfile::tempdir().unwrap();
+    // The template states Test Scenarios as a bullet list, so a scenario
+    // promoted to a level-3 heading is an invented section.
+    let frd = conforming_frd().replace(
+        "## Test Scenarios\n\n- A conforming request produces a conforming response.",
+        "## Test Scenarios\n\n\
+         - A conforming request produces a conforming response.\n\n\
+         ### SCEN-001: Dispatch\n\n\
+         | # | Scenario | Expected |\n\
+         | --- | --- | --- |\n\
+         | 1 | Conforming request | Conforming response |",
+    );
+    write_workspace(tmp.path(), &frd);
+    assert!(
+        has(&audit(tmp.path()), "AES602", "h3_off_template"),
+        "expected h3_off_template for an invented SCEN heading, got: {:#?}",
+        audit(tmp.path())
+    );
+}
+
+#[test]
+fn aes602_accepts_the_three_sanctioned_h3_shapes() {
+    let tmp = tempfile::tempdir().unwrap();
+    // The conforming FRD already carries all three: two requirement headings
+    // plus Protocol API and Aggregate API. Asserting silence proves the check
+    // is not simply "any H3 is a violation".
+    write_workspace(tmp.path(), &conforming_frd());
+    let findings = audit(tmp.path());
+    assert!(
+        !has(&findings, "AES602", "h3_off_template"),
+        "sanctioned H3 shapes must not fire, got: {findings:#?}"
+    );
+}
+
+#[test]
+fn aes602_accepts_a_demoted_h4_heading() {
+    let tmp = tempfile::tempdir().unwrap();
+    // The remedy the message names: demote to level 4 and keep the content.
+    let frd = conforming_frd().replace(
+        "## Assumptions & Constraints\n\n- The capability is stateless.",
+        "## Assumptions & Constraints\n\n\
+         - The capability is stateless.\n\n\
+         #### Tool resolution details\n\n\
+         - Resolution order is local bin, then system path.",
+    );
+    write_workspace(tmp.path(), &frd);
+    let findings = audit(tmp.path());
+    assert!(
+        !has(&findings, "AES602", "h3_off_template"),
+        "a level-4 heading is detail, not a section; got: {findings:#?}"
+    );
+}
+
+#[test]
+fn aes602_h3_parity_ignores_headings_inside_a_fenced_block() {
+    let tmp = tempfile::tempdir().unwrap();
+    // A shell comment in a code fence is not a heading; the template's own
+    // Verify block is fenced and must not be read as a section.
+    let frd = conforming_frd().replace(
+        "## Glossary\n\n- **Sample**: A value object used in this example.",
+        "## Glossary\n\n\
+         - **Sample**: A value object used in this example.\n\n\
+         ```bash\n\
+         ### not-a-heading\n\
+         # also not a heading\n\
+         ```",
+    );
+    write_workspace(tmp.path(), &frd);
+    let findings = audit(tmp.path());
+    assert!(
+        !has(&findings, "AES602", "h3_off_template"),
+        "fenced headings must be ignored, got: {findings:#?}"
+    );
+}
+
+#[test]
+fn aes602_fires_when_protocol_api_is_prose_only() {
+    let tmp = tempfile::tempdir().unwrap();
+    // Author dumps every method into prose under Protocol API instead of a table.
+    let frd = conforming_frd().replace(
+        "| Method | Input | Output | Error | Event | Description |\n\
+         | --- | --- | --- | --- | --- | --- |\n\
+         | `execute` | `SampleRequest` | `SampleResponse` | Reason-coded | — | Single composite entry point. |\n\n\
+         ### Aggregate API",
+        "Every method is documented below.\n\n\
+         ### Aggregate API",
+    );
+    write_workspace(tmp.path(), &frd);
+    assert!(
+        has(&audit(tmp.path()), "AES602", "api_subsection_no_table"),
+        "expected api_subsection_no_table, got: {:#?}",
+        audit(tmp.path())
+    );
+}
+
+#[test]
+fn aes602_fires_when_aggregate_api_is_prose_only() {
+    let tmp = tempfile::tempdir().unwrap();
+    let frd = conforming_frd().replace(
+        "| Method | Input | Output | Error | Event | Description |\n\
+         | --- | --- | --- | --- | --- | --- |\n\
+         | `execute` | `SampleRequest` | `SampleResponse` | Reason-coded | — | Routes to the capability. |\n\n\
+         ## Integration Points",
+        "A single entry point routes requests.\n\n\
+         ## Integration Points",
+    );
+    write_workspace(tmp.path(), &frd);
+    assert!(
+        has(&audit(tmp.path()), "AES602", "api_subsection_no_table"),
+        "expected api_subsection_no_table, got: {:#?}",
+        audit(tmp.path())
+    );
+}
+
+#[test]
+fn aes602_fires_when_aggregate_api_is_duplicated() {
+    let tmp = tempfile::tempdir().unwrap();
+    let frd = conforming_frd().replace(
+        "### Aggregate API",
+        "### Aggregate API\n\n\
+         | Method | Input | Output | Error | Event | Description |\n\
+         | --- | --- | --- | --- | --- | --- |\n\
+         | `execute` | `SampleRequest` | `SampleResponse` | Reason-coded | — | Routes to the capability. |\n\n\
+         ### Aggregate API",
+    );
+    write_workspace(tmp.path(), &frd);
+    assert!(
+        has(&audit(tmp.path()), "AES602", "api_subsection_duplicated"),
+        "expected api_subsection_duplicated, got: {:#?}",
+        audit(tmp.path())
+    );
+}
+
+#[test]
+fn aes602_fires_when_api_subsections_are_out_of_order() {
+    let tmp = tempfile::tempdir().unwrap();
+    // Swap the two subsections: Aggregate API before Protocol API.
+    let frd = conforming_frd();
+    let proto_pos = frd.find("### Protocol API").unwrap();
+    let agg_pos = frd.find("### Aggregate API").unwrap();
+    let agg_end = frd.find("## Integration Points").unwrap();
+    let proto_body = frd[proto_pos..agg_pos].to_string();
+    let agg_body = frd[agg_pos..agg_end].to_string();
+    let head = &frd[..proto_pos];
+    let tail = &frd[agg_end..];
+    let frd = format!("{head}{agg_body}{proto_body}{tail}");
+    write_workspace(tmp.path(), &frd);
+    assert!(
+        has(&audit(tmp.path()), "AES602", "order_violation"),
+        "expected order_violation, got: {:#?}",
+        audit(tmp.path())
+    );
+}
+
+#[test]
+fn aes602_conforming_api_contract_reports_no_findings() {
+    let tmp = tempfile::tempdir().unwrap();
+    write_workspace(tmp.path(), &conforming_frd());
+    let findings = audit(tmp.path());
+    // No API-Contract-related finding should fire on a conforming FRD.
+    let api_findings: Vec<_> = findings
+        .iter()
+        .filter(|(c, v, _, _)| c == "AES602" && v.starts_with("api_"))
+        .collect();
+    assert!(
+        api_findings.is_empty(),
+        "expected no api_* findings on conforming FRD, got: {api_findings:#?}"
+    );
+}
+
+#[test]
+fn aes602_fires_when_integration_points_is_a_bullet_list() {
+    let tmp = tempfile::tempdir().unwrap();
+    let frd = conforming_frd().replace(
+        "| System | Direction | Purpose | Failure mode |\n| --- | --- | --- | --- |\n| Shared domain | in | Supplies value objects | None — types only |",
+        "- Shared domain supplies value objects",
+    );
+    write_workspace(tmp.path(), &frd);
+    assert!(has(&audit(tmp.path()), "AES602", "integration_not_table"));
+}
+
+#[test]
+fn aes602_fires_when_nfr_is_prose() {
+    let tmp = tempfile::tempdir().unwrap();
+    let frd = conforming_frd().replace(
+        "| Metric | Target | Measurement method |\n| --- | --- | --- |\n| Dispatch cost | One call per request | Read the dispatch table |",
+        "- Dispatch cost is one call per request.",
+    );
+    write_workspace(tmp.path(), &frd);
+    assert!(has(&audit(tmp.path()), "AES602", "nfr_not_table"));
+}
 
 #[test]
 fn aes602_fires_when_sections_are_out_of_order() {
     let tmp = tempfile::tempdir().unwrap();
     let scrambled = conforming_frd()
-        .replace("## Feature Overview", "## @@MARK@@")
-        .replace("## Functional Requirements", "## Feature Overview")
-        .replace("## @@MARK@@", "## Functional Requirements");
+        .replace("## Test Scenarios", "## @@MARK@@")
+        .replace("## Glossary", "## Test Scenarios")
+        .replace("## @@MARK@@", "## Glossary");
     write_workspace(tmp.path(), &scrambled);
     assert!(has(&audit(tmp.path()), "AES602", "order_violation"));
 }
 
 #[test]
-fn aes602_fires_when_public_interface_precedes_feature_overview() {
+fn aes602_fires_when_scenarios_have_no_bullets() {
     let tmp = tempfile::tempdir().unwrap();
-    let scrambled = conforming_frd()
-        .replace("## Feature Overview", "## @@MARK@@")
-        .replace("## Public Interface", "## Feature Overview")
-        .replace("## @@MARK@@", "## Public Interface");
-    write_workspace(tmp.path(), &scrambled);
-    assert!(has(&audit(tmp.path()), "AES602", "order_violation"));
-}
-
-#[test]
-fn aes602_accepts_free_form_h3_headings() {
-    // H3s are free-form under the new layout: the order check reads level-2
-    // headings only, so an invented H3 is not a section-structure defect.
     let frd = conforming_frd().replace(
-        "## Public Interface",
-        "### Dispatch details\n\nProse about the dispatch.\n\n## Public Interface",
+        "- A conforming request produces a conforming response.",
+        "1. A conforming request produces a conforming response.",
     );
-    let tmp = tempfile::tempdir().unwrap();
     write_workspace(tmp.path(), &frd);
-    let findings = audit(tmp.path());
-    assert!(
-        !has(&findings, "AES602", "order_violation"),
-        "a free-form H3 must not fire AES602, got: {findings:#?}"
+    assert!(has(&audit(tmp.path()), "AES602", "scenarios_empty"));
+}
+
+#[test]
+fn aes602_fires_when_glossary_has_no_bullets() {
+    let tmp = tempfile::tempdir().unwrap();
+    let frd = conforming_frd().replace(
+        "- **Sample**: A value object used in this example.",
+        "| Sample | A value object |",
     );
+    write_workspace(tmp.path(), &frd);
+    assert!(has(&audit(tmp.path()), "AES602", "glossary_empty"));
 }
 
 #[test]
@@ -543,7 +789,9 @@ fn findings_are_deduplicated_and_ordered() {
     assert_eq!(first, second, "two runs must agree");
     let mut sorted = first.clone();
     sorted.sort_by(|a, b| {
-        (a.0.clone(), a.1.clone(), a.2.clone()).cmp(&(b.0.clone(), b.1.clone(), b.2.clone()))
+        a.0.cmp(&b.0)
+            .then_with(|| a.1.cmp(&b.1))
+            .then_with(|| a.2.cmp(&b.2))
     });
     assert_eq!(first, sorted, "findings must arrive sorted");
 }
@@ -1172,11 +1420,12 @@ fn frd_with_fr_count(count: usize) -> String {
     for n in (existing + 1)..=count {
         frd.push_str(&format!(
             "\n### FR-SAMPLE-{n:03}: Do Another Thing\n\n\
-             | Aspect | Detail |\n\
-             |---|---|\n\
-             | Description | The feature performs a second responsibility. |\n\
-             | Business Rules | The capability is stateless. |\n\
-             | Edge Cases | An absent input yields a default. |\n"
+             - **Description**: The feature performs a second responsibility.\n\
+             - **Input**: A request value object.\n\
+             - **Output**: A response value object.\n\
+             - **Business Rules**: The capability is stateless.\n\
+             - **Edge Cases**: An absent input yields a default.\n\
+             - **Error Handling**: Failures surface as a reason-coded outcome.\n"
         ));
     }
     frd
@@ -1272,7 +1521,7 @@ fn aes607_ignores_doc_h3_headings_that_look_like_protocols() {
 - PRD: [PRD.md](../../PRD.md)
 - Backlog: [BACKLOG.md](BACKLOG.md).
 
-## Feature Overview
+## System Overview
 
 The feature does the work.
 
@@ -1280,19 +1529,59 @@ The feature does the work.
 
 ### FR-SAMPLE-001: Document one thing
 
-| Aspect | Detail |
-|---|---|
-| Description | Count the first. |
-| Business Rules | Always one. |
-| Edge Cases | None. |
+- **Description**: Count the first.
+- **Input**: Nothing.
+- **Output**: One.
+- **Business Rules**: Always one.
+- **Edge Cases**: None.
+- **Error Handling**: None.
 
 ### FR-SAMPLE-002: Document two things
 
-| Aspect | Detail |
-|---|---|
-| Description | Count the second. |
-| Business Rules | Always two. |
-| Edge Cases | None. |
+- **Description**: Count the second.
+- **Input**: Nothing.
+- **Output**: Two.
+- **Business Rules**: Always two.
+- **Edge Cases**: None.
+- **Error Handling**: None.
+
+## API Contract
+
+### Protocol API
+
+| Method | Input | Output | Error | Event | Description |
+| --- | --- | --- | --- | --- | --- |
+| `execute` | SampleRequest | SampleResponse | — | — | Routes. |
+
+### Aggregate API
+
+| Method | Input | Output | Error | Event | Description |
+| --- | --- | --- | --- | --- | --- |
+| `execute` | SampleRequest | SampleResponse | Reason-coded | — | Routes to the capability. |
+
+## Integration Points
+
+| System | Direction | Purpose | Failure mode |
+| --- | --- | --- | --- |
+| Shared domain | in | Supplies value objects | None — types only |
+
+## Non-functional Requirements
+
+| Metric | Target | Measurement method |
+| --- | --- | --- |
+| Dispatch cost | One call per request | Read the dispatch table |
+
+## Test Scenarios
+
+- A conforming request produces a conforming response.
+
+## Assumptions & Constraints
+
+- The capability is stateless.
+
+## Glossary
+
+- **Sample**: A value object used in this example.
 
 ### IParserProtocol (6 operations)
 
@@ -2109,120 +2398,256 @@ fn write_frd_backlog_pair(dir: &Path, frd: &str, backlog: Option<&str>) {
 }
 
 #[test]
-fn backlog_id_mismatch_reports_both_directions() {
+fn backlog_qualifier_mismatch_fires_on_uncarried_qualifier() {
     let tmp = tempfile::tempdir().unwrap();
-    // FRD declares 001 and 003; BACKLOG carries 001 and a bogus 002:
-    // 002 is not an FR-ID, and 003 has no row.
-    let frd = conforming_frd().replace("### FR-SAMPLE-002:", "### FR-SAMPLE-003:");
-    let backlog = conforming_backlog().replace(
-        "| FR-SAMPLE-001 | P0 | Ready | — | — | 2026-09-29 |",
-        "| FR-SAMPLE-002 | P0 | Ready | — | — | 2026-09-29 |",
-    );
-    write_frd_backlog_pair(tmp.path(), &frd, Some(&backlog));
+    // FRD declares FR-SAMPLE-001/002; BACKLOG entry qualifier OTHER is not
+    // carried by any FR-ID → backlog_qualifier_mismatch anchored to the entry.
+    let backlog = backlog_with_entries(&["OTHER"]);
+    write_frd_backlog_pair(tmp.path(), &conforming_frd(), Some(&backlog));
     let findings = audit(tmp.path());
     assert!(
-        has(&findings, "AES601", "backlog_id_not_fr")
-            && has(&findings, "AES601", "backlog_id_missing"),
-        "one misaligned pair reports both directions; got: {findings:#?}"
+        has(&findings, "AES601", "backlog_qualifier_mismatch"),
+        "an entry qualifier no FR-ID carries fires backlog_qualifier_mismatch; got: {findings:#?}"
     );
-    // The not-fr finding anchors to the BACKLOG row, the missing finding to
-    // the `## Backlog` heading; both carry the why and fix of their type.
+    let raw = audit_findings(tmp.path());
+    let mismatch = raw
+        .iter()
+        .find(|f| f.violation_type == "backlog_qualifier_mismatch")
+        .expect("the mismatch finding must fire");
+    let backlog_text = fs::read_to_string(tmp.path().join("crates/sample/BACKLOG.md")).unwrap();
+    let h3_line = backlog_text
+        .lines()
+        .position(|l| l.trim() == "### {OTHER}")
+        .unwrap()
+        + 1;
+    assert_eq!(
+        mismatch.line, h3_line,
+        "`backlog_qualifier_mismatch` anchors to the entry's H3 line; got {}",
+        mismatch.line
+    );
+}
+
+#[test]
+fn backlog_missing_direction_fires_on_uncovered_qualifier() {
+    let tmp = tempfile::tempdir().unwrap();
+    // FRD declares FR-SAMPLE-001/002 but BACKLOG declares no {SAMPLE} entry.
+    let backlog = backlog_with_entries(&[]);
+    write_frd_backlog_pair(tmp.path(), &conforming_frd(), Some(&backlog));
+    let findings = audit(tmp.path());
+    assert!(
+        has(&findings, "AES601", "backlog_id_missing"),
+        "a spec-declared qualifier with no BACKLOG entry fires backlog_id_missing; got: {findings:#?}"
+    );
+    let raw = audit_findings(tmp.path());
+    let missing = raw
+        .iter()
+        .find(|f| f.violation_type == "backlog_id_missing")
+        .expect("the missing finding must fire");
+    let backlog_text = fs::read_to_string(tmp.path().join("crates/sample/BACKLOG.md")).unwrap();
+    let section_line = backlog_text
+        .lines()
+        .position(|l| l.trim() == "## Backlog Status")
+        .unwrap()
+        + 1;
+    assert_eq!(
+        missing.line, section_line,
+        "`backlog_id_missing` anchors to `## Backlog Status`; got {}",
+        missing.line
+    );
+}
+
+#[test]
+fn backlog_stray_id_in_next_fires_not_fr() {
+    let tmp = tempfile::tempdir().unwrap();
+    // BACKLOG entry {SAMPLE} `Next` cites FR-OTHER-001, which the FRD never
+    // declares → backlog_id_not_fr anchored to the entry H3.
+    let backlog = backlog_with_entries(&["SAMPLE"])
+        .replace("| Next        | —      |", "| Next        | FR-OTHER-001 |");
+    write_frd_backlog_pair(tmp.path(), &conforming_frd(), Some(&backlog));
+    let findings = audit(tmp.path());
+    assert!(
+        has(&findings, "AES601", "backlog_id_not_fr"),
+        "a NEXT row token not declared in the FRD fires backlog_id_not_fr; got: {findings:#?}"
+    );
     let raw = audit_findings(tmp.path());
     let not_fr = raw
         .iter()
         .find(|f| f.violation_type == "backlog_id_not_fr")
-        .expect("the non-FR row must fire");
+        .expect("the not-fr finding must fire");
     let backlog_text = fs::read_to_string(tmp.path().join("crates/sample/BACKLOG.md")).unwrap();
-    let row_line = backlog_text
+    let h3_line = backlog_text
         .lines()
-        .position(|l| l.starts_with("| FR-SAMPLE-002"))
-        .unwrap()
-        + 1;
-    let heading_line = backlog_text
-        .lines()
-        .position(|l| l.starts_with("## Backlog"))
+        .position(|l| l.trim() == "### {SAMPLE}")
         .unwrap()
         + 1;
     assert_eq!(
-        not_fr.line, row_line,
-        "`backlog_id_not_fr` anchors to the row's own line; got {}",
+        not_fr.line, h3_line,
+        "`backlog_id_not_fr` anchors to the entry's H3 line; got {}",
         not_fr.line
     );
-    assert!(not_fr.why.contains("traceable"), "got: {}", not_fr.why);
-    assert!(
-        not_fr.fix.contains("FR-SAMPLE-001") && not_fr.fix.contains("FR-SAMPLE-003"),
-        "the fix must list the FRD's valid FR-IDs; got: {}",
-        not_fr.fix
-    );
-    let missing = raw
-        .iter()
-        .find(|f| f.violation_type == "backlog_id_missing" && f.message.contains("FR-SAMPLE-003"))
-        .expect("the untracked FR-ID must fire");
-    assert_eq!(
-        missing.line, heading_line,
-        "`backlog_id_missing` anchors to the `## Backlog` heading; got {}",
-        missing.line
-    );
-    assert!(
-        missing.fix.contains("`FR-SAMPLE-003`"),
-        "the fix must name the untracked FR-ID; got: {}",
-        missing.fix
-    );
 }
 
 #[test]
-fn backlog_id_full_coverage_reports_nothing() {
+fn backlog_qualifier_full_coverage_reports_nothing() {
     let tmp = tempfile::tempdir().unwrap();
-    write_frd_backlog_pair(tmp.path(), &conforming_frd(), Some(conforming_backlog()));
-    let findings = audit(tmp.path());
-    assert!(
-        !has(&findings, "AES601", "backlog_id_not_fr")
-            && !has(&findings, "AES601", "backlog_id_missing"),
-        "every FR-ID has a BACKLOG row and every row is an FR-ID; got: {findings:#?}"
-    );
-}
-
-#[test]
-fn backlog_without_frd_is_silent() {
-    let tmp = tempfile::tempdir().unwrap();
-    // An FRD that declares no FR-IDs has nothing the BACKLOG can align to.
-    let frd = conforming_frd()
-        .replace(
-            "### FR-SAMPLE-001: Document Invariant Enforcement",
-            "### Something Else",
-        )
-        .replace(
-            "### FR-SAMPLE-002: Audit Orchestration",
-            "### Another Thing",
-        );
-    write_frd_backlog_pair(tmp.path(), &frd, Some(conforming_backlog()));
-    let findings = audit(tmp.path());
-    assert!(
-        !has(&findings, "AES601", "backlog_id_not_fr")
-            && !has(&findings, "AES601", "backlog_id_missing"),
-        "an FRD with no FR-IDs stays silent on alignment; got: {findings:#?}"
-    );
-}
-
-#[test]
-fn backlog_without_backlog_section_is_silent() {
-    let tmp = tempfile::tempdir().unwrap();
-    // No `## Backlog` section means there is no row set to align against.
-    let backlog = conforming_backlog()
-        .replace("## Backlog\n", "## Other Section\n")
-        .replace("| FR-SAMPLE-001 | P0 | Ready | — | — | 2026-09-29 |\n", "");
+    let backlog = backlog_with_entries(&["SAMPLE"]);
     write_frd_backlog_pair(tmp.path(), &conforming_frd(), Some(&backlog));
     let findings = audit(tmp.path());
     assert!(
-        !has(&findings, "AES601", "backlog_id_not_fr")
+        !has(&findings, "AES601", "backlog_qualifier_mismatch")
+            && !has(&findings, "AES601", "backlog_id_missing")
+            && !has(&findings, "AES601", "backlog_id_not_fr"),
+        "a fully aligned feature BACKLOG pair reports no qualifier findings; got: {findings:#?}"
+    );
+}
+
+#[test]
+fn backlog_without_backlog_status_section_is_silent() {
+    let tmp = tempfile::tempdir().unwrap();
+    // No `## Backlog Status` section means there is no entry set to align against.
+    let backlog = backlog_with_entries(&["SAMPLE"]).replace("## Backlog Status\n", "## Other\n");
+    write_frd_backlog_pair(tmp.path(), &conforming_frd(), Some(&backlog));
+    let findings = audit(tmp.path());
+    assert!(
+        !has(&findings, "AES601", "backlog_qualifier_mismatch")
             && !has(&findings, "AES601", "backlog_id_missing"),
-        "a BACKLOG without a `## Backlog` section stays silent; got: {findings:#?}"
+        "a BACKLOG without a `## Backlog Status` section stays silent; got: {findings:#?}"
+    );
+}
+
+// ── AES601: PR-ID parity (PRD ↔ ROADMAP) ───────────────────────────────────
+
+/// A PRD that carries PR-QUAL-001 and PR-QUAL-002 items under `## Project
+/// Requirements`.
+fn prd_with_pr_ids() -> String {
+    "# PRD — sample\n\n\
+     ## Problem Statement\n\n\
+     The problem.\n\n\
+     ## Project Requirements\n\n\
+     ### PR-QUAL-001: Implement Scanner\n\n\
+     | Aspect | Detail |\n|---|---|\n\
+     | Description | Scans documents |\n\n\
+     ### PR-QUAL-002: Implement Formatter\n\n\
+     | Aspect | Detail |\n|---|---|\n\
+     | Description | Formats output |\n\n\
+     ## Reference\n\n\
+     - Roadmap: [ROADMAP.md](ROADMAP.md)\n"
+        .to_string()
+}
+
+/// A ROADMAP that carries PR-QUAL-001 and PR-QUAL-002 items under
+/// `## Roadmap Status`.
+fn roadmap_with_pr_ids() -> String {
+    "# ROADMAP — sample\n\n\
+     ## Progress Overview\n\n\
+     Baseline.\n\n\
+     ## Roadmap Status\n\n\
+     ### PR-QUAL-001: Implement Scanner\n\n\
+     | Aspect | Detail |\n|---|---|\n\
+     | Priority | P0 |\n\n\
+     ### PR-QUAL-002: Implement Formatter\n\n\
+     | Aspect | Detail |\n|---|---|\n\
+     | Priority | P1 |\n\n\
+     ## Reference\n\n\
+     - PRD: [PRD.md](PRD.md)\n"
+        .to_string()
+}
+
+/// Write a root workspace whose `PRD.md` and `ROADMAP.md` hold `prd` and
+/// `roadmap` respectively, so the PR-ID parity sub-check contributes findings.
+fn write_pr_roadmap_pair(dir: &Path, prd: &str, roadmap: &str) {
+    fs::write(dir.join("PRD.md"), prd).unwrap();
+    fs::write(dir.join("ROADMAP.md"), roadmap).unwrap();
+    // Feature folder so AES604/605 crosslink and heading checks have a target.
+    let feature = dir.join("crates/sample");
+    fs::create_dir_all(feature.join("src")).unwrap();
+    fs::write(feature.join("FRD.md"), conforming_frd()).unwrap();
+    fs::write(feature.join("BACKLOG.md"), conforming_backlog()).unwrap();
+    fs::write(
+        feature.join("src/agent_sample_orchestrator.rs"),
+        "//! sample orchestrator\n",
+    )
+    .unwrap();
+}
+
+#[test]
+fn pr_roadmap_parity_reports_nothing_when_aligned() {
+    let tmp = tempfile::tempdir().unwrap();
+    write_pr_roadmap_pair(tmp.path(), &prd_with_pr_ids(), &roadmap_with_pr_ids());
+    let findings = audit(tmp.path());
+    assert!(
+        !has(&findings, "AES601", "pr_roadmap_id_missing")
+            && !has(&findings, "AES601", "roadmap_pr_id_not_pr"),
+        "aligned PRD and ROADMAP report no PR-parity findings; got: {findings:#?}"
+    );
+}
+
+#[test]
+fn pr_id_in_prd_missing_from_roadmap_fires_pr_roadmap_id_missing() {
+    let tmp = tempfile::tempdir().unwrap();
+    // PRD declares PR-QUAL-002; ROADMAP does not.
+    let roadmap = roadmap_with_pr_ids().replace("### PR-QUAL-002: Implement Formatter\n\n", "");
+    write_pr_roadmap_pair(tmp.path(), &prd_with_pr_ids(), &roadmap);
+    let findings = audit(tmp.path());
+    assert!(
+        has(&findings, "AES601", "pr_roadmap_id_missing"),
+        "a PRD PR-ID absent from the ROADMAP fires pr_roadmap_id_missing; got: {findings:#?}"
+    );
+    let raw = audit_findings(tmp.path());
+    let missing = raw
+        .iter()
+        .find(|f| f.violation_type == "pr_roadmap_id_missing")
+        .expect("the missing finding must fire");
+    assert!(
+        missing.message.contains("PR-QUAL-002"),
+        "the finding must name the missing PR-ID; got: {}",
+        missing.message
+    );
+}
+
+#[test]
+fn pr_id_in_roadmap_missing_from_prd_fires_roadmap_pr_id_not_pr() {
+    let tmp = tempfile::tempdir().unwrap();
+    // ROADMAP declares PR-QUAL-003; PRD does not.
+    let roadmap = roadmap_with_pr_ids().replace(
+        "## Reference\n",
+        "### PR-QUAL-003: Extra Item\n\n| Aspect | Detail |\n|---|---|\n| Priority | P2 |\n\n## Reference\n",
+    );
+    write_pr_roadmap_pair(tmp.path(), &prd_with_pr_ids(), &roadmap);
+    let findings = audit(tmp.path());
+    assert!(
+        has(&findings, "AES601", "roadmap_pr_id_not_pr"),
+        "a ROADMAP PR-ID absent from the PRD fires roadmap_pr_id_not_pr; got: {findings:#?}"
+    );
+    let raw = audit_findings(tmp.path());
+    let not_pr = raw
+        .iter()
+        .find(|f| f.violation_type == "roadmap_pr_id_not_pr")
+        .expect("the not-pr finding must fire");
+    assert!(
+        not_pr.message.contains("PR-QUAL-003"),
+        "the finding must name the untracked PR-ID; got: {}",
+        not_pr.message
+    );
+}
+
+#[test]
+fn pr_parity_both_directions_fire_on_misaligned_pair() {
+    let tmp = tempfile::tempdir().unwrap();
+    let prd = prd_with_pr_ids();
+    let roadmap = roadmap_with_pr_ids().replace("### PR-QUAL-002", "### PR-QUAL-003");
+    write_pr_roadmap_pair(tmp.path(), &prd, &roadmap);
+    let findings = audit(tmp.path());
+    assert!(
+        has(&findings, "AES601", "pr_roadmap_id_missing")
+            && has(&findings, "AES601", "roadmap_pr_id_not_pr"),
+        "one misaligned PR pair reports both directions; got: {findings:#?}"
     );
 }
 
 // ── AES601: DS/DT ↔ BACKLOG ID alignment ─────────────────────────────────
 
-/// A DESIGN.md carrying a qualified `DS-DISP-NNN:` heading under
+/// A DESIGN.md carrying qualified `DS-DISP-NNN:` headings under
 /// `## Design Requirements`.
 fn conforming_design_with_ds() -> String {
     "# Design — ui\n\n\
@@ -2233,7 +2658,8 @@ fn conforming_design_with_ds() -> String {
      | Variant | Use case | Token | Value |\n|---|---|---|---|\n\
      | `primary` | main action | `--color-primary` | `#000000` |\n\n\
      ## Reference\n\n\
-     - Backlog: [BACKLOG.md](BACKLOG.md)\n"
+     | Artifact | Purpose | Link |\n|---|---|---|\n\
+     | Backlog | [BACKLOG.md](BACKLOG.md) |\n"
         .to_string()
 }
 
@@ -2246,22 +2672,39 @@ fn conforming_data_with_dt() -> String {
      | Type  | Description |\n|-------|-------------|\n\
      | vo    | Lint finding severity level |\n\n\
      ## Reference\n\n\
-     - PRD: [PRD.md](../../PRD.md)\n\
-     - Backlog: [BACKLOG.md](BACKLOG.md)\n"
+     | Artifact | Purpose | Link |\n|---|---|---|\n\
+     | Backlog | [BACKLOG.md](BACKLOG.md) |\n"
         .to_string()
 }
 
-/// A BACKLOG whose `## Backlog` table carries the given row ids.
-fn backlog_with_rows(rows: &[&str]) -> String {
-    let rows = rows
+/// A BACKLOG whose `## Backlog Status` entries carry the given H3 qualifiers.
+fn backlog_with_entries(qualifiers: &[&str]) -> String {
+    let entries = qualifiers
         .iter()
-        .map(|id| format!("| {id} | P0 | Ready | — | — | 2026-09-29 |"))
+        .map(|q| {
+            format!(
+                "### {{{q}}}\n\n\
+                 | Aspect      | Detail |\n\
+                 |-------------|--------|\n\
+                 | State       | Ready  |\n\
+                 | Done        | —      |\n\
+                 | In Progress | —      |\n\
+                 | Blocked     | —      |\n\
+                 | Next        | —      |\n\
+                 | Risk        | —      |\n\
+                 | Updated     | 2026-09-29 |\n"
+            )
+        })
         .collect::<Vec<_>>()
         .join("\n");
     format!(
-        "# Feature Backlog: Sample\n\n## Backlog\n\n\
-         | ID | Priority | State | Dependencies | Next Action | Updated |\n\
-         |---|---:|---|---|---|---|\n{rows}\n"
+        "# Feature Backlog: Sample\n\n\
+         ## Progress Overview\n\n\
+         Baseline.\n\n\
+         ## Backlog Status\n\
+         {entries}\n\
+         ## Reference\n\n\
+         - Backlog: [BACKLOG.md](BACKLOG.md)\n"
     )
 }
 
@@ -2296,64 +2739,88 @@ fn write_data_backlog_pair(dir: &Path, data: &str, backlog: Option<&str>) {
 fn ds_full_coverage_reports_nothing() {
     let tmp = tempfile::tempdir().unwrap();
     let design = conforming_design_with_ds();
-    let backlog = backlog_with_rows(&["DS-DISP-001"]);
+    let backlog = backlog_with_entries(&["DISP"]);
     write_design_backlog_pair(tmp.path(), &design, Some(&backlog));
     let findings = audit(tmp.path());
     assert!(
         !has(&findings, "AES601", "ds_backlog_id_not_ds")
             && !has(&findings, "AES601", "ds_backlog_id_missing"),
-        "every DS-ID has a BACKLOG row and every row is a DS-ID; got: {findings:#?}"
+        "every DS qualifier has a BACKLOG entry and every entry qualifier is carried by a DS-ID; got: {findings:#?}"
     );
 }
 
 #[test]
-fn ds_mismatch_reports_both_directions() {
+fn ds_mismatch_reports_qualifier_mismatch_and_missing() {
     let tmp = tempfile::tempdir().unwrap();
-    // DESIGN declares DS-DISP-001 and DS-DISP-003; BACKLOG carries DS-DISP-001
-    // and a bogus DS-DISP-002.
-    let design = conforming_design_with_ds().replace(
-        "### DS-DISP-001: Primary Button\n\n",
-        "### DS-DISP-001: Primary Button\n\n### DS-DISP-003: Card\n\n",
+    // DESIGN declares DS-DISP-001 and DS-DISP-003; BACKLOG entry qualifier
+    // SAMPLE is not carried by any DS-ID, and the DISP qualifier owes no entry.
+    let mut design = conforming_design_with_ds();
+    // Remove the first item's table so it declares its ID without a body.
+    design = design.replace(
+        "### DS-DISP-001: Primary Button\n\n| Variant | Use case | Token | Value |\n|---|---|---|---|\n| `primary` | main action | `--color-primary` | `#000000` |",
+        "### DS-DISP-001: Primary Button",
     );
-    let backlog = backlog_with_rows(&["DS-DISP-001", "DS-DISP-002"]);
+    // Insert the second item with its own table before `## Reference`.
+    design = design.replace(
+        "## Reference\n",
+        "### DS-DISP-003: Card\n\n| Variant | Use case | Token | Value |\n|---|---|---|---|\n| `card` | surface | `--color-card` | `#101010` |\n\n## Reference\n",
+    );
+    let backlog = backlog_with_entries(&["DISP", "SAMPLE"]);
     write_design_backlog_pair(tmp.path(), &design, Some(&backlog));
     let findings = audit(tmp.path());
+    let mismatch = has(&findings, "AES601", "backlog_qualifier_mismatch");
+    let missing = findings
+        .iter()
+        .any(|(c, v, m, _)| c == "AES601" && v == "ds_backlog_id_missing" && m.contains("DISP"));
     assert!(
-        has(&findings, "AES601", "ds_backlog_id_not_ds")
-            && has(&findings, "AES601", "ds_backlog_id_missing"),
-        "one misaligned DS pair reports both directions; got: {findings:#?}"
+        mismatch && missing,
+        "an uncarried qualifier fires backlog_qualifier_mismatch; a carried qualifier without an entry fires ds_backlog_id_missing; got: {findings:#?}"
+    );
+    // The mismatch finding anchors to the `### {SAMPLE}` entry H3 line.
+    let raw = audit_findings(tmp.path());
+    let mismatch_finding = raw
+        .iter()
+        .find(|f| f.violation_type == "backlog_qualifier_mismatch")
+        .expect("the mismatch finding must fire");
+    let backlog_text = fs::read_to_string(tmp.path().join("crates/sample/BACKLOG.md")).unwrap();
+    let h3_line = backlog_text
+        .lines()
+        .position(|l| l.trim() == "### {SAMPLE}")
+        .unwrap()
+        + 1;
+    assert_eq!(
+        mismatch_finding.line, h3_line,
+        "`backlog_qualifier_mismatch` anchors to the entry's H3 line; got {}",
+        mismatch_finding.line
     );
 }
 
 #[test]
-fn ds_empty_heading_set_fires_not_ds_on_every_legacy_row() {
+fn ds_no_ids_declared_is_silent_on_stray() {
     let tmp = tempfile::tempdir().unwrap();
-    // DESIGN declares no DS-IDs; every legacy BACKLOG row must fire ds_backlog_id_not_ds.
+    // DESIGN declares no DS-IDs; an empty union is silent on alignment.
     let design = "# Design — ui\n\n## Design Overview\n\n- base\n\n## Reference\n\n- Backlog: [BACKLOG.md](BACKLOG.md)\n";
-    let backlog = backlog_with_rows(&["DISP-01", "DISP-02"]);
+    let backlog = backlog_with_entries(&["DISP"]);
     write_design_backlog_pair(tmp.path(), design, Some(&backlog));
     let findings = audit(tmp.path());
-    let count = findings
-        .iter()
-        .filter(|(c, v, _, _)| c == "AES601" && v == "ds_backlog_id_not_ds")
-        .count();
-    assert_eq!(
-        count, 2,
-        "every legacy row fires ds_backlog_id_not_ds; got: {findings:#?}"
+    assert!(
+        !has(&findings, "AES601", "backlog_qualifier_mismatch")
+            && !has(&findings, "AES601", "ds_backlog_id_missing"),
+        "a DESIGN with no DS-IDs is silent on alignment; got: {findings:#?}"
     );
 }
 
 #[test]
-fn ds_backlog_without_backlog_section_is_silent() {
+fn ds_backlog_without_backlog_status_section_is_silent() {
     let tmp = tempfile::tempdir().unwrap();
     let design = conforming_design_with_ds();
-    let backlog = backlog_with_rows(&["DS-DISP-001"]).replace("## Backlog\n", "## Other\n");
+    let backlog = backlog_with_entries(&["DISP"]).replace("## Backlog Status\n", "## Other\n");
     write_design_backlog_pair(tmp.path(), &design, Some(&backlog));
     let findings = audit(tmp.path());
     assert!(
-        !has(&findings, "AES601", "ds_backlog_id_not_ds")
+        !has(&findings, "AES601", "backlog_qualifier_mismatch")
             && !has(&findings, "AES601", "ds_backlog_id_missing"),
-        "a BACKLOG without a `## Backlog` section stays silent; got: {findings:#?}"
+        "a BACKLOG without a `## Backlog Status` section stays silent; got: {findings:#?}"
     );
 }
 
@@ -2361,45 +2828,65 @@ fn ds_backlog_without_backlog_section_is_silent() {
 fn dt_full_coverage_reports_nothing() {
     let tmp = tempfile::tempdir().unwrap();
     let data = conforming_data_with_dt();
-    let backlog = backlog_with_rows(&["DT-SHAR-001"]);
+    let backlog = backlog_with_entries(&["SHAR"]);
     write_data_backlog_pair(tmp.path(), &data, Some(&backlog));
     let findings = audit(tmp.path());
     assert!(
         !has(&findings, "AES601", "dt_backlog_id_not_dt")
             && !has(&findings, "AES601", "dt_backlog_id_missing"),
-        "every DT-ID has a BACKLOG row and every row is a DT-ID; got: {findings:#?}"
+        "every DT qualifier has a BACKLOG entry and every entry qualifier is carried by a DT-ID; got: {findings:#?}"
     );
 }
 
 #[test]
-fn dt_mismatch_reports_both_directions() {
+fn dt_mismatch_reports_qualifier_mismatch_and_missing() {
     let tmp = tempfile::tempdir().unwrap();
     let data = conforming_data_with_dt().replace(
         "## DT-SHAR-001: Severity\n\n",
         "## DT-SHAR-001: Severity\n\n## DT-SHAR-003: MemberDelta\n\n",
     );
-    let backlog = backlog_with_rows(&["DT-SHAR-001", "DT-SHAR-002"]);
+    let backlog = backlog_with_entries(&["SHAR", "MCPS"]);
     write_data_backlog_pair(tmp.path(), &data, Some(&backlog));
     let findings = audit(tmp.path());
+    let mismatch = has(&findings, "AES601", "backlog_qualifier_mismatch");
+    let missing = findings
+        .iter()
+        .any(|(c, v, m, _)| c == "AES601" && v == "dt_backlog_id_missing" && m.contains("SHAR"));
     assert!(
-        has(&findings, "AES601", "dt_backlog_id_not_dt")
-            && has(&findings, "AES601", "dt_backlog_id_missing"),
-        "one misaligned DT pair reports both directions; got: {findings:#?}"
+        mismatch && missing,
+        "an uncarried qualifier fires backlog_qualifier_mismatch; a carried qualifier without an entry fires dt_backlog_id_missing; got: {findings:#?}"
     );
 }
 
 #[test]
-fn dt_rejects_do_headings() {
+fn dt_stray_id_in_next_fires_not_dt() {
     let tmp = tempfile::tempdir().unwrap();
-    // `DO-001` is not an accepted DT-ID; the DATA doc declares no DT headings,
-    // so the legacy DO row fires dt_backlog_id_not_dt.
-    let data = conforming_data_with_dt().replace("## DT-SHAR-001: Severity\n\n", "");
-    let backlog = backlog_with_rows(&["DO-001"]);
+    // DATA declares DT-SHAR-001; BACKLOG entry `Next` cites DT-MCPS-002, which
+    // the DATA doc does not declare → dt_backlog_id_not_dt anchored to H3.
+    let data = conforming_data_with_dt();
+    let backlog = backlog_with_entries(&["SHAR"])
+        .replace("| Next        | —      |", "| Next        | DT-MCPS-002 |");
     write_data_backlog_pair(tmp.path(), &data, Some(&backlog));
     let findings = audit(tmp.path());
     assert!(
         has(&findings, "AES601", "dt_backlog_id_not_dt"),
-        "a DO-001 BACKLOG row with no DT heading must fire dt_backlog_id_not_dt; got: {findings:#?}"
+        "a NEXT row token not declared in DATA fires dt_backlog_id_not_dt anchored to the entry H3; got: {findings:#?}"
+    );
+    let raw = audit_findings(tmp.path());
+    let not_dt = raw
+        .iter()
+        .find(|f| f.violation_type == "dt_backlog_id_not_dt")
+        .expect("the not-dt finding must fire");
+    let backlog_text = fs::read_to_string(tmp.path().join("crates/shared/BACKLOG.md")).unwrap();
+    let h3_line = backlog_text
+        .lines()
+        .position(|l| l.trim() == "### {SHAR}")
+        .unwrap()
+        + 1;
+    assert_eq!(
+        not_dt.line, h3_line,
+        "`dt_backlog_id_not_dt` anchors to the entry's H3 line; got {}",
+        not_dt.line
     );
 }
 
@@ -2407,22 +2894,17 @@ fn dt_rejects_do_headings() {
 fn dt_empty_heading_set_fires_not_dt_on_every_legacy_row() {
     let tmp = tempfile::tempdir().unwrap();
     let data = "# DATA — shared\n\n## Reference\n\n- Backlog: [BACKLOG.md](BACKLOG.md)\n\n## Data Overview\n\nnone.\n";
-    let backlog = backlog_with_rows(&["SHAR-01", "SHAR-02"]);
+    let backlog = backlog_with_entries(&["SHAR"]);
     write_data_backlog_pair(tmp.path(), data, Some(&backlog));
     let findings = audit(tmp.path());
-    let count = findings
-        .iter()
-        .filter(|(c, v, _, _)| c == "AES601" && v == "dt_backlog_id_not_dt")
-        .count();
-    assert_eq!(
-        count, 2,
-        "every legacy row fires dt_backlog_id_not_dt; got: {findings:#?}"
+    assert!(
+        !has(&findings, "AES601", "dt_backlog_id_not_dt"),
+        "a DATA with no DT-IDs is silent on alignment; got: {findings:#?}"
     );
 }
 
 /// A bare `DS-001:` heading (digits only, no NAME qualifier) is no longer an
-/// accepted DS-ID, so the legacy BACKLOG row is not a valid item ID and the
-/// document declares no item at all.
+/// accepted DS-ID.
 #[test]
 fn ds_bare_id_heading_is_no_longer_accepted() {
     let tmp = tempfile::tempdir().unwrap();
@@ -2435,14 +2917,14 @@ fn ds_bare_id_heading_is_no_longer_accepted() {
      | `primary` | main action | `--color-primary` | `#000000` |\n\n\
      ## Reference\n\n\
      - Backlog: [BACKLOG.md](BACKLOG.md)\n";
-    let backlog = backlog_with_rows(&["DS-001"]);
+    let backlog = backlog_with_entries(&["DISP"]);
     write_design_backlog_pair(tmp.path(), design, Some(&backlog));
     let findings = audit(tmp.path());
-    // The bare heading is not collected, so the `DS-001` BACKLOG row is not a
-    // valid item ID (direction b) and no item ID owes a BACKLOG row (no (a)).
+    // The bare heading is not collected, so no DS-ID set is declared and the
+    // pair is silent.
     assert!(
-        has(&findings, "AES601", "ds_backlog_id_not_ds"),
-        "a bare `DS-001:` heading must not be accepted, so the row fires ds_backlog_id_not_ds; got: {findings:#?}"
+        !has(&findings, "AES601", "ds_backlog_id_not_ds"),
+        "a bare `DS-001:` heading must not be accepted; an empty DS-ID set is silent; got: {findings:#?}"
     );
 }
 
@@ -2459,12 +2941,12 @@ fn dt_bare_id_heading_is_no_longer_accepted() {
      | vo    | Lint finding severity level |\n\n\
      ## Reference\n\n\
      - Backlog: [BACKLOG.md](BACKLOG.md)\n";
-    let backlog = backlog_with_rows(&["DT-001"]);
+    let backlog = backlog_with_entries(&["SHAR"]);
     write_data_backlog_pair(tmp.path(), data, Some(&backlog));
     let findings = audit(tmp.path());
     assert!(
-        has(&findings, "AES601", "dt_backlog_id_not_dt"),
-        "a bare `DT-001:` heading must not be accepted, so the row fires dt_backlog_id_not_dt; got: {findings:#?}"
+        !has(&findings, "AES601", "dt_backlog_id_not_dt"),
+        "a bare `DT-001:` heading must not be accepted; an empty DT-ID set is silent; got: {findings:#?}"
     );
 }
 
