@@ -58,11 +58,6 @@ fn codes_from_all(root: &Path) -> Vec<&'static str> {
 fn frd_violating_only_spec_purity() -> String {
     r"# FRD — sample
 
-## Reference
-
-- PRD: [PRD.md](../../PRD.md)
-- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature.
-
 ## Feature Overview
 
 The feature reads its settings from main.rs at startup.
@@ -92,6 +87,11 @@ The feature reads its settings from main.rs at startup.
 | Aspect | Detail |
 | --- | --- |
 | Method | `execute` |
+
+## Reference
+
+- PRD: [PRD.md](../../PRD.md)
+- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature.
 "
     .to_string()
 }

@@ -12,11 +12,6 @@ use std::path::Path;
 fn conforming_frd() -> String {
     r#"# FRD — sample
 
-## Reference
-
-- PRD: [PRD.md](../../PRD.md)
-- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature.
-
 ## Feature Overview
 
 The feature does the work a surface delegates to.
@@ -66,6 +61,11 @@ The feature does the work a surface delegates to.
 | Method | `execute` |
 | Request | `DocRequest` |
 | Response | `DocResponse` |
+
+## Reference
+
+- PRD: [PRD.md](../../PRD.md)
+- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature.
 
 ## API Contract
 
