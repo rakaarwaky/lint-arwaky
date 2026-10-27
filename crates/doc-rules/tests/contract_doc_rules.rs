@@ -341,7 +341,10 @@ fn aes601_fires_on_bare_fr_id() {
 fn aes601_reports_each_missing_field_with_its_own_type() {
     let tmp = tempfile::tempdir().unwrap();
     let frd = conforming_frd()
-        .replace("| Edge Cases | Root-level legacy `BACKLOG.md` is accepted during migration. |\n", "")
+        .replace(
+            "| Edge Cases | Root-level legacy `BACKLOG.md` is accepted during migration. |\n",
+            "",
+        )
         .replace("| Event | None. |\n", "");
     write_workspace(tmp.path(), &frd);
     let findings = audit(tmp.path());
