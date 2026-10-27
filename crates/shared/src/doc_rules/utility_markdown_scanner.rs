@@ -531,9 +531,11 @@ pub fn strip_non_prose_for_placeholders(text: &str) -> String {
 /// backticks stays out of reach — and markers outside the catalog are
 /// stripped as before.
 pub fn matches_placeholder_catalog(text: &str, catalog: &[&str]) -> Vec<(usize, String)> {
-    // Longest first so an inner marker is not consumed by an outer one
-    // (e.g. `<DATA-NAME-ID>` inside the ROADMAP shipped cell
-    // `<DATA-NAME-ID> / <FEATURE-NAME-ID> / <DESIGN-NAME-ID>`).
+    // Longest first so a marker containing another (e.g. `<DATA-NAME-ID>` in
+    // the ROADMAP shipped cell `<DATA-NAME-ID> / <FEATURE-NAME-ID> /
+    // <DESIGN-NAME-ID>`) is protected intact: the containing marker is
+    // swapped first, so its `<...>` span is not shattered by an inner
+    // sentinel before the outer one is matched.
     let mut markers: Vec<&str> = catalog.to_vec();
     markers.sort_by_key(|marker| std::cmp::Reverse(marker.len()));
     let mut protected = text.to_string();
