@@ -57,6 +57,7 @@ Copy, fill, delete nothing.
 ## Quick Start
 
 | Step | Action | Command  |
+|------|--------|----------|
 
 ## Reference
 

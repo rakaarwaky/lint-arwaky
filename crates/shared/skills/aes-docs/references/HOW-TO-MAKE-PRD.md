@@ -54,11 +54,10 @@
 Every row names a concrete subject, a measurable outcome, and a test
 that could falsify it.
 
-**Pairing.** Every feature in the PRD must be reachable from the root
-`ROADMAP.md` feature index. A P0 / P1 / P2 bullet needs its own
+**Pairing.** Every `PR-` item in the PRD must be reachable from the root
+`ROADMAP.md` Roadmap Status. A `PR-` item needs its own
 `FRD.md` + `BACKLOG.md` pair. An out-of-scope item is marked `Won't Do`
-in the root or simply absent. A goal with a metric needs a scenario in
-a feature's `## Test Scenarios` that proves it.
+in the root or simply absent.
 
 ---
 

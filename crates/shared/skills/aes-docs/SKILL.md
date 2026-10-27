@@ -66,7 +66,7 @@ Templates, section contracts, exemplars, and per-document craft rules live in [`
 | Document     | Location                          | Audience                     | Focus                                | Length       | Template                                                               |
 | ------------ | --------------------------------- | ---------------------------- | ------------------------------------ | ------------ | ---------------------------------------------------------------------- |
 | `PRD.md`     | Root workspace                    | Stakeholder, PM, Design, Eng | *What* &amp; *Why*                   | 50–500 lines | [references/HOW-TO-MAKE-PRD.md](references/HOW-TO-MAKE-PRD.md)         |
-| `ROADMAP.md` | Root workspace (exactly one)      | Tech Lead, PM, Engineers     | *Index, policy, workspace condition* | 50–500 lines | [references/HOW-TO-MAKE-ROADMAP.md](references/HOW-TO-MAKE-ROADMAP.md) |
+| `ROADMAP.md` | Root workspace (exactly one)      | Tech Lead, PM, Engineers     | *Progress, status, cross-cutting links* | 50–500 lines | [references/HOW-TO-MAKE-ROADMAP.md](references/HOW-TO-MAKE-ROADMAP.md) |
 | `FRD.md`     | Each **feature** module/crate/pkg (not `shared/`) | Engineer, QA, Tech Lead      | *How* (functionally)                 | 50–500 lines | [references/HOW-TO-MAKE-FRD.md](references/HOW-TO-MAKE-FRD.md)         |
 | `BACKLOG.md` | Each **feature** dir, beside its spec (not `shared/`) | Engineer, QA, Tech Lead      | *What is true now*                   | 50–500 lines | [references/HOW-TO-MAKE-BACKLOG.md](references/HOW-TO-MAKE-BACKLOG.md) |
 | `README.md`  | Root workspace                    | Developer (new/existing)     | *How to use/run*                     | 50–500 lines | [references/HOW-TO-MAKE-README.md](references/HOW-TO-MAKE-README.md)   |
@@ -102,23 +102,20 @@ row that stops being enforced is a test failure rather than a silent edit.
 | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `status-in-spec` / `spec-source-path`                                       | Spec and status never share a file. Specs promise; backlogs report. Specs are stateless — no `.py`/`.rs`/`.ts` file names (HOW-TO Rule 9). |
 | `spec-without-backlog` / `backlog-without-spec` / `feature-doc-in-shared` | An **FRD** and its backlog are a pair in the same **feature** directory (root PRD pairs with root ROADMAP, not a sibling BACKLOG). Kernel folders (`modules/shared`) are not features: either file under `shared/` fails with `feature-doc-in-shared` (HOW-TO-MAKE-FRD § Scope). |
-| `no-master-backlog` / `undefined-state-vocab` / `master-section-missing` | One root master owns the `State` vocabulary, the status policy, the roll-up, in-flight branches and risk (`ROADMAP.md`; legacy root `BACKLOG.md` accepted during migration). |
-| `state-vocab-restated`                                                   | Definitions live once. Feature files cite them, never repeat them.                                                                                                                    |
-| `done-without-evidence` / `unknown-state`                                | Every backlog claim is re-runnable: command + counts + commit hash, and what it excludes.                                                                                             |
+| `no-master-backlog` / `undefined-state-vocab` / `master-section-missing` | One root master owns the `State` vocabulary, the status policy, and the roll-up (`ROADMAP.md` `Roadmap Status`; legacy root `BACKLOG.md` accepted during migration). |
+| `state-vocab-restated`                                                   | Definitions live once. Feature backlogs cite `Roadmap Status`, never restate it under `Backlog Status`.                                                                                                                    |
+| `done-without-evidence` / `unknown-state`                                | Every backlog `Done` row is re-runnable: command + counts + commit hash, and what it excludes.                                                                                             |
 | `duplicate-fr-id` / `orphan-fr-ref`                                      | Requirement IDs are unique, stable, and the only thing a backlog row may cite.                                                                                                        |
-| `fr-id-format` / `fr-fields-missing`                                     | FRD Rule 1–2: `FR-<FEATURENAME>-NNN: <imperative name>`; each FR states Description, Input, Output, Business Rules, Edge Cases, Error Handling.                                         |
-| `api-contract-shape` / `integration-shape` / `nfr-shape`                 | FRD Rule 3/5 + template: API Contract carries both `Protocol API` (leaf capability methods) and `Aggregate API` (orchestrator / capability aggregate exports) tables with exact columns and ≥1 data row each; Integration Points and Non-functional keep their exact columns and at least one data row. |
-| `reference-crosslink` / `section-order`                                  | FRD Rule 7 + template: Reference links PRD and BACKLOG; sections follow HOW-TO-MAKE-FRD order.                                                                                         |
-| `scenario-empty` / `assumption-empty` / `glossary-empty`                 | FRD Rule 4/6 + template: Test Scenarios, Assumptions, and Glossary each carry bullet items — not empty placeholders.                                                                     |
-| `scenario-without-evidence` / `scenario-evidence-count`                  | Each test scenario in a spec has one evidence row: Automated / Proxy / Manual / Gap.                                                                                                  |
-| `backlog-columns` / `backlog-row-width`                                  | The Backlog table keeps its nine columns.                                                                                                                                             |
-| `*-section-missing`                                                      | Each document carries the sections its audience needs. Section contracts are in the refs.                                                                                             |
+| `fr-id-format` / `fr-fields-missing`                                     | FRD Rule 1–2: `FR-<FEATURENAME>-NNN: <imperative name>`; each FR entry table carries the twelve `Aspect | Detail` rows: Description, Business Rules, Edge Cases, Capability, Protocol, Method, Input, Output, Error, Event, Test, Metric. |
+| `reference-crosslink` / `section-order`                                  | FRD + template: `## Reference` links PRD and BACKLOG; sections follow HOW-TO-MAKE-FRD order (Feature Overview, Functional Requirements, Public Interface, Reference).                                                                                         |
+| `backlog-columns` / `backlog-row-width`                                  | The `Backlog Status` entry table keeps its seven `Aspect | Detail` rows: State, Done, In Progress, Blocked, Next, Risk, Updated.                                                                                                                                             |
+| `*-section-missing`                                                      | Each document carries the H2 set its audience needs. Section contracts are in the refs.                                                                                             |
 | `dead-link` / `root-relative-link`                                       | Pointers resolve from the file that writes them, not only from the repo or skill root.                                                                                                |
 | `unreferenced-file`                                                      | Every file under a skill's `references/`, `scripts/`, `assets/` is surfaced by SKILL.md.                                                                                              |
 | `absolute-path` / `secret-in-docs`                                       | No machine-specific path and no credential literal in any document.                                                                                                                   |
 | `ci-command-drift`                                                       | AGENTS.md commands match CI exactly or are labelled advisory.                                                                                                                        |
 | `doc-length` / `doc-thin`                                                | Each document stays inside the size its audience can read.                                                                                                                            |
-| `section_not_table` / `table_missing_columns` / `missing_required_doc`  | AES606: mandated BACKLOG/ROADMAP table sections carry their template tables; the six required root docs exist at a real workspace root.                                                  |
+| `section_not_table` / `table_missing_columns` / `missing_required_doc`  | AES606: mandated entry tables (ROADMAP `Roadmap Status`, BACKLOG `Backlog Status`, FRD `Functional Requirements` / `Public Interface`) carry their template tables; the six required root docs exist at a real workspace root.                                                  |
 
 ### Unchecked Invariants (Language Rules)
 
@@ -138,7 +135,7 @@ Ask these questions in order. The first "No" dictates your next action.
 1. **Can a stakeholder understand this project's purpose in 30 seconds?**
    - *No* → Add `PRD.md` (what/why).
 2. **Can a tech lead see every feature, shared policy, and workspace truth in one place?**
-   - *No* → Add `ROADMAP.md` (index, definitions, status policy, roll-up, risk).
+   - *No* → Add `ROADMAP.md` (`Progress Overview` / `Roadmap Status` / `Reference`).
 3. **Can an engineer implement this from the spec alone?**
    - *No* → Add `FRD.md` (how).
 4. **Can a reader tell what is actually true today for one feature, and re-run the evidence?**
@@ -250,7 +247,7 @@ The invariant codes above cover the machine-checkable ones. These need a reader:
 
 - **One document for all audiences**: Split by audience. Each file answers one question.
 - **FRD at the project root**: It belongs with the feature code, beside its backlog.
-- **Feature backlog carrying workspace rows or restating root policy**: Cross-cutting rows and State definitions live once in `ROADMAP.md` (root master).
+- **Feature backlog carrying workspace rows or restating root policy**: Cross-cutting rows and the `Roadmap Status` roll-up live once in `ROADMAP.md` (root master).
 - **PRD carrying SQL schemas or API detail**: The PRD audience cannot read them. Move to FRD.
 
 ### Cadence and code surface
@@ -262,8 +259,7 @@ The invariant codes above cover the machine-checkable ones. These need a reader:
 **Checker false-freights to dodge when authoring specs** (these bite at draft time, before you run the gate):
 
 - **The word "implemented" in a spec file.** `status-in-spec` matches `\b(impl|un)plemented\b` case-insensitively across the *whole* FRD/PRD — so the reference template's `| As Implemented / As Intended |` column and any `implemented` cell header/cell are auto-flagged. Name the column `impl / intended` and use `impl` for the cell. (Same class: `shipped`/`released in v…`, checkbox items, status markers checkmark / cross status markers, progress `%` all trip it.)
-- **Scenario-evidence rows without a table header.** `check_scenarios` counts evidence via a markdown-table parser that needs a `| Scenario | … |` header + `|---|` separator line; a headerless block of `| … |` rows parses as **0 rows** and reports `0 evidence row(s)` even when the rows are present. Always emit the header row; keep exactly one row per spec scenario, in spec order.
-- **Scenario bullets containing `<`.** The scenario counter skips any spec bullet whose text contains `<` (placeholder convention), so that scenario needs no evidence row — don't write one, or the count is off by one. Rename `<placeholder>` prose to avoid the silent skip.
+- **Entry-table rows without a header + separator.** AES606's `section_not_table` parser reads `| Aspect | … |` rows via a markdown-table parser that needs the header row + a `|---|` separator line; a headerless block of `| … |` rows parses as **0 rows**. Always emit the header row; keep exactly one row per fixed `Aspect` label, in template order.
 
 ---
 

@@ -21,8 +21,8 @@
 1. **Single source of truth.** State vocabulary lives here and nowhere
    else. Feature backlogs cite it; they never redefine it.
 2. **Index every feature.** Every feature directory must appear in the
-   Feature Roll-up table, linking to its FRD.md and BACKLOG.md
-   (`no-master-roadmap`).
+   Roadmap Status as a `PR-<PROJECT-NAME-ID>-NNN` entry, linking to its
+   FRD.md and BACKLOG.md (`no-master-roadmap`).
 3. **Cross-cutting rows only.** The workspace table is for items that
    span multiple features or infrastructure.
 4. **ID scopes are explicit.** The root file uses a workspace prefix
