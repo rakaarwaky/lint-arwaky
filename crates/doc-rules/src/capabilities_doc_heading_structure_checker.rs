@@ -165,13 +165,12 @@ impl HeadingStructureChecker {
     }
 
     /// Check that AGENTS.md matches the template line for line, allowing only
-    /// placeholder slots to carry project-specific content.
+    /// `{...}` placeholder slots to carry project-specific content.
     ///
     /// Strict enforcement: every line the template fixes must appear verbatim
-    /// and in order. A placeholder slot (`<...>`, plus `{Project}` in the
-    /// frontmatter) is the only place a project may write its own text.
-    /// Anything else — a renamed heading, a reworded bullet, a reordered
-    /// section, a dropped rule — is drift.
+    /// and in order. A `{...}` placeholder slot is the only place a project may
+    /// write its own text. Anything else — a renamed heading, a reworded
+    /// bullet, a reordered section, a dropped rule — is drift.
     fn check_agents_line_drift(
         &self,
         text: &str,
@@ -208,10 +207,10 @@ impl HeadingStructureChecker {
             return;
         }
 
-        // A placeholder is an `<...>` slot — the reference file's
-        // convention — and the only place a project may write its own text.
-        // The frontmatter keeps its `{Project}` slot as well. Every other
-        // non-blank line is fixed text that must appear verbatim, in order.
+        // A placeholder is a `{...}` slot. That is the convention the
+        // reference file uses, and it is the only place a project may write
+        // its own text. Every other non-blank line is fixed text that must
+        // appear verbatim, in order.
         //
         // The comparison is scoped per section. A template section holds
         // placeholder lines and their wrapped continuations interleaved with
@@ -267,8 +266,8 @@ impl HeadingStructureChecker {
                 continue;
             };
             // A placeholder may wrap onto the next line. When a line opens a
-            // delimiter it does not close, the following lines up to the
-            // closer are part of the slot, so they carry no fixed text to match.
+            // brace it does not close, the following lines up to the closer are
+            // part of the slot, so they carry no fixed text to match.
             let want_placeholders = placeholder_lines(want_lines);
             let want_strict: Vec<&str> = want_lines
                 .iter()
@@ -294,12 +293,12 @@ impl HeadingStructureChecker {
                                 consts::RULE_CODE_DOC_STRUCTURE,
                                 consts::DOC_STRUCTURE_VIOLATION_LINE_DRIFT,
                                 format!(
-                                    "AGENTS.md section `{name}` does not match the template: expected the line '{want}' (or an <...> placeholder), but found '{offending}'"
+                                    "AGENTS.md section `{name}` does not match the template: expected the line '{want}' (or a {{...}} placeholder), but found '{offending}'"
                                 ),
                             )
                             .with_reason(
-                                "Every line the template fixes must appear verbatim and in order; only <...> placeholder slots may differ.",
-                                "Replace '{offending}' in section `{name}` with the template line '{want}' or an <...> placeholder.",
+                                "Every line the template fixes must appear verbatim and in order; only {{...}} placeholder slots may differ.",
+                                "Replace '{offending}' in section `{name}` with the template line '{want}' or a {{...}} placeholder.",
                             ),
                         );
                         cursor = start + 1;
@@ -324,7 +323,7 @@ impl HeadingStructureChecker {
             );
         }
         // A project may name itself freely, so only the shape is fixed: one
-        // H1 with a non-empty title.
+        // H1, non-empty, carrying no `{...}` slot left unfilled.
         for line in doc_lines
             .iter()
             .filter(|l| l.trim_start().starts_with("# "))
@@ -351,97 +350,94 @@ impl HeadingStructureChecker {
 
 // ─── Block 3: Module Helpers ───────────────────────────────
 
-/// The AGENTS.md template: the fenced template block in
-/// `crates/shared/skills/aes-docs/references/HOW-TO-MAKE-AGENTS.md`, with the
-/// YAML frontmatter retained so harnesses still load the file.
+/// The AGENTS.md template, pasted verbatim from
+/// `crates/shared/skills/aes-docs/references/HOW-TO-MAKE-AGENTS.md`.
 ///
 /// It lives here rather than being read at runtime so the contract cannot go
 /// missing when the skill is absent, and so this file and the reference stay
-/// diffable against each other. Every `<...>` slot is the one place a project
+/// diffable against each other. Every `{...}` slot is the one place a project
 /// writes its own text; every other line must appear verbatim.
 pub const AGENTS_TEMPLATE: &str = r#"---
 trigger: always
 description: "{Project} operational guide."
 ---
-# AGENTS — <project-name>
+# {Project Name}
 
 ## Agent Overview
 
-<One paragraph: what AI agents must know before generating code, docs, or suggestions in this workspace.>
+{One paragraph: what AI agents must know before generating code, docs, or suggestions in this workspace.}
 
 ## Runtime
 
 | Aspect          | Detail                                          |
 |-----------------|-------------------------------------------------|
-| Language        | <language and pinned version>                   |
-| Environment     | <environment manager and creation method>       |
-| Artifacts       | <reviewable artifact location>                  |
-| Package Manager | <package manager and lockfile>                  |
-| Version Probe   | `<version probe command>`                       |
-| Setup           | `<environment setup command>`                   |
-| Activation      | `<optional environment activation command>`     |
+| Language        | {language and pinned version}                   |
+| Environment     | {environment manager and creation method}       |
+| Artifacts       | {reviewable artifact location}                  |
+| Package Manager | {package manager and lockfile}                  |
+| Version Probe   | `{version probe command}`                       |
+| Setup           | `{environment setup command}`                    |
+| Activation      | `{optional environment activation command}`      |
 
 ## Project Structure
 
 | Path       | Purpose              |
 |------------|----------------------|
-| <path>     | <what lives here>    |
-| <path>     | <what lives here>    |
-| <path>     | <what lives here>    |
+| {path}     | {what lives here}    |
 
 ## Commands
 
 | Category    | Command                              | Scope      | CI Gate              |
 |-------------|--------------------------------------|------------|----------------------|
-| Test (all)  | `<whole-workspace test command>`     | All        | ci.yml: <job name>   |
-| Test (unit) | `<single-package test command>`      | One unit   | ci.yml: <job name>   |
-| Test (file) | `<single-file test command>`         | One file   | ci.yml: <job name>   |
-| Lint        | `<formatter or linter command>`      | All        | ci.yml: <job name>   |
-| Type Check  | `<type checker command>`             | All        | ci.yml: <job name>   |
-| Arch Scan   | `<architecture scanner command>`     | All        | ci.yml: <job name>   |
+| Test (all)  | `{whole-workspace test command}`     | All        | ci.yml: {job name}   |
+| Test (unit) | `{single-package test command}`      | One unit   | ci.yml: {job name}   |
+| Test (file) | `{single-file test command}`         | One file   | ci.yml: {job name}   |
+| Lint        | `{formatter or linter command}`      | All        | ci.yml: {job name}   |
+| Type Check  | `{type checker command}`             | All        | ci.yml: {job name}   |
+| Arch Scan   | `{architecture scanner command}`     | All        | ci.yml: {job name}   |
 
 ## Documentation Awareness
 
 | Document | Agent Must                              |
 |----------|-----------------------------------------|
-| PRD      | Read before implementing any `PR-` item | 
-| FRD      | Follow `FR-` spec exactly               | 
-| DATA     | Respect `DT-` shapes and types          | 
-| DESIGN   | Use `DS-` tokens and variants           | 
-| ROADMAP  | Check `State` before starting work      | 
-| BACKLOG  | Update status after each task           | 
+| PRD      | Read before implementing any `PR-` item |
+| FRD      | Follow `FR-` spec exactly               |
+| DATA     | Respect `DT-` shapes and types          |
+| DESIGN   | Use `DS-` tokens and variants           |
+| ROADMAP  | Check `State` before starting work      |
+| BACKLOG  | Update status after each task           |
 
 ## Reference
 
 | Artifact     | Purpose                                    | Link |
 |--------------|--------------------------------------------|------|
-| PRD          | <Business goals, user stories, and scope>  | [PRD.md](PRD.md) |
-| FRD          | <Functional requirements specification>    | [FRD.md](FRD.md) |
-| DATA         | <Data shapes and kernel definitions>       | [DATA.md](DATA.md) |
-| DESIGN       | <UI/UX and visual system>                  | [DESIGN.md](DESIGN.md) |
-| Architecture | <System boundaries, tech stack, and infra> | [ARCHITECTURE.md](ARCHITECTURE.md) |
+| PRD          | {Business goals, user stories, and scope}  | [PRD.md](PRD.md) |
+| FRD          | {Functional requirements specification}    | [FRD.md](FRD.md) |
+| DATA         | {Data shapes and kernel definitions}        | [DATA.md](DATA.md) |
+| DESIGN       | {UI/UX and visual system}                  | [DESIGN.md](DESIGN.md) |
+| Architecture | {System boundaries, tech stack, and infra} | [ARCHITECTURE.md](ARCHITECTURE.md) |
 "#;
 
-/// Split the template into its lines.
+/// Split the template into its lines, dropping the fence that wraps it.
 fn agents_template_lines() -> Vec<&'static str> {
     AGENTS_TEMPLATE.lines().collect()
 }
 
-/// Every line that belongs to a placeholder slot — an `<...>` span, or the
-/// `{Project}` slot in the frontmatter — including slots that wrap across
+/// Every line that belongs to a `{...}` slot, including slots that wrap across
 /// physical lines.
 ///
-/// A slot may open on one line and close on a later one; every line it spans
-/// fixes no text, so it is entirely the project's to write. Walking the lines
-/// once while tracking delimiter depth keeps the caller a plain set lookup.
+/// The template wraps long placeholders, so a slot can start on one line and
+/// close on the next. A line inside such a slot fixes no text: it is entirely
+/// the project's to write. Walking the lines once and tracking brace depth
+/// keeps the caller a plain set lookup.
 fn placeholder_lines(lines: &[&str]) -> HashSet<usize> {
     let mut inside = HashSet::new();
     let mut depth = 0usize;
     for (idx, line) in lines.iter().enumerate() {
-        let opens = line.matches(|c: char| c == '{' || c == '<').count();
-        let closes = line.matches(|c: char| c == '}' || c == '>').count();
+        let opens = line.matches('{').count();
+        let closes = line.matches('}').count();
         if opens > closes {
-            // The slot opens on this line, so the line belongs to it.
+            // The slot is open before this line, so this line starts inside it.
             inside.insert(idx);
             depth += opens - closes;
         } else if depth > 0 {
