@@ -70,9 +70,10 @@ pub const TEMPLATE_PROFILES: &[TemplateProfile] = &[
         ],
     },
     // The BACKLOG H3 title line ships the whole `{<PROJECT-NAME-ID> |
-    // <FEATURE-NAME-ID> | DESIGN-NAME-ID}` qualifier line, so the two
-    // angle-bracketed members of it are catalogued; `DESIGN-NAME-ID` is
-    // bare (no angle brackets) and never fires.
+    // <FEATURE-NAME-ID> | DESIGN-NAME-ID}` qualifier line, so all three
+    // members are catalogued: the two angle-bracketed ones plus the bare
+    // `DESIGN-NAME-ID`, which the substring matcher fires on even without
+    // angle brackets (curly-slot markers prove the matcher needs no `<>`).
     TemplateProfile {
         doc_name: BACKLOG_DOC,
         template_file: "HOW-TO-MAKE-BACKLOG.md",
@@ -82,6 +83,7 @@ pub const TEMPLATE_PROFILES: &[TemplateProfile] = &[
             "<feature-name>",
             "<PROJECT-NAME-ID>",
             "<FEATURE-NAME-ID>",
+            "DESIGN-NAME-ID",
             "<One paragraph of progress summary.>",
             "<evidence>",
             "<None / item name>",
@@ -164,7 +166,7 @@ pub const TEMPLATE_PROFILES: &[TemplateProfile] = &[
     },
     // `feature-name` is intentionally uncatalogued for ARCHITECTURE: the
     // reference file's bare ``` fence at line 95 closes the markdown block
-    // opened at line 60, so `modules/<feature-name>/src/` (line 96) is loose
+    // opened at line 60, so `modules/<feature-name>/src/` (line 97) is loose
     // prose outside the verbatim_copy extraction (lines 61-94) and never
     // reaches the catalog matcher.
     TemplateProfile {
@@ -190,12 +192,13 @@ pub const TEMPLATE_PROFILES: &[TemplateProfile] = &[
     // The DATA and DESIGN catalogs carry the single-line tokens their
     // fenced templates ship unfilled: the H1 `<project-name>`, the
     // H3 item-title tokens (`<Short imperative name>`, the `-NNN: `
-    // ID qualifiers `<DATA-NAME-ID>` / `<DESIGN-NAME-ID>`), and the
-    // Reference-table purpose cells. The multi-line overview
-    // placeholders (`<One paragraph: ...>` in DATA, `<One paragraph of
-    // what the design looks like.>` in DESIGN) stay uncatalogued: their
-    // angle spans run across a line break, and the line-scoped matcher
-    // only sees single-line substrings.
+    // ID qualifiers `<DATA-NAME-ID>` / `<DESIGN-NAME-ID>`), the
+    // Reference-table purpose cells, and — for DESIGN — the overview
+    // `<One paragraph of what the design looks like.>`, which its
+    // template ships as one complete line. The DATA overview stays
+    // excluded: its `<One paragraph: ...>` span genuinely runs across
+    // two lines, and the line-scoped matcher only sees single-line
+    // substrings.
     TemplateProfile {
         doc_name: DATA_DOC,
         template_file: "HOW-TO-MAKE-DATA.md",
@@ -220,6 +223,7 @@ pub const TEMPLATE_PROFILES: &[TemplateProfile] = &[
             "<project-name>",
             "<Short imperative name>",
             "<DESIGN-NAME-ID>",
+            "<One paragraph of what the design looks like.>",
             "<Business goals, user stories, and scope>",
             "<Task tracking, epics, and implementation status>",
             "<Timeline, phasing, and dependencies>",
