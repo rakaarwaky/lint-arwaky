@@ -201,9 +201,8 @@ pub const ROADMAP_REQUIRED_H2S: &[&str] = &["Progress Overview", "Roadmap Status
 /// and the required-H2 set read the same four headings under two names.
 pub const FRD_SECTION_ORDER: &[&str] = FRD_REQUIRED_H2S;
 
-/// No level-3 headings are whitelisted by title under the 9-doc layout: the
-/// only sanctioned H3s are `FR-<FEATURE>-NNN:` requirement headings, matched
-/// by the shared FR-ID pattern (`fr_id_heading_re`) rather than listed here.
+/// Empty under the 9-doc layout; `fr_id_heading_re` is the authority on
+/// sanctioned H3s. PR-10 bookkeeping: re-populate when FRD H3 shapes return.
 pub const FRD_H3_TITLES: &[&str] = &[];
 
 /// The twelve row labels every FRD `Functional Requirements` entry table
@@ -223,12 +222,8 @@ pub const FR_FIELDS: &[&str] = &[
     "Metric",
 ];
 
-/// Legacy: the two level-3 subsections of the retired `## API Contract`
-/// sections. `Protocol API` listed every protocol method; `Aggregate API`
-/// listed the single `execute` entry point. Still read by the shared
-/// `api_contract_methods` scanner, which powers AES601's method-existence
-/// check: a retired API Contract section in a legacy FRD is still a promise
-/// to the integrator.
+/// H3 subsections of the retired `## API Contract`; still read by
+/// `utility_markdown_scanner::api_contract_methods` (AES601 method check).
 pub const API_CONTRACT_SUBSECTIONS: &[&str] = &["Protocol API", "Aggregate API"];
 
 /// File extensions a spec must never name, per HOW-TO-MAKE-FRD Rule 9.

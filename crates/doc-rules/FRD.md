@@ -45,7 +45,7 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 - **Output**: A list of `DocFinding` values, each carrying `AES602` and `order_violation`.
 - **Business Rules**:
   - Sections must appear in the FRD template order; a reordering reports `order_violation` anchored to the first out-of-order section.
-  - The section tree is parsed once per document, because re-parsing per section was the cost this rule used to pay.
+  - The section tree is parsed once per document.
   - The full order set applies to `FRD.md`; `DATA.md` is held to the same order rule.
 - **Edge Cases**: A document whose parse yields no sections produces no findings; level-3 headings are free-form and outside this rule's scope.
 - **Error Handling**: A document whose parse yields no sections produces no findings; an unparseable document is a parse skip, never a violation.

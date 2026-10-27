@@ -118,13 +118,12 @@ fn aes602_accepts_a_frd_in_template_order() {
 
 #[test]
 fn aes602_rejects_a_frd_out_of_template_order() {
-    // Feature Overview after Functional Requirements: the same sections,
-    // the wrong reading order.
-    let text = conforming_frd().replace(
-        "## Feature Overview\n\nThe feature does the work a surface delegates to.\n\n\
-         ## Functional Requirements",
-        "## Functional Requirements",
-    );
+    // Swap Feature Overview and Functional Requirements in place: the same
+    // four sections, the wrong reading order.
+    let text = conforming_frd()
+        .replace("## Feature Overview", "## @@MARK@@")
+        .replace("## Functional Requirements", "## Feature Overview")
+        .replace("## @@MARK@@", "## Functional Requirements");
     assert_ne!(
         text,
         conforming_frd(),

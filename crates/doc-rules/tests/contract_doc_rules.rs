@@ -353,18 +353,19 @@ fn aes601_reports_each_missing_field_with_its_own_type() {
         .filter(|(c, v, _, _)| c == "AES601" && v == "field_missing")
         .map(|(_, _, m, _)| m.as_str())
         .collect();
-    // FR-SAMPLE-001's `Event` row is unique in its cell text, so only it
-    // loses a field; expect 1 finding.
+    // The table-form fixture has no bold `**{field}**` markers, so every FR
+    // heading reports all twelve FR_FIELDS missing; one finding per FR.
     assert_eq!(
         field_findings.len(),
-        1,
-        "one finding per FR with missing fields: {findings:#?}"
+        2,
+        "one finding per FR heading with missing fields: {findings:#?}"
     );
-    let message = &field_findings[0];
-    assert!(
-        message.contains("Edge Cases") && message.contains("Event"),
-        "the message must name each missing field, got: {message}"
-    );
+    for message in &field_findings {
+        assert!(
+            message.contains("Edge Cases") && message.contains("Event"),
+            "each finding must name every missing field, got: {message}"
+        );
+    }
 }
 
 // ── AES602: FRD section order ─────────────────────────────────────────

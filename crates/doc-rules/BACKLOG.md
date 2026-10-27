@@ -51,11 +51,6 @@ Last Updated: 2026-09-29
 | Method column read by header, not by position | AES601 accepts | Automated | `tests/contract_doc_rules.rs` | `cargo nextest run -p doc-rules-lint-arwaky` | working-tree |
 | Slash-joined cell promising several methods | AES601 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo nextest run -p doc-rules-lint-arwaky` | working-tree |
 | Fenced code block `#` comment not counted as H1 | No violation | Automated | `tests/contract_doc_rules.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
-| Per-protocol method table parked under Assumptions | AES602 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo nextest run -p doc-rules-lint-arwaky` | working-tree |
-| Scenario promoted from bullet to an H3 heading | AES602 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo nextest run -p doc-rules-lint-arwaky` | working-tree |
-| The three sanctioned H3 shapes | No violation | Automated | `tests/contract_doc_rules.rs` | `cargo nextest run -p doc-rules-lint-arwaky` | working-tree |
-| Detail demoted to an H4 heading | No violation | Automated | `tests/contract_doc_rules.rs` | `cargo nextest run -p doc-rules-lint-arwaky` | working-tree |
-| Heading-shaped line inside a fenced block | No violation | Automated | `tests/contract_doc_rules.rs` | `cargo nextest run -p doc-rules-lint-arwaky` | working-tree |
 | A capability seam answers a source-file reference and the other four stay silent | AES603 seam isolation | Automated | `tests/contract_doc_capability_seams.rs` | `cargo nextest run -p doc-rules-lint-arwaky` | working-tree |
 | A capability seam answers a missing H2 and the other four stay silent | AES605 seam isolation | Automated | `tests/contract_doc_capability_seams.rs` | `cargo nextest run -p doc-rules-lint-arwaky` | working-tree |
 | A backlog reporting progress raises no spec-purity finding | AES603 document scoping | Automated | `tests/contract_doc_capability_seams.rs` | `cargo nextest run -p doc-rules-lint-arwaky` | working-tree |
@@ -80,7 +75,7 @@ None
 | Area | Status | Notes |
 |---|---|---|
 | Tests | Done | `cargo nextest run -p doc-rules-lint-arwaky` → 149 passed, 0 failed |
-| Scenario evidence | Done | 34 scenarios mapped; all Automated |
+| Scenario evidence | Done | 29 scenarios mapped; all Automated |
 | Docs | Done | [FRD.md](FRD.md) is specification-only; status lives in this file |
 
 ## Deferred
