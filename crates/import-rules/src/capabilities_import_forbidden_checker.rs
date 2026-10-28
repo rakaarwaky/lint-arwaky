@@ -7,9 +7,9 @@
 // 3. Single check per file — no duplicate violations.
 
 use shared_cli_commands::{LintResult, LintResultList};
+use shared_common::architecture_layer_detector;
 use shared_common::taxonomy_layer_vo::LayerMapVO;
 use shared_common::taxonomy_layer_vo::LayerNameVO;
-use shared_common::architecture_layer_detector;
 use shared_common::{FilePath, FilePathList, Identity, Severity};
 use shared_filesystem::taxonomy_filesystem_vo::{ImportEntry, ImportType, Language};
 use shared_orphan_rules::parse_file_content;

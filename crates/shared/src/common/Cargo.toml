@@ -45,8 +45,8 @@ path = "../../tests/smoke_shared.rs"
 name = "unit_common_taxonomy_skill_hint_vo"
 path = "../../tests/unit_common_taxonomy_skill_hint_vo.rs"
 [[test]]
-name = "unit_common_utility_layer_detector"
-path = "../../tests/unit_common_utility_layer_detector.rs"
+name = "unit_common_layer_detector"
+path = "../../tests/unit_common_layer_detector.rs"
 [[test]]
 name = "unit_common_utility_path_filter"
 path = "../../tests/unit_common_utility_path_filter.rs"

@@ -26,11 +26,11 @@ use shared_quality_rules::contract_quality_protocol::IMandatoryClassProtocol;
 use shared_quality_rules::taxonomy_quality_rules_request::CodeAnalysisRequest;
 use shared_quality_rules::taxonomy_quality_rules_response::CodeAnalysisResponse;
 
-use shared_common::taxonomy_severity_vo::Severity;
 use shared_common::architecture_layer_detector::{
     collect_layer_keys, detect_layer_from_prefix, extract_filename, get_layer_def,
     resolve_specialized_layer,
 };
+use shared_common::taxonomy_severity_vo::Severity;
 use shared_common::{LayerMapVO, LayerNameVO};
 use shared_config_system::ArchitectureConfig;
 

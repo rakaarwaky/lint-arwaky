@@ -2,9 +2,9 @@
 // Uses ImportEntry fields directly — no text-based parsing, no bridge functions.
 
 use shared_cli_commands::{LintResult, LintResultList};
+use shared_common::architecture_layer_detector;
 use shared_common::taxonomy_layer_vo::LayerMapVO;
 use shared_common::taxonomy_layer_vo::LayerNameVO;
-use shared_common::architecture_layer_detector;
 use shared_common::{FilePath, FilePathList, Identity, Severity};
 use shared_filesystem::taxonomy_filesystem_vo::ImportEntry;
 
@@ -281,7 +281,9 @@ impl ArchImportMandatoryChecker {
                     .map(|n| n.to_string_lossy().to_string())
                     .unwrap_or_default();
                 let resolved_layer =
-                    shared_common::architecture_layer_detector::detect_layer_from_prefix(&resolved_file);
+                    shared_common::architecture_layer_detector::detect_layer_from_prefix(
+                        &resolved_file,
+                    );
                 let layer_matches = resolved_layer.as_deref() == Some(layer_str);
                 let suffix_matches = suffixes.is_empty()
                     || suffixes.iter().any(|s| {

@@ -1,4 +1,5 @@
 // common — truly shared types used by multiple features
+pub mod architecture_layer_detector;
 pub mod taxonomy_adapter_error;
 pub mod taxonomy_adapter_name_vo;
 pub mod taxonomy_ast_vo;
@@ -17,12 +18,11 @@ pub mod taxonomy_lint_vo;
 pub mod taxonomy_message_vo;
 pub mod taxonomy_name_vo;
 pub mod taxonomy_path_vo;
+pub mod taxonomy_report_snapshot_vo;
 pub mod taxonomy_severity_vo;
 pub mod taxonomy_skill_hint_vo;
 pub mod taxonomy_threshold_vo;
 pub mod taxonomy_violation_item_vo;
-pub mod taxonomy_report_snapshot_vo;
-pub mod architecture_layer_detector;
 pub mod utility_release_version;
 pub mod utility_value_object_generator;
 
@@ -53,6 +53,8 @@ pub use taxonomy_default_constant::DEFAULT_IGNORED_PATHS;
 pub use taxonomy_default_constant::DEFAULT_RULE_EXCEPTIONS;
 pub use taxonomy_error_vo::ErrorCode;
 pub use taxonomy_error_vo::ErrorId;
+pub use taxonomy_format_vo::Format;
+pub use taxonomy_format_vo::format_as_str;
 pub use taxonomy_git_vo::GitBranchName;
 pub use taxonomy_job_vo::AdapterMetadata;
 pub use taxonomy_job_vo::EnvContentVO;
@@ -89,20 +91,18 @@ pub use taxonomy_path_vo::FilePath;
 pub use taxonomy_path_vo::FilePathList;
 pub use taxonomy_path_vo::RenamedFile;
 pub use taxonomy_path_vo::RenamedFileList;
+pub use taxonomy_report_snapshot_vo::MemberDelta;
+pub use taxonomy_report_snapshot_vo::ReportDelta;
+pub use taxonomy_report_snapshot_vo::ReportSnapshot;
+pub use taxonomy_report_snapshot_vo::SnapshotStore;
 pub use taxonomy_severity_vo::Severity;
 pub use taxonomy_skill_hint_vo::SkillHint;
 pub use taxonomy_skill_hint_vo::resolve_skill_hint;
 pub use taxonomy_threshold_vo::Threshold;
 pub use taxonomy_violation_item_vo::ViolationItem;
-pub use taxonomy_format_vo::Format;
-pub use taxonomy_format_vo::format_as_str;
 pub use taxonomy_violation_item_vo::parse_fix;
 pub use taxonomy_violation_item_vo::parse_violation_name;
 pub use taxonomy_violation_item_vo::parse_why;
-pub use taxonomy_report_snapshot_vo::MemberDelta;
-pub use taxonomy_report_snapshot_vo::ReportDelta;
-pub use taxonomy_report_snapshot_vo::ReportSnapshot;
-pub use taxonomy_report_snapshot_vo::SnapshotStore;
 
 // The release version lives in `utility_release_version` so a `utility_` file
 // carries no type definition (AES404). Re-exported here because every crate

@@ -1,6 +1,6 @@
+use shared_common::architecture_layer_detector;
 use shared_common::taxonomy_path_vo::FilePath;
 use shared_common::taxonomy_severity_vo::Severity;
-use shared_common::architecture_layer_detector;
 use shared_orphan_rules::contract_orphan_protocol::IUtilityOrphanProtocol;
 use shared_orphan_rules::taxonomy_orphan_rules_constant::CONSUMER_LAYERS;
 use shared_orphan_rules::taxonomy_orphan_rules_vo::FileParseResultVO;
@@ -104,7 +104,8 @@ impl IUtilityOrphanProtocol for UtilityOrphanAnalyzer {
                         inbound_links.get_importers(barrel_path.to_str().unwrap_or(""))
                     {
                         for importer in mod_importers.iter().filter(|i| *i != fp) {
-                            let imp_filename = architecture_layer_detector::extract_filename(importer);
+                            let imp_filename =
+                                architecture_layer_detector::extract_filename(importer);
                             let is_consumer =
                                 architecture_layer_detector::detect_layer_from_prefix(imp_filename)
                                     .map(|layer| CONSUMER_LAYERS.contains(&layer.as_str()))

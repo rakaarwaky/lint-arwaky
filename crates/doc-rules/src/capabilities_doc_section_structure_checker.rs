@@ -8,7 +8,7 @@
 use shared_doc_rules::contract_doc_protocol::ISectionStructureProtocol;
 use shared_doc_rules::taxonomy_doc_audit_context_vo::DocAuditContext;
 use shared_doc_rules::taxonomy_doc_rules_constant as consts;
-use shared_doc_rules::taxonomy_doc_rules_request::{DocFinding, DocSource};
+use shared_doc_rules::taxonomy_doc_rules_request::DocFinding;
 use shared_doc_rules::taxonomy_doc_section_vo::Section;
 
 use shared_doc_rules::utility_markdown_scanner::{normalize_heading, sections};

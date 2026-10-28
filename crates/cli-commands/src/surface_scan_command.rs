@@ -1,7 +1,7 @@
 // PURPOSE: Check/scan commands — CLI formatting + exit-code mapping.
 // Calls dispatcher for business logic, only adds CLI output.
-use dispatcher::surface_orphan_action::OrphanFactory;
 use dispatcher::surface_check_action::FilesystemSeam;
+use dispatcher::surface_orphan_action::OrphanFactory;
 use shared_common::ExitCode;
 use shared_common::FilePath;
 use shared_common::format_as_str;
@@ -171,7 +171,12 @@ pub fn handle_scan(params: ScanCommandParams) -> ExitCode {
     let root = resolve_root(&opts.path);
     match dispatcher::surface_check_action::collect_scan(opts) {
         Ok(violations) => {
-            output_violations(&violations, &root, format_as_str(params.format), member_flag);
+            output_violations(
+                &violations,
+                &root,
+                format_as_str(params.format),
+                member_flag,
+            );
             exit_for(violations.len())
         }
         Err(e) => {

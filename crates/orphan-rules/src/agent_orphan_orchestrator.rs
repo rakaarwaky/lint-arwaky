@@ -385,8 +385,10 @@ impl ArchOrphanAnalyzer {
                 return None;
             }
         };
-        let filename = shared_common::architecture_layer_detector::extract_filename(file_fp.value());
-        let base_layer = shared_common::architecture_layer_detector::detect_layer_from_prefix(filename);
+        let filename =
+            shared_common::architecture_layer_detector::extract_filename(file_fp.value());
+        let base_layer =
+            shared_common::architecture_layer_detector::detect_layer_from_prefix(filename);
         if filename.contains("surface") {
             trace!(
                 file = f,
@@ -405,16 +407,18 @@ impl ArchOrphanAnalyzer {
             file_fp.value(),
             layer_keys,
         );
-        let definition =
-            shared_common::architecture_layer_detector::get_layer_def(&layer_str, &self.config.layers)
-                .cloned()
-                .unwrap_or_else(|| LayerDefinition {
-                    orphan: OrphanRuleVO {
-                        check_orphan: BooleanVO::new(true),
-                        ..Default::default()
-                    },
-                    ..Default::default()
-                });
+        let definition = shared_common::architecture_layer_detector::get_layer_def(
+            &layer_str,
+            &self.config.layers,
+        )
+        .cloned()
+        .unwrap_or_else(|| LayerDefinition {
+            orphan: OrphanRuleVO {
+                check_orphan: BooleanVO::new(true),
+                ..Default::default()
+            },
+            ..Default::default()
+        });
 
         let basename = file_fp.basename();
         if definition.exceptions.values.contains(&basename) {
