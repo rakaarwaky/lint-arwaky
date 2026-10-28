@@ -81,7 +81,7 @@ impl IAgentOrphanProtocol for AgentOrphanAnalyzer {
         }
 
         // Build diagnostic message
-        let filename = shared_common::utility_layer_detector::extract_filename(fp);
+        let filename = shared_common::architecture_layer_detector::extract_filename(fp);
         let reason = if !is_alive && !is_wired {
             format!(
                 "AES505 AGENT_ORPHAN: '{}' is not reachable and not wired in any container.\nWHY: An agent without reachability or wiring cannot coordinate feature flow.\nFIX: Import '{}' in a surface/entry file and wire it in root_*_container.",

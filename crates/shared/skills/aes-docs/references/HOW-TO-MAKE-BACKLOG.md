@@ -96,7 +96,7 @@ reason.
 | Section          | Why it belongs here                                                     |
 | ---------------- | ----------------------------------------------------------------------- |
 | Progress Overview| Gives the truth before the table, not after it.                         |
-| Backlog Status   | `{<PROJECT-NAME-ID> | <FEATURE-NAME-ID> | DESIGN-NAME-ID}` entries with State / Done / In Progress / Blocked / Next / Risk / Updated. |
+| Backlog Status   | `{<PROJECT-NAME-ID> &#124; <FEATURE-NAME-ID> &#124; DESIGN-NAME-ID}` entries with State / Done / In Progress / Blocked / Next / Risk / Updated. |
 | Reference        | Connects the backlog to PRD, FRD, Roadmap, Architecture.               |
 
 ---

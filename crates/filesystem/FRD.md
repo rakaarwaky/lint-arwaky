@@ -51,13 +51,13 @@ flowchart TD
 
 - **Data Production Map**
 
-| FR | Output Data |
-| --- | --- |
-| FR-Filesystem-001 | Parsed entries + import data |
-| FR-Filesystem-002 | Dependency graph + symbol maps |
-| FR-Filesystem-003 | File paths, content, I/O operations |
-| FR-Filesystem-004 | Tool availability + resolved paths |
-| FR-Filesystem-005 | Workspace metadata + project language presence flags |
+| FR | Output Data|
+| --- | ---|
+| FR-Filesystem-001 | Parsed entries + import data|
+| FR-Filesystem-002 | Dependency graph + symbol maps|
+| FR-Filesystem-003 | File paths, content, I/O operations|
+| FR-Filesystem-004 | Tool availability + resolved paths|
+| FR-Filesystem-005 | Workspace metadata + project language presence flags|
 
 ---
 
@@ -69,12 +69,12 @@ flowchart TD
 
 **What it produces**: File entries enriched with parse metadata + flat list of import entries, with barrel import resolution.
 
-| Output | Description |
-| --- | --- |
-| Parsed entries | File entries with parse_ok flag and language-specific AST data |
-| Import entries | Source file → target module mapping with resolution status |
-| Resolved imports | Import entries with resolved_path populated via barrel/external resolution |
-| Parse warnings | Diagnostic entries for files that failed to parse |
+| Output | Description|
+| --- | ---|
+| Parsed entries | File entries with parse_ok flag and language-specific AST data|
+| Import entries | Source file → target module mapping with resolution status|
+| Resolved imports | Import entries with resolved_path populated via barrel/external resolution|
+| Parse warnings | Diagnostic entries for files that failed to parse|
 
 **Output**: Parsed file entries with metadata, import entry list, and optional parse warnings.
 
@@ -107,15 +107,15 @@ flowchart TD
 
 **What it produces**: Structured graph data with forward links, reverse links, definitions, implementations, cycles, and orphan detection.
 
-| Output | Description |
-| --- | --- |
-| Dependency graph | File → files it imports (forward edges) |
-| Reverse links | File → files that import it (reverse edges) |
-| Symbol definitions | Symbol name → defining file(s) |
-| Implementations | Trait/interface → implementing file(s) |
-| Reachability | Whether two files are connected via import chain |
-| Cycles | Strongly connected components via Kosaraju algorithm |
-| Orphan files | Nodes with no incoming edges |
+| Output | Description|
+| --- | ---|
+| Dependency graph | File → files it imports (forward edges)|
+| Reverse links | File → files that import it (reverse edges)|
+| Symbol definitions | Symbol name → defining file(s)|
+| Implementations | Trait/interface → implementing file(s)|
+| Reachability | Whether two files are connected via import chain|
+| Cycles | Strongly connected components via Kosaraju algorithm|
+| Orphan files | Nodes with no incoming edges|
 
 **Output**: Dependency graph with forward/reverse edges, symbol maps, implementation maps, reachability queries, cycle detection, and orphan file list.
 
@@ -146,15 +146,15 @@ flowchart TD
 
 **What it produces**: File content, directory listings, path metadata, process execution results.
 
-| Output | Description |
-| --- | --- |
-| File paths | Discovered source file paths from directory walk |
-| File content | String content of source files |
-| Path metadata | Exists, is_dir, is_file, canonicalize, symlinks |
-| Directory listings | Directory entries with ignore filtering |
-| Process output | stdout/stderr/success from git and external commands |
-| Scan timing | Duration breakdown of last scan |
-| Cached content | Repeated reads from DashMap-backed cache |
+| Output | Description|
+| --- | ---|
+| File paths | Discovered source file paths from directory walk|
+| File content | String content of source files|
+| Path metadata | Exists, is_dir, is_file, canonicalize, symlinks|
+| Directory listings | Directory entries with ignore filtering|
+| Process output | stdout/stderr/success from git and external commands|
+| Scan timing | Duration breakdown of last scan|
+| Cached content | Repeated reads from DashMap-backed cache|
 
 **Output**: File paths, content strings, path metadata, directory listings, process results, timing data, and cached content.
 
@@ -186,15 +186,15 @@ flowchart TD
 
 **What it produces**: Tool availability status and resolved command paths.
 
-| Output | Description |
-| --- | --- |
-| PATH detection | Whether executable exists in system PATH |
-| Local binary | Whether executable exists in node_modules/.bin |
-| JS tool command | Resolved command vector for local JS tools |
-| Working directory | Resolved project root for JS/Cargo tools |
-| Config detection | Whether directory contains config files (.eslintrc, tsconfig, etc) |
-| Cargo manifest | Whether Cargo.toml/Cargo.lock exists in ancestors |
-| Python detection | Whether path contains Python files (recursive) |
+| Output | Description|
+| --- | ---|
+| PATH detection | Whether executable exists in system PATH|
+| Local binary | Whether executable exists in node_modules/.bin|
+| JS tool command | Resolved command vector for local JS tools|
+| Working directory | Resolved project root for JS/Cargo tools|
+| Config detection | Whether directory contains config files (.eslintrc, tsconfig, etc)|
+| Cargo manifest | Whether Cargo.toml/Cargo.lock exists in ancestors|
+| Python detection | Whether path contains Python files (recursive)|
 
 **Output**: Tool availability boolean, resolved command vectors, working directory paths, and config detection flags.
 
@@ -223,16 +223,16 @@ flowchart TD
 
 **What it produces**: Workspace structure metadata plus `ProjectLanguagesVO`.
 
-| Output | Description |
-| --- | --- |
-| Workspace root | Root directory of the workspace |
-| Member status | Whether path is a workspace member |
-| Leaf member | Whether path is a member without sub-members |
-| Source directory | Primary source directory (src/, lib/, etc.) |
-| Language detection | ConfigLanguage from file path or manifest markers |
-| Project languages | `ProjectLanguagesVO` — boolean flags for Rust, Python, JS/TS, and Markdown file presence under the root |
-| Container wiring | Whether identifiers are wired in container manifest |
-| Module resolver | Resolved module path relative to base directory |
+| Output | Description|
+| --- | ---|
+| Workspace root | Root directory of the workspace|
+| Member status | Whether path is a workspace member|
+| Leaf member | Whether path is a member without sub-members|
+| Source directory | Primary source directory (src/, lib/, etc.)|
+| Language detection | ConfigLanguage from file path or manifest markers|
+| Project languages | `ProjectLanguagesVO` — boolean flags for Rust, Python, JS/TS, and Markdown file presence under the root|
+| Container wiring | Whether identifiers are wired in container manifest|
+| Module resolver | Resolved module path relative to base directory|
 
 **Output**: Workspace root path, member status flags, source directory path, language enum, project language presence flags, wiring boolean, and resolved module path.
 
@@ -265,77 +265,77 @@ flowchart TD
 
 ### Protocol API
 
-| Method | Input | Output | Error | Event | Description |
+| Method | Input | Output | Error | Event | Description|
 |---|---|---|---|---|---|
-| `path_exists` | &Path | `bool` | — | — | Path exists. |
-| `is_dir` | &Path | `bool` | — | — | Is dir. |
-| `is_file` | &Path | `bool` | — | — | Is file. |
-| `should_ignore` | &crate::common::taxonomy_path_vo::FilePath, &[String] | `bool` | — | — | Should ignore. |
-| `canonicalize` | &Path | `PathBuf` | `std::io::Error` | — | Canonicalize. |
-| `canonicalize_path_str` | &FilePath | `FilePath` | — | — | Canonicalize path str. |
-| `is_symlink` | &Path | `bool` | — | — | Is symlink. |
-| `metadata` | &Path | `std::fs::Metadata` | `std::io::Error` | — | Metadata. |
-| `symlink_metadata` | &Path | `std::fs::Metadata` | `std::io::Error` | — | Symlink metadata. |
-| `get_file_stem` | &'a str | `&'a str` | — | — | Get file stem. |
-| `is_source_file` | &Path | `bool` | — | — | Is source file. |
-| `is_source_ext` | &FileExtension | `bool` | — | — | Is source ext. |
-| `get_basename` | &'a str | `&'a str` | — | — | Get basename. |
-| `get_parent` | &'a str | `&'a str` | — | — | Get parent. |
-| `is_python_file` | &Path | `bool` | — | — | Is python file. |
-| `scan_directory_with_ignored` | &Path, &PatternList | `Vec<PathBuf>` | — | — | Scan directory with ignored. |
-| `is_ignored_dir` | &Path, &PatternList | `bool` | — | — | Is ignored dir. |
-| `read_dir_entries_as_pathbuf` | &Path | `Vec<PathBuf>` | `std::io::Error` | — | Read dir entries as pathbuf. |
-| `read_to_string` | &Path | `ContentString` | `std::io::Error` | — | Read to string. |
-| `write_string` | &Path, &str | `()` | `std::io::Error` | — | Write string. |
-| `copy_file` | &Path, &Path | `ByteCount` | `std::io::Error` | — | Copy file. |
-| `create_dir_all` | &Path | `()` | `std::io::Error` | — | Create dir all. |
-| `remove_dir_all` | &Path | `()` | `std::io::Error` | — | Remove dir all. |
-| `set_permissions` | &Path, FileMode | `()` | `io::Error` | — | Set permissions. |
-| `remove_file` | &Path | `()` | `io::Error` | — | Remove file. |
-| `run_git_command` | &[&str], &str | `GitCommandResult` | — | — | Run git command. |
-| `parse_output_lines` | &str | `ParsedLines` | — | — | Parse output lines. |
-| `run_external_command_in` | &str, &[&str], &str | `(String, String, bool)` | — | — | Run external command in. |
-| `timing` | — | `&ScanTiming` | — | — | Timing. |
-| `build_graph` | &[ImportEntry], &[FileEntry], &[DefinitionEntry], &[ImplEntry] | `` | — | — | Build graph. |
-| `symbol_definitions` | — | `&HashMap<String, Vec<PathBuf>>` | — | — | Symbol definitions. |
-| `implementations` | — | `&HashMap<String, Vec<PathBuf>>` | — | — | Implementations. |
-| `dependents` | &Path | `Vec<PathBuf>` | — | — | Dependents. |
-| `dependencies` | &Path | `Vec<PathBuf>` | — | — | Dependencies. |
-| `reachable` | &Path, &Path | `bool` | — | — | Reachable. |
-| `reverse_links` | — | `&HashMap<PathBuf, Vec<PathBuf>>` | — | — | Reverse links. |
-| `parse_warnings` | — | `&[ParseWarning]` | — | — | Parse warnings. |
-| `import_list` | — | `Vec<ImportEntry>` | — | — | Import list. |
-| `parse_all` | &mut [FileEntry] | `` | — | — | Parse all. |
-| `imports_for` | &Path | `Vec<ImportEntry>` | — | — | Imports for. |
-| `extract` | &Path, &str, Language | `Vec<ImportEntry>` | — | — | Extract. |
-| `resolve_barrel_imports` | &Path | `` | — | — | Resolve barrel imports. |
-| `is_executable_in_path` | &ToolName | `bool` | — | — | Is executable in path. |
-| `is_binary_available` | &ToolName | `bool` | — | — | Is binary available. |
-| `has_local_bin` | &Path, &ToolName | `bool` | — | — | Has local bin. |
-| `resolve_js_cmd` | `&ToolName, Vec<String>, &FilePath` | `Option<Vec<String>>` | — | — | Resolve js cmd. |
-| `resolve_js_working_dir` | &FilePath | `FilePath` | — | — | Resolve js working dir. |
-| `resolve_cargo_working_dir` | &FilePath | `FilePath` | — | — | Resolve cargo working dir. |
-| `resolve_cargo_lock_working_dir` | &FilePath | `FilePath` | — | — | Resolve cargo lock working dir. |
-| `has_config_file` | &Path | `bool` | — | — | Has config file. |
-| `has_cargo_toml` | &FilePath | `Option<FilePath>` | — | — | Has cargo toml. |
-| `has_cargo_lock` | &FilePath | `Option<FilePath>` | — | — | Has cargo lock. |
-| `is_python_file_recursive` | &FilePath | `bool` | — | — | Is python file recursive. |
-| `default_working_dir` | &FilePath | `FilePath` | — | — | Default working dir. |
-| `workspace_root` | &FilePath | `Option<PathBuf>` | — | — | Workspace root. |
-| `find_workspace_root_from_path` | &Path | `PathBuf` | `std::io::Error` | — | Find workspace root from path. |
-| `is_member_path` | &FilePath | `bool` | — | — | Is member path. |
-| `is_leaf_member_path` | &FilePath | `bool` | — | — | Is leaf member path. |
-| `detect_source_dir` | &Path | `PathBuf` | — | — | Detect source dir. |
-| `detect_language_from_path` | &str | `ConfigLanguage` | — | — | Detect language from path. |
-| `check_wired_in_container` | &Path, &PatternList | `bool` | — | — | Check wired in container. |
-| `resolve_orphan_module_path` | &Path, &Path, &str | `Option<PathBuf>` | — | — | Resolve orphan module path. |
-| `detect_project_languages` | &Path | `ProjectLanguagesVO` | — | — | Detect which language groups are present (FR-005B). |
+| `path_exists` | &Path | `bool` | — | — | Path exists.|
+| `is_dir` | &Path | `bool` | — | — | Is dir.|
+| `is_file` | &Path | `bool` | — | — | Is file.|
+| `should_ignore` | &crate::common::taxonomy_path_vo::FilePath, &[String] | `bool` | — | — | Should ignore.|
+| `canonicalize` | &Path | `PathBuf` | `std::io::Error` | — | Canonicalize.|
+| `canonicalize_path_str` | &FilePath | `FilePath` | — | — | Canonicalize path str.|
+| `is_symlink` | &Path | `bool` | — | — | Is symlink.|
+| `metadata` | &Path | `std::fs::Metadata` | `std::io::Error` | — | Metadata.|
+| `symlink_metadata` | &Path | `std::fs::Metadata` | `std::io::Error` | — | Symlink metadata.|
+| `get_file_stem` | &'a str | `&'a str` | — | — | Get file stem.|
+| `is_source_file` | &Path | `bool` | — | — | Is source file.|
+| `is_source_ext` | &FileExtension | `bool` | — | — | Is source ext.|
+| `get_basename` | &'a str | `&'a str` | — | — | Get basename.|
+| `get_parent` | &'a str | `&'a str` | — | — | Get parent.|
+| `is_python_file` | &Path | `bool` | — | — | Is python file.|
+| `scan_directory_with_ignored` | &Path, &PatternList | `Vec<PathBuf>` | — | — | Scan directory with ignored.|
+| `is_ignored_dir` | &Path, &PatternList | `bool` | — | — | Is ignored dir.|
+| `read_dir_entries_as_pathbuf` | &Path | `Vec<PathBuf>` | `std::io::Error` | — | Read dir entries as pathbuf.|
+| `read_to_string` | &Path | `ContentString` | `std::io::Error` | — | Read to string.|
+| `write_string` | &Path, &str | `()` | `std::io::Error` | — | Write string.|
+| `copy_file` | &Path, &Path | `ByteCount` | `std::io::Error` | — | Copy file.|
+| `create_dir_all` | &Path | `()` | `std::io::Error` | — | Create dir all.|
+| `remove_dir_all` | &Path | `()` | `std::io::Error` | — | Remove dir all.|
+| `set_permissions` | &Path, FileMode | `()` | `io::Error` | — | Set permissions.|
+| `remove_file` | &Path | `()` | `io::Error` | — | Remove file.|
+| `run_git_command` | &[&str], &str | `GitCommandResult` | — | — | Run git command.|
+| `parse_output_lines` | &str | `ParsedLines` | — | — | Parse output lines.|
+| `run_external_command_in` | &str, &[&str], &str | `(String, String, bool)` | — | — | Run external command in.|
+| `timing` | — | `&ScanTiming` | — | — | Timing.|
+| `build_graph` | &[ImportEntry], &[FileEntry], &[DefinitionEntry], &[ImplEntry] | `` | — | — | Build graph.|
+| `symbol_definitions` | — | `&HashMap<String, Vec<PathBuf>>` | — | — | Symbol definitions.|
+| `implementations` | — | `&HashMap<String, Vec<PathBuf>>` | — | — | Implementations.|
+| `dependents` | &Path | `Vec<PathBuf>` | — | — | Dependents.|
+| `dependencies` | &Path | `Vec<PathBuf>` | — | — | Dependencies.|
+| `reachable` | &Path, &Path | `bool` | — | — | Reachable.|
+| `reverse_links` | — | `&HashMap<PathBuf, Vec<PathBuf>>` | — | — | Reverse links.|
+| `parse_warnings` | — | `&[ParseWarning]` | — | — | Parse warnings.|
+| `import_list` | — | `Vec<ImportEntry>` | — | — | Import list.|
+| `parse_all` | &mut [FileEntry] | `` | — | — | Parse all.|
+| `imports_for` | &Path | `Vec<ImportEntry>` | — | — | Imports for.|
+| `extract` | &Path, &str, Language | `Vec<ImportEntry>` | — | — | Extract.|
+| `resolve_barrel_imports` | &Path | `` | — | — | Resolve barrel imports.|
+| `is_executable_in_path` | &ToolName | `bool` | — | — | Is executable in path.|
+| `is_binary_available` | &ToolName | `bool` | — | — | Is binary available.|
+| `has_local_bin` | &Path, &ToolName | `bool` | — | — | Has local bin.|
+| `resolve_js_cmd` | `&ToolName, Vec<String>, &FilePath` | `Option<Vec<String>>` | — | — | Resolve js cmd.|
+| `resolve_js_working_dir` | &FilePath | `FilePath` | — | — | Resolve js working dir.|
+| `resolve_cargo_working_dir` | &FilePath | `FilePath` | — | — | Resolve cargo working dir.|
+| `resolve_cargo_lock_working_dir` | &FilePath | `FilePath` | — | — | Resolve cargo lock working dir.|
+| `has_config_file` | &Path | `bool` | — | — | Has config file.|
+| `has_cargo_toml` | &FilePath | `Option<FilePath>` | — | — | Has cargo toml.|
+| `has_cargo_lock` | &FilePath | `Option<FilePath>` | — | — | Has cargo lock.|
+| `is_python_file_recursive` | &FilePath | `bool` | — | — | Is python file recursive.|
+| `default_working_dir` | &FilePath | `FilePath` | — | — | Default working dir.|
+| `workspace_root` | &FilePath | `Option<PathBuf>` | — | — | Workspace root.|
+| `find_workspace_root_from_path` | &Path | `PathBuf` | `std::io::Error` | — | Find workspace root from path.|
+| `is_member_path` | &FilePath | `bool` | — | — | Is member path.|
+| `is_leaf_member_path` | &FilePath | `bool` | — | — | Is leaf member path.|
+| `detect_source_dir` | &Path | `PathBuf` | — | — | Detect source dir.|
+| `detect_language_from_path` | &str | `ConfigLanguage` | — | — | Detect language from path.|
+| `check_wired_in_container` | &Path, &PatternList | `bool` | — | — | Check wired in container.|
+| `resolve_orphan_module_path` | &Path, &Path, &str | `Option<PathBuf>` | — | — | Resolve orphan module path.|
+| `detect_project_languages` | &Path | `ProjectLanguagesVO` | — | — | Detect which language groups are present (FR-005B).|
 
 ### Aggregate API
 
-| Method | Input | Output | Error | Event | Description |
+| Method | Input | Output | Error | Event | Description|
 |---|---|---|---|---|---|
-| `execute` | FilesystemRequest | `FilesystemResponse` | — | — | Single composite entry point over the feature. |
+| `execute` | FilesystemRequest | `FilesystemResponse` | — | — | Single composite entry point over the feature.|
 
 ## Reference
 
@@ -343,4 +343,4 @@ flowchart TD
 - PRD: [PRD.md](../../PRD.md)
 - Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
 
-| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md) |
+| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md)|

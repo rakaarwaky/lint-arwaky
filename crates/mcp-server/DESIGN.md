@@ -13,24 +13,24 @@ success/failure.
 
 ## Design Requirements
 
-| Tool             | File                              | Purpose                                                          | States                     |
-| ---------------- | --------------------------------- | ---------------------------------------------------------------- | -------------------------- |
-| `execute_command`| `surface_mcp_tool_command.rs`     | Run any CLI command. The primary tool.                            | ok / warning / error       |
-| `list_commands`  | `surface_mcp_tool_command.rs`     | List available commands, optionally filtered by domain.           | rendered / error           |
-| `read_skill`     | `surface_mcp_tool_command.rs`     | Read a skill's documentation by section.                          | rendered / not-found       |
-| `health_check`   | `surface_mcp_tool_command.rs`     | Report adapter availability and system state.                     | rendered / degraded        |
-| `get_config`     | `surface_mcp_tool_command.rs`     | Return the effective architecture config for a path and language. | rendered / error           |
-| Request loop     | `surface_mcp_action_command.rs`   | The JSON-RPC request loop: parse, route, respond.                 | uninitialized / ready / busy / error |
+| Tool             | File                              | Purpose                                                          | States                    |
+| ---------------- | --------------------------------- | ---------------------------------------------------------------- | --------------------------|
+| `execute_command`| `surface_mcp_tool_command.rs`     | Run any CLI command. The primary tool.                            | ok / warning / error      |
+| `list_commands`  | `surface_mcp_tool_command.rs`     | List available commands, optionally filtered by domain.           | rendered / error          |
+| `read_skill`     | `surface_mcp_tool_command.rs`     | Read a skill's documentation by section.                          | rendered / not-found      |
+| `health_check`   | `surface_mcp_tool_command.rs`     | Report adapter availability and system state.                     | rendered / degraded       |
+| `get_config`     | `surface_mcp_tool_command.rs`     | Return the effective architecture config for a path and language. | rendered / error          |
+| Request loop     | `surface_mcp_action_command.rs`   | The JSON-RPC request loop: parse, route, respond.                 | uninitialized / ready / busy / error|
 
 ### DS-MCPS-001: Outcome Vocabulary
 
-| Field       | Type    | Meaning                                                                                 |
-| ----------- | ------- | --------------------------------------------------------------------------------------- |
-| `exit_code` | integer | The CLI exit-code contract value: `0` Ok, `1` PolicyFail, `2` RuntimeError, `3` PrerequisiteMissing. Always present. |
-| `status`    | string  | A short, human-oriented label for the same outcome (`ok`, `warning`, or `error`).         |
-| `action`    | string  | The command that ran, echoed back.                                                        |
-| `error`     | string  | Present only when the call could not run at all; accompanied by `exit_code: 2`.           |
-| other       | —       | Per-command payload (e.g. `total_violations`, `results`, `items`, `message`).             |
+| Field       | Type    | Meaning                                                                                |
+| ----------- | ------- | ---------------------------------------------------------------------------------------|
+| `exit_code` | integer | The CLI exit-code contract value: `0` Ok, `1` PolicyFail, `2` RuntimeError, `3` PrerequisiteMissing. Always present.|
+| `status`    | string  | A short, human-oriented label for the same outcome (`ok`, `warning`, or `error`).        |
+| `action`    | string  | The command that ran, echoed back.                                                       |
+| `error`     | string  | Present only when the call could not run at all; accompanied by `exit_code: 2`.          |
+| other       | —       | Per-command payload (e.g. `total_violations`, `results`, `items`, `message`).            |
 
 A `scan` that found violations is a JSON-RPC **success** carrying
 `exit_code: 1`. An agent that branches on transport success reads a failing lint
@@ -121,26 +121,26 @@ which every client reads.
 
 #### States (run-time)
 
-| State          | Condition                                                       | Response                                                                 |
-| -------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| `uninitialized`| A request arrived before the MCP handshake                       | A protocol error; the server waits                                      |
-| `ready`        | The handshake completed and the tool router is live              | Normal tool results                                                      |
-| `busy`         | A tool call is executing                                         | The client waits; the server is single-threaded, with no server-side time limit — the call runs to completion, up to the ~14-minute worst case traced in Request Shape |
-| `error`        | The request was malformed, or the tool failed                    | A JSON-RPC error object carrying the cause                              |
+| State          | Condition                                                       | Response                                                                |
+| -------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------|
+| `uninitialized`| A request arrived before the MCP handshake                       | A protocol error; the server waits                                     |
+| `ready`        | The handshake completed and the tool router is live              | Normal tool results                                                     |
+| `busy`         | A tool call is executing                                         | The client waits; the server is single-threaded, with no server-side time limit — the call runs to completion, up to the ~14-minute worst case traced in Request Shape|
+| `error`        | The request was malformed, or the tool failed                    | A JSON-RPC error object carrying the cause                             |
 
 The server never terminates on a client error. A malformed request is answered
 and the loop continues, because an MCP client may recover and retry.
 
 ### DS-MCPS-007: Error States
 
-| Condition | Behaviour |
-| --- | --- |
-| Malformed JSON on stdin | Return a JSON-RPC parse error and keep the process alive |
-| Unknown method | Return a method-not-found error; do not exit |
-| Tool argument fails to deserialize | Return an invalid-params error naming the field |
-| The underlying CLI command fails | Return the command's output and exit code as a successful tool result, so the client can read why — with `exit_code` carrying `1`/`2`/`3` |
-| A tool call runs long (e.g. `execute_command` running `scan`/`ci` over a large mixed-language workspace) | **No server-side timeout and no cancellation method exist.** The call blocks the single-threaded loop until the underlying command returns; queued calls from the same client wait behind it. The only bound is the external-lint per-adapter ceiling chain (~14 minutes worst case) |
-| A client needs to abandon a blocked call | The protocol surface offers no cancel request. Recovery is client-side: set a client timeout above the worst-case bound, or kill and restart the server process and re-issue the call |
+| Condition | Behaviour|
+| --- | ---|
+| Malformed JSON on stdin | Return a JSON-RPC parse error and keep the process alive|
+| Unknown method | Return a method-not-found error; do not exit|
+| Tool argument fails to deserialize | Return an invalid-params error naming the field|
+| The underlying CLI command fails | Return the command's output and exit code as a successful tool result, so the client can read why — with `exit_code` carrying `1`/`2`/`3`|
+| A tool call runs long (e.g. `execute_command` running `scan`/`ci` over a large mixed-language workspace) | **No server-side timeout and no cancellation method exist.** The call blocks the single-threaded loop until the underlying command returns; queued calls from the same client wait behind it. The only bound is the external-lint per-adapter ceiling chain (~14 minutes worst case)|
+| A client needs to abandon a blocked call | The protocol surface offers no cancel request. Recovery is client-side: set a client timeout above the worst-case bound, or kill and restart the server process and re-issue the call|
 
 **Timeout decision (current contract).** Overall MCP calls remain unbounded; the
 subprocess fallback has a configurable 60-second per-linter timeout, while

@@ -66,13 +66,13 @@ lint-arwaky-cli check .
 
 ### 2. Conventional Commit Guidelines
 
-| Prefix      | Usage                                      |
-| ----------- | ------------------------------------------ |
-| `feat:`     | New feature or capability                  |
-| `fix:`      | Bug fix                                    |
-| `chore:`    | Maintenance, dependency bump, cleanup      |
-| `docs:`     | Documentation changes                      |
-| `refactor:` | Refactoring without behavioral change      |
+| Prefix      | Usage                                     |
+| ----------- | ------------------------------------------|
+| `feat:`     | New feature or capability                 |
+| `fix:`      | Bug fix                                   |
+| `chore:`    | Maintenance, dependency bump, cleanup     |
+| `docs:`     | Documentation changes                     |
+| `refactor:` | Refactoring without behavioral change     |
 
 ### 3. Pull Request Checklist
 
@@ -83,5 +83,5 @@ lint-arwaky-cli check .
 - [ ] The PR description names the contribution path and links the issue.
 
 ## Reference
-| Prd | {Link to PRD.md} | [{link}](PRD.md) |
-| Architecture | {Link to ARCHITECTURE.md} | [{link}](ARCHITECTURE.md) |
+| Prd | {Link to PRD.md} | [{link}](PRD.md)|
+| Architecture | {Link to ARCHITECTURE.md} | [{link}](ARCHITECTURE.md)|

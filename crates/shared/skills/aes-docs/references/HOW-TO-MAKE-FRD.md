@@ -107,7 +107,7 @@ reason.
 | Section              | Why it belongs here                                                                       |
 | -------------------- | ----------------------------------------------------------------------------------------- |
 | Feature Overview     | Orients the reader before the requirements begin.                                         |
-| Functional Requirements | The testable promise; each item is `FR-<FEATURE-NAME-ID>-NNN` with an `Aspect | Detail` entry table. |
+| Functional Requirements | The testable promise; each item is `FR-<FEATURE-NAME-ID>-NNN` with an `Aspect &#124; Detail` entry table. |
 | Public Interface     | Agent / Aggregate / Method / Request / Response surface.                                  |
 | Reference            | Connects the spec to PRD, BACKLOG, ROADMAP, ARCHITECTURE.                                 |
 

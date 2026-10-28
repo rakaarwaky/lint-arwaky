@@ -126,22 +126,22 @@ flowchart TD
 
 ### Protocol API
 
-| Method | Input | Output | Error | Event | Description |
+| Method | Input | Output | Error | Event | Description|
 |---|---|---|---|---|---|
-| `start` / `subscribe` / `stop` | `&WatchConfig` / `—` / `—` | `Result<(), WatchServiceError>` / `Receiver` / `Result<(), WatchServiceError>` | — | — | Watch lifecycle. |
-| `filter_events` | `Vec<WatchEvent>` | `Vec<WatchEvent>` | — | — | Deduplicate then filter to lintable extensions. |
-| `lint_changed` | `&WatchEvent` | `Result<(), WatchServiceError>` | — | — | Run lint pipeline on a changed file. |
+| `start` / `subscribe` / `stop` | `&WatchConfig` / `—` / `—` | `Result<(), WatchServiceError>` / `Receiver` / `Result<(), WatchServiceError>` | — | — | Watch lifecycle.|
+| `filter_events` | `Vec<WatchEvent>` | `Vec<WatchEvent>` | — | — | Deduplicate then filter to lintable extensions.|
+| `lint_changed` | `&WatchEvent` | `Result<(), WatchServiceError>` | — | — | Run lint pipeline on a changed file.|
 
 ### Aggregate API
 
-| Method | Input | Output | Error | Event | Description |
+| Method | Input | Output | Error | Event | Description|
 |---|---|---|---|---|---|
-| `execute` | `WatchRequest` | `WatchResponse` | — | — | Single composite entry point over the feature. |
+| `execute` | `WatchRequest` | `WatchResponse` | — | — | Single composite entry point over the feature.|
 
 ## Reference
 
 - PRD: [PRD.md](../../PRD.md)
 - Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this crate; this file is specification only.
 
-| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md) |
-| Architecture | {Link to ARCHITECTURE.md} | [{link}](ARCHITECTURE.md) |
+| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md)|
+| Architecture | {Link to ARCHITECTURE.md} | [{link}](ARCHITECTURE.md)|

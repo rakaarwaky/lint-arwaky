@@ -61,11 +61,11 @@ metadata:
 The **test types** decide which prefixes, which directories, and which coverage floor apply.
 Rules, templates, section contracts, and Verify blocks live in the language HOW-TUs under [`references/`](references/).
 
-| Language | Focus | Body rule | HOW-TO |
-| -------- | ----- | --------- | ------ |
-| Python | Test suite | Flat prefix naming; tests/ + benches/; no inline tests | [references/HOW-TO-MAKE-PYTHON-TESTING.md](references/HOW-TO-MAKE-PYTHON-TESTING.md) |
-| Rust | Test suite | Flat prefix naming; tests/ + benches/; no inline tests | [references/HOW-TO-MAKE-RUST-TESTING.md](references/HOW-TO-MAKE-RUST-TESTING.md) |
-| TypeScript | Test suite | Flat prefix naming; tests/ + benches/; no inline tests | [references/HOW-TO-MAKE-TYPESCRIPT-TESTING.md](references/HOW-TO-MAKE-TYPESCRIPT-TESTING.md) |
+| Language | Focus | Body rule | HOW-TO|
+| -------- | ----- | --------- | ------|
+| Python | Test suite | Flat prefix naming; tests/ + benches/; no inline tests | [references/HOW-TO-MAKE-PYTHON-TESTING.md](references/HOW-TO-MAKE-PYTHON-TESTING.md)|
+| Rust | Test suite | Flat prefix naming; tests/ + benches/; no inline tests | [references/HOW-TO-MAKE-RUST-TESTING.md](references/HOW-TO-MAKE-RUST-TESTING.md)|
+| TypeScript | Test suite | Flat prefix naming; tests/ + benches/; no inline tests | [references/HOW-TO-MAKE-TYPESCRIPT-TESTING.md](references/HOW-TO-MAKE-TYPESCRIPT-TESTING.md)|
 
 **The test chain:**
 
@@ -82,33 +82,33 @@ Layout, placement, and naming are machine-checked by **AES103** (prefix legality
 and flatness) and **AES704** (category coverage), so the linter reports what a
 reader would otherwise have to catch.
 
-| Layer | Rule |
-| ----- | ---- |
-| Placement | Tests live in `tests/`, benchmarks in `benches/` — never inline in `src/`. |
-| Naming | Flat prefix IS the virtual folder: `<type>_<subject>.<ext>` / `bench_<subject>.<ext>` — no subdirectories (**AES103**). |
-| Coverage | Every one of the seven test types is required, plus one benchmark — none are optional (**AES704**). |
-| Benchmarks | Use the language benchmark library (`pytest-benchmark`, `criterion`, `vitest/benchmark`) — never hand-rolled timing; Rust registers `[[bench]]`. |
-| Contract | Proves the protocol/trait/interface implementation exists before behaviour tests. |
-| Unit | Happy path, edge cases, error paths — one public function each. |
-| Integration | Uses the real DI container / entry point (module, crate, or package wiring). |
-| E2E | Hits the real CLI/API/entry point and asserts on real output. |
-| Acceptance | Maps 1:1 to a business requirement (FRD/PRD ID). |
-| Smoke | Completes in under 5 seconds. |
-| Line coverage | Per-layer floor: capabilities 70%, agent 60%, utility 50%. |
-| Verify | Language run command → green, and `lint-arwaky-cli scan .` → 0 for AES103/AES704. |
+| Layer | Rule|
+| ----- | ----|
+| Placement | Tests live in `tests/`, benchmarks in `benches/` — never inline in `src/`.|
+| Naming | Flat prefix IS the virtual folder: `<type>_<subject>.<ext>` / `bench_<subject>.<ext>` — no subdirectories (**AES103**).|
+| Coverage | Every one of the seven test types is required, plus one benchmark — none are optional (**AES704**).|
+| Benchmarks | Use the language benchmark library (`pytest-benchmark`, `criterion`, `vitest/benchmark`) — never hand-rolled timing; Rust registers `[[bench]]`.|
+| Contract | Proves the protocol/trait/interface implementation exists before behaviour tests.|
+| Unit | Happy path, edge cases, error paths — one public function each.|
+| Integration | Uses the real DI container / entry point (module, crate, or package wiring).|
+| E2E | Hits the real CLI/API/entry point and asserts on real output.|
+| Acceptance | Maps 1:1 to a business requirement (FRD/PRD ID).|
+| Smoke | Completes in under 5 seconds.|
+| Line coverage | Per-layer floor: capabilities 70%, agent 60%, utility 50%.|
+| Verify | Language run command → green, and `lint-arwaky-cli scan .` → 0 for AES103/AES704.|
 
 Test-type reference (prefix · directory · scope · speed · runs when):
 
-| Prefix | Directory | Scope | Speed | Runs when |
-| ------ | --------- | ----- | ----- | --------- |
-| `contract_` | tests/ | Protocol/trait/interface impl exists | ms | Every PR |
-| `unit_` | tests/ | One public function | ms | Every PR |
-| `integration_` | tests/ | Module / crate / package + DI wiring | ms–s | Every PR |
-| `dogfood_` | tests/ | CLI against live service/session; skip if unavailable | s–min | Local only; skip CI |
-| `smoke_` | tests/ | App boots + responds | <5s | Every PR |
-| `e2e_` | tests/ | Full request lifecycle | s | Every PR (critical path) |
-| `acceptance_` | tests/ | Business requirement met | s | Every PR / release gate |
-| `bench_` | benches/ | Performance regression | s–min | Release gate / nightly |
+| Prefix | Directory | Scope | Speed | Runs when|
+| ------ | --------- | ----- | ----- | ---------|
+| `contract_` | tests/ | Protocol/trait/interface impl exists | ms | Every PR|
+| `unit_` | tests/ | One public function | ms | Every PR|
+| `integration_` | tests/ | Module / crate / package + DI wiring | ms–s | Every PR|
+| `dogfood_` | tests/ | CLI against live service/session; skip if unavailable | s–min | Local only; skip CI|
+| `smoke_` | tests/ | App boots + responds | <5s | Every PR|
+| `e2e_` | tests/ | Full request lifecycle | s | Every PR (critical path)|
+| `acceptance_` | tests/ | Business requirement met | s | Every PR / release gate|
+| `bench_` | benches/ | Performance regression | s–min | Release gate / nightly|
 
 Coverage targets: capabilities 70% · agent 60% · utility 50%.
 
@@ -117,10 +117,10 @@ Coverage targets: capabilities 70% · agent 60% · utility 50%.
 Both halves of this layout are machine-checked. Run the linter rather than
 eyeballing a tree.
 
-| Code  | Crate            | Question it answers                                                              |
-| ----- | ---------------- | -------------------------------------------------------------------------------- |
-| AES103 | `naming-rules`    | Is each file's prefix legal, and does either directory nest?                     |
-| AES704 | `structure-rules` | Is every category present — one file per type, plus the benchmark?               |
+| Code  | Crate            | Question it answers                                                            |
+| ----- | ---------------- | --------------------------------------------------------------------------------|
+| AES103 | `naming-rules`    | Is each file's prefix legal, and does either directory nest?                   |
+| AES704 | `structure-rules` | Is every category present — one file per type, plus the benchmark?             |
 
 ```bash
 lint-arwaky-cli scan .          # both fire on a non-conforming layout
@@ -234,4 +234,3 @@ need a reader (HOW-TO § Rules):
 - `aes-agent`
 - `aes-utility`
 - `aes-lint-arwaky`
-

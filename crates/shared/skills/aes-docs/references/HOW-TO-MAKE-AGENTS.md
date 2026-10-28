@@ -1,9 +1,9 @@
-# HOW TO MAKE [AGENTS.md](http://AGENTS.md)
-
 ---
 trigger: always
 description: "{Project} operational guide."
 ---
+
+# HOW TO MAKE [AGENTS.md](http://AGENTS.md)
 
 ## Rules
 
@@ -108,11 +108,11 @@ repeated as H2s in `AGENTS.md`.
 | --------------------- | ------------------------------------------------------------------------------------------------------------ |
 | Frontmatter           | Loads the file unconditionally in rule-style harnesses. Skip when harness discovers plain `AGENTS.md`.       |
 | Agent Overview        | Tells the agent what it must know before generating code, docs, or suggestions in this workspace.            |
-| Runtime               | Language, Environment, Artifacts, Package Manager, Version Probe, Setup, Activation — `Aspect | Detail`.   |
-| Project Structure     | `Path | Purpose` per crate/workspace member, so the next session navigates the tree without crawling it.    |
-| Commands              | `Category | Command | Scope | CI Gate` — every gate verbatim as CI runs it. Highest-value section. Never skip. |
-| Documentation Awareness| `Document | Agent Must` — maps each spec doc to the agent's duty toward it.                                |
-| Reference             | `Artifact | Purpose | Link` — PRD, FRD, DATA, DESIGN, Architecture.                                      |
+| Runtime               | Language, Environment, Artifacts, Package Manager, Version Probe, Setup, Activation — `Aspect &#124; Detail`.   |
+| Project Structure     | `Path &#124; Purpose` per crate/workspace member, so the next session navigates the tree without crawling it.    |
+| Commands              | `Category &#124; Command &#124; Scope &#124; CI Gate` — every gate verbatim as CI runs it. Highest-value section. Never skip. |
+| Documentation Awareness| `Document &#124; Agent Must` — maps each spec doc to the agent's duty toward it.                                |
+| Reference             | `Artifact &#124; Purpose &#124; Link` — PRD, FRD, DATA, DESIGN, Architecture.                                      |
 
 ---
 

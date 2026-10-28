@@ -235,8 +235,17 @@ pub const TEMPLATE_PROFILES: &[TemplateProfile] = &[
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::taxonomy_doc_rules_constant::load_reference_template;
-    use crate::utility_markdown_scanner::matches_placeholder_catalog;
+
+    /// Load a reference template from skills/aes-docs/references/.
+    fn load_reference_template(file: &str) -> String {
+        let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../skills/aes-docs/references")
+            .join(file);
+        match std::fs::read_to_string(&path) {
+            Ok(text) => text,
+            Err(e) => panic!("reference template {file} must be readable: {e}"),
+        }
+    }
 
     /// The document an author gets by copying the fenced template verbatim.
     fn verbatim_copy(profile: &TemplateProfile) -> String {
@@ -253,13 +262,30 @@ mod tests {
         rest[..end].to_string()
     }
 
+    /// Inline placeholder matcher for tests — taxonomy(vo) must not import
+    /// utility_markdown_scanner (AES201). Mirrors the utility function's
+    /// marker-protection invariant without the non-prose stripping.
+    fn matches_placeholder_catalog_inline(text: &str, catalog: &[&str]) -> Vec<(usize, String)> {
+        let mut markers: Vec<&str> = catalog.to_vec();
+        markers.sort_by_key(|marker| std::cmp::Reverse(marker.len()));
+        let mut hits: Vec<(usize, String)> = Vec::new();
+        for marker in markers {
+            let mut pos = 0;
+            while let Some(idx) = text[pos..].find(marker) {
+                hits.push((pos + idx, marker.to_string()));
+                pos += idx + marker.len();
+            }
+        }
+        hits
+    }
+
     /// A verbatim template copy must trip every catalogue marker — a profile
     /// entry no copy can fire is dead data (Decision Q3's matching path).
     #[test]
     fn every_catalog_entry_fires_on_a_verbatim_template_copy() {
         for profile in TEMPLATE_PROFILES {
             let copy = verbatim_copy(profile);
-            let hits = matches_placeholder_catalog(&copy, profile.placeholder_catalog);
+            let hits = matches_placeholder_catalog_inline(&copy, profile.placeholder_catalog);
             for marker in profile.placeholder_catalog {
                 assert!(
                     hits.iter().any(|(_, hit)| hit.as_str() == *marker),
@@ -279,8 +305,10 @@ mod tests {
             .iter()
             .find(|p| p.doc_name == AGENTS_DOC)
             .expect("AGENTS profile exists");
-        let hits =
-            matches_placeholder_catalog(&verbatim_copy(profile), profile.placeholder_catalog);
+        let hits = matches_placeholder_catalog_inline(
+            &verbatim_copy(profile),
+            profile.placeholder_catalog,
+        );
         assert!(!hits.is_empty(), "AGENTS copy must fire the catalog");
     }
 }

@@ -149,18 +149,18 @@ branch, not a new aggregate method.
 
 Every contract file is required to carry the rows that apply. Each exists for one reason.
 
-| Section                                  | Why it belongs here                                                                     |
-| ---------------------------------------- | --------------------------------------------------------------------------------------- |
-| Module docstring (required)              | Names the feature and the seams in the file.                                            |
-| Suffix in file + type names              | AES101/AES102 resolve `_protocol` vs `_aggregate` from the name.                        |
-| One file per feature                     | All seams of a feature live together; consumers import from one module.                 |
-| One interface per capability seam        | An interface lists only what its capability owns, so implementation is always complete. |
-| Rich named methods, one return type each | Protocol interfaces: each method has one VO return; no dispatch bag.       |
-| Signature-only interface                 | Outer layers depend on promises, not behaviour.                                         |
-| Aggregate: exactly one method            | Consumers depend on one stable entry point, not a shifting method list.                 |
-| Shared VOs in signatures                 | Numeric and string domain values stay behind VOs; only `boolean` is permitted bare. |
-| No impl-layer imports                    | Keeps the dependency arrow (capabilities → contract ← agent).                           |
-| Register in shared `index.ts`            | Importable without reaching into private modules.                                       |
+| Section                                  | Why it belongs here                                                                   |
+| ---------------------------------------- | ---------------------------------------------------------------------------------------|
+| Module docstring (required)              | Names the feature and the seams in the file.                                          |
+| Suffix in file + type names              | AES101/AES102 resolve `_protocol` vs `_aggregate` from the name.                      |
+| One file per feature                     | All seams of a feature live together; consumers import from one module.               |
+| One interface per capability seam        | An interface lists only what its capability owns, so implementation is always complete.|
+| Rich named methods, one return type each | Protocol interfaces: each method has one VO return; no dispatch bag.     |
+| Signature-only interface                 | Outer layers depend on promises, not behaviour.                                       |
+| Aggregate: exactly one method            | Consumers depend on one stable entry point, not a shifting method list.               |
+| Shared VOs in signatures                 | Numeric and string domain values stay behind VOs; only `boolean` is permitted bare.|
+| No impl-layer imports                    | Keeps the dependency arrow (capabilities → contract ← agent).                         |
+| Register in shared `index.ts`            | Importable without reaching into private modules.                                     |
 
 ---
 

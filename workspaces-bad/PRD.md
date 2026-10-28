@@ -8,7 +8,7 @@ No project requirements; see the ROADMAP for the state vocabulary used across th
 
 ## Reference
 
-| Artifact | Purpose | Link |
+| Artifact | Purpose | Link|
 |---|---|---|
-| ROADMAP | Roadmap and state vocabulary | [ROADMAP.md](ROADMAP.md) |
-| ARCHITECTURE | Layer contract | [ARCHITECTURE.md](ARCHITECTURE.md) |
+| ROADMAP | Roadmap and state vocabulary | [ROADMAP.md](ROADMAP.md)|
+| ARCHITECTURE | Layer contract | [ARCHITECTURE.md](ARCHITECTURE.md)|

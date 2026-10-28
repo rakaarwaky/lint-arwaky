@@ -205,17 +205,17 @@ flowchart TD
 
   - Checks all 9 adapters via version command:
 
-    | Adapter     | Language |
-    | ------------- | ---------- |
-    | clippy      | Rust     |
-    | rustfmt     | Rust     |
-    | cargo-audit | Rust     |
-    | ruff        | Python   |
-    | mypy        | Python   |
-    | bandit      | Python   |
-    | eslint      | JS/TS    |
-    | prettier    | JS/TS    |
-    | tsc         | JS/TS    |
+    | Adapter     | Language|
+    | ------------- | ----------|
+    | clippy      | Rust    |
+    | rustfmt     | Rust    |
+    | cargo-audit | Rust    |
+    | ruff        | Python  |
+    | mypy        | Python  |
+    | bandit      | Python  |
+    | eslint      | JS/TS   |
+    | prettier    | JS/TS   |
+    | tsc         | JS/TS   |
 
   - Each adapter checked via its version command (e.g., `ruff --version`).
   - Available is `true` if version command succeeds, `false` otherwise.
@@ -268,23 +268,23 @@ flowchart TD
 
 ### Protocol API
 
-| Method | Input | Output | Error | Event | Description |
+| Method | Input | Output | Error | Event | Description|
 |---|---|---|---|---|---|
-| `diagnose_toolchain` | — | `ToolchainDiagnostics` | — | — | Diagnose toolchain. |
-| `health_check` | — | `HealthCheckResult` | — | — | Health check. |
-| `run_security_scan` | &FilePath | `SecurityScanReport` | — | — | Run security scan. |
-| `run_dependency_report` | &FilePath | `DependencyReport` | `String` | — | Run dependency report. |
-| `stats` | &FilePath | `MaintenanceStatsVO` | — | — | Stats. |
-| `clean` | — | `` | — | — | Clean. |
-| `update` | — | `` | — | — | Update. |
-| `doctor` | — | `DoctorResultVO` | — | — | Doctor. |
-| `self_update` | bool | `SelfUpdateResultVO` | — | — | Self update. |
+| `diagnose_toolchain` | — | `ToolchainDiagnostics` | — | — | Diagnose toolchain.|
+| `health_check` | — | `HealthCheckResult` | — | — | Health check.|
+| `run_security_scan` | &FilePath | `SecurityScanReport` | — | — | Run security scan.|
+| `run_dependency_report` | &FilePath | `DependencyReport` | `String` | — | Run dependency report.|
+| `stats` | &FilePath | `MaintenanceStatsVO` | — | — | Stats.|
+| `clean` | — | `` | — | — | Clean.|
+| `update` | — | `` | — | — | Update.|
+| `doctor` | — | `DoctorResultVO` | — | — | Doctor.|
+| `self_update` | bool | `SelfUpdateResultVO` | — | — | Self update.|
 
 ### Aggregate API
 
-| Method | Input | Output | Error | Event | Description |
+| Method | Input | Output | Error | Event | Description|
 |---|---|---|---|---|---|
-| `execute` | MaintenanceRequest | `MaintenanceResponse` | — | — | Single composite entry point over the feature. |
+| `execute` | MaintenanceRequest | `MaintenanceResponse` | — | — | Single composite entry point over the feature.|
 
 ## Reference
 
@@ -292,4 +292,4 @@ flowchart TD
 - Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature; this file is specification only.
 - Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
 
-| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md) |
+| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md)|

@@ -8,11 +8,11 @@ The structure-rules crate enforces the 7-layer AES folder discipline by auditing
 
 ### FR-STR-001: Shared Folder Purity and Documentation (AES701)
 
-| Aspect         | Detail                                      |
+| Aspect         | Detail                                     |
 |----------------|---------------------------------------------|
-| Description    | {FR-STR-001 description}                     |
-| Business Rules | {business rules}                          |
-| Edge Cases     | {edge cases}                              |
+| Description    | {FR-STR-001 description}                    |
+| Business Rules | {business rules}                         |
+| Edge Cases     | {edge cases}                             |
 
 - **Description**: Audit shared/kernel folders for forbidden file types and require the doc pair.
 - **Input**: An audit root path and the filesystem inventory of each shared folder.
@@ -26,11 +26,11 @@ The structure-rules crate enforces the 7-layer AES folder discipline by auditing
 
 ### FR-STR-002: Feature Folder Health and Documentation (AES702)
 
-| Aspect         | Detail                                      |
+| Aspect         | Detail                                     |
 |----------------|---------------------------------------------|
-| Description    | {FR-STR-002 description}                     |
-| Business Rules | {business rules}                          |
-| Edge Cases     | {edge cases}                              |
+| Description    | {FR-STR-002 description}                    |
+| Business Rules | {business rules}                         |
+| Edge Cases     | {edge cases}                             |
 
 - **Description**: Audit feature folders for completeness (capabilities + orchestrator + root composition wiring), forbid foreign layer files, and require the doc pair.
 - **Input**: An audit root path and the filesystem inventory of each candidate feature folder.
@@ -48,11 +48,11 @@ The structure-rules crate enforces the 7-layer AES folder discipline by auditing
 
 ### FR-STR-003: Surface Folder Purity and Documentation (AES703)
 
-| Aspect         | Detail                                      |
+| Aspect         | Detail                                     |
 |----------------|---------------------------------------------|
-| Description    | {FR-STR-003 description}                     |
-| Business Rules | {business rules}                          |
-| Edge Cases     | {edge cases}                              |
+| Description    | {FR-STR-003 description}                    |
+| Business Rules | {business rules}                         |
+| Edge Cases     | {edge cases}                             |
 
 - **Description**: Audit surface-dominated folders for misplaced files and require DESIGN.md + BACKLOG.md.
 - **Input**: An audit root path and the filesystem inventory of each surface-dominated folder.
@@ -68,11 +68,11 @@ The structure-rules crate enforces the 7-layer AES folder discipline by auditing
 
 ### FR-STR-004: Test Suite Category Coverage (AES704)
 
-| Aspect         | Detail                                      |
+| Aspect         | Detail                                     |
 |----------------|---------------------------------------------|
-| Description    | {FR-STR-004 description}                     |
-| Business Rules | {business rules}                          |
-| Edge Cases     | {edge cases}                              |
+| Description    | {FR-STR-004 description}                    |
+| Business Rules | {business rules}                         |
+| Edge Cases     | {edge cases}                             |
 
 - **Description**: Require every feature folder that owns source to carry one file per test type in `tests/` and at least one benchmark in `benches/`.
 - **Input**: An audit root path and the filesystem inventory of each candidate feature folder.
@@ -90,11 +90,11 @@ The structure-rules crate enforces the 7-layer AES folder discipline by auditing
 
 ### FR-STR-005: Member-Root File Placement (AES705)
 
-| Aspect         | Detail                                      |
+| Aspect         | Detail                                     |
 |----------------|---------------------------------------------|
-| Description    | {FR-STR-005 description}                     |
-| Business Rules | {business rules}                          |
-| Edge Cases     | {edge cases}                              |
+| Description    | {FR-STR-005 description}                    |
+| Business Rules | {business rules}                         |
+| Edge Cases     | {edge cases}                             |
 
 - **Description**: Require `crates/`, `modules/`, and `packages/` to hold folders and wiring only; a layer file loose at a member root belongs inside the folder that owns it.
 - **Input**: An audit root path and the top-level entries of every member dir.
@@ -111,23 +111,23 @@ The structure-rules crate enforces the 7-layer AES folder discipline by auditing
 
 ### Protocol API
 
-| Method | Input | Output | Error | Event | Description |
+| Method | Input | Output | Error | Event | Description|
 |--------|-------|--------|-------|-------|-------------|
-| `audit_shared` | `StructureRequest::AuditAll { root }` | `StructureResponse::Findings { findings }` | I/O error on path read | — | Walk the kernel folders and report shared-folder purity and documentation findings (AES701). |
-| `audit_feature` | `StructureRequest::AuditAll { root }` | `StructureResponse::Findings { findings }` | I/O error on path read | — | Classify each feature folder and report folder health and documentation findings (AES702). |
-| `audit_surface` | `StructureRequest::AuditAll { root }` | `StructureResponse::Findings { findings }` | I/O error on path read | — | Report surface-folder purity and documentation findings, sorted and deduplicated (AES703). |
-| `audit_test_suite` | `StructureRequest::AuditAll { root }` | `StructureResponse::Findings { findings }` | I/O error on path read | — | Report the test category each feature folder still owes — one finding per absent type, plus any missing test or benchmark directory (AES704). |
+| `audit_shared` | `StructureRequest::AuditAll { root }` | `StructureResponse::Findings { findings }` | I/O error on path read | — | Walk the kernel folders and report shared-folder purity and documentation findings (AES701).|
+| `audit_feature` | `StructureRequest::AuditAll { root }` | `StructureResponse::Findings { findings }` | I/O error on path read | — | Classify each feature folder and report folder health and documentation findings (AES702).|
+| `audit_surface` | `StructureRequest::AuditAll { root }` | `StructureResponse::Findings { findings }` | I/O error on path read | — | Report surface-folder purity and documentation findings, sorted and deduplicated (AES703).|
+| `audit_test_suite` | `StructureRequest::AuditAll { root }` | `StructureResponse::Findings { findings }` | I/O error on path read | — | Report the test category each feature folder still owes — one finding per absent type, plus any missing test or benchmark directory (AES704).|
 
 ### Aggregate API
 
-| Method | Input | Output | Error | Event | Description |
+| Method | Input | Output | Error | Event | Description|
 |--------|-------|--------|-------|-------|-------------|
-| `execute` | `StructureRequest` | `StructureResponse` | I/O error on path read | — | Public aggregate entry point; routes to the appropriate auditor |
+| `execute` | `StructureRequest` | `StructureResponse` | I/O error on path read | — | Public aggregate entry point; routes to the appropriate auditor|
 
 ## Reference
 
 - PRD: [PRD.md](../../PRD.md)
 - Backlog: [BACKLOG.md](BACKLOG.md)
 
-| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md) |
-| Architecture | {Link to ARCHITECTURE.md} | [{link}](ARCHITECTURE.md) |
+| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md)|
+| Architecture | {Link to ARCHITECTURE.md} | [{link}](ARCHITECTURE.md)|

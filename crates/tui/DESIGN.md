@@ -14,21 +14,21 @@ monochrome default in one place.
 
 ## Design Requirements
 
-| Component                   | File                              | States                                    | Token map                             |
-| --------------------------- | --------------------------------- | ----------------------------------------- | ------------------------------------- |
-| Event loop and app state    | `surface_tui_command.rs`          | running / idle                            | `BACKGROUND`                         |
-| Action handler              | `surface_lint_action.rs`          | running / results / clean / error         | —                                     |
-| Keystroke mapping           | `surface_event_action.rs`         | idle / ignored-while-running              | `KEY`                                |
-| Path-entry screen           | `surface_path_screen.rs`          | empty / filled / focused / confirmed      | `PATH_INPUT`, `FOCUS_CONFIRM`         |
-| File-tree pane              | `surface_tree_view.rs`            | browsing / selected                       | `DIRECTORY`, `LABEL`, `HIGHLIGHT`     |
-| File-list pane              | `surface_file_list_view.rs`       | browsing / selected                       | `LABEL`, `HIGHLIGHT`                 |
-| Findings preview pane       | `surface_preview_view.rs`         | results / clean / error                   | `VIOLATIONS`, `CLEAN`                 |
-| Status line                 | `surface_status_component.rs`     | idle / busy / clean / error               | `PENDING`, `CLEAN`, `VIOLATIONS`      |
-| Shortcut hint bar           | `surface_shortcut_component.rs`   | idle / busy-acknowledgement               | `LABEL`, `SEPARATOR`, `KEY`           |
-| Log controller              | `surface_log_controller.rs`       | streaming / idle                          | `SEPARATOR`                          |
-| Theme and colour resolution | `utility_tui_theme.rs`           | colour / no-colour                        | all tokens                           |
-| Report rendering            | `utility_report_formatter.rs`     | rendered                                 | `LABEL`                              |
-| Directory listing           | `utility_file_system.rs`          | ok / error                                | —                                     |
+| Component                   | File                              | States                                    | Token map                            |
+| --------------------------- | --------------------------------- | ----------------------------------------- | -------------------------------------|
+| Event loop and app state    | `surface_tui_command.rs`          | running / idle                            | `BACKGROUND`                        |
+| Action handler              | `surface_lint_action.rs`          | running / results / clean / error         | —                                    |
+| Keystroke mapping           | `surface_event_action.rs`         | idle / ignored-while-running              | `KEY`                               |
+| Path-entry screen           | `surface_path_screen.rs`          | empty / filled / focused / confirmed      | `PATH_INPUT`, `FOCUS_CONFIRM`        |
+| File-tree pane              | `surface_tree_view.rs`            | browsing / selected                       | `DIRECTORY`, `LABEL`, `HIGHLIGHT`    |
+| File-list pane              | `surface_file_list_view.rs`       | browsing / selected                       | `LABEL`, `HIGHLIGHT`                |
+| Findings preview pane       | `surface_preview_view.rs`         | results / clean / error                   | `VIOLATIONS`, `CLEAN`                |
+| Status line                 | `surface_status_component.rs`     | idle / busy / clean / error               | `PENDING`, `CLEAN`, `VIOLATIONS`     |
+| Shortcut hint bar           | `surface_shortcut_component.rs`   | idle / busy-acknowledgement               | `LABEL`, `SEPARATOR`, `KEY`          |
+| Log controller              | `surface_log_controller.rs`       | streaming / idle                          | `SEPARATOR`                         |
+| Theme and colour resolution | `utility_tui_theme.rs`           | colour / no-colour                        | all tokens                          |
+| Report rendering            | `utility_report_formatter.rs`     | rendered                                 | `LABEL`                             |
+| Directory listing           | `utility_file_system.rs`          | ok / error                                | —                                    |
 
 ### DS-TUIC-001: Contrast Ownership
 
@@ -63,41 +63,41 @@ neutral.
 
 #### Base Surfaces
 
-| Token        | Value     | Usage                                       |
-| ------------ | --------- | ------------------------------------------- |
-| `BACKGROUND` | `Black`   | default canvas behind every pane            |
-| `HIGHLIGHT`  | `DarkGray`| selection band in the tree and file list    |
+| Token        | Value     | Usage                                      |
+| ------------ | --------- | -------------------------------------------|
+| `BACKGROUND` | `Black`   | default canvas behind every pane           |
+| `HIGHLIGHT`  | `DarkGray`| selection band in the tree and file list   |
 
 #### Primary Accent
 
-| Token   | Value  | Usage                                                 |
-| ------- | ------ | ----------------------------------------------------- |
-| `ACCENT`| `Cyan` | window header; the surface's identity colour          |
-| `HEADER`| `Cyan` | the header row itself                                  |
+| Token   | Value  | Usage                                                |
+| ------- | ------ | -----------------------------------------------------|
+| `ACCENT`| `Cyan` | window header; the surface's identity colour         |
+| `HEADER`| `Cyan` | the header row itself                                 |
 
 #### Secondary Accent
 
-| Token            | Value      | Usage                                          |
-| ---------------- | ---------- | ---------------------------------------------- |
-| `DIRECTORY`      | `Blue`     | directory rows in the tree                      |
-| `CAPABILITIES_BADGE` | `Magenta` | AES layer badge shown beside a file name    |
+| Token            | Value      | Usage                                         |
+| ---------------- | ---------- | ----------------------------------------------|
+| `DIRECTORY`      | `Blue`     | directory rows in the tree                     |
+| `CAPABILITIES_BADGE` | `Magenta` | AES layer badge shown beside a file name   |
 
 #### System Diagnostics
 
-| Token           | Value  | Usage                                              |
-| --------------- | ------ | -------------------------------------------------- |
-| `VIOLATIONS`    | `Red`  | a finding row; the most saturated token on screen   |
-| `CLEAN`         | `Green` | an explicit clean result, never an empty pane      |
-| `PENDING`       | `Yellow` | work in progress that is not yet a finding        |
-| `FOCUS_CONFIRM` | `Green` | the confirm affordance on the path-entry screen    |
+| Token           | Value  | Usage                                             |
+| --------------- | ------ | --------------------------------------------------|
+| `VIOLATIONS`    | `Red`  | a finding row; the most saturated token on screen  |
+| `CLEAN`         | `Green` | an explicit clean result, never an empty pane     |
+| `PENDING`       | `Yellow` | work in progress that is not yet a finding       |
+| `FOCUS_CONFIRM` | `Green` | the confirm affordance on the path-entry screen   |
 
 #### Hairlines and Contours
 
-| Token      | Value      | Usage                                       |
-| ---------- | ---------- | ------------------------------------------- |
-| `SEPARATOR`| `DarkGray` | rules between panes and above the status bar |
-| `SCROLLBAR`| `DarkGray` | scrollbar track and thumb                    |
-| `LABEL`    | `White`    | primary body text                            |
+| Token      | Value      | Usage                                      |
+| ---------- | ---------- | -------------------------------------------|
+| `SEPARATOR`| `DarkGray` | rules between panes and above the status bar|
+| `SCROLLBAR`| `DarkGray` | scrollbar track and thumb                   |
+| `LABEL`    | `White`    | primary body text                           |
 
 `KEY` and `PATH_INPUT` share `Yellow` with `PENDING` deliberately: a keystroke,
 the field awaiting one, and work in progress are the same class of "the user
@@ -109,11 +109,11 @@ There is no size scale. A terminal cell has one font and one size, so hierarchy
 comes from colour role and emphasis, never from a point size — a larger stop
 cannot map to anything, so the rule is dropped rather than faked.
 
-| Role      | Token(s)              | Usage                                  |
-| --------- | --------------------- | -------------------------------------- |
-| Body      | `LABEL`               | file names, finding messages           |
-| Emphasis  | `ACCENT`, `VIOLATIONS`| header, and the row the user must read |
-| De-emphasis| `SEPARATOR`          | rules, scrollbars, inactive chrome     |
+| Role      | Token(s)              | Usage                                 |
+| --------- | --------------------- | --------------------------------------|
+| Body      | `LABEL`               | file names, finding messages          |
+| Emphasis  | `ACCENT`, `VIOLATIONS`| header, and the row the user must read|
+| De-emphasis| `SEPARATOR`          | rules, scrollbars, inactive chrome    |
 
 ### DS-TUIC-004: Layout & Spacing
 
@@ -121,28 +121,28 @@ Layout is percentage-constrained rather than spaced in multiples of one unit,
 because the three panes share a width the user chooses. The pane split is the
 token; padding inside a pane is left to the renderer.
 
-| Token                      | Value | Usage                              |
-| -------------------------- | ----- | ---------------------------------- |
-| `PANEL_TREE_WIDTH_PCT`     | `35%` | left pane — the file tree           |
-| `PANEL_FILE_LIST_WIDTH_PCT`| `20%` | middle pane — the file list         |
-| `PANEL_PREVIEW_WIDTH_PCT`  | `45%` | right pane — the findings preview   |
-| `HEADER_HEIGHT`            | `1`   | header row                         |
-| `STATUS_BAR_HEIGHT`        | `1`   | status line                        |
-| `SHORTCUT_ROW_COUNT`       | `3`   | rows in the keybinding hint bar     |
-| `MIN_TERMINAL_WIDTH`       | `40`  | below this the surface degrades     |
-| `MIN_TERMINAL_HEIGHT`      | `15`  | below this the surface degrades     |
-| `NARROW_BREAKPOINT_WIDTH`  | `100` | below this the layout collapses to a single active panel |
+| Token                      | Value | Usage                             |
+| -------------------------- | ----- | ----------------------------------|
+| `PANEL_TREE_WIDTH_PCT`     | `35%` | left pane — the file tree          |
+| `PANEL_FILE_LIST_WIDTH_PCT`| `20%` | middle pane — the file list        |
+| `PANEL_PREVIEW_WIDTH_PCT`  | `45%` | right pane — the findings preview  |
+| `HEADER_HEIGHT`            | `1`   | header row                        |
+| `STATUS_BAR_HEIGHT`        | `1`   | status line                       |
+| `SHORTCUT_ROW_COUNT`       | `3`   | rows in the keybinding hint bar    |
+| `MIN_TERMINAL_WIDTH`       | `40`  | below this the surface degrades    |
+| `MIN_TERMINAL_HEIGHT`      | `15`  | below this the surface degrades    |
+| `NARROW_BREAKPOINT_WIDTH`  | `100` | below this the layout collapses to a single active panel|
 
 The three pane splits are used when the terminal is wide enough. Below the
 narrow breakpoint the layout collapses to a single active panel — the user
 cycles between tree, file-list, and preview with Tab. The split that is used
 is determined by `NARROW_BREAKPOINT_WIDTH`:
 
-| Terminal width range   | Layout mode         | What is visible                          |
-| ---------------------- | ------------------- | ---------------------------------------- |
-| `>= NARROW_BREAKPOINT_WIDTH` (100) | `FullThree`       | all three panes: tree / file-list / preview |
-| `< NARROW_BREAKPOINT_WIDTH` but `>= MIN_TERMINAL_WIDTH` | `ActiveOnly` | the single active panel fills the area; Tab cycles between tree, file-list, preview |
-| `< MIN_TERMINAL_WIDTH` (40) | —                  | "Terminal too small — resize" message; layout not drawn |
+| Terminal width range   | Layout mode         | What is visible                         |
+| ---------------------- | ------------------- | ----------------------------------------|
+| `>= NARROW_BREAKPOINT_WIDTH` (100) | `FullThree`       | all three panes: tree / file-list / preview|
+| `< NARROW_BREAKPOINT_WIDTH` but `>= MIN_TERMINAL_WIDTH` | `ActiveOnly` | the single active panel fills the area; Tab cycles between tree, file-list, preview|
+| `< MIN_TERMINAL_WIDTH` (40) | —                  | "Terminal too small — resize" message; layout not drawn|
 
 At `MIN_TERMINAL_WIDTH` (40 cols) the active single panel has enough width for
 a 20-character filename without truncation after border overhead.
@@ -196,14 +196,14 @@ width in the Layout & Spacing table, and `root_tui_container.rs`.
 
 ### DS-TUIC-011: States
 
-| State        | Condition                        | What the user sees                    |
-| ------------ | -------------------------------- | ------------------------------------- |
-| `path_input` | No path chosen yet               | the path-entry screen                 |
-| `browsing`   | A path is set and the tree loads | the tree and file list                |
-| `running`    | An action is executing           | a busy status line                    |
-| `results`    | A run finished                   | findings in the preview pane          |
-| `clean`      | A run finished with zero findings| an explicit clean result, not an empty pane |
-| `error`      | A run failed                     | the cause, with the tree still navigable |
+| State        | Condition                        | What the user sees                   |
+| ------------ | -------------------------------- | -------------------------------------|
+| `path_input` | No path chosen yet               | the path-entry screen                |
+| `browsing`   | A path is set and the tree loads | the tree and file list               |
+| `running`    | An action is executing           | a busy status line                   |
+| `results`    | A run finished                   | findings in the preview pane         |
+| `clean`      | A run finished with zero findings| an explicit clean result, not an empty pane|
+| `error`      | A run failed                     | the cause, with the tree still navigable|
 
 A run that finds nothing shows `clean` explicitly. An empty pane is ambiguous
 between "no findings" and "nothing has run yet".
@@ -223,11 +223,11 @@ process-global rayon pool, so a scan and a background action can never be in
 flight at the same time; the second request is declined with
 `Busy: scan is running` or `Busy: action is running` on the status line (#577).
 
-| Trigger while `running` | Transition | What the user sees |
-| --- | --- | --- |
-| Another action key (scan, fix, ci, orphan, security) | None — stays `running` | The busy status line, with a transient "action ignored" hint |
-| A navigation key (tree/list movement, pane focus) | None — stays `running` | Navigation applies; browsing never contends for the run |
-| Quit | Leaves the loop | The run's result is discarded, not merged into a stale state |
+| Trigger while `running` | Transition | What the user sees|
+| --- | --- | ---|
+| Another action key (scan, fix, ci, orphan, security) | None — stays `running` | The busy status line, with a transient "action ignored" hint|
+| A navigation key (tree/list movement, pane focus) | None — stays `running` | Navigation applies; browsing never contends for the run|
+| Quit | Leaves the loop | The run's result is discarded, not merged into a stale state|
 
 This is enforced by the event loop owning `AppState`, not by disabling terminal
 input: a dropped-at-the-terminal keystroke would also drop navigation. Queueing
@@ -237,12 +237,12 @@ results across navigation" failure this surface already has history with.
 
 ### DS-TUIC-012: Error States
 
-| Condition                              | Behaviour                                                   |
-| -------------------------------------- | ----------------------------------------------------------- |
-| The chosen path does not exist         | Report it and stay in `browsing`; the tree is unchanged      |
-| A required external tool is missing    | Report the tool and stay navigable                          |
-| A run returns findings above threshold | Show the findings and the threshold                          |
-| The terminal is too small to draw      | Degrade to the status line alone rather than panicking       |
+| Condition                              | Behaviour                                                  |
+| -------------------------------------- | -----------------------------------------------------------|
+| The chosen path does not exist         | Report it and stay in `browsing`; the tree is unchanged     |
+| A required external tool is missing    | Report the tool and stay navigable                         |
+| A run returns findings above threshold | Show the findings and the threshold                         |
+| The terminal is too small to draw      | Degrade to the status line alone rather than panicking      |
 
 ### DS-TUIC-013: Accessibility
 
@@ -258,18 +258,18 @@ Keyboard-only operation. Every action has a key; no mouse is required.
 The single source of truth is the `SHORTCUTS` table in
 `crates/tui/src/surface_bindings_store.rs`:
 
-| Key            | Action                                          |
-| -------------- | ----------------------------------------------- |
-| `j`/`↓` `k`/`↑` | Move down / up                                  |
-| `h`/`←` `l`/`→`/`Enter` | Back / open (forward)                          |
-| `Home` `End`   | Top / bottom of the list                        |
-| `PgUp` `PgDn`  | Scroll the preview pane                         |
-| `Tab` `BackTab`| Focus next / previous pane                      |
-| `c` `s` `f` `F` `t` `w` `o` `d` | check · scan · fix (dry) · fix (live) · ci · watch · orphan · doctor |
-| `i` `I` `m` `C` `H` `U` `a` `v` `x` `^P` | init · install · mcp-config · config show · install-hook · uninstall-hook · adapters · version · dependencies · security |
-| `y` `^Y`       | Copy to clipboard / save to file                |
-| `?` `/`        | Toggle help / search                            |
-| `q` `^Q` `Esc`| Quit                                            |
+| Key            | Action                                         |
+| -------------- | -----------------------------------------------|
+| `j`/`↓` `k`/`↑` | Move down / up                                 |
+| `h`/`←` `l`/`→`/`Enter` | Back / open (forward)                         |
+| `Home` `End`   | Top / bottom of the list                       |
+| `PgUp` `PgDn`  | Scroll the preview pane                        |
+| `Tab` `BackTab`| Focus next / previous pane                     |
+| `c` `s` `f` `F` `t` `w` `o` `d` | check · scan · fix (dry) · fix (live) · ci · watch · orphan · doctor|
+| `i` `I` `m` `C` `H` `U` `a` `v` `x` `^P` | init · install · mcp-config · config show · install-hook · uninstall-hook · adapters · version · dependencies · security|
+| `y` `^Y`       | Copy to clipboard / save to file               |
+| `?` `/`        | Toggle help / search                           |
+| `q` `^Q` `Esc`| Quit                                           |
 
 Colour and `NO_COLOR`. Tokens resolve through
 `utility_tui_theme.rs::color()`. When `NO_COLOR` is set the whole surface

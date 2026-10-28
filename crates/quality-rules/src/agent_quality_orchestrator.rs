@@ -27,7 +27,7 @@ use shared_quality_rules::taxonomy_quality_rules_request::CodeAnalysisRequest;
 use shared_quality_rules::taxonomy_quality_rules_response::CodeAnalysisResponse;
 
 use shared_common::taxonomy_severity_vo::Severity;
-use shared_common::utility_layer_detector::{
+use shared_common::architecture_layer_detector::{
     collect_layer_keys, detect_layer_from_prefix, extract_filename, get_layer_def,
     resolve_specialized_layer,
 };

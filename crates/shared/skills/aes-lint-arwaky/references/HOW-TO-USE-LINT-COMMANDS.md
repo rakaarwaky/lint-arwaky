@@ -60,39 +60,39 @@ lac fix . --dry-run
 
 ### Shell aliases
 
-| Alias | Target Binary     | Description                               | Example Usage                       |
-| :---- | :---------------- | :---------------------------------------- | :---------------------------------- |
-| `lac` | `lint-arwaky-cli` | Primary CLI gatekeeper & scanner          | `lac scan .`, `lac fix`, `lac doctor` |
-| `lat` | `lint-arwaky-tui` | Terminal User Interface (TUI) dashboard   | `lat`                               |
-| `lam` | `lint-arwaky-mcp` | MCP Server (STDIO backend for AI clients) | Configured in Claude / Cursor / Windsurf |
+| Alias | Target Binary     | Description                               | Example Usage                     |
+| :---- | :---------------- | :---------------------------------------- | :----------------------------------|
+| `lac` | `lint-arwaky-cli` | Primary CLI gatekeeper & scanner          | `lac scan .`, `lac fix`, `lac doctor`|
+| `lat` | `lint-arwaky-tui` | Terminal User Interface (TUI) dashboard   | `lat`                             |
+| `lam` | `lint-arwaky-mcp` | MCP Server (STDIO backend for AI clients) | Configured in Claude / Cursor / Windsurf|
 
 ### Global CLI options
 
-| Option | Long Flag              | Description                                                                             |
-| :----- | :--------------------- | :-------------------------------------------------------------------------------------- |
-| `-v` | `--verbose`          | Enable debug logging and detailed diagnostic traces.                                    |
-| `-q` | `--quiet`            | Minimize console output (suppress non-error messages).                                  |
-| `-o` | `--output-dir <DIR>` | Directory to save generated reports (overrides active configuration).                   |
-|      | `--filter <CODE>`    | Filter scan results by specific AES rule code (e.g. `AES101`, `AES301`, `AES401`). |
-| `-h` | `--help`             | Print help information for the CLI or a specific subcommand.                            |
-| `-V` | `--version`          | Print CLI binary version.                                                               |
+| Option | Long Flag              | Description                                                                           |
+| :----- | :--------------------- | :--------------------------------------------------------------------------------------|
+| `-v` | `--verbose`          | Enable debug logging and detailed diagnostic traces.                                  |
+| `-q` | `--quiet`            | Minimize console output (suppress non-error messages).                                |
+| `-o` | `--output-dir <DIR>` | Directory to save generated reports (overrides active configuration).                 |
+|      | `--filter <CODE>`    | Filter scan results by specific AES rule code (e.g. `AES101`, `AES301`, `AES401`).|
+| `-h` | `--help`             | Print help information for the CLI or a specific subcommand.                          |
+| `-V` | `--version`          | Print CLI binary version.                                                             |
 
 ### Commands & subcommands
 
-| Command                              | Purpose                                                                     |
-| -------------------------------------- | ------------------------------------------------------------------------------ |
-| `scan` / `check [PATH]`            | Run all linters; `--format` text / json / sarif / junit, `--member <NAME>`, `--filter <CODE>`, `-o <DIR>` |
-| `fix [PATH]`                       | Apply safe automatic fixes; `--dry-run`, `--filter <CODE>`                |
-| `ci [PATH]`                        | Quality gate; `--threshold <SCORE>` (default 80, exit 1 below it). No `--format` flag. |
-| `quality`/`import`/`naming`/`role`/`orphan`/`external` | Run one linter family in isolation (same flags as `scan`; `orphan` accepts `--member`) |
-| `taxonomy`/`contract`/`capabilities`/`utility`/`agents`/`surface` | Run every linter family, report only one AES layer (same flags as `scan`) |
-| `security [PATH]`                  | Code security issues (Bandit / `cargo audit` / ESLint security)             |
-| `dependencies [PATH]`              | Third-party CVE scan of the lockfile/manifest                              |
-| `watch [PATH]`                     | Re-lint on file save                                                       |
-| `install-hook` / `uninstall-hook`  | Manage the Git pre-commit integration                                    |
-| `init` / `install`                 | Write `lint_arwaky.config.yaml` / install external adapter binaries       |
-| `config` / `adapters` / `mcp-config` | Print active rules, enabled adapters, MCP client JSON                     |
-| `doctor` / `version`               | Environment diagnostics / binary version                                 |
+| Command                              | Purpose                                                                   |
+| -------------------------------------- | ------------------------------------------------------------------------------|
+| `scan` / `check [PATH]`            | Run all linters; `--format` text / json / sarif / junit, `--member <NAME>`, `--filter <CODE>`, `-o <DIR>`|
+| `fix [PATH]`                       | Apply safe automatic fixes; `--dry-run`, `--filter <CODE>`              |
+| `ci [PATH]`                        | Quality gate; `--threshold <SCORE>` (default 80, exit 1 below it). No `--format` flag.|
+| `quality`/`import`/`naming`/`role`/`orphan`/`external` | Run one linter family in isolation (same flags as `scan`; `orphan` accepts `--member`)|
+| `taxonomy`/`contract`/`capabilities`/`utility`/`agents`/`surface` | Run every linter family, report only one AES layer (same flags as `scan`)|
+| `security [PATH]`                  | Code security issues (Bandit / `cargo audit` / ESLint security)           |
+| `dependencies [PATH]`              | Third-party CVE scan of the lockfile/manifest                            |
+| `watch [PATH]`                     | Re-lint on file save                                                     |
+| `install-hook` / `uninstall-hook`  | Manage the Git pre-commit integration                                  |
+| `init` / `install`                 | Write `lint_arwaky.config.yaml` / install external adapter binaries     |
+| `config` / `adapters` / `mcp-config` | Print active rules, enabled adapters, MCP client JSON                   |
+| `doctor` / `version`               | Environment diagnostics / binary version                               |
 
 ```bash
 # Per-rule targeting and reporting
@@ -121,13 +121,13 @@ lint-arwaky-cli scan crates/ --format sarif \
 
 Five JSON-RPC 2.0 tools over STDIO for AI clients (Claude Code, Cursor, Windsurf, Hermes):
 
-| Tool Name           | Description                               | Arguments / Parameters                                                                                                       |
-| :------------------ | :---------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------- |
-| `execute_command` | Execute any CLI command action            | `action` (required: `"scan"`, `"check"`, `"fix"`, `"security"`, `"doctor"`, …), `args` (optional JSON object, e.g. `{"path": "/abs/path"}`) |
-| `list_commands`   | List available CLI commands catalog       | `domain` (optional filter, e.g. `"setup"`, `"check"`)                                                                     |
-| `read_skill`      | Read `SKILL.md` documentation by section | `section` (optional: header name to extract)                                                                              |
-| `health_check`    | Check MCP server & adapter health         | None (0 parameters)                                                                                                          |
-| `get_config`      | Get active architecture config            | `path` (optional), `language` (optional: `"rust"`, `"python"`, `"javascript"`)                                          |
+| Tool Name           | Description                               | Arguments / Parameters                                                                                                     |
+| :------------------ | :---------------------------------------- | :-----------------------------------------------------------------------------------------------------------------------------|
+| `execute_command` | Execute any CLI command action            | `action` (required: `"scan"`, `"check"`, `"fix"`, `"security"`, `"doctor"`, …), `args` (optional JSON object, e.g. `{"path": "/abs/path"}`)|
+| `list_commands`   | List available CLI commands catalog       | `domain` (optional filter, e.g. `"setup"`, `"check"`)                                                                   |
+| `read_skill`      | Read `SKILL.md` documentation by section | `section` (optional: header name to extract)                                                                            |
+| `health_check`    | Check MCP server & adapter health         | None (0 parameters)                                                                                                        |
+| `get_config`      | Get active architecture config            | `path` (optional), `language` (optional: `"rust"`, `"python"`, `"javascript"`)                                        |
 
 ```json
 {"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"execute_command","arguments":{"action":"scan","args":{"path":"/abs/path/to/crates"}}}}
@@ -142,15 +142,15 @@ underscore-separated words; verbatim exceptions such as `main.rs`, `lib.rs`, `mo
 
 The 7 strictly-ordered layers, **bottom-up** (a layer may only depend on layers below it):
 
-| # | Layer prefix   | Purpose                                             | Example                    |
-| - | ---------------- | ----------------------------------------------------- | ---------------------------- |
-| 1 | `taxonomy_`    | value objects, entities, errors, events, constants  | `taxonomy_user_vo.py`      |
-| 2 | `utility_`     | pure, stateless helpers                             | `utility_hash_helper.py`   |
-| 3 | `contract_`    | protocols, aggregates (no implementation)             | `contract_payload_protocol.py` |
-| 4 | `capabilities_`| domain logic and business rules                     | `capabilities_task_executor.py` |
-| 5 | `agent_`       | orchestration across subsystems                       | `agent_billing_orchestrator.rs` |
-| 6 | `surface_`     | CLI / MCP / REST / TUI / GUI adapters                 | `surface_cli_adapter.py`   |
-| 7 | `root_`        | entry points and composition containers             | `root_main_entry.py`       |
+| # | Layer prefix   | Purpose                                             | Example                  |
+| - | ---------------- | ----------------------------------------------------- | ----------------------------|
+| 1 | `taxonomy_`    | value objects, entities, errors, events, constants  | `taxonomy_user_vo.py`    |
+| 2 | `utility_`     | pure, stateless helpers                             | `utility_hash_helper.py` |
+| 3 | `contract_`    | protocols, aggregates (no implementation)             | `contract_payload_protocol.py`|
+| 4 | `capabilities_`| domain logic and business rules                     | `capabilities_task_executor.py`|
+| 5 | `agent_`       | orchestration across subsystems                       | `agent_billing_orchestrator.rs`|
+| 6 | `surface_`     | CLI / MCP / REST / TUI / GUI adapters                 | `surface_cli_adapter.py` |
+| 7 | `root_`        | entry points and composition containers             | `root_main_entry.py`     |
 
 *Core invariant:* upper layers may only depend downward. Lower layers may never import upper
 layers.
@@ -164,15 +164,15 @@ their own naming convention — see the `aes-testing-suite` skill.
 
 Every shared-command session is required to carry the rows that apply. Each exists for one reason.
 
-| Section | Why it belongs here |
-| ------- | ------------------- |
-| Invocation form | Orchestrator vs direct binary must be deliberate and reproducible. |
-| Alias + global flags | `lac`/`lat`/`lam` and `-o`/`--filter` are the only stable shared surface. |
-| Subcommand choice | `scan` vs family commands vs `ci` changes what runs and what exits non-zero. |
-| Explicit `--format` | Machine consumers must not parse ad-hoc text. |
-| MCP tool table | STDIO clients call `execute_command`/`get_config` by name, not by guesswork. |
-| Naming + layer matrix | AES101/AES102 decisions before any fix, shared by all languages. |
-| Exit code | CI gates on `0`/`1`/`2`; stdout is not the contract. |
+| Section | Why it belongs here|
+| ------- | -------------------|
+| Invocation form | Orchestrator vs direct binary must be deliberate and reproducible.|
+| Alias + global flags | `lac`/`lat`/`lam` and `-o`/`--filter` are the only stable shared surface.|
+| Subcommand choice | `scan` vs family commands vs `ci` changes what runs and what exits non-zero.|
+| Explicit `--format` | Machine consumers must not parse ad-hoc text.|
+| MCP tool table | STDIO clients call `execute_command`/`get_config` by name, not by guesswork.|
+| Naming + layer matrix | AES101/AES102 decisions before any fix, shared by all languages.|
+| Exit code | CI gates on `0`/`1`/`2`; stdout is not the contract.|
 
 ---
 

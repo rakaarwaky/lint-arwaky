@@ -7,7 +7,7 @@ pub mod taxonomy_config_system_request;
 pub use shared_common::taxonomy_language_vo;
 pub mod taxonomy_config_system_response;
 pub mod taxonomy_config_system_vo;
-pub mod utility_architecture_constants;
+pub mod config_architecture_rules;
 pub mod utility_config_merger;
 pub mod utility_config_parser;
 

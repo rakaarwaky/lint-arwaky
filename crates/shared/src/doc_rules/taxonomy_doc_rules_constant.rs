@@ -397,21 +397,6 @@ pub const TEMPLATE_BODY_VIOLATION_DELETED_SECTION: &str = "section_deleted";
 // `shared_doc_rules::taxonomy_doc_rules_constant` remains the canonical import.
 pub use crate::taxonomy_doc_rules_template_vo::{TEMPLATE_PROFILES, TemplateProfile};
 
-/// A reference template from `crates/shared/skills/aes-docs/references/`,
-/// for the tests that pin constants and catalogs to their source templates.
-#[cfg(test)]
-pub fn load_reference_template(file: &str) -> String {
-    let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../../skills/aes-docs/references")
-        .join(file);
-    std::fs::read_to_string(&path).unwrap_or_else(|e| {
-        panic!(
-            "reference template {} must be readable: {e}",
-            path.display()
-        )
-    })
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;

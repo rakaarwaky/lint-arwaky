@@ -190,22 +190,22 @@ flowchart TD
 
 ### Protocol API
 
-| Method | Input | Output | Error | Event | Description |
+| Method | Input | Output | Error | Event | Description|
 |---|---|---|---|---|---|
-| `get_diff` | &FilePath | `GitDiffResultVO` | — | — | Get diff result. |
-| `get_changed_files` | &FilePath, &GitBranchName | `FilePathList` | — | — | Get changed files. |
-| `get_default_branch` | &FilePath | `GitBranchName` | — | — | Get default branch. |
-| `run_git_diff_check` | &FilePath | `LintResultList` | — | — | Run lint on changed files. |
-| `install_pre_commit` | &FilePath | `SuccessStatus` | `GitHookError` | — | Install pre-commit hook. |
-| `uninstall_pre_commit` | — | `SuccessStatus` | `GitHookError` | — | Uninstall pre-commit hook. |
-| `initialize_config` | &str | `DescriptionVO` | — | — | Initialize config. |
-| `update_ignore_rule` | HookIgnoreUpdateVO | `DescriptionVO` | — | — | Update ignore rule. |
+| `get_diff` | &FilePath | `GitDiffResultVO` | — | — | Get diff result.|
+| `get_changed_files` | &FilePath, &GitBranchName | `FilePathList` | — | — | Get changed files.|
+| `get_default_branch` | &FilePath | `GitBranchName` | — | — | Get default branch.|
+| `run_git_diff_check` | &FilePath | `LintResultList` | — | — | Run lint on changed files.|
+| `install_pre_commit` | &FilePath | `SuccessStatus` | `GitHookError` | — | Install pre-commit hook.|
+| `uninstall_pre_commit` | — | `SuccessStatus` | `GitHookError` | — | Uninstall pre-commit hook.|
+| `initialize_config` | &str | `DescriptionVO` | — | — | Initialize config.|
+| `update_ignore_rule` | HookIgnoreUpdateVO | `DescriptionVO` | — | — | Update ignore rule.|
 
 ### Aggregate API
 
-| Method | Input | Output | Error | Event | Description |
+| Method | Input | Output | Error | Event | Description|
 |---|---|---|---|---|---|
-| `execute` | GitHooksRequest | `GitHooksResponse` | — | — | Single composite entry point over the feature. |
+| `execute` | GitHooksRequest | `GitHooksResponse` | — | — | Single composite entry point over the feature.|
 
 ## Reference
 
@@ -215,4 +215,4 @@ flowchart TD
 - Config System FRD: `crates/config-system/FRD.md` (config resolution)
 - Project Setup FRD: `crates/project-setup/FRD.md` (config initialization)
 
-| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md) |
+| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md)|

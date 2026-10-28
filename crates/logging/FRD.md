@@ -145,21 +145,21 @@ flowchart TD
 
 ### Protocol API
 
-| Method | Input | Output | Error | Event | Description |
+| Method | Input | Output | Error | Event | Description|
 |---|---|---|---|---|---|
-| `build_filter` | `LogVerbosity` | `EnvFilter` | — | — | Construct the filter without installing. |
-| `install` | `LogVerbosity`, `with_ansi: bool` | `()` | — | — | Install the global subscriber (set-once). |
-| `phase_started` | `&str` (phase name) | `PhaseTimer` | — | `phase_start` | Begin a timing scope for one phase. |
-| `phase_finished` | `PhaseTimer`, `count: Option<usize>` | `()` | — | `phase_done` | End the scope, emit `{phase, elapsed_ms, count?}`. |
-| `walker_enter` | `dir: &str` | `()` | — | `walker_enter` | Report the walker descending into `dir`. |
-| `walker_skip` | `dir: &str`, `reason: SkipReason` | `()` | — | `walker_skip` | Report a skipped directory with its reason. |
-| `files_discovered` | `count: usize`, `elapsed_ms: u64` | `()` | — | `files_discovered` | Report the walk total. |
+| `build_filter` | `LogVerbosity` | `EnvFilter` | — | — | Construct the filter without installing.|
+| `install` | `LogVerbosity`, `with_ansi: bool` | `()` | — | — | Install the global subscriber (set-once).|
+| `phase_started` | `&str` (phase name) | `PhaseTimer` | — | `phase_start` | Begin a timing scope for one phase.|
+| `phase_finished` | `PhaseTimer`, `count: Option<usize>` | `()` | — | `phase_done` | End the scope, emit `{phase, elapsed_ms, count?}`.|
+| `walker_enter` | `dir: &str` | `()` | — | `walker_enter` | Report the walker descending into `dir`.|
+| `walker_skip` | `dir: &str`, `reason: SkipReason` | `()` | — | `walker_skip` | Report a skipped directory with its reason.|
+| `files_discovered` | `count: usize`, `elapsed_ms: u64` | `()` | — | `files_discovered` | Report the walk total.|
 
 ### Aggregate API
 
-| Method | Input | Output | Error | Event | Description |
+| Method | Input | Output | Error | Event | Description|
 |---|---|---|---|---|---|
-| `execute` | `LoggingRequest` | `LoggingResponse` | — | — | Single entry point. Routes request variants to capability seams. |
+| `execute` | `LoggingRequest` | `LoggingResponse` | — | — | Single entry point. Routes request variants to capability seams.|
 
 ---
 
@@ -169,4 +169,4 @@ flowchart TD
 - PRD: [PRD.md](../../PRD.md)
 - Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
 
-| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md) |
+| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md)|

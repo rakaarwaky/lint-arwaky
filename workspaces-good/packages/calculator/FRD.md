@@ -10,11 +10,11 @@ history capability merges the four operation logs into what the caller reads.
 
 ### FR-CALCULATOR-001: Route the request
 
-| Aspect         | Detail                                      |
+| Aspect         | Detail                                     |
 |----------------|---------------------------------------------|
-| Description    | {FR-CALCULATOR-001 description}                     |
-| Business Rules | {business rules}                          |
-| Edge Cases     | {edge cases}                              |
+| Description    | {FR-CALCULATOR-001 description}                    |
+| Business Rules | {business rules}                         |
+| Edge Cases     | {edge cases}                             |
 
 - **Description**: The orchestrator routes a request to the feature that owns the operation.
 - **Input**: A request naming the operation and its operands.
@@ -25,11 +25,11 @@ history capability merges the four operation logs into what the caller reads.
 
 ### FR-CALCULATOR-002: Merge the operation history
 
-| Aspect         | Detail                                      |
+| Aspect         | Detail                                     |
 |----------------|---------------------------------------------|
-| Description    | {FR-CALCULATOR-002 description}                     |
-| Business Rules | {business rules}                          |
-| Edge Cases     | {edge cases}                              |
+| Description    | {FR-CALCULATOR-002 description}                    |
+| Business Rules | {business rules}                         |
+| Edge Cases     | {edge cases}                             |
 
 - **Description**: The history capability merges the four operation logs newest first.
 - **Input**: The four per-feature operation logs.
@@ -42,21 +42,21 @@ history capability merges the four operation logs into what the caller reads.
 
 ### Protocol API
 
-| Method | Input | Output | Error | Event | Description |
+| Method | Input | Output | Error | Event | Description|
 |--------|-------|--------|-------|-------|-------------|
-| route | request | result | error | — | Routes a request to the feature that owns the operation. |
-| merge | logs | history | — | — | Merges the four operation logs newest first. |
+| route | request | result | error | — | Routes a request to the feature that owns the operation.|
+| merge | logs | history | — | — | Merges the four operation logs newest first.|
 
 ### Aggregate API
 
-| Method | Input | Output | Error | Event | Description |
+| Method | Input | Output | Error | Event | Description|
 |--------|-------|--------|-------|-------|-------------|
-| execute | request | response | error | — | The member's single entry point. |
+| execute | request | response | error | — | The member's single entry point.|
 
 ## Reference
 
 - PRD: [../../PRD.md](../../PRD.md)
 - Backlog: [BACKLOG.md](BACKLOG.md)
 
-| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md) |
-| Architecture | {Link to ARCHITECTURE.md} | [{link}](ARCHITECTURE.md) |
+| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md)|
+| Architecture | {Link to ARCHITECTURE.md} | [{link}](ARCHITECTURE.md)|

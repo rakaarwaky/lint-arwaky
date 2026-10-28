@@ -67,12 +67,12 @@ undiscoverable behavior, agent misrouting. Keep it to what the boundary rules gu
 
 ## 2. Workspace Organization
 
-| Term               | Meaning                                                       |
-| ------------------ | ------------------------------------------------------------- |
-| Project Workspace  | The root containing all configuration and language members    |
-| Workspace Member   | One self-contained crate, package, or module inside the work- |
-|                    | space                                                           |
-| Shared / kernel    | Cross-cutting domain models and contracts, never a feature    |
+| Term               | Meaning                                                     |
+| ------------------ | -------------------------------------------------------------|
+| Project Workspace  | The root containing all configuration and language members  |
+| Workspace Member   | One self-contained crate, package, or module inside the work-|
+|                    | space                                                         |
+| Shared / kernel    | Cross-cutting domain models and contracts, never a feature  |
 
 ## 3. Naming Convention
 
@@ -80,11 +80,11 @@ File names communicate three parts, joined by underscores, then the language ext
 
 `layer_concern_role.<ext>`
 
-| Part    | Where it lives         | Example                        |
-| ------- | ---------------------- | ------------------------------ |
-| Layer   | Prefix                 | `taxonomy_`, `contract_`, ...  |
-| Concern | Middle                 | `tool`, `doc`, `x509`          |
-| Role    | Suffix                 | `vo`, `protocol`, `orchestrator` |
+| Part    | Where it lives         | Example                      |
+| ------- | ---------------------- | ------------------------------|
+| Layer   | Prefix                 | `taxonomy_`, `contract_`, ...|
+| Concern | Middle                 | `tool`, `doc`, `x509`        |
+| Role    | Suffix                 | `vo`, `protocol`, `orchestrator`|
 
 Exceptions: `main.rs`, `lib.rs`, `mod.rs`, `__init__.py`, `index.ts`, `index.js`.
 
@@ -146,13 +146,13 @@ behavioral concerns.>
 
 ### Components
 
-| Role      | Meaning                              |
-| --------- | ------------------------------------ |
-| Value obj | Immutable data concept               |
+| Role      | Meaning                            |
+| --------- | ------------------------------------|
+| Value obj | Immutable data concept             |
 | Entity    | Stateful domain concept with identity|
-| Event     | Immutable domain fact                |
-| Error     | Domain-level error                   |
-| Constant  | Compile-time literal value           |
+| Event     | Immutable domain fact              |
+| Error     | Domain-level error                 |
+| Constant  | Compile-time literal value         |
 
 ### Dependencies
 
@@ -174,10 +174,10 @@ on stable interfaces, not concrete logic.>
 
 ### Components
 
-| Role      | Meaning                                                             |
-| --------- | ------------------------------------------------------------------- |
-| Protocol  | Interface consumed by Agent, implemented by Capabilities            |
-| Aggregate | Facade consumed by Surface, implemented by Agent                    |
+| Role      | Meaning                                                           |
+| --------- | -------------------------------------------------------------------|
+| Protocol  | Interface consumed by Agent, implemented by Capabilities          |
+| Aggregate | Facade consumed by Surface, implemented by Agent                  |
 
 ### Dependencies
 
@@ -240,13 +240,13 @@ Agent may depend only on Taxonomy, Contract, and Utility.
 
 ### Allowed Flow Control
 
-| Type              | Purpose                            |
-| ----------------- | ---------------------------------- |
-| Sequential        | Run steps in order                 |
-| Looping           | Process multiple items or events   |
-| Branching         | Choose path based on result        |
-| Error handling    | Recover, abort, continue, escalate |
-| Timeout/cancel    | Stop long-running or async work    |
+| Type              | Purpose                          |
+| ----------------- | ----------------------------------|
+| Sequential        | Run steps in order               |
+| Looping           | Process multiple items or events |
+| Branching         | Choose path based on result      |
+| Error handling    | Recover, abort, continue, escalate|
+| Timeout/cancel    | Stop long-running or async work  |
 
 ### Special Rules
 
@@ -284,10 +284,10 @@ starting the application.>
 
 ### Components
 
-| Role      | Meaning                                                       |
-| --------- | ------------------------------------------------------------- |
-| Container | Wires one feature: capabilities to protocol and aggregate     |
-| Entry     | Bootstraps and composes feature containers                    |
+| Role      | Meaning                                                     |
+| --------- | -------------------------------------------------------------|
+| Container | Wires one feature: capabilities to protocol and aggregate   |
+| Entry     | Bootstraps and composes feature containers                  |
 
 ### Dependencies
 
@@ -307,19 +307,19 @@ Root may depend on all layers.
 
 Every section is required unless marked optional. Each exists for one reason.
 
-| Section                        | Why it belongs here                                                                        |
-| ------------------------------ | ------------------------------------------------------------------------------------------ |
-| Purpose                        | Names the failure modes the architecture prevents. Watch for descriptive prose instead of rules. |
-| Workspace Organization         | Defines terms so engineers and agents share a vocabulary. Watch for unstated implicit terms.   |
-| Naming Convention              | Makes file names self-documenting. Watch for missing exceptions list.                          |
-| Vertical Slicing Layout        | Shows where each file lands; prevents the `surface/` folder mistake. Watch for missing shared layout. |
-| Taxonomy Layer                 | The foundation — if it drifts, everything above drifts. Watch for missing dependency rule.     |
-| Contract Layer                 | The stability boundary. Watch for missing "no implementation" guard.                           |
-| Utility Layer                  | Shared mechanics that keep Capabilities clean. Watch for business logic leaking into Utility.  |
-| Capabilities Layer             | The behavior implementation. Watch for inter-capability imports.                               |
-| Agent Layer                    | The orchestrator — sequence, not business. Watch for business calculation here.                |
-| Surface Layer                  | The outer boundary. Watch for orchestration or business logic leaking into Surface.            |
-| Root Layer                     | The composition entry. Watch for business logic in the container.                              |
+| Section                        | Why it belongs here                                                                      |
+| ------------------------------ | ------------------------------------------------------------------------------------------|
+| Purpose                        | Names the failure modes the architecture prevents. Watch for descriptive prose instead of rules.|
+| Workspace Organization         | Defines terms so engineers and agents share a vocabulary. Watch for unstated implicit terms. |
+| Naming Convention              | Makes file names self-documenting. Watch for missing exceptions list.                        |
+| Vertical Slicing Layout        | Shows where each file lands; prevents the `surface/` folder mistake. Watch for missing shared layout.|
+| Taxonomy Layer                 | The foundation — if it drifts, everything above drifts. Watch for missing dependency rule.   |
+| Contract Layer                 | The stability boundary. Watch for missing "no implementation" guard.                         |
+| Utility Layer                  | Shared mechanics that keep Capabilities clean. Watch for business logic leaking into Utility.|
+| Capabilities Layer             | The behavior implementation. Watch for inter-capability imports.                             |
+| Agent Layer                    | The orchestrator — sequence, not business. Watch for business calculation here.              |
+| Surface Layer                  | The outer boundary. Watch for orchestration or business logic leaking into Surface.          |
+| Root Layer                     | The composition entry. Watch for business logic in the container.                            |
 
 ---
 

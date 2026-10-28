@@ -12,11 +12,11 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 
 ### FR-DOC-001: FR Format, PR-ID Family, Protocol-Class Parity, and BACKLOG Qualifier Alignment (AES601)
 
-| Aspect         | Detail                                      |
+| Aspect         | Detail                                     |
 |----------------|---------------------------------------------|
-| Description    | {FR-DOC-001 description}                     |
-| Business Rules | {business rules}                          |
-| Edge Cases     | {edge cases}                              |
+| Description    | {FR-DOC-001 description}                    |
+| Business Rules | {business rules}                         |
+| Edge Cases     | {edge cases}                             |
 
 - **Description**: Every requirement heading states its feature prefix, a PRD and its ROADMAP agree on the `PR-<PROJECT>-NNN` item set, an FRD declares exactly as many requirements as its feature's contract module declares capability seams, every method its API tables promise is one the contract module declares, and every BACKLOG entry qualifier aligns with the qualifier of at least one ID declared by its paired spec.
 - **Input**: An `FRD.md`, `DATA.md`, `PRD.md`, `ROADMAP.md`, or `BACKLOG.md` inside the audit context, plus the audit root for resolving the feature's shared contract module.
@@ -38,11 +38,11 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 
 ### FR-DOC-002: Section Structure (AES602)
 
-| Aspect         | Detail                                      |
+| Aspect         | Detail                                     |
 |----------------|---------------------------------------------|
-| Description    | {FR-DOC-002 description}                     |
-| Business Rules | {business rules}                          |
-| Edge Cases     | {edge cases}                              |
+| Description    | {FR-DOC-002 description}                    |
+| Business Rules | {business rules}                         |
+| Edge Cases     | {edge cases}                             |
 
 - **Description**: A requirement document reads in template order: FRD and DATA H2 sections must follow the shared template H2 set.
 - **Input**: An `FRD.md` or `DATA.md` inside the audit context, parsed into its level-1 and level-2 sections once per document.
@@ -56,11 +56,11 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 
 ### FR-DOC-003: Spec Purity (AES603)
 
-| Aspect         | Detail                                      |
+| Aspect         | Detail                                     |
 |----------------|---------------------------------------------|
-| Description    | {FR-DOC-003 description}                     |
-| Business Rules | {business rules}                          |
-| Edge Cases     | {edge cases}                              |
+| Description    | {FR-DOC-003 description}                    |
+| Business Rules | {business rules}                         |
+| Edge Cases     | {edge cases}                             |
 
 - **Description**: A specification carries no implementation state and names no source file.
 - **Input**: Every promise-bearing document inside the audit context — `FRD.md`, `DATA.md`, `PRD.md`, `ROADMAP.md`.
@@ -76,11 +76,11 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 
 ### FR-DOC-004: Crosslinks and State-Vocabulary Placement (AES604)
 
-| Aspect         | Detail                                      |
+| Aspect         | Detail                                     |
 |----------------|---------------------------------------------|
-| Description    | {FR-DOC-004 description}                     |
-| Business Rules | {business rules}                          |
-| Edge Cases     | {edge cases}                              |
+| Description    | {FR-DOC-004 description}                    |
+| Business Rules | {business rules}                         |
+| Edge Cases     | {edge cases}                             |
 
 - **Description**: A requirement document links the documents it depends on, and the state vocabulary lives once, in the root master.
 - **Input**: The requirement documents plus the root master text carried by the audit context, and each document's position relative to the audit root.
@@ -94,11 +94,11 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 
 ### FR-DOC-005: Document Heading Structure (AES605)
 
-| Aspect         | Detail                                      |
+| Aspect         | Detail                                     |
 |----------------|---------------------------------------------|
-| Description    | {FR-DOC-005 description}                     |
-| Business Rules | {business rules}                          |
-| Edge Cases     | {edge cases}                              |
+| Description    | {FR-DOC-005 description}                    |
+| Business Rules | {business rules}                         |
+| Edge Cases     | {edge cases}                             |
 
 - **Description**: A recognized document opens with exactly one level-1 heading, carries every required level-2 section, and holds no level-2 heading outside its template.
 - **Input**: Every document inside the audit context that has a registered H2 contract.
@@ -115,11 +115,11 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 
 ### FR-DOC-006: Template Body-Shape Conformance (AES606)
 
-| Aspect         | Detail                                      |
+| Aspect         | Detail                                     |
 |----------------|---------------------------------------------|
-| Description    | {FR-DOC-006 description}                     |
-| Business Rules | {business rules}                          |
-| Edge Cases     | {edge cases}                              |
+| Description    | {FR-DOC-006 description}                    |
+| Business Rules | {business rules}                         |
+| Edge Cases     | {edge cases}                             |
 
 - **Description**: Every table-shaped section the HOW-TO templates mandate in `BACKLOG.md` and `ROADMAP.md` carries its template table, and no non-deletable template section has been removed.
 - **Input**: Every `BACKLOG.md` and `ROADMAP.md` inside the audit context.
@@ -135,11 +135,11 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 
 ### FR-DOC-007: Required-Document Presence (AES606)
 
-| Aspect         | Detail                                      |
+| Aspect         | Detail                                     |
 |----------------|---------------------------------------------|
-| Description    | {FR-DOC-007 description}                     |
-| Business Rules | {business rules}                          |
-| Edge Cases     | {edge cases}                              |
+| Description    | {FR-DOC-007 description}                    |
+| Business Rules | {business rules}                         |
+| Edge Cases     | {edge cases}                             |
 
 - **Description**: The six required root documents exist at a real workspace root.
 - **Input**: The audit context's document set and the audit root, for the workspace-root marker check.
@@ -153,11 +153,11 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 
 ### FR-DOC-008: Member-Folder Document Presence (AES606)
 
-| Aspect         | Detail                                      |
+| Aspect         | Detail                                     |
 |----------------|---------------------------------------------|
-| Description    | {FR-DOC-008 description}                     |
-| Business Rules | {business rules}                          |
-| Edge Cases     | {edge cases}                              |
+| Description    | {FR-DOC-008 description}                    |
+| Business Rules | {business rules}                         |
+| Edge Cases     | {edge cases}                             |
 
 - **Description**: Every workspace member folder contains its mandated documentation pair based on its architectural role, classified by objective crate structure.
 - **Input**: The `members: Vec<MemberDescriptor>` field of `DocAuditContext`, pre-populated by the shared utility collector (no I/O inside the capability), plus the audit root for the workspace-root / member-root / sub-folder gating decision.
@@ -180,11 +180,11 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 
 ### FR-DOC-009: Template Body & Placeholder Conformance (AES606)
 
-| Aspect         | Detail                                      |
+| Aspect         | Detail                                     |
 |----------------|---------------------------------------------|
-| Description    | {FR-DOC-009 description}                     |
-| Business Rules | {business rules}                          |
-| Edge Cases     | {edge cases}                              |
+| Description    | {FR-DOC-009 description}                    |
+| Business Rules | {business rules}                         |
+| Edge Cases     | {edge cases}                             |
 
 - **Description**: Every recognized document whose headings and sections follow the shipped HOW-TO template carries no unfilled placeholder tokens, and no non-deletable template section has been removed.
 - **Input**: Every recognized document in the audit context, compared against the corresponding `TemplateProfile` and embedded template text.
@@ -204,23 +204,23 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 
 ### Protocol API
 
-| Method | Input | Output | Error | Event | Description |
+| Method | Input | Output | Error | Event | Description|
 |--------|-------|--------|-------|-------|-------------|
-| `audit_fr_format` | `DocAuditContext` | `Vec<DocFinding>` | — | — | FR-ID format, FR fields, FR/protocol-class parity, and promised-API-method existence (AES601). |
-| `audit_section_structure` | `DocAuditContext` | `Vec<DocFinding>` | — | — | Template section order and mandated section shape (AES602). |
-| `audit_spec_purity` | `DocAuditContext` | `Vec<DocFinding>` | — | — | Status leaks and source-file names in a specification (AES603). |
-| `audit_crosslinks` | `DocAuditContext` | `Vec<DocFinding>` | — | — | Reference crosslinks and state-vocabulary placement (AES604). |
-| `audit_doc_heading` | `DocAuditContext` | `Vec<DocFinding>` | — | — | H1 count and closed H2 set per document template (AES605). |
-| `audit_template_conformance` | `DocAuditContext` | `Vec<DocFinding>` | — | — | BACKLOG/ROADMAP table-shape conformance (AES606). |
-| `audit_required_docs` | `DocAuditContext` | `Vec<DocFinding>` | — | — | Required root-document presence (AES606). |
-| `audit_member_docs` | `DocAuditContext` | `Vec<DocFinding>` | — | — | Required member-folder document presence (AES606). |
-| `audit_template_body` | `DocAuditContext` | `Vec<DocFinding>` | — | — | Template body fidelity and unfilled placeholder detection (AES606). |
+| `audit_fr_format` | `DocAuditContext` | `Vec<DocFinding>` | — | — | FR-ID format, FR fields, FR/protocol-class parity, and promised-API-method existence (AES601).|
+| `audit_section_structure` | `DocAuditContext` | `Vec<DocFinding>` | — | — | Template section order and mandated section shape (AES602).|
+| `audit_spec_purity` | `DocAuditContext` | `Vec<DocFinding>` | — | — | Status leaks and source-file names in a specification (AES603).|
+| `audit_crosslinks` | `DocAuditContext` | `Vec<DocFinding>` | — | — | Reference crosslinks and state-vocabulary placement (AES604).|
+| `audit_doc_heading` | `DocAuditContext` | `Vec<DocFinding>` | — | — | H1 count and closed H2 set per document template (AES605).|
+| `audit_template_conformance` | `DocAuditContext` | `Vec<DocFinding>` | — | — | BACKLOG/ROADMAP table-shape conformance (AES606).|
+| `audit_required_docs` | `DocAuditContext` | `Vec<DocFinding>` | — | — | Required root-document presence (AES606).|
+| `audit_member_docs` | `DocAuditContext` | `Vec<DocFinding>` | — | — | Required member-folder document presence (AES606).|
+| `audit_template_body` | `DocAuditContext` | `Vec<DocFinding>` | — | — | Template body fidelity and unfilled placeholder detection (AES606).|
 
 ### Aggregate API
 
-| Method | Input | Output | Error | Event | Description |
+| Method | Input | Output | Error | Event | Description|
 |--------|-------|--------|-------|-------|-------------|
-| `execute` | `DocRequest` | `DocResponse` | — | — | Walks the document chain once, fans out to the nine protocol seams, and returns the merged, deduplicated, stable-sorted findings. |
+| `execute` | `DocRequest` | `DocResponse` | — | — | Walks the document chain once, fans out to the nine protocol seams, and returns the merged, deduplicated, stable-sorted findings.|
 
 ## Reference
 
@@ -228,4 +228,4 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 - PRD: [PRD.md](../../PRD.md)
 - Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
 
-| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md) |
+| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md)|

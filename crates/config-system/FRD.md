@@ -150,22 +150,22 @@ Loaded config is merged with embedded defaults via rule-based layer merging (FR-
 
 ### Protocol API
 
-| Method | Input | Output | Error | Event | Description |
+| Method | Input | Output | Error | Event | Description|
 |---|---|---|---|---|---|
-| `read_config` | &FilePath, ConfigLanguage | `Option<ConfigSource>` | `ConfigError` | — | Read config from priority chain. |
-| `list_config_files` | &FilePath | `Vec<(ConfigLanguage, FilePath)>` | `ConfigError` | — | List config files at project root. |
-| `detect` | &FilePath | `WorkspaceType` | — | — | Detect workspace type. |
-| `is_workspace` | &FilePath | `bool` | — | — | Is workspace. |
-| `discover_workspace_members` | &FilePath | `Vec<FilePath>` | — | — | Discover workspace members. |
-| `parse_yaml_config` | &FilePath | `ArchitectureConfig` | `ConfigError` | — | Parse yaml config file. |
-| `parse_config_yaml_with_warnings` | &str | `(ArchitectureConfig, Vec<String>)` | — | — | Parse config yaml with warnings. |
-| `merge_config_with_defaults` | &ArchitectureConfig, ConfigLanguage | `(ArchitectureConfig, Vec<String>)` | — | — | Merge config with embedded defaults. |
+| `read_config` | &FilePath, ConfigLanguage | `Option<ConfigSource>` | `ConfigError` | — | Read config from priority chain.|
+| `list_config_files` | &FilePath | `Vec<(ConfigLanguage, FilePath)>` | `ConfigError` | — | List config files at project root.|
+| `detect` | &FilePath | `WorkspaceType` | — | — | Detect workspace type.|
+| `is_workspace` | &FilePath | `bool` | — | — | Is workspace.|
+| `discover_workspace_members` | &FilePath | `Vec<FilePath>` | — | — | Discover workspace members.|
+| `parse_yaml_config` | &FilePath | `ArchitectureConfig` | `ConfigError` | — | Parse yaml config file.|
+| `parse_config_yaml_with_warnings` | &str | `(ArchitectureConfig, Vec<String>)` | — | — | Parse config yaml with warnings.|
+| `merge_config_with_defaults` | &ArchitectureConfig, ConfigLanguage | `(ArchitectureConfig, Vec<String>)` | — | — | Merge config with embedded defaults.|
 
 ### Aggregate API
 
-| Method | Input | Output | Error | Event | Description |
+| Method | Input | Output | Error | Event | Description|
 |---|---|---|---|---|---|
-| `execute` | ConfigRequest | ConfigResponse | — | — | Single composite entry point over the feature. |
+| `execute` | ConfigRequest | ConfigResponse | — | — | Single composite entry point over the feature.|
 
 ## Reference
 
@@ -173,4 +173,4 @@ Loaded config is merged with embedded defaults via rule-based layer merging (FR-
 - PRD: [PRD.md](../../PRD.md)
 - Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
 
-| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md) |
+| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md)|

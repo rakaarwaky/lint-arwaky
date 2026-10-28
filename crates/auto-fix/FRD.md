@@ -8,11 +8,11 @@ The auto-fix crate applies safe, deterministic corrections to source files that 
 
 - **Allowed Operation Classes (product policy — locked)**
 
-| Class       | Examples                                                          | Notes                                    |
-| ----------- | ----------------------------------------------------------------- | ---------------------------------------- |
-| **Remove**  | Delete unused import lines; delete `#[allow(...)]` / bypass comment lines | No new code introduced                  |
-| **Replace** | `unwrap()` → `expect("safe")` on the same line                    | Local token/line substitution only      |
-| **Rename**  | Prepend `renamed_` (or keep valid snake_case) for AES101 symbols   | Mechanical rename of extracted symbol tokens |
+| Class       | Examples                                                          | Notes                                   |
+| ----------- | ----------------------------------------------------------------- | ----------------------------------------|
+| **Remove**  | Delete unused import lines; delete `#[allow(...)]` / bypass comment lines | No new code introduced                 |
+| **Replace** | `unwrap()` → `expect("safe")` on the same line                    | Local token/line substitution only     |
+| **Rename**  | Prepend `renamed_` (or keep valid snake_case) for AES101 symbols   | Mechanical rename of extracted symbol tokens|
 
 **Out of scope:** multi-file renames, structural refactors, adding new imports/types, semantic rewrites, formatting-only passes, `panic!` removal (requires semantic error handling).
 
@@ -73,22 +73,22 @@ Each of the 4 FRs maps to exactly 1 protocol trait and exactly 1 capability stru
 - **Output**: The bypass is removed or replaced. A reason-coded `FixOutcome` is returned.
 - **Business Rules**:
 
-  | Pattern             | Fix Action                            | Outcome                          |
-  | ------------------- | ------------------------------------- | -------------------------------- |
-  | `#[allow(...)]`     | Remove entire line                    | `Applied`                        |
-  | `// noqa`           | Strip comment from line, keep code    | `Applied`                        |
-  | `# noqa`            | Strip comment from line, keep code    | `Applied`                        |
-  | `# type: ignore`    | Strip comment from line, keep code    | `Applied`                        |
-  | `// FIXME`          | Strip comment from line, keep code    | `Applied`                        |
-  | `// HACK`           | Strip comment from line, keep code    | `Applied`                        |
-  | `// XXX`            | Strip comment from line, keep code    | `Applied`                        |
-  | `unwrap()`          | Replace with `expect("safe")`         | `Applied`                        |
-  | `unwrap();`         | Replace with `expect("safe");`        | `Applied`                        |
-  | `panic!(...)`       | **Skip** — requires semantic error handling | `Skipped(unsafe_removal)`   |
-  | `todo!(...)`        | **Skip** — future-logic placeholder             | `Skipped(unsafe_removal)`   |
-  | `unimplemented!(...)` | **Skip** — future-logic placeholder             | `Skipped(unsafe_removal)`   |
-  | `unreachable!(...)` | **Skip** — requires semantic analysis      | `Skipped(unsafe_removal)`   |
-  | `expect(...)`       | **Skip** — already has context message      | `Skipped(already_has_context)` |
+  | Pattern             | Fix Action                            | Outcome                         |
+  | ------------------- | ------------------------------------- | --------------------------------|
+  | `#[allow(...)]`     | Remove entire line                    | `Applied`                       |
+  | `// noqa`           | Strip comment from line, keep code    | `Applied`                       |
+  | `# noqa`            | Strip comment from line, keep code    | `Applied`                       |
+  | `# type: ignore`    | Strip comment from line, keep code    | `Applied`                       |
+  | `// FIXME`          | Strip comment from line, keep code    | `Applied`                       |
+  | `// HACK`           | Strip comment from line, keep code    | `Applied`                       |
+  | `// XXX`            | Strip comment from line, keep code    | `Applied`                       |
+  | `unwrap()`          | Replace with `expect("safe")`         | `Applied`                       |
+  | `unwrap();`         | Replace with `expect("safe");`        | `Applied`                       |
+  | `panic!(...)`       | **Skip** — requires semantic error handling | `Skipped(unsafe_removal)`  |
+  | `todo!(...)`        | **Skip** — future-logic placeholder             | `Skipped(unsafe_removal)`  |
+  | `unimplemented!(...)` | **Skip** — future-logic placeholder             | `Skipped(unsafe_removal)`  |
+  | `unreachable!(...)` | **Skip** — requires semantic analysis      | `Skipped(unsafe_removal)`  |
+  | `expect(...)`       | **Skip** — already has context message      | `Skipped(already_has_context)`|
 
   - Inline comment patterns (`noqa`, `type: ignore`, `FIXME`, `HACK`, `XXX`) are **stripped** from the line (the surrounding code is preserved), not deleted entirely.
   - Standalone comment-only lines and `#[allow]` attribute lines are **removed entirely** (entire line deleted).
@@ -159,20 +159,20 @@ not free text. This table is the canonical enumeration across every fix
 capability; a consumer (CI dashboard, MCP tool surface, report renderer) may
 treat any value outside it as a contract breach.
 
-| Reason | Outcome | Capability | Meaning |
+| Reason | Outcome | Capability | Meaning|
 |---|---|---|---|
-| `MultiLineImport` | Skipped | import removal | The target line belongs to a multi-line import block; deleting one line would break syntax |
-| `LineOutOfBounds` | Skipped | import removal, bypass removal | Line number is 0 or past end of file |
-| `NotAnImportLine` | Skipped | import removal | The target line is not an import statement |
-| `NoBypassPattern` | Skipped | bypass removal | The target line carries no recognised bypass pattern |
-| `UnsafeRemoval` | Skipped | bypass removal | The pattern needs semantic understanding (`panic!`, `todo!`, `unimplemented!`, `unreachable!`) |
-| `AlreadyHasContext` | Skipped | bypass removal | The pattern already carries a context message (e.g. `expect("…")`) |
-| `AlreadyValid` | Skipped | rename | The symbol name is already valid snake_case |
-| `SymbolNotFound` | Skipped | rename | The old symbol name does not occur in the file |
-| `KeywordConflict` | Skipped | rename | The new name collides with a language keyword |
-| `FileNotFound` | Failed | all | The target file does not exist |
-| `ReadError` | Failed | all | The file could not be read |
-| `WriteError` | Failed | all | The file could not be written; the file is left untouched |
+| `MultiLineImport` | Skipped | import removal | The target line belongs to a multi-line import block; deleting one line would break syntax|
+| `LineOutOfBounds` | Skipped | import removal, bypass removal | Line number is 0 or past end of file|
+| `NotAnImportLine` | Skipped | import removal | The target line is not an import statement|
+| `NoBypassPattern` | Skipped | bypass removal | The target line carries no recognised bypass pattern|
+| `UnsafeRemoval` | Skipped | bypass removal | The pattern needs semantic understanding (`panic!`, `todo!`, `unimplemented!`, `unreachable!`)|
+| `AlreadyHasContext` | Skipped | bypass removal | The pattern already carries a context message (e.g. `expect("…")`)|
+| `AlreadyValid` | Skipped | rename | The symbol name is already valid snake_case|
+| `SymbolNotFound` | Skipped | rename | The old symbol name does not occur in the file|
+| `KeywordConflict` | Skipped | rename | The new name collides with a language keyword|
+| `FileNotFound` | Failed | all | The target file does not exist|
+| `ReadError` | Failed | all | The file could not be read|
+| `WriteError` | Failed | all | The file could not be written; the file is left untouched|
 
 Nine skip reasons and three fail reasons, twelve in total. The FR sections
 above spell out when each one fires, using the lower-case spelling
@@ -188,18 +188,18 @@ and the enumerated reason set disagree.
 
 ### Protocol API
 
-| Protocol Trait | Method | Input | Output | Error | Event | Description |
+| Protocol Trait | Method | Input | Output | Error | Event | Description|
 |---|---|---|---|---|---|---|
-| `IUnusedImportFixProtocol` (FR-001) | `fix_unused_import` | &str, LineNumber | `FixOutcome` | — | — | Remove unused import at line. |
-| `IBypassFixProtocol` (FR-002) | `fix_bypass_comments` | &str, LineNumber | `FixOutcome` | — | — | Fix bypass comments at line. |
-| `ISymbolRenameProtocol` (FR-003) | `rename_symbol` | &str, &str, &str | `FixOutcome` | — | — | Rename symbol across file. |
-| `IViolationReportProtocol` (FR-004) | `report_violations` | &FilePath, bool | `FixResult` | — | — | Execute pipeline + report non-fixable. |
+| `IUnusedImportFixProtocol` (FR-001) | `fix_unused_import` | &str, LineNumber | `FixOutcome` | — | — | Remove unused import at line.|
+| `IBypassFixProtocol` (FR-002) | `fix_bypass_comments` | &str, LineNumber | `FixOutcome` | — | — | Fix bypass comments at line.|
+| `ISymbolRenameProtocol` (FR-003) | `rename_symbol` | &str, &str, &str | `FixOutcome` | — | — | Rename symbol across file.|
+| `IViolationReportProtocol` (FR-004) | `report_violations` | &FilePath, bool | `FixResult` | — | — | Execute pipeline + report non-fixable.|
 
 ### Aggregate API
 
-| Method | Input | Output | Error | Event | Description |
+| Method | Input | Output | Error | Event | Description|
 |---|---|---|---|---|---|
-| `execute` | FixRequest | `FixResponse` | — | — | Single composite entry point over the feature. |
+| `execute` | FixRequest | `FixResponse` | — | — | Single composite entry point over the feature.|
 
 ## Reference
 
@@ -208,4 +208,4 @@ and the enumerated reason set disagree.
 - Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
 - Quality Rules FRD: `crates/quality-rules/FRD.md` (AES304 bypass patterns)
 
-| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md) |
+| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md)|

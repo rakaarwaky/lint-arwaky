@@ -19,13 +19,13 @@
 A capability file **implements a protocol** — it has state (via DI), business rules, and concrete behaviour.
 A utility file **performs a pure operation** — no state, no business rules, just a narrow task.
 
-| Decision | → Capability | → Utility |
+| Decision | → Capability | → Utility|
 |---|---|---|
-| Has `self` / instance state / injected dependencies | Yes | No |
-| Contains business rules or protocol logic | Yes | No |
-| Stateless, domain-agnostic, ≥2 consumers | — | Yes |
-| Implements `_protocol` interface/ABC/trait | Yes | No |
-| Pure free function with no business logic | No | Yes |
+| Has `self` / instance state / injected dependencies | Yes | No|
+| Contains business rules or protocol logic | Yes | No|
+| Stateless, domain-agnostic, ≥2 consumers | — | Yes|
+| Implements `_protocol` interface/ABC/trait | Yes | No|
+| Pure free function with no business logic | No | Yes|
 
 **Rule**: If a method or helper in Block 3 is stateless, domain-agnostic, and reusable across modules — extract it to a `utility_*` file. It does not belong in the capability layer.
 
@@ -117,22 +117,22 @@ linter will catch and what stays a review responsibility. `Manual` means no rule
 checks it — the shape is still the contract, but a violation is caught by review
 or by the interpreter, not by `scan`.
 
-| Check                                                             | Enforced                                                          |
-| ----------------------------------------------------------------- | ----------------------------------------------------------------- |
-| All three `# ─── Block 1:` / `Block 2:` / `Block 3:` banners present, in order, none above 3. | **AES403** `CapabilityBlockMarkers` (MEDIUM)   |
-| Block 1 (class) precedes Block 2 (protocol methods).              | **AES403** `CapabilityBlockOrder` (HIGH)                          |
-| ≥1 class inherits a protocol ABC.                                 | **AES403** `CapabilityNoImplementor` (MEDIUM)                     |
-| Exactly 1 protocol ABC per file.                                  | **AES403** `CapabilityMultiProtocol` (MEDIUM)                     |
-| ≤3 total classes.                                                 | **AES403** `CapabilityTooManyTypes` (HIGH)                        |
-| Imports from `_protocol` module only.                             | **AES201**–**AES205** (import rules)                              |
-| No agent / surface / root imports.                                | **AES201** `FORBIDDEN_IMPORT`                                     |
-| Block 2: ONLY protocol ABC method implementations.                | Manual — no rule reads Block 2's contents                        |
-| DI via protocol interfaces; shared VOs for fields and signatures. | Manual                                                            |
-| Constants → `taxonomy_<domain>_constant.py`.                     | **AES403** `CapabilityLocalConstant` (MEDIUM)                     |
-| Block 3 public helpers with no production caller are private (`def _name`). | **AES403** `CapabilityPublicHelper` (MEDIUM)       |
-| Test classes (`class Test*`, `def test_*`) live in `tests/`, never inline. | **AES403** `CapabilityEmbeddedTest` (LOW)          |
-| Low-level ops → Utility.                                          | Manual — the helper-vs-utility matrix is a judgement call         |
-| `python -c "import <module>"` passes.                             | The interpreter, not `scan`                                       |
+| Check                                                             | Enforced                                                        |
+| ----------------------------------------------------------------- | -----------------------------------------------------------------|
+| All three `# ─── Block 1:` / `Block 2:` / `Block 3:` banners present, in order, none above 3. | **AES403** `CapabilityBlockMarkers` (MEDIUM) |
+| Block 1 (class) precedes Block 2 (protocol methods).              | **AES403** `CapabilityBlockOrder` (HIGH)                        |
+| ≥1 class inherits a protocol ABC.                                 | **AES403** `CapabilityNoImplementor` (MEDIUM)                   |
+| Exactly 1 protocol ABC per file.                                  | **AES403** `CapabilityMultiProtocol` (MEDIUM)                   |
+| ≤3 total classes.                                                 | **AES403** `CapabilityTooManyTypes` (HIGH)                      |
+| Imports from `_protocol` module only.                             | **AES201**–**AES205** (import rules)                            |
+| No agent / surface / root imports.                                | **AES201** `FORBIDDEN_IMPORT`                                   |
+| Block 2: ONLY protocol ABC method implementations.                | Manual — no rule reads Block 2's contents                      |
+| DI via protocol interfaces; shared VOs for fields and signatures. | Manual                                                          |
+| Constants → `taxonomy_<domain>_constant.py`.                     | **AES403** `CapabilityLocalConstant` (MEDIUM)                   |
+| Block 3 public helpers with no production caller are private (`def _name`). | **AES403** `CapabilityPublicHelper` (MEDIUM)     |
+| Test classes (`class Test*`, `def test_*`) live in `tests/`, never inline. | **AES403** `CapabilityEmbeddedTest` (LOW)        |
+| Low-level ops → Utility.                                          | Manual — the helper-vs-utility matrix is a judgement call       |
+| `python -c "import <module>"` passes.                             | The interpreter, not `scan`                                     |
 
 **On the block banners.** A banner is `Block <digits>:` standing as its own word
 inside a comment, so the Python comment sigil is `#`. The colon is load-bearing:

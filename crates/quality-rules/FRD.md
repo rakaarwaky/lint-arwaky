@@ -134,13 +134,13 @@ flowchart TD
 
   - **Forbidden patterns** (configurable via YAML, defaults below):
 
-    | Category                    | Patterns                                                                                                                             | Language   |
-    | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ---------- |
-    | Rust forbidden tokens       | `unwrap()`, `expect()`, `panic!`, `todo!`, `unimpl!`, `unreachable!`                                              | Rust       |
-    | Rust attribute bypasses     | `#[allow(`, `#[warn(`, `#[deny(`                                                                                               | Rust       |
-    | Python bypasses             | `raise NotImplementedError`, `assert false`                                                                                      | Python     |
-    | Comment/annotation bypasses | `type: ignore`, `noqa`, `@ts-ignore`, `@ts-expect-error`, `eslint-disable`, `lint-disable`, `FIXME`, `HACK`, `XXX` | All        |
-    | Cargo.toml bypass           | `level = "allow"` under `[workspace.lints.clippy]` or `[lints.clippy]`                                                         | Cargo.toml |
+    | Category                    | Patterns                                                                                                                             | Language  |
+    | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ----------|
+    | Rust forbidden tokens       | `unwrap()`, `expect()`, `panic!`, `todo!`, `unimpl!`, `unreachable!`                                              | Rust      |
+    | Rust attribute bypasses     | `#[allow(`, `#[warn(`, `#[deny(`                                                                                               | Rust      |
+    | Python bypasses             | `raise NotImplementedError`, `assert false`                                                                                      | Python    |
+    | Comment/annotation bypasses | `type: ignore`, `noqa`, `@ts-ignore`, `@ts-expect-error`, `eslint-disable`, `lint-disable`, `FIXME`, `HACK`, `XXX` | All       |
+    | Cargo.toml bypass           | `level = "allow"` under `[workspace.lints.clippy]` or `[lints.clippy]`                                                         | Cargo.toml|
 
   - **Matching rules**:
 
@@ -196,20 +196,20 @@ flowchart TD
 
 ### Protocol API
 
-| Method | Input | Output | Error | Event | Description |
+| Method | Input | Output | Error | Event | Description|
 |---|---|---|---|---|---|
-| `check_bypass_comments` | &str, &str, &mut Vec<LintResult> | `` | — | — | Check bypass comments. |
-| `check_cargo_toml` | &str, &mut Vec<LintResult> | `` | — | — | Check cargo toml. |
-| `check_mandatory_class_definition` | &str, Option<&LayerDefinition>, &str, &mut Vec<LintResult> | `` | — | — | Check mandatory class definition. |
-| `handle_duplicates_entries` | &[(PathBuf, String)] | `Vec<(String, AesCodeAnalysisViolation)>` | — | — | Handle duplicates entries. |
-| `check_dead_inheritance` | &str, &str, &mut Vec<LintResult> | `` | — | — | Check dead inheritance. |
-| `check_line_counts` | &str, Option<&LayerDefinition>, &str, &mut Vec<LintResult> | `` | — | — | Check line counts. |
+| `check_bypass_comments` | &str, &str, &mut Vec<LintResult> | `` | — | — | Check bypass comments.|
+| `check_cargo_toml` | &str, &mut Vec<LintResult> | `` | — | — | Check cargo toml.|
+| `check_mandatory_class_definition` | &str, Option<&LayerDefinition>, &str, &mut Vec<LintResult> | `` | — | — | Check mandatory class definition.|
+| `handle_duplicates_entries` | &[(PathBuf, String)] | `Vec<(String, AesCodeAnalysisViolation)>` | — | — | Handle duplicates entries.|
+| `check_dead_inheritance` | &str, &str, &mut Vec<LintResult> | `` | — | — | Check dead inheritance.|
+| `check_line_counts` | &str, Option<&LayerDefinition>, &str, &mut Vec<LintResult> | `` | — | — | Check line counts.|
 
 ### Aggregate API
 
-| Method | Input | Output | Error | Event | Description |
+| Method | Input | Output | Error | Event | Description|
 |---|---|---|---|---|---|
-| `execute` | CodeAnalysisRequest | `CodeAnalysisResponse` | — | — | Single composite entry point over the feature. |
+| `execute` | CodeAnalysisRequest | `CodeAnalysisResponse` | — | — | Single composite entry point over the feature.|
 
 ## Reference
 
@@ -224,4 +224,4 @@ flowchart TD
 - `utility_mandatory_checker` (this crate): symbol detection helpers
 - Shared compliance score utility
 
-| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md) |
+| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md)|

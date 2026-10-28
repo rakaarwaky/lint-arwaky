@@ -57,12 +57,12 @@ anything not in this folder — are left alone.
 
 ## Project Structure
 
-| Path | Purpose |
-| --- | --- |
-| `crates/shared/skills/<name>/SKILL.md` | The skill body: trigger, purpose, and routing. |
-| `crates/shared/skills/<name>/references/` | Per-language HOW-TO playbooks, filtered at provision time. |
-| `crates/shared/src/project_setup/taxonomy_project_setup_constant.rs` | Maintains the embedded constant — update manually after adding, removing, or renaming a skill file. |
-| `crates/shared/src/project_setup/` | The generated constant that `init` reads from. |
+| Path | Purpose|
+| --- | ---|
+| `crates/shared/skills/<name>/SKILL.md` | The skill body: trigger, purpose, and routing.|
+| `crates/shared/skills/<name>/references/` | Per-language HOW-TO playbooks, filtered at provision time.|
+| `crates/shared/src/project_setup/taxonomy_project_setup_constant.rs` | Maintains the embedded constant — update manually after adding, removing, or renaming a skill file.|
+| `crates/shared/src/project_setup/` | The generated constant that `init` reads from.|
 
 All provisioned skills follow the `aes-<layer>` convention: `aes-taxonomy`,
 `aes-contract`, `aes-capabilities`, `aes-agent`, `aes-surface`, `aes-utility`,
@@ -70,11 +70,11 @@ All provisioned skills follow the `aes-<layer>` convention: `aes-taxonomy`,
 
 ## Available Scripts
 
-| Command | When to run it |
-| --- | --- |
-| `CARGO_INCREMENTAL=0 cargo build --release` | After any skill content change, to re-embed. |
-| `lint-arwaky-cli init <project>` | To provision the pack into a target project. |
-| `lint-arwaky-cli docs <path>` | To audit the provisioned pack for broken links. |
+| Command | When to run it|
+| --- | ---|
+| `CARGO_INCREMENTAL=0 cargo build --release` | After any skill content change, to re-embed.|
+| `lint-arwaky-cli init <project>` | To provision the pack into a target project.|
+| `lint-arwaky-cli docs <path>` | To audit the provisioned pack for broken links.|
 
 ## Configuration
 

@@ -125,43 +125,43 @@ flowchart TD
   - Severity mapping per tool (see table below).
 - **Severity Mapping**:
 
-  | Tool            | Tool Severity/Category          | lint-arwaky Severity |
-  | ----------------- | --------------------------------- | ---------------------- |
-  | **Clippy**      | `correctness`                   | CRITICAL             |
-  |                 | `suspicious`                    | HIGH                 |
-  |                 | `perf`                          | HIGH                 |
-  |                 | `style`                         | MEDIUM               |
-  |                 | `complexity`                    | MEDIUM               |
-  |                 | `pedantic`                      | LOW                  |
-  |                 | `nursery`                       | LOW                  |
-  |                 | `restriction`                   | LOW                  |
-  | **Rustfmt**     | diff found                      | MEDIUM               |
-  | **cargo-audit** | `Critical`                      | CRITICAL             |
-  |                 | `High`                          | HIGH                 |
-  |                 | `Medium`                        | MEDIUM               |
-  |                 | `Low` / `Unknown`               | LOW                  |
-  | **Ruff**        | `E999` (syntax error)           | CRITICAL             |
-  |                 | `S*` (security, all S-codes)    | CRITICAL             |
-  |                 | `F8xx` (undefined name)         | HIGH                 |
-  |                 | `B0xx` (bugbear)                | HIGH                 |
-  |                 | `F401` (unused import)          | MEDIUM               |
-  |                 | `E1xx` (indentation)            | LOW                  |
-  |                 | `E5xx` (line length)            | LOW                  |
-  |                 | `W2xx` (whitespace)             | LOW                  |
-  |                 | default                         | MEDIUM               |
-  | **Mypy**        | `error`                         | HIGH                 |
-  |                 | `warning`                       | MEDIUM               |
-  |                 | `note`                          | LOW                  |
-  |                 | `syntax`/`parse` error in message (beyond the table) | CRITICAL |
-  | **Bandit**      | HIGH confidence + HIGH severity | CRITICAL             |
-  |                 | HIGH severity                   | HIGH                 |
-  |                 | MEDIUM severity                 | MEDIUM               |
-  |                 | LOW severity                    | LOW                  |
-  | **ESLint**      | severity 2 (error)              | HIGH                 |
-  |                 | severity 1 (warning)            | MEDIUM               |
-  | **Prettier**    | diff found                      | MEDIUM               |
-  | **tsc**         | error                           | HIGH                 |
-  | **markdownlint** | any rule violation             | MEDIUM               |
+  | Tool            | Tool Severity/Category          | lint-arwaky Severity|
+  | ----------------- | --------------------------------- | ----------------------|
+  | **Clippy**      | `correctness`                   | CRITICAL            |
+  |                 | `suspicious`                    | HIGH                |
+  |                 | `perf`                          | HIGH                |
+  |                 | `style`                         | MEDIUM              |
+  |                 | `complexity`                    | MEDIUM              |
+  |                 | `pedantic`                      | LOW                 |
+  |                 | `nursery`                       | LOW                 |
+  |                 | `restriction`                   | LOW                 |
+  | **Rustfmt**     | diff found                      | MEDIUM              |
+  | **cargo-audit** | `Critical`                      | CRITICAL            |
+  |                 | `High`                          | HIGH                |
+  |                 | `Medium`                        | MEDIUM              |
+  |                 | `Low` / `Unknown`               | LOW                 |
+  | **Ruff**        | `E999` (syntax error)           | CRITICAL            |
+  |                 | `S*` (security, all S-codes)    | CRITICAL            |
+  |                 | `F8xx` (undefined name)         | HIGH                |
+  |                 | `B0xx` (bugbear)                | HIGH                |
+  |                 | `F401` (unused import)          | MEDIUM              |
+  |                 | `E1xx` (indentation)            | LOW                 |
+  |                 | `E5xx` (line length)            | LOW                 |
+  |                 | `W2xx` (whitespace)             | LOW                 |
+  |                 | default                         | MEDIUM              |
+  | **Mypy**        | `error`                         | HIGH                |
+  |                 | `warning`                       | MEDIUM              |
+  |                 | `note`                          | LOW                 |
+  |                 | `syntax`/`parse` error in message (beyond the table) | CRITICAL|
+  | **Bandit**      | HIGH confidence + HIGH severity | CRITICAL            |
+  |                 | HIGH severity                   | HIGH                |
+  |                 | MEDIUM severity                 | MEDIUM              |
+  |                 | LOW severity                    | LOW                 |
+  | **ESLint**      | severity 2 (error)              | HIGH                |
+  |                 | severity 1 (warning)            | MEDIUM              |
+  | **Prettier**    | diff found                      | MEDIUM              |
+  | **tsc**         | error                           | HIGH                |
+  | **markdownlint** | any rule violation             | MEDIUM              |
 
   > Note: Ruff severity is determined by the rule **code**, not the tool's severity field.
 - **Edge Cases**:
@@ -238,20 +238,20 @@ flowchart TD
 
 ### Protocol API
 
-| Method | Input | Output | Error | Event | Description |
+| Method | Input | Output | Error | Event | Description|
 |---|---|---|---|---|---|
-| `scan` | &FilePath | `LintResultList` | `LinterOperationError` | — | Scan. |
-| `fix` | &FilePath | `ComplianceStatus` | `LinterOperationError` | — | Apply fix. |
-| `exec_cmd_scan` | Vec<String>, FilePath, f64, Option<AdapterName>, &FilePath | `ResponseData` | `LinterOperationError` | — | Exec cmd scan. |
-| `exec_cmd_adapter` | Vec<String>, FilePath, f64, AdapterName | `ResponseData` | `LinterOperationError` | — | Exec cmd adapter. |
-| `js_apply_fix` | &FilePath, &str, &str | `ComplianceStatus` | `LinterOperationError` | — | Js apply fix. |
-| `select_adapters` | bool, bool, bool, bool | `AdapterNameList` | — | — | Select adapters. |
+| `scan` | &FilePath | `LintResultList` | `LinterOperationError` | — | Scan.|
+| `fix` | &FilePath | `ComplianceStatus` | `LinterOperationError` | — | Apply fix.|
+| `exec_cmd_scan` | Vec<String>, FilePath, f64, Option<AdapterName>, &FilePath | `ResponseData` | `LinterOperationError` | — | Exec cmd scan.|
+| `exec_cmd_adapter` | Vec<String>, FilePath, f64, AdapterName | `ResponseData` | `LinterOperationError` | — | Exec cmd adapter.|
+| `js_apply_fix` | &FilePath, &str, &str | `ComplianceStatus` | `LinterOperationError` | — | Js apply fix.|
+| `select_adapters` | bool, bool, bool, bool | `AdapterNameList` | — | — | Select adapters.|
 
 ### Aggregate API
 
-| Method | Input | Output | Error | Event | Description |
+| Method | Input | Output | Error | Event | Description|
 |---|---|---|---|---|---|
-| `execute` | ExternalLintRequest | `ExternalLintResponse` | — | — | Single composite entry point over the feature. |
+| `execute` | ExternalLintRequest | `ExternalLintResponse` | — | — | Single composite entry point over the feature.|
 
 ## Reference
 
@@ -259,4 +259,4 @@ flowchart TD
 - PRD: [PRD.md](../../PRD.md)
 - Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
 
-| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md) |
+| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md)|

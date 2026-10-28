@@ -11,9 +11,9 @@ A small multi-language calculator demo needs a single, clear specification of wh
 
 ## Goals & Success Metrics
 
-| # | Goal                        | Measurement              | Target       |
+| # | Goal                        | Measurement              | Target      |
 |---|-----------------------------|--------------------------|--------------|
-| 1 | Calculator evaluates expressions correctly | `lint-arwaky-cli check .` exit code | 0 |
+| 1 | Calculator evaluates expressions correctly | `lint-arwaky-cli check .` exit code | 0|
 
 ## User Personas
 
@@ -43,18 +43,18 @@ A small multi-language calculator demo needs a single, clear specification of wh
 
 ## Non-functional Requirements (High-level)
 
-| Category    | Commitment                  | Detail lives in          |
+| Category    | Commitment                  | Detail lives in         |
 |-------------|-----------------------------|--------------------------|
-| Performance | Expression evaluation under 10 ms | `FRD.md` of calculator feature |
-| Security    | No secrets or credentials in docs | `SECURITY.md`            |
-| Scalability | Four operation features, no cross-feature imports | `ARCHITECTURE.md`        |
+| Performance | Expression evaluation under 10 ms | `FRD.md` of calculator feature|
+| Security    | No secrets or credentials in docs | `SECURITY.md`           |
+| Scalability | Four operation features, no cross-feature imports | `ARCHITECTURE.md`       |
 
 ## Open Questions / Risks
 
-| # | Question / Risk              | Owner | Deadline | Status |
+| # | Question / Risk              | Owner | Deadline | Status|
 |---|------------------------------|-------|----------|--------|
-| 1 | None                         | —     | —        | open   |
+| 1 | None                         | —     | —        | open  |
 
 ## Reference
-| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md) |
-| Architecture | {Link to ARCHITECTURE.md} | [{link}](ARCHITECTURE.md) |
+| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md)|
+| Architecture | {Link to ARCHITECTURE.md} | [{link}](ARCHITECTURE.md)|

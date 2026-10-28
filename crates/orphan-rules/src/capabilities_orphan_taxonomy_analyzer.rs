@@ -1,7 +1,7 @@
 use shared_common::taxonomy_layer_vo::LayerDefinition;
 use shared_common::taxonomy_path_vo::FilePath;
 use shared_common::taxonomy_severity_vo::Severity;
-use shared_common::utility_layer_detector;
+use shared_common::architecture_layer_detector;
 use shared_orphan_rules::contract_orphan_protocol::ITaxonomyOrphanProtocol;
 use shared_orphan_rules::utility_orphan_filename::file_stem;
 use shared_quality_rules::taxonomy_quality_rules_vo::{
@@ -40,7 +40,7 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
                     .filter(|importer| *importer != f.value())
                     .any(|importer| {
                         let imp_filename =
-                            shared_common::utility_layer_detector::extract_filename(importer);
+                            shared_common::architecture_layer_detector::extract_filename(importer);
                         imp_filename.starts_with("contract_")
                             || imp_filename.starts_with("capabilities_")
                             || imp_filename.starts_with("agent_")
@@ -61,7 +61,7 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
                 {
                     mod_importers.iter().any(|importer| {
                         let imp_filename =
-                            shared_common::utility_layer_detector::extract_filename(importer);
+                            shared_common::architecture_layer_detector::extract_filename(importer);
                         imp_filename.starts_with("contract_")
                             || imp_filename.starts_with("capabilities_")
                             || imp_filename.starts_with("agent_")
@@ -93,7 +93,7 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
                 if other_file == f.value() {
                     return false;
                 }
-                let filename = utility_layer_detector::extract_filename(other_file);
+                let filename = architecture_layer_detector::extract_filename(other_file);
                 let is_higher = filename.starts_with("contract_")
                     || filename.starts_with("capabilities_")
                     || filename.starts_with("agent_")
@@ -135,7 +135,7 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
                         .iter()
                         .filter(|i| *i != f.value())
                         .map(|i| {
-                            shared_common::utility_layer_detector::extract_filename(i).to_string()
+                            shared_common::architecture_layer_detector::extract_filename(i).to_string()
                         })
                         .collect();
                     format!(

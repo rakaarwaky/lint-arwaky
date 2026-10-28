@@ -103,20 +103,20 @@ flowchart TD
   **Rationale**: Agent does not import capabilities because agent receives capabilities via DI (trait objects). Surface does not import agent because surface receives orchestrator via DI from contract aggregate. Utility does not require contract and remains flexible.
 - **Per-Scope Rules**
 
-  | Scope                                  | Allowed                                                    | Forbidden                                               | Mandatory                     |
-  | ---------------------------------------- | ------------------------------------------------------------ | --------------------------------------------------------- | ------------------------------- |
-  | `taxonomy(vo)`                         | taxonomy                                                   | agent, surface, contract, utility, capabilities, root   | —                            |
-  | `taxonomy(entity,error,event)`         | taxonomy                                                   | agent, surface, contract, utility, capabilities, root   | taxonomy(vo\|constant)        |
-  | `taxonomy(constant)`                   | taxonomy                                                   | agent, surface, contract, utility, capabilities, root   | —                            |
-  | `utility`                              | taxonomy,utility                                           | agent, surface, contract, capabilities, root            | taxonomy                      |
-  | `contract(protocol)`                   | taxonomy, contract                                         | agent, surface, capabilities, contract(aggregate), root | taxonomy                      |
-  | `contract(aggregate)`                  | taxonomy, contract                                         | agent, surface, capabilities, root                      | taxonomy                      |
-  | `capabilities`                         | taxonomy, contract, utility                                | surface, agent, capabilities, root                      | taxonomy, contract(protocol)  |
-  | `agent(orchestrator)`                  | taxonomy, contract(aggregate), contract(protocol), utility | surface, capabilities, root                             | taxonomy, contract(aggregate) |
-  | surface(command, controller, page)   | taxonomy,contract(aggregate)                               | capabilities, utility, agent                            | taxonomy                      |
-  | surface(hook, store, action, screen) | taxonomy,contract(aggregate)                               | capabilities, utility, agent                            | taxonomy                      |
-  | surface(component, view, layout)       | taxonomy                                                   | capabilities, utility, agent                            | taxonomy                      |
-  | `root`                                 | taxonomy, contract, capabilities, agent, surface, utility  | —                                                      | —                            |
+  | Scope                                  | Allowed                                                    | Forbidden                                               | Mandatory                    |
+  | ---------------------------------------- | ------------------------------------------------------------ | --------------------------------------------------------- | -------------------------------|
+  | `taxonomy(vo)`                         | taxonomy                                                   | agent, surface, contract, utility, capabilities, root   | —                           |
+  | `taxonomy(entity,error,event)`         | taxonomy                                                   | agent, surface, contract, utility, capabilities, root   | taxonomy(vo\|constant)       |
+  | `taxonomy(constant)`                   | taxonomy                                                   | agent, surface, contract, utility, capabilities, root   | —                           |
+  | `utility`                              | taxonomy,utility                                           | agent, surface, contract, capabilities, root            | taxonomy                     |
+  | `contract(protocol)`                   | taxonomy, contract                                         | agent, surface, capabilities, contract(aggregate), root | taxonomy                     |
+  | `contract(aggregate)`                  | taxonomy, contract                                         | agent, surface, capabilities, root                      | taxonomy                     |
+  | `capabilities`                         | taxonomy, contract, utility                                | surface, agent, capabilities, root                      | taxonomy, contract(protocol) |
+  | `agent(orchestrator)`                  | taxonomy, contract(aggregate), contract(protocol), utility | surface, capabilities, root                             | taxonomy, contract(aggregate)|
+  | surface(command, controller, page)   | taxonomy,contract(aggregate)                               | capabilities, utility, agent                            | taxonomy                     |
+  | surface(hook, store, action, screen) | taxonomy,contract(aggregate)                               | capabilities, utility, agent                            | taxonomy                     |
+  | surface(component, view, layout)       | taxonomy                                                   | capabilities, utility, agent                            | taxonomy                     |
+  | `root`                                 | taxonomy, contract, capabilities, agent, surface, utility  | —                                                      | —                           |
 
 - **Enforcement model**: Whitelist + Blacklist hybrid.
 
@@ -253,28 +253,28 @@ flowchart TD
 
 ### Protocol API
 
-| Method | Input | Output | Error | Event | Description |
+| Method | Input | Output | Error | Event | Description|
 |---|---|---|---|---|---|
-| `scan` | &ArchitectureConfig, &LayerMapVO, &[FilePath], &FilePath, &HashMap<String, String>, &HashMap<String, Vec<ImportEntry>> | `Vec<LintResult>` | — | — | Scan. |
-| `check_cycles` | &ArchitectureConfig, &LayerMapVO, &crate::common::taxonomy_paths_vo::FilePathList, &FilePath, &HashMap<String, String>, &HashMap<String, Vec<ImportEntry>> | `Vec<LintResult>` | `ImportError` | — | Check cycles. |
-| `detect_cycle_edges` | &[DependencyEdge] | `Vec<SymbolName>` | — | — | Detect cycle edges. |
-| `normalize_to_layer` | &str | `LayerNameVO` | — | — | Normalize to layer. |
-| `rule_name` | — | `Identity` | — | — | Rule name. |
-| `check_dummy_imports` | &FilePath, &ContentString, &FilePath, &LayerMapVO, &[ImportEntry] | `Vec<LintResult>` | `ImportError` | — | Check dummy imports. |
-| `check_dummy_functions` | &FilePath, &ContentString, &FilePath, &LayerMapVO | `Vec<LintResult>` | `ImportError` | — | Check dummy functions. |
-| `check_dummy_impls` | &FilePath, &ContentString, &FilePath, &LayerMapVO | `Vec<LintResult>` | `ImportError` | — | Check dummy impls. |
-| `check_taxonomy_intent` | &FilePath, &ContentString, &FilePath, &LayerMapVO, &[ImportEntry] | `Vec<LintResult>` | `ImportError` | — | Check taxonomy intent. |
-| `check_all_dummy` | &FilePath, &ContentString, &FilePath, &LayerMapVO, &HashMap<String, Vec<ImportEntry>> | `Result<Vec<LintResult>, ImportError> { let import_entries = imports_map .get(file.value()) .map(\|v\| v.as_slice()) .unwrap_or(&[])` | — | — | Check all dummy. |
-| `check_forbidden_imports` | &ArchitectureConfig, &LayerMapVO, &FilePathList, &FilePath, &HashMap<String, String>, &HashMap<String, Vec<ImportEntry>> | `LintResultList` | `ImportError` | — | Check forbidden imports. |
-| `run_mandatory_imports` | &ArchitectureConfig, &LayerMapVO, &FilePathList, &FilePath, &HashMap<String, String>, &HashMap<String, Vec<ImportEntry>> | `LintResultList` | `ImportError` | — | Run mandatory imports. |
-| `find_unused_imports` | &FilePath, &str, &[ImportEntry], &[String] | `Vec<LintMessage>` | `ImportError` | — | Find unused imports. |
-| `check_unused_imports` | &str, &str, &[ImportEntry], &[String], &HashMap<String, Vec<String>> | `Vec<LintResult>` | `ImportError` | — | Check unused imports. |
+| `scan` | &ArchitectureConfig, &LayerMapVO, &[FilePath], &FilePath, &HashMap<String, String>, &HashMap<String, Vec<ImportEntry>> | `Vec<LintResult>` | — | — | Scan.|
+| `check_cycles` | &ArchitectureConfig, &LayerMapVO, &crate::common::taxonomy_paths_vo::FilePathList, &FilePath, &HashMap<String, String>, &HashMap<String, Vec<ImportEntry>> | `Vec<LintResult>` | `ImportError` | — | Check cycles.|
+| `detect_cycle_edges` | &[DependencyEdge] | `Vec<SymbolName>` | — | — | Detect cycle edges.|
+| `normalize_to_layer` | &str | `LayerNameVO` | — | — | Normalize to layer.|
+| `rule_name` | — | `Identity` | — | — | Rule name.|
+| `check_dummy_imports` | &FilePath, &ContentString, &FilePath, &LayerMapVO, &[ImportEntry] | `Vec<LintResult>` | `ImportError` | — | Check dummy imports.|
+| `check_dummy_functions` | &FilePath, &ContentString, &FilePath, &LayerMapVO | `Vec<LintResult>` | `ImportError` | — | Check dummy functions.|
+| `check_dummy_impls` | &FilePath, &ContentString, &FilePath, &LayerMapVO | `Vec<LintResult>` | `ImportError` | — | Check dummy impls.|
+| `check_taxonomy_intent` | &FilePath, &ContentString, &FilePath, &LayerMapVO, &[ImportEntry] | `Vec<LintResult>` | `ImportError` | — | Check taxonomy intent.|
+| `check_all_dummy` | &FilePath, &ContentString, &FilePath, &LayerMapVO, &HashMap<String, Vec<ImportEntry>> | `Result<Vec<LintResult>, ImportError> { let import_entries = imports_map .get(file.value()) .map(\|v\| v.as_slice()) .unwrap_or(&[])` | — | — | Check all dummy.|
+| `check_forbidden_imports` | &ArchitectureConfig, &LayerMapVO, &FilePathList, &FilePath, &HashMap<String, String>, &HashMap<String, Vec<ImportEntry>> | `LintResultList` | `ImportError` | — | Check forbidden imports.|
+| `run_mandatory_imports` | &ArchitectureConfig, &LayerMapVO, &FilePathList, &FilePath, &HashMap<String, String>, &HashMap<String, Vec<ImportEntry>> | `LintResultList` | `ImportError` | — | Run mandatory imports.|
+| `find_unused_imports` | &FilePath, &str, &[ImportEntry], &[String] | `Vec<LintMessage>` | `ImportError` | — | Find unused imports.|
+| `check_unused_imports` | &str, &str, &[ImportEntry], &[String], &HashMap<String, Vec<String>> | `Vec<LintResult>` | `ImportError` | — | Check unused imports.|
 
 ### Aggregate API
 
-| Method | Input | Output | Error | Event | Description |
+| Method | Input | Output | Error | Event | Description|
 |---|---|---|---|---|---|
-| `execute` | ImportRequest | `ImportResponse` | — | — | Single composite entry point over the feature. |
+| `execute` | ImportRequest | `ImportResponse` | — | — | Single composite entry point over the feature.|
 
 ## Reference
 
@@ -284,4 +284,4 @@ flowchart TD
 - Filesystem crate
 - Shared crate
 
-| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md) |
+| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md)|

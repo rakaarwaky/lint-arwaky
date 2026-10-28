@@ -105,15 +105,15 @@ flowchart TD
   - **Layer detection** via the layer detection utility using filename prefix.
 - **Per-Layer Suffix Policies** (source of truth: YAML config):
 
-  | Layer        | Policy   | Allowed Suffixes                                                                                              | Forbidden Suffixes                                                                            |
-  | -------------- | ---------- | --------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-  | taxonomy     | strict   | `vo`, `entity`, `error`, `event`, `constant`                                                                  | —                                                                                            |
-  | contract     | strict   | `protocol`, `aggregate`                                                                                       | —                                                                                            |
-  | utility      | flexible | *(any)*                                                                                                       | `vo`, `entity`, `error`, `event`, `constant`, `protocol`, `aggregate`                         |
-  | capabilities | flexible | *(any)*                                                                                                       | `vo`, `entity`, `error`, `event`, `constant`, `constants`, `protocol`, `aggregate`, `utility` |
-  | agent        | strict   | `orchestrator`                                                                                                | —                                                                                            |
-  | surface      | strict   | `command`, `controller`, `page`, `view`, `component`, `router`, `layout`, `hook`, `store`, `action`, `screen` | —                                                                                            |
-  | root         | strict   | `entry`, `container`                                                                                          | —                                                                                            |
+  | Layer        | Policy   | Allowed Suffixes                                                                                              | Forbidden Suffixes                                                                           |
+  | -------------- | ---------- | --------------------------------------------------------------------------------------------------------------- | -----------------------------------------------------------------------------------------------|
+  | taxonomy     | strict   | `vo`, `entity`, `error`, `event`, `constant`                                                                  | —                                                                                           |
+  | contract     | strict   | `protocol`, `aggregate`                                                                                       | —                                                                                           |
+  | utility      | flexible | *(any)*                                                                                                       | `vo`, `entity`, `error`, `event`, `constant`, `protocol`, `aggregate`                        |
+  | capabilities | flexible | *(any)*                                                                                                       | `vo`, `entity`, `error`, `event`, `constant`, `constants`, `protocol`, `aggregate`, `utility`|
+  | agent        | strict   | `orchestrator`                                                                                                | —                                                                                           |
+  | surface      | strict   | `command`, `controller`, `page`, `view`, `component`, `router`, `layout`, `hook`, `store`, `action`, `screen` | —                                                                                           |
+  | root         | strict   | `entry`, `container`                                                                                          | —                                                                                           |
 
 - **Edge Cases**:
 
@@ -154,17 +154,17 @@ flowchart TD
 
 ### Protocol API
 
-| Method | Input | Output | Error | Event | Description |
+| Method | Input | Output | Error | Event | Description|
 |---|---|---|---|---|---|
-| `check_file_naming` | &ArchitectureConfig, &LayerMapVO, &FilePathList, &FilePath, &mut LintResultList | `` | — | — | Check file naming. |
-| `check_domain_suffixes` | &ArchitectureConfig, &LayerMapVO, &FilePathList, &FilePath, &mut LintResultList | `` | — | — | Check domain suffixes. |
-| `check_test_file_prefixes` | &ArchitectureConfig, &LayerMapVO, &FilePathList, &FilePath, &mut LintResultList | `` | — | — | Check test/bench file prefixes. |
+| `check_file_naming` | &ArchitectureConfig, &LayerMapVO, &FilePathList, &FilePath, &mut LintResultList | `` | — | — | Check file naming.|
+| `check_domain_suffixes` | &ArchitectureConfig, &LayerMapVO, &FilePathList, &FilePath, &mut LintResultList | `` | — | — | Check domain suffixes.|
+| `check_test_file_prefixes` | &ArchitectureConfig, &LayerMapVO, &FilePathList, &FilePath, &mut LintResultList | `` | — | — | Check test/bench file prefixes.|
 
 ### Aggregate API
 
-| Method | Input | Output | Error | Event | Description |
+| Method | Input | Output | Error | Event | Description|
 |---|---|---|---|---|---|
-| `execute` | NamingRequest | `NamingResponse` | — | — | Single composite entry point over the feature. |
+| `execute` | NamingRequest | `NamingResponse` | — | — | Single composite entry point over the feature.|
 
 ## Reference
 
@@ -174,4 +174,4 @@ flowchart TD
 - Filesystem crate
 - Shared crate
 
-| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md) |
+| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md)|

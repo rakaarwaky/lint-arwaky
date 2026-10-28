@@ -73,15 +73,15 @@ flowchart TD
 
   - Client-specific wrappers:
 
-    | Client     | Format                                  |
-    | ---------- | --------------------------------------- |
-    | claude-code| `{"mcpServers": { ...base }}`          |
-    | cursor     | `{"mcpServers": { ...base }}`          |
-    | windsurf   | `{"mcpServers": { ...base }}`          |
-    | copilot    | `{"mcpServers": { ...base }}`          |
-    | hermes     | base config directly (no wrapper)      |
-    | vscode     | `{"mcp": {"servers": { ...base }}}`   |
-    | all        | JSON object with all client formats    |
+    | Client     | Format                                 |
+    | ---------- | ---------------------------------------|
+    | claude-code| `{"mcpServers": { ...base }}`         |
+    | cursor     | `{"mcpServers": { ...base }}`         |
+    | windsurf   | `{"mcpServers": { ...base }}`         |
+    | copilot    | `{"mcpServers": { ...base }}`         |
+    | hermes     | base config directly (no wrapper)     |
+    | vscode     | `{"mcp": {"servers": { ...base }}}`  |
+    | all        | JSON object with all client formats   |
 
   - Binary resolution priority (aligned with cli-commands binary lookup):
 
@@ -279,30 +279,30 @@ flowchart TD
 
 ### Protocol API
 
-| Method | Input | Output | Error | Event | Description |
+| Method | Input | Output | Error | Event | Description|
 |---|---|---|---|---|---|
-| `install_python_packages` | &PatternList | `InstallPackagesResult` | — | — | Install python packages. |
-| `install_npm_packages` | &PatternList, bool | `InstallPackagesResult` | — | — | Install npm packages. |
-| `generate_env` | &DirectoryPath | `EnvContentVO` | — | — | Generate env. |
-| `generate_mcp_config` | — | `McpConfigVO` | — | — | Generate mcp config. |
-| `mcp_config_claude` | — | `McpConfigVO` | — | — | Mcp config claude. |
-| `mcp_config_cursor` | — | `McpConfigVO` | — | — | Mcp config cursor. |
-| `mcp_config_windsurf` | — | `McpConfigVO` | — | — | Mcp config windsurf. |
-| `mcp_config_copilot` | — | `McpConfigVO` | — | — | Mcp config copilot. |
-| `mcp_config_hermes` | — | `McpConfigVO` | — | — | Mcp config hermes. |
-| `mcp_config_vscode` | — | `McpConfigVO` | — | — | Mcp config vscode. |
-| `mcp_config_all` | — | `McpConfigVO` | — | — | Mcp config all. |
-| `which_mcp_binary` | — | `McpBinaryNameVO` | — | — | Which mcp binary. |
-| `install_python_adapters` | — | `SuccessStatus` | — | — | Install python adapters. |
-| `install_javascript_adapters` | bool | `SuccessStatus` | — | — | Install javascript adapters. |
-| `detect_language` | — | `Option<ProjectLanguageVO>` | — | — | Detect language. |
-| `detect_languages` | — | `ProjectLanguagesVO` | — | — | Detect languages. |
+| `install_python_packages` | &PatternList | `InstallPackagesResult` | — | — | Install python packages.|
+| `install_npm_packages` | &PatternList, bool | `InstallPackagesResult` | — | — | Install npm packages.|
+| `generate_env` | &DirectoryPath | `EnvContentVO` | — | — | Generate env.|
+| `generate_mcp_config` | — | `McpConfigVO` | — | — | Generate mcp config.|
+| `mcp_config_claude` | — | `McpConfigVO` | — | — | Mcp config claude.|
+| `mcp_config_cursor` | — | `McpConfigVO` | — | — | Mcp config cursor.|
+| `mcp_config_windsurf` | — | `McpConfigVO` | — | — | Mcp config windsurf.|
+| `mcp_config_copilot` | — | `McpConfigVO` | — | — | Mcp config copilot.|
+| `mcp_config_hermes` | — | `McpConfigVO` | — | — | Mcp config hermes.|
+| `mcp_config_vscode` | — | `McpConfigVO` | — | — | Mcp config vscode.|
+| `mcp_config_all` | — | `McpConfigVO` | — | — | Mcp config all.|
+| `which_mcp_binary` | — | `McpBinaryNameVO` | — | — | Which mcp binary.|
+| `install_python_adapters` | — | `SuccessStatus` | — | — | Install python adapters.|
+| `install_javascript_adapters` | bool | `SuccessStatus` | — | — | Install javascript adapters.|
+| `detect_language` | — | `Option<ProjectLanguageVO>` | — | — | Detect language.|
+| `detect_languages` | — | `ProjectLanguagesVO` | — | — | Detect languages.|
 
 ### Aggregate API
 
-| Method | Input | Output | Error | Event | Description |
+| Method | Input | Output | Error | Event | Description|
 |---|---|---|---|---|---|
-| `execute` | SetupRequest | `SetupResponse` | — | — | Single composite entry point over the feature. |
+| `execute` | SetupRequest | `SetupResponse` | — | — | Single composite entry point over the feature.|
 
 ## Reference
 
@@ -311,4 +311,4 @@ flowchart TD
 - Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
 - Maintenance FRD: `crates/maintenance/FRD.md` (doctor, diagnose)
 
-| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md) |
+| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md)|

@@ -59,13 +59,13 @@ metadata:
 
 ## Language routing
 
-| Language | HOW-TO | Use when |
-| -------- | ------ | -------- |
-| All (shared CLI, MCP, exit codes, AES101 naming) | [`references/HOW-TO-USE-LINT-COMMANDS.md`](references/HOW-TO-USE-LINT-COMMANDS.md) | Invoking scan/fix/ci, aliases, flags, MCP tools, layer matrix |
-| Python | [`references/HOW-TO-USE-LINT-PYTHON.md`](references/HOW-TO-USE-LINT-PYTHON.md) | `modules/`, `py_compile` / Ruff / Mypy verify, `__init__.py` barrel |
-| Rust | [`references/HOW-TO-USE-LINT-RUST.md`](references/HOW-TO-USE-LINT-RUST.md) | `crates/`, `cargo check` / clippy / nextest verify, `mod.rs` barrel |
-| TypeScript | [`references/HOW-TO-USE-LINT-TYPESCRIPT.md`](references/HOW-TO-USE-LINT-TYPESCRIPT.md) | `packages/`, `tsc` / ESLint / vitest verify, `index.ts` barrel |
-| Fix routing (every AES code) | [`references/HOW-TO-USE-LINT-ROUTING.md`](references/HOW-TO-USE-LINT-ROUTING.md) | Mapping a finding to its fix + owning `aes-*` skill |
+| Language | HOW-TO | Use when|
+| -------- | ------ | --------|
+| All (shared CLI, MCP, exit codes, AES101 naming) | [`references/HOW-TO-USE-LINT-COMMANDS.md`](references/HOW-TO-USE-LINT-COMMANDS.md) | Invoking scan/fix/ci, aliases, flags, MCP tools, layer matrix|
+| Python | [`references/HOW-TO-USE-LINT-PYTHON.md`](references/HOW-TO-USE-LINT-PYTHON.md) | `modules/`, `py_compile` / Ruff / Mypy verify, `__init__.py` barrel|
+| Rust | [`references/HOW-TO-USE-LINT-RUST.md`](references/HOW-TO-USE-LINT-RUST.md) | `crates/`, `cargo check` / clippy / nextest verify, `mod.rs` barrel|
+| TypeScript | [`references/HOW-TO-USE-LINT-TYPESCRIPT.md`](references/HOW-TO-USE-LINT-TYPESCRIPT.md) | `packages/`, `tsc` / ESLint / vitest verify, `index.ts` barrel|
+| Fix routing (every AES code) | [`references/HOW-TO-USE-LINT-ROUTING.md`](references/HOW-TO-USE-LINT-ROUTING.md) | Mapping a finding to its fix + owning `aes-*` skill|
 
 Read the HOW-TO for the active language before fixing. Do not restate flags, subcommands, or
 the fix table here — they live in the HOW-TOs.
@@ -81,14 +81,14 @@ the routing HOW-TO. `tests/` / `benches/` are **not** AES layers (see `aes-testi
 
 ## Invariants
 
-| Invariant | Rule | Read |
-| --------- | ---- | ---- |
-| Primary gate | `lint-arwaky-cli scan` (AES101–506) → 0; language compile is fallback only | Commands + language HOW-TO |
-| Direction | Upper layers import downward only; never upward (AES201 CRITICAL) | Routing HOW-TO |
-| Role purity | Protocol = one method per feature; aggregate = many exports, one per feature (not dump-all) | Routing + `aes-contract` |
-| Auto-fix set | Only AES101 / AES203 / AES304 via `fix` (`--dry-run` first); AES201/205 manual | Routing HOW-TO |
-| Barrel after rename | AES101 rename → update `__init__.py` / `mod.rs` / `index.ts` or it becomes AES501–506 | Language HOW-TO |
-| Done | Re-scan to **0** + language verify pass; exit code is the gate (`0`/`1`/`2`) | Commands HOW-TO |
+| Invariant | Rule | Read|
+| --------- | ---- | ----|
+| Primary gate | `lint-arwaky-cli scan` (AES101–506) → 0; language compile is fallback only | Commands + language HOW-TO|
+| Direction | Upper layers import downward only; never upward (AES201 CRITICAL) | Routing HOW-TO|
+| Role purity | Protocol = one method per feature; aggregate = many exports, one per feature (not dump-all) | Routing + `aes-contract`|
+| Auto-fix set | Only AES101 / AES203 / AES304 via `fix` (`--dry-run` first); AES201/205 manual | Routing HOW-TO|
+| Barrel after rename | AES101 rename → update `__init__.py` / `mod.rs` / `index.ts` or it becomes AES501–506 | Language HOW-TO|
+| Done | Re-scan to **0** + language verify pass; exit code is the gate (`0`/`1`/`2`) | Commands HOW-TO|
 
 ## Diagnostic Tree
 
@@ -151,15 +151,15 @@ lint-arwaky-cli orphan <path> --format json
 
 ## Common Mistakes (Anti-Patterns)
 
-| Mistake | Correct approach |
-| ------- | ---------------- |
-| Skipping pre-flight; trusting findings on broken code | Build/import first — violations on red builds are noise. |
-| Auto-fixing AES201/205 with `fix` | Only AES101/203/304 auto-fix; AES201/205 manual via `aes-contract`. |
-| AES101 rename without barrel/`mod.rs`/`index.ts` update | Re-export immediately — otherwise AES501–506 orphan. |
-| Declaring done at "mostly clean" | Done = re-scan **0** + language verify; exit code is the gate. |
-| Parsing stdout instead of exit code for CI | Gate on `0`/`1`/`2`; stdout is not the contract. |
-| Re-guessing fix rows from memory | Consult `HOW-TO-USE-LINT-ROUTING.md` every time. |
-| Treating `tests/`/`benches/` as AES layers | They follow `aes-testing-suite` naming, not AES101–102. |
+| Mistake | Correct approach|
+| ------- | ----------------|
+| Skipping pre-flight; trusting findings on broken code | Build/import first — violations on red builds are noise.|
+| Auto-fixing AES201/205 with `fix` | Only AES101/203/304 auto-fix; AES201/205 manual via `aes-contract`.|
+| AES101 rename without barrel/`mod.rs`/`index.ts` update | Re-export immediately — otherwise AES501–506 orphan.|
+| Declaring done at "mostly clean" | Done = re-scan **0** + language verify; exit code is the gate.|
+| Parsing stdout instead of exit code for CI | Gate on `0`/`1`/`2`; stdout is not the contract.|
+| Re-guessing fix rows from memory | Consult `HOW-TO-USE-LINT-ROUTING.md` every time.|
+| Treating `tests/`/`benches/` as AES layers | They follow `aes-testing-suite` naming, not AES101–102.|
 
 ## Related Skills
 

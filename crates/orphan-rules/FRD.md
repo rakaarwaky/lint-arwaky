@@ -222,30 +222,30 @@ flowchart TD
 
 FR-OrphanRules-001's graph-context, entry-point, and reachability steps have **no trait** in the shared contract module. They are orchestration the orphan-rules agent owns: it receives the graph context from the filesystem aggregate and delegates the pure work to the shared orphan/quality utilities. An agent must never implement a contract protocol (AES405), and no other feature consumes these steps, so a seam would have exactly one implementer — the agent — which is the shape the rule forbids. They are therefore inherent methods on the aggregate:
 
-| Method | Input | Output | Error | Description |
+| Method | Input | Output | Error | Description|
 |---|---|---|---|---|
-| `build_orphan_graph_context` | &FilePath | `GraphAnalysisContext` | — | Ask the filesystem aggregate to build the analysis context for a root. |
-| `identify_orphan_entry_points` | &OrphanFileListVO | `OrphanFileListVO` | — | Identify entry points from a workspace file list. |
-| `trace_alive_files` | &OrphanFileListVO, &GraphAnalysisContext | `ReachabilityResult` | — | Trace which files are alive (reachable) from the entry points. |
+| `build_orphan_graph_context` | &FilePath | `GraphAnalysisContext` | — | Ask the filesystem aggregate to build the analysis context for a root.|
+| `identify_orphan_entry_points` | &OrphanFileListVO | `OrphanFileListVO` | — | Identify entry points from a workspace file list.|
+| `trace_alive_files` | &OrphanFileListVO, &GraphAnalysisContext | `ReachabilityResult` | — | Trace which files are alive (reachable) from the entry points.|
 
 ### Protocol API
 
-| Method | Input | Output | Error | Event | Description |
+| Method | Input | Output | Error | Event | Description|
 |---|---|---|---|---|---|
-| `is_agent_orphan` | &FilePath, &FilePath, &[String], &HashMap<String, String>, &ReachabilityResult | `OrphanIndicatorResult` | — | — | Is agent orphan. |
-| `is_capabilities_orphan` | &FilePath, &FilePath, &ReachabilityResult, &HashMap<String, String>, &std::path::Path | `OrphanIndicatorResult` | — | — | Is capabilities orphan. |
-| `is_contract_orphan` | &FilePath, &FilePath, &InheritanceMap, &[String], &HashMap<String, String>, &ReachabilityResult | `OrphanIndicatorResult` | — | — | Is contract orphan. |
-| `parse_file` | &str, &str | `FileParseResultVO` | — | — | Parse file. |
-| `is_supported` | &str | `bool` | — | — | Is supported. |
-| `is_surface_orphan` | &FilePath, &FilePath, &ReachabilityResult, &InboundLinkMap, Option<&LayerDefinition> | `OrphanIndicatorResult` | — | — | Is surface orphan. |
-| `is_taxonomy_orphan` | &FilePath, &FilePath, Option<&LayerDefinition>, &InboundLinkMap, &[String], &HashMap<String, String>, &ReachabilityResult | `OrphanIndicatorResult` | — | — | Is taxonomy orphan. |
-| `is_utility_orphan` | &FilePath, &FilePath, &[String], &InboundLinkMap, &HashMap<String, String>, &ReachabilityResult | `OrphanIndicatorResult` | — | — | Is utility orphan. |
+| `is_agent_orphan` | &FilePath, &FilePath, &[String], &HashMap<String, String>, &ReachabilityResult | `OrphanIndicatorResult` | — | — | Is agent orphan.|
+| `is_capabilities_orphan` | &FilePath, &FilePath, &ReachabilityResult, &HashMap<String, String>, &std::path::Path | `OrphanIndicatorResult` | — | — | Is capabilities orphan.|
+| `is_contract_orphan` | &FilePath, &FilePath, &InheritanceMap, &[String], &HashMap<String, String>, &ReachabilityResult | `OrphanIndicatorResult` | — | — | Is contract orphan.|
+| `parse_file` | &str, &str | `FileParseResultVO` | — | — | Parse file.|
+| `is_supported` | &str | `bool` | — | — | Is supported.|
+| `is_surface_orphan` | &FilePath, &FilePath, &ReachabilityResult, &InboundLinkMap, Option<&LayerDefinition> | `OrphanIndicatorResult` | — | — | Is surface orphan.|
+| `is_taxonomy_orphan` | &FilePath, &FilePath, Option<&LayerDefinition>, &InboundLinkMap, &[String], &HashMap<String, String>, &ReachabilityResult | `OrphanIndicatorResult` | — | — | Is taxonomy orphan.|
+| `is_utility_orphan` | &FilePath, &FilePath, &[String], &InboundLinkMap, &HashMap<String, String>, &ReachabilityResult | `OrphanIndicatorResult` | — | — | Is utility orphan.|
 
 ### Aggregate API
 
-| Method | Input | Output | Error | Event | Description |
+| Method | Input | Output | Error | Event | Description|
 |---|---|---|---|---|---|
-| `execute` | OrphanRequest | `OrphanResponse` | — | — | Single composite entry point over the feature. |
+| `execute` | OrphanRequest | `OrphanResponse` | — | — | Single composite entry point over the feature.|
 
 ## Reference
 
@@ -254,4 +254,4 @@ FR-OrphanRules-001's graph-context, entry-point, and reachability steps have **n
 - Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
 - Filesystem crate FRD: `../filesystem/FRD.md`
 
-| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md) |
+| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md)|

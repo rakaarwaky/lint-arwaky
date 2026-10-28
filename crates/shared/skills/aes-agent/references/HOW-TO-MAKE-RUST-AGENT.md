@@ -126,18 +126,18 @@ impl Default for Agent<Name> {
 
 ## Section Contract
 
-| Check | Why it belongs here |
-| ----- | ------------------- |
-| Block 1 → 2 → 3 order followed. | Required by AES layer rules and the linter; missing it is a defect. |
-| Block 2: ONLY aggregate trait implementation. | Required by AES layer rules and the linter; missing it is a defect. |
-| Block 3: constructors, std traits, private helpers. | Required by AES layer rules and the linter; missing it is a defect. |
-| ≥1 struct implements aggregate trait; ≤3 total types. | Required by AES layer rules and the linter; missing it is a defect. |
-| No local domain data; `Arc<dyn Trait>` for DI; shared VOs. | Required by AES layer rules and the linter; missing it is a defect. |
-| Zero I/O, zero business logic, zero domain computation. | Required by AES layer rules and the linter; missing it is a defect. |
-| No forbidden imports. | Required by AES layer rules and the linter; missing it is a defect. |
-| Generic aggregate methods object-safe or `where Self: Sized`. | Required by AES layer rules and the linter; missing it is a defect. |
-| Aggregate registered in shared crate `mod.rs`. | Required by AES layer rules and the linter; missing it is a defect. |
-| `cargo check -p <crate-name>` passes. | Required by AES layer rules and the linter; missing it is a defect. |
+| Check | Why it belongs here|
+| ----- | -------------------|
+| Block 1 → 2 → 3 order followed. | Required by AES layer rules and the linter; missing it is a defect.|
+| Block 2: ONLY aggregate trait implementation. | Required by AES layer rules and the linter; missing it is a defect.|
+| Block 3: constructors, std traits, private helpers. | Required by AES layer rules and the linter; missing it is a defect.|
+| ≥1 struct implements aggregate trait; ≤3 total types. | Required by AES layer rules and the linter; missing it is a defect.|
+| No local domain data; `Arc<dyn Trait>` for DI; shared VOs. | Required by AES layer rules and the linter; missing it is a defect.|
+| Zero I/O, zero business logic, zero domain computation. | Required by AES layer rules and the linter; missing it is a defect.|
+| No forbidden imports. | Required by AES layer rules and the linter; missing it is a defect.|
+| Generic aggregate methods object-safe or `where Self: Sized`. | Required by AES layer rules and the linter; missing it is a defect.|
+| Aggregate registered in shared crate `mod.rs`. | Required by AES layer rules and the linter; missing it is a defect.|
+| `cargo check -p <crate-name>` passes. | Required by AES layer rules and the linter; missing it is a defect.|
 
 ---
 

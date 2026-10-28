@@ -27,11 +27,11 @@ See `ARCHITECTURE.md`.
 
 ## Available Scripts / Commands
 
-| Command                                 | Purpose                          |
-| --------------------------------------- | -------------------------------- |
-| `cargo build --release`                 | Build all Rust crates            |
-| `lint-arwaky-cli check .`               | Run architecture scanner         |
-| `cargo nextest run --workspace`         | Run all tests                    |
+| Command                                 | Purpose                         |
+| --------------------------------------- | --------------------------------|
+| `cargo build --release`                 | Build all Rust crates           |
+| `lint-arwaky-cli check .`               | Run architecture scanner        |
+| `cargo nextest run --workspace`         | Run all tests                   |
 
 ## Configuration
 

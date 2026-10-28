@@ -33,11 +33,11 @@ flowchart TD
 
 `ScanReport` contains two categories of findings:
 
-| Category                  | Source                   | Rule codes        | Example                                                    |
-| --------------------------- | -------------------------- | ------------------- | ------------------------------------------------------------ |
-| **AES violations**        | Internal rule crates     | AES101–AES506    | `AES201 CRITICAL surface → capabilities import forbidden` |
-| **External lint results** | External linter adapters | Tool-native codes | `clippy::needless_return`, `ruff::E501`                    |
-| **PARSE_WARN**            | Report input or diagnostics | `PARSE_WARN` | `File skipped: parse failure — syntax error` |
+| Category                  | Source                   | Rule codes        | Example                                                   |
+| --------------------------- | -------------------------- | ------------------- | ------------------------------------------------------------|
+| **AES violations**        | Internal rule crates     | AES101–AES506    | `AES201 CRITICAL surface → capabilities import forbidden`|
+| **External lint results** | External linter adapters | Tool-native codes | `clippy::needless_return`, `ruff::E501`                   |
+| **PARSE_WARN**            | Report input or diagnostics | `PARSE_WARN` | `File skipped: parse failure — syntax error`|
 
 > **PARSE_WARN dual representation**: PARSE_WARN entries may arrive via
 > `report.results` (as `LintResult` with code starting with `PARSE_`) or
@@ -110,14 +110,14 @@ flowchart TD
   - Includes tool metadata: name `lint-arwaky`, version, information URI.
   - Severity mapping:
 
-    | lint-arwaky Severity | SARIF Level |
-    | ---------------------- | ------------- |
-    | CRITICAL             | error       |
-    | HIGH                 | error       |
-    | MEDIUM               | warning     |
-    | LOW                  | note        |
-    | INFO                 | note        |
-    | PARSE_WARN           | note        |
+    | lint-arwaky Severity | SARIF Level|
+    | ---------------------- | -------------|
+    | CRITICAL             | error      |
+    | HIGH                 | error      |
+    | MEDIUM               | warning    |
+    | LOW                  | note       |
+    | INFO                 | note       |
+    | PARSE_WARN           | note       |
 
   - Each result includes: rule ID, level, message text, physical location (artifact URI + start line clamped to minimum 1).
   - Rules array includes metadata for all rule codes present in results.
@@ -160,19 +160,19 @@ flowchart TD
 
 ### Protocol API
 
-| Method | Input | Output | Error | Event | Description |
+| Method | Input | Output | Error | Event | Description|
 |---|---|---|---|---|---|
-| `format_text` | &ScanReport | `DisplayContent` | — | — | FR-001: Text output. |
-| `format_json` | &ScanReport | `DisplayContent` | — | — | FR-002: JSON output. |
-| `format_sarif` | &ScanReport | `DisplayContent` | — | — | FR-003: SARIF output. |
-| `format_junit` | &ScanReport | `DisplayContent` | — | — | FR-004: JUnit output. |
-| `supported_format` | — | `Format` | — | — | The single format each formatter serves. |
+| `format_text` | &ScanReport | `DisplayContent` | — | — | FR-001: Text output.|
+| `format_json` | &ScanReport | `DisplayContent` | — | — | FR-002: JSON output.|
+| `format_sarif` | &ScanReport | `DisplayContent` | — | — | FR-003: SARIF output.|
+| `format_junit` | &ScanReport | `DisplayContent` | — | — | FR-004: JUnit output.|
+| `supported_format` | — | `Format` | — | — | The single format each formatter serves.|
 
 ### Aggregate API
 
-| Method | Input | Output | Error | Event | Description |
+| Method | Input | Output | Error | Event | Description|
 |---|---|---|---|---|---|
-| `format` | &ScanReport, Format | `DisplayContent` | — | — | Single composite entry point over the feature. |
+| `format` | &ScanReport, Format | `DisplayContent` | — | — | Single composite entry point over the feature.|
 
 ## Reference
 
@@ -181,4 +181,4 @@ flowchart TD
 - Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
 - External Lint FRD: `crates/external-lint/FRD.md` (tool-native codes)
 
-| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md) |
+| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md)|

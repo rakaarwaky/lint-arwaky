@@ -62,15 +62,15 @@ flowchart TD
   - Extract filename prefix as the first `_`-separated segment of the stem.
   - Match prefix to layer:
 
-    | Prefix                       | Layer        | Checker                                   |
-    | ---------------------------- | ------------ | ----------------------------------------- |
-    | `taxonomy`                   | taxonomy     | taxonomy_checker (AES401)                 |
-    | `contract`                   | contract     | contract_checker (AES402)                 |
-    | `capabilities`, `capability` | capabilities | capabilities_checker (AES403)             |
-    | `utility`                    | utility      | utility_checker (AES404)                  |
-    | `agent`                      | agent        | agent_checker (AES405)                    |
-    | `surface`, `surfaces`        | surface      | surface_checker (AES406)                  |
-    | `root`                       | root         | **SKIP** (pure DI wiring, no role checks) |
+    | Prefix                       | Layer        | Checker                                  |
+    | ---------------------------- | ------------ | -----------------------------------------|
+    | `taxonomy`                   | taxonomy     | taxonomy_checker (AES401)                |
+    | `contract`                   | contract     | contract_checker (AES402)                |
+    | `capabilities`, `capability` | capabilities | capabilities_checker (AES403)            |
+    | `utility`                    | utility      | utility_checker (AES404)                 |
+    | `agent`                      | agent        | agent_checker (AES405)                   |
+    | `surface`, `surfaces`        | surface      | surface_checker (AES406)                 |
+    | `root`                       | root         | **SKIP** (pure DI wiring, no role checks)|
 
   - Apply ignore paths from architecture configuration using **segment matching** (split path by `/`, match per segment — pattern `test` matches segment `test` only, not `latest` or `contest`).
   - Files with no underscore in the name have no prefix match → silently skipped.
@@ -99,11 +99,11 @@ flowchart TD
     - Scan type annotations in struct fields, function parameters, and return types for raw primitives.
     - Forbidden primitives per language:
 
-      | Language              | Forbidden Primitives                                                                                                                                    |
-      | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-      | Rust                  | `String`, `i8`–`i128`, `u8`–`u128`, `f32`, `f64`, `bool`, `char`, `Vec<`, `HashMap<`, `BTreeMap<`, `Option<`, `Result<`, `Box<`, `Cell<`, `RefCell<`, `Arc<`, `Mutex<`, `Rc<` |
-      | Python                | `str`, `int`, `float`, `bool`, `list`, `dict`, `tuple`, `set`                                                                                           |
-      | TypeScript/JavaScript | `string`, `number`, `boolean`, `any`, `Array<`, `Record<`                                                                                               |
+      | Language              | Forbidden Primitives                                                                                                                                   |
+      | --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------|
+      | Rust                  | `String`, `i8`–`i128`, `u8`–`u128`, `f32`, `f64`, `bool`, `char`, `Vec<`, `HashMap<`, `BTreeMap<`, `Option<`, `Result<`, `Box<`, `Cell<`, `RefCell<`, `Arc<`, `Mutex<`, `Rc<`|
+      | Python                | `str`, `int`, `float`, `bool`, `list`, `dict`, `tuple`, `set`                                                                                          |
+      | TypeScript/JavaScript | `string`, `number`, `boolean`, `any`, `Array<`, `Record<`                                                                                              |
 
     - Type annotations using custom VO wrappers (e.g., `FilePath`, `LineNumber`, `SymbolName`) are NOT flagged.
     - Detection uses line-based scanning: extract type annotations after `:` in each line and match against the forbidden primitive list.
@@ -270,27 +270,27 @@ flowchart TD
 
 ### Protocol API
 
-| Method | Input | Output | Error | Event | Description |
+| Method | Input | Output | Error | Event | Description|
 |---|---|---|---|---|---|
-| `check_agent_routing` | &FileEntry, &str, &mut Vec<LintResult> | `` | — | — | Check agent routing. |
-| `check_capability_routing` | &FileEntry, &str, &mut Vec<LintResult> | `` | — | — | Check capability routing. |
-| `check_protocol` | &FileEntry | `Vec<LintResult>` | — | — | Check protocol. |
-| `check_aggregate` | &FileEntry | `Vec<LintResult>` | — | — | Check aggregate. |
-| `check_smart_surface` | &FileEntry, &mut Vec<LintResult> | `` | — | — | Check smart surface. |
-| `check_utility_surface` | &FileEntry, &mut Vec<LintResult> | `` | — | — | Check utility surface. |
-| `check_passive_surface` | &FileEntry, &mut Vec<LintResult> | `` | — | — | Check passive surface. |
-| `check_fn_count_limit` | &FileEntry, &mut Vec<LintResult> | `` | — | — | Check fn count limit. |
-| `check_entity` | &FileEntry, &mut Vec<LintResult> | `` | — | — | Check entity. |
-| `check_error` | &FileEntry, &mut Vec<LintResult> | `` | — | — | Check error. |
-| `check_event` | &FileEntry, &mut Vec<LintResult> | `` | — | — | Check event. |
-| `check_constant` | &FileEntry, &mut Vec<LintResult> | `` | — | — | Check constant. |
-| `check_utility_convention` | &FileEntry, &mut Vec<LintResult> | `` | — | — | Check utility convention. |
+| `check_agent_routing` | &FileEntry, &str, &mut Vec<LintResult> | `` | — | — | Check agent routing.|
+| `check_capability_routing` | &FileEntry, &str, &mut Vec<LintResult> | `` | — | — | Check capability routing.|
+| `check_protocol` | &FileEntry | `Vec<LintResult>` | — | — | Check protocol.|
+| `check_aggregate` | &FileEntry | `Vec<LintResult>` | — | — | Check aggregate.|
+| `check_smart_surface` | &FileEntry, &mut Vec<LintResult> | `` | — | — | Check smart surface.|
+| `check_utility_surface` | &FileEntry, &mut Vec<LintResult> | `` | — | — | Check utility surface.|
+| `check_passive_surface` | &FileEntry, &mut Vec<LintResult> | `` | — | — | Check passive surface.|
+| `check_fn_count_limit` | &FileEntry, &mut Vec<LintResult> | `` | — | — | Check fn count limit.|
+| `check_entity` | &FileEntry, &mut Vec<LintResult> | `` | — | — | Check entity.|
+| `check_error` | &FileEntry, &mut Vec<LintResult> | `` | — | — | Check error.|
+| `check_event` | &FileEntry, &mut Vec<LintResult> | `` | — | — | Check event.|
+| `check_constant` | &FileEntry, &mut Vec<LintResult> | `` | — | — | Check constant.|
+| `check_utility_convention` | &FileEntry, &mut Vec<LintResult> | `` | — | — | Check utility convention.|
 
 ### Aggregate API
 
-| Method | Input | Output | Error | Event | Description |
+| Method | Input | Output | Error | Event | Description|
 |---|---|---|---|---|---|
-| `execute` | RoleRequest | `RoleResponse` | — | — | Single composite entry point over the feature. |
+| `execute` | RoleRequest | `RoleResponse` | — | — | Single composite entry point over the feature.|
 
 ## Reference
 
@@ -300,4 +300,4 @@ flowchart TD
 - Filesystem crate
 - Shared crate
 
-| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md) |
+| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md)|

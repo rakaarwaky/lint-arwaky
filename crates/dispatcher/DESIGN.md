@@ -14,33 +14,33 @@ surface map that onto the process exit-code contract.
 
 ## Design Requirements
 
-| Component            | File                     | Serves    | States                  |
-| -------------------- | ------------------------ | --------- | ----------------------- |
-| Naming collector     | `surface_naming_action.rs`  | AES101–102 | collected / scoped  |
-| Import collector     | `surface_import_action.rs`  | AES201–205 | collected / scoped  |
-| Quality collector    | `surface_quality_action.rs` | AES301–305 | collected / scoped  |
-| Role collector       | `surface_role_action.rs`   | AES401–406 | collected / scoped  |
-| Orphan collector     | `surface_orphan_action.rs` | AES501–506 | collected / scoped  |
-| Structure collector  | `surface_structure_action.rs` | AES701–704 | collected / scoped  |
-| Check entry          | `surface_check_action.rs`  | `check`   | exit-code shaped over all groups |
-| Layer entry          | `surface_layer_scan_action.rs` | `taxonomy`, `contract`, `capabilities`, `utility`, `agents`, `surface` | every group, findings narrowed to one layer |
-| CI entry             | `surface_ci_action.rs`     | `ci`      | the same groups with thresholds   |
-| Fix entry            | `surface_fix_action.rs`    | `fix`     | aggregates every `FixOutcome` into the run-level outcome |
-| Docs entry           | `surface_docs_action.rs`   | `docs`    | audit root, not a filter          |
-| Watch entry          | `surface_watch_action.rs`  | `watch`   | repeated scans over changed files |
-| Config entry         | `surface_config_action.rs` | `config`  | effective configuration           |
-| Git entry            | `surface_git_action.rs`    | `git`     | hook installation and checks      |
-| Supporting surfaces  | `surface_version_action.rs`, `surface_plugin_action.rs`, `surface_setup_action.rs`, `surface_maintenance_action.rs`, `surface_external_action.rs` | `version`, `plugin`, `setup`, `doctor`/`security`/`deps`, `external` | pass-through |
+| Component            | File                     | Serves    | States                 |
+| -------------------- | ------------------------ | --------- | -----------------------|
+| Naming collector     | `surface_naming_action.rs`  | AES101–102 | collected / scoped |
+| Import collector     | `surface_import_action.rs`  | AES201–205 | collected / scoped |
+| Quality collector    | `surface_quality_action.rs` | AES301–305 | collected / scoped |
+| Role collector       | `surface_role_action.rs`   | AES401–406 | collected / scoped |
+| Orphan collector     | `surface_orphan_action.rs` | AES501–506 | collected / scoped |
+| Structure collector  | `surface_structure_action.rs` | AES701–704 | collected / scoped |
+| Check entry          | `surface_check_action.rs`  | `check`   | exit-code shaped over all groups|
+| Layer entry          | `surface_layer_scan_action.rs` | `taxonomy`, `contract`, `capabilities`, `utility`, `agents`, `surface` | every group, findings narrowed to one layer|
+| CI entry             | `surface_ci_action.rs`     | `ci`      | the same groups with thresholds  |
+| Fix entry            | `surface_fix_action.rs`    | `fix`     | aggregates every `FixOutcome` into the run-level outcome|
+| Docs entry           | `surface_docs_action.rs`   | `docs`    | audit root, not a filter         |
+| Watch entry          | `surface_watch_action.rs`  | `watch`   | repeated scans over changed files|
+| Config entry         | `surface_config_action.rs` | `config`  | effective configuration          |
+| Git entry            | `surface_git_action.rs`    | `git`     | hook installation and checks     |
+| Supporting surfaces  | `surface_version_action.rs`, `surface_plugin_action.rs`, `surface_setup_action.rs`, `surface_maintenance_action.rs`, `surface_external_action.rs` | `version`, `plugin`, `setup`, `doctor`/`security`/`deps`, `external` | pass-through|
 
 Every collector has the same shape: `collect_<group>(target, aggregates) -> Vec<Finding>`.
 
 ### DS-DISP-001: Outcome Vocabulary
 
-| Outcome      | Condition                                        | Who grades it   |
-| ------------ | ------------------------------------------------ | --------------- |
-| `clean`      | Every group returned zero findings                | the surface     |
-| `violations` | One or more groups returned findings              | the surface     |
-| `error`      | A group failed to run                             | the surface     |
+| Outcome      | Condition                                        | Who grades it  |
+| ------------ | ------------------------------------------------ | ---------------|
+| `clean`      | Every group returned zero findings                | the surface    |
+| `violations` | One or more groups returned findings              | the surface    |
+| `error`      | A group failed to run                             | the surface    |
 
 The three are not interchangeable. A group that fails is never silently treated
 as clean — a scan that could not complete reports the failure, because a clean
@@ -68,10 +68,10 @@ target.
 Not every path-taking subcommand scopes the same way, and the difference is
 deliberate:
 
-| Collector | What the target means |
-| --- | --- |
-| `surface_check_action.rs`, and every `surface_<group>_action.rs` | A **filter**. The pipeline indexes the workspace and the collector keeps only the findings contained under the target. |
-| `surface_docs_action.rs` | A **root**. The doc request carries the target as its audit root, so pointing `docs` at a sub-directory audits that sub-tree as if it were its own workspace. Crosslink checks (AES604) that expect root-level `PRD.md`/`ROADMAP.md` siblings therefore behave differently than they do for a whole-workspace run. |
+| Collector | What the target means|
+| --- | ---|
+| `surface_check_action.rs`, and every `surface_<group>_action.rs` | A **filter**. The pipeline indexes the workspace and the collector keeps only the findings contained under the target.|
+| `surface_docs_action.rs` | A **root**. The doc request carries the target as its audit root, so pointing `docs` at a sub-directory audits that sub-tree as if it were its own workspace. Crosslink checks (AES604) that expect root-level `PRD.md`/`ROADMAP.md` siblings therefore behave differently than they do for a whole-workspace run.|
 
 The doc-rules contract owns this semantic; see `crates/doc-rules/FRD.md`
 ("Path scoping" under System Overview) and the `docs` row in
@@ -128,19 +128,19 @@ then the matching row here.
 
 ### DS-DISP-006: States
 
-| State        | Condition                                                    |
-| ------------ | ------------------------------------------------------------ |
-| `clean`      | Every group returned zero findings                            |
-| `violations` | One or more groups returned findings                          |
-| `error`      | A group failed to run; the dispatcher reports it rather than reporting a clean scan |
+| State        | Condition                                                   |
+| ------------ | ------------------------------------------------------------|
+| `clean`      | Every group returned zero findings                           |
+| `violations` | One or more groups returned findings                         |
+| `error`      | A group failed to run; the dispatcher reports it rather than reporting a clean scan|
 
 ### DS-DISP-007: Error States
 
-| Condition                        | Behaviour                                                                                   |
-| -------------------------------- | ------------------------------------------------------------------------------------------- |
-| Target path missing              | The caller returns `RuntimeError` before dispatching                                        |
-| A group returns an internal error| The failure is surfaced; other groups still contribute findings                             |
-| A finding's path cannot be resolved | The finding is dropped from a scoped scan rather than reported against a path that does not exist |
+| Condition                        | Behaviour                                                                                  |
+| -------------------------------- | -------------------------------------------------------------------------------------------|
+| Target path missing              | The caller returns `RuntimeError` before dispatching                                       |
+| A group returns an internal error| The failure is surfaced; other groups still contribute findings                            |
+| A finding's path cannot be resolved | The finding is dropped from a scoped scan rather than reported against a path that does not exist|
 
 ## Reference
 

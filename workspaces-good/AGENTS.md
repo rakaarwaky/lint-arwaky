@@ -54,8 +54,8 @@ lint-arwaky-cli check .                                                # archite
 ---
 
 ## Reference
-| Prd | {Link to PRD.md} | [{link}](PRD.md) |
-| Frd | {Link to FRD.md} | [{link}](FRD.md) |
-| Data | {Link to DATA.md} | [{link}](DATA.md) |
-| Design | {Link to DESIGN.md} | [{link}](DESIGN.md) |
-| Architecture | {Link to ARCHITECTURE.md} | [{link}](ARCHITECTURE.md) |
+| Prd | {Link to PRD.md} | [{link}](PRD.md)|
+| Frd | {Link to FRD.md} | [{link}](FRD.md)|
+| Data | {Link to DATA.md} | [{link}](DATA.md)|
+| Design | {Link to DESIGN.md} | [{link}](DESIGN.md)|
+| Architecture | {Link to ARCHITECTURE.md} | [{link}](ARCHITECTURE.md)|

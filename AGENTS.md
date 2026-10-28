@@ -10,50 +10,50 @@ description: "Lint Arwaky operational guide."
 
 ## Runtime
 
-| Aspect          | Detail                                          |
+| Aspect          | Detail                                         |
 |-----------------|-------------------------------------------------|
-| Language        | {language and pinned version}                   |
-| Environment     | {environment manager and creation method}       |
-| Artifacts       | {reviewable artifact location}                  |
-| Package Manager | {package manager and lockfile}                  |
-| Version Probe   | `{version probe command}`                       |
-| Setup           | `{environment setup command}`                    |
-| Activation      | `{optional environment activation command}`      |
+| Language        | {language and pinned version}                  |
+| Environment     | {environment manager and creation method}      |
+| Artifacts       | {reviewable artifact location}                 |
+| Package Manager | {package manager and lockfile}                 |
+| Version Probe   | `{version probe command}`                      |
+| Setup           | `{environment setup command}`                   |
+| Activation      | `{optional environment activation command}`     |
 
 ## Project Structure
 
-| Path       | Purpose              |
+| Path       | Purpose             |
 |------------|----------------------|
-| {path}     | {what lives here}    |
+| {path}     | {what lives here}   |
 
 ## Commands
 
-| Category    | Command                              | Scope      | CI Gate              |
+| Category    | Command                              | Scope      | CI Gate             |
 |-------------|--------------------------------------|------------|----------------------|
-| Test (all)  | `{whole-workspace test command}`     | All        | ci.yml: {job name}   |
-| Test (unit) | `{single-package test command}`      | One unit   | ci.yml: {job name}   |
-| Test (file) | `{single-file test command}`         | One file   | ci.yml: {job name}   |
-| Lint        | `{formatter or linter command}`      | All        | ci.yml: {job name}   |
-| Type Check  | `{type checker command}`             | All        | ci.yml: {job name}   |
-| Arch Scan   | `{architecture scanner command}`     | All        | ci.yml: {job name}   |
+| Test (all)  | `{whole-workspace test command}`     | All        | ci.yml: {job name}  |
+| Test (unit) | `{single-package test command}`      | One unit   | ci.yml: {job name}  |
+| Test (file) | `{single-file test command}`         | One file   | ci.yml: {job name}  |
+| Lint        | `{formatter or linter command}`      | All        | ci.yml: {job name}  |
+| Type Check  | `{type checker command}`             | All        | ci.yml: {job name}  |
+| Arch Scan   | `{architecture scanner command}`     | All        | ci.yml: {job name}  |
 
 ## Documentation Awareness
 
-| Document | Agent Must                              |
+| Document | Agent Must                             |
 |----------|-----------------------------------------|
-| PRD      | Read before implementing any `PR-` item |
-| FRD      | Follow `FR-` spec exactly               |
-| DATA     | Respect `DT-` shapes and types          |
-| DESIGN   | Use `DS-` tokens and variants           |
-| ROADMAP  | Check `State` before starting work      |
-| BACKLOG  | Update status after each task           |
+| PRD      | Read before implementing any `PR-` item|
+| FRD      | Follow `FR-` spec exactly              |
+| DATA     | Respect `DT-` shapes and types         |
+| DESIGN   | Use `DS-` tokens and variants          |
+| ROADMAP  | Check `State` before starting work     |
+| BACKLOG  | Update status after each task          |
 
 ## Reference
 
-| Artifact     | Purpose                                    | Link |
+| Artifact     | Purpose                                    | Link|
 |--------------|--------------------------------------------|------|
-| PRD          | {Business goals, user stories, and scope}  | [PRD.md](PRD.md) |
-| FRD          | {Functional requirements specification}    | [FRD.md](FRD.md) |
-| DATA         | {Data shapes and kernel definitions}        | [DATA.md](DATA.md) |
-| DESIGN       | {UI/UX and visual system}                  | [DESIGN.md](DESIGN.md) |
-| Architecture | {System boundaries, tech stack, and infra} | [ARCHITECTURE.md](ARCHITECTURE.md) |
+| PRD          | {Business goals, user stories, and scope}  | [PRD.md](PRD.md)|
+| FRD          | {Functional requirements specification}    | [FRD.md](FRD.md)|
+| DATA         | {Data shapes and kernel definitions}        | [DATA.md](DATA.md)|
+| DESIGN       | {UI/UX and visual system}                  | [DESIGN.md](DESIGN.md)|
+| Architecture | {System boundaries, tech stack, and infra} | [ARCHITECTURE.md](ARCHITECTURE.md)|

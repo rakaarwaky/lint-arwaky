@@ -13,5 +13,5 @@ resolved value.
 - PRD: [../../PRD.md](../../PRD.md)
 - Backlog: [BACKLOG.md](BACKLOG.md)
 
-| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md) |
-| Architecture | {Link to ARCHITECTURE.md} | [{link}](ARCHITECTURE.md) |
+| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md)|
+| Architecture | {Link to ARCHITECTURE.md} | [{link}](ARCHITECTURE.md)|
