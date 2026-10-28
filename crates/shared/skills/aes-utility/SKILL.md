@@ -38,6 +38,9 @@ metadata:
     - check utility python
     - audit utility
     - audit utility python
+
+when-to-use: Use when creating stateless AES utility helper files — `utility_<domain>_<role>` pure free functions shared across layers; triggers include `create utility`, `add utility`, `extract utility`, `move to utility`, `create helper function`, `audit utility`.
+argument-hint: "[python | rust | typescript] [--check]"
 ---
 
 # aes-utility

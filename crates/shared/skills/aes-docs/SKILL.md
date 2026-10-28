@@ -53,6 +53,9 @@ metadata:
     - add design md
     - design md template
     - brand and style template
+
+when-to-use: Use when documenting Python/Rust/TS modules — docstrings, JSDoc, PRD/ROADMAP/FRD/README/BACKLOG/DESIGN/AGENTS docs — and splitting spec from status backlog; triggers include `add docs`, `add docstring`, `add prd`, `add frd`, `add readme`, `add agents md`, `split spec from status`.
+argument-hint: "[python | rust | typescript] [prd | frd | readme | backlog | roadmap | design | agents-md | docs]"
 ---
 # aes-docs
 
@@ -93,70 +96,30 @@ Doc comments on every public item are the sixth deliverable, in the language's n
 
 ## Invariants
 
-Every rule is machine-checked by `lint-arwaky-cli docs` (crate `doc-rules`, AES601–AES606).
-A rule cannot drift from the gate. Cite the code, not this file, when pointing at a rule.
-Each document's required section set is cross-checked against its reference's contract table, so a
-row that stops being enforced is a test failure rather than a silent edit. (Until the PR-2
-constant migration lands, the enforced closed H2 sets in
-`taxonomy_doc_rules_constant.rs` still name the pre-migration sections; the rows below
-describe the target layout the templates now ship.)
-
-| Code                                                                     | Rule                                                                                                                                                                                  |
-| ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `status-in-spec` / `spec-source-path`                                       | Spec and status never share a file. Specs promise; backlogs report. Specs are stateless — no `.py`/`.rs`/`.ts` file names (HOW-TO Rule 9). |
-| `spec-without-backlog` / `backlog-without-spec` / `feature-doc-in-shared` | An **FRD** and its backlog are a pair in the same **feature** directory (root PRD pairs with root ROADMAP, not a sibling BACKLOG). Kernel folders (`modules/shared`) are not features: either file under `shared/` fails with `feature-doc-in-shared` (HOW-TO-MAKE-FRD § Scope). |
-| `no-master-backlog` / `undefined-state-vocab` / `master-section-missing` | One root master owns the `State` vocabulary and the roll-up (`ROADMAP.md` `Roadmap Status`; legacy root `BACKLOG.md` accepted during migration). |
-| `state-vocab-restated`                                                   | Definitions live once. Feature backlogs cite `Roadmap Status`, never restate it under `Backlog Status`.                                                                                                                    |
-| `done-without-evidence` / `unknown-state`                                | Every backlog `Done` row is re-runnable: command + counts + commit hash, and what it excludes.                                                                                             |
-| `duplicate-fr-id` / `orphan-fr-ref`                                      | Requirement IDs are unique, stable, and the only thing a backlog row may cite.                                                                                                        |
-| `fr-id-format` / `fr-fields-missing`                                     | FRD Rule 1–2: `FR-<FEATURENAME>-NNN: <imperative name>`; each FR entry table carries the twelve `Aspect &#124; Detail` rows: Description, Business Rules, Edge Cases, Capability, Protocol, Method, Input, Output, Error, Event, Test, Metric. |
-| `reference-crosslink` / `section-order`                                  | FRD + template: `## Reference` links PRD and BACKLOG; sections follow HOW-TO-MAKE-FRD order (Feature Overview, Functional Requirements, Public Interface, Reference).                                                                                         |
-| `backlog-columns` / `backlog-row-width`                                  | The `Backlog Status` entry table keeps its seven `Aspect &#124; Detail` rows: State, Done, In Progress, Blocked, Next, Risk, Updated.                                                                                                                                             |
-| `*-section-missing`                                                      | Each document carries the H2 set its audience needs. Section contracts are in the refs.                                                                                             |
-| `dead-link` / `root-relative-link`                                       | Pointers resolve from the file that writes them, not only from the repo or skill root.                                                                                                |
-| `unreferenced-file`                                                      | Every file under a skill's `references/`, `scripts/`, `assets/` is surfaced by SKILL.md.                                                                                              |
-| `absolute-path` / `secret-in-docs`                                       | No machine-specific path and no credential literal in any document.                                                                                                                   |
-| `ci-command-drift`                                                       | AGENTS.md commands match CI exactly or are labelled advisory.                                                                                                                        |
-| `doc-length` / `doc-thin`                                                | Each document stays inside the size its audience can read.                                                                                                                            |
-| `section_not_table` / `table_missing_columns` / `missing_required_doc`  | AES606: mandated entry tables (ROADMAP `Roadmap Status`, BACKLOG `Backlog Status`, FRD `Functional Requirements` / `Public Interface`) carry their template tables; the six required root docs exist at a real workspace root.                                                  |
-
-### Unchecked Invariants (Language Rules)
-
-The checker cannot parse code intent. Enforce these manually (contracts live in the language refs above):
-
-- **Doc comments explain *what* and *why*, never *how*** (the code shows how).
-- **Python**: Public classes and functions need docstrings (PEP 257) — [references/HOW-TO-MAKE-PYTHON-DOC.md](references/HOW-TO-MAKE-PYTHON-DOC.md).
-- **Rust**: Public items need `///` (plain `//` is invisible to `cargo doc`). Examples must compile — [references/HOW-TO-MAKE-RUST-DOC.md](references/HOW-TO-MAKE-RUST-DOC.md).
-- **TypeScript**: Public items need JSDoc — [references/HOW-TO-MAKE-TYPESCRIPT-DOC.md](references/HOW-TO-MAKE-TYPESCRIPT-DOC.md).
+Machine-checked rules enforced by `lint-arwaky-cli docs` (crate `doc-rules`, AES601–AES606). The full invariant table and unchecked language rules live in [`references/invariants.md`](references/invariants.md). Cite the code, not this file, when pointing at a rule.
 
 ---
 
 ## Diagnostic Tree
 
-Ask these questions in order. The first "No" dictates your next action.
+Ask these questions in order. The first "No" dictates your next action. The full tree is in [`references/diagnostic.md`](references/diagnostic.md):
 
-1. **Can a stakeholder understand this project's purpose in 30 seconds?**
-   - *No* → Add `PRD.md` (what/why).
-2. **Can a tech lead see every feature, shared policy, and workspace truth in one place?**
-   - *No* → Add `ROADMAP.md` (`Progress Overview` / `Roadmap Status` / `Reference`).
-3. **Can an engineer implement this from the spec alone?**
-   - *No* → Add `FRD.md` (how).
-4. **Can a reader tell what is actually true today for one feature, and re-run the evidence?**
-   - *No* → Add `BACKLOG.md` beside that feature's spec.
-5. **Can a developer clone, build, and run in under 10 minutes?**
-   - *No* → Add `README.md` (how to use).
-6. **Can an agent work here safely without being told twice?**
-   - *No* → Add `AGENTS.md` (how to work here).
-7. **Can a new engineer tell which layer a file belongs in, and what it may import?**
-   - *No* → Add `ARCHITECTURE.md` (layer boundaries).
-8. **Can a first-time contributor set up the project and open a passing PR?**
-   - *No* → Add `CONTRIBUTING.md` (how to ship a change).
+1. **Can a stakeholder understand this project's purpose in 30 seconds?** → Add `PRD.md`.
+2. **Can a tech lead see every feature, shared policy, and workspace truth in one place?** → Add `ROADMAP.md`.
+3. **Can an engineer implement this from the spec alone?** → Add `FRD.md`.
+4. **Can a reader tell what is actually true today for one feature, and re-run the evidence?** → Add `BACKLOG.md`.
+5. **Can a developer clone, build, and run in under 10 minutes?** → Add `README.md`.
+6. **Can an agent work here safely without being told twice?** → Add `AGENTS.md`.
+7. **Can a new engineer tell which layer a file belongs in, and what it may import?** → Add `ARCHITECTURE.md`.
+8. **Can a first-time contributor set up the project and open a passing PR?** → Add `CONTRIBUTING.md`.
 
 ---
 
 ## Repository Layout
 
-```text
+The full layout diagram, document reference table, and code-surface templates live in [`references/layout.md`](references/layout.md):
+
+```
 project-root/
 ├── PRD.md          # stakeholder alignment (what/why) — 1 per project
 ├── ROADMAP.md      # progress overview + feature status, shared policy, cross-cutting links — 1 per project
@@ -175,37 +138,36 @@ project-root/
 │   │   ├── FRD.md
 │   │   └── BACKLOG.md
 │   └── shared/        # kernel — NO FRD.md / BACKLOG.md (feature-doc-in-shared)
+```
 
-```text
-
-Same shape for Python `modules/<feature>/` and TypeScript `packages/<feature>/`.
-Cross-cutting rows live in the root master `ROADMAP.md` (legacy root `BACKLOG.md` still accepted), not in a feature backlog.
+Same shape for Python `modules/<feature>/` and TypeScript `packages/<feature>/`. Cross-cutting rows live in the root master `ROADMAP.md` (legacy root `BACKLOG.md` still accepted), not in a feature backlog.
 
 ---
 
 ## Workflow
 
-1. **Resolve the repo-root anchor first.** `lint-arwaky-cli docs` 
-2. **Analyze**: List feature modules and public items. Run `lint-arwaky-cli docs <path>`. The findings are your work list.
-3. **Draft PRD**: Write root `PRD.md` per [references/HOW-TO-MAKE-PRD.md](references/HOW-TO-MAKE-PRD.md).
-4. **Draft Roadmap**: Write root `ROADMAP.md` per [references/HOW-TO-MAKE-ROADMAP.md](references/HOW-TO-MAKE-ROADMAP.md)
-5. **Draft FRDs**: Write `FRD.md` in each feature dir per [references/HOW-TO-MAKE-FRD.md](references/HOW-TO-MAKE-FRD.md).
-6. **Draft Feature Backlogs**: Write one `BACKLOG.md` per feature, beside its spec, per [references/HOW-TO-MAKE-BACKLOG.md](references/HOW-TO-MAKE-BACKLOG.md).
-7. **Draft README**: Write root `README.md` per [references/HOW-TO-MAKE-README.md](references/HOW-TO-MAKE-README.md).
-8. **Draft AGENTS**: Write root `AGENTS.md` per [references/HOW-TO-MAKE-AGENTS.md](references/HOW-TO-MAKE-AGENTS.md).
-9. **Draft ARCHITECTURE**: Write root `ARCHITECTURE.md` per [references/HOW-TO-MAKE-ARCHITECTURE.md](references/HOW-TO-MAKE-ARCHITECTURE.md) — required when the workspace has more than one layer beyond shared.
-10. **Draft CONTRIBUTING**: Write root `CONTRIBUTING.md` per [references/HOW-TO-MAKE-CONTRIBUTING.md](references/HOW-TO-MAKE-CONTRIBUTING.md) — required when the repo accepts external contributions. One section per contribution path the project actually supports; delete the rest.
-11. **Draft DESIGN**: Write root `DESIGN.md` per [references/HOW-TO-MAKE-DESIGN.md](references/HOW-TO-MAKE-DESIGN.md) — optional; create it when the surface exposes visual tokens (colors, type scale, component anatomy).
-12. **Document Code**: Add doc comments to all public items per language —
-   [references/HOW-TO-MAKE-PYTHON-DOC.md](references/HOW-TO-MAKE-PYTHON-DOC.md),
-   [references/HOW-TO-MAKE-RUST-DOC.md](references/HOW-TO-MAKE-RUST-DOC.md),
-   [references/HOW-TO-MAKE-TYPESCRIPT-DOC.md](references/HOW-TO-MAKE-TYPESCRIPT-DOC.md) —
-   then add type annotations to all signatures.
-13. **Verify**: Run `lint-arwaky-cli docs <path>`. Then each touched reference's `Verify` block (including the language doc ref).
+The full workflow is in [`references/workflow.md`](references/workflow.md):
+
+1. Resolve the repo-root anchor first. `lint-arwaky-cli docs`
+2. Analyze: List feature modules and public items. Run `lint-arwaky-cli docs <path>`. The findings are your work list.
+3. Draft PRD: Write root `PRD.md` per `references/HOW-TO-MAKE-PRD.md`.
+4. Draft Roadmap: Write root `ROADMAP.md` per `references/HOW-TO-MAKE-ROADMAP.md`.
+5. Draft FRDs: Write `FRD.md` in each feature dir per `references/HOW-TO-MAKE-FRD.md`.
+6. Draft Feature Backlogs: Write one `BACKLOG.md` per feature, beside its spec, per `references/HOW-TO-MAKE-BACKLOG.md`.
+7. Draft README: Write root `README.md` per `references/HOW-TO-MAKE-README.md`.
+8. Draft AGENTS: Write root `AGENTS.md` per `references/HOW-TO-MAKE-AGENTS.md`.
+9. Draft ARCHITECTURE: Write root `ARCHITECTURE.md` per `references/HOW-TO-MAKE-ARCHITECTURE.md` — required when the workspace has more than one layer beyond shared.
+10. Draft CONTRIBUTING: Write root `CONTRIBUTING.md` per `references/HOW-TO-MAKE-CONTRIBUTING.md` — required when the repo accepts external contributions.
+11. Draft DESIGN: Write root `DESIGN.md` per `references/HOW-TO-MAKE-DESIGN.md` — optional; create it when the surface exposes visual tokens.
+12. Document Code: Add doc comments to all public items per language HOW-TO; then add type annotations to all signatures.
+13. Verify: Run `lint-arwaky-cli docs <path>`. Then each touched reference's `Verify` block.
+
 
 ---
 
 ## Verification
+
+The full verification gate is in [`references/verification.md`](references/verification.md).
 
 ### Machine Checks
 
@@ -219,15 +181,14 @@ A pass means no claim sits in the wrong file, no pointer is broken, and no `Done
 
 A machine pass does not mean the documents are good. Falsifiable goals, honest exclusions, and a 10-minute Quick Start still need a reader.
 
----
-
 ### Doc Comment Conventions
 
 Per-language rules, templates, section contracts, and Verify blocks:
 
-- Python (PEP 257): [references/HOW-TO-MAKE-PYTHON-DOC.md](references/HOW-TO-MAKE-PYTHON-DOC.md)
-- Rust (`///` / rustdoc): [references/HOW-TO-MAKE-RUST-DOC.md](references/HOW-TO-MAKE-RUST-DOC.md)
-- TypeScript (JSDoc / TSDoc): [references/HOW-TO-MAKE-TYPESCRIPT-DOC.md](references/HOW-TO-MAKE-TYPESCRIPT-DOC.md)
+- Python (PEP 257): `references/HOW-TO-MAKE-PYTHON-DOC.md`
+- Rust (`///` / rustdoc): `references/HOW-TO-MAKE-RUST-DOC.md`
+- TypeScript (JSDoc / TSDoc): `references/HOW-TO-MAKE-TYPESCRIPT-DOC.md`
+
 
 ---
 
@@ -240,29 +201,6 @@ Per-language rules, templates, section contracts, and Verify blocks:
 - [ ] Public code items carry doc comments, and surface checks (`cargo doc`, `tsc`, `import`) are clean.
 - [ ] Every touched reference file had its specific `Verify` block executed.
 
----
-
-## Common Mistakes (Anti-Patterns)
-
-The invariant codes above cover the machine-checkable ones. These need a reader:
-
-### Structural
-
-- **One document for all audiences**: Split by audience. Each file answers one question.
-- **FRD at the project root**: It belongs with the feature code, beside its backlog.
-- **Feature backlog carrying workspace rows or restating root policy**: Cross-cutting rows and the `Roadmap Status` roll-up live once in `ROADMAP.md` (root master).
-- **PRD carrying SQL schemas or API detail**: The PRD audience cannot read them. Move to FRD.
-
-### Cadence and code surface
-
-- **Documents "write &amp; forget"**: Re-run `lint-arwaky-cli docs` each sprint. Drift is silent.
-- **`//` instead of `///` in Rust**: Plain comments are invisible to the doc generator.
-- **Missing module docstrings or undocumented parameters**: The generated API surface stays incomplete.
-
-**Checker false-freights to dodge when authoring specs** (these bite at draft time, before you run the gate):
-
-- **The word "implemented" in a spec file.** `status-in-spec` matches `\b(impl|un)plemented\b` case-insensitively across the *whole* FRD/PRD — so any `Implemented` / `Shipped` status-style cell header or cell is auto-flagged. Name status-style columns `impl / intended` and use `impl` for the cell. (Same class: `shipped` / `released in v…`, checkbox items, status markers checkmark / cross status markers, progress `%` all trip it.)
-- **Entry-table rows without a header + separator.** AES606's `section_not_table` parser reads `| Aspect | … |` rows via a markdown-table parser that needs the header row + a `|---|` separator line; a headerless block of `| … |` rows parses as **0 rows**. Always emit the header row; keep exactly one row per fixed `Aspect` label, in template order.
 
 ---
 

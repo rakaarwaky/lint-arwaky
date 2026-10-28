@@ -41,6 +41,9 @@ metadata:
     - audit agent
     - audit agent python
     - audit agent rust
+
+when-to-use: Use when creating AES agent orchestrators — `agent_<domain>_orchestrator` files — in Python, Rust, and TypeScript feature folders; triggers include `create agent`, `add agent`, `fix agent structure`, `create aggregate`, `audit agent`, `check agent`.
+argument-hint: "[python | rust | typescript] [--check]"
 ---
 
 # aes-agent

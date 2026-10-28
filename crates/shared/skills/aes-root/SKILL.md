@@ -39,6 +39,9 @@ metadata:
     - check root
     - audit root
     - audit root typescript
+
+when-to-use: Use when creating AES composition roots and entry wiring — containers wire capabilities to contracts; entries bootstrap and start the process; triggers include `create root`, `create container`, `create entry`, `wire dependencies`, `audit root`.
+argument-hint: "[python | rust | typescript] [--check]"
 ---
 
 # aes-root

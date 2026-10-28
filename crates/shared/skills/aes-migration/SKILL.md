@@ -32,6 +32,9 @@ metadata:
     - convert to aes
     - audit aes compliance
     - fix aes violations
+
+when-to-use: Use when migrating legacy codebases to AES layered architecture — taxonomy → contract → utility → capabilities → agent → surface → root — phase by phase; triggers include `migrate to aes`, `refactor to aes`, `apply aes architecture`, `convert to aes`, `audit aes compliance`.
+argument-hint: "[python | rust | typescript] [--phase <n>]"
 ---
 
 # aes-migration

@@ -44,6 +44,9 @@ metadata:
     - audit codebase
     - architecture health check
     - ci quality gate
+
+when-to-use: Use when scanning, fixing AES101–AES506 violations, then re-verifying to zero — using `lint-arwaky-cli` as the primary architecture gate; triggers include `lint arwaky`, `scan project`, `verify aes compliance`, `fix architecture violations`, `audit codebase`.
+argument-hint: "[python | rust | typescript] [--fix | --dry-run]"
 ---
 
 # aes-lint-arwaky

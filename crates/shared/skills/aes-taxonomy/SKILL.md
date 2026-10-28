@@ -45,6 +45,9 @@ metadata:
     - audit taxonomy
     - audit taxonomy python
     - check taxonomy typescript
+
+when-to-use: Use when creating AES taxonomy VO/domain type scaffolding — `taxonomy_<domain>_<suffix>` files — in Python, Rust, and TypeScript; triggers include `create taxonomy`, `create vo`, `create error taxonomy`, `create constant taxonomy`, `check taxonomy`, `audit taxonomy`.
+argument-hint: "[python | rust | typescript] [--check]"
 ---
 
 # aes-taxonomy
