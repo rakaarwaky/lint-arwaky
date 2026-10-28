@@ -37,6 +37,10 @@ fn audit(root: &Path) -> Vec<(String, String, String)> {
 fn write_conforming_workspace(root: &Path) {
     fs::create_dir_all(root.join("crates/filesystem")).unwrap();
     write(
+        &root.join("crates/filesystem/src/agent_filesystem_orchestrator.rs"),
+        "//! filesystem orchestrator\n",
+    );
+    write(
         &root.join("crates/filesystem/FRD.md"),
         "# FRD — filesystem\n\n## Functional Requirements\n\n### FR-Filesystem-001\n",
     );
@@ -57,14 +61,22 @@ fn write_faulty_workspace(root: &Path) {
     write(&root.join("ROADMAP.md"), "# ROADMAP\n\n### PR-LA-001\n");
 
     // A crate folder whose FRD carries a wrong-prefix FR id.
-    fs::create_dir_all(root.join("crates/filesystem")).unwrap();
+    fs::create_dir_all(root.join("crates/filesystem/src")).unwrap();
+    write(
+        &root.join("crates/filesystem/src/agent_filesystem_orchestrator.rs"),
+        "//! filesystem orchestrator\n",
+    );
     write(
         &root.join("crates/filesystem/FRD.md"),
         "# FRD — filesystem\n\n### FR-005B\n",
     );
 
     // A crate folder with no FRD at all.
-    fs::create_dir_all(root.join("crates/auto-fix")).unwrap();
+    fs::create_dir_all(root.join("crates/auto-fix/src")).unwrap();
+    write(
+        &root.join("crates/auto-fix/src/agent_auto_fix_orchestrator.rs"),
+        "//! auto-fix orchestrator\n",
+    );
 }
 
 #[test]
