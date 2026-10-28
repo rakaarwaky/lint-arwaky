@@ -195,7 +195,7 @@ pub enum Commands {
         format: Format,
     },
 
-    /// Doc invariants audit (AES601–AES606) and template scaffolding
+    /// Doc invariants audit (AES601–AES607) and template scaffolding
     #[command(name = "docs", subcommand_required = false)]
     Docs {
         /// Subcommand: `audit` (default) or `scaffold`
@@ -273,7 +273,7 @@ pub enum Commands {
 /// template files in place unless `--dry-run` is passed (Decision Q1).
 #[derive(Subcommand, Debug)]
 pub enum DocsAction {
-    /// Run the doc invariants audit (AES601–AES606)
+    /// Run the doc invariants audit (AES601–AES607)
     Audit {
         /// Path to audit
         #[arg(value_name = "PATH", default_value = ".")]
@@ -521,7 +521,7 @@ pub static COMMAND_CATALOG: &[(&str, &str, &str)] = &[
     ),
     (
         "docs",
-        "Doc invariants audit (AES601–AES606) over the document chain",
+        "Doc invariants audit (AES601–AES607) over the document chain",
         "lint-arwaky-cli docs ./",
     ),
     (
