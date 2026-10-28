@@ -1,6 +1,6 @@
 # Dispatcher — BACKLOG
 
-FRD: [FRD.md](FRD.md)
+FRD: —
 Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
 State: defined in root [ROADMAP.md](../../ROADMAP.md) — cited here, not restated
 Last Updated: 2026-10-02
@@ -140,6 +140,6 @@ Last Updated: 2026-10-02
 | Artifact | Purpose | Link|
 |----------|---------|------|
 | PRD.md | Product requirements | [PRD.md](../../PRD.md)|
-| FRD.md | Feature requirements | [FRD.md](FRD.md)|
+
 | ROADMAP.md | Roadmap status | [ROADMAP.md](../../ROADMAP.md)|
 | ARCHITECTURE.md | Layer contract | [ARCHITECTURE.md](../../ARCHITECTURE.md)|
