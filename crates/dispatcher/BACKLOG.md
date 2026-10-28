@@ -104,6 +104,5 @@ Last Updated: 2026-10-02
 | Artifact | Purpose | Link|
 |----------|---------|------|
 | PRD.md | Product requirements | [PRD.md](../../PRD.md)|
-| DESIGN.md | Surface design | [DESIGN.md](DESIGN.md)|
 | ROADMAP.md | Roadmap status | [ROADMAP.md](../../ROADMAP.md)|
 | ARCHITECTURE.md | Layer contract | [ARCHITECTURE.md](../../ARCHITECTURE.md)|
