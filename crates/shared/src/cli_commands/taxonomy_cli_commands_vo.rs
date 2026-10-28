@@ -85,7 +85,7 @@ pub enum Commands {
         format: Format,
     },
 
-    /// Run code-quality analysis only (AES101-AES306)
+    /// Run code-quality analysis only (AES301-AES305)
     #[command(name = "quality")]
     ScanQuality {
         /// Path to scan
@@ -95,7 +95,7 @@ pub enum Commands {
         format: Format,
     },
 
-    /// Run import-rule checks only (AES201-AES299)
+    /// Run import-rule checks only (AES201-AES205)
     #[command(name = "import")]
     ScanImport {
         /// Path to scan
@@ -105,7 +105,7 @@ pub enum Commands {
         format: Format,
     },
 
-    /// Run naming-rule checks only (AES401-AES406)
+    /// Run naming-rule checks only (AES101-AES103)
     #[command(name = "naming")]
     ScanNaming {
         /// Path to scan
@@ -115,7 +115,7 @@ pub enum Commands {
         format: Format,
     },
 
-    /// Run role-rule checks only (AES301-AES399)
+    /// Run role-rule checks only (AES401-AES406)
     #[command(name = "role")]
     ScanRole {
         /// Path to scan
