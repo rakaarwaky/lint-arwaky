@@ -1,6 +1,8 @@
 // PURPOSE: utility_report_delta — compare two scans' counts. Pure arithmetic,
 // no I/O, so the arithmetic can be tested without a snapshot file.
-use crate::taxonomy_report_snapshot_vo::{MemberDelta, ReportDelta, ReportSnapshot};
+use shared_common::MemberDelta;
+use shared_common::ReportDelta;
+use shared_common::ReportSnapshot;
 
 /// Compare `now` against `previous`.
 ///

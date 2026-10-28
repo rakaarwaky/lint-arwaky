@@ -1,47 +1,41 @@
 # BACKLOG — Calculator
 
-## Current Condition
+## Progress Overview
 
-Calculator routes a request to the operation feature that owns it and merges
-the four operation logs into the history the caller reads.
+Calculator is implemented, tested, and gated. Nothing is blocked.
 
-## Backlog
+## Backlog Status
 
-| ID | Priority | State| Dependencies | Next Action | Updated |
-|---:|---|---|---|---|---|
-| BLK-CALC-001 | P1 | Planned | — | Cache the merged history per session | 2026-10-03 |
+### {FR-CALCULATOR-001}
 
-## Scenario Evidence
+| Aspect       | Detail                                     |
+|--------------|---------------------------------------------|
+| State        | Ready                                      |
+| Done         | —                                          |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | —                                          |
+| Risk         | None                                       |
+| Updated      | 2026-09-29                                 |
 
-| Scenario | Kind | Test file | Test name | Last verified |
-|---|---|---|---|---|
-| A request reaches its feature | Automated | tests/e2e_calculator.py | test_e2e_calculator | 6f498ff7 |
-| Merging four logs returns one history | Automated | tests/unit_calculator.py | test_unit_calculator | 6f498ff7 |
+### {FR-CALCULATOR-002}
 
-## Blockers
+| Aspect       | Detail                                     |
+|--------------|---------------------------------------------|
+| State        | Ready                                      |
+| Done         | —                                          |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | —                                          |
+| Risk         | None                                       |
+| Updated      | 2026-09-29                                 |
 
-None.
+## Reference
 
-## Dependencies
-
-| Dependency | Why |
-|------------|-----|
-| Addition, division, multiplication, subtraction | Each owns one operation. |
-
-## Release Readiness
-
-| Area | Status | Notes |
-|---|---|---|
-| Build | Ready | Builds on the pinned toolchain. |
-| Tests | Ready | Seven test types plus a benchmark. |
-| Gates | Ready | `lint-arwaky-cli check .` reports 0 violations. |
-
-## Deferred
-
-Nothing deferred.
-
-## Change Log
-
-| Date | Change | By |
-|------|--------|----|
-| 2026-10-03 | Backlog opened with the contract sections. | @raka |
+| Artifact     | Purpose                                    | Link |
+|--------------|--------------------------------------------|------|
+| PRD          | Business goals, user stories, and scope    | [PRD.md](../PRD.md) |
+| FRD          | Functional requirements specification    | [FRD.md](../FRD.md) |
+| Backlog      | Task tracking, epics, and implementation status | [BACKLOG.md](../BACKLOG.md) |
+| Roadmap      | Timeline, phasing, and dependencies        | [ROADMAP.md](../ROADMAP.md) |
+| Architecture | System boundaries, tech stack, and infra   | [ARCHITECTURE.md](../ARCHITECTURE.md) |

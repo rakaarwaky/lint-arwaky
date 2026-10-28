@@ -186,13 +186,13 @@ class <Domain>Container:
 
 ## Section Contract
 
-| Section | Why it belongs here |
-| ------- | ------------------- |
-| Phase number in heading | Makes the migration plan explicit; you know which layer you are on. |
-| Rules as numbered list | Each rule prevents one failure mode; agents scan for the first violated rule. |
-| Template per phase | Copy-paste-ready skeleton so the agent never guesses the structure. |
-| Section Contract table | Justifies each required section; keeps the HOW-TO self-documenting. |
-| Verify block | Machine check (lint) + manual check (reader) with exact commands. |
+| Section | Why it belongs here|
+| ------- | -------------------|
+| Phase number in heading | Makes the migration plan explicit; you know which layer you are on.|
+| Rules as numbered list | Each rule prevents one failure mode; agents scan for the first violated rule.|
+| Template per phase | Copy-paste-ready skeleton so the agent never guesses the structure.|
+| Section Contract table | Justifies each required section; keeps the HOW-TO self-documenting.|
+| Verify block | Machine check (lint) + manual check (reader) with exact commands.|
 
 ---
 

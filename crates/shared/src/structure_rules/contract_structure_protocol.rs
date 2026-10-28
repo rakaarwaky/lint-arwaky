@@ -37,3 +37,13 @@ pub trait IStructureTestSuiteProtocol: Send + Sync {
     /// Report every missing test category across every feature folder.
     fn audit_test_suite(&self, request: StructureRequest) -> StructureResponse;
 }
+
+/// AES706 — PR-LA id to crate folder mapping.
+///
+/// Every PR-LA-001..N id in PRD.md / ROADMAP.md maps 1:1 to a crate folder by
+/// order (PR-LA-001 → first folder), and every crate folder's FRD.md carries FR
+/// ids whose feature prefix matches the folder name. A mismatch fires AES706.
+pub trait IStructurePrLaProtocol: Send + Sync {
+    /// Report every PR-LA / FR id to crate folder mismatch.
+    fn audit_pr_la_folder(&self, request: StructureRequest) -> StructureResponse;
+}

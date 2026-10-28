@@ -190,6 +190,42 @@ pub fn collect_members(root: &Path) -> Vec<MemberDescriptor> {
     out
 }
 
+/// The top-level module folders owned by at least one PR-ID's project
+/// identifier, across `crates|modules|packages`.
+///
+/// A folder counts as "owned" when its name matches the project identifier
+/// segment of some declared PR-ID (`PR-<PROJECT>-NNN` → `PROJECT`). Only
+/// top-level subfolders under each layout root are considered; `shared` and
+/// `kernel` are skipped as kernel dirs, not project-owned feature folders.
+/// Returns `None` when no layout root exists at all, leaving the caller
+/// silent rather than flagging every declared PR-ID.
+pub fn collect_pr_owned_module_folders(root: &Path) -> Option<BTreeSet<String>> {
+    let mut owned: BTreeSet<String> = BTreeSet::new();
+    let mut any_layout = false;
+    for layout in FEATURE_LAYOUTS {
+        let base = root.join(layout);
+        let Ok(entries) = fs::read_dir(base) else {
+            continue;
+        };
+        any_layout = true;
+        for entry in entries.flatten() {
+            let folder = entry.path();
+            if !folder.is_dir() {
+                continue;
+            }
+            let name = folder.file_name().and_then(|n| n.to_str()).unwrap_or("");
+            if name == "shared" || name == "kernel" {
+                continue;
+            }
+            owned.insert(name.to_string());
+        }
+    }
+    if !any_layout {
+        return None;
+    }
+    Some(owned)
+}
+
 /// Classify one folder by objective crate structure.
 ///
 /// Kernel: directory named `shared` or `kernel`.

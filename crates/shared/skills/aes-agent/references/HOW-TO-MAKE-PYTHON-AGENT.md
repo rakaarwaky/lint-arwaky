@@ -109,17 +109,17 @@ class Agent<Name>:
 
 ## Section Contract
 
-| Check | Why it belongs here |
-| ----- | ------------------- |
-| Block 1 → 2 → 3 order followed. | Required by AES layer rules and the linter; missing it is a defect. |
-| Block 2: ONLY aggregate ABC method implementations. | Required by AES layer rules and the linter; missing it is a defect. |
-| Block 3: dunders, factories, private helpers. | Required by AES layer rules and the linter; missing it is a defect. |
-| ≥1 class inherits aggregate ABC; ≤3 total classes. | Required by AES layer rules and the linter; missing it is a defect. |
-| No local domain data; DI via protocol interfaces; shared VOs. | Required by AES layer rules and the linter; missing it is a defect. |
-| Zero I/O, zero business logic, zero domain computation. | Required by AES layer rules and the linter; missing it is a defect. |
-| No forbidden imports. | Required by AES layer rules and the linter; missing it is a defect. |
-| Aggregate registered in shared `__init__.py`. | Required by AES layer rules and the linter; missing it is a defect. |
-| `python -c "import <module>"` passes. | Required by AES layer rules and the linter; missing it is a defect. |
+| Check | Why it belongs here|
+| ----- | -------------------|
+| Block 1 → 2 → 3 order followed. | Required by AES layer rules and the linter; missing it is a defect.|
+| Block 2: ONLY aggregate ABC method implementations. | Required by AES layer rules and the linter; missing it is a defect.|
+| Block 3: dunders, factories, private helpers. | Required by AES layer rules and the linter; missing it is a defect.|
+| ≥1 class inherits aggregate ABC; ≤3 total classes. | Required by AES layer rules and the linter; missing it is a defect.|
+| No local domain data; DI via protocol interfaces; shared VOs. | Required by AES layer rules and the linter; missing it is a defect.|
+| Zero I/O, zero business logic, zero domain computation. | Required by AES layer rules and the linter; missing it is a defect.|
+| No forbidden imports. | Required by AES layer rules and the linter; missing it is a defect.|
+| Aggregate registered in shared `__init__.py`. | Required by AES layer rules and the linter; missing it is a defect.|
+| `python -c "import <module>"` passes. | Required by AES layer rules and the linter; missing it is a defect.|
 
 ---
 

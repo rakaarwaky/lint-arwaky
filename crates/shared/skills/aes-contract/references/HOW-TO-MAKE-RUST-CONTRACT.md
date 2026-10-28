@@ -153,20 +153,20 @@ pub mod contract_<name>_aggregate;
 
 Every contract file is required to carry the rows that apply. Each exists for one reason.
 
-| Section                                  | Why it belongs here                                                                |
-| ---------------------------------------- | ---------------------------------------------------------------------------------- |
-| Module docstring (required)              | Names the feature and the seams in the file.                                       |
-| Suffix in file + trait names             | AES101/AES102 resolve `_protocol` vs `_aggregate` from the name.                   |
-| One file per feature                     | All seams of a feature live together; consumers import from one module.            |
-| One trait per capability seam            | A trait lists only what its capability owns, so implementation is always complete. |
-| Rich named methods, one return type each | Protocol traits: each method has one VO return; no dispatch bag.        |
-| Aggregate: exactly one method            | One `execute()` whose response is a taxonomy-defined enum of VOs.        |
-| Method signatures only (`;`)             | Outer layers depend on promises, not behaviour.                                    |
-| `Send + Sync` + object-safe              | Trait objects cross thread/task boundaries without surprises.                      |
-| Aggregate: exactly one method            | Consumers depend on one stable entry point, not a shifting method list.            |
-| Shared VOs in signatures                 | Numeric and string domain values stay behind VOs; only `bool` is permitted bare. |
-| No impl-layer imports                    | Keeps the dependency arrow (capabilities → trait ← agent).                         |
-| Register in shared `mod.rs`              | Importable without reaching into private modules.                                  |
+| Section                                  | Why it belongs here                                                              |
+| ---------------------------------------- | ----------------------------------------------------------------------------------|
+| Module docstring (required)              | Names the feature and the seams in the file.                                     |
+| Suffix in file + trait names             | AES101/AES102 resolve `_protocol` vs `_aggregate` from the name.                 |
+| One file per feature                     | All seams of a feature live together; consumers import from one module.          |
+| One trait per capability seam            | A trait lists only what its capability owns, so implementation is always complete.|
+| Rich named methods, one return type each | Protocol traits: each method has one VO return; no dispatch bag.      |
+| Aggregate: exactly one method            | One `execute()` whose response is a taxonomy-defined enum of VOs.      |
+| Method signatures only (`;`)             | Outer layers depend on promises, not behaviour.                                  |
+| `Send + Sync` + object-safe              | Trait objects cross thread/task boundaries without surprises.                    |
+| Aggregate: exactly one method            | Consumers depend on one stable entry point, not a shifting method list.          |
+| Shared VOs in signatures                 | Numeric and string domain values stay behind VOs; only `bool` is permitted bare.|
+| No impl-layer imports                    | Keeps the dependency arrow (capabilities → trait ← agent).                       |
+| Register in shared `mod.rs`              | Importable without reaching into private modules.                                |
 
 ---
 

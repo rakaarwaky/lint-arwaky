@@ -107,11 +107,11 @@ lint-arwaky-cli scan .
 
 ### Role boundaries
 
-| Layer | Can contain | Cannot contain |
-| ----- | ----------- | -------------- |
-| capabilities | Pure computation, validation | I/O, network, database |
-| utility | Stateless `pub fn` helpers | State, trait impls, non-taxonomy imports |
-| agent | Orchestration flow | Computation, I/O, business |
+| Layer | Can contain | Cannot contain|
+| ----- | ----------- | --------------|
+| capabilities | Pure computation, validation | I/O, network, database|
+| utility | Stateless `pub fn` helpers | State, trait impls, non-taxonomy imports|
+| agent | Orchestration flow | Computation, I/O, business|
 
 ### Quick fix recipes
 
@@ -143,16 +143,16 @@ lint-arwaky-cli import <target-path> --filter AES205
 
 Every Rust lint session is required to carry the rows that apply. Each exists for one reason.
 
-| Section | Why it belongs here |
-| ------- | ------------------- |
-| Pre-flight build | A scan on a broken crate is noise, not signal. |
-| Scan with path + member + format | Findings must be machine-triageable and crate-scoped. |
-| Triage order | CRITICAL (AES201/205/304) blocks merge; fix before HIGH/MEDIUM cosmetics. |
-| Fix routing by AES code | Wrong fix layer recreates the violation; route via `HOW-TO-USE-LINT-ROUTING.md`. |
-| `mod.rs` update after rename | AES101 without re-declaration becomes AES501–506. |
-| Role-boundary check | Capabilities/utility/agent rows above must hold after fixes. |
-| Re-scan to 0 | Done means zero AES findings, not "mostly clean". |
-| Language verify | fmt / clippy / test still pass — AES clean ≠ crate healthy. |
+| Section | Why it belongs here|
+| ------- | -------------------|
+| Pre-flight build | A scan on a broken crate is noise, not signal.|
+| Scan with path + member + format | Findings must be machine-triageable and crate-scoped.|
+| Triage order | CRITICAL (AES201/205/304) blocks merge; fix before HIGH/MEDIUM cosmetics.|
+| Fix routing by AES code | Wrong fix layer recreates the violation; route via `HOW-TO-USE-LINT-ROUTING.md`.|
+| `mod.rs` update after rename | AES101 without re-declaration becomes AES501–506.|
+| Role-boundary check | Capabilities/utility/agent rows above must hold after fixes.|
+| Re-scan to 0 | Done means zero AES findings, not "mostly clean".|
+| Language verify | fmt / clippy / test still pass — AES clean ≠ crate healthy.|
 
 ---
 

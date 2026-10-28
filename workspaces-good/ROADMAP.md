@@ -1,31 +1,60 @@
 # ROADMAP — Calculator Workspace
 
-State: vocabulary below. Last Updated: 2026-10-26
+## Progress Overview
 
-## Current Condition
+All six root documents created and all feature kernel mirrors in place.
 
-- Done: all six root documents created, all feature kernel mirrors in place · In Progress: <None | item> · Blocked: <None | item>
-- Next: <open row IDs>
+## Roadmap Status 
 
-## State Definitions
+### PR-CALC-001: Addition operation
 
-| State | Meaning |
-|---|---|
-| Ready | Specified; not started. |
-| In Progress | Active now. |
-| In Review | PR open. |
-| Done | Command + commit evidence. |
+| Aspect       | Detail                                    |
+|--------------|---------------------------------------------|
+| Priority     | P0                                          |
+| State        | Done                                        |
+| Dependencies | —                                           |
+| Updated      | 2026-10-26                                  |
 
-## Feature Roll-up
+### PR-CALC-002: Subtraction operation
 
-| ID | Feature | Priority | State | Dependencies | Next Action | Updated |
-|---|---|---|---|---|---|---|
-| WS-01 | calculator | P0 | Done | — | <next row ID> | 2026-10-26 |
-| WS-02 | addition | P0 | Done | — | <next row ID> | 2026-10-26 |
-| WS-03 | subtraction | P0 | Done | — | <next row ID> | 2026-10-26 |
-| WS-04 | multiplication | P0 | Done | — | <next row ID> | 2026-10-26 |
-| WS-05 | division | P0 | Done | — | <next row ID> | 2026-10-26 |
+| Aspect       | Detail                                    |
+|--------------|---------------------------------------------|
+| Priority     | P0                                          |
+| State        | Done                                        |
+| Dependencies | —                                           |
+| Updated      | 2026-10-26                                  |
 
-## Risk Register
+### PR-CALC-003: Multiplication operation
 
-- Risk: <what ships broken>. Mitigation: <row ID>.
+| Aspect       | Detail                                    |
+|--------------|---------------------------------------------|
+| Priority     | P0                                          |
+| State        | Done                                        |
+| Dependencies | —                                           |
+| Updated      | 2026-10-26                                  |
+
+### PR-CALC-004: Division operation
+
+| Aspect       | Detail                                    |
+|--------------|---------------------------------------------|
+| Priority     | P0                                          |
+| State        | Done                                        |
+| Dependencies | —                                           |
+| Updated      | 2026-10-26                                  |
+
+### PR-CALC-005: Expression parsing
+
+| Aspect       | Detail                                    |
+|--------------|---------------------------------------------|
+| Priority     | P0                                          |
+| State        | Done                                        |
+| Dependencies | —                                           |
+| Updated      | 2026-10-26                                  |
+
+## Reference
+
+| Artifact     | Purpose                                          | Link|
+|--------------|--------------------------------------------------|------|
+| PRD          | Business goals, user stories, and scope          | [PRD.md](PRD.md)|
+| Architecture | System boundaries, tech stack, and infra         | [ARCHITECTURE.md](ARCHITECTURE.md)|
+

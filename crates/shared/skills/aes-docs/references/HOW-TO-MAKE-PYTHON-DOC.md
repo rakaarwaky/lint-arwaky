@@ -77,14 +77,14 @@ class ImportRuleVO:
 Every public item is required to carry the rows that apply. Each
 exists for one reason.
 
-| Section                     | Why it belongs here                                                                                       |
-| --------------------------- | --------------------------------------------------------------------------------------------------------- |
-| Module docstring (required) | Names the module's job before any import.                                                                 |
-| Class summary (required)    | One sentence: what an instance is. Watch for restating the class name.                                    |
-| Attributes (rec)            | Documents fields whose names do not carry the meaning. Skip when properties are self-describing.          |
-| Method summary (required)   | One sentence: what a call does. Watch for "This method…" throat-clearing.                                 |
-| Args (rec)                  | Explains non-obvious parameters. Skip when every arg is named for its type alone.                         |
-| Returns / Raises (rec)      | States the contract the caller depends on. Skip only when the return type is `None` and nothing can fail. |
+| Section                     | Why it belongs here                                                                                     |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------|
+| Module docstring (required) | Names the module's job before any import.                                                               |
+| Class summary (required)    | One sentence: what an instance is. Watch for restating the class name.                                  |
+| Attributes (rec)            | Documents fields whose names do not carry the meaning. Skip when properties are self-describing.        |
+| Method summary (required)   | One sentence: what a call does. Watch for "This method…" throat-clearing.                               |
+| Args (rec)                  | Explains non-obvious parameters. Skip when every arg is named for its type alone.                       |
+| Returns / Raises (rec)      | States the contract the caller depends on. Skip only when the return type is `None` and nothing can fail.|
 
 ---
 

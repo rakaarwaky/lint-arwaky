@@ -49,11 +49,11 @@ metadata:
 The **layer** decides which suffix, how rich the protocol is, and how the consumer surface is shaped.
 Rules, templates, section contracts, and Verify blocks live in the language HOW-TOs under [`references/`](references/).
 
-| Language   | Declaration                                  | Body rule                          | HOW-TO |
-| ---------- | -------------------------------------------- | ---------------------------------- | ------ |
-| Python     | `class I<Name>…(ABC)` + `@abstractmethod`    | `...` / `pass` — never real code   | [references/HOW-TO-MAKE-PYTHON-CONTRACT.md](references/HOW-TO-MAKE-PYTHON-CONTRACT.md) |
-| Rust       | `pub trait I<Name>…: Send + Sync`            | Ends with `;`, no bodies           | [references/HOW-TO-MAKE-RUST-CONTRACT.md](references/HOW-TO-MAKE-RUST-CONTRACT.md) |
-| TypeScript | `export interface I<Name>…`                  | Signature only, no class           | [references/HOW-TO-MAKE-TYPESCRIPT-CONTRACT.md](references/HOW-TO-MAKE-TYPESCRIPT-CONTRACT.md) |
+| Language   | Declaration                                  | Body rule                          | HOW-TO|
+| ---------- | -------------------------------------------- | ---------------------------------- | ------|
+| Python     | `class I<Name>…(ABC)` + `@abstractmethod`    | `...` / `pass` — never real code   | [references/HOW-TO-MAKE-PYTHON-CONTRACT.md](references/HOW-TO-MAKE-PYTHON-CONTRACT.md)|
+| Rust       | `pub trait I<Name>…: Send + Sync`            | Ends with `;`, no bodies           | [references/HOW-TO-MAKE-RUST-CONTRACT.md](references/HOW-TO-MAKE-RUST-CONTRACT.md)|
+| TypeScript | `export interface I<Name>…`                  | Signature only, no class           | [references/HOW-TO-MAKE-TYPESCRIPT-CONTRACT.md](references/HOW-TO-MAKE-TYPESCRIPT-CONTRACT.md)|
 
 **The contract chain:**
 
@@ -68,16 +68,16 @@ Each suffix answers one direction. A method in the wrong layer is the defect thi
 Every rule is machine-checked by `lint-arwaky-cli scan <contract-dir>` (see each HOW-TO § Verify).
 A rule cannot drift from the gate. Cite the linter, not this file, when pointing at a rule.
 
-| Layer | Rule |
-| ----- | ---- |
-| Naming | `contract_<concept>_<suffix>.<ext>` — suffix strictly `_protocol` or `_aggregate` (AES101/AES102). |
-| Protocol shape | One file per feature, one trait/class/interface per capability seam, each rich with named methods. |
-| Aggregate shape | **Exactly one** `execute()` method; response is a taxonomy-defined enum of VOs. |
-| Body | Pure declaration only: abstract / trait-with-`;` / interface. No default bodies, no helpers. A concrete class in a contract file is a layering violation — shared logic belongs in `utility_*`, not here. |
-| Imports | Taxonomy + other contracts only — never capabilities, agents, surface, root (AES201/AES205). |
-| Signatures | Shared VOs only — no raw primitives for domain values (AES402). |
-| Register | `__init__.py` / `mod.rs` / `index.ts`. |
-| Verify | `lint-arwaky-cli scan <contract-dir>` → 0. Language compile is fallback only. |
+| Layer | Rule|
+| ----- | ----|
+| Naming | `contract_<concept>_<suffix>.<ext>` — suffix strictly `_protocol` or `_aggregate` (AES101/AES102).|
+| Protocol shape | One file per feature, one trait/class/interface per capability seam, each rich with named methods.|
+| Aggregate shape | **Exactly one** `execute()` method; response is a taxonomy-defined enum of VOs.|
+| Body | Pure declaration only: abstract / trait-with-`;` / interface. No default bodies, no helpers. A concrete class in a contract file is a layering violation — shared logic belongs in `utility_*`, not here.|
+| Imports | Taxonomy + other contracts only — never capabilities, agents, surface, root (AES201/AES205).|
+| Signatures | Shared VOs only — no raw primitives for domain values (AES402).|
+| Register | `__init__.py` / `mod.rs` / `index.ts`.|
+| Verify | `lint-arwaky-cli scan <contract-dir>` → 0. Language compile is fallback only.|
 
 Split standard (one file per feature, one trait per seam, many methods per trait; aggregate = one `execute()`), import details, templates, and Section Contract tables: **read the language HOW-TO** — do not restate them here.
 

@@ -19,13 +19,13 @@
 A utility file **performs a narrow, stateless task** — it has no business rules, no injected dependencies, no instance state.
 A capability file **implements a protocol** — it has DI, business rules, and concrete behaviour.
 
-| Decision | → Utility | → Capability |
+| Decision | → Utility | → Capability|
 |---|---|---|
-| Has `&self` / instance state / DI params | No | Yes |
-| Contains business rules or protocol logic | No | Yes |
-| Stateless, pure, domain-agnostic, ≥2 consumers | Yes | No |
-| Implements `_protocol` trait | No | Yes |
-| Performs a narrow reusable operation (e.g., hashing, serialization, string ops) | Yes | No |
+| Has `&self` / instance state / DI params | No | Yes|
+| Contains business rules or protocol logic | No | Yes|
+| Stateless, pure, domain-agnostic, ≥2 consumers | Yes | No|
+| Implements `_protocol` trait | No | Yes|
+| Performs a narrow reusable operation (e.g., hashing, serialization, string ops) | Yes | No|
 
 **Rule**: If a function takes `&self`, contains business rules, or serves a single consumer — it does not belong in a utility file. Move it to the consuming capability or keep it as a private helper.
 
@@ -92,16 +92,16 @@ pub fn <function_name>(<param_name>: &<Type>) -> <ReturnType> {
 
 ## Section Contract
 
-| Check | Why it belongs here |
-| ----- | ------------------- |
-| Only free functions — no struct, no impl, no traits, no type aliases. | Required by AES layer rules and the linter; missing it is a defect. |
-| No `&self`, no instance state. | Required by AES layer rules and the linter; missing it is a defect. |
-| Pure/deterministic (or I/O strictly limited to domain-agnostic ops like serialization/hashing). | Required by AES layer rules and the linter; missing it is a defect. |
-| No business rules or layer-name knowledge. | Required by AES layer rules and the linter; missing it is a defect. |
-| Used by ≥2 modules (not a single-consumer helper). | Required by AES layer rules and the linter; missing it is a defect. |
-| No `use` from Capabilities, Agent, Surface, or Contract. | Required by AES layer rules and the linter; missing it is a defect. |
-| No magic constants (→ move to `taxonomy_*_constant.rs`). | Required by AES layer rules and the linter; missing it is a defect. |
-| `cargo check -p <crate-name>` passes. | Required by AES layer rules and the linter; missing it is a defect. |
+| Check | Why it belongs here|
+| ----- | -------------------|
+| Only free functions — no struct, no impl, no traits, no type aliases. | Required by AES layer rules and the linter; missing it is a defect.|
+| No `&self`, no instance state. | Required by AES layer rules and the linter; missing it is a defect.|
+| Pure/deterministic (or I/O strictly limited to domain-agnostic ops like serialization/hashing). | Required by AES layer rules and the linter; missing it is a defect.|
+| No business rules or layer-name knowledge. | Required by AES layer rules and the linter; missing it is a defect.|
+| Used by ≥2 modules (not a single-consumer helper). | Required by AES layer rules and the linter; missing it is a defect.|
+| No `use` from Capabilities, Agent, Surface, or Contract. | Required by AES layer rules and the linter; missing it is a defect.|
+| No magic constants (→ move to `taxonomy_*_constant.rs`). | Required by AES layer rules and the linter; missing it is a defect.|
+| `cargo check -p <crate-name>` passes. | Required by AES layer rules and the linter; missing it is a defect.|
 
 ---
 

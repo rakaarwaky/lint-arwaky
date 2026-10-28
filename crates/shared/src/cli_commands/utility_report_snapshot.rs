@@ -1,7 +1,8 @@
 // PURPOSE: utility_report_snapshot — read and write one scan's counts so the
 // next `report` can say what changed. I/O only; the types live in
 // taxonomy_report_snapshot_vo because a `utility_` file holds no types (AES404).
-use crate::taxonomy_report_snapshot_vo::{ReportSnapshot, SnapshotStore};
+use shared_common::ReportSnapshot;
+use shared_common::SnapshotStore;
 use std::path::{Path, PathBuf};
 
 /// A stable key for a target path: readable where it can be, and free of

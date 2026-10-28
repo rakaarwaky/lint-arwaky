@@ -441,6 +441,7 @@ fn conforming_workspace_reports_no_findings() {
     );
     fs::write(root.join("crates/shared/DATA.md"), "# Shared DATA\n").unwrap();
     fs::write(root.join("crates/shared/BACKLOG.md"), "# Shared BACKLOG\n").unwrap();
+    fs::write(root.join("crates/shared/FRD.md"), "# Shared — FRD\n").unwrap();
     // a complete feature, documented, with a complete test suite.
     write(
         root.join("crates/calculator/src/agent_calc_orchestrator.rs")
@@ -503,6 +504,10 @@ fn conforming_workspace_reports_no_findings() {
         "pub fn scan() {}",
     );
     write(root.join("crates/cli/lib.rs").as_path(), "");
+    write(
+        root.join("crates/cli/FRD.md").as_path(),
+        "# CLI — FRD\n\n### FR-Cli-001\n",
+    );
     write(
         root.join("crates/cli/DESIGN.md").as_path(),
         "# CLI — DESIGN",
@@ -720,8 +725,8 @@ fn aes702_stays_silent_when_a_packages_member_has_no_agent_files() {
     let root = tmp.path();
     let pkg = root.join("packages/auth");
     fs::create_dir_all(pkg.join("src")).unwrap();
-    fs::write(&pkg.join("FRD.md"), "# FRD\n").unwrap();
-    fs::write(&pkg.join("BACKLOG.md"), "# BACKLOG\n").unwrap();
+    fs::write(pkg.join("FRD.md"), "# FRD\n").unwrap();
+    fs::write(pkg.join("BACKLOG.md"), "# BACKLOG\n").unwrap();
     // TS source files — no AES-named (capabilities_*/agent_*) files.
     fs::write(pkg.join("src").join("index.ts"), "export const x = 1;\n").unwrap();
     let findings = audit(root);
@@ -743,8 +748,8 @@ fn aes702_stays_silent_when_a_modules_surface_has_no_agent_files() {
     let root = tmp.path();
     let surface = root.join("modules/api");
     fs::create_dir_all(surface.join("src")).unwrap();
-    fs::write(&surface.join("FRD.md"), "# FRD\n").unwrap();
-    fs::write(&surface.join("BACKLOG.md"), "# BACKLOG\n").unwrap();
+    fs::write(surface.join("FRD.md"), "# FRD\n").unwrap();
+    fs::write(surface.join("BACKLOG.md"), "# BACKLOG\n").unwrap();
     fs::write(
         surface.join("src").join("surface_api_command.py"),
         "def run(): ...\n",

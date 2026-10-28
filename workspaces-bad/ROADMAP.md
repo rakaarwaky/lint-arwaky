@@ -12,3 +12,7 @@ State machine restated here.
 
 - FR-SHAR: shared kernel feature
 - FR-CONF: config-system feature
+
+## Reference
+| Prd | {Link to PRD.md} | [{link}](PRD.md)|
+| Architecture | {Link to ARCHITECTURE.md} | [{link}](ARCHITECTURE.md)|

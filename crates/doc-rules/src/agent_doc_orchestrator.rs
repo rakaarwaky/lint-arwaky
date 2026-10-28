@@ -9,8 +9,8 @@
 use shared_doc_rules::contract_doc_aggregate::IDocRunnerAggregate;
 use shared_doc_rules::contract_doc_protocol::{
     ICrosslinkProtocol, IDocHeadingProtocol, IFrFormatProtocol, IMemberDocProtocol,
-    IRequiredDocProtocol, ISectionStructureProtocol, ISpecPurityProtocol, ITemplateBodyProtocol,
-    ITemplateConformanceProtocol,
+    IPrFolderOwnershipProtocol, IRequiredDocProtocol, ISectionStructureProtocol,
+    ISpecPurityProtocol, ITemplateBodyProtocol, ITemplateConformanceProtocol,
 };
 use shared_doc_rules::taxonomy_doc_audit_context_vo::DocAuditContext;
 use shared_doc_rules::taxonomy_doc_rules_request::DocRequest;
@@ -21,7 +21,7 @@ use std::sync::Arc;
 // ─── Block 1: Struct Definition ──────────────────────────────────────────
 
 /// Holds one injected capability per AES doc rule, keyed by the rule each
-/// answers. The agent is the only place that knows all nine exist.
+/// answers. The agent is the only place that knows all ten exist.
 pub struct DocOrchestrator {
     fr_format: Arc<dyn IFrFormatProtocol>,
     section_structure: Arc<dyn ISectionStructureProtocol>,
@@ -32,6 +32,7 @@ pub struct DocOrchestrator {
     required_doc: Arc<dyn IRequiredDocProtocol>,
     member_doc: Arc<dyn IMemberDocProtocol>,
     template_body: Arc<dyn ITemplateBodyProtocol>,
+    pr_folder_ownership: Arc<dyn IPrFolderOwnershipProtocol>,
 }
 
 // ─── Block 2: Protocol Trait Implementation ──────────────────────────────
@@ -67,6 +68,7 @@ impl IDocRunnerAggregate for DocOrchestrator {
         findings.extend(self.required_doc.audit_required_docs(&context));
         findings.extend(self.member_doc.audit_member_docs(&context));
         findings.extend(self.template_body.audit_template_body(&context));
+        findings.extend(self.pr_folder_ownership.audit_pr_folder_ownership(&context));
 
         DocResponse::Findings {
             findings: utility_doc_collector::sorted(findings),
@@ -87,6 +89,7 @@ impl DocOrchestrator {
         required_doc: Arc<dyn IRequiredDocProtocol>,
         member_doc: Arc<dyn IMemberDocProtocol>,
         template_body: Arc<dyn ITemplateBodyProtocol>,
+        pr_folder_ownership: Arc<dyn IPrFolderOwnershipProtocol>,
     ) -> Self {
         Self {
             fr_format,
@@ -98,6 +101,7 @@ impl DocOrchestrator {
             required_doc,
             member_doc,
             template_body,
+            pr_folder_ownership,
         }
     }
 }

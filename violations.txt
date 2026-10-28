@@ -1,0 +1,30 @@
+Lint Arwaky v3.12.2 — Scan Report
+Target: crates/shared
+
+{crates}
+
+[crates]
+
+(shared/BACKLOG.md:16)
+AES601:backlog_id_not_pr
+WHY: A BACKLOG row cites an id its paired spec does not declare, so the citation is untraceable.
+FIX: Replace `FR-SAMPLE-001` with one of: .
+
+(shared/BACKLOG.md:28)
+AES606:section_not_table
+WHY: The HOW-TO template mandates `Reference` under this section; a body carrying bullets, prose, or a table missing required columns is not a report a reader can verify.
+FIX: Replace the body of `## Reference` with a table carrying columns Artifact | Purpose | Link.
+
+(shared/DATA.md:23)
+AES606:section_not_table
+WHY: The HOW-TO template mandates `Reference` under this section; a body carrying bullets, prose, or a table missing required columns is not a report a reader can verify.
+FIX: Replace the body of `## Reference` with a table carrying columns Artifact | Purpose | Link.
+
+
+Total: 3 violations
+
+Hint
+  lint-arwaky-cli skill list — pick the skill that matches the file you are fixing
+  lint-arwaky-cli scan crates|modules|packages — filter the report down to one member dir
+  lint-arwaky-cli scan crates|modules|packages/<member> — filter the report down to one folder
+  lint-arwaky-cli scan <file> — filter the report down to one file

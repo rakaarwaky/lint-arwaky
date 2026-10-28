@@ -79,3 +79,16 @@ pub trait ITemplateBodyProtocol: Send + Sync {
     /// document whose template profile is registered.
     fn audit_template_body(&self, context: &DocAuditContext) -> Vec<DocFinding>;
 }
+
+/// AES607 — PR-ID folder ownership. Every `PR-<PROJECT>-NNN` declared in the
+/// root PRD's `Project Requirements` must own exactly one top-level module
+/// folder under `crates|modules|packages` whose name matches the PR-ID's
+/// project identifier (the `PROJECT` segment of `PR-<PROJECT>-NNN`). One
+/// identifier may own the whole folder set; the check keys on the identifier,
+/// not on strict cardinality-1 per PR-ID.
+pub trait IPrFolderOwnershipProtocol: Send + Sync {
+    /// Report one finding per PR-ID declared in the root PRD whose project
+    /// identifier owns no matching top-level module folder under
+    /// `crates|modules|packages`.
+    fn audit_pr_folder_ownership(&self, context: &DocAuditContext) -> Vec<DocFinding>;
+}

@@ -15,8 +15,8 @@ pub mod utility_protocol_counter;
 pub use contract_doc_aggregate::IDocRunnerAggregate;
 pub use contract_doc_protocol::{
     ICrosslinkProtocol, IDocHeadingProtocol, IFrFormatProtocol, IMemberDocProtocol,
-    IRequiredDocProtocol, ISectionStructureProtocol, ISpecPurityProtocol, ITemplateBodyProtocol,
-    ITemplateConformanceProtocol,
+    IPrFolderOwnershipProtocol, IRequiredDocProtocol, ISectionStructureProtocol,
+    ISpecPurityProtocol, ITemplateBodyProtocol, ITemplateConformanceProtocol,
 };
 pub use taxonomy_doc_audit_context_vo::{
     DocAuditContext, DocRulesConfig, MemberDescriptor, MemberRole, StrictModeOverride,
@@ -24,5 +24,5 @@ pub use taxonomy_doc_audit_context_vo::{
 pub use taxonomy_doc_rules_constant::*;
 pub use taxonomy_doc_rules_request::{DocFinding, DocRequest, DocSource};
 pub use taxonomy_doc_rules_response::DocResponse;
-pub use taxonomy_doc_rules_template_vo::{PlaceholderStyle, TEMPLATE_PROFILES, TemplateProfile};
+pub use taxonomy_doc_rules_template_vo::{TEMPLATE_PROFILES, TemplateProfile};
 pub use taxonomy_doc_section_vo::Section;

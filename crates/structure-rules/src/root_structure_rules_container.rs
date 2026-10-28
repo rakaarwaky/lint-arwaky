@@ -6,6 +6,7 @@
 use crate::agent_structure_orchestrator::StructureOrchestrator;
 use crate::capabilities_feature_health_auditor::FeatureHealthAuditor;
 use crate::capabilities_member_root_placement_auditor::MemberRootPlacementAuditor;
+use crate::capabilities_pr_la_folder_auditor::PrLaFolderAuditor;
 use crate::capabilities_shared_purity_auditor::SharedPurityAuditor;
 use crate::capabilities_surface_purity_auditor::SurfacePurityAuditor;
 use crate::capabilities_test_suite_coverage_auditor::TestSuiteCoverageAuditor;
@@ -24,6 +25,7 @@ impl RootStructureRulesContainer {
             Arc::new(SurfacePurityAuditor {}),
             Arc::new(TestSuiteCoverageAuditor {}),
             Arc::new(MemberRootPlacementAuditor {}),
+            Arc::new(PrLaFolderAuditor {}),
         ))
     }
 }

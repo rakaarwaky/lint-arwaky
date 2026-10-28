@@ -7,6 +7,7 @@ pub mod capabilities_doc_crosslink_checker;
 pub mod capabilities_doc_fr_format_checker;
 pub mod capabilities_doc_heading_structure_checker;
 pub mod capabilities_doc_member_doc_checker;
+pub mod capabilities_doc_pr_folder_ownership_checker;
 pub mod capabilities_doc_required_doc_checker;
 pub mod capabilities_doc_section_structure_checker;
 pub mod capabilities_doc_spec_purity_checker;

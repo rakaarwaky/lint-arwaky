@@ -58,12 +58,7 @@ fn codes_from_all(root: &Path) -> Vec<&'static str> {
 fn frd_violating_only_spec_purity() -> String {
     r"# FRD — sample
 
-## Reference
-
-- PRD: [PRD.md](../../PRD.md)
-- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature.
-
-## System Overview
+## Feature Overview
 
 The feature reads its settings from main.rs at startup.
 
@@ -71,61 +66,68 @@ The feature reads its settings from main.rs at startup.
 
 ### FR-SAMPLE-001: Document Invariant Enforcement
 
-- **Description**: Every `.md` document satisfies the AES heading and section contract.
-- **Input**: A workspace root and the list of recognized document paths.
-- **Output**: `Vec<DocFinding>` carrying one finding per invariant violation.
-- **Business Rules**: Validates FR-ID format, section structure, spec purity, crosslinks, heading structure, and parity.
-- **Edge Cases**: Root-level legacy `BACKLOG.md` is accepted during migration.
-- **Error Handling**: Unreadable files produce no findings. Missing documents are skipped silently.
+| Aspect         | Detail                                                          |
+|----------------|-----------------------------------------------------------------|
+| Description    | Every `.md` document satisfies the heading and section contract. |
+| Business Rules | Validates FR-ID format, section order, heading structure.       |
+| Edge Cases     | A root-level legacy `BACKLOG.md` is accepted during migration.  |
+| Capability     | doc_rules::DocStructure                                         |
+| Protocol       | doc_rules::DocStructure                                         |
+| Method         | check_doc_heading                                               |
+| Input          | A workspace root and recognized document paths.                 |
+| Output         | One finding per invariant violation.                            |
+| Error          | Unreadable files produce no findings.                           |
+| Event          | Finding emitted                                                 |
+| Test           | The seam contract tests stay green                               |
+| Metric         | Deterministic finding order                                      |
 
 ### FR-SAMPLE-002: Audit Orchestration
 
-- **Description**: The doc auditor is reachable through a single aggregate entry point dispatching to the invariant checker.
-- **Input**: A `DocRequest` describing the workspace root to audit.
-- **Output**: A `DocResponse` carrying a deduplicated, stable-sorted list of findings.
-- **Business Rules**: The aggregate orchestrates all invariants under one seam so consumers need only invoke `execute`.
-- **Edge Cases**: A request with an empty root produces no findings rather than an error.
-- **Error Handling**: Failures inside the checker are propagated as `DocResponse::Findings` with no partial results.
+| Aspect         | Detail                                                          |
+|----------------|-----------------------------------------------------------------|
+| Description    | The auditor is reachable through a single aggregate entry point. |
+| Business Rules | The aggregate orchestrates all invariants under one seam.       |
+| Edge Cases     | An empty root produces no findings rather than an error.         |
+| Capability     | doc_rules::DocStructure                                         |
+| Protocol       | doc_rules::DocStructure                                         |
+| Method         | execute                                                         |
+| Input          | A request describing the workspace root to audit.                |
+| Output         | A response carrying a deduplicated finding list.                 |
+| Error          | Failures propagate with no partial results.                      |
+| Event          | Finding emitted                                                 |
+| Test           | The seam contract tests stay green                               |
+| Metric         | Deterministic finding order                                      |
 
-## API Contract
+## Public Interface
 
-### Protocol API
+Implemented in `src/capabilities_sample_checker.rs`.
 
-| Method | Input | Output | Error | Event | Description |
-| --- | --- | --- | --- | --- | --- |
-| `audit` | `DocRequest` | `DocResponse` | Reason-coded | — | Single composite entry point. |
+| Aspect | Detail |
+| --- | --- |
+| Method | `execute` |
 
-### Aggregate API
+## Reference
 
-| Method | Input | Output | Error | Event | Description |
-| --- | --- | --- | --- | --- | --- |
-| `execute` | `DocRequest` | `DocResponse` | Reason-coded | — | Routes to the capability. |
-
-## Integration Points
-
-| System | Direction | Purpose | Failure mode |
-| --- | --- | --- | --- |
-| Shared domain | in | Supplies value objects | None — types only |
-
-## Non-functional Requirements
-
-| Metric | Target | Measurement method |
-| --- | --- | --- |
-| Dispatch cost | One call per request | Read the dispatch table |
-
-## Test Scenarios
-
-- A conforming request produces a conforming response.
-
-## Assumptions & Constraints
-
-- The capability is stateless.
-
-## Glossary
-
-- **Sample**: A value object used in this example.
+| Artifact     | Purpose                          | Link |
+|--------------|----------------------------------|------|
+| PRD          | Business goals and scope         | [PRD.md](../../PRD.md) |
+| Backlog      | Task tracking and status         | [BACKLOG.md](BACKLOG.md) |
+| Roadmap      | What ships next, in order        | [ROADMAP.md](../../ROADMAP.md) |
+| Architecture | System boundaries and infra      | [ARCHITECTURE.md](../../ARCHITECTURE.md) |
 "
     .to_string()
+}
+
+/// The source-file-referencing FRD with every AES603 violation removed: no
+/// source-file name in the prose and no implementation-state claim, so a
+/// purity-clean workspace can reuse the same section shape.
+fn purity_clean_frd() -> String {
+    frd_violating_only_spec_purity()
+        .replace("main.rs", "the settings role")
+        .replace(
+            "Implemented in `src/capabilities_sample_checker.rs`.",
+            "Delegates the check to the settings role.",
+        )
 }
 
 /// A PRD that violates exactly one rule: it drops its BACKLOG link is not
@@ -169,7 +171,32 @@ fn write_feature(root: &Path) {
     std::fs::create_dir_all(feature.join("src")).unwrap();
     std::fs::write(
         feature.join("BACKLOG.md"),
-        "# Feature Backlog: Sample\n\n## Current Condition\n\n- Done: nothing yet\n\n## Backlog\n\n| ID | Priority | State | Dependencies | Next Action | Updated |\n|---|---:|---|---|---|---|\n| FR-SAMPLE-001 | P0 | Ready | — | — | 2026-09-29 |\n| FR-SAMPLE-002 | P0 | Ready | — | — | 2026-09-29 |\n\n## Scenario Evidence\n\n| Scenario | Kind | Test file | Test name | Last verified |\n|---|---|---|---|---|\n| nothing yet | Automated | tests/ | test_nothing | 2026-09-29 |\n\n## Blockers\n\nNone\n\n## Dependencies\n\nNone\n\n## Release Readiness\n\n| Area | Status | Notes |\n|---|---|---|\n| Tests | Done | nothing |\n\n## Deferred\n\nNone\n\n## Change Log\n\n| Date | Change | By |\n|---|---|---|\n| 2026-09-29 | init | @raka |\n",
+        "# Feature Backlog: Sample\n\n\
+## Progress Overview\n\n\
+Baseline.\n\n\
+## Backlog Status\n\n\
+### {FR-SAMPLE-001}\n\
+| Aspect       | Detail                                      |\n\
+|--------------|---------------------------------------------|\n\
+| State        | Ready                                       |\n\
+| Done         | none                                        |\n\
+| In Progress  | None                                        |\n\
+| Blocked      | None                                        |\n\
+| Next         | Ship the feature                            |\n\
+| Risk         | None                                        |\n\
+| Updated      | 2026-09-29                                  |\n\n\
+### {FR-SAMPLE-002}\n\
+| Aspect       | Detail                                      |\n\
+|--------------|---------------------------------------------|\n\
+| State        | Ready                                       |\n\
+| Done         | none                                        |\n\
+| In Progress  | None                                        |\n\
+| Blocked      | None                                        |\n\
+| Next         | Ship the feature                            |\n\
+| Risk         | None                                        |\n\
+| Updated      | 2026-09-29                                  |\n\n\
+## Reference\n\n\
+| Artifact     | Purpose                          | Link |\n|--------------|----------------------------------|------|\n| PRD          | Business goals and scope         | [PRD.md](../../PRD.md) |\n| FRD          | Requirements specification       | [FRD.md](FRD.md) |\n| Roadmap      | What ships next, in order        | [ROADMAP.md](../../ROADMAP.md) |\n| Architecture | System boundaries and infra      | [ARCHITECTURE.md](../../ARCHITECTURE.md) |\n",
     )
     .unwrap();
     std::fs::write(
@@ -195,10 +222,18 @@ fn the_spec_purity_seam_is_the_only_one_answering_a_source_file_reference() {
         purity.iter().any(|f| f.code == "AES603"),
         "the AES603 seam answers a source-file reference; got: {purity:#?}"
     );
-    // Every other seam must stay silent: the document satisfies all of them.
-    for finding in FrFormatChecker::new().audit_fr_format(&context) {
-        assert_eq!(finding.code, "AES601", "an FR-ID finding: {finding:#?}");
-    }
+    // The AES601 seam may answer a BACKLOG ID misalignment on the fixture
+    // backlog; no FR-format finding is owed for the document itself.
+    let fr_findings = FrFormatChecker::new().audit_fr_format(&context);
+    assert!(
+        fr_findings
+            .iter()
+            .all(|f| f.violation_type != "id_missing_feature_prefix"
+                && f.violation_type != "field_missing"
+                && f.violation_type != "protocol_count_mismatch"
+                && f.violation_type != "api_method_not_found"),
+        "the AES601 seam must stay silent on the FR document; got: {fr_findings:#?}"
+    );
     assert!(
         SectionStructureChecker::new()
             .audit_section_structure(&context)
@@ -255,11 +290,7 @@ fn the_doc_heading_seam_is_the_only_one_answering_a_missing_h2() {
 fn running_all_five_seams_over_a_clean_workspace_reports_nothing() {
     let tmp = tempfile::tempdir().unwrap();
     write_feature(tmp.path());
-    std::fs::write(
-        tmp.path().join("crates/sample/FRD.md"),
-        frd_violating_only_spec_purity().replace("main.rs", "the settings role"),
-    )
-    .unwrap();
+    std::fs::write(tmp.path().join("crates/sample/FRD.md"), purity_clean_frd()).unwrap();
     std::fs::write(
         tmp.path().join("PRD.md"),
         r"# PRD — sample
@@ -268,31 +299,16 @@ fn running_all_five_seams_over_a_clean_workspace_reports_nothing() {
 
 The problem.
 
-## Goals & Success Metrics
+## Project Requirements
 
 - Fewer defects.
 
-## User Personas
+## Reference
 
-- A maintainer.
-
-## Scope
-
-In scope: the checker.
-
-## Feature Requirements
-
-- P0 — the checker reports every violation.
-
-## Non-functional Requirements
-
-| Metric | Target |
-| --- | --- |
-| Dispatch | One call |
-
-## Open Questions / Risks
-
-- None.
+| Artifact     | Purpose                          | Link |
+|--------------|----------------------------------|------|
+| ROADMAP      | What ships next, in order        | [ROADMAP.md](../../ROADMAP.md) |
+| Architecture | System boundaries and infra      | [ARCHITECTURE.md](../../ARCHITECTURE.md) |
 ",
     )
     .unwrap();
@@ -300,34 +316,32 @@ In scope: the checker.
         tmp.path().join("ROADMAP.md"),
         r"# ROADMAP — sample
 
-## Current Condition
+## Progress Overview
 
 - Todo: none
+- In Progress: None
+- Blocked: None
 
-## State Definitions
+## Roadmap Status
 
-| State | Meaning |
-|---|---|
-| Done | Shipped. |
+| Priority | State | Dependencies | Updated |
+|---|---|---|---|
+| P0 | Done | none | 2026-09-29 |
 
-## Feature Roll-up
+## Reference
 
-| ID | Feature | Priority | State | Dependencies | Next Action | Updated |
-|---|---|---|---|---|---|---|
-| WS-1 | Docs | P0 | Done | — | — | 2026-09-29 |
-
-## Risk Register
-
-| Risk | Mitigation |
-|---|---|
-| None | — |
+| Artifact     | Purpose                          | Link |
+|--------------|----------------------------------|------|
+| PRD          | Business goals and scope         | [PRD.md](../../PRD.md) |
+| Architecture | System boundaries and infra      | [ARCHITECTURE.md](../../ARCHITECTURE.md) |
 ",
     )
     .unwrap();
 
+    let codes = codes_from_all(tmp.path());
     assert!(
-        codes_from_all(tmp.path()).is_empty(),
-        "six seams over a conforming workspace must report nothing"
+        codes.is_empty(),
+        "six seams over a conforming workspace must report nothing; got codes: {codes:?}"
     );
 }
 
@@ -339,11 +353,7 @@ fn the_spec_purity_seam_answers_specs_only_and_never_a_backlog() {
     let tmp = tempfile::tempdir().unwrap();
     let feature = tmp.path().join("crates/sample");
     std::fs::create_dir_all(feature.join("src")).unwrap();
-    std::fs::write(
-        feature.join("FRD.md"),
-        frd_violating_only_spec_purity().replace("main.rs", "the settings role"),
-    )
-    .unwrap();
+    std::fs::write(feature.join("FRD.md"), purity_clean_frd()).unwrap();
     std::fs::write(
         feature.join("BACKLOG.md"),
         "# Feature Backlog: Sample\n\n## Current Condition\n\n- [x] the FR-ID rule landed\n- SAM-01 is 90% complete and shipped in v3.7\n\n## Backlog\n\n| ID | Priority | State | Dependencies | Next Action | Updated |\n|---|---:|---|---|---|---|\n| SAM-02 | P0 | Ready | — | — | 2026-09-29 |\n\n## Scenario Evidence\n\n| Scenario | Kind | Test file | Test name | Last verified |\n|---|---|---|---|---|\n| nothing yet | Automated | tests/ | test_nothing | 2026-09-29 |\n\n## Blockers\n\nNone\n\n## Dependencies\n\nNone\n\n## Release Readiness\n\n| Area | Status | Notes |\n|---|---|---|\n| Tests | Done | nothing |\n\n## Deferred\n\nNone\n\n## Change Log\n\n| Date | Change | By |\n|---|---|---|\n| 2026-09-29 | init | @raka |\n",
@@ -368,7 +378,7 @@ fn a_document_violating_two_rules_reports_both_codes() {
     // the first one short-circuiting the rest.
     let tmp = tempfile::tempdir().unwrap();
     write_feature(tmp.path());
-    let frd = frd_violating_only_spec_purity().replace("- PRD: [PRD.md](../../PRD.md)\n", "");
+    let frd = frd_violating_only_spec_purity().replace("[PRD.md](../../PRD.md)", "");
     std::fs::write(tmp.path().join("crates/sample/FRD.md"), frd).unwrap();
     std::fs::write(tmp.path().join("PRD.md"), prd_missing_required_h2()).unwrap();
 
@@ -402,16 +412,35 @@ fn conforming_design() -> String {
         .to_string()
 }
 
-fn backlog_with_rows(rows: &[&str]) -> String {
-    let rows = rows
+/// A BACKLOG whose `## Backlog Status` entries carry the given H3 full-ID tokens,
+/// each followed by its State/Done/In Progress/Blocked/Next/Risk/Updated rows.
+fn backlog_with_entries(ids: &[&str]) -> String {
+    let entries = ids
         .iter()
-        .map(|id| format!("| {id} | P0 | Ready | — | — | 2026-09-29 |"))
+        .map(|id| {
+            format!(
+                "### {{{id}}}\n\n\
+                 | Aspect       | Detail                                      |\n\
+                 |--------------|---------------------------------------------|\n\
+                 | State        | Ready                                       |\n\
+                 | Done         | —                                           |\n\
+                 | In Progress  | None                                        |\n\
+                 | Blocked      | None                                        |\n\
+                 | Next         | Ship {id}                                   |\n\
+                 | Risk         | None                                        |\n\
+                 | Updated      | 2026-09-29                                  |\n"
+            )
+        })
         .collect::<Vec<_>>()
         .join("\n");
     format!(
-        "# Feature Backlog: Sample\n\n## Backlog\n\n\
-         | ID | Priority | State | Dependencies | Next Action | Updated |\n\
-         |---|---:|---|---|---|---|\n{rows}\n"
+        "# Feature Backlog: Sample\n\n\
+         ## Progress Overview\n\n\
+         Baseline.\n\n\
+         ## Backlog Status\n\
+         {entries}\n\
+         ## Reference\n\n\
+         - Backlog: [BACKLOG.md](BACKLOG.md)\n"
     )
 }
 
@@ -421,11 +450,12 @@ fn the_fr_format_seam_is_the_only_one_answering_a_ds_backlog_mismatch() {
     let feature = tmp.path().join("crates/sample");
     std::fs::create_dir_all(feature.join("src")).unwrap();
     std::fs::write(feature.join("DESIGN.md"), conforming_design()).unwrap();
-    // BACKLOG carries a bogus DS-DISP-002 row and omits DS-DISP-001: both
-    // directions must fire.
+    // DESIGN declares DS-DISP-001; BACKLOG entry FR-SAMPLE-001 is not declared
+    // by any DS-ID (backlog_qualifier_mismatch), and the declared DS-DISP-001
+    // owes no entry (ds_backlog_id_missing).
     std::fs::write(
         feature.join("BACKLOG.md"),
-        backlog_with_rows(&["DS-DISP-002"]),
+        backlog_with_entries(&["FR-SAMPLE-001"]),
     )
     .unwrap();
     std::fs::write(
@@ -460,9 +490,10 @@ fn the_fr_format_seam_stays_silent_when_ds_backlog_is_aligned() {
     let feature = tmp.path().join("crates/sample");
     std::fs::create_dir_all(feature.join("src")).unwrap();
     std::fs::write(feature.join("DESIGN.md"), conforming_design()).unwrap();
+    // DESIGN declares DS-DISP-001; BACKLOG carries an entry for it — aligned.
     std::fs::write(
         feature.join("BACKLOG.md"),
-        backlog_with_rows(&["DS-DISP-001"]),
+        backlog_with_entries(&["DS-DISP-001"]),
     )
     .unwrap();
     std::fs::write(

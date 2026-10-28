@@ -115,17 +115,17 @@ export class Agent<Name> {
 
 ## Section Contract
 
-| Check | Why it belongs here |
-| ----- | ------------------- |
-| Block 1 → 2 → 3 order followed. | Required by AES layer rules and the linter; missing it is a defect. |
-| Block 2: ONLY aggregate interface method implementations. | Required by AES layer rules and the linter; missing it is a defect. |
-| Block 3: utility methods, factories, private helpers. | Required by AES layer rules and the linter; missing it is a defect. |
-| ≥1 class implements aggregate interface; ≤3 total types. | Required by AES layer rules and the linter; missing it is a defect. |
-| No local domain data; DI via protocol interfaces; shared VOs. | Required by AES layer rules and the linter; missing it is a defect. |
-| Zero I/O, zero business logic, zero domain computation. | Required by AES layer rules and the linter; missing it is a defect. |
-| No forbidden imports. | Required by AES layer rules and the linter; missing it is a defect. |
-| Aggregate registered in shared package `index.ts`. | Required by AES layer rules and the linter; missing it is a defect. |
-| `npx tsc --noEmit` passes. | Required by AES layer rules and the linter; missing it is a defect. |
+| Check | Why it belongs here|
+| ----- | -------------------|
+| Block 1 → 2 → 3 order followed. | Required by AES layer rules and the linter; missing it is a defect.|
+| Block 2: ONLY aggregate interface method implementations. | Required by AES layer rules and the linter; missing it is a defect.|
+| Block 3: utility methods, factories, private helpers. | Required by AES layer rules and the linter; missing it is a defect.|
+| ≥1 class implements aggregate interface; ≤3 total types. | Required by AES layer rules and the linter; missing it is a defect.|
+| No local domain data; DI via protocol interfaces; shared VOs. | Required by AES layer rules and the linter; missing it is a defect.|
+| Zero I/O, zero business logic, zero domain computation. | Required by AES layer rules and the linter; missing it is a defect.|
+| No forbidden imports. | Required by AES layer rules and the linter; missing it is a defect.|
+| Aggregate registered in shared package `index.ts`. | Required by AES layer rules and the linter; missing it is a defect.|
+| `npx tsc --noEmit` passes. | Required by AES layer rules and the linter; missing it is a defect.|
 
 ---
 

@@ -111,15 +111,15 @@ Anything else fails AES102.
 
 ### File-name suffix table
 
-| Suffix | Content | Key constraint |
+| Suffix | Content | Key constraint|
 |---|---|---|
-| `_vo.py` | Value Objects | Validate in `__init__` or `__post_init__`, immutable, no I/O |
-| `_entity.py` | Entities with identity | Identity VO field required; domain fields must be VOs |
-| `_error.py` | Domain errors | Extend `Exception`; store VO fields only |
-| `_event.py` | Domain events | Immutable, VO payload fields only |
-| `_constant.py` | Compile-time constants | Pure literals only — no functions, no I/O |
-| `_request.py` | Aggregate request payloads | `@dataclass` with `verb` field or classmethod factories; VO payload fields |
-| `_response.py` | Aggregate response payloads | `@dataclass` with VO payload fields and classmethod factories; carries one outcome type |
+| `_vo.py` | Value Objects | Validate in `__init__` or `__post_init__`, immutable, no I/O|
+| `_entity.py` | Entities with identity | Identity VO field required; domain fields must be VOs|
+| `_error.py` | Domain errors | Extend `Exception`; store VO fields only|
+| `_event.py` | Domain events | Immutable, VO payload fields only|
+| `_constant.py` | Compile-time constants | Pure literals only — no functions, no I/O|
+| `_request.py` | Aggregate request payloads | `@dataclass` with `verb` field or classmethod factories; VO payload fields|
+| `_response.py` | Aggregate response payloads | `@dataclass` with VO payload fields and classmethod factories; carries one outcome type|
 
 ---
 
@@ -302,7 +302,6 @@ If your Python package root differs from `modules.shared`, substitute the correc
 ```python
 from dataclasses import dataclass
 
-
 @dataclass(frozen=True)
 class <Name>:
     # Private primitive encapsulation is allowed only inside leaf VOs.
@@ -324,7 +323,6 @@ Concrete example:
 
 ```python
 from dataclasses import dataclass
-
 
 @dataclass(frozen=True)
 class OrderId:
@@ -351,7 +349,6 @@ from dataclasses import dataclass
 
 from .taxonomy_<domain>_vo import <Name>Id
 
-
 @dataclass(frozen=True)
 class <Name>:
     id: <Name>Id
@@ -363,7 +360,6 @@ Concrete example:
 from dataclasses import dataclass
 
 from .taxonomy_order_vo import OrderId
-
 
 @dataclass(frozen=True)
 class Order:
@@ -378,7 +374,6 @@ Example with additional VO fields:
 from dataclasses import dataclass
 
 from .taxonomy_order_vo import CustomerId, Money, OrderId, OrderStatus
-
 
 @dataclass(frozen=True)
 class Order:
@@ -437,7 +432,6 @@ Concrete example:
 
 ```python
 from .taxonomy_order_vo import OrderId
-
 
 class OrderNotFoundError(Exception):
     def __init__(self, order_id: OrderId) -> None:
@@ -507,7 +501,6 @@ payload: dict
 ```python
 from dataclasses import dataclass
 
-
 @dataclass(frozen=True)
 class <Name>:
     <field_name>: <FieldVO>
@@ -519,7 +512,6 @@ Concrete example:
 from dataclasses import dataclass
 
 from .taxonomy_order_vo import OrderId
-
 
 @dataclass(frozen=True)
 class OrderCreated:
@@ -561,12 +553,10 @@ from enum import Enum, auto
 
 from .taxonomy_<domain>_vo import <VO>
 
-
 class <Name>Verb(Enum):
     """Consumer verbs carried by the <Name> aggregate's single entry point."""
 
     <VERB> = auto()
-
 
 @dataclass
 class <Name>Request:
@@ -578,7 +568,6 @@ class <Name>Request:
     @classmethod
     def <verb>(cls, <field>: <VO>) -> "<Name>Request":
         return cls(verb=<Name>Verb.<VERB>, <field>=<field>)
-
 
 __all__ = ["<Name>Verb", "<Name>Request"]
 ```
@@ -593,13 +582,11 @@ from enum import Enum, auto
 
 from .taxonomy_expression_vo import ExpressionVO
 
-
 class CalculatorVerb(Enum):
     """Consumer verbs carried by the calculator aggregate's single entry point."""
 
     DELEGATE = auto()
     HISTORY = auto()
-
 
 @dataclass
 class CalculatorRequest:
@@ -615,7 +602,6 @@ class CalculatorRequest:
     @classmethod
     def history(cls) -> "CalculatorRequest":
         return cls(verb=CalculatorVerb.HISTORY)
-
 
 __all__ = ["CalculatorVerb", "CalculatorRequest"]
 ```
@@ -642,7 +628,6 @@ from dataclasses import dataclass, field
 
 from .taxonomy_<domain>_vo import <VO>
 
-
 @dataclass
 class <Name>Response:
     """Results of a <Name> aggregate request."""
@@ -658,7 +643,6 @@ class <Name>Response:
     def <history_verb>(cls, <many>: list[<VO>]) -> "<Name>Response":
         return cls(<many>=list(<many>))
 
-
 __all__ = ["<Name>Response"]
 ```
 
@@ -670,7 +654,6 @@ Concrete example:
 from dataclasses import dataclass, field
 
 from .taxonomy_result_vo import ResultVO
-
 
 @dataclass
 class CalculatorResponse:
@@ -690,7 +673,6 @@ class CalculatorResponse:
     @classmethod
     def history(cls, results: list[ResultVO]) -> "CalculatorResponse":
         return cls(results=list(results))
-
 
 __all__ = ["CalculatorResponse"]
 ```
@@ -802,33 +784,33 @@ __all__ = [
 
 ## Section Contract
 
-| Check | Enforcement | Why it belongs here |
+| Check | Enforcement | Why it belongs here|
 |---|---|---|
-| Correct file pattern: `taxonomy_<domain>_<suffix>.py`. | Machine-checked: AES101. | Required by AES layer rules and the linter; missing it is a defect. |
-| Correct suffix: `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_request`, `_response`. | Machine-checked: AES102. | Required by AES layer rules and the linter; missing it is a defect. |
-| File is at least 5 lines. | Machine-checked: AES302. | Required by AES layer rules and the linter; missing it is a defect. |
-| No forbidden layer imports from capabilities, agents, surface, root, contracts. | Partially machine-checked: AES201–AES205. See Verify. | Required by AES layer rules; missing it is a defect. |
-| Registered in shared `__init__.py`. | Machine-checked: AES501 orphan check. See orphan note in Verify. | Required by AES layer rules and the linter; missing it is a defect. |
-| Constant file contains only constant material, not classes/functions. | Machine-checked: AES401 on constant files. | Required by AES layer rules and the linter; missing it is a defect. |
-| Same-role types share one file. One `_vo` file may hold several VOs, one `_error` file may hold several errors. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
-| VOs validate on construction. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
-| VOs are immutable. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
-| Leaf VOs encapsulate only the primitive needed for validation. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
-| Composite VOs use other VOs, not raw primitives. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
-| Public/domain fields avoid primitives. | Convention — not machine-checked reliably. The reader verifies this; the linter may miss bare dataclass fields. | Required by AES taxonomy convention; missing it is a defect. |
-| Entities contain an identity VO field. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
-| Entities use VO fields for domain state. | Convention — not machine-checked reliably. The reader verifies this. | Required by AES taxonomy convention; missing it is a defect. |
-| Events are immutable. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
-| Events use VO payload fields only. | Convention — not machine-checked reliably. The reader verifies this. | Required by AES taxonomy convention; missing it is a defect. |
-| Errors extend `Exception`. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
-| Errors store VO fields only. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
-| Errors expose an `error_id` property (stable numeric id from the per-feature block: common `000X`, feature 1 `1XXX`, feature 2 `2XXX`, …), an `error_code` property (stable string name), and a `message` property derived from their VOs. | Required on every `_error` file — not yet machine-checked. All three are read-only properties; ids never change across releases. | Required by AES taxonomy convention; missing any of the three is a defect. |
-| Constants are pure literal values. | Convention for literal purity; structural violations may be machine-checked. | Required by AES taxonomy convention; missing it is a defect. |
-| Request files define a closed `Verb` enum plus a dataclass with classmethod factories per verb. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
-| Response files define a dataclass with one field per request verb plus classmethod factories. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
-| Request and response files declare `__all__` and are re-exported explicitly in the barrel. | Convention — the linter checks reachability, not export style. | Required by AES taxonomy convention; missing it is a defect. |
-| No I/O, network, database, filesystem, environment, randomness, or time retrieval. | Convention — not machine-checked fully. The reader verifies this; the linter does not guarantee it. | Required by AES taxonomy convention; missing it is a defect. |
-| `python -c "import ..."` passes. | Manual fallback gate. | Required by the Python packaging check; missing it is a defect. |
+| Correct file pattern: `taxonomy_<domain>_<suffix>.py`. | Machine-checked: AES101. | Required by AES layer rules and the linter; missing it is a defect.|
+| Correct suffix: `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_request`, `_response`. | Machine-checked: AES102. | Required by AES layer rules and the linter; missing it is a defect.|
+| File is at least 5 lines. | Machine-checked: AES302. | Required by AES layer rules and the linter; missing it is a defect.|
+| No forbidden layer imports from capabilities, agents, surface, root, contracts. | Partially machine-checked: AES201–AES205. See Verify. | Required by AES layer rules; missing it is a defect.|
+| Registered in shared `__init__.py`. | Machine-checked: AES501 orphan check. See orphan note in Verify. | Required by AES layer rules and the linter; missing it is a defect.|
+| Constant file contains only constant material, not classes/functions. | Machine-checked: AES401 on constant files. | Required by AES layer rules and the linter; missing it is a defect.|
+| Same-role types share one file. One `_vo` file may hold several VOs, one `_error` file may hold several errors. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect.|
+| VOs validate on construction. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect.|
+| VOs are immutable. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect.|
+| Leaf VOs encapsulate only the primitive needed for validation. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect.|
+| Composite VOs use other VOs, not raw primitives. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect.|
+| Public/domain fields avoid primitives. | Convention — not machine-checked reliably. The reader verifies this; the linter may miss bare dataclass fields. | Required by AES taxonomy convention; missing it is a defect.|
+| Entities contain an identity VO field. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect.|
+| Entities use VO fields for domain state. | Convention — not machine-checked reliably. The reader verifies this. | Required by AES taxonomy convention; missing it is a defect.|
+| Events are immutable. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect.|
+| Events use VO payload fields only. | Convention — not machine-checked reliably. The reader verifies this. | Required by AES taxonomy convention; missing it is a defect.|
+| Errors extend `Exception`. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect.|
+| Errors store VO fields only. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect.|
+| Errors expose an `error_id` property (stable numeric id from the per-feature block: common `000X`, feature 1 `1XXX`, feature 2 `2XXX`, …), an `error_code` property (stable string name), and a `message` property derived from their VOs. | Required on every `_error` file — not yet machine-checked. All three are read-only properties; ids never change across releases. | Required by AES taxonomy convention; missing any of the three is a defect.|
+| Constants are pure literal values. | Convention for literal purity; structural violations may be machine-checked. | Required by AES taxonomy convention; missing it is a defect.|
+| Request files define a closed `Verb` enum plus a dataclass with classmethod factories per verb. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect.|
+| Response files define a dataclass with one field per request verb plus classmethod factories. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect.|
+| Request and response files declare `__all__` and are re-exported explicitly in the barrel. | Convention — the linter checks reachability, not export style. | Required by AES taxonomy convention; missing it is a defect.|
+| No I/O, network, database, filesystem, environment, randomness, or time retrieval. | Convention — not machine-checked fully. The reader verifies this; the linter does not guarantee it. | Required by AES taxonomy convention; missing it is a defect.|
+| `python -c "import ..."` passes. | Manual fallback gate. | Required by the Python packaging check; missing it is a defect.|
 
 ---
 

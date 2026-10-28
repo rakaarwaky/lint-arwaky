@@ -78,31 +78,34 @@ fn aes606_accepts_a_backlog_carrying_every_mandated_table() {
 
 #[test]
 fn aes606_rejects_bullet_bodies_under_a_backlog_section() {
-    let text = "# BACKLOG\n\n## Backlog\n\n- SAM-01 is ready\n- SAM-02 is in progress\n";
+    // The inspected unit is a `{ID}` entry under `Backlog Status`; its body
+    // must be the entry table, so bullets are the wrong shape.
+    let text = "# BACKLOG\n\n## Backlog Status\n\n### {SAM-001}\n\n\
+- SAM-01 is ready\n- SAM-02 is in progress\n";
     let findings =
         TemplateConformanceChecker::new().audit_template_conformance(&context("BACKLOG.md", text));
     assert!(
         findings
             .iter()
             .any(|f| f.code == "AES606" && f.violation_type == "section_not_table"),
-        "a bulleted Backlog section must fire AES606 section_not_table; got {findings:?}"
+        "a bulleted entry under Backlog Status must fire AES606 section_not_table; got {findings:?}"
     );
 }
 
 #[test]
 fn aes606_rejects_a_table_missing_one_mandated_column() {
-    // Release Readiness is present as a table, but the "Notes" column is gone.
-    let text = conforming_backlog().replace(
-        "| Area | Status | Notes |\n| --- | --- | --- |\n| Tests | Done | nothing |",
-        "| Area | Status |\n| --- | --- |\n| Tests | Done |",
-    );
+    // Reference is present as a table, but the mandated "Link" column is gone.
+    let text = "# BACKLOG\n\n## Reference\n\n\
+| Artifact | Purpose |\n\
+| --- | --- |\n\
+| PRD | Business goals. |\n";
     let findings =
-        TemplateConformanceChecker::new().audit_template_conformance(&context("BACKLOG.md", &text));
+        TemplateConformanceChecker::new().audit_template_conformance(&context("BACKLOG.md", text));
     assert!(
         findings
             .iter()
             .any(|f| f.code == "AES606" && f.violation_type == "table_missing_columns"),
-        "a Release Readiness table missing its Notes column must fire AES606 table_missing_columns; got {findings:?}"
+        "a Reference table missing its Link column must fire AES606 table_missing_columns; got {findings:?}"
     );
 }
 
@@ -120,14 +123,17 @@ fn aes606_accepts_a_roadmap_carrying_every_mandated_table() {
 
 #[test]
 fn aes606_rejects_prose_under_a_roadmap_state_definitions() {
-    let text = "# ROADMAP\n\n## State Definitions\n\nIdea means not yet examined.\n";
+    // The inspected unit is a `PR-…` entry under `Roadmap Status`; a prose
+    // body carries no table, so the shape check rejects it.
+    let text = "# ROADMAP\n\n## Roadmap Status\n\n\
+### PR-DOC-001: Sample State\n\nIdea means not yet examined.\n";
     let findings =
         TemplateConformanceChecker::new().audit_template_conformance(&context("ROADMAP.md", text));
     assert!(
         findings
             .iter()
             .any(|f| f.code == "AES606" && f.violation_type == "section_not_table"),
-        "prose under State Definitions must fire AES606 section_not_table; got {findings:?}"
+        "prose under a Roadmap Status entry must fire AES606 section_not_table; got {findings:?}"
     );
 }
 

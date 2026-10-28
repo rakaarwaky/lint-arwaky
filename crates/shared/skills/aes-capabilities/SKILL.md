@@ -51,26 +51,26 @@ metadata:
 
 A capability and a utility are fundamentally different layers. Confusing them causes misplaced code, wrong imports, and linter violations.
 
-| | **Capability** (`capabilities_*`) | **Utility** (`utility_*`) |
+| | **Capability** (`capabilities_*`) | **Utility** (`utility_*`)|
 |---|---|---|
-| **Core question** | What can the system **do**? | How is a small task **done**? |
-| **Nature** | Concrete protocol behaviour — domain rules, external adaptation, DI-wired | Stateless, domain-agnostic, pure free functions |
-| **Responsibility** | Implements a `_protocol` contract; orchestrates inputs into domain outcomes | Performs narrow, reusable operations with no business logic |
-| **State** | Has instance state via injected dependencies (`Arc<dyn Trait>`, DI params) | Absolutely no state — pure functions only |
-| **Location** | Feature folder (`crates/<feature>/`, `modules/<feature>/`, `packages/<feature>/`) | Shared folder (`shared/`) beside taxonomy and contract files |
-| **Consumers** | Consumed by agent orchestrators or root composition | Consumed by capabilities, agents, surfaces, or other utilities |
-| **Examples** | `capabilities_user_auth`, `capabilities_data_persist`, `capabilities_rate_limit` | `utility_string_sanitizer`, `utility_date_formatter`, `utility_hasher` |
+| **Core question** | What can the system **do**? | How is a small task **done**?|
+| **Nature** | Concrete protocol behaviour — domain rules, external adaptation, DI-wired | Stateless, domain-agnostic, pure free functions|
+| **Responsibility** | Implements a `_protocol` contract; orchestrates inputs into domain outcomes | Performs narrow, reusable operations with no business logic|
+| **State** | Has instance state via injected dependencies (`Arc<dyn Trait>`, DI params) | Absolutely no state — pure functions only|
+| **Location** | Feature folder (`crates/<feature>/`, `modules/<feature>/`, `packages/<feature>/`) | Shared folder (`shared/`) beside taxonomy and contract files|
+| **Consumers** | Consumed by agent orchestrators or root composition | Consumed by capabilities, agents, surfaces, or other utilities|
+| **Examples** | `capabilities_user_auth`, `capabilities_data_persist`, `capabilities_rate_limit` | `utility_string_sanitizer`, `utility_date_formatter`, `utility_hasher`|
 
 **Decision rule**: Ask "Does this code implement a protocol behaviour with business rules?" If yes → capability. Ask "Does this code perform a narrow, stateless, reusable operation with no business logic?" If yes → utility. If it does both, split it: business logic stays in the capability; the stateless helper moves to utility.
 
 The **layer** decides which suffix, which imports, and which structure apply.
 Rules, templates, section contracts, and Verify blocks live in the language HOW-TUs under [`references/`](references/).
 
-| Language | Focus | Body rule | HOW-TO |
-| -------- | ----- | --------- | ------ |
-| Python | Protocol implementation | 3-block; ≥1 protocol; ≤3 types | [references/HOW-TO-MAKE-PYTHON-CAPABILITIES.md](references/HOW-TO-MAKE-PYTHON-CAPABILITIES.md) |
-| Rust | Protocol implementation | 3-block; ≥1 protocol; ≤3 types | [references/HOW-TO-MAKE-RUST-CAPABILITIES.md](references/HOW-TO-MAKE-RUST-CAPABILITIES.md) |
-| TypeScript | Protocol implementation | 3-block; ≥1 protocol; ≤3 types | [references/HOW-TO-MAKE-TYPESCRIPT-CAPABILITIES.md](references/HOW-TO-MAKE-TYPESCRIPT-CAPABILITIES.md) |
+| Language | Focus | Body rule | HOW-TO|
+| -------- | ----- | --------- | ------|
+| Python | Protocol implementation | 3-block; ≥1 protocol; ≤3 types | [references/HOW-TO-MAKE-PYTHON-CAPABILITIES.md](references/HOW-TO-MAKE-PYTHON-CAPABILITIES.md)|
+| Rust | Protocol implementation | 3-block; ≥1 protocol; ≤3 types | [references/HOW-TO-MAKE-RUST-CAPABILITIES.md](references/HOW-TO-MAKE-RUST-CAPABILITIES.md)|
+| TypeScript | Protocol implementation | 3-block; ≥1 protocol; ≤3 types | [references/HOW-TO-MAKE-TYPESCRIPT-CAPABILITIES.md](references/HOW-TO-MAKE-TYPESCRIPT-CAPABILITIES.md)|
 
 **The layer chain:**
 
@@ -85,15 +85,15 @@ Each file answers one layer's job. A method or import in the wrong layer is the 
 Every rule is machine-checked by `lint-arwaky-cli scan <layer-path>` (see each HOW-TO § Verify).
 A rule cannot drift from the gate. Cite the linter, not this file, when pointing at a rule.
 
-| Layer | Rule |
-| ----- | ---- |
-| Naming | File `capabilities_<domain>_<role>` — role from internal/external naming lists; forbidden suffixes `_vo`/`_entity`/`_error`/`_event`/`_constant`/`_constants`/`_protocol`/`_aggregate`/`_utility`/`_request`/`_response` (AES101/AES102). |
-| Structure | 3-block order: Block 1 type+ctor → Block 2 protocol methods only → Block 3 factories/dunders/helpers. ≥1 protocol implementor, ≤3 types (AES403). |
-| Imports | Taxonomy + `_protocol` contracts + utility only — never agents, siblings, surface, local domain models (AES201–AES205). |
-| DI | Protocol interfaces only (`Arc<dyn Trait>` in Rust); shared VOs in fields/signatures. |
-| Helpers | Stateless domain-agnostic ≥2-consumer functions move to Utility; constants to `taxonomy_*_constant`. |
-| Register | Shared barrel: `__init__.py` / `mod.rs` / `index.ts`. |
-| Verify | `lint-arwaky-cli scan <layer-path>` → 0. Language compile is fallback only. |
+| Layer | Rule|
+| ----- | ----|
+| Naming | File `capabilities_<domain>_<role>` — role from internal/external naming lists; forbidden suffixes `_vo`/`_entity`/`_error`/`_event`/`_constant`/`_constants`/`_protocol`/`_aggregate`/`_utility`/`_request`/`_response` (AES101/AES102).|
+| Structure | 3-block order: Block 1 type+ctor → Block 2 protocol methods only → Block 3 factories/dunders/helpers. ≥1 protocol implementor, ≤3 types (AES403).|
+| Imports | Taxonomy + `_protocol` contracts + utility only — never agents, siblings, surface, local domain models (AES201–AES205).|
+| DI | Protocol interfaces only (`Arc<dyn Trait>` in Rust); shared VOs in fields/signatures.|
+| Helpers | Stateless domain-agnostic ≥2-consumer functions move to Utility; constants to `taxonomy_*_constant`.|
+| Register | Shared barrel: `__init__.py` / `mod.rs` / `index.ts`.|
+| Verify | `lint-arwaky-cli scan <layer-path>` → 0. Language compile is fallback only.|
 
 Split details, templates, and Section Contract tables: **read the language HOW-TO** — do not restate them here.
 

@@ -5,59 +5,176 @@ Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
 State: defined in root [ROADMAP.md](../../ROADMAP.md) — cited here, not restated
 Last Updated: 2026-09-29
 
-## Current Condition
+## Progress Overview
 
 - Done: `cargo test -p tui --lib --tests` → 0 failures
 - In Progress: None
 - Blocked: None
 - Next Action: —
 
-## Backlog
+## Backlog Status
 
-| ID | Priority | State | Dependencies | Next Action | Updated |
-|---:|---|---|---|---|---|
-| DS-TUIC-001 | P2 | Done | None | — | 2026-09-29  |
-| DS-TUIC-002 | P2 | Done | None | — | 2026-09-29  |
-| DS-TUIC-003 | P2 | Done | None | — | 2026-09-29  |
-| DS-TUIC-004 | P2 | Done | None | — | 2026-09-29  |
-| DS-TUIC-005 | P2 | Done | None | — | 2026-09-29  |
-| DS-TUIC-006 | P2 | Done | None | — | 2026-09-29  |
-| DS-TUIC-007 | P2 | Done | None | — | 2026-09-29  |
-| DS-TUIC-008 | P2 | Done | None | — | 2026-09-29  |
-| DS-TUIC-009 | P2 | Done | None | — | 2026-09-29  |
-| DS-TUIC-010 | P2 | Done | None | — | 2026-09-29  |
-| DS-TUIC-011 | P2 | Done | None | — | 2026-09-29  |
-| DS-TUIC-012 | P2 | Done | None | — | 2026-09-29  |
-| DS-TUIC-013 | P2 | Done | None | — | 2026-09-29  |
+### {DS-TUIC-001}
 
-## Scenario Evidence
+| Aspect       | Detail                                     |
+|--------------|---------------------------------------------|
+| State        | Ready                                      |
+| Done         | TUIC                                      |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | Ship                                       |
+| Risk         | None                                       |
+| Updated      | 2026-09-29                                 |
 
-| Scenario | Kind | Test file | Test name | Last verified |
-|---|---|---|---|---|
-| TUI renders scan progress without blocking main thread | Gap | `tests/unit_tui_progress_callback.rs` | `progress_callback_updates_progress_bar` | 2026-09-29 |
+### {DS-TUIC-002}
 
-## Blockers
+| Aspect       | Detail                                     |
+|--------------|---------------------------------------------|
+| State        | Ready                                      |
+| Done         | TUIC                                      |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | Ship                                       |
+| Risk         | None                                       |
+| Updated      | 2026-09-29                                 |
 
-None.
+### {DS-TUIC-003}
 
-## Dependencies
+| Aspect       | Detail                                     |
+|--------------|---------------------------------------------|
+| State        | Ready                                      |
+| Done         | TUIC                                      |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | Ship                                       |
+| Risk         | None                                       |
+| Updated      | 2026-09-29                                 |
 
-None.
+### {DS-TUIC-004}
 
-## Release Readiness
+| Aspect       | Detail                                     |
+|--------------|---------------------------------------------|
+| State        | Ready                                      |
+| Done         | TUIC                                      |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | Ship                                       |
+| Risk         | None                                       |
+| Updated      | 2026-09-29                                 |
 
-| Area | Status | Notes |
-|---|---|---|
-| Tests | Done | `cargo test -p tui --lib --tests` → 0 failures |
-| Docs | Done | [DESIGN.md](DESIGN.md) defines the TUI surface contract; status lives in this file |
+### {DS-TUIC-005}
 
-## Deferred
+| Aspect       | Detail                                     |
+|--------------|---------------------------------------------|
+| State        | Ready                                      |
+| Done         | TUIC                                      |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | Ship                                       |
+| Risk         | None                                       |
+| Updated      | 2026-09-29                                 |
 
-—
+### {DS-TUIC-006}
 
-## Change Log
+| Aspect       | Detail                                     |
+|--------------|---------------------------------------------|
+| State        | Ready                                      |
+| Done         | TUIC                                      |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | Ship                                       |
+| Risk         | None                                       |
+| Updated      | 2026-09-29                                 |
 
-| Date | Change | By |
-|---|---|---|
-| 2026-10-26 | Qualified the Backlog ids to the TUIC design-item scheme for the DESIGN/DATA template redesign | @raka |
-| 2026-09-29 | Created backlog entry for TUI surface crate | @raka |
+### {DS-TUIC-007}
+
+| Aspect       | Detail                                     |
+|--------------|---------------------------------------------|
+| State        | Ready                                      |
+| Done         | TUIC                                      |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | Ship                                       |
+| Risk         | None                                       |
+| Updated      | 2026-09-29                                 |
+
+### {DS-TUIC-008}
+
+| Aspect       | Detail                                     |
+|--------------|---------------------------------------------|
+| State        | Ready                                      |
+| Done         | TUIC                                      |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | Ship                                       |
+| Risk         | None                                       |
+| Updated      | 2026-09-29                                 |
+
+### {DS-TUIC-009}
+
+| Aspect       | Detail                                     |
+|--------------|---------------------------------------------|
+| State        | Ready                                      |
+| Done         | TUIC                                      |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | Ship                                       |
+| Risk         | None                                       |
+| Updated      | 2026-09-29                                 |
+
+### {DS-TUIC-010}
+
+| Aspect       | Detail                                     |
+|--------------|---------------------------------------------|
+| State        | Ready                                      |
+| Done         | TUIC                                      |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | Ship                                       |
+| Risk         | None                                       |
+| Updated      | 2026-09-29                                 |
+
+### {DS-TUIC-011}
+
+| Aspect       | Detail                                     |
+|--------------|---------------------------------------------|
+| State        | Ready                                      |
+| Done         | TUIC                                      |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | Ship                                       |
+| Risk         | None                                       |
+| Updated      | 2026-09-29                                 |
+
+### {DS-TUIC-012}
+
+| Aspect       | Detail                                     |
+|--------------|---------------------------------------------|
+| State        | Ready                                      |
+| Done         | TUIC                                      |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | Ship                                       |
+| Risk         | None                                       |
+| Updated      | 2026-09-29                                 |
+
+### {DS-TUIC-013}
+
+| Aspect       | Detail                                     |
+|--------------|---------------------------------------------|
+| State        | Ready                                      |
+| Done         | TUIC                                      |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | Ship                                       |
+| Risk         | None                                       |
+| Updated      | 2026-09-29                                 |
+
+## Reference
+
+| Artifact | Purpose | Link|
+|----------|---------|------|
+| PRD.md | Product requirements | [PRD.md](../../PRD.md)|
+| FRD.md | Feature requirements | [FRD.md](FRD.md)|
+| ROADMAP.md | Roadmap status | [ROADMAP.md](../../ROADMAP.md)|
+| ARCHITECTURE.md | Layer contract | [ARCHITECTURE.md](../../ARCHITECTURE.md)|

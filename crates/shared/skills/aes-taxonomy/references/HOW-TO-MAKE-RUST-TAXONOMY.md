@@ -117,15 +117,15 @@ Anything else fails AES102.
 
 ### File-name suffix table
 
-| Suffix | Content | Key constraint |
+| Suffix | Content | Key constraint|
 |---|---|---|
-| `_vo.rs` | Value Objects | Validate in `new()`, immutable fields, no I/O |
-| `_entity.rs` | Entities with identity | Identity VO field required; domain fields must be VOs |
-| `_error.rs` | Domain errors | Implement `std::error::Error` + `Display`; store VO fields only |
-| `_event.rs` | Domain events | Immutable, VO payload fields only |
-| `_constant.rs` | Compile-time constants | `pub const` only — no functions, no I/O |
-| `_request.rs` | Aggregate request payloads | `pub enum` with VO-bearing variants + constructor methods; carries a verb/action name |
-| `_response.rs` | Aggregate response payloads | `pub enum` with VO-bearing variants + extractor methods; returns an outcome |
+| `_vo.rs` | Value Objects | Validate in `new()`, immutable fields, no I/O|
+| `_entity.rs` | Entities with identity | Identity VO field required; domain fields must be VOs|
+| `_error.rs` | Domain errors | Implement `std::error::Error` + `Display`; store VO fields only|
+| `_event.rs` | Domain events | Immutable, VO payload fields only|
+| `_constant.rs` | Compile-time constants | `pub const` only — no functions, no I/O|
+| `_request.rs` | Aggregate request payloads | `pub enum` with VO-bearing variants + constructor methods; carries a verb/action name|
+| `_response.rs` | Aggregate response payloads | `pub enum` with VO-bearing variants + extractor methods; returns an outcome|
 
 ---
 
@@ -779,32 +779,32 @@ pub use taxonomy_order_response::OrderResponse;
 
 ## Section Contract
 
-| Check | Enforcement | Why it belongs here |
+| Check | Enforcement | Why it belongs here|
 |---|---|---|
-| Correct file pattern: `taxonomy_<domain>_<suffix>.rs`. | Machine-checked: AES101. | Required by AES layer rules and the linter; missing it is a defect. |
-| Correct suffix: `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_request`, `_response`. | Machine-checked: AES102. | Required by AES layer rules and the linter; missing it is a defect. |
-| File is at least 5 lines. | Machine-checked: AES302. | Required by AES layer rules and the linter; missing it is a defect. |
-| No forbidden layer imports from capabilities, agents, surface, root, contracts. | Partially machine-checked: AES201–AES205. See Verify. | Required by AES layer rules; missing it is a defect. |
-| Registered in shared `mod.rs`. | Machine-checked: AES501 orphan check. | Required by AES layer rules and the linter; missing it is a defect. |
-| Constant file contains only constant material, not structs/enums/functions. | Machine-checked: AES401 on constant files. | Required by AES layer rules and the linter; missing it is a defect. |
-| Same-role types share one file. One `_vo` file may hold several VOs, one `_error` file may hold several errors. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
-| VOs validate on construction. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
-| VOs are immutable. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
-| Leaf VOs encapsulate only the primitive needed for validation. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
-| Composite VOs use other VOs, not raw primitives. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
-| Public/domain fields avoid primitives. | Machine-checked for `_entity`, `_error`, `_event`. Not checked for `_vo` files. | Required by AES taxonomy convention; missing it is a defect. |
-| Entities contain an identity VO field. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
-| Entities use VO fields for domain state. | Machine-checked — see primitive note above. | Required by AES taxonomy convention; missing it is a defect. |
-| Events are immutable. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
-| Events use VO payload fields only. | Machine-checked — see primitive note above. | Required by AES taxonomy convention; missing it is a defect. |
-| Errors implement `std::error::Error` + `Display`. | Convention for semantic correctness; structural derivation is checked by compiler. | Required by AES taxonomy convention; missing it is a defect. |
-| Errors store VO fields only. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
-| Errors expose an `error_id` (stable numeric id from the per-feature block: common `000X`, feature 1 `1XXX`, feature 2 `2XXX`, …), an `error_code` (stable string name), and a `message` derived from their VOs. | Required on every `_error` file — not yet machine-checked. All three are surface methods; ids never change across releases. | Required by AES taxonomy convention; missing any of the three is a defect. |
-| Constants are `pub const` pure literal values. | Convention for literal purity; structural violations may be machine-checked. | Required by AES taxonomy convention; missing it is a defect. |
-| Request enums carry VO payload fields in their variants and expose a named constructor per verb. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
-| Response enums carry VO payload fields in their variants and expose an `into_*` extractor per outcome. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
-| No I/O, network, database, filesystem, environment, randomness, or time retrieval. | Convention — not machine-checked fully. The reader verifies this; the linter does not guarantee it. | Required by AES taxonomy convention; missing it is a defect. |
-| `cargo check -p <crate-name>` passes. | Manual fallback gate. | Required by the Rust compilation check; missing it is a defect. |
+| Correct file pattern: `taxonomy_<domain>_<suffix>.rs`. | Machine-checked: AES101. | Required by AES layer rules and the linter; missing it is a defect.|
+| Correct suffix: `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_request`, `_response`. | Machine-checked: AES102. | Required by AES layer rules and the linter; missing it is a defect.|
+| File is at least 5 lines. | Machine-checked: AES302. | Required by AES layer rules and the linter; missing it is a defect.|
+| No forbidden layer imports from capabilities, agents, surface, root, contracts. | Partially machine-checked: AES201–AES205. See Verify. | Required by AES layer rules; missing it is a defect.|
+| Registered in shared `mod.rs`. | Machine-checked: AES501 orphan check. | Required by AES layer rules and the linter; missing it is a defect.|
+| Constant file contains only constant material, not structs/enums/functions. | Machine-checked: AES401 on constant files. | Required by AES layer rules and the linter; missing it is a defect.|
+| Same-role types share one file. One `_vo` file may hold several VOs, one `_error` file may hold several errors. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect.|
+| VOs validate on construction. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect.|
+| VOs are immutable. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect.|
+| Leaf VOs encapsulate only the primitive needed for validation. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect.|
+| Composite VOs use other VOs, not raw primitives. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect.|
+| Public/domain fields avoid primitives. | Machine-checked for `_entity`, `_error`, `_event`. Not checked for `_vo` files. | Required by AES taxonomy convention; missing it is a defect.|
+| Entities contain an identity VO field. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect.|
+| Entities use VO fields for domain state. | Machine-checked — see primitive note above. | Required by AES taxonomy convention; missing it is a defect.|
+| Events are immutable. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect.|
+| Events use VO payload fields only. | Machine-checked — see primitive note above. | Required by AES taxonomy convention; missing it is a defect.|
+| Errors implement `std::error::Error` + `Display`. | Convention for semantic correctness; structural derivation is checked by compiler. | Required by AES taxonomy convention; missing it is a defect.|
+| Errors store VO fields only. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect.|
+| Errors expose an `error_id` (stable numeric id from the per-feature block: common `000X`, feature 1 `1XXX`, feature 2 `2XXX`, …), an `error_code` (stable string name), and a `message` derived from their VOs. | Required on every `_error` file — not yet machine-checked. All three are surface methods; ids never change across releases. | Required by AES taxonomy convention; missing any of the three is a defect.|
+| Constants are `pub const` pure literal values. | Convention for literal purity; structural violations may be machine-checked. | Required by AES taxonomy convention; missing it is a defect.|
+| Request enums carry VO payload fields in their variants and expose a named constructor per verb. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect.|
+| Response enums carry VO payload fields in their variants and expose an `into_*` extractor per outcome. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect.|
+| No I/O, network, database, filesystem, environment, randomness, or time retrieval. | Convention — not machine-checked fully. The reader verifies this; the linter does not guarantee it. | Required by AES taxonomy convention; missing it is a defect.|
+| `cargo check -p <crate-name>` passes. | Manual fallback gate. | Required by the Rust compilation check; missing it is a defect.|
 
 ---
 

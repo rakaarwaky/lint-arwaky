@@ -9,6 +9,7 @@ use crate::capabilities_doc_crosslink_checker::CrosslinkChecker;
 use crate::capabilities_doc_fr_format_checker::FrFormatChecker;
 use crate::capabilities_doc_heading_structure_checker::HeadingStructureChecker;
 use crate::capabilities_doc_member_doc_checker::MemberDocChecker;
+use crate::capabilities_doc_pr_folder_ownership_checker::PrFolderOwnershipChecker;
 use crate::capabilities_doc_required_doc_checker::RequiredDocChecker;
 use crate::capabilities_doc_section_structure_checker::SectionStructureChecker;
 use crate::capabilities_doc_spec_purity_checker::SpecPurityChecker;
@@ -17,8 +18,8 @@ use crate::capabilities_doc_template_conformance_checker::TemplateConformanceChe
 use shared_doc_rules::contract_doc_aggregate::IDocRunnerAggregate;
 use shared_doc_rules::contract_doc_protocol::{
     ICrosslinkProtocol, IDocHeadingProtocol, IFrFormatProtocol, IMemberDocProtocol,
-    IRequiredDocProtocol, ISectionStructureProtocol, ISpecPurityProtocol, ITemplateBodyProtocol,
-    ITemplateConformanceProtocol,
+    IPrFolderOwnershipProtocol, IRequiredDocProtocol, ISectionStructureProtocol,
+    ISpecPurityProtocol, ITemplateBodyProtocol, ITemplateConformanceProtocol,
 };
 use std::sync::Arc;
 
@@ -39,6 +40,8 @@ impl RootDocRulesContainer {
         let required_doc: Arc<dyn IRequiredDocProtocol> = Arc::new(RequiredDocChecker::new());
         let member_doc: Arc<dyn IMemberDocProtocol> = Arc::new(MemberDocChecker::new());
         let template_body: Arc<dyn ITemplateBodyProtocol> = Arc::new(TemplateBodyChecker::new());
+        let pr_folder_ownership: Arc<dyn IPrFolderOwnershipProtocol> =
+            Arc::new(PrFolderOwnershipChecker::new());
         Arc::new(DocOrchestrator::new(
             fr_format,
             section_structure,
@@ -49,6 +52,7 @@ impl RootDocRulesContainer {
             required_doc,
             member_doc,
             template_body,
+            pr_folder_ownership,
         ))
     }
 }
