@@ -457,10 +457,10 @@ fn template_body_checker_deleted_required_section_fires() {
     assert!(!deleted[0].fix.is_empty());
 }
 
-/// No section is deletable under the 9-doc layout (`deletable_sections` is
-/// empty for every profile), so absence only stays silent for a section
-/// outside the required set — here the legacy "Quality Verification & PR
-/// Process" heading old CONTRIBUTING templates once carried.
+/// No section is deletable under the 9-doc layout, so absence only stays
+/// silent for a section outside the required set — here the legacy
+/// "Quality Verification & PR Process" heading old CONTRIBUTING templates
+/// once carried.
 #[test]
 fn template_body_checker_deletable_section_absent_no_finding() {
     let config = DocRulesConfig {
