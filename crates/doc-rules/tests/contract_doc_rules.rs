@@ -8,7 +8,11 @@ use shared_doc_rules::taxonomy_doc_rules_response::DocResponse;
 use std::fs;
 use std::path::Path;
 
-/// A FRD that satisfies every structural invariant.
+/// A FRD that satisfies every structural invariant: the FRD contract H2 set
+/// (`Feature Overview`, `Functional Requirements`, `Public Interface`,
+/// `Reference`) in FRD_SECTION_ORDER, each entry table carrying the twelve
+/// FR_FIELDS rows, and a Reference table linking every artifact the AES604
+/// required set names.
 fn conforming_frd() -> String {
     r#"# FRD — sample
 
@@ -70,20 +74,6 @@ The feature does the work a surface delegates to.
 | Backlog      | {Task tracking, epics, and implementation status} | [BACKLOG.md](BACKLOG.md) |
 | Architecture | {System boundaries, tech stack, and infra} | [ARCHITECTURE.md](../../ARCHITECTURE.md) |
 | Roadmap      | {What ships next, in order}                | [ROADMAP.md](../../ROADMAP.md) |
-
-## API Contract
-
-### Protocol API
-
-| Method | Input | Output | Error | Event | Description |
-| --- | --- | --- | --- | --- | --- |
-| `execute` | `SampleRequest` | `SampleResponse` | Reason-coded | — | Single composite entry point. |
-
-### Aggregate API
-
-| Method | Input | Output | Error | Event | Description |
-| --- | --- | --- | --- | --- | --- |
-| `execute` | `SampleRequest` | `SampleResponse` | Reason-coded | — | Routes to the capability. |
 "#
     .to_string()
 }
@@ -365,6 +355,10 @@ fn aes601_does_not_validate_fr_row_labels() {
     );
 }
 
+/// The 9-doc FRD contract closed off `api_no_subsection` with the retired
+/// `## API Contract` H2 (AES602 now only answers `order_violation`), so a
+/// subsection-less document is instead answered by the AES605 closed H2 set:
+/// any H2 the contract does not name fires `h2_unexpected`.
 #[test]
 fn aes602_fires_when_aggregate_api_is_absent() {
     let tmp = tempfile::tempdir().unwrap();
@@ -376,33 +370,33 @@ fn aes602_fires_when_aggregate_api_is_absent() {
         );
     write_workspace(tmp.path(), &frd);
     assert!(
-        has(&audit(tmp.path()), "AES602", "api_no_subsection"),
-        "expected api_no_subsection, got: {:#?}",
+        has(&audit(tmp.path()), "AES605", "h2_unexpected"),
+        "expected h2_unexpected for an off-contract subsection heading, got: {:#?}",
         audit(tmp.path())
     );
 }
 
-// ── AES602: API Contract H3 strictness ───────────────────────────────
+// ── AES602: contract H2 set closed off the API Contract H3 shapes ───
 
+/// A level-3 heading per protocol class narrating a split the single
+/// table refused to make: the 9-doc FRD contract does not name the
+/// heading, so the closed H2 set answers with `h2_unexpected`.
 #[test]
 fn aes602_fires_when_api_contract_has_a_per_protocol_h3() {
     let tmp = tempfile::tempdir().unwrap();
-    // The original workaround: one Protocol API table holds every method of
-    // every protocol, then a level-3 heading per protocol class narrates the
-    // split that the single table refused to make.
     let frd = conforming_frd().replace(
-        "### Aggregate API",
+        "## Public Interface",
         "### IParserProtocol\n\n\
              | Method | Input | Output | Error | Event | Description |\n\
              | --- | --- | --- | --- | --- | --- |\n\
              | `parse` | `DocSource` | `Result<Tree>` | — | — | Parse one document. |\n\n\
-             ### Aggregate API",
+             ## Public Interface",
     );
     write_workspace(tmp.path(), &frd);
     let findings = audit(tmp.path());
     assert!(
-        has(&findings, "AES602", "api_h3_unexpected"),
-        "expected api_h3_unexpected, got: {findings:#?}"
+        has(&findings, "AES605", "h2_unexpected"),
+        "expected h2_unexpected, got: {findings:#?}"
     );
 }
 
@@ -410,7 +404,7 @@ fn aes602_fires_when_api_contract_has_a_per_protocol_h3() {
 fn aes602_fires_when_api_contract_has_two_extra_h3s() {
     let tmp = tempfile::tempdir().unwrap();
     let frd = conforming_frd().replace(
-        "### Aggregate API",
+        "## Public Interface",
         "### IGraphProtocol\n\n\
              | Method | Input | Output | Error | Event | Description |\n\
              | --- | --- | --- | --- | --- | --- |\n\
@@ -419,29 +413,39 @@ fn aes602_fires_when_api_contract_has_two_extra_h3s() {
              | Method | Input | Output | Error | Event | Description |\n\
              | --- | --- | --- | --- | --- | --- |\n\
              | `parse` | `DocSource` | `Result<Tree>` | — | — | Parse one document. |\n\n\
-             ### Aggregate API",
+             ## Public Interface",
     );
     write_workspace(tmp.path(), &frd);
     let findings = audit(tmp.path());
-    // Each unknown H3 is reported.
+    // The closed H2 set reports one finding naming every off-contract H3.
     let count = findings
         .iter()
-        .filter(|(c, v, _, _)| c == "AES602" && v == "api_h3_unexpected")
+        .filter(|(c, v, _, _)| c == "AES605" && v == "h2_unexpected")
         .count();
-    assert_eq!(count, 2, "expected 2 api_h3_unexpected, got: {findings:#?}");
+    assert_eq!(count, 1, "expected 1 h2_unexpected naming both headings, got: {findings:#?}");
+    let message = findings
+        .iter()
+        .find(|(c, v, _, _)| c == "AES605" && v == "h2_unexpected")
+        .map(|(_, _, m, _)| m.as_str())
+        .unwrap_or_default();
+    assert!(
+        message.contains("igraphprotocol") && message.contains("iparserprotocol"),
+        "the finding must name both off-contract headings; got: {message}"
+    );
 }
 
+/// The 9-doc FRD contract's H2 set is closed: any H2 the contract does not
+/// name — even a retired layout's, like a protocol table parked under a
+/// parent section the order check reads — fires `h2_unexpected` (AES605)
+/// rather than a document-wide AES602 escape. The document-wide sweep is
+/// what catches it.
 #[test]
 fn aes602_fires_when_a_protocol_table_is_parked_under_assumptions() {
     let tmp = tempfile::tempdir().unwrap();
-    // The escape `api_h3_unexpected` cannot see: `crates/filesystem/FRD.md`
-    // shipped exactly this — the same per-protocol method tables the Protocol
-    // API table already carries, moved to a parent section the API Contract
-    // check never reads. The document-wide parity check is what catches it.
     let frd = conforming_frd().replace(
-        "## Assumptions & Constraints\n\n- The capability is stateless.",
-        "## Assumptions & Constraints\n\n\
-         - The capability is stateless.\n\n\
+        "## Feature Overview\n\nThe feature does the work a surface delegates to.",
+        "## Feature Overview\n\n\
+         The feature does the work a surface delegates to.\n\n\
          ### IToolResolutionProtocol (12 operations)\n\n\
          | Method | Input | Output | Error | Event | Description |\n\
          | --- | --- | --- | --- | --- | --- |\n\
@@ -449,21 +453,22 @@ fn aes602_fires_when_a_protocol_table_is_parked_under_assumptions() {
     );
     write_workspace(tmp.path(), &frd);
     assert!(
-        has(&audit(tmp.path()), "AES602", "h3_off_template"),
-        "expected h3_off_template for a protocol table under Assumptions, got: {:#?}",
+        has(&audit(tmp.path()), "AES605", "h2_unexpected"),
+        "expected h2_unexpected for a protocol table parked outside the contract, got: {:#?}",
         audit(tmp.path())
     );
 }
 
+/// The 9-doc contract's H2 set is closed: a level-3 heading promoted above
+/// a section the template states as a bullet list — e.g. an invented SCEN
+/// heading — is an invented section the closed H2 set does not admit.
 #[test]
 fn aes602_fires_when_a_scen_heading_is_promoted_below_test_scenarios() {
     let tmp = tempfile::tempdir().unwrap();
-    // The template states Test Scenarios as a bullet list, so a scenario
-    // promoted to a level-3 heading is an invented section.
     let frd = conforming_frd().replace(
-        "## Test Scenarios\n\n- A conforming request produces a conforming response.",
-        "## Test Scenarios\n\n\
-         - A conforming request produces a conforming response.\n\n\
+        "## Feature Overview\n\nThe feature does the work a surface delegates to.",
+        "## Feature Overview\n\n\
+         The feature does the work a surface delegates to.\n\n\
          ### SCEN-001: Dispatch\n\n\
          | # | Scenario | Expected |\n\
          | --- | --- | --- |\n\
@@ -471,54 +476,55 @@ fn aes602_fires_when_a_scen_heading_is_promoted_below_test_scenarios() {
     );
     write_workspace(tmp.path(), &frd);
     assert!(
-        has(&audit(tmp.path()), "AES602", "h3_off_template"),
-        "expected h3_off_template for an invented SCEN heading, got: {:#?}",
+        has(&audit(tmp.path()), "AES605", "h2_unexpected"),
+        "expected h2_unexpected for an invented SCEN heading, got: {:#?}",
         audit(tmp.path())
     );
 }
 
+/// A FRD carrying every contract H2 in the correct order reports no
+/// AES602 finding.
 #[test]
 fn aes602_accepts_the_three_sanctioned_h3_shapes() {
     let tmp = tempfile::tempdir().unwrap();
-    // The conforming FRD already carries all three: two requirement headings
-    // plus Protocol API and Aggregate API. Asserting silence proves the check
-    // is not simply "any H3 is a violation".
     write_workspace(tmp.path(), &conforming_frd());
     let findings = audit(tmp.path());
     assert!(
-        !has(&findings, "AES602", "h3_off_template"),
-        "sanctioned H3 shapes must not fire, got: {findings:#?}"
+        !has(&findings, "AES602", "order_violation"),
+        "a contract-conforming FRD must not fire order_violation, got: {findings:#?}"
     );
 }
 
+/// The remedy the order message names: a document that puts every contract
+/// H2 back in template order must stay silent.
 #[test]
 fn aes602_accepts_a_demoted_h4_heading() {
     let tmp = tempfile::tempdir().unwrap();
-    // The remedy the message names: demote to level 4 and keep the content.
+    // Demoting detail to H4 under the contract sections is free-form.
     let frd = conforming_frd().replace(
-        "## Assumptions & Constraints\n\n- The capability is stateless.",
-        "## Assumptions & Constraints\n\n\
-         - The capability is stateless.\n\n\
+        "## Feature Overview\n\nThe feature does the work a surface delegates to.",
+        "## Feature Overview\n\n\
+         The feature does the work a surface delegates to.\n\n\
          #### Tool resolution details\n\n\
          - Resolution order is local bin, then system path.",
     );
     write_workspace(tmp.path(), &frd);
     let findings = audit(tmp.path());
     assert!(
-        !has(&findings, "AES602", "h3_off_template"),
+        !has(&findings, "AES602", "order_violation"),
         "a level-4 heading is detail, not a section; got: {findings:#?}"
     );
 }
 
+/// Headings inside fenced code blocks are not sections, so the order check
+/// must not read a fenced heading as a scrambled template section.
 #[test]
 fn aes602_h3_parity_ignores_headings_inside_a_fenced_block() {
     let tmp = tempfile::tempdir().unwrap();
-    // A shell comment in a code fence is not a heading; the template's own
-    // Verify block is fenced and must not be read as a section.
     let frd = conforming_frd().replace(
-        "## Glossary\n\n- **Sample**: A value object used in this example.",
-        "## Glossary\n\n\
-         - **Sample**: A value object used in this example.\n\n\
+        "## Feature Overview\n\nThe feature does the work a surface delegates to.",
+        "## Feature Overview\n\n\
+         The feature does the work a surface delegates to.\n\n\
          ```bash\n\
          ### not-a-heading\n\
          # also not a heading\n\
@@ -527,7 +533,7 @@ fn aes602_h3_parity_ignores_headings_inside_a_fenced_block() {
     write_workspace(tmp.path(), &frd);
     let findings = audit(tmp.path());
     assert!(
-        !has(&findings, "AES602", "h3_off_template"),
+        !has(&findings, "AES602", "order_violation"),
         "fenced headings must be ignored, got: {findings:#?}"
     );
 }
