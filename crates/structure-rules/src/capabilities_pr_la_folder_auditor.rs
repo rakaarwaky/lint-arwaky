@@ -31,9 +31,14 @@ impl IStructurePrLaProtocol for PrLaFolderAuditor {
         let ws_root = workspace_root(&root);
         let mut findings = Vec::new();
 
-        // Part A: every crate folder's FR ids must match its folder name.
+        // Part A: every *feature* crate folder's FR ids must match its folder
+        // name. Surface and kernel folders owe DESIGN.md/DATA.md, not FRD.md,
+        // so FRD.md presence is only checked on feature folders.
         for member in utility_structure_parsers::member_dirs(&ws_root) {
             for folder in crate_folders(&member) {
+                if member_role(&folder) != MemberRole::Feature {
+                    continue;
+                }
                 let folder_name = match folder.file_name().and_then(|n| n.to_str()) {
                     Some(n) => n.to_string(),
                     None => continue,
@@ -192,6 +197,129 @@ fn crate_folders(member: &Path) -> Vec<PathBuf> {
     dirs
 }
 
+/// Architectural role of a crate folder, classified by objective structure so
+/// AES706 Part A only requires FRD.md from feature folders.
+///
+/// Mirrors doc-rules' `classify_member` exactly so the two classifiers cannot
+/// silently diverge: `shared`/`kernel` → Kernel, `agent_*_orchestrator` file
+/// or Cargo.toml carrying `agent_`/`capability`/`orchestrator` → Feature,
+/// `surface_*` file or Cargo.toml depending on cli/mcp/tui/dispatcher →
+/// Surface, everything else → None. Reading Cargo.toml here is layer-legal:
+/// structure-rules reads its own crate manifests directly and does not
+/// depend on the doc-rules foundation (peer, forbidden per ARCHITECTURE §8).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum MemberRole {
+    Feature,
+    Kernel,
+    Surface,
+    None,
+}
+
+/// Classify *folder* by its crate structure, mirroring the doc-rules
+/// collector.
+fn member_role(folder: &Path) -> MemberRole {
+    let name = folder.file_name().and_then(|n| n.to_str()).unwrap_or("");
+    if name == "shared" || name == "kernel" {
+        return MemberRole::Kernel;
+    }
+    if has_orchestrator_file(folder) || exposes_capability_in_cargo_toml(folder) {
+        return MemberRole::Feature;
+    }
+    if has_surface_files(folder) || has_surface_cargo_deps(folder) {
+        return MemberRole::Surface;
+    }
+    MemberRole::None
+}
+
+/// Walk *folder*'s own entries and its `src/` sub-entries, returning true when
+/// any name satisfies *pred*.
+fn walk_top_and_src(folder: &Path, pred: impl Fn(&str) -> bool) -> bool {
+    let Ok(entries) = std::fs::read_dir(folder) else {
+        return false;
+    };
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if path.is_file() {
+            if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
+                if pred(name) {
+                    return true;
+                }
+            }
+        } else if path.is_dir() {
+            if let Some(src) = path.file_name().and_then(|n| n.to_str()) {
+                if src == "src" {
+                    if let Ok(inner) = std::fs::read_dir(&path) {
+                        for entry in inner.flatten() {
+                            if let Some(n) = entry.path().file_name().and_then(|n| n.to_str()) {
+                                if pred(n) {
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    false
+}
+
+/// Does *folder* contain an `agent_*_orchestrator*.rs` file (top level or
+/// under `src/`)?
+fn has_orchestrator_file(folder: &Path) -> bool {
+    walk_top_and_src(folder, |n| {
+        n.contains("agent_") && n.contains("_orchestrator") && n.ends_with(".rs")
+    })
+}
+
+/// Does *folder* contain a `surface_*` file (top level or under `src/`)?
+fn has_surface_files(folder: &Path) -> bool {
+    walk_top_and_src(folder, |n| n.starts_with("surface_"))
+}
+
+/// Does *folder*'s Cargo.toml expose a capability/agent module?
+///
+/// `pub` so the dispatcher lockstep test (`crates/dispatcher/tests/
+/// unit_lockstep_classifier_helpers.rs`) can pin this copy against the
+/// doc-rules mirror — the two peer foundations may not share a module
+/// (ARCHITECTURE §8), so a cross-crate fixture table is the drift guard.
+pub fn exposes_capability_in_cargo_toml(folder: &Path) -> bool {
+    let cargo_path = folder.join("Cargo.toml");
+    let Some(cargo) = cargo_path.to_str() else {
+        return false;
+    };
+    let Ok(text) = std::fs::read_to_string(cargo) else {
+        return false;
+    };
+    text.contains("agent_") || text.contains("capability") || text.contains("orchestrator")
+}
+
+/// Does *folder*'s Cargo.toml depend on surface crates?
+///
+/// `pub` for the same cross-crate lockstep guard as
+/// `exposes_capability_in_cargo_toml`.
+pub fn has_surface_cargo_deps(folder: &Path) -> bool {
+    let cargo_path = folder.join("Cargo.toml");
+    let Some(cargo) = cargo_path.to_str() else {
+        return false;
+    };
+    let Ok(text) = std::fs::read_to_string(cargo) else {
+        return false;
+    };
+    text.contains("cli-commands")
+        || text.contains("mcp-server")
+        || text.contains("tui")
+        || text.contains("dispatcher")
+}
+
+/// Relative path of *path* against the workspace root.
+fn relative_to(path: &Path, ws_root: &Path) -> String {
+    match path.strip_prefix(ws_root) {
+        Ok(p) => p.to_string_lossy().replace('\\', "/"),
+        Err(_) => path.to_string_lossy().replace('\\', "/"),
+    }
+}
+
 /// The feature prefix for a folder name: kebab-case → PascalCase, with
 /// explicit overrides for abbreviation folders (doc-rules → DOC).
 fn fr_prefix(folder_name: &str) -> String {
@@ -212,14 +340,6 @@ fn fr_prefix(folder_name: &str) -> String {
             }
         })
         .collect()
-}
-
-/// Relative path of *path* against the workspace root.
-fn relative_to(path: &Path, ws_root: &Path) -> String {
-    match path.strip_prefix(ws_root) {
-        Ok(p) => p.to_string_lossy().replace('\\', "/"),
-        Err(_) => path.to_string_lossy().replace('\\', "/"),
-    }
 }
 
 /// Extract every `FR-<FEATURE>-NNN` style id from document contents.

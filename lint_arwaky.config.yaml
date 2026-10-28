@@ -197,3 +197,9 @@ architecture:
     AES703:
       enabled: true
       exceptions: []
+
+# ─── Doc rules strictness (AES601–AES606) ──────────────────────────────
+docs:
+  strict_member_docs: true
+  strict_placeholders: false
+  exempt_members: []
