@@ -69,6 +69,16 @@ fn temp_workspace() -> tempfile::TempDir {
     tmp
 }
 
+/// One member-doc config variant: `strict_member_docs: true` with
+/// *exempt_members*.
+fn member_doc_config(exempt_members: Vec<String>) -> DocRulesConfig {
+    DocRulesConfig {
+        strict_member_docs: true,
+        strict_placeholders: false,
+        exempt_members,
+    }
+}
+
 // ─── FR-DOC-008 — MemberDocChecker ─────────────────────────
 
 /// A feature member missing both FRD.md and BACKLOG.md fires two findings
@@ -76,11 +86,7 @@ fn temp_workspace() -> tempfile::TempDir {
 #[test]
 fn member_doc_checker_feature_missing_pair_fires_findings() {
     let tmp = temp_workspace();
-    let config = DocRulesConfig {
-        strict_member_docs: true,
-        strict_placeholders: false,
-        exempt_members: Vec::new(),
-    };
+    let config = member_doc_config(Vec::new());
     let context = member_context(
         tmp.path(),
         MemberRole::Feature,
@@ -106,11 +112,7 @@ fn member_doc_checker_feature_missing_pair_fires_findings() {
 #[test]
 fn member_doc_checker_exempt_member_is_suppressed() {
     let tmp = temp_workspace();
-    let config = DocRulesConfig {
-        strict_member_docs: true,
-        strict_placeholders: false,
-        exempt_members: vec!["crates/legacy".to_string()],
-    };
+    let config = member_doc_config(vec!["crates/legacy".to_string()]);
     let context = member_context(
         tmp.path(),
         MemberRole::Feature,
@@ -175,11 +177,7 @@ fn member_doc_checker_force_strict_overrides_config_off() {
 #[test]
 fn member_doc_checker_kernel_owes_data_and_backlog() {
     let tmp = temp_workspace();
-    let config = DocRulesConfig {
-        strict_member_docs: true,
-        strict_placeholders: false,
-        exempt_members: Vec::new(),
-    };
+    let config = member_doc_config(Vec::new());
     // Kernel with only DATA.md present, BACKLOG.md missing
     let context = member_context(
         tmp.path(),
@@ -202,11 +200,7 @@ fn member_doc_checker_kernel_owes_data_and_backlog() {
 #[test]
 fn member_doc_checker_surface_owes_design_and_backlog() {
     let tmp = temp_workspace();
-    let config = DocRulesConfig {
-        strict_member_docs: true,
-        strict_placeholders: false,
-        exempt_members: Vec::new(),
-    };
+    let config = member_doc_config(Vec::new());
     let context = member_context(
         tmp.path(),
         MemberRole::Surface,
@@ -228,11 +222,7 @@ fn member_doc_checker_surface_owes_design_and_backlog() {
 #[test]
 fn member_doc_checker_compliant_feature_no_findings() {
     let tmp = temp_workspace();
-    let config = DocRulesConfig {
-        strict_member_docs: true,
-        strict_placeholders: false,
-        exempt_members: Vec::new(),
-    };
+    let config = member_doc_config(Vec::new());
     let context = member_context(
         tmp.path(),
         MemberRole::Feature,
@@ -252,11 +242,7 @@ fn member_doc_checker_compliant_feature_no_findings() {
 #[test]
 fn member_doc_checker_none_role_ows_nothing() {
     let tmp = temp_workspace();
-    let config = DocRulesConfig {
-        strict_member_docs: true,
-        strict_placeholders: false,
-        exempt_members: Vec::new(),
-    };
+    let config = member_doc_config(Vec::new());
     let context = member_context(
         tmp.path(),
         MemberRole::None,
@@ -269,6 +255,174 @@ fn member_doc_checker_none_role_ows_nothing() {
     assert!(
         findings.is_empty(),
         "None role must produce no findings; got {findings:?}"
+    );
+}
+
+/// Surface member carrying DESIGN.md + BACKLOG.md plus forbidden FRD.md fires
+/// a single `forbidden_member_doc` finding; its owed pair is present so only
+/// the forbidden-doc half fires.
+#[test]
+fn member_doc_checker_surface_with_forbidden_frd_fires() {
+    let tmp = temp_workspace();
+    let config = member_doc_config(Vec::new());
+    let context = member_context(
+        tmp.path(),
+        MemberRole::Surface,
+        "crates/mcp-server",
+        &["DESIGN.md", "BACKLOG.md", "FRD.md"],
+        Some(&config),
+        StrictModeOverride::UseConfigFile,
+    );
+    let findings = MemberDocChecker::new().audit_member_docs(&context);
+    assert_eq!(
+        findings.len(),
+        1,
+        "surface carrying forbidden FRD.md must fire exactly one forbidden_member_doc; got {findings:?}"
+    );
+    assert_eq!(
+        findings[0].doc, "crates/mcp-server/FRD.md",
+        "doc must name the forbidden FRD.md path; got {:?}",
+        findings[0].doc
+    );
+    assert_eq!(
+        findings[0].violation_type, "forbidden_member_doc",
+        "surface's forbidden doc must be forbidden_member_doc; got {:?}",
+        findings[0].violation_type
+    );
+    assert!(
+        findings[0].message.contains("FRD.md"),
+        "message must name the forbidden FRD.md; got {:?}",
+        findings[0].message
+    );
+    assert!(
+        findings[0].fix.contains("FRD.md"),
+        "fix must name FRD.md; got {:?}",
+        findings[0].fix
+    );
+}
+
+/// Kernel member carrying DATA.md + BACKLOG.md plus forbidden FRD.md fires.
+#[test]
+fn member_doc_checker_kernel_with_forbidden_frd_fires() {
+    let tmp = temp_workspace();
+    let config = member_doc_config(Vec::new());
+    let context = member_context(
+        tmp.path(),
+        MemberRole::Kernel,
+        "crates/shared",
+        &["DATA.md", "BACKLOG.md", "FRD.md"],
+        Some(&config),
+        StrictModeOverride::UseConfigFile,
+    );
+    let findings = MemberDocChecker::new().audit_member_docs(&context);
+    assert_eq!(
+        findings.len(),
+        1,
+        "kernel carrying forbidden FRD.md must fire exactly one forbidden_member_doc; got {findings:?}"
+    );
+    assert_eq!(
+        findings[0].doc, "crates/shared/FRD.md",
+        "doc must name the forbidden FRD.md path; got {:?}",
+        findings[0].doc
+    );
+    assert_eq!(
+        findings[0].violation_type, "forbidden_member_doc",
+        "kernel's forbidden doc must be forbidden_member_doc; got {:?}",
+        findings[0].violation_type
+    );
+}
+
+/// Feature member carrying FRD.md + BACKLOG.md plus forbidden DATA.md fires.
+#[test]
+fn member_doc_checker_feature_with_forbidden_data_fires() {
+    let tmp = temp_workspace();
+    let config = member_doc_config(Vec::new());
+    let context = member_context(
+        tmp.path(),
+        MemberRole::Feature,
+        "crates/billing",
+        &["FRD.md", "BACKLOG.md", "DATA.md"],
+        Some(&config),
+        StrictModeOverride::UseConfigFile,
+    );
+    let findings = MemberDocChecker::new().audit_member_docs(&context);
+    assert_eq!(
+        findings.len(),
+        1,
+        "feature carrying forbidden DATA.md must fire exactly one forbidden_member_doc; got {findings:?}"
+    );
+    assert_eq!(
+        findings[0].doc, "crates/billing/DATA.md",
+        "doc must name the forbidden DATA.md path; got {:?}",
+        findings[0].doc
+    );
+    assert_eq!(
+        findings[0].violation_type, "forbidden_member_doc",
+        "feature's forbidden doc must be forbidden_member_doc; got {:?}",
+        findings[0].violation_type
+    );
+}
+
+/// Feature member carrying FRD.md + BACKLOG.md + DESIGN.md fires nothing:
+/// FrFormatChecker's Decision-9 pairing explicitly allows a feature folder to
+/// carry both FRD.md and DESIGN.md.
+#[test]
+fn member_doc_checker_feature_with_design_is_clean() {
+    let tmp = temp_workspace();
+    let config = member_doc_config(Vec::new());
+    let context = member_context(
+        tmp.path(),
+        MemberRole::Feature,
+        "crates/billing",
+        &["FRD.md", "BACKLOG.md", "DESIGN.md"],
+        Some(&config),
+        StrictModeOverride::UseConfigFile,
+    );
+    let findings = MemberDocChecker::new().audit_member_docs(&context);
+    assert!(
+        findings.is_empty(),
+        "feature with FRD + BACKLOG + DESIGN must be clean (DESIGN is allowed for features); got {findings:?}"
+    );
+}
+
+/// With strict_member_docs off, no forbidden-member-doc findings fire even
+/// when a member carries forbidden docs.
+#[test]
+fn member_doc_checker_forbidden_strict_off_suppresses() {
+    let tmp = temp_workspace();
+    let context = member_context(
+        tmp.path(),
+        MemberRole::Surface,
+        "crates/mcp-server",
+        &["DESIGN.md", "BACKLOG.md", "FRD.md"],
+        None,
+        StrictModeOverride::UseConfigFile,
+    );
+    let findings = MemberDocChecker::new().audit_member_docs(&context);
+    assert!(
+        findings.is_empty(),
+        "strict off must suppress forbidden-member-doc findings; got {findings:?}"
+    );
+}
+
+/// An exempt member carrying forbidden docs is suppressed from the
+/// forbidden-member-doc check too (same exemption branch as missing docs).
+#[test]
+fn member_doc_checker_forbidden_exempt_member_suppressed() {
+    let tmp = temp_workspace();
+    let config = member_doc_config(vec!["crates/legacy".to_string()]);
+    let context = member_context(
+        tmp.path(),
+        MemberRole::Surface,
+        "crates/legacy",
+        &["DESIGN.md", "BACKLOG.md", "FRD.md"],
+        Some(&config),
+        StrictModeOverride::UseConfigFile,
+    );
+    let findings = MemberDocChecker::new().audit_member_docs(&context);
+    assert!(
+        findings.is_empty(),
+        "exempt member must be clean even when carrying forbidden FRD.md; got {findings:?}"
     );
 }
 

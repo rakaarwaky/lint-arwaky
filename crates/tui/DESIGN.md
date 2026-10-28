@@ -98,6 +98,5 @@ monochrome default in one place.
 |----------|---------|------|
 | BACKLOG.md | Backlog tracking | [BACKLOG.md](BACKLOG.md)|
 | PRD.md | Product requirements | [PRD.md](../../PRD.md)|
-| FRD.md | Feature requirements | [FRD.md](FRD.md)|
 | ROADMAP.md | Roadmap status | [ROADMAP.md](../../ROADMAP.md)|
 | ARCHITECTURE.md | Layer contract | [ARCHITECTURE.md](../../ARCHITECTURE.md)|

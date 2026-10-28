@@ -292,7 +292,7 @@ fn has_orchestrator_file(folder: &Path) -> bool {
 }
 
 /// Does the folder's Cargo.toml expose a capability/agent module?
-fn exposes_capability_in_cargo_toml(folder: &Path) -> bool {
+pub fn exposes_capability_in_cargo_toml(folder: &Path) -> bool {
     let cargo_path = folder.join("Cargo.toml");
     let Some(cargo) = cargo_path.to_str() else {
         return false;
@@ -337,7 +337,7 @@ fn has_surface_files(folder: &Path) -> bool {
 }
 
 /// Does the folder's Cargo.toml depend on surface crates?
-fn has_surface_cargo_deps(folder: &Path) -> bool {
+pub fn has_surface_cargo_deps(folder: &Path) -> bool {
     let cargo_path = folder.join("Cargo.toml");
     let Some(cargo) = cargo_path.to_str() else {
         return false;

@@ -7,7 +7,7 @@
 // alone? The second question needs workspace context — the master text — which
 // the audit context carries.
 use shared_doc_rules::contract_doc_protocol::ICrosslinkProtocol;
-use shared_doc_rules::taxonomy_doc_audit_context_vo::DocAuditContext;
+use shared_doc_rules::taxonomy_doc_audit_context_vo::{DocAuditContext, MemberRole};
 use shared_doc_rules::taxonomy_doc_rules_constant as consts;
 use shared_doc_rules::taxonomy_doc_rules_request::DocFinding;
 use shared_doc_rules::taxonomy_doc_section_vo::Section;
@@ -28,11 +28,37 @@ impl ICrosslinkProtocol for CrosslinkChecker {
         let mut findings = Vec::new();
         for document in context.documents() {
             let name = context.document_name(document);
-            // The master owns the state vocabulary, so it is the one document
-            // allowed to carry those sections; a feature backlog restating them
-            // is the violation.
             let is_root = context.is_root_document(document);
-            let required = Self::required_links(name);
+            // Role-aware AES604: a member BACKLOG owes its role's spec doc
+            // (surface → DESIGN, kernel → DATA) instead of the legacy one-size
+            // FRD link, since surface/kernel folders carry no FRD.
+            let required = if name == consts::BACKLOG_DOC && !is_root {
+                let member_role = context.members().iter().find_map(|m| {
+                    document
+                        .path
+                        .parent()
+                        .map(|parent| parent.to_path_buf())
+                        .filter(|p| *p == m.path)
+                        .map(|_| m.role.clone())
+                });
+                match member_role {
+                    Some(MemberRole::Surface) => &[
+                        consts::PRD_DOC,
+                        consts::DESIGN_DOC,
+                        consts::ROADMAP_DOC,
+                        consts::ARCHITECTURE_DOC,
+                    ] as &'static [&'static str],
+                    Some(MemberRole::Kernel) => &[
+                        consts::PRD_DOC,
+                        consts::DATA_DOC,
+                        consts::ROADMAP_DOC,
+                        consts::ARCHITECTURE_DOC,
+                    ] as &'static [&'static str],
+                    _ => Self::required_links(name),
+                }
+            } else {
+                Self::required_links(name)
+            };
             let restates_master = name == consts::BACKLOG_DOC && !is_root;
             if required.is_empty() && !restates_master {
                 continue;
