@@ -6,11 +6,11 @@ This architecture guards against tangled imports, undiscoverable behavior, and a
 
 ## 2. Workspace Organization
 
-| Term               | Meaning                                                       |
-| ------------------ | ------------------------------------------------------------- |
-| Project Workspace  | The root containing all configuration and language members    |
-| Workspace Member   | One self-contained crate, package, or module inside the workspace |
-| Shared / kernel    | Cross-cutting domain models and contracts, never a feature    |
+| Term               | Meaning                                                      |
+| ------------------ | -------------------------------------------------------------|
+| Project Workspace  | The root containing all configuration and language members   |
+| Workspace Member   | One self-contained crate, package, or module inside the workspace|
+| Shared / kernel    | Cross-cutting domain models and contracts, never a feature   |
 
 ## 3. Naming Convention
 
@@ -18,11 +18,11 @@ File names communicate three parts, joined by underscores, then the language ext
 
 `layer_concern_role.<ext>`
 
-| Part    | Where it lives         | Example                        |
-| ------- | ---------------------- | ------------------------------ |
-| Layer   | Prefix                 | `taxonomy_`, `contract_`, ...  |
-| Concern | Middle                 | `calculator`, `addition`, ...  |
-| Role    | Suffix                 | `vo`, `protocol`, `orchestrator` |
+| Part    | Where it lives         | Example                       |
+| ------- | ---------------------- | ------------------------------|
+| Layer   | Prefix                 | `taxonomy_`, `contract_`, ... |
+| Concern | Middle                 | `calculator`, `addition`, ... |
+| Role    | Suffix                 | `vo`, `protocol`, `orchestrator`|
 
 Exceptions: `main.rs`, `lib.rs`, `mod.rs`, `__init__.py`, `index.ts`, `index.js`.
 
@@ -81,13 +81,13 @@ Taxonomy is the domain foundation. It defines the stable language — immutable 
 
 ### Components
 
-| Role      | Meaning                              |
-| --------- | ------------------------------------ |
-| Value obj | Immutable data concept               |
+| Role      | Meaning                             |
+| --------- | ------------------------------------|
+| Value obj | Immutable data concept              |
 | Entity    | Stateful domain concept with identity|
-| Event     | Immutable domain fact                |
-| Error     | Domain-level error                   |
-| Constant  | Compile-time literal value           |
+| Event     | Immutable domain fact               |
+| Error     | Domain-level error                  |
+| Constant  | Compile-time literal value          |
 
 ### Dependencies
 
@@ -107,10 +107,10 @@ Contract defines public behavior without exposing implementation. Callers depend
 
 ### Components
 
-| Role      | Meaning                                                             |
-| --------- | ------------------------------------------------------------------- |
-| Protocol  | Interface consumed by Agent, implemented by Capabilities            |
-| Aggregate | Facade consumed by Surface, implemented by Agent                    |
+| Role      | Meaning                                                            |
+| --------- | -------------------------------------------------------------------|
+| Protocol  | Interface consumed by Agent, implemented by Capabilities           |
+| Aggregate | Facade consumed by Surface, implemented by Agent                   |
 
 ### Dependencies
 
@@ -170,13 +170,13 @@ Agent may depend only on Taxonomy, Contract, and Utility.
 
 ### Allowed Flow Control
 
-| Type              | Purpose                            |
-| ----------------- | ---------------------------------- |
-| Sequential        | Run steps in order                 |
-| Looping           | Process multiple items or events   |
-| Branching         | Choose path based on result        |
-| Error handling    | Recover, abort, continue, escalate |
-| Timeout/cancel    | Stop long-running or async work    |
+| Type              | Purpose                           |
+| ----------------- | ----------------------------------|
+| Sequential        | Run steps in order                |
+| Looping           | Process multiple items or events  |
+| Branching         | Choose path based on result       |
+| Error handling    | Recover, abort, continue, escalate|
+| Timeout/cancel    | Stop long-running or async work   |
 
 ### Special Rules
 
@@ -211,10 +211,10 @@ Root assembles the system by wiring concrete implementations to contracts and st
 
 ### Components
 
-| Role      | Meaning                                                       |
-| --------- | ------------------------------------------------------------- |
-| Container | Wires one feature: capabilities to protocol and aggregate     |
-| Entry     | Bootstraps and composes feature containers                    |
+| Role      | Meaning                                                      |
+| --------- | -------------------------------------------------------------|
+| Container | Wires one feature: capabilities to protocol and aggregate    |
+| Entry     | Bootstraps and composes feature containers                   |
 
 ### Dependencies
 

@@ -1,7 +1,7 @@
 // PURPOSE: utility_report_renderer — print the summary table and its deltas.
 // Text only; the scan report's own renderers own the per-violation output.
-use crate::taxonomy_report_snapshot_vo::ReportDelta;
-use crate::taxonomy_report_snapshot_vo::ReportSnapshot;
+use shared_common::ReportDelta;
+use shared_common::ReportSnapshot;
 
 /// Print the report: counts per member, and what changed since the last run.
 ///

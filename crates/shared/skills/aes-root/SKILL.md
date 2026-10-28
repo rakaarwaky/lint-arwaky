@@ -50,11 +50,11 @@ metadata:
 The **layer** decides which suffix, which imports, and which structure apply.
 Rules, templates, section contracts, and Verify blocks live in the language HOW-TUs under [`references/`](references/).
 
-| Language | Focus | Body rule | HOW-TO |
-| -------- | ----- | --------- | ------ |
-| Python | Container / entry | Wires only; no business/orchestration logic | [references/HOW-TO-MAKE-PYTHON-ROOT.md](references/HOW-TO-MAKE-PYTHON-ROOT.md) |
-| Rust | Container / entry | Wires only; no business/orchestration logic | [references/HOW-TO-MAKE-RUST-ROOT.md](references/HOW-TO-MAKE-RUST-ROOT.md) |
-| TypeScript | Container / entry | Wires only; no business/orchestration logic | [references/HOW-TO-MAKE-TYPESCRIPT-ROOT.md](references/HOW-TO-MAKE-TYPESCRIPT-ROOT.md) |
+| Language | Focus | Body rule | HOW-TO|
+| -------- | ----- | --------- | ------|
+| Python | Container / entry | Wires only; no business/orchestration logic | [references/HOW-TO-MAKE-PYTHON-ROOT.md](references/HOW-TO-MAKE-PYTHON-ROOT.md)|
+| Rust | Container / entry | Wires only; no business/orchestration logic | [references/HOW-TO-MAKE-RUST-ROOT.md](references/HOW-TO-MAKE-RUST-ROOT.md)|
+| TypeScript | Container / entry | Wires only; no business/orchestration logic | [references/HOW-TO-MAKE-TYPESCRIPT-ROOT.md](references/HOW-TO-MAKE-TYPESCRIPT-ROOT.md)|
 
 **The layer chain:**
 
@@ -69,14 +69,14 @@ Each file answers one layer's job. A method or import in the wrong layer is the 
 Every rule is machine-checked by `lint-arwaky-cli scan <layer-path>` (see each HOW-TO § Verify).
 A rule cannot drift from the gate. Cite the linter, not this file, when pointing at a rule.
 
-| Layer | Rule |
-| ----- | ---- |
-| Naming | File `root_<concept>_container` or `root_<concept>_entry` (AES101/AES102). Documented exceptions: `main.rs`, `lib.rs`, `mod.rs`, `__init__.py`, `index.ts`, barrel/entry files, etc. |
-| Roles | Container: wire one feature's capabilities to contracts. Entry: bootstrap the app and compose feature containers. |
-| Privilege | Root may instantiate and wire components — that is its job; the only layer allowed to depend on everything below. |
-| Behaviour | No business logic, no orchestration policy, no technical parsing, no UI behaviour — those live in capabilities / agent / utility / surface. |
-| Register | `mod.rs` / `index.ts` / package barrel as required. |
-| Verify | `lint-arwaky-cli scan <layer-path>` → 0. Language compile is fallback only. |
+| Layer | Rule|
+| ----- | ----|
+| Naming | File `root_<concept>_container` or `root_<concept>_entry` (AES101/AES102). Documented exceptions: `main.rs`, `lib.rs`, `mod.rs`, `__init__.py`, `index.ts`, barrel/entry files, etc.|
+| Roles | Container: wire one feature's capabilities to contracts. Entry: bootstrap the app and compose feature containers.|
+| Privilege | Root may instantiate and wire components — that is its job; the only layer allowed to depend on everything below.|
+| Behaviour | No business logic, no orchestration policy, no technical parsing, no UI behaviour — those live in capabilities / agent / utility / surface.|
+| Register | `mod.rs` / `index.ts` / package barrel as required.|
+| Verify | `lint-arwaky-cli scan <layer-path>` → 0. Language compile is fallback only.|
 
 Split details, templates, and Section Contract tables: **read the language HOW-TO** — do not restate them here.
 

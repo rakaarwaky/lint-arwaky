@@ -170,7 +170,6 @@
 - docs: remove Precedence and Security sections, drop generated-output DoD bullet (#960)
 - docs: remove Memory section, condense Writing Style, enforce worktree-only branching (#957)
 
-
 ## 3.8.2 (2026-10-08)
 
 ### Features
@@ -238,7 +237,6 @@
   stubs removed from shared sub-crates (#1004, #1002, #1008, #996).
 - **Orphan-rule violation messages** standardized for AES501–AES506
   (#998).
-
 
 ## 3.8.1 (2026-10-06)
 
@@ -366,7 +364,6 @@
   `capabilities_doc_heading_structure_checker.rs` rather than reading the
   `aes-docs` skill at runtime, so a workspace without that skill still gets the
   contract.
-
 
 ### Layer-scoped commands
 

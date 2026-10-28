@@ -1,18 +1,18 @@
 // PURPOSE: Check/scan commands — CLI formatting + exit-code mapping.
 // Calls dispatcher for business logic, only adds CLI output.
+use dispatcher::surface_check_action::FilesystemSeam;
 use dispatcher::surface_orphan_action::OrphanFactory;
 use shared_common::ExitCode;
-use std::sync::Arc;
-use tracing::error;
-
-use dispatcher::surface_check_action::FilesystemSeam;
-use shared_cli_commands::Format;
 use shared_common::FilePath;
+use shared_common::format_as_str;
 use shared_config_system::IConfigOrchestratorAggregate;
 use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared_quality_rules::ICodeAnalysisAggregate;
 use shared_structure_rules::IStructureAggregate;
+use std::sync::Arc;
+use tracing::error;
 
+use shared_cli_commands::Format;
 use shared_cli_commands::taxonomy_cli_commands_vo::DocsAction;
 use shared_cli_commands::utility_output_text_formatter::output_violations;
 
@@ -171,7 +171,12 @@ pub fn handle_scan(params: ScanCommandParams) -> ExitCode {
     let root = resolve_root(&opts.path);
     match dispatcher::surface_check_action::collect_scan(opts) {
         Ok(violations) => {
-            output_violations(&violations, &root, params.format, member_flag);
+            output_violations(
+                &violations,
+                &root,
+                format_as_str(params.format),
+                member_flag,
+            );
             exit_for(violations.len())
         }
         Err(e) => {
@@ -208,7 +213,7 @@ pub fn handle_quality(
             output_violations(
                 &violations,
                 &root,
-                format,
+                format_as_str(format),
                 is_member(&path, &filesystem_seam),
             );
             exit_for(violations.len())
@@ -234,7 +239,7 @@ pub fn handle_import(params: ImportCommandParams) -> ExitCode {
             output_violations(
                 &violations,
                 &root,
-                params.format,
+                format_as_str(params.format),
                 is_member(&params.path, &params.filesystem_seam),
             );
             exit_for(violations.len())
@@ -260,7 +265,7 @@ pub fn handle_naming(params: NamingCommandParams) -> ExitCode {
             output_violations(
                 &violations,
                 &root,
-                params.format,
+                format_as_str(params.format),
                 is_member(&params.path, &params.filesystem_seam),
             );
             exit_for(violations.len())
@@ -295,7 +300,7 @@ pub fn handle_layer_scan(
     };
     match dispatcher::surface_layer_scan_action::collect_layer_scan(opts, layer) {
         Ok(violations) => {
-            output_violations(&violations, &root, format, member_flag);
+            output_violations(&violations, &root, format_as_str(format), member_flag);
             exit_for(violations.len())
         }
         Err(e) => {
@@ -325,7 +330,7 @@ pub fn handle_docs(params: DocsCommandParams) -> ExitCode {
         Ok(findings) => {
             let violations =
                 dispatcher::surface_docs_action::docs_findings_to_violations(&findings);
-            output_violations(&violations, &root, params.format, false);
+            output_violations(&violations, &root, format_as_str(params.format), false);
             exit_for(violations.len())
         }
         Err(e) => {
@@ -379,7 +384,7 @@ pub fn handle_role(params: RoleCommandParams) -> ExitCode {
             output_violations(
                 &violations,
                 &root,
-                params.format,
+                format_as_str(params.format),
                 is_member(&params.path, &params.filesystem_seam),
             );
             exit_for(violations.len())
@@ -411,7 +416,7 @@ pub fn handle_orphan(params: OrphanCommandParams) -> ExitCode {
             output_violations(
                 &violations,
                 &root,
-                params.format,
+                format_as_str(params.format),
                 is_member(&params.path, &params.filesystem_seam),
             );
             exit_for(violations.len())
@@ -435,7 +440,7 @@ pub fn handle_external(params: ExternalCommandParams) -> ExitCode {
         &params.ignored_paths,
     ) {
         Ok(violations) => {
-            output_violations(&violations, &root, params.format, false);
+            output_violations(&violations, &root, format_as_str(params.format), false);
             exit_for(violations.len())
         }
         Err(e) => {
@@ -459,7 +464,7 @@ pub fn handle_structure(params: StructureCommandParams) -> ExitCode {
                 let filter_upper = filter_str.to_uppercase();
                 violations.retain(|v| v.code.code().contains(&filter_upper));
             }
-            output_violations(&violations, &root, params.format, false);
+            output_violations(&violations, &root, format_as_str(params.format), false);
             exit_for(violations.len())
         }
         Err(e) => {

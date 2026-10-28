@@ -7,8 +7,6 @@
 > months.
 >
 > **Scope**: Onboarding: prerequisites, quick start, commands.
-> Exactly one per project root. Workspace layout is documented in
-> `AGENTS.md`, not here.
 >
 > **Location**: Project root.
 >
@@ -19,24 +17,25 @@
 ## Rules
 
 1. **The test is time, not completeness.** Clone → install → build → run
-in under 10 minutes. If the Quick Start cannot clear that, the
-missing step is the bug in this file.
-2. **Every command was actually run, and says how to confirm it
-worked.** A reader who cannot tell success from silence will assume
-failure and go ask a human.
+   in under 10 minutes. If the Quick Start cannot clear that, the
+   missing step is the bug in this file.
+2. **Every command was actually run, and says how to confirm it worked.**
+   A reader who cannot tell success from silence will assume failure and
+   go ask a human.
 3. **Prerequisites are the ones the build fails without**, with versions
-pinned. Optional tooling listed as required teaches readers to
-distrust the list.
+   pinned. Optional tooling listed as required teaches readers to
+   distrust the list.
 
 ---
 
 ## Workflow
 
 1. **Create file** → `README.md` at repo or package root.
-2. **Section: Title** — project/tool name.
-3. **Section: Quick Start** — 3–5 commands to get running.
-4. **Section: Architecture** — diagram or layer description.
-5. **Section: Commands** — CLI reference.
+2. **Section: Project Overview** — what this project does, who it serves,
+   core value.
+3. **Section: Prerequisites** — pinned build dependencies.
+4. **Section: Quick Start** — `Step | Action | Command` table.
+5. **Section: Reference** — required H2 with empty placeholder table.
 6. **Verify** → `lint-arwaky-cli docs` passes; quick start works.
 
 ## Template
@@ -44,44 +43,26 @@ distrust the list.
 Copy, fill, delete nothing.
 
 ```markdown
-# <project-name>
+# README — <project-name>
 
-> One-liner: what this project does and who it's for.
+## Project Overview
+
+<One paragraph: what this project does, who it serves, and the core value it delivers.>
 
 ## Prerequisites
 
-- <see per-language table below>
-- <other dependencies>
+- <requiretment>
+- <requiretment>
 
 ## Quick Start
 
-<see per-language table below — then make it self-confirming>
+| Step | Action | Command  |
+|------|--------|----------|
 
-## Architecture
+## Reference
 
-See `ARCHITECHTURE.md`.
-
-## Available Scripts / Commands
-
-<see per-language table below — Rust: "Available Commands"; Python and
-TypeScript: "Available Scripts">
-
-## Configuration
-
-<Environment variables, config files — names only, never values>
-
-## Testing
-
-See `TESTING.md` 
-
-## Contributing
-
-See `CONTRIBUTING.md` 
-
-## License
-
-<License type>
-
+| Artifact | Purpose | Link |
+|----------|---------|------|
 ```
 
 ---
@@ -91,18 +72,12 @@ See `CONTRIBUTING.md`
 Every section is required unless marked optional. Each exists for one
 reason.
 
-| Section                    | Why it belongs here                                                                    |
-| -------------------------- | -------------------------------------------------------------------------------------- |
-| One-liner                  | Decides in five seconds whether to keep reading. Watch for restating the project name. |
-| Prerequisites              | Prevents a build failure with no cause. Watch for optional tooling listed as required. |
-| Quick Start                | The 10-minute promise. Watch for steps that assume state the reader lacks.             |
-| Architecture               | Delegate to \`ARCHITECHTURE.md\` file                                                  |
-| Project Structure          | **Forbidden.** Layout belongs in `AGENTS.md`; a README that repeats it becomes a second source of truth. |
-| Available Scripts/Commands | The daily loop, as CI runs it. Watch for flags that differ from the CI job.            |
-| Configuration              | What to set before the first run. Watch for values, secrets, or real hostnames.        |
-| Testing                    | Delegate to \`TESTING.md\` file                                                        |
-| Contributing               | Delegate to \`CONTRIBUTING.md\` file                                                   |
-| License                    | Delegate to \`LICENSE\` file                                                           |
+| Section         | Why it belongs here                                                     |
+| --------------- | ----------------------------------------------------------------------- |
+| Project Overview| Decides in five seconds whether to keep reading.                        |
+| Prerequisites   | Prevents a build failure with no cause. Watch for optional tooling listed as required. |
+| Quick Start     | The 10-minute promise, as `Step &#124; Action &#124; Command`.                 |
+| Reference       | Required H2; carries an empty `&#124; Artifact &#124; Purpose &#124; Link &#124;` table when no artifact is mandated. |
 
 ---
 

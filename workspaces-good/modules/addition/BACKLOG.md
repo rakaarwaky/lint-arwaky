@@ -1,45 +1,41 @@
 # BACKLOG — Addition
 
-## Current Condition
+## Progress Overview
 
 Addition is implemented, tested, and gated. Nothing is blocked.
 
-## Backlog
+## Backlog Status
 
-| ID | Priority | State| Dependencies | Next Action | Updated |
-|---:|---|---|---|---|---|
-| BLK-001 | P1 | Planned | — | Document the aggregate boundary | 2026-10-03 |
+### {FR-ADDITION-001}
 
-## Scenario Evidence
+| Aspect       | Detail                                     |
+|--------------|---------------------------------------------|
+| State        | Ready                                      |
+| Done         | —                                          |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | —                                          |
+| Risk         | None                                       |
+| Updated      | 2026-09-29                                 |
 
-| Scenario | Kind | Test file | Test name | Last verified |
-|---|---|---|---|---|
-| A valid request resolves | Automated | tests/orchestrator.rs | test_resolves | 08a3f424 |
+### {FR-ADDITION-002}
 
-## Blockers
+| Aspect       | Detail                                     |
+|--------------|---------------------------------------------|
+| State        | Ready                                      |
+| Done         | —                                          |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | —                                          |
+| Risk         | None                                       |
+| Updated      | 2026-09-29                                 |
 
-None.
+## Reference
 
-## Dependencies
-
-| Dependency | Why |
-|------------|-----|
-| Shared contract crate | Supplies the protocols this feature implements. |
-
-## Release Readiness
-
-| Area | Status | Notes |
-|---|---|---|
-| Build | Ready | Builds on the pinned toolchain. |
-| Tests | Ready | Full suite passes. |
-| Gates | Ready | `lint-arwaky-cli check .` reports 0 violations. |
-
-## Deferred
-
-Nothing deferred.
-
-## Change Log
-
-| Date | Change | By |
-|------|--------|----|
-| 2026-10-03 | Backlog opened with the contract sections. | @raka |
+| Artifact     | Purpose                                    | Link |
+|--------------|--------------------------------------------|------|
+| PRD          | Business goals, user stories, and scope    | [PRD.md](../PRD.md) |
+| FRD          | Functional requirements specification    | [FRD.md](../FRD.md) |
+| Backlog      | Task tracking, epics, and implementation status | [BACKLOG.md](../BACKLOG.md) |
+| Roadmap      | Timeline, phasing, and dependencies        | [ROADMAP.md](../ROADMAP.md) |
+| Architecture | System boundaries, tech stack, and infra   | [ARCHITECTURE.md](../ARCHITECTURE.md) |

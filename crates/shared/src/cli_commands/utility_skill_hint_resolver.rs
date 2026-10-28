@@ -2,9 +2,9 @@
 // Utility layer: standalone functions only. The layer-prefix table is declared
 // here rather than imported, because a utility file may not import another
 // utility module (AES201 self-import).
-use shared_common::taxonomy_error_vo::ErrorCode;
-use shared_common::taxonomy_skill_hint_vo::SkillHint;
-use shared_common::taxonomy_skill_hint_vo::resolve_skill_hint;
+use shared_common::ErrorCode;
+use shared_common::SkillHint;
+use shared_common::resolve_skill_hint;
 
 /// Filename stem prefix → layer name. Mirrors the AES102 prefix convention;
 /// `surface` is the layer name the taxonomy routing table uses.

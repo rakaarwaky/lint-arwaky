@@ -1,57 +1,132 @@
 # Mcp Server — BACKLOG
 
-FRD: —
+FRD: [FRD.md](FRD.md)
 Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
 State: defined in root [ROADMAP.md](../../ROADMAP.md) — cited here, not restated
 Last Updated: 2026-10-24
 
-## Current Condition
+## Progress Overview
 
 - Done: `cargo test -p mcp-server-lint-arwaky --lib --tests` → 0 failures
 - In Progress: None
 - Blocked: None
 - Next Action: —
 
-## Backlog
+## Backlog Status
 
-| ID | Priority | State | Dependencies | Next Action | Updated |
-|---:|---|---|---|---|---|
-| DS-MCPS-001 | P0 | Done | None | — | 2026-10-24 |
-| DS-MCPS-002 | P1 | Done | None | — | 2026-10-24 |
-| DS-MCPS-003 | P1 | Done | None | — | 2026-10-24 |
-| DS-MCPS-004 | P1 | Done | None | — | 2026-10-24 |
-| DS-MCPS-005 | P1 | Done | None | — | 2026-10-24 |
-| DS-MCPS-006 | P1 | Done | None | — | 2026-10-24 |
-| DS-MCPS-007 | P1 | Done | None | — | 2026-10-24 |
+### {DS-MCPS-001}
 
-## Scenario Evidence
+| Aspect       | Detail                                     |
+|--------------|---------------------------------------------|
+| State        | Ready                                      |
+| Done         | MCPS                                      |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | Ship                                       |
+| Risk         | None                                       |
+| Updated      | 2026-09-29                                 |
 
-| Scenario | Kind | Test file | Test name | Last verified |
-|---|---|---|---|---|
-| DS-MCPS-001 JSON-RPC loop and tool dispatch | Automated | `tests/unit_mcp_server_action.rs` | `dispatch_routes_execute_command` | working-tree |
+### {DS-MCPS-002}
 
-## Blockers
+| Aspect       | Detail                                     |
+|--------------|---------------------------------------------|
+| State        | Ready                                      |
+| Done         | MCPS                                      |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | Ship                                       |
+| Risk         | None                                       |
+| Updated      | 2026-09-29                                 |
 
-None.
+### {DS-MCPS-003}
 
-## Dependencies
+| Aspect       | Detail                                     |
+|--------------|---------------------------------------------|
+| State        | Ready                                      |
+| Done         | MCPS                                      |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | Ship                                       |
+| Risk         | None                                       |
+| Updated      | 2026-09-29                                 |
 
-None.
+### {DS-MCPS-004}
 
-## Release Readiness
+| Aspect       | Detail                                     |
+|--------------|---------------------------------------------|
+| State        | Ready                                      |
+| Done         | MCPS                                      |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | Ship                                       |
+| Risk         | None                                       |
+| Updated      | 2026-09-29                                 |
 
-| Area | Status | Notes |
-|---|---|---|
-| Tests | Done | `cargo nextest run -p mcp-server-lint-arwaky` → 0 failures |
-| Docs | Done | [DESIGN.md](DESIGN.md) is specification-only; status lives in this file |
+### {DS-MCPS-005}
 
-## Deferred
+| Aspect       | Detail                                     |
+|--------------|---------------------------------------------|
+| State        | Ready                                      |
+| Done         | MCPS                                      |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | Ship                                       |
+| Risk         | None                                       |
+| Updated      | 2026-09-29                                 |
 
-—
+### {DS-MCPS-006}
 
-## Change Log
+| Aspect       | Detail                                     |
+|--------------|---------------------------------------------|
+| State        | Ready                                      |
+| Done         | MCPS                                      |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | Ship                                       |
+| Risk         | None                                       |
+| Updated      | 2026-09-29                                 |
 
-| Date | Change | By |
-|---|---|---|
-| 2026-10-26 | Qualified the Backlog ids to the MCPS design-item scheme for the DESIGN/DATA template redesign | @raka |
-| 2026-10-24 | Initialized BACKLOG.md for mcp-server surface crate | @raka |
+### {DS-MCPS-007}
+
+| Aspect       | Detail                                     |
+|--------------|---------------------------------------------|
+| State        | Ready                                      |
+| Done         | MCPS                                      |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | Ship                                       |
+| Risk         | None                                       |
+| Updated      | 2026-09-29                                 |
+
+### {FR-McpServer-001}
+
+| Aspect       | Detail                                     |
+|--------------|---------------------------------------------|
+| State        | Ready                                      |
+| Done         | MCPS                                       |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | Ship                                       |
+| Risk         | None                                       |
+| Updated      | 2026-10-28                                 |
+
+### {FR-McpServer-002}
+
+| Aspect       | Detail                                     |
+|--------------|---------------------------------------------|
+| State        | Ready                                      |
+| Done         | MCPS                                       |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | Ship                                       |
+| Risk         | None                                       |
+| Updated      | 2026-10-28                                 |
+
+## Reference
+
+| Artifact | Purpose | Link|
+|----------|---------|------|
+| PRD.md | Product requirements | [PRD.md](../../PRD.md)|
+| FRD.md | Feature requirements | [FRD.md](FRD.md)|
+| ROADMAP.md | Roadmap status | [ROADMAP.md](../../ROADMAP.md)|
+| ARCHITECTURE.md | Layer contract | [ARCHITECTURE.md](../../ARCHITECTURE.md)|

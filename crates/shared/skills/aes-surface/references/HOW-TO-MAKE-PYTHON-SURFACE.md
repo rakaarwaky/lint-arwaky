@@ -53,17 +53,17 @@ class Surface<Name>:
 
 ## Section Contract
 
-| Check | Why it belongs here |
-| ----- | ------------------- |
-| Correct suffix for surface type. | Required by AES layer rules and the linter; missing it is a defect. |
-| Smart: only taxonomy + `contract_*_aggregate` imports. | Required by AES layer rules and the linter; missing it is a defect. |
-| Utility: only taxonomy + passive surface imports. | Required by AES layer rules and the linter; missing it is a defect. |
-| Passive: only taxonomy imports. | Required by AES layer rules and the linter; missing it is a defect. |
-| Smart delegates to aggregate via injected interface. | Required by AES layer rules and the linter; missing it is a defect. |
-| Zero business logic and computation. | Required by AES layer rules and the linter; missing it is a defect. |
-| No silent error discarding. | Required by AES layer rules and the linter; missing it is a defect. |
-| All state fields use shared VOs. | Required by AES layer rules and the linter; missing it is a defect. |
-| `python -c "import <module>"` passes. | Required by AES layer rules and the linter; missing it is a defect. |
+| Check | Why it belongs here|
+| ----- | -------------------|
+| Correct suffix for surface type. | Required by AES layer rules and the linter; missing it is a defect.|
+| Smart: only taxonomy + `contract_*_aggregate` imports. | Required by AES layer rules and the linter; missing it is a defect.|
+| Utility: only taxonomy + passive surface imports. | Required by AES layer rules and the linter; missing it is a defect.|
+| Passive: only taxonomy imports. | Required by AES layer rules and the linter; missing it is a defect.|
+| Smart delegates to aggregate via injected interface. | Required by AES layer rules and the linter; missing it is a defect.|
+| Zero business logic and computation. | Required by AES layer rules and the linter; missing it is a defect.|
+| No silent error discarding. | Required by AES layer rules and the linter; missing it is a defect.|
+| All state fields use shared VOs. | Required by AES layer rules and the linter; missing it is a defect.|
+| `python -c "import <module>"` passes. | Required by AES layer rules and the linter; missing it is a defect.|
 
 ---
 

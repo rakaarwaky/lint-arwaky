@@ -1,10 +1,10 @@
 // PURPOSE: Behavioural guards for the hardcoded AES architecture.
 //
 // The business rules moved out of YAML into
-// `utility_architecture_constants::hardcoded_default_architecture`. These tests
+// `config_architecture_rules::hardcoded_default_architecture`. These tests
 // pin the behaviour that matters to the rule engine, so a careless edit to the
 // table fails here instead of silently changing what the linter reports.
-use shared_config_system::utility_architecture_constants::hardcoded_default_architecture;
+use shared_config_system::config_architecture_rules::hardcoded_default_architecture;
 use shared_config_system::utility_config_merger::merge_config;
 
 fn merged() -> std::collections::HashMap<

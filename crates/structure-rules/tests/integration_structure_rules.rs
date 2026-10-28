@@ -105,6 +105,7 @@ fn container_orchestrator_answers_a_request_over_a_workspace() {
     // its doc pair; a complete workspace supplies it.
     write(&root.join("crates/shared/DATA.md"), "# DATA\n");
     write(&root.join("crates/shared/BACKLOG.md"), "# BACKLOG\n");
+    write(&root.join("crates/shared/FRD.md"), "# Shared — FRD\n");
 
     assert_eq!(
         audit(root),
@@ -211,6 +212,7 @@ fn container_stays_silent_on_a_workspace_whose_every_folder_is_complete() {
     );
     write(&root.join("crates/shared/DATA.md"), "# DATA\n");
     write(&root.join("crates/shared/BACKLOG.md"), "# BACKLOG\n");
+    write(&root.join("crates/shared/FRD.md"), "# Shared — FRD\n");
 
     // A feature folder with both layers, its doc pair, and all eight categories.
     write_feature(root, "crates", "calc");
@@ -231,6 +233,10 @@ fn container_stays_silent_on_a_workspace_whose_every_folder_is_complete() {
     );
     write(&root.join("crates/cli/DESIGN.md"), "# DESIGN\n");
     write(&root.join("crates/cli/BACKLOG.md"), "# BACKLOG\n");
+    write(
+        &root.join("crates/cli/FRD.md"),
+        "# CLI — FRD\n\n### FR-Cli-001\n",
+    );
 
     assert_eq!(
         audit(root),

@@ -21,7 +21,7 @@ fn write(path: &Path, contents: &str) {
 }
 
 /// Audit *root* through the public container and return the findings.
-fn audit(root: &Path) -> Vec<(String, String, String)> {
+fn audit(root: &Path) -> Vec<(String, String, String, String)> {
     let aggregate = RootDocRulesContainer::orchestrator();
     match aggregate.execute(DocRequest::audit_all(
         root,
@@ -35,6 +35,7 @@ fn audit(root: &Path) -> Vec<(String, String, String)> {
                     f.code.to_string(),
                     f.violation_type.to_string(),
                     f.doc.clone(),
+                    f.message.clone(),
                 )
             })
             .collect(),
@@ -60,16 +61,16 @@ fn write_faulty_workspace(root: &Path) {
     write(&root.join("PRD.md"), "# PRD\n");
     write(&root.join("ROADMAP.md"), "# ROADMAP\n");
     // Four independent defects in one document: an FR-ID missing its feature
-    // prefix (AES601), Test Scenarios placed after Glossary so the sections are
-    // out of template order (AES602), a spec naming a source file (AES603), and
-    // PRD.md carrying no mandated H2 (AES605).
+    // prefix (AES601), Public Interface placed before Feature Overview so the
+    // sections are out of template order (AES602), a spec naming a source file
+    // (AES603), and PRD.md carrying no mandated H2 (AES605).
     write(
         &feature.join("FRD.md"),
         "# FRD — sample\n\n\
          ## Reference\n\n\
          - PRD: [PRD.md](../../PRD.md)\n\
          - Backlog: [BACKLOG.md](BACKLOG.md)\n\n\
-         ## System Overview\n\n\
+         ## Public Interface\n\n\
          Implemented in `src/capabilities_sample_checker.rs`.\n\n\
          ## Functional Requirements\n\n\
          ### FR-001: Do The Thing\n\n\
@@ -79,29 +80,8 @@ fn write_faulty_workspace(root: &Path) {
          - **Business Rules**: The capability is stateless.\n\
          - **Edge Cases**: An absent input yields a default.\n\
          - **Error Handling**: Failures surface as a reason-coded outcome.\n\n\
-         ## API Contract\n\n\
-         ### Protocol API\n\n\
-         | Method | Input | Output | Error | Event | Description |\n\
-         | --- | --- | --- | --- | --- | --- |\n\
-         | execute | request | response | none | none | single entry |\n\n\
-         ### Aggregate API\n\n\
-         | Method | Input | Output | Error | Event | Description |\n\
-         | --- | --- | --- | --- | --- | --- |\n\
-         | execute | request | response | none | none | routes to capability |\n\n\
-         ## Integration Points\n\n\
-         | System | Direction | Purpose | Failure mode |\n\
-         | --- | --- | --- | --- |\n\
-         | filesystem | out | read source | missing path |\n\n\
-         ## Non-functional Requirements\n\n\
-         | Metric | Target | Measurement method |\n\
-         | --- | --- | --- |\n\
-         | audit time | under 1s | wall clock |\n\n\
-         ## Assumptions & Constraints\n\n\
-         - none\n\n\
-         ## Glossary\n\n\
-         - **Finding**: a rule violation\n\n\
-         ## Test Scenarios\n\n\
-         - audits a clean workspace\n",
+         ## Feature Overview\n\n\
+         - One overview.\n",
     );
 }
 
@@ -112,7 +92,10 @@ fn one_request_runs_every_invariant_and_reports_each_defect() {
     write_faulty_workspace(root);
 
     let findings = audit(root);
-    let codes: BTreeSet<&str> = findings.iter().map(|(code, _, _)| code.as_str()).collect();
+    let codes: BTreeSet<&str> = findings
+        .iter()
+        .map(|(code, _, _, _)| code.as_str())
+        .collect();
 
     for expected in ["AES601", "AES602", "AES603"] {
         assert!(
@@ -145,12 +128,18 @@ fn repeated_findings_are_collapsed() {
     write_faulty_workspace(root);
 
     let findings = audit(root);
-    let distinct: BTreeSet<(&String, &String, &String)> =
-        findings.iter().map(|(c, v, d)| (c, v, d)).collect();
+    // The collapse key is the one `utility_doc_collector::sorted` applies in
+    // the response assembly: (code, violation, document, message). One
+    // *defect* must produce one finding, but two defects of the same code on
+    // one document — here `## Reference` and `## Public Interface` both missing
+    // their mandated table — are distinct findings whose messages differ, so
+    // the triple alone is not a defect identity.
+    let distinct: BTreeSet<(&String, &String, &String, &String)> =
+        findings.iter().map(|(c, v, d, m)| (c, v, d, m)).collect();
     assert_eq!(
         distinct.len(),
         findings.len(),
-        "one defect must produce one finding; a duplicated (code, violation, document) \
-         triple means the audit ran the same capability twice"
+        "one defect must produce one finding; a duplicated (code, violation, document, message) \
+         quad means the audit ran the same capability twice. Findings: {findings:#?}"
     );
 }

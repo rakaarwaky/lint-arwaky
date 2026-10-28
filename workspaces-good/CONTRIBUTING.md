@@ -1,83 +1,41 @@
-# Contributing to Calculator Workspace
+# CONTRIBUTING — Calculator Workspace
 
-Welcome. This document covers the contribution paths below. Only the paths this project actually supports are present.
+## Contribution Overview
 
-- [Development Setup](#development-setup)
-- [Quality Verification & PR Process](#quality-verification--pr-process)
+Contributors add feature modules, bug fixes, and docs-only updates. Every change must clear the format, clippy, self-lint, and docs gates before the PR merges.
 
----
+## Contribution Guidelines
 
-## Principles to Keep in Mind
+1. Respect layer boundaries and the AES naming convention.
+2. Persistent data belongs under `target/` or `$HOME/.local/bin/`; never `/tmp`.
+3. Update `Cargo.toml`, `pyproject.toml`, or `package.json` with every add or delete.
+4. Do not leak absolute paths, secrets, or machine-specific values into the diff.
 
-Before making changes, observe these non-negotiable rules. Each rule states the constraint, not the tool that enforces it:
+## Workflow
 
-1. **Layer boundaries**: every change must respect the `layer_concern_role.<ext>` naming convention and the dependency rules of each architectural layer.
-2. **Storage / path compliance**: persistent data and caches belong under `target/` or `$HOME/.local/bin/`; never write to `/tmp` for build output a reviewer must find.
-3. **Single source of truth**: `Cargo.toml`, `pyproject.toml`, and `package.json` are the definitive manifests; every add/delete must update them.
+| Step | Action | Detail |
+|------|--------|--------|
+| 1 | Fork / Branch | `<branch-naming-convention>` |
+| 2 | Implement | Follow FRD spec, write tests |
+| 3 | Self-review | Check against acceptance criteria in PRD |
+| 4 | Submit PR | Link to BACKLOG ID, describe what changed |
+| 5 | Review | <reviewer / approval criteria> |
+| 6 | Merge | <merge strategy: squash / rebase / merge> |
 
----
+## Commit Convention
 
-## Development Setup
+| Type | Usage | Example |
+|------|-------|---------|
+| `feat` | New feature | `feat(auth): add login endpoint` |
+| `fix` | Bug fix | `fix(auth): handle expired token` |
+| `docs` | Documentation only | `docs(frd): update FR-AUTH-001` |
+| `test` | Adding/updating tests | `test(auth): add edge case for timeout` |
+| `refactor` | Code refactor, no behaviour change | `refactor(auth): extract middleware` |
+| `chore` | Maintenance, deps, config | `chore: bump dependencies` |
 
-1. Clone the repository:
+## Reference
 
-   ```bash
-   git clone <repo-url>
-   cd <repo>
-   ```
-
-   Add `--recurse-submodules` only if the project has submodules.
-
-2. Verify host prerequisites:
-
-   ```bash
-   rustc --version
-   python3 --version
-   node --version
-   ```
-
-3. Provision the environment:
-
-   ```bash
-   CARGO_INCREMENTAL=0 cargo build --release
-   ```
-
-4. Verify installation:
-
-   ```bash
-   ./target/release/lint-arwaky-cli check .
-   ```
-
----
-
-## Quality Verification & PR Process
-
-Before committing or opening a PR, clear every gate below.
-
-### 1. Run the Verification Commands
-
-```bash
-CARGO_INCREMENTAL=0 cargo fmt --all -- --check
-CARGO_INCREMENTAL=0 cargo clippy --all-targets -- -D warnings
-lint-arwaky-cli check .
-```
-
-<One line naming what this runs: test suite, linter, type check, architecture scanner.> CI mirrors this check on every push via `.github/workflows/ci.yml`.
-
-### 2. Conventional Commit Guidelines
-
-| Prefix      | Usage                                      |
-| ----------- | ------------------------------------------ |
-| `feat:`     | New feature or capability                  |
-| `fix:`      | Bug fix                                    |
-| `chore:`    | Maintenance, dependency bump, cleanup      |
-| `docs:`     | Documentation changes                      |
-| `refactor:` | Refactoring without behavioral change      |
-
-### 3. Pull Request Checklist
-
-- [ ] All local verification commands pass.
-- [ ] New files follow the project's naming and directory conventions.
-- [ ] Any registry or manifest the project keeps is updated.
-- [ ] No absolute paths, secrets, or machine-specific values leaked into the diff.
-- [ ] The PR description names the contribution path and links the issue.
+| Artifact | Purpose | Link |
+|----------|---------|------|
+| PRD | Business goals, user stories, and scope | [PRD.md](PRD.md) |
+| Architecture | System boundaries, tech stack, and infra | [ARCHITECTURE.md](ARCHITECTURE.md) |

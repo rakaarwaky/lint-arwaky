@@ -363,52 +363,49 @@ description: "{Project} operational guide."
 ---
 # {Project Name}
 
+## Agent Overview
+
+{One paragraph: what AI agents must know before generating code, docs, or suggestions in this workspace.}
+
 ## Runtime
 
-- Language: {language and pinned version}
-- Environment: {environment manager and creation method}
-- Artifacts: {reviewable artifact location}
-- Package manager: {package manager and lockfile}
-
-```bash
-{version probe}
-{environment setup}
-{optional environment activation}
-```
-
-## Project Quick Facts
-
-{project quick facts}
-
-## Pipeline
-
-{stage A} → {stage B} → {stage C} → {stage D}
+| Aspect          | Detail                                          |
+|-----------------|-------------------------------------------------|
+| Language        | {language and pinned version}                   |
+| Environment     | {environment manager and creation method}       |
+| Artifacts       | {reviewable artifact location}                  |
+| Package Manager | {package manager and lockfile}                  |
+| Version Probe   | `{version probe command}`                       |
+| Setup           | `{environment setup command}`                    |
+| Activation      | `{optional environment activation command}`      |
 
 ## Project Structure
 
-{project structure}
+| Path       | Purpose              |
+|------------|----------------------|
+| {path}     | {what lives here}    |
 
 ## Commands
 
-Every command must match the exact CI gate.
+| Category    | Command                              | Scope      | CI Gate              |
+|-------------|--------------------------------------|------------|----------------------|
+| Test (all)  | `{whole-workspace test command}`     | All        | ci.yml: {job name}   |
+| Test (unit) | `{single-package test command}`      | One unit   | ci.yml: {job name}   |
+| Test (file) | `{single-file test command}`         | One file   | ci.yml: {job name}   |
+| Lint        | `{formatter or linter command}`      | All        | ci.yml: {job name}   |
+| Type Check  | `{type checker command}`             | All        | ci.yml: {job name}   |
+| Arch Scan   | `{architecture scanner command}`     | All        | ci.yml: {job name}   |
 
-```bash
-# Tests
-{whole-workspace test command}                      # what it covers
-{single-package test command}                       # one unit
-{single-file test command}                          # one file
+## Reference
 
-# Lint / types / architecture
-{formatter or linter command}                       # matches ci.yml {job name}
-{type checker command}                              # exact config-file flags
-{architecture scanner command}
-```
-
-## Related Documents
-
-- {link}: {what the document answers}
-
----"#;
+| Artifact     | Purpose                                    | Link |
+|--------------|--------------------------------------------|------|
+| PRD          | {Business goals, user stories, and scope}  | [PRD.md](PRD.md) |
+| FRD          | {Functional requirements specification}    | [FRD.md](FRD.md) |
+| DATA         | {Data shapes and kernel definitions}        | [DATA.md](DATA.md) |
+| DESIGN       | {UI/UX and visual system}                  | [DESIGN.md](DESIGN.md) |
+| Architecture | {System boundaries, tech stack, and infra} | [ARCHITECTURE.md](ARCHITECTURE.md) |
+"#;
 
 /// Split the template into its lines, dropping the fence that wraps it.
 fn agents_template_lines() -> Vec<&'static str> {

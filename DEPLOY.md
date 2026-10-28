@@ -15,13 +15,13 @@ Operations sign-offs" verbatim. The table maps each of those five named domains 
 role that actually owns the evidence on this project today (PE-5-01 / #629 — this table
 previously used role names that did not match the Deploy checklist's literal text):
 
-| Domain | Role / Owner | Sign-off Criterion | Status | Evidence (Commit / Artifact) | Date |
+| Domain | Role / Owner | Sign-off Criterion | Status | Evidence (Commit / Artifact) | Date|
 |---|---|---|---|---|---|
-| Product | Business Analyst (`@raka`) | Requirements/scope audit issues resolved with verifiable evidence; business outcome metrics current | Approved | `8d4342a` (PR #520, PR #567) | 2026-09-30 |
-| Engineering | Architect + Tech Lead (`@raka`) | 34 AES rules pass with 0 internal violations on self-lint; `cargo build --release` succeeds | Approved | `8d4342a` (`lint-arwaky-cli check .`) | 2026-09-30 |
-| QA | Tech Lead (`@raka`) | Full test suite & negative test matrix green (`TEST.md` Sections 3-4) | Approved | `8d4342a` (`cargo test --workspace`) | 2026-09-30 |
-| Documentation | Business Analyst (`@raka`) | `lint-arwaky-cli docs .` reports 0 document invariant violations | Approved | `8d4342a` (`lint-arwaky-cli docs .`) | 2026-09-30 |
-| Operations | Security Engineer + DevOps Engineer (`@raka`) | `SECURITY.md` supported versions & cargo-audit clean; binaries built, checksums registered | Approved | `8d4342a` (`cargo-audit`, PR #516; `target/release/lint-arwaky-*`) | 2026-09-30 |
+| Product | Business Analyst (`@raka`) | Requirements/scope audit issues resolved with verifiable evidence; business outcome metrics current | Approved | `8d4342a` (PR #520, PR #567) | 2026-09-30|
+| Engineering | Architect + Tech Lead (`@raka`) | 34 AES rules pass with 0 internal violations on self-lint; `cargo build --release` succeeds | Approved | `8d4342a` (`lint-arwaky-cli check .`) | 2026-09-30|
+| QA | Tech Lead (`@raka`) | Full test suite & negative test matrix green (`TEST.md` Sections 3-4) | Approved | `8d4342a` (`cargo test --workspace`) | 2026-09-30|
+| Documentation | Business Analyst (`@raka`) | `lint-arwaky-cli docs .` reports 0 document invariant violations | Approved | `8d4342a` (`lint-arwaky-cli docs .`) | 2026-09-30|
+| Operations | Security Engineer + DevOps Engineer (`@raka`) | `SECURITY.md` supported versions & cargo-audit clean; binaries built, checksums registered | Approved | `8d4342a` (`cargo-audit`, PR #516; `target/release/lint-arwaky-*`) | 2026-09-30|
 
 **Caveat (PE-5-01 / #629, PE-3-01 / #623):** this record was captured at commit `8d4342a`
 before the BA/SA/UX/ARCH/BE/FE/PE audit backlog (#522-#631) existed. Re-collect all five
@@ -31,12 +31,12 @@ sign-offs against the actual release commit before relying on it for a future cu
 
 ## Prerequisites
 
-| Requirement    | Minimum                  | Recommended                 |
-| -------------- | ------------------------ | --------------------------- |
-| Rust toolchain | 1.85 (edition 2024)      | 1.85+ (stable)              |
-| RAM            | 256 MB                   | 1 GB+ (for large codebases) |
-| Disk           | 50 MB (release binaries) | -                           |
-| OS             | Linux                    | Linux x86_64                |
+| Requirement    | Minimum                  | Recommended                |
+| -------------- | ------------------------ | ---------------------------|
+| Rust toolchain | 1.85 (edition 2024)      | 1.85+ (stable)             |
+| RAM            | 256 MB                   | 1 GB+ (for large codebases)|
+| Disk           | 50 MB (release binaries) | -                          |
+| OS             | Linux                    | Linux x86_64               |
 
 No external services required. The MCP server speaks JSON-RPC 2.0 over stdin/stdout and has no network dependencies.
 
@@ -168,11 +168,11 @@ protocol version `2024-11-05`. No automated test exercises any of them today
 (PE-2-02 / #621), so this table is a manual verification record, not a passing
 CI gate:
 
-| Client | Protocol Version Verified | Last Verified | Notes |
+| Client | Protocol Version Verified | Last Verified | Notes|
 |---|---|---|---|
-| Claude Desktop | 2024-11-05 | — (unverified) | Config via `mcp-config --client claude` |
-| VS Code MCP extension | 2024-11-05 | — (unverified) | Config via `mcp-config --client vscode` |
-| Hermes Agent | 2024-11-05 | — (unverified) | Config via `mcp-config --client hermes`; ownership of this integration is not documented — confirm with whoever maintains it before depending on this table |
+| Claude Desktop | 2024-11-05 | — (unverified) | Config via `mcp-config --client claude`|
+| VS Code MCP extension | 2024-11-05 | — (unverified) | Config via `mcp-config --client vscode`|
+| Hermes Agent | 2024-11-05 | — (unverified) | Config via `mcp-config --client hermes`; ownership of this integration is not documented — confirm with whoever maintains it before depending on this table|
 
 **Process note:** whoever changes the MCP tool surface (adds, removes, or renames a tool,
 or bumps the protocol version) updates this table in the same PR and states in the

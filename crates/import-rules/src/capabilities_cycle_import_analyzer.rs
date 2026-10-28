@@ -2,10 +2,10 @@
 use rayon::iter::IntoParallelRefIterator;
 use rayon::iter::ParallelIterator;
 use shared_cli_commands::LintResult;
+use shared_common::architecture_layer_detector;
 use shared_common::taxonomy_layer_vo::LayerMapVO;
 use shared_common::taxonomy_layer_vo::LayerNameVO;
 use shared_common::taxonomy_name_vo::SymbolName;
-use shared_common::utility_layer_detector;
 use shared_common::{FilePath, FilePathList, Severity};
 use shared_filesystem::taxonomy_filesystem_vo::ImportEntry;
 
@@ -133,22 +133,24 @@ impl DependencyCycleAnalyzer {
                 }
                 content_map.get(file)?;
 
-                let filename = utility_layer_detector::extract_filename(file);
-                let file_layer = match utility_layer_detector::detect_layer_from_prefix(filename) {
-                    Some(l) => {
-                        let specialized = utility_layer_detector::resolve_specialized_layer(
-                            &l,
-                            file,
-                            &layer_keys,
-                        );
-                        let base_part = specialized
-                            .find('(')
-                            .map(|i| &specialized[..i])
-                            .unwrap_or(&specialized);
-                        base_part.to_string()
-                    }
-                    None => return None,
-                };
+                let filename = architecture_layer_detector::extract_filename(file);
+                let file_layer =
+                    match architecture_layer_detector::detect_layer_from_prefix(filename) {
+                        Some(l) => {
+                            let specialized =
+                                architecture_layer_detector::resolve_specialized_layer(
+                                    &l,
+                                    file,
+                                    &layer_keys,
+                                );
+                            let base_part = specialized
+                                .find('(')
+                                .map(|i| &specialized[..i])
+                                .unwrap_or(&specialized);
+                            base_part.to_string()
+                        }
+                        None => return None,
+                    };
 
                 // Use ImportEntry from filesystem's AST parser (resolved_path already set)
                 let resolved_modules = match imports_map.get(file) {
@@ -201,9 +203,9 @@ impl DependencyCycleAnalyzer {
                         module_value
                     };
                     let target_layer =
-                        utility_layer_detector::detect_module_layer(module_path, &layer_keys)
+                        architecture_layer_detector::detect_module_layer(module_path, &layer_keys)
                             .or_else(|| {
-                                utility_layer_detector::resolve_module_path_to_layer(
+                                architecture_layer_detector::resolve_module_path_to_layer(
                                     module_path,
                                     root_dir,
                                 )

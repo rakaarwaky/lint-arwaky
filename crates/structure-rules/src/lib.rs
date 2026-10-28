@@ -14,5 +14,7 @@ pub mod capabilities_member_root_placement_auditor;
 pub use capabilities_member_root_placement_auditor::MemberRootPlacementAuditor;
 pub mod capabilities_test_suite_coverage_auditor;
 pub use capabilities_test_suite_coverage_auditor::TestSuiteCoverageAuditor;
+pub mod capabilities_pr_la_folder_auditor;
+pub use capabilities_pr_la_folder_auditor::PrLaFolderAuditor;
 pub mod root_structure_rules_container;
 pub use root_structure_rules_container::RootStructureRulesContainer;

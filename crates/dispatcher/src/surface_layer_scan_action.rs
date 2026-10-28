@@ -7,7 +7,7 @@
 // cycles and orphans are cross-file facts), and only the reporting is narrowed.
 
 use shared_common::ViolationItem;
-use shared_common::utility_layer_detector::detect_layer_from_prefix;
+use shared_common::architecture_layer_detector::detect_layer_from_prefix;
 
 use crate::surface_check_action::{ScanOptions, collect_scan};
 

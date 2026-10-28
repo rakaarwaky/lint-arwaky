@@ -283,7 +283,43 @@ fn template_body_checker_unfilled_placeholder_fires_when_strict_on() {
         strict_placeholders: true,
         exempt_members: Vec::new(),
     };
-    let text = "# AGENTS\n\nSome prose with {lint command} unfilled\n";
+    let text = "---\n\
+trigger: always\ndescription: \"Sample.\"\n\
+---\n\
+# AGENTS\n\n\
+## Agent Overview\n\n\
+This workspace is <project-name>; follow its conventions.\n\n\
+## Runtime\n\n\
+| Aspect          | Detail                                          |\n\
+|-----------------|-------------------------------------------------|\n\
+| Language        | {language and pinned version}                   |\n\
+| Environment     | {environment manager and creation method}       |\n\
+| Artifacts       | {reviewable artifact location}                  |\n\
+| Package Manager | {package manager and lockfile}                  |\n\
+| Version Probe   | `{version probe command}`                       |\n\
+| Setup           | `{environment setup command}`                    |\n\
+| Activation      | `{optional environment activation command}`      |\n\n\
+## Project Structure\n\n\
+| Path       | Purpose              |\n\
+|------------|----------------------|\n\
+| {path}     | {what lives here}    |\n\n\
+## Commands\n\n\
+| Category    | Command                              | Scope      | CI Gate              |\n\
+|-------------|--------------------------------------|------------|----------------------|\n\
+| Test (all)  | {lint command}                       | All        | ci.yml: Test         |\n\
+| Test (unit) | `{single-package test command}`      | One unit   | ci.yml: Test         |\n\
+| Test (file) | `{single-file test command}`         | One file   | ci.yml: Test         |\n\
+| Lint        | `{formatter or linter command}`      | All        | ci.yml: Format       |\n\
+| Type Check  | `{type checker command}`             | All        | ci.yml: Clippy       |\n\
+| Arch Scan   | `{architecture scanner command}`     | All        | ci.yml: Self-Lint    |\n\n\
+## Reference\n\n\
+| Artifact     | Purpose                                    | Link |\n\
+|--------------|--------------------------------------------|------|\n\
+| README       | What the tool does, every command, install | [README.md](README.md) |\n\
+| CONTRIBUTING | Branch, commit, and PR conventions         | [CONTRIBUTING.md](CONTRIBUTING.md) |\n\
+| ARCHITECTURE | Layer contract for every crate             | [ARCHITECTURE.md](ARCHITECTURE.md) |\n\
+| ROADMAP      | What ships next, in order                  | [ROADMAP.md](ROADMAP.md) |\n\
+| PRD          | What the product does and why              | [PRD.md](PRD.md) |\n";
     let context = {
         let documents = vec![DocSource {
             path: PathBuf::from("/repo/AGENTS.md"),
@@ -364,7 +400,7 @@ fn template_body_checker_clean_document_no_findings() {
         strict_placeholders: true,
         exempt_members: Vec::new(),
     };
-    let text = "# ROADMAP\n\n## Current Condition\n\ntext\n\n## State Definitions\n\n| State | Meaning |\n| --- | --- |\n| Done | Shipped |\n\n## Feature Roll-up\n\n| ID | Feature | Priority | State | Dependencies | Next Action | Updated |\n| --- | --- | --- | --- | --- | --- | --- |\n| WS-01 | Docs | P0 | Done | — | — | 2026-01-01 |\n\n## Risk Register\n\nNone.\n";
+    let text = "# ROADMAP\n\n## Progress Overview\n\ntext\n\n## Roadmap Status\n\n| ID | Feature | Priority | State | Dependencies | Next Action | Updated |\n| --- | --- | --- | --- | --- | --- | --- |\n| WS-01 | Docs | P0 | Done | — | — | 2026-01-01 |\n\n## Reference\n\nNone.\n";
     let documents = vec![DocSource {
         path: PathBuf::from("/repo/ROADMAP.md"),
         text: text.to_string(),
@@ -392,8 +428,9 @@ fn template_body_checker_deleted_required_section_fires() {
         strict_placeholders: false,
         exempt_members: Vec::new(),
     };
-    // ROADMAP missing `## Risk Register` (non-deletable)
-    let text = "# ROADMAP\n\n## Current Condition\n\nx\n\n## State Definitions\n\n| State | Meaning |\n| --- | --- |\n| Done | Shipped |\n\n## Feature Roll-up\n\n| ID | Feature | Priority | State | Dependencies | Next Action | Updated |\n| --- | --- | --- | --- | --- | --- | --- |\n";
+    // ROADMAP keeps two required H2s and omits `## Roadmap Status`, so the
+    // message must name that specific gap.
+    let text = "# ROADMAP\n\n## Progress Overview\n\nx\n\n## Reference\n\nx\n";
     let documents = vec![DocSource {
         path: PathBuf::from("/repo/ROADMAP.md"),
         text: text.to_string(),
@@ -415,13 +452,15 @@ fn template_body_checker_deleted_required_section_fires() {
         !deleted.is_empty(),
         "a missing non-deletable section must fire section_deleted; got {findings:?}"
     );
-    assert!(deleted[0].message.contains("Risk Register"));
+    assert!(deleted[0].message.contains("Roadmap Status"));
     assert!(!deleted[0].why.is_empty());
     assert!(!deleted[0].fix.is_empty());
 }
 
-/// A deletable section (CONTRIBUTING.md's "Quality Verification & PR Process")
-/// being absent does NOT fire `section_deleted`.
+/// No section is deletable under the 9-doc layout (`deletable_sections` is
+/// empty for every profile), so absence only stays silent for a section
+/// outside the required set — here the legacy "Quality Verification & PR
+/// Process" heading old CONTRIBUTING templates once carried.
 #[test]
 fn template_body_checker_deletable_section_absent_no_finding() {
     let config = DocRulesConfig {
@@ -429,8 +468,8 @@ fn template_body_checker_deletable_section_absent_no_finding() {
         strict_placeholders: false,
         exempt_members: Vec::new(),
     };
-    // CONTRIBUTING.md missing its deletable section
-    let text = "# CONTRIBUTING\n\n## Principles\n\nx\n\n## Development Setup\n\nx\n";
+    // Every CONTRIBUTING_REQUIRED_H2S present; the legacy section absent.
+    let text = "# CONTRIBUTING\n\n## Contribution Overview\n\nx\n\n## Contribution Guidelines\n\nx\n\n## Workflow\n\nx\n\n## Commit Convention\n\nx\n\n## Reference\n\nx\n";
     let documents = vec![DocSource {
         path: PathBuf::from("/repo/CONTRIBUTING.md"),
         text: text.to_string(),
@@ -461,10 +500,10 @@ fn template_body_checker_extended_heading_satisfies_required_section() {
         strict_placeholders: false,
         exempt_members: Vec::new(),
     };
-    // "Feature Requirements (Prioritized)" extends "Feature Requirements".
-    let text = "# PRD\n\n## Problem Statement\n\nx\n\n## Goals & Success Metrics\n\nx\n\n\
-         ## User Personas\n\nx\n\n## Scope\n\nx\n\n## Feature Requirements (Prioritized)\n\nx\n\n\
-         ## Non-functional Requirements (High-level)\n\nx\n\n## Open Questions / Risks\n\nx\n";
+    // `## Project Requirements (Prioritized)` extends the required
+    // `Project Requirements` by prefix match; only an omission fires.
+    let text = "# PRD\n\n## Problem Statement\n\nx\n\n## Project Requirements (Prioritized)\n\nx\n\n\
+         ## Reference\n\n x\n\n## Feature Requirements (Prioritized)\n\nx\n";
     let documents = vec![DocSource {
         path: PathBuf::from("/repo/PRD.md"),
         text: text.to_string(),
@@ -494,7 +533,35 @@ fn template_body_checker_force_strict_enables_placeholder_check() {
         strict_placeholders: false,
         exempt_members: Vec::new(),
     };
-    let text = "# AGENTS\n\nPlaceholder {lint command} here\n";
+    let text = "---\n\
+trigger: always\ndescription: \"Sample.\"\n\
+---\n\
+# AGENTS\n\n\
+## Agent Overview\n\nPlaceholder <project-name> here\n\n\
+## Runtime\n\n\
+| Aspect          | Detail                                          |\n\
+|-----------------|-------------------------------------------------|\n\
+| Language        | Rust                                            |\n\
+| Environment     | cargo workspace under crates/                   |\n\
+| Artifacts       | target/                                         |\n\
+| Package Manager | cargo, with Cargo.lock                          |\n\
+| Version Probe   | `rustc --version`                               |\n\
+| Setup           | `cargo build --release`                         |\n\
+| Activation      | None                                            |\n\n\
+## Project Structure\n\n\
+| Path       | Purpose              |\n\
+|------------|----------------------|\n\
+| crates/    | Rust workspace crates|\n\n\
+## Commands\n\n\
+| Category    | Command                              | Scope      | CI Gate              |\n\
+|-------------|--------------------------------------|------------|----------------------|\n\
+| Test (all)  | `cargo nextest run`                  | All        | ci.yml: Test         |\n\
+| Lint        | `cargo fmt --all -- --check`         | All        | ci.yml: Format       |\n\n\
+## Reference\n\n\
+| Artifact     | Purpose                                    | Link |\n\
+|--------------|--------------------------------------------|------|\n\
+| README       | What the tool does, every command, install | [README.md](README.md) |\n\
+| PRD          | What the product does and why              | [PRD.md](PRD.md) |\n";
     let documents = vec![DocSource {
         path: PathBuf::from("/repo/AGENTS.md"),
         text: text.to_string(),

@@ -24,6 +24,17 @@ impl fmt::Display for Format {
     }
 }
 
+/// String slice form of the format name, for passing to utility-only renderers
+/// without importing the taxonomy `Format` type into the utility layer.
+pub fn format_as_str(format: Format) -> &'static str {
+    match format {
+        Format::Text => "text",
+        Format::Json => "json",
+        Format::Sarif => "sarif",
+        Format::Junit => "junit",
+    }
+}
+
 impl FromStr for Format {
     type Err = String;
 

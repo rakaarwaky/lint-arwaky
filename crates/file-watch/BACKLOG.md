@@ -5,62 +5,56 @@ Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
 State: defined in root [ROADMAP.md](../../ROADMAP.md) — cited here, not restated
 Last Updated: 2026-09-29
 
-## Current Condition
+## Progress Overview
 
 - Done: `cargo test -p file_watch --lib --tests` → 0 failures
 - In Progress: None
 - Blocked: None
 - Next Action: Re-run `cargo test -p file_watch --lib --tests` after any code change to this crate
 
-## Backlog
+## Backlog Status
 
-| ID | Priority | State| Dependencies | Next Action | Updated |
-|---:|---|---|---|---|---|
-| FR-FileWatch-001 | P0 | Done | None | — | 2026-09-29 |
-| FR-FileWatch-002 | P0 | Done | None | — | 2026-09-29 |
-| FR-FileWatch-003 | P0 | Done | None | — | 2026-09-29 |
+### {FR-FileWatch-001}
 
-## Scenario Evidence
+| Aspect       | Detail                                     |
+|--------------|---------------------------------------------|
+| State        | Ready                                      |
+| Done         | FileWatch                                      |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | Ship                                       |
+| Risk         | None                                       |
+| Updated      | 2026-09-29                                 |
 
-| Scenario | Kind | Test file | Test name | Last verified |
-|---|---|---|---|---|
-| Start watcher on existing directory | Automated | `tests/file-watch/` | cargo test -p file_watch | `2026-09-29` |
-| Start watcher on non-existent path | Automated | `tests/file-watch/` | cargo test -p file_watch | `2026-09-29` |
-| Modify .rs file | Automated | `tests/file-watch/` | cargo test -p file_watch | `2026-09-29` |
-| Modify .txt file | Automated | `tests/file-watch/` | cargo test -p file_watch | `2026-09-29` |
-| Rapid modifications to same file | Automated | `tests/file-watch/` | cargo test -p file_watch | `2026-09-29` |
-| File matching ignore pattern | Automated | `tests/file-watch/` | cargo test -p file_watch | `2026-09-29` |
-| Ctrl+C during watch | Automated | `tests/file-watch/` | cargo test -p file_watch | `2026-09-29` |
-| Multiple subscribers | Automated | `tests/file-watch/` | cargo test -p file_watch | `2026-09-29` |
-| Broadcast channel lagged | Automated | `tests/file-watch/` | cargo test -p file_watch | `2026-09-29` |
-| Initial lint on startup | Automated | `tests/file-watch/` | cargo test -p file_watch | `2026-09-29` |
-| Recursive watch | Automated | `tests/file-watch/` | cargo test -p file_watch | `2026-09-29` |
-| Non-recursive watch | Automated | `tests/file-watch/` | cargo test -p file_watch | `2026-09-29` |
+### {FR-FileWatch-002}
 
-## Blockers
+| Aspect       | Detail                                     |
+|--------------|---------------------------------------------|
+| State        | Ready                                      |
+| Done         | FileWatch                                      |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | Ship                                       |
+| Risk         | None                                       |
+| Updated      | 2026-09-29                                 |
 
-None
+### {FR-FileWatch-003}
 
-## Dependencies
+| Aspect       | Detail                                     |
+|--------------|---------------------------------------------|
+| State        | Ready                                      |
+| Done         | FileWatch                                      |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | Ship                                       |
+| Risk         | None                                       |
+| Updated      | 2026-09-29                                 |
 
-None
+## Reference
 
-## Release Readiness
-
-| Area | Status | Notes |
-|---|---|---|
-| Tests | Done | `cargo test -p file_watch --lib --tests` → 0 failures |
-| Scenario evidence | Done | 12 scenarios mapped; all Automated via `cargo test -p file_watch` |
-| Docs | Done | [FRD.md](FRD.md) is specification-only; status lives in this file |
-
-## Deferred
-
-None
-
-## Change Log
-
-| Date | Change | By |
-|---|---|---|
-| 2026-10-26 | Aligned BACKLOG ID column to FRD FR-IDs (AES601) | @raka |
-| 2026-09-29 | Restructured FRD from 6 mixed utility/capability FRs to 3 clean business-capability FRs; merged IWatchStartBroadcastShutdown into IWatchLifecycleProtocol, merged ILintableFilter+IEventDedup into IChangeFilterProtocol, promoted ChangeLintHandler to standalone capability | @raka |
-| 2026-09-17 | Initial backlog created from FRD test-scenario mapping | @raka |
+| Artifact | Purpose | Link|
+|----------|---------|------|
+| PRD.md | Product requirements | [PRD.md](../../PRD.md)|
+| FRD.md | Feature requirements | [FRD.md](FRD.md)|
+| ROADMAP.md | Roadmap status | [ROADMAP.md](../../ROADMAP.md)|
+| ARCHITECTURE.md | Layer contract | [ARCHITECTURE.md](../../ARCHITECTURE.md)|

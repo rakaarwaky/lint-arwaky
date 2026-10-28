@@ -88,7 +88,6 @@ from abc import ABC, abstractmethod
 
 from shared.<domain>.taxonomy_<domain>_vo import ResultVO, VO
 
-
 class I<Seam1>Protocol(ABC):
     """<Seam 1> capability: <what it owns>."""
 
@@ -102,7 +101,6 @@ class I<Seam1>Protocol(ABC):
         """<What this operation does.> Return <what it returns>."""
         ...
 
-
 class I<Seam2>Protocol(ABC):
     """<Seam 2> capability: <what it owns>."""
 
@@ -111,7 +109,6 @@ class I<Seam2>Protocol(ABC):
         """<What this operation does.> Return <what it returns>."""
         ...
 
-
 class I<SeamN>Protocol(ABC):
     """<Seam N> capability: <what it owns>."""
 
@@ -119,7 +116,6 @@ class I<SeamN>Protocol(ABC):
     def <operation_1>(self, ...) -> ResultVO:
         """<What this operation does.> Return <what it returns>."""
         ...
-
 
 __all__ = ["I<Seam1>Protocol", "I<Seam2>Protocol", "I<SeamN>Protocol"]
 
@@ -151,7 +147,6 @@ from abc import ABC, abstractmethod
 
 from shared.<domain>.taxonomy_<domain>_vo import RequestVO, ResponseVO
 
-
 class I<Feature>Aggregate(ABC):
     """Single entry point over the <feature> feature."""
 
@@ -159,7 +154,6 @@ class I<Feature>Aggregate(ABC):
     def execute(self, request: RequestVO) -> ResponseVO:
         """Run the requested operation; return its response."""
         ...
-
 
 __all__ = ["I<Feature>Aggregate"]
 
@@ -177,19 +171,19 @@ branch, not a new aggregate method.
 
 Every contract file is required to carry the rows that apply. Each exists for one reason.
 
-| Section                                  | Why it belongs here                                                                |
-| ---------------------------------------- | ---------------------------------------------------------------------------------- |
-| Module docstring (required)              | Names the feature and the seams in the file.                                       |
-| Suffix in file + class names             | AES101/AES102 resolve `_protocol` vs `_aggregate` from the name.                   |
-| One file per feature                     | All seams of a feature live together; consumers import from one module.            |
-| One class per capability seam            | A class lists only what its capability owns, so implementation is always complete. |
-| Rich named methods, one return type each | Protocol classes: each method has one VO return; no dispatch bag. |
-| Abstract methods only                    | Outer layers depend on promises, not behaviour.                                    |
-| Aggregate: exactly one method            | Consumers depend on one stable entry point, not a shifting method list.            |
-| Shared VOs in signatures                 | Numeric and string domain values stay behind VOs; only `bool` is permitted bare. |
-| No impl-layer imports                    | Keeps the dependency arrow (capabilities → contract ← agent).                      |
-| `__all__` + `_layer_symbols`             | Harness/loader introspection and explicit public surface.                          |
-| Register in shared `__init__`            | Importable without reaching into private modules.                                  |
+| Section                                  | Why it belongs here                                                              |
+| ---------------------------------------- | ----------------------------------------------------------------------------------|
+| Module docstring (required)              | Names the feature and the seams in the file.                                     |
+| Suffix in file + class names             | AES101/AES102 resolve `_protocol` vs `_aggregate` from the name.                 |
+| One file per feature                     | All seams of a feature live together; consumers import from one module.          |
+| One class per capability seam            | A class lists only what its capability owns, so implementation is always complete.|
+| Rich named methods, one return type each | Protocol classes: each method has one VO return; no dispatch bag.|
+| Abstract methods only                    | Outer layers depend on promises, not behaviour.                                  |
+| Aggregate: exactly one method            | Consumers depend on one stable entry point, not a shifting method list.          |
+| Shared VOs in signatures                 | Numeric and string domain values stay behind VOs; only `bool` is permitted bare.|
+| No impl-layer imports                    | Keeps the dependency arrow (capabilities → contract ← agent).                    |
+| `__all__` + `_layer_symbols`             | Harness/loader introspection and explicit public surface.                        |
+| Register in shared `__init__`            | Importable without reaching into private modules.                                |
 
 ---
 

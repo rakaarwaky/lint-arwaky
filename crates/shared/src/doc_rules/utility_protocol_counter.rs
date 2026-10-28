@@ -33,6 +33,33 @@ pub fn fr_id_heading_re() -> Option<&'static regex::Regex> {
         .as_ref()
 }
 
+/// The one PR-ID shape the AES601 rule family accepts: an H2–H4
+/// requirement heading (`### PR-Project-001: ...`) in a PRD's `Project
+/// Requirements` or a ROADMAP's `Roadmap Status`. Same H2–H4 colon
+/// shape as the FR/DS/DT patterns so the accepted ID sets cannot drift
+/// between the parity check and the counter.
+const PR_ID_HEADING_PATTERN: &str = r"(?m)^#{2,4}\s+(?P<id>PR-[A-Za-z0-9_]+-\d+):";
+
+/// The shared PR-ID heading pattern, compiled once.
+pub fn pr_id_heading_re() -> Option<&'static regex::Regex> {
+    static PAT: OnceLock<Option<regex::Regex>> = OnceLock::new();
+    PAT.get_or_init(|| regex::Regex::new(PR_ID_HEADING_PATTERN).ok())
+        .as_ref()
+}
+
+/// Accepted PR-ID set from a document's `PR-<NAME>-NNN:` headings.
+///
+/// Returns `None` when the document declares no PR-IDs, so the caller
+/// keeps the check silent rather than flagging every sibling row.
+pub fn collect_pr_id_set(text: &str) -> Option<Vec<String>> {
+    let re = pr_id_heading_re()?;
+    let ids: Vec<String> = re
+        .captures_iter(text)
+        .filter_map(|caps| caps.name("id").map(|m| m.as_str().to_string()))
+        .collect();
+    if ids.is_empty() { None } else { Some(ids) }
+}
+
 /// A DESIGN.md DS-ID heading (`### DS-DISP-001: <title>`), H2–H4,
 /// colon-terminated. The NAME token (e.g. DISP, CLIC, MCPS, TUIC) is a
 /// per-folder qualifier, so the qualified `DS-<NAME>-NNN` form is mandatory;
