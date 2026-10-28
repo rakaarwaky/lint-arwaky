@@ -72,7 +72,7 @@ flowchart TD
 | Description | Flag source files whose line count falls below the configured minimum. |
 | Business Rules | AES302 fires FileTooShort when a file's line count is under the min threshold; the violation message contains the observed count and the limit; files at exactly the minimum are allowed. |
 | Edge Cases | A file one line under the minimum violates; at-minimum does not; empty file counts as below-minimum and violates; unreadable file yields no finding. |
-| Capability | ArchLineChecker (shared with FR-001) counts lines against the minimum. |
+| Capability | ArchLineChecker (shared with FR-QualityRules-001) counts lines against the minimum. |
 | Protocol | ILineCheckerProtocol. |
 | Method | Line-count check against the configured minimum returning an AES302 violation on shortfall. |
 | Input | File path plus content; source is CodeAnalysisRequest::RunAnalysis. |

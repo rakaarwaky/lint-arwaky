@@ -76,6 +76,18 @@ Last Updated: 2026-10-02
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
+### {FR-STR-006}
+
+| Aspect       | Detail                                     |
+|--------------|---------------------------------------------|
+| State        | Ready                                      |
+| Done         | STR                                        |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | Ship                                       |
+| Risk         | None                                       |
+| Updated      | 2026-10-28                                 |
+
 ## Reference
 
 | Artifact | Purpose | Link|

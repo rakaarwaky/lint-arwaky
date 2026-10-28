@@ -11,7 +11,7 @@ processing.
 **Configuration lifetime in a watch session.** A watch session is one
 long-lived process holding one config orchestrator, and the config cache is
 keyed by path with no modification-time check and no invalidation entry point
-(see `crates/config-system/FRD.md`, FR-ConfigSystem-003). The configuration a
+(see `crates/config-system/FRD.md`). The configuration a
 session uses is therefore the one parsed at startup, for the whole session:
 editing `lint_arwaky.config.yaml` while `watch` runs changes nothing until the
 session is restarted. Thresholds, ignored paths, and adapter toggles are

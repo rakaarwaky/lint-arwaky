@@ -91,6 +91,23 @@ The structure-rules crate enforces the 7-layer AES folder discipline by auditing
 | Test | Member-root suite tests in the structure rust tests assert AES705 on nested-only-file members and silence on properly rooted members. |
 | Metric | Seeded nested-only member yields exactly one finding; properly rooted member yields zero. |
 
+### FR-STR-006: PR-LA Folder Alignment (AES706)
+
+| Aspect | Detail|
+|--------|-------|
+| Description | Enforce the 1:1 mapping between PR-LA ids at each position, the crate folder that sits there, and the feature requirement prefix that folder's FRD carries. |
+| Business Rules | AES706 fires when a crate folder's requirement ids use a prefix that does not derive from the folder name; fires when a crate folder listed by position has no FRD.md; fires when a PR-LA id in the root spec documents has no crate folder at its position; fires when a PR-LA heading title after the colon does not name its folder. |
+| Edge Cases | A PR-LA id beyond the known folder order fires once per document; requirement ids with the correct prefix stay silent; a documented folder with no FRD.md fires pr_la_missing_frd; a title that names its folder reports no mismatch; PRD.md and ROADMAP.md are read together so both must agree with the folder list. |
+| Capability | PrLaFolderAuditor checks its PR-LA id to crate folder mapping. |
+| Protocol | IStructurePrLaProtocol. |
+| Method | PR-LA folder audit returning AES706 findings per wrong prefix, missing FRD, dangling id, and misnamed title. |
+| Input | Audit entries plus the contents of PRD.md and ROADMAP.md; source is StructureRequest::AuditAll via IStructureAggregate::execute. |
+| Output | Findings in StructureResponse::Findings with AES706 codes. |
+| Error | An unreadable spec document skips its checks instead of failing the audit. |
+| Event | None; audit is synchronous. |
+| Test | conforming_workspace_reports_no_aes706_findings, pr_la_id_without_folder_fires_aes706, fr_id_wrong_prefix_fires_aes706, and missing_frd_fires_aes706 assert firing and silence. |
+| Metric | Each wrong prefix or dangling id yields one AES706 finding per document that carries it; a conforming workspace yields zero. |
+
 ## Public Interface
 
 | Aspect | Detail|

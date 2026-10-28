@@ -18,7 +18,7 @@ flowchart TD
         O --> P2["IGraphProtocol\n(FR-Filesystem-002)"]
         O --> P3["IFileSystemIOProtocol\n(FR-Filesystem-003)"]
         O --> P4["IToolResolutionProtocol\n(FR-Filesystem-004)"]
-        O --> P5["IWorkspaceProtocol\n(FR-Filesystem-005)\nworkspace root + members\n+ project languages (FR-005B)"]
+        O --> P5["IWorkspaceProtocol\n(FR-Filesystem-005)\nworkspace root + members\n+ project languages (FR-Filesystem-005)"]
         O --> C["Cache\n(DashMap)"]
 
         P1 --> T1["tree-sitter parsers\n(Rust, Python, TS, JS)"]

@@ -10,7 +10,7 @@ The crate also provides **auto-fix** capabilities — each adapter exposes an `a
 
 All adapters execute **sequentially** (no threads, no async runtime). Each adapter runs its external tool as a subprocess, captures output, and normalizes results. The entry point is the DI container, which wires all adapters and exposes the aggregate trait.
 
-The crate does **not** own language detection. Project-level language detection belongs to the `filesystem` aggregate, which serves it as `FilesystemRequest::DetectProjectLanguages` (see [crates/filesystem/FRD.md](../filesystem/FRD.md), FR-Filesystem-005). When a caller supplies no pre-computed context, the orchestrator asks the filesystem aggregate which language groups are present and uses the returned flags. It never walks the tree itself.
+The crate does **not** own language detection. Project-level language detection belongs to the `filesystem` aggregate, which serves it as `FilesystemRequest::DetectProjectLanguages` (see [crates/filesystem/FRD.md](../filesystem/FRD.md)). When a caller supplies no pre-computed context, the orchestrator asks the filesystem aggregate which language groups are present and uses the returned flags. It never walks the tree itself.
 
 - **Architecture & Data Flow**
 
@@ -19,7 +19,7 @@ flowchart TD
     A["Surface / Dispatcher"] -->|input| B["ExternalLintContainer"]
     B --> C["ExternalLintOrchestrator\n(IExternalLintAggregate)"]
 
-    C -->|"DetectProjectLanguages\n(no caller context)"| FS["filesystem aggregate\n(FR-Filesystem-005)"]
+    C -->|"DetectProjectLanguages\n(no caller context)"| FS["filesystem aggregate"]
     FS -->|"has_rust / has_python\nhas_js / has_markdown"| C
 
     C -->|"select_adapters()"| D["ExternalLintSelector\n(IExternalLintSelectorProtocol)"]

@@ -48,7 +48,7 @@ Each of the 4 FRs maps to exactly 1 protocol trait and exactly 1 capability stru
 | Description | Remove the unused import at a flagged line, in place or as a dry-run preview. |
 | Business Rules | One call fixes exactly one flagged line; the flag must sit on an import line (`NotAnImportLine` otherwise) and must not span multiple lines (`MultiLineImport`); the import list must not fall out of bounds (`LineOutOfBounds`); dry-run reports the would-be change without writing. |
 | Edge Cases | A clean file yields no call at all; an already-valid import list skips with `AlreadyValid`; a missing or unreadable file fails with `FileNotFound`/`ReadError` rather than succeeding silently; dry-run never modifies the file on disk. |
-| Capability | `UnusedImportFix` implements `IUnusedImportFixProtocol` (`fix_unused_import`, plus the `fix_unused_import_dry` seam the FR-004 pipeline drives). |
+| Capability | `UnusedImportFix` implements `IUnusedImportFixProtocol` (`fix_unused_import`, plus the `fix_unused_import_dry` seam the FR-AutoFix-004 pipeline drives). |
 | Protocol | `IUnusedImportFixProtocol` in `shared/auto_fix`. |
 | Method | `fix_unused_import(&self, file_path: &str, line: LineNumber) -> FixOutcome` |
 | Input | `file_path: &str` and `line: LineNumber` carried by the flagged violation. |
@@ -65,7 +65,7 @@ Each of the 4 FRs maps to exactly 1 protocol trait and exactly 1 capability stru
 | Description | Strip a bypass comment or bypass macro at the flagged line, in place or as a dry-run preview. |
 | Business Rules | Known bypass surface only: allow attributes, hack comments, noqa inline markers, and unwrap macros are in scope; an unmatched pattern skips with `NoBypassPattern`; unsafe removals refuse with `UnsafeRemoval`; context-bearing patterns skip with `AlreadyHasContext`. |
 | Edge Cases | Multiple bypass markers on one line are rewritten in one pass when all are known; an unwrap in a macro context still skips rather than corrupt code; dry-run previews the edit and leaves the file untouched; a missing file fails with `FileNotFound`. |
-| Capability | `BypassFix` implements `IBypassFixProtocol` (`fix_bypass_comments`, plus the `fix_bypass_dry` seam the FR-004 pipeline drives). |
+| Capability | `BypassFix` implements `IBypassFixProtocol` (`fix_bypass_comments`, plus the `fix_bypass_dry` seam the FR-AutoFix-004 pipeline drives). |
 | Protocol | `IBypassFixProtocol` in `shared/auto_fix`. |
 | Method | `fix_bypass_comments(&self, file_path: &str, line: LineNumber) -> FixOutcome` |
 | Input | `file_path: &str` plus `line: LineNumber` from the flagged violation. |
@@ -82,7 +82,7 @@ Each of the 4 FRs maps to exactly 1 protocol trait and exactly 1 capability stru
 | Description | Rename a flagged symbol across the whole file with word-boundary awareness, in place or as a dry-run preview. |
 | Business Rules | Rename is mechanical: the new name carries the `renamed_` prefix; matching is word-boundary aware so substrings survive; a name that collides with a keyword skips with `KeywordConflict`; an absent target skips with `SymbolNotFound`; `AlreadyValid` when the file is already compliant. |
 | Edge Cases | Symbols appearing inside strings/comments move with the rename because the pass is textual and boundary-based, never AST-based; a missing file fails with `FileNotFound`; dry-run prints the would-be rename without writing; zero occurrences skip rather than inventing one. |
-| Capability | `SymbolRename` implements `ISymbolRenameProtocol` (`rename_symbol`, plus the `rename_symbol_dry` seam the FR-004 pipeline drives). |
+| Capability | `SymbolRename` implements `ISymbolRenameProtocol` (`rename_symbol`, plus the `rename_symbol_dry` seam the FR-AutoFix-004 pipeline drives). |
 | Protocol | `ISymbolRenameProtocol` in `shared/auto_fix`. |
 | Method | `rename_symbol(&self, file_path: &str, old_name: &SymbolName, new_name: &SymbolName) -> FixOutcome` |
 | Input | `file_path: &str`, `old_name: &SymbolName`, `new_name: &SymbolName` (the dry variant additionally takes `dry_run: bool`). |

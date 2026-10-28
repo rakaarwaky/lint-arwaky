@@ -12,7 +12,7 @@ Developers, AI agents, and DevOps engineers on multi-language monorepos (Rust/Py
 
 ## Project Requirements
 
-### PR-LA-001: Multi-language scanning (Rust, Python, JS/TS)
+### PR-LA-001: filesystem
 
 | Aspect       | Detail                                                                                  |
 |--------------|------------------------------------------------------------------------------------------|
@@ -23,7 +23,7 @@ Developers, AI agents, and DevOps engineers on multi-language monorepos (Rust/Py
 | Acceptance   | `scan` on `workspaces-bad/` produces violations for every applicable rule code.       |
 | Success Metric | 3 passes/PR → ≤ 1 pass/PR (-66%) across the three languages.                        |
 
-### PR-LA-002: 34 AES rules enforcement across 7 groups
+### PR-LA-002: auto-fix
 
 | Aspect       | Detail                                                                                  |
 |--------------|------------------------------------------------------------------------------------------|
@@ -34,7 +34,7 @@ Developers, AI agents, and DevOps engineers on multi-language monorepos (Rust/Py
 | Acceptance   | `workspaces-bad` produces violations for every applicable rule code in each language.  |
 | Success Metric | 12 post-merge defect escapes/quarter → 0 escapes/quarter.                            |
 
-### PR-LA-003: CLI core commands (`check`, `scan`, `fix`, `ci`)
+### PR-LA-003: cli-commands
 
 | Aspect       | Detail                                                                                  |
 |--------------|------------------------------------------------------------------------------------------|
@@ -45,7 +45,7 @@ Developers, AI agents, and DevOps engineers on multi-language monorepos (Rust/Py
 | Acceptance   | Each command exits with the correct code from the exit-code contract (0/1/2/3).         |
 | Success Metric | Manual developer triage in CI: 45 min/run → < 5 min/run (-89%).                    |
 
-### PR-LA-004: MCP server with 5 tools, full CLI parity
+### PR-LA-004: config-system
 
 | Aspect       | Detail                                                                                  |
 |--------------|------------------------------------------------------------------------------------------|
@@ -56,7 +56,7 @@ Developers, AI agents, and DevOps engineers on multi-language monorepos (Rust/Py
 | Acceptance   | Every CLI command is reachable via `execute_command`.                                   |
 | Success Metric | 45 min/run manual triage → < 5 min/run autonomous agent loop.                         |
 
-### PR-LA-005: Self-auditing capability
+### PR-LA-005: dispatcher
 
 | Aspect       | Detail                                                                                  |
 |--------------|------------------------------------------------------------------------------------------|
@@ -67,7 +67,7 @@ Developers, AI agents, and DevOps engineers on multi-language monorepos (Rust/Py
 | Acceptance   | `check .` on this repo → 0 violations; `docs .` → 0 invariant findings.               |
 | Success Metric | 0 internal architectural regressions across all releases.                            |
 
-### PR-LA-006: External linter adapters (Clippy, Ruff, ESLint)
+### PR-LA-006: doc-rules
 
 | Aspect       | Detail                                                                                  |
 |--------------|------------------------------------------------------------------------------------------|
@@ -78,7 +78,7 @@ Developers, AI agents, and DevOps engineers on multi-language monorepos (Rust/Py
 | Acceptance   | `adapters` lists all installed tools; missing tools are skipped and logged.            |
 | Success Metric | 10k-file scan in < 10s on CI hardware with adapters enabled.                        |
 
-### PR-LA-007: SARIF 2.1.0, JUnit XML, JSON reports
+### PR-LA-007: external-lint
 
 | Aspect       | Detail                                                                                  |
 |--------------|------------------------------------------------------------------------------------------|
@@ -89,7 +89,7 @@ Developers, AI agents, and DevOps engineers on multi-language monorepos (Rust/Py
 | Acceptance   | `scan . --format sarif` emits valid SARIF; `--format junit` emits valid JUnit XML.     |
 | Success Metric | 0 malformed reports across the three formats in CI.                                  |
 
-### PR-LA-008: Git hooks integration
+### PR-LA-008: file-watch
 
 | Aspect       | Detail                                                                                  |
 |--------------|------------------------------------------------------------------------------------------|
@@ -100,7 +100,7 @@ Developers, AI agents, and DevOps engineers on multi-language monorepos (Rust/Py
 | Acceptance   | `install-hook` creates a working pre-commit hook that fires on staged files.           |
 | Success Metric | 0 pre-commit hook false-negatives across the test suite.                           |
 
-### PR-LA-009: Auto-fix capabilities (remove + replace + rename)
+### PR-LA-009: git-hooks
 
 | Aspect       | Detail                                                                                  |
 |--------------|------------------------------------------------------------------------------------------|
@@ -111,7 +111,7 @@ Developers, AI agents, and DevOps engineers on multi-language monorepos (Rust/Py
 | Acceptance   | `fix` applies fixes; `--dry-run` previews without writing files.                       |
 | Success Metric | 100% of mechanical fixes are safe (0 behavioral changes).                            |
 
-### PR-LA-010: Watch mode for continuous linting
+### PR-LA-010: import-rules
 
 | Aspect       | Detail                                                                                  |
 |--------------|------------------------------------------------------------------------------------------|
@@ -122,7 +122,7 @@ Developers, AI agents, and DevOps engineers on multi-language monorepos (Rust/Py
 | Acceptance   | `watch` re-lints on file save; exits cleanly on `Ctrl-C`.                              |
 | Success Metric | 0 missed re-lints across the file-watch acceptance suite.                            |
 
-### PR-LA-011: TUI file browser
+### PR-LA-011: logging
 
 | Aspect       | Detail                                                                                  |
 |--------------|------------------------------------------------------------------------------------------|
@@ -133,7 +133,7 @@ Developers, AI agents, and DevOps engineers on multi-language monorepos (Rust/Py
 | Acceptance   | TUI renders the file tree, runs lint actions, and exits cleanly.                        |
 | Success Metric | 0 TUI crashes in the acceptance suite.                                               |
 
-### PR-LA-012: Workspace exit-code contract enforced everywhere
+### PR-LA-012: maintenance
 
 | Aspect       | Detail                                                                                  |
 |--------------|------------------------------------------------------------------------------------------|
@@ -144,7 +144,7 @@ Developers, AI agents, and DevOps engineers on multi-language monorepos (Rust/Py
 | Acceptance   | All commands return 0/1/2/3 per contract; MCP `execute_command` carries `exit_code`.   |
 | Success Metric | 0 exit-code contract violations in the acceptance suites.                          |
 
-### PR-LA-013: Acceptance tests standardized (one test file per FR)
+### PR-LA-013: mcp-server
 
 | Aspect       | Detail                                                                                  |
 |--------------|------------------------------------------------------------------------------------------|
@@ -155,7 +155,7 @@ Developers, AI agents, and DevOps engineers on multi-language monorepos (Rust/Py
 | Acceptance   | `crates/*/tests/` acceptance test inventory maps to FR IDs in `crates/*/FRD.md`.       |
 | Success Metric | 100% of new FRs ship with an `acceptance_FR_NNN` file.                           |
 
-### PR-LA-014: Windows support
+### PR-LA-014: naming-rules
 
 | Aspect       | Detail                                                                                  |
 |--------------|------------------------------------------------------------------------------------------|
@@ -166,7 +166,7 @@ Developers, AI agents, and DevOps engineers on multi-language monorepos (Rust/Py
 | Acceptance   | Build + test suite passes on a Windows CI runner (experimental cross-compile target).  |
 | Success Metric | 0 Windows runtime regression reports across releases.                              |
 
-### PR-LA-015: Deeper monorepo performance optimizations
+### PR-LA-015: orphan-rules
 
 | Aspect       | Detail                                                                                  |
 |--------------|------------------------------------------------------------------------------------------|
