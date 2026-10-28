@@ -321,7 +321,7 @@ pub const AGENTS_RUNTIME_ROW_LABELS: &[&str] = &[
 /// Header-based table sets per document (AES606 header checks, not row checks).
 pub const AGENTS_PATH_PURPOSE_COLUMNS: &[&str] = &["Path", "Purpose"];
 pub const AGENTS_COMMAND_COLUMNS: &[&str] = &["Category", "Command", "Scope", "CI Gate"];
-
+pub const AGENTS_DOCUMENT_AGENT_COLUMNS: &[&str] = &["Document", "Agent Must"];
 pub const README_QUICK_START_COLUMNS: &[&str] = &["Step", "Action", "Command"];
 pub const CONTRIBUTING_WORKFLOW_COLUMNS: &[&str] = &["Step", "Action", "Detail"];
 pub const CONTRIBUTING_COMMIT_COLUMNS: &[&str] = &["Type", "Usage", "Example"];
@@ -400,6 +400,9 @@ pub const DOC_HEADING_CONTRACTS: &[DocH2Contract] = &[
 // ─── AES606 (expanded) — member docs & template body ─────────────────────
 /// Missing FRD.md / BACKLOG.md / DATA.md / DESIGN.md in a member folder.
 pub const MEMBER_DOC_VIOLATION: &str = "missing_member_doc";
+
+/// Forbidden spec doc present in a member folder that does not owe it.
+pub const MEMBER_DOC_FORBIDDEN_VIOLATION: &str = "forbidden_member_doc";
 
 /// A template placeholder token survived non-prose stripping on a document.
 pub const TEMPLATE_BODY_VIOLATION_UNFILLED_PLACEHOLDER: &str = "unfilled_placeholder";
