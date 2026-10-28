@@ -54,8 +54,8 @@ AI agents working in this workspace must know the AES 7-layer naming convention,
 
 | Artifact     | Purpose                                    | Link |
 |--------------|--------------------------------------------|------|
-| PRD          | Business goals, user stories, and scope    | [PRD.md](PRD.md) |
-| FRD          | Functional requirements specification      | [FRD.md](FRD.md) |
-| DATA         | Data shapes and kernel definitions         | [DATA.md](DATA.md) |
-| DESIGN       | UI/UX and visual system                    | [DESIGN.md](DESIGN.md) |
-| Architecture | System boundaries, tech stack, and infra   | [ARCHITECTURE.md](ARCHITECTURE.md) |
+| README       | What the tool does, every command, install | [README.md](README.md) |
+| CONTRIBUTING | Branch, commit, and PR conventions         | [CONTRIBUTING.md](CONTRIBUTING.md) |
+| ARCHITECTURE | Layer contract for every crate             | [ARCHITECTURE.md](ARCHITECTURE.md) |
+| ROADMAP      | What ships next, in order                  | [ROADMAP.md](ROADMAP.md) |
+| PRD          | What the product does and why              | [PRD.md](PRD.md) |
