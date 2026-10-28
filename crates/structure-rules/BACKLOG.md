@@ -18,67 +18,81 @@ Last Updated: 2026-10-02
 
 ### {FR-STR-001}
 
-| Aspect       | Detail                                      |
+| Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
-| State        | Ready                                       |
-| Done         | FR-STR-001                                       |
-| In Progress  | None                                        |
-| Blocked      | None                                        |
-| Next         | Ship                                        |
-| Risk         | None                                        |
-| Updated      | 2026-09-29                                  |
+| State        | Ready                                      |
+| Done         | STR                                      |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | Ship                                       |
+| Risk         | None                                       |
+| Updated      | 2026-09-29                                 |
 
 ### {FR-STR-002}
 
-| Aspect       | Detail                                      |
+| Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
-| State        | Ready                                       |
-| Done         | FR-STR-002                                       |
-| In Progress  | None                                        |
-| Blocked      | None                                        |
-| Next         | Ship                                        |
-| Risk         | None                                        |
-| Updated      | 2026-09-29                                  |
+| State        | Ready                                      |
+| Done         | STR                                      |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | Ship                                       |
+| Risk         | None                                       |
+| Updated      | 2026-09-29                                 |
 
 ### {FR-STR-003}
 
-| Aspect       | Detail                                      |
+| Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
-| State        | Ready                                       |
-| Done         | FR-STR-003                                       |
-| In Progress  | None                                        |
-| Blocked      | None                                        |
-| Next         | Ship                                        |
-| Risk         | None                                        |
-| Updated      | 2026-09-29                                  |
+| State        | Ready                                      |
+| Done         | STR                                      |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | Ship                                       |
+| Risk         | None                                       |
+| Updated      | 2026-09-29                                 |
 
 ### {FR-STR-004}
 
-| Aspect       | Detail                                      |
+| Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
-| State        | Ready                                       |
-| Done         | FR-STR-004                                       |
-| In Progress  | None                                        |
-| Blocked      | None                                        |
-| Next         | Ship                                        |
-| Risk         | None                                        |
-| Updated      | 2026-09-29                                  |
+| State        | Ready                                      |
+| Done         | STR                                      |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | Ship                                       |
+| Risk         | None                                       |
+| Updated      | 2026-09-29                                 |
 
 ### {FR-STR-005}
 
-| Aspect       | Detail                                      |
+| Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
-| State        | Ready                                       |
-| Done         | FR-STR-005                                       |
-| In Progress  | None                                        |
-| Blocked      | None                                        |
-| Next         | Ship                                        |
-| Risk         | None                                        |
-| Updated      | 2026-09-29                                  |
+| State        | Ready                                      |
+| Done         | STR                                      |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | Ship                                       |
+| Risk         | None                                       |
+| Updated      | 2026-09-29                                 |
+
+### {FR-STR-006}
+
+| Aspect       | Detail                                     |
+|--------------|---------------------------------------------|
+| State        | Ready                                      |
+| Done         | STR                                        |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | Ship                                       |
+| Risk         | None                                       |
+| Updated      | 2026-10-28                                 |
 
 ## Reference
 
-| Prd | {Link to PRD.md} | [{link}](PRD.md) |
-| Frd | {Link to FRD.md} | [{link}](FRD.md) |
-| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md) |
-| Architecture | {Link to ARCHITECTURE.md} | [{link}](ARCHITECTURE.md) |
+| Artifact | Purpose | Link|
+|----------|---------|------|
+| PRD.md | Product requirements | [PRD.md](../../PRD.md)|
+| FRD.md | Feature requirements | [FRD.md](FRD.md)|
+| ROADMAP.md | Roadmap status | [ROADMAP.md](../../ROADMAP.md)|
+| ARCHITECTURE.md | Layer contract | [ARCHITECTURE.md](../../ARCHITECTURE.md)|

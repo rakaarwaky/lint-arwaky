@@ -50,12 +50,12 @@ Copy, fill, delete nothing.
 `lint-arwaky-cli install` installs external adapters; `lint-arwaky-cli adapters` lists the
 active ones (Ruff, Mypy, Bandit, …). `get_config` accepts `"language": "python"`.
 
-| Adapter | Standalone command | What it covers |
-| ------- | ------------------ | -------------- |
-| Ruff | `ruff check src/` | lint + style gate |
-| Mypy | `mypy src/` | static type checking |
-| Bandit | `lint-arwaky-cli security modules/` | security issues |
-| CVE check | `lint-arwaky-cli dependencies modules/` | library vulnerabilities |
+| Adapter | Standalone command | What it covers|
+| ------- | ------------------ | --------------|
+| Ruff | `ruff check src/` | lint + style gate|
+| Mypy | `mypy src/` | static type checking|
+| Bandit | `lint-arwaky-cli security modules/` | security issues|
+| CVE check | `lint-arwaky-cli dependencies modules/` | library vulnerabilities|
 
 `lint-arwaky-cli external modules/` runs only the external linters (ruff).
 
@@ -100,11 +100,11 @@ lint-arwaky-cli scan modules/ --format sarif \
 
 ### Role boundaries
 
-| Layer | Can contain | Cannot contain |
-| ----- | ----------- | -------------- |
-| capabilities | Pure computation, validation | I/O, network, database |
-| utility | Stateless pure functions | State, classes with fields, non-taxonomy imports |
-| agent | Orchestration flow | Computation, I/O, business |
+| Layer | Can contain | Cannot contain|
+| ----- | ----------- | --------------|
+| capabilities | Pure computation, validation | I/O, network, database|
+| utility | Stateless pure functions | State, classes with fields, non-taxonomy imports|
+| agent | Orchestration flow | Computation, I/O, business|
 
 ### Quick fix recipes
 
@@ -132,13 +132,13 @@ lint-arwaky-cli role modules/ --filter AES403
 
 ### Common issues
 
-| Issue | Fix strategy |
-| ----- | ------------ |
-| Cross-layer imports | Contract protocols via DI (`aes-contract`) |
-| Missing protocol inheritance | Create protocol ABC and inherit (`aes-contract` + `aes-capabilities`) |
-| Mixed layer responsibilities | Move code to the correct layer (`aes-*`) |
-| Magic constants | Extract to taxonomy constants (`aes-taxonomy`) |
-| Surface importing capabilities | Use aggregate contracts instead (`aes-contract`) |
+| Issue | Fix strategy|
+| ----- | ------------|
+| Cross-layer imports | Contract protocols via DI (`aes-contract`)|
+| Missing protocol inheritance | Create protocol ABC and inherit (`aes-contract` + `aes-capabilities`)|
+| Mixed layer responsibilities | Move code to the correct layer (`aes-*`)|
+| Magic constants | Extract to taxonomy constants (`aes-taxonomy`)|
+| Surface importing capabilities | Use aggregate contracts instead (`aes-contract`)|
 
 ---
 
@@ -146,16 +146,16 @@ lint-arwaky-cli role modules/ --filter AES403
 
 Every Python lint session is required to carry the rows that apply. Each exists for one reason.
 
-| Section | Why it belongs here |
-| ------- | ------------------- |
-| Pre-flight | A scan on a broken interpreter is noise, not signal. |
-| Scan with path + format | Findings must be machine-triageable (json) or human-scannable (text). |
-| Triage order | CRITICAL (AES201/205/304) blocks merge; fix before HIGH/MEDIUM cosmetics. |
-| Fix routing by AES code | Wrong fix layer recreates the violation; route via `HOW-TO-USE-LINT-ROUTING.md`. |
-| Barrel update after rename | AES101 without `__init__.py` re-export becomes AES501–506. |
-| Role-boundary check | Capabilities/utility/agent rows above must hold after fixes. |
-| Re-scan to 0 | Done means zero AES findings, not "mostly clean". |
-| Language verify | `py_compile` / import / ruff / mypy still pass — AES clean ≠ code healthy. |
+| Section | Why it belongs here|
+| ------- | -------------------|
+| Pre-flight | A scan on a broken interpreter is noise, not signal.|
+| Scan with path + format | Findings must be machine-triageable (json) or human-scannable (text).|
+| Triage order | CRITICAL (AES201/205/304) blocks merge; fix before HIGH/MEDIUM cosmetics.|
+| Fix routing by AES code | Wrong fix layer recreates the violation; route via `HOW-TO-USE-LINT-ROUTING.md`.|
+| Barrel update after rename | AES101 without `__init__.py` re-export becomes AES501–506.|
+| Role-boundary check | Capabilities/utility/agent rows above must hold after fixes.|
+| Re-scan to 0 | Done means zero AES findings, not "mostly clean".|
+| Language verify | `py_compile` / import / ruff / mypy still pass — AES clean ≠ code healthy.|
 
 ---
 

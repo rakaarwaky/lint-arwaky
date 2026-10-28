@@ -8,19 +8,22 @@ Single Orchestrator is implemented, tested, and gated. Nothing is blocked.
 
 ### {FR-SINGLE-001}
 
-| Aspect       | Detail                                      |
+| Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
-| State        | Ready                                       |
-| Done         | FR-SINGLE-001                                       |
-| In Progress  | None                                        |
-| Blocked      | None                                        |
-| Next         | Ship                                        |
-| Risk         | None                                        |
-| Updated      | 2026-09-29                                  |
+| State        | Ready                                      |
+| Done         | —                                          |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | —                                          |
+| Risk         | None                                       |
+| Updated      | 2026-09-29                                 |
 
 ## Reference
 
-| Prd | {Link to PRD.md} | [{link}](PRD.md) |
-| Frd | {Link to FRD.md} | [{link}](FRD.md) |
-| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md) |
-| Architecture | {Link to ARCHITECTURE.md} | [{link}](ARCHITECTURE.md) |
+| Artifact     | Purpose                                    | Link |
+|--------------|--------------------------------------------|------|
+| PRD          | Business goals, user stories, and scope    | [PRD.md](../../PRD.md) |
+| FRD          | Functional requirements specification    | [FRD.md](../../FRD.md) |
+| Backlog      | Task tracking, epics, and implementation status | [BACKLOG.md](../../BACKLOG.md) |
+| Roadmap      | Timeline, phasing, and dependencies        | [ROADMAP.md](../../ROADMAP.md) |
+| Architecture | System boundaries, tech stack, and infra   | [ARCHITECTURE.md](../../ARCHITECTURE.md) |

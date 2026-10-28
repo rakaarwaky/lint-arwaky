@@ -105,16 +105,16 @@ a container; no business logic.
 
 ## Section Contract
 
-| Section | Why it belongs here |
-| ------- | ------------------- |
-| Module docstring / PURPOSE | Names the role: composition container or app entry. |
-| Correct filename + suffix | AES101/AES102 resolve the layer and role from the name. |
-| Layer-legal imports | Keeps the dependency arrow pointed down (AES201–AES205). |
-| `Arc<dyn Trait>` in signatures | Expose contracts, not concretions (AES402). |
-| Block 1 struct / Block 2 wiring | Matches the standard 3-block root layout. |
-| Container: `new` + accessors only | Wiring is the whole job; logic belongs below. |
-| Entry: compose containers + `main` | Bootstrap only; never construct capabilities. |
-| Registered in `mod.rs` | Dead code otherwise; composition needs the export. |
+| Section | Why it belongs here|
+| ------- | -------------------|
+| Module docstring / PURPOSE | Names the role: composition container or app entry.|
+| Correct filename + suffix | AES101/AES102 resolve the layer and role from the name.|
+| Layer-legal imports | Keeps the dependency arrow pointed down (AES201–AES205).|
+| `Arc<dyn Trait>` in signatures | Expose contracts, not concretions (AES402).|
+| Block 1 struct / Block 2 wiring | Matches the standard 3-block root layout.|
+| Container: `new` + accessors only | Wiring is the whole job; logic belongs below.|
+| Entry: compose containers + `main` | Bootstrap only; never construct capabilities.|
+| Registered in `mod.rs` | Dead code otherwise; composition needs the export.|
 
 ---
 

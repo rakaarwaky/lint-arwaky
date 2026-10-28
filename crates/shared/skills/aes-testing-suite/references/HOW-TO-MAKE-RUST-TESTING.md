@@ -88,11 +88,11 @@ Prefixes: `contract_`, `unit_`, `integration_`, `dogfood_`, `smoke_`, `e2e_`, `a
 
 ### Coverage targets
 
-| Layer | Minimum |
-| ----- | ------- |
-| Capabilities | 70% |
-| Agent | 60% |
-| Utility | 50% |
+| Layer | Minimum|
+| ----- | -------|
+| Capabilities | 70%|
+| Agent | 60%|
+| Utility | 50%|
 
 ### Workflow
 
@@ -133,18 +133,18 @@ Repo root:
 
 ### When to use which location
 
-| Test Type | Root `tests/` | Crate `tests/` |
+| Test Type | Root `tests/` | Crate `tests/`|
 |-----------|---------------|----------------|
-| Cross-crate utility | ✓ | |
-| Shared contract | ✓ | |
-| Crate-specific contract | | ✓ |
-| Crate-specific unit | | ✓ |
-| Crate integration | | ✓ |
-| Crate dogfood | | ✓ |
-| Crate smoke | | ✓ |
-| Crate e2e | | ✓ |
-| Crate acceptance | | ✓ |
-| Crate benchmark | | ✓ |
+| Cross-crate utility | ✓ ||
+| Shared contract | ✓ ||
+| Crate-specific contract | | ✓|
+| Crate-specific unit | | ✓|
+| Crate integration | | ✓|
+| Crate dogfood | | ✓|
+| Crate smoke | | ✓|
+| Crate e2e | | ✓|
+| Crate acceptance | | ✓|
+| Crate benchmark | | ✓|
 
 ### Cargo.toml for benchmarks
 
@@ -162,19 +162,19 @@ Registering a benchmark requires the `[[bench]]` block above **and** workflow st
 
 ## Section Contract
 
-| Check | Why it belongs here |
-| ----- | ------------------- |
-| No inline tests in `src/`. | Source stays clean; the suite lives under `tests/`/`benches/` only. |
-| Flat prefix naming, no subdirectories under `tests/`. | The prefix IS the virtual folder — keeps discovery and CI filters uniform. |
-| Contract test proves trait implementation exists. | Catches unimplemented seams before behaviour tests. |
-| Unit tests cover happy path, edge cases, and error paths. | The baseline every PR must carry. |
-| Integration test builds the real DI wiring; e2e asserts on real output. | Proves composition, not mocks. |
-| Dogfood test runs against LIVE service/session without mocks; skips when unavailable. | Real-end-to-end validation; CI-safe with skipif. |
-| Acceptance tests reference FRD/PRD IDs; smoke runs in <5s. | Requirement traceability plus a fast boot gate. |
-| Benchmarks use `criterion` + `[[bench]]` registered in `Cargo.toml`. | Comparable, stable numbers; `cargo bench` discovers the target. |
-| Coverage meets 70/60/50 for capabilities/agent/utility. | Per-layer floor before merge. |
-| `cargo nextest run --workspace --lib --tests -j 2` passes. | The suite is green or the work is not done. |
-| ALL 8 test types present per crate. | No type is optional — contract, unit, integration, dogfood, smoke, e2e, acceptance, bench. |
+| Check | Why it belongs here|
+| ----- | -------------------|
+| No inline tests in `src/`. | Source stays clean; the suite lives under `tests/`/`benches/` only.|
+| Flat prefix naming, no subdirectories under `tests/`. | The prefix IS the virtual folder — keeps discovery and CI filters uniform.|
+| Contract test proves trait implementation exists. | Catches unimplemented seams before behaviour tests.|
+| Unit tests cover happy path, edge cases, and error paths. | The baseline every PR must carry.|
+| Integration test builds the real DI wiring; e2e asserts on real output. | Proves composition, not mocks.|
+| Dogfood test runs against LIVE service/session without mocks; skips when unavailable. | Real-end-to-end validation; CI-safe with skipif.|
+| Acceptance tests reference FRD/PRD IDs; smoke runs in <5s. | Requirement traceability plus a fast boot gate.|
+| Benchmarks use `criterion` + `[[bench]]` registered in `Cargo.toml`. | Comparable, stable numbers; `cargo bench` discovers the target.|
+| Coverage meets 70/60/50 for capabilities/agent/utility. | Per-layer floor before merge.|
+| `cargo nextest run --workspace --lib --tests -j 2` passes. | The suite is green or the work is not done.|
+| ALL 8 test types present per crate. | No type is optional — contract, unit, integration, dogfood, smoke, e2e, acceptance, bench.|
 
 ---
 

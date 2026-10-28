@@ -8,15 +8,13 @@ The Agentic Engineering System is a layered, AI-native architecture pattern. It 
 
 The architecture supports multi-language workspaces.
 
-
-| Term               | Meaning                                                           |
-| ------------------ | ----------------------------------------------------------------- |
-| Project Workspaces | Project root containing all configuration and language members    |
-| Workspace Member   | One self-contained crate, package, or module inside the workspace |
-| Crates directory   | Rust workspace members                                            |
-| Packages directory | TypeScript or JavaScript packages                                 |
-| Modules directory  | Python modules                                                    |
-
+| Term               | Meaning                                                          |
+| ------------------ | -----------------------------------------------------------------|
+| Project Workspaces | Project root containing all configuration and language members   |
+| Workspace Member   | One self-contained crate, package, or module inside the workspace|
+| Crates directory   | Rust workspace members                                           |
+| Packages directory | TypeScript or JavaScript packages                                |
+| Modules directory  | Python modules                                                   |
 
 ---
 
@@ -137,13 +135,11 @@ project-root/                             <- Project workspace root
 
 #### Summary
 
-
-| Folder kind | Carries                                   | Documents                  |
-| ----------- | ----------------------------------------- | -------------------------- |
-| `shared/`   | `taxonomy_*`, `utility_*`, `contract_*`   | `DATA.md` + `BACKLOG.md`   |
-| feature     | `capabilities_*` + `agent_*_orchestrator` | `FRD.md` + `BACKLOG.md`    |
-| surface     | `surface_*`                               | `DESIGN.md` + `BACKLOG.md` |
-
+| Folder kind | Carries                                   | Documents                 |
+| ----------- | ----------------------------------------- | --------------------------|
+| `shared/`   | `taxonomy_*`, `utility_*`, `contract_*`   | `DATA.md` + `BACKLOG.md`  |
+| feature     | `capabilities_*` + `agent_*_orchestrator` | `FRD.md` + `BACKLOG.md`   |
+| surface     | `surface_*`                               | `DESIGN.md` + `BACKLOG.md`|
 
 ---
 
@@ -155,15 +151,13 @@ Taxonomy is the domain foundation layer. It defines the stable language of the d
 
 ### Components
 
-
-| Role         | Meaning                               |
-| ------------ | ------------------------------------- |
-| Value object | Immutable data concept                |
-| Entity       | Stateful domain concept with identity |
-| Event        | Immutable domain fact                 |
-| Error        | Domain-level error                    |
-| Constant     | Compile-time literal value            |
-
+| Role         | Meaning                              |
+| ------------ | -------------------------------------|
+| Value object | Immutable data concept               |
+| Entity       | Stateful domain concept with identity|
+| Event        | Immutable domain fact                |
+| Error        | Domain-level error                   |
+| Constant     | Compile-time literal value           |
 
 ### Dependencies
 
@@ -186,12 +180,10 @@ Contract defines the public behavior of the system without exposing implementati
 
 ### Components
 
-
-| Role      | Meaning                                                                                           |
-| --------- | ------------------------------------------------------------------------------------------------- |
-| Protocol  | Interface defining inbound behavior. It is implemented by Capabilities and consumed by the Agent. |
-| Aggregate | Facade definition implemented by Agent, used by Surface to access feature behavior.               |
-
+| Role      | Meaning                                                                                          |
+| --------- | -------------------------------------------------------------------------------------------------|
+| Protocol  | Interface defining inbound behavior. It is implemented by Capabilities and consumed by the Agent.|
+| Aggregate | Facade definition implemented by Agent, used by Surface to access feature behavior.              |
 
 ### Dependencies
 
@@ -226,15 +218,13 @@ surface folder is misplaced (AES703 `surface_has_misplaced_files`).
 
 ### Technical Concern Examples
 
-
-| Concern                 | Responsibility                                      |
-| ----------------------- | --------------------------------------------------- |
-| File discovery          | Walk directories, detect files, apply ignore        |
-| External tool execution | Run linters, compilers, formatters, analyzers       |
-| Parsing and matching    | Parse text, match patterns, extract structured data |
-| Path normalization      | Normalize paths across platforms                    |
-| System operations       | Handle process or environment mechanics             |
-
+| Concern                 | Responsibility                                     |
+| ----------------------- | ---------------------------------------------------|
+| File discovery          | Walk directories, detect files, apply ignore       |
+| External tool execution | Run linters, compilers, formatters, analyzers      |
+| Parsing and matching    | Parse text, match patterns, extract structured data|
+| Path normalization      | Normalize paths across platforms                   |
+| System operations       | Handle process or environment mechanics            |
 
 ### Special Rules
 
@@ -266,18 +256,16 @@ Capabilities role suffixes are unlimited. The role name is chosen based on deman
 
 Capabilities generally handle two types of concerns:
 
-
-| Category                | Concern        | Responsibility                                 |
-| ----------------------- | -------------- | ---------------------------------------------- |
-| **Business Logic**      | Validation     | Check domain conditions or input correctness   |
-|                         | Computation    | Calculate scores, totals, or derived values    |
-|                         | Transformation | Map, filter, reduce, or reshape data           |
-|                         | Resolution     | Apply rules and decide outcomes                |
-|                         | Assessment     | Judge severity, compliance, grade, or quality  |
-| **External Adaptation** | Repository     | Fetch or persist domain entities to a database |
-|                         | Integration    | Communicate with third-party services or APIs  |
-|                         | Provider       | Generate data from external systems            |
-
+| Category                | Concern        | Responsibility                                |
+| ----------------------- | -------------- | ----------------------------------------------|
+| **Business Logic**      | Validation     | Check domain conditions or input correctness  |
+|                         | Computation    | Calculate scores, totals, or derived values   |
+|                         | Transformation | Map, filter, reduce, or reshape data          |
+|                         | Resolution     | Apply rules and decide outcomes               |
+|                         | Assessment     | Judge severity, compliance, grade, or quality |
+| **External Adaptation** | Repository     | Fetch or persist domain entities to a database|
+|                         | Integration    | Communicate with third-party services or APIs |
+|                         | Provider       | Generate data from external systems           |
 
 ### Special Rules
 
@@ -306,15 +294,13 @@ Agent may depend only on Taxonomy, Contract, and Utility.
 
 ### Allowed Flow Control
 
-
-| Flow Type               | Purpose                                |
-| ----------------------- | -------------------------------------- |
-| Sequential execution    | Run steps in order                     |
-| Looping                 | Process multiple items or events       |
-| Branching               | Choose path based on result            |
-| Error handling          | Recover, abort, continue, or escalate  |
-| Timeout or cancellation | Stop long-running or asynchronous work |
-
+| Flow Type               | Purpose                               |
+| ----------------------- | --------------------------------------|
+| Sequential execution    | Run steps in order                    |
+| Looping                 | Process multiple items or events      |
+| Branching               | Choose path based on result           |
+| Error handling          | Recover, abort, continue, or escalate |
+| Timeout or cancellation | Stop long-running or asynchronous work|
 
 ### Special Rules
 
@@ -349,13 +335,11 @@ Surface roles include:
 
 ### Surface Groups
 
-
-| Group            | Roles                             | Allowed Dependencies                  | Forbidden Dependencies                                       | Rule                                            |
-| ---------------- | --------------------------------- | ------------------------------------- | ------------------------------------------------------------ | ----------------------------------------------- |
-| Smart surfaces   | command, controller, page, router | Taxonomy, Contract Aggregate, Utility | Agent, Capabilities, Contract Protocol, Root                 | May initiate feature behavior through aggregate |
-| Utility surfaces | hook, store, action, screen       | Taxonomy                              | Agent, Capabilities, Contract, Utility, Other surfaces, Root | Support smart surfaces, data/state only         |
-| Passive surfaces | component, view, layout           | Taxonomy                              | Agent, Contract, Capabilities, Other surfaces, Root          | Presentation-only, no logic or orchestration    |
-
+| Group            | Roles                             | Allowed Dependencies                  | Forbidden Dependencies                                       | Rule                                           |
+| ---------------- | --------------------------------- | ------------------------------------- | ------------------------------------------------------------ | -----------------------------------------------|
+| Smart surfaces   | command, controller, page, router | Taxonomy, Contract Aggregate, Utility | Agent, Capabilities, Contract Protocol, Root                 | May initiate feature behavior through aggregate|
+| Utility surfaces | hook, store, action, screen       | Taxonomy                              | Agent, Capabilities, Contract, Utility, Other surfaces, Root | Support smart surfaces, data/state only        |
+| Passive surfaces | component, view, layout           | Taxonomy                              | Agent, Contract, Capabilities, Other surfaces, Root          | Presentation-only, no logic or orchestration   |
 
 ### Special Rules
 
@@ -374,12 +358,10 @@ Root is the composition layer. It assembles the system by connecting concrete im
 
 ### Components
 
-
-| Role      | Meaning                                                                           |
-| --------- | --------------------------------------------------------------------------------- |
-| Container | Wires one feature by connecting Capabilities to Contract protocols and aggregates |
-| Entry     | Bootstraps the application and composes feature containers                        |
-
+| Role      | Meaning                                                                          |
+| --------- | ---------------------------------------------------------------------------------|
+| Container | Wires one feature by connecting Capabilities to Contract protocols and aggregates|
+| Entry     | Bootstraps the application and composes feature containers                       |
 
 ### Dependencies
 

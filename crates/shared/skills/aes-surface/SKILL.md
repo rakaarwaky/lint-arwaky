@@ -47,11 +47,11 @@ metadata:
 The **layer** decides which suffix, which imports, and which structure apply.
 Rules, templates, section contracts, and Verify blocks live in the language HOW-TUs under [`references/`](references/).
 
-| Language | Focus | Body rule | HOW-TO |
-| -------- | ----- | --------- | ------ |
-| Python | Command / controller / component | Smart / Utility / Passive tiers; no business logic | [references/HOW-TO-MAKE-PYTHON-SURFACE.md](references/HOW-TO-MAKE-PYTHON-SURFACE.md) |
-| Rust | Command / controller / component | Smart / Utility / Passive tiers; no business logic | [references/HOW-TO-MAKE-RUST-SURFACE.md](references/HOW-TO-MAKE-RUST-SURFACE.md) |
-| TypeScript | Command / controller / component | Smart / Utility / Passive tiers; no business logic | [references/HOW-TO-MAKE-TYPESCRIPT-SURFACE.md](references/HOW-TO-MAKE-TYPESCRIPT-SURFACE.md) |
+| Language | Focus | Body rule | HOW-TO|
+| -------- | ----- | --------- | ------|
+| Python | Command / controller / component | Smart / Utility / Passive tiers; no business logic | [references/HOW-TO-MAKE-PYTHON-SURFACE.md](references/HOW-TO-MAKE-PYTHON-SURFACE.md)|
+| Rust | Command / controller / component | Smart / Utility / Passive tiers; no business logic | [references/HOW-TO-MAKE-RUST-SURFACE.md](references/HOW-TO-MAKE-RUST-SURFACE.md)|
+| TypeScript | Command / controller / component | Smart / Utility / Passive tiers; no business logic | [references/HOW-TO-MAKE-TYPESCRIPT-SURFACE.md](references/HOW-TO-MAKE-TYPESCRIPT-SURFACE.md)|
 
 **The layer chain:**
 
@@ -66,15 +66,15 @@ Each file answers one layer's job. A method or import in the wrong layer is the 
 Every rule is machine-checked by `lint-arwaky-cli scan <layer-path>` (see each HOW-TO § Verify).
 A rule cannot drift from the gate. Cite the linter, not this file, when pointing at a rule.
 
-| Layer | Rule |
-| ----- | ---- |
-| Naming | File `surface_<domain>_<role>` — suffix in the surface allow-list; **`_entry` is root, not surface** (AES101/AES102). |
-| Tiers | Smart (`_command`/`_controller`/`_page`): taxonomy + `_aggregate` + utility. Utility (`_hook`/`_store`/`_action`/`_screen`/`_router`): taxonomy only. Passive (`_component`/`_view`/`_layout`): taxonomy only (AES406 / AES201). |
-| Behaviour | Zero business logic and zero computation in every tier; Smart delegates through the injected aggregate only. |
-| Errors | Never silently discard — no `or None` / `unwrap_or_default()` / `?? UiState…`; return Ok/Err or update an error-state VO. |
-| State | All state fields use shared VOs — no primitives, no local domain models. |
-| Register | Package module export where required. |
-| Verify | `lint-arwaky-cli scan <layer-path>` → 0. Language compile is fallback only. |
+| Layer | Rule|
+| ----- | ----|
+| Naming | File `surface_<domain>_<role>` — suffix in the surface allow-list; **`_entry` is root, not surface** (AES101/AES102).|
+| Tiers | Smart (`_command`/`_controller`/`_page`): taxonomy + `_aggregate` + utility. Utility (`_hook`/`_store`/`_action`/`_screen`/`_router`): taxonomy only. Passive (`_component`/`_view`/`_layout`): taxonomy only (AES406 / AES201).|
+| Behaviour | Zero business logic and zero computation in every tier; Smart delegates through the injected aggregate only.|
+| Errors | Never silently discard — no `or None` / `unwrap_or_default()` / `?? UiState…`; return Ok/Err or update an error-state VO.|
+| State | All state fields use shared VOs — no primitives, no local domain models.|
+| Register | Package module export where required.|
+| Verify | `lint-arwaky-cli scan <layer-path>` → 0. Language compile is fallback only.|
 
 Split details, templates, and Section Contract tables: **read the language HOW-TO** — do not restate them here.
 
@@ -112,15 +112,15 @@ you write the file.
 The file is written for the developer who arrives before you and has to change something
 without reading every source file. It carries six sections:
 
-| Section | Answers |
-| --- | --- |
-| `## Kind` | Which surface this is — `api`, `mcp`, `cli`, `desktop`, `tui` — and what the layer does and does not own. |
-| `## Entry Points` | One row per entry: the file, what the user or caller invokes, and which aggregate it reaches. |
-| `## Request Shape` | What a request looks like once it arrives, and what has already been resolved. |
-| `## States` | Each state a caller can observe, the condition that produces it, and what the user sees. |
-| `## Error States` | Each failure mode, where it is caught, and what the caller gets. |
-| `## Invariants` | The rules a change must not break. |
-| `## Change Checklist` | Which files to touch for which kind of change. |
+| Section | Answers|
+| --- | ---|
+| `## Kind` | Which surface this is — `api`, `mcp`, `cli`, `desktop`, `tui` — and what the layer does and does not own.|
+| `## Entry Points` | One row per entry: the file, what the user or caller invokes, and which aggregate it reaches.|
+| `## Request Shape` | What a request looks like once it arrives, and what has already been resolved.|
+| `## States` | Each state a caller can observe, the condition that produces it, and what the user sees.|
+| `## Error States` | Each failure mode, where it is caught, and what the caller gets.|
+| `## Invariants` | The rules a change must not break.|
+| `## Change Checklist` | Which files to touch for which kind of change.|
 
 Write each row against the real code. A `DESIGN.md` that restates the layer definition
 instead of naming this folder's files has told the reader nothing they could not get from

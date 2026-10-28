@@ -42,7 +42,7 @@
 
 1. **Create file** → `BACKLOG.md` in feature directory.
 2. **Section: Progress Overview** — document baseline state.
-3. **Section: Backlog Status** — `{<PROJECT-NAME-ID> | <FEATURE-NAME-ID> | DESIGN-NAME-ID}` items,
+3. **Section: Backlog Status** — `{<DATA-NAME-ID> | <FEATURE-NAME-ID> | DESIGN-NAME-ID}` items,
    each carrying State / Done / In Progress / Blocked / Next / Risk / Updated.
 4. **Section: Reference** — link to PRD.md, FRD.md, ROADMAP.md, ARCHITECTURE.md.
 5. **Verify** → `lint-arwaky-cli docs` passes; all sections present.
@@ -60,7 +60,7 @@ Copy, fill, delete nothing.
 
 ## Backlog Status 
 
-### {<PROJECT-NAME-ID> | <FEATURE-NAME-ID> | DESIGN-NAME-ID}
+### {<DATA-NAME-ID> | <FEATURE-NAME-ID> | DESIGN-NAME-ID}
 
 | Aspect       | Detail                                      |
 |--------------|---------------------------------------------|
@@ -72,9 +72,9 @@ Copy, fill, delete nothing.
 | Risk         | <what ships broken / None>                  |
 | Updated      | <YYYY-MM-DD>                                |
 
-### {<PROJECT-NAME-ID> | <FEATURE-NAME-ID> | DESIGN-NAME-ID}
-### {<PROJECT-NAME-ID> | <FEATURE-NAME-ID> | DESIGN-NAME-ID}
-### {<PROJECT-NAME-ID> | <FEATURE-NAME-ID> | DESIGN-NAME-ID}
+### {<DATA-NAME-ID> | <FEATURE-NAME-ID> | DESIGN-NAME-ID}
+### {<DATA-NAME-ID> | <FEATURE-NAME-ID> | DESIGN-NAME-ID}
+### {<DATA-NAME-ID> | <FEATURE-NAME-ID> | DESIGN-NAME-ID}
 
 ## Reference
 
@@ -96,7 +96,7 @@ reason.
 | Section          | Why it belongs here                                                     |
 | ---------------- | ----------------------------------------------------------------------- |
 | Progress Overview| Gives the truth before the table, not after it.                         |
-| Backlog Status   | `{<PROJECT-NAME-ID> | <FEATURE-NAME-ID> | DESIGN-NAME-ID}` entries with State / Done / In Progress / Blocked / Next / Risk / Updated. |
+| Backlog Status   | `{<DATA-NAME-ID> &#124; <FEATURE-NAME-ID> &#124; DESIGN-NAME-ID}` entries with State / Done / In Progress / Blocked / Next / Risk / Updated. |
 | Reference        | Connects the backlog to PRD, FRD, Roadmap, Architecture.               |
 
 ---

@@ -41,132 +41,88 @@ flowchart TD
 
 ### FR-Logging-001: Build the Filter Directives
 
-- **Description**: Map a `LogVerbosity` value to the `EnvFilter`
-  directive string that decides which events reach the terminal.
-- **Input**: `LogVerbosity`.
-- **Output**: An `EnvFilter` ready to install.
-- **Business Rules**:
-  - `Default` → `"warn,lint_arwaky::audit=info"` (no flag; quiet).
-  - `Info` → `"info,lint_arwaky::audit=info"` (`-v`; the full feed).
-  - `Debug` → `"debug,lint_arwaky::audit=debug"` (`-v` repeated;
-    adds walker trace-level detail).
-  - An explicitly-set `LINT_ARWAKY_LOG` env var overrides the flag
-    (operator override — useful in CI where the flag is not passed).
-- **Edge Cases**:
-  - Malformed `LINT_ARWAKY_LOG` value → tracing falls back to the
-    flag's directive (built-in behavior).
-  - No env var, no flag → `Default` directives.
-- **Error Handling**: none — directive construction cannot fail; a
-  malformed env value degrades to the flag's directive.
-
----
+| Aspect | Detail|
+|--------|-------|
+| Description | Map a verbosity level to tracing EnvFilter directives for the root and audit targets. |
+| Business Rules | Verbosity levels (default, info, debug) map to fixed directives: default yields warn on root plus info on the audit target; info yields info on root plus info on audit; debug yields debug on root plus debug on audit. Unknown verbosity falls back to default. Directives are returned as an EnvFilter, never installed here. |
+| Edge Cases | Unknown verbosity level falls back to the default mapping rather than panicking; repeated builds with the same level yield identical directives; audit target is always at least info. |
+| Capability | FilterBuilder maps verbosity to filter directives. |
+| Protocol | IFilterBuildProtocol. |
+| Method | Build the EnvFilter string/directives for a given verbosity level. |
+| Input | Verbosity enum from LoggingRequest (InstallSubscriber carries it); source is CLI verbosity flags. |
+| Output | EnvFilter passed to subscriber installation in FR-Logging-002; returned in LoggingResponse::Done. |
+| Error | Invalid level input falls back to default directives; never fails. |
+| Event | None; pure mapping. |
+| Test | fr_001_default_filter_directive, fr_001_info_filter_directive, fr_001_debug_filter_directive, filter_directive_default_returns_warn_and_audit_info, and filter_directive_debug_returns_debug_and_audit_debug assert exact directive strings. |
+| Metric | Each of the three verbosity levels maps to its documented directive pair with zero mismatch on the filter_directive_* suite. |
 
 ### FR-Logging-002: Install the Global Subscriber
 
-- **Description**: Install the process-wide `tracing_subscriber` fmt
-  layer, writing to stderr, with the filter from FR-Logging-001.
-- **Input**: `LogVerbosity`, `with_ansi: bool`.
-- **Output**: none (the global subscriber is set-once).
-- **Business Rules**:
-  - `with_ansi = true` → ANSI colors enabled (CLI).
-  - `with_ansi = false` → ANSI escapes suppressed (MCP stdio
-    transport must never carry escape bytes).
-  - A second call is a no-op: the global subscriber cannot be
-    re-initialized, so the guard must swallow it silently.
-- **Edge Cases**:
-  - Called before any `tracing::` event → the subscriber catches
-    everything from that point on.
-  - Called twice in the same process → second call is a no-op, no
-    panic.
-- **Error Handling**: none at runtime; a panic on re-init is
-  prevented by the set-once guard.
-
----
+| Aspect | Detail|
+|--------|-------|
+| Description | Install the global tracing subscriber exactly once with the requested filter and ANSI setting. |
+| Business Rules | SubscriberInit installs a tracing-subscriber registry with the EnvFilter from FR-Logging-001. First call wins: a second init call is a noop. ANSI on/off is honored by the request. Installation never panics for any verbosity level. |
+| Edge Cases | Second init call is a noop (no panic, no double subscriber); init with ANSI disabled works; init with debug verbosity works; default verbosity works; container init delegates to the orchestrator. |
+| Capability | SubscriberInit performs global subscriber installation. |
+| Protocol | ISubscriberInstallProtocol. |
+| Method | Install the subscriber with the given filter and ansi flag; returns the EnvFilter used. |
+| Input | Verbosity level plus ansi boolean; source is LoggingRequestKind::InstallSubscriber via ILoggingAggregate::execute. |
+| Output | LoggingResponseKind::Done carrying install status and the EnvFilter. |
+| Error | Already-installed global subscriber makes the call a noop with success status; no error propagates. |
+| Event | None; subscriber installation is process-global setup. |
+| Test | fr_002_init_does_not_panic, second_init_call_is_noop, init_debug_with_ansi_does_not_panic, install_via_protocol_returns_env_filter_for_each_level, and container_init_delegates_to_orchestrator assert idempotence and delegation. |
+| Metric | Three verbosity levels each return their EnvFilter from one protocol install call; repeat install leaves process state unchanged. |
 
 ### FR-Logging-003: Time a Scan Phase
 
-- **Description**: Measure how long one scan phase takes and emit a
-  structured event when it finishes.
-- **Input**: a phase name; a start marker; an end marker with a
-  result count.
-- **Output**: one tracing event per finished phase:
-  `{phase, elapsed_ms, count?}`.
-- **Business Rules**:
-  - One event per phase; the phase is identified by name (`quality`,
-    `role`, `import`, `naming`, `orphan`, `external:<adapter>`,
-    `structure`, `doc`).
-  - `elapsed_ms` is wall-clock time from start to end marker.
-  - `count` is optional (violation count, file count, adapter
-    count).
-  - Events use the audit target so the filter in FR-Logging-001
-    controls their visibility.
-- **Edge Cases**:
-  - A phase that panics → the end marker still fires (the timer is
-    a scope guard, not a success check).
-  - Nested phases are not supported; one timer per phase, flat.
-- **Error Handling**: none — timing cannot fail.
-
----
+| Aspect | Detail|
+|--------|-------|
+| Description | Time a scan phase and emit a structured duration event when it finishes. |
+| Business Rules | PhaseTimer starts when PhaseStarted arrives and records the elapsed time on PhaseFinished, emitting a structured tracing event with the phase name and duration. Measurements use a monotonic clock; nested phases are timed independently. |
+| Edge Cases | PhaseFinished without a matching PhaseStarted tolerates a zero/unknown duration rather than panicking; two sequential phases each get their own timing; dropping a timer without finishing still returns a response without panic. |
+| Capability | PhaseTimerCapability records phase durations. |
+| Protocol | IPhaseTimerProtocol. |
+| Method | Start phase timing, stop it, and return the measured duration. |
+| Input | Phase name from LoggingRequestKind::PhaseStarted and PhaseFinished; source is per-phase calls in the scan pipeline. |
+| Output | Timing data through LoggingResponseKind::PhaseTimer plus a structured trace event. |
+| Error | Unmatched finish (no start) yields a zero-duration result instead of an error. |
+| Event | Structured trace event on phase completion with phase name and elapsed milliseconds. |
+| Test | PhaseTimer contract tests in the logging suite assert start/stop pairing and response shape (LoggingResponseKind::PhaseTimer). |
+| Metric | Measured duration for a seeded busy phase is greater than zero and within a sane bound of wall clock; unmatched finish returns zero without panic. |
 
 ### FR-Logging-004: Report Walker Progress
 
-- **Description**: Emit a real-time event per directory the file
-  walker enters or skips, so a developer watching `scan -v` sees
-  exactly what is being read and what is being ignored, and why.
-- **Input**: a directory name; optionally a skip reason; optionally
-  a running file count.
-- **Output**: tracing events: `walker_enter(dir)`,
-  `walker_skip(dir, reason)`, `files_discovered(count, elapsed_ms)`.
-- **Business Rules**:
-  - `walker_enter` fires once per directory the walker descends
-    into.
-  - `walker_skip` fires once per directory the walker does not
-    descend into, carrying exactly one reason: `default_skip_dir`,
-    `ignored_path_pattern`, `non_member_at_ws_root`, or
-    `nested_git_repo`.
-  - `files_discovered` fires once at the end of the walk, carrying
-    the total lintable-file count and the walk duration.
-  - All three use the audit target; visibility follows
-    FR-Logging-001.
-- **Edge Cases**:
-  - A skip that matches two rules (e.g. an ignored dir that is also
-    a nested git repo) → report the first matching reason, in the
-    fixed order: default skip dir, ignored path pattern, non-member
-    at workspace root, nested git repo.
-  - The walk root itself never fires `walker_enter` (the scan starts
-    there, not inside it).
-- **Error Handling**: none — the walker receives directory names
-    from the filesystem aggregate; a missing directory produces no
-    event.
-
----
+| Aspect | Detail|
+|--------|-------|
+| Description | Emit real-time progress events for files the directory walker enters and skips. |
+| Business Rules | WalkerEnter reports a path being considered; WalkerSkip reports a path rejected by ignore rules with a reason; FilesDiscovered aggregates the count found in the batch. Events map to tracing at the verbosity tier from FR-Logging-001 so they appear only when enabled. |
+| Edge Cases | Skipped files still appear as skip events with reason, not as enter events; empty batch emits nothing; disabled verbosity suppresses emission without dropping counts; walker continuation is unaffected by reporting failures. |
+| Capability | WalkerReporter emits walker progress events. |
+| Protocol | IWalkerReportProtocol. |
+| Method | Report enter, skip, and discovered-count signals to the tracing backend. |
+| Input | Path plus optional reason and counts; source is LoggingRequestKind::WalkerEnter, WalkerSkip, and FilesDiscovered inside the scan walk. |
+| Output | LoggingResponseKind::Done plus trace events visible at info/debug. |
+| Error | Reporting never fails the walk; emission is best-effort. |
+| Event | Trace events for enter, skip, and discovered counts. |
+| Test | Walker-report contract coverage in the logging tests asserts enter/skip event emission and count reporting through the aggregate. |
+| Metric | On a seeded tree, reported enter plus skip events equal the seeded file count; disabled verbosity produces zero emitted events yet identical counts. |
 
 ## Public Interface
 
-### Protocol API
-
-| Method | Input | Output | Error | Event | Description |
-|---|---|---|---|---|---|
-| `build_filter` | `LogVerbosity` | `EnvFilter` | — | — | Construct the filter without installing. |
-| `install` | `LogVerbosity`, `with_ansi: bool` | `()` | — | — | Install the global subscriber (set-once). |
-| `phase_started` | `&str` (phase name) | `PhaseTimer` | — | `phase_start` | Begin a timing scope for one phase. |
-| `phase_finished` | `PhaseTimer`, `count: Option<usize>` | `()` | — | `phase_done` | End the scope, emit `{phase, elapsed_ms, count?}`. |
-| `walker_enter` | `dir: &str` | `()` | — | `walker_enter` | Report the walker descending into `dir`. |
-| `walker_skip` | `dir: &str`, `reason: SkipReason` | `()` | — | `walker_skip` | Report a skipped directory with its reason. |
-| `files_discovered` | `count: usize`, `elapsed_ms: u64` | `()` | — | `files_discovered` | Report the walk total. |
-
-### Aggregate API
-
-| Method | Input | Output | Error | Event | Description |
-|---|---|---|---|---|---|
-| `execute` | `LoggingRequest` | `LoggingResponse` | — | — | Single entry point. Routes request variants to capability seams. |
-
----
+| Aspect | Detail|
+|--------|-------|
+| Agent | LoggingOrchestrator — the agent-layer orchestrator behind logger setup and observability requests. |
+| Aggregate | ILoggingAggregate — the feature's single front door. |
+| Method | execute(&self, request: LoggingRequest) -> LoggingResponse |
+| Request | LoggingRequest { kind: LoggingRequestKind::{InstallSubscriber, PhaseStarted, PhaseFinished, WalkerEnter, WalkerSkip, FilesDiscovered} } |
+| Response | LoggingResponse { kind: LoggingResponseKind::{Done, PhaseTimer} } |
 
 ## Reference
 
-- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature; this file is specification only.
-- PRD: [PRD.md](../../PRD.md)
-- Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
-
-| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md) |
+| Artifact | Purpose | Link|
+|----------|---------|------|
+| BACKLOG.md | Backlog tracking | [BACKLOG.md](BACKLOG.md)|
+| PRD.md | Product requirements | [PRD.md](../../PRD.md)|
+| FRD.md | Feature requirements | [FRD.md](FRD.md)|
+| ROADMAP.md | Roadmap status | [ROADMAP.md](../../ROADMAP.md)|
+| ARCHITECTURE.md | Layer contract | [ARCHITECTURE.md](../../ARCHITECTURE.md)|

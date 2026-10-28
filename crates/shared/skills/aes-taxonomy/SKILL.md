@@ -56,11 +56,11 @@ metadata:
 The **layer** decides which suffix, which imports, and which structure apply.
 Rules, templates, section contracts, and Verify blocks live in the language HOW-TUs under [`references/`](references/).
 
-| Language | Focus | Body rule | HOW-TO |
-| -------- | ----- | --------- | ------ |
-| Python | Taxonomy VO / entity / error / event / constant | Strict suffix set; no I/O; no upward imports | [references/HOW-TO-MAKE-PYTHON-TAXONOMY.md](references/HOW-TO-MAKE-PYTHON-TAXONOMY.md) |
-| Rust | Taxonomy VO / entity / error / event / constant | Strict suffix set; no I/O; no upward imports | [references/HOW-TO-MAKE-RUST-TAXONOMY.md](references/HOW-TO-MAKE-RUST-TAXONOMY.md) |
-| TypeScript | Taxonomy VO / entity / error / event / constant | Strict suffix set; no I/O; no upward imports | [references/HOW-TO-MAKE-TYPESCRIPT-TAXONOMY.md](references/HOW-TO-MAKE-TYPESCRIPT-TAXONOMY.md) |
+| Language | Focus | Body rule | HOW-TO|
+| -------- | ----- | --------- | ------|
+| Python | Taxonomy VO / entity / error / event / constant | Strict suffix set; no I/O; no upward imports | [references/HOW-TO-MAKE-PYTHON-TAXONOMY.md](references/HOW-TO-MAKE-PYTHON-TAXONOMY.md)|
+| Rust | Taxonomy VO / entity / error / event / constant | Strict suffix set; no I/O; no upward imports | [references/HOW-TO-MAKE-RUST-TAXONOMY.md](references/HOW-TO-MAKE-RUST-TAXONOMY.md)|
+| TypeScript | Taxonomy VO / entity / error / event / constant | Strict suffix set; no I/O; no upward imports | [references/HOW-TO-MAKE-TYPESCRIPT-TAXONOMY.md](references/HOW-TO-MAKE-TYPESCRIPT-TAXONOMY.md)|
 
 **The layer chain:**
 
@@ -76,15 +76,15 @@ Machine-checked rules are enforced by `lint-arwaky-cli scan <layer-path>` (see e
 Convention-level rules are enforced by reading; the linter covers what it can, and the
 HOW-TO states explicitly which of the three is the case. Cite the HOW-TO, not this file, when pointing at a rule.
 
-| Layer | Rule |
-| ----- | ---- |
-| Naming | File `taxonomy_<domain>_<suffix>` — suffix strictly `_vo`/`_entity`/`_error`/`_event`/`_constant`/`_request`/`_response` (AES101/AES102). |
-| Imports | Taxonomy + stdlib only — never capabilities, agents, surface, root, contracts; no I/O (AES201). |
-| Primitives | Domain fields wrap VOs — no raw `str`/`int`/`float`/`String`/`string`/`number` for domain values (AES401). |
-| Error contract | Every `_error` file exposes `error_id` + `error_code` + `message`. Ids come from per-feature blocks: common `000X`, feature 1 `1XXX`, feature 2 `2XXX`, …; a feature is a folder with an `agent_*_orchestrator` file. Ids never change across releases. |
-| Construction | VOs validate on construction; immutable; constants are pure literals. |
-| Register | Shared barrel: `__init__.py` / `mod.rs` / `index.ts`. |
-| Verify | `lint-arwaky-cli scan <layer-path>` → 0. Language compile is fallback only. |
+| Layer | Rule|
+| ----- | ----|
+| Naming | File `taxonomy_<domain>_<suffix>` — suffix strictly `_vo`/`_entity`/`_error`/`_event`/`_constant`/`_request`/`_response` (AES101/AES102).|
+| Imports | Taxonomy + stdlib only — never capabilities, agents, surface, root, contracts; no I/O (AES201).|
+| Primitives | Domain fields wrap VOs — no raw `str`/`int`/`float`/`String`/`string`/`number` for domain values (AES401).|
+| Error contract | Every `_error` file exposes `error_id` + `error_code` + `message`. Ids come from per-feature blocks: common `000X`, feature 1 `1XXX`, feature 2 `2XXX`, …; a feature is a folder with an `agent_*_orchestrator` file. Ids never change across releases.|
+| Construction | VOs validate on construction; immutable; constants are pure literals.|
+| Register | Shared barrel: `__init__.py` / `mod.rs` / `index.ts`.|
+| Verify | `lint-arwaky-cli scan <layer-path>` → 0. Language compile is fallback only.|
 
 Split details, templates, and Section Contract tables: **read the language HOW-TO** — do not restate them here.
 

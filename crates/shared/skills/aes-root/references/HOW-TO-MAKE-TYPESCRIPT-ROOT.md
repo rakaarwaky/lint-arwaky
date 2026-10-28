@@ -98,15 +98,15 @@ no business logic.
 
 ## Section Contract
 
-| Section | Why it belongs here |
-| ------- | ------------------- |
-| Module comment / PURPOSE | Names the role: composition container or app entry. |
-| Correct filename + suffix | AES101/AES102 resolve the layer and role from the name. |
-| Layer-legal imports | Keeps the dependency arrow pointed down (AES201–AES205). |
-| Contract types in signatures | Expose aggregate/protocol, not concretions (AES402). |
-| Container: construct + bind only | Wiring is the whole job; logic belongs below. |
-| Entry: compose containers + start | Bootstrap only; never construct capabilities. |
-| Registered in `index.ts` | Dead code otherwise; composition needs the export. |
+| Section | Why it belongs here|
+| ------- | -------------------|
+| Module comment / PURPOSE | Names the role: composition container or app entry.|
+| Correct filename + suffix | AES101/AES102 resolve the layer and role from the name.|
+| Layer-legal imports | Keeps the dependency arrow pointed down (AES201–AES205).|
+| Contract types in signatures | Expose aggregate/protocol, not concretions (AES402).|
+| Container: construct + bind only | Wiring is the whole job; logic belongs below.|
+| Entry: compose containers + start | Bootstrap only; never construct capabilities.|
+| Registered in `index.ts` | Dead code otherwise; composition needs the export.|
 
 ---
 

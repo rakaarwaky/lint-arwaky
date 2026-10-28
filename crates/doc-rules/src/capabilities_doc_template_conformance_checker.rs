@@ -14,7 +14,7 @@ use shared_doc_rules::taxonomy_doc_rules_constant as consts;
 use shared_doc_rules::taxonomy_doc_rules_request::DocFinding;
 use shared_doc_rules::taxonomy_doc_section_vo::Section;
 use shared_doc_rules::utility_markdown_scanner::{
-    h3_subsections, has_table_with_columns, normalize_heading, sections,
+    blank_fenced, h3_subsections, has_table_with_columns, normalize_heading, sections,
 };
 
 use std::collections::HashSet;
@@ -59,10 +59,74 @@ fn is_table_separator(line: &str) -> bool {
         && inner.iter().any(|cell| cell.contains('-'))
 }
 
+/// Does any table in *body* repeat its header row in a data-row position?
+///
+/// Walks each `|` block: the first row is the header, the next separator row
+/// arms the check, and any later non-separator row whose normalized cells equal
+/// the header's is a placeholder copy of the header instead of real data.
+fn table_repeats_header_row(body: &str) -> bool {
+    let mut header: Option<Vec<String>> = None;
+    let mut separator_seen = false;
+    for line in body.lines() {
+        let trimmed = line.trim();
+        if !trimmed.starts_with('|') {
+            header = None;
+            separator_seen = false;
+            continue;
+        }
+        let cells: Vec<String> = trimmed
+            .trim_matches('|')
+            .split('|')
+            .map(|c| c.trim().to_lowercase())
+            .collect();
+        if is_table_separator(trimmed) {
+            separator_seen = header.is_some();
+            continue;
+        }
+        match &header {
+            None => header = Some(cells),
+            Some(h) if separator_seen && cells == *h => return true,
+            _ => {}
+        }
+    }
+    false
+}
+
+/// The header cells of the first table row that carries every *columns* entry
+/// but also ships cells outside that fixed set, lowercased. `None` when no
+/// such row exists — either the columns are absent (a `table_missing_columns`
+/// question) or the header matches the template exactly.
+fn header_extra_columns(body: &str, columns: &[&str]) -> Option<Vec<String>> {
+    for line in body.lines() {
+        let trimmed = line.trim();
+        if !trimmed.starts_with('|') {
+            continue;
+        }
+        let cells: Vec<String> = trimmed
+            .trim_matches('|')
+            .split('|')
+            .map(|c| c.trim().to_lowercase())
+            .collect();
+        if !columns
+            .iter()
+            .all(|want| cells.iter().any(|cell| cell.contains(&want.to_lowercase())))
+        {
+            continue;
+        }
+        let extras: Vec<String> = cells
+            .iter()
+            .filter(|cell| !columns.iter().any(|c| cell.contains(&c.to_lowercase())))
+            .cloned()
+            .collect();
+        return (!extras.is_empty()).then_some(extras);
+    }
+    None
+}
+
 // ─── Block 2: Entry regexes ────────────────────────────────
 
 /// `FR-<FEATURE>-NNN:` item heading (FRD `Functional Requirements` entries).
-fn fr_entry_re() -> Option<&'static regex::Regex> {
+pub fn fr_entry_re() -> Option<&'static regex::Regex> {
     static PAT: OnceLock<Option<regex::Regex>> = OnceLock::new();
     PAT.get_or_init(|| regex::Regex::new(r"^FR-[A-Za-z0-9_]+-\d+:").ok())
         .as_ref()
@@ -70,28 +134,28 @@ fn fr_entry_re() -> Option<&'static regex::Regex> {
 
 /// `PR-<PROJECT>-NNN:` item heading (PRD `Project Requirements` and ROADMAP
 /// `Roadmap Status` entries).
-fn pr_entry_re() -> Option<&'static regex::Regex> {
+pub fn pr_entry_re() -> Option<&'static regex::Regex> {
     static PAT: OnceLock<Option<regex::Regex>> = OnceLock::new();
     PAT.get_or_init(|| regex::Regex::new(r"^PR-[A-Za-z0-9_]+-\d+:").ok())
         .as_ref()
 }
 
 /// `DT-<DATA>-NNN:` item heading (DATA `Data Requirements` entries).
-fn dt_entry_re() -> Option<&'static regex::Regex> {
+pub fn dt_entry_re() -> Option<&'static regex::Regex> {
     static PAT: OnceLock<Option<regex::Regex>> = OnceLock::new();
     PAT.get_or_init(|| regex::Regex::new(r"^DT-[A-Za-z0-9_]+-\d+:").ok())
         .as_ref()
 }
 
 /// `DS-<DESIGN>-NNN:` item heading (DESIGN `Design Requirements` entries).
-fn ds_entry_re() -> Option<&'static regex::Regex> {
+pub fn ds_entry_re() -> Option<&'static regex::Regex> {
     static PAT: OnceLock<Option<regex::Regex>> = OnceLock::new();
     PAT.get_or_init(|| regex::Regex::new(r"^DS-[A-Za-z0-9_]+-\d+:").ok())
         .as_ref()
 }
 
 /// `{<qualifier>}` single-qualifier heading (BACKLOG `Backlog Status` entries).
-fn backlog_entry_re() -> Option<&'static regex::Regex> {
+pub fn backlog_entry_re() -> Option<&'static regex::Regex> {
     static PAT: OnceLock<Option<regex::Regex>> = OnceLock::new();
     PAT.get_or_init(|| regex::Regex::new(r"^\{[A-Za-z0-9_-]+\}$").ok())
         .as_ref()
@@ -126,7 +190,7 @@ impl ITemplateConformanceProtocol for TemplateConformanceChecker {
     }
 }
 
-// ─── Block 4: Per-document checks ─────────────────────────
+// ─── Block 3: Constructors, Std Traits, Helpers ───────────
 
 impl TemplateConformanceChecker {
     pub fn new() -> Self {
@@ -226,8 +290,10 @@ impl TemplateConformanceChecker {
     }
 
     /// DESIGN: `Design Requirements` entry tables (header-only, no fixed rows)
-    /// plus `Reference` H2 table.
-    fn check_design(&self, parsed: &[Section]) -> Vec<DocFinding> {
+    /// plus `Reference` H2 table, then the strict template-shape sweep: no
+    /// table where the HOW-TO shows none, and no H3 outside the `DS-` entry
+    /// pattern. Public so the test suite can drive the DESIGN branch whole.
+    pub fn check_design(&self, parsed: &[Section]) -> Vec<DocFinding> {
         let mut findings = Vec::new();
         let Some(re) = ds_entry_re() else {
             return findings;
@@ -240,11 +306,145 @@ impl TemplateConformanceChecker {
             &[],
         ));
         findings.extend(self.check_h2_table(parsed, "Reference", consts::REFERENCE_COLUMNS));
+        // The HOW-TO template shows a prose paragraph under `Design Overview`
+        // and DS- entry H3s directly under `Design Requirements`; a table in
+        // either spot has no template column set to conform to.
+        findings.extend(self.check_no_extra_table(parsed, "Design Overview"));
+        if let Some(findings_one) = self.check_requirements_prefix_table(parsed) {
+            findings.push(findings_one);
+        }
+        findings.extend(self.check_design_h3s(parsed, re));
+        findings
+    }
+
+    /// *title* must not carry a table: the HOW-TO template sanctions either
+    /// prose (Design Overview) or entry H3 tables (Design Requirements), never
+    /// an H2-level table. Returns `None` when the section is absent — a
+    /// missing H2 belongs to AES605.
+    fn check_no_extra_table(&self, parsed: &[Section], title: &str) -> Option<DocFinding> {
+        let section = parsed
+            .iter()
+            .find(|s| s.level == 2 && normalize_heading(&s.title) == normalize_heading(title))?;
+        if !has_any_table(&section.body) {
+            return None;
+        }
+        Some(
+            DocFinding::new_with_line(
+                "",
+                section.line,
+                consts::RULE_CODE_TEMPLATE_CONFORMANCE,
+                consts::TEMPLATE_CONFORMANCE_VIOLATION_TABLE_NOT_IN_TEMPLATE,
+                format!(
+                    "line {} `## {}` carries a table, but the HOW-TO template prescribes no table here",
+                    section.line, section.title
+                ),
+            )
+            .with_reason(
+                format!(
+                    "The HOW-TO template shows `{}` as prose entries only; an H2-level table has no template column set to conform to.",
+                    section.title
+                ),
+                format!(
+                    "Delete the table under `## {}` (or move its content into `### DS-<NAME>-NNN` entry tables, which the template sanctions).",
+                    section.title
+                ),
+            ),
+        )
+    }
+
+    /// The body text of `## Design Requirements` before its first H3 must not
+    /// carry a table: entry tables belong under the `DS-` H3s.
+    fn check_requirements_prefix_table(&self, parsed: &[Section]) -> Option<DocFinding> {
+        let section = parsed.iter().find(|s| {
+            s.level == 2 && normalize_heading(&s.title) == normalize_heading("Design Requirements")
+        })?;
+        // Blank fenced code first so a table inside an example block cannot
+        // read as a real table, and its line structure is preserved.
+        let prose = blank_fenced(&section.body);
+        let prefix: String = prose
+            .split_inclusive('\n')
+            .take_while(|line| !line.trim_start().starts_with("### "))
+            .collect();
+        if !has_any_table(&prefix) {
+            return None;
+        }
+        Some(
+            DocFinding::new_with_line(
+                "",
+                section.line,
+                consts::RULE_CODE_TEMPLATE_CONFORMANCE,
+                consts::TEMPLATE_CONFORMANCE_VIOLATION_TABLE_NOT_IN_TEMPLATE,
+                format!(
+                    "line {} `## Design Requirements` carries a table above its `DS-` entries; the HOW-TO template prescribes no table here",
+                    section.line
+                ),
+            )
+            .with_reason(
+                "The HOW-TO template places entry tables under each `### DS-<NAME>-NNN` H3; an H2-level overview table has no template column set to conform to.",
+                "Delete the table above the first `DS-` entry, or move each row into its own `### DS-<NAME>-NNN` entry table.",
+            ),
+        )
+    }
+
+    /// Every level-3 heading in the DESIGN document must sit under
+    /// `## Design Requirements` and match the `DS-<NAME>-NNN:` pattern;
+    /// `Design Overview` and `Reference` sanction no H3 at all. H4 and
+    /// deeper stay free-form detail per the HOW-TO template.
+    fn check_design_h3s(&self, parsed: &[Section], ds_re: &regex::Regex) -> Vec<DocFinding> {
+        let mut findings = Vec::new();
+        for parent_title in ["Design Overview", "Design Requirements", "Reference"] {
+            let Some(parent) = parsed.iter().find(|s| {
+                s.level == 2 && normalize_heading(&s.title) == normalize_heading(parent_title)
+            }) else {
+                continue;
+            };
+            // Blank fences so an example heading inside a code block cannot
+            // read as a real H3. Line count is preserved for anchoring.
+            let blanked = Section::new(
+                parent.level,
+                parent.title.clone(),
+                blank_fenced(&parent.body),
+                parent.line,
+            );
+            for h3 in h3_subsections(&blanked) {
+                let sanctioned = parent_title == "Design Requirements" && ds_re.is_match(&h3.title);
+                if sanctioned {
+                    continue;
+                }
+                let detail = if parent_title == "Design Requirements" {
+                    "the HOW-TO template reserves `## Design Requirements` H3s for `DS-<NAME>-NNN:` entry items"
+                } else {
+                    "the HOW-TO template sanctions no `###` heading under this section"
+                };
+                findings.push(
+                    DocFinding::new_with_line(
+                        "",
+                        h3.line,
+                        consts::RULE_CODE_TEMPLATE_CONFORMANCE,
+                        consts::TEMPLATE_CONFORMANCE_VIOLATION_H3_UNEXPECTED,
+                        format!(
+                            "line {} `### {}` sits under `## {}`, which the HOW-TO template does not sanction",
+                            h3.line, h3.title, parent_title
+                        ),
+                    )
+                    .with_reason(
+                        format!(
+                            "{}, so `### {}` is a heading the template cannot recognize.",
+                            detail, h3.title
+                        ),
+                        format!(
+                            "Rename `### {}` to `DS-<NAME>-NNN: <title>` or remove it (demote detail to H4 or deeper).",
+                            h3.title
+                        ),
+                    ),
+                );
+            }
+        }
         findings
     }
 
     /// AGENTS: `Runtime` H2-level fixed-row table plus H2 tables for Project
-    /// Structure, Commands, Documentation Awareness, Reference.
+    /// Structure, Commands, Reference.
     fn check_agents(&self, parsed: &[Section]) -> Vec<DocFinding> {
         let mut findings = Vec::new();
         findings.extend(self.check_h2_fixed_rows(
@@ -258,11 +458,6 @@ impl TemplateConformanceChecker {
             consts::AGENTS_PATH_PURPOSE_COLUMNS,
         ));
         findings.extend(self.check_h2_table(parsed, "Commands", consts::AGENTS_COMMAND_COLUMNS));
-        findings.extend(self.check_h2_table(
-            parsed,
-            "Documentation Awareness",
-            consts::AGENTS_DOCUMENT_AGENT_COLUMNS,
-        ));
         findings.extend(self.check_h2_table(parsed, "Reference", consts::REFERENCE_COLUMNS));
         findings
     }
@@ -296,13 +491,13 @@ impl TemplateConformanceChecker {
         findings
     }
 
-    // ─── Block 5: Shared helpers ───────────────────────────
+    // ─── Block 3: Constructors, Std Traits, Helpers ───────────
 
     /// Walk every H3 under *parent_h2* whose title matches *entry_re* and verify
     /// each carries a table with *columns* whose first-column row labels equal
     /// *row_labels* (header-only when empty). Findings anchor to the offending H3
     /// line.
-    fn check_entry_tables(
+    pub fn check_entry_tables(
         &self,
         parsed: &[Section],
         parent_h2: &str,
@@ -367,7 +562,12 @@ impl TemplateConformanceChecker {
 
     /// H2-level: the section titled *title* must carry a table whose header
     /// covers *columns*. Finding (if any) anchors to the H2 line.
-    fn check_h2_table(&self, parsed: &[Section], title: &str, columns: &[&str]) -> Vec<DocFinding> {
+    pub fn check_h2_table(
+        &self,
+        parsed: &[Section],
+        title: &str,
+        columns: &[&str],
+    ) -> Vec<DocFinding> {
         self.check_section_shape(parsed, title, columns, None)
             .into_iter()
             .collect()
@@ -376,7 +576,7 @@ impl TemplateConformanceChecker {
     /// H2-level fixed-row check: the section titled *title* must carry an
     /// `| Aspect | Detail |` table whose first-column row labels equal
     /// *row_labels*. Finding anchors to the H2 line.
-    fn check_h2_fixed_rows(
+    pub fn check_h2_fixed_rows(
         &self,
         parsed: &[Section],
         title: &str,
@@ -454,6 +654,66 @@ impl TemplateConformanceChecker {
         };
         let body = &section.body;
         if has_table_with_columns(body, columns) {
+            // Exact-header rule: the template fixes the header set, so a cell
+            // outside it is an extra column a reader cannot map to a template
+            // column.
+            if let Some(extras) = header_extra_columns(body, columns) {
+                let marker = if section.level == 2 { "##" } else { "###" };
+                return Some(
+                    DocFinding::new_with_line(
+                        "",
+                        section.line,
+                        consts::RULE_CODE_TEMPLATE_CONFORMANCE,
+                        consts::TEMPLATE_CONFORMANCE_VIOLATION_TABLE_EXTRA_COLUMNS,
+                        format!(
+                            "line {} `{marker} {}` table carries column(s) outside the template: {}",
+                            section.line,
+                            section.title,
+                            extras.join(", ")
+                        ),
+                    )
+                    .with_reason(
+                        format!(
+                            "The HOW-TO template fixes the header of `{}` to exactly {}; an undeclared column breaks the fixed shape.",
+                            section.title,
+                            columns.join(" | ")
+                        ),
+                        format!(
+                            "Remove the extra column(s) ({}) from `{marker} {}` or fold the data into an existing column.",
+                            extras.join(", "),
+                            section.title,
+                        ),
+                    ),
+                );
+            }
+            // Right columns, but a data row copying the header means the
+            // table ships placeholders where the template expects values.
+            if table_repeats_header_row(body) {
+                let marker = if section.level == 2 { "##" } else { "###" };
+                return Some(
+                    DocFinding::new_with_line(
+                        "",
+                        section.line,
+                        consts::RULE_CODE_TEMPLATE_CONFORMANCE,
+                        consts::TEMPLATE_CONFORMANCE_VIOLATION_TABLE_HEADER_REPEATED,
+                        format!(
+                            "line {} `{marker} {}` repeats its header row as a data row",
+                            section.line, section.title
+                        ),
+                    )
+                    .with_reason(
+                        format!(
+                            "The HOW-TO template mandates one header row under `{}`; repeating it in a data-row position ships the column names where filled values belong.",
+                            section.title
+                        ),
+                        format!(
+                            "Replace the duplicated `| {} |` row under `{marker} {}` with real values, or delete it if no values exist yet.",
+                            columns.join(" | "),
+                            section.title
+                        ),
+                    ),
+                );
+            }
             return None;
         }
         // The section is present but wrong-shaped. Distinguish "no table at all"
@@ -495,7 +755,7 @@ impl TemplateConformanceChecker {
     }
 }
 
-// ─── Block 6: Constructors, Std Traits ────────────────────
+// ─── Block 3: Constructors, Std Traits, Helpers ───────────
 
 impl Default for TemplateConformanceChecker {
     fn default() -> Self {
@@ -503,9 +763,8 @@ impl Default for TemplateConformanceChecker {
     }
 }
 
-/// First-column cell of every data row in a markdown table body (header and
-/// separator rows skipped).
-fn first_column_values(body: &str) -> HashSet<String> {
+/// First-column cell of every data row in a markdown table body
+pub fn first_column_values(body: &str) -> HashSet<String> {
     let mut values = HashSet::new();
     let mut header_seen = false;
     for raw in body.lines() {
@@ -542,7 +801,7 @@ fn first_column_values(body: &str) -> HashSet<String> {
 /// labels in *row_labels* absent from *values* and cells in *values* not in
 /// *row_labels*. The entry and H2 fixed-row checks share this diff so the two
 /// sites cannot drift apart.
-fn row_label_diff<'a>(
+pub(crate) fn row_label_diff<'a>(
     row_labels: &'a [&'a str],
     values: &HashSet<String>,
 ) -> (Vec<&'a str>, Vec<String>) {
@@ -557,411 +816,4 @@ fn row_label_diff<'a>(
         .cloned()
         .collect();
     (missing, extra)
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    fn section(level: usize, title: &str, body: &str, line: usize) -> Section {
-        Section::new(level, title.to_string(), body.to_string(), line)
-    }
-
-    #[test]
-    fn entry_tables_accepts_conforming_frd_entry() {
-        let text = "# X\n\n## Functional Requirements\n\n### FR-FEAT-001: Do Thing\n\n\
-             | Aspect | Detail |\n| --- | --- |\n| Description | x |\n| Business Rules | x |\n| Edge Cases | x |\n| Capability | x |\n| Protocol | x |\n| Method | x |\n| Input | x |\n| Output | x |\n| Error | x |\n| Event | x |\n| Test | x |\n| Metric | x |\n";
-        let parsed = sections(text);
-        let re = fr_entry_re().expect("regex compiles");
-        let findings = TemplateConformanceChecker::new().check_entry_tables(
-            &parsed,
-            "Functional Requirements",
-            re,
-            consts::ASPECT_DETAIL_COLUMNS,
-            consts::FRD_ROW_LABELS,
-        );
-        assert!(
-            findings.is_empty(),
-            "a conforming FR entry must pass; got {findings:?}"
-        );
-    }
-
-    #[test]
-    fn entry_tables_rejects_missing_row_label() {
-        let text = "# X\n\n## Functional Requirements\n\n### FR-FEAT-001: Do Thing\n\n\
-             | Aspect | Detail |\n| --- | --- |\n| Description | x |\n| User Story | x |\n";
-        let parsed = sections(text);
-        let re = fr_entry_re().expect("regex compiles");
-        let findings = TemplateConformanceChecker::new().check_entry_tables(
-            &parsed,
-            "Functional Requirements",
-            re,
-            consts::ASPECT_DETAIL_COLUMNS,
-            consts::FRD_ROW_LABELS,
-        );
-        assert!(
-            findings
-                .iter()
-                .any(|f| f.violation_type
-                    == consts::TEMPLATE_CONFORMANCE_VIOLATION_ENTRY_MISSING_ROW),
-            "missing row labels must fire entry_missing_row; got {findings:?}"
-        );
-        let message = findings[0].message.as_str();
-        assert!(
-            message.contains("Business Rules"),
-            "message must name at least one missing label; got '{message}'"
-        );
-        assert!(
-            message.contains("User Story"),
-            "message must name the extra label; got '{message}'"
-        );
-    }
-
-    #[test]
-    fn entry_tables_rejects_no_table() {
-        let text = "# X\n\n## Functional Requirements\n\n### FR-FEAT-001: Do Thing\n\njust prose\n";
-        let parsed = sections(text);
-        let re = fr_entry_re().expect("regex compiles");
-        let findings = TemplateConformanceChecker::new().check_entry_tables(
-            &parsed,
-            "Functional Requirements",
-            re,
-            consts::ASPECT_DETAIL_COLUMNS,
-            consts::FRD_ROW_LABELS,
-        );
-        assert!(
-            findings
-                .iter()
-                .any(|f| f.violation_type
-                    == consts::TEMPLATE_CONFORMANCE_VIOLATION_SECTION_NOT_TABLE),
-            "no table must fire section_not_table; got {findings:?}"
-        );
-    }
-
-    #[test]
-    fn prd_entry_rejects_missing_table() {
-        let text = "# X\n\n## Project Requirements\n\n### PR-PROJ-001: Do Thing\n\njust prose\n";
-        let parsed = sections(text);
-        let re = pr_entry_re().expect("regex compiles");
-        let findings = TemplateConformanceChecker::new().check_entry_tables(
-            &parsed,
-            "Project Requirements",
-            re,
-            consts::ASPECT_DETAIL_COLUMNS,
-            consts::PRD_ROW_LABELS,
-        );
-        assert!(
-            findings
-                .iter()
-                .any(|f| f.violation_type
-                    == consts::TEMPLATE_CONFORMANCE_VIOLATION_SECTION_NOT_TABLE),
-            "PR entry with no table must fire section_not_table; got {findings:?}"
-        );
-    }
-
-    #[test]
-    fn roadmap_entry_rejects_missing_table() {
-        let text = "# X\n\n## Roadmap Status\n\n### PR-PROJ-001: Ship\n\nno table here\n";
-        let parsed = sections(text);
-        let re = pr_entry_re().expect("regex compiles");
-        let findings = TemplateConformanceChecker::new().check_entry_tables(
-            &parsed,
-            "Roadmap Status",
-            re,
-            consts::ASPECT_DETAIL_COLUMNS,
-            consts::ROADMAP_ROW_LABELS,
-        );
-        assert!(
-            findings
-                .iter()
-                .any(|f| f.violation_type
-                    == consts::TEMPLATE_CONFORMANCE_VIOLATION_SECTION_NOT_TABLE),
-            "roadmap entry with no table must fire section_not_table; got {findings:?}"
-        );
-    }
-
-    #[test]
-    fn backlog_entry_rejects_wrong_row_labels() {
-        let text = "# X\n\n## Backlog Status\n\n### {RENDER-01}\n\n\
-             | Aspect | Detail |\n| --- | --- |\n| State | x |\n| Done | x |\n| Bogus | x |\n";
-        let parsed = sections(text);
-        let re = backlog_entry_re().expect("regex compiles");
-        let findings = TemplateConformanceChecker::new().check_entry_tables(
-            &parsed,
-            "Backlog Status",
-            re,
-            consts::ASPECT_DETAIL_COLUMNS,
-            consts::BACKLOG_ROW_LABELS,
-        );
-        assert!(
-            findings
-                .iter()
-                .any(|f| f.violation_type
-                    == consts::TEMPLATE_CONFORMANCE_VIOLATION_ENTRY_MISSING_ROW),
-            "backlog entry with wrong row labels must fire entry_missing_row; got {findings:?}"
-        );
-        let message = findings[0].message.as_str();
-        assert!(
-            message.contains("In Progress")
-                || message.contains("Blocked")
-                || message.contains("Risk"),
-            "message must name at least one missing label; got '{message}'"
-        );
-        assert!(
-            message.contains("Bogus"),
-            "message must name the extra label; got '{message}'"
-        );
-    }
-
-    #[test]
-    fn data_entry_rejects_header_missing_description() {
-        let text = "# X\n\n## Data Requirements\n\n### DT-SHAR-001: Severity\n\n\
-             | Type | Notes |\n| --- | --- |\n| vo | level |\n";
-        let parsed = sections(text);
-        let re = dt_entry_re().expect("regex compiles");
-        let findings = TemplateConformanceChecker::new().check_entry_tables(
-            &parsed,
-            "Data Requirements",
-            re,
-            consts::DATA_TYPE_DESCRIPTION_COLUMNS,
-            &[],
-        );
-        assert!(
-            findings.iter().any(|f| f.violation_type
-                == consts::TEMPLATE_CONFORMANCE_VIOLATION_TABLE_MISSING_COLUMNS),
-            "DATA header lacking Description must fire table_missing_columns; got {findings:?}"
-        );
-    }
-
-    #[test]
-    fn design_entry_rejects_missing_table() {
-        let text = "# X\n\n## Design Requirements\n\n### DS-DESIGN-001: X\n\njust prose\n";
-        let parsed = sections(text);
-        let re = ds_entry_re().expect("regex compiles");
-        let findings = TemplateConformanceChecker::new().check_entry_tables(
-            &parsed,
-            "Design Requirements",
-            re,
-            consts::DESIGN_VARIANT_VALUE_COLUMNS,
-            &[],
-        );
-        assert!(
-            findings
-                .iter()
-                .any(|f| f.violation_type
-                    == consts::TEMPLATE_CONFORMANCE_VIOLATION_SECTION_NOT_TABLE),
-            "DESIGN entry with no table must fire section_not_table; got {findings:?}"
-        );
-    }
-
-    #[test]
-    fn data_entry_accepts_header_only() {
-        let text = "# X\n\n## Data Requirements\n\n### DT-SHAR-001: Severity\n\n\
-             | Type | Description |\n| --- | --- |\n| vo | level |\n";
-        let parsed = sections(text);
-        let re = dt_entry_re().expect("regex compiles");
-        let findings = TemplateConformanceChecker::new().check_entry_tables(
-            &parsed,
-            "Data Requirements",
-            re,
-            consts::DATA_TYPE_DESCRIPTION_COLUMNS,
-            &[],
-        );
-        assert!(
-            findings.is_empty(),
-            "header-only DATA entry must pass; got {findings:?}"
-        );
-    }
-
-    #[test]
-    fn fr_entry_rejects_bad_header_missing_detail() {
-        let text = "# X\n\n## Functional Requirements\n\n### FR-FEAT-001: Do Thing\n\n\
-             | Aspect |\n| --- | |\n| Description | x |\n";
-        let parsed = sections(text);
-        let re = fr_entry_re().expect("regex compiles");
-        let findings = TemplateConformanceChecker::new().check_entry_tables(
-            &parsed,
-            "Functional Requirements",
-            re,
-            consts::ASPECT_DETAIL_COLUMNS,
-            consts::FRD_ROW_LABELS,
-        );
-        assert!(
-            findings.iter().any(|f| f.violation_type
-                == consts::TEMPLATE_CONFORMANCE_VIOLATION_TABLE_MISSING_COLUMNS),
-            "FR table missing Detail column must fire table_missing_columns; got {findings:?}"
-        );
-    }
-
-    #[test]
-    fn agents_project_structure_rejects_missing_columns() {
-        let parsed = vec![section(
-            2,
-            "Project Structure",
-            "| Path |\n| --- |\n| crates/ |\n",
-            1,
-        )];
-        let findings = TemplateConformanceChecker::new().check_h2_table(
-            &parsed,
-            "Project Structure",
-            consts::AGENTS_PATH_PURPOSE_COLUMNS,
-        );
-        assert!(
-            !findings.is_empty()
-                && findings.iter().any(|f| f.violation_type
-                    == consts::TEMPLATE_CONFORMANCE_VIOLATION_TABLE_MISSING_COLUMNS),
-            "AGENTS Project Structure table missing Purpose must fire table_missing_columns; got {findings:?}"
-        );
-    }
-
-    #[test]
-    fn readme_quick_start_rejects_missing_columns() {
-        let parsed = vec![section(
-            2,
-            "Quick Start",
-            "| Step | Action |\n| --- | --- |\n| 1 | Do it |\n",
-            1,
-        )];
-        let findings = TemplateConformanceChecker::new().check_h2_table(
-            &parsed,
-            "Quick Start",
-            consts::README_QUICK_START_COLUMNS,
-        );
-        assert!(
-            !findings.is_empty()
-                && findings.iter().any(|f| f.violation_type
-                    == consts::TEMPLATE_CONFORMANCE_VIOLATION_TABLE_MISSING_COLUMNS),
-            "README Quick Start table missing Command must fire table_missing_columns; got {findings:?}"
-        );
-    }
-
-    #[test]
-    fn contributing_workflow_rejects_missing_columns() {
-        let parsed = vec![section(
-            2,
-            "Workflow",
-            "| Step | Action |\n| --- | --- |\n| 1 | Do it |\n",
-            1,
-        )];
-        let findings = TemplateConformanceChecker::new().check_h2_table(
-            &parsed,
-            "Workflow",
-            consts::CONTRIBUTING_WORKFLOW_COLUMNS,
-        );
-        assert!(
-            !findings.is_empty()
-                && findings.iter().any(|f| f.violation_type
-                    == consts::TEMPLATE_CONFORMANCE_VIOLATION_TABLE_MISSING_COLUMNS),
-            "CONTRIBUTING Workflow table missing Detail must fire table_missing_columns; got {findings:?}"
-        );
-    }
-
-    #[test]
-    fn entry_tables_skips_non_matching_h3() {
-        // Non-matching H3 titles are silently skipped (entry-walking scoping);
-        // only matching entries are checked. A prose H3 next to a conforming
-        // entry must not fire a finding on its own.
-        let text = "# X\n\n## Functional Requirements\n\n### Not An Entry At All\n\njust prose\n\n\
-             ### FR-FEAT-001: Do Thing\n\n\
-             | Aspect | Detail |\n| --- | --- |\n| Description | x |\n| Business Rules | x |\n| Edge Cases | x |\n| Capability | x |\n| Protocol | x |\n| Method | x |\n| Input | x |\n| Output | x |\n| Error | x |\n| Event | x |\n| Test | x |\n| Metric | x |\n";
-        let parsed = sections(text);
-        let re = fr_entry_re().expect("regex compiles");
-        let findings = TemplateConformanceChecker::new().check_entry_tables(
-            &parsed,
-            "Functional Requirements",
-            re,
-            consts::ASPECT_DETAIL_COLUMNS,
-            consts::FRD_ROW_LABELS,
-        );
-        assert!(
-            findings.is_empty(),
-            "non-matching H3 skipped and conforming entry passes; got {findings:?}"
-        );
-    }
-
-    #[test]
-    fn entry_tables_empty_parent_no_findings() {
-        // Parent H2 exists but has no matching H3 entries → no findings
-        // (missing-H2 enforcement is AES605's question; empty body is AES606-silent).
-        let text = "# X\n\n## Functional Requirements\n\njust prose, no entries\n";
-        let parsed = sections(text);
-        let re = fr_entry_re().expect("regex compiles");
-        let findings = TemplateConformanceChecker::new().check_entry_tables(
-            &parsed,
-            "Functional Requirements",
-            re,
-            consts::ASPECT_DETAIL_COLUMNS,
-            consts::FRD_ROW_LABELS,
-        );
-        assert!(
-            findings.is_empty(),
-            "empty parent H2 yields no findings; got {findings:?}"
-        );
-    }
-
-    #[test]
-    fn first_column_values_only_first_table_header_is_data() {
-        // first_column_values aggregates across ALL tables in a body and treats
-        // a later table's header row as a data row (single-table assumption,
-        // not enforced). Pin that boundary behavior deliberately.
-        let body = "| Aspect | Detail |\n| --- | --- |\n| Description | x |\n| Extra Col | y |\n| Second | Header |\n| Data | row |\n";
-        let values = first_column_values(body);
-        assert!(values.contains("Description"));
-        // Current behavior: header_seen skips only the very first `|` line, so
-        // a later table's header row first cell leaks into the data values
-        // (single-table assumption not enforced). Pin that boundary deliberately.
-        assert!(
-            values.contains("Second"),
-            "later table header first cell leaks in: {values:?}"
-        );
-    }
-
-    #[test]
-    fn backlog_entry_re_matches_single_qualifier() {
-        let re = backlog_entry_re().expect("regex compiles");
-        assert!(re.is_match("{RENDER-01}"));
-        assert!(re.is_match("{FEATURE-NAME-ID}"));
-        assert!(!re.is_match("{RENDER-01 | FEATURE-01}"));
-    }
-
-    #[test]
-    fn agents_runtime_fixed_rows_accepts_conforming() {
-        let parsed = vec![section(
-            2,
-            "Runtime",
-            "| Aspect | Detail |\n| --- | --- |\n| Language | Rust |\n| Environment | dev |\n| Artifacts | target/ |\n| Package Manager | cargo |\n| Version Probe | rustc --version |\n| Setup | cargo build |\n| Activation | none |\n",
-            1,
-        )];
-        let findings = TemplateConformanceChecker::new().check_h2_fixed_rows(
-            &parsed,
-            "Runtime",
-            consts::AGENTS_RUNTIME_ROW_LABELS,
-        );
-        assert!(
-            findings.is_empty(),
-            "a conforming AGENTS Runtime must pass; got {findings:?}"
-        );
-    }
-
-    #[test]
-    fn agents_runtime_fixed_rows_rejects_missing_row() {
-        let parsed = vec![section(
-            2,
-            "Runtime",
-            "| Aspect | Detail |\n| --- | --- |\n| Language | Rust |\n| Environment | dev |\n",
-            1,
-        )];
-        let findings = TemplateConformanceChecker::new().check_h2_fixed_rows(
-            &parsed,
-            "Runtime",
-            consts::AGENTS_RUNTIME_ROW_LABELS,
-        );
-        assert!(
-            findings
-                .iter()
-                .any(|f| f.violation_type
-                    == consts::TEMPLATE_CONFORMANCE_VIOLATION_ENTRY_MISSING_ROW),
-            "missing AGENTS Runtime rows must fire entry_missing_row; got {findings:?}"
-        );
-    }
 }

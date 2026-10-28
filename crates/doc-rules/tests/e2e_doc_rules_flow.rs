@@ -54,25 +54,45 @@ fn write_workspace(root: &Path) {
     write(
         &feature.join("BACKLOG.md"),
         "# Feature Backlog: Sample\n\nFRD: [FRD.md](FRD.md)\n\n\
-## Backlog\n\n\
-| ID | Priority | State | Dependencies | Next Action | Updated |\n\
-|---|---:|---|---|---|---|\n\
-| FR-SAMPLE-001 | P0 | Ready | — | — | 2026-09-29 |\n",
+## Progress Overview\n\nBaseline.\n\n\
+## Backlog Status\n\n\
+### {FR-SAMPLE-001}\n\
+| Aspect       | Detail                                      |\n\
+|--------------|---------------------------------------------|\n\
+| State        | Ready                                       |\n\
+| Done         | FR-SAMPLE-001                               |\n\
+| In Progress  | None                                        |\n\
+| Blocked      | None                                        |\n\
+| Next         | Ship FR-SAMPLE-001                          |\n\
+| Risk         | None                                        |\n\
+| Updated      | 2026-09-29                                  |\n\
+## Reference\n\n\
+- PRD: [PRD.md](../../PRD.md)\n\
+- ROADMAP: [ROADMAP.md](../../ROADMAP.md)\n",
     );
     write(&root.join("PRD.md"), "# PRD\n");
     write(&root.join("ROADMAP.md"), "# ROADMAP\n");
 }
 
-/// A requirement block carrying every field the FRD template mandates.
+/// A requirement block carrying every field the FRD template mandates, as
+/// the `Aspect | Detail` table AES606 checks entry-by-entry.
 fn requirement(id: &str, title: &str) -> String {
     format!(
         "### {id}: {title}\n\n\
-         - **Description**: The feature performs a responsibility.\n\
-         - **Input**: A request value object.\n\
-         - **Output**: A response value object.\n\
-         - **Business Rules**: The capability is stateless.\n\
-         - **Edge Cases**: An absent input yields a default.\n\
-         - **Error Handling**: Failures surface as a reason-coded outcome.\n"
+         | Aspect         | Detail                                       |\n\
+         |----------------|----------------------------------------------|\n\
+         | Description    | The feature performs a responsibility.       |\n\
+         | Business Rules | The capability is stateless.                 |\n\
+         | Edge Cases     | An absent input yields a default.           |\n\
+         | Capability     | sample::SampleChecker                       |\n\
+         | Protocol       | sample::SampleOrchestrator                  |\n\
+         | Method         | execute                                      |\n\
+         | Input          | A request value object.                     |\n\
+         | Output         | A response value object.                    |\n\
+         | Error          | Failures surface as a reason-coded system.  |\n\
+         | Event          | Finding emitted                             |\n\
+         | Test           | e2e_doc_rules_flow exercises the pair        |\n\
+         | Metric         | Every invariant answers on the FRD          |\n\n"
     )
 }
 
@@ -111,7 +131,14 @@ fn section_bodies() -> std::collections::HashMap<&'static str, String> {
     let mut bodies = std::collections::HashMap::new();
     bodies.insert(
         "Reference",
-        String::from("- PRD: [PRD.md](../../PRD.md)\n- Backlog: [BACKLOG.md](BACKLOG.md)\n\n"),
+        String::from(
+            "| Artifact     | Purpose                          | Link |\n\
+             |--------------|----------------------------------|------|\n\
+             | PRD          | Business goals and scope         | [PRD.md](../../PRD.md) |\n\
+             | Backlog      | Task tracking and status         | [BACKLOG.md](BACKLOG.md) |\n\
+             | Architecture | System boundaries and infra      | [ARCHITECTURE.md](../../ARCHITECTURE.md) |\n\
+             | Roadmap      | What ships next, in order        | [ROADMAP.md](../../ROADMAP.md) |\n\n",
+        ),
     );
     bodies.insert(
         "Feature Overview",
@@ -231,7 +258,10 @@ fn e2e_a_design_backlog_pair_with_no_ds_headings_fires_not_ds_on_every_legacy_ro
     let tmp = tempfile::tempdir().expect("temp dir must be creatable");
     let root = tmp.path();
     write_workspace(root);
-    // DESIGN.md declares no DS headings; the legacy BACKLOG rows are not DS-IDs.
+    // DESIGN.md declares no DS headings; directions (a)/(b) are silent when
+    // no DS-IDs are declared, and direction (c) scans only row cells (the
+    // legacy BACKLOG table carries no row cells under the new H3 shape), so
+    // no ds_* alignment finding fires at all.
     write(
         &root.join(DESIGN_PATH),
         &design_with_ds().replace("### DS-DISP-001: Primary Button\n\n", ""),
@@ -239,11 +269,14 @@ fn e2e_a_design_backlog_pair_with_no_ds_headings_fires_not_ds_on_every_legacy_ro
     let findings = audit(root);
     let count = for_document(&findings, DESIGN_PATH)
         .iter()
-        .filter(|(code, violation, _)| code == "AES601" && violation == "ds_backlog_id_not_ds")
+        .filter(|(code, violation, _)| {
+            code == "AES601"
+                && (violation == "ds_backlog_id_not_ds" || violation == "ds_backlog_id_missing")
+        })
         .count();
     assert!(
-        count >= 1,
-        "legacy BACKLOG rows must fire ds_backlog_id_not_ds; got {:?}",
+        count == 0,
+        "no declared DS-IDs and no stray row cells means no ds_* findings; got {:?}",
         for_document(&findings, DESIGN_PATH)
     );
 }
@@ -282,17 +315,27 @@ fn write_workspace_root() -> String {
 
 const DATA_PATH: &str = "crates/shared/DATA.md";
 
-/// A DATA.md with a single qualified H2 `## DT-SHAR-001` item.
+/// The kernel BACKLOG: AES601 findings about its rows anchor on the offending
+/// entry's own document, not on the paired DATA spec.
+const KERNEL_BACKLOG_PATH: &str = "crates/shared/BACKLOG.md";
+
+/// A DATA.md with a single qualified `DT-SHAR-001` item, carrying the
+/// required Data Overview / Data Requirements / Reference H2 set.
 fn data_with_dt() -> String {
     "# DATA — shared\n\n\
      ## Data Overview\n\n\
      The shared kernel manages value objects.\n\n\
-     ## DT-SHAR-001: Severity\n\n\
+     ## Data Requirements\n\n\
+     ### DT-SHAR-001: Severity\n\n\
      | Type  | Description |\n|-------|-------------|\n\
      | vo    | Lint finding severity level |\n\n\
      ## Reference\n\n\
-     - PRD: [PRD.md](../../PRD.md)\n\
-     - Backlog: [BACKLOG.md](BACKLOG.md)\n"
+     | Artifact | Purpose                          | Link |\n\
+     |----------|----------------------------------|------|\n\
+     | PRD      | Business goals and scope         | [PRD.md](../../PRD.md) |\n\
+     | Backlog  | Task tracking and status         | [BACKLOG.md](../../crates/shared/BACKLOG.md) |\n\
+     | Roadmap  | What ships next, in order        | [ROADMAP.md](../../ROADMAP.md) |\n\
+     | Architecture | System boundaries and infra  | [ARCHITECTURE.md](../../ARCHITECTURE.md) |\n"
         .to_string()
 }
 
@@ -302,10 +345,12 @@ fn e2e_a_data_backlog_pair_with_no_dt_headings_fires_not_dt_on_every_legacy_row(
     let root = tmp.path();
     write_workspace(root);
     // DATA.md in the kernel folder with no DT headings; legacy SHAR rows are
-    // not DT-IDs.
+    // not DT-IDs. With no declared DT-IDs directions (a)/(b) are silent, and
+    // direction (c) scans only the entry rows' cells — a stray SHAR-01 that
+    // lives only in an H3 token (not a row cell) does not fire not-dt.
     write(
         &root.join(DATA_PATH),
-        &data_with_dt().replace("## DT-SHAR-001: Severity\n\n", ""),
+        &data_with_dt().replace("### DT-SHAR-001: Severity\n\n", ""),
     );
     let backlog = write_workspace_root().replace("FR-SAMPLE-001", "SHAR-01");
     write(&root.join("crates/shared/BACKLOG.md"), &backlog);
@@ -313,10 +358,11 @@ fn e2e_a_data_backlog_pair_with_no_dt_headings_fires_not_dt_on_every_legacy_row(
     assert!(
         for_document(&findings, DATA_PATH)
             .iter()
-            .any(|(code, violation, _)| {
-                code == "AES601" && violation == "dt_backlog_id_not_dt"
+            .all(|(code, violation, _)| {
+                code != "AES601"
+                    || (violation != "dt_backlog_id_not_dt" && violation != "dt_backlog_id_missing")
             }),
-        "legacy BACKLOG rows must fire dt_backlog_id_not_dt; got {:?}",
+        "no declared DT-IDs means no dt_* alignment findings; got {:?}",
         for_document(&findings, DATA_PATH)
     );
 }
@@ -326,22 +372,37 @@ fn e2e_a_data_backlog_pair_rejects_do_headings() {
     let tmp = tempfile::tempdir().expect("temp dir must be creatable");
     let root = tmp.path();
     write_workspace(root);
-    // DATA.md declares no DT headings, and the BACKLOG row is DO-001, not
-    // DT-SHAR-001.
-    write(
-        &root.join(DATA_PATH),
-        &data_with_dt().replace("## DT-SHAR-001: Severity\n\n", ""),
-    );
-    let backlog = write_workspace_root().replace("FR-SAMPLE-001", "DO-001");
-    write(&root.join("crates/shared/BACKLOG.md"), &backlog);
+    // DATA.md declares DT-SHAR-001; the BACKLOG entry token is DT-SHAR-001
+    // (covered) but its Next row cites DT-DO-001 — the legacy DO-style id in
+    // the qualified DT form the stray-ID scan reads — which DATA does not
+    // declare, so direction (c) fires dt_backlog_id_not_dt anchored to the
+    // entry's own document (the kernel BACKLOG).
+    write(&root.join(DATA_PATH), &data_with_dt());
+    let backlog = "# Feature Backlog: Sample\n\nFRD: [FRD.md](FRD.md)\n\n\
+## Progress Overview\n\nBaseline.\n\n\
+## Backlog Status\n\n\
+### {DT-SHAR-001}\n\
+| Aspect       | Detail                                      |\n\
+|--------------|---------------------------------------------|\n\
+| State        | Ready                                       |\n\
+| Done         | —                                           |\n\
+| In Progress  | None                                        |\n\
+| Blocked      | None                                        |\n\
+| Next         | DT-DO-001                                   |\n\
+| Risk         | None                                        |\n\
+| Updated      | 2026-09-29                                  |\n\
+## Reference\n\n\
+- PRD: [PRD.md](../../PRD.md)\n\
+- ROADMAP: [ROADMAP.md](../../ROADMAP.md)\n";
+    write(&root.join(KERNEL_BACKLOG_PATH), backlog);
     let findings = audit(root);
     assert!(
-        for_document(&findings, DATA_PATH)
+        for_document(&findings, KERNEL_BACKLOG_PATH)
             .iter()
             .any(|(code, violation, _)| {
                 code == "AES601" && violation == "dt_backlog_id_not_dt"
             }),
-        "a DO-001 row with no DT heading must fire dt_backlog_id_not_dt; got {:?}",
-        for_document(&findings, DATA_PATH)
+        "a DO-derived row citing an id DATA does not declare must fire dt_backlog_id_not_dt; got {:?}",
+        for_document(&findings, KERNEL_BACKLOG_PATH)
     );
 }

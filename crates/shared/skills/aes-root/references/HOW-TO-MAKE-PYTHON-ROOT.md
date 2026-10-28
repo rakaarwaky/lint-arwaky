@@ -53,7 +53,6 @@ from modules.<feature>.src.capabilities_<concept>_<role> import <Capability>
 from modules.shared.src.contract_<concept>_aggregate import I<Concept>Aggregate
 from modules.shared.src.contract_<concept>_protocol import I<Concept>Protocol
 
-
 class <Concept>Container:
     """Construct the capabilities and the orchestrator (wiring only)."""
 
@@ -66,7 +65,6 @@ class <Concept>Container:
     @property
     def aggregate(self) -> I<Concept>Aggregate:
         return self._orchestrator
-
 
 def create_<concept>_feature(/* shared deps */) -> I<Concept>Aggregate:
     """Fully-wired <concept> feature aggregate (factory for entry / DI)."""
@@ -88,12 +86,10 @@ import sys
 from modules.<feature>.src.root_<concept>_container import create_<concept>_feature
 from modules.<feature>.src.surface_<concept>_command import main as surface_main
 
-
 def main(argv: list[str] | None = None) -> int:
     argv = sys.argv[1:] if argv is None else argv
     aggregate = create_<concept>_feature()
     return int(surface_main(aggregate, argv))
-
 
 if __name__ == "__main__":
     raise SystemExit(main())
@@ -107,15 +103,15 @@ a container factory; no business logic.
 
 ## Section Contract
 
-| Section | Why it belongs here |
-| ------- | ------------------- |
-| Module docstring | Names the role: composition container or app entry. |
-| Correct filename + suffix | AES101/AES102 resolve the layer and role from the name. |
-| Layer-legal imports | Keeps the dependency arrow pointed down (AES201–AES205). |
-| Contract types in signatures | Expose aggregate/protocol, not concretions (AES402). |
-| Container: construct + bind only | Wiring is the whole job; logic belongs below. |
-| Entry: compose containers + start | Bootstrap only; never new capabilities directly. |
-| Registered in package barrel | Dead code otherwise; composition needs the export. |
+| Section | Why it belongs here|
+| ------- | -------------------|
+| Module docstring | Names the role: composition container or app entry.|
+| Correct filename + suffix | AES101/AES102 resolve the layer and role from the name.|
+| Layer-legal imports | Keeps the dependency arrow pointed down (AES201–AES205).|
+| Contract types in signatures | Expose aggregate/protocol, not concretions (AES402).|
+| Container: construct + bind only | Wiring is the whole job; logic belongs below.|
+| Entry: compose containers + start | Bootstrap only; never new capabilities directly.|
+| Registered in package barrel | Dead code otherwise; composition needs the export.|
 
 ---
 

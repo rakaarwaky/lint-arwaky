@@ -71,9 +71,9 @@ what business domain they serve. No code.>
 
 ### DT-<DATA-NAME-ID>-001: <Short imperative name>
 
-| Type | Description |
+| Type | Description|
 |------|-------------|
-|      |             |
+|      |           |
 
 ### DT-<DATA-NAME-ID>-002: <Short imperative name>
 ### DT-<DATA-NAME-ID>-003: <Short imperative name>
@@ -82,12 +82,12 @@ what business domain they serve. No code.>
 
 ## Reference
 
-| Artifact     | Purpose                                         | Link |
+| Artifact     | Purpose                                         | Link|
 |--------------|-------------------------------------------------|------|
-| PRD          | <Business goals, user stories, and scope>       | [PRD.md](PRD.md) |
-| Backlog      | <Task tracking, epics, and implementation status>| [BACKLOG.md](BACKLOG.md) |
-| Roadmap      | <Timeline, phasing, and dependencies>           | [ROADMAP.md](ROADMAP.md) |
-| Architecture | <System boundaries, tech stack, and infra>      | [ARCHITECTURE.md](ARCHITECTURE.md) |
+| PRD          | <Business goals, user stories, and scope>       | [PRD.md](PRD.md)|
+| Backlog      | <Task tracking, epics, and implementation status>| [BACKLOG.md](BACKLOG.md)|
+| Roadmap      | <Timeline, phasing, and dependencies>           | [ROADMAP.md](ROADMAP.md)|
+| Architecture | <System boundaries, tech stack, and infra>      | [ARCHITECTURE.md](ARCHITECTURE.md)|
 ```
 
 ---
@@ -97,11 +97,11 @@ what business domain they serve. No code.>
 Only `Data Overview`, `Data Requirements`, `Reference` are required.
 Each exists for one reason.
 
-| Section         | Why it belongs here                                                  |
-| --------------- | -------------------------------------------------------------------- |
-| Data Overview   | Orients the reader before the data items begin.                      |
-| Data Requirements | `DT-<DATA-NAME-ID>-NNN` items, each with Type / Description table. |
-| Reference       | Separates spec promise from backlog claim.                           |
+| Section         | Why it belongs here                                                |
+| --------------- | --------------------------------------------------------------------|
+| Data Overview   | Orients the reader before the data items begin.                    |
+| Data Requirements | `DT-<DATA-NAME-ID>-NNN` items, each with Type / Description table.|
+| Reference       | Separates spec promise from backlog claim.                         |
 
 ---
 

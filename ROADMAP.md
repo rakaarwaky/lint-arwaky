@@ -6,144 +6,144 @@ RELEASED as v3.8.0. It supersedes 3.7.1 and 3.7.2, which were declared in `Cargo
 
 ## Roadmap Status
 
-### PR-LA-001: Multi-language scanning (Rust, Python, JS/TS)
+### PR-LA-001: filesystem
 
-| Aspect       | Detail                              |
+| Aspect       | Detail                             |
 |--------------|-----------------------------------|
-| Priority     | P0                                 |
-| State        | Done                               |
-| Dependencies | —                                 |
-| Updated      | 2026-10-02                        |
+| Priority     | P0                                |
+| State        | Done                              |
+| Dependencies | —                                |
+| Updated      | 2026-10-02                       |
 
-### PR-LA-002: 34 AES rules enforcement across 7 groups
+### PR-LA-002: auto-fix
 
-| Aspect       | Detail                                  |
+| Aspect       | Detail                                 |
 |--------------|----------------------------------------|
-| Priority     | P0                                       |
-| State        | Done                                     |
-| Dependencies | BE config-wipe CRITICAL finding (#522)  |
-| Updated      | 2026-10-02                              |
+| Priority     | P0                                      |
+| State        | Done                                    |
+| Dependencies | BE config-wipe CRITICAL finding (#522) |
+| Updated      | 2026-10-02                             |
 
-### PR-LA-003: CLI core commands (`check`, `scan`, `fix`, `ci`)
+### PR-LA-003: cli-commands
 
-| Aspect       | Detail                                  |
+| Aspect       | Detail                                 |
 |--------------|----------------------------------------|
-| Priority     | P0                                       |
-| State        | Done                                     |
-| Dependencies | #606, #611 (re-verification pending)    |
-| Updated      | 2026-10-01                              |
+| Priority     | P0                                      |
+| State        | Done                                    |
+| Dependencies | #606, #611 (re-verification pending)   |
+| Updated      | 2026-10-01                             |
 
-### PR-LA-004: MCP server with 5 tools, full CLI parity
+### PR-LA-004: config-system
 
-| Aspect       | Detail                                  |
+| Aspect       | Detail                                 |
 |--------------|----------------------------------------|
-| Priority     | P0                                       |
-| State        | Done                                     |
-| Dependencies | BE path-validation CRITICAL finding (#608) |
-| Updated      | 2026-10-01                              |
+| Priority     | P0                                      |
+| State        | Done                                    |
+| Dependencies | BE path-validation CRITICAL finding (#608)|
+| Updated      | 2026-10-01                             |
 
-### PR-LA-005: Self-auditing capability
+### PR-LA-005: dispatcher
 
-| Aspect       | Detail                                  |
+| Aspect       | Detail                                 |
 |--------------|----------------------------------------|
-| Priority     | P0                                       |
-| State        | Done                                     |
-| Dependencies | —                                       |
-| Updated      | 2026-10-02                              |
+| Priority     | P0                                      |
+| State        | Done                                    |
+| Dependencies | —                                      |
+| Updated      | 2026-10-02                             |
 
-### PR-LA-006: External linter adapters (Clippy, Ruff, ESLint)
+### PR-LA-006: doc-rules
 
-| Aspect       | Detail                                  |
+| Aspect       | Detail                                 |
 |--------------|----------------------------------------|
-| Priority     | P1                                       |
-| State        | Done                                     |
-| Dependencies | —                                       |
-| Updated      | 2026-10-02                              |
+| Priority     | P1                                      |
+| State        | Done                                    |
+| Dependencies | —                                      |
+| Updated      | 2026-10-02                             |
 
-### PR-LA-007: SARIF 2.1.0, JUnit XML, JSON reports
+### PR-LA-007: external-lint
 
-| Aspect       | Detail                                  |
+| Aspect       | Detail                                 |
 |--------------|----------------------------------------|
-| Priority     | P1                                       |
-| State        | Done                                     |
-| Dependencies | —                                       |
-| Updated      | 2026-09-30                              |
+| Priority     | P1                                      |
+| State        | Done                                    |
+| Dependencies | —                                      |
+| Updated      | 2026-09-30                             |
 
-### PR-LA-008: Git hooks integration
+### PR-LA-008: file-watch
 
-| Aspect       | Detail                                  |
+| Aspect       | Detail                                 |
 |--------------|----------------------------------------|
-| Priority     | P1                                       |
-| State        | Done                                     |
-| Dependencies | BE hook-overwrite finding (#522)        |
-| Updated      | 2026-10-01                              |
+| Priority     | P1                                      |
+| State        | Done                                    |
+| Dependencies | BE hook-overwrite finding (#522)       |
+| Updated      | 2026-10-01                             |
 
-### PR-LA-009: Auto-fix capabilities (remove + replace + rename)
+### PR-LA-009: git-hooks
 
-| Aspect       | Detail                                  |
+| Aspect       | Detail                                 |
 |--------------|----------------------------------------|
-| Priority     | P1                                       |
-| State        | Done                                     |
-| Dependencies | —                                       |
-| Updated      | 2026-09-30                              |
+| Priority     | P1                                      |
+| State        | Done                                    |
+| Dependencies | —                                      |
+| Updated      | 2026-09-30                             |
 
-### PR-LA-010: Watch mode for continuous linting
+### PR-LA-010: import-rules
 
-| Aspect       | Detail                                  |
+| Aspect       | Detail                                 |
 |--------------|----------------------------------------|
-| Priority     | P1                                       |
-| State        | Done                                     |
-| Dependencies | —                                       |
-| Updated      | 2026-09-30                              |
+| Priority     | P1                                      |
+| State        | Done                                    |
+| Dependencies | —                                      |
+| Updated      | 2026-09-30                             |
 
-### PR-LA-011: TUI file browser
+### PR-LA-011: logging
 
-| Aspect       | Detail                                  |
+| Aspect       | Detail                                 |
 |--------------|----------------------------------------|
-| Priority     | P2                                       |
-| State        | Done                                     |
-| Dependencies | #552, #606, #611, #608 (re-verification pending) |
-| Updated      | 2026-10-01                              |
+| Priority     | P2                                      |
+| State        | Done                                    |
+| Dependencies | #552, #606, #611, #608 (re-verification pending)|
+| Updated      | 2026-10-01                             |
 
-### PR-LA-012: Workspace exit-code contract enforced everywhere
+### PR-LA-012: maintenance
 
-| Aspect       | Detail                                  |
+| Aspect       | Detail                                 |
 |--------------|----------------------------------------|
-| Priority     | P0                                       |
-| State        | Done                                     |
-| Dependencies | —                                       |
-| Updated      | 2026-09-30                              |
+| Priority     | P0                                      |
+| State        | Done                                    |
+| Dependencies | —                                      |
+| Updated      | 2026-09-30                             |
 
-### PR-LA-013: Acceptance tests standardized (one test file per FR)
+### PR-LA-013: mcp-server
 
-| Aspect       | Detail                                  |
+| Aspect       | Detail                                 |
 |--------------|----------------------------------------|
-| Priority     | P1                                       |
-| State        | Done                                     |
-| Dependencies | —                                       |
-| Updated      | 2026-10-02                              |
+| Priority     | P1                                      |
+| State        | Done                                    |
+| Dependencies | —                                      |
+| Updated      | 2026-10-02                             |
 
-### PR-LA-014: Windows support
+### PR-LA-014: naming-rules
 
-| Aspect       | Detail                                  |
+| Aspect       | Detail                                 |
 |--------------|----------------------------------------|
-| Priority     | P2                                       |
-| State        | In Review                                |
-| Dependencies | Dedicated Windows CI runner (deferred)  |
-| Updated      | 2026-10-02                              |
+| Priority     | P2                                      |
+| State        | In Review                               |
+| Dependencies | Dedicated Windows CI runner (deferred) |
+| Updated      | 2026-10-02                             |
 
-### PR-LA-015: Deeper monorepo performance optimizations
+### PR-LA-015: orphan-rules
 
-| Aspect       | Detail                                  |
+| Aspect       | Detail                                 |
 |--------------|----------------------------------------|
-| Priority     | P2                                       |
-| State        | In Review                                |
-| Dependencies | —                                       |
-| Updated      | 2026-10-02                              |
+| Priority     | P2                                      |
+| State        | In Review                               |
+| Dependencies | —                                      |
+| Updated      | 2026-10-02                             |
 
 ## Reference
 
-| Artifact     | Purpose                                          | Link |
+| Artifact     | Purpose                                          | Link|
 |--------------|--------------------------------------------------|------|
-| PRD          | Business goals, user stories, and scope          | [PRD.md](PRD.md) |
-| Architecture | System boundaries, tech stack, and infra         | [ARCHITECTURE.md](ARCHITECTURE.md) |
+| PRD          | Business goals, user stories, and scope          | [PRD.md](PRD.md)|
+| Architecture | System boundaries, tech stack, and infra         | [ARCHITECTURE.md](ARCHITECTURE.md)|

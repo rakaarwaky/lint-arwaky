@@ -110,15 +110,15 @@ Anything else fails AES102. The filename itself must use underscores only — ke
 
 ### File-name suffix table
 
-| Suffix | Content | Key constraint |
+| Suffix | Content | Key constraint|
 |---|---|---|
-| `_vo.ts` | Value Objects | `readonly` fields, validate in constructor, no I/O |
-| `_entity.ts` | Entities with identity | Identity VO field required; domain fields must be VOs |
-| `_error.ts` | Domain errors | Extend `Error`, set `this.name`, store VO fields only |
-| `_event.ts` | Domain events | Immutable (`readonly`), VO payload fields only |
-| `_constant.ts` | Compile-time constants | `export const` only — no functions, no I/O |
-| `_request.ts` | Aggregate request payloads | Discriminated union with a string-literal `verb` + `request<Verb>()` factory functions |
-| `_response.ts` | Aggregate response payloads | Discriminated union with a string-literal `kind`; VO payload fields per outcome |
+| `_vo.ts` | Value Objects | `readonly` fields, validate in constructor, no I/O|
+| `_entity.ts` | Entities with identity | Identity VO field required; domain fields must be VOs|
+| `_error.ts` | Domain errors | Extend `Error`, set `this.name`, store VO fields only|
+| `_event.ts` | Domain events | Immutable (`readonly`), VO payload fields only|
+| `_constant.ts` | Compile-time constants | `export const` only — no functions, no I/O|
+| `_request.ts` | Aggregate request payloads | Discriminated union with a string-literal `verb` + `request<Verb>()` factory functions|
+| `_response.ts` | Aggregate response payloads | Discriminated union with a string-literal `kind`; VO payload fields per outcome|
 
 ---
 
@@ -675,33 +675,33 @@ export type { OrderResponse } from './taxonomy_order_response';
 
 ## Section Contract
 
-| Check | Enforcement | Why it belongs here |
+| Check | Enforcement | Why it belongs here|
 |---|---|---|
-| Correct file pattern: `taxonomy_<domain>_<suffix>.ts` (underscores only). | Machine-checked: AES101. | Required by AES layer rules and the linter; missing it is a defect. |
-| Correct suffix: `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_request`, `_response`. | Machine-checked: AES102. | Required by AES layer rules and the linter; missing it is a defect. |
-| File is at least 5 lines. | Machine-checked: AES302. | Required by AES layer rules and the linter; missing it is a defect. |
-| No forbidden layer imports from capabilities, agents, surface, root, contracts. | Partially machine-checked: AES201–AES205. See Verify. | Required by AES layer rules; missing it is a defect. |
-| Registered in shared `index.ts`. | Machine-checked: AES501 orphan check. | Required by AES layer rules and the linter; missing it is a defect. |
-| Constant file contains only constant material, not classes/functions. | Machine-checked: AES401 on constant files. | Required by AES layer rules and the linter; missing it is a defect. |
-| Same-role types share one file. One `_vo` file may hold several VOs, one `_error` file may hold several errors. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
-| VOs validate on construction. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
-| VOs are immutable (`readonly`). | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
-| Leaf VOs encapsulate only the primitive needed for validation. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
-| Composite VOs use other VOs, not raw primitives. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
-| Public/domain fields avoid primitives. | Convention — not machine-checked. The linter does not inspect TypeScript class properties. | Required by AES taxonomy convention; missing it is a defect. |
-| Entities contain an identity VO field. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
-| Entities use VO fields for domain state. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
-| Events are immutable (`readonly`). | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
-| Events use VO payload fields only. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
-| Errors extend `Error` and set `this.name`. | Convention for semantic correctness; structural inheritance is checked by compiler. | Required by AES taxonomy convention; missing it is a defect. |
-| Errors store VO fields only. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
-| Errors expose an `error_id` getter (stable numeric id from the per-feature block: common `000X`, feature 1 `1XXX`, feature 2 `2XXX`, …), an `error_code` getter (stable string name), and a `message` getter derived from their VOs. | Required on every `_error` file — not yet machine-checked. All three are getters; ids never change across releases. | Required by AES taxonomy convention; missing any of the three is a defect. |
-| Constants are `export const` pure literal values. | Convention for literal purity; structural violations may be machine-checked. | Required by AES taxonomy convention; missing it is a defect. |
-| Request types are discriminated unions with one member per verb, and one `request*()` factory function per verb. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
-| Response types are discriminated unions keyed by `kind`, one member per outcome. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
-| Request and response are re-exported explicitly from the domain `index.ts` — type-only with `export type` for the union, value exports for the factories. | Convention — the linter checks reachability, not export style. | Required by AES taxonomy convention; missing it is a defect. |
-| No I/O, network, database, filesystem, environment, randomness, or time retrieval. | Convention — not machine-checked fully. The reader verifies this; the linter does not guarantee it. | Required by AES taxonomy convention; missing it is a defect. |
-| `npx tsc --noEmit` passes. | Manual fallback gate. | Required by the TypeScript compilation check; missing it is a defect. |
+| Correct file pattern: `taxonomy_<domain>_<suffix>.ts` (underscores only). | Machine-checked: AES101. | Required by AES layer rules and the linter; missing it is a defect.|
+| Correct suffix: `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_request`, `_response`. | Machine-checked: AES102. | Required by AES layer rules and the linter; missing it is a defect.|
+| File is at least 5 lines. | Machine-checked: AES302. | Required by AES layer rules and the linter; missing it is a defect.|
+| No forbidden layer imports from capabilities, agents, surface, root, contracts. | Partially machine-checked: AES201–AES205. See Verify. | Required by AES layer rules; missing it is a defect.|
+| Registered in shared `index.ts`. | Machine-checked: AES501 orphan check. | Required by AES layer rules and the linter; missing it is a defect.|
+| Constant file contains only constant material, not classes/functions. | Machine-checked: AES401 on constant files. | Required by AES layer rules and the linter; missing it is a defect.|
+| Same-role types share one file. One `_vo` file may hold several VOs, one `_error` file may hold several errors. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect.|
+| VOs validate on construction. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect.|
+| VOs are immutable (`readonly`). | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect.|
+| Leaf VOs encapsulate only the primitive needed for validation. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect.|
+| Composite VOs use other VOs, not raw primitives. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect.|
+| Public/domain fields avoid primitives. | Convention — not machine-checked. The linter does not inspect TypeScript class properties. | Required by AES taxonomy convention; missing it is a defect.|
+| Entities contain an identity VO field. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect.|
+| Entities use VO fields for domain state. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect.|
+| Events are immutable (`readonly`). | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect.|
+| Events use VO payload fields only. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect.|
+| Errors extend `Error` and set `this.name`. | Convention for semantic correctness; structural inheritance is checked by compiler. | Required by AES taxonomy convention; missing it is a defect.|
+| Errors store VO fields only. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect.|
+| Errors expose an `error_id` getter (stable numeric id from the per-feature block: common `000X`, feature 1 `1XXX`, feature 2 `2XXX`, …), an `error_code` getter (stable string name), and a `message` getter derived from their VOs. | Required on every `_error` file — not yet machine-checked. All three are getters; ids never change across releases. | Required by AES taxonomy convention; missing any of the three is a defect.|
+| Constants are `export const` pure literal values. | Convention for literal purity; structural violations may be machine-checked. | Required by AES taxonomy convention; missing it is a defect.|
+| Request types are discriminated unions with one member per verb, and one `request*()` factory function per verb. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect.|
+| Response types are discriminated unions keyed by `kind`, one member per outcome. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect.|
+| Request and response are re-exported explicitly from the domain `index.ts` — type-only with `export type` for the union, value exports for the factories. | Convention — the linter checks reachability, not export style. | Required by AES taxonomy convention; missing it is a defect.|
+| No I/O, network, database, filesystem, environment, randomness, or time retrieval. | Convention — not machine-checked fully. The reader verifies this; the linter does not guarantee it. | Required by AES taxonomy convention; missing it is a defect.|
+| `npx tsc --noEmit` passes. | Manual fallback gate. | Required by the TypeScript compilation check; missing it is a defect.|
 
 ---
 

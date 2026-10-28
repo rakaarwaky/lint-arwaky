@@ -16,91 +16,93 @@ Last Updated: 2026-09-17
 
 ### {FR-OrphanRules-001}
 
-| Aspect       | Detail                                      |
+| Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
-| State        | Ready                                       |
-| Done         | FR-OrphanRules-001                                       |
-| In Progress  | None                                        |
-| Blocked      | None                                        |
-| Next         | Ship                                        |
-| Risk         | None                                        |
-| Updated      | 2026-09-29                                  |
+| State        | Ready                                      |
+| Done         | OrphanRules                                      |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | Ship                                       |
+| Risk         | None                                       |
+| Updated      | 2026-09-29                                 |
 
 ### {FR-OrphanRules-002}
 
-| Aspect       | Detail                                      |
+| Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
-| State        | Ready                                       |
-| Done         | FR-OrphanRules-002                                       |
-| In Progress  | None                                        |
-| Blocked      | None                                        |
-| Next         | Ship                                        |
-| Risk         | None                                        |
-| Updated      | 2026-09-29                                  |
+| State        | Ready                                      |
+| Done         | OrphanRules                                      |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | Ship                                       |
+| Risk         | None                                       |
+| Updated      | 2026-09-29                                 |
 
 ### {FR-OrphanRules-003}
 
-| Aspect       | Detail                                      |
+| Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
-| State        | Ready                                       |
-| Done         | FR-OrphanRules-003                                       |
-| In Progress  | None                                        |
-| Blocked      | None                                        |
-| Next         | Ship                                        |
-| Risk         | None                                        |
-| Updated      | 2026-09-29                                  |
+| State        | Ready                                      |
+| Done         | OrphanRules                                      |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | Ship                                       |
+| Risk         | None                                       |
+| Updated      | 2026-09-29                                 |
 
 ### {FR-OrphanRules-004}
 
-| Aspect       | Detail                                      |
+| Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
-| State        | Ready                                       |
-| Done         | FR-OrphanRules-004                                       |
-| In Progress  | None                                        |
-| Blocked      | None                                        |
-| Next         | Ship                                        |
-| Risk         | None                                        |
-| Updated      | 2026-09-29                                  |
+| State        | Ready                                      |
+| Done         | OrphanRules                                      |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | Ship                                       |
+| Risk         | None                                       |
+| Updated      | 2026-09-29                                 |
 
 ### {FR-OrphanRules-005}
 
-| Aspect       | Detail                                      |
+| Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
-| State        | Ready                                       |
-| Done         | FR-OrphanRules-005                                       |
-| In Progress  | None                                        |
-| Blocked      | None                                        |
-| Next         | Ship                                        |
-| Risk         | None                                        |
-| Updated      | 2026-09-29                                  |
+| State        | Ready                                      |
+| Done         | OrphanRules                                      |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | Ship                                       |
+| Risk         | None                                       |
+| Updated      | 2026-09-29                                 |
 
 ### {FR-OrphanRules-006}
 
-| Aspect       | Detail                                      |
+| Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
-| State        | Ready                                       |
-| Done         | FR-OrphanRules-006                                       |
-| In Progress  | None                                        |
-| Blocked      | None                                        |
-| Next         | Ship                                        |
-| Risk         | None                                        |
-| Updated      | 2026-09-29                                  |
+| State        | Ready                                      |
+| Done         | OrphanRules                                      |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | Ship                                       |
+| Risk         | None                                       |
+| Updated      | 2026-09-29                                 |
 
 ### {FR-OrphanRules-007}
 
-| Aspect       | Detail                                      |
+| Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
-| State        | Ready                                       |
-| Done         | FR-OrphanRules-007                                       |
-| In Progress  | None                                        |
-| Blocked      | None                                        |
-| Next         | Ship                                        |
-| Risk         | None                                        |
-| Updated      | 2026-09-29                                  |
+| State        | Ready                                      |
+| Done         | OrphanRules                                      |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | Ship                                       |
+| Risk         | None                                       |
+| Updated      | 2026-09-29                                 |
 
 ## Reference
 
-| Prd | {Link to PRD.md} | [{link}](PRD.md) |
-| Frd | {Link to FRD.md} | [{link}](FRD.md) |
-| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md) |
-| Architecture | {Link to ARCHITECTURE.md} | [{link}](ARCHITECTURE.md) |
+| Artifact | Purpose | Link|
+|----------|---------|------|
+| PRD.md | Product requirements | [PRD.md](../../PRD.md)|
+| FRD.md | Feature requirements | [FRD.md](FRD.md)|
+| ROADMAP.md | Roadmap status | [ROADMAP.md](../../ROADMAP.md)|
+| ARCHITECTURE.md | Layer contract | [ARCHITECTURE.md](../../ARCHITECTURE.md)|

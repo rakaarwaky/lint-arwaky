@@ -112,6 +112,22 @@ pub const TEMPLATE_CONFORMANCE_VIOLATION_TABLE_MISSING_COLUMNS: &str = "table_mi
 /// An entry table's first-column row labels do not match the template's fixed set.
 pub const TEMPLATE_CONFORMANCE_VIOLATION_ENTRY_MISSING_ROW: &str = "entry_missing_row";
 
+/// A table body repeats its header row in a data-row position, so the table
+/// carries the column names where the template expects filled values.
+pub const TEMPLATE_CONFORMANCE_VIOLATION_TABLE_HEADER_REPEATED: &str = "table_header_repeated";
+
+/// A table header carries a column the template's fixed header set does not
+/// declare. The header must match the template exactly — no extra columns.
+pub const TEMPLATE_CONFORMANCE_VIOLATION_TABLE_EXTRA_COLUMNS: &str = "table_extra_columns";
+
+/// A section where the template prescribes no table at all still carries one,
+/// so the table has no template to conform to.
+pub const TEMPLATE_CONFORMANCE_VIOLATION_TABLE_NOT_IN_TEMPLATE: &str = "table_not_in_template";
+
+/// A level-3 heading in a position the template does not sanction: under a
+/// DESIGN section whose H3s are reserved for `DS-<NAME>-NNN` entry items.
+pub const TEMPLATE_CONFORMANCE_VIOLATION_H3_UNEXPECTED: &str = "h3_unexpected";
+
 /// A required root document does not exist at the audit root.
 pub const MISSING_DOC_VIOLATION: &str = "missing_required_doc";
 
@@ -158,7 +174,6 @@ pub const AGENTS_REQUIRED_H2S: &[&str] = &[
     "Runtime",
     "Project Structure",
     "Commands",
-    "Documentation Awareness",
     "Reference",
 ];
 
@@ -377,7 +392,7 @@ pub const DOC_HEADING_CONTRACTS: &[DocH2Contract] = &[
         &[],
     ),
     (ROADMAP_DOC, ROADMAP_REQUIRED_H2S, &[]),
-    (FRD_DOC, FRD_REQUIRED_H2S, &[]),
+    (FRD_DOC, FRD_REQUIRED_H2S, &["API Contract"]),
     (BACKLOG_DOC, BACKLOG_REQUIRED_H2S, &[]),
     (DATA_DOC, DATA_REQUIRED_H2S, &["DT-"]),
     (DESIGN_DOC, DESIGN_REQUIRED_H2S, &[]),
@@ -393,28 +408,34 @@ pub const TEMPLATE_BODY_VIOLATION_UNFILLED_PLACEHOLDER: &str = "unfilled_placeho
 /// A non-deletable template section is entirely absent from a document.
 pub const TEMPLATE_BODY_VIOLATION_DELETED_SECTION: &str = "section_deleted";
 
+// ─── AES607 — PR-ID owns exactly one module folder ─────────────────────
+/// Every `PR-<PROJECT>-NNN` declared in the root PRD's `Project Requirements`
+/// must own exactly one top-level module folder under `crates|modules|packages`
+/// whose name matches the PR-ID's project identifier.
+pub const RULE_CODE_PR_FOLDER_OWNERSHIP: &str = "AES607";
+
+/// A PRD-declared PR-ID whose project identifier owns no matching module folder
+/// under `crates|modules|packages`.
+pub const PR_FOLDER_NOT_OWNED_VIOLATION: &str = "pr_folder_not_owned";
+
 // Re-export template conformance types from the template module so that
 // `shared_doc_rules::taxonomy_doc_rules_constant` remains the canonical import.
 pub use crate::taxonomy_doc_rules_template_vo::{TEMPLATE_PROFILES, TemplateProfile};
 
-/// A reference template from `crates/shared/skills/aes-docs/references/`,
-/// for the tests that pin constants and catalogs to their source templates.
-#[cfg(test)]
-pub fn load_reference_template(file: &str) -> String {
-    let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../../skills/aes-docs/references")
-        .join(file);
-    std::fs::read_to_string(&path).unwrap_or_else(|e| {
-        panic!(
-            "reference template {} must be readable: {e}",
-            path.display()
-        )
-    })
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Load a reference template from skills/aes-docs/references/.
+    fn load_reference_template(file: &str) -> String {
+        let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../skills/aes-docs/references")
+            .join(file);
+        match std::fs::read_to_string(&path) {
+            Ok(text) => text,
+            Err(e) => panic!("reference template {file} must be readable: {e}"),
+        }
+    }
 
     /// *columns* must all appear somewhere in the reference template *file*.
     fn ships_columns(file: &str, columns: &[&str]) {
@@ -445,7 +466,7 @@ mod tests {
     fn header_column_sets_transcribe_their_reference_templates() {
         ships_columns("HOW-TO-MAKE-AGENTS.md", AGENTS_PATH_PURPOSE_COLUMNS);
         ships_columns("HOW-TO-MAKE-AGENTS.md", AGENTS_COMMAND_COLUMNS);
-        ships_columns("HOW-TO-MAKE-AGENTS.md", AGENTS_DOCUMENT_AGENT_COLUMNS);
+
         ships_columns("HOW-TO-MAKE-README.md", README_QUICK_START_COLUMNS);
         ships_columns("HOW-TO-MAKE-CONTRIBUTING.md", CONTRIBUTING_WORKFLOW_COLUMNS);
         ships_columns("HOW-TO-MAKE-CONTRIBUTING.md", CONTRIBUTING_COMMIT_COLUMNS);
@@ -472,10 +493,10 @@ mod tests {
             "HOW-TO-MAKE-ROADMAP.md ships the `PR-` item shape"
         );
         assert!(
-            backlog.contains("PROJECT-NAME-ID")
+            backlog.contains("DATA-NAME-ID")
                 && backlog.contains("FEATURE-NAME-ID")
                 && backlog.contains("DESIGN-NAME-ID"),
-            "HOW-TO-MAKE-BACKLOG.md ships the qualifier disjunction"
+            "HOW-TO-MAKE-BACKLOG.md ships the family-ID disjunction"
         );
         assert_eq!(PR_ROADMAP_ID_MISSING, "pr_roadmap_id_missing");
         assert_eq!(ROADMAP_PR_ID_NOT_PR, "roadmap_pr_id_not_pr");

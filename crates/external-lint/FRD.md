@@ -10,7 +10,7 @@ The crate also provides **auto-fix** capabilities — each adapter exposes an `a
 
 All adapters execute **sequentially** (no threads, no async runtime). Each adapter runs its external tool as a subprocess, captures output, and normalizes results. The entry point is the DI container, which wires all adapters and exposes the aggregate trait.
 
-The crate does **not** own language detection. Project-level language detection belongs to the `filesystem` aggregate, which serves it as `FilesystemRequest::DetectProjectLanguages` (see [crates/filesystem/FRD.md](../filesystem/FRD.md), FR-Filesystem-005). When a caller supplies no pre-computed context, the orchestrator asks the filesystem aggregate which language groups are present and uses the returned flags. It never walks the tree itself.
+The crate does **not** own language detection. Project-level language detection belongs to the `filesystem` aggregate, which serves it as `FilesystemRequest::DetectProjectLanguages` (see [crates/filesystem/FRD.md](../filesystem/FRD.md)). When a caller supplies no pre-computed context, the orchestrator asks the filesystem aggregate which language groups are present and uses the returned flags. It never walks the tree itself.
 
 - **Architecture & Data Flow**
 
@@ -19,7 +19,7 @@ flowchart TD
     A["Surface / Dispatcher"] -->|input| B["ExternalLintContainer"]
     B --> C["ExternalLintOrchestrator\n(IExternalLintAggregate)"]
 
-    C -->|"DetectProjectLanguages\n(no caller context)"| FS["filesystem aggregate\n(FR-Filesystem-005)"]
+    C -->|"DetectProjectLanguages\n(no caller context)"| FS["filesystem aggregate"]
     FS -->|"has_rust / has_python\nhas_js / has_markdown"| C
 
     C -->|"select_adapters()"| D["ExternalLintSelector\n(IExternalLintSelectorProtocol)"]
@@ -149,8 +149,6 @@ flowchart TD
 | Test           | A path nested in a cargo project resolves to the directory carrying `Cargo.toml`; a path with no cargo tree reports none. |
 | Metric         | 1 upward walk per invocation; 0 files created or modified. |
 
----
-
 ## Public Interface
 
 | Aspect     | Detail |
@@ -183,7 +181,7 @@ flowchart TD
 
 | Artifact     | Purpose                                                | Link |
 |--------------|--------------------------------------------------------|------|
-| PRD          | Business goals and scope for external lint adapters    | [PRD.md](../PRD.md) |
+| PRD          | Business goals and scope for external lint adapters    | [PRD.md](../../PRD.md) |
 | Backlog      | Real condition for this feature; specification only here | [BACKLOG.md](BACKLOG.md) |
-| Roadmap      | Timeline and dependencies                              | [ROADMAP.md](../ROADMAP.md) |
-| Architecture | System boundaries, tech stack, and infra               | [ARCHITECTURE.md](../ARCHITECTURE.md) |
+| Roadmap      | Timeline and dependencies                              | [ROADMAP.md](../../ROADMAP.md) |
+| Architecture | System boundaries, tech stack, and infra               | [ARCHITECTURE.md](../../ARCHITECTURE.md) |

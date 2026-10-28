@@ -1,8 +1,8 @@
 # Feature Backlog: External Lint
 
 FRD: [FRD.md](FRD.md)
-Architecture: [ARCHITECTURE.md](../ARCHITECTURE.md)
-State: defined in root [ROADMAP.md](../ROADMAP.md) — cited here, not restated
+Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
+State: defined in root [ROADMAP.md](../../ROADMAP.md) — cited here, not restated
 Last Updated: 2026-10-28
 
 ## Progress Overview
@@ -14,23 +14,83 @@ Last Updated: 2026-10-28
 
 ## Backlog Status
 
-### {ExternalLint}
+### {FR-ExternalLint-001}
 
-| Aspect       | Detail                                  |
-|--------------|-----------------------------------------|
-| State        | Ready                                   |
-| Done         | All FR-ExternalLint requirements shipped |
-| In Progress  | None                                    |
-| Blocked      | None                                    |
-| Next         | Ship                                    |
-| Risk         | None                                    |
-| Updated      | 2026-10-28                              |
+| Aspect       | Detail                                   |
+|--------------|------------------------------------------|
+| State        | Ready                                    |
+| Done         | FR-ExternalLint-001 shipped              |
+| In Progress  | None                                     |
+| Blocked      | None                                     |
+| Next         | Ship                                     |
+| Risk         | None                                     |
+| Updated      | 2026-10-28                               |
+
+### {FR-ExternalLint-002}
+
+| Aspect       | Detail                                   |
+|--------------|------------------------------------------|
+| State        | Ready                                    |
+| Done         | FR-ExternalLint-002 shipped              |
+| In Progress  | None                                     |
+| Blocked      | None                                     |
+| Next         | Ship                                     |
+| Risk         | None                                     |
+| Updated      | 2026-10-28                               |
+
+### {FR-ExternalLint-003}
+
+| Aspect       | Detail                                   |
+|--------------|------------------------------------------|
+| State        | Ready                                    |
+| Done         | FR-ExternalLint-003 shipped              |
+| In Progress  | None                                     |
+| Blocked      | None                                     |
+| Next         | Ship                                     |
+| Risk         | None                                     |
+| Updated      | 2026-10-28                               |
+
+### {FR-ExternalLint-004}
+
+| Aspect       | Detail                                   |
+|--------------|------------------------------------------|
+| State        | Ready                                    |
+| Done         | FR-ExternalLint-004 shipped              |
+| In Progress  | None                                     |
+| Blocked      | None                                     |
+| Next         | Ship                                     |
+| Risk         | None                                     |
+| Updated      | 2026-10-28                               |
+
+### {FR-ExternalLint-005}
+
+| Aspect       | Detail                                   |
+|--------------|------------------------------------------|
+| State        | Ready                                    |
+| Done         | FR-ExternalLint-005 shipped              |
+| In Progress  | None                                     |
+| Blocked      | None                                     |
+| Next         | Ship                                     |
+| Risk         | None                                     |
+| Updated      | 2026-10-28                               |
+
+### {FR-ExternalLint-006}
+
+| Aspect       | Detail                                   |
+|--------------|------------------------------------------|
+| State        | Ready                                    |
+| Done         | FR-ExternalLint-006 shipped              |
+| In Progress  | None                                     |
+| Blocked      | None                                     |
+| Next         | Ship                                     |
+| Risk         | None                                     |
+| Updated      | 2026-10-28                               |
 
 ## Reference
 
 | Artifact     | Purpose                                                | Link |
 |--------------|--------------------------------------------------------|------|
-| PRD          | Business goals and scope for external lint adapters    | [PRD.md](../PRD.md) |
+| PRD          | Business goals and scope for external lint adapters    | [PRD.md](../../PRD.md) |
 | FRD          | Functional requirements for this feature               | [FRD.md](FRD.md) |
-| Roadmap      | Timeline and dependencies                              | [ROADMAP.md](../ROADMAP.md) |
-| Architecture | System boundaries, tech stack, and infra               | [ARCHITECTURE.md](../ARCHITECTURE.md) |
+| Roadmap      | Timeline and dependencies                              | [ROADMAP.md](../../ROADMAP.md) |
+| Architecture | System boundaries, tech stack, and infra               | [ARCHITECTURE.md](../../ARCHITECTURE.md) |

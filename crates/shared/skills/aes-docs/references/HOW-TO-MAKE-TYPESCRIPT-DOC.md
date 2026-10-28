@@ -79,13 +79,13 @@ export class ImportRuleVO {
 Every public item is required to carry the rows that apply. Each
 exists for one reason.
 
-| Section                     | Why it belongs here                                                           |
-| --------------------------- | ----------------------------------------------------------------------------- |
-| Module one-liner (required) | Names the module's job before any export.                                     |
-| Export summary (required)   | One sentence: what the export is or does. Watch for restating the identifier. |
-| `@param` (rec)              | Explains non-obvious parameters. Skip when the name and type fully say it.    |
-| `@returns` (rec)            | States the contract the caller depends on. Skip for `void`.                   |
-| Named type alias (rec)      | Gives complex object shapes one documented name. Skip for one-field bags.     |
+| Section                     | Why it belongs here                                                         |
+| --------------------------- | -----------------------------------------------------------------------------|
+| Module one-liner (required) | Names the module's job before any export.                                   |
+| Export summary (required)   | One sentence: what the export is or does. Watch for restating the identifier.|
+| `@param` (rec)              | Explains non-obvious parameters. Skip when the name and type fully say it.  |
+| `@returns` (rec)            | States the contract the caller depends on. Skip for `void`.                 |
+| Named type alias (rec)      | Gives complex object shapes one documented name. Skip for one-field bags.   |
 
 ---
 

@@ -14,29 +14,29 @@ Contribute to Lint Arwaky by keeping 7-layer architecture discipline, no-bypass 
 
 ## Workflow
 
-| Step | Action                              | Detail                                                                                  |
+| Step | Action                              | Detail                                                                                 |
 |------|------------------------------------|----------------------------------------------------------------------------------------|
-| 1    | Fork / Branch                     | `<branch-name>` following `<prefix>-<scope>`; branch into `develop`, not `main`       |
-| 2    | Implement                         | Follow FRD spec, write tests first in `crates/<crate>/tests/` named after the FR ID   |
-| 3    | Self-review                       | Check against acceptance criteria in `PRD.md` and run `bash scripts/gates.sh`          |
-| 4    | Submit PR                         | Link the `BACKLOG` ID, describe what changed, name the contribution path               |
-| 5    | Review                            | QA/PE sign-off on CRITICAL/WARNING findings, CI green, no merge conflicts             |
-| 6    | Merge                             | Squash into `develop`, then promote to `main` with `--delete-branch`                  |
+| 1    | Fork / Branch                     | `<branch-name>` following `<prefix>-<scope>`; branch into `develop`, not `main`      |
+| 2    | Implement                         | Follow FRD spec, write tests first in `crates/<crate>/tests/` named after the FR ID  |
+| 3    | Self-review                       | Check against acceptance criteria in `PRD.md` and run `bash scripts/gates.sh`         |
+| 4    | Submit PR                         | Link the `BACKLOG` ID, describe what changed, name the contribution path              |
+| 5    | Review                            | QA/PE sign-off on CRITICAL/WARNING findings, CI green, no merge conflicts            |
+| 6    | Merge                             | Squash into `develop`, then promote to `main` with `--delete-branch`                 |
 
 ## Commit Convention
 
-| Type     | Usage                                  | Example                                  |
+| Type     | Usage                                  | Example                                 |
 |----------|----------------------------------------|------------------------------------------|
-| `feat`   | New feature or capability              | `feat(auth): add login endpoint`         |
-| `fix`    | Bug fix                                 | `fix(auth): handle expired token`        |
-| `docs`   | Documentation only                     | `docs(frd): update FR-AUTH-001`         |
-| `test`   | Adding/updating tests                 | `test(auth): add edge case for timeout`  |
-| `refactor` | Code refactor, no behaviour change  | `refactor(auth): extract middleware`     |
-| `chore`  | Maintenance, deps, config             | `chore: bump dependencies`              |
+| `feat`   | New feature or capability              | `feat(auth): add login endpoint`        |
+| `fix`    | Bug fix                                 | `fix(auth): handle expired token`       |
+| `docs`   | Documentation only                     | `docs(frd): update FR-AUTH-001`        |
+| `test`   | Adding/updating tests                 | `test(auth): add edge case for timeout` |
+| `refactor` | Code refactor, no behaviour change  | `refactor(auth): extract middleware`    |
+| `chore`  | Maintenance, deps, config             | `chore: bump dependencies`             |
 
 ## Reference
 
-| Artifact | Purpose                                        | Link |
+| Artifact | Purpose                                        | Link|
 |----------|------------------------------------------------|------|
-| PRD      | Business goals, user stories, and scope        | [PRD.md](PRD.md) |
-| Architecture | System boundaries, tech stack, and infra   | [ARCHITECTURE.md](ARCHITECTURE.md) |
+| PRD      | Business goals, user stories, and scope        | [PRD.md](PRD.md)|
+| Architecture | System boundaries, tech stack, and infra   | [ARCHITECTURE.md](ARCHITECTURE.md)|

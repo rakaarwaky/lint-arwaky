@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 
 use crate::taxonomy_action_vo::ActionName;
-use crate::taxonomy_format_vo::Format;
+use shared_common::taxonomy_format_vo::Format;
 use shared_common::taxonomy_lint_vo::LintResult;
 use shared_common::taxonomy_message_vo::DescriptionVO;
 use shared_common::taxonomy_message_vo::Suggestion;

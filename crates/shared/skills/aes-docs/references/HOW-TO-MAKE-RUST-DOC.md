@@ -89,14 +89,14 @@ pub fn check(&self, path: &str) -> Result<bool, Error> {
 Every public item is required to carry the rows that apply. Each
 exists for one reason.
 
-| Section                                            | Why it belongs here                                                            |
-| -------------------------------------------------- | ------------------------------------------------------------------------------ |
-| Module doc (`//!` or `//!` file header) (required) | Orients the reader before any type.                                            |
-| Item summary (required)                            | One sentence: what the item is or does. Watch for restating the identifier.    |
-| Structure notes (rec)                              | Execution order or invariants for types that orchestrate. Skip for plain data. |
-| `# Arguments` (rec)                                | Documents parameters whose meaning is not in the type.                         |
-| `# Returns` / `# Errors` (rec)                     | The contract callers depend on. Required when the fn returns `Result`.         |
-| `# Example` (rec)                                  | Proves the API is usable as documented. Skip only for trivial accessors.       |
+| Section                                            | Why it belongs here                                                          |
+| -------------------------------------------------- | ------------------------------------------------------------------------------|
+| Module doc (`//!` or `//!` file header) (required) | Orients the reader before any type.                                          |
+| Item summary (required)                            | One sentence: what the item is or does. Watch for restating the identifier.  |
+| Structure notes (rec)                              | Execution order or invariants for types that orchestrate. Skip for plain data.|
+| `# Arguments` (rec)                                | Documents parameters whose meaning is not in the type.                       |
+| `# Returns` / `# Errors` (rec)                     | The contract callers depend on. Required when the fn returns `Result`.       |
+| `# Example` (rec)                                  | Proves the API is usable as documented. Skip only for trivial accessors.     |
 
 ---
 

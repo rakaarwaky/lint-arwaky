@@ -2,58 +2,49 @@
 trigger: always
 description: "Lint Arwaky operational guide."
 ---
+
 # AGENTS — Lint Arwaky
 
 ## Agent Overview
 
-{One paragraph: what AI agents must know before generating code, docs, or suggestions in this workspace.}
+AI agents working in this workspace must know the AES 7-layer naming convention, the pinned Rust edition 2024 toolchain, and the exact CI gates before generating code, docs, or suggestions. ARCHITECTURE.md wins on ambiguity.
 
 ## Runtime
 
 | Aspect          | Detail                                          |
 |-----------------|-------------------------------------------------|
-| Language        | {language and pinned version}                   |
-| Environment     | {environment manager and creation method}       |
-| Artifacts       | {reviewable artifact location}                  |
-| Package Manager | {package manager and lockfile}                  |
-| Version Probe   | `{version probe command}`                       |
-| Setup           | `{environment setup command}`                    |
-| Activation      | `{optional environment activation command}`      |
+| Language        | Rust (edition 2024 via rust-toolchain.toml)     |
+| Environment     | cargo workspace under crates/                   |
+| Artifacts       | target/ and $HOME/.local/bin/                   |
+| Package Manager | cargo, with Cargo.lock                          |
+| Version Probe   | `rustc --version`                               |
+| Setup           | `CARGO_INCREMENTAL=0 cargo build --release`     |
+| Activation      | None                                            |
 
 ## Project Structure
 
 | Path       | Purpose              |
 |------------|----------------------|
-| {path}     | {what lives here}    |
+| crates/    | Rust workspace crates|
+| shared/    | Shared kernel code   |
 
 ## Commands
 
 | Category    | Command                              | Scope      | CI Gate              |
 |-------------|--------------------------------------|------------|----------------------|
-| Test (all)  | `{whole-workspace test command}`     | All        | ci.yml: {job name}   |
-| Test (unit) | `{single-package test command}`      | One unit   | ci.yml: {job name}   |
-| Test (file) | `{single-file test command}`         | One file   | ci.yml: {job name}   |
-| Lint        | `{formatter or linter command}`      | All        | ci.yml: {job name}   |
-| Type Check  | `{type checker command}`             | All        | ci.yml: {job name}   |
-| Arch Scan   | `{architecture scanner command}`     | All        | ci.yml: {job name}   |
-
-## Documentation Awareness
-
-| Document | Agent Must                              |
-|----------|-----------------------------------------|
-| PRD      | Read before implementing any `PR-` item |
-| FRD      | Follow `FR-` spec exactly               |
-| DATA     | Respect `DT-` shapes and types          |
-| DESIGN   | Use `DS-` tokens and variants           |
-| ROADMAP  | Check `State` before starting work      |
-| BACKLOG  | Update status after each task           |
+| Test (all)  | `CARGO_INCREMENTAL=0 cargo nextest run --workspace --lib --tests -j 2`     | All        | ci.yml: Test         |
+| Test (unit) | `CARGO_INCREMENTAL=0 cargo nextest run -p <crate>`                      | One unit   | ci.yml: Test         |
+| Test (file) | `CARGO_INCREMENTAL=0 cargo nextest run -p <crate> --test <file>`        | One file   | ci.yml: Test         |
+| Lint        | `CARGO_INCREMENTAL=0 cargo fmt --all -- --check`                         | All        | ci.yml: Format       |
+| Type Check  | `CARGO_INCREMENTAL=0 cargo clippy --all-targets -- -D warnings`          | All        | ci.yml: Clippy       |
+| Arch Scan   | `lint-arwaky-cli check .`                                                | All        | ci.yml: Self-Lint    |
 
 ## Reference
 
 | Artifact     | Purpose                                    | Link |
 |--------------|--------------------------------------------|------|
-| PRD          | {Business goals, user stories, and scope}  | [PRD.md](PRD.md) |
-| FRD          | {Functional requirements specification}    | [FRD.md](FRD.md) |
-| DATA         | {Data shapes and kernel definitions}        | [DATA.md](DATA.md) |
-| DESIGN       | {UI/UX and visual system}                  | [DESIGN.md](DESIGN.md) |
-| Architecture | {System boundaries, tech stack, and infra} | [ARCHITECTURE.md](ARCHITECTURE.md) |
+| README       | What the tool does, every command, install | [README.md](README.md) |
+| CONTRIBUTING | Branch, commit, and PR conventions         | [CONTRIBUTING.md](CONTRIBUTING.md) |
+| ARCHITECTURE | Layer contract for every crate             | [ARCHITECTURE.md](ARCHITECTURE.md) |
+| ROADMAP      | What ships next, in order                  | [ROADMAP.md](ROADMAP.md) |
+| PRD          | What the product does and why              | [PRD.md](PRD.md) |

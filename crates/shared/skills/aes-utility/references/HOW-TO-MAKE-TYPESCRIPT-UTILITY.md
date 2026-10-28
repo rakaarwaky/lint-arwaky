@@ -19,13 +19,13 @@
 A utility file **performs a narrow, stateless task** — it has no business rules, no injected dependencies, no instance state.
 A capability file **implements a protocol** — it has DI, business rules, and concrete behaviour.
 
-| Decision | → Utility | → Capability |
+| Decision | → Utility | → Capability|
 |---|---|---|
-| Uses `this` / instance state / DI params | No | Yes |
-| Contains business rules or protocol logic | No | Yes |
-| Stateless, pure, domain-agnostic, ≥2 consumers | Yes | No |
-| Implements `_protocol` interface | No | Yes |
-| Performs a narrow reusable operation (e.g., string parsing, date formatting) | Yes | No |
+| Uses `this` / instance state / DI params | No | Yes|
+| Contains business rules or protocol logic | No | Yes|
+| Stateless, pure, domain-agnostic, ≥2 consumers | Yes | No|
+| Implements `_protocol` interface | No | Yes|
+| Performs a narrow reusable operation (e.g., string parsing, date formatting) | Yes | No|
 
 **Rule**: If a function uses `this`, contains business rules, or serves a single consumer — it does not belong in a utility file. Move it to the consuming capability or keep it as a private helper.
 
@@ -83,16 +83,16 @@ export function <functionName>(<paramName>: string): string {
 
 ## Section Contract
 
-| Check | Why it belongs here |
-| ----- | ------------------- |
-| Only exported functions — no class, no interface, no enum, no type alias. | Required by AES layer rules and the linter; missing it is a defect. |
-| No `this`, no instance state. | Required by AES layer rules and the linter; missing it is a defect. |
-| Pure/deterministic (or I/O justified: domain-agnostic + reusable). | Required by AES layer rules and the linter; missing it is a defect. |
-| No business rules or layer-name knowledge. | Required by AES layer rules and the linter; missing it is a defect. |
-| Used by ≥2 modules. | Required by AES layer rules and the linter; missing it is a defect. |
-| No import from Capabilities, Agent, Surface, Contract. | Required by AES layer rules and the linter; missing it is a defect. |
-| No magic constants (→ `taxonomy_*_constant.ts`). | Required by AES layer rules and the linter; missing it is a defect. |
-| `npx tsc --noEmit` passes. | Required by AES layer rules and the linter; missing it is a defect. |
+| Check | Why it belongs here|
+| ----- | -------------------|
+| Only exported functions — no class, no interface, no enum, no type alias. | Required by AES layer rules and the linter; missing it is a defect.|
+| No `this`, no instance state. | Required by AES layer rules and the linter; missing it is a defect.|
+| Pure/deterministic (or I/O justified: domain-agnostic + reusable). | Required by AES layer rules and the linter; missing it is a defect.|
+| No business rules or layer-name knowledge. | Required by AES layer rules and the linter; missing it is a defect.|
+| Used by ≥2 modules. | Required by AES layer rules and the linter; missing it is a defect.|
+| No import from Capabilities, Agent, Surface, Contract. | Required by AES layer rules and the linter; missing it is a defect.|
+| No magic constants (→ `taxonomy_*_constant.ts`). | Required by AES layer rules and the linter; missing it is a defect.|
+| `npx tsc --noEmit` passes. | Required by AES layer rules and the linter; missing it is a defect.|
 
 ---
 

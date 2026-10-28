@@ -2,61 +2,60 @@
 
 ## Feature Overview
 
-Calculator coordinates four operation features. The orchestrator routes a
-request to the feature that owns the operation and returns the result; the
-history capability merges the four operation logs into what the caller reads.
+Calculator is one layer inside the shared contract. The caller supplies a request,
+the orchestrator applies the capability, and the result returns to the caller.
 
 ## Functional Requirements
 
-### FR-CALCULATOR-001: Route the request
+### FR-CALCULATOR-001: Check the request
 
 | Aspect         | Detail                                      |
 |----------------|---------------------------------------------|
-| Description    | {FR-CALCULATOR-001 description}                     |
-| Business Rules | {business rules}                          |
-| Edge Cases     | {edge cases}                              |
+| Description    | The feature validates the request and returns the result. |
+| Business Rules | The caller never sees a partial result.     |
+| Edge Cases     | An empty request is rejected before work runs. |
+| Capability     | Calculator::Capability                          |
+| Protocol       | Calculator::Protocol                            |
+| Method         | check                                       |
+| Input          | A request supplied by the caller.           |
+| Output         | The resolved value, or an error.            |
+| Error          | Returns an error; never panics.             |
+| Event          | Finding emitted                             |
+| Test           | lint-arwaky-cli docs . reports 0 findings   |
+| Metric         | 0 doc-rule findings                         |
 
-- **Description**: The orchestrator routes a request to the feature that owns the operation.
-- **Input**: A request naming the operation and its operands.
-- **Output**: The resolved value, or an error naming the operation.
-- **Business Rules**: The orchestrator performs no arithmetic itself.
-- **Edge Cases**: An unknown operation returns an error instead of a default.
-- **Error Handling**: Returns an error; never panics.
-
-### FR-CALCULATOR-002: Merge the operation history
+### FR-CALCULATOR-002: Run the request
 
 | Aspect         | Detail                                      |
 |----------------|---------------------------------------------|
-| Description    | {FR-CALCULATOR-002 description}                     |
-| Business Rules | {business rules}                          |
-| Edge Cases     | {edge cases}                              |
-
-- **Description**: The history capability merges the four operation logs newest first.
-- **Input**: The four per-feature operation logs.
-- **Output**: One history ordered by when each entry was recorded.
-- **Business Rules**: Merging never reorders entries recorded at the same instant.
-- **Edge Cases**: An empty log set returns an empty history rather than an error.
-- **Error Handling**: An unreadable log yields an empty history, not a panic.
+| Description    | The feature executes the request and returns the result. |
+| Business Rules | The caller never sees a partial result.     |
+| Edge Cases     | An empty request is rejected before work runs. |
+| Capability     | Calculator::Capability                          |
+| Protocol       | Calculator::Protocol                            |
+| Method         | run                                         |
+| Input          | A request supplied by the caller.           |
+| Output         | The resolved value, or an error.            |
+| Error          | Returns an error; never panics.             |
+| Event          | Finding emitted                             |
+| Test           | lint-arwaky-cli docs . reports 0 findings   |
+| Metric         | 0 doc-rule findings                         |
 
 ## Public Interface
 
-### Protocol API
-
-| Method | Input | Output | Error | Event | Description |
-|--------|-------|--------|-------|-------|-------------|
-| route | request | result | error | — | Routes a request to the feature that owns the operation. |
-| merge | logs | history | — | — | Merges the four operation logs newest first. |
-
-### Aggregate API
-
-| Method | Input | Output | Error | Event | Description |
-|--------|-------|--------|-------|-------|-------------|
-| execute | request | response | error | — | The member's single entry point. |
+| Aspect     | Detail            |
+|------------|-------------------|
+| Agent      | Calculator::Agent     |
+| Aggregate  | Calculator::Aggregate |
+| Method     | execute           |
+| Request    | request           |
+| Response   | response          |
 
 ## Reference
 
-- PRD: [../../PRD.md](../../PRD.md)
-- Backlog: [BACKLOG.md](BACKLOG.md)
-
-| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md) |
-| Architecture | {Link to ARCHITECTURE.md} | [{link}](ARCHITECTURE.md) |
+| Artifact     | Purpose                                    | Link |
+|--------------|--------------------------------------------|------|
+| PRD          | Business goals, user stories, and scope    | [PRD.md](../PRD.md) |
+| Backlog      | Task tracking, epics, and implementation status | [BACKLOG.md](../BACKLOG.md) |
+| Roadmap      | Timeline, phasing, and dependencies        | [ROADMAP.md](../ROADMAP.md) |
+| Architecture | System boundaries, tech stack, and infra   | [ARCHITECTURE.md](../ARCHITECTURE.md) |

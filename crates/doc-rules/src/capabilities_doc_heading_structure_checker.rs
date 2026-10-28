@@ -396,17 +396,6 @@ description: "{Project} operational guide."
 | Type Check  | `{type checker command}`             | All        | ci.yml: {job name}   |
 | Arch Scan   | `{architecture scanner command}`     | All        | ci.yml: {job name}   |
 
-## Documentation Awareness
-
-| Document | Agent Must                              |
-|----------|-----------------------------------------|
-| PRD      | Read before implementing any `PR-` item |
-| FRD      | Follow `FR-` spec exactly               |
-| DATA     | Respect `DT-` shapes and types          |
-| DESIGN   | Use `DS-` tokens and variants           |
-| ROADMAP  | Check `State` before starting work      |
-| BACKLOG  | Update status after each task           |
-
 ## Reference
 
 | Artifact     | Purpose                                    | Link |

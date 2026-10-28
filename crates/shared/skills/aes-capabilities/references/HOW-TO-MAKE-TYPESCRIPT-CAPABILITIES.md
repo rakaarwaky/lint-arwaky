@@ -19,13 +19,13 @@
 A capability file **implements a protocol** — it has state (via DI), business rules, and concrete behaviour.
 A utility file **performs a pure operation** — no state, no business rules, just a narrow task.
 
-| Decision | → Capability | → Utility |
+| Decision | → Capability | → Utility|
 |---|---|---|
-| Uses `this` / instance state / injected dependencies | Yes | No |
-| Contains business rules or protocol logic | Yes | No |
-| Stateless, domain-agnostic, ≥2 consumers | — | Yes |
-| Implements `_protocol` interface | Yes | No |
-| Pure exported function with no business logic | No | Yes |
+| Uses `this` / instance state / injected dependencies | Yes | No|
+| Contains business rules or protocol logic | Yes | No|
+| Stateless, domain-agnostic, ≥2 consumers | — | Yes|
+| Implements `_protocol` interface | Yes | No|
+| Pure exported function with no business logic | No | Yes|
 
 **Rule**: If a method in Block 3 is a module-level function (`export function` without class), stateless, domain-agnostic, and reusable across modules — extract it to a `utility_*` file. It does not belong in the capability layer.
 
@@ -117,22 +117,22 @@ linter will catch and what stays a review responsibility. `Manual` means no rule
 checks it — the shape is still the contract, but a violation is caught by review
 or by `tsc`, not by `scan`.
 
-| Check                                                             | Enforced                                                          |
-| ----------------------------------------------------------------- | ----------------------------------------------------------------- |
-| All three `// ─── Block 1:` / `Block 2:` / `Block 3:` banners present, in order, none above 3. | **AES403** `CapabilityBlockMarkers` (MEDIUM) |
-| Block 1 (class) precedes Block 2 (protocol methods).              | **AES403** `CapabilityBlockOrder` (HIGH)                          |
-| ≥1 class implements a protocol interface.                         | **AES403** `CapabilityNoImplementor` (MEDIUM)                     |
-| Exactly 1 protocol interface per file.                            | **AES403** `CapabilityMultiProtocol` (MEDIUM)                     |
-| ≤3 total classes / interfaces / type aliases.                     | **AES403** `CapabilityTooManyTypes` (HIGH)                        |
-| Imports from `_protocol` module only.                             | **AES201**–**AES205** (import rules)                              |
-| No agent / surface / root imports.                                | **AES201** `FORBIDDEN_IMPORT`                                     |
-| Block 2: ONLY protocol interface method implementations.          | Manual — no rule reads Block 2's contents                        |
-| DI via protocol interfaces; shared VOs for fields and signatures. | Manual                                                            |
-| Constants → `taxonomy_<domain>_constant.ts`.                      | **AES403** `CapabilityLocalConstant` (MEDIUM)                     |
-| Block 3 public helpers with no production caller flagged as defect. | **AES403** `CapabilityPublicHelper` (MEDIUM)                      |
-| Test blocks (`describe`, `it`, `test`) live in `tests/`, never inline. | **AES403** `CapabilityEmbeddedTest` (LOW)                      |
-| Low-level ops → Utility.                                          | Manual — the helper-vs-utility matrix is a judgement call         |
-| `npx tsc --noEmit` passes.                                        | `tsc`, not `scan`                                                 |
+| Check                                                             | Enforced                                                        |
+| ----------------------------------------------------------------- | -----------------------------------------------------------------|
+| All three `// ─── Block 1:` / `Block 2:` / `Block 3:` banners present, in order, none above 3. | **AES403** `CapabilityBlockMarkers` (MEDIUM)|
+| Block 1 (class) precedes Block 2 (protocol methods).              | **AES403** `CapabilityBlockOrder` (HIGH)                        |
+| ≥1 class implements a protocol interface.                         | **AES403** `CapabilityNoImplementor` (MEDIUM)                   |
+| Exactly 1 protocol interface per file.                            | **AES403** `CapabilityMultiProtocol` (MEDIUM)                   |
+| ≤3 total classes / interfaces / type aliases.                     | **AES403** `CapabilityTooManyTypes` (HIGH)                      |
+| Imports from `_protocol` module only.                             | **AES201**–**AES205** (import rules)                            |
+| No agent / surface / root imports.                                | **AES201** `FORBIDDEN_IMPORT`                                   |
+| Block 2: ONLY protocol interface method implementations.          | Manual — no rule reads Block 2's contents                      |
+| DI via protocol interfaces; shared VOs for fields and signatures. | Manual                                                          |
+| Constants → `taxonomy_<domain>_constant.ts`.                      | **AES403** `CapabilityLocalConstant` (MEDIUM)                   |
+| Block 3 public helpers with no production caller flagged as defect. | **AES403** `CapabilityPublicHelper` (MEDIUM)                    |
+| Test blocks (`describe`, `it`, `test`) live in `tests/`, never inline. | **AES403** `CapabilityEmbeddedTest` (LOW)                    |
+| Low-level ops → Utility.                                          | Manual — the helper-vs-utility matrix is a judgement call       |
+| `npx tsc --noEmit` passes.                                        | `tsc`, not `scan`                                               |
 
 **On the block banners.** A banner is `Block <digits>:` standing as its own word
 inside a comment, so TypeScript uses the `//` sigil. The colon is load-bearing:

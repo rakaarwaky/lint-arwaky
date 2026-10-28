@@ -8,62 +8,63 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the full 7-layer specification.
 
 **36 rules across 7 groups:** Naming (AES101–103), Import (AES201–205), Quality (AES301–305), Role (AES401–406), Orphan (AES501–506), Doc (AES601–606), and Structure (AES701–705). The `scan`/`check` command runs the six code linters plus structure and the doc-audit pass (which surfaces AES601–AES606 inside `scan`); Doc rules additionally read Markdown and are audited over the document chain via the `docs` command. External adapters (Clippy, Ruff, ESLint, …) run alongside via `external` and emit tool-native codes.
 
-| Code   | Name                | Severity | Group  | Description                                                                                |
-| -------- | --------------------- | ---------- | -------- | -------------------------------------------------------------------------------------------- |
-| AES101 | Naming Convention   | HIGH     | Naming | Filename must follow`prefix_concept_suffix` pattern — lowercase, underscore, min 3 words. |
-| AES102 | Suffix Prefix Rules | HIGH     | Naming | Suffix must match layer definition — allowed, forbidden, mandatory strict.                |
-| AES103 | Test File Prefix    | HIGH     | Naming | A file in `tests/` or `benches/` must carry a legal test-type prefix and neither directory may nest. |
+| Code   | Name                | Severity | Group  | Description                                                                               |
+| -------- | --------------------- | ---------- | -------- | --------------------------------------------------------------------------------------------|
+| AES101 | Naming Convention   | HIGH     | Naming | Filename must follow`prefix_concept_suffix` pattern — lowercase, underscore, min 3 words.|
+| AES102 | Suffix Prefix Rules | HIGH     | Naming | Suffix must match layer definition — allowed, forbidden, mandatory strict.               |
+| AES103 | Test File Prefix    | HIGH     | Naming | A file in `tests/` or `benches/` must carry a legal test-type prefix and neither directory may nest.|
 
-| Code   | Name             | Severity | Group  | Description                                                                                    |
-| -------- | ------------------ | ---------- | -------- | ------------------------------------------------------------------------------------------------ |
-| AES201 | Forbidden Import | CRITICAL | Import | Cross-layer imports must comply with allowed/mandatory/forbidden rules.                        |
-| AES202 | Mandatory Import | HIGH     | Import | File is missing required imports defined by config.                                            |
-| AES203 | Unused Import    | MEDIUM   | Import | Symbol is imported but never used in file scope.                                               |
-| AES204 | Dummy Import     | HIGH     | Import | Import string matches a forbidden dummy pattern; symbol used only in dummy functions or stubs. |
-| AES205 | Circular Import  | CRITICAL | Import | Circular dependency between layers — must be unidirectional bottom-up.                        |
+| Code   | Name             | Severity | Group  | Description                                                                                   |
+| -------- | ------------------ | ---------- | -------- | ------------------------------------------------------------------------------------------------|
+| AES201 | Forbidden Import | CRITICAL | Import | Cross-layer imports must comply with allowed/mandatory/forbidden rules.                       |
+| AES202 | Mandatory Import | HIGH     | Import | File is missing required imports defined by config.                                           |
+| AES203 | Unused Import    | MEDIUM   | Import | Symbol is imported but never used in file scope.                                              |
+| AES204 | Dummy Import     | HIGH     | Import | Import string matches a forbidden dummy pattern; symbol used only in dummy functions or stubs.|
+| AES205 | Circular Import  | CRITICAL | Import | Circular dependency between layers — must be unidirectional bottom-up.                       |
 
-| Code   | Name                 | Severity      | Group   | Description                                                                        |
-| -------- | ---------------------- | --------------- | --------- | ------------------------------------------------------------------------------------ |
-| AES301 | File Maximum Limit   | HIGH          | Quality | File exceeds maximum allowed line count (default: 1000).                           |
-| AES302 | File Minimum Limit   | HIGH          | Quality | File is below minimum required line count (default: 5).                            |
-| AES303 | Mandatory Definition | HIGH / MEDIUM | Quality | File missing struct/enum/trait/class definition, or definition is empty.           |
-| AES304 | Bypass Comment       | CRITICAL      | Quality | Forbidden bypass pattern detected (`#[allow]`, `unwrap()`, `panic!`, `noqa`, etc). |
-| AES305 | Duplication Code     | MEDIUM        | Quality | Duplicate code blocks detected across files.                                       |
+| Code   | Name                 | Severity      | Group   | Description                                                                       |
+| -------- | ---------------------- | --------------- | --------- | ------------------------------------------------------------------------------------|
+| AES301 | File Maximum Limit   | HIGH          | Quality | File exceeds maximum allowed line count (default: 1000).                          |
+| AES302 | File Minimum Limit   | HIGH          | Quality | File is below minimum required line count (default: 5).                           |
+| AES303 | Mandatory Definition | HIGH / MEDIUM | Quality | File missing struct/enum/trait/class definition, or definition is empty.          |
+| AES304 | Bypass Comment       | CRITICAL      | Quality | Forbidden bypass pattern detected (`#[allow]`, `unwrap()`, `panic!`, `noqa`, etc).|
+| AES305 | Duplication Code     | MEDIUM        | Quality | Duplicate code blocks detected across files.                                      |
 
-| Code   | Name              | Severity | Group | Description                                                                                     |
-| -------- | ------------------- | ---------- | ------- | ------------------------------------------------------------------------------------------------- |
-| AES401 | Taxonomy Role     | HIGH     | Role  | Constant file contains non-constant declarations; primitives used in entity/error/event.        |
-| AES402 | Contract Role     | HIGH     | Role  | Contract trait/method uses primitive types instead of taxonomy VO or constant types.            |
-| AES403 | Capabilities Role | HIGH/MEDIUM/LOW | Role  | Capability exceeds 3 types, has no protocol implementor, reversed block order, missing or misordered block markers, local const, inline test, or public helper. |
-| AES404 | Utility Role      | MEDIUM   | Role  | Utility contains struct/impl/trait/type-alias (Rust), class/interface/enum (Python/TS), or non-taxonomy imports |
-| AES405 | Agent Role        | MEDIUM   | Role  | Orchestrator contains too many types, or has no aggregate implementor or uses`Any` annotations. |
-| AES406 | Surface Role      | HIGH     | Role  | Passive surface contains active domain logic; file exceeds 15 functions.                        |
+| Code   | Name              | Severity | Group | Description                                                                                    |
+| -------- | ------------------- | ---------- | ------- | -------------------------------------------------------------------------------------------------|
+| AES401 | Taxonomy Role     | HIGH     | Role  | Constant file contains non-constant declarations; primitives used in entity/error/event.       |
+| AES402 | Contract Role     | HIGH     | Role  | Contract trait/method uses primitive types instead of taxonomy VO or constant types.           |
+| AES403 | Capabilities Role | HIGH/MEDIUM/LOW | Role  | Capability exceeds 3 types, has no protocol implementor, reversed block order, missing or misordered block markers, local const, inline test, or public helper.|
+| AES404 | Utility Role      | MEDIUM   | Role  | Utility contains struct/impl/trait/type-alias (Rust), class/interface/enum (Python/TS), or non-taxonomy imports|
+| AES405 | Agent Role        | MEDIUM   | Role  | Orchestrator contains too many types, or has no aggregate implementor or uses`Any` annotations.|
+| AES406 | Surface Role      | HIGH     | Role  | Passive surface contains active domain logic; file exceeds 15 functions.                       |
 
-| Code   | Name                | Severity | Group  | Description                                                                                                                                       |
-| -------- | --------------------- | ---------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| AES501 | Taxonomy Orphan     | LOW      | Orphan | Taxonomy file has no inbound imports from any contract file.                                                                                      |
-| AES502 | Contract Orphan     | MEDIUM   | Orphan | Contract protocol not implemented by capabilities or not called by agent; aggregate not called by surface.                                        |
-| AES503 | Capabilities Orphan | MEDIUM   | Orphan | Capability not wired in any container AND unreachable in import graph.                                                                            |
-| AES504 | Utility Orphan      | MEDIUM   | Orphan | Utility file not imported or consumed by any capability, agent, or surface layer.                                                                 |
-| AES505 | Agent Orphan        | HIGH     | Orphan | Agent orchestrator not called by any surface file or entry point.                                                                                 |
-| AES506 | Surface Orphan      | HIGH     | Orphan | Smart surface not imported by entry/router; utility surface not imported by smart surface; passive surface not imported by smart/utility surface. |
+| Code   | Name                | Severity | Group  | Description                                                                                                                                      |
+| -------- | --------------------- | ---------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------|
+| AES501 | Taxonomy Orphan     | LOW      | Orphan | Taxonomy file has no inbound imports from any contract file.                                                                                     |
+| AES502 | Contract Orphan     | MEDIUM   | Orphan | Contract protocol not implemented by capabilities or not called by agent; aggregate not called by surface.                                       |
+| AES503 | Capabilities Orphan | MEDIUM   | Orphan | Capability not wired in any container AND unreachable in import graph.                                                                           |
+| AES504 | Utility Orphan      | MEDIUM   | Orphan | Utility file not imported or consumed by any capability, agent, or surface layer.                                                                |
+| AES505 | Agent Orphan        | HIGH     | Orphan | Agent orchestrator not called by any surface file or entry point.                                                                                |
+| AES506 | Surface Orphan      | HIGH     | Orphan | Smart surface not imported by entry/router; utility surface not imported by smart surface; passive surface not imported by smart/utility surface.|
 
-| Code   | Name                  | Severity | Group  | Description                                                                                     |
-| -------- | --------------------- | -------- | ------ | ------------------------------------------------------------------------------------------------- |
-| AES601 | FR Format             | HIGH     | Doc    | Requirement IDs are `FR-<FEATURE>-NNN`; every requirement states all six fields; FRD requirement count equals protocol class count.                  |
-| AES602 | Section Structure     | HIGH     | Doc    | FRD sections follow template order; required tables and subsections are present; API Contract holds exactly the Protocol API / Aggregate API pair, each with its own table. |
-| AES603 | Spec Purity           | HIGH     | Doc    | Specs never name source files and never carry implementation state.                              |
-| AES604 | Crosslinks            | HIGH     | Doc    | An FRD crosslinks its PRD and backlog; a feature backlog never restates master sections.         |
-| AES605 | Doc Heading Structure | HIGH     | Doc    | Every root document carries one H1 and its own template-derived H2 set; off-template H2s are reported. |
-| AES606 | Doc Template Conformance | HIGH     | Doc    | BACKLOG and ROADMAP table-shaped sections carry their template tables (bullets or prose fire `section_not_table`; a table missing a required column fires `table_missing_columns`). The six required root documents (`PRD.md`, `ROADMAP.md`, `README.md`, `AGENTS.md`, `ARCHITECTURE.md`, `CONTRIBUTING.md`) exist at a real workspace root; a missing one fires `missing_required_doc`. |
+| Code   | Name                  | Severity | Group  | Description                                                                                    |
+| -------- | --------------------- | -------- | ------ | -------------------------------------------------------------------------------------------------|
+| AES601 | FR Format             | HIGH     | Doc    | Requirement IDs are `FR-<FEATURE>-NNN`; every requirement states all six fields; FRD requirement count equals protocol class count.                 |
+| AES602 | Section Structure     | HIGH     | Doc    | FRD sections follow template order; required tables and subsections are present; API Contract holds exactly the Protocol API / Aggregate API pair, each with its own table.|
+| AES603 | Spec Purity           | HIGH     | Doc    | Specs never name source files and never carry implementation state.                             |
+| AES604 | Crosslinks            | HIGH     | Doc    | An FRD crosslinks its PRD and backlog; a feature backlog never restates master sections.        |
+| AES605 | Doc Heading Structure | HIGH     | Doc    | Every root document carries one H1 and its own template-derived H2 set; off-template H2s are reported.|
+| AES606 | Doc Template Conformance | HIGH     | Doc    | Mandated table-shaped sections carry exactly their template table: bullets or prose fire `section_not_table`; missing columns fire `table_missing_columns`; undeclared columns fire `table_extra_columns`; a header repeated as a data row fires `table_header_repeated`; a table where the HOW-TO shows none fires `table_not_in_template`; an unsanctioned `DS-` position H3 fires `h3_unexpected`. The six required root documents (`PRD.md`, `ROADMAP.md`, `README.md`, `AGENTS.md`, `ARCHITECTURE.md`, `CONTRIBUTING.md`) exist at a real workspace root; a missing one fires `missing_required_doc`.|
+| AES607 | PR Folder Ownership      | HIGH     | Doc    | Every `PR-<PROJECT>-NNN` declared in the root PRD's `Project Requirements` must own a top-level module folder under `crates|modules|packages` named after its project identifier (`PR-LA-001` → `LA`). One identifier may own the whole non-empty layout; fired per unowned PR-ID anchored to its PRD heading line, code `AES607` / `pr_folder_not_owned`, audited by `docs` only (not `scan`/`check`).|
 
-| Code   | Name               | Severity | Group     | Description                                                                                |
-| -------- | -------------------- | ---------- | ----------- | ---------------------------------------------------------------------------------------------- |
-| AES701 | Shared Folder Purity | HIGH     | Structure | A `shared` folder holds a `capabilities_*`, `agent_*`, or `surface_*` file.                  |
-| AES702 | Feature Folder Health | MEDIUM   | Structure | A feature folder lacks an `agent_*_orchestrator` or a `capabilities_*` file, holds foreign layer files, lacks its doc pair, or is not mirrored as a `shared/src/<feature>/` subfolder.                                  |
-| AES703 | Surface Folder Purity | MEDIUM   | Structure | A surface folder holds a `capabilities_*`, `agent_*`, or `utility_*` file, or lacks DESIGN.md.              |
-| AES704 | Test Suite Coverage | MEDIUM   | Structure | A feature folder lacks a `tests/` category or its `benches/` benchmark.                                      |
-| AES705 | Member-Root Placement | MEDIUM   | Structure | A `crates/`, `modules/`, or `packages/` root holds a loose `capabilities_*`, `agent_*`, `surface_*`, or `utility_*` file. |
+| Code   | Name               | Severity | Group     | Description                                                                               |
+| -------- | -------------------- | ---------- | ----------- | ----------------------------------------------------------------------------------------------|
+| AES701 | Shared Folder Purity | HIGH     | Structure | A `shared` folder holds a `capabilities_*`, `agent_*`, or `surface_*` file.                 |
+| AES702 | Feature Folder Health | MEDIUM   | Structure | A feature folder lacks an `agent_*_orchestrator` or a `capabilities_*` file, holds foreign layer files, lacks its doc pair, or is not mirrored as a `shared/src/<feature>/` subfolder.                                 |
+| AES703 | Surface Folder Purity | MEDIUM   | Structure | A surface folder holds a `capabilities_*`, `agent_*`, or `utility_*` file, or lacks DESIGN.md.             |
+| AES704 | Test Suite Coverage | MEDIUM   | Structure | A feature folder lacks a `tests/` category or its `benches/` benchmark.                                     |
+| AES705 | Member-Root Placement | MEDIUM   | Structure | A `crates/`, `modules/`, or `packages/` root holds a loose `capabilities_*`, `agent_*`, `surface_*`, or `utility_*` file.|
 
 ### AES705 — Member-Root Placement
 
@@ -74,12 +75,12 @@ wiring. A layer file loose at its root belongs to a folder beneath it, and
 without that folder it has no owning feature: AES702 cannot hold it to a
 contract, AES704 cannot ask it for a test suite, and no FRD describes it.
 
-| Prefix           | Belongs in              |
-| ---------------- | ----------------------- |
-| `capabilities_`  | a feature folder        |
-| `agent_`         | the feature that owns the orchestrator |
-| `surface_`       | a surface folder        |
-| `utility_`       | the shared folder       |
+| Prefix           | Belongs in             |
+| ---------------- | -----------------------|
+| `capabilities_`  | a feature folder       |
+| `agent_`         | the feature that owns the orchestrator|
+| `surface_`       | a surface folder       |
+| `utility_`       | the shared folder      |
 
 Only the top level is read. `root_*` wiring, a barrel module, and any file whose
 stem carries no layer prefix — a README, a manifest — stay legal at a member
@@ -117,15 +118,15 @@ Suffix must match the layer definition. Three sub-checks:
 
 #### Suffix Policy per Layer
 
-| Layer          | Policy   | Allowed Suffixes                                                                                                         | Forbidden Suffixes                                                                                     |
-| ---------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `root`         | strict   | `_entry`, `_container`                                                                                                   | N/A                                                                                                    |
-| `taxonomy`     | strict   | `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_request`, `_response`                                                                        | N/A                                                                                                    |
-| `contract`     | strict   | `_protocol`, `_aggregate`                                                                                                | N/A                                                                                                    |
-| `utility`      | flexible | based on config                                                                                                          | `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_protocol`, `_aggregate`, `_request`, `_response`                           |
-| `capabilities` | flexible | based on config                                                                                                          | `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_constants`, `_protocol`, `_aggregate`, `_utility`, `_request`, `_response` |
-| `agent`        | strict   | `_orchestrator`                                                                                                          | N/A                                                                                                    |
-| `surfaces`     | strict   | `_command`, `_controller`, `_page`, `_view`, `_component`, `_router`, `_layout`, `_hook`, `_store`, `_action`, `_screen` | N/A                                                                                                    |
+| Layer          | Policy   | Allowed Suffixes                                                                                                         | Forbidden Suffixes                                                                                    |
+| ---------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------|
+| `root`         | strict   | `_entry`, `_container`                                                                                                   | N/A                                                                                                   |
+| `taxonomy`     | strict   | `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_request`, `_response`                                                                        | N/A                                                                                                   |
+| `contract`     | strict   | `_protocol`, `_aggregate`                                                                                                | N/A                                                                                                   |
+| `utility`      | flexible | based on config                                                                                                          | `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_protocol`, `_aggregate`, `_request`, `_response`                          |
+| `capabilities` | flexible | based on config                                                                                                          | `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_constants`, `_protocol`, `_aggregate`, `_utility`, `_request`, `_response`|
+| `agent`        | strict   | `_orchestrator`                                                                                                          | N/A                                                                                                   |
+| `surfaces`     | strict   | `_command`, `_controller`, `_page`, `_view`, `_component`, `_router`, `_layout`, `_hook`, `_store`, `_action`, `_screen` | N/A                                                                                                   |
 
 ---
 
@@ -139,11 +140,11 @@ folder. AES103 enforces both halves of that.
 
 #### Legal prefixes
 
-| Directory  | Legal prefixes                                                                                                                              |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| `tests/`    | the seven test types — `contract_`, `unit_`, `integration_`, `dogfood_`, `smoke_`, `e2e_`, `acceptance_` — plus the support set `regression_`, `behavioral_`, `mock_`, `fixture_` |
-| `benches/`  | `bench_`                                                                                                                                     |
-| anywhere    | any — a file outside both directories carries no test-type prefix and is not read by this rule                                              |
+| Directory  | Legal prefixes                                                                                                                             |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------|
+| `tests/`    | the seven test types — `contract_`, `unit_`, `integration_`, `dogfood_`, `smoke_`, `e2e_`, `acceptance_` — plus the support set `regression_`, `behavioral_`, `mock_`, `fixture_`|
+| `benches/`  | `bench_`                                                                                                                                    |
+| anywhere    | any — a file outside both directories carries no test-type prefix and is not read by this rule                                             |
 
 #### Sub-checks
 
@@ -180,21 +181,21 @@ rule's question.
 
 A single rule with **13 sub-conditions** — each has `allowed`, `mandatory`, and `forbidden` fields. Layers are identified by **filename prefix** (`taxonomy_`, `utility_`, `contract_`, `capabilities_`, `agent_`, `surface_`, `root_`), not directory path.
 
-| #  | Scope                                                           | Allowed Imports                                            | Mandatory Imports             | Forbidden Imports                                                |
-| ---- | ----------------------------------------------------------------- | ------------------------------------------------------------ | ------------------------------- | ------------------------------------------------------------------ |
-| 1  | `taxonomy(vo)`                                                  | taxonomy                                                   | None                          | agent*, surface*, contract*, utility*, capabilities*, root       |
-| 1a | `taxonomy(request,response)`                                    | taxonomy                                                   | None                          | agent*, surface*, contract*, utility*, capabilities*, root       |
-| 2  | `taxonomy(entity,error,event)`                                  | taxonomy                                                   | taxonomy(vo&#124;constant)    | agent*, surface*, contract*, utility*, capabilities*, root       |
-| 3  | `taxonomy(constant)`                                            | taxonomy                                                   | None                          | agent*, surface*, contract*, utility*, capabilities*, root       |
-| 4  | `utility`                                                       | taxonomy                                                   | None                          | agent*, surface*, contract*, capabilities*, root                 |
-| 5  | `contract(protocol)`                                            | taxonomy, contract                                         | taxonomy                      | agent*, surface*, capabilities*, contract(aggregate), root       |
-| 6  | `contract(aggregate)`                                           | taxonomy, contract                                         | taxonomy                      | agent*, surface*, capabilities*, root                            |
-| 7  | `capabilities`                                                  | taxonomy, contract(protocol), utility                      | taxonomy, contract(protocol)  | surface*, agent*, capabilities*, root                            |
-| 8  | `agent(orchestrator)`                                           | taxonomy, contract(aggregate), contract(protocol), utility | taxonomy, contract(aggregate) | surface*, capabilities*, root                                    |
-| 9  | `surfaces(command&#124;controller&#124;page)`                   | taxonomy, contract(aggregate), utility                     | None                          | agent*, capabilities*, contract(protocol), root                  |
-| 10 | `surfaces(hook&#124;store&#124;action&#124;screen&#124;router)` | taxonomy                                                   | None                          | agent*, capabilities*, contract(protocol), smart surfaces*, root |
-| 11 | `surfaces(component&#124;view&#124;layout)`                     | taxonomy                                                   | None                          | agent*, contract*, capabilities*, all surface*, root             |
-| 12 | `root`                                                          | taxonomy, contract, capabilities, agent, surface           | None                          | None                                                             |
+| #  | Scope                                                           | Allowed Imports                                            | Mandatory Imports             | Forbidden Imports                                               |
+| ---- | ----------------------------------------------------------------- | ------------------------------------------------------------ | ------------------------------- | ------------------------------------------------------------------|
+| 1  | `taxonomy(vo)`                                                  | taxonomy                                                   | None                          | agent*, surface*, contract*, utility*, capabilities*, root      |
+| 1a | `taxonomy(request,response)`                                    | taxonomy                                                   | None                          | agent*, surface*, contract*, utility*, capabilities*, root      |
+| 2  | `taxonomy(entity,error,event)`                                  | taxonomy                                                   | taxonomy(vo&#124;constant)    | agent*, surface*, contract*, utility*, capabilities*, root      |
+| 3  | `taxonomy(constant)`                                            | taxonomy                                                   | None                          | agent*, surface*, contract*, utility*, capabilities*, root      |
+| 4  | `utility`                                                       | taxonomy                                                   | None                          | agent*, surface*, contract*, capabilities*, root                |
+| 5  | `contract(protocol)`                                            | taxonomy, contract                                         | taxonomy                      | agent*, surface*, capabilities*, contract(aggregate), root      |
+| 6  | `contract(aggregate)`                                           | taxonomy, contract                                         | taxonomy                      | agent*, surface*, capabilities*, root                           |
+| 7  | `capabilities`                                                  | taxonomy, contract(protocol), utility                      | taxonomy, contract(protocol)  | surface*, agent*, capabilities*, root                           |
+| 8  | `agent(orchestrator)`                                           | taxonomy, contract(aggregate), contract(protocol), utility | taxonomy, contract(aggregate) | surface*, capabilities*, root                                   |
+| 9  | `surfaces(command&#124;controller&#124;page)`                   | taxonomy, contract(aggregate), utility                     | None                          | agent*, capabilities*, contract(protocol), root                 |
+| 10 | `surfaces(hook&#124;store&#124;action&#124;screen&#124;router)` | taxonomy                                                   | None                          | agent*, capabilities*, contract(protocol), smart surfaces*, root|
+| 11 | `surfaces(component&#124;view&#124;layout)`                     | taxonomy                                                   | None                          | agent*, contract*, capabilities*, all surface*, root            |
+| 12 | `root`                                                          | taxonomy, contract, capabilities, agent, surface           | None                          | None                                                            |
 
 ---
 
@@ -275,10 +276,10 @@ Two sub-checks:
 1. **Missing definition** (`Severity: HIGH`) — file has no struct/enum/trait/class at all
 2. **Empty / dead definition** (`Severity: MEDIUM`) — `struct Foo;`, `impl X for Y {}`, `class Foo: pass`, `class Foo {}`
 
-| Checker                  | Method                               | Path                                                     |
-| -------------------------- | -------------------------------------- | ---------------------------------------------------------- |
-| `MandatoryDefinitionChecker` | `check_mandatory_class_definition()` | `quality-rules/capabilities_mandatory_definition_checker.rs` |
-| `MandatoryDefinitionChecker` | `check_dead_inheritance()`           | `quality-rules/capabilities_mandatory_definition_checker.rs` |
+| Checker                  | Method                               | Path                                                    |
+| -------------------------- | -------------------------------------- | ----------------------------------------------------------|
+| `MandatoryDefinitionChecker` | `check_mandatory_class_definition()` | `quality-rules/capabilities_mandatory_definition_checker.rs`|
+| `MandatoryDefinitionChecker` | `check_dead_inheritance()`           | `quality-rules/capabilities_mandatory_definition_checker.rs`|
 
 **Exceptions:** `__init__.py`, `mod.rs`, `lib.rs`, `*_constant.rs`, `*_constant.py`.
 
@@ -355,16 +356,16 @@ Checks for primitive types (`String`, `i32`, `bool`, `int`, `float`, etc.) in co
 
 Capability routing, protocol enforcement, and 3-block structure. Eight sub-checks — each with its own severity:
 
-| Sub-check                        | Severity   | Description                                                                                          |
-| -------------------------------- | ---------- | ---------------------------------------------------------------------------------------------------- |
-| **CapabilityTooManyTypes**       | **HIGH**   | File exceeds max 3 type declarations.                                                                 |
-| **CapabilityNoImplementor**      | **MEDIUM** | No struct/class in the capability file implements a `_protocol` contract trait. Python classes satisfied only by a decorator claim (e.g. `@with_adapter_protocol`) still pass the check when the class body or module carries methods; a decorated class with no methods is reported.                        |
-| **CapabilityMultiProtocol**      | **MEDIUM** | File implements more than one protocol trait — should be split into separate capability files; shared helpers belong in `utility_*`. |
-| **CapabilityBlockOrder**         | **HIGH**   | Block 2 (protocol trait impl) does not precede Block 3 (inherent impl: ctors, std traits, helpers).    |
-| **CapabilityBlockMarkers**       | **MEDIUM** | The `// Block 1:` / `// Block 2:` / `// Block 3:` banners are not all present, are out of order, or declare a block above 3. |
-| **CapabilityLocalConstant**      | **MEDIUM** | File-level `const` declared inline; belongs in `taxonomy_<domain>_constant.rs`.                        |
-| **CapabilityEmbeddedTest**       | **LOW**    | `#[cfg(test)]` or `mod tests` declared inline; test code belongs in `tests/`.                          |
-| **CapabilityPublicHelper**       | **MEDIUM** | Block 3 helper with no production caller (own-module or external) is `pub`; change to `fn` or `pub(crate)` (tests in `tests/` compile as separate crate and require `pub`). |
+| Sub-check                        | Severity   | Description                                                                                         |
+| -------------------------------- | ---------- | ----------------------------------------------------------------------------------------------------|
+| **CapabilityTooManyTypes**       | **HIGH**   | File exceeds max 3 type declarations.                                                                |
+| **CapabilityNoImplementor**      | **MEDIUM** | No struct/class in the capability file implements a `_protocol` contract trait. Python classes satisfied only by a decorator claim (e.g. `@with_adapter_protocol`) still pass the check when the class body or module carries methods; a decorated class with no methods is reported.                       |
+| **CapabilityMultiProtocol**      | **MEDIUM** | File implements more than one protocol trait — should be split into separate capability files; shared helpers belong in `utility_*`.|
+| **CapabilityBlockOrder**         | **HIGH**   | Block 2 (protocol trait impl) does not precede Block 3 (inherent impl: ctors, std traits, helpers).   |
+| **CapabilityBlockMarkers**       | **MEDIUM** | The `// Block 1:` / `// Block 2:` / `// Block 3:` banners are not all present, are out of order, or declare a block above 3.|
+| **CapabilityLocalConstant**      | **MEDIUM** | File-level `const` declared inline; belongs in `taxonomy_<domain>_constant.rs`.                       |
+| **CapabilityEmbeddedTest**       | **LOW**    | `#[cfg(test)]` or `mod tests` declared inline; test code belongs in `tests/`.                         |
+| **CapabilityPublicHelper**       | **MEDIUM** | Block 3 helper with no production caller (own-module or external) is `pub`; change to `fn` or `pub(crate)` (tests in `tests/` compile as separate crate and require `pub`).|
 
 **Structure rule (3-block):** a capability file reads Block 1 (type + constructor) → Block 2 (protocol methods only) → Block 3 (factories, std traits, helpers). The `CapabilityBlockOrder` sub-check enforces the 2-before-3 half of that order by comparing two `impl` lines; `CapabilityBlockMarkers` reads the `Block <n>:` banner comments themselves, so a file that documents none of its three blocks is reported even when its two `impl` blocks happen to land in a valid order. A banner is `Block <digits>:` standing as its own word inside a comment — the colon keeps prose such as `Block 1 (types) -> Block 2` from reading as a marker, and the word boundary keeps `Sub-Block 4:` out.
 
@@ -390,11 +391,11 @@ Utility role boundary violation. Utility files must contain stateless standalone
 
 Checks — each with its own severity:
 
-| Sub-check              | Severity   | Description                                                                       |
-| ------------------------ | ------------ | ----------------------------------------------------------------------------------- |
-| **AgentTooManyTypes**  | **HIGH**   | File exceeds max 3 type declarations (struct/enum/class/interface).               |
-| **AgentNoImplementor** | **MEDIUM** | No struct/class implements an aggregate trait.                                    |
-| **AnyType annotation** | **MEDIUM** | `: Any`, `Any<`, `Any[` patterns detected in agent code; must use concrete types. |
+| Sub-check              | Severity   | Description                                                                      |
+| ------------------------ | ------------ | -----------------------------------------------------------------------------------|
+| **AgentTooManyTypes**  | **HIGH**   | File exceeds max 3 type declarations (struct/enum/class/interface).              |
+| **AgentNoImplementor** | **MEDIUM** | No struct/class implements an aggregate trait.                                   |
+| **AnyType annotation** | **MEDIUM** | `: Any`, `Any<`, `Any[` patterns detected in agent code; must use concrete types.|
 
 Additional checks:
 
@@ -504,17 +505,17 @@ These rules audit the AES document chain — `PRD.md`, `ROADMAP.md`, `README.md`
 
 Requirement IDs follow `FR-<FEATURE>-NNN: <imperative name>`, and every requirement states all six fields: Description, Input, Output, Business Rules, Edge Cases, Error Handling. The FRD's requirement count must also equal the count of `pub trait I*Protocol` declarations in the feature's shared contract module. DESIGN.md item IDs follow `DS-<DESIGNNAME>-NNN: <title>` (item headings at H2–H4 (`### DS-<DESIGNNAME>-NNN:` in the shipped template)); DATA.md item IDs follow `DT-<DATANAME>-NNN: <title>` as item H2s. A bare `DS-001`/`DT-001` (digits only, no NAME qualifier) is not an accepted item ID.
 
-| Violation type                  | Fires when                                                              |
-| ------------------------------- | ------------------------------------------------------------------------ |
-| `id_missing_feature_prefix`     | An ID reads `FR-NNN` with no feature prefix.                            |
-| `field_missing`                 | A requirement omits one or more of the six fields; the message names each. |
-| `protocol_count_mismatch`       | The FRD heading count and the module's `I*Protocol` class count differ; the message states both counts. |
-| `backlog_id_not_fr`             | A BACKLOG `## Backlog` row's ID cell is not a valid FRD FR-ID.          |
-| `backlog_id_missing`            | An FRD FR-ID has no corresponding BACKLOG `## Backlog` row.             |
-| `ds_backlog_id_not_ds`          | A BACKLOG `## Backlog` row's ID cell is not a valid DESIGN.md `DS-<DESIGNNAME>-NNN` ID.    |
-| `ds_backlog_id_missing`         | A DESIGN.md `DS-<DESIGNNAME>-NNN` ID has no corresponding BACKLOG `## Backlog` row.        |
-| `dt_backlog_id_not_dt`          | A BACKLOG `## Backlog` row's ID cell is not a valid DATA.md `DT-<DATANAME>-NNN` ID.      |
-| `dt_backlog_id_missing`         | A DATA.md `DT-<DATANAME>-NNN` ID has no corresponding BACKLOG `## Backlog` row.          |
+| Violation type                  | Fires when                                                             |
+| ------------------------------- | ------------------------------------------------------------------------|
+| `id_missing_feature_prefix`     | An ID reads `FR-NNN` with no feature prefix.                           |
+| `field_missing`                 | A requirement omits one or more of the six fields; the message names each.|
+| `protocol_count_mismatch`       | The FRD heading count and the module's `I*Protocol` class count differ; the message states both counts.|
+| `backlog_id_not_fr`             | A BACKLOG `## Backlog` row's ID cell is not a valid FRD FR-ID.         |
+| `backlog_id_missing`            | An FRD FR-ID has no corresponding BACKLOG `## Backlog` row.            |
+| `ds_backlog_id_not_ds`          | A BACKLOG `## Backlog` row's ID cell is not a valid DESIGN.md `DS-<DESIGNNAME>-NNN` ID.   |
+| `ds_backlog_id_missing`         | A DESIGN.md `DS-<DESIGNNAME>-NNN` ID has no corresponding BACKLOG `## Backlog` row.       |
+| `dt_backlog_id_not_dt`          | A BACKLOG `## Backlog` row's ID cell is not a valid DATA.md `DT-<DATANAME>-NNN` ID.     |
+| `dt_backlog_id_missing`         | A DATA.md `DT-<DATANAME>-NNN` ID has no corresponding BACKLOG `## Backlog` row.         |
 
 One protocol class is one capability seam, and one seam is one requirement. Aggregate traits (`I*Aggregate`) are excluded from the count. The crate folder name is translated to the module name by replacing `-` with `_`. A feature with no shared contract module is left alone. The message names both fix directions: either merge/split requirements or merge/split protocol classes — see the four-direction table in `HOW-TO-MAKE-FRD.md`.
 
@@ -526,18 +527,18 @@ One protocol class is one capability seam, and one seam is one requirement. Aggr
 
 Sections follow the template order (Reference, System Overview, Functional Requirements, API Contract, Integration Points, Non-functional, Test Scenarios, Assumptions, Glossary), and each carries the shape its type requires.
 
-| Violation type               | Fires when                                                            |
-| ------------------------------ | ---------------------------------------------------------------------- |
-| `order_violation`             | The level-2 sections appear out of template order, or the API Contract subsections do. |
-| `api_no_subsection`           | API Contract is missing its Protocol API or Aggregate API subsection.  |
-| `api_h3_unexpected`           | API Contract carries a level-3 heading other than Protocol API / Aggregate API. |
-| `api_subsection_no_table`     | A required API subsection has no table with Method, Input, Output, Error, Event, Description. |
-| `api_subsection_duplicated`   | A required API subsection appears more than once.                      |
-| `h3_off_template`             | A level-3 heading anywhere in the FRD is not `FR-<FEATURE>-NNN:`, `Protocol API`, or `Aggregate API`. |
-| `integration_not_table`       | Integration Points is not a table with System, Direction, Purpose, Failure mode. |
-| `nfr_not_table`               | Non-functional Requirements is not a table with Metric, Target, Measurement method. |
-| `scenarios_empty`             | Test Scenarios carries no bullet items.                               |
-| `glossary_empty`              | Glossary carries no `- **Term**: definition` bullets.                  |
+| Violation type               | Fires when                                                           |
+| ------------------------------ | ----------------------------------------------------------------------|
+| `order_violation`             | The level-2 sections appear out of template order, or the API Contract subsections do.|
+| `api_no_subsection`           | API Contract is missing its Protocol API or Aggregate API subsection. |
+| `api_h3_unexpected`           | API Contract carries a level-3 heading other than Protocol API / Aggregate API.|
+| `api_subsection_no_table`     | A required API subsection has no table with Method, Input, Output, Error, Event, Description.|
+| `api_subsection_duplicated`   | A required API subsection appears more than once.                     |
+| `h3_off_template`             | A level-3 heading anywhere in the FRD is not `FR-<FEATURE>-NNN:`, `Protocol API`, or `Aggregate API`.|
+| `integration_not_table`       | Integration Points is not a table with System, Direction, Purpose, Failure mode.|
+| `nfr_not_table`               | Non-functional Requirements is not a table with Metric, Target, Measurement method.|
+| `scenarios_empty`             | Test Scenarios carries no bullet items.                              |
+| `glossary_empty`              | Glossary carries no `- **Term**: definition` bullets.                 |
 
 **API Contract is strict to the level-3 heading.** The rule reads the
 headings *under* `## API Contract`, not only the H2 set, because an H2-only
@@ -571,10 +572,10 @@ stay free-form — that is where detail that must not become a section belongs.
 
 A spec promises; it never reports state. Applies to exactly four promise-bearing documents: PRD, FRD, DATA, ROADMAP. ARCHITECTURE and CONTRIBUTING are not in this set: ARCHITECTURE.md names source-file patterns by design, CONTRIBUTING.md carries checklists by design, and applying the spec-purity check to them would fire false positives. The code's `is_spec` never included ARCHITECTURE or CONTRIBUTING, so the text is corrected to match the code. DESIGN is a visual contract, not a promise-bearing spec, and is also excluded.
 
-| Violation type         | Fires when                                                              |
-| ------------------------ | ------------------------------------------------------------------------ |
-| `source_file_named`     | The spec names a concrete source file (`.py`, `.rs`, `.ts`, `.tsx`); the message names the file. |
-| `status_leak`           | The spec carries checkboxes, a Status field, implementation state, release state, a status marker, or a progress percentage. |
+| Violation type         | Fires when                                                             |
+| ------------------------ | ------------------------------------------------------------------------|
+| `source_file_named`     | The spec names a concrete source file (`.py`, `.rs`, `.ts`, `.tsx`); the message names the file.|
+| `status_leak`           | The spec carries checkboxes, a Status field, implementation state, release state, a status marker, or a progress percentage.|
 
 ---
 
@@ -584,11 +585,11 @@ A spec promises; it never reports state. Applies to exactly four promise-bearing
 
 Documents reference each other, and the state vocabulary lives in exactly one place.
 
-| Violation type             | Fires when                                                              |
-| --------------------------- | ------------------------------------------------------------------------ |
-| `no_backlog_link`           | An FRD's Reference section does not link its BACKLOG.md.                |
-| `no_prd_link`               | An FRD's Reference section does not link its PRD.md.                    |
-| `state_vocab_restated`      | A feature backlog restates a root-master section (State Definitions, Status Policy, Feature Roll-up, Branches in Flight, Risk Register). |
+| Violation type             | Fires when                                                             |
+| --------------------------- | ------------------------------------------------------------------------|
+| `no_backlog_link`           | An FRD's Reference section does not link its BACKLOG.md.               |
+| `no_prd_link`               | An FRD's Reference section does not link its PRD.md.                   |
+| `state_vocab_restated`      | A feature backlog restates a root-master section (State Definitions, Status Policy, Feature Roll-up, Branches in Flight, Risk Register).|
 
 ---
 
@@ -604,24 +605,24 @@ Matching is by leading words after lowercasing and stripping punctuation, so `##
 
 **Required and allowed H2s per document:**
 
-| Document | Required H2s |
-| --- | --- |
-| `AGENTS.md` | Runtime, Project Quick Facts, Pipeline, Commands, Related Documents (allowed: Project Structure) |
-| `ARCHITECTURE.md` | Purpose, Workspace Organization, Naming Convention, Vertical Slicing Layout, Taxonomy Layer, Contract Layer, Utility Layer, Capabilities Layer, Agent Layer, Surface Layer, Root Layer |
-| `CONTRIBUTING.md` | Principles, Development Setup, Feature Change, Documentation Change, Quality Verification & PR Process |
-| `PRD.md` | Problem Statement, Goals & Success Metrics, User Personas, Scope, Feature Requirements, Non-functional Requirements, Open Questions / Risks |
-| `README.md` | Prerequisites, Quick Start, Architecture, Available Scripts/Commands, Configuration, Testing, Contributing, License (forbidden: Project Structure — that section belongs to `AGENTS.md`) |
-| `ROADMAP.md` | Current Condition, State Definitions, Status Policy, Feature Roll-up, Risk Register |
-| `DATA.md` | Data Overview, Reference (allowed: `DT-` item H2s) |
-| `DESIGN.md` | Design Overview, Design Requirements, Reference |
+| Document | Required H2s|
+| --- | ---|
+| `AGENTS.md` | Runtime, Project Quick Facts, Pipeline, Commands, Related Documents (allowed: Project Structure)|
+| `ARCHITECTURE.md` | Purpose, Workspace Organization, Naming Convention, Vertical Slicing Layout, Taxonomy Layer, Contract Layer, Utility Layer, Capabilities Layer, Agent Layer, Surface Layer, Root Layer|
+| `CONTRIBUTING.md` | Principles, Development Setup, Feature Change, Documentation Change, Quality Verification & PR Process|
+| `PRD.md` | Problem Statement, Goals & Success Metrics, User Personas, Scope, Feature Requirements, Non-functional Requirements, Open Questions / Risks|
+| `README.md` | Prerequisites, Quick Start, Architecture, Available Scripts/Commands, Configuration, Testing, Contributing, License (forbidden: Project Structure — that section belongs to `AGENTS.md`)|
+| `ROADMAP.md` | Current Condition, State Definitions, Status Policy, Feature Roll-up, Risk Register|
+| `DATA.md` | Data Overview, Reference (allowed: `DT-` item H2s)|
+| `DESIGN.md` | Design Overview, Design Requirements, Reference|
 
 Each document also carries an agreed set of project-specific H2s that are accepted without violation; see the constants in `taxonomy_doc_rules_constant.rs` for the full per-document lists.
 
-| Violation type     | Fires when                                                                            |
-| ------------------- | ------------------------------------------------------------------------------------- |
-| `h1_count`          | The document has zero or more than one level-1 heading.                              |
-| `h2_missing`        | One or more of the required H2 sections is absent; the message names each one.         |
-| `h2_unexpected`     | A level-2 heading is outside the required and allowed sets; the message asks for demotion to H3 or removal. |
+| Violation type     | Fires when                                                                           |
+| ------------------- | -------------------------------------------------------------------------------------|
+| `h1_count`          | The document has zero or more than one level-1 heading.                             |
+| `h2_missing`        | One or more of the required H2 sections is absent; the message names each one.        |
+| `h2_unexpected`     | A level-2 heading is outside the required and allowed sets; the message asks for demotion to H3 or removal.|
 
 ---
 
@@ -631,26 +632,30 @@ Each document also carries an agreed set of project-specific H2s that are accept
 
 Two checks answer one question: does the document body carry the table shape its HOW-TO template mandates?
 
-**Template body-shape conformance.** The `HOW-TO-MAKE-BACKLOG` and `HOW-TO-MAKE-ROADMAP` templates each mandate a specific table under a specific H2 section. A section that is present but carrying the wrong body — bullets, prose, or a table missing a required column — is a violation. AES605 sees the H2 heading is present but says nothing about what the section body must look like; this rule closes that gap.
+**Template body-shape conformance.** The `HOW-TO-MAKE-*` templates each mandate specific tables under specific sections. A section that is present but carrying the wrong body — bullets, prose, or a table missing a required column — is a violation. Conformance is exact: a header cell the template never declares (`table_extra_columns`), a data row that copies the header (`table_header_repeated`), a table under a section where the template shows none (`table_not_in_template`, e.g. a Design Requirements overview table), or a DESIGN H3 outside the `DS-<NAME>-NNN` pattern (`h3_unexpected`) all fire. AES605 sees the H2 heading is present but says nothing about what the section body must look like; this rule closes that gap.
 
 **Required-document presence.** The six root documents the templates require — `PRD.md`, `ROADMAP.md`, `README.md`, `AGENTS.md`, `ARCHITECTURE.md`, `CONTRIBUTING.md` — must exist at a real workspace root (detected by `Cargo.toml`, `pyproject.toml`, or `package.json` at the audit root). A sub-directory audit is self-contained and does not owe the root document set. `DESIGN.md`, `FRD.md`, `DATA.md`, and root `BACKLOG.md` are per-feature files and are not required at the root.
 
-| Violation type             | Fires when                                                          |
-| ------------------------- | ------------------------------------------------------------------- |
-| `section_not_table`       | A mandated section (e.g. `## Backlog`, `## State Definitions`) carries bullets or prose instead of a markdown table. |
-| `table_missing_columns`   | A mandated section carries a table, but one or more required columns are absent. |
-| `missing_required_doc`    | A required root document does not exist at a real workspace root.  |
+| Violation type             | Fires when                                                         |
+| ------------------------- | -------------------------------------------------------------------|
+| `section_not_table`       | A mandated section (e.g. `## Backlog`, `## State Definitions`) carries bullets or prose instead of a markdown table.|
+| `table_missing_columns`   | A mandated section carries a table, but one or more required columns are absent.|
+| `table_extra_columns`     | A mandated table's header carries a column the template's fixed header set does not declare.|
+| `table_header_repeated`   | A table repeats its header row in a data-row position, shipping column names where values belong.|
+| `table_not_in_template`   | A section whose template prescribes no table (e.g. `## Design Overview`, the `## Design Requirements` prefix) still carries one.|
+| `h3_unexpected`           | A `###` heading sits where the template reserves H3s for `DS-<NAME>-NNN` entry items, or in a section that sanctions no H3.|
+| `missing_required_doc`    | A required root document does not exist at a real workspace root. |
 
 The enforced column sets are transcribed from the shipped templates:
 
-| Document | Section        | Required columns |
-| -------- | -------------- | ---------------- |
-| `BACKLOG.md` | Backlog | ID, Priority, State, Dependencies, Next Action, Updated |
-| `BACKLOG.md` | Scenario Evidence | Scenario, Kind, Test file, Test name, Last verified |
-| `BACKLOG.md` | Release Readiness | Area, Status, Notes |
-| `BACKLOG.md` | Change Log | Date, Change, By |
-| `ROADMAP.md` | State Definitions | State, Meaning |
-| `ROADMAP.md` | Feature Roll-up | ID, Feature, Priority, State, Dependencies, Next Action, Updated |
+| Document | Section        | Required columns|
+| -------- | -------------- | ----------------|
+| `BACKLOG.md` | Backlog | ID, Priority, State, Dependencies, Next Action, Updated|
+| `BACKLOG.md` | Scenario Evidence | Scenario, Kind, Test file, Test name, Last verified|
+| `BACKLOG.md` | Release Readiness | Area, Status, Notes|
+| `BACKLOG.md` | Change Log | Date, Change, By|
+| `ROADMAP.md` | State Definitions | State, Meaning|
+| `ROADMAP.md` | Feature Roll-up | ID, Feature, Priority, State, Dependencies, Next Action, Updated|
 
 ---
 
@@ -662,9 +667,9 @@ The enforced column sets are transcribed from the shipped templates:
 
 A workspace holds a locked `shared` folder that contains only taxonomy, utility, and contract files. Any `capabilities_*`, `agent_*`, or `surface_*` file sitting there is misplaced and must be moved to a feature or surface folder.
 
-| Violation type                  | Fires when                                                       |
-| --------------------------------- | ------------------------------------------------------------------ |
-| `shared_has_forbidden_files` | A shared folder holds a `capabilities_*`, `agent_*`, or `surface_*` file. |
+| Violation type                  | Fires when                                                      |
+| --------------------------------- | ------------------------------------------------------------------|
+| `shared_has_forbidden_files` | A shared folder holds a `capabilities_*`, `agent_*`, or `surface_*` file.|
 
 ---
 
@@ -680,12 +685,12 @@ The orchestrator check is per folder. A member-level orchestrator — one sittin
 
 **Shared kernel mirror.** A feature folder is also mirrored in its member's kernel: the subfolder `shared/src/<feature>/` must exist, where `<feature>` is the folder name with `-` replaced by `_` (the module name). The kernel holds the feature's contract and taxonomy modules, so a feature without that subfolder has no home for them. The mirror is required only for feature folders; a surface folder's shared subfolder is optional and never fires this check.
 
-| Violation type                    | Fires when                                                                    |
-| ------------------------------------ | ------------------------------------------------------------------------------- |
-| `feature_missing_agent`       | The folder holds capabilities but no `agent_*_orchestrator` file of its own. |
-| `feature_missing_capability` | The folder holds an agent orchestrator but no `capabilities_*` file.        |
-| `feature_missing_shared_subfolder` | The feature has no `shared/src/<feature>/` mirror subfolder in its member's kernel. |
-| `feature_missing_root_container` | The feature holds no `root_*_container` or `root_*_entry` file under it, in its `src/` subfolder, or at the member root. |
+| Violation type                    | Fires when                                                                   |
+| ------------------------------------ | -------------------------------------------------------------------------------|
+| `feature_missing_agent`       | The folder holds capabilities but no `agent_*_orchestrator` file of its own.|
+| `feature_missing_capability` | The folder holds an agent orchestrator but no `capabilities_*` file.       |
+| `feature_missing_shared_subfolder` | The feature has no `shared/src/<feature>/` mirror subfolder in its member's kernel.|
+| `feature_missing_root_container` | The feature holds no `root_*_container` or `root_*_entry` file under it, in its `src/` subfolder, or at the member root.|
 
 ---
 
@@ -695,9 +700,9 @@ The orchestrator check is per folder. A member-level orchestrator — one sittin
 
 A surface folder is a folder where surface files dominate — it has more surface files than all other layers combined. Such a folder must contain surface files only. Any `capabilities_*`, `agent_*`, or `utility_*` file in a surface folder is misplaced: capability and agent files move to a feature folder, utility files move to the `shared/` kernel folder. Barrel files and entry-point wrappers are permitted alongside surfaces.
 
-| Violation type                       | Fires when                                                             |
-| -------------------------------------- | ------------------------------------------------------------------------ |
-| `surface_has_misplaced_files` | A surface-dominated folder holds a `capabilities_*`, `agent_*`, or `utility_*` file. |
+| Violation type                       | Fires when                                                            |
+| -------------------------------------- | ------------------------------------------------------------------------|
+| `surface_has_misplaced_files` | A surface-dominated folder holds a `capabilities_*`, `agent_*`, or `utility_*` file.|
 
 ---
 
@@ -715,26 +720,26 @@ A folder is in scope when it holds at least one `capabilities_*` or one
 `agent_*_orchestrator` file — the same gate AES702 uses to decide what counts as
 a feature. A utility-only folder or a surface owes no suite.
 
-| Prefix         | Directory  | Proves                                  |
-| --------------- | ----------- | --------------------------------------- |
-| `contract_`     | `tests/`    | Protocol/trait/interface impl exists    |
-| `unit_`         | `tests/`    | One public function                     |
-| `integration_`  | `tests/`    | Module / crate / package + DI wiring    |
-| `dogfood_`      | `tests/`    | CLI against a live service; skip if unavailable |
-| `smoke_`        | `tests/`    | App boots + responds, under 5 s         |
-| `e2e_`          | `tests/`    | Full request lifecycle                  |
-| `acceptance_`   | `tests/`    | Business requirement met                |
-| `bench_`        | `benches/`  | Performance regression                  |
+| Prefix         | Directory  | Proves                                 |
+| --------------- | ----------- | ---------------------------------------|
+| `contract_`     | `tests/`    | Protocol/trait/interface impl exists   |
+| `unit_`         | `tests/`    | One public function                    |
+| `integration_`  | `tests/`    | Module / crate / package + DI wiring   |
+| `dogfood_`      | `tests/`    | CLI against a live service; skip if unavailable|
+| `smoke_`        | `tests/`    | App boots + responds, under 5 s        |
+| `e2e_`          | `tests/`    | Full request lifecycle                 |
+| `acceptance_`   | `tests/`    | Business requirement met               |
+| `bench_`        | `benches/`  | Performance regression                 |
 
 Support prefixes (`regression_`, `behavioral_`, `mock_`, `fixture_`) are legal
 file names and satisfy **no** category: a folder carrying only regression guards
 still owes the full seven.
 
-| Violation type                     | Fires when                                                                 |
-| ----------------------------------- | -------------------------------------------------------------------------- |
-| `test_suite_missing_tests_dir`     | A feature folder owns source and has no `tests/` directory.                |
-| `test_suite_missing_bench_dir`     | A feature folder owns source and has no `benches/` directory.              |
-| `test_suite_missing_category`      | A feature folder owns source and no file carries one required test prefix.  |
+| Violation type                     | Fires when                                                                |
+| ----------------------------------- | --------------------------------------------------------------------------|
+| `test_suite_missing_tests_dir`     | A feature folder owns source and has no `tests/` directory.               |
+| `test_suite_missing_bench_dir`     | A feature folder owns source and has no `benches/` directory.             |
+| `test_suite_missing_category`      | A feature folder owns source and no file carries one required test prefix. |
 
 Each missing category is its own finding, so a reader sees exactly which seam is
 untested rather than a single "your suite is incomplete".

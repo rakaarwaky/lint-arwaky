@@ -6,7 +6,6 @@
 use std::collections::BTreeMap;
 
 use shared_common::ViolationItem;
-use shared_common::taxonomy_format_vo::Format;
 
 /// Format a violation location as "file:line:column".
 pub fn format_location(file: &str, line: i64, column: i64) -> String {
@@ -125,7 +124,7 @@ fn is_source_file(path: &str) -> bool {
 pub fn output_violations(
     violations: &[ViolationItem],
     target_path: &str,
-    format: Format,
+    format: &str,
     is_specific_member: bool,
 ) {
     let force_member = if is_specific_member {
@@ -137,10 +136,11 @@ pub fn output_violations(
     let grouped = group_by_member(violations, target_path, force_member.as_deref());
     let is_single_file = is_source_file(target_path);
     match format {
-        Format::Text => render_text(&grouped, target_path, is_specific_member, is_single_file),
-        Format::Json => render_json(&grouped, violations, target_path),
-        Format::Sarif => render_sarif(&grouped),
-        Format::Junit => render_junit(&grouped),
+        "text" => render_text(&grouped, target_path, is_specific_member, is_single_file),
+        "json" => render_json(&grouped, violations, target_path),
+        "sarif" => render_sarif(&grouped),
+        "junit" => render_junit(&grouped),
+        _ => render_text(&grouped, target_path, is_specific_member, is_single_file),
     }
 }
 

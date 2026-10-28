@@ -14,5 +14,5 @@ State machine restated here.
 - FR-CONF: config-system feature
 
 ## Reference
-| Prd | {Link to PRD.md} | [{link}](PRD.md) |
-| Architecture | {Link to ARCHITECTURE.md} | [{link}](ARCHITECTURE.md) |
+| Prd | {Link to PRD.md} | [{link}](PRD.md)|
+| Architecture | {Link to ARCHITECTURE.md} | [{link}](ARCHITECTURE.md)|

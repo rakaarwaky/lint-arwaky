@@ -19,13 +19,13 @@
 A capability file **implements a protocol** — it has state (via DI), business rules, and concrete behaviour.
 A utility file **performs a pure operation** — no state, no business rules, just a narrow task.
 
-| Decision | → Capability | → Utility |
+| Decision | → Capability | → Utility|
 |---|---|---|
-| Has `&self` / instance state / injected dependencies | Yes | No |
-| Contains business rules or protocol logic | Yes | No |
-| Stateless, domain-agnostic, ≥2 consumers | — | Yes |
-| Implements `_protocol` trait | Yes | No |
-| Pure free function with no business logic | No | Yes |
+| Has `&self` / instance state / injected dependencies | Yes | No|
+| Contains business rules or protocol logic | Yes | No|
+| Stateless, domain-agnostic, ≥2 consumers | — | Yes|
+| Implements `_protocol` trait | Yes | No|
+| Pure free function with no business logic | No | Yes|
 
 **Rule**: If a method in Block 3 is stateless (`fn` without `&self`), domain-agnostic, and reusable across modules — extract it to a `utility_*` file. It does not belong in the capability layer.
 
@@ -136,22 +136,22 @@ linter will catch and what stays a review responsibility. `Manual` means no rule
 checks it — the shape is still the contract, but a violation is caught by review
 or by `cargo`, not by `scan`.
 
-| Check                                                        | Enforced                                                          |
-| ------------------------------------------------------------ | ----------------------------------------------------------------- |
-| All three `// Block 1:` / `// Block 2:` / `// Block 3:` banners present, in order, none above 3. | **AES403** `CapabilityBlockMarkers` (MEDIUM)                      |
-| Block 2 (protocol impl) precedes Block 3 (inherent impl).    | **AES403** `CapabilityBlockOrder` (HIGH)                          |
-| ≥1 struct implements a protocol trait.                       | **AES403** `CapabilityNoImplementor` (MEDIUM)                     |
-| Exactly 1 protocol trait per file.                           | **AES403** `CapabilityMultiProtocol` (MEDIUM)                     |
-| ≤3 total struct + enum.                                      | **AES403** `CapabilityTooManyTypes` (HIGH)                        |
-| Imports from `_protocol` or Utility only.                    | **AES201**–**AES205** (import rules)                              |
-| No agent / surface / root imports.                           | **AES201** `FORBIDDEN_IMPORT`                                     |
-| Block 2 holds ONLY `impl I<Name>Protocol for ...`.           | Manual — no rule reads Block 2's contents                        |
-| `Arc<dyn Trait>` for DI; shared VOs for fields and signatures. | Manual                                                          |
-| Constants → `taxonomy_<domain>_constant.rs`.                 | **AES403** `CapabilityLocalConstant` (MEDIUM)                     |
-| Block 3 helpers with no production caller are `fn` or `pub(crate)`, not `pub`. | **AES403** `CapabilityPublicHelper` (MEDIUM)       |
-| `#[cfg(test)] mod tests` lives in `tests/`, never inline.    | **AES403** `CapabilityEmbeddedTest` (LOW)                         |
-| Low-level, reusable, stateless ops → moved to Utility.       | Manual — the helper-vs-utility matrix below is a judgement call   |
-| `cargo check -p <crate-name>` passes.                        | `cargo`, not `scan`                                               |
+| Check                                                        | Enforced                                                        |
+| ------------------------------------------------------------ | -----------------------------------------------------------------|
+| All three `// Block 1:` / `// Block 2:` / `// Block 3:` banners present, in order, none above 3. | **AES403** `CapabilityBlockMarkers` (MEDIUM)                    |
+| Block 2 (protocol impl) precedes Block 3 (inherent impl).    | **AES403** `CapabilityBlockOrder` (HIGH)                        |
+| ≥1 struct implements a protocol trait.                       | **AES403** `CapabilityNoImplementor` (MEDIUM)                   |
+| Exactly 1 protocol trait per file.                           | **AES403** `CapabilityMultiProtocol` (MEDIUM)                   |
+| ≤3 total struct + enum.                                      | **AES403** `CapabilityTooManyTypes` (HIGH)                      |
+| Imports from `_protocol` or Utility only.                    | **AES201**–**AES205** (import rules)                            |
+| No agent / surface / root imports.                           | **AES201** `FORBIDDEN_IMPORT`                                   |
+| Block 2 holds ONLY `impl I<Name>Protocol for ...`.           | Manual — no rule reads Block 2's contents                      |
+| `Arc<dyn Trait>` for DI; shared VOs for fields and signatures. | Manual                                                        |
+| Constants → `taxonomy_<domain>_constant.rs`.                 | **AES403** `CapabilityLocalConstant` (MEDIUM)                   |
+| Block 3 helpers with no production caller are `fn` or `pub(crate)`, not `pub`. | **AES403** `CapabilityPublicHelper` (MEDIUM)     |
+| `#[cfg(test)] mod tests` lives in `tests/`, never inline.    | **AES403** `CapabilityEmbeddedTest` (LOW)                       |
+| Low-level, reusable, stateless ops → moved to Utility.       | Manual — the helper-vs-utility matrix below is a judgement call |
+| `cargo check -p <crate-name>` passes.                        | `cargo`, not `scan`                                             |
 
 **On the block banners.** A banner is `Block <digits>:` standing as its own word
 inside a comment. The colon is load-bearing: prose such as

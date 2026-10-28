@@ -47,131 +47,71 @@ flowchart TD
 
 ### FR-NamingRules-001: Naming Convention (AES101)
 
-- **Description**: Every file stem must be snake_case with at least N underscore-separated words in `prefix_concept_suffix` pattern.
-- **Input**: Pre-populated `&[FileEntry]` from filesystem aggregate (via surface), architecture configuration, layer map.
-- **Output**:
-
-  - AES101 diagnostic if naming structure is invalid.
-- **Business Rules**:
-
-  - Must be snake_case: lowercase ASCII letters (`a-z`), digits (`0-9`), and underscores only. No uppercase, no hyphens, no dots.
-  - Must follow `prefix_concept_suffix` pattern with minimum N words (configurable via `config.naming.word_count.value`, default 3.
-  - Validation regex: `^[a-z0-9]+(_[a-z0-9]+){N-1,}$` — compiled once per word count and cached in a static `OnceLock` table for word counts 1–10; counts above 10 build the pattern on demand so the configured minimum is honored exactly.
-  - Exceptions — three sources, evaluated in order; any match skips the file:
-    1. **Barrel files and entry points** — module barrels, library roots, binary entries, package markers, and index barrels.
-    2. **Rule-level exceptions** (`config.rules[].exceptions.values`) — global exceptions that apply to all layers for a given rule code.
-    3. **Definition-level exceptions** (`layers[].exceptions.values`) — per-layer exceptions that apply only when the file's layer is recognized.
-- **Edge Cases**:
-
-  - Files with uppercase letters → AES101 (invalid snake_case).
-  - Files with hyphens (`taxonomy-user-vo`) → AES101 (invalid separator).
-  - Files with dots (`taxonomy.user.vo`) → AES101 (invalid character).
-  - Abbreviations like `db` or `http` → allowed as long as lowercase and underscore-separated.
-  - Digits in segments (`taxonomy_v2_vo`) → allowed.
-  - Files with fewer than N words → AES101 (too few words).
-- **Error Handling**:
-
-  - Emit AES101 with the invalid stem, expected pattern, and minimum word count.
-  - Files with empty content (parse failures from filesystem crate) are skipped.
-
----
+| Aspect | Detail|
+|--------|-------|
+| Description | Validate file stem shapes against the AES naming convention for each source language. |
+| Business Rules | AES101 checks the stem (not the extension) for legal shape: mixed-case identifiers are expected; all-uppercase stems are violations; files are classified by directory so support-directory files are treated as flat; windows-style separators classify the same as forward slashes; barrels in support directories are skipped. Violation messages report the observed shape. |
+| Edge Cases | All uppercase produces a violation; windows separator path classified identically; barrel in support dir skipped; file outside relevant directories not read at all; unreadable file yields no finding rather than failing the audit. |
+| Capability | NamingConventionChecker validates stem shape. |
+| Protocol | INamingConventionProtocol. |
+| Method | Stem-shape check over a file path returning violations with the observed shape. |
+| Input | File path (and optionally content for classification); source is NamingRequest::RunAuditWithEntries or RunAuditWithTestEntries via INamingRunnerAggregate::execute. |
+| Output | Lint results with AES101 codes inside NamingResponse::Audit. |
+| Error | Missing file yields no finding for that path; classification never panics on either separator style. |
+| Event | None; audit is synchronous. |
+| Test | all_uppercase_produces_violation, a_windows_separator_path_is_classified_the_same_way, and a_file_under_the_support_dir_is_treated_as_flat assert shape and classification. |
+| Metric | All seeded stem-shape fixtures produce exactly the expected violation count; separator-style variants agree on classification. |
 
 ### FR-NamingRules-002: Suffix/Prefix Validation (AES102)
 
-- **Description**: File suffix must align with the architectural layer indicated by its prefix, and file prefix must be consistent with its suffix. Forbidden suffixes from other layers are rejected. Prefix-suffix cross-validation ensures a file's layer identity is internally consistent.
-- **Input**: Pre-populated `&[FileEntry]` from filesystem aggregate (via surface), architecture configuration with per-layer suffix policies, layer map.
-- **Output**: AES102 diagnostic if suffix is forbidden, mismatches the layer's allowed list, or is inconsistent with the prefix.
-- **Business Rules**:
-
-  - **Suffix extraction**: The suffix is the last underscore-separated token from the stem (e.g., `taxonomy_user_vo` → suffix = `vo`).
-  - **Prefix extraction**: The prefix is the first underscore-separated token from the stem (e.g., `taxonomy_user_vo` → prefix = `taxonomy`).
-  - **Suffix policy per layer** (from config `layers` definition):
-
-    - `strict`: Only suffixes in the explicit allow-list are permitted. Any other suffix → AES102 (`SuffixMismatch`).
-    - `flexible`: Any suffix is allowed EXCEPT those in the `forbidden` list. Forbidden suffix → AES102 (`SuffixForbidden`).
-    - If a layer has no suffix definition, suffix checking is skipped for that layer.
-  - **Prefix-suffix cross-validation**:
-
-    - The detected prefix determines the expected layer.
-    - The suffix must belong to that layer's allowed suffix set.
-    - If the suffix belongs to a DIFFERENT layer's suffix set, AES102 is emitted with both the expected and actual layer.
-    - Example: `taxonomy_user_protocol` → prefix = `taxonomy`, suffix = `protocol`. But `protocol` belongs to `contract` layer → AES102 (`PrefixSuffixMismatch`: expected taxonomy suffix, got contract suffix).
-  - **Forbidden suffix enforcement**:
-
-    - If a suffix appears in the layer's `forbidden` list, it is immediately rejected (AES102 with `SuffixForbidden`), regardless of flexible/strict policy.
-  - **Barrel files and entry points** — module barrels, library roots, binary entries, package markers, index barrels, and packaging build scripts — are skipped.
-  - **Rule-level exceptions** (`config.rules[].exceptions.values`) — global exceptions that apply to all layers for a given rule code.
-  - **Definition-level exceptions** (`layers[].exceptions.values`) — per-layer exceptions that apply only when the file's layer is recognized.
-  - **Layer detection** via the layer detection utility using filename prefix.
-- **Per-Layer Suffix Policies** (source of truth: YAML config):
-
-  | Layer        | Policy   | Allowed Suffixes                                                                                              | Forbidden Suffixes                                                                            |
-  | -------------- | ---------- | --------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-  | taxonomy     | strict   | `vo`, `entity`, `error`, `event`, `constant`                                                                  | —                                                                                            |
-  | contract     | strict   | `protocol`, `aggregate`                                                                                       | —                                                                                            |
-  | utility      | flexible | *(any)*                                                                                                       | `vo`, `entity`, `error`, `event`, `constant`, `protocol`, `aggregate`                         |
-  | capabilities | flexible | *(any)*                                                                                                       | `vo`, `entity`, `error`, `event`, `constant`, `constants`, `protocol`, `aggregate`, `utility` |
-  | agent        | strict   | `orchestrator`                                                                                                | —                                                                                            |
-  | surface      | strict   | `command`, `controller`, `page`, `view`, `component`, `router`, `layout`, `hook`, `store`, `action`, `screen` | —                                                                                            |
-  | root         | strict   | `entry`, `container`                                                                                          | —                                                                                            |
-
-- **Edge Cases**:
-
-  - Files with no suffix (single-word stem after prefix, e.g., `taxonomy_user`) → fails strict policy check (AES102 `SuffixMismatch`).
-  - Multiple valid suffixes for a layer (e.g., taxonomy allows `_vo`, `_entity`, `_error`, `_event`, `_constant`) → all pass.
-  - Custom or unknown layers without a definition → skipped (no definition means no suffix policy).
-  - Prefix-suffix mismatch across layers (e.g., `contract_user_vo`) → AES102 (`PrefixSuffixMismatch`).
-  - Packaging build scripts are skipped (in exceptions list).
-- **Error Handling**: Emit AES102 with the layer name, used suffix, prefix, and the full allowed/forbidden lists. For prefix-suffix mismatch, include expected layer and actual suffix layer.
-
----
+| Aspect | Detail|
+|--------|-------|
+| Description | Enforce suffix and prefix policies for special file roles (barrels, registries, regression guards). |
+| Business Rules | AES102 checks each file for a legal prefix/suffix descriptor for its role: an allowed suffix yields no violation; a file with no legal prefix produces a violation explaining the missing descriptor; barrel files are skipped (not flagged); a regression guard name is legal even though it is not a category; support directories are flat scope. |
+| Edge Cases | Barrel file skipped; file with no legal prefix produces a violation; a regression-guard name passes despite not matching category prefixes; empty content file (no descriptors found) is handled without panic; file outside policy directories is never read. |
+| Capability | SuffixPolicyChecker validates prefix/suffix descriptors. |
+| Protocol | ISuffixPolicyProtocol. |
+| Method | Suffix/prefix policy check for a file returning violations naming the missing policy. |
+| Input | File path plus content; source is NamingRequest through the audit entry points. |
+| Output | Lint results with AES102 codes inside NamingResponse::Audit. |
+| Error | Unclassified file yields no finding rather than a false positive. |
+| Event | None. |
+| Test | allowed_suffix_no_violation, a_file_with_no_legal_prefix_produces_a_violation, aes102_barrel_file_skipped, and a_regression_guard_is_a_legal_name_even_though_it_is_not_a_category assert policy outcomes. |
+| Metric | Barrel fixtures contribute zero AES102 findings; no-legal-prefix fixture yields exactly one; regression-guard fixture yields zero. |
 
 ### FR-NamingRules-003: Test File Prefix Discipline (AES103)
 
-- **Description**: Every file inside `tests/` and `benches/` must be typed by its file-name prefix, because the prefix is the virtual folder — there is no subdirectory left to express the type in.
-- **Input**: The test and bench file entries discovered by the filesystem aggregate's `tests/`/`benches/` walk, the architecture configuration, and the layer map.
-- **Output**: AES103 diagnostic naming the offending prefix set, the directory, and whether the fix is a rename or a move.
-- **Business Rules**:
-
-  - **Slot classification** reads the containing directory, not the path depth. A file directly in `tests/` is a test file, one directly in `benches/` is a benchmark, and anything else is out of scope.
-  - **Legal prefixes in `tests/`** are the seven test types (`contract_`, `unit_`, `integration_`, `dogfood_`, `smoke_`, `e2e_`, `acceptance_`) plus the support set (`regression_`, `behavioral_`, `mock_`, `fixture_`).
-  - **Legal prefix in `benches/`** is `bench_` alone.
-  - **Flat layout**: neither directory may nest a subdirectory, with one registered exception — a `common/` support directory, which Rust reaches through a module declaration. A support module cannot sit flat beside the test files without colliding with them.
-  - **Barrels are skipped.** A Rust module barrel, a Python package marker, or a JavaScript index file names no test of its own; the same exemption AES101 grants them applies here.
-  - **Rule-level exceptions** (`config.rules[].exceptions.values`) skip a file by bare name, evaluated before any classification.
-  - **Support prefixes satisfy AES103 but not AES704.** A `regression_*` guard is a legal file name and no required category; category presence is the structure rule's question.
-- **Edge Cases**:
-
-  - A prefix belonging to the *other* directory (`bench_*` inside `tests/`) → AES103 distinguishing a move from a rename.
-  - No legal prefix at all → AES103 listing the legal set for that directory.
-  - A file nested below `tests/common/` → treated as flat, since that is where shared support code goes.
-  - A workspace with no `tests/` or `benches/` at all → no AES103 finding; the absence of a suite is AES704's question.
-- **Error Handling**: Emit AES103 at the file, naming the directory, the legal prefix set, and whether the fix is a rename or a move. Files with empty content are skipped by the same unreadable proxy AES101 and AES102 use.
-
----
+| Aspect | Detail|
+|--------|-------|
+| Description | Keep test and bench files disciplined to legal prefixes and correct directories. |
+| Business Rules | AES103 classifies files under tests/ and benches/: a test named inside benches reports to move it; a bench named inside tests reports to move it; a mismatched prefix says move rather than rename; a file with no legal prefix in a test directory is named with its legal prefixes in the message; nested depth is reported with flattening guidance; benchmarks belong in benches/; support subdirectories under tests are accepted so shared helpers survive; unclassified paths are reported for classification rather than assumed. |
+| Edge Cases | Benchmark inside tests says move it; test inside benches says move it; bench prefix inside tests says move rather than rename; benchmarks accepted in benches dir; a benches subdirectory is reported; outside-directory files are not read at all; activity of one directory never reads the other. |
+| Capability | TestFilePrefixChecker validates test/bench prefix discipline. |
+| Protocol | ITestFilePrefixProtocol. |
+| Method | Test/bench placement and prefix check returning violations with move-or-rename guidance. |
+| Input | File path; source is NamingRequest::RunAuditWithTestEntries. |
+| Output | Lint results with AES103 codes inside NamingResponse::Audit. |
+| Error | Path that cannot be classified reports need-for-classification instead of guessing; no panic. |
+| Event | None. |
+| Test | a_benchmark_named_inside_tests_says_move_it, a_bench_prefix_inside_tests_says_move_rather_than_rename, an_unprefixed_test_file_is_named_with_its_legal_prefixes, a_support_directory_is_accepted_so_shared_helpers_survive, and a_nested_file_reports_the_depth_it_sits_at assert guidance. |
+| Metric | Misplacement fixtures each produce the documented message family; support-dir and benches-dir legal fixtures produce zero findings. |
 
 ## Public Interface
 
-### Protocol API
-
-| Method | Input | Output | Error | Event | Description |
-|---|---|---|---|---|---|
-| `check_file_naming` | &ArchitectureConfig, &LayerMapVO, &FilePathList, &FilePath, &mut LintResultList | `` | — | — | Check file naming. |
-| `check_domain_suffixes` | &ArchitectureConfig, &LayerMapVO, &FilePathList, &FilePath, &mut LintResultList | `` | — | — | Check domain suffixes. |
-| `check_test_file_prefixes` | &ArchitectureConfig, &LayerMapVO, &FilePathList, &FilePath, &mut LintResultList | `` | — | — | Check test/bench file prefixes. |
-
-### Aggregate API
-
-| Method | Input | Output | Error | Event | Description |
-|---|---|---|---|---|---|
-| `execute` | NamingRequest | `NamingResponse` | — | — | Single composite entry point over the feature. |
+| Aspect | Detail|
+|--------|-------|
+| Agent | NamingOrchestrator — the agent-layer orchestrator behind the naming-rule stage of the check command. |
+| Aggregate | INamingRunnerAggregate — the feature's single front door. |
+| Method | execute(&self, request: NamingRequest) -> NamingResponse |
+| Request | NamingRequest::{RunAuditWithEntries, RunAuditWithTestEntries, Name} |
+| Response | NamingResponse::{Audit, Name} |
 
 ## Reference
 
-- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature; this file is specification only.
-- PRD: [PRD.md](../../PRD.md)
-- Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
-- Filesystem crate
-- Shared crate
-
-| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md) |
+| Artifact | Purpose | Link|
+|----------|---------|------|
+| BACKLOG.md | Backlog tracking | [BACKLOG.md](BACKLOG.md)|
+| PRD.md | Product requirements | [PRD.md](../../PRD.md)|
+| FRD.md | Feature requirements | [FRD.md](FRD.md)|
+| ROADMAP.md | Roadmap status | [ROADMAP.md](../../ROADMAP.md)|
+| ARCHITECTURE.md | Layer contract | [ARCHITECTURE.md](../../ARCHITECTURE.md)|

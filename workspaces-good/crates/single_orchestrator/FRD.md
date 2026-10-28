@@ -11,35 +11,34 @@ the orchestrator applies the capability, and the result returns to the caller.
 
 | Aspect         | Detail                                      |
 |----------------|---------------------------------------------|
-| Description    | {FR-SINGLE-001 description}                     |
-| Business Rules | {business rules}                          |
-| Edge Cases     | {edge cases}                              |
-
-- **Description**: The feature validates the request and returns the result.
-- **Input**: A request supplied by the caller.
-- **Output**: The resolved value, or an error.
-- **Business Rules**: The caller never sees a partial result.
-- **Edge Cases**: An empty request is rejected before any work runs.
-- **Error Handling**: Returns an error; never panics.
+| Description    | The feature validates the request and returns the result. |
+| Business Rules | The caller never sees a partial result.     |
+| Edge Cases     | An empty request is rejected before work runs. |
+| Capability     | single_orchestrator::Capability             |
+| Protocol       | single_orchestrator::Protocol               |
+| Method         | audit                                       |
+| Input          | A request supplied by the caller.           |
+| Output         | The resolved value, or an error.            |
+| Error          | Returns an error; never panics.             |
+| Event          | Finding emitted                             |
+| Test           | lint-arwaky-cli docs . reports 0 findings   |
+| Metric         | 0 doc-rule findings                         |
 
 ## Public Interface
 
-### Protocol API
-
-| Method | Input | Output | Error | Event | Description |
-|--------|-------|--------|-------|-------|-------------|
-| audit | SingleRequest | SingleResponse | — | — | Audits the request the caller supplies. |
-
-### Aggregate API
-
-| Method | Input | Output | Error | Event | Description |
-|--------|-------|--------|-------|-------|-------------|
-| execute | request | response | error | — | The feature's single entry point. |
+| Aspect     | Detail            |
+|------------|-------------------|
+| Agent      | single_orchestrator::Agent  |
+| Aggregate  | single_orchestrator::Aggregate |
+| Method     | execute           |
+| Request    | request           |
+| Response   | response          |
 
 ## Reference
 
-- PRD: [../PRD.md](../PRD.md)
-- Backlog: [BACKLOG.md](BACKLOG.md)
-
-| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md) |
-| Architecture | {Link to ARCHITECTURE.md} | [{link}](ARCHITECTURE.md) |
+| Artifact     | Purpose                                    | Link |
+|--------------|--------------------------------------------|------|
+| PRD          | Business goals, user stories, and scope    | [PRD.md](../../PRD.md) |
+| Backlog      | Task tracking, epics, and implementation status | [BACKLOG.md](BACKLOG.md) |
+| Roadmap      | Timeline, phasing, and dependencies        | [ROADMAP.md](../../ROADMAP.md) |
+| Architecture | System boundaries, tech stack, and infra   | [ARCHITECTURE.md](../../ARCHITECTURE.md) |

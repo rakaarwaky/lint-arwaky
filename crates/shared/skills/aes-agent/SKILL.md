@@ -52,11 +52,11 @@ metadata:
 The **layer** decides which suffix, which imports, and which structure apply.
 Rules, templates, section contracts, and Verify blocks live in the language HOW-TUs under [`references/`](references/).
 
-| Language | Focus | Body rule | HOW-TO |
-| -------- | ----- | --------- | ------ |
-| Python | Orchestrator | One aggregate; 3-block; zero I/O/computation | [references/HOW-TO-MAKE-PYTHON-AGENT.md](references/HOW-TO-MAKE-PYTHON-AGENT.md) |
-| Rust | Orchestrator | One aggregate; 3-block; zero I/O/computation | [references/HOW-TO-MAKE-RUST-AGENT.md](references/HOW-TO-MAKE-RUST-AGENT.md) |
-| TypeScript | Orchestrator | One aggregate; 3-block; zero I/O/computation | [references/HOW-TO-MAKE-TYPESCRIPT-AGENT.md](references/HOW-TO-MAKE-TYPESCRIPT-AGENT.md) |
+| Language | Focus | Body rule | HOW-TO|
+| -------- | ----- | --------- | ------|
+| Python | Orchestrator | One aggregate; 3-block; zero I/O/computation | [references/HOW-TO-MAKE-PYTHON-AGENT.md](references/HOW-TO-MAKE-PYTHON-AGENT.md)|
+| Rust | Orchestrator | One aggregate; 3-block; zero I/O/computation | [references/HOW-TO-MAKE-RUST-AGENT.md](references/HOW-TO-MAKE-RUST-AGENT.md)|
+| TypeScript | Orchestrator | One aggregate; 3-block; zero I/O/computation | [references/HOW-TO-MAKE-TYPESCRIPT-AGENT.md](references/HOW-TO-MAKE-TYPESCRIPT-AGENT.md)|
 
 **The layer chain:**
 
@@ -71,15 +71,15 @@ Each file answers one layer's job. A method or import in the wrong layer is the 
 Every rule is machine-checked by `lint-arwaky-cli scan <layer-path>` (see each HOW-TO § Verify).
 A rule cannot drift from the gate. Cite the linter, not this file, when pointing at a rule.
 
-| Layer | Rule |
-| ----- | ---- |
-| Naming | File `agent_<domain>_orchestrator` — `_orchestrator` is the only suffix (AES101/AES102). |
-| Structure | 3-block order: Block 1 type+injected deps → Block 2 aggregate methods only → Block 3 factories/dunders/helpers. ≥1 aggregate, ≤3 types (AES405). |
-| Imports | Shared contracts/taxonomy/utility only — never capabilities, siblings, surface (AES201). |
-| Behaviour | No I/O, no arithmetic/parsing/normalisation, no local domain data, no magic constants, no silently discarded errors. |
-| DI | Injected aggregate only (`Arc<dyn Trait>` in Rust); shared VOs in signatures. |
-| Register | Shared barrel so the root can compose the agent. |
-| Verify | `lint-arwaky-cli scan <layer-path>` → 0. Language compile is fallback only. |
+| Layer | Rule|
+| ----- | ----|
+| Naming | File `agent_<domain>_orchestrator` — `_orchestrator` is the only suffix (AES101/AES102).|
+| Structure | 3-block order: Block 1 type+injected deps → Block 2 aggregate methods only → Block 3 factories/dunders/helpers. ≥1 aggregate, ≤3 types (AES405).|
+| Imports | Shared contracts/taxonomy/utility only — never capabilities, siblings, surface (AES201).|
+| Behaviour | No I/O, no arithmetic/parsing/normalisation, no local domain data, no magic constants, no silently discarded errors.|
+| DI | Injected aggregate only (`Arc<dyn Trait>` in Rust); shared VOs in signatures.|
+| Register | Shared barrel so the root can compose the agent.|
+| Verify | `lint-arwaky-cli scan <layer-path>` → 0. Language compile is fallback only.|
 
 Split details, templates, and Section Contract tables: **read the language HOW-TO** — do not restate them here.
 

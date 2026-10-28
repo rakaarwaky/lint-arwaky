@@ -111,6 +111,7 @@ fn e2e_a_conforming_workspace_produces_no_findings_end_to_end() {
     );
     write(&root.join("crates/shared/DATA.md"), "# DATA\n");
     write(&root.join("crates/shared/BACKLOG.md"), "# BACKLOG\n");
+    write(&root.join("crates/shared/FRD.md"), "# Shared — FRD\n");
 
     assert_eq!(
         audit(root),

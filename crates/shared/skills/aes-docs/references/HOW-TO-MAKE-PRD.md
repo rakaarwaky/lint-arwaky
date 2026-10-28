@@ -43,13 +43,13 @@
 
 **Exemplar.** Weak fails a stakeholder; falsifiable lets them decide.
 
-| Section      | Weak                            | Falsifiable                                                                                                                              |
-| ------------ | ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| Problem      | "Documentation is inefficient." | "Six documents describe one feature and disagree about what is finished; telling whether `FR-006` shipped requires reading the source."  |
-| Goal         | "Docs should be high quality."  | "`aa check` fails any repo where a `Done` backlog row cites no command and commit hash."                                                 |
-| Feature      | "P0 — good documentation."      | "P0 — the checker reports every invariant by file and line. Acceptance: exit 1 on a status line in an `FRD.md`, exit 0 on a clean tree." |
-| Out of scope | *(empty)*                       | "Out of scope: rendering or publishing docs; the checker only reads and reports."                                                        |
-| Persona      | "Users."                        | "The agent writing the docs in a fresh session, with no memory of the last one."                                                         |
+| Section      | Weak                            | Falsifiable                                                                                                                            |
+| ------------ | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------|
+| Problem      | "Documentation is inefficient." | "Six documents describe one feature and disagree about what is finished; telling whether `FR-006` shipped requires reading the source."|
+| Goal         | "Docs should be high quality."  | "`aa check` fails any repo where a `Done` backlog row cites no command and commit hash."                                               |
+| Feature      | "P0 — good documentation."      | "P0 — the checker reports every invariant by file and line. Acceptance: exit 1 on a status line in an `FRD.md`, exit 0 on a clean tree."|
+| Out of scope | *(empty)*                       | "Out of scope: rendering or publishing docs; the checker only reads and reports."                                                      |
+| Persona      | "Users."                        | "The agent writing the docs in a fresh session, with no memory of the last one."                                                       |
 
 Every row names a concrete subject, a measurable outcome, and a test
 that could falsify it.
@@ -87,14 +87,14 @@ Do not list features here.>
 
 ### PR-<PROJECT-NAME-ID>-001: <Short imperative name>
 
-| Aspect         | Detail                                                        |
+| Aspect         | Detail                                                      |
 |----------------|---------------------------------------------------------------|
-| Description    | <one behaviour — what it does>                                |
-| User Story     | <as a..., I want..., so that...>                              |
-| In Scope       | <boundary — what this project will deliver>                   |
-| Out of Scope   | <explicit exclusions — name them so the argument ends here>   |
-| Acceptance     | <observable check>                                            |
-| Success Metric | <how to measure this requirement succeeds>                    |
+| Description    | <one behaviour — what it does>                              |
+| User Story     | <as a..., I want..., so that...>                            |
+| In Scope       | <boundary — what this project will deliver>                 |
+| Out of Scope   | <explicit exclusions — name them so the argument ends here> |
+| Acceptance     | <observable check>                                          |
+| Success Metric | <how to measure this requirement succeeds>                  |
 
 ### PR-<PROJECT-NAME-ID>-002: <Short imperative name>
 ### PR-<PROJECT-NAME-ID>-003: <Short imperative name>
@@ -103,10 +103,10 @@ Do not list features here.>
 
 ## Reference
 
-| Artifact     | Purpose                                          | Link |
+| Artifact     | Purpose                                          | Link|
 |--------------|--------------------------------------------------|------|
-| Roadmap      | <Timeline, phasing, and dependencies>            | [ROADMAP.md](ROADMAP.md) |
-| Architecture | <System boundaries, tech stack, and infra>       | [ARCHITECTURE.md](ARCHITECTURE.md) |
+| Roadmap      | <Timeline, phasing, and dependencies>            | [ROADMAP.md](ROADMAP.md)|
+| Architecture | <System boundaries, tech stack, and infra>       | [ARCHITECTURE.md](ARCHITECTURE.md)|
 ```
 
 ---
@@ -116,11 +116,11 @@ Do not list features here.>
 Every section is required unless marked optional. Each exists for one
 reason.
 
-| Section               | Why it belongs here                                                                                 |
-| --------------------- | --------------------------------------------------------------------------------------------------- |
-| Problem Statement     | The reason the project exists, in one paragraph. Watch for a feature list instead of a problem.     |
-| Project Requirements  | The promise, in `PR-<PROJECT-NAME-ID>-NNN` items, each with Description / User Story / In Scope / Out of Scope / Acceptance / Success Metric. |
-| Reference             | Connects the spec to its plan and its boundaries.                                                  |
+| Section               | Why it belongs here                                                                               |
+| --------------------- | ---------------------------------------------------------------------------------------------------|
+| Problem Statement     | The reason the project exists, in one paragraph. Watch for a feature list instead of a problem.   |
+| Project Requirements  | The promise, in `PR-<PROJECT-NAME-ID>-NNN` items, each with Description / User Story / In Scope / Out of Scope / Acceptance / Success Metric.|
+| Reference             | Connects the spec to its plan and its boundaries.                                                |
 
 ---
 
