@@ -70,6 +70,20 @@ The feature does the work a surface delegates to.
 | Backlog      | {Task tracking, epics, and implementation status} | [BACKLOG.md](BACKLOG.md) |
 | Architecture | {System boundaries, tech stack, and infra} | [ARCHITECTURE.md](../../ARCHITECTURE.md) |
 | Roadmap      | {What ships next, in order}                | [ROADMAP.md](../../ROADMAP.md) |
+
+## API Contract
+
+### Protocol API
+
+| Method | Input | Output | Error | Event | Description |
+| --- | --- | --- | --- | --- | --- |
+| `execute` | `SampleRequest` | `SampleResponse` | Reason-coded | — | Single composite entry point. |
+
+### Aggregate API
+
+| Method | Input | Output | Error | Event | Description |
+| --- | --- | --- | --- | --- | --- |
+| `execute` | `SampleRequest` | `SampleResponse` | Reason-coded | — | Routes to the capability. |
 "#
     .to_string()
 }

@@ -376,7 +376,7 @@ pub const DOC_HEADING_CONTRACTS: &[DocH2Contract] = &[
         &[],
     ),
     (ROADMAP_DOC, ROADMAP_REQUIRED_H2S, &[]),
-    (FRD_DOC, FRD_REQUIRED_H2S, &[]),
+    (FRD_DOC, FRD_REQUIRED_H2S, &["API Contract"]),
     (BACKLOG_DOC, BACKLOG_REQUIRED_H2S, &[]),
     (DATA_DOC, DATA_REQUIRED_H2S, &["DT-"]),
     (DESIGN_DOC, DESIGN_REQUIRED_H2S, &[]),
