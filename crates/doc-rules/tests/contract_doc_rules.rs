@@ -74,6 +74,20 @@ The feature does the work a surface delegates to.
 | Backlog      | {Task tracking, epics, and implementation status} | [BACKLOG.md](BACKLOG.md) |
 | Architecture | {System boundaries, tech stack, and infra} | [ARCHITECTURE.md](../../ARCHITECTURE.md) |
 | Roadmap      | {What ships next, in order}                | [ROADMAP.md](../../ROADMAP.md) |
+
+## API Contract
+
+### Protocol API
+
+| Method | Input | Output | Error | Event | Description |
+| --- | --- | --- | --- | --- | --- |
+| `execute` | `SampleRequest` | `SampleResponse` | Reason-coded | — | Single composite entry point. |
+
+### Aggregate API
+
+| Method | Input | Output | Error | Event | Description |
+| --- | --- | --- | --- | --- | --- |
+| `execute` | `SampleRequest` | `SampleResponse` | Reason-coded | — | Routes to the capability. |
 "#
     .to_string()
 }
@@ -356,37 +370,43 @@ fn aes601_does_not_validate_fr_row_labels() {
 }
 
 /// The 9-doc FRD contract closed off `api_no_subsection` with the retired
-/// `## API Contract` H2 (AES602 now only answers `order_violation`), so a
-/// subsection-less document is instead answered by the AES605 closed H2 set:
-/// any H2 the contract does not name fires `h2_unexpected`.
+/// `## API Contract` H2 (AES602 now only answers `order_violation`): the
+/// sanctioned `### Aggregate API` subsection no longer exists, so an old FRD
+/// that still names the section carries an H2 outside `required ∪ allowed`.
+/// The AES605 closed set is the rule that answers it.
 #[test]
 fn aes602_fires_when_aggregate_api_is_absent() {
     let tmp = tempfile::tempdir().unwrap();
-    let frd = conforming_frd()
-        .replace("### Aggregate API", "### Other API")
-        .replace(
-            "| `execute` | `SampleRequest` | `SampleResponse` | Reason-coded | — | Routes to the capability. |\n",
-            "",
-        );
+    let frd = conforming_frd().replace("### Aggregate API", "## Aggregate API");
     write_workspace(tmp.path(), &frd);
+    let findings = audit(tmp.path());
     assert!(
-        has(&audit(tmp.path()), "AES605", "h2_unexpected"),
-        "expected h2_unexpected for an off-contract subsection heading, got: {:#?}",
-        audit(tmp.path())
+        has(&findings, "AES605", "h2_unexpected"),
+        "expected h2_unexpected for the absent subsection's stand-in section, got: {findings:#?}"
+    );
+    let message = findings
+        .iter()
+        .find(|(c, v, _, _)| c == "AES605" && v == "h2_unexpected")
+        .map(|(_, _, m, _)| m.as_str())
+        .unwrap_or_default();
+    assert!(
+        message.contains("aggregate api"),
+        "the finding must name the inherited heading; got: {message}"
     );
 }
 
 // ── AES602: contract H2 set closed off the API Contract H3 shapes ───
 
-/// A level-3 heading per protocol class narrating a split the single
-/// table refused to make: the 9-doc FRD contract does not name the
-/// heading, so the closed H2 set answers with `h2_unexpected`.
+/// A per-protocol heading narrating a split the single API table refused to
+/// make: AES602 no longer polices level-3 shape, and written at level 2 — the
+/// shape a legacy FRD gives it far more often than 10 — the heading sits
+/// outside the FRD contract's H2 set, so AES605's `h2_unexpected` answers.
 #[test]
 fn aes602_fires_when_api_contract_has_a_per_protocol_h3() {
     let tmp = tempfile::tempdir().unwrap();
     let frd = conforming_frd().replace(
         "## Public Interface",
-        "### IParserProtocol\n\n\
+        "## IParserProtocol\n\n\
              | Method | Input | Output | Error | Event | Description |\n\
              | --- | --- | --- | --- | --- | --- |\n\
              | `parse` | `DocSource` | `Result<Tree>` | — | — | Parse one document. |\n\n\
@@ -398,6 +418,15 @@ fn aes602_fires_when_api_contract_has_a_per_protocol_h3() {
         has(&findings, "AES605", "h2_unexpected"),
         "expected h2_unexpected, got: {findings:#?}"
     );
+    let message = findings
+        .iter()
+        .find(|(c, v, _, _)| c == "AES605" && v == "h2_unexpected")
+        .map(|(_, _, m, _)| m.as_str())
+        .unwrap_or_default();
+    assert!(
+        message.contains("iparserprotocol"),
+        "the finding must name the off-contract heading; got: {message}"
+    );
 }
 
 #[test]
@@ -405,11 +434,11 @@ fn aes602_fires_when_api_contract_has_two_extra_h3s() {
     let tmp = tempfile::tempdir().unwrap();
     let frd = conforming_frd().replace(
         "## Public Interface",
-        "### IGraphProtocol\n\n\
+        "## IGraphProtocol\n\n\
              | Method | Input | Output | Error | Event | Description |\n\
              | --- | --- | --- | --- | --- | --- |\n\
              | `build` | `Vec<Edge>` | `Graph` | — | — | Build. |\n\n\
-             ### IParserProtocol\n\n\
+             ## IParserProtocol\n\n\
              | Method | Input | Output | Error | Event | Description |\n\
              | --- | --- | --- | --- | --- | --- |\n\
              | `parse` | `DocSource` | `Result<Tree>` | — | — | Parse one document. |\n\n\
@@ -417,12 +446,15 @@ fn aes602_fires_when_api_contract_has_two_extra_h3s() {
     );
     write_workspace(tmp.path(), &frd);
     let findings = audit(tmp.path());
-    // The closed H2 set reports one finding naming every off-contract H3.
+    // The closed H2 set reports one finding naming every off-contract heading.
     let count = findings
         .iter()
         .filter(|(c, v, _, _)| c == "AES605" && v == "h2_unexpected")
         .count();
-    assert_eq!(count, 1, "expected 1 h2_unexpected naming both headings, got: {findings:#?}");
+    assert_eq!(
+        count, 1,
+        "expected 1 h2_unexpected naming both headings, got: {findings:#?}"
+    );
     let message = findings
         .iter()
         .find(|(c, v, _, _)| c == "AES605" && v == "h2_unexpected")
@@ -434,51 +466,70 @@ fn aes602_fires_when_api_contract_has_two_extra_h3s() {
     );
 }
 
-/// The 9-doc FRD contract's H2 set is closed: any H2 the contract does not
-/// name — even a retired layout's, like a protocol table parked under a
-/// parent section the order check reads — fires `h2_unexpected` (AES605)
-/// rather than a document-wide AES602 escape. The document-wide sweep is
-/// what catches it.
+/// The 9-doc FRD contract's H2 set is closed: `## Assumptions & Constraints`
+/// left the layout, so a protocol table parked under it is an off-contract
+/// section the AES605 closed set answers with `h2_unexpected`.
 #[test]
 fn aes602_fires_when_a_protocol_table_is_parked_under_assumptions() {
     let tmp = tempfile::tempdir().unwrap();
     let frd = conforming_frd().replace(
-        "## Feature Overview\n\nThe feature does the work a surface delegates to.",
-        "## Feature Overview\n\n\
-         The feature does the work a surface delegates to.\n\n\
+        "## Reference",
+        "## Assumptions & Constraints\n\n\
+         The capability is stateless.\n\n\
          ### IToolResolutionProtocol (12 operations)\n\n\
          | Method | Input | Output | Error | Event | Description |\n\
          | --- | --- | --- | --- | --- | --- |\n\
-         | `has_local_bin` | `&Path, &ToolName` | `bool` | — | — | Local bin. |",
+         | `has_local_bin` | `&Path, &ToolName` | `bool` | — | — | Local bin. |\n\n\
+         ## Reference",
     );
     write_workspace(tmp.path(), &frd);
+    let findings = audit(tmp.path());
     assert!(
-        has(&audit(tmp.path()), "AES605", "h2_unexpected"),
-        "expected h2_unexpected for a protocol table parked outside the contract, got: {:#?}",
-        audit(tmp.path())
+        has(&findings, "AES605", "h2_unexpected"),
+        "expected h2_unexpected for a protocol table parked outside the contract, got: {findings:#?}"
+    );
+    let message = findings
+        .iter()
+        .find(|(c, v, _, _)| c == "AES605" && v == "h2_unexpected")
+        .map(|(_, _, m, _)| m.as_str())
+        .unwrap_or_default();
+    assert!(
+        message.contains("assumptions"),
+        "the finding must name the retired section; got: {message}"
     );
 }
 
-/// The 9-doc contract's H2 set is closed: a level-3 heading promoted above
-/// a section the template states as a bullet list — e.g. an invented SCEN
-/// heading — is an invented section the closed H2 set does not admit.
+/// The closed H2 set answers an invented SCEN section: `## Test Scenarios`
+/// left the 9-doc layout, so a scenario promoted out of the bullet list into
+/// its own section — here with a level-3 item heading — fires `h2_unexpected`
+/// naming the section it was parked in.
 #[test]
 fn aes602_fires_when_a_scen_heading_is_promoted_below_test_scenarios() {
     let tmp = tempfile::tempdir().unwrap();
     let frd = conforming_frd().replace(
-        "## Feature Overview\n\nThe feature does the work a surface delegates to.",
-        "## Feature Overview\n\n\
-         The feature does the work a surface delegates to.\n\n\
+        "## Reference",
+        "## Test Scenarios\n\n\
+         - A conforming request produces a conforming response.\n\n\
          ### SCEN-001: Dispatch\n\n\
          | # | Scenario | Expected |\n\
          | --- | --- | --- |\n\
-         | 1 | Conforming request | Conforming response |",
+         | 1 | Conforming request | Conforming response |\n\n\
+         ## Reference",
     );
     write_workspace(tmp.path(), &frd);
+    let findings = audit(tmp.path());
     assert!(
-        has(&audit(tmp.path()), "AES605", "h2_unexpected"),
-        "expected h2_unexpected for an invented SCEN heading, got: {:#?}",
-        audit(tmp.path())
+        has(&findings, "AES605", "h2_unexpected"),
+        "expected h2_unexpected for an invented Test Scenarios section, got: {findings:#?}"
+    );
+    let message = findings
+        .iter()
+        .find(|(c, v, _, _)| c == "AES605" && v == "h2_unexpected")
+        .map(|(_, _, m, _)| m.as_str())
+        .unwrap_or_default();
+    assert!(
+        message.contains("test scenarios"),
+        "the finding must name the retired section; got: {message}"
     );
 }
 
@@ -538,23 +589,36 @@ fn aes602_h3_parity_ignores_headings_inside_a_fenced_block() {
     );
 }
 
+/// `api_subsection_no_table` left with the 9-doc layout: an API table that a
+/// prose paragraph replaced now reads as an off-contract `## Protocol API`
+/// section (the H2 a legacy FRD promotes it to), which the closed H2 set
+/// answers with `h2_unexpected`.
 #[test]
 fn aes602_fires_when_protocol_api_is_prose_only() {
     let tmp = tempfile::tempdir().unwrap();
     // Author dumps every method into prose under Protocol API instead of a table.
     let frd = conforming_frd().replace(
-        "| Method | Input | Output | Error | Event | Description |\n\
+        "### Protocol API\n\n\
+         | Method | Input | Output | Error | Event | Description |\n\
          | --- | --- | --- | --- | --- | --- |\n\
-         | `execute` | `SampleRequest` | `SampleResponse` | Reason-coded | — | Single composite entry point. |\n\n\
-         ### Aggregate API",
-        "Every method is documented below.\n\n\
-         ### Aggregate API",
+         | `execute` | `SampleRequest` | `SampleResponse` | Reason-coded | — | Single composite entry point. |",
+        "## Protocol API\n\n\
+         Every method is documented in prose rather than in a table.",
     );
     write_workspace(tmp.path(), &frd);
+    let findings = audit(tmp.path());
     assert!(
-        has(&audit(tmp.path()), "AES602", "api_subsection_no_table"),
-        "expected api_subsection_no_table, got: {:#?}",
-        audit(tmp.path())
+        has(&findings, "AES605", "h2_unexpected"),
+        "expected h2_unexpected for the prose-only API section, got: {findings:#?}"
+    );
+    let message = findings
+        .iter()
+        .find(|(c, v, _, _)| c == "AES605" && v == "h2_unexpected")
+        .map(|(_, _, m, _)| m.as_str())
+        .unwrap_or_default();
+    assert!(
+        message.contains("protocol api"),
+        "the finding must name the prose-only section; got: {message}"
     );
 }
 
@@ -562,58 +626,76 @@ fn aes602_fires_when_protocol_api_is_prose_only() {
 fn aes602_fires_when_aggregate_api_is_prose_only() {
     let tmp = tempfile::tempdir().unwrap();
     let frd = conforming_frd().replace(
-        "| Method | Input | Output | Error | Event | Description |\n\
+        "### Aggregate API\n\n\
+         | Method | Input | Output | Error | Event | Description |\n\
          | --- | --- | --- | --- | --- | --- |\n\
-         | `execute` | `SampleRequest` | `SampleResponse` | Reason-coded | — | Routes to the capability. |\n\n\
-         ## Integration Points",
-        "A single entry point routes requests.\n\n\
-         ## Integration Points",
+         | `execute` | `SampleRequest` | `SampleResponse` | Reason-coded | — | Routes to the capability. |",
+        "## Aggregate API\n\n\
+         A single entry point routes requests, in prose rather than in a table.",
     );
     write_workspace(tmp.path(), &frd);
+    let findings = audit(tmp.path());
     assert!(
-        has(&audit(tmp.path()), "AES602", "api_subsection_no_table"),
-        "expected api_subsection_no_table, got: {:#?}",
-        audit(tmp.path())
+        has(&findings, "AES605", "h2_unexpected"),
+        "expected h2_unexpected for the prose-only API section, got: {findings:#?}"
+    );
+    let message = findings
+        .iter()
+        .find(|(c, v, _, _)| c == "AES605" && v == "h2_unexpected")
+        .map(|(_, _, m, _)| m.as_str())
+        .unwrap_or_default();
+    assert!(
+        message.contains("aggregate api"),
+        "the finding must name the prose-only section; got: {message}"
     );
 }
 
 #[test]
 fn aes602_fires_when_aggregate_api_is_duplicated() {
     let tmp = tempfile::tempdir().unwrap();
+    // The second copy is promoted to level 2, which is the shape the closed
+    // H2 set judges; the level-3 original stays where the template put it.
     let frd = conforming_frd().replace(
         "### Aggregate API",
-        "### Aggregate API\n\n\
+        "## Aggregate API\n\n\
          | Method | Input | Output | Error | Event | Description |\n\
          | --- | --- | --- | --- | --- | --- |\n\
          | `execute` | `SampleRequest` | `SampleResponse` | Reason-coded | — | Routes to the capability. |\n\n\
          ### Aggregate API",
     );
     write_workspace(tmp.path(), &frd);
+    let findings = audit(tmp.path());
     assert!(
-        has(&audit(tmp.path()), "AES602", "api_subsection_duplicated"),
-        "expected api_subsection_duplicated, got: {:#?}",
-        audit(tmp.path())
+        has(&findings, "AES605", "h2_unexpected"),
+        "expected h2_unexpected for the duplicated API section, got: {findings:#?}"
+    );
+    let message = findings
+        .iter()
+        .find(|(c, v, _, _)| c == "AES605" && v == "h2_unexpected")
+        .map(|(_, _, m, _)| m.as_str())
+        .unwrap_or_default();
+    assert!(
+        message.contains("aggregate api"),
+        "the finding must name the duplicated section; got: {message}"
     );
 }
 
+/// Level-3 subsection order left AES602's scope with the 9-doc layout; the
+/// order the rule still answers is the section order, so an API surface
+/// hoisted above the requirement block is the scramble it reports.
 #[test]
 fn aes602_fires_when_api_subsections_are_out_of_order() {
     let tmp = tempfile::tempdir().unwrap();
-    // Swap the two subsections: Aggregate API before Protocol API.
-    let frd = conforming_frd();
-    let proto_pos = frd.find("### Protocol API").unwrap();
-    let agg_pos = frd.find("### Aggregate API").unwrap();
-    let agg_end = frd.find("## Integration Points").unwrap();
-    let proto_body = frd[proto_pos..agg_pos].to_string();
-    let agg_body = frd[agg_pos..agg_end].to_string();
-    let head = &frd[..proto_pos];
-    let tail = &frd[agg_end..];
-    let frd = format!("{head}{agg_body}{proto_body}{tail}");
-    write_workspace(tmp.path(), &frd);
+    // Swap `## Public Interface` ahead of `## Functional Requirements`.
+    let scrambled = conforming_frd()
+        .replace("## Functional Requirements", "## @@MARK@@")
+        .replace("## Public Interface", "## Functional Requirements")
+        .replace("## @@MARK@@", "## Public Interface");
+    write_workspace(tmp.path(), &scrambled);
+    let findings = audit(tmp.path());
     assert!(
-        has(&audit(tmp.path()), "AES602", "order_violation"),
-        "expected order_violation, got: {:#?}",
-        audit(tmp.path())
+        has(&findings, "AES602", "order_violation"),
+        "expected order_violation, got: {findings:#?}"
     );
 }
 
@@ -633,59 +715,139 @@ fn aes602_conforming_api_contract_reports_no_findings() {
     );
 }
 
+/// `integration_not_table` left AES602 with the 9-doc layout; a bullet-only
+/// Integration Points block parked at level 2 now reads as an H2 outside the
+/// closed FRD set, and AES605's `h2_unexpected` is the finding that answers.
 #[test]
 fn aes602_fires_when_integration_points_is_a_bullet_list() {
     let tmp = tempfile::tempdir().unwrap();
     let frd = conforming_frd().replace(
-        "| System | Direction | Purpose | Failure mode |\n| --- | --- | --- | --- |\n| Shared domain | in | Supplies value objects | None — types only |",
-        "- Shared domain supplies value objects",
+        "## Reference",
+        "## Integration Points\n\n\
+- Shared domain supplies value objects.\n\
+- Orchestrator dispatches the check.\n\n\
+## Reference",
     );
     write_workspace(tmp.path(), &frd);
-    assert!(has(&audit(tmp.path()), "AES602", "integration_not_table"));
+    let findings = audit(tmp.path());
+    assert!(
+        has(&findings, "AES605", "h2_unexpected"),
+        "expected h2_unexpected for the bullet-only integration block, got: {findings:#?}"
+    );
+    let message = findings
+        .iter()
+        .find(|(c, v, _, _)| c == "AES605" && v == "h2_unexpected")
+        .map(|(_, _, m, _)| m.as_str())
+        .unwrap_or_default();
+    assert!(
+        message.contains("integration points"),
+        "the finding must name the section; got: {message}"
+    );
 }
 
+/// `nfr_not_table` left AES602 with the 9-doc layout; prose NFR narration
+/// hoisted to level 2 is now an H2 outside the closed FRD set, answered by
+/// AES605's `h2_unexpected`.
 #[test]
 fn aes602_fires_when_nfr_is_prose() {
     let tmp = tempfile::tempdir().unwrap();
     let frd = conforming_frd().replace(
-        "| Metric | Target | Measurement method |\n| --- | --- | --- |\n| Dispatch cost | One call per request | Read the dispatch table |",
-        "- Dispatch cost is one call per request.",
+        "## Reference",
+        "## Non-Functional Requirements\n\n\
+Dispatch cost stays one call per request.\n\n\
+## Reference",
     );
     write_workspace(tmp.path(), &frd);
-    assert!(has(&audit(tmp.path()), "AES602", "nfr_not_table"));
+    let findings = audit(tmp.path());
+    assert!(
+        has(&findings, "AES605", "h2_unexpected"),
+        "expected h2_unexpected for the prose NFR block, got: {findings:#?}"
+    );
+    let message = findings
+        .iter()
+        .find(|(c, v, _, _)| c == "AES605" && v == "h2_unexpected")
+        .map(|(_, _, m, _)| m.as_str())
+        .unwrap_or_default();
+    assert!(
+        message.contains("non functional requirements"),
+        "the finding must name the section; got: {message}"
+    );
 }
 
 #[test]
 fn aes602_fires_when_sections_are_out_of_order() {
     let tmp = tempfile::tempdir().unwrap();
+    // Swap `## Reference` ahead of `## Public Interface`.
     let scrambled = conforming_frd()
-        .replace("## Test Scenarios", "## @@MARK@@")
-        .replace("## Glossary", "## Test Scenarios")
-        .replace("## @@MARK@@", "## Glossary");
+        .replace("## Public Interface", "## @@MARK@@")
+        .replace("## Reference", "## Public Interface")
+        .replace("## @@MARK@@", "## Reference");
     write_workspace(tmp.path(), &scrambled);
-    assert!(has(&audit(tmp.path()), "AES602", "order_violation"));
+    let findings = audit(tmp.path());
+    assert!(
+        has(&findings, "AES602", "order_violation"),
+        "expected order_violation, got: {findings:#?}"
+    );
 }
 
+/// `scenarios_empty` left AES602 with the 9-doc layout; a bullet-free
+/// Test Scenarios block at level 2 is an H2 outside the closed FRD set,
+/// answered by AES605's `h2_unexpected`.
 #[test]
 fn aes602_fires_when_scenarios_have_no_bullets() {
     let tmp = tempfile::tempdir().unwrap();
     let frd = conforming_frd().replace(
-        "- A conforming request produces a conforming response.",
-        "1. A conforming request produces a conforming response.",
+        "## Reference",
+        "## Test Scenarios\n\n\
+The scenario list carries no bullets, only a sentence.\n\n\
+## Reference",
     );
     write_workspace(tmp.path(), &frd);
-    assert!(has(&audit(tmp.path()), "AES602", "scenarios_empty"));
+    let findings = audit(tmp.path());
+    assert!(
+        has(&findings, "AES605", "h2_unexpected"),
+        "expected h2_unexpected for the bullet-free scenarios block, got: {findings:#?}"
+    );
+    let message = findings
+        .iter()
+        .find(|(c, v, _, _)| c == "AES605" && v == "h2_unexpected")
+        .map(|(_, _, m, _)| m.as_str())
+        .unwrap_or_default();
+    assert!(
+        message.contains("test scenarios"),
+        "the finding must name the section; got: {message}"
+    );
 }
 
+/// `glossary_empty` left AES602 with the 9-doc layout; a table-only Glossary
+/// at level 2 is an H2 outside the closed FRD set, answered by AES605's
+/// `h2_unexpected`.
 #[test]
 fn aes602_fires_when_glossary_has_no_bullets() {
     let tmp = tempfile::tempdir().unwrap();
     let frd = conforming_frd().replace(
-        "- **Sample**: A value object used in this example.",
-        "| Sample | A value object |",
+        "## Reference",
+        "## Glossary\n\n\
+| Term | Meaning |\n\
+| --- | --- |\n\
+| Sample | A value object used in this example. |\n\n\
+## Reference",
     );
     write_workspace(tmp.path(), &frd);
-    assert!(has(&audit(tmp.path()), "AES602", "glossary_empty"));
+    let findings = audit(tmp.path());
+    assert!(
+        has(&findings, "AES605", "h2_unexpected"),
+        "expected h2_unexpected for the table-only glossary, got: {findings:#?}"
+    );
+    let message = findings
+        .iter()
+        .find(|(c, v, _, _)| c == "AES605" && v == "h2_unexpected")
+        .map(|(_, _, m, _)| m.as_str())
+        .unwrap_or_default();
+    assert!(
+        message.contains("glossary"),
+        "the finding must name the section; got: {message}"
+    );
 }
 
 #[test]
@@ -741,10 +903,9 @@ fn aes603_distinguishes_status_leak_from_source_file_naming() {
 #[test]
 fn aes604_fires_when_the_frd_omits_its_backlog_link() {
     let tmp = tempfile::tempdir().unwrap();
-    let frd = conforming_frd().replace(
-        "- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature.\n",
-        "",
-    );
+    // The Reference section is a table now; blanking the artifact cell is the
+    // row-level equivalent of dropping the bullet the old fixture deleted.
+    let frd = conforming_frd().replace("[BACKLOG.md](BACKLOG.md)", "");
     write_workspace(tmp.path(), &frd);
     assert!(has(&audit(tmp.path()), "AES604", "no_backlog_link"));
 }
@@ -752,7 +913,7 @@ fn aes604_fires_when_the_frd_omits_its_backlog_link() {
 #[test]
 fn aes604_fires_when_the_frd_omits_its_prd_link() {
     let tmp = tempfile::tempdir().unwrap();
-    let frd = conforming_frd().replace("- PRD: [PRD.md](../../PRD.md)\n", "");
+    let frd = conforming_frd().replace("[PRD.md](../../PRD.md)", "");
     write_workspace(tmp.path(), &frd);
     assert!(has(&audit(tmp.path()), "AES604", "no_prd_link"));
 }
@@ -763,7 +924,17 @@ fn aes604_fires_when_a_feature_backlog_restates_master_sections() {
     write_workspace(tmp.path(), &conforming_frd());
     fs::write(
         tmp.path().join("crates/sample/BACKLOG.md"),
+        // `state_vocab_restated` answers only when the feature backlog carries
+        // its own `Progress Overview` next to a master-only section; the
+        // legacy section set below stays, since restating it is this test's
+        // subject.
         "# BACKLOG — sample\n\n\
+## Progress Overview\n\n\
+- Done: nothing\n\n\
+## Roadmap Status\n\n\
+| Priority | State | Dependencies | Updated |\n\
+|---|---|---|---|\n\
+| P0 | Ready | — | 2026-09-29 |\n\n\
 ## Current Condition\n\n\
 - Done: nothing\n\n\
 ## Backlog\n\n\
@@ -1043,40 +1214,31 @@ Anything the author wanted to jot down.\n\n\
 
 #[test]
 fn aes605_allows_the_project_specific_h2_set() {
-    // The AGENTS H2 set is closed: the template's exact H2s and nothing else.
+    // The AGENTS H2 set is closed: the project's own five template sections
+    // and nothing else, so a workspace that declares exactly that set passes.
     let tmp = tempfile::tempdir().unwrap();
     write_bad_agents(
         tmp.path(),
-        "# Sample AGENTS.md
-
-## Runtime
-
-- Language: Rust.
-
-## Project Quick Facts
-
-sample facts.
-
-## Pipeline
-
-scan → check
-lint
-run by CI
-
-## Project Structure
-
-one crate.
-
-## Commands
-
-```bash
-true
-```
-
-## Related Documents
-
-- [PRD.md](PRD.md).
-",
+        "# Sample AGENTS.md\n\n\
+## Agent Overview\n\n\
+AI agents must know this workspace's conventions before generating anything.\n\n\
+## Runtime\n\n\
+| Aspect          | Detail                                          |\n\
+|-----------------|-------------------------------------------------|\n\
+| Language        | Rust, edition 2024 pinned                       |\n\
+| Package Manager | cargo, with Cargo.lock                          |\n\n\
+## Project Structure\n\n\
+| Path       | Purpose              |\n\
+|------------|----------------------|\n\
+| crates/    | Rust workspace crates|\n\n\
+## Commands\n\n\
+| Category    | Command                              | Scope      | CI Gate              |\n\
+|-------------|--------------------------------------|------------|----------------------|\n\
+| Test (all)  | `cargo nextest run --workspace`      | All        | ci.yml: Test          |\n\n\
+## Reference\n\n\
+| Artifact | Purpose            | Link        |\n\
+|----------|--------------------|-------------|\n\
+| README   | How the tool works | [README.md](README.md) |\n",
     );
     let findings = audit(tmp.path());
     assert!(
@@ -1096,8 +1258,9 @@ fn audit_root_doc(name: &str, text: &str) -> Vec<(String, String, String, String
 
 #[test]
 fn aes605_reports_a_missing_h2_naming_the_document() {
-    // A ROADMAP.md without Risk Register must name the document and section.
-    let text = conforming_roadmap().replace("## Risk Register", "## Risks");
+    // A ROADMAP.md without Progress Overview must name the document and the
+    // absent section.
+    let text = conforming_roadmap().replace("## Progress Overview", "## Progress Summary");
     let findings = audit_root_doc("ROADMAP.md", &text);
     assert!(has(&findings, "AES605", "h2_missing"));
     let message = findings
@@ -1106,7 +1269,7 @@ fn aes605_reports_a_missing_h2_naming_the_document() {
         .map(|(_, _, m, _)| m.as_str())
         .unwrap_or_default();
     assert!(
-        message.contains("ROADMAP.md") && message.contains("Risk Register"),
+        message.contains("ROADMAP.md") && message.contains("Progress Overview"),
         "message must name the document and section; got: {message}"
     );
 }
@@ -1169,7 +1332,15 @@ Off-template.
 /// though it is a real section of this project.
 #[test]
 fn aes605_rejects_project_structure_in_a_readme() {
+    // Layout is documented in AGENTS.md. A README that repeats it is a second
+    // source of truth, so the section is off-template. The rest of the
+    // fixture carries every README_REQUIRED_H2S so only the rebel section
+    // drives the findings.
     let text = r#"# Sample README
+
+## Project Overview
+
+What the tool does.
 
 ## Prerequisites
 
@@ -1177,35 +1348,19 @@ fn aes605_rejects_project_structure_in_a_readme() {
 
 ## Quick Start
 
-Run it.
+| Step | Action | Command |
+| --- | --- | --- |
+| 1 | Install | `cargo install lint-arwaky-cli` |
 
-## Architecture
+## Reference
 
-Delegate to ARCHITECTURE.md.
+| Artifact | Purpose | Link |
+| --- | --- | --- |
+| CONTRIBUTING | Branch and PR conventions | [CONTRIBUTING.md](CONTRIBUTING.md) |
 
 ## Project Structure
 
 Where things live.
-
-## Available Scripts/Commands
-
-The daily loop.
-
-## Configuration
-
-What to set.
-
-## Testing
-
-Run the tests.
-
-## Contributing
-
-Read CONTRIBUTING.md.
-
-## License
-
-MIT.
 "#;
     let findings = audit_root_doc("README.md", text);
     assert!(

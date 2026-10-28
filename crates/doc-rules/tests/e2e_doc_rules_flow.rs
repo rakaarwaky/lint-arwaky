@@ -74,16 +74,25 @@ fn write_workspace(root: &Path) {
     write(&root.join("ROADMAP.md"), "# ROADMAP\n");
 }
 
-/// A requirement block carrying every field the FRD template mandates.
+/// A requirement block carrying every field the FRD template mandates, as
+/// the `Aspect | Detail` table AES606 checks entry-by-entry.
 fn requirement(id: &str, title: &str) -> String {
     format!(
         "### {id}: {title}\n\n\
-         - **Description**: The feature performs a responsibility.\n\
-         - **Input**: A request value object.\n\
-         - **Output**: A response value object.\n\
-         - **Business Rules**: The capability is stateless.\n\
-         - **Edge Cases**: An absent input yields a default.\n\
-         - **Error Handling**: Failures surface as a reason-coded outcome.\n"
+         | Aspect         | Detail                                       |\n\
+         |----------------|----------------------------------------------|\n\
+         | Description    | The feature performs a responsibility.       |\n\
+         | Business Rules | The capability is stateless.                 |\n\
+         | Edge Cases     | An absent input yields a default.           |\n\
+         | Capability     | sample::SampleChecker                       |\n\
+         | Protocol       | sample::SampleOrchestrator                  |\n\
+         | Method         | execute                                      |\n\
+         | Input          | A request value object.                     |\n\
+         | Output         | A response value object.                    |\n\
+         | Error          | Failures surface as a reason-coded system.  |\n\
+         | Event          | Finding emitted                             |\n\
+         | Test           | e2e_doc_rules_flow exercises the pair        |\n\
+         | Metric         | Every invariant answers on the FRD          |\n\n"
     )
 }
 
@@ -122,7 +131,14 @@ fn section_bodies() -> std::collections::HashMap<&'static str, String> {
     let mut bodies = std::collections::HashMap::new();
     bodies.insert(
         "Reference",
-        String::from("- PRD: [PRD.md](../../PRD.md)\n- Backlog: [BACKLOG.md](BACKLOG.md)\n\n"),
+        String::from(
+            "| Artifact     | Purpose                          | Link |\n\
+             |--------------|----------------------------------|------|\n\
+             | PRD          | Business goals and scope         | [PRD.md](../../PRD.md) |\n\
+             | Backlog      | Task tracking and status         | [BACKLOG.md](BACKLOG.md) |\n\
+             | Architecture | System boundaries and infra      | [ARCHITECTURE.md](../../ARCHITECTURE.md) |\n\
+             | Roadmap      | What ships next, in order        | [ROADMAP.md](../../ROADMAP.md) |\n\n",
+        ),
     );
     bodies.insert(
         "Feature Overview",
@@ -299,19 +315,23 @@ fn write_workspace_root() -> String {
 
 const DATA_PATH: &str = "crates/shared/DATA.md";
 
-/// A DATA.md with a single qualified H2 `## DT-SHAR-001` item.
+/// A DATA.md with a single qualified `DT-SHAR-001` item, carrying the
+/// required Data Overview / Data Requirements / Reference H2 set.
 fn data_with_dt() -> String {
     "# DATA — shared\n\n\
      ## Data Overview\n\n\
      The shared kernel manages value objects.\n\n\
-     ## DT-SHAR-001: Severity\n\n\
+     ## Data Requirements\n\n\
+     ### DT-SHAR-001: Severity\n\n\
      | Type  | Description |\n|-------|-------------|\n\
      | vo    | Lint finding severity level |\n\n\
      ## Reference\n\n\
-     - PRD: [PRD.md](../../PRD.md)\n\
-     - Backlog: [BACKLOG.md](../../crates/shared/BACKLOG.md)\n\
-     - Roadmap: [ROADMAP.md](../../ROADMAP.md)\n\
-     - Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)\n"
+     | Artifact | Purpose                          | Link |\n\
+     |----------|----------------------------------|------|\n\
+     | PRD      | Business goals and scope         | [PRD.md](../../PRD.md) |\n\
+     | Backlog  | Task tracking and status         | [BACKLOG.md](../../crates/shared/BACKLOG.md) |\n\
+     | Roadmap  | What ships next, in order        | [ROADMAP.md](../../ROADMAP.md) |\n\
+     | Architecture | System boundaries and infra  | [ARCHITECTURE.md](../../ARCHITECTURE.md) |\n"
         .to_string()
 }
 
@@ -326,7 +346,7 @@ fn e2e_a_data_backlog_pair_with_no_dt_headings_fires_not_dt_on_every_legacy_row(
     // lives only in an H3 token (not a row cell) does not fire not-dt.
     write(
         &root.join(DATA_PATH),
-        &data_with_dt().replace("## DT-SHAR-001: Severity\n\n", ""),
+        &data_with_dt().replace("### DT-SHAR-001: Severity\n\n", ""),
     );
     let backlog = write_workspace_root().replace("FR-SAMPLE-001", "SHAR-01");
     write(&root.join("crates/shared/BACKLOG.md"), &backlog);

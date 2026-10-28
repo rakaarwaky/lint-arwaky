@@ -130,6 +130,6 @@ fn repeated_findings_are_collapsed() {
         distinct.len(),
         findings.len(),
         "one defect must produce one finding; a duplicated (code, violation, document) \
-         triple means the audit ran the same capability twice"
+         triple means the audit ran the same capability twice. Findings: {findings:#?}"
     );
 }

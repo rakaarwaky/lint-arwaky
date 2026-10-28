@@ -288,7 +288,7 @@ trigger: always\ndescription: \"Sample.\"\n\
 ---\n\
 # AGENTS\n\n\
 ## Agent Overview\n\n\
-{One paragraph: what AI agents must know before generating code, docs, or suggestions in this workspace.}\n\n\
+This workspace is <project-name>; follow its conventions.\n\n\
 ## Runtime\n\n\
 | Aspect          | Detail                                          |\n\
 |-----------------|-------------------------------------------------|\n\
@@ -400,7 +400,7 @@ fn template_body_checker_clean_document_no_findings() {
         strict_placeholders: true,
         exempt_members: Vec::new(),
     };
-    let text = "# ROADMAP\n\n## Current Condition\n\ntext\n\n## State Definitions\n\n| State | Meaning |\n| --- | --- |\n| Done | Shipped |\n\n## Feature Roll-up\n\n| ID | Feature | Priority | State | Dependencies | Next Action | Updated |\n| --- | --- | --- | --- | --- | --- | --- |\n| WS-01 | Docs | P0 | Done | — | — | 2026-01-01 |\n\n## Risk Register\n\nNone.\n";
+    let text = "# ROADMAP\n\n## Progress Overview\n\ntext\n\n## Roadmap Status\n\n| ID | Feature | Priority | State | Dependencies | Next Action | Updated |\n| --- | --- | --- | --- | --- | --- | --- |\n| WS-01 | Docs | P0 | Done | — | — | 2026-01-01 |\n\n## Reference\n\nNone.\n";
     let documents = vec![DocSource {
         path: PathBuf::from("/repo/ROADMAP.md"),
         text: text.to_string(),
@@ -428,8 +428,9 @@ fn template_body_checker_deleted_required_section_fires() {
         strict_placeholders: false,
         exempt_members: Vec::new(),
     };
-    // ROADMAP missing `## Risk Register` (non-deletable)
-    let text = "# ROADMAP\n\n## Current Condition\n\nx\n\n## State Definitions\n\n| State | Meaning |\n| --- | --- |\n| Done | Shipped |\n\n## Feature Roll-up\n\n| ID | Feature | Priority | State | Dependencies | Next Action | Updated |\n| --- | --- | --- | --- | --- | --- | --- |\n";
+    // ROADMAP keeps two required H2s and omits `## Roadmap Status`, so the
+    // message must name that specific gap.
+    let text = "# ROADMAP\n\n## Progress Overview\n\nx\n\n## Reference\n\nx\n";
     let documents = vec![DocSource {
         path: PathBuf::from("/repo/ROADMAP.md"),
         text: text.to_string(),
@@ -451,13 +452,15 @@ fn template_body_checker_deleted_required_section_fires() {
         !deleted.is_empty(),
         "a missing non-deletable section must fire section_deleted; got {findings:?}"
     );
-    assert!(deleted[0].message.contains("Risk Register"));
+    assert!(deleted[0].message.contains("Roadmap Status"));
     assert!(!deleted[0].why.is_empty());
     assert!(!deleted[0].fix.is_empty());
 }
 
-/// A deletable section (CONTRIBUTING.md's "Quality Verification & PR Process")
-/// being absent does NOT fire `section_deleted`.
+/// No section is deletable under the 9-doc layout (`deletable_sections` is
+/// empty for every profile), so absence only stays silent for a section
+/// outside the required set — here the legacy "Quality Verification & PR
+/// Process" heading old CONTRIBUTING templates once carried.
 #[test]
 fn template_body_checker_deletable_section_absent_no_finding() {
     let config = DocRulesConfig {
@@ -465,8 +468,8 @@ fn template_body_checker_deletable_section_absent_no_finding() {
         strict_placeholders: false,
         exempt_members: Vec::new(),
     };
-    // CONTRIBUTING.md missing its deletable section
-    let text = "# CONTRIBUTING\n\n## Principles\n\nx\n\n## Development Setup\n\nx\n";
+    // Every CONTRIBUTING_REQUIRED_H2S present; the legacy section absent.
+    let text = "# CONTRIBUTING\n\n## Contribution Overview\n\nx\n\n## Contribution Guidelines\n\nx\n\n## Workflow\n\nx\n\n## Commit Convention\n\nx\n\n## Reference\n\nx\n";
     let documents = vec![DocSource {
         path: PathBuf::from("/repo/CONTRIBUTING.md"),
         text: text.to_string(),
@@ -497,10 +500,10 @@ fn template_body_checker_extended_heading_satisfies_required_section() {
         strict_placeholders: false,
         exempt_members: Vec::new(),
     };
-    // "Feature Requirements (Prioritized)" extends "Feature Requirements".
-    let text = "# PRD\n\n## Problem Statement\n\nx\n\n## Goals & Success Metrics\n\nx\n\n\
-         ## User Personas\n\nx\n\n## Scope\n\nx\n\n## Feature Requirements (Prioritized)\n\nx\n\n\
-         ## Non-functional Requirements (High-level)\n\nx\n\n## Open Questions / Risks\n\nx\n";
+    // `## Project Requirements (Prioritized)` extends the required
+    // `Project Requirements` by prefix match; only an omission fires.
+    let text = "# PRD\n\n## Problem Statement\n\nx\n\n## Project Requirements (Prioritized)\n\nx\n\n\
+         ## Reference\n\n x\n\n## Feature Requirements (Prioritized)\n\nx\n";
     let documents = vec![DocSource {
         path: PathBuf::from("/repo/PRD.md"),
         text: text.to_string(),
@@ -534,7 +537,7 @@ fn template_body_checker_force_strict_enables_placeholder_check() {
 trigger: always\ndescription: \"Sample.\"\n\
 ---\n\
 # AGENTS\n\n\
-## Agent Overview\n\nPlaceholder {lint command} here\n\n\
+## Agent Overview\n\nPlaceholder <project-name> here\n\n\
 ## Runtime\n\n\
 | Aspect          | Detail                                          |\n\
 |-----------------|-------------------------------------------------|\n\

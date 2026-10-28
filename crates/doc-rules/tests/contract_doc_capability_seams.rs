@@ -66,23 +66,41 @@ The feature reads its settings from main.rs at startup.
 
 ### FR-SAMPLE-001: Document Invariant Enforcement
 
-- **Description**: Every `.md` document satisfies the AES heading and section contract.
-- **Input**: A workspace root and the list of recognized document paths.
-- **Output**: `Vec<DocFinding>` carrying one finding per invariant violation.
-- **Business Rules**: Validates FR-ID format, section structure, spec purity, crosslinks, heading structure, and parity.
-- **Edge Cases**: Root-level legacy `BACKLOG.md` is accepted during migration.
-- **Error Handling**: Unreadable files produce no findings. Missing documents are skipped silently.
+| Aspect         | Detail                                                          |
+|----------------|-----------------------------------------------------------------|
+| Description    | Every `.md` document satisfies the heading and section contract. |
+| Business Rules | Validates FR-ID format, section order, heading structure.       |
+| Edge Cases     | A root-level legacy `BACKLOG.md` is accepted during migration.  |
+| Capability     | doc_rules::DocStructure                                         |
+| Protocol       | doc_rules::DocStructure                                         |
+| Method         | check_doc_heading                                               |
+| Input          | A workspace root and recognized document paths.                 |
+| Output         | One finding per invariant violation.                            |
+| Error          | Unreadable files produce no findings.                           |
+| Event          | Finding emitted                                                 |
+| Test           | The seam contract tests stay green                               |
+| Metric         | Deterministic finding order                                      |
 
 ### FR-SAMPLE-002: Audit Orchestration
 
-- **Description**: The doc auditor is reachable through a single aggregate entry point dispatching to the invariant checker.
-- **Input**: A `DocRequest` describing the workspace root to audit.
-- **Output**: A `DocResponse` carrying a deduplicated, stable-sorted list of findings.
-- **Business Rules**: The aggregate orchestrates all invariants under one seam so consumers need only invoke `execute`.
-- **Edge Cases**: A request with an empty root produces no findings rather than an error.
-- **Error Handling**: Failures inside the checker are propagated as `DocResponse::Findings` with no partial results.
+| Aspect         | Detail                                                          |
+|----------------|-----------------------------------------------------------------|
+| Description    | The auditor is reachable through a single aggregate entry point. |
+| Business Rules | The aggregate orchestrates all invariants under one seam.       |
+| Edge Cases     | An empty root produces no findings rather than an error.         |
+| Capability     | doc_rules::DocStructure                                         |
+| Protocol       | doc_rules::DocStructure                                         |
+| Method         | execute                                                         |
+| Input          | A request describing the workspace root to audit.                |
+| Output         | A response carrying a deduplicated finding list.                 |
+| Error          | Failures propagate with no partial results.                      |
+| Event          | Finding emitted                                                 |
+| Test           | The seam contract tests stay green                               |
+| Metric         | Deterministic finding order                                      |
 
 ## Public Interface
+
+Implemented in `src/capabilities_sample_checker.rs`.
 
 | Aspect | Detail |
 | --- | --- |
@@ -90,8 +108,12 @@ The feature reads its settings from main.rs at startup.
 
 ## Reference
 
-- PRD: [PRD.md](../../PRD.md)
-- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature.
+| Artifact     | Purpose                          | Link |
+|--------------|----------------------------------|------|
+| PRD          | Business goals and scope         | [PRD.md](../../PRD.md) |
+| Backlog      | Task tracking and status         | [BACKLOG.md](BACKLOG.md) |
+| Roadmap      | What ships next, in order        | [ROADMAP.md](../../ROADMAP.md) |
+| Architecture | System boundaries and infra      | [ARCHITECTURE.md](../../ARCHITECTURE.md) |
 "
     .to_string()
 }
@@ -137,7 +159,32 @@ fn write_feature(root: &Path) {
     std::fs::create_dir_all(feature.join("src")).unwrap();
     std::fs::write(
         feature.join("BACKLOG.md"),
-        "# Feature Backlog: Sample\n\n## Current Condition\n\n- Done: nothing yet\n\n## Backlog\n\n| ID | Priority | State | Dependencies | Next Action | Updated |\n|---|---:|---|---|---|---|\n| FR-SAMPLE-001 | P0 | Ready | — | — | 2026-09-29 |\n| FR-SAMPLE-002 | P0 | Ready | — | — | 2026-09-29 |\n\n## Scenario Evidence\n\n| Scenario | Kind | Test file | Test name | Last verified |\n|---|---|---|---|---|\n| nothing yet | Automated | tests/ | test_nothing | 2026-09-29 |\n\n## Blockers\n\nNone\n\n## Dependencies\n\nNone\n\n## Release Readiness\n\n| Area | Status | Notes |\n|---|---|---|\n| Tests | Done | nothing |\n\n## Deferred\n\nNone\n\n## Change Log\n\n| Date | Change | By |\n|---|---|---|\n| 2026-09-29 | init | @raka |\n",
+        "# Feature Backlog: Sample\n\n\
+## Progress Overview\n\n\
+Baseline.\n\n\
+## Backlog Status\n\n\
+### {FR-SAMPLE-001}\n\
+| Aspect       | Detail                                      |\n\
+|--------------|---------------------------------------------|\n\
+| State        | Ready                                       |\n\
+| Done         | none                                        |\n\
+| In Progress  | None                                        |\n\
+| Blocked      | None                                        |\n\
+| Next         | Ship the feature                            |\n\
+| Risk         | None                                        |\n\
+| Updated      | 2026-09-29                                  |\n\n\
+### {FR-SAMPLE-002}\n\
+| Aspect       | Detail                                      |\n\
+|--------------|---------------------------------------------|\n\
+| State        | Ready                                       |\n\
+| Done         | none                                        |\n\
+| In Progress  | None                                        |\n\
+| Blocked      | None                                        |\n\
+| Next         | Ship the feature                            |\n\
+| Risk         | None                                        |\n\
+| Updated      | 2026-09-29                                  |\n\n\
+## Reference\n\n\
+| Artifact     | Purpose                          | Link |\n|--------------|----------------------------------|------|\n| PRD          | Business goals and scope         | [PRD.md](../../PRD.md) |\n| FRD          | Requirements specification       | [FRD.md](FRD.md) |\n| Roadmap      | What ships next, in order        | [ROADMAP.md](../../ROADMAP.md) |\n| Architecture | System boundaries and infra      | [ARCHITECTURE.md](../../ARCHITECTURE.md) |\n",
     )
     .unwrap();
     std::fs::write(
@@ -244,31 +291,16 @@ fn running_all_five_seams_over_a_clean_workspace_reports_nothing() {
 
 The problem.
 
-## Goals & Success Metrics
+## Project Requirements
 
 - Fewer defects.
 
-## User Personas
+## Reference
 
-- A maintainer.
-
-## Scope
-
-In scope: the checker.
-
-## Feature Requirements
-
-- P0 — the checker reports every violation.
-
-## Non-functional Requirements
-
-| Metric | Target |
-| --- | --- |
-| Dispatch | One call |
-
-## Open Questions / Risks
-
-- None.
+| Artifact     | Purpose                          | Link |
+|--------------|----------------------------------|------|
+| ROADMAP      | What ships next, in order        | [ROADMAP.md](../../ROADMAP.md) |
+| Architecture | System boundaries and infra      | [ARCHITECTURE.md](../../ARCHITECTURE.md) |
 ",
     )
     .unwrap();
@@ -276,27 +308,24 @@ In scope: the checker.
         tmp.path().join("ROADMAP.md"),
         r"# ROADMAP — sample
 
-## Current Condition
+## Progress Overview
 
 - Todo: none
+- In Progress: None
+- Blocked: None
 
-## State Definitions
+## Roadmap Status
 
-| State | Meaning |
-|---|---|
-| Done | Shipped. |
+| Priority | State | Dependencies | Updated |
+|---|---|---|---|
+| P0 | Done | none | 2026-09-29 |
 
-## Feature Roll-up
+## Reference
 
-| ID | Feature | Priority | State | Dependencies | Next Action | Updated |
-|---|---|---|---|---|---|---|
-| WS-1 | Docs | P0 | Done | — | — | 2026-09-29 |
-
-## Risk Register
-
-| Risk | Mitigation |
-|---|---|
-| None | — |
+| Artifact     | Purpose                          | Link |
+|--------------|----------------------------------|------|
+| PRD          | Business goals and scope         | [PRD.md](../../PRD.md) |
+| Architecture | System boundaries and infra      | [ARCHITECTURE.md](../../ARCHITECTURE.md) |
 ",
     )
     .unwrap();
@@ -344,7 +373,7 @@ fn a_document_violating_two_rules_reports_both_codes() {
     // the first one short-circuiting the rest.
     let tmp = tempfile::tempdir().unwrap();
     write_feature(tmp.path());
-    let frd = frd_violating_only_spec_purity().replace("- PRD: [PRD.md](../../PRD.md)\n", "");
+    let frd = frd_violating_only_spec_purity().replace("[PRD.md](../../PRD.md)", "");
     std::fs::write(tmp.path().join("crates/sample/FRD.md"), frd).unwrap();
     std::fs::write(tmp.path().join("PRD.md"), prd_missing_required_h2()).unwrap();
 
