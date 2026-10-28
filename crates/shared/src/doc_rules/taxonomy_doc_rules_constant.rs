@@ -279,13 +279,12 @@ pub const ASPECT_DETAIL_COLUMNS: &[&str] = &["Aspect", "Detail"];
 /// `## Reference` table, per the HOW-TO-MAKE templates.
 pub const REFERENCE_COLUMNS: &[&str] = &["Artifact", "Purpose", "Link"];
 
-/// PRD `Project Requirements` entry row labels — 6, per HOW-TO-MAKE-PRD.md.
+/// PRD `Project Requirements` entry row labels — 5, per HOW-TO-MAKE-PRD.md.
 pub const PRD_ROW_LABELS: &[&str] = &[
     "Description",
     "User Story",
     "In Scope",
     "Out of Scope",
-    "Acceptance",
     "Success Metric",
 ];
 
@@ -460,6 +459,40 @@ mod tests {
         ships_columns("HOW-TO-MAKE-FRD.md", FRD_ROW_LABELS);
         ships_columns("HOW-TO-MAKE-FRD.md", ASPECT_DETAIL_COLUMNS);
         ships_columns("HOW-TO-MAKE-AGENTS.md", AGENTS_RUNTIME_ROW_LABELS);
+    }
+
+    /// The reverse of `ships_columns`, for the PRD entry table only: a row
+    /// added to the shipped template without `PRD_ROW_LABELS` (or dropped
+    /// from the constant alone) fails here instead of failing a user who
+    /// copies the template verbatim.
+    #[test]
+    fn prd_entry_table_carries_exactly_prd_row_labels() {
+        let text = load_reference_template("HOW-TO-MAKE-PRD.md");
+        let mut labels: Vec<&str> = Vec::new();
+        let mut in_table = false;
+        for line in text.lines().map(str::trim) {
+            if !in_table {
+                in_table = line.starts_with("| Aspect");
+                continue;
+            }
+            if !line.starts_with('|') {
+                break;
+            }
+            if line.starts_with("|--") {
+                continue;
+            }
+            let label = line.split('|').nth(1).unwrap_or_default().trim();
+            if !label.is_empty() {
+                labels.push(label);
+            }
+        }
+        let mut expected: Vec<&str> = PRD_ROW_LABELS.to_vec();
+        labels.sort_unstable();
+        expected.sort_unstable();
+        assert_eq!(
+            labels, expected,
+            "HOW-TO-MAKE-PRD.md entry table must carry exactly PRD_ROW_LABELS"
+        );
     }
 
     #[test]

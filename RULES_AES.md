@@ -610,7 +610,7 @@ Matching is by leading words after lowercasing and stripping punctuation, so `##
 | `AGENTS.md` | Runtime, Project Quick Facts, Pipeline, Commands, Related Documents (allowed: Project Structure)|
 | `ARCHITECTURE.md` | Purpose, Workspace Organization, Naming Convention, Vertical Slicing Layout, Taxonomy Layer, Contract Layer, Utility Layer, Capabilities Layer, Agent Layer, Surface Layer, Root Layer|
 | `CONTRIBUTING.md` | Principles, Development Setup, Feature Change, Documentation Change, Quality Verification & PR Process|
-| `PRD.md` | Problem Statement, Goals & Success Metrics, User Personas, Scope, Feature Requirements, Non-functional Requirements, Open Questions / Risks|
+| `PRD.md` | Problem Statement, Project Requirements, Reference|
 | `README.md` | Prerequisites, Quick Start, Architecture, Available Scripts/Commands, Configuration, Testing, Contributing, License (forbidden: Project Structure — that section belongs to `AGENTS.md`)|
 | `ROADMAP.md` | Current Condition, State Definitions, Status Policy, Feature Roll-up, Risk Register|
 | `DATA.md` | Data Overview, Reference (allowed: `DT-` item H2s)|
