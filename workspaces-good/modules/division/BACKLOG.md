@@ -6,21 +6,24 @@ Division is implemented, tested, and gated. Nothing is blocked.
 
 ## Backlog Status
 
-### {FR-SAMPLE-001}
+### {DIVISION}
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
 | State        | Ready                                      |
-| Done         | FR-SAMPLE-001                                      |
+| Done         | —                                          |
 | In Progress  | None                                       |
 | Blocked      | None                                       |
-| Next         | Ship                                       |
+| Next         | —                                          |
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
 ## Reference
 
-| Prd | {Link to PRD.md} | [{link}](PRD.md)|
-| Frd | {Link to FRD.md} | [{link}](FRD.md)|
-| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md)|
-| Architecture | {Link to ARCHITECTURE.md} | [{link}](ARCHITECTURE.md)|
+| Artifact     | Purpose                                    | Link |
+|--------------|--------------------------------------------|------|
+| PRD          | Business goals, user stories, and scope    | [PRD.md](../PRD.md) |
+| FRD          | Functional requirements specification    | [FRD.md](../FRD.md) |
+| Backlog      | Task tracking, epics, and implementation status | [BACKLOG.md](../BACKLOG.md) |
+| Roadmap      | Timeline, phasing, and dependencies        | [ROADMAP.md](../ROADMAP.md) |
+| Architecture | System boundaries, tech stack, and infra   | [ARCHITECTURE.md](../ARCHITECTURE.md) |

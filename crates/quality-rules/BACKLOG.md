@@ -14,60 +14,12 @@ Last Updated: 2026-09-17
 
 ## Backlog Status
 
-### {FR-QualityRules-001}
+### {QualityRules}
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
 | State        | Ready                                      |
-| Done         | FR-QualityRules-001                                      |
-| In Progress  | None                                       |
-| Blocked      | None                                       |
-| Next         | Ship                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
-
-### {FR-QualityRules-002}
-
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | FR-QualityRules-002                                      |
-| In Progress  | None                                       |
-| Blocked      | None                                       |
-| Next         | Ship                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
-
-### {FR-QualityRules-003}
-
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | FR-QualityRules-003                                      |
-| In Progress  | None                                       |
-| Blocked      | None                                       |
-| Next         | Ship                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
-
-### {FR-QualityRules-004}
-
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | FR-QualityRules-004                                      |
-| In Progress  | None                                       |
-| Blocked      | None                                       |
-| Next         | Ship                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
-
-### {FR-QualityRules-005}
-
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | FR-QualityRules-005                                      |
+| Done         | QualityRules                                      |
 | In Progress  | None                                       |
 | Blocked      | None                                       |
 | Next         | Ship                                       |
@@ -76,7 +28,9 @@ Last Updated: 2026-09-17
 
 ## Reference
 
-| Prd | {Link to PRD.md} | [{link}](PRD.md)|
-| Frd | {Link to FRD.md} | [{link}](FRD.md)|
-| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md)|
-| Architecture | {Link to ARCHITECTURE.md} | [{link}](ARCHITECTURE.md)|
+| Artifact | Purpose | Link|
+|----------|---------|------|
+| PRD.md | Product requirements | [PRD.md](../../PRD.md)|
+| FRD.md | Feature requirements | [FRD.md](FRD.md)|
+| ROADMAP.md | Roadmap status | [ROADMAP.md](../../ROADMAP.md)|
+| ARCHITECTURE.md | Layer contract | [ARCHITECTURE.md](../../ARCHITECTURE.md)|

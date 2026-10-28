@@ -14,96 +14,12 @@ Last Updated: 2026-09-29
 
 ## Backlog Status
 
-### {FR-ProjectSetup-001}
+### {ProjectSetup}
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
 | State        | Ready                                      |
-| Done         | FR-ProjectSetup-001                                      |
-| In Progress  | None                                       |
-| Blocked      | None                                       |
-| Next         | Ship                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
-
-### {FR-ProjectSetup-002}
-
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | FR-ProjectSetup-002                                      |
-| In Progress  | None                                       |
-| Blocked      | None                                       |
-| Next         | Ship                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
-
-### {FR-ProjectSetup-003}
-
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | FR-ProjectSetup-003                                      |
-| In Progress  | None                                       |
-| Blocked      | None                                       |
-| Next         | Ship                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
-
-### {FR-ProjectSetup-004}
-
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | FR-ProjectSetup-004                                      |
-| In Progress  | None                                       |
-| Blocked      | None                                       |
-| Next         | Ship                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
-
-### {FR-ProjectSetup-005}
-
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | FR-ProjectSetup-005                                      |
-| In Progress  | None                                       |
-| Blocked      | None                                       |
-| Next         | Ship                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
-
-### {FR-ProjectSetup-006}
-
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | FR-ProjectSetup-006                                      |
-| In Progress  | None                                       |
-| Blocked      | None                                       |
-| Next         | Ship                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
-
-### {FR-ProjectSetup-007}
-
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | FR-ProjectSetup-007                                      |
-| In Progress  | None                                       |
-| Blocked      | None                                       |
-| Next         | Ship                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
-
-### {FR-ProjectSetup-008}
-
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | FR-ProjectSetup-008                                      |
+| Done         | ProjectSetup                                      |
 | In Progress  | None                                       |
 | Blocked      | None                                       |
 | Next         | Ship                                       |
@@ -112,7 +28,9 @@ Last Updated: 2026-09-29
 
 ## Reference
 
-| Prd | {Link to PRD.md} | [{link}](PRD.md)|
-| Frd | {Link to FRD.md} | [{link}](FRD.md)|
-| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md)|
-| Architecture | {Link to ARCHITECTURE.md} | [{link}](ARCHITECTURE.md)|
+| Artifact | Purpose | Link|
+|----------|---------|------|
+| PRD.md | Product requirements | [PRD.md](../../PRD.md)|
+| FRD.md | Feature requirements | [FRD.md](FRD.md)|
+| ROADMAP.md | Roadmap status | [ROADMAP.md](../../ROADMAP.md)|
+| ARCHITECTURE.md | Layer contract | [ARCHITECTURE.md](../../ARCHITECTURE.md)|

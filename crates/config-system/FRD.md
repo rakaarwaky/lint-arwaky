@@ -63,114 +63,67 @@ Loaded config is merged with embedded defaults via rule-based layer merging (FR-
 
 ### FR-ConfigSystem-001: Config Discovery
 
-- **Description**: Locate and load the first matching YAML config file for a project root, following a 5-level priority chain, and list every config file visible at the root. Language naming, TOML section parsing, and config-file listing are steps of this same discovery concern.
-- **Input**: Project root path; a `ConfigLanguage` for language-specific reads.
-- **Output**: A `ConfigSource` (language, path, raw content), or `None` when no config exists at any priority level (caller falls back to embedded defaults). Listing returns `Vec<(ConfigLanguage, FilePath)>`.
-- **Business Rules**:
-
-  - Priority order: (1) project-root YAML, (2) parent directory YAML (project root plus up to 4 ancestor levels — 5 levels total), (3) XDG user config `~/.config/lint-arwaky/`, (4) XDG system dirs `/etc/xdg/lint-arwaky/` (limited to 8 dirs, absolute paths only), (5) embedded defaults.
-  - First match wins — deeper/more-specific configs take priority over shallower ones.
-  - No config file size limit — config files of any size are accepted.
-  - Symlinks pointing outside the project root are rejected via canonical path resolution.
-  - Language is derived from workspace marker files (`Cargo.toml` → Rust, `pyproject.toml` → Python, `package.json` → TypeScript) and selects the correct config filename.
-  - TOML `[tool.lint-arwaky]` sections in packaging manifests are parsed as an optional secondary source when no YAML config is found.
-  - Listing returns one config filename per language, deduplicated by path; absent languages are omitted.
-- **Edge Cases**:
-
-  - No config file exists at any level → returns `None`, caller falls back to embedded defaults.
-  - YAML parse failure → logs warning to stderr, continues searching next priority level.
-  - Non-NotFound I/O error (e.g., permission denied) → logs warning, continues searching.
-  - TOML file exists but has no `[tool]` section → ignored, not an error.
-  - Root path unreadable during listing → `ConfigError`.
-- **Error Handling**:
-
-  - Permission denied error when symlink points outside project root.
-  - IO error on invalid path canonicalization.
-  - `ConfigError` propagated from YAML parse or file read failures.
-
----
+| Aspect | Detail|
+|--------|-------|
+| Description | |
+| Business Rules | |
+| Edge Cases | |
+| Capability | |
+| Protocol | |
+| Method | |
+| Input | |
+| Output | |
+| Error | |
+| Event | |
+| Test | |
+| Metric | |
 
 ### FR-ConfigSystem-002: Multi-Workspace
 
-- **Description**: Identify the language type of a project and enumerate all workspace member directories under `crates/`, `packages/`, and `modules/`.
-- **Input**: Target path or root path.
-- **Output**: A `WorkspaceType` (`Rust`, `Python`, `TypeScript`, `Unknown`); a boolean workspace check; a list of workspace member paths.
-- **Business Rules**:
-
-  - Single-pass directory scan for marker files (single syscall per directory).
-  - Marker files: Rust `Cargo.toml`; Python `pyproject.toml` and packaging/dependency markers; TypeScript `package.json`, `tsconfig.json`.
-  - Walks up to 10 parent directories if no marker found at the target path.
-  - Stops at workspace directory names (`crates/`, `packages/`, `modules/`).
-  - Member discovery scans subdirectories under `crates/`, `packages/`, `modules/` using sequential filesystem operations.
-  - If root is itself a workspace directory, returns its direct subdirectories.
-  - If root's parent is a workspace directory, returns root as a single-member workspace.
-- **Edge Cases**:
-
-  - No marker files found at any level → returns `Unknown`.
-  - Multiple marker files → first match in scan order wins.
-  - No workspace directories found → returns empty vec, prints warning to stderr.
-  - Symlink targets outside workspace root → pruned during file collection.
-  - I/O error reading a workspace directory → warning logged, that directory is skipped.
-- **Error Handling**: Directory read failures are silently ignored; warnings for member-directory read failures with graceful degradation.
-
----
+| Aspect | Detail|
+|--------|-------|
+| Description | |
+| Business Rules | |
+| Edge Cases | |
+| Capability | |
+| Protocol | |
+| Method | |
+| Input | |
+| Output | |
+| Error | |
+| Event | |
+| Test | |
+| Metric | |
 
 ### FR-ConfigSystem-003: Config Merger
 
-- **Description**: Parse YAML config content into a typed configuration and merge it with embedded defaults using rule-based layer merging with scoped sub-layer creation. The `architecture:` section is locked to the embedded defaults: user-supplied `architecture:` rules, layers, naming, and `enabled` are discarded; only the tool-policy fields (`thresholds`, `adapters`, `ignored_rules`, `ignored_paths`) apply from user config. Threshold validation, adapter enablement, config caching, and ignored-path assembly are steps of this same merge concern.
-- **Input**: YAML source text or a file path; a parsed `ArchitectureConfig`; a `ConfigLanguage`.
-- **Output**: `ArchitectureConfig` or `(ArchitectureConfig, Vec<String>)` of merge warnings; a `ValidationResult` for threshold validation; a boolean adapter-enabled flag; a `PatternList` of ignored paths.
-- **Business Rules**:
-
-  - **Layer merging** — rules are merged INTO layer definitions by scope (base or specialized), not simple concatenation.
-  - **Scoped sub-layers** — rules with scoped names (e.g., `agent(container|registry)`) create specialized sub-layer entries derived from the parent layer definition, with inner names split by `|` or `,`.
-  - **Rule deduplication** — rules are deduplicated by value containment (checked via `contains()` before appending), not by name.
-  - **Naming** — merged recursively; non-empty values override defaults.
-  - **Ignored paths** — concatenated and deduplicated with the 8 universal defaults.
-  - Empty arrays/objects in a child config do NOT override parent values.
-  - **Architecture lock** — user `architecture:` rules/layers/naming/enabled are discarded; embedded defaults are the sole source of AES business rules. `ignored_paths` carries through. A warning is emitted when a user config declares an `architecture:` section.
-  - When config has no layers, injects defaults for layers only and adds a warning.
-  - When no config file found, returns embedded defaults with warning.
-  - **Score threshold** must be between 0.0 and 100.0 (inclusive); **complexity** and **max_file_lines** thresholds must be positive (> 0).
-  - Adapter enabled check: defaults to `true` if adapter not found in config.
-  - Caching is keyed by config path; a hit returns the previously parsed value without re-parsing.
-  - **Cache lifetime and invalidation** — the cache lives for as long as the config orchestrator that owns it, which is one process invocation. There is no TTL, no modification-time check, and no explicit invalidation entry point: once a path has been parsed, every later read of that path in the same process is served from the cache, whatever the file on disk now says. A single-shot command therefore sees the config as it stood at first read, and a long-lived `watch` session keeps serving the config it parsed at startup until the session is restarted. Editing the config file while `watch` runs has no effect on that session.
-- **Edge Cases**:
-
-  - Config with empty `layers` array → defaults injected, warning emitted.
-  - Duplicate rule values across configs → deduplicated, not added twice.
-  - Score threshold at exactly 0 or 100 → valid; -1.0 or 101.0 → invalid.
-  - Unknown adapter name → returns true (enabled by default).
-  - Empty YAML body → `None`, caller falls back to embedded defaults.
-- **Error Handling**: Multiple validation errors joined with ` | ` separator. `ConfigError` logged as warning string; defaults used as fallback.
-
----
+| Aspect | Detail|
+|--------|-------|
+| Description | |
+| Business Rules | |
+| Edge Cases | |
+| Capability | |
+| Protocol | |
+| Method | |
+| Input | |
+| Output | |
+| Error | |
+| Event | |
+| Test | |
+| Metric | |
 
 ## Public Interface
 
-### Protocol API
-
-| Method | Input | Output | Error | Event | Description|
-|---|---|---|---|---|---|
-| `read_config` | &FilePath, ConfigLanguage | `Option<ConfigSource>` | `ConfigError` | — | Read config from priority chain.|
-| `list_config_files` | &FilePath | `Vec<(ConfigLanguage, FilePath)>` | `ConfigError` | — | List config files at project root.|
-| `detect` | &FilePath | `WorkspaceType` | — | — | Detect workspace type.|
-| `is_workspace` | &FilePath | `bool` | — | — | Is workspace.|
-| `discover_workspace_members` | &FilePath | `Vec<FilePath>` | — | — | Discover workspace members.|
-| `parse_yaml_config` | &FilePath | `ArchitectureConfig` | `ConfigError` | — | Parse yaml config file.|
-| `parse_config_yaml_with_warnings` | &str | `(ArchitectureConfig, Vec<String>)` | — | — | Parse config yaml with warnings.|
-| `merge_config_with_defaults` | &ArchitectureConfig, ConfigLanguage | `(ArchitectureConfig, Vec<String>)` | — | — | Merge config with embedded defaults.|
-
-### Aggregate API
-
-| Method | Input | Output | Error | Event | Description|
-|---|---|---|---|---|---|
-| `execute` | ConfigRequest | ConfigResponse | — | — | Single composite entry point over the feature.|
+| Aspect | Detail|
+|--------|-------|
+| — | — |
 
 ## Reference
 
-- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature; this file is specification only.
-- PRD: [PRD.md](../../PRD.md)
-- Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
-
-| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md)|
+| Artifact | Purpose | Link|
+|----------|---------|------|
+| BACKLOG.md | Backlog tracking | [BACKLOG.md](BACKLOG.md)|
+| PRD.md | Product requirements | [PRD.md](../../PRD.md)|
+| FRD.md | Feature requirements | [FRD.md](FRD.md)|
+| ROADMAP.md | Roadmap status | [ROADMAP.md](../../ROADMAP.md)|
+| ARCHITECTURE.md | Layer contract | [ARCHITECTURE.md](../../ARCHITECTURE.md)|

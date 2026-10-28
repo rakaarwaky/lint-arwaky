@@ -19,6 +19,5 @@
 ## Reference
 
 | Prd | {Link to PRD.md} | [{link}](PRD.md)|
-| Frd | {Link to FRD.md} | [{link}](FRD.md)|
 | Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md)|
 | Architecture | {Link to ARCHITECTURE.md} | [{link}](ARCHITECTURE.md)|

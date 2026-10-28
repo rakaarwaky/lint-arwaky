@@ -10,6 +10,7 @@ pub use shared_common::taxonomy_format_vo::Format;
 pub use shared_common::taxonomy_lint_vo as taxonomy_result_vo;
 pub use shared_common::taxonomy_lint_vo::LintResult;
 pub use shared_common::taxonomy_lint_vo::LintResultList;
+pub use taxonomy_action_vo::ActionName;
 pub use taxonomy_cli_commands_request::ScanScope;
 pub use taxonomy_cli_commands_request::classify_scan_scope;
 pub use taxonomy_cli_commands_vo::DiagnosticSeverity;

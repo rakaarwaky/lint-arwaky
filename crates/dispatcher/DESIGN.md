@@ -36,116 +36,59 @@ Every collector has the same shape: `collect_<group>(target, aggregates) -> Vec<
 
 ### DS-DISP-001: Outcome Vocabulary
 
-| Outcome      | Condition                                        | Who grades it  |
-| ------------ | ------------------------------------------------ | ---------------|
-| `clean`      | Every group returned zero findings                | the surface    |
-| `violations` | One or more groups returned findings              | the surface    |
-| `error`      | A group failed to run                             | the surface    |
-
-The three are not interchangeable. A group that fails is never silently treated
-as clean — a scan that could not complete reports the failure, because a clean
-result the user did not earn is worse than a visible error.
+| Variant | Use case | Token | Value|
+|---------|----------|-------|------|
+| Variant | Use case | Token | Value|
+| — | — | — | — |
 
 ### DS-DISP-002: Kind
 
-`api` — the single boundary where every rule group meets the surfaces. One
-`surface_<group>_action.rs` file per group, each collecting that group's
-findings from the shared `ScanAggregates` and narrowing them to the requested
-target. The CLI, the MCP server, and the TUI all reach rule behavior through
-here and nowhere else.
+| Variant | Use case | Token | Value|
+|---------|----------|-------|------|
+| Variant | Use case | Token | Value|
+| — | — | — | — |
 
 ### DS-DISP-003: Request Shape
 
-A collector receives the requested target as a string and the shared aggregates
-as an immutable borrow. It never reads the filesystem to decide scope; the scan
-pipeline already produced the aggregates. Where a collector must resolve a path
-— the structure group does, because its findings are workspace-root-relative —
-it resolves against the workspace root and filters for containment under the
-target.
-
-#### Path scoping: `scan`/`check` vs. `docs`
-
-Not every path-taking subcommand scopes the same way, and the difference is
-deliberate:
-
-| Collector | What the target means|
-| --- | ---|
-| `surface_check_action.rs`, and every `surface_<group>_action.rs` | A **filter**. The pipeline indexes the workspace and the collector keeps only the findings contained under the target.|
-| `surface_docs_action.rs` | A **root**. The doc request carries the target as its audit root, so pointing `docs` at a sub-directory audits that sub-tree as if it were its own workspace. Crosslink checks (AES604) that expect root-level `PRD.md`/`ROADMAP.md` siblings therefore behave differently than they do for a whole-workspace run.|
-
-The doc-rules contract owns this semantic; see `crates/doc-rules/FRD.md`
-("Path scoping" under System Overview) and the `docs` row in
-`crates/cli-commands/DESIGN.md`.
-
-#### Layer scoping: the six layer subcommands
-
-`surface_layer_scan_action.rs` is a second filter, applied after the scan rather
-than instead of it. A layer subcommand still runs every rule group over the
-whole workspace — an import cycle or an orphan is a property of the workspace,
-not of one layer — and then keeps only the violations whose file name carries
-that layer's AES prefix. Narrowing the analysis instead of the output would make
-each layer command blind to findings that only become visible across layers.
-
-The layer of a file is its name prefix (`taxonomy_`, `contract_`,
-`capabilities_`, `utility_`, `agent_`, `surface_`, `root_`), the same signal
-`detect_layer_from_prefix` gives every other rule. Two consequences follow, and
-both are deliberate: `root` has no subcommand, because root files are wiring and
-`check` already reports them; and a finding that names no layer-prefixed file —
-a folder-level structure finding, a Markdown doc invariant — belongs to no
-single layer, so it is dropped here and stays with `structure` and `docs`.
-
-#### Exit-code aggregation for `fix`
-
-`surface_fix_action.rs` owns the aggregation of per-item `FixOutcome`s into one
-run-level outcome: any `Failed(reason)` raises the report's failure flag, while
-a run of only `Applied`/`Skipped(reason)` items does not. `cli-commands`'
-`surface_fix_command.rs` renders that outcome and maps it onto the exit-code
-contract (a `Failed` present → `RuntimeError` (2); otherwise `Ok` (0), or
-`PolicyFail` (1) when violations remain after a non-dry run). The surface never
-re-derives the aggregation — per the CLI's own invariant, "a surface file
-computes nothing about the codebase."
+| Variant | Use case | Token | Value|
+|---------|----------|-------|------|
+| Variant | Use case | Token | Value|
+| — | — | — | — |
 
 ### DS-DISP-004: Invariants
 
-- A collector filters, it does not re-derive. Rule decisions belong to the rule
-  crates; this layer only scopes and shapes their output.
-- Collectors are pure with respect to the filesystem — they read `ScanAggregates`,
-  which the pipeline built.
-- Adding a rule group means adding one collector here and registering it in
-  `ScanAggregates`; no surface needs to change.
-- The rule-code range in the inventory table at the top of `## Design Requirements` is a copy of the range
-  `RULES_AES.md` publishes for that group. The two must agree; a rule
-  renumbering or consolidation edits both in the same change.
+| Variant | Use case | Token | Value|
+|---------|----------|-------|------|
+| Variant | Use case | Token | Value|
+| — | — | — | — |
 
 ### DS-DISP-005: Change Checklist
 
-A new group: create `surface_<group>_action.rs`, add its findings to the
-aggregates in the scan pipeline, and register the group in the config. The CLI,
-MCP, and TUI surfaces pick it up with no edit.
-
-Renumbering, adding, or consolidating a rule code: update `RULES_AES.md` first,
-then the matching row here.
+| Variant | Use case | Token | Value|
+|---------|----------|-------|------|
+| Variant | Use case | Token | Value|
+| — | — | — | — |
 
 ### DS-DISP-006: States
 
-| State        | Condition                                                   |
-| ------------ | ------------------------------------------------------------|
-| `clean`      | Every group returned zero findings                           |
-| `violations` | One or more groups returned findings                         |
-| `error`      | A group failed to run; the dispatcher reports it rather than reporting a clean scan|
+| Variant | Use case | Token | Value|
+|---------|----------|-------|------|
+| Variant | Use case | Token | Value|
+| — | — | — | — |
 
 ### DS-DISP-007: Error States
 
-| Condition                        | Behaviour                                                                                  |
-| -------------------------------- | -------------------------------------------------------------------------------------------|
-| Target path missing              | The caller returns `RuntimeError` before dispatching                                       |
-| A group returns an internal error| The failure is surfaced; other groups still contribute findings                            |
-| A finding's path cannot be resolved | The finding is dropped from a scoped scan rather than reported against a path that does not exist|
+| Variant | Use case | Token | Value|
+|---------|----------|-------|------|
+| Variant | Use case | Token | Value|
+| — | — | — | — |
 
 ## Reference
 
-- PRD: [PRD.md](../../PRD.md)
-- Backlog: [BACKLOG.md](BACKLOG.md)
-- ROADMAP: [ROADMAP.md](../../ROADMAP.md)
-- Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
-- Rules: [RULES_AES.md](../../RULES_AES.md)
+| Artifact | Purpose | Link|
+|----------|---------|------|
+| BACKLOG.md | Backlog tracking | [BACKLOG.md](BACKLOG.md)|
+| PRD.md | Product requirements | [PRD.md](../../PRD.md)|
+| FRD.md | Feature requirements | [FRD.md](FRD.md)|
+| ROADMAP.md | Roadmap status | [ROADMAP.md](../../ROADMAP.md)|
+| ARCHITECTURE.md | Layer contract | [ARCHITECTURE.md](../../ARCHITECTURE.md)|

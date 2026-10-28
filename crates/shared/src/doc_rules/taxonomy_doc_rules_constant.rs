@@ -401,6 +401,17 @@ pub use crate::taxonomy_doc_rules_template_vo::{TEMPLATE_PROFILES, TemplateProfi
 mod tests {
     use super::*;
 
+    /// Load a reference template from skills/aes-docs/references/.
+    fn load_reference_template(file: &str) -> String {
+        let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../skills/aes-docs/references")
+            .join(file);
+        match std::fs::read_to_string(&path) {
+            Ok(text) => text,
+            Err(e) => panic!("reference template {file} must be readable: {e}"),
+        }
+    }
+
     /// *columns* must all appear somewhere in the reference template *file*.
     fn ships_columns(file: &str, columns: &[&str]) {
         let text = load_reference_template(file);
