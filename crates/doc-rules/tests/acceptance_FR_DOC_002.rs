@@ -21,7 +21,7 @@ fn write(path: &Path, contents: &str) {
 }
 
 /// Audit *root* through the public container and return the findings.
-fn audit(root: &Path) -> Vec<(String, String, String)> {
+fn audit(root: &Path) -> Vec<(String, String, String, String)> {
     let aggregate = RootDocRulesContainer::orchestrator();
     match aggregate.execute(DocRequest::audit_all(
         root,
@@ -35,6 +35,7 @@ fn audit(root: &Path) -> Vec<(String, String, String)> {
                     f.code.to_string(),
                     f.violation_type.to_string(),
                     f.doc.clone(),
+                    f.message.clone(),
                 )
             })
             .collect(),
@@ -91,7 +92,10 @@ fn one_request_runs_every_invariant_and_reports_each_defect() {
     write_faulty_workspace(root);
 
     let findings = audit(root);
-    let codes: BTreeSet<&str> = findings.iter().map(|(code, _, _)| code.as_str()).collect();
+    let codes: BTreeSet<&str> = findings
+        .iter()
+        .map(|(code, _, _, _)| code.as_str())
+        .collect();
 
     for expected in ["AES601", "AES602", "AES603"] {
         assert!(
@@ -124,12 +128,18 @@ fn repeated_findings_are_collapsed() {
     write_faulty_workspace(root);
 
     let findings = audit(root);
-    let distinct: BTreeSet<(&String, &String, &String)> =
-        findings.iter().map(|(c, v, d)| (c, v, d)).collect();
+    // The collapse key is the one `utility_doc_collector::sorted` applies in
+    // the response assembly: (code, violation, document, message). One
+    // *defect* must produce one finding, but two defects of the same code on
+    // one document — here `## Reference` and `## Public Interface` both missing
+    // their mandated table — are distinct findings whose messages differ, so
+    // the triple alone is not a defect identity.
+    let distinct: BTreeSet<(&String, &String, &String, &String)> =
+        findings.iter().map(|(c, v, d, m)| (c, v, d, m)).collect();
     assert_eq!(
         distinct.len(),
         findings.len(),
-        "one defect must produce one finding; a duplicated (code, violation, document) \
-         triple means the audit ran the same capability twice. Findings: {findings:#?}"
+        "one defect must produce one finding; a duplicated (code, violation, document, message) \
+         quad means the audit ran the same capability twice. Findings: {findings:#?}"
     );
 }

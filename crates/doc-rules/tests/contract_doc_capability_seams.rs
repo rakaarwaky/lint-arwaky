@@ -118,6 +118,18 @@ Implemented in `src/capabilities_sample_checker.rs`.
     .to_string()
 }
 
+/// The source-file-referencing FRD with every AES603 violation removed: no
+/// source-file name in the prose and no implementation-state claim, so a
+/// purity-clean workspace can reuse the same section shape.
+fn purity_clean_frd() -> String {
+    frd_violating_only_spec_purity()
+        .replace("main.rs", "the settings role")
+        .replace(
+            "Implemented in `src/capabilities_sample_checker.rs`.",
+            "Delegates the check to the settings role.",
+        )
+}
+
 /// A PRD that violates exactly one rule: it drops its BACKLOG link is not
 /// possible on a PRD, so instead it drops a required H2, exercising AES605
 /// alone.
@@ -278,11 +290,7 @@ fn the_doc_heading_seam_is_the_only_one_answering_a_missing_h2() {
 fn running_all_five_seams_over_a_clean_workspace_reports_nothing() {
     let tmp = tempfile::tempdir().unwrap();
     write_feature(tmp.path());
-    std::fs::write(
-        tmp.path().join("crates/sample/FRD.md"),
-        frd_violating_only_spec_purity().replace("main.rs", "the settings role"),
-    )
-    .unwrap();
+    std::fs::write(tmp.path().join("crates/sample/FRD.md"), purity_clean_frd()).unwrap();
     std::fs::write(
         tmp.path().join("PRD.md"),
         r"# PRD — sample
@@ -330,9 +338,10 @@ The problem.
     )
     .unwrap();
 
+    let codes = codes_from_all(tmp.path());
     assert!(
-        codes_from_all(tmp.path()).is_empty(),
-        "six seams over a conforming workspace must report nothing"
+        codes.is_empty(),
+        "six seams over a conforming workspace must report nothing; got codes: {codes:?}"
     );
 }
 
@@ -344,11 +353,7 @@ fn the_spec_purity_seam_answers_specs_only_and_never_a_backlog() {
     let tmp = tempfile::tempdir().unwrap();
     let feature = tmp.path().join("crates/sample");
     std::fs::create_dir_all(feature.join("src")).unwrap();
-    std::fs::write(
-        feature.join("FRD.md"),
-        frd_violating_only_spec_purity().replace("main.rs", "the settings role"),
-    )
-    .unwrap();
+    std::fs::write(feature.join("FRD.md"), purity_clean_frd()).unwrap();
     std::fs::write(
         feature.join("BACKLOG.md"),
         "# Feature Backlog: Sample\n\n## Current Condition\n\n- [x] the FR-ID rule landed\n- SAM-01 is 90% complete and shipped in v3.7\n\n## Backlog\n\n| ID | Priority | State | Dependencies | Next Action | Updated |\n|---|---:|---|---|---|---|\n| SAM-02 | P0 | Ready | — | — | 2026-09-29 |\n\n## Scenario Evidence\n\n| Scenario | Kind | Test file | Test name | Last verified |\n|---|---|---|---|---|\n| nothing yet | Automated | tests/ | test_nothing | 2026-09-29 |\n\n## Blockers\n\nNone\n\n## Dependencies\n\nNone\n\n## Release Readiness\n\n| Area | Status | Notes |\n|---|---|---|\n| Tests | Done | nothing |\n\n## Deferred\n\nNone\n\n## Change Log\n\n| Date | Change | By |\n|---|---|---|\n| 2026-09-29 | init | @raka |\n",

@@ -315,6 +315,10 @@ fn write_workspace_root() -> String {
 
 const DATA_PATH: &str = "crates/shared/DATA.md";
 
+/// The kernel BACKLOG: AES601 findings about its rows anchor on the offending
+/// entry's own document, not on the paired DATA spec.
+const KERNEL_BACKLOG_PATH: &str = "crates/shared/BACKLOG.md";
+
 /// A DATA.md with a single qualified `DT-SHAR-001` item, carrying the
 /// required Data Overview / Data Requirements / Reference H2 set.
 fn data_with_dt() -> String {
@@ -369,8 +373,10 @@ fn e2e_a_data_backlog_pair_rejects_do_headings() {
     let root = tmp.path();
     write_workspace(root);
     // DATA.md declares DT-SHAR-001; the BACKLOG entry token is DT-SHAR-001
-    // (covered) but its Next row cites DO-001, which DATA does not declare,
-    // so direction (c) fires dt_backlog_id_not_dt.
+    // (covered) but its Next row cites DT-DO-001 — the legacy DO-style id in
+    // the qualified DT form the stray-ID scan reads — which DATA does not
+    // declare, so direction (c) fires dt_backlog_id_not_dt anchored to the
+    // entry's own document (the kernel BACKLOG).
     write(&root.join(DATA_PATH), &data_with_dt());
     let backlog = "# Feature Backlog: Sample\n\nFRD: [FRD.md](FRD.md)\n\n\
 ## Progress Overview\n\nBaseline.\n\n\
@@ -382,21 +388,21 @@ fn e2e_a_data_backlog_pair_rejects_do_headings() {
 | Done         | —                                           |\n\
 | In Progress  | None                                        |\n\
 | Blocked      | None                                        |\n\
-| Next         | DO-001                                      |\n\
+| Next         | DT-DO-001                                   |\n\
 | Risk         | None                                        |\n\
 | Updated      | 2026-09-29                                  |\n\
 ## Reference\n\n\
 - PRD: [PRD.md](../../PRD.md)\n\
 - ROADMAP: [ROADMAP.md](../../ROADMAP.md)\n";
-    write(&root.join("crates/shared/BACKLOG.md"), backlog);
+    write(&root.join(KERNEL_BACKLOG_PATH), backlog);
     let findings = audit(root);
     assert!(
-        for_document(&findings, DATA_PATH)
+        for_document(&findings, KERNEL_BACKLOG_PATH)
             .iter()
             .any(|(code, violation, _)| {
                 code == "AES601" && violation == "dt_backlog_id_not_dt"
             }),
-        "a DO-001 row citing an id DATA does not declare must fire dt_backlog_id_not_dt; got {:?}",
-        for_document(&findings, DATA_PATH)
+        "a DO-derived row citing an id DATA does not declare must fire dt_backlog_id_not_dt; got {:?}",
+        for_document(&findings, KERNEL_BACKLOG_PATH)
     );
 }
