@@ -112,6 +112,10 @@ pub const TEMPLATE_CONFORMANCE_VIOLATION_TABLE_MISSING_COLUMNS: &str = "table_mi
 /// An entry table's first-column row labels do not match the template's fixed set.
 pub const TEMPLATE_CONFORMANCE_VIOLATION_ENTRY_MISSING_ROW: &str = "entry_missing_row";
 
+/// A table body repeats its header row in a data-row position, so the table
+/// carries the column names where the template expects filled values.
+pub const TEMPLATE_CONFORMANCE_VIOLATION_TABLE_HEADER_REPEATED: &str = "table_header_repeated";
+
 /// A required root document does not exist at the audit root.
 pub const MISSING_DOC_VIOLATION: &str = "missing_required_doc";
 

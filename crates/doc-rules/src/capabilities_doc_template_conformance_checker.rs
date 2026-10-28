@@ -59,6 +59,39 @@ fn is_table_separator(line: &str) -> bool {
         && inner.iter().any(|cell| cell.contains('-'))
 }
 
+/// Does any table in *body* repeat its header row in a data-row position?
+///
+/// Walks each `|` block: the first row is the header, the next separator row
+/// arms the check, and any later non-separator row whose normalized cells equal
+/// the header's is a placeholder copy of the header instead of real data.
+fn table_repeats_header_row(body: &str) -> bool {
+    let mut header: Option<Vec<String>> = None;
+    let mut separator_seen = false;
+    for line in body.lines() {
+        let trimmed = line.trim();
+        if !trimmed.starts_with('|') {
+            header = None;
+            separator_seen = false;
+            continue;
+        }
+        let cells: Vec<String> = trimmed
+            .trim_matches('|')
+            .split('|')
+            .map(|c| c.trim().to_lowercase())
+            .collect();
+        if is_table_separator(trimmed) {
+            separator_seen = header.is_some();
+            continue;
+        }
+        match &header {
+            None => header = Some(cells),
+            Some(h) if separator_seen && cells == *h => return true,
+            _ => {}
+        }
+    }
+    false
+}
+
 // ─── Block 2: Entry regexes ────────────────────────────────
 
 /// `FR-<FEATURE>-NNN:` item heading (FRD `Functional Requirements` entries).
@@ -454,6 +487,34 @@ impl TemplateConformanceChecker {
         };
         let body = &section.body;
         if has_table_with_columns(body, columns) {
+            // Right columns, but a data row copying the header means the
+            // table ships placeholders where the template expects values.
+            if table_repeats_header_row(body) {
+                let marker = if section.level == 2 { "##" } else { "###" };
+                return Some(
+                    DocFinding::new_with_line(
+                        "",
+                        section.line,
+                        consts::RULE_CODE_TEMPLATE_CONFORMANCE,
+                        consts::TEMPLATE_CONFORMANCE_VIOLATION_TABLE_HEADER_REPEATED,
+                        format!(
+                            "line {} `{marker} {}` repeats its header row as a data row",
+                            section.line, section.title
+                        ),
+                    )
+                    .with_reason(
+                        format!(
+                            "The HOW-TO template mandates one header row under `{}`; repeating it in a data-row position ships the column names where filled values belong.",
+                            section.title
+                        ),
+                        format!(
+                            "Replace the duplicated `| {} |` row under `{marker} {}` with real values, or delete it if no values exist yet.",
+                            columns.join(" | "),
+                            section.title
+                        ),
+                    ),
+                );
+            }
             return None;
         }
         // The section is present but wrong-shaped. Distinguish "no table at all"

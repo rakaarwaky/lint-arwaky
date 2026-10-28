@@ -100,17 +100,17 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 | Aspect | Detail|
 |--------|-------|
 | Description | Check that each mandated section carries the exact table shape — columns and entry-table row labels — that its template fixes. |
-| Business Rules | A section the template fixes as a table must be a table (`section_not_table`); a table must carry every fixed column (`table_missing_columns`); an entry table's first-column labels must equal the template's fixed row set with none missing and none extra (`entry_missing_row`); header-only tables and pipe-delimited separators are recognized before any verdict. |
-| Edge Cases | A parent H2 with no body is silent — absence is AES605's question; a bullet list or prose under a mandated section fires `section_not_table`; the finding anchors to the offending H3 so a reader lands on the broken table, not the section head. |
+| Business Rules | A section the template fixes as a table must be a table (`section_not_table`); a table must carry every fixed column (`table_missing_columns`); an entry table's first-column labels must equal the template's fixed row set with none missing and none extra (`entry_missing_row`); a data row that repeats the header row ships column names where values belong (`table_header_repeated`); header-only tables and pipe-delimited separators are recognized before any verdict. |
+| Edge Cases | A parent H2 with no body is silent — absence is AES605's question; a bullet list or prose under a mandated section fires `section_not_table`; a table whose data row copies the header fires `table_header_repeated`; the finding anchors to the offending H3 so a reader lands on the broken table, not the section head. |
 | Capability | `TemplateConformanceChecker` implements `ITemplateConformanceProtocol` (`audit_template_conformance`, plus the `check_entry_tables` helper). |
 | Protocol | `ITemplateConformanceProtocol` in `shared/doc_rules`. |
 | Method | `audit_template_conformance(&self, context: &DocAuditContext) -> Vec<DocFinding>` |
 | Input | `DocAuditContext` with each document's section list and the profile tables registered for its type. |
-| Output | `Vec<DocFinding>` — code `AES606`, types `section_not_table`, `table_missing_columns`, or `entry_missing_row`, each carrying the missing/extra labels in `message` and a fix line. |
+| Output | `Vec<DocFinding>` — code `AES606`, types `section_not_table`, `table_missing_columns`, `entry_missing_row`, or `table_header_repeated`, each carrying the missing/extra labels in `message` and a fix line. |
 | Error | Audit-only: findings, no rewriting of the document. |
 | Event | `lint-arwaky-cli docs .`. |
-| Test | `unit_doc_template_conformance` suite — `aes606_accepts_a_backlog_carrying_every_mandated_table`, `aes606_rejects_bullet_bodies_under_a_backlog_section`, `aes606_rejects_a_table_missing_one_mandated_column`, `aes606_rejects_prose_under_a_roadmap_state_definitions`; `unit_capabilities_doc_template_conformance` suite covers the entry-table and empty-parent branches. |
-| Metric | Zero `AES606` shape findings (`section_not_table`, `table_missing_columns`, `entry_missing_row`) from `lint-arwaky-cli docs .` on a conforming workspace. |
+| Test | `unit_doc_template_conformance` suite — `aes606_accepts_a_backlog_carrying_every_mandated_table`, `aes606_rejects_bullet_bodies_under_a_backlog_section`, `aes606_rejects_a_table_missing_one_mandated_column`, `aes606_rejects_prose_under_a_roadmap_state_definitions`; `unit_capabilities_doc_template_conformance` suite covers the entry-table and empty-parent branches plus `design_entry_rejects_repeated_header_row` and `design_entry_accepts_template_blank_data_row`. |
+| Metric | Zero `AES606` shape findings (`section_not_table`, `table_missing_columns`, `entry_missing_row`, `table_header_repeated`) from `lint-arwaky-cli docs .` on a conforming workspace. |
 
 ### FR-DOC-007: Required-Document Presence (AES606)
 

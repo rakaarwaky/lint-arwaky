@@ -202,6 +202,56 @@ fn design_entry_rejects_missing_table() {
 }
 
 #[test]
+fn design_entry_rejects_repeated_header_row() {
+    // The shipped-defect shape: the header row is copied into a data-row
+    // position, so the table carries column names where values belong.
+    let text = "# X\n\n## Design Requirements\n\n### DS-DESI-001: Outcome Vocabulary\n\n\
+             | Variant | Use case | Token | Value|\n\
+             |---------|----------|-------|------|\n\
+             | Variant | Use case | Token | Value|\n\
+             | — | — | — | — |\n";
+    let parsed = sections(text);
+    let re = ds_entry_re().expect("regex compiles");
+    let findings = TemplateConformanceChecker::new().check_entry_tables(
+        &parsed,
+        "Design Requirements",
+        re,
+        consts::DESIGN_VARIANT_VALUE_COLUMNS,
+        &[],
+    );
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.violation_type
+                == consts::TEMPLATE_CONFORMANCE_VIOLATION_TABLE_HEADER_REPEATED),
+        "a data row copying the header must fire table_header_repeated; got {findings:?}"
+    );
+}
+
+#[test]
+fn design_entry_accepts_template_blank_data_row() {
+    // HOW-TO-MAKE-DESIGN.md ships header + separator + blank row; real
+    // filled values pass the same way (cells differ from the header).
+    let text = "# X\n\n## Design Requirements\n\n### DS-DESI-001: Outcome Vocabulary\n\n\
+             | Variant | Use case | Token | Value|\n\
+             |---------|----------|-------|-------|\n\
+             |         |          |       |       |\n";
+    let parsed = sections(text);
+    let re = ds_entry_re().expect("regex compiles");
+    let findings = TemplateConformanceChecker::new().check_entry_tables(
+        &parsed,
+        "Design Requirements",
+        re,
+        consts::DESIGN_VARIANT_VALUE_COLUMNS,
+        &[],
+    );
+    assert!(
+        findings.is_empty(),
+        "the template's blank data row must pass; got {findings:?}"
+    );
+}
+
+#[test]
 fn data_entry_accepts_header_only() {
     let text = "# X\n\n## Data Requirements\n\n### DT-SHAR-001: Severity\n\n\
              | Type | Description |\n| --- | --- |\n| vo | level |\n";

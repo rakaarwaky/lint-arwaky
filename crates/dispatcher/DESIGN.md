@@ -37,51 +37,44 @@ Every collector has the same shape: `collect_<group>(target, aggregates) -> Vec<
 ### DS-DISP-001: Outcome Vocabulary
 
 | Variant | Use case | Token | Value|
-|---------|----------|-------|------|
-| Variant | Use case | Token | Value|
-| — | — | — | — |
+|---------|----------|-------|-------|
+|         |          |       |       |
 
 ### DS-DISP-002: Kind
 
 | Variant | Use case | Token | Value|
-|---------|----------|-------|------|
-| Variant | Use case | Token | Value|
-| — | — | — | — |
+|---------|----------|-------|-------|
+|         |          |       |       |
 
 ### DS-DISP-003: Request Shape
 
 | Variant | Use case | Token | Value|
-|---------|----------|-------|------|
-| Variant | Use case | Token | Value|
-| — | — | — | — |
+|---------|----------|-------|-------|
+|         |          |       |       |
 
 ### DS-DISP-004: Invariants
 
 | Variant | Use case | Token | Value|
-|---------|----------|-------|------|
-| Variant | Use case | Token | Value|
-| — | — | — | — |
+|---------|----------|-------|-------|
+|         |          |       |       |
 
 ### DS-DISP-005: Change Checklist
 
 | Variant | Use case | Token | Value|
-|---------|----------|-------|------|
-| Variant | Use case | Token | Value|
-| — | — | — | — |
+|---------|----------|-------|-------|
+|         |          |       |       |
 
 ### DS-DISP-006: States
 
 | Variant | Use case | Token | Value|
-|---------|----------|-------|------|
-| Variant | Use case | Token | Value|
-| — | — | — | — |
+|---------|----------|-------|-------|
+|         |          |       |       |
 
 ### DS-DISP-007: Error States
 
 | Variant | Use case | Token | Value|
-|---------|----------|-------|------|
-| Variant | Use case | Token | Value|
-| — | — | — | — |
+|---------|----------|-------|-------|
+|         |          |       |       |
 
 ## Reference
 
