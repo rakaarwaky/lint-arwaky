@@ -93,7 +93,6 @@ Do not list features here.>
 | User Story     | <as a..., I want..., so that...>                            |
 | In Scope       | <boundary — what this project will deliver>                 |
 | Out of Scope   | <explicit exclusions — name them so the argument ends here> |
-| Acceptance     | <observable check>                                          |
 | Success Metric | <how to measure this requirement succeeds>                  |
 
 ### PR-<PROJECT-NAME-ID>-002: <Short imperative name>
@@ -119,7 +118,7 @@ reason.
 | Section               | Why it belongs here                                                                               |
 | --------------------- | ---------------------------------------------------------------------------------------------------|
 | Problem Statement     | The reason the project exists, in one paragraph. Watch for a feature list instead of a problem.   |
-| Project Requirements  | The promise, in `PR-<PROJECT-NAME-ID>-NNN` items, each with Description / User Story / In Scope / Out of Scope / Acceptance / Success Metric.|
+| Project Requirements  | The promise, in `PR-<PROJECT-NAME-ID>-NNN` items, each with Description / User Story / In Scope / Out of Scope / Success Metric.|
 | Reference             | Connects the spec to its plan and its boundaries.                                                |
 
 ---
@@ -129,6 +128,6 @@ reason.
 ```bash
 lint-arwaky-cli docs .
 # Checks: placement, sections, links, length, hygiene.
-# Manual: every Requirement row has all six Aspect labels; no impl detail (grep CREATE TABLE|POST /|fn |interface);
+# Manual: every Requirement row has all five Aspect labels; no impl detail (grep CREATE TABLE|POST /|fn |interface);
 # out-of-scope non-empty; every Priority has acceptance criteria.
 ```
