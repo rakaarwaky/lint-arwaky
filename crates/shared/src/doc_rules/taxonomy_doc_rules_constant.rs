@@ -279,13 +279,12 @@ pub const ASPECT_DETAIL_COLUMNS: &[&str] = &["Aspect", "Detail"];
 /// `## Reference` table, per the HOW-TO-MAKE templates.
 pub const REFERENCE_COLUMNS: &[&str] = &["Artifact", "Purpose", "Link"];
 
-/// PRD `Project Requirements` entry row labels — 6, per HOW-TO-MAKE-PRD.md.
+/// PRD `Project Requirements` entry row labels — 5, per HOW-TO-MAKE-PRD.md.
 pub const PRD_ROW_LABELS: &[&str] = &[
     "Description",
     "User Story",
     "In Scope",
     "Out of Scope",
-    "Acceptance",
     "Success Metric",
 ];
 

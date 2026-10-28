@@ -136,7 +136,6 @@ pub const TEMPLATE_PROFILES: &[TemplateProfile] = &[
             "<as a..., I want..., so that...>",
             "<boundary — what this project will deliver>",
             "<explicit exclusions — name them so the argument ends here>",
-            "<observable check>",
             "<how to measure this requirement succeeds>",
             "<Timeline, phasing, and dependencies>",
             "<System boundaries, tech stack, and infra>",

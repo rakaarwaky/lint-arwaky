@@ -14,7 +14,6 @@ A small multi-language calculator demo needs a single, clear specification of wh
 | User Story     | As a user, I want to add two numbers, so that I get their sum |
 | In Scope       | Integer and decimal addition in the calculator feature      |
 | Out of Scope   | Persistent storage of calculation history                   |
-| Acceptance     | `lint-arwaky-cli check .` exits 0                           |
 | Success Metric | Expression evaluation under 10 ms                           |
 
 ### PR-CALC-002: Subtraction operation
@@ -25,7 +24,6 @@ A small multi-language calculator demo needs a single, clear specification of wh
 | User Story     | As a user, I want to subtract two numbers, so that I get their difference |
 | In Scope       | Integer and decimal subtraction in the calculator feature   |
 | Out of Scope   | Persistent storage of calculation history                   |
-| Acceptance     | `lint-arwaky-cli check .` exits 0                           |
 | Success Metric | Expression evaluation under 10 ms                           |
 
 ### PR-CALC-003: Multiplication operation
@@ -36,7 +34,6 @@ A small multi-language calculator demo needs a single, clear specification of wh
 | User Story     | As a user, I want to multiply two numbers, so that I get their product |
 | In Scope       | Integer and decimal multiplication in the calculator feature |
 | Out of Scope   | Persistent storage of calculation history                   |
-| Acceptance     | `lint-arwaky-cli check .` exits 0                           |
 | Success Metric | Expression evaluation under 10 ms                           |
 
 ### PR-CALC-004: Division operation
@@ -47,7 +44,6 @@ A small multi-language calculator demo needs a single, clear specification of wh
 | User Story     | As a user, I want to divide two numbers, so that I get their quotient |
 | In Scope       | Integer and decimal division in the calculator feature      |
 | Out of Scope   | Persistent storage of calculation history                   |
-| Acceptance     | `lint-arwaky-cli check .` exits 0                           |
 | Success Metric | Expression evaluation under 10 ms                           |
 
 ### PR-CALC-005: Expression parsing
@@ -58,7 +54,6 @@ A small multi-language calculator demo needs a single, clear specification of wh
 | User Story     | As a user, I want to write an expression, so that I get its value |
 | In Scope       | Addition, subtraction, multiplication, division expressions |
 | Out of Scope   | Variables, functions, persistent storage                    |
-| Acceptance     | `lint-arwaky-cli check .` exits 0                           |
 | Success Metric | Expression evaluation under 10 ms                           |
 
 ## Reference
