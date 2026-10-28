@@ -1,59 +1,85 @@
 ---
 trigger: always
-description: "Lint Arwaky operational guide."
+description: "Lint Arwaky operational guide. ARCHITECTURE.md wins on ambiguity."
 ---
-# AGENTS — Lint Arwaky
-
-## Agent Overview
-
-{One paragraph: what AI agents must know before generating code, docs, or suggestions in this workspace.}
+# Lint Arwaky
 
 ## Runtime
 
-| Aspect          | Detail                                          |
-|-----------------|-------------------------------------------------|
-| Language        | {language and pinned version}                   |
-| Environment     | {environment manager and creation method}       |
-| Artifacts       | {reviewable artifact location}                  |
-| Package Manager | {package manager and lockfile}                  |
-| Version Probe   | `{version probe command}`                       |
-| Setup           | `{environment setup command}`                    |
-| Activation      | `{optional environment activation command}`      |
+- Language: Rust (edition 2024, pinned via rust-toolchain.toml)
+- Environment: cargo workspace under crates/, built on Linux/macOS with CARGO_INCREMENTAL=0
+- Artifacts: target/ and $HOME/.local/bin/ (install path). Never use /tmp for
+  build output a reviewer must find
+- Package manager: cargo, with Cargo.lock
+
+```bash
+rustc --version
+CARGO_INCREMENTAL=0 cargo build --release
+```
+
+## Project Quick Facts
+
+INPUT  = Rust workspace under crates/ with AES 7-layer naming
+OUTPUT = 0 violations from lint-arwaky-cli check ., docs ., and scripts/gates.sh
+
+## Pipeline
+
+scan → check → gates → publish
 
 ## Project Structure
 
-| Path       | Purpose              |
-|------------|----------------------|
-| {path}     | {what lives here}    |
+```text
+crates/
+├── shared/            # Taxonomy VOs, contracts, utilities
+│   └── skills/        # Embedded skill content (source for init)
+├── config-system/     # Config loading, merging, validation
+├── filesystem/        # File walking, AST parsing, graph construction
+├── naming-rules/      # AES101–102
+├── import-rules/      # AES201–205
+├── quality-rules/     # AES301–305
+├── role-rules/        # AES401–406
+├── orphan-rules/      # AES501–506
+├── doc-rules/         # AES601–606 (document invariants)
+├── structure-rules/   # AES701–705 (folder structure)
+├── external-lint/     # External linter adapters
+├── auto-fix/          # Mechanical fixes
+├── report-formatter/  # text/JSON/SARIF/JUnit output
+├── dispatcher/        # Utility Surface — business logic
+├── cli-commands/      # CLI surface
+├── mcp-server/        # MCP server
+├── git-hooks/         # Pre-commit / git-diff
+├── file-watch/        # Continuous lint
+├── project-setup/     # init / install / mcp-config
+├── maintenance/       # doctor / security / deps
+└── tui/               # Interactive terminal UI
+```
 
 ## Commands
 
-| Category    | Command                              | Scope      | CI Gate              |
-|-------------|--------------------------------------|------------|----------------------|
-| Test (all)  | `{whole-workspace test command}`     | All        | ci.yml: {job name}   |
-| Test (unit) | `{single-package test command}`      | One unit   | ci.yml: {job name}   |
-| Test (file) | `{single-file test command}`         | One file   | ci.yml: {job name}   |
-| Lint        | `{formatter or linter command}`      | All        | ci.yml: {job name}   |
-| Type Check  | `{type checker command}`             | All        | ci.yml: {job name}   |
-| Arch Scan   | `{architecture scanner command}`     | All        | ci.yml: {job name}   |
+Every command must match the exact CI gate.
 
-## Documentation Awareness
+```bash
+# Tests
+CARGO_INCREMENTAL=0 cargo nextest run --workspace --lib --tests -j 2   # all tests (3x faster than cargo test)
+CARGO_INCREMENTAL=0 cargo nextest run -p <crate>                      # one unit
+CARGO_INCREMENTAL=0 cargo nextest run -p <crate> --test <file>        # one file
 
-| Document | Agent Must                              |
-|----------|-----------------------------------------|
-| PRD      | Read before implementing any `PR-` item |
-| FRD      | Follow `FR-` spec exactly               |
-| DATA     | Respect `DT-` shapes and types          |
-| DESIGN   | Use `DS-` tokens and variants           |
-| ROADMAP  | Check `State` before starting work      |
-| BACKLOG  | Update status after each task           |
+# Lint / types / architecture
+CARGO_INCREMENTAL=0 cargo fmt --all -- --check                         # matches ci.yml "Format" job
+CARGO_INCREMENTAL=0 cargo clippy --all-targets -- -D warnings          # matches ci.yml "Clippy" job
+lint-arwaky-cli check .                                                # architecture scanner (self-lint)
+```
 
-## Reference
+## Related Documents
 
-| Artifact     | Purpose                                    | Link |
-|--------------|--------------------------------------------|------|
-| PRD          | {Business goals, user stories, and scope}  | [PRD.md](PRD.md) |
-| FRD          | {Functional requirements specification}    | [FRD.md](FRD.md) |
-| DATA         | {Data shapes and kernel definitions}        | [DATA.md](DATA.md) |
-| DESIGN       | {UI/UX and visual system}                  | [DESIGN.md](DESIGN.md) |
-| Architecture | {System boundaries, tech stack, and infra} | [ARCHITECTURE.md](ARCHITECTURE.md) |
+- [README.md](README.md): What the tool does, every command, and how to install it
+- [PRD.md](PRD.md): What the product does and why — feature tiers, exit codes, non-functional goals
+- [ARCHITECTURE.md](ARCHITECTURE.md): Layer contract for every crate and the rules that keep the boundaries
+- [RULES_AES.md](RULES_AES.md): The 32 rules, what each one forbids, and why
+- [ROADMAP.md](ROADMAP.md): What ships next, in order
+- [TEST.md](TEST.md): How to run the suite and what a green run proves
+- [CONTRIBUTING.md](CONTRIBUTING.md): Branch, commit, and PR conventions
+- [DEPLOY.md](DEPLOY.md): Release path and the checks it gates on
+- [SECURITY.md](SECURITY.md): Reporting a vulnerability and what counts as one
+
+---
