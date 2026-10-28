@@ -14,7 +14,115 @@ Last Updated: 2026-09-29
 
 ## Backlog Status
 
-### {DOC}
+### {FR-DOC-001}
+
+| Aspect       | Detail                                     |
+|--------------|---------------------------------------------|
+| State        | Ready                                      |
+| Done         | DOC                                      |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | Ship                                       |
+| Risk         | None                                       |
+| Updated      | 2026-09-29                                 |
+
+### {FR-DOC-002}
+
+| Aspect       | Detail                                     |
+|--------------|---------------------------------------------|
+| State        | Ready                                      |
+| Done         | DOC                                      |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | Ship                                       |
+| Risk         | None                                       |
+| Updated      | 2026-09-29                                 |
+
+### {FR-DOC-003}
+
+| Aspect       | Detail                                     |
+|--------------|---------------------------------------------|
+| State        | Ready                                      |
+| Done         | DOC                                      |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | Ship                                       |
+| Risk         | None                                       |
+| Updated      | 2026-09-29                                 |
+
+### {FR-DOC-004}
+
+| Aspect       | Detail                                     |
+|--------------|---------------------------------------------|
+| State        | Ready                                      |
+| Done         | DOC                                      |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | Ship                                       |
+| Risk         | None                                       |
+| Updated      | 2026-09-29                                 |
+
+### {FR-DOC-005}
+
+| Aspect       | Detail                                     |
+|--------------|---------------------------------------------|
+| State        | Ready                                      |
+| Done         | DOC                                      |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | Ship                                       |
+| Risk         | None                                       |
+| Updated      | 2026-09-29                                 |
+
+### {FR-DOC-006}
+
+| Aspect       | Detail                                     |
+|--------------|---------------------------------------------|
+| State        | Ready                                      |
+| Done         | DOC                                      |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | Ship                                       |
+| Risk         | None                                       |
+| Updated      | 2026-09-29                                 |
+
+### {FR-DOC-007}
+
+| Aspect       | Detail                                     |
+|--------------|---------------------------------------------|
+| State        | Ready                                      |
+| Done         | DOC                                      |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | Ship                                       |
+| Risk         | None                                       |
+| Updated      | 2026-09-29                                 |
+
+### {FR-DOC-008}
+
+| Aspect       | Detail                                     |
+|--------------|---------------------------------------------|
+| State        | Ready                                      |
+| Done         | DOC                                      |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | Ship                                       |
+| Risk         | None                                       |
+| Updated      | 2026-09-29                                 |
+
+### {FR-DOC-009}
+
+| Aspect       | Detail                                     |
+|--------------|---------------------------------------------|
+| State        | Ready                                      |
+| Done         | DOC                                      |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | Ship                                       |
+| Risk         | None                                       |
+| Updated      | 2026-09-29                                 |
+
+### {FR-DOC-010}
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|

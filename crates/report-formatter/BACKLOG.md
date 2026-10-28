@@ -14,7 +14,43 @@ Last Updated: 2026-09-29
 
 ## Backlog Status
 
-### {ReportFormatter}
+### {FR-ReportFormatter-001}
+
+| Aspect       | Detail                                     |
+|--------------|---------------------------------------------|
+| State        | Ready                                      |
+| Done         | ReportFormatter                                      |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | Ship                                       |
+| Risk         | None                                       |
+| Updated      | 2026-09-29                                 |
+
+### {FR-ReportFormatter-002}
+
+| Aspect       | Detail                                     |
+|--------------|---------------------------------------------|
+| State        | Ready                                      |
+| Done         | ReportFormatter                                      |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | Ship                                       |
+| Risk         | None                                       |
+| Updated      | 2026-09-29                                 |
+
+### {FR-ReportFormatter-003}
+
+| Aspect       | Detail                                     |
+|--------------|---------------------------------------------|
+| State        | Ready                                      |
+| Done         | ReportFormatter                                      |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | Ship                                       |
+| Risk         | None                                       |
+| Updated      | 2026-09-29                                 |
+
+### {FR-ReportFormatter-004}
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|

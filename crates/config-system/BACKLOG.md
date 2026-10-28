@@ -14,7 +14,31 @@ Last Updated: 2026-09-29
 
 ## Backlog Status
 
-### {ConfigSystem}
+### {FR-ConfigSystem-001}
+
+| Aspect       | Detail                                     |
+|--------------|---------------------------------------------|
+| State        | Ready                                      |
+| Done         | ConfigSystem                                      |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | Ship                                       |
+| Risk         | None                                       |
+| Updated      | 2026-09-29                                 |
+
+### {FR-ConfigSystem-002}
+
+| Aspect       | Detail                                     |
+|--------------|---------------------------------------------|
+| State        | Ready                                      |
+| Done         | ConfigSystem                                      |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | Ship                                       |
+| Risk         | None                                       |
+| Updated      | 2026-09-29                                 |
+
+### {FR-ConfigSystem-003}
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|

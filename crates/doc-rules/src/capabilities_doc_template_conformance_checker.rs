@@ -14,7 +14,7 @@ use shared_doc_rules::taxonomy_doc_rules_constant as consts;
 use shared_doc_rules::taxonomy_doc_rules_request::DocFinding;
 use shared_doc_rules::taxonomy_doc_section_vo::Section;
 use shared_doc_rules::utility_markdown_scanner::{
-    h3_subsections, has_table_with_columns, normalize_heading, sections,
+    blank_fenced, h3_subsections, has_table_with_columns, normalize_heading, sections,
 };
 
 use std::collections::HashSet;
@@ -90,6 +90,37 @@ fn table_repeats_header_row(body: &str) -> bool {
         }
     }
     false
+}
+
+/// The header cells of the first table row that carries every *columns* entry
+/// but also ships cells outside that fixed set, lowercased. `None` when no
+/// such row exists — either the columns are absent (a `table_missing_columns`
+/// question) or the header matches the template exactly.
+fn header_extra_columns(body: &str, columns: &[&str]) -> Option<Vec<String>> {
+    for line in body.lines() {
+        let trimmed = line.trim();
+        if !trimmed.starts_with('|') {
+            continue;
+        }
+        let cells: Vec<String> = trimmed
+            .trim_matches('|')
+            .split('|')
+            .map(|c| c.trim().to_lowercase())
+            .collect();
+        if !columns
+            .iter()
+            .all(|want| cells.iter().any(|cell| cell.contains(&want.to_lowercase())))
+        {
+            continue;
+        }
+        let extras: Vec<String> = cells
+            .iter()
+            .filter(|cell| !columns.iter().any(|c| cell.contains(&c.to_lowercase())))
+            .cloned()
+            .collect();
+        return (!extras.is_empty()).then_some(extras);
+    }
+    None
 }
 
 // ─── Block 2: Entry regexes ────────────────────────────────
@@ -259,8 +290,10 @@ impl TemplateConformanceChecker {
     }
 
     /// DESIGN: `Design Requirements` entry tables (header-only, no fixed rows)
-    /// plus `Reference` H2 table.
-    fn check_design(&self, parsed: &[Section]) -> Vec<DocFinding> {
+    /// plus `Reference` H2 table, then the strict template-shape sweep: no
+    /// table where the HOW-TO shows none, and no H3 outside the `DS-` entry
+    /// pattern. Public so the test suite can drive the DESIGN branch whole.
+    pub fn check_design(&self, parsed: &[Section]) -> Vec<DocFinding> {
         let mut findings = Vec::new();
         let Some(re) = ds_entry_re() else {
             return findings;
@@ -273,6 +306,140 @@ impl TemplateConformanceChecker {
             &[],
         ));
         findings.extend(self.check_h2_table(parsed, "Reference", consts::REFERENCE_COLUMNS));
+        // The HOW-TO template shows a prose paragraph under `Design Overview`
+        // and DS- entry H3s directly under `Design Requirements`; a table in
+        // either spot has no template column set to conform to.
+        findings.extend(self.check_no_extra_table(parsed, "Design Overview"));
+        if let Some(findings_one) = self.check_requirements_prefix_table(parsed) {
+            findings.push(findings_one);
+        }
+        findings.extend(self.check_design_h3s(parsed, re));
+        findings
+    }
+
+    /// *title* must not carry a table: the HOW-TO template sanctions either
+    /// prose (Design Overview) or entry H3 tables (Design Requirements), never
+    /// an H2-level table. Returns `None` when the section is absent — a
+    /// missing H2 belongs to AES605.
+    fn check_no_extra_table(&self, parsed: &[Section], title: &str) -> Option<DocFinding> {
+        let section = parsed
+            .iter()
+            .find(|s| s.level == 2 && normalize_heading(&s.title) == normalize_heading(title))?;
+        if !has_any_table(&section.body) {
+            return None;
+        }
+        Some(
+            DocFinding::new_with_line(
+                "",
+                section.line,
+                consts::RULE_CODE_TEMPLATE_CONFORMANCE,
+                consts::TEMPLATE_CONFORMANCE_VIOLATION_TABLE_NOT_IN_TEMPLATE,
+                format!(
+                    "line {} `## {}` carries a table, but the HOW-TO template prescribes no table here",
+                    section.line, section.title
+                ),
+            )
+            .with_reason(
+                format!(
+                    "The HOW-TO template shows `{}` as prose entries only; an H2-level table has no template column set to conform to.",
+                    section.title
+                ),
+                format!(
+                    "Delete the table under `## {}` (or move its content into `### DS-<NAME>-NNN` entry tables, which the template sanctions).",
+                    section.title
+                ),
+            ),
+        )
+    }
+
+    /// The body text of `## Design Requirements` before its first H3 must not
+    /// carry a table: entry tables belong under the `DS-` H3s.
+    fn check_requirements_prefix_table(&self, parsed: &[Section]) -> Option<DocFinding> {
+        let section = parsed.iter().find(|s| {
+            s.level == 2 && normalize_heading(&s.title) == normalize_heading("Design Requirements")
+        })?;
+        // Blank fenced code first so a table inside an example block cannot
+        // read as a real table, and its line structure is preserved.
+        let prose = blank_fenced(&section.body);
+        let prefix: String = prose
+            .split_inclusive('\n')
+            .take_while(|line| !line.trim_start().starts_with("### "))
+            .collect();
+        if !has_any_table(&prefix) {
+            return None;
+        }
+        Some(
+            DocFinding::new_with_line(
+                "",
+                section.line,
+                consts::RULE_CODE_TEMPLATE_CONFORMANCE,
+                consts::TEMPLATE_CONFORMANCE_VIOLATION_TABLE_NOT_IN_TEMPLATE,
+                format!(
+                    "line {} `## Design Requirements` carries a table above its `DS-` entries; the HOW-TO template prescribes no table here",
+                    section.line
+                ),
+            )
+            .with_reason(
+                "The HOW-TO template places entry tables under each `### DS-<NAME>-NNN` H3; an H2-level overview table has no template column set to conform to.",
+                "Delete the table above the first `DS-` entry, or move each row into its own `### DS-<NAME>-NNN` entry table.",
+            ),
+        )
+    }
+
+    /// Every level-3 heading in the DESIGN document must sit under
+    /// `## Design Requirements` and match the `DS-<NAME>-NNN:` pattern;
+    /// `Design Overview` and `Reference` sanction no H3 at all. H4 and
+    /// deeper stay free-form detail per the HOW-TO template.
+    fn check_design_h3s(&self, parsed: &[Section], ds_re: &regex::Regex) -> Vec<DocFinding> {
+        let mut findings = Vec::new();
+        for parent_title in ["Design Overview", "Design Requirements", "Reference"] {
+            let Some(parent) = parsed.iter().find(|s| {
+                s.level == 2 && normalize_heading(&s.title) == normalize_heading(parent_title)
+            }) else {
+                continue;
+            };
+            // Blank fences so an example heading inside a code block cannot
+            // read as a real H3. Line count is preserved for anchoring.
+            let blanked = Section::new(
+                parent.level,
+                parent.title.clone(),
+                blank_fenced(&parent.body),
+                parent.line,
+            );
+            for h3 in h3_subsections(&blanked) {
+                let sanctioned = parent_title == "Design Requirements" && ds_re.is_match(&h3.title);
+                if sanctioned {
+                    continue;
+                }
+                let detail = if parent_title == "Design Requirements" {
+                    "the HOW-TO template reserves `## Design Requirements` H3s for `DS-<NAME>-NNN:` entry items"
+                } else {
+                    "the HOW-TO template sanctions no `###` heading under this section"
+                };
+                findings.push(
+                    DocFinding::new_with_line(
+                        "",
+                        h3.line,
+                        consts::RULE_CODE_TEMPLATE_CONFORMANCE,
+                        consts::TEMPLATE_CONFORMANCE_VIOLATION_H3_UNEXPECTED,
+                        format!(
+                            "line {} `### {}` sits under `## {}`, which the HOW-TO template does not sanction",
+                            h3.line, h3.title, parent_title
+                        ),
+                    )
+                    .with_reason(
+                        format!(
+                            "{}, so `### {}` is a heading the template cannot recognize.",
+                            detail, h3.title
+                        ),
+                        format!(
+                            "Rename `### {}` to `DS-<NAME>-NNN: <title>` or remove it (demote detail to H4 or deeper).",
+                            h3.title
+                        ),
+                    ),
+                );
+            }
+        }
         findings
     }
 
@@ -487,6 +654,38 @@ impl TemplateConformanceChecker {
         };
         let body = &section.body;
         if has_table_with_columns(body, columns) {
+            // Exact-header rule: the template fixes the header set, so a cell
+            // outside it is an extra column a reader cannot map to a template
+            // column.
+            if let Some(extras) = header_extra_columns(body, columns) {
+                let marker = if section.level == 2 { "##" } else { "###" };
+                return Some(
+                    DocFinding::new_with_line(
+                        "",
+                        section.line,
+                        consts::RULE_CODE_TEMPLATE_CONFORMANCE,
+                        consts::TEMPLATE_CONFORMANCE_VIOLATION_TABLE_EXTRA_COLUMNS,
+                        format!(
+                            "line {} `{marker} {}` table carries column(s) outside the template: {}",
+                            section.line,
+                            section.title,
+                            extras.join(", ")
+                        ),
+                    )
+                    .with_reason(
+                        format!(
+                            "The HOW-TO template fixes the header of `{}` to exactly {}; an undeclared column breaks the fixed shape.",
+                            section.title,
+                            columns.join(" | ")
+                        ),
+                        format!(
+                            "Remove the extra column(s) ({}) from `{marker} {}` or fold the data into an existing column.",
+                            extras.join(", "),
+                            section.title,
+                        ),
+                    ),
+                );
+            }
             // Right columns, but a data row copying the header means the
             // table ships placeholders where the template expects values.
             if table_repeats_header_row(body) {

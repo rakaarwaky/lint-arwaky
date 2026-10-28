@@ -116,6 +116,18 @@ pub const TEMPLATE_CONFORMANCE_VIOLATION_ENTRY_MISSING_ROW: &str = "entry_missin
 /// carries the column names where the template expects filled values.
 pub const TEMPLATE_CONFORMANCE_VIOLATION_TABLE_HEADER_REPEATED: &str = "table_header_repeated";
 
+/// A table header carries a column the template's fixed header set does not
+/// declare. The header must match the template exactly — no extra columns.
+pub const TEMPLATE_CONFORMANCE_VIOLATION_TABLE_EXTRA_COLUMNS: &str = "table_extra_columns";
+
+/// A section where the template prescribes no table at all still carries one,
+/// so the table has no template to conform to.
+pub const TEMPLATE_CONFORMANCE_VIOLATION_TABLE_NOT_IN_TEMPLATE: &str = "table_not_in_template";
+
+/// A level-3 heading in a position the template does not sanction: under a
+/// DESIGN section whose H3s are reserved for `DS-<NAME>-NNN` entry items.
+pub const TEMPLATE_CONFORMANCE_VIOLATION_H3_UNEXPECTED: &str = "h3_unexpected";
+
 /// A required root document does not exist at the audit root.
 pub const MISSING_DOC_VIOLATION: &str = "missing_required_doc";
 

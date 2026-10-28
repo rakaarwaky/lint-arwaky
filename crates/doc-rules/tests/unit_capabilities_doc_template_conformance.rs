@@ -252,6 +252,78 @@ fn design_entry_accepts_template_blank_data_row() {
 }
 
 #[test]
+fn design_rejects_a_table_not_in_template() {
+    // The shipped-defect shape: a component-overview table sits directly
+    // under the H2s where the HOW-TO template shows prose or entry-H3 tables.
+    let text = "# X\n\n## Design Overview\n\nProse.\n\n\
+             | A | B |\n| --- | --- |\n| 1 | 2 |\n\n\
+             ## Design Requirements\n\n\
+             | Component | File |\n| --- | --- |\n| x | y |\n\n\
+             ### DS-DESI-001: Outcome Vocabulary\n\n\
+             | Variant | Use case | Token | Value|\n|---|---|---|---|\n| | | | |\n\n\
+             ## Reference\n\n\
+             | Artifact | Purpose | Link|\n|---|---|---|\n";
+    let parsed = sections(text);
+    let findings = TemplateConformanceChecker::new().check_design(&parsed);
+    let count = findings
+        .iter()
+        .filter(|f| {
+            f.violation_type == consts::TEMPLATE_CONFORMANCE_VIOLATION_TABLE_NOT_IN_TEMPLATE
+        })
+        .count();
+    assert!(
+        count >= 2,
+        "a table under Design Overview and Design Requirements must each fire table_not_in_template; got {findings:?}"
+    );
+}
+
+#[test]
+fn design_rejects_h3_outside_the_ds_pattern() {
+    // Strict-heading rule: Design Requirements H3s are DS- entries only,
+    // and Design Overview / Reference sanction no H3 at all.
+    let text = "# X\n\n## Design Overview\n\nProse.\n\n### Extra Detail\n\nmore\n\n\
+             ## Design Requirements\n\n### Notes\n\n| a |\n|---|\n| 1 |\n\n\
+             ### DS-DESI-001: Outcome Vocabulary\n\n\
+             | Variant | Use case | Token | Value|\n|---|---|---|---|\n| | | | |\n\n\
+             ## Reference\n\n\
+             | Artifact | Purpose | Link|\n|---|---|---|\n";
+    let parsed = sections(text);
+    let findings = TemplateConformanceChecker::new().check_design(&parsed);
+    assert!(
+        findings.iter().any(|f| f.violation_type
+            == consts::TEMPLATE_CONFORMANCE_VIOLATION_H3_UNEXPECTED
+            && f.message.contains("Notes")),
+        "a non-DS H3 under Design Requirements must fire h3_unexpected naming it; got {findings:?}"
+    );
+    assert!(
+        findings.iter().any(|f| f.violation_type
+            == consts::TEMPLATE_CONFORMANCE_VIOLATION_H3_UNEXPECTED
+            && f.message.contains("Extra Detail")),
+        "an H3 under Design Overview (no H3s in the template) must fire h3_unexpected; got {findings:?}"
+    );
+}
+
+#[test]
+fn design_entry_rejects_extra_header_columns() {
+    // Exact-header rule: `... | Value | Notes |` carries every template
+    // column plus one the template never declared.
+    let text = "# X\n\n## Design Requirements\n\n### DS-DESI-001: Outcome Vocabulary\n\n\
+             | Variant | Use case | Token | Value | Notes |\n\
+             |---|---|---|---|---|\n\
+             | v | u | t | n | x |\n\n\
+             ## Reference\n\n\
+             | Artifact | Purpose | Link|\n|---|---|---|\n";
+    let parsed = sections(text);
+    let findings = TemplateConformanceChecker::new().check_design(&parsed);
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.violation_type == consts::TEMPLATE_CONFORMANCE_VIOLATION_TABLE_EXTRA_COLUMNS),
+        "an undeclared header cell must fire table_extra_columns; got {findings:?}"
+    );
+}
+
+#[test]
 fn data_entry_accepts_header_only() {
     let text = "# X\n\n## Data Requirements\n\n### DT-SHAR-001: Severity\n\n\
              | Type | Description |\n| --- | --- |\n| vo | level |\n";

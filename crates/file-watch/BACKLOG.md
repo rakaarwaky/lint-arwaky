@@ -14,7 +14,31 @@ Last Updated: 2026-09-29
 
 ## Backlog Status
 
-### {FileWatch}
+### {FR-FileWatch-001}
+
+| Aspect       | Detail                                     |
+|--------------|---------------------------------------------|
+| State        | Ready                                      |
+| Done         | FileWatch                                      |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | Ship                                       |
+| Risk         | None                                       |
+| Updated      | 2026-09-29                                 |
+
+### {FR-FileWatch-002}
+
+| Aspect       | Detail                                     |
+|--------------|---------------------------------------------|
+| State        | Ready                                      |
+| Done         | FileWatch                                      |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | Ship                                       |
+| Risk         | None                                       |
+| Updated      | 2026-09-29                                 |
+
+### {FR-FileWatch-003}
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|

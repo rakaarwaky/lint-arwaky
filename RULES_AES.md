@@ -55,7 +55,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the full 7-layer specification.
 | AES603 | Spec Purity           | HIGH     | Doc    | Specs never name source files and never carry implementation state.                             |
 | AES604 | Crosslinks            | HIGH     | Doc    | An FRD crosslinks its PRD and backlog; a feature backlog never restates master sections.        |
 | AES605 | Doc Heading Structure | HIGH     | Doc    | Every root document carries one H1 and its own template-derived H2 set; off-template H2s are reported.|
-| AES606 | Doc Template Conformance | HIGH     | Doc    | BACKLOG and ROADMAP table-shaped sections carry their template tables (bullets or prose fire `section_not_table`; a table missing a required column fires `table_missing_columns`). The six required root documents (`PRD.md`, `ROADMAP.md`, `README.md`, `AGENTS.md`, `ARCHITECTURE.md`, `CONTRIBUTING.md`) exist at a real workspace root; a missing one fires `missing_required_doc`.|
+| AES606 | Doc Template Conformance | HIGH     | Doc    | Mandated table-shaped sections carry exactly their template table: bullets or prose fire `section_not_table`; missing columns fire `table_missing_columns`; undeclared columns fire `table_extra_columns`; a header repeated as a data row fires `table_header_repeated`; a table where the HOW-TO shows none fires `table_not_in_template`; an unsanctioned `DS-` position H3 fires `h3_unexpected`. The six required root documents (`PRD.md`, `ROADMAP.md`, `README.md`, `AGENTS.md`, `ARCHITECTURE.md`, `CONTRIBUTING.md`) exist at a real workspace root; a missing one fires `missing_required_doc`.|
 | AES607 | PR Folder Ownership      | HIGH     | Doc    | Every `PR-<PROJECT>-NNN` declared in the root PRD's `Project Requirements` must own a top-level module folder under `crates|modules|packages` named after its project identifier (`PR-LA-001` → `LA`). One identifier may own the whole non-empty layout; fired per unowned PR-ID anchored to its PRD heading line, code `AES607` / `pr_folder_not_owned`, audited by `docs` only (not `scan`/`check`).|
 
 | Code   | Name               | Severity | Group     | Description                                                                               |
@@ -632,7 +632,7 @@ Each document also carries an agreed set of project-specific H2s that are accept
 
 Two checks answer one question: does the document body carry the table shape its HOW-TO template mandates?
 
-**Template body-shape conformance.** The `HOW-TO-MAKE-BACKLOG` and `HOW-TO-MAKE-ROADMAP` templates each mandate a specific table under a specific H2 section. A section that is present but carrying the wrong body — bullets, prose, or a table missing a required column — is a violation. AES605 sees the H2 heading is present but says nothing about what the section body must look like; this rule closes that gap.
+**Template body-shape conformance.** The `HOW-TO-MAKE-*` templates each mandate specific tables under specific sections. A section that is present but carrying the wrong body — bullets, prose, or a table missing a required column — is a violation. Conformance is exact: a header cell the template never declares (`table_extra_columns`), a data row that copies the header (`table_header_repeated`), a table under a section where the template shows none (`table_not_in_template`, e.g. a Design Requirements overview table), or a DESIGN H3 outside the `DS-<NAME>-NNN` pattern (`h3_unexpected`) all fire. AES605 sees the H2 heading is present but says nothing about what the section body must look like; this rule closes that gap.
 
 **Required-document presence.** The six root documents the templates require — `PRD.md`, `ROADMAP.md`, `README.md`, `AGENTS.md`, `ARCHITECTURE.md`, `CONTRIBUTING.md` — must exist at a real workspace root (detected by `Cargo.toml`, `pyproject.toml`, or `package.json` at the audit root). A sub-directory audit is self-contained and does not owe the root document set. `DESIGN.md`, `FRD.md`, `DATA.md`, and root `BACKLOG.md` are per-feature files and are not required at the root.
 
@@ -640,6 +640,10 @@ Two checks answer one question: does the document body carry the table shape its
 | ------------------------- | -------------------------------------------------------------------|
 | `section_not_table`       | A mandated section (e.g. `## Backlog`, `## State Definitions`) carries bullets or prose instead of a markdown table.|
 | `table_missing_columns`   | A mandated section carries a table, but one or more required columns are absent.|
+| `table_extra_columns`     | A mandated table's header carries a column the template's fixed header set does not declare.|
+| `table_header_repeated`   | A table repeats its header row in a data-row position, shipping column names where values belong.|
+| `table_not_in_template`   | A section whose template prescribes no table (e.g. `## Design Overview`, the `## Design Requirements` prefix) still carries one.|
+| `h3_unexpected`           | A `###` heading sits where the template reserves H3s for `DS-<NAME>-NNN` entry items, or in a section that sanctions no H3.|
 | `missing_required_doc`    | A required root document does not exist at a real workspace root. |
 
 The enforced column sets are transcribed from the shipped templates:

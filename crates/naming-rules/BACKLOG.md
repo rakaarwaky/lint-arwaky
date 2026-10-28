@@ -14,7 +14,31 @@ Last Updated: 2026-10-02
 
 ## Backlog Status
 
-### {NamingRules}
+### {FR-NamingRules-001}
+
+| Aspect       | Detail                                     |
+|--------------|---------------------------------------------|
+| State        | Ready                                      |
+| Done         | NamingRules                                      |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | Ship                                       |
+| Risk         | None                                       |
+| Updated      | 2026-09-29                                 |
+
+### {FR-NamingRules-002}
+
+| Aspect       | Detail                                     |
+|--------------|---------------------------------------------|
+| State        | Ready                                      |
+| Done         | NamingRules                                      |
+| In Progress  | None                                       |
+| Blocked      | None                                       |
+| Next         | Ship                                       |
+| Risk         | None                                       |
+| Updated      | 2026-09-29                                 |
+
+### {FR-NamingRules-003}
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
