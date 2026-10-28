@@ -258,7 +258,7 @@ impl TemplateConformanceChecker {
             consts::AGENTS_PATH_PURPOSE_COLUMNS,
         ));
         findings.extend(self.check_h2_table(parsed, "Commands", consts::AGENTS_COMMAND_COLUMNS));
-        findings.extend(self.check_h2_table(parsed, "Reference", consts.REFERENCE_COLUMNS));
+        findings.extend(self.check_h2_table(parsed, "Reference", consts::REFERENCE_COLUMNS));
         findings
     }
 

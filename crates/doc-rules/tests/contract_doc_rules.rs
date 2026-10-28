@@ -68,6 +68,8 @@ The feature does the work a surface delegates to.
 |--------------|--------------------------------------------|------|
 | PRD          | {Business goals, user stories, and scope}  | [PRD.md](../../PRD.md) |
 | Backlog      | {Task tracking, epics, and implementation status} | [BACKLOG.md](BACKLOG.md) |
+| Architecture | {System boundaries, tech stack, and infra} | [ARCHITECTURE.md](../../ARCHITECTURE.md) |
+| Roadmap      | {What ships next, in order}                | [ROADMAP.md](../../ROADMAP.md) |
 "#
     .to_string()
 }
@@ -86,7 +88,10 @@ The problem.
 
 ## Reference
 
-- PRD goals and success metrics.
+| Artifact     | Purpose                                    | Link |
+|--------------|--------------------------------------------|------|
+| ROADMAP      | What ships next, in order                  | [ROADMAP.md](../../ROADMAP.md) |
+| Architecture | {System boundaries, tech stack, and infra} | [ARCHITECTURE.md](../../ARCHITECTURE.md) |
 "
 }
 
@@ -108,7 +113,10 @@ fn conforming_roadmap() -> &'static str {
 
 ## Reference
 
-- Done: Shipped.
+| Artifact     | Purpose                                    | Link |
+|--------------|--------------------------------------------|------|
+| PRD          | What the product does and why              | [PRD.md](../../PRD.md) |
+| Architecture | {System boundaries, tech stack, and infra} | [ARCHITECTURE.md](../../ARCHITECTURE.md) |
 "
 }
 
@@ -130,7 +138,7 @@ Last Updated: 2026-09-29
 
 ## Backlog Status
 
-### {FR-SAMPLE | sample}
+### {SAMPLE}
 
 | Aspect       | Detail                                      |
 |--------------|---------------------------------------------|
@@ -240,23 +248,14 @@ description: \"Sample.\"\n\
 | Lint        | `{formatter or linter command}`      | All        | ci.yml: {job name}   |\n\
 | Type Check  | `{type checker command}`             | All        | ci.yml: {job name}   |\n\
 | Arch Scan   | `{architecture scanner command}`     | All        | ci.yml: {job name}   |\n\n\
-## Documentation Awareness\n\n\
-| Document | Agent Must                              |\n\
-|----------|-----------------------------------------|\n\
-| PRD      | Read before implementing any `PR-` item |\n\
-| FRD      | Follow `FR-` spec exactly               |\n\
-| DATA     | Respect `DT-` shapes and types          |\n\
-| DESIGN   | Use `DS-` tokens and variants           |\n\
-| ROADMAP  | Check `State` before starting work      |\n\
-| BACKLOG  | Update status after each task           |\n\n\
 ## Reference\n\n\
 | Artifact     | Purpose                                    | Link |\n\
 |--------------|--------------------------------------------|------|\n\
-| PRD          | {Business goals, user stories, and scope}  | [PRD.md](PRD.md) |\n\
-| FRD          | {Functional requirements specification}    | [FRD.md](FRD.md) |\n\
-| DATA         | {Data shapes and kernel definitions}        | [DATA.md](DATA.md) |\n\
-| DESIGN       | {UI/UX and visual system}                  | [DESIGN.md](DESIGN.md) |\n\
-| Architecture | {System boundaries, tech stack, and infra} | [ARCHITECTURE.md](ARCHITECTURE.md) |\n",
+| README       | What the tool does, every command, install | [README.md](README.md) |\n\
+| CONTRIBUTING | Branch, commit, and PR conventions         | [CONTRIBUTING.md](CONTRIBUTING.md) |\n\
+| ARCHITECTURE | Layer contract for every crate             | [ARCHITECTURE.md](ARCHITECTURE.md) |\n\
+| ROADMAP      | What ships next, in order                  | [ROADMAP.md](ROADMAP.md) |\n\
+| PRD          | What the product does and why              | [PRD.md](PRD.md) |\n",
     )
     .unwrap();
 }
@@ -881,7 +880,7 @@ cargo nextest run
 #[test]
 fn aes605_fires_when_required_h2_is_absent() {
     let tmp = tempfile::tempdir().unwrap();
-    // Runtime, Project Quick Facts, and most others are missing from the required set.
+    // Runtime, Documentation Awareness removed, and most others are missing from the required set.
     write_bad_agents(
         tmp.path(),
         "# Sample AGENTS.md\n\n\
@@ -899,7 +898,7 @@ fn aes605_fires_when_required_h2_is_absent() {
         .unwrap();
     // The message names the absent section(s), not just the rule.
     assert!(
-        message.contains("Project Quick Facts") || message.contains("Pipeline"),
+        message.contains("Agent Overview") || message.contains("Project Structure"),
         "the message must name the absent section(s); got: {message}"
     );
 }
@@ -912,19 +911,13 @@ fn aes605_allows_extra_and_free_h3_headings() {
         tmp.path(),
         "# Sample AGENTS.md
 
+## Agent Overview
+
+AI agents working in this workspace must know the AES 7-layer naming convention.
+
 ## Runtime
 
 - Language: Rust.
-
-## Project Quick Facts
-
-sample facts.
-
-## Pipeline
-
-scan → check
-lint
-run by CI
 
 ## Project Structure
 
@@ -936,10 +929,9 @@ one crate.
 true
 ```
 
-## Related Documents
+## Reference
 
-- [PRD.md](PRD.md).
-",
+- [README.md](README.md).",
     );
     let findings = audit(tmp.path());
     assert!(
@@ -959,8 +951,8 @@ fn aes605_fires_when_a_required_section_is_absent() {
 - Language: Rust.\n\n\
 ## Commands\n\
 ```bash\ntrue\n```\n\n\
-## Related Documents\n\
-- [PRD.md](PRD.md).",
+## Reference\n\
+- [README.md](README.md).",
     );
     let findings = audit(tmp.path());
     assert!(
@@ -973,7 +965,7 @@ fn aes605_fires_when_a_required_section_is_absent() {
         .map(|(_, _, m, _)| m.as_str())
         .unwrap();
     assert!(
-        message.contains("Project Quick Facts") && message.contains("Pipeline"),
+        message.contains("Agent Overview") && message.contains("Project Structure"),
         "message must name the missing sections; got: {message}"
     );
 }

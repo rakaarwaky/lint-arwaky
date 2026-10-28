@@ -58,11 +58,11 @@ impl CrosslinkChecker {
     fn required_links(name: &str) -> &'static [&'static str] {
         match name {
             consts::AGENTS_DOC => &[
-                consts::PRD_DOC,
-                consts::FRD_DOC,
-                consts::DATA_DOC,
-                consts::DESIGN_DOC,
+                consts::README_DOC,
+                consts::CONTRIBUTING_DOC,
                 consts::ARCHITECTURE_DOC,
+                consts::ROADMAP_DOC,
+                consts::PRD_DOC,
             ],
             consts::PRD_DOC => &[consts::ROADMAP_DOC, consts::ARCHITECTURE_DOC],
             consts::ROADMAP_DOC => &[consts::PRD_DOC, consts::ARCHITECTURE_DOC],
@@ -105,6 +105,8 @@ impl CrosslinkChecker {
             // one of the next AES604 PRs adds them.
             consts::ROADMAP_DOC => "no_roadmap_link",
             consts::ARCHITECTURE_DOC => "no_architecture_link",
+            consts::README_DOC => "no_readme_link",
+            consts::CONTRIBUTING_DOC => "no_contributing_link",
             consts::FRD_DOC => "no_frd_link",
             consts::DATA_DOC => "no_data_link",
             consts::DESIGN_DOC => "no_design_link",

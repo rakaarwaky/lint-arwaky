@@ -292,7 +292,9 @@ fn data_with_dt() -> String {
      | vo    | Lint finding severity level |\n\n\
      ## Reference\n\n\
      - PRD: [PRD.md](../../PRD.md)\n\
-     - Backlog: [BACKLOG.md](BACKLOG.md)\n"
+     - Backlog: [BACKLOG.md](../../crates/shared/BACKLOG.md)\n\
+     - Roadmap: [ROADMAP.md](../../ROADMAP.md)\n\
+     - Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)\n"
         .to_string()
 }
 

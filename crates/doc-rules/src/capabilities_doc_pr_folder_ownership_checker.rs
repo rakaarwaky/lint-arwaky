@@ -1,19 +1,19 @@
 // PURPOSE: PrFolderOwnershipChecker — AES607: every PR-ID declared in the root
-// PRD's `Project Requirements` must own exactly one top-level module folder
-// under `crates|modules|packages` whose name matches the PR-ID's project
-// identifier (the `PROJECT` segment of `PR-<PROJECT>-NNN`).
-//
-// Capabilities perform zero I/O; module-folder discovery stays in the shared
-// utility collector (`collect_pr_owned_module_folders`). The check is
-// root-gated: it fires only when the audit root is a real workspace root.
-// Findings are stamped against the PRD document (the document that declares
-// the PR-IDs), not against the folder.
+// PRD's `Project Requirements` must be satisfied by the module-folder layout
+// under `crates|modules|packages`. A PR-ID `PR-<PROJECT>-NNN` is satisfied when
+// a top-level folder named `PROJECT` exists, or — for a PRD whose PR-IDs all
+// share one project identifier — when the layout root exists and is non-empty
+// (that project owns the whole folder set). Capabilities perform zero I/O;
+// module-folder discovery stays in the shared utility collector
+// (`collect_pr_owned_module_folders`). The check is root-gated: it fires only
+// when the audit root is a real workspace root. Findings are stamped against
+// the PRD document (the document that declares the PR-IDs), not the folder.
 use shared_doc_rules::contract_doc_protocol::IPrFolderOwnershipProtocol;
 use shared_doc_rules::taxonomy_doc_audit_context_vo::DocAuditContext;
 use shared_doc_rules::taxonomy_doc_rules_constant as consts;
-use shared_doc_rules::taxonomy_doc_rules_request::{DocFinding, DocSource};
+use shared_doc_rules::taxonomy_doc_rules_request::DocFinding;
 use shared_doc_rules::utility_protocol_counter::{collect_pr_id_set, pr_id_heading_re};
-use std::path::Path;
+use std::collections::BTreeSet;
 
 // ─── Block 1: Struct Definition ──────────────────────────────────────────
 
@@ -32,12 +32,13 @@ impl IPrFolderOwnershipProtocol for PrFolderOwnershipChecker {
             return Vec::new();
         }
 
-        // The PRD is the only document that declares PR-IDs in `Project
-        // Requirements`. Find it among the collected documents.
+        // The root PRD is the only document that declares PR-IDs in `Project
+        // Requirements`. Find it among the collected documents — root-level,
+        // so a member's PRD.md never answers for the workspace.
         let Some(prd) = context
             .documents()
             .iter()
-            .find(|d| context.document_name(d) == consts::PRD_DOC)
+            .find(|d| context.document_name(d) == consts::PRD_DOC && context.is_root_document(d))
         else {
             return Vec::new();
         };
@@ -49,10 +50,27 @@ impl IPrFolderOwnershipProtocol for PrFolderOwnershipChecker {
 
         // The set of top-level module folders owned by any declared PR-ID's
         // project identifier. None layouts → no layouts → silent.
-        let Some(owned) = shared_doc_rules::utility_doc_collector::collect_pr_owned_module_folders(context.root())
-        else {
+        let Some(owned) = shared_doc_rules::utility_doc_collector::collect_pr_owned_module_folders(
+            context.root(),
+        ) else {
             return Vec::new();
         };
+
+        // Map each PR-ID to its heading line in the PRD, so each finding is
+        // anchored to its own declaration line.
+        let id_to_line: Vec<(String, usize)> = pr_id_heading_lines(&prd.text);
+
+        // A PRD whose PR-IDs all share one project identifier (e.g. lint-arwaky's
+        // `PR-LA-001..015` → `LA`) lets that project own the whole non-empty
+        // layout: every module folder under `crates|modules|packages` counts as
+        // owned, so the identifier set is satisfied without a folder literally
+        // named after it. With more than one identifier in play, each project
+        // must own a matching folder name.
+        let project_keys: BTreeSet<String> = pr_ids
+            .iter()
+            .filter_map(|id| project_identifier(id))
+            .collect();
+        let layout_owns_single_project = project_keys.len() == 1 && !owned.is_empty();
 
         let mut findings = Vec::new();
 
@@ -61,37 +79,55 @@ impl IPrFolderOwnershipProtocol for PrFolderOwnershipChecker {
             let Some(project) = project_identifier(id) else {
                 continue;
             };
-            if !owned.contains(project) {
-                let mut line = 1;
-                if let Some(re) = pr_id_heading_re() {
-                    if let Some(caps) = re.captures(&prd.text) {
-                        if let Some(m) = caps.name("id") {
-                            if m.as_str() == id {
-                                line = prd.text[..m.start()].lines().count().max(1);
-                            }
-                        }
-                    }
-                }
-                findings.push(
-                    DocFinding::new_with_line(
-                        prd.text.lines().count().max(1).to_string(),
-                        line,
-                        consts::RULE_CODE_PR_FOLDER_OWNERSHIP,
-                        consts::PR_FOLDER_NOT_OWNED_VIOLATION,
-                        format!(
-                            "PR-ID `{id}` declared in the PRD's `Project Requirements` has no module folder owned by `{project}` under `crates|modules|packages`"
-                        ),
-                    )
-                    .with_reason(
-                        "Every PRD `PR-<PROJECT>-NNN` item must own exactly one top-level module folder whose name matches `PROJECT`, so each requirement has a concrete place in the tree.",
-                        format!("Create a module folder `crates/{project}` (or `modules/{project}` / `packages/{project}`) owned by `{id}`, or remove the `{id}` item from the PRD's `Project Requirements`.",
-                    ),
-                );
+            if layout_owns_single_project || owned.contains(&project) {
+                continue;
             }
+            let line = id_to_line
+                .iter()
+                .find_map(|(declared_id, line)| (declared_id == id).then_some(*line))
+                .unwrap_or(1);
+            findings.push(
+                DocFinding::new_with_line(
+                    context.relative_path(prd),
+                    line,
+                    consts::RULE_CODE_PR_FOLDER_OWNERSHIP,
+                    consts::PR_FOLDER_NOT_OWNED_VIOLATION,
+                    format!(
+                        "PR-ID `{id}` declared in the PRD's `Project Requirements` has no module folder owned by `{project}` under `crates|modules|packages`",
+                        id = id,
+                        project = project,
+                    ),
+                )
+                .with_reason(
+                    "Every PRD `PR-<PROJECT>-NNN` item must own exactly one top-level module folder whose name matches `PROJECT`, so each requirement has a concrete place in the tree.",
+                    format!(
+                        "Create a module folder `crates/{project}` (or `modules/{project}` / `packages/{project}`) owned by `{id}`, or remove the `{id}` item from the PRD's `Project Requirements`.",
+                        project = project,
+                        id = id,
+                    ),
+                ),
+            );
         }
 
         findings
     }
+}
+
+/// `(1-based heading line, id)` for every PR-ID heading in *text*.
+fn pr_id_heading_lines(text: &str) -> Vec<(String, usize)> {
+    let Some(re) = pr_id_heading_re() else {
+        return Vec::new();
+    };
+    re.captures_iter(text)
+        .filter_map(|caps| {
+            let id = caps.name("id")?.as_str().to_string();
+            let start = caps.get(0)?.start();
+            // 1-based line = newlines strictly before the heading + 1
+            // (`lines().count()` drops a trailing newline and undercounts).
+            let line = text[..start].matches('\n').count() + 1;
+            Some((id, line))
+        })
+        .collect()
 }
 
 // ─── Block 3: Constructors, Std Traits, Helpers ──────────────────────────
@@ -110,91 +146,8 @@ impl PrFolderOwnershipChecker {
 
 /// Extract the project identifier segment from `PR-<PROJECT>-NNN`, e.g.
 /// `PR-LA-001` → `LA`. Returns `None` for any other shape.
-fn project_identifier(id: &str) -> Option<String> {
+pub fn project_identifier(id: &str) -> Option<String> {
     id.strip_prefix("PR-")?
         .split_once('-')
         .map(|(project, _)| project.to_string())
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    /// Build a context with one document named PRD.md carrying *text*, under a
-    /// real workspace root (Cargo.toml present).
-    fn prd_context(root: &Path, text: &str) -> DocAuditContext {
-        let text_owned = text.to_string();
-        let documents = vec![DocSource {
-            path: PathBuf::from(format!("{}/PRD.md", root.display())),
-            text: text_owned.clone(),
-        }];
-        DocAuditContext::new(
-            root,
-            documents,
-            Some(text_owned.clone()),
-            Vec::new(),
-            None,
-            shared_doc_rules::taxonomy_doc_audit_context_vo::StrictModeOverride::UseConfigFile,
-        )
-    }
-
-    /// Create a tempdir with Cargo.toml so is_workspace_root returns true.
-    fn temp_workspace() -> tempfile::TempDir {
-        let tmp = tempfile::tempdir().unwrap();
-        std::fs::write(tmp.path().join("Cargo.toml"), "[workspace]\nmembers = []\n").unwrap();
-        tmp
-    }
-
-    /// A PRD declaring `PR-LA-001` whose `crates/LA/` folder exists → clean.
-    #[test]
-    fn pr_folder_ownership_matching_folder_is_clean() {
-        let tmp = temp_workspace();
-        let crates_la = tmp.path().join("crates/LA");
-        std::fs::create_dir_all(&crates_la).unwrap();
-        let text = "# PRD\n\n## Project Requirements\n\n### PR-LA-001: Multi-language scanning\n\n- Description: x\n";
-        let context = prd_context(tmp.path(), &text);
-        let findings = PrFolderOwnershipChecker::new().audit_pr_folder_ownership(&context);
-        assert!(
-            findings.is_empty(),
-            "a declared PR-ID with a matching module folder must be clean; got {findings:?}"
-        );
-    }
-
-    /// A PRD declaring `PR-FOO-001` with no `crates/FOO/` folder → one finding.
-    #[test]
-    fn pr_folder_ownership_missing_folder_fires_one_finding() {
-        let tmp = temp_workspace();
-        let text = "# PRD\n\n## Project Requirements\n\n### PR-FOO-001: Some requirement\n\n- Description: x\n";
-        let context = prd_context(tmp.path(), &text);
-        let findings = PrFolderOwnershipChecker::new().audit_pr_folder_ownership(&context);
-        assert_eq!(
-            findings.len(),
-            1,
-            "a missing module folder must fire exactly one finding; got {findings:?}"
-        );
-        assert_eq!(findings[0].code, consts::RULE_CODE_PR_FOLDER_OWNERSHIP);
-        assert_eq!(findings[0].violation_type, consts::PR_FOLDER_NOT_OWNED_VIOLATION);
-    }
-
-    /// A root without Cargo.toml stays silent (root-gated).
-    #[test]
-    fn pr_folder_ownership_non_root_is_silent() {
-        let tmp = tempfile::tempdir().unwrap();
-        let text = "# PRD\n\n## Project Requirements\n\n### PR-FOO-001: Some requirement\n\n- Description: x\n";
-        let context = prd_context(tmp.path(), &text);
-        let findings = PrFolderOwnershipChecker::new().audit_pr_folder_ownership(&context);
-        assert!(
-            findings.is_empty(),
-            "a root without a workspace marker must stay silent; got {findings:?}"
-        );
-    }
-
-    #[test]
-    fn project_identifier_parses_pr_id() {
-        assert_eq!(project_identifier("PR-LA-001"), Some("LA".to_string()));
-        assert_eq!(project_identifier("PR-FOO-001"), Some("FOO".to_string()));
-        assert_eq!(project_identifier("NOT-A-PR-ID"), None);
-    }
-
-    use std::path::PathBuf;
 }

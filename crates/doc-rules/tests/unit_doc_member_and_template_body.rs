@@ -283,7 +283,43 @@ fn template_body_checker_unfilled_placeholder_fires_when_strict_on() {
         strict_placeholders: true,
         exempt_members: Vec::new(),
     };
-    let text = "# AGENTS\n\nSome prose with {lint command} unfilled\n";
+    let text = "---\n\
+trigger: always\ndescription: \"Sample.\"\n\
+---\n\
+# AGENTS\n\n\
+## Agent Overview\n\n\
+{One paragraph: what AI agents must know before generating code, docs, or suggestions in this workspace.}\n\n\
+## Runtime\n\n\
+| Aspect          | Detail                                          |\n\
+|-----------------|-------------------------------------------------|\n\
+| Language        | {language and pinned version}                   |\n\
+| Environment     | {environment manager and creation method}       |\n\
+| Artifacts       | {reviewable artifact location}                  |\n\
+| Package Manager | {package manager and lockfile}                  |\n\
+| Version Probe   | `{version probe command}`                       |\n\
+| Setup           | `{environment setup command}`                    |\n\
+| Activation      | `{optional environment activation command}`      |\n\n\
+## Project Structure\n\n\
+| Path       | Purpose              |\n\
+|------------|----------------------|\n\
+| {path}     | {what lives here}    |\n\n\
+## Commands\n\n\
+| Category    | Command                              | Scope      | CI Gate              |\n\
+|-------------|--------------------------------------|------------|----------------------|\n\
+| Test (all)  | {lint command}                       | All        | ci.yml: Test         |\n\
+| Test (unit) | `{single-package test command}`      | One unit   | ci.yml: Test         |\n\
+| Test (file) | `{single-file test command}`         | One file   | ci.yml: Test         |\n\
+| Lint        | `{formatter or linter command}`      | All        | ci.yml: Format       |\n\
+| Type Check  | `{type checker command}`             | All        | ci.yml: Clippy       |\n\
+| Arch Scan   | `{architecture scanner command}`     | All        | ci.yml: Self-Lint    |\n\n\
+## Reference\n\n\
+| Artifact     | Purpose                                    | Link |\n\
+|--------------|--------------------------------------------|------|\n\
+| README       | What the tool does, every command, install | [README.md](README.md) |\n\
+| CONTRIBUTING | Branch, commit, and PR conventions         | [CONTRIBUTING.md](CONTRIBUTING.md) |\n\
+| ARCHITECTURE | Layer contract for every crate             | [ARCHITECTURE.md](ARCHITECTURE.md) |\n\
+| ROADMAP      | What ships next, in order                  | [ROADMAP.md](ROADMAP.md) |\n\
+| PRD          | What the product does and why              | [PRD.md](PRD.md) |\n";
     let context = {
         let documents = vec![DocSource {
             path: PathBuf::from("/repo/AGENTS.md"),
@@ -494,7 +530,35 @@ fn template_body_checker_force_strict_enables_placeholder_check() {
         strict_placeholders: false,
         exempt_members: Vec::new(),
     };
-    let text = "# AGENTS\n\nPlaceholder {lint command} here\n";
+    let text = "---\n\
+trigger: always\ndescription: \"Sample.\"\n\
+---\n\
+# AGENTS\n\n\
+## Agent Overview\n\nPlaceholder {lint command} here\n\n\
+## Runtime\n\n\
+| Aspect          | Detail                                          |\n\
+|-----------------|-------------------------------------------------|\n\
+| Language        | Rust                                            |\n\
+| Environment     | cargo workspace under crates/                   |\n\
+| Artifacts       | target/                                         |\n\
+| Package Manager | cargo, with Cargo.lock                          |\n\
+| Version Probe   | `rustc --version`                               |\n\
+| Setup           | `cargo build --release`                         |\n\
+| Activation      | None                                            |\n\n\
+## Project Structure\n\n\
+| Path       | Purpose              |\n\
+|------------|----------------------|\n\
+| crates/    | Rust workspace crates|\n\n\
+## Commands\n\n\
+| Category    | Command                              | Scope      | CI Gate              |\n\
+|-------------|--------------------------------------|------------|----------------------|\n\
+| Test (all)  | `cargo nextest run`                  | All        | ci.yml: Test         |\n\
+| Lint        | `cargo fmt --all -- --check`         | All        | ci.yml: Format       |\n\n\
+## Reference\n\n\
+| Artifact     | Purpose                                    | Link |\n\
+|--------------|--------------------------------------------|------|\n\
+| README       | What the tool does, every command, install | [README.md](README.md) |\n\
+| PRD          | What the product does and why              | [PRD.md](PRD.md) |\n";
     let documents = vec![DocSource {
         path: PathBuf::from("/repo/AGENTS.md"),
         text: text.to_string(),
