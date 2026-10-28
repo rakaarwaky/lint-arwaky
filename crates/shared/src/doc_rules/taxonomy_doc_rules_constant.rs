@@ -481,10 +481,10 @@ mod tests {
             "HOW-TO-MAKE-ROADMAP.md ships the `PR-` item shape"
         );
         assert!(
-            backlog.contains("PROJECT-NAME-ID")
+            backlog.contains("DATA-NAME-ID")
                 && backlog.contains("FEATURE-NAME-ID")
                 && backlog.contains("DESIGN-NAME-ID"),
-            "HOW-TO-MAKE-BACKLOG.md ships the qualifier disjunction"
+            "HOW-TO-MAKE-BACKLOG.md ships the family-ID disjunction"
         );
         assert_eq!(PR_ROADMAP_ID_MISSING, "pr_roadmap_id_missing");
         assert_eq!(ROADMAP_PR_ID_NOT_PR, "roadmap_pr_id_not_pr");

@@ -54,10 +54,21 @@ fn write_workspace(root: &Path) {
     write(
         &feature.join("BACKLOG.md"),
         "# Feature Backlog: Sample\n\nFRD: [FRD.md](FRD.md)\n\n\
-## Backlog\n\n\
-| ID | Priority | State | Dependencies | Next Action | Updated |\n\
-|---|---:|---|---|---|---|\n\
-| FR-SAMPLE-001 | P0 | Ready | — | — | 2026-09-29 |\n",
+## Progress Overview\n\nBaseline.\n\n\
+## Backlog Status\n\n\
+### {FR-SAMPLE-001}\n\
+| Aspect       | Detail                                      |\n\
+|--------------|---------------------------------------------|\n\
+| State        | Ready                                       |\n\
+| Done         | FR-SAMPLE-001                               |\n\
+| In Progress  | None                                        |\n\
+| Blocked      | None                                        |\n\
+| Next         | Ship FR-SAMPLE-001                          |\n\
+| Risk         | None                                        |\n\
+| Updated      | 2026-09-29                                  |\n\
+## Reference\n\n\
+- PRD: [PRD.md](../../PRD.md)\n\
+- ROADMAP: [ROADMAP.md](../../ROADMAP.md)\n",
     );
     write(&root.join("PRD.md"), "# PRD\n");
     write(&root.join("ROADMAP.md"), "# ROADMAP\n");
@@ -231,7 +242,10 @@ fn e2e_a_design_backlog_pair_with_no_ds_headings_fires_not_ds_on_every_legacy_ro
     let tmp = tempfile::tempdir().expect("temp dir must be creatable");
     let root = tmp.path();
     write_workspace(root);
-    // DESIGN.md declares no DS headings; the legacy BACKLOG rows are not DS-IDs.
+    // DESIGN.md declares no DS headings; directions (a)/(b) are silent when
+    // no DS-IDs are declared, and direction (c) scans only row cells (the
+    // legacy BACKLOG table carries no row cells under the new H3 shape), so
+    // no ds_* alignment finding fires at all.
     write(
         &root.join(DESIGN_PATH),
         &design_with_ds().replace("### DS-DISP-001: Primary Button\n\n", ""),
@@ -239,11 +253,14 @@ fn e2e_a_design_backlog_pair_with_no_ds_headings_fires_not_ds_on_every_legacy_ro
     let findings = audit(root);
     let count = for_document(&findings, DESIGN_PATH)
         .iter()
-        .filter(|(code, violation, _)| code == "AES601" && violation == "ds_backlog_id_not_ds")
+        .filter(|(code, violation, _)| {
+            code == "AES601"
+                && (violation == "ds_backlog_id_not_ds" || violation == "ds_backlog_id_missing")
+        })
         .count();
     assert!(
-        count >= 1,
-        "legacy BACKLOG rows must fire ds_backlog_id_not_ds; got {:?}",
+        count == 0,
+        "no declared DS-IDs and no stray row cells means no ds_* findings; got {:?}",
         for_document(&findings, DESIGN_PATH)
     );
 }
@@ -304,7 +321,9 @@ fn e2e_a_data_backlog_pair_with_no_dt_headings_fires_not_dt_on_every_legacy_row(
     let root = tmp.path();
     write_workspace(root);
     // DATA.md in the kernel folder with no DT headings; legacy SHAR rows are
-    // not DT-IDs.
+    // not DT-IDs. With no declared DT-IDs directions (a)/(b) are silent, and
+    // direction (c) scans only the entry rows' cells — a stray SHAR-01 that
+    // lives only in an H3 token (not a row cell) does not fire not-dt.
     write(
         &root.join(DATA_PATH),
         &data_with_dt().replace("## DT-SHAR-001: Severity\n\n", ""),
@@ -315,10 +334,11 @@ fn e2e_a_data_backlog_pair_with_no_dt_headings_fires_not_dt_on_every_legacy_row(
     assert!(
         for_document(&findings, DATA_PATH)
             .iter()
-            .any(|(code, violation, _)| {
-                code == "AES601" && violation == "dt_backlog_id_not_dt"
+            .all(|(code, violation, _)| {
+                code != "AES601"
+                    || (violation != "dt_backlog_id_not_dt" && violation != "dt_backlog_id_missing")
             }),
-        "legacy BACKLOG rows must fire dt_backlog_id_not_dt; got {:?}",
+        "no declared DT-IDs means no dt_* alignment findings; got {:?}",
         for_document(&findings, DATA_PATH)
     );
 }
@@ -328,14 +348,27 @@ fn e2e_a_data_backlog_pair_rejects_do_headings() {
     let tmp = tempfile::tempdir().expect("temp dir must be creatable");
     let root = tmp.path();
     write_workspace(root);
-    // DATA.md declares no DT headings, and the BACKLOG row is DO-001, not
-    // DT-SHAR-001.
-    write(
-        &root.join(DATA_PATH),
-        &data_with_dt().replace("## DT-SHAR-001: Severity\n\n", ""),
-    );
-    let backlog = write_workspace_root().replace("FR-SAMPLE-001", "DO-001");
-    write(&root.join("crates/shared/BACKLOG.md"), &backlog);
+    // DATA.md declares DT-SHAR-001; the BACKLOG entry token is DT-SHAR-001
+    // (covered) but its Next row cites DO-001, which DATA does not declare,
+    // so direction (c) fires dt_backlog_id_not_dt.
+    write(&root.join(DATA_PATH), &data_with_dt());
+    let backlog = "# Feature Backlog: Sample\n\nFRD: [FRD.md](FRD.md)\n\n\
+## Progress Overview\n\nBaseline.\n\n\
+## Backlog Status\n\n\
+### {DT-SHAR-001}\n\
+| Aspect       | Detail                                      |\n\
+|--------------|---------------------------------------------|\n\
+| State        | Ready                                       |\n\
+| Done         | —                                           |\n\
+| In Progress  | None                                        |\n\
+| Blocked      | None                                        |\n\
+| Next         | DO-001                                      |\n\
+| Risk         | None                                        |\n\
+| Updated      | 2026-09-29                                  |\n\
+## Reference\n\n\
+- PRD: [PRD.md](../../PRD.md)\n\
+- ROADMAP: [ROADMAP.md](../../ROADMAP.md)\n";
+    write(&root.join("crates/shared/BACKLOG.md"), backlog);
     let findings = audit(root);
     assert!(
         for_document(&findings, DATA_PATH)
@@ -343,7 +376,7 @@ fn e2e_a_data_backlog_pair_rejects_do_headings() {
             .any(|(code, violation, _)| {
                 code == "AES601" && violation == "dt_backlog_id_not_dt"
             }),
-        "a DO-001 row with no DT heading must fire dt_backlog_id_not_dt; got {:?}",
+        "a DO-001 row citing an id DATA does not declare must fire dt_backlog_id_not_dt; got {:?}",
         for_document(&findings, DATA_PATH)
     );
 }

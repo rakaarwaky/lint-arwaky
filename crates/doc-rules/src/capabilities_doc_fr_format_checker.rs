@@ -1,5 +1,5 @@
 // PURPOSE: FrFormatChecker — AES601: requirement-ID shape, PR/DS/DT/FR parity,
-// and BACKLOG qualifier-level alignment.
+// and BACKLOG ID-level alignment.
 //
 // The one capability that answers AES601. It reads the requirement documents
 // (an FRD and a DATA document state requirements under the same ID rules) and
@@ -7,7 +7,7 @@
 // requirement count that has drifted from the feature's count of capability
 // seams, a promised Protocol/Aggregate API method that the contract module
 // never declares, PR-ID parity between the PRD and ROADMAP, and BACKLOG
-// qualifier-level alignment against the paired spec.
+// ID-level alignment against the paired spec.
 use shared_doc_rules::contract_doc_protocol::IFrFormatProtocol;
 use shared_doc_rules::taxonomy_doc_audit_context_vo::DocAuditContext;
 use shared_doc_rules::taxonomy_doc_rules_constant as consts;
@@ -28,7 +28,7 @@ use shared_doc_rules::utility_protocol_counter::{
 // ─── Block 1: Struct Definition ────────────────────────────
 
 /// The AES601 auditor: FR-ID format, PR/DS/DT/FR parity, and BACKLOG
-/// qualifier-level alignment.
+/// ID-level alignment.
 pub struct FrFormatChecker {}
 
 // ─── Block 2: Protocol Trait Implementation ────────────────
@@ -40,7 +40,7 @@ impl IFrFormatProtocol for FrFormatChecker {
     /// Documents are grouped by parent folder so the FRD/BACKLOG alignment
     /// sub-check can read both members of a feature folder together. The
     /// root PRD/ROADMAP pair and any root BACKLOG are read together so the
-    /// PR-parity and root qualifier-alignment sub-checks can pair them.
+    /// PR-parity and root ID-alignment sub-checks can pair them.
     fn audit_fr_format(&self, context: &DocAuditContext) -> Vec<DocFinding> {
         let mut findings = Vec::new();
         let mut by_folder: BTreeMap<PathBuf, Vec<&DocSource>> = BTreeMap::new();
@@ -105,7 +105,7 @@ impl IFrFormatProtocol for FrFormatChecker {
             }
             // Feature BACKLOG pairs with its FRD (+ DESIGN.md if present);
             // kernel BACKLOG with DATA.md; surface BACKLOG with DESIGN.md.
-            // Alignment is qualifier-level over the paired spec union.
+            // Alignment is ID-level over the paired spec union.
             if !is_root {
                 if let Some(backlog) = backlog {
                     // One doc per spec family: FRD declares FR-IDs, DATA.md
@@ -465,12 +465,12 @@ impl FrFormatChecker {
             .collect()
     }
 
-    /// BACKLOG entry H3s under `## Backlog Status`: `(qualifier, 1-based
+    /// BACKLOG entry H3s under `## Backlog Status`: `(token, 1-based
     /// heading line, stray ids in the entry's Next/Done/Blocked rows)` —
     /// one tuple per entry.
     ///
     /// A qualifying H3 title is exactly one brace-wrapped token
-    /// (`{SAMPLE}`); a title that does not read as one is skipped, so a
+    /// (`{FR-SAMPLE-001}`); a title that does not read as one is skipped, so a
     /// BACKLOG with malformed entries is silent on alignment. Stray ids are
     /// every `PR-`/`FR-`/`DS-`/`DT-` token in the entry's `Next`, `Done`,
     /// and `Blocked` data rows (row labels come from `BACKLOG_ROW_LABELS`).
@@ -493,7 +493,7 @@ impl FrFormatChecker {
         };
         let mut entries: Vec<(String, usize, Vec<String>)> = Vec::new();
         for sub in h3_subsections(section) {
-            let Some(qualifier) = Self::extract_qualifier(&sub.title) else {
+            let Some(token) = Self::extract_qualifier(&sub.title) else {
                 continue;
             };
             let mut stray_ids = Vec::new();
@@ -525,16 +525,16 @@ impl FrFormatChecker {
                     }
                 }
             }
-            entries.push((qualifier, sub.line + 1, stray_ids));
+            entries.push((token, sub.line + 1, stray_ids));
         }
         // `+1` converts the 0-based heading index to the 1-based document
         // line of the `## Backlog Status` heading.
         (entries, section.line + 1)
     }
 
-    /// The single brace-wrapped qualifier token of a BACKLOG entry H3 title
-    /// (`{SAMPLE}` → `SAMPLE`), or `None` for any other shape. Braces, pipes,
-    /// and surrounding whitespace are stripped per Decision 9.
+    /// The single brace-wrapped ID token of a BACKLOG entry H3 title
+    /// (`{FR-SAMPLE-001}` → `FR-SAMPLE-001`), or `None` for any other shape.
+    /// Braces, pipes, and surrounding whitespace are stripped per Decision 9.
     fn extract_qualifier(title: &str) -> Option<String> {
         let inner = title
             .trim()
@@ -553,14 +553,14 @@ impl FrFormatChecker {
     }
 
     /// Union of the accepted ID sets of up to two documents under a shared
-    /// collector, as `(ids, qualifiers)`. `None` documents are skipped, and
-    /// the result is the empty set when neither document declares any IDs —
-    /// a union the caller can test for silence.
+    /// collector. `None` documents are skipped, and the result is the empty
+    /// set when neither document declares any IDs — a union the caller can
+    /// test for silence.
     pub(crate) fn collect_union_id_set(
         collect: fn(&str) -> Option<Vec<String>>,
         first: Option<&DocSource>,
         second: Option<&DocSource>,
-    ) -> Option<(Vec<String>, Vec<String>)> {
+    ) -> Option<Vec<String>> {
         let mut ids: Vec<String> = Vec::new();
         if let Some(document) = first {
             ids.extend(collect(&document.text).unwrap_or_default());
@@ -568,64 +568,46 @@ impl FrFormatChecker {
         if let Some(document) = second {
             ids.extend(collect(&document.text).unwrap_or_default());
         }
-        if ids.is_empty() {
-            return None;
-        }
-        // `PFX-QUAL-NNN` → `QUAL`: drop the prefix token, then take the
-        // middle token up to the numeric tail.
-        let mut quals: Vec<String> = ids
-            .iter()
-            .filter_map(|id| {
-                id.split_once('-')
-                    .and_then(|(_, tail)| tail.split_once('-'))
-                    .map(|(qual, _)| qual.to_string())
-            })
-            .collect();
-        quals.sort();
-        quals.dedup();
-        Some((ids, quals))
+        if ids.is_empty() { None } else { Some(ids) }
     }
 
-    /// BACKLOG qualifier-level alignment against a paired spec union
+    /// BACKLOG ID-level alignment against a paired spec union
     /// (Decision 9), parameterized by the family's missing-code and not-code.
     ///
-    /// (a) An entry qualifier that no declared ID carries fires
+    /// (a) An entry token that no declared ID equals verbatim fires
     /// `backlog_qualifier_mismatch`, anchored to the entry's H3 line.
-    /// (b) A declared qualifier with no entry fires the *missing_code*
+    /// (b) A declared ID with no entry fires the *missing_code*
     /// (analog of `backlog_id_missing`), anchored to `## Backlog Status`.
     /// (c) A stray `PR-`/`FR-`/`DS-`/`DT-` token in an entry's
     /// `Next`/`Done`/`Blocked` row that no declared ID is fires the
     /// *not_code* (analog of `backlog_id_not_fr`), anchored to the
     /// entry's H3 line.
     ///
-    /// Silent when the BACKLOG has no `## Backlog Status` section, or when an
-    /// entry has no qualifier. Direction (a) qualifier consistency and
-    /// direction (b) missing are silent when the paired spec declares no IDs;
-    /// direction (c) stray-ID still fires against an empty declared set.
+    /// Silent when the BACKLOG has no `## Backlog Status` section.
+    /// Directions (a) and (b) are silent when the paired spec declares no
+    /// IDs; direction (c) stray-ID still fires against an empty declared set.
     fn check_backlog_qualifier_alignment(
         &self,
         backlog: &DocSource,
-        union: Option<&(Vec<String>, Vec<String>)>,
+        union: Option<&Vec<String>>,
         missing_code: &'static str,
         not_code: &'static str,
         findings: &mut Vec<DocFinding>,
     ) {
-        let (ids, quals) = match union {
-            Some((ids, quals)) => (ids.to_vec(), quals.to_vec()),
-            None => (Vec::new(), Vec::new()),
-        };
+        let ids: Vec<String> = union.cloned().unwrap_or_default();
         let id_set: HashSet<&str> = ids.iter().map(String::as_str).collect();
-        let qual_set: HashSet<&str> = quals.iter().map(String::as_str).collect();
         let (entries, section_line) = Self::parse_backlog_entries(backlog);
         if section_line == 0 {
             return;
         }
 
-        // (a) entry qualifier not carried by any declared ID.
-        // Silent when the union declares no IDs — nothing can carry a qualifier.
-        if !quals.is_empty() {
-            for (qualifier, line, _) in &entries {
-                if !qual_set.contains(qualifier.as_str()) {
+        // (a) entry token not equal to any declared ID.
+        // Silent when the union declares no IDs — nothing can carry a token.
+        if !ids.is_empty() {
+            for (token, line, _) in &entries {
+                if !id_set.contains(token.as_str()) {
+                    let mut valid: Vec<&str> = ids.iter().map(String::as_str).collect();
+                    valid.sort();
                     findings.push(
                         DocFinding::new_with_line(
                             "",
@@ -633,14 +615,14 @@ impl FrFormatChecker {
                             consts::RULE_CODE_FR_FORMAT,
                             consts::BACKLOG_QUALIFIER_MISMATCH,
                             format!(
-                                "line {line} BACKLOG entry `{{{qualifier}}}` has no matching ID in the paired spec"
+                                "line {line} BACKLOG entry `{{{token}}}` has no matching ID in the paired spec"
                             ),
                         )
                         .with_reason(
-                            "A BACKLOG entry traces to its spec through the qualifier, so a qualifier no spec ID carries cannot be aligned.",
+                            "A BACKLOG entry traces to its spec through the ID, so a token no spec ID equals cannot be aligned.",
                             format!(
-                                "Rename the entry to a qualifier the spec declares: {}.",
-                                quals.join(", ")
+                                "Rename the entry to an ID the spec declares: {}.",
+                                valid.join(", ")
                             ),
                         ),
                     );
@@ -648,12 +630,12 @@ impl FrFormatChecker {
             }
         }
 
-        // (b) declared qualifier with no BACKLOG entry.
+        // (b) declared ID with no BACKLOG entry, once per ID.
         // Silent when the union declares no IDs — nothing is declared to track.
-        if !quals.is_empty() {
-            let entry_set: HashSet<&str> = entries.iter().map(|(q, _, _)| q.as_str()).collect();
-            for qual in quals {
-                if !entry_set.contains(qual.as_str()) {
+        if !ids.is_empty() {
+            let entry_set: HashSet<&str> = entries.iter().map(|(t, _, _)| t.as_str()).collect();
+            for id in &ids {
+                if !entry_set.contains(id.as_str()) {
                     findings.push(
                         DocFinding::new_with_line(
                             "",
@@ -661,12 +643,12 @@ impl FrFormatChecker {
                             consts::RULE_CODE_FR_FORMAT,
                             missing_code,
                             format!(
-                                "qualifier `{qual}` declared in the paired spec has no BACKLOG `## Backlog Status` entry"
+                                "spec-declared ID `{id}` has no BACKLOG `## Backlog Status` entry"
                             ),
                         )
                         .with_reason(
-                            "Every spec-declared qualifier must have a BACKLOG entry so the backlog tracks every requirement family.",
-                            format!("Add a BACKLOG entry `### {{{qual}}}` under `## Backlog Status`."),
+                            "Every spec-declared ID must have a BACKLOG entry so the backlog tracks every requirement.",
+                            format!("Add a BACKLOG entry `### {{{id}}}` under `## Backlog Status`."),
                         ),
                     );
                 }
@@ -676,7 +658,7 @@ impl FrFormatChecker {
         // (c) stray id token in an entry's Next/Done/Blocked row.
         // Runs even when the union declares no IDs: every cited token is then
         // untraceable because nothing is declared.
-        for (qualifier, line, stray_ids) in &entries {
+        for (token, line, stray_ids) in &entries {
             for id in stray_ids {
                 if id_set.contains(id.as_str()) {
                     continue;
@@ -690,7 +672,7 @@ impl FrFormatChecker {
                         consts::RULE_CODE_FR_FORMAT,
                         not_code,
                         format!(
-                            "line {line} BACKLOG entry `{{{qualifier}}}` cites `{id}`, which the paired spec does not declare"
+                            "line {line} BACKLOG entry `{{{token}}}` cites `{id}`, which the paired spec does not declare"
                         ),
                     )
                     .with_reason(

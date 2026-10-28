@@ -378,16 +378,35 @@ fn conforming_design() -> String {
         .to_string()
 }
 
-fn backlog_with_rows(rows: &[&str]) -> String {
-    let rows = rows
+/// A BACKLOG whose `## Backlog Status` entries carry the given H3 full-ID tokens,
+/// each followed by its State/Done/In Progress/Blocked/Next/Risk/Updated rows.
+fn backlog_with_entries(ids: &[&str]) -> String {
+    let entries = ids
         .iter()
-        .map(|id| format!("| {id} | P0 | Ready | — | — | 2026-09-29 |"))
+        .map(|id| {
+            format!(
+                "### {{{id}}}\n\n\
+                 | Aspect       | Detail                                      |\n\
+                 |--------------|---------------------------------------------|\n\
+                 | State        | Ready                                       |\n\
+                 | Done         | —                                           |\n\
+                 | In Progress  | None                                        |\n\
+                 | Blocked      | None                                        |\n\
+                 | Next         | Ship {id}                                   |\n\
+                 | Risk         | None                                        |\n\
+                 | Updated      | 2026-09-29                                  |\n"
+            )
+        })
         .collect::<Vec<_>>()
         .join("\n");
     format!(
-        "# Feature Backlog: Sample\n\n## Backlog\n\n\
-         | ID | Priority | State | Dependencies | Next Action | Updated |\n\
-         |---|---:|---|---|---|---|\n{rows}\n"
+        "# Feature Backlog: Sample\n\n\
+         ## Progress Overview\n\n\
+         Baseline.\n\n\
+         ## Backlog Status\n\
+         {entries}\n\
+         ## Reference\n\n\
+         - Backlog: [BACKLOG.md](BACKLOG.md)\n"
     )
 }
 
@@ -397,11 +416,12 @@ fn the_fr_format_seam_is_the_only_one_answering_a_ds_backlog_mismatch() {
     let feature = tmp.path().join("crates/sample");
     std::fs::create_dir_all(feature.join("src")).unwrap();
     std::fs::write(feature.join("DESIGN.md"), conforming_design()).unwrap();
-    // BACKLOG carries a bogus DS-DISP-002 row and omits DS-DISP-001: both
-    // directions must fire.
+    // DESIGN declares DS-DISP-001; BACKLOG entry FR-SAMPLE-001 is not declared
+    // by any DS-ID (backlog_qualifier_mismatch), and the declared DS-DISP-001
+    // owes no entry (ds_backlog_id_missing).
     std::fs::write(
         feature.join("BACKLOG.md"),
-        backlog_with_rows(&["DS-DISP-002"]),
+        backlog_with_entries(&["FR-SAMPLE-001"]),
     )
     .unwrap();
     std::fs::write(
@@ -436,9 +456,10 @@ fn the_fr_format_seam_stays_silent_when_ds_backlog_is_aligned() {
     let feature = tmp.path().join("crates/sample");
     std::fs::create_dir_all(feature.join("src")).unwrap();
     std::fs::write(feature.join("DESIGN.md"), conforming_design()).unwrap();
+    // DESIGN declares DS-DISP-001; BACKLOG carries an entry for it — aligned.
     std::fs::write(
         feature.join("BACKLOG.md"),
-        backlog_with_rows(&["DS-DISP-001"]),
+        backlog_with_entries(&["DS-DISP-001"]),
     )
     .unwrap();
     std::fs::write(

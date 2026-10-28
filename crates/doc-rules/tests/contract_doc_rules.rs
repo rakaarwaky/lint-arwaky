@@ -152,15 +152,27 @@ Last Updated: 2026-09-29
 
 ## Backlog Status
 
-### {SAMPLE}
+### {FR-SAMPLE-001}
 
 | Aspect       | Detail                                      |
 |--------------|---------------------------------------------|
 | State        | Ready                                       |
-| Done         | FR-SAMPLE-001                               |
+| Done         | —                                           |
 | In Progress  | None                                        |
 | Blocked      | None                                        |
 | Next         | Ship FR-SAMPLE-001                          |
+| Risk         | None                                        |
+| Updated      | 2026-09-29                                  |
+
+### {FR-SAMPLE-002}
+
+| Aspect       | Detail                                      |
+|--------------|---------------------------------------------|
+| State        | Ready                                       |
+| Done         | —                                           |
+| In Progress  | None                                        |
+| Blocked      | None                                        |
+| Next         | Ship FR-SAMPLE-002                          |
 | Risk         | None                                        |
 | Updated      | 2026-09-29                                  |
 
@@ -2423,14 +2435,14 @@ fn write_frd_backlog_pair(dir: &Path, frd: &str, backlog: Option<&str>) {
 #[test]
 fn backlog_qualifier_mismatch_fires_on_uncarried_qualifier() {
     let tmp = tempfile::tempdir().unwrap();
-    // FRD declares FR-SAMPLE-001/002; BACKLOG entry qualifier OTHER is not
-    // carried by any FR-ID → backlog_qualifier_mismatch anchored to the entry.
-    let backlog = backlog_with_entries(&["OTHER"]);
+    // FRD declares FR-SAMPLE-001/002; BACKLOG entry token FR-OTHER-001 is not
+    // declared by any FR-ID → backlog_qualifier_mismatch anchored to the entry.
+    let backlog = backlog_with_entries(&["FR-OTHER-001"]);
     write_frd_backlog_pair(tmp.path(), &conforming_frd(), Some(&backlog));
     let findings = audit(tmp.path());
     assert!(
         has(&findings, "AES601", "backlog_qualifier_mismatch"),
-        "an entry qualifier no FR-ID carries fires backlog_qualifier_mismatch; got: {findings:#?}"
+        "an entry token no FR-ID carries fires backlog_qualifier_mismatch; got: {findings:#?}"
     );
     let raw = audit_findings(tmp.path());
     let mismatch = raw
@@ -2440,7 +2452,7 @@ fn backlog_qualifier_mismatch_fires_on_uncarried_qualifier() {
     let backlog_text = fs::read_to_string(tmp.path().join("crates/sample/BACKLOG.md")).unwrap();
     let h3_line = backlog_text
         .lines()
-        .position(|l| l.trim() == "### {OTHER}")
+        .position(|l| l.trim() == "### {FR-OTHER-001}")
         .unwrap()
         + 1;
     assert_eq!(
@@ -2453,19 +2465,24 @@ fn backlog_qualifier_mismatch_fires_on_uncarried_qualifier() {
 #[test]
 fn backlog_missing_direction_fires_on_uncovered_qualifier() {
     let tmp = tempfile::tempdir().unwrap();
-    // FRD declares FR-SAMPLE-001/002 but BACKLOG declares no {SAMPLE} entry.
+    // FRD declares FR-SAMPLE-001/002 but BACKLOG declares no entry →
+    // backlog_id_missing fires once per declared FR ID (2).
     let backlog = backlog_with_entries(&[]);
     write_frd_backlog_pair(tmp.path(), &conforming_frd(), Some(&backlog));
     let findings = audit(tmp.path());
     assert!(
         has(&findings, "AES601", "backlog_id_missing"),
-        "a spec-declared qualifier with no BACKLOG entry fires backlog_id_missing; got: {findings:#?}"
+        "a spec-declared ID with no BACKLOG entry fires backlog_id_missing; got: {findings:#?}"
     );
     let raw = audit_findings(tmp.path());
-    let missing = raw
+    let count = raw
         .iter()
-        .find(|f| f.violation_type == "backlog_id_missing")
-        .expect("the missing finding must fire");
+        .filter(|f| f.violation_type == "backlog_id_missing")
+        .count();
+    assert_eq!(
+        count, 2,
+        "missing direction fires once per declared FR ID; got {count}"
+    );
     let backlog_text = fs::read_to_string(tmp.path().join("crates/sample/BACKLOG.md")).unwrap();
     let section_line = backlog_text
         .lines()
@@ -2473,18 +2490,21 @@ fn backlog_missing_direction_fires_on_uncovered_qualifier() {
         .unwrap()
         + 1;
     assert_eq!(
-        missing.line, section_line,
-        "`backlog_id_missing` anchors to `## Backlog Status`; got {}",
-        missing.line
+        raw.iter()
+            .find(|f| f.violation_type == "backlog_id_missing")
+            .expect("the missing finding must fire")
+            .line,
+        section_line,
+        "`backlog_id_missing` anchors to `## Backlog Status`; got {section_line}"
     );
 }
 
 #[test]
 fn backlog_stray_id_in_next_fires_not_fr() {
     let tmp = tempfile::tempdir().unwrap();
-    // BACKLOG entry {SAMPLE} `Next` cites FR-OTHER-001, which the FRD never
-    // declares → backlog_id_not_fr anchored to the entry H3.
-    let backlog = backlog_with_entries(&["SAMPLE"])
+    // BACKLOG entry FR-SAMPLE-001 `Next` cites FR-OTHER-001, which the FRD
+    // never declares → backlog_id_not_fr anchored to the entry H3.
+    let backlog = backlog_with_entries(&["FR-SAMPLE-001"])
         .replace("| Next        | —      |", "| Next        | FR-OTHER-001 |");
     write_frd_backlog_pair(tmp.path(), &conforming_frd(), Some(&backlog));
     let findings = audit(tmp.path());
@@ -2500,7 +2520,7 @@ fn backlog_stray_id_in_next_fires_not_fr() {
     let backlog_text = fs::read_to_string(tmp.path().join("crates/sample/BACKLOG.md")).unwrap();
     let h3_line = backlog_text
         .lines()
-        .position(|l| l.trim() == "### {SAMPLE}")
+        .position(|l| l.trim() == "### {FR-SAMPLE-001}")
         .unwrap()
         + 1;
     assert_eq!(
@@ -2513,7 +2533,7 @@ fn backlog_stray_id_in_next_fires_not_fr() {
 #[test]
 fn backlog_qualifier_full_coverage_reports_nothing() {
     let tmp = tempfile::tempdir().unwrap();
-    let backlog = backlog_with_entries(&["SAMPLE"]);
+    let backlog = backlog_with_entries(&["FR-SAMPLE-001", "FR-SAMPLE-002"]);
     write_frd_backlog_pair(tmp.path(), &conforming_frd(), Some(&backlog));
     let findings = audit(tmp.path());
     assert!(
@@ -2524,11 +2544,38 @@ fn backlog_qualifier_full_coverage_reports_nothing() {
     );
 }
 
+/// The FRD declares two FR IDs but the Backlog Status carries an entry for
+/// only one of them ⇒ exactly one `backlog_id_missing` naming the uncovered ID.
+#[test]
+fn backlog_missing_direction_fires_once_per_spec_id() {
+    let tmp = tempfile::tempdir().unwrap();
+    // FRD declares FR-SAMPLE-001/002; BACKLOG carries an entry for FR-SAMPLE-001 only.
+    let backlog = backlog_with_entries(&["FR-SAMPLE-001"]);
+    write_frd_backlog_pair(tmp.path(), &conforming_frd(), Some(&backlog));
+    let findings = audit(tmp.path());
+    let missing: Vec<_> = findings
+        .iter()
+        .filter(|(_, v, _, _)| v == "backlog_id_missing")
+        .collect();
+    assert_eq!(
+        missing.len(),
+        1,
+        "missing direction fires exactly once per uncovered ID; got {missing:?}"
+    );
+    assert!(
+        missing
+            .iter()
+            .any(|(_, _, m, _)| m.contains("FR-SAMPLE-002")),
+        "the single missing finding must name FR-SAMPLE-002; got: {missing:?}"
+    );
+}
+
 #[test]
 fn backlog_without_backlog_status_section_is_silent() {
     let tmp = tempfile::tempdir().unwrap();
     // No `## Backlog Status` section means there is no entry set to align against.
-    let backlog = backlog_with_entries(&["SAMPLE"]).replace("## Backlog Status\n", "## Other\n");
+    let backlog =
+        backlog_with_entries(&["FR-SAMPLE-001"]).replace("## Backlog Status\n", "## Other\n");
     write_frd_backlog_pair(tmp.path(), &conforming_frd(), Some(&backlog));
     let findings = audit(tmp.path());
     assert!(
@@ -2704,13 +2751,13 @@ fn conforming_data_with_dt() -> String {
         .to_string()
 }
 
-/// A BACKLOG whose `## Backlog Status` entries carry the given H3 qualifiers.
-fn backlog_with_entries(qualifiers: &[&str]) -> String {
-    let entries = qualifiers
+/// A BACKLOG whose `## Backlog Status` entries carry the given H3 full-ID tokens.
+fn backlog_with_entries(ids: &[&str]) -> String {
+    let entries = ids
         .iter()
-        .map(|q| {
+        .map(|id| {
             format!(
-                "### {{{q}}}\n\n\
+                "### {{{id}}}\n\n\
                  | Aspect      | Detail |\n\
                  |-------------|--------|\n\
                  | State       | Ready  |\n\
@@ -2766,21 +2813,21 @@ fn write_data_backlog_pair(dir: &Path, data: &str, backlog: Option<&str>) {
 fn ds_full_coverage_reports_nothing() {
     let tmp = tempfile::tempdir().unwrap();
     let design = conforming_design_with_ds();
-    let backlog = backlog_with_entries(&["DISP"]);
+    let backlog = backlog_with_entries(&["DS-DISP-001"]);
     write_design_backlog_pair(tmp.path(), &design, Some(&backlog));
     let findings = audit(tmp.path());
     assert!(
         !has(&findings, "AES601", "ds_backlog_id_not_ds")
             && !has(&findings, "AES601", "ds_backlog_id_missing"),
-        "every DS qualifier has a BACKLOG entry and every entry qualifier is carried by a DS-ID; got: {findings:#?}"
+        "every DS ID has a BACKLOG entry and every entry ID is declared by a DS-ID; got: {findings:#?}"
     );
 }
 
 #[test]
 fn ds_mismatch_reports_qualifier_mismatch_and_missing() {
     let tmp = tempfile::tempdir().unwrap();
-    // DESIGN declares DS-DISP-001 and DS-DISP-003; BACKLOG entry qualifier
-    // SAMPLE is not carried by any DS-ID, and the DISP qualifier owes no entry.
+    // DESIGN declares DS-DISP-001 and DS-DISP-003; BACKLOG entry FR-SAMPLE-001
+    // is not declared by any DS-ID, and DS-DISP-003 owes no entry.
     let mut design = conforming_design_with_ds();
     // Remove the first item's table so it declares its ID without a body.
     design = design.replace(
@@ -2792,18 +2839,18 @@ fn ds_mismatch_reports_qualifier_mismatch_and_missing() {
         "## Reference\n",
         "### DS-DISP-003: Card\n\n| Variant | Use case | Token | Value |\n|---|---|---|---|\n| `card` | surface | `--color-card` | `#101010` |\n\n## Reference\n",
     );
-    let backlog = backlog_with_entries(&["DISP", "SAMPLE"]);
+    let backlog = backlog_with_entries(&["DS-DISP-001", "FR-SAMPLE-001"]);
     write_design_backlog_pair(tmp.path(), &design, Some(&backlog));
     let findings = audit(tmp.path());
     let mismatch = has(&findings, "AES601", "backlog_qualifier_mismatch");
-    let missing = findings
-        .iter()
-        .any(|(c, v, m, _)| c == "AES601" && v == "ds_backlog_id_missing" && m.contains("DISP"));
+    let missing = findings.iter().any(|(c, v, m, _)| {
+        c == "AES601" && v == "ds_backlog_id_missing" && m.contains("DS-DISP-003")
+    });
     assert!(
         mismatch && missing,
-        "an uncarried qualifier fires backlog_qualifier_mismatch; a carried qualifier without an entry fires ds_backlog_id_missing; got: {findings:#?}"
+        "an undeclared entry token fires backlog_qualifier_mismatch; a declared ID without an entry fires ds_backlog_id_missing; got: {findings:#?}"
     );
-    // The mismatch finding anchors to the `### {SAMPLE}` entry H3 line.
+    // The mismatch finding anchors to the `### {FR-SAMPLE-001}` entry H3 line.
     let raw = audit_findings(tmp.path());
     let mismatch_finding = raw
         .iter()
@@ -2812,7 +2859,7 @@ fn ds_mismatch_reports_qualifier_mismatch_and_missing() {
     let backlog_text = fs::read_to_string(tmp.path().join("crates/sample/BACKLOG.md")).unwrap();
     let h3_line = backlog_text
         .lines()
-        .position(|l| l.trim() == "### {SAMPLE}")
+        .position(|l| l.trim() == "### {FR-SAMPLE-001}")
         .unwrap()
         + 1;
     assert_eq!(
@@ -2825,9 +2872,9 @@ fn ds_mismatch_reports_qualifier_mismatch_and_missing() {
 #[test]
 fn ds_no_ids_declared_is_silent_on_stray() {
     let tmp = tempfile::tempdir().unwrap();
-    // DESIGN declares no DS-IDs; an empty union is silent on alignment.
+    // DESIGN declares no DS-IDs; an empty union is silent on directions (a)/(b).
     let design = "# Design — ui\n\n## Design Overview\n\n- base\n\n## Reference\n\n- Backlog: [BACKLOG.md](BACKLOG.md)\n";
-    let backlog = backlog_with_entries(&["DISP"]);
+    let backlog = backlog_with_entries(&["DS-DISP-001"]);
     write_design_backlog_pair(tmp.path(), design, Some(&backlog));
     let findings = audit(tmp.path());
     assert!(
@@ -2841,7 +2888,8 @@ fn ds_no_ids_declared_is_silent_on_stray() {
 fn ds_backlog_without_backlog_status_section_is_silent() {
     let tmp = tempfile::tempdir().unwrap();
     let design = conforming_design_with_ds();
-    let backlog = backlog_with_entries(&["DISP"]).replace("## Backlog Status\n", "## Other\n");
+    let backlog =
+        backlog_with_entries(&["DS-DISP-001"]).replace("## Backlog Status\n", "## Other\n");
     write_design_backlog_pair(tmp.path(), &design, Some(&backlog));
     let findings = audit(tmp.path());
     assert!(
@@ -2855,13 +2903,13 @@ fn ds_backlog_without_backlog_status_section_is_silent() {
 fn dt_full_coverage_reports_nothing() {
     let tmp = tempfile::tempdir().unwrap();
     let data = conforming_data_with_dt();
-    let backlog = backlog_with_entries(&["SHAR"]);
+    let backlog = backlog_with_entries(&["DT-SHAR-001"]);
     write_data_backlog_pair(tmp.path(), &data, Some(&backlog));
     let findings = audit(tmp.path());
     assert!(
         !has(&findings, "AES601", "dt_backlog_id_not_dt")
             && !has(&findings, "AES601", "dt_backlog_id_missing"),
-        "every DT qualifier has a BACKLOG entry and every entry qualifier is carried by a DT-ID; got: {findings:#?}"
+        "every DT ID has a BACKLOG entry and every entry ID is declared by a DT-ID; got: {findings:#?}"
     );
 }
 
@@ -2872,16 +2920,16 @@ fn dt_mismatch_reports_qualifier_mismatch_and_missing() {
         "## DT-SHAR-001: Severity\n\n",
         "## DT-SHAR-001: Severity\n\n## DT-SHAR-003: MemberDelta\n\n",
     );
-    let backlog = backlog_with_entries(&["SHAR", "MCPS"]);
+    let backlog = backlog_with_entries(&["DT-SHAR-001", "FR-SAMPLE-001"]);
     write_data_backlog_pair(tmp.path(), &data, Some(&backlog));
     let findings = audit(tmp.path());
     let mismatch = has(&findings, "AES601", "backlog_qualifier_mismatch");
-    let missing = findings
-        .iter()
-        .any(|(c, v, m, _)| c == "AES601" && v == "dt_backlog_id_missing" && m.contains("SHAR"));
+    let missing = findings.iter().any(|(c, v, m, _)| {
+        c == "AES601" && v == "dt_backlog_id_missing" && m.contains("DT-SHAR-003")
+    });
     assert!(
         mismatch && missing,
-        "an uncarried qualifier fires backlog_qualifier_mismatch; a carried qualifier without an entry fires dt_backlog_id_missing; got: {findings:#?}"
+        "an undeclared entry token fires backlog_qualifier_mismatch; a declared ID without an entry fires dt_backlog_id_missing; got: {findings:#?}"
     );
 }
 
@@ -2891,7 +2939,7 @@ fn dt_stray_id_in_next_fires_not_dt() {
     // DATA declares DT-SHAR-001; BACKLOG entry `Next` cites DT-MCPS-002, which
     // the DATA doc does not declare → dt_backlog_id_not_dt anchored to H3.
     let data = conforming_data_with_dt();
-    let backlog = backlog_with_entries(&["SHAR"])
+    let backlog = backlog_with_entries(&["DT-SHAR-001"])
         .replace("| Next        | —      |", "| Next        | DT-MCPS-002 |");
     write_data_backlog_pair(tmp.path(), &data, Some(&backlog));
     let findings = audit(tmp.path());
@@ -2907,7 +2955,7 @@ fn dt_stray_id_in_next_fires_not_dt() {
     let backlog_text = fs::read_to_string(tmp.path().join("crates/shared/BACKLOG.md")).unwrap();
     let h3_line = backlog_text
         .lines()
-        .position(|l| l.trim() == "### {SHAR}")
+        .position(|l| l.trim() == "### {DT-SHAR-001}")
         .unwrap()
         + 1;
     assert_eq!(
@@ -2921,7 +2969,7 @@ fn dt_stray_id_in_next_fires_not_dt() {
 fn dt_empty_heading_set_fires_not_dt_on_every_legacy_row() {
     let tmp = tempfile::tempdir().unwrap();
     let data = "# DATA — shared\n\n## Reference\n\n- Backlog: [BACKLOG.md](BACKLOG.md)\n\n## Data Overview\n\nnone.\n";
-    let backlog = backlog_with_entries(&["SHAR"]);
+    let backlog = backlog_with_entries(&["DT-SHAR-001"]);
     write_data_backlog_pair(tmp.path(), data, Some(&backlog));
     let findings = audit(tmp.path());
     assert!(
