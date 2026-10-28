@@ -103,6 +103,50 @@ impl IMemberDocProtocol for MemberDocChecker {
                     );
                 }
             }
+
+            // Forbidden spec docs: a member may only carry the docs its role
+            // owes; anything else in its spec set is a violation.
+            let forbidden_docs: &[&str] = match member.role {
+                MemberRole::Feature => &[consts::DATA_DOC],
+                MemberRole::Surface => &[consts::FRD_DOC, consts::DATA_DOC],
+                MemberRole::Kernel => &[consts::FRD_DOC, consts::DESIGN_DOC],
+                MemberRole::None => &[],
+            };
+
+            for &doc in forbidden_docs {
+                if member.present_docs.contains(doc) {
+                    let doc_rel_path = member
+                        .path
+                        .strip_prefix(context.root())
+                        .unwrap_or(&member.path)
+                        .join(doc)
+                        .to_string_lossy()
+                        .replace('\\', "/");
+
+                    findings.push(
+                        DocFinding::new_with_line(
+                            doc_rel_path,
+                            0,
+                            consts::RULE_CODE_TEMPLATE_CONFORMANCE,
+                            consts::MEMBER_DOC_FORBIDDEN_VIOLATION,
+                            format!(
+                                "Member folder `{}` is a {role_name} member but carries forbidden specification `{doc}`.",
+                                member.path.display()
+                            ),
+                        )
+                        .with_reason(
+                            format!(
+                                "A {role_name} member's mandated pair is `{}`; `{doc}` belongs to another role, so it must not live here.",
+                                required_docs.join(" + ")
+                            ),
+                            format!(
+                                "Remove `{doc}` from `{}`.",
+                                member.path.display()
+                            ),
+                        ),
+                    );
+                }
+            }
         }
 
         findings

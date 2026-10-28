@@ -511,3 +511,162 @@ fn the_fr_format_seam_stays_silent_when_ds_backlog_is_aligned() {
         "an aligned DS pair must report no ds_* findings; got: {fr_findings:#?}"
     );
 }
+
+/// Write *backlog* under *root*/crates/*folder* with an optional *source_file*
+/// (the role signal beside the BACKLOG) so the folder classifies as the role
+/// that source file names.
+fn write_member_backlog(
+    root: &Path,
+    folder: &str,
+    source_file: Option<(&str, &str)>,
+    backlog: &str,
+) {
+    let member = root.join("crates").join(folder);
+    if let Some((file, content)) = source_file {
+        std::fs::create_dir_all(member.join("src")).unwrap();
+        std::fs::write(member.join("src").join(file), content).unwrap();
+    } else {
+        std::fs::create_dir_all(&member).unwrap();
+    }
+    std::fs::write(member.join("BACKLOG.md"), backlog).unwrap();
+}
+
+/// The Reference table every BACKLOG crosslink test writes, with the given
+/// link rows.
+fn backlog_reference(rows: &[&str]) -> String {
+    format!(
+        "# Backlog\n\n## Reference\n\n\
+         | Artifact | Purpose | Link |\n\
+         |--------|---------|------|\n\
+         {}",
+        rows.join("\n")
+    )
+}
+
+/// PRD row of the BACKLOG Reference table.
+const PRD_ROW: &str = "| PRD.md | [PRD.md](../../PRD.md) |";
+/// DESIGN row.
+const DESIGN_ROW: &str = "| DESIGN.md | [DESIGN.md](DESIGN.md) |";
+/// DATA row.
+const DATA_ROW: &str = "| DATA.md | [DATA.md](DATA.md) |";
+/// ROADMAP row.
+const ROADMAP_ROW: &str = "| ROADMAP.md | [ROADMAP.md](../../ROADMAP.md) |";
+/// ARCHITECTURE row.
+const ARCHITECTURE_ROW: &str = "| ARCHITECTURE.md | [ARCHITECTURE.md](../../ARCHITECTURE.md) |";
+
+/// Surface folder (carries a `surface_*` file) whose BACKLOG Reference links
+/// PRD/DESIGN/ROADMAP/ARCHITECTURE and omits FRD.md → zero AES604 findings,
+/// because surface owes DESIGN, not FRD.
+#[test]
+fn crosslink_surface_backlog_design_not_frd_is_clean() {
+    let tmp = tempfile::tempdir().unwrap();
+    write_member_backlog(
+        tmp.path(),
+        "sample",
+        Some(("surface_sample_api.rs", "// sample surface\n")),
+        &backlog_reference(&[PRD_ROW, DESIGN_ROW, ROADMAP_ROW, ARCHITECTURE_ROW]),
+    );
+
+    let findings = CrosslinkChecker::new().audit_crosslinks(&context_for(tmp.path()));
+    let aes604: Vec<&str> = findings
+        .iter()
+        .filter(|f| f.code == "AES604")
+        .map(|f| f.violation_type)
+        .collect();
+    assert!(
+        aes604.is_empty(),
+        "surface BACKLOG with DESIGN (no FRD) must be AES604-clean; got: {aes604:?}"
+    );
+}
+
+/// Same surface BACKLOG missing the DESIGN link → `no_design_link`.
+#[test]
+fn crosslink_surface_backlog_missing_design_fires_no_design_link() {
+    let tmp = tempfile::tempdir().unwrap();
+    write_member_backlog(
+        tmp.path(),
+        "sample",
+        Some(("surface_sample_api.rs", "// sample surface\n")),
+        &backlog_reference(&[PRD_ROW, ROADMAP_ROW, ARCHITECTURE_ROW]),
+    );
+
+    let findings = CrosslinkChecker::new().audit_crosslinks(&context_for(tmp.path()));
+    let missing: Vec<&DocFinding> = findings
+        .iter()
+        .filter(|f| f.code == "AES604" && f.violation_type == "no_design_link")
+        .collect();
+    assert!(
+        missing.len() == 1 && missing[0].doc == "crates/sample/BACKLOG.md",
+        "surface BACKLOG missing DESIGN must fire exactly one no_design_link naming crates/sample/BACKLOG.md; got: {findings:#?}"
+    );
+}
+
+/// Kernel BACKLOG (`crates/shared`) with DATA link and no FRD link → zero
+/// AES604 findings; without the DATA link → `no_data_link`.
+#[test]
+fn crosslink_kernel_backlog_data_not_frd_is_clean() {
+    let tmp = tempfile::tempdir().unwrap();
+    write_member_backlog(
+        tmp.path(),
+        "shared",
+        None,
+        &backlog_reference(&[PRD_ROW, DATA_ROW, ROADMAP_ROW, ARCHITECTURE_ROW]),
+    );
+
+    let findings = CrosslinkChecker::new().audit_crosslinks(&context_for(tmp.path()));
+    let aes604: Vec<&str> = findings
+        .iter()
+        .filter(|f| f.code == "AES604")
+        .map(|f| f.violation_type)
+        .collect();
+    assert!(
+        aes604.is_empty(),
+        "kernel BACKLOG with DATA (no FRD) must be AES604-clean; got: {aes604:?}"
+    );
+}
+
+#[test]
+fn crosslink_kernel_backlog_missing_data_fires_no_data_link() {
+    let tmp = tempfile::tempdir().unwrap();
+    write_member_backlog(
+        tmp.path(),
+        "shared",
+        None,
+        &backlog_reference(&[PRD_ROW, ROADMAP_ROW, ARCHITECTURE_ROW]),
+    );
+
+    let findings = CrosslinkChecker::new().audit_crosslinks(&context_for(tmp.path()));
+    // The fixture writes only BACKLOG.md (no DATA.md), so exactly one
+    // document owes the missing link.
+    let missing: Vec<&DocFinding> = findings
+        .iter()
+        .filter(|f| f.code == "AES604" && f.violation_type == "no_data_link")
+        .collect();
+    assert!(
+        !missing.is_empty() && missing.iter().all(|f| f.doc == "crates/shared/BACKLOG.md"),
+        "kernel BACKLOG missing DATA must fire no_data_link naming crates/shared/BACKLOG.md; got: {findings:#?}"
+    );
+}
+
+/// Feature BACKLOG missing its FRD link still fires `no_frd_link` — the
+/// role-aware rule preserves the legacy requirement for feature folders.
+#[test]
+fn crosslink_feature_backlog_missing_frd_still_fires_no_frd_link() {
+    let tmp = tempfile::tempdir().unwrap();
+    write_member_backlog(
+        tmp.path(),
+        "sample",
+        Some(("agent_sample_orchestrator.rs", "//! sample orchestrator\n")),
+        &backlog_reference(&[PRD_ROW, ROADMAP_ROW, ARCHITECTURE_ROW]),
+    );
+
+    let findings = CrosslinkChecker::new().audit_crosslinks(&context_for(tmp.path()));
+    let missing: Vec<&DocFinding> = findings
+        .iter()
+        .filter(|f| f.code == "AES604" && f.violation_type == "no_frd_link")
+        .collect();
+    assert!(
+        missing.len() == 1 && missing[0].doc == "crates/sample/BACKLOG.md",
+        "feature BACKLOG missing FRD must fire exactly one no_frd_link naming crates/sample/BACKLOG.md; got: {findings:#?}"
+    );
+}

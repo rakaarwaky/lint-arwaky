@@ -402,6 +402,9 @@ pub const DOC_HEADING_CONTRACTS: &[DocH2Contract] = &[
 /// Missing FRD.md / BACKLOG.md / DATA.md / DESIGN.md in a member folder.
 pub const MEMBER_DOC_VIOLATION: &str = "missing_member_doc";
 
+/// Forbidden spec doc present in a member folder that does not owe it.
+pub const MEMBER_DOC_FORBIDDEN_VIOLATION: &str = "forbidden_member_doc";
+
 /// A template placeholder token survived non-prose stripping on a document.
 pub const TEMPLATE_BODY_VIOLATION_UNFILLED_PLACEHOLDER: &str = "unfilled_placeholder";
 
