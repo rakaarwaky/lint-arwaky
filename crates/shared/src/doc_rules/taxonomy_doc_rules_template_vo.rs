@@ -69,7 +69,7 @@ pub const TEMPLATE_PROFILES: &[TemplateProfile] = &[
             "<System boundaries, tech stack, and infra>",
         ],
     },
-    // The BACKLOG H3 title line ships the whole `{<PROJECT-NAME-ID> |
+    // The BACKLOG H3 title line ships the whole `{<DATA-NAME-ID> |
     // <FEATURE-NAME-ID> | DESIGN-NAME-ID}` qualifier line, so all three
     // members are catalogued: the two angle-bracketed ones plus the bare
     // `DESIGN-NAME-ID`, which the substring matcher fires on even without
@@ -81,7 +81,7 @@ pub const TEMPLATE_PROFILES: &[TemplateProfile] = &[
         required_h2s: BACKLOG_REQUIRED_H2S,
         placeholder_catalog: &[
             "<feature-name>",
-            "<PROJECT-NAME-ID>",
+            "<DATA-NAME-ID>",
             "<FEATURE-NAME-ID>",
             "DESIGN-NAME-ID",
             "<One paragraph of progress summary.>",
