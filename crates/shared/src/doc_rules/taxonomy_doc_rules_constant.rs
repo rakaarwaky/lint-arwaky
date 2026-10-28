@@ -321,7 +321,7 @@ pub const AGENTS_RUNTIME_ROW_LABELS: &[&str] = &[
 /// Header-based table sets per document (AES606 header checks, not row checks).
 pub const AGENTS_PATH_PURPOSE_COLUMNS: &[&str] = &["Path", "Purpose"];
 pub const AGENTS_COMMAND_COLUMNS: &[&str] = &["Category", "Command", "Scope", "CI Gate"];
-
+pub const AGENTS_DOCUMENT_AGENT_COLUMNS: &[&str] = &["Document", "Agent Must"];
 pub const README_QUICK_START_COLUMNS: &[&str] = &["Step", "Action", "Command"];
 pub const CONTRIBUTING_WORKFLOW_COLUMNS: &[&str] = &["Step", "Action", "Detail"];
 pub const CONTRIBUTING_COMMIT_COLUMNS: &[&str] = &["Type", "Usage", "Example"];
