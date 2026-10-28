@@ -158,7 +158,6 @@ pub const AGENTS_REQUIRED_H2S: &[&str] = &[
     "Runtime",
     "Project Structure",
     "Commands",
-    "Documentation Awareness",
     "Reference",
 ];
 
@@ -307,7 +306,7 @@ pub const AGENTS_RUNTIME_ROW_LABELS: &[&str] = &[
 /// Header-based table sets per document (AES606 header checks, not row checks).
 pub const AGENTS_PATH_PURPOSE_COLUMNS: &[&str] = &["Path", "Purpose"];
 pub const AGENTS_COMMAND_COLUMNS: &[&str] = &["Category", "Command", "Scope", "CI Gate"];
-pub const AGENTS_DOCUMENT_AGENT_COLUMNS: &[&str] = &["Document", "Agent Must"];
+
 pub const README_QUICK_START_COLUMNS: &[&str] = &["Step", "Action", "Command"];
 pub const CONTRIBUTING_WORKFLOW_COLUMNS: &[&str] = &["Step", "Action", "Detail"];
 pub const CONTRIBUTING_COMMIT_COLUMNS: &[&str] = &["Type", "Usage", "Example"];
@@ -393,6 +392,16 @@ pub const TEMPLATE_BODY_VIOLATION_UNFILLED_PLACEHOLDER: &str = "unfilled_placeho
 /// A non-deletable template section is entirely absent from a document.
 pub const TEMPLATE_BODY_VIOLATION_DELETED_SECTION: &str = "section_deleted";
 
+// ─── AES607 — PR-ID owns exactly one module folder ─────────────────────
+/// Every `PR-<PROJECT>-NNN` declared in the root PRD's `Project Requirements`
+/// must own exactly one top-level module folder under `crates|modules|packages`
+/// whose name matches the PR-ID's project identifier.
+pub const RULE_CODE_PR_FOLDER_OWNERSHIP: &str = "AES607";
+
+/// A PRD-declared PR-ID whose project identifier owns no matching module folder
+/// under `crates|modules|packages`.
+pub const PR_FOLDER_NOT_OWNED_VIOLATION: &str = "pr_folder_not_owned";
+
 // Re-export template conformance types from the template module so that
 // `shared_doc_rules::taxonomy_doc_rules_constant` remains the canonical import.
 pub use crate::taxonomy_doc_rules_template_vo::{TEMPLATE_PROFILES, TemplateProfile};
@@ -441,7 +450,7 @@ mod tests {
     fn header_column_sets_transcribe_their_reference_templates() {
         ships_columns("HOW-TO-MAKE-AGENTS.md", AGENTS_PATH_PURPOSE_COLUMNS);
         ships_columns("HOW-TO-MAKE-AGENTS.md", AGENTS_COMMAND_COLUMNS);
-        ships_columns("HOW-TO-MAKE-AGENTS.md", AGENTS_DOCUMENT_AGENT_COLUMNS);
+
         ships_columns("HOW-TO-MAKE-README.md", README_QUICK_START_COLUMNS);
         ships_columns("HOW-TO-MAKE-CONTRIBUTING.md", CONTRIBUTING_WORKFLOW_COLUMNS);
         ships_columns("HOW-TO-MAKE-CONTRIBUTING.md", CONTRIBUTING_COMMIT_COLUMNS);

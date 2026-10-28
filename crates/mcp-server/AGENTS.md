@@ -2,6 +2,7 @@
 trigger: always
 description: "Lint Arwaky operational guide."
 ---
+
 # AGENTS — Lint Arwaky
 
 ## Agent Overview
@@ -37,23 +38,12 @@ description: "Lint Arwaky operational guide."
 | Type Check  | `{type checker command}`             | All        | ci.yml: {job name}   |
 | Arch Scan   | `{architecture scanner command}`     | All        | ci.yml: {job name}   |
 
-## Documentation Awareness
-
-| Document | Agent Must                              |
-|----------|-----------------------------------------|
-| PRD      | Read before implementing any `PR-` item |
-| FRD      | Follow `FR-` spec exactly               |
-| DATA     | Respect `DT-` shapes and types          |
-| DESIGN   | Use `DS-` tokens and variants           |
-| ROADMAP  | Check `State` before starting work      |
-| BACKLOG  | Update status after each task           |
-
 ## Reference
 
 | Artifact     | Purpose                                    | Link |
 |--------------|--------------------------------------------|------|
-| PRD          | {Business goals, user stories, and scope}  | [PRD.md](PRD.md) |
-| FRD          | {Functional requirements specification}    | [FRD.md](FRD.md) |
-| DATA         | {Data shapes and kernel definitions}        | [DATA.md](DATA.md) |
-| DESIGN       | {UI/UX and visual system}                  | [DESIGN.md](DESIGN.md) |
-| Architecture | {System boundaries, tech stack, and infra} | [ARCHITECTURE.md](ARCHITECTURE.md) |
+| README       | What the tool does, every command, install | [README.md](README.md) |
+| CONTRIBUTING | Branch, commit, and PR conventions         | [CONTRIBUTING.md](CONTRIBUTING.md) |
+| ARCHITECTURE | Layer contract for every crate             | [ARCHITECTURE.md](ARCHITECTURE.md) |
+| ROADMAP      | What ships next, in order                  | [ROADMAP.md](ROADMAP.md) |
+| PRD          | What the product does and why              | [PRD.md](PRD.md) |

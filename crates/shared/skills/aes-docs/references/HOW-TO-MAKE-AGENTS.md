@@ -70,26 +70,15 @@ Copy, fill, delete nothing.
 | Type Check  | `<type checker command>`             | All        | ci.yml: <job name>   |
 | Arch Scan   | `<architecture scanner command>`     | All        | ci.yml: <job name>   |
 
-## Documentation Awareness
-
-| Document | Agent Must                              |
-|----------|-----------------------------------------|
-| PRD      | Read before implementing any `PR-` item | 
-| FRD      | Follow `FR-` spec exactly               | 
-| DATA     | Respect `DT-` shapes and types          | 
-| DESIGN   | Use `DS-` tokens and variants           | 
-| ROADMAP  | Check `State` before starting work      | 
-| BACKLOG  | Update status after each task           | 
-
 ## Reference
 
 | Artifact     | Purpose                                    | Link |
 |--------------|--------------------------------------------|------|
-| PRD          | <Business goals, user stories, and scope>  | [PRD.md](PRD.md) |
-| FRD          | <Functional requirements specification>    | [FRD.md](FRD.md) |
-| DATA         | <Data shapes and kernel definitions>       | [DATA.md](DATA.md) |
-| DESIGN       | <UI/UX and visual system>                  | [DESIGN.md](DESIGN.md) |
-| Architecture | <System boundaries, tech stack, and infra> | [ARCHITECTURE.md](ARCHITECTURE.md) |
+| README       | What the tool does, every command, install | [README.md](README.md) |
+| CONTRIBUTING | Branch, commit, and PR conventions         | [CONTRIBUTING.md](CONTRIBUTING.md) |
+| ARCHITECTURE | Layer contract for every crate             | [ARCHITECTURE.md](ARCHITECTURE.md) |
+| ROADMAP      | What ships next, in order                  | [ROADMAP.md](ROADMAP.md) |
+| PRD          | What the product does and why              | [PRD.md](PRD.md) |
 ```
 
 ---
@@ -97,9 +86,8 @@ Copy, fill, delete nothing.
 ## Section Contract
 
 Every section is required unless marked optional. Each exists for one
-reason. The H2 set is closed by AES605: the six required H2s are
-`Agent Overview`, `Runtime`, `Project Structure`, `Commands`,
-`Documentation Awareness`, `Reference`. Global agent
+reason. The H2 set is closed by AES605: the five required H2s are
+`Agent Overview`, `Runtime`, `Project Structure`, `Commands`, `Reference`. Global agent
 behavior (autonomy, safety, work loop, merge guard) is carried in the
 global agent guide (`~/.qwen/QWEN.md` or equivalent) and is not
 repeated as H2s in `AGENTS.md`.
@@ -111,8 +99,7 @@ repeated as H2s in `AGENTS.md`.
 | Runtime               | Language, Environment, Artifacts, Package Manager, Version Probe, Setup, Activation — `Aspect &#124; Detail`.   |
 | Project Structure     | `Path &#124; Purpose` per crate/workspace member, so the next session navigates the tree without crawling it.    |
 | Commands              | `Category &#124; Command &#124; Scope &#124; CI Gate` — every gate verbatim as CI runs it. Highest-value section. Never skip. |
-| Documentation Awareness| `Document &#124; Agent Must` — maps each spec doc to the agent's duty toward it.                                |
-| Reference             | `Artifact &#124; Purpose &#124; Link` — PRD, FRD, DATA, DESIGN, Architecture.                                      |
+| Reference             | `Artifact &#124; Purpose &#124; Link` — README, CONTRIBUTING, ARCHITECTURE, ROADMAP, PRD.                                      |
 
 ---
 

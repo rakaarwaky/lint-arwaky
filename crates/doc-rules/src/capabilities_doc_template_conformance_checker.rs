@@ -244,7 +244,7 @@ impl TemplateConformanceChecker {
     }
 
     /// AGENTS: `Runtime` H2-level fixed-row table plus H2 tables for Project
-    /// Structure, Commands, Documentation Awareness, Reference.
+    /// Structure, Commands, Reference.
     fn check_agents(&self, parsed: &[Section]) -> Vec<DocFinding> {
         let mut findings = Vec::new();
         findings.extend(self.check_h2_fixed_rows(
@@ -258,12 +258,7 @@ impl TemplateConformanceChecker {
             consts::AGENTS_PATH_PURPOSE_COLUMNS,
         ));
         findings.extend(self.check_h2_table(parsed, "Commands", consts::AGENTS_COMMAND_COLUMNS));
-        findings.extend(self.check_h2_table(
-            parsed,
-            "Documentation Awareness",
-            consts::AGENTS_DOCUMENT_AGENT_COLUMNS,
-        ));
-        findings.extend(self.check_h2_table(parsed, "Reference", consts::REFERENCE_COLUMNS));
+        findings.extend(self.check_h2_table(parsed, "Reference", consts.REFERENCE_COLUMNS));
         findings
     }
 

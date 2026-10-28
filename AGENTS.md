@@ -39,17 +39,6 @@ AI agents working in this workspace must know the AES 7-layer naming convention,
 | Type Check  | `CARGO_INCREMENTAL=0 cargo clippy --all-targets -- -D warnings`          | All        | ci.yml: Clippy       |
 | Arch Scan   | `lint-arwaky-cli check .`                                                | All        | ci.yml: Self-Lint    |
 
-## Documentation Awareness
-
-| Document | Agent Must                              |
-|----------|-----------------------------------------|
-| PRD      | Read before implementing any `PR-` item |
-| FRD      | Follow `FR-` spec exactly               |
-| DATA     | Respect `DT-` shapes and types          |
-| DESIGN   | Use `DS-` tokens and variants           |
-| ROADMAP  | Check `State` before starting work      |
-| BACKLOG  | Update status after each task           |
-
 ## Reference
 
 | Artifact     | Purpose                                    | Link |
