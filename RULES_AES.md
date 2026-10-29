@@ -118,7 +118,7 @@ ids whose feature prefix matches the folder name (`crates/filesystem` →
 | Fires when | File stem violates `prefix_concept[_concept…]_suffix`: lowercase, `_` separated, ≥3 words (`NamingConfig::new(Count::new(3))`) |
 | Scope | Production source files; `tests/`+`benches/` handled by AES103 only |
 | Fix | Rename to the layer pattern, e.g. `capabilities_user_checker.rs` |
-| Exceptions | `main.rs`, `lib.rs`, `mod.rs`, `root_cli_main_entry.rs`, `root_mcp_main_entry.rs`, `root_tui_main_entry.rs`, `root_composition_container.rs`, `__init__.py`, `index.ts`, `index.js`, barrel/entry files — `DEFAULT_RULE_EXCEPTIONS` in `shared_common` |
+| Exceptions | `DEFAULT_RULE_EXCEPTIONS` in `shared_common` |
 
 #### Sub-checks
 
@@ -161,8 +161,8 @@ ids whose feature prefix matches the folder name (`crates/filesystem` →
 | Field | Value |
 | --- | --- |
 | Code / Severity | AES103 / HIGH |
-| Fires when | A file in `tests/` or `benches/` is nested under a subdirectory, lacks a legal test-type prefix, or carries a prefix belonging to the other directory |
-| Scope | `tests/` and `benches/` files only; every other per-file auditor skips them |
+| Fires when | A file in `tests/` or `benches/` is nested under a subdirectory, lacks a legal test-type prefix, or carries a prefix belonging to the other directory; barrel files are skipped |
+| Scope | `tests/` and `benches/` files only; every other per-file auditor skips them; support prefixes like `regression_` satisfy AES103 but are not required categories for AES704 |
 | Fix | Flatten the file into `tests/`/`benches/` and rename it `<type>_<subject>.<ext>` with a legal prefix |
 | Exceptions | Barrel files `mod.rs`, `lib.rs`, `__init__.py`, `index.ts`, `index.js` — same exemption AES101 grants |
 
@@ -201,9 +201,9 @@ ids whose feature prefix matches the folder name (`crates/filesystem` →
 | Scope | Every scanned source file whose stem maps to one of the 13 layer scopes below |
 | Fix | Remove or redirect the import to a layer the scope's Allowed cell permits |
 | Config | `architecture.rules.AES201` (per-scope rows are not individually switchable) |
-| Source | `config_architecture_rules.rs` `RULES` rows 238–355 |
+| Source | `config_architecture_rules.rs` `RULES` |
 
-#### Import matrix (13 scopes — re-transcribed from `RULES`, source row order preserved)
+#### Import matrix (13 scopes)
 
 | # | Scope | Allowed | Mandatory | Forbidden |
 | --- | --- | --- | --- | --- |
@@ -284,7 +284,7 @@ ids whose feature prefix matches the folder name (`crates/filesystem` →
 | Scope | Every scanned source file; barrel/entry files and `*_constant` files are excepted |
 | Fix | Split into smaller files |
 | Config | `architecture.rules.AES301` (`code_analysis.max_lines`) |
-| Exceptions | `DEFAULT_RULE_EXCEPTIONS` (`lib.rs`, `mod.rs`, `build.rs`, `__init__.py`, `index.js`, `index.ts`, `index.tsx`) plus per-layer `exceptions` |
+| Exceptions | `DEFAULT_RULE_EXCEPTIONS` plus per-layer `exceptions` |
 
 ### AES302 — File Minimum Limit
 
@@ -327,8 +327,8 @@ ids whose feature prefix matches the folder name (`crates/filesystem` →
 | Field | Value |
 | --- | --- |
 | Code / Severity | AES304 / CRITICAL |
-| Fires when | A forbidden bypass pattern is detected: `#[allow(...)]`, `unwrap`/`expect`, `panic!`, `todo`/`unimplemented`/`unreachable`, `noqa`, `type: ignore`, `eslint-disable`, `ts-ignore`/`ts-expect-error`, `FIXME`/`HACK`/`XXX`, Python `raise NotImplementedError`/`assert False`, JS/TS `throw new Error(...)` |
-| Scope | Every scanned source file; `#[cfg(test)]` blocks and `Lazy<Regex>` inits are skipped |
+| Fires when | A forbidden bypass pattern is detected: `#[allow(...)]`, `unwrap`/`expect`, `panic!`, `todo`/`unimplemented`/`unreachable`, `noqa`, `type: ignore`, `eslint-disable`, `ts-ignore`/`ts-expect-error`, `FIXME`/`HACK`/`XXX`, Python `raise NotImplementedError`/`assert False`, JS/TS `throw new Error(...)`/`TypeError`/`RangeError`/`ReferenceError`/`SyntaxError` |
+| Scope | Every scanned source file |
 | Fix | Use proper error handling |
 | Config | `architecture.rules.AES304` (`code_analysis.forbidden_bypass` patterns; fallback default list when empty) |
 | Exceptions | Test modules are skipped |
@@ -345,7 +345,7 @@ ids whose feature prefix matches the folder name (`crates/filesystem` →
 | `noqa` / `type: ignore` / `eslint-disable` / `ts-ignore` / `ts-expect-error` | `BYPASS_COMMENT` | Forbidden lint-stopper comment |
 | `FIXME` / `HACK` / `XXX` | `BYPASS_COMMENT` | Forbidden TODO marker |
 | `raise NotImplementedError` / `assert False` | `UNIMPLEMENTED` / `PANIC` | Python bypass patterns |
-| `throw new Error(...)` | `PANIC` | JS/TS bypass pattern |
+| `throw new Error(...)` / `throw new TypeError(...)` / `throw new RangeError(...)` / `throw new ReferenceError(...)` / `throw new SyntaxError(...)` | `PANIC` | JS/TS bypass pattern |
 
 ### AES305 — Duplication Code
 
@@ -356,7 +356,6 @@ ids whose feature prefix matches the folder name (`crates/filesystem` →
 | Scope | Every scanned source file; import-only windows are excluded |
 | Fix | Extract duplicated logic into shared utilities |
 | Config | `architecture.rules.AES305` (`code_analysis.min_lines`, `duplication_threshold`) |
-| Exceptions | Barrel files are skipped |
 
 ## Group 4: Role Violations
 

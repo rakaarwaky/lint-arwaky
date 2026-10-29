@@ -15,11 +15,9 @@ fn aes_codes_from_rules_doc() -> Vec<String> {
 fn doc_codes_match_emitted_inventory() {
     // Distinct codes: Groups 1–3 also appear in the untouched top-level summary
     // block, so dedup before comparing against the pinned emitted set.
-    let codes: Vec<String> = aes_codes_from_rules_doc()
-        .into_iter()
-        .collect::<std::collections::HashSet<_>>()
-        .into_iter()
-        .collect();
+    let mut codes = aes_codes_from_rules_doc();
+    codes.sort_unstable();
+    codes.dedup();
 
     let expected = [
         "AES101", "AES102", "AES103", "AES201", "AES202", "AES203", "AES204", "AES205", "AES301",
@@ -57,13 +55,11 @@ fn summary_states_38_rules() {
     );
 }
 
-/// Scoped structure assertion: every heading in the converted Group 1–3 subtree
-/// (from the `## Group 1` heading through the line before `## Group 4`) must be
-/// immediately followed by one blank line then a table line.
+// Scoped to Group 1-3; the whole-file variant lands in PR 4.
 #[test]
 fn group1_to_3_headings_are_table_first() {
     let doc = include_str!("../../../RULES_AES.md");
-    let mut lines: Vec<&str> = doc.lines().collect();
+    let lines: Vec<&str> = doc.lines().collect();
 
     let start = lines
         .iter()
