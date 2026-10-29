@@ -2,23 +2,6 @@
 
 ## Feature Overview
 
-The file-watch crate provides a filesystem monitoring system that detects file
-changes in real time and re-triggers analysis via an injected
-`ICodeAnalysisAggregate`. It uses the `notify` crate (inotify on Linux) with
-`notify-debouncer-mini` to debounce rapid changes and avoid redundant
-processing.
-
-**Configuration lifetime in a watch session.** A watch session is one
-long-lived process holding one config orchestrator, and the config cache is
-keyed by path with no modification-time check and no invalidation entry point
-(see `crates/config-system/FRD.md`). The configuration a
-session uses is therefore the one parsed at startup, for the whole session:
-editing `lint_arwaky.config.yaml` while `watch` runs changes nothing until the
-session is restarted. Thresholds, ignored paths, and adapter toggles are
-start-of-session values.
-
-- **Architecture & Data Flow**
-
 ```mermaid
 flowchart TD
     A["Surface"] -->|input| B["Watch Orchestrator"]
@@ -38,7 +21,7 @@ flowchart TD
 | Aspect | Detail|
 |--------|-------|
 | Description | Start, monitor, and stop the filesystem watcher that emits change events for linting. |
-| Business Rules | start(config) registers watches per NotifyWatchProvider (notify crate, inotify on Linux); is_available reports readiness as a BooleanVO; subscribe returns a broadcast receiver of WatchEvent; stop tears the watcher down cleanly. The service runs under the container lifecycle with an AtomicBool run flag. |
+| Business Rules | start(config) registers watches per NotifyWatchProvider (notify crate, inotify on Linux); is_available reports readiness as a BooleanVO; subscribe returns a broadcast receiver of WatchEvent; stop tears the watcher down cleanly. The service runs under the container lifecycle with an AtomicBool run flag; WatchConfig is read once at startup and is never invalidated or reloaded mid-session — a config change requires a restart. |
 | Edge Cases | stop without a running watcher returns Ok; start on an already-running service is idempotent; watcher errors surface as WatchServiceError; subscribe after stop still returns a receiver that simply receives nothing. |
 | Capability | NotifyWatchProvider implements the watch lifecycle over the notify crate. |
 | Protocol | IWatchLifecycleProtocol. |
@@ -96,10 +79,9 @@ flowchart TD
 
 ## Reference
 
-| Artifact | Purpose | Link|
+| Artifact | Purpose | Link |
 |----------|---------|------|
-| BACKLOG.md | Backlog tracking | [BACKLOG.md](BACKLOG.md)|
-| PRD.md | Product requirements | [PRD.md](../../PRD.md)|
-| FRD.md | Feature requirements | [FRD.md](FRD.md)|
-| ROADMAP.md | Roadmap status | [ROADMAP.md](../../ROADMAP.md)|
-| ARCHITECTURE.md | Layer contract | [ARCHITECTURE.md](../../ARCHITECTURE.md)|
+| PRD | Business goals, user stories, and scope | [PRD.md](../../PRD.md) |
+| Backlog | Task tracking, epics, and implementation status | [BACKLOG.md](BACKLOG.md) |
+| Roadmap | Timeline, phasing, and dependencies | [ROADMAP.md](../../ROADMAP.md) |
+| Architecture | System boundaries, tech stack, and infra | [ARCHITECTURE.md](../../ARCHITECTURE.md) |

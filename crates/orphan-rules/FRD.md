@@ -1,14 +1,6 @@
-# FRD — orphan-rules (v2.0.0)
+# FRD — orphan-rules
 
 ## Feature Overview
-
-The orphan-rules crate identifies dead, unused, or unreachable code components across the 7-layer AES architecture. It receives a pre-built `GraphAnalysisContext` from the external `filesystem` crate and performs layer-specific orphan analysis starting from valid entry points (containers, binary entries, main files).
-
-Graph construction is delegated to the external `filesystem` aggregate via `build_orphan_graph_context(root, ignored)`, which discovers workspace files, parses each file via tree-sitter AST, resolves imports to file edges, and returns a `GraphAnalysisContext`. The orphan-rules crate receives pre-built graph data and performs zero I/O — it only performs business logic analysis on pre-fetched data.
-
-The orchestrator internally performs BFS reachability tracing over the import graph to determine which files are "alive" (reachable from entry points), then dispatches to 6 layer-specific orphan analyzers (AES501–AES506).
-
-- **Architecture & Data Flow**
 
 ```mermaid
 flowchart TD
@@ -61,13 +53,13 @@ flowchart TD
 | Business Rules | BuildGraphContext sources the file graph from the filesystem aggregate (BuildOrphanGraphContext); IdentifyEntryPoints computes alive entry points (containers, mains, surfaces calling aggregates); fr001 asserts orchestration steps are inherent agent methods. Reachability flows entry point through DI implementation bridges to capabilities. |
 | Edge Cases | Empty graph yields empty entry points without error; entry points computed from any subset still reach consistently; paths compared by absolute-path suffix so case/nesting differences still match. |
 | Capability | ArchOrphanAnalyzer coordinates context building; shared filesystem serves graph data. |
-| Protocol | IOrphanParserProtocol (parse/breakdown) plus the aggregate's context methods. |
-| Method | BuildGraphContext and IdentifyEntryPoints as OrphanRequest variants resolved through IOrphanAggregate::execute. |
+| Protocol | IOrphanAggregate::execute resolves the context variants; IOrphanParserProtocol (parse_file, is_supported) parses files. |
+| Method | execute(&self, request: OrphanRequest) -> OrphanResponse for BuildGraphContext and IdentifyEntryPoints; IOrphanParserProtocol parses each candidate file. |
 | Input | Root path plus optional entries; source is OrphanRequest::{BuildGraphContext, IdentifyEntryPoints}. |
 | Output | OrphanResponse::{GraphContext, EntryPoints} used by FR-OrphanRules-002..007. |
 | Error | Unreadable trees skip nodes; missing entry points yield an empty alive set, causing downstream orphans (correct behavior). |
 | Event | None; context build is synchronous. |
-| Test | fr001_orchestration_steps_are_inherent_agent_methods and graph-context coverage in the orphan suite assert entry-point derivation. |
+| Test | fr001_orchestration_steps_are_inherent_agent_methods asserts the orchestration steps; e2e_entry_point_detection_default_patterns derives the alive set from default container patterns, and e2e_empty_file_list_yields_no_entry_points expects an empty entry set from an empty file list. |
 | Metric | Seeded container entry points identify the expected alive set; empty graphs produce empty context with zero errors. |
 
 ### FR-OrphanRules-002: Taxonomy Orphan Detection (AES501)
@@ -79,7 +71,7 @@ flowchart TD
 | Edge Cases | Taxonomy imported by agent/capabilities/surface is not an orphan; imported only by other taxonomy is an orphan; self-import only is an orphan; helper suffix categorized as utility; utility suffix also flagged under taxonomy rules. |
 | Capability | TaxonomyOrphanAnalyzer computes taxonomy reachability. |
 | Protocol | ITaxonomyOrphanProtocol. |
-| Method | Taxonomy orphan check over graph context returning AES501 violations. |
+| Method | is_taxonomy_orphan identifying taxonomy files with no alive cross-layer importer (AES501) |
 | Input | Graph context and entry points; source is OrphanRequest::{Check, CheckWithContext, CheckWithEntries}. |
 | Output | OrphanResponse::Violations with AES501 codes. |
 | Error | Missing context causes a pre-check build rather than a crash; unreadable files are skipped. |
@@ -96,7 +88,7 @@ flowchart TD
 | Edge Cases | Aggregate not called by surface is an orphan; implementor matched by absolute-path suffix is alive; same basename at different path stays orphan; implementor not alive remains orphan; multi-trait file with only one alive implementor keeps only that trait alive. |
 | Capability | ContractOrphanAnalyzer resolves implementors per contract. |
 | Protocol | IContractOrphanProtocol. |
-| Method | Contract orphan check mapping contracts to alive implementors returning AES502 violations. |
+| Method | is_contract_orphan mapping contracts to alive implementors (AES502) |
 | Input | Graph context, entry points, and parsed entries; source is OrphanRequest check variants (Also OrphanRequest::Scan for full runs). |
 | Output | OrphanResponse::Violations with AES502 codes; ScanOutcome for full scans. |
 | Error | Unmatched references report orphan rather than erroring; unreadable files skipped. |
@@ -113,7 +105,7 @@ flowchart TD
 | Edge Cases | Reachable file not an orphan; broken chain detects unreachable; DI bridge reaches capabilities; unwired reachable file reports a DI bridge gap message; python chained imports reachable; multiple impls on one contract all examined. |
 | Capability | CapabilitiesOrphanAnalyzer walks DI chains to capabilities. |
 | Protocol | ICapabilitiesOrphanProtocol. |
-| Method | Capabilities orphan check over graph plus bridge edges returning AES503 violations. |
+| Method | is_capabilities_orphan walking DI chains over the graph plus bridge edges (AES503) |
 | Input | Graph context with implementation bridges; source is OrphanRequest check variants. |
 | Output | OrphanResponse::Violations with AES503 codes including violation display messages. |
 | Error | Gap in wiring is reported as the violation itself (message mentions DI bridge gap), not a tool error. |
@@ -130,7 +122,7 @@ flowchart TD
 | Edge Cases | Utility imported by any alive file is not an orphan; unimported utility is an orphan; self-references do not count; empty content is handled without panic; categorization of utility suffix files verified by test_utility_suffix_categorization and aes501_taxonomy_helper_suffix_categorized_as_utility. |
 | Capability | UtilityOrphanAnalyzer computes utility reachability. |
 | Protocol | IUtilityOrphanProtocol. |
-| Method | Utility orphan check returning AES504 violations. |
+| Method | is_utility_orphan flagging utility files no alive file references (AES504) |
 | Input | Graph context and entry points; source is OrphanRequest check variants. |
 | Output | OrphanResponse::Violations with AES504 codes. |
 | Error | Missing references produce a violation (the orphan), not an error. |
@@ -147,7 +139,7 @@ flowchart TD
 | Edge Cases | Agent aggregate used by surface/container/main is not an orphan; aggregate trait never in alive set is an orphan; empty alive set yields no agent orphans; empty file not an orphan; display message contract covered by aes505_agent_violation_display_message. |
 | Capability | AgentOrphanAnalyzer checks agent aggregate usage. |
 | Protocol | IAgentOrphanProtocol. |
-| Method | Agent orphan check against the alive set returning AES505 violations. |
+| Method | is_agent_orphan checking aggregate usage against the alive set (AES505) |
 | Input | Graph context, entry points, alive aggregate set; source is OrphanRequest check variants. |
 | Output | OrphanResponse::Violations with AES505 codes. |
 | Error | Unreachable aggregate registers as orphan rather than failing. |
@@ -164,7 +156,7 @@ flowchart TD
 | Edge Cases | Surface used from wiring is not an orphan; unused surface file is orphaned with its own violation kind; unchanged inputs classify deterministically; parse of surface tree with no entries yields no finding. |
 | Capability | SurfacesOrphanAnalyzer checks surface reachability. |
 | Protocol | ISurfacesOrphanProtocol. |
-| Method | Surfaces orphan check returning AES506 violations. |
+| Method | is_surface_orphan flagging render trees never invoked from entry flows (AES506) |
 | Input | Graph context and registration data; source is OrphanRequest check variants. |
 | Output | OrphanResponse::Violations with AES506 codes. |
 | Error | No registration entry maps to an orphan finding; parse errors skip entries. |
@@ -184,10 +176,9 @@ flowchart TD
 
 ## Reference
 
-| Artifact | Purpose | Link|
+| Artifact | Purpose | Link |
 |----------|---------|------|
-| BACKLOG.md | Backlog tracking | [BACKLOG.md](BACKLOG.md)|
-| PRD.md | Product requirements | [PRD.md](../../PRD.md)|
-| FRD.md | Feature requirements | [FRD.md](FRD.md)|
-| ROADMAP.md | Roadmap status | [ROADMAP.md](../../ROADMAP.md)|
-| ARCHITECTURE.md | Layer contract | [ARCHITECTURE.md](../../ARCHITECTURE.md)|
+| PRD | Business goals, user stories, and scope | [PRD.md](../../PRD.md) |
+| Backlog | Task tracking, epics, and implementation status | [BACKLOG.md](BACKLOG.md) |
+| Roadmap | Timeline, phasing, and dependencies | [ROADMAP.md](../../ROADMAP.md) |
+| Architecture | System boundaries, tech stack, and infra | [ARCHITECTURE.md](../../ARCHITECTURE.md) |

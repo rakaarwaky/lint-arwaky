@@ -1,18 +1,8 @@
-# FRD — external-lint (v1.14.0)
+# FRD — external-lint
 
 ---
 
 ## Feature Overview
-
-The external-lint crate is an aggregate bridge to external, industry-standard linters and formatters. It coordinates and executes Cargo Clippy, Rustfmt, cargo-audit, Ruff, Mypy, Bandit, ESLint, Prettier, TSC, and markdownlint-cli on Rust, Python, JS/TS, and Markdown files. It normalizes their JSON/text reports into the unified lint-arwaky violation format using **tool-native rule codes** (e.g., `clippy::needless_return`, `ruff::E501`, `markdownlint::MD041`) and integrates them into the compliance report.
-
-The crate also provides **auto-fix** capabilities — each adapter exposes an `apply_fix` method that runs the tool's native fix command (e.g., `cargo clippy --fix`, `ruff check --fix`, `eslint --fix`).
-
-All adapters execute **sequentially** (no threads, no async runtime). Each adapter runs its external tool as a subprocess, captures output, and normalizes results. The entry point is the DI container, which wires all adapters and exposes the aggregate trait.
-
-The crate does **not** own language detection. Project-level language detection belongs to the `filesystem` aggregate, which serves it as `FilesystemRequest::DetectProjectLanguages` (see [crates/filesystem/FRD.md](../filesystem/FRD.md)). When a caller supplies no pre-computed context, the orchestrator asks the filesystem aggregate which language groups are present and uses the returned flags. It never walks the tree itself.
-
-- **Architecture & Data Flow**
 
 ```mermaid
 flowchart TD
@@ -60,7 +50,7 @@ flowchart TD
 | Input          | Target path, the booleans `has_rust`, `has_python`, `has_js`, `has_markdown`, and an optional context (config entries, ignored paths). The target path flows through the `ExternalLintRequest` request variants carried by the aggregate entry point (`execute`). |
 | Output         | Ordered list of adapter names, and the aggregated lint results from all adapters. |
 | Error          | No error on selection; empty list for no matches. Per-adapter errors are caught at the loop boundary; missing tool detection via OS error string matching. A failing adapter does not stop subsequent adapters. |
-| Event          | — |
+| Event          | None |
 | Test           | `select_adapters(true, false, false, false)` yields `clippy`, `rustfmt`, `cargo-audit` in that order; empty flags yield an empty list. |
 | Metric         | 0 unrequested adapters invoked; 0 threads spawned per scan. |
 
@@ -77,7 +67,7 @@ flowchart TD
 | Input          | Tool name, file path, fix argument (e.g., `--fix`, `--write`). |
 | Output         | Compliance status indicating success or failure. |
 | Error          | Subprocess failure mapped to an adapter error; caller decides next step. |
-| Event          | — |
+| Event          | None |
 | Test           | `js_apply_fix` against a fix-capable tool reports success after the tool rewrites the file; against Mypy it reports the no-op status. |
 | Metric         | 1 subprocess spawn per invoked fix. |
 
@@ -94,7 +84,7 @@ flowchart TD
 | Input          | Raw output from an external linter subprocess (JSON or text). |
 | Output         | Normalized lint results. |
 | Error          | Parse failures return empty results with a warning; no crash on malformed output. |
-| Event          | — |
+| Event          | None |
 | Test           | A ruff JSON report with `E501` normalizes to `ruff::E501` LOW; a clippy `correctness` diagnostic normalizes to CRITICAL. |
 | Metric         | 0 panics on malformed tool output; 100% of results carry tool-native rule codes. |
 
@@ -111,7 +101,7 @@ flowchart TD
 | Input          | Tool name, argument list, target path, and timeout in seconds. |
 | Output         | Captured stdout/stderr text plus a completion status (ok, timed out, spawn failure). |
 | Error          | Spawn and timeout errors are surfaced as `LinterOperationError`. |
-| Event          | — |
+| Event          | None |
 | Test           | A tool exceeding its ceiling returns the timed-out status while the remaining adapters still run; a PATH-missing tool returns the unavailable status. |
 | Metric         | 0 retries per adapter; total worst-case scan wall time ≤ ~840 s. |
 
@@ -128,7 +118,7 @@ flowchart TD
 | Input          | Tool name and a starting path. |
 | Output         | Absolute path to the resolved binary and the working directory to run it from. |
 | Error          | Resolution failures are reported as adapter errors; other adapters continue. |
-| Event          | — |
+| Event          | None |
 | Test           | A file under `node_modules/.bin`-bearing project resolves to the local binary; a bare file with no config within 10 levels reports the tool unavailable. |
 | Metric         | 1 lookup per tool invocation; 0 global installs required for the local-preference path. |
 
@@ -145,7 +135,7 @@ flowchart TD
 | Input          | Starting path. |
 | Output         | Absolute path to the resolved cargo working directory, or none. |
 | Error          | Resolution failure is reported as an adapter error; other adapters continue. |
-| Event          | — |
+| Event          | None |
 | Test           | A path nested in a cargo project resolves to the directory carrying `Cargo.toml`; a path with no cargo tree reports none. |
 | Metric         | 1 upward walk per invocation; 0 files created or modified. |
 
@@ -158,24 +148,6 @@ flowchart TD
 | Method     | `execute` |
 | Request    | ExternalLintRequest: `ScanAll { path }`, `ScanAllWithContext { path, context }`, `AdapterNames` |
 | Response   | ExternalLintResponse: `Scan { violations }` or `AdapterNames { names }` |
-| Protocol API | `scan` (&FilePath → `LintResultList`); `fix` (&FilePath → `ComplianceStatus`); `exec_cmd_scan` (Vec\<String\>, FilePath, f64, Option\<AdapterName\>, &FilePath → `ResponseData`); `exec_cmd_adapter` (Vec\<String\>, FilePath, f64, AdapterName → `ResponseData`); `js_apply_fix` (&FilePath, &str, &str → `ComplianceStatus`); `select_adapters` (bool, bool, bool, bool → `AdapterNameList`) — all errors `LinterOperationError` where applicable |
-
-### Protocol API
-
-| Method | Input | Output | Error | Event | Description |
-|---|---|---|---|---|---|
-| `scan` | &FilePath | `LintResultList` | `LinterOperationError` | — | Scan. |
-| `fix` | &FilePath | `ComplianceStatus` | `LinterOperationError` | — | Apply fix. |
-| `exec_cmd_scan` | Vec<String>, FilePath, f64, Option<AdapterName>, &FilePath | `ResponseData` | `LinterOperationError` | — | Exec cmd scan. |
-| `exec_cmd_adapter` | Vec<String>, FilePath, f64, AdapterName | `ResponseData` | `LinterOperationError` | — | Exec cmd adapter. |
-| `js_apply_fix` | &FilePath, &str, &str | `ComplianceStatus` | `LinterOperationError` | — | Js apply fix. |
-| `select_adapters` | bool, bool, bool, bool | `AdapterNameList` | — | — | Select adapters. |
-
-### Aggregate API
-
-| Method | Input | Output | Error | Event | Description |
-|---|---|---|---|---|---|
-| `execute` | ExternalLintRequest | `ExternalLintResponse` | — | — | Single composite entry point over the feature. |
 
 ## Reference
 

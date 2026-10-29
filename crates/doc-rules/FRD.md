@@ -1,12 +1,8 @@
-# Doc Rules — FRD
+# FRD — doc-rules
 
 ## Feature Overview
 
-The doc-rules crate enforces the AES document-invariant contract across the workspace. It audits every recognized `.md` document against seven rules (AES601–AES607): FR-ID format and field completeness with FR/protocol class parity, section structure shape, spec purity, crosslink integrity, document heading structure, template body-shape conformance with required-document presence, and PR-ID to module-folder ownership. AES606 is answered by four capability seams — table-shape conformance, required-document presence, member-document presence, and template-body placeholder conformance — so this document declares ten requirements against ten protocol classes. Findings carry a machine-readable `violation_type` so consumers can route on them without parsing prose.
-
-Each rule is one capability behind one protocol seam; AES606 carries four seams, so the ten requirements below map one-for-one onto the ten capability seams the agent coordinates. The agent walks the document chain once, hands every capability the same audit context, and merges what they report; the filesystem walk itself lives in the shared utility layer, because an agent may not perform I/O. No external tool is involved.
-
-**Path scoping.** The audit request carries one path, and that path is the **audit root**, not a filter. This differs from `scan`/`check`, which index the whole workspace and then narrow the findings to the target: `docs <path>` discovers the document chain starting at `<path>` and audits only what it finds there. Two consequences follow for a sub-directory run. First, root-level documents outside `<path>` are not audited at all. Second, crosslink and master-document invariants (AES604) resolve against `<path>` — a crate directory has no sibling `PRD.md`/`ROADMAP.md`, so the invariants that look for them behave as they would in a workspace that has none. A whole-workspace audit is the intended default; a sub-directory run is a narrower, self-contained audit, not a filtered view of the full one.
+The doc-rules crate audits every recognized document in the workspace against the seven document rules AES601–AES607. `DocOrchestrator` walks the document chain once through `DocRequest::AuditAll`, hands the same `DocAuditContext` to the ten capability seams (`FrFormatChecker`, `SectionStructureChecker`, `SpecPurityChecker`, `CrosslinkChecker`, `HeadingStructureChecker`, `TemplateConformanceChecker`, `RequiredDocChecker`, `MemberDocChecker`, `TemplateBodyChecker`, `PrFolderOwnershipChecker`), and merges their `DocFinding` rows. The filesystem walk lives in the shared utility layer, and every finding carries a machine-readable `violation_type` so consumers route without parsing prose.
 
 ## Functional Requirements
 
@@ -127,7 +123,7 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 | Error | Audit-only: a missing document is a finding; the run never aborts and offers no auto-create. |
 | Event | `lint-arwaky-cli docs .`. |
 | Test | `unit_doc_template_conformance` suite — `aes606_reports_a_missing_required_root_doc` and `aes606_stays_silent_for_required_docs_when_the_root_is_present`. |
-| Metric | Zero `missing_required_doc` findings from `lint-arwaky-cli docs .` on a workspace that ships the full root layout. |
+| Metric | Zero `missing_required_doc` findings from `lint-arwaky-cli docs .` on a workspace that carries the full root layout. |
 
 ### FR-DOC-008: Member-Folder Document Presence (AES606)
 
@@ -143,7 +139,7 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 | Output | `Vec<DocFinding>` — code `AES606` with the missing-document violation type, one per absent file, stamped on the member folder. |
 | Error | Audit-only: findings; a compliant folder yields an empty vector rather than an error. |
 | Event | `lint-arwaky-cli docs .`. |
-| Test | `unit_doc_member_and_template_body` suite — `member_doc_checker_feature_missing_pair_fires_findings`, `member_doc_checker_kernel_owes_data_and_backlog`, `member_doc_checker_surface_owes_design_and_backlog`, `member_doc_checker_exempt_member_is_suppressed`, `member_doc_checker_strict_off_suppresses_findings`, `member_doc_checker_force_strict_overrides_config_off`, `member_doc_checker_compliant_feature_no_findings`, `member_doc_checker_none_role_owes_nothing`. |
+| Test | `unit_doc_member_and_template_body` suite — `member_doc_checker_feature_missing_pair_fires_findings`, `member_doc_checker_kernel_owes_data_and_backlog`, `member_doc_checker_surface_owes_design_and_backlog`, `member_doc_checker_exempt_member_is_suppressed`, `member_doc_checker_strict_off_suppresses_findings`, `member_doc_checker_force_strict_overrides_config_off`, `member_doc_checker_compliant_feature_no_findings`, `member_doc_checker_none_role_ows_nothing`. |
 | Metric | Zero member-document findings from `lint-arwaky-cli docs .` on a workspace where every role folder carries its pair. |
 
 ### FR-DOC-009: Template Body & Placeholder Conformance (AES606)
@@ -167,17 +163,17 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 
 | Aspect | Detail|
 |--------|-------|
-| Description | Every `PR-<PROJECT>-NNN` item declared in the root PRD's `Project Requirements` must own exactly one top-level module folder under `crates\|modules\|packages` whose name matches the PR-ID's project identifier (`PROJECT`). A PRD whose PR-IDs all share one project identifier is satisfied when the layout root exists and is non-empty (that project owns the whole folder set). |
-| Business Rules | The root PRD is the only document that declares PR-IDs in `Project Requirements`. Ownership is keyed on the project identifier segment (`PR-LA-001` → `LA`), not on strict cardinality-1 per PR-ID. One identifier may own the whole layout. A PRD declaring no PR-IDs stays silent. A root without a workspace-root marker (`Cargo.toml`, `pyproject.toml`, `package.json`) stays silent. A workspace with no `crates\|modules\|packages` layout root stays silent. |
+| Description | Every `PR-<PROJECT>-NNN` item declared in the root PRD's `Project Requirements` must own exactly one top-level module folder under crates/modules/packages whose name matches the PR-ID's project identifier (`PROJECT`). A PRD whose PR-IDs all share one project identifier is satisfied when the layout root exists and is non-empty (that project owns the whole folder set). |
+| Business Rules | The root PRD is the only document that declares PR-IDs in `Project Requirements`. Ownership is keyed on the project identifier segment (`PR-LA-001` → `LA`), not on strict cardinality-1 per PR-ID. One identifier may own the whole layout. A PRD declaring no PR-IDs stays silent. A root without a workspace-root marker (`Cargo.toml`, `pyproject.toml`, `package.json`) stays silent. A workspace with no crates/modules/packages layout root stays silent. |
 | Edge Cases | No matching folder for the identifier fires one finding per PR-ID, anchored to its `Project Requirements` heading line, stamped on the PRD document with code `AES607` and violation type `pr_folder_not_owned`. `shared`/`kernel` folders are skipped as kernel dirs. `exempt_members` does not apply — this is a root-PRD-level check, not a per-member check. |
 | Capability | `PrFolderOwnershipChecker` implements `IPrFolderOwnershipProtocol` (`audit_pr_folder_ownership`). |
 | Protocol | `IPrFolderOwnershipProtocol` in `shared/doc_rules`. |
 | Method | `audit_pr_folder_ownership(context: &DocAuditContext) -> Vec<DocFinding>` |
 | Input | `DocAuditContext` carrying the document chain rooted at the workspace root. |
-| Output | `Vec<DocFinding>` — one finding per PR-ID whose project identifier owns no top-level module folder under `crates\|modules\|packages`. |
+| Output | `Vec<DocFinding>` — one finding per PR-ID whose project identifier owns no top-level module folder under crates/modules/packages. |
 | Error | Not applicable; audit-only violation, no auto-fix. |
 | Event | `lint-arwaky-cli docs .` (doc-audit pass); not run by `scan`/`check`. |
-| Test | Capability test suite covers: clean-matching-folder, missing-folder fires one finding, multi-project membership, single-project owns whole non-empty layout, empty layout fires each PR-ID, non-root silent, no PR-IDs silent, no layout root silent. |
+| Test | `unit_doc_pr_folder_ownership` suite — `pr_folder_ownership_matching_folder_is_clean`, `pr_folder_ownership_missing_folder_fires_one_finding`, `pr_folder_ownership_multi_project_membership`, `pr_folder_ownership_single_project_owns_whole_nonempty_layout`, `pr_folder_ownership_single_project_empty_layout_fires_each`, `pr_folder_ownership_non_root_is_silent`, `pr_folder_ownership_no_pr_ids_is_silent`, and `pr_folder_ownership_no_layout_root_is_silent` assert firing and silence. |
 | Metric | Zero `AES607` / `pr_folder_not_owned` findings from `lint-arwaky-cli docs .` on a conforming project. |
 
 ## Public Interface
@@ -192,10 +188,9 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 
 ## Reference
 
-| Artifact | Purpose | Link|
+| Artifact | Purpose | Link |
 |----------|---------|------|
-| BACKLOG.md | Backlog tracking | [BACKLOG.md](BACKLOG.md)|
-| PRD.md | Product requirements | [PRD.md](../../PRD.md)|
-| FRD.md | Feature requirements | [FRD.md](FRD.md)|
-| ROADMAP.md | Roadmap status | [ROADMAP.md](../../ROADMAP.md)|
-| ARCHITECTURE.md | Layer contract | [ARCHITECTURE.md](../../ARCHITECTURE.md)|
+| PRD | Business goals, user stories, and scope | [PRD.md](../../PRD.md) |
+| Backlog | Task tracking, epics, and implementation status | [BACKLOG.md](BACKLOG.md) |
+| Roadmap | Timeline, phasing, and dependencies | [ROADMAP.md](../../ROADMAP.md) |
+| Architecture | System boundaries, tech stack, and infra | [ARCHITECTURE.md](../../ARCHITECTURE.md) |

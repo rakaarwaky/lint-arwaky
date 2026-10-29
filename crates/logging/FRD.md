@@ -4,24 +4,6 @@
 
 ## Feature Overview
 
-The logging crate gives a developer running `lint-arwaky scan -v` a
-real-time feed on stderr of what the scan is doing: which directories
-it walks, which directories it skips and why, how long each linter
-phase takes, and what the final result is.
-
-It provides:
-
-- `LogVerbosity` — the value type the `-v` / `--verbose` flag selects.
-  One density level: the flag is always the full per-file trace.
-- Four capabilities: filter construction, subscriber installation,
-  phase timing, and walker reporting.
-- An orchestrator that composes the four capabilities; a root
-  container that wires them together.
-
-Output goes to stderr so stdout stays clean for piping.
-
-- **Architecture & Data Flow**
-
 ```mermaid
 flowchart TD
     A["CLI entry point"] -->|LogVerbosity| B["LoggingOrchestrator"]
@@ -48,7 +30,7 @@ flowchart TD
 | Edge Cases | Unknown verbosity level falls back to the default mapping rather than panicking; repeated builds with the same level yield identical directives; audit target is always at least info. |
 | Capability | FilterBuilder maps verbosity to filter directives. |
 | Protocol | IFilterBuildProtocol. |
-| Method | Build the EnvFilter string/directives for a given verbosity level. |
+| Method | build_filter(&self, verbosity: LogVerbosity) -> EnvFilter |
 | Input | Verbosity enum from LoggingRequest (InstallSubscriber carries it); source is CLI verbosity flags. |
 | Output | EnvFilter passed to subscriber installation in FR-Logging-002; returned in LoggingResponse::Done. |
 | Error | Invalid level input falls back to default directives; never fails. |
@@ -65,7 +47,7 @@ flowchart TD
 | Edge Cases | Second init call is a noop (no panic, no double subscriber); init with ANSI disabled works; init with debug verbosity works; default verbosity works; container init delegates to the orchestrator. |
 | Capability | SubscriberInit performs global subscriber installation. |
 | Protocol | ISubscriberInstallProtocol. |
-| Method | Install the subscriber with the given filter and ansi flag; returns the EnvFilter used. |
+| Method | install(&self, verbosity: LogVerbosity, with_ansi: bool) — set-once, silently ignored after the first call |
 | Input | Verbosity level plus ansi boolean; source is LoggingRequestKind::InstallSubscriber via ILoggingAggregate::execute. |
 | Output | LoggingResponseKind::Done carrying install status and the EnvFilter. |
 | Error | Already-installed global subscriber makes the call a noop with success status; no error propagates. |
@@ -82,12 +64,12 @@ flowchart TD
 | Edge Cases | PhaseFinished without a matching PhaseStarted tolerates a zero/unknown duration rather than panicking; two sequential phases each get their own timing; dropping a timer without finishing still returns a response without panic. |
 | Capability | PhaseTimerCapability records phase durations. |
 | Protocol | IPhaseTimerProtocol. |
-| Method | Start phase timing, stop it, and return the measured duration. |
+| Method | phase_started(&self, phase: &'static str) -> PhaseTimerVO; phase_finished(timer, count) — the end marker fires even if the phase panics |
 | Input | Phase name from LoggingRequestKind::PhaseStarted and PhaseFinished; source is per-phase calls in the scan pipeline. |
 | Output | Timing data through LoggingResponseKind::PhaseTimer plus a structured trace event. |
 | Error | Unmatched finish (no start) yields a zero-duration result instead of an error. |
 | Event | Structured trace event on phase completion with phase name and elapsed milliseconds. |
-| Test | PhaseTimer contract tests in the logging suite assert start/stop pairing and response shape (LoggingResponseKind::PhaseTimer). |
+| Test | FR-Logging-003 coverage asserts phase_finished after a seeded busy phase reports elapsed_ms greater than zero through LoggingResponseKind::PhaseTimer, and an unmatched phase_finished returns a zero duration without panicking. |
 | Metric | Measured duration for a seeded busy phase is greater than zero and within a sane bound of wall clock; unmatched finish returns zero without panic. |
 
 ### FR-Logging-004: Report Walker Progress
@@ -99,12 +81,12 @@ flowchart TD
 | Edge Cases | Skipped files still appear as skip events with reason, not as enter events; empty batch emits nothing; disabled verbosity suppresses emission without dropping counts; walker continuation is unaffected by reporting failures. |
 | Capability | WalkerReporter emits walker progress events. |
 | Protocol | IWalkerReportProtocol. |
-| Method | Report enter, skip, and discovered-count signals to the tracing backend. |
+| Method | walker_enter(&self, dir: &str), walker_skip(&self, dir: &str, reason: SkipReason), files_discovered(&self, count: Count, elapsed_ms: DurationMs) |
 | Input | Path plus optional reason and counts; source is LoggingRequestKind::WalkerEnter, WalkerSkip, and FilesDiscovered inside the scan walk. |
 | Output | LoggingResponseKind::Done plus trace events visible at info/debug. |
 | Error | Reporting never fails the walk; emission is best-effort. |
 | Event | Trace events for enter, skip, and discovered counts. |
-| Test | Walker-report contract coverage in the logging tests asserts enter/skip event emission and count reporting through the aggregate. |
+| Test | FR-Logging-004 coverage asserts walker_enter and walker_skip emit one event per seeded path (skip carrying its reason) and files_discovered reports the seeded count; disabled verbosity emits no events yet the counts still match. |
 | Metric | On a seeded tree, reported enter plus skip events equal the seeded file count; disabled verbosity produces zero emitted events yet identical counts. |
 
 ## Public Interface
@@ -119,10 +101,9 @@ flowchart TD
 
 ## Reference
 
-| Artifact | Purpose | Link|
+| Artifact | Purpose | Link |
 |----------|---------|------|
-| BACKLOG.md | Backlog tracking | [BACKLOG.md](BACKLOG.md)|
-| PRD.md | Product requirements | [PRD.md](../../PRD.md)|
-| FRD.md | Feature requirements | [FRD.md](FRD.md)|
-| ROADMAP.md | Roadmap status | [ROADMAP.md](../../ROADMAP.md)|
-| ARCHITECTURE.md | Layer contract | [ARCHITECTURE.md](../../ARCHITECTURE.md)|
+| PRD | Business goals, user stories, and scope | [PRD.md](../../PRD.md) |
+| Backlog | Task tracking, epics, and implementation status | [BACKLOG.md](BACKLOG.md) |
+| Roadmap | Timeline, phasing, and dependencies | [ROADMAP.md](../../ROADMAP.md) |
+| Architecture | System boundaries, tech stack, and infra | [ARCHITECTURE.md](../../ARCHITECTURE.md) |

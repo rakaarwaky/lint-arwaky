@@ -1,14 +1,8 @@
-# FRD — report-formatter (v1.14.0)
+# FRD — report-formatter
 
 ---
 
 ## Feature Overview
-
-The report-formatter crate provides formatting capabilities for scan report output. It has exactly four capabilities, one per output format (text, JSON, SARIF, JUnit), each implementing a dedicated protocol trait. The agent orchestrator routes requests through the aggregate by matching on `Format` and calling the specific protocol method directly — no delegation seam exists.
-
-All formatters are **self-contained** — they operate solely on `ScanReport` data and do not depend on other rule crates.
-
-- **Architecture & Data Flow**
 
 ```mermaid
 flowchart TD
@@ -28,29 +22,6 @@ flowchart TD
     H --> B
     B -->|output| A
 ```
-
-- **ScanReport Content**
-
-`ScanReport` contains two categories of findings:
-
-| Category                  | Source                   | Rule codes        | Example                                                   |
-| --------------------------- | -------------------------- | ------------------- | ------------------------------------------------------------|
-| **AES violations**        | Internal rule crates     | AES101–AES506    | `AES201 CRITICAL surface → capabilities import forbidden`|
-| **External lint results** | External linter adapters | Tool-native codes | `clippy::needless_return`, `ruff::E501`                   |
-| **PARSE_WARN**            | Report input or diagnostics | `PARSE_WARN` | `File skipped: parse failure — syntax error`|
-
-> **PARSE_WARN dual representation**: PARSE_WARN entries may arrive via
-> `report.results` (as `LintResult` with code starting with `PARSE_`) or
-> via `report.diagnostics` (as `PipelineDiagnostic`). All formatters
-> handle both paths and render them consistently.
->
-> **Dedup invariant**: a single parse failure must be recorded exactly
-> once per `ScanReport`. `ScanReport::new` enforces this at the producer
-> boundary: a parser-sourced `PipelineDiagnostic` whose file matches a
-> `PARSE_`-prefixed `LintResult` in `results` is dropped from
-> `diagnostics`, so no formatter double-counts the same failure. Dedup is
-> per file: parser diagnostics for other files, and non-parser
-> diagnostics, survive.
 
 ---
 
@@ -95,7 +66,7 @@ flowchart TD
 | Aspect | Detail|
 |--------|-------|
 | Description | Render a scan report as SARIF 2.1.0 for code-scanning uploaders. |
-| Business Rules | format_sarif produces SARIF 2.1.0 XML/JSON document (runs, tool driver, results); empty report is valid SARIF with zero results; findings map to results with level and rule id; tool-native rule ids are retained for external findings. |
+| Business Rules | format_sarif produces a SARIF 2.1.0 JSON document (runs, tool driver, results); empty report is valid SARIF with zero results; findings map to results with level and rule id; tool-native rule ids are retained for external findings. |
 | Edge Cases | Empty report validates as SARIF with zero results; full report round-trips to disk; direct slice formatting works outside the orchestrator routing; unknown severity maps to a default SARIF level rather than failing validation. |
 | Capability | SarifFormatter builds the SARIF document. |
 | Protocol | ISarifFormatProtocol. |
@@ -136,10 +107,9 @@ flowchart TD
 
 ## Reference
 
-| Artifact | Purpose | Link|
+| Artifact | Purpose | Link |
 |----------|---------|------|
-| BACKLOG.md | Backlog tracking | [BACKLOG.md](BACKLOG.md)|
-| PRD.md | Product requirements | [PRD.md](../../PRD.md)|
-| FRD.md | Feature requirements | [FRD.md](FRD.md)|
-| ROADMAP.md | Roadmap status | [ROADMAP.md](../../ROADMAP.md)|
-| ARCHITECTURE.md | Layer contract | [ARCHITECTURE.md](../../ARCHITECTURE.md)|
+| PRD | Business goals, user stories, and scope | [PRD.md](../../PRD.md) |
+| Backlog | Task tracking, epics, and implementation status | [BACKLOG.md](BACKLOG.md) |
+| Roadmap | Timeline, phasing, and dependencies | [ROADMAP.md](../../ROADMAP.md) |
+| Architecture | System boundaries, tech stack, and infra | [ARCHITECTURE.md](../../ARCHITECTURE.md) |

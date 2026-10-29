@@ -1,20 +1,6 @@
-# FRD — naming-rules (v2.1.0)
-
-> **Scope:** this crate enforces AES101 (stem shape), AES102 (layer suffix), and
-> AES103 (test/bench file prefix). Unknown-layer-prefix files are skipped by
-> AES102 (no layer → no suffix policy) and validated structurally by AES101.
-> AES103 is the only rule here that reads `tests/` and `benches/`, which the
-> default discovery walk prunes, so its input arrives as a second file set.
-
----
+# FRD — naming-rules
 
 ## Feature Overview
-
-The naming-rules crate enforces strict naming conventions across the codebase to ensure consistency, readability, and adherence to the 7-layer AES architecture. It validates that files conform to structural naming patterns (AES101) and that file prefixes/suffixes are consistent with their architectural layer (AES102), preventing naming chaos and ensuring every file can be correctly assigned to an architectural layer.
-
-File system operations  are handled by the external `filesystem` crate via `IFilesystemAggregate`. The surface layer fetches the pre-populated file list from `filesystem.file_list()` and passes it to the naming orchestrator via `run_audit_with_entries(&[FileEntry])`. The naming-rules crate performs zero I/O — it receives data and delegates analysis to its internal checkers.
-
-- **Architecture & Data Flow**
 
 ```mermaid
 flowchart TD
@@ -50,11 +36,11 @@ flowchart TD
 | Aspect | Detail|
 |--------|-------|
 | Description | Validate file stem shapes against the AES naming convention for each source language. |
-| Business Rules | AES101 checks the stem (not the extension) for legal shape: mixed-case identifiers are expected; all-uppercase stems are violations; files are classified by directory so support-directory files are treated as flat; windows-style separators classify the same as forward slashes; barrels in support directories are skipped. Violation messages report the observed shape. |
+| Business Rules | AES101 checks the stem (not the extension) for legal shape: mixed-case identifiers are expected; all-uppercase stems are violations; files are classified by directory so support-directory files are treated as flat; windows-style separators classify the same as forward slashes; barrels in support directories are skipped. Violation messages report the observed shape; files with no recognized layer prefix are still validated structurally by stem shape here. |
 | Edge Cases | All uppercase produces a violation; windows separator path classified identically; barrel in support dir skipped; file outside relevant directories not read at all; unreadable file yields no finding rather than failing the audit. |
 | Capability | NamingConventionChecker validates stem shape. |
 | Protocol | INamingConventionProtocol. |
-| Method | Stem-shape check over a file path returning violations with the observed shape. |
+| Method | check_file_naming returning violations with the observed stem shape |
 | Input | File path (and optionally content for classification); source is NamingRequest::RunAuditWithEntries or RunAuditWithTestEntries via INamingRunnerAggregate::execute. |
 | Output | Lint results with AES101 codes inside NamingResponse::Audit. |
 | Error | Missing file yields no finding for that path; classification never panics on either separator style. |
@@ -67,11 +53,11 @@ flowchart TD
 | Aspect | Detail|
 |--------|-------|
 | Description | Enforce suffix and prefix policies for special file roles (barrels, registries, regression guards). |
-| Business Rules | AES102 checks each file for a legal prefix/suffix descriptor for its role: an allowed suffix yields no violation; a file with no legal prefix produces a violation explaining the missing descriptor; barrel files are skipped (not flagged); a regression guard name is legal even though it is not a category; support directories are flat scope. |
+| Business Rules | AES102 checks each file for a legal prefix/suffix descriptor for its role: an allowed suffix yields no violation; a file with no legal prefix produces a violation explaining the missing descriptor; barrel files are skipped (not flagged); a regression guard name is legal even though it is not a category; support directories are flat scope; files with no recognized layer prefix are skipped because they carry no layer, so no suffix policy applies. |
 | Edge Cases | Barrel file skipped; file with no legal prefix produces a violation; a regression-guard name passes despite not matching category prefixes; empty content file (no descriptors found) is handled without panic; file outside policy directories is never read. |
 | Capability | SuffixPolicyChecker validates prefix/suffix descriptors. |
 | Protocol | ISuffixPolicyProtocol. |
-| Method | Suffix/prefix policy check for a file returning violations naming the missing policy. |
+| Method | check_domain_suffixes returning violations that name the missing prefix or suffix policy |
 | Input | File path plus content; source is NamingRequest through the audit entry points. |
 | Output | Lint results with AES102 codes inside NamingResponse::Audit. |
 | Error | Unclassified file yields no finding rather than a false positive. |
@@ -84,11 +70,11 @@ flowchart TD
 | Aspect | Detail|
 |--------|-------|
 | Description | Keep test and bench files disciplined to legal prefixes and correct directories. |
-| Business Rules | AES103 classifies files under tests/ and benches/: a test named inside benches reports to move it; a bench named inside tests reports to move it; a mismatched prefix says move rather than rename; a file with no legal prefix in a test directory is named with its legal prefixes in the message; nested depth is reported with flattening guidance; benchmarks belong in benches/; support subdirectories under tests are accepted so shared helpers survive; unclassified paths are reported for classification rather than assumed. |
+| Business Rules | AES103 reads tests/ and benches/ — directories the default discovery walk prunes — so its input arrives as a second file set; it classifies those files: a test named inside benches reports to move it; a bench named inside tests reports to move it; a mismatched prefix says move rather than rename; a file with no legal prefix in a test directory is named with its legal prefixes in the message; nested depth is reported with flattening guidance; benchmarks belong in benches/; support subdirectories under tests are accepted so shared helpers survive; unclassified paths are reported for classification rather than assumed. |
 | Edge Cases | Benchmark inside tests says move it; test inside benches says move it; bench prefix inside tests says move rather than rename; benchmarks accepted in benches dir; a benches subdirectory is reported; outside-directory files are not read at all; activity of one directory never reads the other. |
 | Capability | TestFilePrefixChecker validates test/bench prefix discipline. |
 | Protocol | ITestFilePrefixProtocol. |
-| Method | Test/bench placement and prefix check returning violations with move-or-rename guidance. |
+| Method | check_test_file_prefixes returning violations with move-or-rename guidance |
 | Input | File path; source is NamingRequest::RunAuditWithTestEntries. |
 | Output | Lint results with AES103 codes inside NamingResponse::Audit. |
 | Error | Path that cannot be classified reports need-for-classification instead of guessing; no panic. |
@@ -108,10 +94,9 @@ flowchart TD
 
 ## Reference
 
-| Artifact | Purpose | Link|
+| Artifact | Purpose | Link |
 |----------|---------|------|
-| BACKLOG.md | Backlog tracking | [BACKLOG.md](BACKLOG.md)|
-| PRD.md | Product requirements | [PRD.md](../../PRD.md)|
-| FRD.md | Feature requirements | [FRD.md](FRD.md)|
-| ROADMAP.md | Roadmap status | [ROADMAP.md](../../ROADMAP.md)|
-| ARCHITECTURE.md | Layer contract | [ARCHITECTURE.md](../../ARCHITECTURE.md)|
+| PRD | Business goals, user stories, and scope | [PRD.md](../../PRD.md) |
+| Backlog | Task tracking, epics, and implementation status | [BACKLOG.md](BACKLOG.md) |
+| Roadmap | Timeline, phasing, and dependencies | [ROADMAP.md](../../ROADMAP.md) |
+| Architecture | System boundaries, tech stack, and infra | [ARCHITECTURE.md](../../ARCHITECTURE.md) |

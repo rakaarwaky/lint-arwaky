@@ -4,19 +4,6 @@
 
 ## Feature Overview
 
-The git-hooks crate implements a pre-commit hook system that enforces AES
-compliance before code enters the repository. It detects changed files via
-git diff, runs linting only on modified files, and blocks commits that
-violate AES rules.
-
-The crate follows the AES 7-layer architecture: the diff checker (capability)
-implements the diff protocol, the git hook adapter (capability) implements
-both the install and uninstall protocols, the hook manager (capability)
-implements the config protocol, the git hooks orchestrator (agent) composes
-the four protocols, and the git container (root) wires dependencies.
-
-- **Architecture & Data Flow**
-
 ```mermaid
 flowchart TD
     A["Surface"] -->|input| B["git hooks orchestrator"]
@@ -129,10 +116,9 @@ flowchart TD
 
 ## Reference
 
-| Artifact | Purpose | Link|
+| Artifact | Purpose | Link |
 |----------|---------|------|
-| BACKLOG.md | Backlog tracking | [BACKLOG.md](BACKLOG.md)|
-| PRD.md | Product requirements | [PRD.md](../../PRD.md)|
-| FRD.md | Feature requirements | [FRD.md](FRD.md)|
-| ROADMAP.md | Roadmap status | [ROADMAP.md](../../ROADMAP.md)|
-| ARCHITECTURE.md | Layer contract | [ARCHITECTURE.md](../../ARCHITECTURE.md)|
+| PRD | Business goals, user stories, and scope | [PRD.md](../../PRD.md) |
+| Backlog | Task tracking, epics, and implementation status | [BACKLOG.md](BACKLOG.md) |
+| Roadmap | Timeline, phasing, and dependencies | [ROADMAP.md](../../ROADMAP.md) |
+| Architecture | System boundaries, tech stack, and infra | [ARCHITECTURE.md](../../ARCHITECTURE.md) |

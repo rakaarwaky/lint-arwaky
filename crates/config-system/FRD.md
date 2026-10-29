@@ -4,10 +4,6 @@
 
 ## Feature Overview
 
-The config-system crate manages lint-arwaky configuration as a business capability: discovering projects, loading and merging configuration, validating thresholds, and determining which paths the linter should ignore. It is an **infrastructure crate** — at compile time it depends only on `shared` and `filesystem` (for config file I/O via `IFileSystemIOProtocol`). Other crates receive config at runtime via DI (aggregate trait injection through `shared` re-exports).
-
-- **Architecture & Data Flow**
-
 ```mermaid
 flowchart TD
     subgraph CS ["config-system crate"]
@@ -31,32 +27,6 @@ flowchart TD
     O["external-lint"] -->|"config"| A
 ```
 
-- **Config Loading Priority Chain**
-
-```text
-Priority 1: Project root
-  lint_arwaky.config.yaml at project root
-      │ (not found)
-      ▼
-Priority 2: Parent directories (project root plus up to 4 ancestor levels — 5 levels total)
-  Walk up 5 levels (root, then 4 ancestors) looking for config file
-      │ (not found)
-      ▼
-Priority 3: XDG user config
-  ~/.config/lint-arwaky/lint_arwaky.config.yaml
-      │ (not found)
-      ▼
-Priority 4: XDG system dirs
-  /etc/xdg/lint-arwaky/ (max 8 dirs, absolute paths only)
-      │ (not found)
-      ▼
-Priority 5: Embedded defaults
-  Compiled into binary, always available
-
-First match wins — no merge across priority levels.
-Loaded config is merged with embedded defaults via rule-based layer merging (FR-ConfigSystem-004).
-```
-
 ---
 
 ## Functional Requirements
@@ -66,7 +36,7 @@ Loaded config is merged with embedded defaults via rule-based layer merging (FR-
 | Aspect | Detail|
 |--------|-------|
 | Description | Locate and load the first config matching a project root and language, following the 5-level priority chain. |
-| Business Rules | Local project files are tried first in the language's filename order, then parents within the depth bound; `None` means the caller falls back to embedded defaults; every config file present at the root is listed deduplicated by path; a raw YAML string parses to the adapter entry list, and a string with no `adapters:` key yields an empty vector so defaults apply; symlinks leaving the root are rejected and a language-scoped read blocks path injection. |
+| Business Rules | Search order: project root, then up to 4 ancestor levels, then the XDG user config, then XDG system dirs (max 8 absolute paths), then embedded defaults — first match wins with no cross-level merge, and the matched file merges with embedded defaults via merge_config_with_defaults (FR-ConfigSystem-003). Local project files are tried first in the language's filename order, then parents within the depth bound; `None` means the caller falls back to embedded defaults; every config file present at the root is listed deduplicated by path; a raw YAML string parses to the adapter entry list, and a string with no `adapters:` key yields an empty vector so defaults apply; symlinks leaving the root are rejected and a language-scoped read blocks path injection. |
 | Edge Cases | No config anywhere returns `Ok(None)` rather than an error; an empty config string yields no adapters; a symlink target outside the root is refused; a crafted language value cannot escape the root; parent-directory search stops at the depth bound and never leaves the tree. |
 | Capability | `ConfigYamlReader` implements `IConfigReadProtocol` (`read_config`, `list_config_files`, `read_config_from_content`). |
 | Protocol | `IConfigReadProtocol` in `shared/config_system`. |
@@ -124,10 +94,9 @@ Loaded config is merged with embedded defaults via rule-based layer merging (FR-
 
 ## Reference
 
-| Artifact | Purpose | Link|
+| Artifact | Purpose | Link |
 |----------|---------|------|
-| BACKLOG.md | Backlog tracking | [BACKLOG.md](BACKLOG.md)|
-| PRD.md | Product requirements | [PRD.md](../../PRD.md)|
-| FRD.md | Feature requirements | [FRD.md](FRD.md)|
-| ROADMAP.md | Roadmap status | [ROADMAP.md](../../ROADMAP.md)|
-| ARCHITECTURE.md | Layer contract | [ARCHITECTURE.md](../../ARCHITECTURE.md)|
+| PRD | Business goals, user stories, and scope | [PRD.md](../../PRD.md) |
+| Backlog | Task tracking, epics, and implementation status | [BACKLOG.md](BACKLOG.md) |
+| Roadmap | Timeline, phasing, and dependencies | [ROADMAP.md](../../ROADMAP.md) |
+| Architecture | System boundaries, tech stack, and infra | [ARCHITECTURE.md](../../ARCHITECTURE.md) |

@@ -1,28 +1,15 @@
-# FRD — maintenance (v2.1.0)
+# FRD — maintenance
 
 ---
 
 ## Feature Overview
-
-The maintenance crate provides operational health and upkeep commands for the
-lint-arwaky system: environment diagnostics, toolchain verification, adapter
-health checking, cache cleanup, tool updates, binary self-update from
-GitHub releases, security scanning, dependency reporting, and project
-statistics. It is the ops-focused crate — it handles environment health,
-not code quality analysis.
-
-The crate follows the AES 7-layer architecture. Each of the eight business
-capabilities below corresponds to one `_protocol` trait in `shared/maintenance`
-and one implementation in `capabilities_maintenance_checker`.
-
-- **Architecture & Data Flow**
 
 ```mermaid
 flowchart TD
     A["Surface"] -->|input| B["maintenance aggregate"]
     B --> C{"action"}
 
-    C -->|"doctor / diagnose / health"| D["MaintenanceChecker"]
+    C -->|"doctor / diagnose / health"| D["capabilities checkers"]
     C -->|"security / dependencies"| D
     C -->|"stats / clean / update"| D
     C -->|"self-update"| D
@@ -49,7 +36,7 @@ flowchart TD
 | Edge Cases | Missing tools produce entries in the missing list while the overall doctor call still succeeds; cancel returns Cancelled rather than a partial error; empty environment yields a doctor result with all entries missing and no panic. |
 | Capability | DoctorChecker implements doctor and toolchain diagnosis. |
 | Protocol | IDoctorProtocol. |
-| Method | doctor() result plus toolchain diagnosis returning binary path and categorized tool lists. |
+| Method | doctor(&self) -> DoctorResultVO; diagnose_toolchain(&self) -> ToolchainDiagnostics |
 | Input | MaintenanceRequest::{Doctor, DiagnoseToolchain, Cancel}; source is the doctor surface command. |
 | Output | MaintenanceResponse::{Doctor, Toolchain, Cancelled} carrying status and tool lists. |
 | Error | Unavailable tools are reported in lists, not as top-level failures; cancellation surfaces as Cancelled. |
@@ -117,7 +104,7 @@ flowchart TD
 | Edge Cases | No advisories found yields an empty clean result; unreadable manifest is reported as a scan error; network-dependent advisory fetch failing degrades to local-only results. |
 | Capability | SecurityScanChecker performs the security scan. |
 | Protocol | ISecurityScanProtocol. |
-| Method | security_scan() returning findings list and scan status. |
+| Method | run_security_scan(&self, project_path: &FilePath) -> SecurityScanReport |
 | Input | Project path; source is MaintenanceRequest::SecurityScan. |
 | Output | MaintenanceResponse::Security with findings. |
 | Error | Manifest/lock unreadable yields a scoped error in the response; never panics. |
@@ -134,7 +121,7 @@ flowchart TD
 | Edge Cases | Missing dependency data yields an empty report rather than failure; partial graphs report what was parsed; report works even when security scan finds nothing. |
 | Capability | DependencyReportChecker aggregates dependency information. |
 | Protocol | IDependencyReportProtocol. |
-| Method | dependency_report() returning dependency listing. |
+| Method | run_dependency_report(&self, project_path: &FilePath) -> Result<DependencyReport, String> |
 | Input | Project path; source is MaintenanceRequest::DependencyReport. |
 | Output | MaintenanceResponse::Dependencies with the dependency listing. |
 | Error | Unreadable input yields empty listing plus error note. |
@@ -188,10 +175,9 @@ flowchart TD
 
 ## Reference
 
-| Artifact | Purpose | Link|
+| Artifact | Purpose | Link |
 |----------|---------|------|
-| BACKLOG.md | Backlog tracking | [BACKLOG.md](BACKLOG.md)|
-| PRD.md | Product requirements | [PRD.md](../../PRD.md)|
-| FRD.md | Feature requirements | [FRD.md](FRD.md)|
-| ROADMAP.md | Roadmap status | [ROADMAP.md](../../ROADMAP.md)|
-| ARCHITECTURE.md | Layer contract | [ARCHITECTURE.md](../../ARCHITECTURE.md)|
+| PRD | Business goals, user stories, and scope | [PRD.md](../../PRD.md) |
+| Backlog | Task tracking, epics, and implementation status | [BACKLOG.md](BACKLOG.md) |
+| Roadmap | Timeline, phasing, and dependencies | [ROADMAP.md](../../ROADMAP.md) |
+| Architecture | System boundaries, tech stack, and infra | [ARCHITECTURE.md](../../ARCHITECTURE.md) |

@@ -1,24 +1,8 @@
-# FRD — auto-fix (v3.0.0)
+# FRD — auto-fix
 
 ---
 
 ## Feature Overview
-
-The auto-fix crate applies safe, deterministic corrections to source files that violate AES rules. It consumes lint results from the analysis pipeline, filters violations by fixable error code, and writes corrected files back to disk.
-
-- **Allowed Operation Classes (product policy — locked)**
-
-| Class       | Examples                                                          | Notes                                   |
-| ----------- | ----------------------------------------------------------------- | ----------------------------------------|
-| **Remove**  | Delete unused import lines; delete `#[allow(...)]` / bypass comment lines | No new code introduced                 |
-| **Replace** | `unwrap()` → `expect("safe")` on the same line                    | Local token/line substitution only     |
-| **Rename**  | Prepend `renamed_` (or keep valid snake_case) for AES101 symbols   | Mechanical rename of extracted symbol tokens|
-
-**Out of scope:** multi-file renames, structural refactors, adding new imports/types, semantic rewrites, formatting-only passes, `panic!` removal (requires semantic error handling).
-
-Every fix attempt MUST return a **reason-coded outcome** (`Applied` / `Skipped(reason)` / `Failed(reason)`), not a bare boolean. Dry-run reports the same outcomes without writing files.
-
-- **Architecture & Data Flow**
 
 ```mermaid
 flowchart TD
@@ -34,8 +18,6 @@ flowchart TD
     I --> B
     B -->|output| A
 ```
-
-Each of the 4 FRs maps to exactly 1 protocol trait and exactly 1 capability struct.
 
 ---
 
@@ -63,7 +45,7 @@ Each of the 4 FRs maps to exactly 1 protocol trait and exactly 1 capability stru
 | Aspect | Detail|
 |--------|-------|
 | Description | Strip a bypass comment or bypass macro at the flagged line, in place or as a dry-run preview. |
-| Business Rules | Known bypass surface only: allow attributes, hack comments, noqa inline markers, and unwrap macros are in scope; an unmatched pattern skips with `NoBypassPattern`; unsafe removals refuse with `UnsafeRemoval`; context-bearing patterns skip with `AlreadyHasContext`. |
+| Business Rules | Known bypass surface only: allow attributes, hack comments, noqa inline markers, and unwrap macros are in scope; the replacement class is a same-line token substitution (unwrap becomes expect carrying a reason on that line) with no structural change; an unmatched pattern skips with `NoBypassPattern`; unsafe removals refuse with `UnsafeRemoval`; context-bearing patterns skip with `AlreadyHasContext`. |
 | Edge Cases | Multiple bypass markers on one line are rewritten in one pass when all are known; an unwrap in a macro context still skips rather than corrupt code; dry-run previews the edit and leaves the file untouched; a missing file fails with `FileNotFound`. |
 | Capability | `BypassFix` implements `IBypassFixProtocol` (`fix_bypass_comments`, plus the `fix_bypass_dry` seam the FR-AutoFix-004 pipeline drives). |
 | Protocol | `IBypassFixProtocol` in `shared/auto_fix`. |
@@ -97,7 +79,7 @@ Each of the 4 FRs maps to exactly 1 protocol trait and exactly 1 capability stru
 | Aspect | Detail|
 |--------|-------|
 | Description | Run the whole fix pipeline over a path and report what was fixed versus what still needs a human. |
-| Business Rules | `dry_run` is selectable per request: report what would change without writing, or apply every fixable violation and skip the rest; violations that have no fixer are never rewritten — they are listed as manual work; exit signal comes from the `FixResult`, which merges applied changes with the non-fixable list. |
+| Business Rules | `dry_run` is selectable per request: report what would change without writing, or apply every fixable violation and skip the rest; violations that have no fixer are never rewritten — they are listed as manual work; exit signal comes from the `FixResult`, which merges applied changes with the non-fixable list. Every attempt returns a reason-coded outcome — `Applied`, `Skipped(reason)`, or `Failed(reason)` — and dry-run reports the same codes without writing files. Out of scope: multi-file renames, structural refactors, added imports or types, semantic rewrites, formatting-only passes, and `panic!` removal. |
 | Edge Cases | An empty path or a project with no violations returns a clean `FixResult` with zero changes; a path that does not exist fails the CLI with a non-zero exit (dogfood pins this); a file that appears mid-walk is read once; walker-level skips (`MultiLineImport`, `LineOutOfBounds`) never abort the batch. |
 | Capability | `ViolationReport` implements `IViolationReportProtocol` (`report_violations`, `report_non_fixable`); it walks the tree, delegates each fixable violation to the three fix capabilities, and keeps non-fixable codes as a manual report. |
 | Protocol | `IViolationReportProtocol` in `shared/auto_fix`. |
@@ -121,10 +103,9 @@ Each of the 4 FRs maps to exactly 1 protocol trait and exactly 1 capability stru
 
 ## Reference
 
-| Artifact | Purpose | Link|
+| Artifact | Purpose | Link |
 |----------|---------|------|
-| BACKLOG.md | Backlog tracking | [BACKLOG.md](BACKLOG.md)|
-| PRD.md | Product requirements | [PRD.md](../../PRD.md)|
-| FRD.md | Feature requirements | [FRD.md](FRD.md)|
-| ROADMAP.md | Roadmap status | [ROADMAP.md](../../ROADMAP.md)|
-| ARCHITECTURE.md | Layer contract | [ARCHITECTURE.md](../../ARCHITECTURE.md)|
+| PRD | Business goals, user stories, and scope | [PRD.md](../../PRD.md) |
+| Backlog | Task tracking, epics, and implementation status | [BACKLOG.md](BACKLOG.md) |
+| Roadmap | Timeline, phasing, and dependencies | [ROADMAP.md](../../ROADMAP.md) |
+| Architecture | System boundaries, tech stack, and infra | [ARCHITECTURE.md](../../ARCHITECTURE.md) |

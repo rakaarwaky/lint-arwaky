@@ -1,10 +1,6 @@
-# FRD — import-rules (v1.13.0)
+# FRD — import-rules
 
 ## Feature Overview
-
-The import-rules crate enforces correct structural boundaries and dependency flows across the 7-layer AES architecture. It validates every import statement against a config-driven dependency, detects dummy/stub code created to circumvent unused-import warnings, and identifies circular dependencies at the layer level. File discovery, raw content reads, AST parsing (import extraction + identifier extraction), and barrel resolution are handled by the filesystem aggregate (`IFilesystemAggregate`). The Surface fetches file entries, import data, and `used_identifiers` (via `used_identifiers_for(path)`) from filesystem first, then passes pre-fetched data to the import orchestrator. The import-rules crate receives `&[FileEntry]`, `content_map`, `imports_map`, and `used_identifiers_map` — all pre-fetched by the caller. The import orchestrator does **zero I/O** — it only performs business logic analysis. All rule behavior is governed by YAML configuration. The crate makes no assumptions about allowed/forbidden dependencies beyond what is explicitly defined in config.
-
-- **Architecture & Data Flow**
 
 ```mermaid
 flowchart TD
@@ -57,9 +53,9 @@ flowchart TD
 | Description | Flag imports that cross architectural layers against the forbidden-layer matrix. |
 | Business Rules | AES201 rejects a lower layer importing a higher one (agent, surface, capabilities, taxonomy are each forbidden from specific importers; utility remains allowed from taxonomy/capabilities). Entry is matched by its first segment; index fallback applies when the entry line is zero. Python and Rust import sources both report the source line, not the import index. |
 | Edge Cases | A forbidden Python import with entry line zero falls back to index; allowed pairs (taxonomy importing utility, capabilities importing taxonomy/utility) stay silent; multiple forbidden imports in one file each produce a violation; line-number extraction prefers the reported source line and degrades to entry index only when line info is absent. |
-| Capability | ArchImportForbiddenChecker enforces the layer matrix; ScopeMatcher utility resolves layer from import segment. |
+| Capability | ArchImportForbiddenChecker enforces the layer matrix; the utility scope-matcher helpers (file_belongs_to_scope, resolve_scope) resolve the layer from the import segment. |
 | Protocol | IImportForbiddenProtocol. |
-| Method | check on the forbidden-import protocol (see contract for exact method name) returning lint messages per violating import. |
+| Method | check_forbidden_imports returning lint messages per violating import. |
 | Input | File path plus parsed imports (and optional entries); source is ImportRequest::RunAudit variants from the aggregate. |
 | Output | Lint results inside ImportResponse::Audit with AES201 rule codes and source line numbers. |
 | Error | Unreadable file contributes no findings rather than failing the audit; a zero entry line still yields a locatable violation. |
@@ -76,7 +72,7 @@ flowchart TD
 | Edge Cases | A file already importing the dependency yields no violation; unclassified files are ignored; clean fixture exits with zero AES202 findings. |
 | Capability | ArchImportMandatoryChecker enforces mandatory-import requirements. |
 | Protocol | IImportMandatoryProtocol. |
-| Method | Mandatory-import check on parsed file imports returning lint messages when the required import is absent. |
+| Method | run_mandatory_imports returning lint messages when the required import is absent. |
 | Input | File path plus its import list; source is the import audit pipeline through IImportRunnerAggregate::execute. |
 | Output | Lint results with AES202 codes inside ImportResponse::Audit. |
 | Error | Missing or empty input file yields no findings for that file rather than failing the run. |
@@ -93,7 +89,7 @@ flowchart TD
 | Edge Cases | Actual unused import flags exactly once; multiple unused imports each flag; empty file/content no violation; aliased Python import used only via alias not flagged; aliased and truly unused flagged; barrel/mod/lib index files skipped. |
 | Capability | UnusedImportRuleChecker computes usage sets from parsed identifiers. |
 | Protocol | IUnusedImportProtocol. |
-| Method | Unused-import check over parse entries returning lint messages per unused binding. |
+| Method | find_unused_imports / check_unused_imports returning lint messages per unused binding |
 | Input | File path plus parsed imports and used identifiers; source is ImportRequest::RunAudit variants. |
 | Output | Lint results with AES203 codes inside ImportResponse::Audit. |
 | Error | Parse failure of the body yields no findings for that file instead of false positives. |
@@ -110,7 +106,7 @@ flowchart TD
 | Edge Cases | A clean fixture yields zero findings; a file with a stub function still yields a finding for the stub; unreadable file yields no findings; classification of a mixed file reports each dummy independently. |
 | Capability | DummyImportChecker detects dummy constructs. |
 | Protocol | IDummyImportCheckerProtocol. |
-| Method | Dummy-import/function/impl check over parsed file content returning lint messages. |
+| Method | check_dummy_imports, check_dummy_functions, check_dummy_impls, and check_all_dummy returning lint messages |
 | Input | File path plus parsed content; source is the import audit pipeline. |
 | Output | Lint results with AES204 codes inside ImportResponse::Audit. |
 | Error | Parse failure skips the file's dummy analysis rather than failing the audit. |
@@ -127,7 +123,7 @@ flowchart TD
 | Edge Cases | Empty edge set yields no cycles; mutual cross-layer cycles detected; normalize with and without crate prefix both resolve to the same layer; disabled configuration returns an empty audit; missing entry in graph does not panic. |
 | Capability | DependencyCycleAnalyzer builds the layer graph and finds cycles. |
 | Protocol | ICycleImportProtocol. |
-| Method | Cycle scan over edge list returning detected cycles as lint messages. |
+| Method | scan / check_cycles / detect_cycle_edges returning detected cycles as lint messages |
 | Input | Import edge list (or file discovery then edges); source is ImportRequest::RunAudit variants. |
 | Output | Lint results with AES205 codes inside ImportResponse::Audit; empty list when acyclic or disabled. |
 | Error | Unparseable edge entries are dropped; the scan still completes on remaining edges. |
@@ -147,10 +143,9 @@ flowchart TD
 
 ## Reference
 
-| Artifact | Purpose | Link|
+| Artifact | Purpose | Link |
 |----------|---------|------|
-| BACKLOG.md | Backlog tracking | [BACKLOG.md](BACKLOG.md)|
-| PRD.md | Product requirements | [PRD.md](../../PRD.md)|
-| FRD.md | Feature requirements | [FRD.md](FRD.md)|
-| ROADMAP.md | Roadmap status | [ROADMAP.md](../../ROADMAP.md)|
-| ARCHITECTURE.md | Layer contract | [ARCHITECTURE.md](../../ARCHITECTURE.md)|
+| PRD | Business goals, user stories, and scope | [PRD.md](../../PRD.md) |
+| Backlog | Task tracking, epics, and implementation status | [BACKLOG.md](BACKLOG.md) |
+| Roadmap | Timeline, phasing, and dependencies | [ROADMAP.md](../../ROADMAP.md) |
+| Architecture | System boundaries, tech stack, and infra | [ARCHITECTURE.md](../../ARCHITECTURE.md) |

@@ -4,10 +4,6 @@
 
 ## Feature Overview
 
-The filesystem crate produces filesystem data for all feature crates.
-
-- **Architecture & Data Flow**
-
 ```mermaid
 flowchart TD
     A["Consumer\n(any feature crate)"] -->|"import IFilesystemAggregate"| D["filesystem_aggregate"]
@@ -48,16 +44,6 @@ flowchart TD
     D -->|"81 methods via\n&dyn IFilesystemAggregate"| A
 
 ```
-
-- **Data Production Map**
-
-| FR | Output Data|
-| --- | ---|
-| FR-Filesystem-001 | Parsed entries + import data|
-| FR-Filesystem-002 | Dependency graph + symbol maps|
-| FR-Filesystem-003 | File paths, content, I/O operations|
-| FR-Filesystem-004 | Tool availability + resolved paths|
-| FR-Filesystem-005 | Workspace metadata + project language presence flags|
 
 ---
 
@@ -160,10 +146,9 @@ flowchart TD
 
 ## Reference
 
-| Artifact | Purpose | Link|
+| Artifact | Purpose | Link |
 |----------|---------|------|
-| BACKLOG.md | Backlog tracking | [BACKLOG.md](BACKLOG.md)|
-| PRD.md | Product requirements | [PRD.md](../../PRD.md)|
-| FRD.md | Feature requirements | [FRD.md](FRD.md)|
-| ROADMAP.md | Roadmap status | [ROADMAP.md](../../ROADMAP.md)|
-| ARCHITECTURE.md | Layer contract | [ARCHITECTURE.md](../../ARCHITECTURE.md)|
+| PRD | Business goals, user stories, and scope | [PRD.md](../../PRD.md) |
+| Backlog | Task tracking, epics, and implementation status | [BACKLOG.md](BACKLOG.md) |
+| Roadmap | Timeline, phasing, and dependencies | [ROADMAP.md](../../ROADMAP.md) |
+| Architecture | System boundaries, tech stack, and infra | [ARCHITECTURE.md](../../ARCHITECTURE.md) |

@@ -1,25 +1,8 @@
-# FRD — project-setup (v3.0.0)
+# FRD — project-setup
 
 ---
 
 ## Feature Overview
-
-The project-setup crate provides scaffolding facilities and adapter installation
-for new and existing projects. It detects project languages (Rust, Python,
-JavaScript/TypeScript), generates MCP configuration for different AI clients,
-generates `.env` files, installs linter adapters via pip/npm, and manages XDG
-config directories.
-
-The crate follows the AES 7-layer architecture. Four capability seams provide
-MCP config generation, environment file creation, language detection, and adapter
-installation. Auxiliary technical operations are delegated through the aggregate
-contract and the injected utility protocols.
-
-> **Note**: Environment diagnostics (`doctor`, `diagnose`) are handled by the
-> **maintenance** crate, not project-setup. This crate focuses on scaffolding
-> and installation only.
-
-- **Architecture & Data Flow**
 
 ```mermaid
 flowchart TD
@@ -54,11 +37,11 @@ flowchart TD
 | Aspect | Detail|
 |--------|-------|
 | Description | Generate MCP client configuration files for supported editors and agents. |
-| Business Rules | One request variant per target (Claude, Claude, Cursor, Windsurf, Copilot, Hermes, VSCode) plus McpConfigAll; each output wraps servers in the right key (mcp_servers vs mcpServers per client conventions); generated config parses as valid JSON/TOML for the target; Claude/Copilot/Cursor/VSCode/Windsurf wrappers asserted by fr001 tests. |
+| Business Rules | One request variant per target (Claude, Cursor, Windsurf, Copilot, Hermes, VSCode) plus McpConfigAll; each output wraps servers in the right key (mcp_servers vs mcpServers per client conventions); generated config parses as valid JSON/TOML for the target; Claude/Copilot/Cursor/VSCode/Windsurf wrappers asserted by fr001 tests. |
 | Edge Cases | McpConfigAll generates every target in one call; an unknown target does not silently pick a default; generated servers block omits empty command lists; header/comment lines preserved where the target format allows comments. |
 | Capability | SetupMcpConfigGenerator builds per-client MCP configuration. |
 | Protocol | IMcpConfigGenerationProtocol. |
-| Method | Generate MCP config for a named target returning the config content. |
+| Method | generate_mcp_config and the per-target constructors mcp_config_claude, mcp_config_cursor, mcp_config_windsurf, mcp_config_copilot, mcp_config_hermes, mcp_config_vscode, mcp_config_all, plus which_mcp_binary |
 | Input | Target client identifier; source is SetupRequest::{GenerateMcpConfig, McpConfigClaude, McpConfigCursor, McpConfigWindsurf, McpConfigCopilot, McpConfigHermes, McpConfigVscode, McpConfigAll}. |
 | Output | SetupResponse::Mcp with per-target config content ready to write. |
 | Error | Unknown target returns an error description rather than writing a wrong-shaped file. |
@@ -75,7 +58,7 @@ flowchart TD
 | Edge Cases | Existing env is not clobbered silently (WriteConfigFile governs overwrite); generated content identical on repeat calls; empty project path still produces a well-formed env body. |
 | Capability | SetupEnvGenerator renders the environment file content. |
 | Protocol | IEnvGenerationProtocol. |
-| Method | generate_env() -> env file content. |
+| Method | generate_env(&self, home: &DirectoryPath) -> EnvContentVO |
 | Input | Project path/context; source is SetupRequest::GenerateEnv. |
 | Output | SetupResponse::Env with content for .env-style file. |
 | Error | Generation itself never fails; write failures fall to FR-ProjectSetup-006. |
@@ -92,7 +75,7 @@ flowchart TD
 | Edge Cases | Unknown/empty project returns none; manifests of several languages present returns all in detect_languages while primary is deterministic; unreadable tree yields empty; fr003 asserts valid-language-or-none. |
 | Capability | SetupLanguageDetector detects project languages. |
 | Protocol | ILanguageDetectionProtocol. |
-| Method | detect_language() ->Language or none; detect_languages() -> list. |
+| Method | detect_language returning the primary language or none; detect_languages returning every present language group |
 | Input | Project root path; source is SetupRequest::{DetectLanguage, DetectLanguages}. |
 | Output | SetupResponse::{Language, Languages}. |
 | Error | No signal yields None/empty rather than an error. |
@@ -124,9 +107,9 @@ flowchart TD
 | Description | Load the embedded config template for a target file or project type. |
 | Business Rules | GetConfigTemplate returns the embedded template for the requested key; templates are bundled (get embedded skills listed as GetEmbeddedSkills); template content is byte-stable across runs; container exposes aggregate_get_config_template. |
 | Edge Cases | Unknown template key returns not-found description; empty key returns not-found; template exists but project is non-empty still returns template (write policy decides merge). |
-| Capability | Config template loading via the setup aggregate's template protocol. |
+| Capability | The setup aggregate routes GetConfigTemplate and GetEmbeddedSkills to the shared project-setup utility helpers; no separate capability struct serves them. |
 | Protocol | IConfigTemplateProtocol. |
-| Method | get_config_template(key) -> template content. |
+| Method | get_config_template(&self, language: &str) -> Result<&'static str, SetupError> |
 | Input | Template key; source is SetupRequest::{GetConfigTemplate, GetEmbeddedSkills}. |
 | Output | SetupResponse::{Template, Skills}. |
 | Error | Unknown key yields a not-found-style description instead of empty filler. |
@@ -141,9 +124,9 @@ flowchart TD
 | Description | Write configuration files to disk from generated or templated content. |
 | Business Rules | WriteConfigFile writes content to the target path creating parent dirs as needed; CreateGlobalConfigDir ensures the user-level config directory exists; write is atomic enough to avoid partial files on normal error paths; existing files overwritten only when the request implies it. |
 | Edge Cases | Missing parent directories created; read-only target fails with error description; same content written twice leaves file byte-identical; CreateGlobalConfigDir on existing dir is a no-op success. |
-| Capability | Config writing through the setup aggregate. |
+| Capability | Config writing flows through the setup aggregate to the shared project-setup utility helpers (write_config_file, create_global_config_dir); no separate capability struct serves them. |
 | Protocol | IConfigWritingProtocol. |
-| Method | write_config(path, content) and create_global_config_dir(). |
+| Method | write_config_file(&self, filename, content) -> WriteConfigResult and create_global_config_dir(&self) -> CreateConfigDirResult |
 | Input | Target path plus content; source is SetupRequest::{WriteConfigFile, CreateGlobalConfigDir}. |
 | Output | SetupResponse::{ConfigWritten, ConfigDir}. |
 | Error | Permission or path errors return failure description; no partial file left behind. |
@@ -156,11 +139,11 @@ flowchart TD
 | Aspect | Detail|
 |--------|-------|
 | Description | Run pre-project setup checks before any generation or installation proceeds. |
-| Business Rules | PreFlightCheck verifies prerequisites (working directory usable, required tools discovered, no blocking conflicts) and returns a pass/fail report with reasons; generation flows consult it first. |
-| Edge Cases | Missing prerequisite reports failing item without performing generation; clean environment passes; CheckHttp variant probes a URL and reports reachability; partial failures list each failed item. |
-| Capability | Pre-flight gate inside the setup aggregate. |
+| Business Rules | PreFlightCheck verifies prerequisites (working directory usable, required tools discovered, no blocking conflicts) and returns a pass/fail report with reasons; the caller decides whether to consult it — generation flows never run it automatically. |
+| Edge Cases | Missing prerequisite reports failing item without performing generation; clean environment passes; the CheckHttp variant performs no network probe and answers with a fixed success status; partial failures list each failed item. |
+| Capability | Pre-flight gate served by the setup aggregate's helpers. |
 | Protocol | IPreFlightProtocol. |
-| Method | pre_flight_check() -> pass/fail report; check_http for reachability probes. |
+| Method | pre_flight_check(&self) -> PreFlightResult; the CheckHttp request variant answers with a fixed success status without probing |
 | Input | Project path and optional HTTP target; source is SetupRequest::{PreFlightCheck, CheckHttp}. |
 | Output | SetupResponse::{PreFlight, CheckHttp} with per-item status. |
 | Error | Failing check returns failure report (not an exception); caller decides whether to proceed. |
@@ -197,10 +180,9 @@ flowchart TD
 
 ## Reference
 
-| Artifact | Purpose | Link|
+| Artifact | Purpose | Link |
 |----------|---------|------|
-| BACKLOG.md | Backlog tracking | [BACKLOG.md](BACKLOG.md)|
-| PRD.md | Product requirements | [PRD.md](../../PRD.md)|
-| FRD.md | Feature requirements | [FRD.md](FRD.md)|
-| ROADMAP.md | Roadmap status | [ROADMAP.md](../../ROADMAP.md)|
-| ARCHITECTURE.md | Layer contract | [ARCHITECTURE.md](../../ARCHITECTURE.md)|
+| PRD | Business goals, user stories, and scope | [PRD.md](../../PRD.md) |
+| Backlog | Task tracking, epics, and implementation status | [BACKLOG.md](BACKLOG.md) |
+| Roadmap | Timeline, phasing, and dependencies | [ROADMAP.md](../../ROADMAP.md) |
+| Architecture | System boundaries, tech stack, and infra | [ARCHITECTURE.md](../../ARCHITECTURE.md) |

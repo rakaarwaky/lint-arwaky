@@ -1,4 +1,4 @@
-# FRD — Structure Rules (AES701–AES705)
+# FRD — structure-rules
 
 ## Feature Overview
 
@@ -15,7 +15,7 @@ The structure-rules crate enforces the 7-layer AES folder discipline by auditing
 | Edge Cases | Shared with only permitted layers produces zero findings; each forbidden file reported individually (not merged); missing doc pair fires once; empty shared root yields no findings; member-root files are classified before purity rules. |
 | Capability | SharedPurityAuditor checks shared-folder purity and docs. |
 | Protocol | IStructureSharedPurityProtocol. |
-| Method | Shared purity audit returning findings per forbidden file and missing doc pair. |
+| Method | audit_shared(&self, request: StructureRequest) -> StructureResponse |
 | Input | Audit root plus tree entries; source is StructureRequest::AuditAll via IStructureAggregate::execute. |
 | Output | Findings in StructureResponse::Findings with AES701 codes. |
 | Error | Unreadable directories skip their subtree instead of failing the audit. |
@@ -32,7 +32,7 @@ The structure-rules crate enforces the 7-layer AES folder discipline by auditing
 | Edge Cases | Doc-pair folder without orchestrator fires; capabilities without orchestrator fires; orchestrator without capabilities fires; feature without root container fires; python feature accepts language-extension container; audit root being a member directory fires; member-holding-orchestrator fires; features with complete structure stay silent. |
 | Capability | FeatureHealthAuditor checks feature folder structure and docs. |
 | Protocol | IStructureFeatureHealthProtocol. |
-| Method | Feature health audit over the tree returning AES702 findings per structural gap. |
+| Method | audit_feature(&self, request: StructureRequest) -> StructureResponse |
 | Input | Audit root plus entries; source is StructureRequest::AuditAll. |
 | Output | Findings in StructureResponse::Findings with AES702 codes. |
 | Error | Unreadable subtree skipped; root that is a member directory is reported, not mis-audited. |
@@ -49,12 +49,12 @@ The structure-rules crate enforces the 7-layer AES folder discipline by auditing
 | Edge Cases | A pure surface folder yields zero findings; a foreign capability/agent file inside surface fires individually; missing doc pair fires once; empty surface root yields nothing. |
 | Capability | SurfacePurityAuditor checks surface-folder purity and docs. |
 | Protocol | IStructureSurfacePurityProtocol. |
-| Method | Surface purity audit returning AES703 findings per violation. |
+| Method | audit_surface(&self, request: StructureRequest) -> StructureResponse |
 | Input | Audit root plus entries; source is StructureRequest::AuditAll. |
 | Output | Findings in StructureResponse::Findings with AES703 codes. |
 | Error | Unreadable subtree skipped. |
 | Event | None. |
-| Test | Surface purity suite tests in the structure rust suite assert AES703 firing on foreign files and silence on pure surface trees. |
+| Test | contract_structure_rules — aes703_fires_when_a_surface_folder_holds_a_capability, aes703_stays_silent_when_a_surface_crate_holds_a_container, and aes703_fires_when_a_surface_folder_lacks_design_md — assert firing and silence. |
 | Metric | Seeded foreign-file fixture yields one finding per file; pure surface fixture yields zero AES703 findings. |
 
 ### FR-STR-004: Test Suite Category Coverage (AES704)
@@ -66,12 +66,12 @@ The structure-rules crate enforces the 7-layer AES folder discipline by auditing
 | Edge Cases | A tree missing an entire category fires a coverage finding; a category directory that exists but is empty is treated as missing; extra categories beyond the required set never fire; unreadable test dirs skip without failing the audit. |
 | Capability | TestSuiteCoverageAuditor computes per-category coverage. |
 | Protocol | IStructureTestSuiteProtocol. |
-| Method | Test-suite coverage audit returning AES704 findings for absent categories. |
+| Method | audit_test_suite(&self, request: StructureRequest) -> StructureResponse |
 | Input | Audit root plus test-dir entries; source is StructureRequest::AuditAll. |
 | Output | Findings in StructureResponse::Findings with AES704 codes. |
 | Error | Unreadable test directories yield no findings for their category rather than an audit failure. |
 | Event | None. |
-| Test | Test-suite coverage suite tests in the structure rust tests assert AES704 on seeded missing-category trees and silence on fully covered trees. |
+| Test | e2e_structure_rules_flow — e2e_each_missing_test_category_is_named_and_located, e2e_a_missing_bench_directory_is_reported_once_not_per_category, e2e_a_support_prefix_does_not_satisfy_a_required_category, and e2e_a_folder_owning_no_feature_source_owes_no_test_suite — assert category reporting. |
 | Metric | Seeded tree missing one category fires exactly one finding; fully covered tree fires zero. |
 
 ### FR-STR-005: Member-Root File Placement (AES705)
@@ -83,12 +83,12 @@ The structure-rules crate enforces the 7-layer AES folder discipline by auditing
 | Edge Cases | Member with config only in a nested subdir fires (root placement not satisfied); member with root files passes; non-member directories are not checked; nested file does not count as root placement. |
 | Capability | MemberRootPlacementAuditor enforces member-root file placement. |
 | Protocol | IStructureMemberRootProtocol. |
-| Method | Member-root placement audit returning AES705 findings when required root files are absent. |
+| Method | audit_member_root(&self, request: StructureRequest) -> StructureResponse |
 | Input | Audit root plus entries; source is StructureRequest::AuditAll. |
 | Output | Findings in StructureResponse::Findings with AES705 codes. |
 | Error | Non-member or unreadable directories are skipped. |
 | Event | None. |
-| Test | Member-root suite tests in the structure rust tests assert AES705 on nested-only-file members and silence on properly rooted members. |
+| Test | contract_structure_rules — aes705_reports_a_capability_file_loose_at_a_member_root, aes705_allows_wiring_and_unclassified_files_at_a_member_root, and aes705_ignores_a_layer_file_inside_a_feature_folder — assert placement rules. |
 | Metric | Seeded nested-only member yields exactly one finding; properly rooted member yields zero. |
 
 ### FR-STR-006: PR-LA Folder Alignment (AES706)
@@ -100,7 +100,7 @@ The structure-rules crate enforces the 7-layer AES folder discipline by auditing
 | Edge Cases | A PR-LA id beyond the known folder order fires once per document; requirement ids with the correct prefix stay silent; a documented folder with no FRD.md fires pr_la_missing_frd; a title that names its folder reports no mismatch; PRD.md and ROADMAP.md are read together so both must agree with the folder list. |
 | Capability | PrLaFolderAuditor checks its PR-LA id to crate folder mapping. |
 | Protocol | IStructurePrLaProtocol. |
-| Method | PR-LA folder audit returning AES706 findings per wrong prefix, missing FRD, dangling id, and misnamed title. |
+| Method | audit_pr_la_folder(&self, request: StructureRequest) -> StructureResponse |
 | Input | Audit entries plus the contents of PRD.md and ROADMAP.md; source is StructureRequest::AuditAll via IStructureAggregate::execute. |
 | Output | Findings in StructureResponse::Findings with AES706 codes. |
 | Error | An unreadable spec document skips its checks instead of failing the audit. |
@@ -120,10 +120,9 @@ The structure-rules crate enforces the 7-layer AES folder discipline by auditing
 
 ## Reference
 
-| Artifact | Purpose | Link|
+| Artifact | Purpose | Link |
 |----------|---------|------|
-| BACKLOG.md | Backlog tracking | [BACKLOG.md](BACKLOG.md)|
-| PRD.md | Product requirements | [PRD.md](../../PRD.md)|
-| FRD.md | Feature requirements | [FRD.md](FRD.md)|
-| ROADMAP.md | Roadmap status | [ROADMAP.md](../../ROADMAP.md)|
-| ARCHITECTURE.md | Layer contract | [ARCHITECTURE.md](../../ARCHITECTURE.md)|
+| PRD | Business goals, user stories, and scope | [PRD.md](../../PRD.md) |
+| Backlog | Task tracking, epics, and implementation status | [BACKLOG.md](BACKLOG.md) |
+| Roadmap | Timeline, phasing, and dependencies | [ROADMAP.md](../../ROADMAP.md) |
+| Architecture | System boundaries, tech stack, and infra | [ARCHITECTURE.md](../../ARCHITECTURE.md) |
