@@ -16,10 +16,6 @@ use crate::taxonomy_doc_rules_constant::{
 pub struct TemplateProfile {
     pub doc_name: &'static str,
     pub template_file: &'static str,
-    /// H2 titles a copied template may drop without a finding. Empty for
-    /// every profile under the 9-doc layout; the field goes away together
-    /// with the template-body checker branch that still reads it.
-    pub deletable_sections: &'static [&'static str],
     pub required_h2s: &'static [&'static str],
     pub placeholder_catalog: &'static [&'static str],
 }
@@ -39,7 +35,7 @@ pub const TEMPLATE_PROFILES: &[TemplateProfile] = &[
     TemplateProfile {
         doc_name: FRD_DOC,
         template_file: "HOW-TO-MAKE-FRD.md",
-        deletable_sections: &[],
+
         required_h2s: FRD_REQUIRED_H2S,
         placeholder_catalog: &[
             "<feature-name>",
@@ -77,7 +73,7 @@ pub const TEMPLATE_PROFILES: &[TemplateProfile] = &[
     TemplateProfile {
         doc_name: BACKLOG_DOC,
         template_file: "HOW-TO-MAKE-BACKLOG.md",
-        deletable_sections: &[],
+
         required_h2s: BACKLOG_REQUIRED_H2S,
         placeholder_catalog: &[
             "<feature-name>",
@@ -103,7 +99,7 @@ pub const TEMPLATE_PROFILES: &[TemplateProfile] = &[
     TemplateProfile {
         doc_name: AGENTS_DOC,
         template_file: "HOW-TO-MAKE-AGENTS.md",
-        deletable_sections: &[],
+
         required_h2s: AGENTS_REQUIRED_H2S,
         placeholder_catalog: &[
             "<project-name>",
@@ -126,7 +122,7 @@ pub const TEMPLATE_PROFILES: &[TemplateProfile] = &[
     TemplateProfile {
         doc_name: PRD_DOC,
         template_file: "HOW-TO-MAKE-PRD.md",
-        deletable_sections: &[],
+
         required_h2s: PRD_REQUIRED_H2S,
         placeholder_catalog: &[
             "<project-name>",
@@ -134,9 +130,9 @@ pub const TEMPLATE_PROFILES: &[TemplateProfile] = &[
             "<Short imperative name>",
             "<one behaviour — what it does>",
             "<as a..., I want..., so that...>",
-            "<boundary — what this project will deliver>",
-            "<explicit exclusions — name them so the argument ends here>",
-            "<how to measure this requirement succeeds>",
+            "<functional boundary — what must exist>",
+            "<functional boundary — what must not exist. Name them so the argument ends here>",
+            "<how to measure the outcome of this requirement>",
             "<Timeline, phasing, and dependencies>",
             "<System boundaries, tech stack, and infra>",
         ],
@@ -144,7 +140,7 @@ pub const TEMPLATE_PROFILES: &[TemplateProfile] = &[
     TemplateProfile {
         doc_name: ROADMAP_DOC,
         template_file: "HOW-TO-MAKE-ROADMAP.md",
-        deletable_sections: &[],
+
         required_h2s: ROADMAP_REQUIRED_H2S,
         placeholder_catalog: &[
             "<workspace name>",
@@ -160,7 +156,7 @@ pub const TEMPLATE_PROFILES: &[TemplateProfile] = &[
     TemplateProfile {
         doc_name: README_DOC,
         template_file: "HOW-TO-MAKE-README.md",
-        deletable_sections: &[],
+
         required_h2s: README_REQUIRED_H2S,
         placeholder_catalog: &["<project-name>", "<requiretment>"],
     },
@@ -172,14 +168,14 @@ pub const TEMPLATE_PROFILES: &[TemplateProfile] = &[
     TemplateProfile {
         doc_name: ARCHITECTURE_DOC,
         template_file: "HOW-TO-MAKE-ARCHITECTURE.md",
-        deletable_sections: &[],
+
         required_h2s: ARCHITECTURE_REQUIRED_H2S,
         placeholder_catalog: &["<Project>", "<One paragraph."],
     },
     TemplateProfile {
         doc_name: CONTRIBUTING_DOC,
         template_file: "HOW-TO-MAKE-CONTRIBUTING.md",
-        deletable_sections: &[],
+
         required_h2s: CONTRIBUTING_REQUIRED_H2S,
         placeholder_catalog: &[
             "<project-name>",
@@ -202,7 +198,7 @@ pub const TEMPLATE_PROFILES: &[TemplateProfile] = &[
     TemplateProfile {
         doc_name: DATA_DOC,
         template_file: "HOW-TO-MAKE-DATA.md",
-        deletable_sections: &[],
+
         required_h2s: DATA_REQUIRED_H2S,
         placeholder_catalog: &[
             "<project-name>",
@@ -217,7 +213,7 @@ pub const TEMPLATE_PROFILES: &[TemplateProfile] = &[
     TemplateProfile {
         doc_name: DESIGN_DOC,
         template_file: "HOW-TO-MAKE-DESIGN.md",
-        deletable_sections: &[],
+
         required_h2s: DESIGN_REQUIRED_H2S,
         placeholder_catalog: &[
             "<project-name>",
