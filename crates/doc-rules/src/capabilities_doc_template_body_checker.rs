@@ -64,9 +64,6 @@ impl ITemplateBodyProtocol for TemplateBodyChecker {
                 .iter()
                 .copied()
                 .filter(|&req_h2| {
-                    if profile.deletable_sections.contains(&req_h2) {
-                        return false;
-                    }
                     let norm_req = normalize_heading(req_h2);
                     !present_h2s
                         .iter()

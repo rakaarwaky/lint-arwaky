@@ -262,7 +262,7 @@ pub const FR_FIELDS: &[&str] = &[
 /// `utility_markdown_scanner::api_contract_methods` (AES601 method check).
 pub const API_CONTRACT_SUBSECTIONS: &[&str] = &["Protocol API", "Aggregate API"];
 
-/// File extensions a spec must never name, per HOW-TO-MAKE-FRD Rule 9.
+/// File extensions a spec must never name, per HOW-TO-MAKE-FRD Rule 7.
 pub const SOURCE_EXTENSIONS: &[&str] = &["py", "rs", "ts", "tsx"];
 
 // ─── AES606 — Template body-shape conformance ──────────────────────────────
