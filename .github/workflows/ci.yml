@@ -147,7 +147,7 @@ jobs:
 
       - name: AES Codes Check
         # Threshold must match the reconciled scan-visible rule count in
-        # TEST.md §3.1/§3.2 exactly: 36 total AES rules across 7 groups.
+        # TEST.md §3.1/§3.2 exactly: 38 total AES rules across 7 groups.
         # All 36 are now surfaced by `scan workspaces-bad` via the doc-audit
         # pass. AES606 fires `section_not_table` on workspaces-bad's
         # ROADMAP.md, whose Feature Roll-up and State Definitions carry

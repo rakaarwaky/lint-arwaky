@@ -46,9 +46,9 @@ workspaces-good/
 
 | Workspace | Language | Files | Violations | False Positives | Expected AES Codes|
 | --------- | -------- | ----- | ---------- | --------------- | ------------------|
-| bad       | Rust     | 156   | ≥ 100 (non-regressing floor) | — | 36 unique codes|
-| bad       | Python   | 160   | ≥ 100 (non-regressing floor) | — | 36 unique codes|
-| bad       | JS/TS    | 114   | ≥ 100 (non-regressing floor) | — | 36 unique codes|
+| bad       | Rust     | 156   | ≥ 100 (non-regressing floor) | — | 38 unique codes|
+| bad       | Python   | 160   | ≥ 100 (non-regressing floor) | — | 38 unique codes|
+| bad       | JS/TS    | 114   | ≥ 100 (non-regressing floor) | — | 38 unique codes|
 | good      | Rust     | 35    | 0          | 0               | —                 |
 | good      | Python   | 42    | 0          | 0               | —                 |
 | good      | JS/TS    | 33    | 0          | 0               | —                 |
@@ -58,10 +58,10 @@ workspaces-good/
 > below the documented ≥ 100 violation floor per language.
 >
 > **Reconciled rule count (single source of truth — §3.2):** the product
-> enforces **36 AES rules** total (per RULES_AES.md and the §3.2 Per-Rule
-> Detection Matrix). `scan` now surfaces **all 36** — including the six
+> enforces **38 AES rules** total (per RULES_AES.md and the §3.2 Per-Rule
+> Detection Matrix). `scan` now surfaces **all 38** — including the six
 > doc-invariant codes AES601–AES606, which the doc-audit pass folds into
-> every scan target. The CI "AES Codes Check" gate enforces all 36 unique
+> every scan target. The CI "AES Codes Check" gate enforces all 38 unique
 > codes per scan — no safety margin (QA #636).
 >
 > **External tools prerequisite**: Python & JS/TS scans require external tools
@@ -223,17 +223,17 @@ Thresholds match the §1 Expected Violation Counts table (≥ 100 violations flo
 | Total violations (Rust scan)   | >= 100 | < 100 or 0|
 | Total violations (Python scan) | >= 100 | < 100 or 0|
 | Total violations (JS/TS scan)  | >= 100 | < 100 or 0|
-| Unique AES codes (Rust)        | >= 36  | < 36      |
-| Unique AES codes (Python)      | >= 36  | < 36      |
-| Unique AES codes (JS/TS)       | >= 36  | < 36      |
+| Unique AES codes (Rust)        | >= 38  | < 38      |
+| Unique AES codes (Python)      | >= 38  | < 38      |
+| Unique AES codes (JS/TS)       | >= 38  | < 38      |
 | Self-lint violations           | 0      | > 0       |
 | Doc-consistency gate failures  | 0      | > 0       |
 
 > The "Unique AES codes" threshold is the reconciled scan-visible count from
-> §1/§3.2 (all 36 AES rules; AES601–AES606 are now surfaced by the doc-audit
-> pass inside `scan`). The CI "AES Codes Check" step enforces exactly 36
+> §1/§3.2 (all 38 AES rules; AES601–AES606 are now surfaced by the doc-audit
+> pass inside `scan`). The CI "AES Codes Check" step enforces exactly 38
 > with no lower safety margin, so a detection regression in any one of the
-> 36 rules fails CI (QA #636). When rules are added/removed, update §3.2, this table,
+> 38 rules fails CI (QA #636). When rules are added/removed, update §3.2, this table,
 > §1, and the `ci.yml` threshold in lockstep.
 
 ### 3.2 Per-Rule Detection Matrix
@@ -425,7 +425,7 @@ The base codebase must be clean of internal architecture rule violations.
 
 - [ ] **Criteria**: Bad workspaces meet aggregate thresholds (Section 3.1).
 - [ ] **Criteria**: Good workspaces produce 0 violations (false positive test).
-- [ ] **Criteria**: All 36 unique AES codes detected per language (Section 3.2).
+- [ ] **Criteria**: All 38 unique AES codes detected per language (Section 3.2).
 - [ ] **Criteria**: All negative tests pass (Section 3.3).
 - [ ] **Criteria**: All exit code tests pass (Section 3.4).
 
