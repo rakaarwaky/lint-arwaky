@@ -104,238 +104,258 @@ ids whose feature prefix matches the folder name (`crates/filesystem` →
 
 ## Group 1: Naming
 
+| Code | Name | Severity | Sub-checks | Violation names | Ran by |
+| --- | --- | --- | --- | --- | --- |
+| AES101 | Naming Convention | HIGH | 1 | `NAMING_CONVENTION` | check/scan, naming |
+| AES102 | Suffix/Prefix Rules | HIGH | 3 | `SUFFIX_PREFIX` | check/scan, naming |
+| AES103 | Test File Prefix | HIGH | 3 | `TEST_FILE_PREFIX` | check/scan, naming |
+
 ### AES101 — Naming Convention
 
-**Severity:** HIGH
-
-Filename must follow pattern: `prefix_concept_suffix` or `prefix_concept1_concept2_suffix`
-
-- All **lowercase**
-- Separator: **underscore** (`_`)
-- Minimum **3 words** (prefix + suffix)
-- Maximum: Unlimited
-- Examples: `capabilities_user_checker.rs`, `utility_path_resolver.rs`, `capabilities_db_adapter.py`
-
-**Exceptions:** `main.rs`, `lib.rs`, `mod.rs`, `root_cli_main_entry.rs`, `root_mcp_main_entry.rs`, `root_tui_main_entry.rs`, `root_composition_container.rs`, `__init__.py`, `index.ts`, `index.js`, barrel/entry files.
-
----
-
-### AES102 — Suffix/Prefix Rules
-
-**Severity:** HIGH
-
-Suffix must match the layer definition. Three sub-checks:
-
-1. **Forbidden suffix** — suffix must not be in the `forbidden_suffix` list
-2. **Strict suffix policy** — suffix must be in the `allowed_suffix` list
-3. **Flexible suffix policy** — suffix can be anything except `forbidden` ones
-
-#### Suffix Policy per Layer
-
-| Layer          | Policy   | Allowed Suffixes                                                                                                         | Forbidden Suffixes                                                                                    |
-| ---------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------|
-| `root`         | strict   | `_entry`, `_container`                                                                                                   | N/A                                                                                                   |
-| `taxonomy`     | strict   | `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_request`, `_response`                                                                        | N/A                                                                                                   |
-| `contract`     | strict   | `_protocol`, `_aggregate`                                                                                                | N/A                                                                                                   |
-| `utility`      | flexible | based on config                                                                                                          | `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_protocol`, `_aggregate`, `_request`, `_response`                          |
-| `capabilities` | flexible | based on config                                                                                                          | `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_constants`, `_protocol`, `_aggregate`, `_utility`, `_request`, `_response`|
-| `agent`        | strict   | `_orchestrator`                                                                                                          | N/A                                                                                                   |
-| `surface`     | strict   | `_command`, `_controller`, `_page`, `_view`, `_component`, `_router`, `_layout`, `_hook`, `_store`, `_action`, `_screen` | N/A                                                                                                   |
-
----
-
-### AES103 — Test File Prefix
-
-**Severity:** HIGH
-
-The `aes-testing-suite` skill fixes one test layout: tests live in `tests/`,
-benchmarks in `benches/`, and the flat file-name prefix **is** the virtual
-folder. AES103 enforces both halves of that.
-
-#### Legal prefixes
-
-| Directory  | Legal prefixes                                                                                                                             |
-| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------|
-| `tests/`    | the seven test types — `contract_`, `unit_`, `integration_`, `dogfood_`, `smoke_`, `e2e_`, `acceptance_` — plus the support set `regression_`, `behavioral_`, `mock_`, `fixture_`|
-| `benches/`  | `bench_`                                                                                                                                    |
-| anywhere    | any — a file outside both directories carries no test-type prefix and is not read by this rule                                             |
+| Field | Value |
+| --- | --- |
+| Code / Severity | AES101 / HIGH |
+| Fires when | File stem violates `prefix_concept[_concept…]_suffix`: lowercase, `_` separated, ≥3 words (`NamingConfig::new(Count::new(3))`) |
+| Scope | Production source files; `tests/`+`benches/` handled by AES103 only |
+| Fix | Rename to the layer pattern, e.g. `capabilities_user_checker.rs` |
+| Exceptions | `DEFAULT_RULE_EXCEPTIONS` in `shared_common` |
 
 #### Sub-checks
 
-1. **Flat layout** — `tests/` and `benches/` must not nest a subdirectory. The
-   one registered exception is `tests/common/`, which Rust reaches through
-   `mod common;`; a support module cannot sit flat beside the test files without
-   colliding with them.
-2. **Legal prefix** — a file's stem must start with one of its directory's
-   prefixes. A prefix belonging to the *other* directory is reported separately
-   from no prefix at all, because the fix is a move rather than a rename.
-3. **Barrel exemption** — `mod.rs`, `lib.rs`, `__init__.py`, `index.ts`, and
-   `index.js` name no test of their own and are skipped, the same exemption
-   AES101 grants them.
+| # | Sub-check | Severity | Violation name | Fires when |
+| --- | --- | --- | --- | --- |
+| 1 | Naming convention | HIGH | `NAMING_CONVENTION` | Stem is not the `prefix_concept_suffix` shape (all-lowercase, ≥3 underscore-separated words) |
 
-#### Scope boundary
+### AES102 — Suffix/Prefix Rules
 
-AES103 is the only rule that reads `tests/` and `benches/`. Every other
-per-file auditor works on production source and skips them — a test file judged
-by AES101 or AES102 yields noise nobody acts on. The file index the naming
-orchestrator receives therefore carries two sets: production source for AES101
-and AES102, and the test/bench files for AES103.
+| Field | Value |
+| --- | --- |
+| Code / Severity | AES102 / HIGH |
+| Fires when | A file's layer suffix matches neither its layer's allowed set nor its forbidden list (forbidden-suffix, strict-policy, and flexible-policy sub-checks) |
+| Scope | Production source files whose stem carries a recognized layer prefix (`taxonomy_`, `contract_`, `utility_`, `capabilities_`, `agent_`, `surface_`, `root_`) |
+| Fix | Rename with an allowed suffix for the detected layer, or move the file to the layer whose suffix set it matches |
+| Exceptions | Barrel/entry files (`main.rs`, `lib.rs`, `mod.rs`, `__init__.py`, `index.ts`, `index.js`) plus any `exceptions` entries for `AES102` in config |
 
-**Support prefixes satisfy AES103 but not AES704.** A `regression_*` guard is a
-legal file name and no required category; category presence is the structure
-rule's question.
+#### Layer suffix policy
 
----
+| Layer | Policy | Allowed Suffixes | Forbidden Suffixes |
+| --- | --- | --- | --- |
+| `root` | strict | `entry`, `container` | — |
+| `taxonomy` | strict | `vo`, `entity`, `error`, `event`, `constant`, `request`, `response` | — |
+| `contract` | strict | `protocol`, `aggregate` | — |
+| `utility` | flexible | any | `vo`, `entity`, `error`, `event`, `constant`, `protocol`, `aggregate`, `request`, `response` |
+| `capabilities` | flexible | any | `vo`, `entity`, `error`, `event`, `constant`, `constants`, `protocol`, `aggregate`, `utility`, `request`, `response` |
+| `agent` | strict | `orchestrator` | — |
+| `surface` | strict | `command`, `controller`, `page`, `view`, `component`, `router`, `layout`, `hook`, `store`, `action`, `screen` | — |
+
+#### Sub-checks
+
+| # | Sub-check | Severity | Violation name | Fires when |
+| --- | --- | --- | --- | --- |
+| 1 | Forbidden suffix | HIGH | `SUFFIX_PREFIX` | Suffix is in this layer's `forbidden_suffix` list |
+| 2 | Strict suffix policy | HIGH | `SUFFIX_PREFIX` | Layer policy is `strict` and suffix is not in `allowed_suffix` |
+| 3 | Flexible suffix policy | HIGH | `SUFFIX_PREFIX` | Layer policy is `flexible` and suffix is in `forbidden_suffix` |
+
+### AES103 — Test File Prefix
+
+| Field | Value |
+| --- | --- |
+| Code / Severity | AES103 / HIGH |
+| Fires when | A file in `tests/` or `benches/` is nested under a subdirectory, lacks a legal test-type prefix, or carries a prefix belonging to the other directory; barrel files are skipped |
+| Scope | `tests/` and `benches/` files only; every other per-file auditor skips them; support prefixes like `regression_` satisfy AES103 but are not required categories for AES704 |
+| Fix | Flatten the file into `tests/`/`benches/` and rename it `<type>_<subject>.<ext>` with a legal prefix |
+| Exceptions | Barrel files `mod.rs`, `lib.rs`, `__init__.py`, `index.ts`, `index.js` — same exemption AES101 grants |
+
+#### Legal prefixes
+
+| Directory | Legal prefixes |
+| --- | --- |
+| `tests/` | `contract_`, `unit_`, `integration_`, `dogfood_`, `smoke_`, `e2e_`, `acceptance_`, plus support `regression_`, `behavioral_`, `mock_`, `fixture_` |
+| `benches/` | `bench_` |
+| anywhere | any — a file outside both directories carries no test-type prefix and is not read by this rule |
+
+#### Sub-checks
+
+| # | Sub-check | Severity | Violation name | Fires when |
+| --- | --- | --- | --- | --- |
+| 1 | Flat layout | HIGH | `TEST_FILE_PREFIX` | File sits below `tests/` or `benches/` in a subdirectory |
+| 2 | Legal prefix | HIGH | `TEST_FILE_PREFIX` | Stem starts with no legal prefix for its directory |
+| 3 | Barrel exemption | HIGH | `TEST_FILE_PREFIX` | `mod.rs`, `lib.rs`, `__init__.py`, `index.ts`, `index.js` name no test and are skipped |
 
 ## Group 2: Layer & Import Boundary
 
+| Code | Name | Severity | Sub-checks | Violation names | Ran by |
+| --- | --- | --- | --- | --- | --- |
+| AES201 | Forbidden Import | CRITICAL | 13 scope rows | `FORBIDDEN_IMPORT` | check/scan, import |
+| AES202 | Mandatory Import | HIGH | — | `MANDATORY_IMPORT` | check/scan, import |
+| AES203 | Unused Import | MEDIUM | — | `UNUSED_IMPORT` | check/scan, import |
+| AES204 | Dummy Import | HIGH | — | `DUMMY_IMPORT` | check/scan, import |
+| AES205 | Circular Import | CRITICAL | — | `CIRCULAR_IMPORT` | check/scan, import |
+
 ### AES201 — Forbidden Import
 
-**Severity:** CRITICAL
+| Field | Value |
+| --- | --- |
+| Code / Severity | AES201 / CRITICAL |
+| Fires when | An import violates the allowed/mandatory/forbidden triple for the file's filename-prefix layer scope (13 rows) |
+| Scope | Every scanned source file whose stem maps to one of the 13 layer scopes below |
+| Fix | Remove or redirect the import to a layer the scope's Allowed cell permits |
+| Config | `architecture.rules.AES201` (per-scope rows are not individually switchable) |
+| Source | `config_architecture_rules.rs` `RULES` |
 
-A single rule with **13 sub-conditions** — each has `allowed`, `mandatory`, and `forbidden` fields. Layers are identified by **filename prefix** (`taxonomy_`, `utility_`, `contract_`, `capabilities_`, `agent_`, `surface_`, `root_`), not directory path.
+#### Import matrix (13 scopes)
 
-| #  | Scope                                                           | Allowed Imports                                            | Mandatory Imports             | Forbidden Imports                                               |
-| ---- | ----------------------------------------------------------------- | ------------------------------------------------------------ | ------------------------------- | ------------------------------------------------------------------|
-| 1  | `taxonomy(vo)`                                                  | taxonomy                                                   | None                          | agent*, surface*, contract*, utility*, capabilities*, root      |
-| 1a | `taxonomy(request,response)`                                    | taxonomy                                                   | None                          | agent*, surface*, contract*, utility*, capabilities*, root      |
-| 2  | `taxonomy(entity,error,event)`                                  | taxonomy                                                   | taxonomy(vo&#124;constant)    | agent*, surface*, contract*, utility*, capabilities*, root      |
-| 3  | `taxonomy(constant)`                                            | taxonomy                                                   | None                          | agent*, surface*, contract*, utility*, capabilities*, root      |
-| 4  | `utility`                                                       | taxonomy                                                   | None                          | agent*, surface*, contract*, capabilities*, root, utility        |
-| 5  | `contract(protocol)`                                            | taxonomy, contract                                         | taxonomy                      | agent*, surface*, capabilities*, contract(aggregate), root      |
-| 6  | `contract(aggregate)`                                           | taxonomy, contract                                         | taxonomy                      | agent*, surface*, capabilities*, root                           |
-| 7  | `capabilities`                                                  | taxonomy, contract, utility                      | taxonomy, contract(protocol)  | surface*, agent*, capabilities*, root                           |
-| 8  | `agent(orchestrator)`                                           | taxonomy, contract(aggregate), contract(protocol), utility | taxonomy, contract(aggregate) | surface*, capabilities*, root                                   |
-| 9  | `surface(command&#124;controller&#124;page)`                   | taxonomy, contract(aggregate), utility                     | None                          | agent, capabilities, contract(protocol), root                 |
-| 10 | `surface(hook&#124;store&#124;action&#124;screen&#124;router)` | taxonomy, contract(aggregate), utility                     | None                          | agent, capabilities, contract(protocol), surface(command&#124;controller&#124;page&#124;entry), root|
-| 11 | `surface(component&#124;view&#124;layout)`                     | taxonomy, contract(aggregate), utility                     | None                          | agent, contract, capabilities, surface(command&#124;controller&#124;page&#124;entry&#124;hook&#124;store&#124;action&#124;screen&#124;router), root            |
-| 12 | `root`                                                          | taxonomy, contract, capabilities, agent, surface           | None                          | None                                                            |
-
----
+| # | Scope | Allowed | Mandatory | Forbidden |
+| --- | --- | --- | --- | --- |
+| 1 | `taxonomy(vo)` | `taxonomy` | — | `agent,surface,contract,utility,capabilities,root` |
+| 2 | `taxonomy(request,response)` | `taxonomy` | — | `agent,surface,contract,utility,capabilities,root` |
+| 3 | `taxonomy(entity,error,event)` | `taxonomy` | `taxonomy(vo&#124;constant)` | `agent,surface,contract,utility,capabilities,root` |
+| 4 | `taxonomy(constant)` | `taxonomy` | — | `agent,surface,contract,utility,capabilities,root` |
+| 5 | `utility` | `taxonomy` | — | `agent,surface,contract,capabilities,root,utility` |
+| 6 | `contract(protocol)` | `taxonomy,contract` | `taxonomy` | `agent,surface,capabilities,contract(aggregate),root` |
+| 7 | `contract(aggregate)` | `taxonomy,contract` | `taxonomy` | `agent,surface,capabilities,root` |
+| 8 | `capabilities` | `taxonomy,contract,utility` | `taxonomy,contract(protocol)` | `surface,agent,capabilities,root` |
+| 9 | `agent(orchestrator)` | `taxonomy,contract(aggregate),contract(protocol),utility` | `taxonomy,contract(aggregate)` | `surface,capabilities,root` |
+| 10 | `root` | `taxonomy,contract,capabilities,agent,surface` | — | — |
+| 11 | `surface(command&#124;controller&#124;page)` | `taxonomy,contract(aggregate),utility` | — | `agent,capabilities,contract(protocol),root` |
+| 12 | `surface(hook&#124;store&#124;action&#124;screen&#124;router)` | `taxonomy,contract(aggregate),utility` | — | `agent,capabilities,contract(protocol),surface(command&#124;controller&#124;page&#124;entry),root` |
+| 13 | `surface(component&#124;view&#124;layout)` | `taxonomy,contract(aggregate),utility` | — | `agent,contract,capabilities,surface(command&#124;controller&#124;page&#124;entry&#124;hook&#124;store&#124;action&#124;screen&#124;router),root` |
 
 ### AES202 — Mandatory Import
 
-**Severity:** HIGH
-
-File is missing required imports defined by the configuration. Each layer has specific mandatory import expectations to ensure dependencies are properly structured.
-
-**FIX:** Add the required import statement to the file.
-
----
+| Field | Value |
+| --- | --- |
+| Code / Severity | AES202 / HIGH |
+| Fires when | A file is missing a required import defined by its layer's `mandatory` list |
+| Scope | Every scanned source file whose layer declares a non-empty `mandatory` list |
+| Fix | Add the required import statement |
+| Config | `architecture.rules.AES202` (per-scope rows not individually switchable) |
+| Exceptions | `exceptions` entries for `AES202` in config; barrel files are skipped |
 
 ### AES203 — Unused Import
 
-**Severity:** MEDIUM
-
-Symbol is imported but never used in file scope. Detected via AST analysis across Rust, Python, and JavaScript.
-
-**FIX:** Remove the unused import or use the symbol.
-
----
+| Field | Value |
+| --- | --- |
+| Code / Severity | AES203 / MEDIUM |
+| Fires when | A symbol is imported but never used in file scope (AST analysis across Rust, Python, JavaScript) |
+| Scope | Every scanned source file |
+| Fix | Remove the unused import or use the symbol |
+| Config | `architecture.rules.AES203` |
+| Exceptions | `exceptions` entries for `AES203` in config; barrel files are skipped |
 
 ### AES204 — Dummy Import
 
-**Severity:** HIGH
-
-Import statement matches a forbidden dummy pattern. Used to detect fake/redundant imports that exist only to satisfy the linter but serve no real purpose. Includes three sub-checks:
-
-1. **Dummy imports** — imported symbols only used inside `_use_mandatory_imports` dummy functions (dead code to silence import warnings)
-2. **Dummy functions** — `_use_mandatory_imports` function ranges flagged as dead code
-3. **Dummy trait impls** — trait implementations with empty/todo bodies that violate contract abstraction
-
-**FIX:** Use imported symbols in real logic, remove `_use_mandatory_imports` functions, implement contract methods with real behavior.
-
----
+| Field | Value |
+| --- | --- |
+| Code / Severity | AES204 / HIGH |
+| Fires when | An import string matches a forbidden dummy pattern — symbols used only inside `_use_mandatory_imports` dummy functions, dummy functions, or dummy trait impls |
+| Scope | Every scanned source file |
+| Fix | Use imported symbols in real logic, remove `_use_mandatory_imports` functions, implement contract methods with real behavior |
+| Config | `architecture.rules.AES204` |
+| Exceptions | `exceptions` entries for `AES204` in config; barrel files are skipped |
 
 ### AES205 — Circular Import
 
-**Severity:** CRITICAL
-
-Circular dependency detected between layers. Layer dependencies must be unidirectional (bottom-up).
-Allowed direction: `taxonomy → contract / utility → capabilities → agent → surface → root`.
-Any back-edge or cross-layer cycle is a violation.
-
----
+| Field | Value |
+| --- | --- |
+| Code / Severity | AES205 / CRITICAL |
+| Fires when | A back-edge or cross-layer dependency cycle exists between layers |
+| Scope | Every scanned source file |
+| Fix | Extract shared types to taxonomy, define a contract protocol, or restructure dependency direction to bottom-up (`taxonomy → contract / utility → capabilities → agent → surface → root`) |
+| Config | `architecture.rules.AES205` |
+| Exceptions | `exceptions` entries for `AES205` in config |
 
 ## Group 3: File & Content Quality
 
+| Code | Name | Severity | Sub-checks | Violation names | Ran by |
+| --- | --- | --- | --- | --- | --- |
+| AES301 | File Maximum Limit | HIGH | — | `FILE_TOO_LARGE` | check/scan, quality |
+| AES302 | File Minimum Limit | HIGH | — | `FILE_TOO_SHORT` | check/scan, quality |
+| AES303 | Mandatory Definition | HIGH (missing) / MEDIUM (empty) | 2 | `MANDATORY_DEFINITION`, `DEAD_INHERITANCE` | check/scan, quality |
+| AES304 | Bypass Comment | CRITICAL | — | `BYPASS_COMMENT`, `UNWRAP_EXPECT`, `PANIC`, `UNIMPLEMENTED`, `TODO` | check/scan, quality |
+| AES305 | Code Duplication | MEDIUM | 1 | — | check/scan, quality |
+
 ### AES301 — File Maximum Limit
 
-**Severity:** HIGH
-
-File exceeds maximum allowed line count (default: 1000).
-
-**FIX:** Split into smaller files.
-
----
+| Field | Value |
+| --- | --- |
+| Code / Severity | AES301 / HIGH |
+| Fires when | File exceeds the maximum allowed line count (default: 1000) |
+| Scope | Every scanned source file; barrel/entry files and `*_constant` files are excepted |
+| Fix | Split into smaller files |
+| Config | `architecture.rules.AES301` (`code_analysis.max_lines`) |
+| Exceptions | `DEFAULT_RULE_EXCEPTIONS` plus per-layer `exceptions` |
 
 ### AES302 — File Minimum Limit
 
-**Severity:** HIGH
-
-File is below minimum required line count (default: 5).
-
-**FIX:** Merge into a related module or add more documentation.
-
----
+| Field | Value |
+| --- | --- |
+| Code / Severity | AES302 / HIGH |
+| Fires when | File is below the minimum required line count (default: 5) |
+| Scope | Every scanned source file; barrel/entry files and `*_constant` files are excepted |
+| Fix | Merge into a related module or add more documentation |
+| Config | `architecture.rules.AES302` (`code_analysis.min_lines`) |
+| Exceptions | `DEFAULT_RULE_EXCEPTIONS` plus per-layer `exceptions` |
 
 ### AES303 — Mandatory Definition
 
-**Severity:** HIGH (sub-check 1) / MEDIUM (sub-check 2)
+| Field | Value |
+| --- | --- |
+| Code / Severity | AES303 / HIGH (missing) / MEDIUM (empty) |
+| Fires when | A source file has no struct/enum/trait/class definition, or a definition is empty (unit struct without impl/derive, empty class/interface) |
+| Scope | Every scanned source file; barrel/entry files, `*_constant.rs`, `*_constant.py`, `main.rs`, `main.py`, `py.typed` are excepted |
+| Fix | Group functions into a struct or implement an interface; remove empty definitions |
+| Config | `architecture.rules.AES303` (`code_analysis.mandatory_class_definition`) |
+| Exceptions | `__init__.py`, `mod.rs`, `lib.rs`, `*_constant.rs`, `*_constant.py` |
 
-File must have at least one struct/enum/trait/class definition, and definitions must not be empty.
+#### Sub-checks
 
-Two sub-checks:
+| # | Sub-check | Severity | Violation name | Fires when |
+| --- | --- | --- | --- | --- |
+| 1 | Missing definition | HIGH | `MANDATORY_DEFINITION` | File has no struct/enum/trait/class at all |
+| 2 | Empty / dead definition | MEDIUM | `DEAD_INHERITANCE` | `struct Foo;`, `impl X for Y {}`, `class Foo: pass`, `class Foo {}` |
 
-1. **Missing definition** (`Severity: HIGH`) — file has no struct/enum/trait/class at all
-2. **Empty / dead definition** (`Severity: MEDIUM`) — `struct Foo;`, `impl X for Y {}`, `class Foo: pass`, `class Foo {}`
+#### Checker source
 
-| Checker                  | Method                               | Path                                                    |
-| -------------------------- | -------------------------------------- | ----------------------------------------------------------|
-| `MandatoryDefinitionChecker` | `check_mandatory_class_definition()` | `quality-rules/capabilities_mandatory_definition_checker.rs`|
-| `MandatoryDefinitionChecker` | `check_dead_inheritance()`           | `quality-rules/capabilities_mandatory_definition_checker.rs`|
-
-**Exceptions:** `__init__.py`, `mod.rs`, `lib.rs`, `*_constant.rs`, `*_constant.py`.
-
----
+| Checker | Method | Path |
+| --- | --- | --- |
+| `MandatoryDefinitionChecker` | `check_mandatory_class_definition()` | `quality-rules/capabilities_mandatory_definition_checker.rs` |
+| `DeadInheritanceChecker` | `check_dead_inheritance()` | `quality-rules/capabilities_dead_inheritance_checker.rs` |
 
 ### AES304 — Bypass Comment
 
-**Severity:** CRITICAL
+| Field | Value |
+| --- | --- |
+| Code / Severity | AES304 / CRITICAL |
+| Fires when | A forbidden bypass pattern is detected: `#[allow(...)]`, `unwrap`/`expect`, `panic!`, `todo`/`unimplemented`/`unreachable`, `noqa`, `type: ignore`, `eslint-disable`, `ts-ignore`/`ts-expect-error`, `FIXME`/`HACK`/`XXX`, Python `raise NotImplementedError`/`assert False`, JS/TS `throw new Error(...)`/`TypeError`/`RangeError`/`ReferenceError`/`SyntaxError` |
+| Scope | Every scanned source file |
+| Fix | Use proper error handling |
+| Config | `architecture.rules.AES304` (`code_analysis.forbidden_bypass` patterns; fallback default list when empty) |
+| Exceptions | Test modules are skipped |
 
-Forbidden bypass patterns detected:
+#### Forbidden bypass patterns
 
-- `#[allow(...)]`
-- `unwrap()` / `expect()`
-- `panic!`
-- `todo`
-- `unimplemented`
-- `unreachable`
-- `noqa`
-- `type: ignore`
-- `eslint-disable`
-- `ts-ignore`
-- `ts-expect-error`
-- `FIXME`
-- `HACK`
-- `XXX`
-- `raise NotImplementedError` (Python)
-- `assert False` (Python)
-- `throw new Error(...)` (JS/TS)
-
-**FIX:** Use proper error handling.
-
----
+| Pattern | Violation kind | Fires when |
+| --- | --- | --- |
+| `#[allow(...)]` | `BYPASS_COMMENT` | Forbidden bypass attribute |
+| `unwrap()` / `expect()` | `UNWRAP_EXPECT` | Forbidden unwrap or expect call |
+| `panic!` | `PANIC` | Forbidden panic call |
+| `todo` | `TODO` | Forbidden unfinished-implementation marker |
+| `unimplemented` / `unreachable` | `UNIMPLEMENTED` | Forbidden unimplemented-body marker |
+| `noqa` / `type: ignore` / `eslint-disable` / `ts-ignore` / `ts-expect-error` | `BYPASS_COMMENT` | Forbidden lint-stopper comment |
+| `FIXME` / `HACK` / `XXX` | `BYPASS_COMMENT` | Forbidden TODO marker |
+| `raise NotImplementedError` / `assert False` | `UNIMPLEMENTED` / `PANIC` | Python bypass patterns |
+| `throw new Error(...)` / `throw new TypeError(...)` / `throw new RangeError(...)` / `throw new ReferenceError(...)` / `throw new SyntaxError(...)` | `PANIC` | JS/TS bypass pattern |
 
 ### AES305 — Duplication Code
 
-**Severity:** MEDIUM
-
-Duplicate code blocks detected across files within the project scope.
-
-**FIX:** Extract duplicated logic into shared utilities.
-
----
+| Field | Value |
+| --- | --- |
+| Code / Severity | AES305 / MEDIUM |
+| Fires when | A file's share of shared normalized content windows exceeds the duplication threshold |
+| Scope | Every scanned source file; import-only windows are excluded |
+| Fix | Extract duplicated logic into shared utilities |
+| Config | `architecture.rules.AES305` (`code_analysis.min_lines`, `duplication_threshold`) |
 
 ## Group 4: Role Violations
 
