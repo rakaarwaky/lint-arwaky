@@ -2,7 +2,7 @@
 
 ## 1. Purpose
 
-The Agentic Engineering System is a layered, AI-native architecture pattern. It keeps domain models stable, business logic readable, technical detail isolated, and layer boundaries explicit enough for both humans and AI agents to modify the system safely.
+This architecture prevents tangled imports, undiscoverable behavior, and agent misrouting: explicit layer boundaries and one file-naming pattern govern every file humans and AI agents touch.
 
 ---
 
@@ -107,7 +107,6 @@ project-root/                             <- Project workspace root
 │   ├── <feature-a>/                      <- FEATURE: <feature-a description>
 │   │   └── src/
 │   │       ├── agent_<feature-a>_orchestrator.rs/py/ts         <- Agent
-│   │       ├── capabilities_<feature-a>_<role>.rs/py/ts        <- Capabilities
 │   │       ├── capabilities_<feature-a>_<role>.rs/py/ts        <- Capabilities
 │   │       ├── root_<feature-a>_container.rs/py/ts             <- Root
 │   │       └── lib.rs
@@ -412,62 +411,23 @@ graph TD
 | 7 Structure | AES701–AES706 | 6 | check/scan (severity normalized to MEDIUM at report) |
 | Total | AES101–AES706 | 38 | — |
 
-### Rule inventory
+The pinned per-rule inventory (first-cell `| AESxxx |` rows: code, group, name, severity, ran-by) lives in [RULES_AES.md](RULES_AES.md) and is verified against the emitted codes by `doc_codes_match_emitted_inventory` (§21). Per-rule detail blocks live in §14–20 below.
 
-| Code | Group | Name | Severity | Ran by |
-| --- | --- | --- | --- | --- |
-| AES101 | Naming | Naming Convention | HIGH | check/scan, naming |
-| AES102 | Naming | Suffix/Prefix Rules | HIGH | check/scan, naming |
-| AES103 | Naming | Test File Prefix | HIGH | check/scan, naming |
-| AES201 | Import | Forbidden Import | CRITICAL | check/scan, import |
-| AES202 | Import | Mandatory Import | HIGH | check/scan, import |
-| AES203 | Import | Unused Import | MEDIUM | check/scan, import |
-| AES204 | Import | Dummy Import | HIGH | check/scan, import |
-| AES205 | Import | Circular Import | CRITICAL | check/scan, import |
-| AES301 | Quality | File Maximum Limit | HIGH | check/scan, quality |
-| AES302 | Quality | File Minimum Limit | HIGH | check/scan, quality |
-| AES303 | Quality | Mandatory Definition | HIGH (missing) / MEDIUM (empty) | check/scan, quality |
-| AES304 | Quality | Bypass Comment | CRITICAL | check/scan, quality |
-| AES305 | Quality | Code Duplication | MEDIUM | check/scan, quality |
-| AES401 | Role | Taxonomy Role | HIGH | check/scan, role |
-| AES402 | Role | Contract Role | HIGH | check/scan, role |
-| AES403 | Role | Capabilities Role | HIGH / MEDIUM / LOW per sub-check | check/scan, role |
-| AES404 | Role | Utility Role | MEDIUM | check/scan, role |
-| AES405 | Role | Agent Role | HIGH / MEDIUM / LOW per sub-check | check/scan, role |
-| AES406 | Role | Surface Role | HIGH (one sub-check MEDIUM) | check/scan, role |
-| AES501 | Orphan | Taxonomy Orphan | LOW | check/scan, orphan |
-| AES502 | Orphan | Contract Orphan | MEDIUM | check/scan, orphan |
-| AES503 | Orphan | Capabilities Orphan | MEDIUM | check/scan, orphan |
-| AES504 | Orphan | Utility Orphan | MEDIUM | check/scan, orphan |
-| AES505 | Orphan | Agent Orphan | HIGH | check/scan, orphan |
-| AES506 | Orphan | Surface Orphan | HIGH smart / MEDIUM utility / LOW passive | check/scan, orphan |
-| AES601 | Doc | FR Format | HIGH | check/scan, docs |
-| AES602 | Doc | Section Structure | HIGH | check/scan, docs |
-| AES603 | Doc | Spec Purity | HIGH | check/scan, docs |
-| AES604 | Doc | Crosslinks | HIGH | check/scan, docs |
-| AES605 | Doc | Doc Heading Structure | HIGH | check/scan, docs |
-| AES606 | Doc | Doc Template Conformance | HIGH | check/scan, docs |
-| AES607 | Doc | PR Folder Ownership | HIGH | check/scan, docs |
-| AES701 | Structure | Shared Folder Purity | MEDIUM (report) | check/scan |
-| AES702 | Structure | Feature Folder Health | MEDIUM (report) | check/scan |
-| AES703 | Structure | Surface Folder Purity | MEDIUM (report) | check/scan |
-| AES704 | Structure | Test Suite Coverage | MEDIUM (report) | check/scan |
-| AES705 | Structure | Member-Root Placement | MEDIUM (report) | check/scan |
-| AES706 | Structure | PR-LA Folder Mapping | MEDIUM (report) | check/scan |
+### Common rule exceptions
+
+| Item | Detail |
+| --- | --- |
+| Constant | `shared_common::DEFAULT_RULE_EXCEPTIONS` in `crates/shared/src/common/taxonomy_default_constant.rs` |
+| Carries | `lib.rs`, `mod.rs`, `build.rs`, `__init__.py`, `index.js`, `index.ts`, `index.tsx` |
+| Effect | Barrel/entry files are skipped by the rule checkers |
+| Not included | `main.rs`, `main.py`, `main.ts` — they keep firing so they are renamed to `root_*_entry` |
+| Config overlay | `architecture.rules.<CODE>.exceptions` merges on top of these defaults |
 
 Severity is as emitted; sub-check severities override where they differ (see per-rule detail). Layer semantics live in §5–11 and are referenced, not repeated, in rule detail below.
 
 ---
 
 ## 14. Group 1: Naming (AES101–AES103)
-
-### Group coverage
-
-| Code | Name | Severity | Sub-checks | Violation names | Ran by |
-| --- | --- | --- | --- | --- | --- |
-| AES101 | Naming Convention | HIGH | 1 | `NAMING_CONVENTION` | check/scan, naming |
-| AES102 | Suffix/Prefix Rules | HIGH | 3 | `SUFFIX_PREFIX` | check/scan, naming |
-| AES103 | Test File Prefix | HIGH | 3 | `TEST_FILE_PREFIX` | check/scan, naming |
 
 ### AES101 — Naming Convention
 
@@ -477,7 +437,7 @@ Severity is as emitted; sub-check severities override where they differ (see per
 | Fires when | File stem violates `prefix_concept[_concept…]_suffix`: lowercase, `_` separated, ≥3 words (`NamingConfig::new(Count::new(3))`) |
 | Scope | Production source files; `tests/`+`benches/` handled by AES103 only |
 | Fix | Rename to the layer pattern, e.g. `capabilities_user_checker.rs` |
-| Exceptions | `DEFAULT_RULE_EXCEPTIONS` in `shared_common` |
+| Exceptions | Common exemptions (§13) |
 
 #### Sub-checks
 
@@ -493,7 +453,7 @@ Severity is as emitted; sub-check severities override where they differ (see per
 | Fires when | A file's layer suffix matches neither its layer's allowed set nor its forbidden list (forbidden-suffix, strict-policy, and flexible-policy sub-checks) |
 | Scope | Production source files whose stem carries a recognized layer prefix (`taxonomy_`, `contract_`, `utility_`, `capabilities_`, `agent_`, `surface_`, `root_`) |
 | Fix | Rename with an allowed suffix for the detected layer, or move the file to the layer whose suffix set it matches |
-| Exceptions | Barrel/entry files (`main.rs`, `lib.rs`, `mod.rs`, `__init__.py`, `index.ts`, `index.js`) plus any `exceptions` entries for `AES102` in config |
+| Exceptions | Common exemptions (§13) plus `main.rs`; config `exceptions` entries for `AES102` |
 
 #### Layer suffix policy
 
@@ -523,7 +483,7 @@ Severity is as emitted; sub-check severities override where they differ (see per
 | Fires when | A file in `tests/` or `benches/` is nested under a subdirectory, lacks a legal test-type prefix, or carries a prefix belonging to the other directory; barrel files are skipped |
 | Scope | `tests/` and `benches/` files only; every other per-file auditor skips them; support prefixes like `regression_` satisfy AES103 but are not required categories for AES704 |
 | Fix | Flatten the file into `tests/`/`benches/` and rename it `<type>_<subject>.<ext>` with a legal prefix |
-| Exceptions | Barrel files `mod.rs`, `lib.rs`, `__init__.py`, `index.ts`, `index.js` — same exemption AES101 grants |
+| Exceptions | Common exemptions (§13) |
 
 #### Legal prefixes
 
@@ -545,26 +505,16 @@ Severity is as emitted; sub-check severities override where they differ (see per
 
 ## 15. Group 2: Layer & Import Boundary (AES201–AES205)
 
-### Group coverage
-
-| Code | Name | Severity | Sub-checks | Violation names | Ran by |
-| --- | --- | --- | --- | --- | --- |
-| AES201 | Forbidden Import | CRITICAL | 13 scope rows | `FORBIDDEN_IMPORT` | check/scan, import |
-| AES202 | Mandatory Import | HIGH | — | `MANDATORY_IMPORT` | check/scan, import |
-| AES203 | Unused Import | MEDIUM | — | `UNUSED_IMPORT` | check/scan, import |
-| AES204 | Dummy Import | HIGH | — | `DUMMY_IMPORT` | check/scan, import |
-| AES205 | Circular Import | CRITICAL | — | `CIRCULAR_IMPORT` | check/scan, import |
-
 ### AES201 — Forbidden Import
 
 | Field | Value |
 | --- | --- |
 | Code / Severity | AES201 / CRITICAL |
+| Violation names | `FORBIDDEN_IMPORT` |
 | Fires when | An import violates the allowed/mandatory/forbidden triple for the file's filename-prefix layer scope (13 rows) |
 | Scope | Every scanned source file whose stem maps to one of the 13 layer scopes below |
 | Fix | Remove or redirect the import to a layer the scope's Allowed cell permits |
 | Config | `architecture.rules.AES201` (per-scope rows are not individually switchable) |
-| Source | `config_architecture_rules.rs` `RULES` |
 
 #### Import matrix (13 scopes)
 
@@ -589,39 +539,43 @@ Severity is as emitted; sub-check severities override where they differ (see per
 | Field | Value |
 | --- | --- |
 | Code / Severity | AES202 / HIGH |
+| Violation names | `MANDATORY_IMPORT` |
 | Fires when | A file is missing a required import defined by its layer's `mandatory` list |
 | Scope | Every scanned source file whose layer declares a non-empty `mandatory` list |
 | Fix | Add the required import statement |
 | Config | `architecture.rules.AES202` (per-scope rows not individually switchable) |
-| Exceptions | `exceptions` entries for `AES202` in config; barrel files are skipped |
+| Exceptions | Common exemptions (§13); config `exceptions` entries for `AES202` |
 
 ### AES203 — Unused Import
 
 | Field | Value |
 | --- | --- |
 | Code / Severity | AES203 / MEDIUM |
+| Violation names | `UNUSED_IMPORT` |
 | Fires when | A symbol is imported but never used in file scope (AST analysis across Rust, Python, JavaScript) |
 | Scope | Every scanned source file |
 | Fix | Remove the unused import or use the symbol |
 | Config | `architecture.rules.AES203` |
-| Exceptions | `exceptions` entries for `AES203` in config; barrel files are skipped |
+| Exceptions | Common exemptions (§13); config `exceptions` entries for `AES203` |
 
 ### AES204 — Dummy Import
 
 | Field | Value |
 | --- | --- |
 | Code / Severity | AES204 / HIGH |
+| Violation names | `DUMMY_IMPORT` |
 | Fires when | An import string matches a forbidden dummy pattern — symbols used only inside `_use_mandatory_imports` dummy functions, dummy functions, or dummy trait impls |
 | Scope | Every scanned source file |
 | Fix | Use imported symbols in real logic, remove `_use_mandatory_imports` functions, implement contract methods with real behavior |
 | Config | `architecture.rules.AES204` |
-| Exceptions | `exceptions` entries for `AES204` in config; barrel files are skipped |
+| Exceptions | Common exemptions (§13); config `exceptions` entries for `AES204` |
 
 ### AES205 — Circular Import
 
 | Field | Value |
 | --- | --- |
 | Code / Severity | AES205 / CRITICAL |
+| Violation names | `CIRCULAR_IMPORT` |
 | Fires when | A back-edge or cross-layer dependency cycle exists between layers |
 | Scope | Every scanned source file |
 | Fix | Extract shared types to taxonomy, define a contract protocol, or restructure dependency direction to bottom-up (`taxonomy → contract / utility → capabilities → agent → surface → root`) |
@@ -632,37 +586,29 @@ Severity is as emitted; sub-check severities override where they differ (see per
 
 ## 16. Group 3: File & Content Quality (AES301–AES305)
 
-### Group coverage
-
-| Code | Name | Severity | Sub-checks | Violation names | Ran by |
-| --- | --- | --- | --- | --- | --- |
-| AES301 | File Maximum Limit | HIGH | — | `FILE_TOO_LARGE` | check/scan, quality |
-| AES302 | File Minimum Limit | HIGH | — | `FILE_TOO_SHORT` | check/scan, quality |
-| AES303 | Mandatory Definition | HIGH (missing) / MEDIUM (empty) | 2 | `MANDATORY_DEFINITION`, `DEAD_INHERITANCE` | check/scan, quality |
-| AES304 | Bypass Comment | CRITICAL | — | `BYPASS_COMMENT`, `UNWRAP_EXPECT`, `PANIC`, `UNIMPLEMENTED`, `TODO` | check/scan, quality |
-| AES305 | Code Duplication | MEDIUM | 1 | — | check/scan, quality |
-
 ### AES301 — File Maximum Limit
 
 | Field | Value |
 | --- | --- |
 | Code / Severity | AES301 / HIGH |
+| Violation names | `FILE_TOO_LARGE` |
 | Fires when | File exceeds the maximum allowed line count (default: 1000) |
 | Scope | Every scanned source file; barrel/entry files and `*_constant` files are excepted |
 | Fix | Split into smaller files |
 | Config | `architecture.rules.AES301` (`code_analysis.max_lines`) |
-| Exceptions | `DEFAULT_RULE_EXCEPTIONS` plus per-layer `exceptions` |
+| Exceptions | Common exemptions (§13) plus per-layer `exceptions` |
 
 ### AES302 — File Minimum Limit
 
 | Field | Value |
 | --- | --- |
 | Code / Severity | AES302 / HIGH |
+| Violation names | `FILE_TOO_SHORT` |
 | Fires when | File is below the minimum required line count (default: 5) |
 | Scope | Every scanned source file; barrel/entry files and `*_constant` files are excepted |
 | Fix | Merge into a related module or add more documentation |
 | Config | `architecture.rules.AES302` (`code_analysis.min_lines`) |
-| Exceptions | `DEFAULT_RULE_EXCEPTIONS` plus per-layer `exceptions` |
+| Exceptions | Common exemptions (§13) plus per-layer `exceptions` |
 
 ### AES303 — Mandatory Definition
 
@@ -681,13 +627,6 @@ Severity is as emitted; sub-check severities override where they differ (see per
 | --- | --- | --- | --- | --- |
 | 1 | Missing definition | HIGH | `MANDATORY_DEFINITION` | File has no struct/enum/trait/class at all |
 | 2 | Empty / dead definition | MEDIUM | `DEAD_INHERITANCE` | `struct Foo;`, `impl X for Y {}`, `class Foo: pass`, `class Foo {}` |
-
-#### Checker source
-
-| Checker | Method | Path |
-| --- | --- | --- |
-| `MandatoryDefinitionChecker` | `check_mandatory_class_definition()` | `quality-rules/capabilities_mandatory_definition_checker.rs` |
-| `DeadInheritanceChecker` | `check_dead_inheritance()` | `quality-rules/capabilities_dead_inheritance_checker.rs` |
 
 ### AES304 — Bypass Comment
 
@@ -728,17 +667,6 @@ Severity is as emitted; sub-check severities override where they differ (see per
 
 ## 17. Group 4: Role Violations (AES401–AES406)
 
-### Group coverage
-
-| Code | Name | Severity | Sub-checks | Violation names | Ran by |
-| --- | --- | --- | --- | --- | --- |
-| AES401 | Taxonomy Role | HIGH | — | `TAXONOMY_ROLE` | check/scan, role |
-| AES402 | Contract Role | HIGH | — | `CONTRACT_ROLE` | check/scan, role |
-| AES403 | Capabilities Role | HIGH / MEDIUM / LOW per sub-check | 8 | `CAPABILITY_ROLE` | check/scan, role |
-| AES404 | Utility Role | MEDIUM | — | `UTILITY_ROLE` | check/scan, role |
-| AES405 | Agent Role | HIGH / MEDIUM / LOW per sub-check | 11 | `AGENT_ROLE` | check/scan, role |
-| AES406 | Surface Role | HIGH (one sub-check MEDIUM) | 4 | `SURFACE_ROLE` | check/scan, role |
-
 ### AES401 — Taxonomy Role
 
 | Field | Value |
@@ -747,8 +675,7 @@ Severity is as emitted; sub-check severities override where they differ (see per
 | Fires when | A `_constant` file carries a non-const declaration, or an `_entity`/`_error`/`_event` file uses a primitive type directly in a field declaration |
 | Scope | Taxonomy files: `*_constant.rs`, `*_entity.rs`, `*_error.rs`, `*_event.rs` |
 | Fix | Replace primitives with taxonomy value objects; keep `_constant` files const-only |
-| Source | `capabilities_taxonomy_role_auditor.rs` |
-| Exceptions | Barrel files are skipped |
+| Exceptions | Common exemptions (§13) |
 
 #### Sub-checks
 
@@ -765,7 +692,6 @@ Severity is as emitted; sub-check severities override where they differ (see per
 | Fires when | A contract trait/method signature uses a primitive type instead of a taxonomy VO or constant |
 | Scope | Contract files (`*_protocol.rs`, `*_aggregate.rs`); test projects are the primary target |
 | Fix | Replace primitives with VO/constant types from the taxonomy layer |
-| Source | `utility_contract_role_checker.rs` |
 
 #### Sub-checks
 
@@ -781,7 +707,6 @@ Severity is as emitted; sub-check severities override where they differ (see per
 | Fires when | Capability violates protocol enforcement or the 3-block structure; per-sub-check severity applies |
 | Scope | Capability files (`*_capability*`); runs for Rust, Python, and TypeScript/JavaScript |
 | Fix | Ensure capability implements its protocol; split routing across capabilities; reorder impl blocks so protocol implementation comes first |
-| Source | `capabilities_capabilities_{rust,python,ts}_role_auditor.rs` |
 
 #### Sub-checks
 
@@ -812,7 +737,6 @@ Severity is as emitted; sub-check severities override where they differ (see per
 | Fires when | A utility file contains stateful objects, struct/class state, trait definitions, impl blocks, type aliases (Rust `pub type`), interface definitions (TS), enum definitions |
 | Scope | Utility files (`*_utility*`) |
 | Fix | Refactor to stateless standalone functions; remove non-taxonomy imports; move stateful logic into Capabilities |
-| Source | `agent_role_orchestrator.rs:227` |
 
 #### Sub-checks
 
@@ -828,7 +752,6 @@ Severity is as emitted; sub-check severities override where they differ (see per
 | Fires when | Agent orchestrator violates role discipline; per-sub-check severity applies; dispatch in `agent_role_orchestrator.rs:140-168` |
 | Scope | Agent files (`*_orchestrator*`) |
 | Fix | Coordinate at minimum 2 injected subsystems; no state mutation outside the constructor; delegate computation to capabilities |
-| Source | `agent_role_orchestrator.rs:140-168`; severities in `contract_role_protocol.rs:173-267` |
 
 #### Sub-checks
 
@@ -854,7 +777,6 @@ Severity is as emitted; sub-check severities override where they differ (see per
 | Fires when | A surface file carries too many responsibilities, active domain logic in a passive surface, or direct surface-to-domain calls |
 | Scope | Surface files (`*_command*`, `*_controller*`, `*_page*`, `*_router*`, `*_hook*`, `*_store*`, `*_action*`, `*_screen*`, `*_component*`, `*_view*`, `*_layout*`) |
 | Fix | Split surface responsibilities; move business logic to Capabilities; route domain calls through contracts |
-| Source | `capabilities_surface_role_auditor.rs:69-70` |
 
 #### Sub-checks
 
@@ -869,76 +791,65 @@ Severity is as emitted; sub-check severities override where they differ (see per
 
 ## 18. Group 5: Orphan Code (AES501–AES506)
 
-### Group coverage
-
-| Code | Name | Severity | Sub-checks | Violation names | Ran by |
-| --- | --- | --- | --- | --- | --- |
-| AES501 | Taxonomy Orphan | LOW | — | `TAXONOMY_ORPHAN` | check/scan, orphan |
-| AES502 | Contract Orphan | MEDIUM | — | `CONTRACT_ORPHAN` | check/scan, orphan |
-| AES503 | Capabilities Orphan | MEDIUM | — | `CAPABILITIES_ORPHAN` | check/scan, orphan |
-| AES504 | Utility Orphan | MEDIUM | — | `UTILITY_ORPHAN` | check/scan, orphan |
-| AES505 | Agent Orphan | HIGH | — | `AGENT_ORPHAN` | check/scan, orphan |
-| AES506 | Surface Orphan | HIGH smart / MEDIUM utility / LOW passive | — | `SURFACE_ORPHAN` | check/scan, orphan |
-
 ### AES501 — Taxonomy Orphan
 
 | Field | Value |
 | --- | --- |
 | Code / Severity | AES501 / LOW |
+| Violation names | `TAXONOMY_ORPHAN` |
 | Fires when | A taxonomy file (VO, entity, error, event, constant) has no inbound imports from any contract file |
 | Scope | Taxonomy files |
 | Fix | Wire the taxonomy type into a contract, or remove the dead taxonomy file |
-| Source | `capabilities_orphan_taxonomy_analyzer.rs:162` |
 
 ### AES502 — Contract Orphan
 
 | Field | Value |
 | --- | --- |
 | Code / Severity | AES502 / MEDIUM |
+| Violation names | `CONTRACT_ORPHAN` |
 | Fires when | A contract protocol is not implemented by any capabilities file, or a contract aggregate is not implemented by any agent file; not imported by any container or entry point |
 | Scope | Contract files (`*_protocol*`, `*_aggregate*`) |
 | Fix | Implement the protocol/aggregate, or wire it into a container; barrel re-exports do not count |
-| Source | `capabilities_orphan_contract_analyzer.rs:79` |
 
 ### AES503 — Capabilities Orphan
 
 | Field | Value |
 | --- | --- |
 | Code / Severity | AES503 / MEDIUM |
+| Violation names | `CAPABILITIES_ORPHAN` |
 | Fires when | A capability file is not wired in any `_container` |
 | Scope | Capability files |
 | Fix | Wire the capability into a container |
-| Source | `capabilities_orphan_capabilities_analyzer.rs:85` |
 
 ### AES504 — Utility Orphan
 
 | Field | Value |
 | --- | --- |
 | Code / Severity | AES504 / MEDIUM |
+| Violation names | `UTILITY_ORPHAN` |
 | Fires when | A utility file is not imported or consumed by any capability, agent, or surface layer, or is only imported by other utility files |
 | Scope | Utility files |
 | Fix | Import the utility from a capability/agent/surface, or remove it |
-| Source | `capabilities_orphan_utility_analyzer.rs:158` |
 
 ### AES505 — Agent Orphan
 
 | Field | Value |
 | --- | --- |
 | Code / Severity | AES505 / HIGH |
+| Violation names | `AGENT_ORPHAN` |
 | Fires when | An agent orchestrator file (suffix `_orchestrator`) is not wired in any `_container` |
 | Scope | Agent orchestrator files |
 | Fix | Wire the orchestrator into a container |
-| Source | `capabilities_orphan_agent_analyzer.rs:102` |
 
 ### AES506 — Surface Orphan
 
 | Field | Value |
 | --- | --- |
 | Code / Severity | AES506 / HIGH smart / MEDIUM utility / LOW passive |
+| Violation names | `SURFACE_ORPHAN` |
 | Fires when | A surface file is not imported by its required consumer; severity depends on surface category |
 | Scope | Surface files (`*_command*`, `*_controller*`, `*_page*`, `*_router*`, `*_hook*`, `*_store*`, `*_action*`, `*_screen*`, `*_component*`, `*_view*`, `*_layout*`) |
 | Fix | Import the surface from its required consumer |
-| Source | `capabilities_orphan_surfaces_analyzer.rs:43-45` |
 
 #### Category / severity / consumer
 
@@ -953,18 +864,6 @@ Severity is as emitted; sub-check severities override where they differ (see per
 
 ## 19. Group 6: Document Invariants (AES601–AES607)
 
-### Group coverage
-
-| Code | Name | Severity | Sub-checks | Violation types | Ran by |
-| --- | --- | --- | --- | --- | --- |
-| AES601 | FR Format | HIGH | — | 14 | check/scan, docs |
-| AES602 | Section Structure | HIGH | — | 1 | check/scan, docs |
-| AES603 | Spec Purity | HIGH | — | 2 | check/scan, docs |
-| AES604 | Crosslinks | HIGH | — | 11 | check/scan, docs |
-| AES605 | Doc Heading Structure | HIGH | — | 5 | check/scan, docs |
-| AES606 | Doc Template Conformance | HIGH | — | 11 | check/scan, docs |
-| AES607 | PR Folder Ownership | HIGH | — | 1 | check/scan, docs |
-
 ### AES601 — FR Format
 
 | Field | Value |
@@ -973,7 +872,6 @@ Severity is as emitted; sub-check severities override where they differ (see per
 | Fires when | FR-ID is bare (`FR-NNN`) without feature prefix; a requirement omits a field; FRD requirement count differs from contract `I*Protocol` count; BACKLOG/DESIGN/DATA row ID mismatches or missing rows |
 | Scope | Recognized docs: `PRD.md`, `FRD.md`, `BACKLOG.md`, `DESIGN.md`, `DATA.md` |
 | Fix | Merge/split requirements or protocol classes; align row IDs |
-| Source | `capabilities_doc_fr_format_checker.rs` |
 
 #### Violation types
 
@@ -1002,7 +900,6 @@ Severity is as emitted; sub-check severities override where they differ (see per
 | Fires when | The FRD's level-2 sections are out of template order, or the API Contract subsections do not match |
 | Scope | `FRD.md` |
 | Fix | Reorder sections to `Feature Overview → Functional Requirements → Public Interface → Reference`; accept exactly `### Protocol API` then `### Aggregate API` |
-| Source | `capabilities_doc_section_structure_checker.rs` |
 
 #### Violation types
 
@@ -1018,7 +915,6 @@ Severity is as emitted; sub-check severities override where they differ (see per
 | Fires when | A promise-bearing spec names a concrete source file or carries implementation state |
 | Scope | Exactly four promise-bearing documents: `PRD.md`, `FRD.md`, `DATA.md`, `ROADMAP.md`; `ARCHITECTURE.md`, `CONTRIBUTING.md`, `DESIGN.md` excluded (`is_spec` never includes them) |
 | Fix | Remove source-file names and status/checkbox/progress state from the spec |
-| Source | `capabilities_doc_spec_purity_checker.rs` |
 
 #### Violation types
 
@@ -1035,7 +931,6 @@ Severity is as emitted; sub-check severities override where they differ (see per
 | Fires when | A document's Reference section lacks a mandatory link, or a feature backlog restates a root-master state-vocabulary section |
 | Scope | Recognized docs with Reference sections; `MASTER_ONLY_SECTIONS = ["Roadmap Status"]` |
 | Fix | Add the missing link; remove restated master sections from the backlog |
-| Source | `capabilities_doc_crosslink_checker.rs` |
 
 #### Violation types
 
@@ -1061,7 +956,6 @@ Severity is as emitted; sub-check severities override where they differ (see per
 | Fires when | Zero or >1 H1; a required H2 is absent; an H2 is outside required ∪ allowed; a non-placeholder line drifts from its template; YAML frontmatter is missing |
 | Scope | Ten recognized docs: `PRD, ROADMAP, FRD, BACKLOG, DATA, DESIGN, README, AGENTS, ARCHITECTURE, CONTRIBUTING` |
 | Fix | Restore the missing H2, demote/remove off-template H2s, match template lines verbatim, add frontmatter |
-| Source | `capabilities_doc_heading_structure_checker.rs` |
 
 #### Required and allowed H2s (per `DOC_HEADING_CONTRACTS`)
 
@@ -1096,7 +990,6 @@ Severity is as emitted; sub-check severities override where they differ (see per
 | Fires when | A recognized document's body, entry table, or root/member document presence drifts from the shipped `HOW-TO-MAKE-*` template |
 | Scope | Ten recognized docs: `PRD, ROADMAP, FRD, BACKLOG, DATA, DESIGN, README, AGENTS, ARCHITECTURE, CONTRIBUTING` |
 | Fix | Re-shape the section to its template row (`docs scaffold` regenerates missing docs) |
-| Source | `capabilities_doc_template_conformance_checker.rs` |
 
 #### Violation types
 
@@ -1133,7 +1026,6 @@ Severity is as emitted; sub-check severities override where they differ (see per
 | Fires when | A PR-ID declared in the root PRD's `Project Requirements` owns no matching top-level module folder under `crates|modules|packages` |
 | Scope | Root PRD's `Project Requirements` entries |
 | Fix | Create the module folder named after the PR-ID's project identifier |
-| Source | `capabilities_doc_pr_folder_ownership_checker.rs:93` |
 
 #### Violation types
 
@@ -1145,17 +1037,6 @@ Severity is as emitted; sub-check severities override where they differ (see per
 
 ## 20. Group 7: Folder Structure (AES701–AES706)
 
-### Group coverage
-
-| Code | Name | Severity | Sub-checks | Violation types | Ran by |
-| --- | --- | --- | --- | --- | --- |
-| AES701 | Shared Folder Purity | MEDIUM (report) | — | 2 | check/scan |
-| AES702 | Feature Folder Health | MEDIUM (report) | — | 7 | check/scan |
-| AES703 | Surface Folder Purity | MEDIUM (report) | — | 3 | check/scan |
-| AES704 | Test Suite Coverage | MEDIUM (report) | — | 3 | check/scan |
-| AES705 | Member-Root Placement | MEDIUM (report) | — | 1 | check/scan |
-| AES706 | PR-LA Folder Mapping | MEDIUM (report) | — | 3 | check/scan |
-
 ### AES701 — Shared Folder Purity
 
 | Field | Value |
@@ -1164,7 +1045,6 @@ Severity is as emitted; sub-check severities override where they differ (see per
 | Fires when | A shared folder holds a `capabilities_*`, `agent_*`, or `surface_*` file, or lacks its DATA.md + BACKLOG.md doc pair |
 | Scope | `shared/` kernel folders under member dirs |
 | Fix | Move misplaced layer files to a feature or surface folder; add DATA.md and BACKLOG.md |
-| Source | `capabilities_shared_purity_auditor.rs`; `surface_structure_action.rs:61` normalizes severity to MEDIUM |
 
 #### Violation types
 
@@ -1181,7 +1061,6 @@ Severity is as emitted; sub-check severities override where they differ (see per
 | Fires when | A feature folder lacks its `agent_*_orchestrator` and/or `capabilities_*` pair, holds foreign layer files, lacks its FRD.md + BACKLOG.md pair, lacks root composition wiring, or lacks its `shared/src/<feature>/` mirror |
 | Scope | Member subdirectories (`crates/`, `modules/`, `packages/`) |
 | Fix | Add the missing orchestrator/capabilities file, remove foreign files, add the doc pair, add a `root_*` composition file, or mirror into `shared/src/<feature>/` |
-| Source | `capabilities_feature_health_auditor.rs`; `surface_structure_action.rs:61` normalizes severity to MEDIUM |
 
 #### Violation types
 
@@ -1203,7 +1082,6 @@ Severity is as emitted; sub-check severities override where they differ (see per
 | Fires when | A surface-dominated folder holds a `capabilities_*`, `agent_*`, or `utility_*` file, or lacks DESIGN.md or BACKLOG.md |
 | Scope | Surface-dominated folders under member dirs |
 | Fix | Move capability/agent/utility files out; add DESIGN.md and BACKLOG.md |
-| Source | `capabilities_surface_purity_auditor.rs`; `surface_structure_action.rs:61` normalizes severity to MEDIUM |
 
 #### Violation types
 
@@ -1221,7 +1099,6 @@ Severity is as emitted; sub-check severities override where they differ (see per
 | Fires when | A feature folder owns source but lacks `tests/`, lacks `benches/`, or misses a required test category prefix |
 | Scope | Folders owning `capabilities_*` or `agent_*_orchestrator` source |
 | Fix | Add missing test files/benches with one of the seven required prefixes plus a bench file |
-| Source | `capabilities_test_suite_coverage_auditor.rs`; `surface_structure_action.rs:61` normalizes severity to MEDIUM |
 
 #### Violation types
 
@@ -1252,7 +1129,6 @@ Severity is as emitted; sub-check severities override where they differ (see per
 | Fires when | A member dir (`crates/`, `modules/`, `packages/`) root holds a `capabilities_*`, `agent_*`, `surface_*`, or `utility_*` file |
 | Scope | Member root level only |
 | Fix | Move the layer file into a feature folder (capabilities/agent), a surface folder (surface), or `shared/` (utility) |
-| Source | `capabilities_member_root_placement_auditor.rs`; `surface_structure_action.rs:61` normalizes severity to MEDIUM |
 
 #### Prefix placement table
 
@@ -1271,7 +1147,6 @@ Severity is as emitted; sub-check severities override where they differ (see per
 | Fires when | Every `PR-LA-001..N` id in PRD.md / ROADMAP.md does not map positionally to an existing crate folder, or a crate folder's FRD carries `FR-` ids whose feature prefix does not match the folder name |
 | Scope | `PRD.md`, `ROADMAP.md`, and feature crate folders under `crates/` / `modules/` / `packages/` |
 | Fix | Create the missing crate folder, rename/mismatched FR ids to `FR-<Feature>-NNN`, or add the missing FRD.md |
-| Source | `capabilities_pr_la_folder_auditor.rs`; `surface_structure_action.rs:61` normalizes severity to MEDIUM |
 
 #### Violation types
 
@@ -1331,20 +1206,6 @@ Config lives in `lint_arwaky.config.yaml`:
 | `architecture.rules.<CODE>.enabled` | Toggle a rule on/off (absent entry = enabled) |
 | `architecture.rules.<CODE>.exceptions` | Paths/globs the checker skips |
 | `architecture.rules.<CODE>.ignored_rules` | Rule codes to ignore for a path |
-
-### Mermaid: doc-merge flow
-
-```mermaid
-graph LR
-    RA[RULES_AES.md]:::legacy
-    ARCH[ARCHITECTURE.md]:::authoritative
-    EMIT[crates/ emitted codes]:::source
-    EMIT --> ARCH
-    RA -.pointer.-> ARCH
-    classDef legacy fill:#fff3e0,stroke:#ef6c00
-    classDef authoritative fill:#e1f5e1,stroke:#2e7d32
-    classDef source fill:#e3f2fd,stroke:#1565c0
-```
 
 ### Pointer note
 
