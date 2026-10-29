@@ -363,7 +363,7 @@ ids whose feature prefix matches the folder name (`crates/filesystem` →
 | --- | --- | --- | --- | --- | --- |
 | AES401 | Taxonomy Role | HIGH | — | `TAXONOMY_ROLE` | check/scan, role |
 | AES402 | Contract Role | HIGH | — | `CONTRACT_ROLE` | check/scan, role |
-| AES403 | Capabilities Role | HIGH / MEDIUM / LOW per sub-check | — | `CAPABILITY_ROLE` | check/scan, role |
+| AES403 | Capabilities Role | HIGH / MEDIUM / LOW per sub-check | 8 | `CAPABILITY_ROLE` | check/scan, role |
 | AES404 | Utility Role | MEDIUM | — | `UTILITY_ROLE` | check/scan, role |
 | AES405 | Agent Role | HIGH / MEDIUM / LOW per sub-check | 11 | `AGENT_ROLE` | check/scan, role |
 | AES406 | Surface Role | HIGH (one sub-check MEDIUM) | 4 | `SURFACE_ROLE` | check/scan, role |
@@ -373,7 +373,7 @@ ids whose feature prefix matches the folder name (`crates/filesystem` →
 | Field | Value |
 | --- | --- |
 | Code / Severity | AES401 / HIGH |
-| Fires when | A `_constant` file carries a non-const declaration, or an `_entity`/`_error`/`_event` file uses a primitive type directly in a field declaration; `_vo` files may use primitives directly |
+| Fires when | A `_constant` file carries a non-const declaration, or an `_entity`/`_error`/`_event` file uses a primitive type directly in a field declaration |
 | Scope | Taxonomy files: `*_constant.rs`, `*_entity.rs`, `*_error.rs`, `*_event.rs` |
 | Fix | Replace primitives with taxonomy value objects; keep `_constant` files const-only |
 | Source | `capabilities_taxonomy_role_auditor.rs` |
@@ -433,14 +433,12 @@ ids whose feature prefix matches the folder name (`crates/filesystem` →
 | Python | All eight sub-checks |
 | TypeScript / JavaScript | All eight sub-checks |
 
-The block-order, constant-placement, test-placement, and helper-visibility sub-checks differ per language (`impl X for` vs `class X(Base)` vs `class X implements I`). The block-marker, type-budget, implementor, and multi-protocol sub-checks are language-agnostic and share one implementation.
-
 ### AES404 — Utility Role
 
 | Field | Value |
 | --- | --- |
 | Code / Severity | AES404 / MEDIUM |
-| Fires when | A utility file contains stateful objects, struct/class state, trait definitions, impl blocks, type aliases (Rust `pub type`), interface definitions (TS), enum definitions, or imports from any layer other than Taxonomy |
+| Fires when | A utility file contains stateful objects, struct/class state, trait definitions, impl blocks, type aliases (Rust `pub type`), interface definitions (TS), enum definitions |
 | Scope | Utility files (`*_utility*`) |
 | Fix | Refactor to stateless standalone functions; remove non-taxonomy imports; move stateful logic into Capabilities |
 | Source | `agent_role_orchestrator.rs:227` |
@@ -449,7 +447,7 @@ The block-order, constant-placement, test-placement, and helper-visibility sub-c
 
 | # | Sub-check | Severity | Violation name | Fires when |
 | --- | --- | --- | --- | --- |
-| 1 | Utility role | MEDIUM | `UTILITY_ROLE` | Utility contains stateful objects or non-taxonomy imports |
+| 1 | Utility role | MEDIUM | `UTILITY_ROLE` | Utility contains stateful objects or type definitions |
 
 ### AES405 — Agent Role
 
@@ -477,8 +475,6 @@ The block-order, constant-placement, test-placement, and helper-visibility sub-c
 | 10 | `check_agent_free_fn` | LOW | `AGENT_ROLE` | Module-level free functions |
 | 11 | `check_agent_subsystem_count` | LOW | `AGENT_ROLE` | Fewer than 2 injected protocol subsystems |
 
-Legacy-bullet disposition: "Non-stateless execution" maps to sub-check 9; "Single execution goal" (coordinate at minimum 2 subsystems) maps to sub-check 11; "Direct capability implementation" maps to sub-check 7. "Direct capabilities imports" is enforced by AES201's Forbidden cell for `agent(orchestrator)` (`surface,capabilities,root`) — AES201 owns it. "Container initialization" has no emission site under `crates/role-rules` and is dropped.
-
 ### AES406 — Surface Role
 
 | Field | Value |
@@ -493,10 +489,10 @@ Legacy-bullet disposition: "Non-stateless execution" maps to sub-check 9; "Singl
 
 | # | Sub-check | Severity | Violation name | Fires when |
 | --- | --- | --- | --- | --- |
-| 1 | File > 15 functions | HIGH | `SURFACE_ROLE` | Surface file exceeds 15 functions |
+| 1 | Function-count ceiling (tier-specific) | HIGH | `SURFACE_ROLE` | Smart exempt; utility 25; passive 50 |
 | 2 | Active domain logic in passive surface | HIGH | `SURFACE_ROLE` | `_component`/`_view`/`_layout` carries business logic |
 | 3 | Surface logic bypass | MEDIUM | `SURFACE_ROLE` | Surface calls domain logic directly (`lint_path(`, `walk_rs_files(`) |
-| 4 | Role boundary violation | HIGH | `SURFACE_ROLE` | Surface imports capabilities or non-aggregate contracts directly |
+| 4 | Role boundary violation | HIGH | `SURFACE_ROLE` | Passive surface exceeds MAX_PUBLIC_METHODS (50) functions |
 
 ## Group 5: Orphan Code
 
@@ -569,16 +565,12 @@ Legacy-bullet disposition: "Non-stateless execution" maps to sub-check 9; "Singl
 | Fix | Import the surface from its required consumer |
 | Source | `capabilities_orphan_surfaces_analyzer.rs:43-45` |
 
-Orphan detection per category:
-
 | Category | Suffixes | Severity | Must be imported by |
 | --- | --- | --- | --- |
 | Smart | `_command`, `_controller`, `_page`, `_router` | HIGH | entry |
 | Utility | `_hook`, `_store`, `_action`, `_screen` | MEDIUM | smart surface |
 | Passive | `_component`, `_view`, `_layout` | LOW | smart or utility surface |
 | `_entry` | — | never fires | — |
-
-`_entry` never fires: entry surfaces are the roots of the import graph and are never orphaned.
 
 ## Group 6: Document Invariants
 
@@ -619,9 +611,7 @@ Orphan detection per category:
 | `backlog_qualifier_mismatch` | A BACKLOG entry's H3 qualifier does not equal any ID declared by the paired spec |
 | `pr_backlog_id_missing` | A BACKLOG `## Backlog Status` entry H3 whose qualifier has no matching PR-ID in the root ROADMAP/PRD pair |
 | `backlog_id_not_pr` | A token in a BACKLOG entry's `Next`/`Done`/`Blocked` row that is not a valid PR-ID of the root ROADMAP/PRD pair |
-| `protocol_count_mismatch` | The FRD requirement count and the module's `I*Protocol` class count differ |
-
-One protocol class is one capability seam; one seam is one requirement. Aggregate traits (`I*Aggregate`) are excluded. `field_missing` is retired (Decision 9, `contract_doc_rules.rs:348`) — entry row-label validation belongs to AES606 `entry_missing_row`.
+| `protocol_count_mismatch` | The FRD requirement count and the module's `I*Protocol` class count differ; one protocol class is one capability seam; aggregate traits (`I*Aggregate`) are excluded |
 
 ### AES602 — Section Structure
 
@@ -707,8 +697,6 @@ One protocol class is one capability seam; one seam is one requirement. Aggregat
 | `DATA.md` | Data Overview · Data Requirements · Reference | `DT-` item H2s |
 | `DESIGN.md` | Design Overview · Design Requirements · Reference | — |
 
-Stale required-H2 rows (AGENTS/CONTRIBUTING/PRD/README/ROADMAP/DATA from pre-migration template sets) are dropped; only ARCHITECTURE and DESIGN rows carried over unchanged.
-
 #### Violation types
 
 | Violation type | Fires when |
@@ -745,7 +733,7 @@ Stale required-H2 rows (AGENTS/CONTRIBUTING/PRD/README/ROADMAP/DATA from pre-mig
 | `unfilled_placeholder` | Template placeholder token survived into a non-prose line |
 | `section_deleted` | A non-deletable template section is entirely absent |
 
-#### Required table shapes (transcribed from constants — live sets only)
+#### Required table shapes
 
 | Document | Section / role | Required shape |
 | --- | --- | --- |
@@ -771,8 +759,6 @@ Stale required-H2 rows (AGENTS/CONTRIBUTING/PRD/README/ROADMAP/DATA from pre-mig
 | Violation type | Fires when |
 | --- | --- |
 | `pr_folder_not_owned` | A PRD-declared PR-ID's project identifier owns no matching module folder |
-
-Runs via `check`/`scan` (`DocRequest::audit_all`) as well as `docs`.
 
 ## Group 7: Folder Structure
 

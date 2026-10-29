@@ -55,20 +55,15 @@ fn summary_states_38_rules() {
     );
 }
 
-// Scoped to Group 1-3; the whole-file variant lands in PR 4.
-#[test]
-fn group1_to_3_headings_are_table_first() {
-    let doc = include_str!("../../../RULES_AES.md");
-    let lines: Vec<&str> = doc.lines().collect();
-
+fn assert_heading_then_table(lines: &[&str], start_marker: &str, end_marker: &str) {
     let start = lines
         .iter()
-        .position(|l| l.starts_with("## Group 1:"))
-        .expect("`## Group 1` heading present");
+        .position(|l| l.starts_with(start_marker))
+        .expect(format!("`{start_marker}` heading present").as_str());
     let end = lines
         .iter()
-        .position(|l| l.starts_with("## Group 4:"))
-        .expect("`## Group 4` heading present");
+        .position(|l| l.starts_with(end_marker))
+        .expect(format!("`{end_marker}` heading present").as_str());
 
     let is_heading = |l: &&str| {
         let trimmed = l.trim_start();
@@ -88,36 +83,23 @@ fn group1_to_3_headings_are_table_first() {
     }
 }
 
+// Scoped to Group 1-3; the whole-file variant lands in PR 4.
+#[test]
+fn group1_to_3_headings_are_table_first() {
+    let doc = include_str!("../../../RULES_AES.md");
+    let lines: Vec<&str> = doc.lines().collect();
+    assert_heading_then_table(&lines, "## Group 1:", "## Group 4:");
+}
+
 // Scoped to Groups 4-6: every heading from ## Group 4 through the line before
 // ## Group 7 must be followed by a blank line then a table line.
 #[test]
 fn group4_to_6_headings_are_table_first() {
     let doc = include_str!("../../../RULES_AES.md");
     let lines: Vec<&str> = doc.lines().collect();
-
-    let start = lines
-        .iter()
-        .position(|l| l.starts_with("## Group 4: Role Violations"))
-        .expect("`## Group 4` heading present");
-    let end = lines
-        .iter()
-        .position(|l| l.starts_with("## Group 7: Folder Structure"))
-        .expect("`## Group 7` heading present");
-
-    let is_heading = |l: &&str| {
-        let trimmed = l.trim_start();
-        trimmed.starts_with('#')
-    };
-    let is_blank = |l: &str| l.trim().is_empty();
-    let is_table = |l: &str| l.trim_start().starts_with('|');
-
-    for i in start..end {
-        if is_heading(&lines[i]) {
-            assert!(
-                i + 2 < lines.len() && is_blank(lines[i + 1]) && is_table(lines[i + 2]),
-                "heading `{}` must be followed by a blank line then a table line",
-                lines[i].trim()
-            );
-        }
-    }
+    assert_heading_then_table(
+        &lines,
+        "## Group 4: Role Violations",
+        "## Group 7: Folder Structure",
+    );
 }
