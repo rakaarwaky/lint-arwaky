@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Summary | 38 rules across 7 groups: Naming 3 · Import 5 · Quality 5 · Role 6 · Orphan 6 · Doc 7 · Structure 6 |
+| Summary | 38 rules across 7 groups |
 | Source of truth | The rule codes emitted by the crates under `crates/` — this file is the readable mirror, verified by the `doc_codes_match_emitted_inventory` parity test |
 | Architecture spec | [ARCHITECTURE.md](ARCHITECTURE.md) — the 7-layer contract this file does not repeat |
 | Full rule detail | Full rule detail lives in ARCHITECTURE.md §14–20. This file is the readable mirror, verified by the parity test. |
@@ -16,13 +16,10 @@
 | Element | Meaning |
 | --- | --- |
 | First cell of a rule row | The rule code exactly as the CLI reports it (JSON `code`) |
-| Severity | Severity the checker emits; where sub-checks differ, the per-sub-check column in `#### Sub-checks` wins |
-| Violation types | `violation_type` field (snake_case) for groups 6–7; SCREAMING_SNAKE `violation_name` for groups 1–5 where populated |
-| Fix | One-line remediation |
+| Name | Short rule name as emitted by the checker |
+| Severity | Severity as emitted by the checker; normalized to MEDIUM at report for group 7 |
 | Ran by | `check`/`scan` = full pipeline; `docs` = doc audit; both for group 6 |
-| Exceptions | Config `exceptions` list entries the checker skips (barrel files, config exemptions) |
-| How findings show | Group 6/7 findings render with their `violation_type` in the JSON report; per-finding `why`/`fix` rendering notes live in `ARCHITECTURE.md` / the HOW-TO skill references, never in this file |
-| Sub-checks | Group-table count of the rule's `#### Sub-checks` facet rows (or `13 scope rows` for the AES201 matrix); `—` when the rule renders no sub-check facet |
+| Fix / Exceptions / Sub-checks | Per-rule detail lives in ARCHITECTURE.md §14–20, not in this file |
 
 ## Rule inventory
 
@@ -82,11 +79,11 @@
 
 ## Group 1: Naming
 
-| Code | Name | Severity | Sub-checks | Violation names | Ran by |
-| --- | --- | --- | --- | --- | --- |
-| AES101 | Naming Convention | HIGH | 1 | `NAMING_CONVENTION` | check/scan, naming |
-| AES102 | Suffix/Prefix Rules | HIGH | 3 | `SUFFIX_PREFIX` | check/scan, naming |
-| AES103 | Test File Prefix | HIGH | 3 | `TEST_FILE_PREFIX` | check/scan, naming |
+| Code | Name |
+| --- | --- |
+| AES101 | Naming Convention |
+| AES102 | Suffix/Prefix Rules |
+| AES103 | Test File Prefix |
 
 ### AES101 — Naming Convention
 
@@ -108,13 +105,13 @@
 
 ## Group 2: Layer & Import Boundary
 
-| Code | Name | Severity | Sub-checks | Violation names | Ran by |
-| --- | --- | --- | --- | --- | --- |
-| AES201 | Forbidden Import | CRITICAL | 13 scope rows | `FORBIDDEN_IMPORT` | check/scan, import |
-| AES202 | Mandatory Import | HIGH | — | `MANDATORY_IMPORT` | check/scan, import |
-| AES203 | Unused Import | MEDIUM | — | `UNUSED_IMPORT` | check/scan, import |
-| AES204 | Dummy Import | HIGH | — | `DUMMY_IMPORT` | check/scan, import |
-| AES205 | Circular Import | CRITICAL | — | `CIRCULAR_IMPORT` | check/scan, import |
+| Code | Name |
+| --- | --- |
+| AES201 | Forbidden Import |
+| AES202 | Mandatory Import |
+| AES203 | Unused Import |
+| AES204 | Dummy Import |
+| AES205 | Circular Import |
 
 ### AES201 — Forbidden Import
 
@@ -148,13 +145,13 @@
 
 ## Group 3: File & Content Quality
 
-| Code | Name | Severity | Sub-checks | Violation names | Ran by |
-| --- | --- | --- | --- | --- | --- |
-| AES301 | File Maximum Limit | HIGH | — | `FILE_TOO_LARGE` | check/scan, quality |
-| AES302 | File Minimum Limit | HIGH | — | `FILE_TOO_SHORT` | check/scan, quality |
-| AES303 | Mandatory Definition | HIGH (missing) / MEDIUM (empty) | 2 | `MANDATORY_DEFINITION`, `DEAD_INHERITANCE` | check/scan, quality |
-| AES304 | Bypass Comment | CRITICAL | — | `BYPASS_COMMENT`, `UNWRAP_EXPECT`, `PANIC`, `UNIMPLEMENTED`, `TODO` | check/scan, quality |
-| AES305 | Duplication Code | MEDIUM | 1 | — | check/scan, quality |
+| Code | Name |
+| --- | --- |
+| AES301 | File Maximum Limit |
+| AES302 | File Minimum Limit |
+| AES303 | Mandatory Definition |
+| AES304 | Bypass Comment |
+| AES305 | Duplication Code |
 
 ### AES301 — File Maximum Limit
 
@@ -188,14 +185,14 @@
 
 ## Group 4: Role Violations
 
-| Code | Name | Severity | Sub-checks | Violation names | Ran by |
-| --- | --- | --- | --- | --- | --- |
-| AES401 | Taxonomy Role | HIGH | — | `TAXONOMY_ROLE` | check/scan, role |
-| AES402 | Contract Role | HIGH | — | `CONTRACT_ROLE` | check/scan, role |
-| AES403 | Capabilities Role | HIGH / MEDIUM / LOW per sub-check | 8 | `CAPABILITY_ROLE` | check/scan, role |
-| AES404 | Utility Role | MEDIUM | — | `UTILITY_ROLE` | check/scan, role |
-| AES405 | Agent Role | HIGH / MEDIUM / LOW per sub-check | 11 | `AGENT_ROLE` | check/scan, role |
-| AES406 | Surface Role | HIGH (one sub-check MEDIUM) | 4 | `SURFACE_ROLE` | check/scan, role |
+| Code | Name |
+| --- | --- |
+| AES401 | Taxonomy Role |
+| AES402 | Contract Role |
+| AES403 | Capabilities Role |
+| AES404 | Utility Role |
+| AES405 | Agent Role |
+| AES406 | Surface Role |
 
 ### AES401 — Taxonomy Role
 
@@ -235,14 +232,14 @@
 
 ## Group 5: Orphan Code
 
-| Code | Name | Severity | Sub-checks | Violation names | Ran by |
-| --- | --- | --- | --- | --- | --- |
-| AES501 | Taxonomy Orphan | LOW | — | `TAXONOMY_ORPHAN` | check/scan, orphan |
-| AES502 | Contract Orphan | MEDIUM | — | `CONTRACT_ORPHAN` | check/scan, orphan |
-| AES503 | Capabilities Orphan | MEDIUM | — | `CAPABILITIES_ORPHAN` | check/scan, orphan |
-| AES504 | Utility Orphan | MEDIUM | — | `UTILITY_ORPHAN` | check/scan, orphan |
-| AES505 | Agent Orphan | HIGH | — | `AGENT_ORPHAN` | check/scan, orphan |
-| AES506 | Surface Orphan | HIGH smart / MEDIUM utility / LOW passive | — | `SURFACE_ORPHAN` | check/scan, orphan |
+| Code | Name |
+| --- | --- |
+| AES501 | Taxonomy Orphan |
+| AES502 | Contract Orphan |
+| AES503 | Capabilities Orphan |
+| AES504 | Utility Orphan |
+| AES505 | Agent Orphan |
+| AES506 | Surface Orphan |
 
 ### AES501 — Taxonomy Orphan
 
@@ -282,15 +279,15 @@
 
 ## Group 6: Document Invariants
 
-| Code | Name | Severity | Sub-checks | Violation types | Ran by |
-| --- | --- | --- | --- | --- | --- |
-| AES601 | FR Format | HIGH | — | 14 | check/scan, docs |
-| AES602 | Section Structure | HIGH | — | 1 | check/scan, docs |
-| AES603 | Spec Purity | HIGH | — | 2 | check/scan, docs |
-| AES604 | Crosslinks | HIGH | — | 11 | check/scan, docs |
-| AES605 | Doc Heading Structure | HIGH | — | 5 | check/scan, docs |
-| AES606 | Doc Template Conformance | HIGH | — | 11 | check/scan, docs |
-| AES607 | PR Folder Ownership | HIGH | — | 1 | check/scan, docs |
+| Code | Name |
+| --- | --- |
+| AES601 | FR Format |
+| AES602 | Section Structure |
+| AES603 | Spec Purity |
+| AES604 | Crosslinks |
+| AES605 | Doc Heading Structure |
+| AES606 | Doc Template Conformance |
+| AES607 | PR Folder Ownership |
 
 ### AES601 — FR Format
 
@@ -336,14 +333,14 @@
 
 ## Group 7: Folder Structure
 
-| Code | Name | Severity | Sub-checks | Violation types | Ran by |
-| --- | --- | --- | --- | --- | --- |
-| AES701 | Shared Folder Purity | MEDIUM (report) | — | 2 | check/scan |
-| AES702 | Feature Folder Health | MEDIUM (report) | — | 7 | check/scan |
-| AES703 | Surface Folder Purity | MEDIUM (report) | — | 3 | check/scan |
-| AES704 | Test Suite Coverage | MEDIUM (report) | — | 3 | check/scan |
-| AES705 | Member-Root Placement | MEDIUM (report) | — | 1 | check/scan |
-| AES706 | PR-LA Folder Mapping | MEDIUM (report) | — | 3 | check/scan |
+| Code | Name |
+| --- | --- |
+| AES701 | Shared Folder Purity |
+| AES702 | Feature Folder Health |
+| AES703 | Surface Folder Purity |
+| AES704 | Test Suite Coverage |
+| AES705 | Member-Root Placement |
+| AES706 | PR-LA Folder Mapping |
 
 ### AES701 — Shared Folder Purity
 
