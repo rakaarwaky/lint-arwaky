@@ -1534,6 +1534,42 @@ Entry.
 ## 12. Finding rendering notes
 
 Notes.
+
+## 13. Rule Inventory Overview
+
+Groups.
+
+## 14. Group 1: Naming
+
+Naming.
+
+## 15. Group 2: Layer & Import Boundary
+
+Boundary.
+
+## 16. Group 3: File & Content Quality
+
+Quality.
+
+## 17. Group 4: Role Violations
+
+Roles.
+
+## 18. Group 5: Orphan Code
+
+Orphans.
+
+## 19. Group 6: Document Invariants
+
+Docs.
+
+## 20. Group 7: Folder Structure
+
+Folders.
+
+## 21. Rule Source of Truth & Parity
+
+Parity.
 "#;
     let findings = audit_root_doc("ARCHITECTURE.md", text);
     assert!(

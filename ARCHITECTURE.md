@@ -365,3 +365,158 @@ the authoritative explanations — the linter sets them at emission time.
 `RULES_AES.md` documents only the violation-type names and when each fires; it
 deliberately omits the `why`/`fix` rendering notes to avoid drift. Use the
 JSON `why` and `fix` fields in scan output for remediation guidance.
+---
+
+## 13. Rule Inventory Overview
+
+The table below lists every rule in the seven groups with its code, name,
+severity, and the check surface that runs it. Per-code detail — sub-checks,
+fires-on/allowed conditions, severity buckets, and exceptions — lives in
+`RULES_AES.md`; the emitted rule codes from `crates/` remain the source of
+truth, and this document mirrors the group structure for navigation.
+
+| Code | Group | Name | Severity | Ran by |
+| --- | --- | --- | --- | --- |
+| AES101 | Naming | Naming Convention | HIGH | check/scan, naming |
+| AES102 | Naming | Suffix/Prefix Rules | HIGH | check/scan, naming |
+| AES103 | Naming | Test File Prefix | HIGH | check/scan, naming |
+| AES201 | Import | Forbidden Import | CRITICAL | check/scan, import |
+| AES202 | Import | Mandatory Import | HIGH | check/scan, import |
+| AES203 | Import | Unused Import | MEDIUM | check/scan, import |
+| AES204 | Import | Dummy Import | HIGH | check/scan, import |
+| AES205 | Import | Circular Import | CRITICAL | check/scan, import |
+| AES301 | Quality | File Maximum Limit | HIGH | check/scan, quality |
+| AES302 | Quality | File Minimum Limit | HIGH | check/scan, quality |
+| AES303 | Quality | Mandatory Definition | HIGH (missing) / MEDIUM (empty) | check/scan, quality |
+| AES304 | Quality | Bypass Comment | CRITICAL | check/scan, quality |
+| AES305 | Quality | Code Duplication | MEDIUM | check/scan, quality |
+| AES401 | Role | Taxonomy Role | HIGH | check/scan, role |
+| AES402 | Role | Contract Role | HIGH | check/scan, role |
+| AES403 | Role | Capabilities Role | HIGH / MEDIUM / LOW per sub-check | check/scan, role |
+| AES404 | Role | Utility Role | MEDIUM | check/scan, role |
+| AES405 | Role | Agent Role | HIGH / MEDIUM / LOW per sub-check | check/scan, role |
+| AES406 | Role | Surface Role | HIGH (one sub-check MEDIUM) | check/scan, role |
+| AES501 | Orphan | Taxonomy Orphan | LOW | check/scan, orphan |
+| AES502 | Orphan | Contract Orphan | LOW | check/scan, orphan |
+| AES503 | Orphan | Capabilities Orphan | MEDIUM | check/scan, orphan |
+| AES504 | Orphan | Utility Orphan | MEDIUM | check/scan, orphan |
+| AES505 | Orphan | Agent Orphan | MEDIUM | check/scan, orphan |
+| AES506 | Orphan | Surface Orphan | HIGH / MEDIUM / LOW per sub-check | check/scan, orphan |
+| AES601 | Doc | Doc Inventory | HIGH | docs, doc-audit |
+| AES602 | Doc | Doc Length | MEDIUM | docs, doc-audit |
+| AES603 | Doc | Doc Heading Drift | HIGH | docs, doc-audit |
+| AES604 | Doc | Dead Link | MEDIUM | docs, doc-audit |
+| AES605 | Doc | Heading Contract | HIGH | check/scan + docs, doc-audit |
+| AES606 | Doc | Template Conformance | HIGH | check/scan + docs, doc-audit |
+| AES607 | Doc | PR Folder Ownership | HIGH | check/scan + docs, doc-audit |
+| AES701 | Structure | 7-Layer Folder | HIGH | check/scan, structure |
+| AES702 | Structure | Shared Kernel Folder | HIGH | check/scan, structure |
+| AES703 | Structure | Feature Folder | HIGH | check/scan, structure |
+| AES704 | Structure | AES Testing Suite Layout | HIGH | check/scan, structure |
+| AES705 | Structure | Utility Shared Folder | MEDIUM | check/scan, structure |
+| AES706 | Structure | PR/LA Folder Order | HIGH | check/scan, structure |
+
+Group counts: Naming 3, Import 5, Quality 5, Role 6, Orphan 6, Doc 7,
+Structure 6 — 38 rules total, matching the emitted inventory verified by the
+`doc_codes_match_emitted_inventory` parity test.
+
+---
+
+## 14. Group 1: Naming
+
+| Code | Name | Fires when | Allowed / exceptions |
+| --- | --- | --- | --- |
+| AES101 | Naming Convention | A file does not follow `layer_concern_role.ext` | Names in `DEFAULT_RULE_EXCEPTIONS`; the exceptions list is the single source of truth |
+| AES102 | Suffix/Prefix Rules | A role suffix or layer prefix is missing or misspelled | Same `DEFAULT_RULE_EXCEPTIONS` set |
+| AES103 | Test File Prefix | A test file does not use its language's test prefix | Barrel and support files in `DEFAULT_RULE_EXCEPTIONS` |
+
+---
+
+## 15. Group 2: Layer & Import Boundary
+
+| Code | Name | Fires when | Allowed / exceptions |
+| --- | --- | --- | --- |
+| AES201 | Forbidden Import | A lower layer imports from an upper layer, or a forbidden cross-layer import appears | The pinned layer-dependency matrix; utility shared-folder imports |
+| AES202 | Mandatory Import | A layer file lacks the imports its role mandates | None — the mandate is per-role |
+| AES203 | Unused Import | An import has no use in the file | None |
+| AES204 | Dummy Import | An import exists only to keep a symbol alive or for side effects | None |
+| AES205 | Circular Import | Two modules import each other transitively | None |
+
+---
+
+## 16. Group 3: File & Content Quality
+
+| Code | Name | Fires when | Allowed / exceptions |
+| --- | --- | --- | --- |
+| AES301 | File Maximum Limit | A file exceeds the maximum line limit | `DEFAULT_RULE_EXCEPTIONS` entries |
+| AES302 | File Minimum Limit | A non-test source file is below the minimum line limit | Tests and exception-listed files |
+| AES303 | Mandatory Definition | A required definition (fn, type, or const) is missing or empty | The required-definition table per role |
+| AES304 | Bypass Comment | A `#[allow(...)]` bypass comment lacks justification | None — bypasses need a reason |
+| AES305 | Code Duplication | Two files share a near-identical block above the threshold | None |
+
+---
+
+## 17. Group 4: Role Violations
+
+| Code | Name | Fires when | Allowed / exceptions |
+| --- | --- | --- | --- |
+| AES401 | Taxonomy Role | The Taxonomy layer contains non-constant or non-vocabulary data | None |
+| AES402 | Contract Role | The Contract layer contains implementation logic | None |
+| AES403 | Capabilities Role | A capability file imports another capability, or exposes non-capability behavior | The inter-capability import ban |
+| AES404 | Utility Role | A utility file embeds business logic | Shared mechanics only |
+| AES405 | Agent Role | An agent file performs business calculation instead of orchestration | Sequence and wiring only |
+| AES406 | Surface Role | The Surface layer embeds orchestration or business logic | Boundary translation only |
+
+---
+
+## 18. Group 5: Orphan Code
+
+| Code | Name | Fires when | Allowed / exceptions |
+| --- | --- | --- | --- |
+| AES501 | Taxonomy Orphan | A taxonomy symbol is unreferenced | None |
+| AES502 | Contract Orphan | A contract symbol is unreferenced | None |
+| AES503 | Capabilities Orphan | A capability symbol is unreferenced | Test-only references count |
+| AES504 | Utility Orphan | A utility symbol is unreferenced | Public API surface entries |
+| AES505 | Agent Orphan | An agent symbol is unreferenced | None |
+| AES506 | Surface Orphan | A surface symbol is unreferenced | Router-to-smart, drop-entry, and utility-without-router buckets |
+
+---
+
+## 19. Group 6: Document Invariants
+
+| Code | Name | Fires when | Allowed / exceptions |
+| --- | --- | --- | --- |
+| AES601 | Doc Inventory | A required root or member document is missing | `MASTER_DOC_CANDIDATES` and the member-doc table |
+| AES602 | Doc Length | A document exceeds its line cap or falls below the floor | The per-document length table |
+| AES603 | Doc Heading Drift | An H2 heading drifted from its registered form | The registered H2 sets |
+| AES604 | Dead Link | A relative link target does not exist | External URLs are not checked |
+| AES605 | Heading Contract | A document is missing required H2s or carries unexpected ones | `DOC_HEADING_CONTRACTS` |
+| AES606 | Template Conformance | A document deleted a required template section or left a placeholder | `TEMPLATE_PROFILES` |
+| AES607 | PR Folder Ownership | A PR-ID in the root PRD owns no matching module folder | One module folder per project identifier |
+
+---
+
+## 20. Group 7: Folder Structure
+
+| Code | Name | Fires when | Allowed / exceptions |
+| --- | --- | --- | --- |
+| AES701 | 7-Layer Folder | A workspace member does not expose the 7-layer folder | The layer-folder table |
+| AES702 | Shared Kernel Folder | The shared kernel folder is missing or misnamed | `KERNEL_DIR` |
+| AES703 | Feature Folder | A feature folder lacks its orchestrator | `ORCHESTRATOR_SUFFIX` |
+| AES704 | AES Testing Suite Layout | The test-suite layout deviates from the pinned form | The layout template |
+| AES705 | Utility Shared Folder | A utility file lives outside the shared folder | The shared-folder rule |
+| AES706 | PR/LA Folder Order | A PR or LA folder violates the positional order | `PR_LA_FOLDER_ORDER` |
+
+---
+
+## 21. Rule Source of Truth & Parity
+
+The emitted rule codes from `crates/` are the source of truth for the rule
+inventory. `RULES_AES.md` is the readable mirror, and the
+`doc_codes_match_emitted_inventory` parity test verifies that the file's rule
+codes, group counts, and severities match what the checkers emit. When a
+rule is added, removed, or renamed in code, the mirror and this document's
+inventory table are updated in the same change so the three never drift.
+
+---
+
