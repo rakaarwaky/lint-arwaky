@@ -1530,6 +1530,10 @@ Outer.
 ## 11. Root Layer
 
 Entry.
+
+## 12. Finding rendering notes
+
+Notes.
 "#;
     let findings = audit_root_doc("ARCHITECTURE.md", text);
     assert!(

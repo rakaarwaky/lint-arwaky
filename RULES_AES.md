@@ -1,107 +1,83 @@
-# AES (Agentic Engineering System) Rules — v3.0
+# AES Rules — lint-arwaky
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) for the full 7-layer specification.
+| Field | Value |
+| --- | --- |
+| Summary | 38 rules across 7 groups: Naming 3 · Import 5 · Quality 5 · Role 6 · Orphan 6 · Doc 7 · Structure 6 |
+| Source of truth | The rule codes emitted by the crates under `crates/` — this file is the readable mirror, verified by the `doc_codes_match_emitted_inventory` parity test |
+| Architecture spec | [ARCHITECTURE.md](ARCHITECTURE.md) — the 7-layer contract this file does not repeat |
+| Run everything | `lint-arwaky-cli check .` (= `scan`; code + structure + doc groups 1–7) |
+| Run doc group only | `lint-arwaky-cli docs .` (group 6; `docs scaffold` writes templates) |
+| Config switches | `lint_arwaky.config.yaml` → `architecture.rules.<CODE>.enabled` / `exceptions` / `ignored_rules` (absent entry = enabled) |
+| Format | Every heading is followed by exactly one table; severities are as emitted by the checkers |
 
----
+## How to read this file
 
-## Summary
+| Element | Meaning |
+| --- | --- |
+| First cell of a rule row | The rule code exactly as the CLI reports it (JSON `code`) |
+| Severity | Severity the checker emits; where sub-checks differ, the per-sub-check column in `#### Sub-checks` wins |
+| Violation types | `violation_type` field (snake_case) for groups 6–7; SCREAMING_SNAKE `violation_name` for groups 1–5 where populated |
+| Fix | One-line remediation |
+| Ran by | `check`/`scan` = full pipeline; `docs` = doc audit; both for group 6 |
+| Exceptions | Config `exceptions` list entries the checker skips (barrel files, config exemptions) |
+| How findings show | Group 6/7 findings render with their `violation_type` in the JSON report; per-finding `why`/`fix` rendering notes live in `ARCHITECTURE.md` / the HOW-TO skill references, never in this file |
+| Sub-checks | Group-table count of the rule's `#### Sub-checks` facet rows (or `13 scope rows` for the AES201 matrix); `—` when the rule renders no sub-check facet |
 
-**38 rules across 7 groups:** Naming (AES101–103) 3, Import (AES201–205) 5, Quality (AES301–305) 5, Role (AES401–406) 6, Orphan (AES501–506) 6, Doc (AES601–AES607) 7, Structure (AES701–AES706) 6 — 3·5·5·6·6·7·6 = 38. The `scan`/`check` command runs the five code linters (groups 1–5) plus structure and the doc-audit pass — all 7 groups — surfacing AES601–AES607 inside `scan`/`check`; the `docs` command covers group 6. External adapters (Clippy, Ruff, ESLint, …) run alongside via `external` and emit tool-native codes.
+## Rule inventory
 
-| Code   | Name                | Severity | Group  | Description                                                                               |
-| -------- | --------------------- | ---------- | -------- | --------------------------------------------------------------------------------------------|
-| AES101 | Naming Convention   | HIGH     | Naming | Filename must follow`prefix_concept_suffix` pattern — lowercase, underscore, min 3 words.|
-| AES102 | Suffix Prefix Rules | HIGH     | Naming | Suffix must match layer definition — allowed, forbidden, mandatory strict.               |
-| AES103 | Test File Prefix    | HIGH     | Naming | A file in `tests/` or `benches/` must carry a legal test-type prefix and neither directory may nest.|
+| Code | Group | Name | Severity | Ran by |
+| --- | --- | --- | --- | --- |
+| AES101 | Naming | Naming Convention | HIGH | check/scan, naming |
+| AES102 | Naming | Suffix/Prefix Rules | HIGH | check/scan, naming |
+| AES103 | Naming | Test File Prefix | HIGH | check/scan, naming |
+| AES201 | Import | Forbidden Import | CRITICAL | check/scan, import |
+| AES202 | Import | Mandatory Import | HIGH | check/scan, import |
+| AES203 | Import | Unused Import | MEDIUM | check/scan, import |
+| AES204 | Import | Dummy Import | HIGH | check/scan, import |
+| AES205 | Import | Circular Import | CRITICAL | check/scan, import |
+| AES301 | Quality | File Maximum Limit | HIGH | check/scan, quality |
+| AES302 | Quality | File Minimum Limit | HIGH | check/scan, quality |
+| AES303 | Quality | Mandatory Definition | HIGH (missing) / MEDIUM (empty) | check/scan, quality |
+| AES304 | Quality | Bypass Comment | CRITICAL | check/scan, quality |
+| AES305 | Quality | Code Duplication | MEDIUM | check/scan, quality |
+| AES401 | Role | Taxonomy Role | HIGH | check/scan, role |
+| AES402 | Role | Contract Role | HIGH | check/scan, role |
+| AES403 | Role | Capabilities Role | HIGH / MEDIUM / LOW per sub-check | check/scan, role |
+| AES404 | Role | Utility Role | MEDIUM | check/scan, role |
+| AES405 | Role | Agent Role | HIGH / MEDIUM / LOW per sub-check | check/scan, role |
+| AES406 | Role | Surface Role | HIGH (one sub-check MEDIUM) | check/scan, role |
+| AES501 | Orphan | Taxonomy Orphan | LOW | check/scan, orphan |
+| AES502 | Orphan | Contract Orphan | MEDIUM | check/scan, orphan |
+| AES503 | Orphan | Capabilities Orphan | MEDIUM | check/scan, orphan |
+| AES504 | Orphan | Utility Orphan | MEDIUM | check/scan, orphan |
+| AES505 | Orphan | Agent Orphan | HIGH | check/scan, orphan |
+| AES506 | Orphan | Surface Orphan | HIGH smart / MEDIUM utility / LOW passive | check/scan, orphan |
+| AES601 | Doc | FR Format | HIGH | check/scan, docs |
+| AES602 | Doc | Section Structure | HIGH | check/scan, docs |
+| AES603 | Doc | Spec Purity | HIGH | check/scan, docs |
+| AES604 | Doc | Crosslinks | HIGH | check/scan, docs |
+| AES605 | Doc | Doc Heading Structure | HIGH | check/scan, docs |
+| AES606 | Doc | Doc Template Conformance | HIGH | check/scan, docs |
+| AES607 | Doc | PR Folder Ownership | HIGH | check/scan, docs |
+| AES701 | Structure | Shared Folder Purity | MEDIUM (report) | check/scan |
+| AES702 | Structure | Feature Folder Health | MEDIUM (report) | check/scan |
+| AES703 | Structure | Surface Folder Purity | MEDIUM (report) | check/scan |
+| AES704 | Structure | Test Suite Coverage | MEDIUM (report) | check/scan |
+| AES705 | Structure | Member-Root Placement | MEDIUM (report) | check/scan |
+| AES706 | Structure | PR-LA Folder Mapping | MEDIUM (report) | check/scan |
 
-| Code   | Name             | Severity | Group  | Description                                                                                   |
-| -------- | ------------------ | ---------- | -------- | ------------------------------------------------------------------------------------------------|
-| AES201 | Forbidden Import | CRITICAL | Import | Cross-layer imports must comply with allowed/mandatory/forbidden rules.                       |
-| AES202 | Mandatory Import | HIGH     | Import | File is missing required imports defined by config.                                           |
-| AES203 | Unused Import    | MEDIUM   | Import | Symbol is imported but never used in file scope.                                              |
-| AES204 | Dummy Import     | HIGH     | Import | Import string matches a forbidden dummy pattern; symbol used only in dummy functions or stubs.|
-| AES205 | Circular Import  | CRITICAL | Import | Circular dependency between layers — must be unidirectional bottom-up.                       |
+## Group coverage and counts
 
-| Code   | Name                 | Severity      | Group   | Description                                                                       |
-| -------- | ---------------------- | --------------- | --------- | ------------------------------------------------------------------------------------|
-| AES301 | File Maximum Limit   | HIGH          | Quality | File exceeds maximum allowed line count (default: 1000).                          |
-| AES302 | File Minimum Limit   | HIGH          | Quality | File is below minimum required line count (default: 5).                           |
-| AES303 | Mandatory Definition | HIGH / MEDIUM | Quality | File missing struct/enum/trait/class definition, or definition is empty.          |
-| AES304 | Bypass Comment       | CRITICAL      | Quality | Forbidden bypass pattern detected (`#[allow]`, `unwrap()`, `panic!`, `noqa`, etc).|
-| AES305 | Duplication Code     | MEDIUM        | Quality | Duplicate code blocks detected across files.                                      |
-
-| Code   | Name              | Severity | Group | Description                                                                                    |
-| -------- | ------------------- | ---------- | ------- | -------------------------------------------------------------------------------------------------|
-| AES401 | Taxonomy Role     | HIGH     | Role  | Constant file contains non-constant declarations; primitives used in entity/error/event.       |
-| AES402 | Contract Role     | HIGH     | Role  | Contract trait/method uses primitive types instead of taxonomy VO or constant types.           |
-| AES403 | Capabilities Role | HIGH/MEDIUM/LOW | Role  | Capability exceeds 3 types, has no protocol implementor, reversed block order, missing or misordered block markers, local const, inline test, or public helper.|
-| AES404 | Utility Role      | MEDIUM   | Role  | Utility contains struct/impl/trait/type-alias (Rust), class/interface/enum (Python/TS), or non-taxonomy imports|
-| AES405 | Agent Role        | MEDIUM   | Role  | Orchestrator contains too many types, or has no aggregate implementor or uses`Any` annotations.|
-| AES406 | Surface Role      | HIGH     | Role  | Passive surface contains active domain logic; file exceeds 15 functions.                       |
-
-| Code   | Name                | Severity | Group  | Description                                                                                                                                      |
-| -------- | --------------------- | ---------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------|
-| AES501 | Taxonomy Orphan     | LOW      | Orphan | Taxonomy file has no inbound imports from any contract file.                                                                                     |
-| AES502 | Contract Orphan     | MEDIUM   | Orphan | Contract protocol not implemented by capabilities or not called by agent; aggregate not called by surface.                                       |
-| AES503 | Capabilities Orphan | MEDIUM   | Orphan | Capability not wired in any container AND unreachable in import graph.                                                                           |
-| AES504 | Utility Orphan      | MEDIUM   | Orphan | Utility file not imported or consumed by any capability, agent, or surface layer.                                                                |
-| AES505 | Agent Orphan        | HIGH     | Orphan | Agent orchestrator not called by any surface file or entry point.                                                                                |
-| AES506 | Surface Orphan      | HIGH/MEDIUM/LOW | Orphan | Smart surface not imported by entry/router; utility surface not imported by smart surface; passive surface not imported by smart/utility surface.|
-
-| Code   | Name                  | Severity | Group  | Description                                                                                    |
-| -------- | --------------------- | -------- | ------ | -------------------------------------------------------------------------------------------------|
-| AES601 | FR Format             | HIGH     | Doc    | Requirement IDs are `FR-<FEATURE>-NNN`; every requirement states all six fields; FRD requirement count equals protocol class count.                 |
-| AES602 | Section Structure     | HIGH     | Doc    | FRD sections follow template order; required tables and subsections are present; API Contract holds exactly the Protocol API / Aggregate API pair, each with its own table.|
-| AES603 | Spec Purity           | HIGH     | Doc    | Specs never name source files and never carry implementation state.                             |
-| AES604 | Crosslinks            | HIGH     | Doc    | An FRD crosslinks its PRD and backlog; a feature backlog never restates master sections.        |
-| AES605 | Doc Heading Structure | HIGH     | Doc    | Every root document carries one H1 and its own template-derived H2 set; off-template H2s are reported.|
-| AES606 | Doc Template Conformance | HIGH     | Doc    | Mandated table-shaped sections carry exactly their template table: bullets or prose fire `section_not_table`; missing columns fire `table_missing_columns`; undeclared columns fire `table_extra_columns`; a header repeated as a data row fires `table_header_repeated`; a table where the HOW-TO shows none fires `table_not_in_template`; an unsanctioned `DS-` position H3 fires `h3_unexpected`. The six required root documents (`PRD.md`, `ROADMAP.md`, `README.md`, `AGENTS.md`, `ARCHITECTURE.md`, `CONTRIBUTING.md`) exist at a real workspace root; a missing one fires `missing_required_doc`.|
-| AES607 | PR Folder Ownership      | HIGH     | Doc    | Every `PR-<PROJECT>-NNN` declared in the root PRD's `Project Requirements` must own a top-level module folder under `crates&#124;modules&#124;packages` named after its project identifier (`PR-LA-001` → `LA`). One identifier may own the whole non-empty layout; fired per unowned PR-ID anchored to its PRD heading line, code `AES607` / `pr_folder_not_owned`; surfaces via `scan`/`check` (DocRequest::audit_all) as well as `docs`.|
-
-| Code   | Name               | Severity | Group     | Description                                                                               |
-| -------- | -------------------- | ---------- | ----------- | ----------------------------------------------------------------------------------------------|
-| AES701 | Shared Folder Purity | MEDIUM   | Structure | A `shared` folder holds a `capabilities_*`, `agent_*`, or `surface_*` file.                 |
-| AES702 | Feature Folder Health | MEDIUM   | Structure | A feature folder lacks an `agent_*_orchestrator` or a `capabilities_*` file, holds foreign layer files, lacks its doc pair, or is not mirrored as a `shared/src/<feature>/` subfolder.                                 |
-| AES703 | Surface Folder Purity | MEDIUM   | Structure | A surface folder holds a `capabilities_*`, `agent_*`, or `utility_*` file, or lacks DESIGN.md.             |
-| AES704 | Test Suite Coverage | MEDIUM   | Structure | A feature folder lacks a `tests/` category or its `benches/` benchmark.                                     |
-| AES705 | Member-Root Placement | MEDIUM   | Structure | A `crates/`, `modules/`, or `packages/` root holds a loose `capabilities_*`, `agent_*`, `surface_*`, or `utility_*` file.|
-| AES706 | PR-LA Folder Ownership | MEDIUM | Structure | Every `PR-LA-001..N` id in PRD.md/ROADMAP.md maps positionally to a crate folder under `crates&#124;modules&#124;packages` (`PR-LA-001` → first folder, `filesystem`), and each crate folder's FRD carries `FR-` ids whose feature prefix matches its folder name (`crates/filesystem` → `FR-Filesystem-NNN`). Violation types: `pr_la_missing_frd`, `pr_la_fr_id_mismatch`, `pr_la_id_mismatch`.|
-
-### AES705 — Member-Root Placement
-
-**Severity:** MEDIUM
-
-A member dir — `crates/`, `modules/`, or `packages/` — holds folders and
-wiring. A layer file loose at its root belongs to a folder beneath it, and
-without that folder it has no owning feature: AES702 cannot hold it to a
-contract, AES704 cannot ask it for a test suite, and no FRD describes it.
-
-| Prefix           | Belongs in             |
-| ---------------- | -----------------------|
-| `capabilities_`  | a feature folder       |
-| `agent_`         | the feature that owns the orchestrator|
-| `surface_`       | a surface folder       |
-| `utility_`       | the shared folder      |
-
-Only the top level is read. `root_*` wiring, a barrel module, and any file whose
-stem carries no layer prefix — a README, a manifest — stay legal at a member
-root, because the container composes them there.
-
----
-
-### AES706 — PR-LA Folder Ownership
-
-**Severity:** MEDIUM
-
-Every `PR-LA-001..N` id declared in PRD.md/ROADMAP.md's `Project Requirements` maps
-positionally to a crate folder under `crates`, `modules`, or `packages`
-(`PR-LA-001` → the first folder). Each crate folder's FRD must carry `FR-`
-ids whose feature prefix matches the folder name (`crates/filesystem` →
-`FR-Filesystem-NNN`). Violation types: `pr_la_missing_frd`, `pr_la_fr_id_mismatch`,
-`pr_la_id_mismatch`.
-
----
-
+| Group | Code range | Count | Command scope |
+| --- | --- | --- | --- |
+| 1 Naming | AES101–AES103 | 3 | check/scan, `naming` |
+| 2 Import | AES201–AES205 | 5 | check/scan, `import` |
+| 3 Quality | AES301–AES305 | 5 | check/scan, `quality` |
+| 4 Role | AES401–AES406 | 6 | check/scan, `role` |
+| 5 Orphan | AES501–AES506 | 6 | check/scan, `orphan` |
+| 6 Doc | AES601–AES607 | 7 | check/scan **and** `docs` |
+| 7 Structure | AES701–AES706 | 6 | check/scan (severity normalized to MEDIUM at report) |
+| Total | AES101–AES706 | 38 | — |
 ## Group 1: Naming
 
 | Code | Name | Severity | Sub-checks | Violation names | Ran by |
@@ -762,87 +738,163 @@ ids whose feature prefix matches the folder name (`crates/filesystem` →
 
 ## Group 7: Folder Structure
 
+| Code | Name | Severity | Sub-checks | Violation types | Ran by |
+| --- | --- | --- | --- | --- | --- |
+| AES701 | Shared Folder Purity | MEDIUM (report) | — | 2 | check/scan |
+| AES702 | Feature Folder Health | MEDIUM (report) | — | 7 | check/scan |
+| AES703 | Surface Folder Purity | MEDIUM (report) | — | 3 | check/scan |
+| AES704 | Test Suite Coverage | MEDIUM (report) | — | 3 | check/scan |
+| AES705 | Member-Root Placement | MEDIUM (report) | — | 1 | check/scan |
+| AES706 | PR-LA Folder Mapping | MEDIUM (report) | — | 3 | check/scan |
+
 ### AES701 — Shared Folder Purity
 
-**Severity:** MEDIUM (report-normalized from the structure audit)
+| Field | Value |
+| --- | --- |
+| Code / Severity | AES701 / MEDIUM (report) |
+| Fires when | A shared folder holds a `capabilities_*`, `agent_*`, or `surface_*` file, or lacks its DATA.md + BACKLOG.md doc pair |
+| Scope | `shared/` kernel folders under member dirs |
+| Fix | Move misplaced layer files to a feature or surface folder; add DATA.md and BACKLOG.md |
+| Source | `capabilities_shared_purity_auditor.rs`; `surface_structure_action.rs:61` normalizes severity to MEDIUM |
 
-A workspace holds a locked `shared` folder that contains only taxonomy, utility, and contract files. Any `capabilities_*`, `agent_*`, or `surface_*` file sitting there is misplaced and must be moved to a feature or surface folder.
+#### Violation types
 
-| Violation type                  | Fires when                                                      |
-| --------------------------------- | ------------------------------------------------------------------|
-| `shared_has_forbidden_files` | A shared folder holds a `capabilities_*`, `agent_*`, or `surface_*` file.|
-
----
+| Violation type | Fires when |
+| --- | --- |
+| `shared_has_forbidden_files` | A shared folder holds a `capabilities_*`, `agent_*`, or `surface_*` file |
+| `shared_missing_doc_pair` | A shared folder lacks DATA.md or BACKLOG.md |
 
 ### AES702 — Feature Folder Health
 
-**Severity:** MEDIUM
+| Field | Value |
+| --- | --- |
+| Code / Severity | AES702 / MEDIUM (report) |
+| Fires when | A feature folder lacks its `agent_*_orchestrator` and/or `capabilities_*` pair, holds foreign layer files, lacks its FRD.md + BACKLOG.md pair, lacks root composition wiring, or lacks its `shared/src/<feature>/` mirror |
+| Scope | Member subdirectories (`crates/`, `modules/`, `packages/`) |
+| Fix | Add the missing orchestrator/capabilities file, remove foreign files, add the doc pair, add a `root_*` composition file, or mirror into `shared/src/<feature>/` |
+| Source | `capabilities_feature_health_auditor.rs`; `surface_structure_action.rs:61` normalizes severity to MEDIUM |
 
-A feature folder is a member subdirectory (under `crates/`, `modules/`, or `packages/`) that carries business logic. It must hold at least one `agent_*_orchestrator` file AND at least one `capabilities_*` file. A folder with only one side of that pair is incomplete and should be split or merged into the correct home.
+#### Violation types
 
-It must also hold its composition wiring: a `root_<concept>_container` file, or a `root_<concept>_entry` file when the feature's root is an entry point. The root layer is the only layer that may instantiate and wire the feature's components, so a feature without that file has no home for its wiring and nothing below it can reach it. The wiring may sit anywhere under the feature folder, in the feature's `src/` subfolder, or directly at the member root — one composition file at the member root composes every feature folder in the member and answers for them all.
-
-The orchestrator check is per folder. A member-level orchestrator — one sitting directly under `crates/`, `modules/`, or `packages/` rather than inside a feature — does **not** answer for the folders beneath it. Each feature owns its own orchestration, so a member-level orchestrator is a routing aggregate over the features, and a feature folder missing its own agent is still a split feature.
-
-**Shared kernel mirror.** A feature folder is also mirrored in its member's kernel: the subfolder `shared/src/<feature>/` must exist, where `<feature>` is the folder name with `-` replaced by `_` (the module name). The kernel holds the feature's contract and taxonomy modules, so a feature without that subfolder has no home for them. The mirror is required only for feature folders; a surface folder's shared subfolder is optional and never fires this check.
-
-| Violation type                    | Fires when                                                                   |
-| ------------------------------------ | -------------------------------------------------------------------------------|
-| `feature_missing_agent`       | The folder holds capabilities but no `agent_*_orchestrator` file of its own.|
-| `feature_missing_capability` | The folder holds an agent orchestrator but no `capabilities_*` file.       |
-| `feature_missing_shared_subfolder` | The feature has no `shared/src/<feature>/` mirror subfolder in its member's kernel.|
-| `feature_missing_root_container` | The feature holds no `root_*_container` or `root_*_entry` file under it, in its `src/` subfolder, or at the member root.|
-
----
+| Violation type | Fires when |
+| --- | --- |
+| `feature_missing_agent` | The folder holds capabilities but no `agent_*_orchestrator` file of its own |
+| `feature_missing_capability` | The folder holds an agent orchestrator but no `capabilities_*` file |
+| `feature_has_forbidden_files` | A feature folder holds a `utility_*`, `surface_*`, `taxonomy_*`, or `contract_*` file |
+| `feature_missing_doc_pair` | The feature folder lacks FRD.md or BACKLOG.md |
+| `feature_missing_root_container` | No `root_*_container`/`root_*_entry` file under the folder, its `src/` subfolder, or the member root |
+| `feature_missing_shared_subfolder` | The feature has no `shared/src/<feature>/` mirror subfolder in its member's kernel |
+| `doc_pair_without_orchestrator` | A folder carries a doc pair but holds no orchestrator |
 
 ### AES703 — Surface Folder Purity
 
-**Severity:** MEDIUM
+| Field | Value |
+| --- | --- |
+| Code / Severity | AES703 / MEDIUM (report) |
+| Fires when | A surface-dominated folder holds a `capabilities_*`, `agent_*`, or `utility_*` file, or lacks DESIGN.md or BACKLOG.md |
+| Scope | Surface-dominated folders under member dirs |
+| Fix | Move capability/agent/utility files out; add DESIGN.md and BACKLOG.md |
+| Source | `capabilities_surface_purity_auditor.rs`; `surface_structure_action.rs:61` normalizes severity to MEDIUM |
 
-A surface folder is a folder where surface files dominate — it has more surface files than all other layers combined. Such a folder must contain surface files only. Any `capabilities_*`, `agent_*`, or `utility_*` file in a surface folder is misplaced: capability and agent files move to a feature folder, utility files move to the `shared/` kernel folder. Barrel files and entry-point wrappers are permitted alongside surfaces.
+#### Violation types
 
-| Violation type                       | Fires when                                                            |
-| -------------------------------------- | ------------------------------------------------------------------------|
-| `surface_has_misplaced_files` | A surface-dominated folder holds a `capabilities_*`, `agent_*`, or `utility_*` file.|
-
----
+| Violation type | Fires when |
+| --- | --- |
+| `surface_has_misplaced_files` | A surface-dominated folder holds a `capabilities_*`, `agent_*`, or `utility_*` file |
+| `surface_missing_design_md` | A surface-dominated folder carries no DESIGN.md |
+| `surface_missing_backlog_md` | A surface-dominated folder carries no BACKLOG.md |
 
 ### AES704 — Test Suite Coverage
 
-**Severity:** MEDIUM
+| Field | Value |
+| --- | --- |
+| Code / Severity | AES704 / MEDIUM (report) |
+| Fires when | A feature folder owns source but lacks `tests/`, lacks `benches/`, or misses a required test category prefix |
+| Scope | Folders owning `capabilities_*` or `agent_*_orchestrator` source |
+| Fix | Add missing test files/benches with one of the seven required prefixes plus a bench file |
+| Source | `capabilities_test_suite_coverage_auditor.rs`; `surface_structure_action.rs:61` normalizes severity to MEDIUM |
 
-The `aes-testing-suite` skill fixes one test layout: seven test types in `tests/`
-plus benchmarks in `benches/`, each named by a flat prefix. A feature folder that
-owns source owes all eight, so a missing category is a structural gap rather
-than a naming slip — AES103 asks whether a name is legal, AES704 asks whether the
-category is present.
+#### Violation types
 
-A folder is in scope when it holds at least one `capabilities_*` or one
-`agent_*_orchestrator` file — the same gate AES702 uses to decide what counts as
-a feature. A utility-only folder or a surface owes no suite.
+| Violation type | Fires when |
+| --- | --- |
+| `test_suite_missing_tests_dir` | A feature folder owns source and has no `tests/` directory |
+| `test_suite_missing_bench_dir` | A feature folder owns source and has no `benches/` directory |
+| `test_suite_missing_category` | A feature folder owns source and no file carries one required test prefix |
 
-| Prefix         | Directory  | Proves                                 |
-| --------------- | ----------- | ---------------------------------------|
-| `contract_`     | `tests/`    | Protocol/trait/interface impl exists   |
-| `unit_`         | `tests/`    | One public function                    |
-| `integration_`  | `tests/`    | Module / crate / package + DI wiring   |
-| `dogfood_`      | `tests/`    | CLI against a live service; skip if unavailable|
-| `smoke_`        | `tests/`    | App boots + responds, under 5 s        |
-| `e2e_`          | `tests/`    | Full request lifecycle                 |
-| `acceptance_`   | `tests/`    | Business requirement met               |
-| `bench_`        | `benches/`  | Performance regression                 |
+#### Test categories
 
-Support prefixes (`regression_`, `behavioral_`, `mock_`, `fixture_`) are legal
-file names and satisfy **no** category: a folder carrying only regression guards
-still owes the full seven.
+| Prefix | Directory | Proves |
+| --- | --- | --- |
+| `contract_` | `tests/` | Protocol/trait/interface impl exists |
+| `unit_` | `tests/` | One public function |
+| `integration_` | `tests/` | Module / crate / package + DI wiring |
+| `dogfood_` | `tests/` | CLI against live service/session; skip if unavailable |
+| `smoke_` | `tests/` | App boots + responds |
+| `e2e_` | `tests/` | Full request lifecycle |
+| `acceptance_` | `tests/` | Business requirement met |
+| `bench_` | `benches/` | Performance regression |
 
-| Violation type                     | Fires when                                                                |
-| ----------------------------------- | --------------------------------------------------------------------------|
-| `test_suite_missing_tests_dir`     | A feature folder owns source and has no `tests/` directory.               |
-| `test_suite_missing_bench_dir`     | A feature folder owns source and has no `benches/` directory.             |
-| `test_suite_missing_category`      | A feature folder owns source and no file carries one required test prefix. |
+### AES705 — Member-Root Placement
 
-Each missing category is its own finding, so a reader sees exactly which seam is
-untested rather than a single "your suite is incomplete".
+| Field | Value |
+| --- | --- |
+| Code / Severity | AES705 / MEDIUM (report) |
+| Fires when | A member dir (`crates/`, `modules/`, `packages/`) root holds a `capabilities_*`, `agent_*`, `surface_*`, or `utility_*` file |
+| Scope | Member root level only |
+| Fix | Move the layer file into a feature folder (capabilities/agent), a surface folder (surface), or `shared/` (utility) |
+| Source | `capabilities_member_root_placement_auditor.rs`; `surface_structure_action.rs:61` normalizes severity to MEDIUM |
 
----
+#### Prefix placement table
+
+| Prefix | Belongs in |
+| --- | --- |
+| `capabilities_` | a feature folder |
+| `agent_` | the feature that owns the orchestrator |
+| `surface_` | a surface folder |
+| `utility_` | the shared folder |
+
+### AES706 — PR-LA Folder Mapping
+
+| Field | Value |
+| --- | --- |
+| Code / Severity | AES706 / MEDIUM (report) |
+| Fires when | Every `PR-LA-001..N` id in PRD.md / ROADMAP.md does not map positionally to an existing crate folder, or a crate folder's FRD carries `FR-` ids whose feature prefix does not match the folder name |
+| Scope | `PRD.md`, `ROADMAP.md`, and feature crate folders under `crates/` / `modules/` / `packages/` |
+| Fix | Create the missing crate folder, rename/mismatched FR ids to `FR-<Feature>-NNN`, or add the missing FRD.md |
+| Source | `capabilities_pr_la_folder_auditor.rs`; `surface_structure_action.rs:61` normalizes severity to MEDIUM |
+
+#### Violation types
+
+| Violation type | Fires when |
+| --- | --- |
+| `pr_la_missing_frd` | A crate folder holds no FRD.md at all |
+| `pr_la_fr_id_mismatch` | A crate folder's FRD carries an FR id whose prefix does not match the folder name |
+| `pr_la_id_mismatch` | A `PR-LA-001..N` id does not map to an existing crate folder by order |
+
+#### PR-LA folder order (`PR_LA_FOLDER_ORDER`)
+
+| Position | Folder | FR prefix |
+| --- | --- | --- |
+| 1 | `filesystem` | `FR-Filesystem` |
+| 2 | `auto-fix` | `FR-AutoFix` |
+| 3 | `cli-commands` | `FR-CliCommands` |
+| 4 | `config-system` | `FR-ConfigSystem` |
+| 5 | `dispatcher` | `FR-Dispatcher` |
+| 6 | `doc-rules` | `FR-DOC` |
+| 7 | `external-lint` | `FR-ExternalLint` |
+| 8 | `file-watch` | `FR-FileWatch` |
+| 9 | `git-hooks` | `FR-GitHooks` |
+| 10 | `import-rules` | `FR-ImportRules` |
+| 11 | `logging` | `FR-Logging` |
+| 12 | `maintenance` | `FR-Maintenance` |
+| 13 | `mcp-server` | `FR-McpServer` |
+| 14 | `naming-rules` | `FR-NamingRules` |
+| 15 | `orphan-rules` | `FR-OrphanRules` |
+| 16 | `project-setup` | `FR-ProjectSetup` |
+| 17 | `quality-rules` | `FR-QualityRules` |
+| 18 | `report-formatter` | `FR-ReportFormatter` |
+| 19 | `role-rules` | `FR-RoleRules` |
+| 20 | `shared` | `FR-Shared` |
+| 21 | `structure-rules` | `FR-STR` |
+| 22 | `tui` | `FR-Tui` |
