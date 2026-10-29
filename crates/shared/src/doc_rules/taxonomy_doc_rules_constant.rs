@@ -191,6 +191,15 @@ pub const ARCHITECTURE_REQUIRED_H2S: &[&str] = &[
     "Surface Layer",
     "Root Layer",
     "Finding rendering notes",
+    "Rule Inventory Overview",
+    "Group 1: Naming",
+    "Group 2: Layer & Import Boundary",
+    "Group 3: File & Content Quality",
+    "Group 4: Role Violations",
+    "Group 5: Orphan Code",
+    "Group 6: Document Invariants",
+    "Group 7: Folder Structure",
+    "Rule Source of Truth & Parity",
 ];
 
 /// Per-crate BACKLOG section order, per HOW-TO-MAKE-BACKLOG.
