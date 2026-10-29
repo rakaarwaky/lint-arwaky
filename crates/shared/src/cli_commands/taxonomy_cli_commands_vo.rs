@@ -85,7 +85,7 @@ pub enum Commands {
         format: Format,
     },
 
-    /// Run code-quality analysis only (AES101-AES306)
+    /// Run code-quality analysis only (AES301-AES305)
     #[command(name = "quality")]
     ScanQuality {
         /// Path to scan
@@ -95,7 +95,7 @@ pub enum Commands {
         format: Format,
     },
 
-    /// Run import-rule checks only (AES201-AES299)
+    /// Run import-rule checks only (AES201-AES205)
     #[command(name = "import")]
     ScanImport {
         /// Path to scan
@@ -105,7 +105,7 @@ pub enum Commands {
         format: Format,
     },
 
-    /// Run naming-rule checks only (AES401-AES406)
+    /// Run naming-rule checks only (AES101-AES103)
     #[command(name = "naming")]
     ScanNaming {
         /// Path to scan
@@ -115,7 +115,7 @@ pub enum Commands {
         format: Format,
     },
 
-    /// Run role-rule checks only (AES301-AES399)
+    /// Run role-rule checks only (AES401-AES406)
     #[command(name = "role")]
     ScanRole {
         /// Path to scan
@@ -195,7 +195,7 @@ pub enum Commands {
         format: Format,
     },
 
-    /// Doc invariants audit (AES601–AES606) and template scaffolding
+    /// Doc invariants audit (AES601–AES607) and template scaffolding
     #[command(name = "docs", subcommand_required = false)]
     Docs {
         /// Subcommand: `audit` (default) or `scaffold`
@@ -273,7 +273,7 @@ pub enum Commands {
 /// template files in place unless `--dry-run` is passed (Decision Q1).
 #[derive(Subcommand, Debug)]
 pub enum DocsAction {
-    /// Run the doc invariants audit (AES601–AES606)
+    /// Run the doc invariants audit (AES601–AES607)
     Audit {
         /// Path to audit
         #[arg(value_name = "PATH", default_value = ".")]
@@ -521,7 +521,7 @@ pub static COMMAND_CATALOG: &[(&str, &str, &str)] = &[
     ),
     (
         "docs",
-        "Doc invariants audit (AES601–AES606) over the document chain",
+        "Doc invariants audit (AES601–AES607) over the document chain",
         "lint-arwaky-cli docs ./",
     ),
     (
