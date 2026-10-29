@@ -353,6 +353,15 @@ Every section is required unless marked optional. Each exists for one reason.
 | Agent Layer                    | The orchestrator — sequence, not business. Watch for business calculation here.              |
 | Surface Layer                  | The outer boundary. Watch for orchestration or business logic leaking into Surface.          |
 | Root Layer                     | The composition entry. Watch for business logic in the container.                            |
+| Rule Inventory Overview        | Names every emitted rule with its group, severity, and check surface so a reader can navigate the inventory without opening RULES_AES.md. Watch for the table drifting from the emitted rule codes. |
+| Group 1: Naming                | Groups the naming rules (AES101–AES103) with their fires-on and exception conditions. Watch for prose duplicating RULES_AES.md detail. |
+| Group 2: Layer & Import Boundary | Groups the import-boundary rules (AES201–AES205). Watch for the layer-dependency matrix restated instead of referenced.       |
+| Group 3: File & Content Quality | Groups the quality rules (AES301–AES305). Watch for per-rule exception lists diverging from DEFAULT_RULE_EXCEPTIONS.          |
+| Group 4: Role Violations       | Groups the role rules (AES401–AES406). Watch for per-role allowed-dependency statements missing.                               |
+| Group 5: Orphan Code          | Groups the orphan-code rules (AES501–AES506). Watch for unreferenced-symbol conditions drifting from the checkers.            |
+| Group 6: Document Invariants   | Groups the document-invariant rules (AES601–AES607). Watch for the check surface (check/scan vs docs) drifting from the runners. |
+| Group 7: Folder Structure      | Groups the folder-structure rules (AES701–AES706). Watch for the pinned folder-form names drifting from the structure checkers. |
+| Rule Source of Truth & Parity | States that emitted rule codes are the source of truth and names the parity test that keeps RULES_AES.md in sync. Watch for the parity test being bypassed or the mirror drifting. |
 
 ---
 
