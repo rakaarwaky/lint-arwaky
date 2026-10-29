@@ -27,7 +27,7 @@ pub struct DocFinding {
     /// 1-based line in the document the finding anchors to.
     /// Document-level findings that have no concrete line use `0` or `1`.
     pub line: usize,
-    /// Severity of the finding. All AES6xx rules are HIGH per RULES_AES.
+    /// Severity of the finding. All AES6xx rules are HIGH per ARCHITECTURE.md §19.
     pub severity: Severity,
     /// Why the invariant matters. Rendered on its own line in the report, so
     /// it holds the reason and not a restatement of `message`.

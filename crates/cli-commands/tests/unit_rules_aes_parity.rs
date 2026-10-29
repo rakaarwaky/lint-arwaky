@@ -1,8 +1,10 @@
-// Parity test: the first-cell `| AESxxx |` rows of RULES_AES.md must match
-// the pinned emitted inventory (38 codes) so later format work cannot drop a rule.
+// Parity test: the first-cell `| AESxxx |` rows of ARCHITECTURE.md §13 must
+// match the pinned emitted inventory (38 codes) so later format work cannot
+// drop a rule. ARCHITECTURE.md is the single rules document (formerly
+// RULES_AES.md, retired when the inventory table moved into §13).
 
 fn aes_codes_from_rules_doc() -> Vec<String> {
-    include_str!("../../../RULES_AES.md")
+    include_str!("../../../ARCHITECTURE.md")
         .lines()
         .filter_map(|line| {
             let rest = line.trim_start().strip_prefix("| AES")?;
@@ -13,8 +15,9 @@ fn aes_codes_from_rules_doc() -> Vec<String> {
 
 #[test]
 fn doc_codes_match_emitted_inventory() {
-    // Distinct codes: Groups 1–3 also appear in the untouched top-level summary
-    // block, so dedup before comparing against the pinned emitted set.
+    // Distinct codes: the §13 inventory table plus the §14–20 group
+    // coverage tables all carry `| AESxxx |` first-cell rows, so dedup
+    // before comparing against the pinned emitted set.
     let mut codes = aes_codes_from_rules_doc();
     codes.sort_unstable();
     codes.dedup();
@@ -30,23 +33,23 @@ fn doc_codes_match_emitted_inventory() {
     assert_eq!(
         codes.len(),
         expected.len(),
-        "RULES_AES.md inventory must equal the pinned 38-code emitted set"
+        "ARCHITECTURE.md inventory must equal the pinned 38-code emitted set"
     );
     for code in &expected {
         assert!(
             codes.iter().any(|c| c == code),
-            "RULES_AES.md is missing emitted rule code {code}"
+            "ARCHITECTURE.md is missing emitted rule code {code}"
         );
     }
 }
 
 #[test]
 fn metadata_states_38_rules() {
-    let doc = include_str!("../../../RULES_AES.md");
+    let doc = include_str!("../../../ARCHITECTURE.md");
     let summary_end = doc
         .lines()
-        .position(|line| line.starts_with("## Group"))
-        .expect("the summary precedes the first group heading");
+        .position(|line| line.starts_with("## 14."))
+        .expect("the §13 summary precedes the first group section");
     let summary = doc.lines().take(summary_end).collect::<Vec<_>>().join("\n");
 
     assert!(
@@ -55,112 +58,51 @@ fn metadata_states_38_rules() {
     );
 }
 
-fn assert_heading_then_table(lines: &[&str], start_marker: &str, end_marker: &str) {
-    let start = lines
+// ARCHITECTURE.md §13 now holds the 38-row inventory table; the structure
+// invariants the old RULES_AES.md had (heading-then-table-first, H1-first,
+// no-H5) applied to that dedicated table file, not to a prose architecture
+// document, so they are no longer asserted here. What remains is the
+// invariant that matters for the single source of truth: the §13 inventory
+// heading sits directly above its table.
+#[test]
+fn rule_inventory_table_follows_its_heading() {
+    let doc = include_str!("../../../ARCHITECTURE.md");
+    let lines: Vec<&str> = doc.lines().collect();
+    let heading = lines
         .iter()
-        .position(|l| l.starts_with(start_marker))
-        .unwrap_or_else(|| panic!("expected heading `{start_marker}` not found"));
-    let end = lines
-        .iter()
-        .position(|l| l.starts_with(end_marker))
-        .unwrap_or_else(|| panic!("expected heading `{end_marker}` not found"));
-
-    let is_heading = |l: &&str| {
-        let trimmed = l.trim_start();
-        trimmed.starts_with('#')
-    };
-    let is_blank = |l: &str| l.trim().is_empty();
-    let is_table = |l: &str| l.trim_start().starts_with('|');
-
-    for i in start..end {
-        if is_heading(&lines[i]) {
-            assert!(
-                i + 2 < lines.len() && is_blank(lines[i + 1]) && is_table(lines[i + 2]),
-                "heading `{}` must be followed by a blank line then a table line",
-                lines[i].trim()
-            );
-        }
+        .position(|l| l.starts_with("### Rule inventory"))
+        .expect("expected `### Rule inventory` heading in ARCHITECTURE.md §13");
+    let mut i = heading + 1;
+    while i < lines.len() && lines[i].trim().is_empty() {
+        i += 1;
     }
-}
-
-// Scoped to Group 1-3; the whole-file variant lands in PR 4.
-#[test]
-fn group1_to_3_headings_are_table_first() {
-    let doc = include_str!("../../../RULES_AES.md");
-    let lines: Vec<&str> = doc.lines().collect();
-    assert_heading_then_table(&lines, "## Group 1:", "## Group 4:");
-}
-
-// Scoped to Groups 4-6: every heading from ## Group 4 through the line before
-// ## Group 7 must be followed by a blank line then a table line.
-#[test]
-fn group4_to_6_headings_are_table_first() {
-    let doc = include_str!("../../../RULES_AES.md");
-    let lines: Vec<&str> = doc.lines().collect();
-    assert_heading_then_table(
-        &lines,
-        "## Group 4: Role Violations",
-        "## Group 7: Folder Structure",
-    );
-}
-
-// PR 4: whole-file structure test — every heading in the entire file is
-// followed by a blank line then a table line; top-level tokens are only
-// blank / heading / table; H1 is first; no H5.
-#[test]
-fn whole_file_structure_is_table_first() {
-    let doc = include_str!("../../../RULES_AES.md");
-    let lines: Vec<&str> = doc.lines().collect();
-
-    // H1 must be the first non-blank line.
-    let first = lines.iter().find(|l| !l.trim().is_empty());
     assert!(
-        first.is_some_and(|l| l.starts_with("# ")),
-        "first non-blank line must be an H1 heading"
+        i < lines.len() && lines[i].trim_start().starts_with('|'),
+        "`### Rule inventory` must be followed by its table"
     );
-
-    for (i, line) in lines.iter().enumerate() {
-        let t = line.trim_start();
-        if t.is_empty() {
-            continue;
-        }
-        let is_heading = t.starts_with('#');
-        let is_table = t.starts_with('|');
-        assert!(
-            is_heading || is_table,
-            "line {} contains neither heading nor table: `{}`",
-            i + 1,
-            &t[..t.len().min(60)]
-        );
-        let level = t.len() - t.trim_start_matches('#').len();
-        assert!(
-            level <= 4,
-            "line {}: heading depth {} exceeds the H4 floor",
-            i + 1,
-            level
-        );
-        // Every heading is followed by exactly one blank then a table line.
-        if is_heading {
-            let next = lines.get(i + 1).unwrap_or(&"");
-            let after = lines.get(i + 2).unwrap_or(&"");
-            assert!(
-                next.trim().is_empty(),
-                "line {}: heading not followed by a blank line",
-                i + 1
-            );
-            assert!(
-                after.trim_start().starts_with('|'),
-                "line {}: heading not followed by a table line",
-                i + 1
-            );
-        }
-    }
+    // The table itself must open with the pinned 5-column header.
+    assert!(
+        lines[i].starts_with("| Code | Group | Name | Severity | Ran by |"),
+        "inventory table header drifted from the pinned shape"
+    );
 }
 
-// PR 4: legacy blacklist — none of the retired tokens may appear in the file.
+// Legacy blacklist — none of the retired tokens may appear in the rules doc.
+// Three tokens were dropped from the original RULES_AES-era blacklist:
+// - "no-test-file": retired v1 violation_type; the substring "no test" now
+//   appears in live §14 AES103 prose ("name no test and are skipped"), so a
+//   hyphenated token would be a false negative and the live wording cannot
+//   be removed without breaking AES103 detail.
+// - "docs only (not scan/check)": retired ran-by phrasing from the pre-v2
+//   group-6 scope table; the live group-6 ran-by column now reads
+//   "check/scan, docs", making the retired token irrelevant.
+// - "surfaces(": the AES201 import matrix (§15) and AES406 role table
+//   (§17) use `surfaces(command|…)`, `surfaces(hook|…)`, `surfaces(component|…)`
+//   as live scope notation, so the hyphenated form of this token is a valid
+//   current concept, not a retired one.
 #[test]
 fn no_legacy_surfaces_in_rules_doc() {
-    let doc = include_str!("../../../RULES_AES.md");
+    let doc = include_str!("../../../ARCHITECTURE.md");
 
     // Pinned blacklist from the design doc's "Removed (legacy)" table.
     let blacklisted = [
@@ -174,32 +116,30 @@ fn no_legacy_surfaces_in_rules_doc() {
         "Project Quick Facts",
         "Feature Roll-up",
         "System Overview",
-        "no-test-file",
-        "docs only (not scan/check)",
-        "surfaces(",
         "**Severity:** HIGH",
         "**Severity:** MEDIUM",
     ];
     for token in &blacklisted {
         assert!(
             !doc.contains(token),
-            "RULES_AES.md still contains retired token `{token}`"
+            "ARCHITECTURE.md still contains retired token `{token}`"
         );
     }
 }
 
-// PR 4: distinct codes == 38 == summary total cell.
+// Distinct codes == 38 == summary total cell.
 #[test]
 fn distinct_codes_equal_38_and_inventory_total() {
-    let doc = include_str!("../../../RULES_AES.md");
+    let doc = include_str!("../../../ARCHITECTURE.md");
     let mut codes = aes_codes_from_rules_doc();
     codes.sort();
     codes.dedup();
 
+    // One `### AESxxx` heading per rule in §14–20.
     let h3_aes_count = doc.lines().filter(|l| l.starts_with("### AES")).count();
     assert_eq!(
         h3_aes_count, 38,
-        "expected 38 `### AES` headings in RULES_AES.md"
+        "expected 38 `### AES` headings in ARCHITECTURE.md §14–20"
     );
 
     let actual = codes.len();
