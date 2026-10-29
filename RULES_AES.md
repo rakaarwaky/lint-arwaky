@@ -359,339 +359,420 @@ ids whose feature prefix matches the folder name (`crates/filesystem` →
 
 ## Group 4: Role Violations
 
+| Code | Name | Severity | Sub-checks | Violation names | Ran by |
+| --- | --- | --- | --- | --- | --- |
+| AES401 | Taxonomy Role | HIGH | — | `TAXONOMY_ROLE` | check/scan, role |
+| AES402 | Contract Role | HIGH | — | `CONTRACT_ROLE` | check/scan, role |
+| AES403 | Capabilities Role | HIGH / MEDIUM / LOW per sub-check | — | `CAPABILITY_ROLE` | check/scan, role |
+| AES404 | Utility Role | MEDIUM | — | `UTILITY_ROLE` | check/scan, role |
+| AES405 | Agent Role | HIGH / MEDIUM / LOW per sub-check | 11 | `AGENT_ROLE` | check/scan, role |
+| AES406 | Surface Role | HIGH (one sub-check MEDIUM) | 4 | `SURFACE_ROLE` | check/scan, role |
+
 ### AES401 — Taxonomy Role
 
-**Severity:** HIGH
+| Field | Value |
+| --- | --- |
+| Code / Severity | AES401 / HIGH |
+| Fires when | A `_constant` file carries a non-const declaration, or an `_entity`/`_error`/`_event` file uses a primitive type directly in a field declaration; `_vo` files may use primitives directly |
+| Scope | Taxonomy files: `*_constant.rs`, `*_entity.rs`, `*_error.rs`, `*_event.rs` |
+| Fix | Replace primitives with taxonomy value objects; keep `_constant` files const-only |
+| Source | `capabilities_taxonomy_role_auditor.rs` |
+| Exceptions | Barrel files are skipped |
 
-Constant purity violation or primitive usage in domain models. Two sub-checks:
+#### Sub-checks
 
-1. **Constant purity** — `_constant` files must only contain const  declarations
-2. **Primitive in taxonomy** — `_entity`, `_error`, `_event` files must not use direct primitive types (e.g. `String`, `i32`, `int`) in field declarations. `_vo` _constant files are allowed to use primitives directly.
-
-**FIX:** Replace primitives with taxonomy value objects.
-
----
+| # | Sub-check | Severity | Violation name | Fires when |
+| --- | --- | --- | --- | --- |
+| 1 | Constant purity | HIGH | `TAXONOMY_ROLE` | `_constant` file contains non-const declarations |
+| 2 | Primitive in taxonomy | HIGH | `TAXONOMY_ROLE` | `_entity`/`_error`/`_event` file uses `String`, `i32`, `bool`, `int`, `float` etc. directly |
 
 ### AES402 — Contract Role
 
-**Severity:** HIGH
+| Field | Value |
+| --- | --- |
+| Code / Severity | AES402 / HIGH |
+| Fires when | A contract trait/method signature uses a primitive type instead of a taxonomy VO or constant |
+| Scope | Contract files (`*_protocol.rs`, `*_aggregate.rs`); test projects are the primary target |
+| Fix | Replace primitives with VO/constant types from the taxonomy layer |
+| Source | `utility_contract_role_checker.rs` |
 
-Contract trait/method must use taxonomy VO/constant types, not primitive types.
+#### Sub-checks
 
-Checks for primitive types (`String`, `i32`, `bool`, `int`, `float`, etc.) in contract trait method signatures. Test projects are the primary target.
-
-**FIX:** Replace primitives with VO/constant from the taxonomy layer.
-
----
+| # | Sub-check | Severity | Violation name | Fires when |
+| --- | --- | --- | --- | --- |
+| 1 | Contract role | HIGH | `CONTRACT_ROLE` | Primitive type in a contract trait/method signature |
 
 ### AES403 — Capabilities Role
 
-**Severity:** HIGH / MEDIUM / LOW
+| Field | Value |
+| --- | --- |
+| Code / Severity | AES403 / HIGH / MEDIUM / LOW per sub-check |
+| Fires when | Capability violates protocol enforcement or the 3-block structure; per-sub-check severity applies |
+| Scope | Capability files (`*_capability*`); runs for Rust, Python, and TypeScript/JavaScript |
+| Fix | Ensure capability implements its protocol; split routing across capabilities; reorder impl blocks so protocol implementation comes first |
+| Source | `capabilities_capabilities_{rust,python,ts}_role_auditor.rs` |
 
-Capability routing, protocol enforcement, and 3-block structure. Eight sub-checks — each with its own severity:
+#### Sub-checks
 
-| Sub-check                        | Severity   | Description                                                                                         |
-| -------------------------------- | ---------- | ----------------------------------------------------------------------------------------------------|
-| **CapabilityTooManyTypes**       | **HIGH**   | File exceeds max 3 type declarations.                                                                |
-| **CapabilityNoImplementor**      | **MEDIUM** | No struct/class in the capability file implements a `_protocol` contract trait. Python classes satisfied only by a decorator claim (e.g. `@with_adapter_protocol`) still pass the check when the class body or module carries methods; a decorated class with no methods is reported.                       |
-| **CapabilityMultiProtocol**      | **MEDIUM** | File implements more than one protocol trait — should be split into separate capability files; shared helpers belong in `utility_*`.|
-| **CapabilityBlockOrder**         | **HIGH**   | Block 2 (protocol trait impl) does not precede Block 3 (inherent impl: ctors, std traits, helpers).   |
-| **CapabilityBlockMarkers**       | **MEDIUM** | The `// Block 1:` / `// Block 2:` / `// Block 3:` banners are not all present, are out of order, or declare a block above 3.|
-| **CapabilityLocalConstant**      | **MEDIUM** | File-level `const` declared inline; belongs in `taxonomy_<domain>_constant.rs`.                       |
-| **CapabilityEmbeddedTest**       | **LOW**    | `#[cfg(test)]` or `mod tests` declared inline; test code belongs in `tests/`.                         |
-| **CapabilityPublicHelper**       | **MEDIUM** | Block 3 helper with no production caller (own-module or external) is `pub`; change to `fn` or `pub(crate)` (tests in `tests/` compile as separate crate and require `pub`).|
+| # | Sub-check | Severity | Violation name | Fires when |
+| --- | --- | --- | --- | --- |
+| 1 | CapabilityTooManyTypes | HIGH | `CAPABILITY_ROLE` | File exceeds max 3 type declarations |
+| 2 | CapabilityNoImplementor | MEDIUM | `CAPABILITY_ROLE` | No struct/class implements a `_protocol` contract trait |
+| 3 | CapabilityMultiProtocol | MEDIUM | `CAPABILITY_ROLE` | File implements more than one protocol trait |
+| 4 | CapabilityBlockOrder | HIGH | `CAPABILITY_ROLE` | Block 2 (protocol trait impl) does not precede Block 3 (inherent impl) |
+| 5 | CapabilityBlockMarkers | MEDIUM | `CAPABILITY_ROLE` | `Block <n>:` banners missing, out of order, or above 3 |
+| 6 | CapabilityLocalConstant | MEDIUM | `CAPABILITY_ROLE` | File-level `const` declared inline; belongs in `taxonomy_<domain>_constant.rs` |
+| 7 | CapabilityEmbeddedTest | LOW | `CAPABILITY_ROLE` | `#[cfg(test)]` or `mod tests` declared inline |
+| 8 | CapabilityPublicHelper | MEDIUM | `CAPABILITY_ROLE` | Block 3 helper with no production caller is `pub` |
 
-**Structure rule (3-block):** a capability file reads Block 1 (type + constructor) → Block 2 (protocol methods only) → Block 3 (factories, std traits, helpers). The `CapabilityBlockOrder` sub-check enforces the 2-before-3 half of that order by comparing two `impl` lines; `CapabilityBlockMarkers` reads the `Block <n>:` banner comments themselves, so a file that documents none of its three blocks is reported even when its two `impl` blocks happen to land in a valid order. A banner is `Block <digits>:` standing as its own word inside a comment — the colon keeps prose such as `Block 1 (types) -> Block 2` from reading as a marker, and the word boundary keeps `Sub-Block 4:` out.
+#### Language coverage
 
-**Language coverage:** all eight sub-checks run for Rust, Python, and TypeScript/JavaScript. Each language has its own implementation of the block-order, constant-placement, test-placement, and helper-visibility sub-checks, since the syntactic markers differ (`impl X for` vs `class X(Base)` vs `class X implements I`). The block-marker, type-budget, implementor, and multi-protocol sub-checks are language-agnostic and share one implementation.
+| Language | Coverage |
+| --- | --- |
+| Rust | All eight sub-checks |
+| Python | All eight sub-checks |
+| TypeScript / JavaScript | All eight sub-checks |
 
-**FIX:** Ensure capability implements its protocol; split routing across multiple capabilities; reorder impl blocks so the protocol implementation comes first.
-
----
+The block-order, constant-placement, test-placement, and helper-visibility sub-checks differ per language (`impl X for` vs `class X(Base)` vs `class X implements I`). The block-marker, type-budget, implementor, and multi-protocol sub-checks are language-agnostic and share one implementation.
 
 ### AES404 — Utility Role
 
-**Severity:** MEDIUM
+| Field | Value |
+| --- | --- |
+| Code / Severity | AES404 / MEDIUM |
+| Fires when | A utility file contains stateful objects, struct/class state, trait definitions, impl blocks, type aliases (Rust `pub type`), interface definitions (TS), enum definitions, or imports from any layer other than Taxonomy |
+| Scope | Utility files (`*_utility*`) |
+| Fix | Refactor to stateless standalone functions; remove non-taxonomy imports; move stateful logic into Capabilities |
+| Source | `agent_role_orchestrator.rs:227` |
 
-Utility role boundary violation. Utility files must contain stateless standalone functions only. They must not contain stateful objects, struct/class state, trait definitions, impl blocks, type aliases (Rust `pub type`), interface definitions (TS), or enum definitions. Furthermore, Utility files may only depend on Taxonomy, and must not import any other layer (`contract`, `capabilities`, `agent`, `surface`, `root`) or other `utility_*` files.
+#### Sub-checks
 
-**FIX:** Refactor Utility to stateless functions and remove non-taxonomy imports or move stateful logic into Capabilities.
-
----
+| # | Sub-check | Severity | Violation name | Fires when |
+| --- | --- | --- | --- | --- |
+| 1 | Utility role | MEDIUM | `UTILITY_ROLE` | Utility contains stateful objects or non-taxonomy imports |
 
 ### AES405 — Agent Role
 
-**Severity:** MEDIUM / HIGH
+| Field | Value |
+| --- | --- |
+| Code / Severity | AES405 / HIGH / MEDIUM / LOW per sub-check |
+| Fires when | Agent orchestrator violates role discipline; per-sub-check severity applies; dispatch in `agent_role_orchestrator.rs:140-168` |
+| Scope | Agent files (`*_orchestrator*`) |
+| Fix | Coordinate at minimum 2 injected subsystems; no state mutation outside the constructor; delegate computation to capabilities |
+| Source | `agent_role_orchestrator.rs:140-168`; severities in `contract_role_protocol.rs:173-267` |
 
-Checks — each with its own severity:
+#### Sub-checks
 
-| Sub-check              | Severity   | Description                                                                      |
-| ------------------------ | ------------ | -----------------------------------------------------------------------------------|
-| **AgentTooManyTypes**  | **HIGH**   | File exceeds max 3 type declarations (struct/enum/class/interface).              |
-| **AgentNoImplementor** | **MEDIUM** | No struct/class implements an aggregate trait.                                   |
-| **AnyType annotation** | **MEDIUM** | `: Any`, `Any<`, `Any[` patterns detected in agent code; must use concrete types.|
+| # | Sub-check (dispatch order) | Severity | Violation name | Fires when |
+| --- | --- | --- | --- | --- |
+| 1 | `check_agent_routing` (implementor + type budget + annotation) | MEDIUM / HIGH / MEDIUM | `AGENT_ROLE` | No aggregate-trait implementor (MEDIUM); >3 type declarations (HIGH); `Any`/`any` annotation (MEDIUM) |
+| 2 | `check_agent_block_order` | HIGH | `AGENT_ROLE` | Block 2 does not precede Block 3 |
+| 3 | `check_agent_protocol_forbidden` | HIGH | `AGENT_ROLE` | Agent implements a contract protocol |
+| 4 | `check_agent_block_markers` | MEDIUM | `AGENT_ROLE` | `Block <n>:` banner with n > 3 |
+| 5 | `check_agent_io_forbidden` | MEDIUM | `AGENT_ROLE` | Forbidden I/O operations in the agent file |
+| 6 | `check_agent_constant_placement` | MEDIUM | `AGENT_ROLE` | File-level constants; policy constants belong in taxonomy |
+| 7 | `check_agent_computation` | MEDIUM | `AGENT_ROLE` | `.sum()` / `.fold()` / `.reduce()` / arithmetic in agent file |
+| 8 | `check_agent_abstract_method` | MEDIUM | `AGENT_ROLE` | `@abstractmethod` in agent file |
+| 9 | `check_agent_stateless` | MEDIUM | `AGENT_ROLE` | State mutation outside the constructor |
+| 10 | `check_agent_free_fn` | LOW | `AGENT_ROLE` | Module-level free functions |
+| 11 | `check_agent_subsystem_count` | LOW | `AGENT_ROLE` | Fewer than 2 injected protocol subsystems |
 
-Additional checks:
-
-- **Non-stateless execution** — state assignment outside `__init__` / constructor
-- **Direct capabilities imports** — agent must not import capabilities directly; must communicate via contract protocols/aggregates
-- **Direct capability implementation** — agent must delegate execution to capabilities via protocols
-- **Single execution goal** — orchestrator must coordinate at minimum 2 subsystems
-- **Container initialization** — complex domain logic in container module
-
-**Note:** File size limits for agent files are governed by **AES301** (max 1000 lines), same as all other layers.
-
----
+Legacy-bullet disposition: "Non-stateless execution" maps to sub-check 9; "Single execution goal" (coordinate at minimum 2 subsystems) maps to sub-check 11; "Direct capability implementation" maps to sub-check 7. "Direct capabilities imports" is enforced by AES201's Forbidden cell for `agent(orchestrator)` (`surface,capabilities,root`) — AES201 owns it. "Container initialization" has no emission site under `crates/role-rules` and is dropped.
 
 ### AES406 — Surface Role
 
-**Severity:** HIGH
+| Field | Value |
+| --- | --- |
+| Code / Severity | AES406 / HIGH (one sub-check MEDIUM) |
+| Fires when | A surface file carries too many responsibilities, active domain logic in a passive surface, or direct surface-to-domain calls |
+| Scope | Surface files (`*_command*`, `*_controller*`, `*_page*`, `*_router*`, `*_hook*`, `*_store*`, `*_action*`, `*_screen*`, `*_component*`, `*_view*`, `*_layout*`) |
+| Fix | Split surface responsibilities; move business logic to Capabilities; route domain calls through contracts |
+| Source | `capabilities_surface_role_auditor.rs:69-70` |
 
-Checks:
+#### Sub-checks
 
-- **File > 15 functions** — surface file has too many responsibilities
-- **Active domain logic in passive surface** — passive surfaces (`_component`, `_view`, `_layout`) must not contain business logic
-- **Surface logic bypass** — surface-layer code calling domain logic directly (`lint_path(`, `walk_rs_files(`) — `Severity: MEDIUM`
-- **Role boundary violation** — surface enters forbidden territory (e.g. importing capabilities or non-aggregate contracts directly)
-
----
+| # | Sub-check | Severity | Violation name | Fires when |
+| --- | --- | --- | --- | --- |
+| 1 | File > 15 functions | HIGH | `SURFACE_ROLE` | Surface file exceeds 15 functions |
+| 2 | Active domain logic in passive surface | HIGH | `SURFACE_ROLE` | `_component`/`_view`/`_layout` carries business logic |
+| 3 | Surface logic bypass | MEDIUM | `SURFACE_ROLE` | Surface calls domain logic directly (`lint_path(`, `walk_rs_files(`) |
+| 4 | Role boundary violation | HIGH | `SURFACE_ROLE` | Surface imports capabilities or non-aggregate contracts directly |
 
 ## Group 5: Orphan Code
 
+| Code | Name | Severity | Sub-checks | Violation names | Ran by |
+| --- | --- | --- | --- | --- | --- |
+| AES501 | Taxonomy Orphan | LOW | — | `TAXONOMY_ORPHAN` | check/scan, orphan |
+| AES502 | Contract Orphan | MEDIUM | — | `CONTRACT_ORPHAN` | check/scan, orphan |
+| AES503 | Capabilities Orphan | MEDIUM | — | `CAPABILITIES_ORPHAN` | check/scan, orphan |
+| AES504 | Utility Orphan | MEDIUM | — | `UTILITY_ORPHAN` | check/scan, orphan |
+| AES505 | Agent Orphan | HIGH | — | `AGENT_ORPHAN` | check/scan, orphan |
+| AES506 | Surface Orphan | HIGH smart / MEDIUM utility / LOW passive | — | `SURFACE_ORPHAN` | check/scan, orphan |
+
 ### AES501 — Taxonomy Orphan
 
-**Severity:** LOW
-
-Taxonomy file (VO, entity, error, event, constant) has no inbound imports from any contract file. If no contract references a taxonomy type, it may be dead code.
-
----
+| Field | Value |
+| --- | --- |
+| Code / Severity | AES501 / LOW |
+| Fires when | A taxonomy file (VO, entity, error, event, constant) has no inbound imports from any contract file |
+| Scope | Taxonomy files |
+| Fix | Wire the taxonomy type into a contract, or remove the dead taxonomy file |
+| Source | `capabilities_orphan_taxonomy_analyzer.rs:162` |
 
 ### AES502 — Contract Orphan
 
-**Severity:** MEDIUM
-
-Contract file not wired or missing implementation:
-
-- **Reachability**: Not imported by any container or entry point → orphan
-- `_protocol` → not implemented by any `capabilities_` file
-- `_aggregate` → not implemented by any `agent_` file
-
-**Examples:**
-- Protocol with implementation but not wired in container → orphan
-- Aggregate with implementation but not wired → orphan
-- Barrel re-exported contract → not orphan
-
----
+| Field | Value |
+| --- | --- |
+| Code / Severity | AES502 / MEDIUM |
+| Fires when | A contract protocol is not implemented by any capabilities file, or a contract aggregate is not implemented by any agent file; not imported by any container or entry point |
+| Scope | Contract files (`*_protocol*`, `*_aggregate*`) |
+| Fix | Implement the protocol/aggregate, or wire it into a container; barrel re-exports do not count |
+| Source | `capabilities_orphan_contract_analyzer.rs:79` |
 
 ### AES503 — Capabilities Orphan
 
-**Severity:** MEDIUM
-
-Capability file not wired in any `_container`
-
----
+| Field | Value |
+| --- | --- |
+| Code / Severity | AES503 / MEDIUM |
+| Fires when | A capability file is not wired in any `_container` |
+| Scope | Capability files |
+| Fix | Wire the capability into a container |
+| Source | `capabilities_orphan_capabilities_analyzer.rs:85` |
 
 ### AES504 — Utility Orphan
 
-**Severity:** MEDIUM
-
-Utility file is not imported or consumed by any capability, agent, or surface layer or is only imported by other utility files.
-
----
+| Field | Value |
+| --- | --- |
+| Code / Severity | AES504 / MEDIUM |
+| Fires when | A utility file is not imported or consumed by any capability, agent, or surface layer, or is only imported by other utility files |
+| Scope | Utility files |
+| Fix | Import the utility from a capability/agent/surface, or remove it |
+| Source | `capabilities_orphan_utility_analyzer.rs:158` |
 
 ### AES505 — Agent Orphan
 
-**Severity:** HIGH
-
-Agent orchestrator file not wired in any _container
-
-**Suffix checked:** `_orchestrator`
-
----
+| Field | Value |
+| --- | --- |
+| Code / Severity | AES505 / HIGH |
+| Fires when | An agent orchestrator file (suffix `_orchestrator`) is not wired in any `_container` |
+| Scope | Agent orchestrator files |
+| Fix | Wire the orchestrator into a container |
+| Source | `capabilities_orphan_agent_analyzer.rs:102` |
 
 ### AES506 — Surface Orphan
 
-**Severity:** HIGH (smart), MEDIUM (utility), LOW (passive)
+| Field | Value |
+| --- | --- |
+| Code / Severity | AES506 / HIGH smart / MEDIUM utility / LOW passive |
+| Fires when | A surface file is not imported by its required consumer; severity depends on surface category |
+| Scope | Surface files (`*_command*`, `*_controller*`, `*_page*`, `*_router*`, `*_hook*`, `*_store*`, `*_action*`, `*_screen*`, `*_component*`, `*_view*`, `*_layout*`) |
+| Fix | Import the surface from its required consumer |
+| Source | `capabilities_orphan_surfaces_analyzer.rs:43-45` |
 
 Orphan detection per category:
 
-- **Smart** (`_command` / `_controller` / `_page` / `_router`) — must be imported by entry → HIGH
-- **Utility** (`_hook` / `_store` / `_action` / `_screen`) — must be imported by smart surface → MEDIUM
-- **Passive** (`_component` / `_view` / `_layout`) — must be imported by smart or utility surface → LOW
+| Category | Suffixes | Severity | Must be imported by |
+| --- | --- | --- | --- |
+| Smart | `_command`, `_controller`, `_page`, `_router` | HIGH | entry |
+| Utility | `_hook`, `_store`, `_action`, `_screen` | MEDIUM | smart surface |
+| Passive | `_component`, `_view`, `_layout` | LOW | smart or utility surface |
+| `_entry` | — | never fires | — |
 
----
+`_entry` never fires: entry surfaces are the roots of the import graph and are never orphaned.
 
 ## Group 6: Document Invariants
 
-These rules audit the AES document chain — `PRD.md`, `ROADMAP.md`, `README.md`, `AGENTS.md` at the workspace root, plus the `FRD.md` / `BACKLOG.md` pair in each feature folder. Unlike groups 1–5 they read Markdown, not source code, so they run through `docs` and through the doc-audit pass inside `scan`/`check` (both call `DocRequest::audit_all`).
-
-**Run:** `lint-arwaky-cli docs .`
-
-**Finding shape:** each code groups one category. A finding carries `code`, a `violation_type` naming the exact sub-invariant that failed, and a `message` giving the line and the concrete drift. The `violation_type` is stable and machine-readable; the message is for a human.
-
-**Documented by:** the HOW-TO-MAKE-FRD / HOW-TO-MAKE-ROADMAP templates in the `aes-docs` skill.
-
----
+| Code | Name | Severity | Sub-checks | Violation types | Ran by |
+| --- | --- | --- | --- | --- | --- |
+| AES601 | FR Format | HIGH | — | 14 | check/scan, docs |
+| AES602 | Section Structure | HIGH | — | 1 | check/scan, docs |
+| AES603 | Spec Purity | HIGH | — | 2 | check/scan, docs |
+| AES604 | Crosslinks | HIGH | — | 11 | check/scan, docs |
+| AES605 | Doc Heading Structure | HIGH | — | 5 | check/scan, docs |
+| AES606 | Doc Template Conformance | HIGH | — | 11 | check/scan, docs |
+| AES607 | PR Folder Ownership | HIGH | — | 1 | check/scan, docs |
 
 ### AES601 — FR Format
 
-**Severity:** HIGH
+| Field | Value |
+| --- | --- |
+| Code / Severity | AES601 / HIGH |
+| Fires when | FR-ID is bare (`FR-NNN`) without feature prefix; a requirement omits a field; FRD requirement count differs from contract `I*Protocol` count; BACKLOG/DESIGN/DATA row ID mismatches or missing rows |
+| Scope | Recognized docs: `PRD.md`, `FRD.md`, `BACKLOG.md`, `DESIGN.md`, `DATA.md` |
+| Fix | Merge/split requirements or protocol classes; align row IDs |
+| Source | `capabilities_doc_fr_format_checker.rs` |
 
-Requirement IDs follow `FR-<FEATURE>-NNN: <imperative name>`, and every requirement states all six fields: Description, Input, Output, Business Rules, Edge Cases, Error Handling. The FRD's requirement count must also equal the count of `pub trait I*Protocol` declarations in the feature's shared contract module. DESIGN.md item IDs follow `DS-<DESIGNNAME>-NNN: <title>` (item headings at H2–H4 (`### DS-<DESIGNNAME>-NNN:` in the shipped template)); DATA.md item IDs follow `DT-<DATANAME>-NNN: <title>` as item H2s. A bare `DS-001`/`DT-001` (digits only, no NAME qualifier) is not an accepted item ID.
+#### Violation types
 
-| Violation type                  | Fires when                                                             |
-| ------------------------------- | ------------------------------------------------------------------------|
-| `id_missing_feature_prefix`     | An ID reads `FR-NNN` with no feature prefix.                           |
-| `field_missing`                 | A requirement omits one or more of the six fields; the message names each.|
-| `protocol_count_mismatch`       | The FRD heading count and the module's `I*Protocol` class count differ; the message states both counts.|
-| `backlog_id_not_fr`             | A BACKLOG `## Backlog` row's ID cell is not a valid FRD FR-ID.         |
-| `backlog_id_missing`            | An FRD FR-ID has no corresponding BACKLOG `## Backlog` row.            |
-| `ds_backlog_id_not_ds`          | A BACKLOG `## Backlog` row's ID cell is not a valid DESIGN.md `DS-<DESIGNNAME>-NNN` ID.   |
-| `ds_backlog_id_missing`         | A DESIGN.md `DS-<DESIGNNAME>-NNN` ID has no corresponding BACKLOG `## Backlog` row.       |
-| `dt_backlog_id_not_dt`          | A BACKLOG `## Backlog` row's ID cell is not a valid DATA.md `DT-<DATANAME>-NNN` ID.     |
-| `dt_backlog_id_missing`         | A DATA.md `DT-<DATANAME>-NNN` ID has no corresponding BACKLOG `## Backlog` row.         |
+| Violation type | Fires when |
+| --- | --- |
+| `id_missing_feature_prefix` | An ID reads `FR-NNN` with no feature prefix |
+| `api_method_not_found` | A method named in the Protocol API / Aggregate API table has no matching declaration in the contract module |
+| `backlog_id_not_fr` | A BACKLOG `## Backlog` row's ID cell is not a valid FRD FR-ID |
+| `backlog_id_missing` | An FRD FR-ID has no corresponding BACKLOG `## Backlog` row |
+| `ds_backlog_id_not_ds` | A BACKLOG `## Backlog` row's ID cell is not a valid DESIGN.md `DS-<DESIGNNAME>-NNN` ID |
+| `ds_backlog_id_missing` | A DESIGN.md `DS-<DESIGNNAME>-NNN` ID has no corresponding BACKLOG `## Backlog` row |
+| `dt_backlog_id_not_dt` | A BACKLOG `## Backlog` row's ID cell is not a valid DATA.md `DT-<DATANAME>-NNN` ID |
+| `dt_backlog_id_missing` | A DATA.md `DT-<DATANAME>-NNN` ID has no corresponding BACKLOG `## Backlog` row |
+| `pr_roadmap_id_missing` | A PRD `PR-<PROJECT>-NNN` item has no ROADMAP `Roadmap Status` entry |
+| `roadmap_pr_id_not_pr` | A ROADMAP `Roadmap Status` item is not declared in the PRD's `Project Requirements` |
+| `backlog_qualifier_mismatch` | A BACKLOG entry's H3 qualifier does not equal any ID declared by the paired spec |
+| `pr_backlog_id_missing` | A BACKLOG `## Backlog Status` entry H3 whose qualifier has no matching PR-ID in the root ROADMAP/PRD pair |
+| `backlog_id_not_pr` | A token in a BACKLOG entry's `Next`/`Done`/`Blocked` row that is not a valid PR-ID of the root ROADMAP/PRD pair |
+| `protocol_count_mismatch` | The FRD requirement count and the module's `I*Protocol` class count differ |
 
-One protocol class is one capability seam, and one seam is one requirement. Aggregate traits (`I*Aggregate`) are excluded from the count. The crate folder name is translated to the module name by replacing `-` with `_`. A feature with no shared contract module is left alone. The message names both fix directions: either merge/split requirements or merge/split protocol classes — see the four-direction table in `HOW-TO-MAKE-FRD.md`.
-
----
+One protocol class is one capability seam; one seam is one requirement. Aggregate traits (`I*Aggregate`) are excluded. `field_missing` is retired (Decision 9, `contract_doc_rules.rs:348`) — entry row-label validation belongs to AES606 `entry_missing_row`.
 
 ### AES602 — Section Structure
 
-**Severity:** HIGH
+| Field | Value |
+| --- | --- |
+| Code / Severity | AES602 / HIGH |
+| Fires when | The FRD's level-2 sections are out of template order, or the API Contract subsections do not match |
+| Scope | `FRD.md` |
+| Fix | Reorder sections to `Feature Overview → Functional Requirements → Public Interface → Reference`; accept exactly `### Protocol API` then `### Aggregate API` |
+| Source | `capabilities_doc_section_structure_checker.rs` |
 
-Sections follow the template order (Reference, System Overview, Functional Requirements, API Contract, Integration Points, Non-functional, Test Scenarios, Assumptions, Glossary), and each carries the shape its type requires.
+#### Violation types
 
-| Violation type               | Fires when                                                           |
-| ------------------------------ | ----------------------------------------------------------------------|
-| `order_violation`             | The level-2 sections appear out of template order, or the API Contract subsections do.|
-| `api_no_subsection`           | API Contract is missing its Protocol API or Aggregate API subsection. |
-| `api_h3_unexpected`           | API Contract carries a level-3 heading other than Protocol API / Aggregate API.|
-| `api_subsection_no_table`     | A required API subsection has no table with Method, Input, Output, Error, Event, Description.|
-| `api_subsection_duplicated`   | A required API subsection appears more than once.                     |
-| `h3_off_template`             | A level-3 heading anywhere in the FRD is not `FR-<FEATURE>-NNN:`, `Protocol API`, or `Aggregate API`.|
-| `integration_not_table`       | Integration Points is not a table with System, Direction, Purpose, Failure mode.|
-| `nfr_not_table`               | Non-functional Requirements is not a table with Metric, Target, Measurement method.|
-| `scenarios_empty`             | Test Scenarios carries no bullet items.                              |
-| `glossary_empty`              | Glossary carries no `- **Term**: definition` bullets.                 |
-
-**API Contract is strict to the level-3 heading.** The rule reads the
-headings *under* `## API Contract`, not only the H2 set, because an H2-only
-contract is satisfiable without ever naming a seam: one `Protocol API` table
-can hold every method of every protocol, and the per-protocol split can then
-be narrated in extra level-3 headings the rule never inspected. The section
-therefore accepts exactly two subsections — `### Protocol API` then
-`### Aggregate API`, in that order, once each — and each must own a
-column-complete table. Per-protocol detail belongs in the rows of the
-`Protocol API` table, never in a heading.
-
-**The FRD level-3 set is closed document-wide, not just under API Contract.**
-`api_h3_unexpected` reads the subtree of one H2, so it can be evaded by moving
-the same invented section under a different parent: `crates/filesystem/FRD.md`
-shipped six `### I*Protocol (N operations)` tables under
-`## Assumptions & Constraints`, each restating method-for-method what its
-`### Protocol API` table already carried (63 rows on both sides, zero-name
-symmetric difference), and `docs` reported 0 violations. `h3_off_template` is
-therefore a whole-document statement: the only level-3 headings an FRD may carry
-are `### FR-<FEATURE>-NNN: <name>`, `### Protocol API`, and `### Aggregate API`,
-wherever they sit. A requirement heading is exempt by *shape* rather than by
-title, recognised through the same `FR_ID_HEADING_PATTERN` AES601 uses, so the
-set AES602 accepts and the set AES601 accepts cannot drift. Level 4 and deeper
-stay free-form — that is where detail that must not become a section belongs.
-
----
+| Violation type | Fires when |
+| --- | --- |
+| `order_violation` | Level-2 sections appear out of template order, or API Contract subsections are out of order |
 
 ### AES603 — Spec Purity
 
-**Severity:** HIGH
+| Field | Value |
+| --- | --- |
+| Code / Severity | AES603 / HIGH |
+| Fires when | A promise-bearing spec names a concrete source file or carries implementation state |
+| Scope | Exactly four promise-bearing documents: `PRD.md`, `FRD.md`, `DATA.md`, `ROADMAP.md`; `ARCHITECTURE.md`, `CONTRIBUTING.md`, `DESIGN.md` excluded (`is_spec` never includes them) |
+| Fix | Remove source-file names and status/checkbox/progress state from the spec |
+| Source | `capabilities_doc_spec_purity_checker.rs` |
 
-A spec promises; it never reports state. Applies to exactly four promise-bearing documents: PRD, FRD, DATA, ROADMAP. ARCHITECTURE and CONTRIBUTING are not in this set: ARCHITECTURE.md names source-file patterns by design, CONTRIBUTING.md carries checklists by design, and applying the spec-purity check to them would fire false positives. The code's `is_spec` never included ARCHITECTURE or CONTRIBUTING, so the text is corrected to match the code. DESIGN is a visual contract, not a promise-bearing spec, and is also excluded.
+#### Violation types
 
-| Violation type         | Fires when                                                             |
-| ------------------------ | ------------------------------------------------------------------------|
-| `source_file_named`     | The spec names a concrete source file (`.py`, `.rs`, `.ts`, `.tsx`); the message names the file.|
-| `status_leak`           | The spec carries checkboxes, a Status field, implementation state, release state, a status marker, or a progress percentage.|
-
----
+| Violation type | Fires when |
+| --- | --- |
+| `source_file_named` | The spec names a concrete source file (`.py`, `.rs`, `.ts`, `.tsx`) |
+| `status_leak` | The spec carries checkboxes, a Status field, implementation state, release state, a status marker, or a progress percentage |
 
 ### AES604 — Crosslinks
 
-**Severity:** HIGH
+| Field | Value |
+| --- | --- |
+| Code / Severity | AES604 / HIGH |
+| Fires when | A document's Reference section lacks a mandatory link, or a feature backlog restates a root-master state-vocabulary section |
+| Scope | Recognized docs with Reference sections; `MASTER_ONLY_SECTIONS = ["Roadmap Status"]` |
+| Fix | Add the missing link; remove restated master sections from the backlog |
+| Source | `capabilities_doc_crosslink_checker.rs` |
 
-Documents reference each other, and the state vocabulary lives in exactly one place.
+#### Violation types
 
-| Violation type             | Fires when                                                             |
-| --------------------------- | ------------------------------------------------------------------------|
-| `no_backlog_link`           | An FRD's Reference section does not link its BACKLOG.md.               |
-| `no_prd_link`               | An FRD's Reference section does not link its PRD.md.                   |
-| `state_vocab_restated`      | A feature backlog restates a root-master section (State Definitions, Status Policy, Feature Roll-up, Branches in Flight, Risk Register).|
-
----
+| Violation type | Fires when |
+| --- | --- |
+| `no_backlog_link` | An FRD's Reference section does not link its BACKLOG.md |
+| `no_prd_link` | An FRD's Reference section does not link its PRD.md |
+| `no_roadmap_link` | Reference section lacks a ROADMAP.md link |
+| `no_architecture_link` | Reference section lacks an ARCHITECTURE.md link |
+| `no_readme_link` | Reference section lacks a README.md link |
+| `no_contributing_link` | Reference section lacks a CONTRIBUTING.md link |
+| `no_frd_link` | Reference section lacks an FRD.md link |
+| `no_data_link` | Reference section lacks a DATA.md link |
+| `no_design_link` | Reference section lacks a DESIGN.md link |
+| `no_required_link` | Fallback link violation for unmapped targets |
+| `state_vocab_restated` | A feature backlog restates a root-master state-vocabulary section |
 
 ### AES605 — Doc Heading Structure
 
-**Severity:** HIGH
+| Field | Value |
+| --- | --- |
+| Code / Severity | AES605 / HIGH |
+| Fires when | Zero or >1 H1; a required H2 is absent; an H2 is outside required ∪ allowed; a non-placeholder line drifts from its template; YAML frontmatter is missing |
+| Scope | Ten recognized docs: `PRD, ROADMAP, FRD, BACKLOG, DATA, DESIGN, README, AGENTS, ARCHITECTURE, CONTRIBUTING` |
+| Fix | Restore the missing H2, demote/remove off-template H2s, match template lines verbatim, add frontmatter |
+| Source | `capabilities_doc_heading_structure_checker.rs` |
 
-Every root document carries exactly one level-1 heading and a template-derived set of required and allowed level-2 sections. Fenced code-block contents are stripped before scanning so they never read as headings.
+#### Required and allowed H2s (per `DOC_HEADING_CONTRACTS`)
 
-The H2 set is closed per document: a required H2 is mandatory; a project-specific H2 is allowed only when it appears in that document's agreed optional list; any other H2 is reported so it can be demoted to a level-3 heading or removed. Level-3 headings and deeper are free-form.
+| Document | Required H2s | Allowed extra |
+| --- | --- | --- |
+| `AGENTS.md` | Agent Overview · Runtime · Project Structure · Commands · Reference | — |
+| `ARCHITECTURE.md` | Purpose · Workspace Organization · Naming Convention · Vertical Slicing Layout · Taxonomy Layer · Contract Layer · Utility Layer · Capabilities Layer · Agent Layer · Surface Layer · Root Layer | — |
+| `CONTRIBUTING.md` | Contribution Overview · Contribution Guidelines · Workflow · Commit Convention · Reference | — |
+| `PRD.md` | Problem Statement · Project Requirements · Reference | — |
+| `README.md` | Project Overview · Prerequisites · Quick Start · Reference | — |
+| `ROADMAP.md` | Progress Overview · Roadmap Status · Reference | — |
+| `FRD.md` | Feature Overview · Functional Requirements · Public Interface · Reference | `API Contract` (legacy) |
+| `BACKLOG.md` | Progress Overview · Backlog Status · Reference | — |
+| `DATA.md` | Data Overview · Data Requirements · Reference | `DT-` item H2s |
+| `DESIGN.md` | Design Overview · Design Requirements · Reference | — |
 
-Matching is by leading words after lowercasing and stripping punctuation, so `## 4. Vertical Slicing Layout` satisfies `Vertical Slicing Layout`.
+Stale required-H2 rows (AGENTS/CONTRIBUTING/PRD/README/ROADMAP/DATA from pre-migration template sets) are dropped; only ARCHITECTURE and DESIGN rows carried over unchanged.
 
-**Required and allowed H2s per document:**
+#### Violation types
 
-| Document | Required H2s|
-| --- | ---|
-| `AGENTS.md` | Runtime, Project Quick Facts, Pipeline, Commands, Related Documents (allowed: Project Structure)|
-| `ARCHITECTURE.md` | Purpose, Workspace Organization, Naming Convention, Vertical Slicing Layout, Taxonomy Layer, Contract Layer, Utility Layer, Capabilities Layer, Agent Layer, Surface Layer, Root Layer|
-| `CONTRIBUTING.md` | Principles, Development Setup, Feature Change, Documentation Change, Quality Verification & PR Process|
-| `PRD.md` | Problem Statement, Project Requirements, Reference|
-| `README.md` | Prerequisites, Quick Start, Architecture, Available Scripts/Commands, Configuration, Testing, Contributing, License (forbidden: Project Structure — that section belongs to `AGENTS.md`)|
-| `ROADMAP.md` | Current Condition, State Definitions, Status Policy, Feature Roll-up, Risk Register|
-| `DATA.md` | Data Overview, Reference (allowed: `DT-` item H2s)|
-| `DESIGN.md` | Design Overview, Design Requirements, Reference|
-
-Each document also carries an agreed set of project-specific H2s that are accepted without violation; see the constants in `taxonomy_doc_rules_constant.rs` for the full per-document lists.
-
-| Violation type     | Fires when                                                                           |
-| ------------------- | -------------------------------------------------------------------------------------|
-| `h1_count`          | The document has zero or more than one level-1 heading.                             |
-| `h2_missing`        | One or more of the required H2 sections is absent; the message names each one.        |
-| `h2_unexpected`     | A level-2 heading is outside the required and allowed sets; the message asks for demotion to H3 or removal.|
-
----
+| Violation type | Fires when |
+| --- | --- |
+| `h1_count` | Zero or >1 H1 |
+| `h2_missing` | A required H2 is absent |
+| `h2_unexpected` | H2 outside required ∪ allowed |
+| `line_drift` | A non-placeholder scaffolded line was edited away from its template |
+| `frontmatter_missing` | YAML frontmatter block absent |
 
 ### AES606 — Doc Template Conformance
 
-**Severity:** HIGH
+| Field | Value |
+| --- | --- |
+| Code / Severity | AES606 / HIGH |
+| Fires when | A recognized document's body, entry table, or root/member document presence drifts from the shipped `HOW-TO-MAKE-*` template |
+| Scope | Ten recognized docs: `PRD, ROADMAP, FRD, BACKLOG, DATA, DESIGN, README, AGENTS, ARCHITECTURE, CONTRIBUTING` |
+| Fix | Re-shape the section to its template row (`docs scaffold` regenerates missing docs) |
+| Source | `capabilities_doc_template_conformance_checker.rs` |
 
-Two checks answer one question: does the document body carry the table shape its HOW-TO template mandates?
+#### Violation types
 
-**Template body-shape conformance.** The `HOW-TO-MAKE-*` templates each mandate specific tables under specific sections. A section that is present but carrying the wrong body — bullets, prose, or a table missing a required column — is a violation. Conformance is exact: a header cell the template never declares (`table_extra_columns`), a data row that copies the header (`table_header_repeated`), a table under a section where the template shows none (`table_not_in_template`, e.g. a Design Requirements overview table), or a DESIGN H3 outside the `DS-<NAME>-NNN` pattern (`h3_unexpected`) all fire. AES605 sees the H2 heading is present but says nothing about what the section body must look like; this rule closes that gap.
+| Violation type | Fires when |
+| --- | --- |
+| `section_not_table` | A mandated section carries bullets/prose instead of a table |
+| `table_missing_columns` | A mandated table lacks a required column |
+| `table_extra_columns` | Header carries a column the template never declares |
+| `table_header_repeated` | A data row repeats the header row |
+| `table_not_in_template` | A section whose template prescribes no table still carries one |
+| `entry_missing_row` | Entry table's first column misses a required row label (`FRD_ROW_LABELS` family) |
+| `h3_unexpected` | `###` in a position only `DS-<NAME>-NNN` may occupy |
+| `missing_required_doc` | A required root doc absent at a real workspace root |
+| `missing_member_doc` | Member folder missing its required doc pair (`FRD+BACKLOG`/`DATA+BACKLOG`/`DESIGN+BACKLOG`) |
+| `unfilled_placeholder` | Template placeholder token survived into a non-prose line |
+| `section_deleted` | A non-deletable template section is entirely absent |
 
-**Required-document presence.** The six root documents the templates require — `PRD.md`, `ROADMAP.md`, `README.md`, `AGENTS.md`, `ARCHITECTURE.md`, `CONTRIBUTING.md` — must exist at a real workspace root (detected by `Cargo.toml`, `pyproject.toml`, or `package.json` at the audit root). A sub-directory audit is self-contained and does not owe the root document set. `DESIGN.md`, `FRD.md`, `DATA.md`, and root `BACKLOG.md` are per-feature files and are not required at the root.
+#### Required table shapes (transcribed from constants — live sets only)
 
-| Violation type             | Fires when                                                         |
-| ------------------------- | -------------------------------------------------------------------|
-| `section_not_table`       | A mandated section (e.g. `## Backlog`, `## State Definitions`) carries bullets or prose instead of a markdown table.|
-| `table_missing_columns`   | A mandated section carries a table, but one or more required columns are absent.|
-| `table_extra_columns`     | A mandated table's header carries a column the template's fixed header set does not declare.|
-| `table_header_repeated`   | A table repeats its header row in a data-row position, shipping column names where values belong.|
-| `table_not_in_template`   | A section whose template prescribes no table (e.g. `## Design Overview`, the `## Design Requirements` prefix) still carries one.|
-| `h3_unexpected`           | A `###` heading sits where the template reserves H3s for `DS-<NAME>-NNN` entry items, or in a section that sanctions no H3.|
-| `missing_required_doc`    | A required root document does not exist at a real workspace root. |
+| Document | Section / role | Required shape |
+| --- | --- | --- |
+| `PRD.md` | `Project Requirements` entry (Aspect/Detail) | rows: `Description, User Story, In Scope, Out of Scope, Success Metric` |
+| `ROADMAP.md` | `Roadmap Status` entry | rows: `Priority, State, Dependencies, Updated` |
+| `BACKLOG.md` | `Backlog Status` entry | rows: `State, Done, In Progress, Blocked, Next, Risk, Updated` |
+| `FRD.md` | `Functional Requirements` entry | rows: the 12 `FRD_ROW_LABELS` |
+| `AGENTS.md` | `Runtime` entry; `Path/Purpose`; `Category/Command/Scope/CI Gate` | `AGENTS_RUNTIME_ROW_LABELS` / column sets |
+| all | `Reference` | `Artifact, Purpose, Link` |
 
-The enforced column sets are transcribed from the shipped templates:
+### AES607 — PR Folder Ownership
 
-| Document | Section        | Required columns|
-| -------- | -------------- | ----------------|
-| `BACKLOG.md` | Backlog | ID, Priority, State, Dependencies, Next Action, Updated|
-| `BACKLOG.md` | Scenario Evidence | Scenario, Kind, Test file, Test name, Last verified|
-| `BACKLOG.md` | Release Readiness | Area, Status, Notes|
-| `BACKLOG.md` | Change Log | Date, Change, By|
-| `ROADMAP.md` | State Definitions | State, Meaning|
-| `ROADMAP.md` | Feature Roll-up | ID, Feature, Priority, State, Dependencies, Next Action, Updated|
+| Field | Value |
+| --- | --- |
+| Code / Severity | AES607 / HIGH |
+| Fires when | A PR-ID declared in the root PRD's `Project Requirements` owns no matching top-level module folder under `crates|modules|packages` |
+| Scope | Root PRD's `Project Requirements` entries |
+| Fix | Create the module folder named after the PR-ID's project identifier |
+| Source | `capabilities_doc_pr_folder_ownership_checker.rs:93` |
 
----
+#### Violation types
+
+| Violation type | Fires when |
+| --- | --- |
+| `pr_folder_not_owned` | A PRD-declared PR-ID's project identifier owns no matching module folder |
+
+Runs via `check`/`scan` (`DocRequest::audit_all`) as well as `docs`.
 
 ## Group 7: Folder Structure
 
