@@ -6,7 +6,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the full 7-layer specification.
 
 ## Summary
 
-**36 rules across 7 groups:** Naming (AES101–103), Import (AES201–205), Quality (AES301–305), Role (AES401–406), Orphan (AES501–506), Doc (AES601–606), and Structure (AES701–705). The `scan`/`check` command runs the six code linters plus structure and the doc-audit pass (which surfaces AES601–AES606 inside `scan`); Doc rules additionally read Markdown and are audited over the document chain via the `docs` command. External adapters (Clippy, Ruff, ESLint, …) run alongside via `external` and emit tool-native codes.
+**38 rules across 7 groups:** Naming (AES101–103) 3, Import (AES201–205) 5, Quality (AES301–305) 5, Role (AES401–406) 6, Orphan (AES501–506) 6, Doc (AES601–AES607) 7, Structure (AES701–AES706) 6 — 3·5·5·6·6·7·6 = 38. The `scan`/`check` command runs the five code linters (groups 1–5) plus structure and the doc-audit pass — all 7 groups — surfacing AES601–AES607 inside `scan`/`check`; the `docs` command covers group 6. External adapters (Clippy, Ruff, ESLint, …) run alongside via `external` and emit tool-native codes.
 
 | Code   | Name                | Severity | Group  | Description                                                                               |
 | -------- | --------------------- | ---------- | -------- | --------------------------------------------------------------------------------------------|
@@ -46,7 +46,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the full 7-layer specification.
 | AES503 | Capabilities Orphan | MEDIUM   | Orphan | Capability not wired in any container AND unreachable in import graph.                                                                           |
 | AES504 | Utility Orphan      | MEDIUM   | Orphan | Utility file not imported or consumed by any capability, agent, or surface layer.                                                                |
 | AES505 | Agent Orphan        | HIGH     | Orphan | Agent orchestrator not called by any surface file or entry point.                                                                                |
-| AES506 | Surface Orphan      | HIGH     | Orphan | Smart surface not imported by entry/router; utility surface not imported by smart surface; passive surface not imported by smart/utility surface.|
+| AES506 | Surface Orphan      | HIGH/MEDIUM/LOW | Orphan | Smart surface not imported by entry/router; utility surface not imported by smart surface; passive surface not imported by smart/utility surface.|
 
 | Code   | Name                  | Severity | Group  | Description                                                                                    |
 | -------- | --------------------- | -------- | ------ | -------------------------------------------------------------------------------------------------|
@@ -56,15 +56,16 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the full 7-layer specification.
 | AES604 | Crosslinks            | HIGH     | Doc    | An FRD crosslinks its PRD and backlog; a feature backlog never restates master sections.        |
 | AES605 | Doc Heading Structure | HIGH     | Doc    | Every root document carries one H1 and its own template-derived H2 set; off-template H2s are reported.|
 | AES606 | Doc Template Conformance | HIGH     | Doc    | Mandated table-shaped sections carry exactly their template table: bullets or prose fire `section_not_table`; missing columns fire `table_missing_columns`; undeclared columns fire `table_extra_columns`; a header repeated as a data row fires `table_header_repeated`; a table where the HOW-TO shows none fires `table_not_in_template`; an unsanctioned `DS-` position H3 fires `h3_unexpected`. The six required root documents (`PRD.md`, `ROADMAP.md`, `README.md`, `AGENTS.md`, `ARCHITECTURE.md`, `CONTRIBUTING.md`) exist at a real workspace root; a missing one fires `missing_required_doc`.|
-| AES607 | PR Folder Ownership      | HIGH     | Doc    | Every `PR-<PROJECT>-NNN` declared in the root PRD's `Project Requirements` must own a top-level module folder under `crates|modules|packages` named after its project identifier (`PR-LA-001` → `LA`). One identifier may own the whole non-empty layout; fired per unowned PR-ID anchored to its PRD heading line, code `AES607` / `pr_folder_not_owned`, audited by `docs` only (not `scan`/`check`).|
+| AES607 | PR Folder Ownership      | HIGH     | Doc    | Every `PR-<PROJECT>-NNN` declared in the root PRD's `Project Requirements` must own a top-level module folder under `crates&#124;modules&#124;packages` named after its project identifier (`PR-LA-001` → `LA`). One identifier may own the whole non-empty layout; fired per unowned PR-ID anchored to its PRD heading line, code `AES607` / `pr_folder_not_owned`; surfaces via `scan`/`check` (DocRequest::audit_all) as well as `docs`.|
 
 | Code   | Name               | Severity | Group     | Description                                                                               |
 | -------- | -------------------- | ---------- | ----------- | ----------------------------------------------------------------------------------------------|
-| AES701 | Shared Folder Purity | HIGH     | Structure | A `shared` folder holds a `capabilities_*`, `agent_*`, or `surface_*` file.                 |
+| AES701 | Shared Folder Purity | MEDIUM   | Structure | A `shared` folder holds a `capabilities_*`, `agent_*`, or `surface_*` file.                 |
 | AES702 | Feature Folder Health | MEDIUM   | Structure | A feature folder lacks an `agent_*_orchestrator` or a `capabilities_*` file, holds foreign layer files, lacks its doc pair, or is not mirrored as a `shared/src/<feature>/` subfolder.                                 |
 | AES703 | Surface Folder Purity | MEDIUM   | Structure | A surface folder holds a `capabilities_*`, `agent_*`, or `utility_*` file, or lacks DESIGN.md.             |
 | AES704 | Test Suite Coverage | MEDIUM   | Structure | A feature folder lacks a `tests/` category or its `benches/` benchmark.                                     |
 | AES705 | Member-Root Placement | MEDIUM   | Structure | A `crates/`, `modules/`, or `packages/` root holds a loose `capabilities_*`, `agent_*`, `surface_*`, or `utility_*` file.|
+| AES706 | PR-LA Folder Ownership | MEDIUM | Structure | Every `PR-LA-001..N` id in PRD.md/ROADMAP.md maps positionally to a crate folder under `crates&#124;modules&#124;packages` (`PR-LA-001` → first folder, `filesystem`), and each crate folder's FRD carries `FR-` ids whose feature prefix matches its folder name (`crates/filesystem` → `FR-Filesystem-NNN`). Violation types: `pr_la_missing_frd`, `pr_la_fr_id_mismatch`, `pr_la_id_mismatch`.|
 
 ### AES705 — Member-Root Placement
 
@@ -85,6 +86,19 @@ contract, AES704 cannot ask it for a test suite, and no FRD describes it.
 Only the top level is read. `root_*` wiring, a barrel module, and any file whose
 stem carries no layer prefix — a README, a manifest — stay legal at a member
 root, because the container composes them there.
+
+---
+
+### AES706 — PR-LA Folder Ownership
+
+**Severity:** MEDIUM
+
+Every `PR-LA-001..N` id declared in PRD.md/ROADMAP.md's `Project Requirements` maps
+positionally to a crate folder under `crates`, `modules`, or `packages`
+(`PR-LA-001` → the first folder). Each crate folder's FRD must carry `FR-`
+ids whose feature prefix matches the folder name (`crates/filesystem` →
+`FR-Filesystem-NNN`). Violation types: `pr_la_missing_frd`, `pr_la_fr_id_mismatch`,
+`pr_la_id_mismatch`.
 
 ---
 
@@ -126,7 +140,7 @@ Suffix must match the layer definition. Three sub-checks:
 | `utility`      | flexible | based on config                                                                                                          | `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_protocol`, `_aggregate`, `_request`, `_response`                          |
 | `capabilities` | flexible | based on config                                                                                                          | `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_constants`, `_protocol`, `_aggregate`, `_utility`, `_request`, `_response`|
 | `agent`        | strict   | `_orchestrator`                                                                                                          | N/A                                                                                                   |
-| `surfaces`     | strict   | `_command`, `_controller`, `_page`, `_view`, `_component`, `_router`, `_layout`, `_hook`, `_store`, `_action`, `_screen` | N/A                                                                                                   |
+| `surface`     | strict   | `_command`, `_controller`, `_page`, `_view`, `_component`, `_router`, `_layout`, `_hook`, `_store`, `_action`, `_screen` | N/A                                                                                                   |
 
 ---
 
@@ -187,14 +201,14 @@ A single rule with **13 sub-conditions** — each has `allowed`, `mandatory`, an
 | 1a | `taxonomy(request,response)`                                    | taxonomy                                                   | None                          | agent*, surface*, contract*, utility*, capabilities*, root      |
 | 2  | `taxonomy(entity,error,event)`                                  | taxonomy                                                   | taxonomy(vo&#124;constant)    | agent*, surface*, contract*, utility*, capabilities*, root      |
 | 3  | `taxonomy(constant)`                                            | taxonomy                                                   | None                          | agent*, surface*, contract*, utility*, capabilities*, root      |
-| 4  | `utility`                                                       | taxonomy                                                   | None                          | agent*, surface*, contract*, capabilities*, root                |
+| 4  | `utility`                                                       | taxonomy                                                   | None                          | agent*, surface*, contract*, capabilities*, root, utility        |
 | 5  | `contract(protocol)`                                            | taxonomy, contract                                         | taxonomy                      | agent*, surface*, capabilities*, contract(aggregate), root      |
 | 6  | `contract(aggregate)`                                           | taxonomy, contract                                         | taxonomy                      | agent*, surface*, capabilities*, root                           |
-| 7  | `capabilities`                                                  | taxonomy, contract(protocol), utility                      | taxonomy, contract(protocol)  | surface*, agent*, capabilities*, root                           |
+| 7  | `capabilities`                                                  | taxonomy, contract, utility                      | taxonomy, contract(protocol)  | surface*, agent*, capabilities*, root                           |
 | 8  | `agent(orchestrator)`                                           | taxonomy, contract(aggregate), contract(protocol), utility | taxonomy, contract(aggregate) | surface*, capabilities*, root                                   |
-| 9  | `surfaces(command&#124;controller&#124;page)`                   | taxonomy, contract(aggregate), utility                     | None                          | agent*, capabilities*, contract(protocol), root                 |
-| 10 | `surfaces(hook&#124;store&#124;action&#124;screen&#124;router)` | taxonomy                                                   | None                          | agent*, capabilities*, contract(protocol), smart surfaces*, root|
-| 11 | `surfaces(component&#124;view&#124;layout)`                     | taxonomy                                                   | None                          | agent*, contract*, capabilities*, all surface*, root            |
+| 9  | `surface(command&#124;controller&#124;page)`                   | taxonomy, contract(aggregate), utility                     | None                          | agent, capabilities, contract(protocol), root                 |
+| 10 | `surface(hook&#124;store&#124;action&#124;screen&#124;router)` | taxonomy, contract(aggregate), utility                     | None                          | agent, capabilities, contract(protocol), surface(command&#124;controller&#124;page&#124;entry), root|
+| 11 | `surface(component&#124;view&#124;layout)`                     | taxonomy, contract(aggregate), utility                     | None                          | agent, contract, capabilities, surface(command&#124;controller&#124;page&#124;entry&#124;hook&#124;store&#124;action&#124;screen&#124;router), root            |
 | 12 | `root`                                                          | taxonomy, contract, capabilities, agent, surface           | None                          | None                                                            |
 
 ---
@@ -477,19 +491,19 @@ Agent orchestrator file not wired in any _container
 
 ### AES506 — Surface Orphan
 
-**Severity:** HIGH
+**Severity:** HIGH (smart), MEDIUM (utility), LOW (passive)
 
 Orphan detection per category:
 
-- **Smart** (`_command` / `_controller` / `_page` / `_entry`) — must be imported by entry
-- **Utility** (`_hook` / `_store` / `_action` / `_screen` / `_router`) — must be imported by smart surface
-- **Passive** (`_component` / `_view` / `_layout`) — must be imported by smart or utility surface
+- **Smart** (`_command` / `_controller` / `_page` / `_router`) — must be imported by entry → HIGH
+- **Utility** (`_hook` / `_store` / `_action` / `_screen`) — must be imported by smart surface → MEDIUM
+- **Passive** (`_component` / `_view` / `_layout`) — must be imported by smart or utility surface → LOW
 
 ---
 
 ## Group 6: Document Invariants
 
-These rules audit the AES document chain — `PRD.md`, `ROADMAP.md`, `README.md`, `AGENTS.md` at the workspace root, plus the `FRD.md` / `BACKLOG.md` pair in each feature folder. Unlike groups 1–5 they read Markdown, not source code, so they run through the `docs` command rather than `scan`.
+These rules audit the AES document chain — `PRD.md`, `ROADMAP.md`, `README.md`, `AGENTS.md` at the workspace root, plus the `FRD.md` / `BACKLOG.md` pair in each feature folder. Unlike groups 1–5 they read Markdown, not source code, so they run through `docs` and through the doc-audit pass inside `scan`/`check` (both call `DocRequest::audit_all`).
 
 **Run:** `lint-arwaky-cli docs .`
 
@@ -663,7 +677,7 @@ The enforced column sets are transcribed from the shipped templates:
 
 ### AES701 — Shared Folder Purity
 
-**Severity:** HIGH
+**Severity:** MEDIUM (report-normalized from the structure audit)
 
 A workspace holds a locked `shared` folder that contains only taxonomy, utility, and contract files. Any `capabilities_*`, `agent_*`, or `surface_*` file sitting there is misplaced and must be moved to a feature or surface folder.
 
