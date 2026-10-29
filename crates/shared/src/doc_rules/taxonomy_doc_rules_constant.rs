@@ -190,6 +190,7 @@ pub const ARCHITECTURE_REQUIRED_H2S: &[&str] = &[
     "Agent Layer",
     "Surface Layer",
     "Root Layer",
+    "Finding rendering notes",
 ];
 
 /// Per-crate BACKLOG section order, per HOW-TO-MAKE-BACKLOG.

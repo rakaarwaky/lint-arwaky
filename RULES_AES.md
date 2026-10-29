@@ -17,7 +17,7 @@
 | First cell of a rule row | The rule code exactly as the CLI reports it (JSON `code`) |
 | Severity | Severity the checker emits; where sub-checks differ, the per-sub-check column in `#### Sub-checks` wins |
 | Violation types | `violation_type` field (snake_case) for groups 6–7; SCREAMING_SNAKE `violation_name` for groups 1–5 where populated |
-| Fix | One-line remediation; automated fixes show the exact `lint-arwaky-cli fix …` command |
+| Fix | One-line remediation |
 | Ran by | `check`/`scan` = full pipeline; `docs` = doc audit; both for group 6 |
 | Exceptions | Config `exceptions` list entries the checker skips (barrel files, config exemptions) |
 | How findings show | Group 6/7 findings render with their `violation_type` in the JSON report; per-finding `why`/`fix` rendering notes live in `ARCHITECTURE.md` / the HOW-TO skill references, never in this file |
@@ -834,7 +834,6 @@
 | `e2e_` | `tests/` | Full request lifecycle |
 | `acceptance_` | `tests/` | Business requirement met |
 | `bench_` | `benches/` | Performance regression |
-
 
 ### AES705 — Member-Root Placement
 

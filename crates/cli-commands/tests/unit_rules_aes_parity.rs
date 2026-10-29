@@ -41,7 +41,7 @@ fn doc_codes_match_emitted_inventory() {
 }
 
 #[test]
-fn summary_states_38_rules() {
+fn metadata_states_38_rules() {
     let doc = include_str!("../../../RULES_AES.md");
     let summary_end = doc
         .lines()
@@ -59,11 +59,11 @@ fn assert_heading_then_table(lines: &[&str], start_marker: &str, end_marker: &st
     let start = lines
         .iter()
         .position(|l| l.starts_with(start_marker))
-        .unwrap_or_else(|| panic!("`{start_marker}` heading present"));
+        .unwrap_or_else(|| panic!("expected heading `{start_marker}` not found"));
     let end = lines
         .iter()
         .position(|l| l.starts_with(end_marker))
-        .unwrap_or_else(|| panic!("`{end_marker}` heading present"));
+        .unwrap_or_else(|| panic!("expected heading `{end_marker}` not found"));
 
     let is_heading = |l: &&str| {
         let trimmed = l.trim_start();
@@ -119,7 +119,6 @@ fn whole_file_structure_is_table_first() {
         "first non-blank line must be an H1 heading"
     );
 
-    // Tokenize: every non-blank line must be a heading or a table line.
     for (i, line) in lines.iter().enumerate() {
         let t = line.trim_start();
         if t.is_empty() {
@@ -133,7 +132,6 @@ fn whole_file_structure_is_table_first() {
             i + 1,
             &t[..t.len().min(60)]
         );
-        // No H5 allowed.
         let level = t.len() - t.trim_start_matches('#').len();
         assert!(
             level <= 4,
@@ -188,39 +186,29 @@ fn no_legacy_surfaces_in_rules_doc() {
             "RULES_AES.md still contains retired token `{token}`"
         );
     }
-
-    // One section per rule: count of `### AES\d{3}` headings == 38.
-    let h3_aes_count = doc.lines().filter(|l| l.starts_with("### AES")).count();
-    assert_eq!(
-        h3_aes_count, 38,
-        "expected 38 `### AES` rule sections, found {h3_aes_count}"
-    );
 }
 
 // PR 4: distinct codes == 38 == summary total cell.
 #[test]
 fn distinct_codes_equal_38_and_inventory_total() {
     let doc = include_str!("../../../RULES_AES.md");
-    let mut codes: Vec<String> = doc
-        .lines()
-        .filter_map(|l| {
-            let rest = l.trim_start().strip_prefix("| AES")?;
-            Some(format!("AES{}", rest.get(0..3)?))
-        })
-        .collect();
+    let mut codes = aes_codes_from_rules_doc();
     codes.sort();
     codes.dedup();
+
+    let h3_aes_count = doc.lines().filter(|l| l.starts_with("### AES")).count();
     assert_eq!(
-        codes.len(),
-        38,
-        "expected 38 distinct AES codes in RULES_AES.md, found {}",
-        codes.len()
+        h3_aes_count, 38,
+        "expected 38 `### AES` headings in RULES_AES.md"
     );
+
+    let actual = codes.len();
+    assert_eq!(actual, 38, "expected 38 distinct AES codes, found {actual}");
 
     // The "Total" row of the Group coverage and counts table must show 38.
     let total_row = doc.lines().find(|l| l.starts_with("| Total |"));
     assert!(
-        total_row.is_some_and(|r| r.contains("38")),
+        total_row.is_some_and(|r| r.split('|').any(|c| c.trim() == "38")),
         "Group coverage total row must contain the numeral 38"
     );
 }

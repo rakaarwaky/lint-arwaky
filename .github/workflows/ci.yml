@@ -163,10 +163,7 @@ jobs:
         # failure still yields 0 codes, which fails the threshold below.
         #
         # Subset check: every code that scan emits must have a row in
-        # RULES_AES.md. A rule that fires in real scans but has no doc row
-        # is a drift the parity test alone cannot catch (pinned array vs.
-        # live emission). The `>= 36` floor remains unchanged (PR 5 syncs
-        # TEST.md; the floor is deliberately a floor, not an inventory).
+        # RULES_AES.md. The `>= 36` floor is unchanged.
         run: |
           # --- emit-count floor (unchanged) ---
           codes=$(./target/debug/lint-arwaky-cli scan workspaces-bad --format json 2>/dev/null | grep -oP '"code": *"[A-Z0-9_:]+"' | grep -oP '(?<="code": ")[A-Z0-9_:]+' | grep '^AES' | sort -u | wc -l) || true
