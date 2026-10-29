@@ -63,10 +63,11 @@ fn windows_style_paths_resolve_layer() {
 }
 
 // Rule codes are derived from the source of truth — the `| AESxxx |` rows of
-// the rules tables in RULES_AES.md — so a rule added there is covered here
-// automatically instead of silently falling behind a hard-coded array.
+// the rule inventory table in ARCHITECTURE.md §13 — so a rule added there is
+// covered here automatically instead of silently falling behind a hard-coded
+// array.
 fn aes_codes_from_rules_doc() -> Vec<String> {
-    include_str!("../../../RULES_AES.md")
+    include_str!("../../../ARCHITECTURE.md")
         .lines()
         .filter_map(|line| {
             let rest = line.trim_start().strip_prefix("| AES")?;
@@ -80,7 +81,7 @@ fn every_aes_code_resolves_to_non_empty_guidance() {
     let codes = aes_codes_from_rules_doc();
     assert!(
         codes.len() >= 32,
-        "parsed only {} rule codes from RULES_AES.md — table format changed?",
+        "parsed only {} rule codes from ARCHITECTURE.md — table format changed?",
         codes.len()
     );
     for code in codes {

@@ -9,7 +9,7 @@
 > (AES201).
 >
 > **Location**: Decision table consulted after a scan; rule semantics ultimately come from
-> the project's `RULES_AES.md` and `lint_arwaky.config.yaml` —
+> `ARCHITECTURE.md` (§13 inventory + §14–20 detail) and `lint_arwaky.config.yaml` —
 > those files win if this table and the code disagree.
 >
 > **Length**: Triage order + one row per AES code + two reference matrices (suffix, imports).
@@ -89,7 +89,7 @@ Every routing decision is required to carry the rows that apply. Each exists for
 | AES201 import matrix | Allowed / mandatory / forbidden is per file scope, not a blanket rule.|
 | Barrel + reachability note after rename | AES101 without barrel update breaks imports; barrel alone does not clear AES501–506.|
 | Non-layer note for tests | `tests/` / `benches/` are outside AES101–102.|
-| Source-of-truth pointer | `RULES_AES.md` + `lint_arwaky.config.yaml` win on disagreement.|
+| Source-of-truth pointer | `ARCHITECTURE.md` (§13 + §14–20) + `lint_arwaky.config.yaml` win on disagreement.|
 
 ---
 

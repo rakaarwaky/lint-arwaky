@@ -409,7 +409,50 @@ graph TD
 | 7 Structure | AES701–AES706 | 6 | check/scan (severity normalized to MEDIUM at report) |
 | Total | AES101–AES706 | 38 | — |
 
-The pinned per-rule inventory (first-cell `| AESxxx |` rows: code, group, name, severity, ran-by) lives in [RULES_AES.md](RULES_AES.md) and is verified against the emitted codes by `doc_codes_match_emitted_inventory` (§21). Per-rule detail blocks live in §14–20 below.
+### Rule inventory
+
+| Code | Group | Name | Severity | Ran by |
+| --- | --- | --- | --- | --- |
+| AES101 | Naming | Naming Convention | HIGH | check/scan, naming |
+| AES102 | Naming | Suffix/Prefix Rules | HIGH | check/scan, naming |
+| AES103 | Naming | Test File Prefix | HIGH | check/scan, naming |
+| AES201 | Import | Forbidden Import | CRITICAL | check/scan, import |
+| AES202 | Import | Mandatory Import | HIGH | check/scan, import |
+| AES203 | Import | Unused Import | MEDIUM | check/scan, import |
+| AES204 | Import | Dummy Import | HIGH | check/scan, import |
+| AES205 | Import | Circular Import | CRITICAL | check/scan, import |
+| AES301 | Quality | File Maximum Limit | HIGH | check/scan, quality |
+| AES302 | Quality | File Minimum Limit | HIGH | check/scan, quality |
+| AES303 | Quality | Mandatory Definition | HIGH (missing) / MEDIUM (empty) | check/scan, quality |
+| AES304 | Quality | Bypass Comment | CRITICAL | check/scan, quality |
+| AES305 | Quality | Duplication Code | MEDIUM | check/scan, quality |
+| AES401 | Role | Taxonomy Role | HIGH | check/scan, role |
+| AES402 | Role | Contract Role | HIGH | check/scan, role |
+| AES403 | Role | Capabilities Role | HIGH / MEDIUM / LOW per sub-check | check/scan, role |
+| AES404 | Role | Utility Role | MEDIUM | check/scan, role |
+| AES405 | Role | Agent Role | HIGH / MEDIUM / LOW per sub-check | check/scan, role |
+| AES406 | Role | Surface Role | HIGH (one sub-check MEDIUM) | check/scan, role |
+| AES501 | Orphan | Taxonomy Orphan | LOW | check/scan, orphan |
+| AES502 | Orphan | Contract Orphan | MEDIUM | check/scan, orphan |
+| AES503 | Orphan | Capabilities Orphan | MEDIUM | check/scan, orphan |
+| AES504 | Orphan | Utility Orphan | MEDIUM | check/scan, orphan |
+| AES505 | Orphan | Agent Orphan | HIGH | check/scan, orphan |
+| AES506 | Orphan | Surface Orphan | HIGH smart / MEDIUM utility / LOW passive | check/scan, orphan |
+| AES601 | Doc | FR Format | HIGH | check/scan, docs |
+| AES602 | Doc | Section Structure | HIGH | check/scan, docs |
+| AES603 | Doc | Spec Purity | HIGH | check/scan, docs |
+| AES604 | Doc | Crosslinks | HIGH | check/scan, docs |
+| AES605 | Doc | Doc Heading Structure | HIGH | check/scan, docs |
+| AES606 | Doc | Doc Template Conformance | HIGH | check/scan, docs |
+| AES607 | Doc | PR Folder Ownership | HIGH | check/scan, docs |
+| AES701 | Structure | Shared Folder Purity | MEDIUM (report) | check/scan |
+| AES702 | Structure | Feature Folder Health | MEDIUM (report) | check/scan |
+| AES703 | Structure | Surface Folder Purity | MEDIUM (report) | check/scan |
+| AES704 | Structure | Test Suite Coverage | MEDIUM (report) | check/scan |
+| AES705 | Structure | Member-Root Placement | MEDIUM (report) | check/scan |
+| AES706 | Structure | PR-LA Folder Mapping | MEDIUM (report) | check/scan |
+
+Per-rule detail blocks live in §14–20 below.
 
 ### Common rule exceptions
 
@@ -1281,12 +1324,12 @@ Severity is as emitted; sub-check severities override where they differ (see per
 ### Source of truth
 
 The rule codes emitted by the crates under `crates/` are the source of truth.
-This document and `RULES_AES.md` are readable mirrors. The parity test
+This document is the readable mirror, single-sourced: the 38-row inventory
+table (§13, first-cell AES-rows: code, group, name, severity, ran-by) and the
+per-rule detail (§14–20) live here. The parity test
 `crates/cli-commands/tests/unit_rules_aes_parity.rs::doc_codes_match_emitted_inventory`
-validates that the first-cell `| AESxxx |` rows in `RULES_AES.md` equal the
-pinned emitted inventory of 38 codes (plus heading count, heading→table
-structure, H1 first / no H5, distinct codes == inventory total, and no legacy
-tokens).
+validates that the first-cell AES-rows in this document equal the
+pinned emitted inventory of 38 codes.
 
 ### Config switches
 
@@ -1302,20 +1345,17 @@ Config lives in `lint_arwaky.config.yaml`:
 
 ```mermaid
 graph LR
-    RA[RULES_AES.md]:::legacy
-    ARCH[ARCHITECTURE.md]:::authoritative
     EMIT[crates/ emitted codes]:::source
+    ARCH[ARCHITECTURE.md]:::authoritative
     EMIT --> ARCH
-    RA -.pointer.-> ARCH
-    classDef legacy fill:#fff3e0,stroke:#ef6c00
     classDef authoritative fill:#e1f5e1,stroke:#2e7d32
     classDef source fill:#e3f2fd,stroke:#1565c0
 ```
 
-### Pointer note
+### Single-source note
 
-`RULES_AES.md` remains as a thin pointer: header source-of-truth statement,
-first-cell 38-row inventory table, and one `### AESxxx` heading per rule
-followed by a blank line and a minimal table row. Full per-rule detail lives
-in §14–20 above. Per-finding `why`/`fix` rendering notes remain authoritative
-in `DocFinding` / `StructureFinding` JSON (§12).
+`ARCHITECTURE.md` is the sole rules documentation: the 38-row inventory table
+lives in §13 and the full per-rule detail lives in §14–20 above. The former
+`RULES_AES.md` pointer file was retired so the inventory table and the
+per-rule blocks cannot drift apart. Per-finding `why`/`fix` rendering notes
+remain authoritative in `DocFinding` / `StructureFinding` JSON (§12).
