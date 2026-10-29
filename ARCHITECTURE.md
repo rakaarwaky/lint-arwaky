@@ -363,9 +363,7 @@ per-finding `why` and `fix` strings in `DocFinding` / `StructureFinding` are
 the authoritative explanations — the linter sets them at emission time.
 For rule detail (fires-when, scope, fix, exceptions, sub-checks, violation
 types) see §13 Rule Inventory Overview and the per-group sections §14–20.
-`RULES_AES.md` carries only the pinned code inventory and group/summary
-counts; when each rule fires is documented in §14–20 above. Use the JSON
-`why` and `fix` fields in scan output for remediation guidance.
+Use the JSON `why` and `fix` fields in scan output for remediation guidance.
 
 ---
 
