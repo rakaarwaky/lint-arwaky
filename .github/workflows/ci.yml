@@ -163,7 +163,7 @@ jobs:
         # failure still yields 0 codes, which fails the threshold below.
         #
         # Subset check: every code that scan emits must have a row in
-        # RULES_AES.md. The `>= 36` floor is unchanged.
+        # ARCHITECTURE.md. The `>= 36` floor is unchanged.
         run: |
           # --- emit-count floor (unchanged) ---
           codes=$(./target/debug/lint-arwaky-cli scan workspaces-bad --format json 2>/dev/null | grep -oP '"code": *"[A-Z0-9_:]+"' | grep -oP '(?<="code": ")[A-Z0-9_:]+' | grep '^AES' | sort -u | wc -l) || true
@@ -171,11 +171,11 @@ jobs:
           [ "${codes:-0}" -ge 36 ]
 
           # --- scan-emitted ⊆ doc-codes subset check ---
-          doc_codes=$(grep -hE '^\| AES[0-9]{3} \|' RULES_AES.md | awk -F'|' '{gsub(/ /,"",$2); print $2}' | sort -u)
+          doc_codes=$(grep -hE '^\| AES[0-9]{3} \|' ARCHITECTURE.md | awk -F'|' '{gsub(/ /,"",$2); print $2}' | sort -u)
           scan_codes=$(./target/debug/lint-arwaky-cli scan workspaces-bad --format json 2>/dev/null | grep -oP '(?<="code": ")AES[0-9]{3}' | sort -u)
           undocumented=$(comm -23 <(echo "$scan_codes") <(echo "$doc_codes"))
           if [ -n "$undocumented" ]; then
-            echo "::error::scan emitted AES codes not in RULES_AES.md: $undocumented"
+            echo "::error::scan emitted AES codes not in ARCHITECTURE.md: $undocumented"
             exit 1
           fi
           echo "Scan-emitted codes ⊆ doc codes: OK"

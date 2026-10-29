@@ -58,11 +58,11 @@ workspaces-good/
 > below the documented ≥ 100 violation floor per language.
 >
 > **Reconciled rule count (single source of truth — §3.2):** the product
-> enforces **38 AES rules** total (per RULES_AES.md and the §3.2 Per-Rule
-> Detection Matrix). `scan` now surfaces **all 38** — including the six
-> doc-invariant codes AES601–AES606, which the doc-audit pass folds into
-> every scan target. The CI "AES Codes Check" gate enforces all 38 unique
-> codes per scan — no safety margin (QA #636).
+> enforces **38 AES rules** total (per ARCHITECTURE.md §13 inventory table
+> and the §3.2 Per-Rule Detection Matrix). `scan` now surfaces **all 38** —
+> including the six doc-invariant codes AES601–AES606, which the doc-audit
+> pass folds into every scan target. The CI "AES Codes Check" gate enforces
+> all 38 unique codes per scan — no safety margin (QA #636).
 >
 > **External tools prerequisite**: Python & JS/TS scans require external tools
 > installed (ruff, mypy, bandit, eslint, prettier, tsc, markdownlint-cli2) for
