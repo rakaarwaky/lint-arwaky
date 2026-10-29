@@ -49,7 +49,7 @@ pub fn status_leak_patterns() -> Option<&'static [(regex::Regex, &'static str)]>
         .map(|v| &**v)
 }
 
-/// Pattern matching a concrete source-file reference, per HOW-TO Rule 9.
+/// Pattern matching a concrete source-file reference, per HOW-TO Rule 7.
 pub fn source_ext_pattern() -> Option<&'static regex::Regex> {
     static PAT: OnceLock<Option<regex::Regex>> = OnceLock::new();
     PAT.get_or_init(|| {
