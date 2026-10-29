@@ -147,6 +147,16 @@ project-root/                             <- Project workspace root
 
 ## 5. Taxonomy Layer
 
+### Finding rendering notes for AES601–AES706
+
+Group 6 (Document Invariants) and Group 7 (Folder Structure) findings carry a
+`violation_type` field (snake_case) that appears in the JSON report. The
+per-finding `why` and `fix` strings in `DocFinding` / `StructureFinding` are
+the authoritative explanations — the linter sets them at emission time.
+`RULES_AES.md` documents only the violation-type names and when each fires; it
+deliberately omits the `why`/`fix` rendering notes to avoid drift. Use the
+JSON `why` and `fix` fields in scan output for remediation guidance.
+
 ### Overview
 
 | Aspect       | Detail                                                                                                                                  |
