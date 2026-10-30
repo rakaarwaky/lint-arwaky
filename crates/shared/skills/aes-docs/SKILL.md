@@ -1,15 +1,11 @@
 ---
 name: aes-docs
-description: "Adds PRD/ROADMAP/FRD/README/BACKLOG/DESIGN/AGENTS/DATA docs for Python, Rust, and TypeScript modules. Use when documenting public API, adding type hints, or splitting spec from status backlog. Triggers: add docs, document public api, add type hints, add prd, add frd, add backlog, add feature backlog, add root roadmap, add roadmap, add readme, add package readme, add crate readme, add agents md, agents md template, port agents md, prd template, frd template, readme template, backlog template, roadmap template, split spec from status, move status out of frd, audit document invariants, add design md, design md template, brand and style template."
+description: "Adds PRD/ROADMAP/FRD/README/BACKLOG/DESIGN/AGENTS/DATA docs for Python, Rust, and TypeScript modules. 
 when-to-use: "Use when the task is to create or improve a PRD, ROADMAP, FRD, BACKLOG, README, AGENTS, DESIGN, or DATA document, or to split spec from status."
 argument-hint: "--docpath <path> [--improve | --design | --make]"
 metadata:
   tags:
-    - python
-    - rust
-    - typescript
     - docs
-    - type-hints
     - prd
     - roadmap
     - frd
@@ -18,66 +14,27 @@ metadata:
     - agents-md
   related_skills:
     - aes-doc-comments
-    - aes-taxonomy
-    - aes-contract
     - aes-lint-arwaky
 ---
 # aes-docs
 
-> **Purpose**: Route every claim to the correct document, and ensure every public code item is documented.
-> **Audience**: The AI agent executing documentation tasks.
-> **Scope**: Python, Rust, and TypeScript modules; PRD, ROADMAP, FRD, README, BACKLOG, DESIGN, and AGENTS files.
+The aggregated efines which document exists, where it lives, and  to improve make and design it.
 
-The **aggregate** defines which document exists, where it lives, who reads it, and which claim belongs where.
-Templates, section contracts, exemplars, and per-document craft rules live in [`references/`](references/).
+| Document          | Location                                   | Focus                                       | workflow                                                                                           |
+| ----------------- | ------------------------------------------ | ------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `PRD.md`          | Root workspace                             | *What* &amp; *Why*                          | [references/HOW-TO-MAKE-PRD/workflow.md.](references/HOW-TO-MAKE-PRD/workflow.md)                   |
+| `ROADMAP.md`      | Root workspace                             | How the priority progrees                   | [references/HOW-TO-MAKE-ROADMAP/workflow.md](references/HOW-TO-MAKE-ROADMAP/workflow.md)           |
+| `FRD.md`          | Each Feature Folder                        | *How* functionally                          | [references/HOW-TO-MAKE-FRD/workflow.md](references/HOW-TO-MAKE-FRD/workflow.md)                   |
+| `BACKLOG.md`      | Each feature **|** surface | shared folder | *What is true now*                          | [references/HOW-TO-MAKE-BACKLOG/workflow.md](references/HOW-TO-MAKE-BACKLOG/workflow.md)           |
+| `README.md`       | Root workspace                             | *How to use/run*                            | [references/HOW-TO-MAKE-README/workflow.md](references/HOW-TO-MAKE-README/workflow.md)             |
+| `AGENTS.md`       | Root workspace                             | *How to work here safely*                   | [references/HOW-TO-MAKE-AGENTS/workflow.md](references/HOW-TO-MAKE-AGENTS/workflow.md)             |
+| `ARCHITECTURE.md` | Root workspace                             | *Layer boundaries and allowed dependencies* | [references/HOW-TO-MAKE-ARCHITECTURE/workflow.md](references/HOW-TO-MAKE-ARCHITECTURE/workflow.md) |
+| `CONTRIBUTING.md` | Root workspace                             | *How to set up and ship a change*           | [references/HOW-TO-MAKE-CONTRIBUTING/workflow.md](references/HOW-TO-MAKE-CONTRIBUTING/workflow.md) |
+| `DESIGN.md`       | Each surface folder                        | *Visual &amp; interaction contract*         | [references/HOW-TO-MAKE-DESIGN/workflow.md](references/HOW-TO-MAKE-DESIGN/workflow.md)             |
+| `DATA.md`         | Shared folder                              | *What the kernel manages*                   | [references/HOW-TO-MAKE-DATA/workflow.md](references/HOW-TO-MAKE-DATA/workflow.md)                 |
 
-| Document     | Location                          | Audience                     | Focus                                | Length       | Template                                                               |
-| ------------ | --------------------------------- | ---------------------------- | ------------------------------------ | ------------ | ---------------------------------------------------------------------- |
-| `PRD.md`     | Root workspace                    | Stakeholder, PM, Design, Eng | *What* &amp; *Why*                   | 50–500 lines | [references/HOW-TO-MAKE-PRD.md](references/HOW-TO-MAKE-PRD.md)         |
-| `ROADMAP.md` | Root workspace (exactly one)      | Tech Lead, PM, Engineers     | *Progress, status, cross-cutting links* | 50–500 lines | [references/HOW-TO-MAKE-ROADMAP.md](references/HOW-TO-MAKE-ROADMAP.md) |
-| `FRD.md`     | Each **feature** module/crate/pkg (not `shared/`) | Engineer, QA, Tech Lead      | *How* (functionally)                 | 50–1000 lines | [references/HOW-TO-MAKE-FRD/template.md](references/HOW-TO-MAKE-FRD/template.md)        |
-| `BACKLOG.md` | Each **feature** dir, beside its spec (not `shared/`) | Engineer, QA, Tech Lead      | *What is true now*                   | 50–500 lines | [references/HOW-TO-MAKE-BACKLOG.md](references/HOW-TO-MAKE-BACKLOG.md) |
-| `README.md`  | Root workspace                    | Developer (new/existing)     | *How to use/run*                     | 50–500 lines | [references/HOW-TO-MAKE-README.md](references/HOW-TO-MAKE-README.md)   |
-| `AGENTS.md`  | Root workspace                    | The agent, every session     | *How to work here safely*            | 50–500 lines | [references/HOW-TO-MAKE-AGENTS.md](references/HOW-TO-MAKE-AGENTS.md)   |
-| `ARCHITECTURE.md` | Root workspace                | Engineer, Tech Lead, agent   | *Layer boundaries and allowed dependencies* | 50–500 lines | [references/HOW-TO-MAKE-ARCHITECTURE.md](references/HOW-TO-MAKE-ARCHITECTURE.md) |
-| `CONTRIBUTING.md` | Root workspace                | New and existing contributor | *How to set up and ship a change*   | 50–500 lines | [references/HOW-TO-MAKE-CONTRIBUTING.md](references/HOW-TO-MAKE-CONTRIBUTING.md) |
-| `DESIGN.md`       | Root workspace (optional theme) | Design, Surface Engineer, TUI dev | *Visual & interaction contract*     | 50–500 lines | [references/HOW-TO-MAKE-DESIGN.md](references/HOW-TO-MAKE-DESIGN.md)         |
 
-**The Document Chain**:  
-PRD → ROADMAP  → FRD → BACKLOG → README→ AGENTS
 
-Each file answers exactly one audience's question. A claim in the wrong file is the defect this skill exists to prevent.
----
-
-## Invariants
-
-Every rule is machine-checked by `lint-arwaky-cli docs` (crate `doc-rules`, AES601–AES606).
-A rule cannot drift from the gate. Cite the code, not this file, when pointing at a rule.
-Each document's required section set is cross-checked against its reference's contract table, so a
-row that stops being enforced is a test failure rather than a silent edit.
-
-| Code                                                                     | Rule                                                                                                                                                                                  |
-| ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `status-in-spec` / `spec-source-path`                                       | Spec and status never share a file. Specs promise; backlogs report. Specs are stateless — no `.py`/`.rs`/`.ts` file names (HOW-TO Rule 9). |
-| `spec-without-backlog` / `backlog-without-spec` / `feature-doc-in-shared` | An **FRD** and its backlog are a pair in the same **feature** directory (root PRD pairs with root ROADMAP, not a sibling BACKLOG). Kernel folders (`modules/shared`) are not features: either file under `shared/` fails with `feature-doc-in-shared` (HOW-TO-MAKE-FRD § Scope). |
-| `no-master-backlog` / `undefined-state-vocab` / `master-section-missing` | One root master owns the `State` vocabulary and the roll-up (`ROADMAP.md` `Roadmap Status`). |
-| `state-vocab-restated`                                                   | Definitions live once. Feature backlogs cite `Roadmap Status`, never restate it under `Backlog Status`.                                                                                                                    |
-| `done-without-evidence` / `unknown-state`                                | Every backlog `Done` row is re-runnable: command + counts + commit hash, and what it excludes.                                                                                             |
-| `duplicate-fr-id` / `orphan-fr-ref`                                      | Requirement IDs are unique, stable, and the only thing a backlog row may cite.                                                                                                        |
-| `fr-id-format` / `fr-fields-missing`                                     | FRD Rule 1–2: `FR-<FEATURENAME>-NNN: <imperative name>`; each FR entry table carries the twelve `Aspect &#124; Detail` rows: Description, Business Rules, Edge Cases, Capability, Protocol, Method, Input, Output, Error, Event, Test, Metric. |
-| `reference-crosslink` / `section-order`                                  | FRD + template: `## Reference` links PRD and BACKLOG; sections follow HOW-TO-MAKE-FRD order (Feature Overview, Functional Requirements, Public Interface, Reference).                                                                                         |
-| `backlog-columns` / `backlog-row-width`                                  | The `Backlog Status` entry table keeps its seven `Aspect &#124; Detail` rows: State, Done, In Progress, Blocked, Next, Risk, Updated.                                                                                                                                             |
-| `*-section-missing`                                                      | Each document carries the H2 set its audience needs. Section contracts are in the refs.                                                                                             |
-| `dead-link` / `root-relative-link`                                       | Pointers resolve from the file that writes them, not only from the repo or skill root.                                                                                                |
-| `unreferenced-file`                                                      | Every file under a skill's `references/`, `scripts/`, `assets/` is surfaced by SKILL.md.                                                                                              |
-| `absolute-path` / `secret-in-docs`                                       | No machine-specific path and no credential literal in any document.                                                                                                                   |
-| `ci-command-drift`                                                       | AGENTS.md commands match CI exactly or are labelled advisory.                                                                                                                        |
-| `doc-length` / `doc-thin`                                                | Each document stays inside the size its audience can read.                                                                                                                            |
-| `section_not_table` / `table_missing_columns` / `missing_required_doc`  | AES606: mandated entry tables (ROADMAP `Roadmap Status`, BACKLOG `Backlog Status`, FRD `Functional Requirements` / `Public Interface`) carry their template tables; the six required root docs exist at a real workspace root.                                                  |
-
-### Unchecked Invariants (Language Rules)
-
-Doc comments now live under the [`aes-doc-comments`](../aes-doc-comments/SKILL.md) skill. See [`references/HOW-TO-MAKE-PYTHON-DOC.md`](../aes-doc-comments/references/HOW-TO-MAKE-PYTHON-DOC.md), [`references/HOW-TO-MAKE-RUST-DOC.md`](../aes-doc-comments/references/HOW-TO-MAKE-RUST-DOC.md), and [`references/HOW-TO-MAKE-TYPESCRIPT-DOC.md`](../aes-doc-comments/references/HOW-TO-MAKE-TYPESCRIPT-DOC.md).
 
 ---
 
@@ -86,21 +43,21 @@ Doc comments now live under the [`aes-doc-comments`](../aes-doc-comments/SKILL.m
 Ask these questions in order. The first "No" dictates your next action.
 
 1. **Can a stakeholder understand this project's purpose in 30 seconds?**
-   - *No* → Add `PRD.md` (what/why).
+   - *No* → Add `PRD.md`
 2. **Can a tech lead see every feature, shared policy, and workspace truth in one place?**
-   - *No* → Add `ROADMAP.md` (`Progress Overview` / `Roadmap Status` / `Reference`).
+   - *No* → Add `ROADMAP.md`
 3. **Can an engineer implement this from the spec alone?**
-   - *No* → Add `FRD.md` (how).
+   - *No* → Add `FRD.md` 
 4. **Can a reader tell what is actually true today for one feature, and re-run the evidence?**
-   - *No* → Add `BACKLOG.md` beside that feature's spec.
+   - *No* → Add `BACKLOG.md` 
 5. **Can a developer clone, build, and run in under 10 minutes?**
-   - *No* → Add `README.md` (how to use).
+   - *No* → Add `README.md`
 6. **Can an agent work here safely without being told twice?**
-   - *No* → Add `AGENTS.md` (how to work here).
+   - *No* → Add `AGENTS.md` 
 7. **Can a new engineer tell which layer a file belongs in, and what it may import?**
-   - *No* → Add `ARCHITECTURE.md` (layer boundaries).
+   - *No* → Add `ARCHITECTURE.md`
 8. **Can a first-time contributor set up the project and open a passing PR?**
-   - *No* → Add `CONTRIBUTING.md` (how to ship a change).
+   - *No* → Add `CONTRIBUTING.md` 
 
 ---
 
@@ -114,7 +71,6 @@ project-root/
 ├── AGENTS.md       # operational guide (how the agent works here) — 1 per project
 ├── ARCHITECTURE.md # layer boundaries and allowed dependencies — 1 per project
 ├── CONTRIBUTING.md # contributor setup, contribution paths, PR gates — 1 per project
-├── DESIGN.md       # visual & interaction contract (optional theme) — 1 per project
 ├── crates|modules|packages/
 │   ├── feature-a/
 │   │   ├── src/
@@ -124,95 +80,23 @@ project-root/
 │   │   ├── src/
 │   │   ├── FRD.md
 │   │   └── BACKLOG.md
-│   └── shared/        # kernel — NO FRD.md / BACKLOG.md (feature-doc-in-shared)
-
-```text
-
+│   ├── surface-a/
+│   │   ├── src/
+│   │   ├── DESIGN.md
+│   │   └── BACKLOG.md
+│   ├── surface-b/
+│   │   ├── src/
+│   │   ├── FRD.md
+│   │   └── BACKLOG.md
+│   └── shared/    
+│   │   ├── src/
+│   │   ├── Data.md
+│   │   └── BACKLOG.md   
 Same shape for Python `modules/<feature>/` and TypeScript `packages/<feature>/`.
-Cross-cutting rows live in the root master `ROADMAP.md`, not in a feature backlog.
-
----
-
-## Workflow
-
-SKILL.md only routes. Every document's step-by-step workflow lives in its own subfolder under `references/`; do not inline workflow steps here.
-
-| Document | Workflow |
-| -------- | -------- |
-| `PRD.md` | [references/HOW-TO-MAKE-PRD/workflow.md](references/HOW-TO-MAKE-PRD/workflow.md) |
-| `ROADMAP.md` | [references/HOW-TO-MAKE-ROADMAP/workflow.md](references/HOW-TO-MAKE-ROADMAP/workflow.md) |
-| `FRD.md` | [references/HOW-TO-MAKE-FRD/workflow.md](references/HOW-TO-MAKE-FRD/workflow.md) |
-| `BACKLOG.md` | [references/HOW-TO-MAKE-BACKLOG/workflow.md](references/HOW-TO-MAKE-BACKLOG/workflow.md) |
-| `README.md` | [references/HOW-TO-MAKE-README/workflow.md](references/HOW-TO-MAKE-README/workflow.md) |
-| `AGENTS.md` | [references/HOW-TO-MAKE-AGENTS/workflow.md](references/HOW-TO-MAKE-AGENTS/workflow.md) |
-| `ARCHITECTURE.md` | [references/HOW-TO-MAKE-ARCHITECTURE/workflow.md](references/HOW-TO-MAKE-ARCHITECTURE/workflow.md) |
-| `CONTRIBUTING.md` | [references/HOW-TO-MAKE-CONTRIBUTING/workflow.md](references/HOW-TO-MAKE-CONTRIBUTING/workflow.md) |
-| `DESIGN.md` | [references/HOW-TO-MAKE-DESIGN/workflow.md](references/HOW-TO-MAKE-DESIGN/workflow.md) |
-| `DATA.md` | [references/HOW-TO-MAKE-DATA/workflow.md](references/HOW-TO-MAKE-DATA/workflow.md) |
-| Doc comments | [`aes-doc-comments`](../aes-doc-comments/SKILL.md) |
-| Gate / verify | `lint-arwaky-cli docs <path>` — then run each touched reference's `Verify` block |
-
----
-
-## Verification
-
-### Machine Checks
-
-```bash
-lint-arwaky-cli docs .                 # invariant audit of every document (strict; every finding gates)
 ```
 
-A pass means no claim sits in the wrong file, no pointer is broken, and no `Done` row is unevidenced.
-
-### Human Checks
-
-A machine pass does not mean the documents are good. Falsifiable goals, honest exclusions, and a 10-minute Quick Start still need a reader.
 
 ---
 
-### Doc Comment Conventions
-
-Per-language rules, templates, section contracts, and Verify blocks live under [`aes-doc-comments`](../aes-doc-comments/SKILL.md).
 
 ---
-
-## Pre-flight Checklist
-
-- [ ] `lint-arwaky-cli docs <path>` exits 0.
-- [ ] Every required document exists in the correct directory.
-- [ ] Every `Done` backlog row cites a re-run command, a commit hash, and its exclusions.
-- [ ] Documents serve their exact audience (no cross-contamination).
-- [ ] Public code items carry doc comments, and surface checks (`cargo doc`, `tsc`, `import`) are clean.
-- [ ] Every touched reference file had its specific `Verify` block executed.
-
----
-
-## Common Mistakes (Anti-Patterns)
-
-The invariant codes above cover the machine-checkable ones. These need a reader:
-
-### Structural
-
-- **One document for all audiences**: Split by audience. Each file answers one question.
-- **FRD at the project root**: It belongs with the feature code, beside its backlog.
-- **Feature backlog carrying workspace rows or restating root policy**: Cross-cutting rows and the `Roadmap Status` roll-up live once in `ROADMAP.md` (root master).
-- **PRD carrying SQL schemas or API detail**: The PRD audience cannot read them. Move to FRD.
-
-### Cadence and code surface
-
-- **Documents "write &amp; forget"**: Re-run `lint-arwaky-cli docs` each sprint. Drift is silent.
-- **`//` instead of `///` in Rust**: Plain comments are invisible to the doc generator.
-- **Missing module docstrings or undocumented parameters**: The generated API surface stays incomplete.
-
-**Checker false-freights to dodge when authoring specs** (these bite at draft time, before you run the gate):
-
-- **The word "implemented" in a spec file.** `status-in-spec` matches `\b(impl|un)plemented\b` case-insensitively across the *whole* FRD/PRD — so any `Implemented` / `Shipped` status-style cell header or cell is auto-flagged. Name status-style columns `impl / intended` and use `impl` for the cell. (Same class: `shipped` / `released in v…`, checkbox items, status markers checkmark / cross status markers, progress `%` all trip it.)
-- **Entry-table rows without a header + separator.** AES606's `section_not_table` parser reads `| Aspect | … |` rows via a markdown-table parser that needs the header row + a `|---|` separator line; a headerless block of `| … |` rows parses as **0 rows**. Always emit the header row; keep exactly one row per fixed `Aspect` label, in template order.
-
----
-
-## Related Skills
-
-- `aes-lint-arwaky`
-- `aes-taxonomy`
-- `aes-contract`

@@ -643,7 +643,7 @@ impl FrFormatChecker {
                         )
                         .with_reason(
                             "Every spec-declared ID must have a BACKLOG entry so the backlog tracks every requirement.",
-                            format!("Add a BACKLOG entry `### {{{id}}}` under `## Backlog Status`."),
+                            format!("Add a BACKLOG entry `### {id}: ` under `## Backlog Status`."),
                         ),
                     );
                 }
