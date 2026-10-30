@@ -69,7 +69,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Parse source files with tree-sitter grammars and extract imports, identifiers, and declared symbols. |
-| 2 | — |
 
 #### Business Rules
 
@@ -102,14 +101,12 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | ParseAll(entries) -> ParsedEntries; ImportsFor(path); UsedIdentifiers(path). |
-| 2 | — |
 
 #### Input
 
 | No | Detail |
 | --- | --- |
 | 1 | Batch of FileEntry records or a single path; source is the aggregated scan pipeline from the surface check command. |
-| 2 | — |
 
 #### Output
 
@@ -130,21 +127,18 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | None; parsing is synchronous. |
-| 2 | — |
 
 #### Test
 
 | No | Detail |
 | --- | --- |
 | 1 | ast_parser_implements_parser_protocol and ast_parser_resolves_each_grouped_barrel_symbol_independently assert object safety and barrel-resolution behavior. |
-| 2 | — |
 
 #### Metric
 
 | No | Detail |
 | --- | --- |
 | 1 | Every seeded fixture file in the parse suite yields its expected import and symbol counts. |
-| 2 | — |
 
 ### FR-Filesystem-002: Dependency Graph Construction
 
@@ -153,7 +147,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Build a project-wide import graph from parsed entries so downstream rule crates can query reachability. |
-| 2 | — |
 
 #### Business Rules
 
@@ -186,14 +179,12 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | BuildFileIndex(root), BuildFileIndexWithIgnored(root, ignored), and BuildOrphanGraphContext(root, ignored). |
-| 2 | — |
 
 #### Input
 
 | No | Detail |
 | --- | --- |
 | 1 | Project root filepath plus optional ignored-path list; source is the filesystem aggregate request. |
-| 2 | — |
 
 #### Output
 
@@ -207,28 +198,24 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Unreadable directories skip their entries instead of failing the whole build; root that does not exist yields an empty graph. |
-| 2 | — |
 
 #### Event
 
 | No | Detail |
 | --- | --- |
 | 1 | None; the graph is built in memory. |
-| 2 | — |
 
 #### Test
 
 | No | Detail |
 | --- | --- |
 | 1 | dependency_graph_implements_graph_protocol, e2e_full_pipeline_with_graph_query, e2e_chained_python_import_graph_reaches_capabilities, and the add_container_wiring_edges_* family assert edge construction and dedup. |
-| 2 | — |
 
 #### Metric
 
 | No | Detail |
 | --- | --- |
 | 1 | Seeded e2e import chain reaches the capabilities layer with zero missing edges; wiring-edge dedup keeps one edge per identifier. |
-| 2 | — |
 
 ### FR-Filesystem-003: File I/O & Directory Operations
 
@@ -237,7 +224,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Provide the file I/O primitives (read, write, discover, copy, remove, permissions) every rule crate builds on. |
-| 2 | — |
 
 #### Business Rules
 
@@ -270,49 +256,42 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | ReadFile, WriteFile, DiscoverSourceFiles, CollectSourceFiles, PathExists, Canonicalize, SetPermissions, and the remaining I/O operations each map to one request variant. |
-| 2 | — |
 
 #### Input
 
 | No | Detail |
 | --- | --- |
 | 1 | FilePath or directory path plus content where required; source is caller requests through IFilesystemAggregate::execute. |
-| 2 | — |
 
 #### Output
 
 | No | Detail |
 | --- | --- |
 | 1 | Operation result through FilesystemResponse variants OpOk, Content, PathExists, Has, Files, and Paths. |
-| 2 | — |
 
 #### Error
 
 | No | Detail |
 | --- | --- |
 | 1 | Missing or unreadable path yields a failed read or an OpOk=false style error result; callers see the error on the response variant for that operation. |
-| 2 | — |
 
 #### Event
 
 | No | Detail |
 | --- | --- |
 | 1 | None; I/O is synchronous. |
-| 2 | — |
 
 #### Test
 
 | No | Detail |
 | --- | --- |
 | 1 | capabilities_filesystem_io_implements_io_protocol, canonicalize_resolves_path, detect_source_dir_prefers_crates, and detect_source_dir_falls_back_to_root assert the I/O contract on seeded fixtures. |
-| 2 | — |
 
 #### Metric
 
 | No | Detail |
 | --- | --- |
 | 1 | All I/O operations on the seeded fixture tree return their expected results; discovery order crates then packages then root holds on every run. |
-| 2 | — |
 
 ### FR-Filesystem-004: Tool Resolution
 
@@ -321,14 +300,12 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Locate external tool binaries so CLI and adapter layers can invoke them without hard-coding paths. |
-| 2 | — |
 
 #### Business Rules
 
 | No | Detail |
 | --- | --- |
 | 1 | BinaryAvailable(bin_name) probes PATH for the named binary; resolution uses the shared tool-resolution utility; the response reports availability as a boolean rather than failing when the tool is missing. |
-| 2 | — |
 
 #### Edge Cases
 
@@ -354,21 +331,18 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | BinaryAvailable(bin_name) -> availability boolean. |
-| 2 | — |
 
 #### Input
 
 | No | Detail |
 | --- | --- |
 | 1 | Binary name string; source is adapters and collectors that need an external tool. |
-| 2 | — |
 
 #### Output
 
 | No | Detail |
 | --- | --- |
 | 1 | FilesystemResponse::BinaryAvailable { available }. |
-| 2 | — |
 
 #### Error
 
@@ -382,21 +356,18 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | None; resolution is a pure lookup. |
-| 2 | — |
 
 #### Test
 
 | No | Detail |
 | --- | --- |
 | 1 | capabilities_tool_resolution_implements_tool_resolution_protocol and filesystem_tool_resolution_responds assert the protocol contract and response shape. |
-| 2 | — |
 
 #### Metric
 
 | No | Detail |
 | --- | --- |
 | 1 | Present binaries report available=true and absent binaries available=false on every seeded probe list. |
-| 2 | — |
 
 ### FR-Filesystem-005: Workspace & Project Language Detection
 
@@ -405,7 +376,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Detect the workspace root and the language groups present in a project so downstream rules can specialize. |
-| 2 | — |
 
 #### Business Rules
 
@@ -438,49 +408,42 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | FindWorkspaceRoot(start) and DetectProjectLanguages(root) -> ProjectLanguages. |
-| 2 | — |
 
 #### Input
 
 | No | Detail |
 | --- | --- |
 | 1 | Start path or project root FilePath; source is the container and cross-crate callers such as external-lint via FilesystemRequest::DetectProjectLanguages. |
-| 2 | — |
 
 #### Output
 
 | No | Detail |
 | --- | --- |
 | 1 | Root path and ProjectLanguages flags through FilesystemResponse::Root and ProjectLanguages. |
-| 2 | — |
 
 #### Error
 
 | No | Detail |
 | --- | --- |
 | 1 | No upward workspace found returns the start path rather than an error; unreadable subtrees are skipped. |
-| 2 | — |
 
 #### Event
 
 | No | Detail |
 | --- | --- |
 | 1 | None; detection is a one-shot query. |
-| 2 | — |
 
 #### Test
 
 | No | Detail |
 | --- | --- |
 | 1 | e2e_workspace_detection_in_pipeline, detects_each_language_group, detects_nested_files, empty_project_reports_no_languages, and detect_language_from_unknown_defaults_to_rust assert root and language detection. |
-| 2 | — |
 
 #### Metric
 
 | No | Detail |
 | --- | --- |
 | 1 | Every seeded language fixture reports exactly its own group; empty project yields four false flags with zero walk errors. |
-| 2 | — |
 
 ## Public Interface
 

@@ -59,7 +59,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Flag imports that cross architectural layers against the forbidden-layer matrix. |
-| 2 | — |
 
 #### Business Rules
 
@@ -92,21 +91,18 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Check on the forbidden-import protocol returning lint messages per violating import. |
-| 2 | — |
 
 #### Input
 
 | No | Detail |
 | --- | --- |
 | 1 | File path plus parsed imports (and optional entries); source is ImportRequest::RunAudit variants from the aggregate. |
-| 2 | — |
 
 #### Output
 
 | No | Detail |
 | --- | --- |
 | 1 | Lint results inside ImportResponse::Audit with AES201 rule codes and source line numbers. |
-| 2 | — |
 
 #### Error
 
@@ -120,7 +116,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | None; audit is synchronous. |
-| 2 | — |
 
 #### Test
 
@@ -143,7 +138,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Require mandatory imports for layers that cannot function without them. |
-| 2 | — |
 
 #### Business Rules
 
@@ -176,35 +170,30 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Mandatory-import check on parsed file imports returning lint messages when the required import is absent. |
-| 2 | — |
 
 #### Input
 
 | No | Detail |
 | --- | --- |
 | 1 | File path plus its import list; source is the import audit pipeline through IImportRunnerAggregate::execute. |
-| 2 | — |
 
 #### Output
 
 | No | Detail |
 | --- | --- |
 | 1 | Lint results with AES202 codes inside ImportResponse::Audit. |
-| 2 | — |
 
 #### Error
 
 | No | Detail |
 | --- | --- |
 | 1 | Missing or empty input file yields no findings for that file rather than failing the run. |
-| 2 | — |
 
 #### Event
 
 | No | Detail |
 | --- | --- |
 | 1 | None. |
-| 2 | — |
 
 #### Test
 
@@ -227,7 +216,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Detect imports that are never referenced in the file body. |
-| 2 | — |
 
 #### Business Rules
 
@@ -260,35 +248,30 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Unused-import check over parse entries returning lint messages per unused binding. |
-| 2 | — |
 
 #### Input
 
 | No | Detail |
 | --- | --- |
 | 1 | File path plus parsed imports and used identifiers; source is ImportRequest::RunAudit variants. |
-| 2 | — |
 
 #### Output
 
 | No | Detail |
 | --- | --- |
 | 1 | Lint results with AES203 codes inside ImportResponse::Audit. |
-| 2 | — |
 
 #### Error
 
 | No | Detail |
 | --- | --- |
 | 1 | Parse failure of the body yields no findings for that file instead of false positives. |
-| 2 | — |
 
 #### Event
 
 | No | Detail |
 | --- | --- |
 | 1 | None. |
-| 2 | — |
 
 #### Test
 
@@ -311,7 +294,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Catch dummy imports, dummy functions, and dummy trait impls that exist only to satisfy a checker. |
-| 2 | — |
 
 #### Business Rules
 
@@ -344,35 +326,30 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Dummy-import/function/impl check over parsed file content returning lint messages. |
-| 2 | — |
 
 #### Input
 
 | No | Detail |
 | --- | --- |
 | 1 | File path plus parsed content; source is the import audit pipeline. |
-| 2 | — |
 
 #### Output
 
 | No | Detail |
 | --- | --- |
 | 1 | Lint results with AES204 codes inside ImportResponse::Audit. |
-| 2 | — |
 
 #### Error
 
 | No | Detail |
 | --- | --- |
 | 1 | Parse failure skips the file's dummy analysis rather than failing the audit. |
-| 2 | — |
 
 #### Event
 
 | No | Detail |
 | --- | --- |
 | 1 | None. |
-| 2 | — |
 
 #### Test
 
@@ -395,7 +372,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Detect circular cross-layer dependencies among parsed import edges. |
-| 2 | — |
 
 #### Business Rules
 
@@ -428,35 +404,30 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Cycle scan over edge list returning detected cycles as lint messages. |
-| 2 | — |
 
 #### Input
 
 | No | Detail |
 | --- | --- |
 | 1 | Import edge list (or file discovery then edges); source is ImportRequest::RunAudit variants. |
-| 2 | — |
 
 #### Output
 
 | No | Detail |
 | --- | --- |
 | 1 | Lint results with AES205 codes inside ImportResponse::Audit; empty list when acyclic or disabled. |
-| 2 | — |
 
 #### Error
 
 | No | Detail |
 | --- | --- |
 | 1 | Unparseable edge entries are dropped; the scan still completes on remaining edges. |
-| 2 | — |
 
 #### Event
 
 | No | Detail |
 | --- | --- |
 | 1 | None. |
-| 2 | — |
 
 #### Test
 

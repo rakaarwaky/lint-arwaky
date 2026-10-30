@@ -68,7 +68,6 @@ Loaded config is merged with embedded defaults via rule-based layer merging (FR-
 | No | Detail |
 | --- | --- |
 | 1 | Locate and load the first config matching a project root and language, following the 5-level priority chain. |
-| 2 | — |
 
 #### Business Rules
 
@@ -101,14 +100,12 @@ Loaded config is merged with embedded defaults via rule-based layer merging (FR-
 | No | Detail |
 | --- | --- |
 | 1 | `read_config(&self, project_root: &FilePath, language: ConfigLanguage) -> Result<Option<ConfigSource>, ConfigError>` |
-| 2 | — |
 
 #### Input
 
 | No | Detail |
 | --- | --- |
 | 1 | `project_root: &FilePath`, `language: ConfigLanguage`, or a raw YAML `content: &str` for the content reader. |
-| 2 | — |
 
 #### Output
 
@@ -129,7 +126,6 @@ Loaded config is merged with embedded defaults via rule-based layer merging (FR-
 | No | Detail |
 | --- | --- |
 | 1 | `lint-arwaky-cli config show` reads through `ConfigRequest::ReadConfig`/`show`; `check`, `ci`, and `scan` consume the same discovery when they load project config. |
-| 2 | — |
 
 #### Test
 
@@ -152,7 +148,6 @@ Loaded config is merged with embedded defaults via rule-based layer merging (FR-
 | No | Detail |
 | --- | --- |
 | 1 | Detect workspace type, probe workspace roots, and enumerate member directories under the layout roots. |
-| 2 | — |
 
 #### Business Rules
 
@@ -185,21 +180,18 @@ Loaded config is merged with embedded defaults via rule-based layer merging (FR-
 | No | Detail |
 | --- | --- |
 | 1 | `discover_workspace_members(&self, root: &FilePath) -> Vec<FilePath>` (with `detect(&self, path: &FilePath) -> WorkspaceType` and `is_workspace(&self, path: &FilePath) -> bool`). |
-| 2 | — |
 
 #### Input
 
 | No | Detail |
 | --- | --- |
 | 1 | `root: &FilePath` — the candidate workspace root (or any path, for `detect`/`is_workspace`). |
-| 2 | — |
 
 #### Output
 
 | No | Detail |
 | --- | --- |
 | 1 | `Vec<FilePath>` — one member directory per layout entry; `WorkspaceType` for detection; a boolean for the workspace probe. |
-| 2 | — |
 
 #### Error
 
@@ -213,7 +205,6 @@ Loaded config is merged with embedded defaults via rule-based layer merging (FR-
 | No | Detail |
 | --- | --- |
 | 1 | `check` runs `ConfigRequest::DiscoverWorkspaces { root }` to scope a run; `ci` and multi-member `scan` rely on the same enumeration. |
-| 2 | — |
 
 #### Test
 
@@ -236,7 +227,6 @@ Loaded config is merged with embedded defaults via rule-based layer merging (FR-
 | No | Detail |
 | --- | --- |
 | 1 | Merge parsed configuration into embedded defaults with rule-based layer merging, including scoped sub-layer creation. |
-| 2 | — |
 
 #### Business Rules
 
@@ -269,21 +259,18 @@ Loaded config is merged with embedded defaults via rule-based layer merging (FR-
 | No | Detail |
 | --- | --- |
 | 1 | `merge_config_with_defaults(&self, ...)` alongside `parse_yaml_config(&self, path: &FilePath) -> Result<ProjectConfig, ConfigError>` and `parse_toml_config(&self, path: &FilePath) -> Result<Option<ProjectConfig>, ConfigError>` |
-| 2 | — |
 
 #### Input
 
 | No | Detail |
 | --- | --- |
 | 1 | `path: &FilePath` pointing at a YAML or TOML config, or a raw YAML `yaml_str: &str` for the warning-carrying parse. |
-| 2 | — |
 
 #### Output
 
 | No | Detail |
 | --- | --- |
 | 1 | `Result<ProjectConfig, ConfigError>` for file parses; `(ArchitectureConfig, Vec<String>)` for the warning parse; merged config plus warnings from `merge_config_with_defaults`. |
-| 2 | — |
 
 #### Error
 
@@ -297,7 +284,6 @@ Loaded config is merged with embedded defaults via rule-based layer merging (FR-
 | No | Detail |
 | --- | --- |
 | 1 | Config loading for every command path that calls `ConfigRequest::LoadProjectConfig`/`LoadSync` (loaded once and cached by the orchestrator before rules apply). |
-| 2 | — |
 
 #### Test
 

@@ -50,7 +50,6 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 | No | Detail |
 | --- | --- |
 | 1 | `audit_fr_format(&self, context: &DocAuditContext) -> Vec<DocFinding>` |
-| 2 | — |
 
 #### Input
 
@@ -92,7 +91,6 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 | No | Detail |
 | --- | --- |
 | 1 | Zero `AES601` findings from `lint-arwaky-cli docs .` on a conforming workspace. |
-| 2 | — |
 
 ### FR-DOC-002: Section Structure (AES602)
 
@@ -101,7 +99,6 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 | No | Detail |
 | --- | --- |
 | 1 | Report section-order and sanctioned-shape violations so every document reads in the order its template fixes. |
-| 2 | — |
 
 #### Business Rules
 
@@ -134,7 +131,6 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 | No | Detail |
 | --- | --- |
 | 1 | `audit_section_structure(&self, context: &DocAuditContext) -> Vec<DocFinding>` |
-| 2 | — |
 
 #### Input
 
@@ -162,7 +158,6 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 | No | Detail |
 | --- | --- |
 | 1 | `lint-arwaky-cli docs .` (doc-audit pass). |
-| 2 | — |
 
 #### Test
 
@@ -176,7 +171,6 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 | No | Detail |
 | --- | --- |
 | 1 | Zero `AES602` findings from `lint-arwaky-cli docs .` on a conforming workspace. |
-| 2 | — |
 
 ### FR-DOC-003: Spec Purity (AES603)
 
@@ -218,7 +212,6 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 | No | Detail |
 | --- | --- |
 | 1 | `audit_spec_purity(&self, context: &DocAuditContext) -> Vec<DocFinding>` |
-| 2 | — |
 
 #### Input
 
@@ -246,7 +239,6 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 | No | Detail |
 | --- | --- |
 | 1 | `lint-arwaky-cli docs .`. |
-| 2 | — |
 
 #### Test
 
@@ -260,7 +252,6 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 | No | Detail |
 | --- | --- |
 | 1 | Zero `AES603` findings from `lint-arwaky-cli docs .` on a conforming workspace. |
-| 2 | — |
 
 ### FR-DOC-004: Crosslinks and State-Vocabulary Placement (AES604)
 
@@ -269,7 +260,6 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 | No | Detail |
 | --- | --- |
 | 1 | Enforce the crosslink set every document owes the chain and keep master-only state sections in the master documents. |
-| 2 | — |
 
 #### Business Rules
 
@@ -302,7 +292,6 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 | No | Detail |
 | --- | --- |
 | 1 | `audit_crosslinks(&self, context: &DocAuditContext) -> Vec<DocFinding>` |
-| 2 | — |
 
 #### Input
 
@@ -330,7 +319,6 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 | No | Detail |
 | --- | --- |
 | 1 | `lint-arwaky-cli docs .`. |
-| 2 | — |
 
 #### Test
 
@@ -344,7 +332,6 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 | No | Detail |
 | --- | --- |
 | 1 | Zero `AES604` findings from `lint-arwaky-cli docs .` on a conforming workspace. |
-| 2 | — |
 
 ### FR-DOC-005: Document Heading Structure (AES605)
 
@@ -386,7 +373,6 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 | No | Detail |
 | --- | --- |
 | 1 | `audit_doc_heading(&self, context: &DocAuditContext) -> Vec<DocFinding>` |
-| 2 | — |
 
 #### Input
 
@@ -414,21 +400,18 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 | No | Detail |
 | --- | --- |
 | 1 | `lint-arwaky-cli docs .`. |
-| 2 | — |
 
 #### Test
 
 | No | Detail |
 | --- | --- |
 | 1 | `contract_doc_rules` suite — the `aes605_*` family (`aes605_fires_when_no_h1`, `aes605_fires_when_required_h2_is_absent`, `aes605_fires_on_an_h2_outside_the_template`, `aes605_does_not_falsely_fire_on_sharp_commented_commands`, `aes605_allows_the_project_specific_h2_set`, `aes605_accepts_one_h1_and_every_required_h2`). |
-| 2 | — |
 
 #### Metric
 
 | No | Detail |
 | --- | --- |
 | 1 | Zero `AES605` findings from `lint-arwaky-cli docs .` on a conforming workspace. |
-| 2 | — |
 
 ### FR-DOC-006: Template Body-Shape Conformance (AES606)
 
@@ -437,7 +420,6 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 | No | Detail |
 | --- | --- |
 | 1 | Check that each mandated section carries the exact table shape — columns and entry-table row labels — that its template fixes. |
-| 2 | — |
 
 #### Business Rules
 
@@ -470,7 +452,6 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 | No | Detail |
 | --- | --- |
 | 1 | `audit_template_conformance(&self, context: &DocAuditContext) -> Vec<DocFinding>` |
-| 2 | — |
 
 #### Input
 
@@ -491,14 +472,12 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 | No | Detail |
 | --- | --- |
 | 1 | Audit-only: findings, no rewriting of the document. |
-| 2 | — |
 
 #### Event
 
 | No | Detail |
 | --- | --- |
 | 1 | `lint-arwaky-cli docs .`. |
-| 2 | — |
 
 #### Test
 
@@ -512,7 +491,6 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 | No | Detail |
 | --- | --- |
 | 1 | Zero `AES606` shape findings (`section_not_table`, `table_missing_columns`, `table_extra_columns`, `entry_missing_row`, `table_header_repeated`, `table_not_in_template`, `h3_unexpected`) from `lint-arwaky-cli docs .` on a conforming workspace. |
-| 2 | — |
 
 ### FR-DOC-007: Required-Document Presence (AES606)
 
@@ -521,7 +499,6 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 | No | Detail |
 | --- | --- |
 | 1 | Report every required root document that does not exist at a real workspace root. |
-| 2 | — |
 
 #### Business Rules
 
@@ -554,7 +531,6 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 | No | Detail |
 | --- | --- |
 | 1 | `audit_required_docs(&self, context: &DocAuditContext) -> Vec<DocFinding>` |
-| 2 | — |
 
 #### Input
 
@@ -582,7 +558,6 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 | No | Detail |
 | --- | --- |
 | 1 | `lint-arwaky-cli docs .`. |
-| 2 | — |
 
 #### Test
 
@@ -596,7 +571,6 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 | No | Detail |
 | --- | --- |
 | 1 | Zero `missing_required_doc` findings from `lint-arwaky-cli docs .` on a workspace that ships the full root layout. |
-| 2 | — |
 
 ### FR-DOC-008: Member-Folder Document Presence (AES606)
 
@@ -605,7 +579,6 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 | No | Detail |
 | --- | --- |
 | 1 | Report every member folder that lacks the document pair its role mandates. |
-| 2 | — |
 
 #### Business Rules
 
@@ -638,7 +611,6 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 | No | Detail |
 | --- | --- |
 | 1 | `audit_member_docs(&self, context: &DocAuditContext) -> Vec<DocFinding>` |
-| 2 | — |
 
 #### Input
 
@@ -666,7 +638,6 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 | No | Detail |
 | --- | --- |
 | 1 | `lint-arwaky-cli docs .`. |
-| 2 | — |
 
 #### Test
 
@@ -680,7 +651,6 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 | No | Detail |
 | --- | --- |
 | 1 | Zero member-document findings from `lint-arwaky-cli docs .` on a workspace where every role folder carries its pair. |
-| 2 | — |
 
 ### FR-DOC-009: Template Body & Placeholder Conformance (AES606)
 
@@ -722,7 +692,6 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 | No | Detail |
 | --- | --- |
 | 1 | `audit_template_body(&self, context: &DocAuditContext) -> Vec<DocFinding>` |
-| 2 | — |
 
 #### Input
 
@@ -750,7 +719,6 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 | No | Detail |
 | --- | --- |
 | 1 | `lint-arwaky-cli docs .`, honoring `strict_override`/config for placeholder strictness. |
-| 2 | — |
 
 #### Test
 
@@ -764,7 +732,6 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 | No | Detail |
 | --- | --- |
 | 1 | Zero `unfilled_placeholder` and zero deleted-section findings from `lint-arwaky-cli docs .` on templates copied and fully filled. |
-| 2 | — |
 
 ### FR-DOC-010: PR-ID Module-Folder Ownership (AES607)
 
@@ -806,7 +773,6 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 | No | Detail |
 | --- | --- |
 | 1 | `audit_pr_folder_ownership(context: &DocAuditContext) -> Vec<DocFinding>` |
-| 2 | — |
 
 #### Input
 
@@ -841,14 +807,12 @@ Each rule is one capability behind one protocol seam; AES606 carries four seams,
 | No | Detail |
 | --- | --- |
 | 1 | Capability test suite covers: clean-matching-folder, missing-folder fires one finding, multi-project membership, single-project owns whole non-empty layout, empty layout fires each PR-ID, non-root silent, no PR-IDs silent, no layout root silent. |
-| 2 | — |
 
 #### Metric
 
 | No | Detail |
 | --- | --- |
 | 1 | Zero `AES607` / `pr_folder_not_owned` findings from `lint-arwaky-cli docs .` on a conforming project. |
-| 2 | — |
 
 ## Public Interface
 

@@ -40,7 +40,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Start, monitor, and stop the filesystem watcher that emits change events for linting. |
-| 2 | — |
 
 #### Business Rules
 
@@ -75,7 +74,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | start(config), is_available(), subscribe() -> broadcast receiver of WatchEvent, stop(). |
-| 2 | — |
 
 #### Input
 
@@ -103,14 +101,12 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | WatchEvent per filesystem change, delivered on the broadcast channel. |
-| 2 | — |
 
 #### Test
 
 | No | Detail |
 | --- | --- |
 | 1 | acceptance_watch_container_creates_successfully, container_lifecycle_accessible, e2e_file_watch_container_creates, and file_watch_container_creates assert construction and lifecycle wiring. |
-| 2 | — |
 
 #### Metric
 
@@ -126,7 +122,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Keep only lintable file changes and remove duplicate events for the same path and kind. |
-| 2 | — |
 
 #### Business Rules
 
@@ -161,7 +156,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | is_lintable(path) -> bool; filter_events(events) -> filtered event list. |
-| 2 | — |
 
 #### Input
 
@@ -175,28 +169,24 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Vec<WatchEvent> of lintable unique changes, passed to FR-FileWatch-003. |
-| 2 | — |
 
 #### Error
 
 | No | Detail |
 | --- | --- |
 | 1 | None; filtering is total and never fails. |
-| 2 | — |
 
 #### Event
 
 | No | Detail |
 | --- | --- |
 | 1 | None of its own; it only narrows WatchEvents. |
-| 2 | — |
 
 #### Test
 
 | No | Detail |
 | --- | --- |
 | 1 | filter_events_keeps_lintable, filter_events_removes_non_lintable, filter_events_all_non_lintable, filter_events_empty_input, dedup_all_same_path, dedup_mixed_duplicates, and change_filter_implements_change_filter_protocol assert the contract. |
-| 2 | — |
 
 #### Metric
 
@@ -212,7 +202,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Invoke the linter for each retained change event coming out of the filter. |
-| 2 | — |
 
 #### Business Rules
 
@@ -246,7 +235,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | lint_changed(event) -> Result<(), WatchServiceError>. |
-| 2 | — |
 
 #### Input
 
@@ -267,21 +255,18 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | WatchServiceError for unreadable or vanished files; the error is scoped to that file. |
-| 2 | — |
 
 #### Event
 
 | No | Detail |
 | --- | --- |
 | 1 | None emitted; lint results flow to the linter dependency. |
-| 2 | — |
 
 #### Test
 
 | No | Detail |
 | --- | --- |
 | 1 | change_lint_protocol_is_object_safe, container_aggregate_needs_linter, and filter_via_container assert the handler contract and container wiring. |
-| 2 | — |
 
 #### Metric
 

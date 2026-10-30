@@ -47,7 +47,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Report overall environment health including toolchain state for the doctor command. |
-| 2 | — |
 
 #### Business Rules
 
@@ -80,49 +79,42 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | `doctor()` result plus toolchain diagnosis returning binary path and categorized tool lists. |
-| 2 | — |
 
 #### Input
 
 | No | Detail |
 | --- | --- |
 | 1 | MaintenanceRequest::{Doctor, DiagnoseToolchain, Cancel}; source is the doctor surface command. |
-| 2 | — |
 
 #### Output
 
 | No | Detail |
 | --- | --- |
 | 1 | MaintenanceResponse::{Doctor, Toolchain, Cancelled} carrying status and tool lists. |
-| 2 | — |
 
 #### Error
 
 | No | Detail |
 | --- | --- |
 | 1 | Unavailable tools are reported in lists, not as top-level failures; cancellation surfaces as Cancelled. |
-| 2 | — |
 
 #### Event
 
 | No | Detail |
 | --- | --- |
 | 1 | None; doctor runs synchronously. |
-| 2 | — |
 
 #### Test
 
 | No | Detail |
 | --- | --- |
 | 1 | maintenance_doctor_reports_health_status, diagnose_toolchain_has_binary_path, diagnose_toolchain_returns_non_empty_lists, and doctor_checker_serves_doctor_and_toolchain assert doctor output. |
-| 2 | — |
 
 #### Metric
 
 | No | Detail |
 | --- | --- |
 | 1 | Diagnosis lists are non-empty on a seeded environment; doctor exit status reflects health on every run. |
-| 2 | — |
 
 ### FR-Maintenance-002: Project Statistics (stats)
 
@@ -131,7 +123,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Compute project statistics (counts and language breakdown) for the stats command. |
-| 2 | — |
 
 #### Business Rules
 
@@ -164,49 +155,42 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | `stats()` over the target directory returning counts and breakdown. |
-| 2 | — |
 
 #### Input
 
 | No | Detail |
 | --- | --- |
 | 1 | Directory path; source is MaintenanceRequest::Stats. |
-| 2 | — |
 
 #### Output
 
 | No | Detail |
 | --- | --- |
 | 1 | MaintenanceResponse::Stats with count fields. |
-| 2 | — |
 
 #### Error
 
 | No | Detail |
 | --- | --- |
 | 1 | Unreadable path reports zero/partial counts rather than failing. |
-| 2 | — |
 
 #### Event
 
 | No | Detail |
 | --- | --- |
 | 1 | None. |
-| 2 | — |
 
 #### Test
 
 | No | Detail |
 | --- | --- |
 | 1 | maintenance_stats_counts_are_consistent and orchestrator_stats_on_current_dir assert count consistency and current-dir routing. |
-| 2 | — |
 
 #### Metric
 
 | No | Detail |
 | --- | --- |
 | 1 | Sum of per-language counts equals the total on every seeded fixture run. |
-| 2 | — |
 
 ### FR-Maintenance-003: Cache Cleanup (clean)
 
@@ -215,7 +199,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Remove cache artifacts to reclaim disk space for the clean command. |
-| 2 | — |
 
 #### Business Rules
 
@@ -248,49 +231,42 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | `clean()` removing known cache roots and returning cleanup status. |
-| 2 | — |
 
 #### Input
 
 | No | Detail |
 | --- | --- |
 | 1 | Cache root locations (default: configured cache dir); source is MaintenanceRequest::Clean. |
-| 2 | — |
 
 #### Output
 
 | No | Detail |
 | --- | --- |
 | 1 | MaintenanceResponse::Clean with removal status. |
-| 2 | — |
 
 #### Error
 
 | No | Detail |
 | --- | --- |
 | 1 | Permission failures on individual entries are reported; overall call still completes. |
-| 2 | — |
 
 #### Event
 
 | No | Detail |
 | --- | --- |
 | 1 | None. |
-| 2 | — |
 
 #### Test
 
 | No | Detail |
 | --- | --- |
 | 1 | orchestrator_clean_does_not_panic and cache_cleanup_checker_implements_cache_cleanup_protocol assert safety and contract. |
-| 2 | — |
 
 #### Metric
 
 | No | Detail |
 | --- | --- |
 | 1 | Clean leaves zero owned cache files on the seeded fixture; source files remain untouched (byte-identical). |
-| 2 | — |
 
 ### FR-Maintenance-004: Tool Update (update)
 
@@ -299,7 +275,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Check for and apply updates to bundled linter tools for the update command. |
-| 2 | — |
 
 #### Business Rules
 
@@ -332,49 +307,42 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | `update()` probing and updating managed tools returning per-tool status. |
-| 2 | — |
 
 #### Input
 
 | No | Detail |
 | --- | --- |
 | 1 | Tool list from configuration; source is MaintenanceRequest::Update. |
-| 2 | — |
 
 #### Output
 
 | No | Detail |
 | --- | --- |
 | 1 | MaintenanceResponse::Update with per-tool update outcomes. |
-| 2 | — |
 
 #### Error
 
 | No | Detail |
 | --- | --- |
 | 1 | Per-tool probe or install failure is reported on that entry; overall response still returns. |
-| 2 | — |
 
 #### Event
 
 | No | Detail |
 | --- | --- |
 | 1 | None. |
-| 2 | — |
 
 #### Test
 
 | No | Detail |
 | --- | --- |
 | 1 | tool_update_checker_implements_tool_update_protocol asserts the protocol contract. |
-| 2 | — |
 
 #### Metric
 
 | No | Detail |
 | --- | --- |
 | 1 | Each probed tool returns a definite status (current, updated, or failed) on a seeded run. |
-| 2 | — |
 
 ### FR-Maintenance-005: Security Scan
 
@@ -383,7 +351,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Scan the project for known security issues for the security scan command. |
-| 2 | — |
 
 #### Business Rules
 
@@ -416,49 +383,42 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | `security_scan()` returning findings list and scan status. |
-| 2 | — |
 
 #### Input
 
 | No | Detail |
 | --- | --- |
 | 1 | Project path; source is MaintenanceRequest::SecurityScan. |
-| 2 | — |
 
 #### Output
 
 | No | Detail |
 | --- | --- |
 | 1 | MaintenanceResponse::Security with findings. |
-| 2 | — |
 
 #### Error
 
 | No | Detail |
 | --- | --- |
 | 1 | Manifest/lock unreadable yields a scoped error in the response; never panics. |
-| 2 | — |
 
 #### Event
 
 | No | Detail |
 | --- | --- |
 | 1 | None. |
-| 2 | — |
 
 #### Test
 
 | No | Detail |
 | --- | --- |
 | 1 | e2e_security_scan_and_dependency_report and orchestrator_security_scan assert scan flow on seeded fixtures. |
-| 2 | — |
 
 #### Metric
 
 | No | Detail |
 | --- | --- |
 | 1 | Seeded vulnerable fixture reports at least one finding; clean fixture reports zero. |
-| 2 | — |
 
 ### FR-Maintenance-006: Dependency Report
 
@@ -467,7 +427,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Produce a dependency report for the project's dependency graph. |
-| 2 | — |
 
 #### Business Rules
 
@@ -481,7 +440,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Partial graphs report what was parsed; report works even when security scan finds nothing. |
-| 2 | — |
 
 #### Capability
 
@@ -500,49 +458,42 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | `dependency_report()` returning dependency listing. |
-| 2 | — |
 
 #### Input
 
 | No | Detail |
 | --- | --- |
 | 1 | Project path; source is MaintenanceRequest::DependencyReport. |
-| 2 | — |
 
 #### Output
 
 | No | Detail |
 | --- | --- |
 | 1 | MaintenanceResponse::Dependencies with the dependency listing. |
-| 2 | — |
 
 #### Error
 
 | No | Detail |
 | --- | --- |
 | 1 | Unreadable input yields empty listing plus error note. |
-| 2 | — |
 
 #### Event
 
 | No | Detail |
 | --- | --- |
 | 1 | None. |
-| 2 | — |
 
 #### Test
 
 | No | Detail |
 | --- | --- |
 | 1 | orchestrator_dependency_report, dependency_report_checker_implements_dependency_report_protocol, and e2e_security_scan_and_dependency_report assert reporting. |
-| 2 | — |
 
 #### Metric
 
 | No | Detail |
 | --- | --- |
 | 1 | Seeded manifest fixtures produce a listing matching their dependency count. |
-| 2 | — |
 
 ### FR-Maintenance-007: Adapter Health Check
 
@@ -551,7 +502,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Check that every configured linter adapter is installed and runnable. |
-| 2 | — |
 
 #### Business Rules
 
@@ -584,49 +534,42 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | `health_check()` returning per-adapter availability (ten adapters, all four languages). |
-| 2 | — |
 
 #### Input
 
 | No | Detail |
 | --- | --- |
 | 1 | Adapter configuration; source is MaintenanceRequest::HealthCheck. |
-| 2 | — |
 
 #### Output
 
 | No | Detail |
 | --- | --- |
 | 1 | MaintenanceResponse::Health with availability per adapter. |
-| 2 | — |
 
 #### Error
 
 | No | Detail |
 | --- | --- |
 | 1 | Individual probe failure marks that adapter unhealthy; overall response completes. |
-| 2 | — |
 
 #### Event
 
 | No | Detail |
 | --- | --- |
 | 1 | None. |
-| 2 | — |
 
 #### Test
 
 | No | Detail |
 | --- | --- |
 | 1 | health_check_returns_10_adapters, health_check_has_all_languages, maintenance_health_check_covers_all_languages, and orchestrator_health_check assert coverage. |
-| 2 | — |
 
 #### Metric
 
 | No | Detail |
 | --- | --- |
 | 1 | Health check returns exactly ten adapter entries covering Rust, Python, JS, and Markdown groups. |
-| 2 | — |
 
 ### FR-Maintenance-008: Self-Update (binary)
 
@@ -635,7 +578,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Update the lint-arwaky binary itself with integrity verification for the self-update command. |
-| 2 | — |
 
 #### Business Rules
 
@@ -668,49 +610,42 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | `self_update()` downloading, verifying, and replacing the binary. |
-| 2 | — |
 
 #### Input
 
 | No | Detail |
 | --- | --- |
 | 1 | Release source and current binary path; source is MaintenanceRequest::SelfUpdate. |
-| 2 | — |
 
 #### Output
 
 | No | Detail |
 | --- | --- |
 | 1 | MaintenanceResponse::SelfUpdate with update outcome. |
-| 2 | — |
 
 #### Error
 
 | No | Detail |
 | --- | --- |
 | 1 | Corrupt or unverifiable download aborts before replace; caller sees failure with the current binary untouched. |
-| 2 | — |
 
 #### Event
 
 | No | Detail |
 | --- | --- |
 | 1 | None. |
-| 2 | — |
 
 #### Test
 
 | No | Detail |
 | --- | --- |
 | 1 | self_update_checker_implements_self_update_protocol, self_update_rejects_corrupt_download_even_when_target_matches, self_update_verifies_download_when_no_target_exists, and self_update_success_or_already_up_to_date assert integrity and outcomes. |
-| 2 | — |
 
 #### Metric
 
 | No | Detail |
 | --- | --- |
 | 1 | Corrupt payload never replaces the binary on a seeded run; valid payload updates atomically in one call. |
-| 2 | — |
 
 ## Public Interface
 

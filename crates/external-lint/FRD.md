@@ -54,7 +54,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Based on the language flags for a project, select the appropriate set of linter adapters and run them in adapter-list order, aggregating the results. |
-| 2 | — |
 
 #### Business Rules
 
@@ -90,7 +89,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | `select_adapters` |
-| 2 | — |
 
 #### Input
 
@@ -118,7 +116,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | None. |
-| 2 | — |
 
 #### Test
 
@@ -141,7 +138,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Run an external linter tool's native fix command for a specific file, returning whether the fix succeeded. |
-| 2 | — |
 
 #### Business Rules
 
@@ -175,35 +171,30 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | `js_apply_fix` |
-| 2 | — |
 
 #### Input
 
 | No | Detail |
 | --- | --- |
 | 1 | Tool name, file path, fix argument (e.g., `--fix`, `--write`). |
-| 2 | — |
 
 #### Output
 
 | No | Detail |
 | --- | --- |
 | 1 | Compliance status indicating success or failure. |
-| 2 | — |
 
 #### Error
 
 | No | Detail |
 | --- | --- |
 | 1 | Subprocess failure mapped to an adapter error; caller decides next step. |
-| 2 | — |
 
 #### Event
 
 | No | Detail |
 | --- | --- |
 | 1 | None. |
-| 2 | — |
 
 #### Test
 
@@ -217,7 +208,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | One subprocess spawn per invoked fix. |
-| 2 | — |
 
 ### FR-ExternalLint-003: Normalize External Tool Output
 
@@ -266,35 +256,30 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | `normalize` |
-| 2 | — |
 
 #### Input
 
 | No | Detail |
 | --- | --- |
 | 1 | Raw output from an external linter subprocess (JSON or text). |
-| 2 | — |
 
 #### Output
 
 | No | Detail |
 | --- | --- |
 | 1 | Normalized lint results. |
-| 2 | — |
 
 #### Error
 
 | No | Detail |
 | --- | --- |
 | 1 | Parse failures return empty results with a warning; no crash on malformed output. |
-| 2 | — |
 
 #### Event
 
 | No | Detail |
 | --- | --- |
 | 1 | None. |
-| 2 | — |
 
 #### Test
 
@@ -317,7 +302,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Spawn external linter tools as blocking subprocesses, capturing stdout/stderr, enforcing per-adapter timeouts, and mapping spawn/timeout errors. |
-| 2 | — |
 
 #### Business Rules
 
@@ -354,35 +338,30 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | `exec_cmd_scan` / `exec_cmd_adapter` |
-| 2 | — |
 
 #### Input
 
 | No | Detail |
 | --- | --- |
 | 1 | Tool name, argument list, target path, and timeout in seconds. |
-| 2 | — |
 
 #### Output
 
 | No | Detail |
 | --- | --- |
 | 1 | Captured stdout/stderr text plus a completion status (ok, timed out, spawn failure). |
-| 2 | — |
 
 #### Error
 
 | No | Detail |
 | --- | --- |
 | 1 | Spawn and timeout errors are surfaced as `LinterOperationError`. |
-| 2 | — |
 
 #### Event
 
 | No | Detail |
 | --- | --- |
 | 1 | None. |
-| 2 | — |
 
 #### Test
 
@@ -405,7 +384,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Resolve the binary path for a JS/TS tool, preferring a local `node_modules/.bin/<tool>` installation over a global PATH lookup, and locate the working directory by walking up to 10 parent directories. |
-| 2 | — |
 
 #### Business Rules
 
@@ -439,14 +417,12 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | `resolve_js_cmd` / `resolve_js_working_dir` |
-| 2 | — |
 
 #### Input
 
 | No | Detail |
 | --- | --- |
 | 1 | Tool name and a starting path. |
-| 2 | — |
 
 #### Output
 
@@ -460,14 +436,12 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Resolution failures are reported as adapter errors; other adapters continue. |
-| 2 | — |
 
 #### Event
 
 | No | Detail |
 | --- | --- |
 | 1 | None. |
-| 2 | — |
 
 #### Test
 
@@ -490,7 +464,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Find the directory containing `Cargo.toml` or `Cargo.lock` for Rust tool execution, walking up the directory tree. |
-| 2 | — |
 
 #### Business Rules
 
@@ -505,7 +478,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | No `Cargo.toml` or `Cargo.lock` anywhere in the parent chain → the adapter is skipped with a warning. |
-| 2 | — |
 
 #### Capability
 
@@ -524,35 +496,30 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | `resolve_cargo_working_dir` |
-| 2 | — |
 
 #### Input
 
 | No | Detail |
 | --- | --- |
 | 1 | Starting path. |
-| 2 | — |
 
 #### Output
 
 | No | Detail |
 | --- | --- |
 | 1 | Absolute path to the resolved cargo working directory, or none. |
-| 2 | — |
 
 #### Error
 
 | No | Detail |
 | --- | --- |
 | 1 | Resolution failure is reported as an adapter error; other adapters continue. |
-| 2 | — |
 
 #### Event
 
 | No | Detail |
 | --- | --- |
 | 1 | None. |
-| 2 | — |
 
 #### Test
 

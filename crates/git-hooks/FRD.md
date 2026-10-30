@@ -56,7 +56,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Detect changed files in the working tree and run lint checks over them before commit. |
-| 2 | — |
 
 #### Business Rules
 
@@ -91,7 +90,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | get_diff, get_changed_files, get_default_branch, run_git_diff_check(path). |
-| 2 | — |
 
 #### Input
 
@@ -105,7 +103,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | GitDiffResultVO, FilePathList, GitBranchName, and LintResultList returned in GitHooksResponse::RunCheck. |
-| 2 | — |
 
 #### Error
 
@@ -119,14 +116,12 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | None; results return synchronously to the hook process. |
-| 2 | — |
 
 #### Test
 
 | No | Detail |
 | --- | --- |
 | 1 | changed_file_with_aes_violation_produces_blocking_results, clean_changed_file_produces_no_violations, e2e_orchestrator_delegates_to_diff_protocol, and assert_diff_detection_trait cover the contract. |
-| 2 | — |
 
 #### Metric
 
@@ -142,7 +137,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Install the pre-commit hook into the repository so every commit runs the lint check. |
-| 2 | — |
 
 #### Business Rules
 
@@ -177,7 +171,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | install_pre_commit(executable_path); get_hook_manager_identity(). |
-| 2 | — |
 
 #### Input
 
@@ -191,7 +184,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | GitHooksResponse::Install carrying success status and identity. |
-| 2 | — |
 
 #### Error
 
@@ -205,14 +197,12 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | None; installation is a filesystem write. |
-| 2 | — |
 
 #### Test
 
 | No | Detail |
 | --- | --- |
 | 1 | e2e_install_creates_hooks_directory_when_missing, e2e_full_user_workflow_init_install_check, and config_init_identity_is_git_hook_manager assert install behavior and identity. |
-| 2 | — |
 
 #### Metric
 
@@ -228,7 +218,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Uninstall the pre-commit hook and restore the repository to its pre-install state. |
-| 2 | — |
 
 #### Business Rules
 
@@ -262,7 +251,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | uninstall_pre_commit() -> Result<SuccessStatus, GitHookError>. |
-| 2 | — |
 
 #### Input
 
@@ -276,35 +264,30 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | GitHooksResponse::Uninstall with success status. |
-| 2 | — |
 
 #### Error
 
 | No | Detail |
 | --- | --- |
 | 1 | GitHookError when the repository is unusable or removal is denied. |
-| 2 | — |
 
 #### Event
 
 | No | Detail |
 | --- | --- |
 | 1 | None; uninstallation is a filesystem delete. |
-| 2 | — |
 
 #### Test
 
 | No | Detail |
 | --- | --- |
 | 1 | e2e_hook_install_then_uninstall_round_trip and assert_hook_uninstall_trait assert the round trip and protocol contract. |
-| 2 | — |
 
 #### Metric
 
 | No | Detail |
 | --- | --- |
 | 1 | Round trip on a seeded repo restores the original hooks directory state exactly. |
-| 2 | — |
 
 ### FR-GitHooks-004: Project Config Initialization
 
@@ -313,7 +296,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Initialize the git-hooks project configuration and manage its ignore rules. |
-| 2 | — |
 
 #### Business Rules
 
@@ -348,7 +330,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | initialize_config(path) -> DescriptionVO; update_ignore_rule(request: HookIgnoreUpdateVO) -> DescriptionVO. |
-| 2 | — |
 
 #### Input
 
@@ -362,7 +343,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | GitHooksResponse::GetManagerIdentity and description text describing the operation result. |
-| 2 | — |
 
 #### Error
 
@@ -376,14 +356,12 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | None; configuration write is synchronous. |
-| 2 | — |
 
 #### Test
 
 | No | Detail |
 | --- | --- |
 | 1 | config_file_not_found, config_init_identity_is_git_hook_manager, and e2e_full_user_workflow_init_install_check assert init, identity, and missing-config handling. |
-| 2 | — |
 
 #### Metric
 

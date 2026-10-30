@@ -60,7 +60,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Build the graph context and entry-point set that reachability checks run against. |
-| 2 | — |
 
 #### Business Rules
 
@@ -74,7 +73,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Empty graph yields empty entry points without error; entry points computed from any subset still reach consistently; paths compared by absolute-path suffix so case/nesting differences still match. |
-| 2 | — |
 
 #### Capability
 
@@ -93,49 +91,42 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | BuildGraphContext and IdentifyEntryPoints as OrphanRequest variants resolved through IOrphanAggregate::execute. |
-| 2 | — |
 
 #### Input
 
 | No | Detail |
 | --- | --- |
 | 1 | Root path plus optional entries; source is OrphanRequest::{BuildGraphContext, IdentifyEntryPoints}. |
-| 2 | — |
 
 #### Output
 
 | No | Detail |
 | --- | --- |
 | 1 | OrphanResponse::{GraphContext, EntryPoints} used by FR-OrphanRules-002..007. |
-| 2 | — |
 
 #### Error
 
 | No | Detail |
 | --- | --- |
 | 1 | Unreadable trees skip nodes; missing entry points yield an empty alive set, causing downstream orphans (correct behavior). |
-| 2 | — |
 
 #### Event
 
 | No | Detail |
 | --- | --- |
 | 1 | None; context build is synchronous. |
-| 2 | — |
 
 #### Test
 
 | No | Detail |
 | --- | --- |
 | 1 | fr001_orchestration_steps_are_inherent_agent_methods and graph-context coverage in the orphan suite assert entry-point derivation. |
-| 2 | — |
 
 #### Metric
 
 | No | Detail |
 | --- | --- |
 | 1 | Seeded container entry points identify the expected alive set; empty graphs produce empty context with zero errors. |
-| 2 | — |
 
 ### FR-OrphanRules-002: Taxonomy Orphan Detection (AES501)
 
@@ -144,7 +135,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Flag taxonomy files that no other layer imports (AES501). |
-| 2 | — |
 
 #### Business Rules
 
@@ -158,7 +148,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Taxonomy imported by agent/capabilities/surface is not an orphan; imported only by other taxonomy is an orphan; self-import only is an orphan; helper suffix categorized as utility; utility suffix also flagged under taxonomy rules. |
-| 2 | — |
 
 #### Capability
 
@@ -177,49 +166,42 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Taxonomy orphan check over graph context returning AES501 violations. |
-| 2 | — |
 
 #### Input
 
 | No | Detail |
 | --- | --- |
 | 1 | Graph context and entry points; source is OrphanRequest::{Check, CheckWithContext, CheckWithEntries}. |
-| 2 | — |
 
 #### Output
 
 | No | Detail |
 | --- | --- |
 | 1 | OrphanResponse::Violations with AES501 codes. |
-| 2 | — |
 
 #### Error
 
 | No | Detail |
 | --- | --- |
 | 1 | Missing context causes a pre-check build rather than a crash; unreadable files are skipped. |
-| 2 | — |
 
 #### Event
 
 | No | Detail |
 | --- | --- |
 | 1 | None. |
-| 2 | — |
 
 #### Test
 
 | No | Detail |
 | --- | --- |
 | 1 | aes501_taxonomy_file_imported_by_surface_is_not_orphan, aes501_taxonomy_file_only_imported_by_other_taxonomy_is_orphan, aes501_taxonomy_file_with_self_import_only_is_orphan, and aes501_taxonomy_helper_suffix_categorized_as_utility assert rules. |
-| 2 | — |
 
 #### Metric
 
 | No | Detail |
 | --- | --- |
 | 1 | Each seeded taxonomy orphan fires exactly one AES501 finding; cross-layer-imported taxonomy fixtures fire zero. |
-| 2 | — |
 
 ### FR-OrphanRules-003: Contract Orphan Detection (AES502)
 
@@ -228,7 +210,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Flag contract files whose traits have no alive implementor wired into the app (AES502). |
-| 2 | — |
 
 #### Business Rules
 
@@ -242,7 +223,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Aggregate not called by surface is an orphan; implementor matched by absolute-path suffix is alive; same basename at different path stays orphan; implementor not alive remains orphan; multi-trait file with only one alive implementor keeps only that trait alive. |
-| 2 | — |
 
 #### Capability
 
@@ -261,49 +241,42 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Contract orphan check mapping contracts to alive implementors returning AES502 violations. |
-| 2 | — |
 
 #### Input
 
 | No | Detail |
 | --- | --- |
 | 1 | Graph context, entry points, and parsed entries; source is OrphanRequest check variants (also OrphanRequest::Scan for full runs). |
-| 2 | — |
 
 #### Output
 
 | No | Detail |
 | --- | --- |
 | 1 | OrphanResponse::Violations with AES502 codes; ScanOutcome for full scans. |
-| 2 | — |
 
 #### Error
 
 | No | Detail |
 | --- | --- |
 | 1 | Unmatched references report orphan rather than erroring; unreadable files skipped. |
-| 2 | — |
 
 #### Event
 
 | No | Detail |
 | --- | --- |
 | 1 | None. |
-| 2 | — |
 
 #### Test
 
 | No | Detail |
 | --- | --- |
 | 1 | aes502_contract_wired_through_implementation, aes502_contract_implementor_same_basename_different_path_is_orphan, aes502_contract_implementor_not_alive_is_still_orphan, and aes502_aggregate_not_called_by_surface_is_orphan assert matching rules. |
-| 2 | — |
 
 #### Metric
 
 | No | Detail |
 | --- | --- |
 | 1 | Seeded wired contract fires zero findings; each seeded unwired contract fires exactly one AES502 finding. |
-| 2 | — |
 
 ### FR-OrphanRules-004: Capabilities Orphan Detection (AES503)
 
@@ -312,7 +285,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Flag capability files unreachable from entry points through the DI wiring (AES503). |
-| 2 | — |
 
 #### Business Rules
 
@@ -326,7 +298,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Reachable file not an orphan; broken chain detects unreachable; DI bridge reaches capabilities; unwired reachable file reports a DI bridge gap message; python chained imports reachable; multiple impls on one contract all examined. |
-| 2 | — |
 
 #### Capability
 
@@ -345,49 +316,42 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Capabilities orphan check over graph plus bridge edges returning AES503 violations. |
-| 2 | — |
 
 #### Input
 
 | No | Detail |
 | --- | --- |
 | 1 | Graph context with implementation bridges; source is OrphanRequest check variants. |
-| 2 | — |
 
 #### Output
 
 | No | Detail |
 | --- | --- |
 | 1 | OrphanResponse::Violations with AES503 codes including violation display messages. |
-| 2 | — |
 
 #### Error
 
 | No | Detail |
 | --- | --- |
 | 1 | Gap in wiring is reported as the violation itself (message mentions DI bridge gap), not a tool error. |
-| 2 | — |
 
 #### Event
 
 | No | Detail |
 | --- | --- |
 | 1 | None. |
-| 2 | — |
 
 #### Test
 
 | No | Detail |
 | --- | --- |
 | 1 | aes503_reachable_file_is_not_orphan, aes503_di_impl_bridge_reaches_capabilities, aes503_broken_chain_detects_unreachable, and aes503_reachable_unwired_message_mentions_di_bridge_gap assert reachability and messaging. |
-| 2 | — |
 
 #### Metric
 
 | No | Detail |
 | --- | --- |
 | 1 | Seeded reachable capability fires zero; each seeded unwired capability fires one AES503 finding with the documented message. |
-| 2 | — |
 
 ### FR-OrphanRules-005: Utility Orphan Detection (AES504)
 
@@ -396,7 +360,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Flag utility files that nothing references (AES504). |
-| 2 | — |
 
 #### Business Rules
 
@@ -429,49 +392,42 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Utility orphan check returning AES504 violations. |
-| 2 | — |
 
 #### Input
 
 | No | Detail |
 | --- | --- |
 | 1 | Graph context and entry points; source is OrphanRequest check variants. |
-| 2 | — |
 
 #### Output
 
 | No | Detail |
 | --- | --- |
 | 1 | OrphanResponse::Violations with AES504 codes. |
-| 2 | — |
 
 #### Error
 
 | No | Detail |
 | --- | --- |
 | 1 | Missing references produce a violation (the orphan), not an error. |
-| 2 | — |
 
 #### Event
 
 | No | Detail |
 | --- | --- |
 | 1 | None. |
-| 2 | — |
 
 #### Test
 
 | No | Detail |
 | --- | --- |
 | 1 | fr005_utility_orphan_analyzer_implements_protocol, utility_analyzer_is_object_safe, and test_utility_suffix_categorization assert contract and categorization. |
-| 2 | — |
 
 #### Metric
 
 | No | Detail |
 | --- | --- |
 | 1 | Seeded unimported utility fires one AES504 finding; referenced utility fires zero. |
-| 2 | — |
 
 ### FR-OrphanRules-006: Agent Orphan Detection (AES505)
 
@@ -480,7 +436,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Flag agent orchestrator files whose aggregate is never used by surface, container, or main (AES505). |
-| 2 | — |
 
 #### Business Rules
 
@@ -513,49 +468,42 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Agent orphan check against the alive set returning AES505 violations. |
-| 2 | — |
 
 #### Input
 
 | No | Detail |
 | --- | --- |
 | 1 | Graph context, entry points, alive aggregate set; source is OrphanRequest check variants. |
-| 2 | — |
 
 #### Output
 
 | No | Detail |
 | --- | --- |
 | 1 | OrphanResponse::Violations with AES505 codes. |
-| 2 | — |
 
 #### Error
 
 | No | Detail |
 | --- | --- |
 | 1 | Unreachable aggregate registers as orphan rather than failing. |
-| 2 | — |
 
 #### Event
 
 | No | Detail |
 | --- | --- |
 | 1 | None. |
-| 2 | — |
 
 #### Test
 
 | No | Detail |
 | --- | --- |
 | 1 | aes505_agent_with_aggregate_used_by_surface_is_not_orphan, aes505_no_aggregate_traits_not_in_alive_set_is_orphan, aes505_no_aggregate_traits_in_alive_set_is_not_orphan, and aes505_empty_content_is_not_orphan assert rules. |
-| 2 | — |
 
 #### Metric
 
 | No | Detail |
 | --- | --- |
 | 1 | Seeded used agent fires zero; seeded unused agent fires exactly one AES505 finding. |
-| 2 | — |
 
 ### FR-OrphanRules-007: Surface Orphan Detection (AES506)
 
@@ -564,7 +512,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Flag surface files (render trees) that never get invoked (AES506). |
-| 2 | — |
 
 #### Business Rules
 
@@ -578,7 +525,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Surface used from wiring is not an orphan; unused surface file is orphaned with its own violation kind; unchanged inputs classify deterministically; parse of surface tree with no entries yields no finding. |
-| 2 | — |
 
 #### Capability
 
@@ -597,49 +543,42 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Surfaces orphan check returning AES506 violations. |
-| 2 | — |
 
 #### Input
 
 | No | Detail |
 | --- | --- |
 | 1 | Graph context and registration data; source is OrphanRequest check variants. |
-| 2 | — |
 
 #### Output
 
 | No | Detail |
 | --- | --- |
 | 1 | OrphanResponse::Violations with AES506 codes. |
-| 2 | — |
 
 #### Error
 
 | No | Detail |
 | --- | --- |
 | 1 | No registration entry maps to an orphan finding; parse errors skip entries. |
-| 2 | — |
 
 #### Event
 
 | No | Detail |
 | --- | --- |
 | 1 | None. |
-| 2 | — |
 
 #### Test
 
 | No | Detail |
 | --- | --- |
 | 1 | fr007_surfaces_orphan_analyzer_implements_protocol and surfaces_analyzer_is_object_safe assert the analyzer contract. |
-| 2 | — |
 
 #### Metric
 
 | No | Detail |
 | --- | --- |
 | 1 | Seeded wired surface fires zero; seeded unwired surface fires exactly one AES506 finding. |
-| 2 | — |
 
 ## Public Interface
 

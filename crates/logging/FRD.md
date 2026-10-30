@@ -40,7 +40,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Map a verbosity level to tracing EnvFilter directives for the root and audit targets. |
-| 2 | — |
 
 #### Business Rules
 
@@ -73,35 +72,30 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Build the EnvFilter string/directives for a given verbosity level. |
-| 2 | — |
 
 #### Input
 
 | No | Detail |
 | --- | --- |
 | 1 | Verbosity enum from LoggingRequest (InstallSubscriber carries it); source is CLI verbosity flags. |
-| 2 | — |
 
 #### Output
 
 | No | Detail |
 | --- | --- |
 | 1 | EnvFilter passed to subscriber installation in FR-Logging-002; returned in LoggingResponse::Done. |
-| 2 | — |
 
 #### Error
 
 | No | Detail |
 | --- | --- |
 | 1 | Invalid level input falls back to default directives; never fails. |
-| 2 | — |
 
 #### Event
 
 | No | Detail |
 | --- | --- |
 | 1 | None; pure mapping. |
-| 2 | — |
 
 #### Test
 
@@ -115,7 +109,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Each of the three verbosity levels maps to its documented directive pair with zero mismatch on the filter_directive_* suite. |
-| 2 | — |
 
 ### FR-Logging-002: Install the Global Subscriber
 
@@ -124,7 +117,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Install the global tracing subscriber exactly once with the requested filter and ANSI setting. |
-| 2 | — |
 
 #### Business Rules
 
@@ -157,35 +149,30 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Install the subscriber with the given filter and ansi flag; returns the EnvFilter used. |
-| 2 | — |
 
 #### Input
 
 | No | Detail |
 | --- | --- |
 | 1 | Verbosity level plus ansi boolean; source is LoggingRequestKind::InstallSubscriber via ILoggingAggregate::execute. |
-| 2 | — |
 
 #### Output
 
 | No | Detail |
 | --- | --- |
 | 1 | LoggingResponseKind::Done carrying install status and the EnvFilter. |
-| 2 | — |
 
 #### Error
 
 | No | Detail |
 | --- | --- |
 | 1 | Already-installed global subscriber makes the call a noop with success status; no error propagates. |
-| 2 | — |
 
 #### Event
 
 | No | Detail |
 | --- | --- |
 | 1 | None; subscriber installation is process-global setup. |
-| 2 | — |
 
 #### Test
 
@@ -208,7 +195,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Time a scan phase and emit a structured duration event when it finishes. |
-| 2 | — |
 
 #### Business Rules
 
@@ -241,42 +227,36 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Start phase timing, stop it, and return the measured duration. |
-| 2 | — |
 
 #### Input
 
 | No | Detail |
 | --- | --- |
 | 1 | Phase name from LoggingRequestKind::PhaseStarted and PhaseFinished; source is per-phase calls in the scan pipeline. |
-| 2 | — |
 
 #### Output
 
 | No | Detail |
 | --- | --- |
 | 1 | Timing data through LoggingResponseKind::PhaseTimer plus a structured trace event. |
-| 2 | — |
 
 #### Error
 
 | No | Detail |
 | --- | --- |
 | 1 | Unmatched finish (no start) yields a zero-duration result instead of an error. |
-| 2 | — |
 
 #### Event
 
 | No | Detail |
 | --- | --- |
 | 1 | Structured trace event on phase completion with phase name and elapsed milliseconds. |
-| 2 | — |
 
 #### Test
 
 | No | Detail |
 | --- | --- |
 | 1 | PhaseTimer contract tests in the logging suite assert start/stop pairing and response shape (LoggingResponseKind::PhaseTimer). |
-| 2 | — |
 
 #### Metric
 
@@ -292,7 +272,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Emit real-time progress events for files the directory walker enters and skips. |
-| 2 | — |
 
 #### Business Rules
 
@@ -325,42 +304,36 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Report enter, skip, and discovered-count signals to the tracing backend. |
-| 2 | — |
 
 #### Input
 
 | No | Detail |
 | --- | --- |
 | 1 | Path plus optional reason and counts; source is LoggingRequestKind::WalkerEnter, WalkerSkip, and FilesDiscovered inside the scan walk. |
-| 2 | — |
 
 #### Output
 
 | No | Detail |
 | --- | --- |
 | 1 | LoggingResponseKind::Done plus trace events visible at info/debug. |
-| 2 | — |
 
 #### Error
 
 | No | Detail |
 | --- | --- |
 | 1 | Reporting never fails the walk; emission is best-effort. |
-| 2 | — |
 
 #### Event
 
 | No | Detail |
 | --- | --- |
 | 1 | Trace events for enter, skip, and discovered counts. |
-| 2 | — |
 
 #### Test
 
 | No | Detail |
 | --- | --- |
 | 1 | Walker-report contract coverage in the logging tests asserts enter/skip event emission and count reporting through the aggregate. |
-| 2 | — |
 
 #### Metric
 

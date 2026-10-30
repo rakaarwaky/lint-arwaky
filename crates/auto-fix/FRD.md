@@ -47,7 +47,6 @@ Each of the 4 FRs maps to exactly 1 protocol trait and exactly 1 capability stru
 | No | Detail |
 | --- | --- |
 | 1 | Remove the unused import at a flagged line, in place or as a dry-run preview. |
-| 2 | — |
 
 #### Business Rules
 
@@ -80,14 +79,12 @@ Each of the 4 FRs maps to exactly 1 protocol trait and exactly 1 capability stru
 | No | Detail |
 | --- | --- |
 | 1 | `fix_unused_import(&self, file_path: &str, line: LineNumber) -> FixOutcome` |
-| 2 | — |
 
 #### Input
 
 | No | Detail |
 | --- | --- |
 | 1 | `file_path: &str` and `line: LineNumber` carried by the flagged violation. |
-| 2 | — |
 
 #### Output
 
@@ -131,7 +128,6 @@ Each of the 4 FRs maps to exactly 1 protocol trait and exactly 1 capability stru
 | No | Detail |
 | --- | --- |
 | 1 | Strip a bypass comment or bypass macro at the flagged line, in place or as a dry-run preview. |
-| 2 | — |
 
 #### Business Rules
 
@@ -164,14 +160,12 @@ Each of the 4 FRs maps to exactly 1 protocol trait and exactly 1 capability stru
 | No | Detail |
 | --- | --- |
 | 1 | `fix_bypass_comments(&self, file_path: &str, line: LineNumber) -> FixOutcome` |
-| 2 | — |
 
 #### Input
 
 | No | Detail |
 | --- | --- |
 | 1 | `file_path: &str` plus `line: LineNumber` from the flagged violation. |
-| 2 | — |
 
 #### Output
 
@@ -192,7 +186,6 @@ Each of the 4 FRs maps to exactly 1 protocol trait and exactly 1 capability stru
 | No | Detail |
 | --- | --- |
 | 1 | `lint-arwaky-cli fix <path> --dry-run` (and without `--dry-run` to apply), routed through `FixRequest::Execute { path, dry_run }`. |
-| 2 | — |
 
 #### Test
 
@@ -215,7 +208,6 @@ Each of the 4 FRs maps to exactly 1 protocol trait and exactly 1 capability stru
 | No | Detail |
 | --- | --- |
 | 1 | Rename a flagged symbol across the whole file with word-boundary awareness, in place or as a dry-run preview. |
-| 2 | — |
 
 #### Business Rules
 
@@ -248,14 +240,12 @@ Each of the 4 FRs maps to exactly 1 protocol trait and exactly 1 capability stru
 | No | Detail |
 | --- | --- |
 | 1 | `rename_symbol(&self, file_path: &str, old_name: &SymbolName, new_name: &SymbolName) -> FixOutcome` |
-| 2 | — |
 
 #### Input
 
 | No | Detail |
 | --- | --- |
 | 1 | `file_path: &str`, `old_name: &SymbolName`, `new_name: &SymbolName`; the dry variant additionally takes `dry_run: bool`. |
-| 2 | — |
 
 #### Output
 
@@ -299,7 +289,6 @@ Each of the 4 FRs maps to exactly 1 protocol trait and exactly 1 capability stru
 | No | Detail |
 | --- | --- |
 | 1 | Run the whole fix pipeline over a path and report what was fixed versus what still needs a human. |
-| 2 | — |
 
 #### Business Rules
 
@@ -332,14 +321,12 @@ Each of the 4 FRs maps to exactly 1 protocol trait and exactly 1 capability stru
 | No | Detail |
 | --- | --- |
 | 1 | `report_violations(&self, path: &FilePath, dry_run: bool) -> FixResult` and `report_non_fixable(&self, violations: &[LintResult]) -> Vec<LintMessage>` |
-| 2 | — |
 
 #### Input
 
 | No | Detail |
 | --- | --- |
 | 1 | `path: &FilePath` (file or directory) and `dry_run: bool` from `FixRequest::Execute { path, dry_run }`. |
-| 2 | — |
 
 #### Output
 
@@ -360,7 +347,6 @@ Each of the 4 FRs maps to exactly 1 protocol trait and exactly 1 capability stru
 | No | Detail |
 | --- | --- |
 | 1 | `lint-arwaky-cli fix <path> --dry-run` (preview) and `lint-arwaky-cli fix <path>` (apply); the request factory is `FixRequest::Execute`. |
-| 2 | — |
 
 #### Test
 

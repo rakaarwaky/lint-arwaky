@@ -56,7 +56,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Flag source files whose line count exceeds the configured maximum. |
-| 2 | — |
 
 #### Business Rules
 
@@ -89,35 +88,30 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Line-count check against the configured maximum returning an AES301 violation on overflow. |
-| 2 | — |
 
 #### Input
 
 | No | Detail |
 | --- | --- |
 | 1 | File path plus content (or line count); source is CodeAnalysisRequest::RunAnalysis via ICodeAnalysisAggregate::execute. |
-| 2 | — |
 
 #### Output
 
 | No | Detail |
 | --- | --- |
 | 1 | Violation (FileTooLarge) inside CodeAnalysisResponse::Analysis. |
-| 2 | — |
 
 #### Error
 
 | No | Detail |
 | --- | --- |
 | 1 | Unreadable file reports no finding for that path rather than failing the analysis. |
-| 2 | — |
 
 #### Event
 
 | No | Detail |
 | --- | --- |
 | 1 | None; analysis is synchronous. |
-| 2 | — |
 
 #### Test
 
@@ -140,7 +134,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Flag source files whose line count falls below the configured minimum. |
-| 2 | — |
 
 #### Business Rules
 
@@ -173,35 +166,30 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Line-count check against the configured minimum returning an AES302 violation on shortfall. |
-| 2 | — |
 
 #### Input
 
 | No | Detail |
 | --- | --- |
 | 1 | File path plus content; source is CodeAnalysisRequest::RunAnalysis. |
-| 2 | — |
 
 #### Output
 
 | No | Detail |
 | --- | --- |
 | 1 | Violation (FileTooShort) inside CodeAnalysisResponse::Analysis. |
-| 2 | — |
 
 #### Error
 
 | No | Detail |
 | --- | --- |
 | 1 | Unreadable file reports no finding rather than failing the analysis. |
-| 2 | — |
 
 #### Event
 
 | No | Detail |
 | --- | --- |
 | 1 | None. |
-| 2 | — |
 
 #### Test
 
@@ -224,7 +212,6 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Require struct/enum/trait/class/interface/type definitions and flag dead (never-implemented) inheritance. |
-| 2 | — |
 
 #### Business Rules
 
@@ -257,35 +244,30 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Definition-presence check (MandatoryDefinitionChecker) plus dead-inheritance check (DeadInheritanceChecker), both over parsed entries. |
-| 2 | — |
 
 #### Input
 
 | No | Detail |
 | --- | --- |
 | 1 | Parsed file entries (defs, impls); source is CodeAnalysisRequest::RunAnalysis. |
-| 2 | — |
 
 #### Output
 
 | No | Detail |
 | --- | --- |
 | 1 | Violations MandatoryClassDefinition and DeadInheritance inside CodeAnalysisResponse::Analysis. |
-| 2 | — |
 
 #### Error
 
 | No | Detail |
 | --- | --- |
 | 1 | Unparseable file contributes no findings; analysis continues across files. |
-| 2 | — |
 
 #### Event
 
 | No | Detail |
 | --- | --- |
 | 1 | None. |
-| 2 | — |
 
 #### Test
 
@@ -308,14 +290,12 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Detect bypass annotations and panic-style shortcuts that dodge quality checks. |
-| 2 | — |
 
 #### Business Rules
 
 | No | Detail |
 | --- | --- |
 | 1 | AES304 fires per ViolationKind: BypassComment (bypass suppressions), UnwrapExpect, Panic, Todo, Unimplemented. Each occurrence in a scanned file is counted as its own finding with the kind carried in the message. |
-| 2 | — |
 
 #### Edge Cases
 
@@ -341,42 +321,36 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Scan file content for bypass markers and panic constructs returning per-kind violations. |
-| 2 | — |
 
 #### Input
 
 | No | Detail |
 | --- | --- |
 | 1 | File content plus path; source is CodeAnalysisRequest::RunAnalysis. |
-| 2 | — |
 
 #### Output
 
 | No | Detail |
 | --- | --- |
 | 1 | Violations (BypassComment, UnwrapExpect, Panic, Todo, Unimplemented) inside CodeAnalysisResponse::Analysis. |
-| 2 | — |
 
 #### Error
 
 | No | Detail |
 | --- | --- |
 | 1 | Unreadable file contributes no findings; no analysis failure occurs. |
-| 2 | — |
 
 #### Event
 
 | No | Detail |
 | --- | --- |
 | 1 | None. |
-| 2 | — |
 
 #### Test
 
 | No | Detail |
 | --- | --- |
 | 1 | Bypass-checker contract tests in the quality suite assert per-kind detection through IBypassCheckerProtocol (ViolationKind enums: UnwrapExpect, Panic, Todo, Unimplemented, BypassComment). |
-| 2 | — |
 
 #### Metric
 
@@ -392,14 +366,12 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Detect excessive code duplication across the codebase. |
-| 2 | — |
 
 #### Business Rules
 
 | No | Detail |
 | --- | --- |
 | 1 | AES305 fires CodeDuplication when duplicate regions across scanned files exceed the configured duplication threshold; identical files or near-clones group into a single finding naming the participants. |
-| 2 | — |
 
 #### Edge Cases
 
@@ -425,42 +397,36 @@ flowchart TD
 | No | Detail |
 | --- | --- |
 | 1 | Duplication analysis over the scanned file set returning CodeDuplication violations. |
-| 2 | — |
 
 #### Input
 
 | No | Detail |
 | --- | --- |
 | 1 | Set of file contents from the analysis request; source is CodeAnalysisRequest::RunAnalysis. |
-| 2 | — |
 
 #### Output
 
 | No | Detail |
 | --- | --- |
 | 1 | Violation (CodeDuplication) inside CodeAnalysisResponse::Analysis. |
-| 2 | — |
 
 #### Error
 
 | No | Detail |
 | --- | --- |
 | 1 | Unreadable file drops out of the comparison set rather than failing the run. |
-| 2 | — |
 
 #### Event
 
 | No | Detail |
 | --- | --- |
 | 1 | None. |
-| 2 | — |
 
 #### Test
 
 | No | Detail |
 | --- | --- |
 | 1 | Duplication contract coverage in the quality suite asserts CodeDuplication on a seeded clone pair and silence on distinct files. |
-| 2 | — |
 
 #### Metric
 
