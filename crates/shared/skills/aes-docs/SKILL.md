@@ -1,15 +1,12 @@
 ---
 name: aes-docs
-description: Adds docstrings, doc comments, JSDoc, types and PRD/ROADMAP/FRD/README/BACKLOG/DESIGN/AGENTS docs. Use when documenting Python, Rust, TS modules, or splitting spec from status backlog.
+description: Adds PRD/ROADMAP/FRD/README/BACKLOG/DESIGN/AGENTS docs. Use when documenting Python, Rust, TS modules, or splitting spec from status backlog.
 metadata:
   tags:
     - python
     - rust
     - typescript
     - docs
-    - docstring
-    - doc-comments
-    - jsdoc
     - type-hints
     - prd
     - roadmap
@@ -17,17 +14,14 @@ metadata:
     - readme
     - backlog
     - agents-md
-    - pep257
   related_skills:
+    - aes-doc-comments
     - aes-taxonomy
     - aes-contract
     - aes-lint-arwaky
   triggers:
     - add docs
-    - add doc comments
     - document public api
-    - add docstring
-    - add jsdoc
     - add type hints
     - add prd
     - add frd
@@ -75,20 +69,10 @@ Templates, section contracts, exemplars, and per-document craft rules live in [`
 | `CONTRIBUTING.md` | Root workspace                | New and existing contributor | *How to set up and ship a change*   | 50–500 lines | [references/HOW-TO-MAKE-CONTRIBUTING.md](references/HOW-TO-MAKE-CONTRIBUTING.md) |
 | `DESIGN.md`       | Root workspace (optional theme) | Design, Surface Engineer, TUI dev | *Visual & interaction contract*     | 50–500 lines | [references/HOW-TO-MAKE-DESIGN.md](references/HOW-TO-MAKE-DESIGN.md)         |
 
-**Code surface (doc comments)** — same Rules / Template / Section Contract / Verify shape:
-
-| Language   | Focus                          | Template |
-| ---------- | ------------------------------ | -------- |
-| Python     | PEP 257 docstrings             | [references/HOW-TO-MAKE-PYTHON-DOC.md](references/HOW-TO-MAKE-PYTHON-DOC.md) |
-| Rust       | `///` + rustdoc sections       | [references/HOW-TO-MAKE-RUST-DOC.md](references/HOW-TO-MAKE-RUST-DOC.md) |
-| TypeScript | JSDoc / TSDoc                  | [references/HOW-TO-MAKE-TYPESCRIPT-DOC.md](references/HOW-TO-MAKE-TYPESCRIPT-DOC.md) |
-
 **The Document Chain**:  
 PRD → ROADMAP  → FRD → BACKLOG → README→ AGENTS
 
 Each file answers exactly one audience's question. A claim in the wrong file is the defect this skill exists to prevent.
-Doc comments on every public item are the sixth deliverable, in the language's native form.
-
 ---
 
 ## Invariants
@@ -96,16 +80,13 @@ Doc comments on every public item are the sixth deliverable, in the language's n
 Every rule is machine-checked by `lint-arwaky-cli docs` (crate `doc-rules`, AES601–AES606).
 A rule cannot drift from the gate. Cite the code, not this file, when pointing at a rule.
 Each document's required section set is cross-checked against its reference's contract table, so a
-row that stops being enforced is a test failure rather than a silent edit. (Until the PR-2
-constant migration lands, the enforced closed H2 sets in
-`taxonomy_doc_rules_constant.rs` still name the pre-migration sections; the rows below
-describe the target layout the templates now ship.)
+row that stops being enforced is a test failure rather than a silent edit.
 
 | Code                                                                     | Rule                                                                                                                                                                                  |
 | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `status-in-spec` / `spec-source-path`                                       | Spec and status never share a file. Specs promise; backlogs report. Specs are stateless — no `.py`/`.rs`/`.ts` file names (HOW-TO Rule 9). |
 | `spec-without-backlog` / `backlog-without-spec` / `feature-doc-in-shared` | An **FRD** and its backlog are a pair in the same **feature** directory (root PRD pairs with root ROADMAP, not a sibling BACKLOG). Kernel folders (`modules/shared`) are not features: either file under `shared/` fails with `feature-doc-in-shared` (HOW-TO-MAKE-FRD § Scope). |
-| `no-master-backlog` / `undefined-state-vocab` / `master-section-missing` | One root master owns the `State` vocabulary and the roll-up (`ROADMAP.md` `Roadmap Status`; legacy root `BACKLOG.md` accepted during migration). |
+| `no-master-backlog` / `undefined-state-vocab` / `master-section-missing` | One root master owns the `State` vocabulary and the roll-up (`ROADMAP.md` `Roadmap Status`). |
 | `state-vocab-restated`                                                   | Definitions live once. Feature backlogs cite `Roadmap Status`, never restate it under `Backlog Status`.                                                                                                                    |
 | `done-without-evidence` / `unknown-state`                                | Every backlog `Done` row is re-runnable: command + counts + commit hash, and what it excludes.                                                                                             |
 | `duplicate-fr-id` / `orphan-fr-ref`                                      | Requirement IDs are unique, stable, and the only thing a backlog row may cite.                                                                                                        |
@@ -122,12 +103,7 @@ describe the target layout the templates now ship.)
 
 ### Unchecked Invariants (Language Rules)
 
-The checker cannot parse code intent. Enforce these manually (contracts live in the language refs above):
-
-- **Doc comments explain *what* and *why*, never *how*** (the code shows how).
-- **Python**: Public classes and functions need docstrings (PEP 257) — [references/HOW-TO-MAKE-PYTHON-DOC.md](references/HOW-TO-MAKE-PYTHON-DOC.md).
-- **Rust**: Public items need `///` (plain `//` is invisible to `cargo doc`). Examples must compile — [references/HOW-TO-MAKE-RUST-DOC.md](references/HOW-TO-MAKE-RUST-DOC.md).
-- **TypeScript**: Public items need JSDoc — [references/HOW-TO-MAKE-TYPESCRIPT-DOC.md](references/HOW-TO-MAKE-TYPESCRIPT-DOC.md).
+Doc comments now live under the [`aes-doc-comments`](../aes-doc-comments/SKILL.md) skill. See [`references/HOW-TO-MAKE-PYTHON-DOC.md`](../aes-doc-comments/references/HOW-TO-MAKE-PYTHON-DOC.md), [`references/HOW-TO-MAKE-RUST-DOC.md`](../aes-doc-comments/references/HOW-TO-MAKE-RUST-DOC.md), and [`references/HOW-TO-MAKE-TYPESCRIPT-DOC.md`](../aes-doc-comments/references/HOW-TO-MAKE-TYPESCRIPT-DOC.md).
 
 ---
 
@@ -179,7 +155,7 @@ project-root/
 ```text
 
 Same shape for Python `modules/<feature>/` and TypeScript `packages/<feature>/`.
-Cross-cutting rows live in the root master `ROADMAP.md` (legacy root `BACKLOG.md` still accepted), not in a feature backlog.
+Cross-cutting rows live in the root master `ROADMAP.md`, not in a feature backlog.
 
 ---
 
@@ -196,12 +172,8 @@ Cross-cutting rows live in the root master `ROADMAP.md` (legacy root `BACKLOG.md
 9. **Draft ARCHITECTURE**: Write root `ARCHITECTURE.md` per [references/HOW-TO-MAKE-ARCHITECTURE.md](references/HOW-TO-MAKE-ARCHITECTURE.md) — required when the workspace has more than one layer beyond shared.
 10. **Draft CONTRIBUTING**: Write root `CONTRIBUTING.md` per [references/HOW-TO-MAKE-CONTRIBUTING.md](references/HOW-TO-MAKE-CONTRIBUTING.md) — required when the repo accepts external contributions. One section per contribution path the project actually supports; delete the rest.
 11. **Draft DESIGN**: Write root `DESIGN.md` per [references/HOW-TO-MAKE-DESIGN.md](references/HOW-TO-MAKE-DESIGN.md) — optional; create it when the surface exposes visual tokens (colors, type scale, component anatomy).
-12. **Document Code**: Add doc comments to all public items per language —
-   [references/HOW-TO-MAKE-PYTHON-DOC.md](references/HOW-TO-MAKE-PYTHON-DOC.md),
-   [references/HOW-TO-MAKE-RUST-DOC.md](references/HOW-TO-MAKE-RUST-DOC.md),
-   [references/HOW-TO-MAKE-TYPESCRIPT-DOC.md](references/HOW-TO-MAKE-TYPESCRIPT-DOC.md) —
-   then add type annotations to all signatures.
-13. **Verify**: Run `lint-arwaky-cli docs <path>`. Then each touched reference's `Verify` block (including the language doc ref).
+12. **Document Code**: Add doc comments to all public items per language — see [`aes-doc-comments`](../aes-doc-comments/SKILL.md) — then add type annotations to all signatures.
+13. **Verify**: Run `lint-arwaky-cli docs <path>`. Then each touched reference's `Verify` block (including the language doc ref under `aes-doc-comments`).
 
 ---
 
@@ -223,11 +195,7 @@ A machine pass does not mean the documents are good. Falsifiable goals, honest e
 
 ### Doc Comment Conventions
 
-Per-language rules, templates, section contracts, and Verify blocks:
-
-- Python (PEP 257): [references/HOW-TO-MAKE-PYTHON-DOC.md](references/HOW-TO-MAKE-PYTHON-DOC.md)
-- Rust (`///` / rustdoc): [references/HOW-TO-MAKE-RUST-DOC.md](references/HOW-TO-MAKE-RUST-DOC.md)
-- TypeScript (JSDoc / TSDoc): [references/HOW-TO-MAKE-TYPESCRIPT-DOC.md](references/HOW-TO-MAKE-TYPESCRIPT-DOC.md)
+Per-language rules, templates, section contracts, and Verify blocks live under [`aes-doc-comments`](../aes-doc-comments/SKILL.md).
 
 ---
 
