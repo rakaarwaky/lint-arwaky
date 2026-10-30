@@ -14,7 +14,7 @@ Last Updated: 2026-09-17
 
 ## Backlog Status
 
-### {FR-QualityRules-001}
+### FR-QualityRules-001: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
@@ -24,7 +24,7 @@ Last Updated: 2026-09-17
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
-### {FR-QualityRules-002}
+### FR-QualityRules-002: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
@@ -34,7 +34,7 @@ Last Updated: 2026-09-17
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
-### {FR-QualityRules-003}
+### FR-QualityRules-003: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
@@ -44,7 +44,7 @@ Last Updated: 2026-09-17
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
-### {FR-QualityRules-004}
+### FR-QualityRules-004: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
@@ -54,7 +54,7 @@ Last Updated: 2026-09-17
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
-### {FR-QualityRules-005}
+### FR-QualityRules-005: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|

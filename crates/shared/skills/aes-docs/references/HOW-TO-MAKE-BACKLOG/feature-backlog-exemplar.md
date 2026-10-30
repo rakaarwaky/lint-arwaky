@@ -11,7 +11,7 @@ Checkout flow is in progress: cart validation, stock reservation, voucher applic
 
 ## Backlog Status 
 
-### {FR-ECOMMERCE-001}
+### FR-ECOMMERCE-001: Catalog search
 
 | Aspect       | Detail                                      |
 |--------------|---------------------------------------------|
@@ -21,7 +21,7 @@ Checkout flow is in progress: cart validation, stock reservation, voucher applic
 | Risk         | None                                        |
 | Updated      | 2026-10-30                                  |
 
-### {FR-ECOMMERCE-002}
+### FR-ECOMMERCE-002: Checkout flow
 
 | Aspect       | Detail                                      |
 |--------------|---------------------------------------------|
@@ -31,7 +31,7 @@ Checkout flow is in progress: cart validation, stock reservation, voucher applic
 | Risk         | None                                        |
 | Updated      | 2026-10-30                                  |
 
-### {FR-ECOMMERCE-003}
+### FR-ECOMMERCE-003: Voucher validation
 
 | Aspect       | Detail                                      |
 |--------------|---------------------------------------------|
@@ -53,6 +53,7 @@ Checkout flow is in progress: cart validation, stock reservation, voucher applic
 
 ## Why this shape
 
-- One entry per ID (`{FR-ECOMMERCE-001}`, `{FR-ECOMMERCE-002}`, `{FR-ECOMMERCE-003}`), each carrying one ID token per `extract_qualifier`.
+- One entry per ID (`FR-ECOMMERCE-001`, `FR-ECOMMERCE-002`, `FR-ECOMMERCE-003`), each carrying one ID token per `extract_qualifier`.
 - Five fixed rows per entry: State / Done / In Progress / Risk / Updated (`Blocked` and `Next` are no longer in the schema).
+- Entry headings are unbraced and colon-terminated, matching FRD/DATA/DESIGN heading syntax.
 - Reference links PRD, FRD, Roadmap, and Architecture per the template.

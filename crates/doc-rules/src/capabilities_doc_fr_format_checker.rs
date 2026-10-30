@@ -534,22 +534,17 @@ impl FrFormatChecker {
 
     /// The single brace-wrapped ID token of a BACKLOG entry H3 title
     /// (`{FR-SAMPLE-001}` → `FR-SAMPLE-001`), or `None` for any other shape.
-    /// Braces, pipes, and surrounding whitespace are stripped per Decision 9.
+    /// `<ID>: <title>` single-qualifier heading (BACKLOG `Backlog Status` entries).
+    /// Strips the `:` title suffix to yield the raw ID token
+    /// (`FR-ECOMMERCE-001: Checkout flow` → `FR-ECOMMERCE-001`), per Decision 9.
     fn extract_qualifier(title: &str) -> Option<String> {
-        let inner = title
-            .trim()
-            .strip_prefix('{')
-            .and_then(|s| s.strip_suffix('}'))
-            .map(str::trim)
-            .filter(|s| !s.is_empty())?;
-        Some(
-            inner
-                .chars()
-                .filter(|c| *c != '|')
-                .collect::<String>()
-                .trim()
-                .to_string(),
-        )
+        let inner = title.trim();
+        let id = inner.split(':').next()?.trim();
+        let id = id.chars().filter(|c| *c != '|').collect::<String>();
+        if id.is_empty() {
+            return None;
+        }
+        Some(id.trim().to_string())
     }
 
     /// Union of the accepted ID sets of up to two documents under a shared

@@ -12,7 +12,7 @@ hard-coded filter change.
 
 ## Backlog Status
 
-### {FR-Logging-001}
+### FR-Logging-001: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
@@ -22,7 +22,7 @@ hard-coded filter change.
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
-### {FR-Logging-002}
+### FR-Logging-002: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
@@ -32,7 +32,7 @@ hard-coded filter change.
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
-### {FR-Logging-003}
+### FR-Logging-003: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
@@ -42,7 +42,7 @@ hard-coded filter change.
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
-### {FR-Logging-004}
+### FR-Logging-004: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|

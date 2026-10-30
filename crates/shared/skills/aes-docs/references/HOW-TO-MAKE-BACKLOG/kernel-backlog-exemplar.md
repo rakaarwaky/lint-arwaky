@@ -1,6 +1,6 @@
 # Kernel BACKLOG Exemplar
 
-A filled BACKLOG against a shared/kernel (DATA.md) folder, matching the Template shape exactly. A shared/kernel folder carries `DATA.md` + `BACKLOG.md`. Each entry carries one ID from the `DATA-<NAME>` family; the example below tracks five value-object IDs across entries.
+A filled BACKLOG against a shared/kernel (DATA.md) folder, matching the Template shape exactly. A shared/kernel folder carries `DATA.md` + `BACKLOG.md`. Each entry carries one ID from the `DT-<NAME>` family; the example below tracks five value-object IDs across entries.
 
 ```markdown
 # BACKLOG — Ecommerce Shared Kernel
@@ -11,7 +11,7 @@ The shared kernel value objects are declared but only half are implemented acros
 
 ## Backlog Status 
 
-### {DT-ECOM-001}
+### DT-ECOM-001: Product value object
 
 | Aspect       | Detail                                      |
 |--------------|---------------------------------------------|
@@ -21,7 +21,7 @@ The shared kernel value objects are declared but only half are implemented acros
 | Risk         | None                                        |
 | Updated      | 2026-10-30                                  |
 
-### {DT-ECOM-002}
+### DT-ECOM-002: CartItem value object
 
 | Aspect       | Detail                                      |
 |--------------|---------------------------------------------|
@@ -31,7 +31,7 @@ The shared kernel value objects are declared but only half are implemented acros
 | Risk         | None                                        |
 | Updated      | 2026-10-30                                  |
 
-### {DT-ECOM-003}
+### DT-ECOM-003: Order value object
 
 | Aspect       | Detail                                      |
 |--------------|---------------------------------------------|
@@ -41,7 +41,7 @@ The shared kernel value objects are declared but only half are implemented acros
 | Risk         | None                                        |
 | Updated      | 2026-10-30                                  |
 
-### {DT-ECOM-004}
+### DT-ECOM-004: Address value object
 
 | Aspect       | Detail                                      |
 |--------------|---------------------------------------------|
@@ -51,7 +51,7 @@ The shared kernel value objects are declared but only half are implemented acros
 | Risk         | None                                        |
 | Updated      | 2026-10-30                                  |
 
-### {DT-ECOM-005}
+### DT-ECOM-005: PaymentMethod value object
 
 | Aspect       | Detail                                      |
 |--------------|---------------------------------------------|
@@ -73,6 +73,7 @@ The shared kernel value objects are declared but only half are implemented acros
 
 ## Why this shape
 
-- One entry per ID (`{DT-ECOM-001}`..`{DT-ECOM-005}`), each carrying one ID token per `extract_qualifier`.
+- One entry per ID (`DT-ECOM-001`..`DT-ECOM-005`), each carrying one ID token per `extract_qualifier`.
 - Five fixed rows per entry: State / Done / In Progress / Risk / Updated (`Blocked` and `Next` are no longer in the schema).
+- Entry headings are unbraced and colon-terminated, matching FRD/DATA/DESIGN heading syntax.
 - Reference links PRD, FRD, Roadmap, and Architecture per the template.

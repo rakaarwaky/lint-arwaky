@@ -14,7 +14,7 @@ Last Updated: 2026-09-17
 
 ## Backlog Status
 
-### {FR-OrphanRules-001}
+### FR-OrphanRules-001: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
@@ -24,7 +24,7 @@ Last Updated: 2026-09-17
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
-### {FR-OrphanRules-002}
+### FR-OrphanRules-002: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
@@ -34,7 +34,7 @@ Last Updated: 2026-09-17
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
-### {FR-OrphanRules-003}
+### FR-OrphanRules-003: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
@@ -44,7 +44,7 @@ Last Updated: 2026-09-17
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
-### {FR-OrphanRules-004}
+### FR-OrphanRules-004: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
@@ -54,7 +54,7 @@ Last Updated: 2026-09-17
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
-### {FR-OrphanRules-005}
+### FR-OrphanRules-005: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
@@ -64,7 +64,7 @@ Last Updated: 2026-09-17
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
-### {FR-OrphanRules-006}
+### FR-OrphanRules-006: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
@@ -74,7 +74,7 @@ Last Updated: 2026-09-17
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
-### {FR-OrphanRules-007}
+### FR-OrphanRules-007: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|

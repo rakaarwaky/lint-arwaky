@@ -174,7 +174,7 @@ fn roadmap_entry_rejects_missing_table() {
 
 #[test]
 fn backlog_entry_rejects_wrong_row_labels() {
-    let text = "# X\n\n## Backlog Status\n\n### {RENDER-01}\n\n\
+    let text = "# X\n\n## Backlog Status\n\n### RENDER-01: \n\n\
              | Aspect | Detail |\n| --- | --- |\n| State | x |\n| Done | x |\n| Bogus | x |\n";
     let parsed = sections(text);
     let re = backlog_entry_re().expect("regex compiles");

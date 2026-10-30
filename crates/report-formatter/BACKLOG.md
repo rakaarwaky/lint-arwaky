@@ -14,7 +14,7 @@ Last Updated: 2026-09-29
 
 ## Backlog Status
 
-### {FR-ReportFormatter-001}
+### FR-ReportFormatter-001: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
@@ -24,7 +24,7 @@ Last Updated: 2026-09-29
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
-### {FR-ReportFormatter-002}
+### FR-ReportFormatter-002: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
@@ -34,7 +34,7 @@ Last Updated: 2026-09-29
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
-### {FR-ReportFormatter-003}
+### FR-ReportFormatter-003: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
@@ -44,7 +44,7 @@ Last Updated: 2026-09-29
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
-### {FR-ReportFormatter-004}
+### FR-ReportFormatter-004: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|

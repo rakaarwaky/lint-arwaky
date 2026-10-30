@@ -14,7 +14,7 @@ Last Updated: 2026-09-29
 
 ## Backlog Status
 
-### {FR-FileWatch-001}
+### FR-FileWatch-001: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
@@ -24,7 +24,7 @@ Last Updated: 2026-09-29
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
-### {FR-FileWatch-002}
+### FR-FileWatch-002: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
@@ -34,7 +34,7 @@ Last Updated: 2026-09-29
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
-### {FR-FileWatch-003}
+### FR-FileWatch-003: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|

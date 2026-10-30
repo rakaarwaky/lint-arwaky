@@ -14,7 +14,7 @@ Last Updated: 2026-09-29
 
 ## Backlog Status
 
-### {FR-ConfigSystem-001}
+### FR-ConfigSystem-001: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
@@ -24,7 +24,7 @@ Last Updated: 2026-09-29
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
-### {FR-ConfigSystem-002}
+### FR-ConfigSystem-002: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
@@ -34,7 +34,7 @@ Last Updated: 2026-09-29
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
-### {FR-ConfigSystem-003}
+### FR-ConfigSystem-003: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|

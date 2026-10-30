@@ -14,7 +14,7 @@ Last Updated: 2026-10-28
 
 ## Backlog Status
 
-### {FR-Shared-001}
+### FR-Shared-001: 
 
 | Aspect       | Detail|
 |--------------|--------|
@@ -24,7 +24,7 @@ Last Updated: 2026-10-28
 | Risk         | None  |
 | Updated      | 2026-10-28|
 
-### {FR-Shared-002}
+### FR-Shared-002: 
 
 | Aspect       | Detail|
 |--------------|--------|

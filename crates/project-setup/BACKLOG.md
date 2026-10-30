@@ -14,7 +14,7 @@ Last Updated: 2026-09-29
 
 ## Backlog Status
 
-### {FR-ProjectSetup-001}
+### FR-ProjectSetup-001: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
@@ -24,7 +24,7 @@ Last Updated: 2026-09-29
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
-### {FR-ProjectSetup-002}
+### FR-ProjectSetup-002: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
@@ -34,7 +34,7 @@ Last Updated: 2026-09-29
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
-### {FR-ProjectSetup-003}
+### FR-ProjectSetup-003: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
@@ -44,7 +44,7 @@ Last Updated: 2026-09-29
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
-### {FR-ProjectSetup-004}
+### FR-ProjectSetup-004: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
@@ -54,7 +54,7 @@ Last Updated: 2026-09-29
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
-### {FR-ProjectSetup-005}
+### FR-ProjectSetup-005: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
@@ -64,7 +64,7 @@ Last Updated: 2026-09-29
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
-### {FR-ProjectSetup-006}
+### FR-ProjectSetup-006: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
@@ -74,7 +74,7 @@ Last Updated: 2026-09-29
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
-### {FR-ProjectSetup-007}
+### FR-ProjectSetup-007: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
@@ -84,7 +84,7 @@ Last Updated: 2026-09-29
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
-### {FR-ProjectSetup-008}
+### FR-ProjectSetup-008: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|

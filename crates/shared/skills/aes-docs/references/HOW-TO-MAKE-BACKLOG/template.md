@@ -11,7 +11,7 @@ Copy, fill, delete nothing.
 
 ## Backlog Status 
 
-### {<DATA-NAME-ID> | <FEATURE-NAME-ID> | DESIGN-NAME-ID}
+### <FEATURE-NAME-ID>: <entry title>
 
 | Aspect       | Detail                                      |
 |--------------|---------------------------------------------|
@@ -21,9 +21,9 @@ Copy, fill, delete nothing.
 | Risk         | <what ships broken / None>                  |
 | Updated      | <YYYY-MM-DD>                                |
 
-### {<DATA-NAME-ID> | <FEATURE-NAME-ID> | DESIGN-NAME-ID}
-### {<DATA-NAME-ID> | <FEATURE-NAME-ID> | DESIGN-NAME-ID}
-### {<DATA-NAME-ID> | <FEATURE-NAME-ID> | DESIGN-NAME-ID}
+### <FEATURE-NAME-ID>: <entry title>
+### <DS-NAME-ID>: <entry title>
+### <DT-NAME-ID>: <entry title>
 
 ## Reference
 
@@ -41,5 +41,5 @@ Copy, fill, delete nothing.
 | Section          | Why it belongs here                                                     |
 | ---------------- | ----------------------------------------------------------------------- |
 | Progress Overview| Gives the truth before the table, not after it.                         |
-| Backlog Status   | `{<DATA-NAME-ID> &#124; <FEATURE-NAME-ID> &#124; DESIGN-NAME-ID}` entries with State / Done / In Progress / Risk / Updated. |
+| Backlog Status   | `<FEATURE-NAME-ID>`, `<DS-NAME-ID>`, or `<DT-NAME-ID>` entries (unbraced, colon-terminated) with State / Done / In Progress / Risk / Updated. |
 | Reference        | Connects the backlog to PRD, FRD, Roadmap, Architecture.               |

@@ -438,10 +438,12 @@ impl TemplateConformanceChecker {
             .as_ref()
     }
 
-    /// `{<qualifier>}` single-qualifier heading (BACKLOG `Backlog Status` entries).
+    /// `<ID>: <title>` single-qualifier heading (BACKLOG `Backlog Status` entries).
+    /// Matches the same ID families FRD/DESIGN/DATA use (FR / DS / DT / PR),
+    /// so a BACKLOG entry cites the same ID its spec doc declares.
     fn backlog_entry_re() -> Option<&'static regex::Regex> {
         static PAT: OnceLock<Option<regex::Regex>> = OnceLock::new();
-        PAT.get_or_init(|| regex::Regex::new(r"^\{[A-Za-z0-9_-]+\}$").ok())
+        PAT.get_or_init(|| regex::Regex::new(r"^(FR|DS|DT|PR)-[A-Za-z0-9_]+-\d+:\s*$").ok())
             .as_ref()
     }
 }

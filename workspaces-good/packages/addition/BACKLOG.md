@@ -6,7 +6,7 @@ Addition is implemented, tested, and gated. Nothing is blocked.
 
 ## Backlog Status
 
-### {FR-ADDITION-001}
+### FR-ADDITION-001: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
@@ -16,7 +16,7 @@ Addition is implemented, tested, and gated. Nothing is blocked.
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
-### {FR-ADDITION-002}
+### FR-ADDITION-002: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|

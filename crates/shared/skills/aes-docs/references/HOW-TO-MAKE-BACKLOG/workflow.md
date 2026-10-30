@@ -30,7 +30,7 @@ The entry point depends on the starting state. In every scenario the BACKLOG.md 
 document baseline state.
 
 ## 3. Section: Backlog Status
-`{<DATA-NAME-ID> | <FEATURE-NAME-ID> | DESIGN-NAME-ID}` items, each carrying State / Done / In Progress / Risk / Updated.
+`<FEATURE-NAME-ID>`, `<DS-NAME-ID>`, or `<DT-NAME-ID>` items (unbraced, colon-terminated), each carrying State / Done / In Progress / Risk / Updated.
 
 ## 4. Section: Reference
 link to PRD.md, FRD.md, ROADMAP.md, ARCHITECTURE.md.

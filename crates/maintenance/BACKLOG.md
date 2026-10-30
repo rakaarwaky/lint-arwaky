@@ -14,7 +14,7 @@ Last Updated: 2026-09-30
 
 ## Backlog Status
 
-### {FR-Maintenance-001}
+### FR-Maintenance-001: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
@@ -24,7 +24,7 @@ Last Updated: 2026-09-30
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
-### {FR-Maintenance-002}
+### FR-Maintenance-002: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
@@ -34,7 +34,7 @@ Last Updated: 2026-09-30
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
-### {FR-Maintenance-003}
+### FR-Maintenance-003: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
@@ -44,7 +44,7 @@ Last Updated: 2026-09-30
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
-### {FR-Maintenance-004}
+### FR-Maintenance-004: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
@@ -54,7 +54,7 @@ Last Updated: 2026-09-30
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
-### {FR-Maintenance-005}
+### FR-Maintenance-005: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
@@ -64,7 +64,7 @@ Last Updated: 2026-09-30
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
-### {FR-Maintenance-006}
+### FR-Maintenance-006: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
@@ -74,7 +74,7 @@ Last Updated: 2026-09-30
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
-### {FR-Maintenance-007}
+### FR-Maintenance-007: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
@@ -84,7 +84,7 @@ Last Updated: 2026-09-30
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
-### {FR-Maintenance-008}
+### FR-Maintenance-008: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|

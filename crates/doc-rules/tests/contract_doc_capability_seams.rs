@@ -175,7 +175,7 @@ fn write_feature(root: &Path) {
 ## Progress Overview\n\n\
 Baseline.\n\n\
 ## Backlog Status\n\n\
-### {FR-SAMPLE-001}\n\
+### FR-SAMPLE-001: \n\
 | Aspect       | Detail                                      |\n\
 |--------------|---------------------------------------------|\n\
 | State        | Ready                                       |\n\
@@ -183,7 +183,7 @@ Baseline.\n\n\
 | In Progress  | None                                        |\n\
 | Risk         | None                                        |\n\
 | Updated      | 2026-09-29                                  |\n\n\
-### {FR-SAMPLE-002}\n\
+### FR-SAMPLE-002: \n\
 | Aspect       | Detail                                      |\n\
 |--------------|---------------------------------------------|\n\
 | State        | Ready                                       |\n\
@@ -415,7 +415,7 @@ fn backlog_with_entries(ids: &[&str]) -> String {
         .iter()
         .map(|id| {
             format!(
-                "### {{{id}}}\n\n\
+                "### {id}: \n\n\
                  | Aspect       | Detail                                      |\n\
                  |--------------|---------------------------------------------|\n\
                  | State        | Ready                                       |\n\

@@ -14,7 +14,7 @@ Last Updated: 2026-10-02
 
 ## Backlog Status
 
-### {FR-NamingRules-001}
+### FR-NamingRules-001: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
@@ -24,7 +24,7 @@ Last Updated: 2026-10-02
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
-### {FR-NamingRules-002}
+### FR-NamingRules-002: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
@@ -34,7 +34,7 @@ Last Updated: 2026-10-02
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
-### {FR-NamingRules-003}
+### FR-NamingRules-003: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|

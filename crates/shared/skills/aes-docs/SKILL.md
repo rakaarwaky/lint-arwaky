@@ -1,6 +1,8 @@
 ---
 name: aes-docs
-description: Adds PRD/ROADMAP/FRD/README/BACKLOG/DESIGN/AGENTS docs. Use when documenting Python, Rust, TS modules, or splitting spec from status backlog.
+description: "Adds PRD/ROADMAP/FRD/README/BACKLOG/DESIGN/AGENTS/DATA docs for Python, Rust, and TypeScript modules. Use when documenting public API, adding type hints, or splitting spec from status backlog. Triggers: add docs, document public api, add type hints, add prd, add frd, add backlog, add feature backlog, add root roadmap, add roadmap, add readme, add package readme, add crate readme, add agents md, agents md template, port agents md, prd template, frd template, readme template, backlog template, roadmap template, split spec from status, move status out of frd, audit document invariants, add design md, design md template, brand and style template."
+when-to-use: "Use when the task is to create or improve a PRD, ROADMAP, FRD, BACKLOG, README, AGENTS, DESIGN, or DATA document, or to split spec from status."
+argument-hint: "--docpath <path> [--improve | --design | --make]"
 metadata:
   tags:
     - python
@@ -19,34 +21,6 @@ metadata:
     - aes-taxonomy
     - aes-contract
     - aes-lint-arwaky
-  triggers:
-    - add docs
-    - document public api
-    - add type hints
-    - add prd
-    - add frd
-    - add backlog
-    - add backlog md
-    - add feature backlog
-    - add root roadmap
-    - add roadmap
-    - add readme
-    - add package readme
-    - add crate readme
-    - add agents md
-    - agents md template
-    - port agents md
-    - prd template
-    - frd template
-    - readme template
-    - backlog template
-    - roadmap template
-    - split spec from status
-    - move status out of frd
-    - audit document invariants
-    - add design md
-    - design md template
-    - brand and style template
 ---
 # aes-docs
 
@@ -161,19 +135,22 @@ Cross-cutting rows live in the root master `ROADMAP.md`, not in a feature backlo
 
 ## Workflow
 
-1. **Resolve the repo-root anchor first.** `lint-arwaky-cli docs` 
-2. **Analyze**: List feature modules and public items. Run `lint-arwaky-cli docs <path>`. The findings are your work list.
-3. **Draft PRD**: Write root `PRD.md` per [references/HOW-TO-MAKE-PRD.md](references/HOW-TO-MAKE-PRD.md).
-4. **Draft Roadmap**: Write root `ROADMAP.md` per [references/HOW-TO-MAKE-ROADMAP.md](references/HOW-TO-MAKE-ROADMAP.md)
-5. **Draft FRDs**: Write `FRD.md` in each feature dir per [references/HOW-TO-MAKE-FRD/template.md](references/HOW-TO-MAKE-FRD/template.md).
-6. **Draft Feature Backlogs**: Write one `BACKLOG.md` per feature, beside its spec, per [references/HOW-TO-MAKE-BACKLOG.md](references/HOW-TO-MAKE-BACKLOG.md).
-7. **Draft README**: Write root `README.md` per [references/HOW-TO-MAKE-README.md](references/HOW-TO-MAKE-README.md).
-8. **Draft AGENTS**: Write root `AGENTS.md` per [references/HOW-TO-MAKE-AGENTS.md](references/HOW-TO-MAKE-AGENTS.md).
-9. **Draft ARCHITECTURE**: Write root `ARCHITECTURE.md` per [references/HOW-TO-MAKE-ARCHITECTURE.md](references/HOW-TO-MAKE-ARCHITECTURE.md) — required when the workspace has more than one layer beyond shared.
-10. **Draft CONTRIBUTING**: Write root `CONTRIBUTING.md` per [references/HOW-TO-MAKE-CONTRIBUTING.md](references/HOW-TO-MAKE-CONTRIBUTING.md) — required when the repo accepts external contributions. One section per contribution path the project actually supports; delete the rest.
-11. **Draft DESIGN**: Write root `DESIGN.md` per [references/HOW-TO-MAKE-DESIGN.md](references/HOW-TO-MAKE-DESIGN.md) — optional; create it when the surface exposes visual tokens (colors, type scale, component anatomy).
-12. **Document Code**: Add doc comments to all public items per language — see [`aes-doc-comments`](../aes-doc-comments/SKILL.md) — then add type annotations to all signatures.
-13. **Verify**: Run `lint-arwaky-cli docs <path>`. Then each touched reference's `Verify` block (including the language doc ref under `aes-doc-comments`).
+SKILL.md only routes. Every document's step-by-step workflow lives in its own subfolder under `references/`; do not inline workflow steps here.
+
+| Document | Workflow |
+| -------- | -------- |
+| `PRD.md` | [references/HOW-TO-MAKE-PRD/workflow.md](references/HOW-TO-MAKE-PRD/workflow.md) |
+| `ROADMAP.md` | [references/HOW-TO-MAKE-ROADMAP/workflow.md](references/HOW-TO-MAKE-ROADMAP/workflow.md) |
+| `FRD.md` | [references/HOW-TO-MAKE-FRD/workflow.md](references/HOW-TO-MAKE-FRD/workflow.md) |
+| `BACKLOG.md` | [references/HOW-TO-MAKE-BACKLOG/workflow.md](references/HOW-TO-MAKE-BACKLOG/workflow.md) |
+| `README.md` | [references/HOW-TO-MAKE-README/workflow.md](references/HOW-TO-MAKE-README/workflow.md) |
+| `AGENTS.md` | [references/HOW-TO-MAKE-AGENTS/workflow.md](references/HOW-TO-MAKE-AGENTS/workflow.md) |
+| `ARCHITECTURE.md` | [references/HOW-TO-MAKE-ARCHITECTURE/workflow.md](references/HOW-TO-MAKE-ARCHITECTURE/workflow.md) |
+| `CONTRIBUTING.md` | [references/HOW-TO-MAKE-CONTRIBUTING/workflow.md](references/HOW-TO-MAKE-CONTRIBUTING/workflow.md) |
+| `DESIGN.md` | [references/HOW-TO-MAKE-DESIGN/workflow.md](references/HOW-TO-MAKE-DESIGN/workflow.md) |
+| `DATA.md` | [references/HOW-TO-MAKE-DATA/workflow.md](references/HOW-TO-MAKE-DATA/workflow.md) |
+| Doc comments | [`aes-doc-comments`](../aes-doc-comments/SKILL.md) |
+| Gate / verify | `lint-arwaky-cli docs <path>` — then run each touched reference's `Verify` block |
 
 ---
 

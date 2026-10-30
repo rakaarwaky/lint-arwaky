@@ -14,7 +14,7 @@ Last Updated: 2026-10-28
 
 ## Backlog Status
 
-### {FR-ExternalLint-001}
+### FR-ExternalLint-001: 
 
 | Aspect       | Detail                                   |
 |--------------|------------------------------------------|
@@ -24,7 +24,7 @@ Last Updated: 2026-10-28
 | Risk         | None                                     |
 | Updated      | 2026-10-28                               |
 
-### {FR-ExternalLint-002}
+### FR-ExternalLint-002: 
 
 | Aspect       | Detail                                   |
 |--------------|------------------------------------------|
@@ -34,7 +34,7 @@ Last Updated: 2026-10-28
 | Risk         | None                                     |
 | Updated      | 2026-10-28                               |
 
-### {FR-ExternalLint-003}
+### FR-ExternalLint-003: 
 
 | Aspect       | Detail                                   |
 |--------------|------------------------------------------|
@@ -44,7 +44,7 @@ Last Updated: 2026-10-28
 | Risk         | None                                     |
 | Updated      | 2026-10-28                               |
 
-### {FR-ExternalLint-004}
+### FR-ExternalLint-004: 
 
 | Aspect       | Detail                                   |
 |--------------|------------------------------------------|
@@ -54,7 +54,7 @@ Last Updated: 2026-10-28
 | Risk         | None                                     |
 | Updated      | 2026-10-28                               |
 
-### {FR-ExternalLint-005}
+### FR-ExternalLint-005: 
 
 | Aspect       | Detail                                   |
 |--------------|------------------------------------------|
@@ -64,7 +64,7 @@ Last Updated: 2026-10-28
 | Risk         | None                                     |
 | Updated      | 2026-10-28                               |
 
-### {FR-ExternalLint-006}
+### FR-ExternalLint-006: 
 
 | Aspect       | Detail                                   |
 |--------------|------------------------------------------|

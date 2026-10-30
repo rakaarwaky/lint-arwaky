@@ -14,7 +14,7 @@ Last Updated: 2026-09-29
 
 ## Backlog Status
 
-### {FR-AutoFix-001}
+### FR-AutoFix-001: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
@@ -24,7 +24,7 @@ Last Updated: 2026-09-29
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
-### {FR-AutoFix-002}
+### FR-AutoFix-002: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
@@ -34,7 +34,7 @@ Last Updated: 2026-09-29
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
-### {FR-AutoFix-003}
+### FR-AutoFix-003: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
@@ -44,7 +44,7 @@ Last Updated: 2026-09-29
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
-### {FR-AutoFix-004}
+### FR-AutoFix-004: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|

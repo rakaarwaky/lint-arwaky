@@ -56,7 +56,7 @@ fn write_workspace(root: &Path) {
         "# Feature Backlog: Sample\n\nFRD: [FRD.md](FRD.md)\n\n\
 ## Progress Overview\n\nBaseline.\n\n\
 ## Backlog Status\n\n\
-### {FR-SAMPLE-001}\n\
+### FR-SAMPLE-001: \n\
 | Aspect       | Detail                                      |\n\
 |--------------|---------------------------------------------|\n\
 | State        | Ready                                       |\n\
@@ -76,7 +76,7 @@ fn write_workspace(root: &Path) {
 /// the `Aspect | Detail` table AES606 checks entry-by-entry.
 fn requirement(id: &str, title: &str) -> String {
     format!(
-        "### {id}: {title}\n\n\
+        "### id: : {title}\n\n\
          | Aspect         | Detail                                       |\n\
          |----------------|----------------------------------------------|\n\
          | Description    | The feature performs a responsibility.       |\n\
@@ -379,7 +379,7 @@ fn e2e_a_data_backlog_pair_rejects_do_headings() {
     let backlog = "# Feature Backlog: Sample\n\nFRD: [FRD.md](FRD.md)\n\n\
 ## Progress Overview\n\nBaseline.\n\n\
 ## Backlog Status\n\n\
-### {DT-SHAR-001}\n\
+### DT-SHAR-001: \n\
 | Aspect       | Detail                                      |\n\
 |--------------|---------------------------------------------|\n\
 | State        | Ready                                       |\n\

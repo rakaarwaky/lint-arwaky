@@ -5,7 +5,7 @@ Probe.
 
 ## Backlog Status
 
-### {FR-SAMPLE-001}
+### FR-SAMPLE-001: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|

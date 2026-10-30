@@ -15,7 +15,7 @@ Last Updated: 2026-09-29
 
 ## Backlog Status
 
-### {FR-GitHooks-001}
+### FR-GitHooks-001: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
@@ -25,7 +25,7 @@ Last Updated: 2026-09-29
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
-### {FR-GitHooks-002}
+### FR-GitHooks-002: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
@@ -35,7 +35,7 @@ Last Updated: 2026-09-29
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
-### {FR-GitHooks-003}
+### FR-GitHooks-003: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
@@ -45,7 +45,7 @@ Last Updated: 2026-09-29
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
-### {FR-GitHooks-004}
+### FR-GitHooks-004: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|

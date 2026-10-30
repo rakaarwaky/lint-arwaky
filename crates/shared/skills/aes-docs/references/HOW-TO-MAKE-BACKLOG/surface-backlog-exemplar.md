@@ -1,6 +1,6 @@
 # Surface BACKLOG Exemplar
 
-A filled BACKLOG against a surface (DESIGN.md) folder, matching the Template shape exactly. A surface folder carries `DESIGN.md` + `BACKLOG.md`. Each entry carries one ID from the `DESIGN-<NAME>` family; the example below tracks three design-token IDs across entries.
+A filled BACKLOG against a surface (DESIGN.md) folder, matching the Template shape exactly. A surface folder carries `DESIGN.md` + `BACKLOG.md`. Each entry carries one ID from the `DS-<NAME>` family; the example below tracks three design-token IDs across entries.
 
 ```markdown
 # BACKLOG — Ecommerce Web Surface
@@ -11,7 +11,7 @@ The web surface is in progress: catalog, cart, and checkout pages render against
 
 ## Backlog Status 
 
-### {DS-WEB-001}
+### DS-WEB-001: Color tokens
 
 | Aspect       | Detail                                      |
 |--------------|---------------------------------------------|
@@ -21,7 +21,7 @@ The web surface is in progress: catalog, cart, and checkout pages render against
 | Risk         | None                                        |
 | Updated      | 2026-10-30                                  |
 
-### {DS-WEB-002}
+### DS-WEB-002: Spacing and layout grid
 
 | Aspect       | Detail                                      |
 |--------------|---------------------------------------------|
@@ -31,7 +31,7 @@ The web surface is in progress: catalog, cart, and checkout pages render against
 | Risk         | Mobile single-column grid not yet verified  |
 | Updated      | 2026-10-30                                  |
 
-### {DS-WEB-003}
+### DS-WEB-003: Typography scale
 
 | Aspect       | Detail                                      |
 |--------------|---------------------------------------------|
@@ -53,6 +53,7 @@ The web surface is in progress: catalog, cart, and checkout pages render against
 
 ## Why this shape
 
-- One entry per ID (`{DS-WEB-001}`, `{DS-WEB-002}`, `{DS-WEB-003}`), each carrying one ID token per `extract_qualifier`.
+- One entry per ID (`DS-WEB-001`, `DS-WEB-002`, `DS-WEB-003`), each carrying one ID token per `extract_qualifier`.
 - Five fixed rows per entry: State / Done / In Progress / Risk / Updated (`Blocked` and `Next` are no longer in the schema).
+- Entry headings are unbraced and colon-terminated, matching FRD/DATA/DESIGN heading syntax.
 - Reference links PRD, FRD, Roadmap, and Architecture per the template.

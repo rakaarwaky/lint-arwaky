@@ -6,7 +6,7 @@ Shared is implemented, tested, and gated. Nothing is blocked.
 
 ## Backlog Status
 
-### {DT-SHAR-001}
+### DT-SHAR-001: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|

@@ -14,7 +14,7 @@ Last Updated: 2026-09-17
 
 ## Backlog Status
 
-### {FR-Filesystem-001}
+### FR-Filesystem-001: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
@@ -24,7 +24,7 @@ Last Updated: 2026-09-17
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
-### {FR-Filesystem-002}
+### FR-Filesystem-002: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
@@ -34,7 +34,7 @@ Last Updated: 2026-09-17
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
-### {FR-Filesystem-003}
+### FR-Filesystem-003: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
@@ -44,7 +44,7 @@ Last Updated: 2026-09-17
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
-### {FR-Filesystem-004}
+### FR-Filesystem-004: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
@@ -54,7 +54,7 @@ Last Updated: 2026-09-17
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
-### {FR-Filesystem-005}
+### FR-Filesystem-005: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|

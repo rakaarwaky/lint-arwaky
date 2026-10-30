@@ -77,9 +77,9 @@ pub const TEMPLATE_PROFILES: &[TemplateProfile] = &[
         required_h2s: BACKLOG_REQUIRED_H2S,
         placeholder_catalog: &[
             "<feature-name>",
-            "<DATA-NAME-ID>",
             "<FEATURE-NAME-ID>",
-            "DESIGN-NAME-ID",
+            "<DS-NAME-ID>",
+            "<DT-NAME-ID>",
             "<One paragraph of progress summary.>",
             "<evidence>",
             "<None / item name>",

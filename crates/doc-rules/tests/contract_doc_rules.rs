@@ -156,7 +156,7 @@ Last Updated: 2026-09-29
 
 ## Backlog Status
 
-### {FR-SAMPLE-001}
+### FR-SAMPLE-001: 
 
 | Aspect       | Detail                                      |
 |--------------|---------------------------------------------|
@@ -166,7 +166,7 @@ Last Updated: 2026-09-29
 | Risk         | None                                        |
 | Updated      | 2026-09-29                                  |
 
-### {FR-SAMPLE-002}
+### FR-SAMPLE-002: 
 
 | Aspect       | Detail                                      |
 |--------------|---------------------------------------------|
@@ -2649,7 +2649,7 @@ fn backlog_qualifier_mismatch_fires_on_uncarried_qualifier() {
     let backlog_text = fs::read_to_string(tmp.path().join("crates/sample/BACKLOG.md")).unwrap();
     let h3_line = backlog_text
         .lines()
-        .position(|l| l.trim() == "### {FR-OTHER-001}")
+        .position(|l| l.trim() == "### FR-OTHER-001: ")
         .unwrap()
         + 1;
     assert_eq!(
@@ -2717,7 +2717,7 @@ fn backlog_stray_id_in_next_fires_not_fr() {
     let backlog_text = fs::read_to_string(tmp.path().join("crates/sample/BACKLOG.md")).unwrap();
     let h3_line = backlog_text
         .lines()
-        .position(|l| l.trim() == "### {FR-SAMPLE-001}")
+        .position(|l| l.trim() == "### FR-SAMPLE-001: ")
         .unwrap()
         + 1;
     assert_eq!(
@@ -2954,7 +2954,7 @@ fn backlog_with_entries(ids: &[&str]) -> String {
         .iter()
         .map(|id| {
             format!(
-                "### {{{id}}}\n\n\
+                "### {id}: \n\n\
                  | Aspect      | Detail |\n\
                  |-------------|--------|\n\
                  | State       | Ready  |\n\
@@ -3045,7 +3045,7 @@ fn ds_mismatch_reports_qualifier_mismatch_and_missing() {
         mismatch && missing,
         "an undeclared entry token fires backlog_qualifier_mismatch; a declared ID without an entry fires ds_backlog_id_missing; got: {findings:#?}"
     );
-    // The mismatch finding anchors to the `### {FR-SAMPLE-001}` entry H3 line.
+    // The mismatch finding anchors to the `### FR-SAMPLE-001: ` entry H3 line.
     let raw = audit_findings(tmp.path());
     let mismatch_finding = raw
         .iter()
@@ -3054,7 +3054,7 @@ fn ds_mismatch_reports_qualifier_mismatch_and_missing() {
     let backlog_text = fs::read_to_string(tmp.path().join("crates/sample/BACKLOG.md")).unwrap();
     let h3_line = backlog_text
         .lines()
-        .position(|l| l.trim() == "### {FR-SAMPLE-001}")
+        .position(|l| l.trim() == "### FR-SAMPLE-001: ")
         .unwrap()
         + 1;
     assert_eq!(
@@ -3150,7 +3150,7 @@ fn dt_stray_id_in_next_fires_not_dt() {
     let backlog_text = fs::read_to_string(tmp.path().join("crates/shared/BACKLOG.md")).unwrap();
     let h3_line = backlog_text
         .lines()
-        .position(|l| l.trim() == "### {DT-SHAR-001}")
+        .position(|l| l.trim() == "### DT-SHAR-001: ")
         .unwrap()
         + 1;
     assert_eq!(

@@ -80,7 +80,7 @@ fn aes606_accepts_a_backlog_carrying_every_mandated_table() {
 fn aes606_rejects_bullet_bodies_under_a_backlog_section() {
     // The inspected unit is a `{ID}` entry under `Backlog Status`; its body
     // must be the entry table, so bullets are the wrong shape.
-    let text = "# BACKLOG\n\n## Backlog Status\n\n### {SAM-001}\n\n\
+    let text = "# BACKLOG\n\n## Backlog Status\n\n### SAM-001: \n\n\
 - SAM-01 is ready\n- SAM-02 is in progress\n";
     let findings =
         TemplateConformanceChecker::new().audit_template_conformance(&context("BACKLOG.md", text));

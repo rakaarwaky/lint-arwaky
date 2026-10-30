@@ -14,7 +14,7 @@ Last Updated: 2026-09-28
 
 ## Backlog Status
 
-### {FR-RoleRules-001}
+### FR-RoleRules-001: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
@@ -24,7 +24,7 @@ Last Updated: 2026-09-28
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
-### {FR-RoleRules-002}
+### FR-RoleRules-002: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
@@ -34,7 +34,7 @@ Last Updated: 2026-09-28
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
-### {FR-RoleRules-003}
+### FR-RoleRules-003: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
@@ -44,7 +44,7 @@ Last Updated: 2026-09-28
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
-### {FR-RoleRules-004}
+### FR-RoleRules-004: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
@@ -54,7 +54,7 @@ Last Updated: 2026-09-28
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
-### {FR-RoleRules-005}
+### FR-RoleRules-005: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
@@ -64,7 +64,7 @@ Last Updated: 2026-09-28
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
-### {FR-RoleRules-006}
+### FR-RoleRules-006: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
@@ -74,7 +74,7 @@ Last Updated: 2026-09-28
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
-### {FR-RoleRules-007}
+### FR-RoleRules-007: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
