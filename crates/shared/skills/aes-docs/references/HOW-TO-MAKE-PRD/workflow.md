@@ -11,6 +11,8 @@ The entry point depends on the starting state. In every scenario the PRD is a pr
 **Argument hint:** `--improve --docpath <docpath>`
 `<docpath>` is the path to the existing `PRD.md`. `<instruction>` describes what to change. The delegate reads the current PRD, applies the improvement, and keeps every PR ID stable; new PR IDs are only added when the improvement declares new deliverables. Never derive requirements from source code — apply the instruction against the existing spec.
 
+**Special case — `--docpath all`:** improves every existing `PRD.md` in the workspace in parallel. The orchestrator discovers all `PRD.md` files, then fans out one delegate subagent per `PRD.md`, each applying the same `<instruction>` to its own PRD while keeping that PRD's IDs stable. The same shared rule applies: no source-code derivation, instruction overrides code.
+
 ### Scenario 2 — Create new PRD, no source code yet
 **When:** the project has no implementation and no `PRD.md`.
 **Argument hint:** `--design --docpath <docpath>`

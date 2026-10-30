@@ -1,18 +1,8 @@
-# PRD Exemplar
+# FRD Exemplar
 
-| Template Section  | Weak (do not write)             | Falsifiable (write like this)                                                                                                         |
-| ----------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| Project Overview  | "Documentation is inefficient." | "Six documents describe one feature and disagree about what is finished; telling whether PR-006 shipped requires reading the source." |
-| Goals             | "High quality."                 | "Exit 1 on any status line found in an FRD; exit 0 on a clean tree."                                                                  |
-| Non-Goals         | (empty)                         | "Rendering, publishing, or translating docs; the checker only reads and reports."                                                     |
-| Target Users      | "Users want docs."              | "As an ops engineer at 3 a.m., I want one file that tells me what shipped, so that I don't grep six sources."                         |
-| Scope             | "Everything docs-related."      | "Reads markdown files under /docs and reports invariant violations to stdout."                                                        |
+A filled PRD against the Order Checkout project, matching the Template shape exactly.
 
-## Complete exemplar: Express Checkout
-
-Below is a complete, folder-friendly exemplar (`PR-CHECKOUT-EXPRESS`) adjusted to the project-name conventions.
-
----
+```markdown
 
 # PRD — Express Checkout
 

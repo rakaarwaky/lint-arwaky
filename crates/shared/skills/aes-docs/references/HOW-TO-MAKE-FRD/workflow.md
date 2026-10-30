@@ -11,6 +11,8 @@ The entry point depends on the starting state. In every scenario the FRD is a pr
 **Argument hint:** `--improve --docpath <docpath>`
 `<docpath>` is the path to the existing `FRD.md`. `<instruction>` describes what to change. The delegate reads the current FRD, applies the improvement, and keeps every FR ID stable; new FR IDs are only added when the improvement declares new deliverables. Never derive requirements from source code — apply the instruction against the existing spec.
 
+**Special case — `--docpath all`:** improves every existing `FRD.md` in the workspace in parallel. The orchestrator discovers all `FRD.md` files under feature directories, then fans out one delegate subagent per `FRD.md`, each applying the same `<instruction>` to its own FRD while keeping that FRD's IDs stable. The same shared rule applies: no source-code derivation, instruction overrides code.
+
 ### Scenario 2 — Create new FRD, no source code yet
 **When:** the feature has no implementation and no `FRD.md`.
 **Argument hint:** `--design --docpath <docpath>`
