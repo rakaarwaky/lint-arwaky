@@ -469,11 +469,6 @@ pub const PRD_ASPECT_SEED_MIN: &[(&str, usize)] = &[
     ("Main User Flow", 1),
 ];
 
-/// PRD `Project Requirements` entry H4 aspect labels — 3, per HOW-TO-MAKE-PRD.md.
-/// Mirrors `PRD_ASPECTS` so the fenced-template H4-aspect test and the
-/// required-aspect constant cannot drift.
-pub const PRD_ROW_LABELS: &[&str] = PRD_ASPECTS;
-
 /// An expected per-aspect H4 subsection is missing under an FR/PR entry.
 pub const TEMPLATE_CONFORMANCE_VIOLATION_MISSING_H4_ASPECT: &str = "missing_h4_aspect";
 
