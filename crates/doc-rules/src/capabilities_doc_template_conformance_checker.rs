@@ -82,6 +82,7 @@ impl TemplateConformanceChecker {
             consts::FRD_ASPECTS,
             consts::FRD_ASPECTS_OPEN,
             consts::FRD_ASPECT_SEED_MIN,
+            false,
         ));
         findings.extend(check_h2_table(
             parsed,
@@ -110,6 +111,7 @@ impl TemplateConformanceChecker {
             consts::PRD_ASPECTS,
             consts::PRD_ASPECTS_OPEN,
             consts::PRD_ASPECT_SEED_MIN,
+            true,
         ));
         findings.extend(check_h2_table(
             parsed,
@@ -528,6 +530,7 @@ impl TemplateConformanceChecker {
         aspects: &[&str],
         open: &[&str],
         seed_min: &[(&str, usize)],
+        is_prd: bool,
     ) -> Vec<DocFinding> {
         let mut findings = Vec::new();
         let Some(parent) = parsed
@@ -542,8 +545,10 @@ impl TemplateConformanceChecker {
             }
             // Legacy entry shape: one `| Aspect | Detail |` table on the H3,
             // no per-aspect H4 subsections. Enforced by `check_entry_tables`
-            // until the doc migrates to the H4 aspect template.
-            if has_any_table(&h3.body)
+            // until the doc migrates to the H4 aspect template. PRD entries
+            // never use this shape: they carry H4 aspects directly.
+            if !is_prd
+                && has_any_table(&h3.body)
                 && header_extra_columns(&h3.body, &["Aspect", "Detail"]).is_none()
             {
                 let columns_match = first_column_values(&h3.body)
@@ -628,11 +633,38 @@ impl TemplateConformanceChecker {
                 );
             }
 
-            // Per-aspect body checks.
+            // Per-aspect body checks. PRD aspects are free-form prose /
+            // tables per the HOW-TO-MAKE-PRD template, so only presence and
+            // non-empty body are enforced there. FRD keeps the strict
+            // `| No | Detail |` aspect-table contract.
             for aspect in aspects {
                 let Some(h4) = h4s.iter().find(|s| s.title == *aspect) else {
                     continue;
                 };
+                if is_prd {
+                    // PRD aspect: require the H4 to exist (checked above) and
+                    // carry a non-empty body. No table-shape, numbering, or
+                    // seed-min count enforcement.
+                    if h4.body.trim().is_empty() {
+                        findings.push(
+                            DocFinding::new_with_line(
+                                "",
+                                h4.line,
+                                consts::RULE_CODE_TEMPLATE_CONFORMANCE,
+                                consts::TEMPLATE_CONFORMANCE_VIOLATION_EMPTY_DETAIL_CELL,
+                                format!(
+                                    "line {} `#### {}` under `### {}` has an empty body",
+                                    h4.line, aspect, h3.title
+                                ),
+                            )
+                            .with_reason(
+                                "Each PRD aspect H4 must carry real content.",
+                                "Fill `#### {aspect}` with prose, a table, or a numbered list.",
+                            ),
+                        );
+                    }
+                    continue;
+                }
                 let Some(min) = seed_min.iter().find(|(n, _)| n == aspect).map(|&(_, m)| m) else {
                     continue;
                 };

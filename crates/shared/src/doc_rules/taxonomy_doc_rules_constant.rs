@@ -229,7 +229,15 @@ pub const FRD_REQUIRED_H2S: &[&str] = &[
 ];
 
 /// PRD required H2s, per HOW-TO-MAKE-PRD.md.
-pub const PRD_REQUIRED_H2S: &[&str] = &["Problem Statement", "Project Requirements", "Reference"];
+pub const PRD_REQUIRED_H2S: &[&str] = &[
+    "Project Overview",
+    "Goals",
+    "Non-Goals",
+    "Target Users",
+    "Scope",
+    "Project Requirements",
+    "Reference",
+];
 
 /// README required H2s, per HOW-TO-MAKE-README.md.
 pub const README_REQUIRED_H2S: &[&str] = &[
@@ -276,14 +284,10 @@ pub const ASPECT_DETAIL_COLUMNS: &[&str] = &["Aspect", "Detail"];
 /// `## Reference` table, per the HOW-TO-MAKE templates.
 pub const REFERENCE_COLUMNS: &[&str] = &["Artifact", "Purpose", "Link"];
 
-/// PRD `Project Requirements` entry row labels — 5, per HOW-TO-MAKE-PRD.md.
-pub const PRD_ROW_LABELS: &[&str] = &[
-    "Description",
-    "User Story",
-    "In Scope",
-    "Out of Scope",
-    "Success Metric",
-];
+/// PRD `Project Requirements` entry row labels — mirrors `PRD_ASPECTS`
+/// (defined below), kept in sync so the fenced-template H4-aspect test and
+/// the required-aspect constant cannot drift.
+pub const PRD_ROW_LABELS: &[&str] = PRD_ASPECTS;
 
 /// ROADMAP `Roadmap Status` entry row labels — 4, per HOW-TO-MAKE-ROADMAP.md.
 pub const ROADMAP_ROW_LABELS: &[&str] = &["Priority", "State", "Dependencies", "Updated"];
@@ -449,30 +453,26 @@ pub const FRD_ASPECT_SEED_MIN: &[(&str, usize)] = &[
     ("Error", 1),
 ];
 
-/// Canonical order of the five PRD per-aspect H4 subsections, per the new
+/// Canonical order of the three PRD per-aspect H4 subsections, per the new
 /// modular HOW-TO-MAKE-PRD.md template.
-pub const PRD_ASPECTS: &[&str] = &[
-    "Description",
-    "User Story",
-    "In Scope",
-    "Out of Scope",
-    "Success Metric",
-];
+pub const PRD_ASPECTS: &[&str] = &["User Stories", "Proposed Solution", "Main User Flow"];
 
-/// All five PRD aspects are open-ended (seed minimum 1 each).
+/// All three PRD aspects are open-ended (seed minimum 1 each).
 pub const PRD_ASPECTS_OPEN: &[&str] = PRD_ASPECTS;
 
-/// Minimum total row count per PRD aspect. All five are open-ended at 1
-/// (row 1 with real content; a second row only when a second real fact
-/// exists — never a placeholder cell). Numbered seed rows only; `∞` is
-/// not written as a marker row.
+/// Minimum content per PRD aspect. All three are open-ended at 1
+/// (one real row / bullet / step; a second only when a second real fact
+/// exists — never a placeholder cell).
 pub const PRD_ASPECT_SEED_MIN: &[(&str, usize)] = &[
-    ("Description", 1),
-    ("User Story", 1),
-    ("In Scope", 1),
-    ("Out of Scope", 1),
-    ("Success Metric", 1),
+    ("User Stories", 1),
+    ("Proposed Solution", 1),
+    ("Main User Flow", 1),
 ];
+
+/// PRD `Project Requirements` entry H4 aspect labels — 3, per HOW-TO-MAKE-PRD.md.
+/// Mirrors `PRD_ASPECTS` so the fenced-template H4-aspect test and the
+/// required-aspect constant cannot drift.
+pub const PRD_ROW_LABELS: &[&str] = PRD_ASPECTS;
 
 /// An expected per-aspect H4 subsection is missing under an FR/PR entry.
 pub const TEMPLATE_CONFORMANCE_VIOLATION_MISSING_H4_ASPECT: &str = "missing_h4_aspect";
