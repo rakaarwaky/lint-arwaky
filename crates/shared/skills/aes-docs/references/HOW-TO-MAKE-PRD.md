@@ -45,31 +45,26 @@ nothing changes. Do not list features here.
 | No | Detail |
 |----|--------|
 | 1 | One behaviour — what it does |
-| 2 | Second detail |
 
 #### User Story
 | No | Detail |
 |----|--------|
 | 1 | As a persona, I want action, so that outcome |
-| 2 | Second detail |
 
 #### In Scope
 | No | Detail |
 |----|--------|
 | 1 | Functional boundary — what must exist |
-| 2 | Second detail |
 
 #### Out of Scope
 | No | Detail |
 |----|--------|
 | 1 | Functional boundary — what must not exist. Name them so the argument ends here |
-| 2 | Second detail |
 
 #### Success Metric
 | No | Detail |
 |----|--------|
 | 1 | How to measure the outcome of this requirement |
-| 2 | Second detail |
 
 ### PR-<PROJECT-NAME-ID>-002: <Short imperative name>
 ### PR-ACME-003: Short imperative name
@@ -125,7 +120,7 @@ opens each entry from its own H4 block; entries 002 and 003 are elided.
 | **In Scope** | Functional boundary — what must exist. Defines what the system will deliver. |
 | **Out of Scope** | Functional boundary — what must not exist. Name exclusions explicitly so the argument ends here. Written per requirement only, no global out-of-scope. |
 | **Success Metric** | Measures the outcome of the requirement. Must be testable or a wish. Does NOT describe functional steps (that belongs in FRD). |
-| **Seed rows** | All five PRD aspects open at 2 rows: `1`, `2`. The `∞` marker row is not written in PRD docs — open-ended means any count ≥2, not an explicit infinity marker. This is the `PRD_ASPECT_SEED_MIN` contract — a design-level invariant today; the linter enforces it via `check_aspect_entry_tables` through the PRD aspect constants and the aspect-table checker (linter catch-up for H4/seed-row shape is a BACKLOG item, not yet wired). |
+| **Seed rows** | All five PRD aspects seed at 1 row: `1`, filled with real content. Write row 2 (and beyond) only when the aspect carries a second real fact — never a placeholder cell such as `—`. The `∞` marker row is not written in PRD docs — open-ended means any count ≥1. This is the `PRD_ASPECT_SEED_MIN` contract, enforced by the linter through `check_aspect_entry_tables` (AES606 `row_minimum_violation` for too few rows, `empty_detail_cell` for an empty or dash-padded cell). |
 
 ---
 
