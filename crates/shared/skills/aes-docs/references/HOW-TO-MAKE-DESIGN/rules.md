@@ -2,7 +2,7 @@
 
 **Purpose:** Define the design contract of a surface so designers and engineers can implement or audit it without asking the author.
 
-**Audience:** Designers, Surface Engineers, TUI developers.
+**Audience:** Designers, Surface Engineers, UI/UX Designer.
 
 **Scope:** One DESIGN.md per surface folder.
 

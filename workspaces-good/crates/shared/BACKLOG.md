@@ -13,8 +13,6 @@ Shared is implemented, tested, and gated. Nothing is blocked.
 | State        | Ready                                      |
 | Done         | —                                          |
 | In Progress  | None                                       |
-| Blocked      | None                                       |
-| Next         | —                                          |
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 

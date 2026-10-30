@@ -163,8 +163,6 @@ Last Updated: 2026-09-29
 | State        | Ready                                       |
 | Done         | —                                           |
 | In Progress  | None                                        |
-| Blocked      | None                                        |
-| Next         | Ship FR-SAMPLE-001                          |
 | Risk         | None                                        |
 | Updated      | 2026-09-29                                  |
 
@@ -175,8 +173,6 @@ Last Updated: 2026-09-29
 | State        | Ready                                       |
 | Done         | —                                           |
 | In Progress  | None                                        |
-| Blocked      | None                                        |
-| Next         | Ship FR-SAMPLE-002                          |
 | Risk         | None                                        |
 | Updated      | 2026-09-29                                  |
 
@@ -2703,15 +2699,15 @@ fn backlog_missing_direction_fires_on_uncovered_qualifier() {
 #[test]
 fn backlog_stray_id_in_next_fires_not_fr() {
     let tmp = tempfile::tempdir().unwrap();
-    // BACKLOG entry FR-SAMPLE-001 `Next` cites FR-OTHER-001, which the FRD
+    // BACKLOG entry FR-SAMPLE-001 `Done` cites FR-OTHER-001, which the FRD
     // never declares → backlog_id_not_fr anchored to the entry H3.
     let backlog = backlog_with_entries(&["FR-SAMPLE-001"])
-        .replace("| Next        | —      |", "| Next        | FR-OTHER-001 |");
+        .replace("| Done        | —      |", "| Done        | FR-OTHER-001 |");
     write_frd_backlog_pair(tmp.path(), &conforming_frd(), Some(&backlog));
     let findings = audit(tmp.path());
     assert!(
         has(&findings, "AES601", "backlog_id_not_fr"),
-        "a NEXT row token not declared in the FRD fires backlog_id_not_fr; got: {findings:#?}"
+        "a DONE row token not declared in the FRD fires backlog_id_not_fr; got: {findings:#?}"
     );
     let raw = audit_findings(tmp.path());
     let not_fr = raw
@@ -2964,8 +2960,6 @@ fn backlog_with_entries(ids: &[&str]) -> String {
                  | State       | Ready  |\n\
                  | Done        | —      |\n\
                  | In Progress | —      |\n\
-                 | Blocked     | —      |\n\
-                 | Next        | —      |\n\
                  | Risk        | —      |\n\
                  | Updated     | 2026-09-29 |\n"
             )
@@ -3137,16 +3131,16 @@ fn dt_mismatch_reports_qualifier_mismatch_and_missing() {
 #[test]
 fn dt_stray_id_in_next_fires_not_dt() {
     let tmp = tempfile::tempdir().unwrap();
-    // DATA declares DT-SHAR-001; BACKLOG entry `Next` cites DT-MCPS-002, which
+    // DATA declares DT-SHAR-001; BACKLOG entry `Done` cites DT-MCPS-002, which
     // the DATA doc does not declare → dt_backlog_id_not_dt anchored to H3.
     let data = conforming_data_with_dt();
     let backlog = backlog_with_entries(&["DT-SHAR-001"])
-        .replace("| Next        | —      |", "| Next        | DT-MCPS-002 |");
+        .replace("| Done        | —      |", "| Done        | DT-MCPS-002 |");
     write_data_backlog_pair(tmp.path(), &data, Some(&backlog));
     let findings = audit(tmp.path());
     assert!(
         has(&findings, "AES601", "dt_backlog_id_not_dt"),
-        "a NEXT row token not declared in DATA fires dt_backlog_id_not_dt anchored to the entry H3; got: {findings:#?}"
+        "a DONE row token not declared in DATA fires dt_backlog_id_not_dt anchored to the entry H3; got: {findings:#?}"
     );
     let raw = audit_findings(tmp.path());
     let not_dt = raw

@@ -181,8 +181,6 @@ Baseline.\n\n\
 | State        | Ready                                       |\n\
 | Done         | none                                        |\n\
 | In Progress  | None                                        |\n\
-| Blocked      | None                                        |\n\
-| Next         | Ship the feature                            |\n\
 | Risk         | None                                        |\n\
 | Updated      | 2026-09-29                                  |\n\n\
 ### {FR-SAMPLE-002}\n\
@@ -191,8 +189,6 @@ Baseline.\n\n\
 | State        | Ready                                       |\n\
 | Done         | none                                        |\n\
 | In Progress  | None                                        |\n\
-| Blocked      | None                                        |\n\
-| Next         | Ship the feature                            |\n\
 | Risk         | None                                        |\n\
 | Updated      | 2026-09-29                                  |\n\n\
 ## Reference\n\n\
@@ -425,8 +421,6 @@ fn backlog_with_entries(ids: &[&str]) -> String {
                  | State        | Ready                                       |\n\
                  | Done         | —                                           |\n\
                  | In Progress  | None                                        |\n\
-                 | Blocked      | None                                        |\n\
-                 | Next         | Ship {id}                                   |\n\
                  | Risk         | None                                        |\n\
                  | Updated      | 2026-09-29                                  |\n"
             )

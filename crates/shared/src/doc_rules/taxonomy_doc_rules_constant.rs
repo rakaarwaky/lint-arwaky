@@ -289,19 +289,11 @@ pub const REFERENCE_COLUMNS: &[&str] = &["Artifact", "Purpose", "Link"];
 /// the required-aspect constant cannot drift.
 pub const PRD_ROW_LABELS: &[&str] = PRD_ASPECTS;
 
-/// ROADMAP `Roadmap Status` entry row labels — 4, per HOW-TO-MAKE-ROADMAP.md.
-pub const ROADMAP_ROW_LABELS: &[&str] = &["Priority", "State", "Dependencies", "Updated"];
+/// ROADMAP `Roadmap Status` entry row labels — 3, per HOW-TO-MAKE-ROADMAP.md.
+pub const ROADMAP_ROW_LABELS: &[&str] = &["Priority", "State", "Backlog"];
 
-/// BACKLOG `Backlog Status` entry row labels — 7, per HOW-TO-MAKE-BACKLOG.md.
-pub const BACKLOG_ROW_LABELS: &[&str] = &[
-    "State",
-    "Done",
-    "In Progress",
-    "Blocked",
-    "Next",
-    "Risk",
-    "Updated",
-];
+/// BACKLOG `Backlog Status` entry row labels — 5, per HOW-TO-MAKE-BACKLOG.md.
+pub const BACKLOG_ROW_LABELS: &[&str] = &["State", "Done", "In Progress", "Risk", "Updated"];
 
 /// FRD `Technical Specification` entry row labels — 6. Alias of
 /// `FR_FIELDS`: both are the same six labels the entry table in

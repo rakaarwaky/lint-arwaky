@@ -1,136 +1,165 @@
-# FRD Exemplar
+# PRD Exemplar
 
-A filled PRD against the Order Checkout project, matching the Template shape exactly.
+A filled PRD against the Ecommerce Application project, matching the Template shape exactly.
 
 ```markdown
 
-# PRD — Express Checkout
+# PRD — Ecommerce Application
 
 ## Project Overview
 
-```text
-[Customer App/Web] --> [API Gateway] --> [Checkout Service]
-[Checkout Service] --> [Payment Gateway]
-[Checkout Service] --> [Inventory Service]
-[Checkout Service] --> [Notification Service]
-```
+    [Customer] --> [Storefront] --> [API Gateway]
+    [API Gateway] --> [Catalog Service]
+    [API Gateway] --> [Checkout Service]
+    [API Gateway] --> [Account Service]
 
-**Express Checkout** is a cross-functional project aimed at reducing friction during the purchase process for returning customers. It targets active shoppers who repeatedly buy from the platform and currently abandon carts due to repetitive checkout steps. The project matters because cart abandonment during checkout is currently at 38%, costing the business an estimated $2.4M in lost revenue per quarter. If this project is not delivered, we will continue losing market share to competitors who already offer one-click purchasing, and customer retention among high-frequency buyers will decline.
+**Ecommerce Application** is a cross-functional project that lets customers browse products, add items to a cart, and place orders online. It serves shoppers who buy goods on the platform and merchants who list and sell those goods. The project matters because the platform currently loses customers at checkout and cannot track orders end to end; without it, the business cannot grow its online sales or compete with merchants who offer a complete buying experience.
 
 ## Goals
 
-- Reduce checkout abandonment rate from 38% to below 20% within 6 months of launch.
-- Decrease average time-to-purchase from 4 minutes to under 60 seconds for returning customers.
-- Increase repeat purchase rate among top-tier loyalty members by 15%.
+- Reduce cart abandonment from checkout to purchase below 25% within 6 months of launch.
+- Enable customers to complete a purchase from product discovery to order confirmation in under 3 minutes.
+- Grow merchant gross merchandise value by 20% year over year through the online channel.
 
 ## Non-Goals
 
-- Redesigning the full shopping or product discovery experience.
-- Supporting new payment methods beyond credit cards and digital wallets already integrated.
-- Building a merchant-side checkout customization tool (deferred to Q2 next year).
-- International shipping or multi-currency support (out of scope for this release).
+- Building a brick-and-mortar point-of-sale system.
+- Supporting international shipping or multi-currency settlement in this release.
+- Offering a marketplace for third-party sellers beyond the platform's own merchant catalog.
 
 ## Target Users
 
 | Persona | Need | Current Pain | Desired Outcome |
 |---------|------|--------------|-----------------|
-| Returning Shopper | Buy frequently-used items quickly | Re-entering shipping and payment info every time | Complete a purchase in under 60 seconds with one tap |
-| Loyalty Member | Get rewarded for fast, repeat purchases | No streamlined path for high-frequency buyers | Seamless checkout with auto-applied loyalty discounts |
-| Mobile Shopper | Checkout on the go with minimal typing | Small screens make form-filling painful | Minimal-tap, mobile-first checkout experience |
+| Shopper | Browse products and buy them online | No way to check out or track an order end to end | Find, buy, and receive items with order tracking |
+| Merchant | List products and receive orders | No online storefront or order intake | Publish products and get paid orders |
+| Customer Service Agent | Look up and resolve order issues | No order history or status tool | View orders and issue refunds or changes |
 
 ## Scope
 
 ### In Scope
 
-- Streamlined order checkout flow for authenticated users.
-- Saved payment methods with tokenized storage.
-- One-click purchase capability for eligible items.
-- Auto-application of active vouchers and loyalty points.
-- Order confirmation and receipt delivery via email and in-app notification.
+- Product catalog browsing with search and filters.
+- Shopping cart with add, update, and remove item actions.
+- Authenticated checkout flow with saved addresses and payment.
+- Order creation, status tracking, and confirmation emails.
+- Merchant product listing and order management dashboard.
 
 ### Out of Scope
 
-- Guest checkout flow (handled separately in Guest Checkout project).
-- Subscription-based recurring purchases.
-- B2B bulk ordering workflows.
+- Subscription boxes or recurring orders.
 - In-store pickup or delivery scheduling.
+- Multi-currency pricing and international tax calculation.
 
 ---
 
 ## Project Requirements
 
-### PR-CHECKOUT-EXPRESS-001: Express Checkout
+### PR-ECOMMERCE-000: Shared Kernel
 
 #### User Stories
 
 | As a | I want | So that | Priority |
 |------|--------|---------|----------|
-| Returning customer | to see a pre-filled checkout page with my saved address and payment | I can confirm my order without re-entering details | P0 |
-| Returning customer | to review my cart and total before confirming | I feel confident about what I am paying | P0 |
-| Customer | to apply or remove a voucher during checkout | I can maximize my savings | P1 |
+| Developer | to find taxonomy, contract, and utility in one shared kernel | I can reuse domain definitions across features | P0 |
+| Engineer | to import shared contracts and utilities without circular dependencies | I can build features on stable foundations | P0 |
 
 #### Proposed Solution
 
-The system will present a single-page checkout view for authenticated users, pre-populated with their default shipping address and preferred payment method. Users can modify either before confirming. The order is created atomically, with stock reserved immediately and payment authorized in a single flow. If any validation fails (e.g., out of stock), the user is shown a clear, actionable error with a path to resolution.
+The shared kernel holds taxonomy value objects, contract protocols and aggregates, and stateless utilities. Feature and surface crates import from shared, but shared imports nothing from them.
 
 #### Main User Flow
 
-1. Customer taps "Checkout" from the cart page.
-2. System loads saved address and payment method, displays order summary.
-3. Customer reviews total (with auto-applied voucher if eligible) and taps "Place Order".
-4. System creates order, reserves stock, authorizes payment, and shows confirmation screen.
+1. Developer adds a new value object under `crates/shared/<domain>/`.
+2. Feature crate imports the taxonomy type and contract protocol.
+3. Surface consumes the contract aggregate to trigger feature behavior.
 
----
-
-### PR-CHECKOUT-EXPRESS-002: Saved Payments
+### PR-ECOMMERCE-001: Product Catalog
 
 #### User Stories
 
 | As a | I want | So that | Priority |
 |------|--------|---------|----------|
-| Returning customer | to save my credit card or digital wallet securely | I do not have to re-enter it on every purchase | P0 |
-| Customer | to manage (add, remove, set default) my saved payment methods | I have full control over my payment options | P1 |
-| Customer | to see only the last 4 digits of my saved card | I can identify my card without exposing sensitive data | P0 |
+| Shopper | to browse products by category and search by name | I can find the item I want to buy | P1 |
+| Shopper | to see product price, stock, and images | I can decide whether to buy | P1 |
+| Merchant | to list a product with price and stock | I can sell it on the platform | P1 |
 
 #### Proposed Solution
 
-Payment details will be tokenized through the existing payment gateway and stored in a dedicated Payment Vault service. The UI will display masked card information and allow users to add, remove, or set a default method. Tokens are never stored in the application database — only references to the gateway's secure vault.
+The storefront displays products from the catalog with category filters and a search bar. Each product page shows price, stock availability, and images. Merchants create and edit product listings through a seller dashboard.
 
 #### Main User Flow
 
-1. Customer navigates to "Payment Methods" in account settings.
-2. Customer taps "Add Payment Method" and completes gateway-hosted card entry.
-3. System stores token reference and displays masked card in the list.
-4. Customer can set a card as default or remove it at any time.
+1. Shopper opens the storefront and browses categories or searches for a product.
+2. Shopper selects a product to view its details, price, and stock.
+3. Merchant adds a product through the seller dashboard with name, price, and stock.
 
----
-
-### PR-CHECKOUT-EXPRESS-003: One-Click Buy
+### PR-ECOMMERCE-002: Shopping Cart
 
 #### User Stories
 
 | As a | I want | So that | Priority |
 |------|--------|---------|----------|
-| Loyalty member | to buy an item with a single tap from the product page | I can complete repeat purchases instantly | P0 |
-| Customer | to confirm one-click purchases with a biometric or PIN prompt | I feel my account is protected from accidental or unauthorized buys | P0 |
-| Customer | to disable one-click purchase at any time | I can control this convenience feature | P1 |
+| Shopper | to add items to a cart and adjust quantities | I can buy multiple items in one order | P2 |
+| Shopper | to review cart total before checkout | I know what I will pay | P2 |
 
 #### Proposed Solution
 
-A "Buy Now" button will appear on eligible product pages for authenticated users with a saved payment method and default address. Tapping it triggers a biometric or PIN confirmation, then creates the order using the same streamlined flow as PR-001. The feature can be toggled off in account settings.
+The cart holds selected items with quantities and computes a running total. Shoppers can change quantities or remove items before checking out.
 
 #### Main User Flow
 
-1. Customer taps "Buy Now" on a product page.
-2. System prompts biometric or PIN confirmation.
-3. Upon confirmation, system creates order, reserves stock, and charges default payment method.
-4. Customer sees order confirmation with tracking details.
+1. Shopper taps "Add to Cart" on a product page.
+2. Shopper opens the cart to review items, quantities, and total.
+3. Shopper adjusts quantity or removes items, then proceeds to checkout.
 
----
+### PR-ECOMMERCE-003: Checkout and Order
+
+#### User Stories
+
+| As a | I want | So that | Priority |
+|------|--------|---------|----------|
+| Shopper | to check out with saved address and payment | I can place an order without re-entering details | P2 |
+| Shopper | to receive an order confirmation | I know my order was placed | P2 |
+| Merchant | to receive new orders in the seller dashboard | I can fulfill them | P2 |
+
+#### Proposed Solution
+
+Authenticated shoppers check out through a single-page flow pre-filled with saved address and payment. Placing the order creates an order record, reserves stock, and sends a confirmation. Merchants see new orders in their dashboard.
+
+#### Main User Flow
+
+1. Shopper taps "Checkout" from the cart page.
+2. System loads saved address and payment, shows order summary.
+3. Shopper reviews total and taps "Place Order".
+4. System creates the order, reserves stock, and shows confirmation.
+
+### PR-ECOMMERCE-004: Web
+
+#### User Stories
+
+| As a | I want | So that | Priority |
+|------|--------|---------|----------|
+| Shopper | to browse and buy through a web storefront | I can shop from any device without installing an app | P3 |
+| Merchant | to manage products and orders through a web UI | I can run my store from a browser | P3 |
+
+#### Proposed Solution
+
+A web surface presents product catalog, cart, and checkout pages to shoppers and a seller dashboard to merchants. Smart surfaces call contract aggregates to trigger feature behavior, while passive surfaces render presentation only.
+
+#### Main User Flow
+
+1. Shopper opens the web storefront in a browser.
+2. Shopper browses products, adds items to cart, and checks out.
+3. Merchant opens the seller dashboard to list products and view orders.
 
 ## Reference
 
-| Artifact | Purpose | Link |
-|----------|---------|------|
-| Roadmap | Timeline, phasing, and dependencies | [ROADMAP.md](ROADMAP.md) |
-| Architecture | System boundaries, tech stack, and infra | [ARCHITECTURE.md](ARCHITECTURE.md) |
+| Artifact     | Purpose                                         | Link |
+|--------------|-------------------------------------------------|------|
+| PRD          | Business goals, user stories, and scope         | [PRD.md](PRD.md) |
+| Backlog      | Task tracking, epics, and implementation status | [BACKLOG.md](BACKLOG.md) |
+| Roadmap      | Timeline, phasing, and dependencies             | [ROADMAP.md](ROADMAP.md) |
+| Architecture | System boundaries, tech stack, and infra        | [ARCHITECTURE.md](ARCHITECTURE.md) |
+
+```

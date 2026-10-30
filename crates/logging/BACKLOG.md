@@ -19,8 +19,6 @@ hard-coded filter change.
 | State        | Ready                                      |
 | Done         | Logging                                      |
 | In Progress  | None                                       |
-| Blocked      | None                                       |
-| Next         | Ship                                       |
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
@@ -31,8 +29,6 @@ hard-coded filter change.
 | State        | Ready                                      |
 | Done         | Logging                                      |
 | In Progress  | None                                       |
-| Blocked      | None                                       |
-| Next         | Ship                                       |
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
@@ -43,8 +39,6 @@ hard-coded filter change.
 | State        | Ready                                      |
 | Done         | Logging                                      |
 | In Progress  | None                                       |
-| Blocked      | None                                       |
-| Next         | Ship                                       |
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
@@ -55,8 +49,6 @@ hard-coded filter change.
 | State        | Ready                                      |
 | Done         | Logging                                      |
 | In Progress  | None                                       |
-| Blocked      | None                                       |
-| Next         | Ship                                       |
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 

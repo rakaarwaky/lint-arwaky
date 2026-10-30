@@ -33,7 +33,7 @@ Spawn exactly N subagents, one per PR ID; each delegate researches its own subje
 
 ## 3. Integrate
 
-Merge the N drafts into `## Project Requirements` in ID order; the integrator polishes against the Rules above (no impl detail, testable metrics, explicit exclusions, open-ended seed rows) and does not invent entries for IDs that were never declared.
+Merge the N drafts into `## Project Requirements` in priority order: P0 entries first (NNN 001, 002, …), then P1, then P2. The NNN counter is global and sequential — no gaps, no tier jumps. The integrator polishes against the Rules above (no impl detail, testable metrics, explicit exclusions, open-ended seed rows) and does not invent entries for IDs that were never declared.
 
 ## 4. Verify
 

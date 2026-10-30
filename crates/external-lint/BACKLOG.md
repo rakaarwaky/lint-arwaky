@@ -21,8 +21,6 @@ Last Updated: 2026-10-28
 | State        | Ready                                    |
 | Done         | FR-ExternalLint-001 shipped              |
 | In Progress  | None                                     |
-| Blocked      | None                                     |
-| Next         | Ship                                     |
 | Risk         | None                                     |
 | Updated      | 2026-10-28                               |
 
@@ -33,8 +31,6 @@ Last Updated: 2026-10-28
 | State        | Ready                                    |
 | Done         | FR-ExternalLint-002 shipped              |
 | In Progress  | None                                     |
-| Blocked      | None                                     |
-| Next         | Ship                                     |
 | Risk         | None                                     |
 | Updated      | 2026-10-28                               |
 
@@ -45,8 +41,6 @@ Last Updated: 2026-10-28
 | State        | Ready                                    |
 | Done         | FR-ExternalLint-003 shipped              |
 | In Progress  | None                                     |
-| Blocked      | None                                     |
-| Next         | Ship                                     |
 | Risk         | None                                     |
 | Updated      | 2026-10-28                               |
 
@@ -57,8 +51,6 @@ Last Updated: 2026-10-28
 | State        | Ready                                    |
 | Done         | FR-ExternalLint-004 shipped              |
 | In Progress  | None                                     |
-| Blocked      | None                                     |
-| Next         | Ship                                     |
 | Risk         | None                                     |
 | Updated      | 2026-10-28                               |
 
@@ -69,8 +61,6 @@ Last Updated: 2026-10-28
 | State        | Ready                                    |
 | Done         | FR-ExternalLint-005 shipped              |
 | In Progress  | None                                     |
-| Blocked      | None                                     |
-| Next         | Ship                                     |
 | Risk         | None                                     |
 | Updated      | 2026-10-28                               |
 
@@ -81,8 +71,6 @@ Last Updated: 2026-10-28
 | State        | Ready                                    |
 | Done         | FR-ExternalLint-006 shipped              |
 | In Progress  | None                                     |
-| Blocked      | None                                     |
-| Next         | Ship                                     |
 | Risk         | None                                     |
 | Updated      | 2026-10-28                               |
 

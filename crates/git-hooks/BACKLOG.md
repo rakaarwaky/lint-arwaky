@@ -22,8 +22,6 @@ Last Updated: 2026-09-29
 | State        | Ready                                      |
 | Done         | GitHooks                                      |
 | In Progress  | None                                       |
-| Blocked      | None                                       |
-| Next         | Ship                                       |
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
@@ -34,8 +32,6 @@ Last Updated: 2026-09-29
 | State        | Ready                                      |
 | Done         | GitHooks                                      |
 | In Progress  | None                                       |
-| Blocked      | None                                       |
-| Next         | Ship                                       |
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
@@ -46,8 +42,6 @@ Last Updated: 2026-09-29
 | State        | Ready                                      |
 | Done         | GitHooks                                      |
 | In Progress  | None                                       |
-| Blocked      | None                                       |
-| Next         | Ship                                       |
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
@@ -58,8 +52,6 @@ Last Updated: 2026-09-29
 | State        | Ready                                      |
 | Done         | GitHooks                                      |
 | In Progress  | None                                       |
-| Blocked      | None                                       |
-| Next         | Ship                                       |
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 

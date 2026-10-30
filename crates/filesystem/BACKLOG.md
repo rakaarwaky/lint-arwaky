@@ -21,8 +21,6 @@ Last Updated: 2026-09-17
 | State        | Ready                                      |
 | Done         | Filesystem                                      |
 | In Progress  | None                                       |
-| Blocked      | None                                       |
-| Next         | Ship                                       |
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
@@ -33,8 +31,6 @@ Last Updated: 2026-09-17
 | State        | Ready                                      |
 | Done         | Filesystem                                      |
 | In Progress  | None                                       |
-| Blocked      | None                                       |
-| Next         | Ship                                       |
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
@@ -45,8 +41,6 @@ Last Updated: 2026-09-17
 | State        | Ready                                      |
 | Done         | Filesystem                                      |
 | In Progress  | None                                       |
-| Blocked      | None                                       |
-| Next         | Ship                                       |
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
@@ -57,8 +51,6 @@ Last Updated: 2026-09-17
 | State        | Ready                                      |
 | Done         | Filesystem                                      |
 | In Progress  | None                                       |
-| Blocked      | None                                       |
-| Next         | Ship                                       |
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
@@ -69,8 +61,6 @@ Last Updated: 2026-09-17
 | State        | Ready                                      |
 | Done         | Filesystem                                      |
 | In Progress  | None                                       |
-| Blocked      | None                                       |
-| Next         | Ship                                       |
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 

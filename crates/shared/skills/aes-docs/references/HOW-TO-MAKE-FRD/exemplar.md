@@ -1,9 +1,9 @@
 # FRD Exemplar
 
-A filled FRD against the Order Checkout feature, matching the Template shape exactly.
+A filled FRD against the Ecommerce Checkout Order feature, matching the Template shape exactly.
 
 ```markdown
-# FRD — Order Checkout
+# FRD — Ecommerce Checkout Order
 
 ## Feature Overview
 
@@ -14,11 +14,11 @@ A filled FRD against the Order Checkout feature, matching the Template shape exa
     [Event Bus] --> [Payment Service]
     [Event Bus] --> [Notification Service]
 
-The **Order Checkout** feature sits in the application/service layer and is called by clients through the API Gateway. This feature is responsible for creating an order from the user's cart, validating item availability, applying vouchers or discounts, and producing an order with an initial status of `PENDING_PAYMENT`. After the order is successfully created, the feature interacts with the Inventory Service to reserve stock and publishes the `OrderCreated` domain event to the Event Bus so that payment, notification, and downstream fulfillment processes can continue asynchronously.
+The **Ecommerce Checkout Order** feature sits in the application/service layer and is called by clients through the API Gateway. This feature is responsible for creating an order from the user's cart, validating item availability, applying vouchers or discounts, and producing an order with an initial status of `PENDING_PAYMENT`. After the order is successfully created, the feature interacts with the Inventory Service to reserve stock and publishes the `OrderCreated` domain event to the Event Bus so that payment, notification, and downstream fulfillment processes can continue asynchronously.
 
 ## Functional Requirements
 
-### FR-ORDER-CHECKOUT-001: Create Order
+### FR-ECOMMERCE-CHECKOUT-001: Create Order
 
 **Description:**
 This feature creates a new order based on the cart belonging to an authenticated user. The system validates the cart, checks stock availability, calculates the total amount, applies a voucher if provided, and stores the order with an initial status of `PENDING_PAYMENT`. Once the order is successfully created, the system publishes the `OrderCreated` domain event to trigger downstream processes such as payment, notification, and fulfillment.
@@ -63,9 +63,7 @@ This feature creates a new order based on the cart belonging to an authenticated
 | Duplicate Order Rate | 0% |
 | Order Creation Error Rate | < 0.1% |
 
----
-
-### FR-ORDER-CHECKOUT-002: Reserve Stock
+### FR-ECOMMERCE-CHECKOUT-002: Reserve Stock
 
 **Description:**
 This feature performs temporary stock reservation for a newly created order. Reservation is required so that items currently in the payment process are not sold to another user. If reservation is successful, available stock is temporarily reduced and the order can proceed to payment. If reservation fails, the order must be rejected or marked as failed.
@@ -109,9 +107,7 @@ This feature performs temporary stock reservation for a newly created order. Res
 | Timeout Rate | < 0.1% |
 | Stock Consistency | 100% |
 
----
-
-### FR-ORDER-CHECKOUT-003: Apply Voucher
+### FR-ECOMMERCE-CHECKOUT-003: Apply Voucher
 
 **Description:**
 This feature validates the voucher used by the user and applies a discount to the order total. The system checks the voucher's active status, validity period, usage quota, minimum purchase requirement, and user eligibility. If the voucher is valid, the system returns the discount amount that should be applied to the order.
@@ -177,4 +173,5 @@ This feature validates the voucher used by the user and applies a discount to th
 | Backlog      | Task tracking, epics, and implementation status | [BACKLOG.md](BACKLOG.md) |
 | Roadmap      | Timeline, phasing, and dependencies             | [ROADMAP.md](ROADMAP.md) |
 | Architecture | System boundaries, tech stack, and infra        | [ARCHITECTURE.md](ARCHITECTURE.md) |
+
 ```

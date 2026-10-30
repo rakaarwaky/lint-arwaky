@@ -1,69 +1,13 @@
-# HOW TO MAKE ARCHITECTURE.md
+# ARCHITECTURE Exemplar
 
-> **Purpose**: Document the layered architecture — what each layer is, what it may depend on,
-> and what it must not touch — so both humans and agents modify the system safely.
->
-> **Audience**: Engineers, Tech Lead, AI agents that read or generate structural code.
->
-> **Scope**: The architectural rules that govern the workspace. Exactly one per project root.
->
-> **Location**: Project root (or at `README.md` level when the repo has a single crate/package).
->
-> **Length**: 50–500 lines (flat budget shared by every document type).
-
----
-
-## Rules
-
-1. **Write rules, not descriptions.** Every section must say what an agent or engineer
-   is allowed to do or not do. A paragraph that reads like marketing text instead of
-   an enforcement rule is the bug in this file.
-2. **Dependencies are explicit.** Every layer states exactly what it may import from,
-   and exactly what it may not. Vague "follows best practices" lines are replaced
-   with named-layer restrictions (`Layer X depends only on Layer Y`).
-3. **No per-file exceptions without a reason.** When a layer has a special case,
-   state the exception as its own subsection and name the failure mode it prevents.
-4. **One diagram per page.** ASCII trees are acceptable. Embedding large PNG or SVG
-   images violates the length budget and breaks copy-paste for agents.
-5. **Do not restate code.** If a pattern is visible in the source already, the
-   architecture file explains *why* the pattern exists, not the implementation.
-6. **Name the naming convention.** File names must communicate three parts —
-   layer, concern, role — joined by underscores, followed by the language extension:
-   `layer_concern_role.<ext>`.
-7. **No implementation detail.** Concrete class names, API signatures, and library
-   choices belong in `FRD.md`. This file owns the boundary rules; FRD owns the
-   per-feature mechanics.
-8. **Nothing about the current build.** Whether a layer shipped or not is a backlog
-   claim with evidence, not an architecture sentence.
-
----
-
-## Workflow
-
-1. **Create file** → `ARCHITECTURE.md` at repo root (note: spelling `ARCHITECHTURE` is
-   intentionally variant here only if your team prefers it; the checker uses the
-   heading text, not the file name).
-2. **Section: Purpose** — one paragraph stating what the architecture guards against.
-3. **Section: Workspace Organization** — define the workspace terms and member types.
-4. **Section: Naming Convention** — the `layer_concern_role.<ext>` rule and its
-   language suffixes.
-5. **Section: Vertical Slicing Folder Structure** — feature layout and shared layout.
-6. **Section per layer** — Taxonomy, Contract, Utility, Capabilities, Agent, Surface,
-   Root. Each section: Overview, Component, Rules.
-7. **Verify** → `lint-arwaky-cli docs` passes; every dependency table has a line for each
-   named layer.
-
-## Template
-
-Copy, fill, delete nothing.
+A filled ARCHITECTURE against the Ecommerce Application project, matching the Template shape exactly.
 
 ```markdown
-# <Project> Architecture
+# Ecommerce Architecture
 
 ## 1. Purpose
 
-<One paragraph. Name the failure modes this architecture prevents: tangled imports,
-undiscoverable behavior, agent misrouting. Keep it to what the boundary rules guard.>
+10→This architecture prevents tangled imports, undiscoverable behavior, and agent misrouting by naming each layer and its allowed dependencies. Every boundary rule guards against a failure mode: smart surfaces importing capabilities directly, capabilities importing each other, or taxonomy depending on implementation layers. ARCHITECTURE.md wins on ambiguity.
 
 ## 2. Workspace Organization
 
@@ -93,14 +37,13 @@ Exceptions: `main.rs`, `lib.rs`, `mod.rs`, `__init__.py`, `index.ts`, `index.js`
 #### Feature member
 
 ```
-
 modules/<feature-name>/src/
 ├── agent_<feature>*orchestrator.py        # Agent layer — only allowed role
 ├── capabilities*<feature>*<role>.py       # Capabilities layer
 ├── utility*<feature>*<role>.py            # Utility layer
 └── root*<feature>_container.py            # Root layer
 
-```text
+```
 
 Do **not** create `surface/`, `taxonomy/`, `contract/`, `capabilities/`, `utility/`,
 `agent/` folders. Layers live in file names, not directories.
@@ -116,14 +59,13 @@ modules/shared/src/
 ├── contract*<domain>*protocol.py
 └── contract*<domain>_aggregate.py
 
-```text
+```
 
 `shared/common/` holds generic utilities not tied to a domain.
 
 ### General Workspace Layout
 
 ```
-
 project-root/
 ├── modules/
 │   ├── shared/src/           <- Taxonomy + Contract (all features)
@@ -133,8 +75,7 @@ project-root/
 ├── PRD.md
 ├── README.md
 └── AGENTS.md
-
-```text
+```
 
 ## 5. Taxonomy Layer
 
@@ -169,14 +110,14 @@ project-root/
 ### Overview
 
 | Aspect       | Detail                                                                                                                                      |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| ------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
 | Purpose      | Contract defines the public behavior of the system without exposing implementation. It allows callers to depend on stable interfaces instead of concrete logic. |
 | Dependencies | Contract may depend on Taxonomy only.                                                                                                       |
 
 ### Component
 
 | Role      | Meaning                                                                                           | Allowed Dependencies | Forbidden Dependencies                      |
-| --------- | ------------------------------------------------------------------------------------------------- | -------------------- | ------------------------------------------- |
+| --------- | ------------------------------------------------------------------------------------------------- | -------------------- | --------------------------------------------------- |
 | Protocol  | Interface defining inbound behavior. It is implemented by Capabilities and consumed by the Agent. | Taxonomy             | Utility, Capabilities, Agent, Surface, Root |
 | Aggregate | Facade definition implemented by Agent, used by Surface to access feature behavior.               | Taxonomy             | Utility, Capabilities, Agent, Surface, Root |
 
@@ -201,7 +142,7 @@ project-root/
 ### Component
 
 | Concern                 | Responsibility                                      | Allowed Dependencies | Forbidden Dependencies                      |
-| ----------------------- | --------------------------------------------------- | -------------------- | ------------------------------------------- |
+| ----------------------- | --------------------------------------------------- | -------------------- | --------------------------------------------------- |
 | File discovery          | Walk directories, detect files, apply ignore        | Taxonomy             | Contract, Capabilities, Agent, Surface, Root |
 | External tool execution | Run linters, compilers, formatters, analyzers       | Taxonomy             | Contract, Capabilities, Agent, Surface, Root |
 | Parsing and matching    | Parse text, match patterns, extract structured data | Taxonomy             | Contract, Capabilities, Agent, Surface, Root |
@@ -332,13 +273,47 @@ project-root/
 | No business logic        | Root must not contain business logic.                               |
 | No orchestration         | Root must not contain orchestration policy.                         |
 | No technical/UI behavior | Root must not contain technical parsing or user interface behavior. |
-```
 
----
+## Rule Inventory Overview
+
+Carries the pinned AES rule inventory table (first-cell AES-rows: code, group, name, severity, ran-by) plus the group-coverage counts, so a reader can navigate the full inventory in-file.
+
+| Code | Group | Name | Severity | Ran by |
+|------|-------|------|----------|--------|
+
+## Group 1: Naming
+
+Groups the naming rules (AES101–AES103) with their fires-on and exception conditions.
+
+## Group 2: Layer & Import Boundary
+
+Groups the import-boundary rules (AES201–AES205).
+
+## Group 3: File & Content Quality
+
+Groups the quality rules (AES301–AES305).
+
+## Group 4: Role Violations
+
+Groups the role rules (AES401–AES406).
+
+## Group 5: Orphan Code
+
+Groups the orphan-code rules (AES501–AES506).
+
+## Group 6: Document Invariants
+
+Groups the document-invariant rules (AES601–AES607).
+
+## Group 7: Folder Structure
+
+Groups the folder-structure rules (AES701–AES706).
+
+## Rule Source of Truth & Parity
+
+States that emitted rule codes are the source of truth and names the parity test that keeps the inventory table in sync.
 
 ## Section Contract
-
-Every section is required unless marked optional. Each exists for one reason.
 
 | Section                        | Why it belongs here                                                                      |
 | ------------------------------ | ------------------------------------------------------------------------------------------|
@@ -353,23 +328,14 @@ Every section is required unless marked optional. Each exists for one reason.
 | Agent Layer                    | The orchestrator — sequence, not business. Watch for business calculation here.              |
 | Surface Layer                  | The outer boundary. Watch for orchestration or business logic leaking into Surface.          |
 | Root Layer                     | The composition entry. Watch for business logic in the container.                            |
-| Rule Inventory Overview        | Carries the pinned 38-row inventory table (first-cell AES-rows: code, group, name, severity, ran-by) plus the group-coverage counts, so a reader can navigate the full inventory in-file. Watch for the table drifting from the emitted rule codes. |
-| Group 1: Naming                | Groups the naming rules (AES101–AES103) with their fires-on and exception conditions. Watch for prose duplicating the emitted rule detail. |
-| Group 2: Layer & Import Boundary | Groups the import-boundary rules (AES201–AES205). Watch for the layer-dependency matrix restated instead of referenced.       |
-| Group 3: File & Content Quality | Groups the quality rules (AES301–AES305). Watch for per-rule exception lists diverging from DEFAULT_RULE_EXCEPTIONS.          |
-| Group 4: Role Violations       | Groups the role rules (AES401–AES406). Watch for per-role allowed-dependency statements missing.                               |
-| Group 5: Orphan Code          | Groups the orphan-code rules (AES501–AES506). Watch for unreferenced-symbol conditions drifting from the checkers.            |
-| Group 6: Document Invariants   | Groups the document-invariant rules (AES601–AES607). Watch for the check surface (check/scan vs docs) drifting from the runners. |
-| Group 7: Folder Structure      | Groups the folder-structure rules (AES701–AES706). Watch for the pinned folder-form names drifting from the structure checkers. |
-| Rule Source of Truth & Parity | States that emitted rule codes are the source of truth and names the parity test that keeps the §13 inventory table in sync. Watch for the parity test being bypassed or the mirror drifting. |
+| Rule Inventory Overview        | Carries the pinned AES rule inventory table plus group-coverage counts. Watch for the table drifting from the emitted rule codes. |
+| Group 1: Naming                | Groups the naming rules (AES101–AES103) with their fires-on and exception conditions. |
+| Group 2: Layer & Import Boundary | Groups the import-boundary rules (AES201–AES205). |
+| Group 3: File & Content Quality | Groups the quality rules (AES301–AES305). |
+| Group 4: Role Violations       | Groups the role rules (AES401–AES406). |
+| Group 5: Orphan Code           | Groups the orphan-code rules (AES501–AES506). |
+| Group 6: Document Invariants   | Groups the document-invariant rules (AES601–AES607). |
+| Group 7: Folder Structure      | Groups the folder-structure rules (AES701–AES706). |
+| Rule Source of Truth & Parity | States that emitted rule codes are the source of truth and names the parity test. |
 
----
-
-## Verify
-
-```bash
-lint-arwaky-cli docs .
-# Checks: dead-link, absolute-path, secret-in-docs, doc-length.
-# Manual: every layer states its allowed dependencies; no implementation detail;
-#   file names follow layer_concern_role.ext; no per-file exceptions without a subsection.
 ```

@@ -11,8 +11,6 @@
 | State        | Ready                                      |
 | Done         | FR-SAMPLE-001                                      |
 | In Progress  | None                                       |
-| Blocked      | None                                       |
-| Next         | Ship                                       |
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 

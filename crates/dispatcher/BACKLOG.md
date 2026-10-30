@@ -22,8 +22,6 @@ Last Updated: 2026-10-02
 | State        | Ready                                      |
 | Done         | DISP                                      |
 | In Progress  | None                                       |
-| Blocked      | None                                       |
-| Next         | Ship                                       |
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
@@ -34,8 +32,6 @@ Last Updated: 2026-10-02
 | State        | Ready                                      |
 | Done         | DISP                                      |
 | In Progress  | None                                       |
-| Blocked      | None                                       |
-| Next         | Ship                                       |
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
@@ -46,8 +42,6 @@ Last Updated: 2026-10-02
 | State        | Ready                                      |
 | Done         | DISP                                      |
 | In Progress  | None                                       |
-| Blocked      | None                                       |
-| Next         | Ship                                       |
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
@@ -58,8 +52,6 @@ Last Updated: 2026-10-02
 | State        | Ready                                      |
 | Done         | DISP                                      |
 | In Progress  | None                                       |
-| Blocked      | None                                       |
-| Next         | Ship                                       |
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
@@ -70,8 +62,6 @@ Last Updated: 2026-10-02
 | State        | Ready                                      |
 | Done         | DISP                                      |
 | In Progress  | None                                       |
-| Blocked      | None                                       |
-| Next         | Ship                                       |
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
@@ -82,8 +72,6 @@ Last Updated: 2026-10-02
 | State        | Ready                                      |
 | Done         | DISP                                      |
 | In Progress  | None                                       |
-| Blocked      | None                                       |
-| Next         | Ship                                       |
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
@@ -94,8 +82,6 @@ Last Updated: 2026-10-02
 | State        | Ready                                      |
 | Done         | DISP                                      |
 | In Progress  | None                                       |
-| Blocked      | None                                       |
-| Next         | Ship                                       |
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 

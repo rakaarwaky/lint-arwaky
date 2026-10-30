@@ -46,12 +46,13 @@ Copy, fill, delete nothing.
 ## Project Requirements
 
 ### PR-<PROJECT-NAME-ID>-001: <Short imperative name>
+<!-- Tier P0: entry -001 is always P0. -->
 
 #### User Stories
 
 | As a | I want | So that | Priority |
 |------|--------|---------|----------|
-| <role> | <capability> | <benefit> | <P0/P1/P2> |
+| <role> | <capability> | <benefit> | P0 |
 
 #### Proposed Solution
 
@@ -64,7 +65,38 @@ Copy, fill, delete nothing.
 3. <Step 3>
 
 ### PR-<PROJECT-NAME-ID>-002: <Short imperative name>
+<!-- Tier P1: the first P1 entry. -->
+
+#### User Stories
+
+| As a | I want | So that | Priority |
+|------|--------|---------|----------|
+| <role> | <capability> | <benefit> | P1 |
+
+#### Proposed Solution
+
+<Describe the proposed solution.>
+
+#### Main User Flow
+
+1. <Step 1>
+
 ### PR-<PROJECT-NAME-ID>-003: <Short imperative name>
+<!-- Tier P2: the first P2 entry. -->
+
+#### User Stories
+
+| As a | I want | So that | Priority |
+|------|--------|---------|----------|
+| <role> | <capability> | <benefit> | P2 |
+
+#### Proposed Solution
+
+<Describe the proposed solution.>
+
+#### Main User Flow
+
+1. <Step 1>
 
 ## Reference
 
@@ -77,3 +109,5 @@ Copy, fill, delete nothing.
 ```
 
 **Seed rows.** Each `### PR-<PROJECT-NAME-ID>-NNN:` entry carries three H4 aspect subsections in canonical order: `#### User Stories`, `#### Proposed Solution`, `#### Main User Flow`. `User Stories` is a `| As a | I want | So that | Priority |` table seeded with at least one real row (priority `P0`/`P1`/`P2`). `Proposed Solution` states one observable behaviour per entry — no implementation detail, SQL, API signatures, or class names. `Main User Flow` is a numbered list of user-facing steps (1., 2., 3.). Every aspect seeds at least one real content row/bullet/step; add further rows only when a second real fact exists — never a placeholder cell. This is the `PRD_ASPECT_SEED_MIN` contract (open-ended at 1 per aspect).
+
+**Priority ordering.** `PR-<PROJECT-NAME-ID>-NNN` entries must be listed in priority order: all P0 entries first, then P1, then P2. The NNN counter is global across tiers; the first entry (`-001`) is always P0. No P1 entry may appear before a P0 entry, and no P2 entry before a P1 entry. Within the same tier the author may reorder entries, but tier jumps are forbidden.

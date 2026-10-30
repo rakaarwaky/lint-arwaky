@@ -26,12 +26,12 @@ Copy, fill, delete what does not apply to the project.
 
 | Type | Usage | Example |
 |------|-------|---------|
-| `feat` | New feature | `feat(auth): add login endpoint` |
-| `fix` | Bug fix | `fix(auth): handle expired token` |
-| `docs` | Documentation only | `docs(frd): update FR-AUTH-001` |
-| `test` | Adding/updating tests | `test(auth): add edge case for timeout` |
-| `refactor` | Code refactor, no behaviour change | `refactor(auth): extract middleware` |
-| `chore` | Maintenance, deps, config | `chore: bump dependencies` |
+| `feat` | New feature | `feat(feature-name): <new-description>` |
+| `fix` | Bug fix | `fix(feature-name): <fix-description>` |
+| `docs` | Documentation only | `docs(doc-name): <update-description>` |
+| `test` | Adding/updating tests | `test(feature-name): <test-description>` |
+| `refactor` | Code refactor, no behaviour change | `refactor(feature-name): <refactor-description>` |
+| `chore` | Maintenance, deps, config | `chore: <bump-description>` |
 
 ## Reference
 

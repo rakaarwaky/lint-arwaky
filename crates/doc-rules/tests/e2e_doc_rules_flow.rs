@@ -62,8 +62,6 @@ fn write_workspace(root: &Path) {
 | State        | Ready                                       |\n\
 | Done         | FR-SAMPLE-001                               |\n\
 | In Progress  | None                                        |\n\
-| Blocked      | None                                        |\n\
-| Next         | Ship FR-SAMPLE-001                          |\n\
 | Risk         | None                                        |\n\
 | Updated      | 2026-09-29                                  |\n\
 ## Reference\n\n\
@@ -385,10 +383,8 @@ fn e2e_a_data_backlog_pair_rejects_do_headings() {
 | Aspect       | Detail                                      |\n\
 |--------------|---------------------------------------------|\n\
 | State        | Ready                                       |\n\
-| Done         | —                                           |\n\
+| Done         | DT-DO-001                                   |\n\
 | In Progress  | None                                        |\n\
-| Blocked      | None                                        |\n\
-| Next         | DT-DO-001                                   |\n\
 | Risk         | None                                        |\n\
 | Updated      | 2026-09-29                                  |\n\
 ## Reference\n\n\

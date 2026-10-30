@@ -21,8 +21,6 @@ Last Updated: 2026-10-28
 | State        | Ready |
 | Done         | LA    |
 | In Progress  | None  |
-| Blocked      | None  |
-| Next         | Ship  |
 | Risk         | None  |
 | Updated      | 2026-10-28|
 
@@ -33,8 +31,6 @@ Last Updated: 2026-10-28
 | State        | Ready |
 | Done         | LA    |
 | In Progress  | None  |
-| Blocked      | None  |
-| Next         | Ship  |
 | Risk         | None  |
 | Updated      | 2026-10-28|
 
