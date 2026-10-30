@@ -11,16 +11,16 @@ Copy, fill, delete nothing.
 
 ## Data Requirements
 
-### DT-<DATA-NAME-ID>-001: <Short imperative name>
+### DT-SHARED-001: <Short imperative name>
 
 | Type | Description|
 |------|-------------|
 |      |           |
 
-### DT-<DATA-NAME-ID>-002: <Short imperative name>
-### DT-<DATA-NAME-ID>-003: <Short imperative name>
-### DT-<DATA-NAME-ID>-004: <Short imperative name>
-### DT-<DATA-NAME-ID>-005: <Short imperative name>
+### DT-SHARED-002: <Short imperative name>
+### DT-SHARED-003: <Short imperative name>
+### DT-SHARED-004: <Short imperative name>
+### DT-SHARED-005: <Short imperative name>
 
 ## Reference
 
@@ -39,5 +39,5 @@ Only `Data Overview`, `Data Requirements`, `Reference` are required. Each exists
 | Section         | Why it belongs here                                                |
 | --------------- | --------------------------------------------------------------------|
 | Data Overview   | Orients the reader before the data items begin.                    |
-| Data Requirements | `DT-<DATA-NAME-ID>-NNN` items, each with Type / Description table.|
+| Data Requirements | `DT-SHARED-NNN` items, each with Type / Description table.|
 | Reference       | Separates spec promise from backlog claim.                         |

@@ -30,7 +30,7 @@ Copy, fill, delete nothing.
 | Artifact     | Purpose                                    | Link |
 |--------------|--------------------------------------------|------|
 | PRD          | <Business goals and scope>                 | [PRD.md](PRD.md) |
-| FRD          | <Functional requirement specification>     | [FRD.md](FRD.md) |
+| FRD          | <Functional requirements specification>    | [FRD.md](FRD.md) |
 | Roadmap      | <Timeline, phasing, and dependencies>      | [ROADMAP.md](ROADMAP.md) |
 | Architecture | <System boundaries, tech stack, and infra> | [ARCHITECTURE.md](ARCHITECTURE.md) |
 ```

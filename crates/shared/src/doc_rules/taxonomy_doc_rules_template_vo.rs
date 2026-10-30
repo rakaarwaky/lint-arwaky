@@ -216,7 +216,7 @@ pub const TEMPLATE_PROFILES: &[TemplateProfile] = &[
         placeholder_catalog: &[
             "<project-name>",
             "<Short imperative name>",
-            "<DATA-NAME-ID>",
+            "<SHARED>",
             "<Business goals, user stories, and scope>",
             "<Task tracking, epics, and implementation status>",
             "<Timeline, phasing, and dependencies>",
