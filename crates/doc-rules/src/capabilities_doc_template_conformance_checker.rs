@@ -848,9 +848,12 @@ impl TemplateConformanceChecker {
             );
         }
 
-        // Empty Detail cells on every numbered row.
+        // Empty or placeholder Detail cells on every numbered row: a lone
+        // dash cell carries no content, so it fires like an empty one and
+        // the fix is to delete the row, not to keep a padded line.
         for (no, detail) in rows.iter() {
-            if !detail.is_empty() {
+            let trimmed = detail.trim();
+            if !trimmed.is_empty() && !matches!(trimmed, "—" | "–" | "-") {
                 continue;
             }
             if !no.chars().next().is_some_and(|c| c.is_ascii_digit()) {
@@ -863,13 +866,13 @@ impl TemplateConformanceChecker {
                     consts::RULE_CODE_TEMPLATE_CONFORMANCE,
                     consts::TEMPLATE_CONFORMANCE_VIOLATION_EMPTY_DETAIL_CELL,
                     format!(
-                        "line {} `#### {}` row {no} Detail cell is empty",
+                        "line {} `#### {}` row {no} Detail cell is empty or a placeholder dash",
                         h4.line, aspect
                     ),
                 )
                 .with_reason(
-                    "Every numbered row's Detail cell must be filled in a real document.",
-                    "Fill the Detail cell or remove the row.",
+                    "Every numbered row's Detail cell must carry real content; a lone `—` is a placeholder, not content. A second row belongs in the table only when a second fact exists.",
+                    "Fill the Detail cell with real content, or remove the row.",
                 ),
             );
         }

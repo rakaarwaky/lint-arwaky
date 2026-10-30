@@ -432,9 +432,10 @@ pub const PR_FOLDER_NOT_OWNED_VIOLATION: &str = "pr_folder_not_owned";
 
 // ─── AES606 — Per-aspect H4 subsection constants (modular template) ──────
 // These constants are the source of truth for the open-ended/bounded
-// enforcement contract until PRs 5/6 update HOW-TO-MAKE-FRD.md and
-// HOW-TO-MAKE-PRD.md to print the seed rows verbatim. The
-// open-ended/bounded enforcement contract is defined in this section.
+// enforcement contract; HOW-TO-MAKE-FRD.md and HOW-TO-MAKE-PRD.md mirror
+// it. Every aspect seeds exactly one numbered row: row 1 with real
+// content. Row 2 is written only when the aspect carries a second real
+// fact — never padded with a placeholder cell such as `—`.
 
 /// Canonical order of the twelve FRD per-aspect H4 subsections. Alias of
 /// `FR_FIELDS`: under the modular template the H4 subsection names are the
@@ -442,16 +443,19 @@ pub const PR_FOLDER_NOT_OWNED_VIOLATION: &str = "pr_folder_not_owned";
 /// pattern, so the AES601 field list and the H4 order check cannot drift.
 pub const FRD_ASPECTS: &[&str] = FR_FIELDS;
 
-/// Aspects whose row list is open-ended (any count ≥ seed minimum).
-/// Under the migrated template, open-ended aspects carry at least two
-/// numbered seed rows (`1`, `2`) and no `∞` marker row — `∞` is not
-/// written in actual FRD/PRD docs as an "unlimited" sign.
+/// Aspects whose row list is open-ended: at least one numbered seed row
+/// (row 1 with real content) plus any further rows the aspect genuinely
+/// needs — a second line is created only when a second real fact exists,
+/// never a placeholder cell. `∞` is not written in actual FRD/PRD docs as
+/// an "unlimited" sign.
 pub const FRD_ASPECTS_OPEN: &[&str] = &[
     "Description",
     "Business Rules",
     "Edge Cases",
     "Method",
+    "Input",
     "Output",
+    "Error",
     "Event",
     "Test",
     "Metric",
@@ -460,25 +464,23 @@ pub const FRD_ASPECTS_OPEN: &[&str] = &[
 /// Aspects bounded to exactly one printed seed row (no `∞` marker row).
 pub const FRD_ASPECTS_BOUNDED_ONE: &[&str] = &["Capability", "Protocol"];
 
-/// Aspects bounded to exactly two printed seed rows (no `∞` marker row).
-pub const FRD_ASPECTS_BOUNDED_TWO: &[&str] = &["Input", "Error"];
-
 /// Minimum total row count per FRD aspect (numbered seed rows only;
-/// `∞` is not written as a marker row). Open-ended aspects: 2;
-/// bounded-one: 1; bounded-two: 2.
+/// `∞` is not written as a marker row). Every aspect seeds 1 real row:
+/// open-ended = at least 1 (rows 2+ only when a second real fact exists);
+/// bounded-one = exactly 1.
 pub const FRD_ASPECT_SEED_MIN: &[(&str, usize)] = &[
-    ("Description", 2),
-    ("Business Rules", 2),
-    ("Edge Cases", 2),
+    ("Description", 1),
+    ("Business Rules", 1),
+    ("Edge Cases", 1),
     ("Capability", 1),
     ("Protocol", 1),
-    ("Method", 2),
-    ("Input", 2),
-    ("Output", 2),
-    ("Error", 2),
-    ("Event", 2),
-    ("Test", 2),
-    ("Metric", 2),
+    ("Method", 1),
+    ("Input", 1),
+    ("Output", 1),
+    ("Error", 1),
+    ("Event", 1),
+    ("Test", 1),
+    ("Metric", 1),
 ];
 
 /// Canonical order of the five PRD per-aspect H4 subsections, per the new
@@ -491,17 +493,19 @@ pub const PRD_ASPECTS: &[&str] = &[
     "Success Metric",
 ];
 
-/// All five PRD aspects are open-ended (seed minimum 3 each).
+/// All five PRD aspects are open-ended (seed minimum 1 each).
 pub const PRD_ASPECTS_OPEN: &[&str] = PRD_ASPECTS;
 
-/// Minimum total row count per PRD aspect. All five are open-ended at 2
-/// (numbered seed rows only; `∞` is not written as a marker row).
+/// Minimum total row count per PRD aspect. All five are open-ended at 1
+/// (row 1 with real content; a second row only when a second real fact
+/// exists — never a placeholder cell). Numbered seed rows only; `∞` is
+/// not written as a marker row.
 pub const PRD_ASPECT_SEED_MIN: &[(&str, usize)] = &[
-    ("Description", 2),
-    ("User Story", 2),
-    ("In Scope", 2),
-    ("Out of Scope", 2),
-    ("Success Metric", 2),
+    ("Description", 1),
+    ("User Story", 1),
+    ("In Scope", 1),
+    ("Out of Scope", 1),
+    ("Success Metric", 1),
 ];
 
 /// An expected per-aspect H4 subsection is missing under an FR/PR entry.
@@ -566,37 +570,38 @@ mod tests {
         ships_columns("HOW-TO-MAKE-AGENTS.md", AGENTS_RUNTIME_ROW_LABELS);
     }
 
-    /// The reverse of `ships_columns`, for the PRD entry table only: a row
-    /// added to the shipped template without `PRD_ROW_LABELS` (or dropped
-    /// from the constant alone) fails here instead of failing a user who
-    /// copies the template verbatim.
+    /// The reverse of `ships_columns`, for the PRD entry shape only: the
+    /// fenced Project Requirements entry must carry exactly PRD_ROW_LABELS
+    /// as its `####` aspect subsections (a label added to the template
+    /// without the constant, or dropped from the constant alone, fails
+    /// here instead of failing a user who copies the template verbatim).
     #[test]
     fn prd_entry_table_carries_exactly_prd_row_labels() {
         let text = load_reference_template("HOW-TO-MAKE-PRD.md");
-        let mut labels: Vec<&str> = Vec::new();
-        let mut in_table = false;
-        for line in text.lines().map(str::trim) {
-            if !in_table {
-                in_table = line.starts_with("| Aspect");
-                continue;
-            }
-            if !line.starts_with('|') {
-                break;
-            }
-            if line.starts_with("|--") {
-                continue;
-            }
-            let label = line.split('|').nth(1).unwrap_or_default().trim();
-            if !label.is_empty() {
-                labels.push(label);
-            }
-        }
+        let open = "```markdown";
+        let start = text
+            .find(open)
+            .expect("HOW-TO-MAKE-PRD.md opens a template block")
+            + open.len();
+        let rest = &text[start..];
+        let end = rest
+            .find("```")
+            .expect("HOW-TO-MAKE-PRD.md closes its template block");
+        let fence = &rest[..end];
+        let entry_start = fence
+            .find("### PR-")
+            .expect("HOW-TO-MAKE-PRD.md ships a PR entry in its fence");
+        let mut labels: Vec<&str> = fence[entry_start..]
+            .lines()
+            .filter_map(|line| line.strip_prefix("#### "))
+            .map(str::trim)
+            .collect();
         let mut expected: Vec<&str> = PRD_ROW_LABELS.to_vec();
         labels.sort_unstable();
         expected.sort_unstable();
         assert_eq!(
             labels, expected,
-            "HOW-TO-MAKE-PRD.md entry table must carry exactly PRD_ROW_LABELS"
+            "the fenced PR entry's H4 aspects must carry exactly PRD_ROW_LABELS"
         );
     }
 
@@ -652,8 +657,8 @@ mod tests {
         assert_eq!(FRD_ROW_LABELS.len(), 12, "twelve labels, one per row");
     }
 
-    /// The three FRD aspect sets (open, bounded-one, bounded-two) are
-    /// pairwise disjoint and together partition `FRD_ASPECTS`.
+    /// The two FRD aspect sets (open, bounded-one) are disjoint and
+    /// together partition `FRD_ASPECTS`.
     #[test]
     fn frd_aspect_sets_are_disjoint_and_partition_frd_aspects() {
         fn disjoint(a: &[&str], b: &[&str]) {
@@ -662,22 +667,16 @@ mod tests {
             }
         }
         disjoint(FRD_ASPECTS_OPEN, FRD_ASPECTS_BOUNDED_ONE);
-        disjoint(FRD_ASPECTS_OPEN, FRD_ASPECTS_BOUNDED_TWO);
-        disjoint(FRD_ASPECTS_BOUNDED_ONE, FRD_ASPECTS_BOUNDED_TWO);
 
         let mut union: Vec<&str> = FRD_ASPECTS_OPEN
             .iter()
             .chain(FRD_ASPECTS_BOUNDED_ONE)
-            .chain(FRD_ASPECTS_BOUNDED_TWO)
             .copied()
             .collect();
         union.sort_unstable();
         let mut expected: Vec<&str> = FRD_ASPECTS.to_vec();
         expected.sort_unstable();
-        assert_eq!(
-            union, expected,
-            "open ∪ bounded-one ∪ bounded-two = FRD_ASPECTS"
-        );
+        assert_eq!(union, expected, "open ∪ bounded-one = FRD_ASPECTS");
 
         // FRD_ASPECTS is the canonical order PR 3's
         // TEMPLATE_CONFORMANCE_VIOLATION_H4_ORDER check enforces, so pin
@@ -703,8 +702,9 @@ mod tests {
     }
 
     /// `FRD_ASPECT_SEED_MIN` covers every FRD aspect exactly once and the
-    /// minimum values match the open/bounded contract: open-ended = 3,
-    /// bounded-one = 1, bounded-two = 2.
+    /// minimum values match the open/bounded contract: every aspect seeds
+    /// at 1 — open-ended at least 1 real row (rows 2+ only when a second
+    /// fact exists), bounded-one (Capability, Protocol) exactly 1.
     #[test]
     fn frd_aspect_seed_min_matches_open_bounded_contract() {
         let mut names: Vec<&str> = FRD_ASPECT_SEED_MIN.iter().map(|(n, _)| *n).collect();
@@ -718,20 +718,19 @@ mod tests {
 
         for (name, min) in FRD_ASPECT_SEED_MIN {
             if FRD_ASPECTS_OPEN.contains(name) {
-                assert_eq!(*min, 3, "open-ended aspect {name} must seed at 3");
+                assert_eq!(*min, 1, "open-ended aspect {name} must seed at 1");
             } else if FRD_ASPECTS_BOUNDED_ONE.contains(name) {
-                assert_eq!(*min, 1, "bounded-one aspect {name} must seed at 1");
-            } else if FRD_ASPECTS_BOUNDED_TWO.contains(name) {
-                assert_eq!(*min, 2, "bounded-two aspect {name} must seed at 2");
+                assert_eq!(*min, 1, "bounded-one aspect {name} must be exactly 1 row");
             } else {
                 panic!("aspect {name} not in any known set");
             }
         }
     }
 
-    /// All five PRD aspects are open-ended and seed at 3.
+    /// All five PRD aspects are open-ended and seed at 1 real row; row 2
+    /// exists only when the aspect carries a second real fact.
     #[test]
-    fn prd_aspect_seed_min_all_open_at_three() {
+    fn prd_aspect_seed_min_all_open_at_one() {
         let mut names: Vec<&str> = PRD_ASPECT_SEED_MIN.iter().map(|(n, _)| *n).collect();
         names.sort_unstable();
         let mut expected: Vec<&str> = PRD_ASPECTS.to_vec();
@@ -745,7 +744,7 @@ mod tests {
             "all PRD aspects are open-ended"
         );
         for (_, min) in PRD_ASPECT_SEED_MIN {
-            assert_eq!(*min, 3, "PRD aspects seed at 3");
+            assert_eq!(*min, 1, "PRD aspects seed at 1");
         }
     }
 }

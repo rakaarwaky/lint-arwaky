@@ -673,6 +673,32 @@ fn empty_detail_cell_fires() {
 }
 
 #[test]
+fn placeholder_dash_detail_cell_fires() {
+    // A second row padded with a lone em dash is contentless: it must
+    // fire empty_detail_cell so the row gets filled or deleted.
+    let text = load_fixture("frd-conforming.md").replacen(
+        "| 1 | The feature performs a core responsibility. |",
+        "| 1 | The feature performs a core responsibility. |\n| 2 | — |",
+        1,
+    );
+    let findings = audit_frd(&text);
+    let empty: Vec<_> = findings
+        .iter()
+        .filter(|f| f.violation_type == consts::TEMPLATE_CONFORMANCE_VIOLATION_EMPTY_DETAIL_CELL)
+        .collect();
+    assert_eq!(
+        empty.len(),
+        1,
+        "exactly one empty_detail_cell finding expected for a dash pad row; got {findings:?}"
+    );
+    assert!(
+        empty[0].message.contains("Description"),
+        "the finding must name the offending aspect; got '{}'",
+        empty[0].message
+    );
+}
+
+#[test]
 fn row_numbering_violation_fires() {
     let text = load_fixture("frd-row-numbering.md");
     let findings = audit_frd(&text);
