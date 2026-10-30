@@ -14,7 +14,8 @@ use shared_doc_rules::taxonomy_doc_rules_constant as consts;
 use shared_doc_rules::taxonomy_doc_rules_request::DocFinding;
 use shared_doc_rules::taxonomy_doc_section_vo::Section;
 use shared_doc_rules::utility_markdown_scanner::{
-    blank_fenced, h3_subsections, has_table_with_columns, normalize_heading, sections,
+    blank_fenced, h3_subsections, h4_subsections, has_table_with_columns, normalize_heading,
+    sections,
 };
 
 use std::collections::HashSet;
@@ -197,19 +198,20 @@ impl TemplateConformanceChecker {
         Self {}
     }
 
-    /// FRD: `Functional Requirements` entry tables plus `Public Interface` and
-    /// `Reference` H2 tables.
+    /// FRD: `Functional Requirements` per-aspect H4 entry tables plus
+    /// `Public Interface` and `Reference` H2 tables.
     fn check_frd(&self, parsed: &[Section]) -> Vec<DocFinding> {
         let mut findings = Vec::new();
         let Some(re) = fr_entry_re() else {
             return findings;
         };
-        findings.extend(self.check_entry_tables(
+        findings.extend(self.check_aspect_entry_tables(
             parsed,
             "Functional Requirements",
             re,
-            consts::ASPECT_DETAIL_COLUMNS,
-            consts::FRD_ROW_LABELS,
+            consts::FRD_ASPECTS,
+            consts::FRD_ASPECTS_OPEN,
+            consts::FRD_ASPECT_SEED_MIN,
         ));
         findings.extend(self.check_h2_table(
             parsed,
@@ -220,18 +222,20 @@ impl TemplateConformanceChecker {
         findings
     }
 
-    /// PRD: `Project Requirements` entry tables plus `Reference` H2 table.
+    /// PRD: `Project Requirements` per-aspect H4 entry tables plus `Reference`
+    /// H2 table.
     fn check_prd(&self, parsed: &[Section]) -> Vec<DocFinding> {
         let mut findings = Vec::new();
         let Some(re) = pr_entry_re() else {
             return findings;
         };
-        findings.extend(self.check_entry_tables(
+        findings.extend(self.check_aspect_entry_tables(
             parsed,
             "Project Requirements",
             re,
-            consts::ASPECT_DETAIL_COLUMNS,
-            consts::PRD_ROW_LABELS,
+            consts::PRD_ASPECTS,
+            consts::PRD_ASPECTS_OPEN,
+            consts::PRD_ASPECT_SEED_MIN,
         ));
         findings.extend(self.check_h2_table(parsed, "Reference", consts::REFERENCE_COLUMNS));
         findings
@@ -557,6 +561,372 @@ impl TemplateConformanceChecker {
                 }
             }
         }
+        findings
+    }
+
+    /// Walk every entry H3 under *parent_h2* whose title matches *entry_re*
+    /// and verify the per-aspect H4 subsections: presence and canonical order
+    /// of *aspects*, each H4's `| No | Detail |` table shape, contiguous
+    /// `1..N` row numbering, bounded/open-ended row counts against
+    /// *seed_min*, and non-empty `Detail` cells. Findings anchor to the
+    /// offending H3 or H4 line. H4 subsections are not entry headings (no
+    /// `FR-`/`PR-` ID), so they stay out of `fr_id_bare_re` counting.
+    pub fn check_aspect_entry_tables(
+        &self,
+        parsed: &[Section],
+        parent_h2: &str,
+        entry_re: &regex::Regex,
+        aspects: &[&str],
+        open: &[&str],
+        seed_min: &[(&str, usize)],
+    ) -> Vec<DocFinding> {
+        let mut findings = Vec::new();
+        let Some(parent) = parsed
+            .iter()
+            .find(|s| s.level == 2 && normalize_heading(&s.title) == normalize_heading(parent_h2))
+        else {
+            return findings;
+        };
+        for h3 in h3_subsections(parent) {
+            if !entry_re.is_match(&h3.title) {
+                continue;
+            }
+            // Legacy entry shape: one `| Aspect | Detail |` table on the H3,
+            // no per-aspect H4 subsections. Enforced by `check_entry_tables`
+            // until the doc migrates to the H4 aspect template.
+            if has_table_with_columns(&h3.body, &["Aspect", "Detail"][..]) {
+                findings.extend(self.check_entry_tables(
+                    parsed,
+                    parent_h2,
+                    entry_re,
+                    &["Aspect", "Detail"][..],
+                    aspects,
+                ));
+                continue;
+            }
+            let h4s = h4_subsections(&h3);
+            let present: Vec<&Section> = h4s
+                .iter()
+                .filter(|s| aspects.iter().any(|a| *a == s.title))
+                .collect();
+
+            // Presence: every expected aspect H4 must exist under the entry.
+            for aspect in aspects {
+                if !h4s.iter().any(|s| s.title == *aspect) {
+                    findings.push(
+                        DocFinding::new_with_line(
+                            "",
+                            h3.line,
+                            consts::RULE_CODE_TEMPLATE_CONFORMANCE,
+                            consts::TEMPLATE_CONFORMANCE_VIOLATION_MISSING_H4_ASPECT,
+                            format!(
+                                "line {} `### {}` is missing H4 aspect `{aspect}`",
+                                h3.line, h3.title
+                            ),
+                        )
+                        .with_reason(
+                            format!(
+                                "The {parent_h2} template requires the per-aspect H4 subsections in order under every entry.",
+                            ),
+                            format!(
+                                "Add `#### {aspect}` in its canonical position with a `| No | Detail |` table carrying at least one numbered row.",
+                            ),
+                        ),
+                    );
+                }
+            }
+
+            // Order: expected-aspect H4s must follow canonical order.
+            // Zip expected aspects against matching H4s in document order;
+            // the first mismatch wins, anchored to that H4's line.
+            let mut order_mismatch = false;
+            let mut mismatch_line = h3.line;
+            for (expected, h4_sec) in aspects.iter().zip(present.iter()) {
+                if *expected != h4_sec.title.as_str() {
+                    order_mismatch = true;
+                    mismatch_line = h4_sec.line;
+                    break;
+                }
+            }
+            if order_mismatch {
+                findings.push(
+                    DocFinding::new_with_line(
+                        "",
+                        mismatch_line,
+                        consts::RULE_CODE_TEMPLATE_CONFORMANCE,
+                        consts::TEMPLATE_CONFORMANCE_VIOLATION_H4_ORDER,
+                        format!(
+                            "line {} `### {}` H4 aspects are out of canonical order",
+                            mismatch_line, h3.title
+                        ),
+                    )
+                        .with_reason(
+                            "The entry template fixes the per-aspect H4 order; a reader navigating the entry cannot rely on it otherwise.",
+                            format!(
+                                "Reorder the aspect H4s of `### {}` to: {}.",
+                                h3.title,
+                                aspects.join(" → ")
+                            ),
+                        ),
+                );
+            }
+
+            // Per-aspect body checks.
+            for aspect in aspects {
+                let Some(h4) = h4s.iter().find(|s| s.title == *aspect) else {
+                    continue;
+                };
+                let Some(min) = seed_min.iter().find(|(n, _)| n == aspect).map(|&(_, m)| m) else {
+                    continue;
+                };
+                let open_min = open.contains(aspect).then_some(min);
+                findings.extend(self.check_aspect_table(&h3, h4, aspect, open_min, min));
+            }
+        }
+        findings
+    }
+
+    /// One aspect H4's `| No | Detail |` table: presence, exact header,
+    /// contiguous numbering, row count (bounded exact / open-ended minimum),
+    /// and non-empty `Detail` cells.
+    ///
+    /// `open`: `None` = bounded exact `seed_min`; `Some(min)` = open-ended,
+    /// at least `min` rows (the `∞` marker counts toward the total).
+    fn check_aspect_table(
+        &self,
+        h3: &Section,
+        h4: &Section,
+        aspect: &str,
+        open: Option<usize>,
+        seed_min: usize,
+    ) -> Vec<DocFinding> {
+        let mut findings = Vec::new();
+        if !has_any_table(&h4.body) {
+            findings.push(
+                DocFinding::new_with_line(
+                    "",
+                    h4.line,
+                    consts::RULE_CODE_TEMPLATE_CONFORMANCE,
+                    consts::TEMPLATE_CONFORMANCE_VIOLATION_SECTION_NOT_TABLE,
+                    format!(
+                        "line {} `#### {}` under `### {}` must be a markdown table with columns No | Detail",
+                        h4.line, aspect, h3.title
+                    ),
+                )
+                .with_reason(
+                    "Each aspect subsection carries a `| No | Detail |` table; a body of prose or bullets is not verifiable.",
+                    "Replace the body with a `| No | Detail |` table.",
+                ),
+            );
+            return findings;
+        }
+
+        // Header must be exactly `| No | Detail |`. Compute missing/extras in
+        // a single pass; derive the equality violation from missing being empty.
+        let Some(header_cells) = h4
+            .body
+            .lines()
+            .map(str::trim)
+            .find(|l| l.starts_with('|'))
+            .map(|l| {
+                l.trim_matches('|')
+                    .split('|')
+                    .map(str::trim)
+                    .collect::<Vec<_>>()
+            })
+        else {
+            return findings;
+        };
+        let missing: Vec<&str> = ["No", "Detail"]
+            .into_iter()
+            .filter(|label| {
+                !header_cells
+                    .iter()
+                    .any(|cell| cell.to_lowercase().contains(&label.to_lowercase()))
+            })
+            .collect();
+        let extras: Vec<&str> = header_cells
+            .iter()
+            .filter(|cell| {
+                let c = cell.to_lowercase();
+                !c.contains("no") && !c.contains("detail")
+            })
+            .copied()
+            .collect();
+        if !missing.is_empty() || !extras.is_empty() {
+            let violation = if missing.is_empty() {
+                consts::TEMPLATE_CONFORMANCE_VIOLATION_TABLE_EXTRA_COLUMNS
+            } else {
+                consts::TEMPLATE_CONFORMANCE_VIOLATION_TABLE_MISSING_COLUMNS
+            };
+            findings.push(
+                DocFinding::new_with_line(
+                    "",
+                    h4.line,
+                    consts::RULE_CODE_TEMPLATE_CONFORMANCE,
+                    violation,
+                    format!(
+                        "line {} `#### {}` table header must be exactly `| No | Detail |`",
+                        h4.line, aspect
+                    ),
+                )
+                .with_reason(
+                    "The aspect table is a fixed two-column shape; a different header breaks the shared row contract.",
+                    {
+                        let extras_joined = extras.join(", ");
+                        format!(
+                            "Rename the columns to `No` and `Detail` (remove extras: {}).",
+                            if extras.is_empty() {
+                                "none"
+                            } else {
+                                extras_joined.as_str()
+                            }
+                        )
+                    },
+                ),
+            );
+            return findings;
+        }
+
+        // Inline row scan: skip header + separator + non-pipe lines;
+        // collect (No, Detail) for every data row. `∞` counts toward total.
+        let mut rows: Vec<(String, &str)> = Vec::new();
+        let mut header_seen = false;
+        for line in h4.body.lines() {
+            let trimmed = line.trim();
+            if !trimmed.starts_with('|') {
+                continue;
+            }
+            let cells: Vec<&str> = trimmed
+                .trim_matches('|')
+                .split('|')
+                .map(str::trim)
+                .collect();
+            if cells.len() < 2 {
+                continue;
+            }
+            if !header_seen {
+                header_seen = true;
+                continue;
+            }
+            let is_separator = cells
+                .iter()
+                .all(|c| c.chars().all(|c| c == '-' || c == ':' || c.is_whitespace()));
+            if is_separator {
+                continue;
+            }
+            rows.push((cells[0].to_string(), cells[1]));
+        }
+        let numbered: Vec<&(String, &str)> = rows
+            .iter()
+            .filter(|(no, _)| no.chars().next().is_some_and(|c| c.is_ascii_digit()))
+            .collect();
+
+        // Numbering: 1, 2, … N with no gaps.
+        let mut numbering_ok = true;
+        for (idx, row) in numbered.iter().enumerate() {
+            if row.0 != (idx + 1).to_string() {
+                numbering_ok = false;
+                break;
+            }
+        }
+        if !numbering_ok {
+            findings.push(
+                DocFinding::new_with_line(
+                    "",
+                    h4.line,
+                    consts::RULE_CODE_TEMPLATE_CONFORMANCE,
+                    consts::TEMPLATE_CONFORMANCE_VIOLATION_ROW_NUMBERING,
+                    format!(
+                        "line {} `#### {}` under `### {}` rows are not numbered 1..N",
+                        h4.line, aspect, h3.title
+                    ),
+                )
+                .with_reason(
+                    "Each aspect table must carry contiguous numbered rows starting at 1.",
+                    "Renumber rows 1, 2, … without gaps.",
+                ),
+            );
+        }
+
+        // Count: `∞` is a valid final marker row for open-ended aspects.
+        let infinity_marker = rows.iter().any(|(no, _)| no == "∞");
+        let total = numbered.len() + usize::from(infinity_marker);
+        let count_violation = match open {
+            Some(min) => total < min,
+            None => total != seed_min,
+        };
+        if count_violation {
+            let violation = match open {
+                Some(_) => consts::TEMPLATE_CONFORMANCE_VIOLATION_ROW_MINIMUM,
+                None => consts::TEMPLATE_CONFORMANCE_VIOLATION_ROW_COUNT,
+            };
+            let message = match open {
+                Some(min) => format!(
+                    "line {} `#### {}` under `### {}` has {} rows; open-ended aspect {aspect} needs at least {min}",
+                    h4.line, aspect, h3.title, total
+                ),
+                None => format!(
+                    "line {} `#### {}` under `### {}` has {} rows; bounded aspect {aspect} must carry exactly {seed_min} row{}",
+                    h4.line,
+                    aspect,
+                    h3.title,
+                    total,
+                    if seed_min == 1 { "" } else { "s" }
+                ),
+            };
+            let fix = match open {
+                Some(_) => {
+                    "Add numbered rows (or the `∞` marker row) until the aspect carries at least its seed minimum."
+                }
+                None => "Adjust the row count to exactly the bounded seed.",
+            };
+            findings.push(
+                DocFinding::new_with_line(
+                    "",
+                    h4.line,
+                    consts::RULE_CODE_TEMPLATE_CONFORMANCE,
+                    violation,
+                    message,
+                )
+                .with_reason(
+                    "The open/bounded contract fixes each aspect's minimum or exact seed row count.",
+                    fix,
+                ),
+            );
+        }
+
+        // Empty Detail cells on every numbered and `∞` row.
+        for (no, detail) in rows.iter() {
+            if !detail.is_empty() {
+                continue;
+            }
+            if !no.chars().next().is_some_and(|c| c.is_ascii_digit()) && no != "∞" {
+                continue;
+            }
+            let row_label = if no == "∞" {
+                "`∞` row"
+            } else {
+                &format!("row {no}")
+            };
+            findings.push(
+                DocFinding::new_with_line(
+                    "",
+                    h4.line,
+                    consts::RULE_CODE_TEMPLATE_CONFORMANCE,
+                    consts::TEMPLATE_CONFORMANCE_VIOLATION_EMPTY_DETAIL_CELL,
+                    format!(
+                        "line {} `#### {}` {row_label} Detail cell is empty",
+                        h4.line, aspect
+                    ),
+                )
+                .with_reason(
+                    "Every numbered row's Detail cell must be filled in a real document.",
+                    "Fill the Detail cell or remove the row.",
+                ),
+            );
+        }
+
         findings
     }
 
