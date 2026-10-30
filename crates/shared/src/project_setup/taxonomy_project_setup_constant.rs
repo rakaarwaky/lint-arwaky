@@ -193,10 +193,10 @@ pub const EMBEDDED_SKILLS: &[EmbeddedSkillVO] = &[
     ),
     EmbeddedSkillVO::new(
         "aes-docs",
-        "aes-docs/references/HOW-TO-MAKE-FRD.md",
+        "aes-docs/references/HOW-TO-MAKE-FRD/template.md",
         include_str!(concat!(
             env!("OUT_DIR"),
-            "/skills/aes-docs/references/HOW-TO-MAKE-FRD.md"
+            "/skills/aes-docs/references/HOW-TO-MAKE-FRD/template.md"
         )),
         None,
     ),

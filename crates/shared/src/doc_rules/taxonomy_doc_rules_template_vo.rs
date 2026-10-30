@@ -34,7 +34,7 @@ pub struct TemplateProfile {
 pub const TEMPLATE_PROFILES: &[TemplateProfile] = &[
     TemplateProfile {
         doc_name: FRD_DOC,
-        template_file: "HOW-TO-MAKE-FRD.md",
+        template_file: "HOW-TO-MAKE-FRD/template.md",
 
         required_h2s: FRD_REQUIRED_H2S,
         placeholder_catalog: &[

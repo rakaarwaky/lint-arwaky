@@ -437,7 +437,7 @@ fn embedded_template_content(doc_name: &str) -> Option<String> {
         "AGENTS.md" => "HOW-TO-MAKE-AGENTS.md",
         "ARCHITECTURE.md" => "HOW-TO-MAKE-ARCHITECTURE.md",
         "CONTRIBUTING.md" => "HOW-TO-MAKE-CONTRIBUTING.md",
-        "FRD.md" => "HOW-TO-MAKE-FRD.md",
+        "FRD.md" => "template.md",
         "BACKLOG.md" => "HOW-TO-MAKE-BACKLOG.md",
         "DATA.md" => "HOW-TO-MAKE-DATA.md",
         "DESIGN.md" => "HOW-TO-MAKE-DESIGN.md",

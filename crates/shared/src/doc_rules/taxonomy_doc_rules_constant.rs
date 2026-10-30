@@ -252,14 +252,7 @@ pub const FRD_H3_TITLES: &[&str] = &[];
 
 /// The six fixed row labels every FRD `Technical Specification` table
 /// carries under its `Aspect | Detail` header, per HOW-TO-MAKE-FRD.
-pub const FR_FIELDS: &[&str] = &[
-    "Input",
-    "Output",
-    "Protocol",
-    "Method",
-    "Event",
-    "Error",
-];
+pub const FR_FIELDS: &[&str] = &["Input", "Output", "Protocol", "Method", "Event", "Error"];
 
 /// H3 subsections of the retired `## API Contract`; still read by
 /// `utility_markdown_scanner::api_contract_methods` (AES601 method check).
@@ -538,8 +531,8 @@ mod tests {
         ships_columns("HOW-TO-MAKE-PRD.md", PRD_ROW_LABELS);
         ships_columns("HOW-TO-MAKE-ROADMAP.md", ROADMAP_ROW_LABELS);
         ships_columns("HOW-TO-MAKE-BACKLOG.md", BACKLOG_ROW_LABELS);
-        ships_columns("HOW-TO-MAKE-FRD.md", FRD_ROW_LABELS);
-        ships_columns("HOW-TO-MAKE-FRD.md", ASPECT_DETAIL_COLUMNS);
+        ships_columns("HOW-TO-MAKE-FRD/template.md", FRD_ROW_LABELS);
+        ships_columns("HOW-TO-MAKE-FRD/template.md", ASPECT_DETAIL_COLUMNS);
         ships_columns("HOW-TO-MAKE-AGENTS.md", AGENTS_RUNTIME_ROW_LABELS);
     }
 
@@ -656,14 +649,7 @@ mod tests {
         // just set equality.
         assert_eq!(
             FRD_ASPECTS,
-            &[
-                "Input",
-                "Output",
-                "Protocol",
-                "Method",
-                "Event",
-                "Error"
-            ],
+            &["Input", "Output", "Protocol", "Method", "Event", "Error"],
             "canonical Technical Specification row order"
         );
     }

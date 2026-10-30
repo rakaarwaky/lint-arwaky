@@ -61,7 +61,7 @@ Templates, section contracts, exemplars, and per-document craft rules live in [`
 | ------------ | --------------------------------- | ---------------------------- | ------------------------------------ | ------------ | ---------------------------------------------------------------------- |
 | `PRD.md`     | Root workspace                    | Stakeholder, PM, Design, Eng | *What* &amp; *Why*                   | 50–500 lines | [references/HOW-TO-MAKE-PRD.md](references/HOW-TO-MAKE-PRD.md)         |
 | `ROADMAP.md` | Root workspace (exactly one)      | Tech Lead, PM, Engineers     | *Progress, status, cross-cutting links* | 50–500 lines | [references/HOW-TO-MAKE-ROADMAP.md](references/HOW-TO-MAKE-ROADMAP.md) |
-| `FRD.md`     | Each **feature** module/crate/pkg (not `shared/`) | Engineer, QA, Tech Lead      | *How* (functionally)                 | 50–1000 lines | [references/HOW-TO-MAKE-FRD.md](references/HOW-TO-MAKE-FRD.md)        |
+| `FRD.md`     | Each **feature** module/crate/pkg (not `shared/`) | Engineer, QA, Tech Lead      | *How* (functionally)                 | 50–1000 lines | [references/HOW-TO-MAKE-FRD/template.md](references/HOW-TO-MAKE-FRD/template.md)        |
 | `BACKLOG.md` | Each **feature** dir, beside its spec (not `shared/`) | Engineer, QA, Tech Lead      | *What is true now*                   | 50–500 lines | [references/HOW-TO-MAKE-BACKLOG.md](references/HOW-TO-MAKE-BACKLOG.md) |
 | `README.md`  | Root workspace                    | Developer (new/existing)     | *How to use/run*                     | 50–500 lines | [references/HOW-TO-MAKE-README.md](references/HOW-TO-MAKE-README.md)   |
 | `AGENTS.md`  | Root workspace                    | The agent, every session     | *How to work here safely*            | 50–500 lines | [references/HOW-TO-MAKE-AGENTS.md](references/HOW-TO-MAKE-AGENTS.md)   |
@@ -165,7 +165,7 @@ Cross-cutting rows live in the root master `ROADMAP.md`, not in a feature backlo
 2. **Analyze**: List feature modules and public items. Run `lint-arwaky-cli docs <path>`. The findings are your work list.
 3. **Draft PRD**: Write root `PRD.md` per [references/HOW-TO-MAKE-PRD.md](references/HOW-TO-MAKE-PRD.md).
 4. **Draft Roadmap**: Write root `ROADMAP.md` per [references/HOW-TO-MAKE-ROADMAP.md](references/HOW-TO-MAKE-ROADMAP.md)
-5. **Draft FRDs**: Write `FRD.md` in each feature dir per [references/HOW-TO-MAKE-FRD.md](references/HOW-TO-MAKE-FRD.md).
+5. **Draft FRDs**: Write `FRD.md` in each feature dir per [references/HOW-TO-MAKE-FRD/template.md](references/HOW-TO-MAKE-FRD/template.md).
 6. **Draft Feature Backlogs**: Write one `BACKLOG.md` per feature, beside its spec, per [references/HOW-TO-MAKE-BACKLOG.md](references/HOW-TO-MAKE-BACKLOG.md).
 7. **Draft README**: Write root `README.md` per [references/HOW-TO-MAKE-README.md](references/HOW-TO-MAKE-README.md).
 8. **Draft AGENTS**: Write root `AGENTS.md` per [references/HOW-TO-MAKE-AGENTS.md](references/HOW-TO-MAKE-AGENTS.md).
