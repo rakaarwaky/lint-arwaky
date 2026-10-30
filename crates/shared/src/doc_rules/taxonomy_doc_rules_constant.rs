@@ -443,8 +443,9 @@ pub const PR_FOLDER_NOT_OWNED_VIOLATION: &str = "pr_folder_not_owned";
 pub const FRD_ASPECTS: &[&str] = FR_FIELDS;
 
 /// Aspects whose row list is open-ended (any count ≥ seed minimum).
-/// These are exactly the aspects whose owner sample carries a literal
-/// `| ∞ |  |` seed row as the final open-ended marker row.
+/// Under the migrated template, open-ended aspects carry at least two
+/// numbered seed rows (`1`, `2`) and no `∞` marker row — `∞` is not
+/// written in actual FRD/PRD docs as an "unlimited" sign.
 pub const FRD_ASPECTS_OPEN: &[&str] = &[
     "Description",
     "Business Rules",
@@ -462,22 +463,22 @@ pub const FRD_ASPECTS_BOUNDED_ONE: &[&str] = &["Capability", "Protocol"];
 /// Aspects bounded to exactly two printed seed rows (no `∞` marker row).
 pub const FRD_ASPECTS_BOUNDED_TWO: &[&str] = &["Input", "Error"];
 
-/// Minimum total row count per FRD aspect (numbered seed rows + the `∞`
-/// marker row where applicable). Open-ended aspects: 3; bounded-one: 1;
-/// bounded-two: 2.
+/// Minimum total row count per FRD aspect (numbered seed rows only;
+/// `∞` is not written as a marker row). Open-ended aspects: 2;
+/// bounded-one: 1; bounded-two: 2.
 pub const FRD_ASPECT_SEED_MIN: &[(&str, usize)] = &[
-    ("Description", 3),
-    ("Business Rules", 3),
-    ("Edge Cases", 3),
+    ("Description", 2),
+    ("Business Rules", 2),
+    ("Edge Cases", 2),
     ("Capability", 1),
     ("Protocol", 1),
-    ("Method", 3),
+    ("Method", 2),
     ("Input", 2),
-    ("Output", 3),
+    ("Output", 2),
     ("Error", 2),
-    ("Event", 3),
-    ("Test", 3),
-    ("Metric", 3),
+    ("Event", 2),
+    ("Test", 2),
+    ("Metric", 2),
 ];
 
 /// Canonical order of the five PRD per-aspect H4 subsections, per the new
@@ -493,13 +494,14 @@ pub const PRD_ASPECTS: &[&str] = &[
 /// All five PRD aspects are open-ended (seed minimum 3 each).
 pub const PRD_ASPECTS_OPEN: &[&str] = PRD_ASPECTS;
 
-/// Minimum total row count per PRD aspect. All five are open-ended at 3.
+/// Minimum total row count per PRD aspect. All five are open-ended at 2
+/// (numbered seed rows only; `∞` is not written as a marker row).
 pub const PRD_ASPECT_SEED_MIN: &[(&str, usize)] = &[
-    ("Description", 3),
-    ("User Story", 3),
-    ("In Scope", 3),
-    ("Out of Scope", 3),
-    ("Success Metric", 3),
+    ("Description", 2),
+    ("User Story", 2),
+    ("In Scope", 2),
+    ("Out of Scope", 2),
+    ("Success Metric", 2),
 ];
 
 /// An expected per-aspect H4 subsection is missing under an FR/PR entry.

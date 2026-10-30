@@ -10,7 +10,6 @@
 | --- | --- |
 | 1 | The feature performs a core responsibility. |
 | 3 | It integrates with the shared contract layer. |
-| ∞ | — |
 
 #### Business Rules
 
@@ -18,7 +17,6 @@
 | --- | --- |
 | 1 | State is immutable across invocations. |
 | 2 | Failures surface as reason-coded outcomes. |
-| ∞ | — |
 
 #### Edge Cases
 
@@ -26,7 +24,6 @@
 | --- | --- |
 | 1 | An absent input yields a default. |
 | 2 | An oversized input is rejected. |
-| ∞ | — |
 
 #### Capability
 
@@ -46,7 +43,6 @@
 | --- | --- |
 | 1 | `execute` is the single entry point. |
 | 2 | `dispatch` routes to the seam. |
-| ∞ | — |
 
 #### Input
 
@@ -61,7 +57,6 @@
 | --- | --- |
 | 1 | A response value object. |
 | 2 | A status code. |
-| ∞ | — |
 
 #### Error
 
@@ -76,7 +71,6 @@
 | --- | --- |
 | 1 | `Completed` fires on success. |
 | 2 | `Failed` fires on error. |
-| ∞ | — |
 
 #### Test
 
@@ -84,7 +78,6 @@
 | --- | --- |
 | 1 | Unit test covers the happy path. |
 | 2 | Integration test covers the error path. |
-| ∞ | — |
 
 #### Metric
 
@@ -92,7 +85,6 @@
 | --- | --- |
 | 1 | P99 latency under 200 ms. |
 | 2 | Error rate under 0.1 %. |
-| ∞ | — |
 
 ## Public Interface
 

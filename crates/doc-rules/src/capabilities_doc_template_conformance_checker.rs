@@ -7,162 +7,32 @@
 // sections (AGENTS Runtime, Project Structure, Commands, ...; README Quick
 // Start, Reference; CONTRIBUTING Workflow, Commit Convention, Reference; ...)
 // carry fixed tables checked directly at H2 level.
+//
+// Block 1: type + constructor
+// Block 2: protocol trait implementation
+// Block 3: constructors, std traits, helpers, regexes, entry checks
 
 use shared_doc_rules::contract_doc_protocol::ITemplateConformanceProtocol;
 use shared_doc_rules::taxonomy_doc_audit_context_vo::DocAuditContext;
 use shared_doc_rules::taxonomy_doc_rules_constant as consts;
 use shared_doc_rules::taxonomy_doc_rules_request::DocFinding;
 use shared_doc_rules::taxonomy_doc_section_vo::Section;
-use shared_doc_rules::utility_markdown_scanner::{
-    blank_fenced, h3_subsections, h4_subsections, has_table_with_columns, normalize_heading,
-    sections,
+use shared_doc_rules::utility_capabilities_doc_h2_checks::{
+    check_h2_fixed_rows, check_h2_table, check_section_shape, first_column_values, has_any_table,
+    header_extra_columns, row_label_diff,
 };
-
-use std::collections::HashSet;
+use shared_doc_rules::utility_markdown_scanner::{
+    blank_fenced, h3_subsections, h4_subsections, normalize_heading, sections,
+};
 use std::sync::OnceLock;
 
-// ─── Block 1: Struct Definition ────────────────────────────
+// ─── Block 1: Struct Definition ─────────────────────────────────────────────
 
 /// The AES606 template-conformance auditor: every mandated section of a
 /// recognized document must carry the table shape its template mandates.
 pub struct TemplateConformanceChecker {}
 
-/// The body carries a markdown table: a `|`-prefixed header row followed by a
-/// table separator row. Header rows alone are not tables in markdown.
-fn has_any_table(body: &str) -> bool {
-    let lines = body.lines().collect::<Vec<_>>();
-    lines.iter().enumerate().any(|(i, line)| {
-        if !line.trim().starts_with('|') || i == 0 || !is_table_separator(line) {
-            return false;
-        }
-        lines[..i].iter().any(|prev| prev.trim().starts_with('|'))
-    })
-}
-
-/// A line that is a markdown table separator row: `| --- |`, `|:---:|`, etc.
-fn is_table_separator(line: &str) -> bool {
-    let t = line.trim();
-    if !t.starts_with('|') {
-        return false;
-    }
-    // Strip the outer `|` delimiters and any whitespace, then check the cell
-    // contents: each `|`-separated cell holds only `-` and/or `:` characters.
-    let inner = t
-        .trim_start_matches(['|', ' '])
-        .trim_end_matches(['|', ' '])
-        .split('|')
-        .map(|cell| cell.trim())
-        .collect::<Vec<_>>();
-    !inner.is_empty()
-        && inner
-            .iter()
-            .all(|cell| !cell.is_empty() && cell.chars().all(|c| c == '-' || c == ':'))
-        && inner.iter().any(|cell| cell.contains('-'))
-}
-
-/// Does any table in *body* repeat its header row in a data-row position?
-///
-/// Walks each `|` block: the first row is the header, the next separator row
-/// arms the check, and any later non-separator row whose normalized cells equal
-/// the header's is a placeholder copy of the header instead of real data.
-fn table_repeats_header_row(body: &str) -> bool {
-    let mut header: Option<Vec<String>> = None;
-    let mut separator_seen = false;
-    for line in body.lines() {
-        let trimmed = line.trim();
-        if !trimmed.starts_with('|') {
-            header = None;
-            separator_seen = false;
-            continue;
-        }
-        let cells: Vec<String> = trimmed
-            .trim_matches('|')
-            .split('|')
-            .map(|c| c.trim().to_lowercase())
-            .collect();
-        if is_table_separator(trimmed) {
-            separator_seen = header.is_some();
-            continue;
-        }
-        match &header {
-            None => header = Some(cells),
-            Some(h) if separator_seen && cells == *h => return true,
-            _ => {}
-        }
-    }
-    false
-}
-
-/// The header cells of the first table row that carries every *columns* entry
-/// but also ships cells outside that fixed set, lowercased. `None` when no
-/// such row exists — either the columns are absent (a `table_missing_columns`
-/// question) or the header matches the template exactly.
-fn header_extra_columns(body: &str, columns: &[&str]) -> Option<Vec<String>> {
-    for line in body.lines() {
-        let trimmed = line.trim();
-        if !trimmed.starts_with('|') {
-            continue;
-        }
-        let cells: Vec<String> = trimmed
-            .trim_matches('|')
-            .split('|')
-            .map(|c| c.trim().to_lowercase())
-            .collect();
-        if !columns
-            .iter()
-            .all(|want| cells.iter().any(|cell| cell.contains(&want.to_lowercase())))
-        {
-            continue;
-        }
-        let extras: Vec<String> = cells
-            .iter()
-            .filter(|cell| !columns.iter().any(|c| cell.contains(&c.to_lowercase())))
-            .cloned()
-            .collect();
-        return (!extras.is_empty()).then_some(extras);
-    }
-    None
-}
-
-// ─── Block 2: Entry regexes ────────────────────────────────
-
-/// `FR-<FEATURE>-NNN:` item heading (FRD `Functional Requirements` entries).
-pub fn fr_entry_re() -> Option<&'static regex::Regex> {
-    static PAT: OnceLock<Option<regex::Regex>> = OnceLock::new();
-    PAT.get_or_init(|| regex::Regex::new(r"^FR-[A-Za-z0-9_]+-\d+:").ok())
-        .as_ref()
-}
-
-/// `PR-<PROJECT>-NNN:` item heading (PRD `Project Requirements` and ROADMAP
-/// `Roadmap Status` entries).
-pub fn pr_entry_re() -> Option<&'static regex::Regex> {
-    static PAT: OnceLock<Option<regex::Regex>> = OnceLock::new();
-    PAT.get_or_init(|| regex::Regex::new(r"^PR-[A-Za-z0-9_]+-\d+:").ok())
-        .as_ref()
-}
-
-/// `DT-<DATA>-NNN:` item heading (DATA `Data Requirements` entries).
-pub fn dt_entry_re() -> Option<&'static regex::Regex> {
-    static PAT: OnceLock<Option<regex::Regex>> = OnceLock::new();
-    PAT.get_or_init(|| regex::Regex::new(r"^DT-[A-Za-z0-9_]+-\d+:").ok())
-        .as_ref()
-}
-
-/// `DS-<DESIGN>-NNN:` item heading (DESIGN `Design Requirements` entries).
-pub fn ds_entry_re() -> Option<&'static regex::Regex> {
-    static PAT: OnceLock<Option<regex::Regex>> = OnceLock::new();
-    PAT.get_or_init(|| regex::Regex::new(r"^DS-[A-Za-z0-9_]+-\d+:").ok())
-        .as_ref()
-}
-
-/// `{<qualifier>}` single-qualifier heading (BACKLOG `Backlog Status` entries).
-pub fn backlog_entry_re() -> Option<&'static regex::Regex> {
-    static PAT: OnceLock<Option<regex::Regex>> = OnceLock::new();
-    PAT.get_or_init(|| regex::Regex::new(r"^\{[A-Za-z0-9_-]+\}$").ok())
-        .as_ref()
-}
-
-// ─── Block 3: Protocol Trait Implementation ────────────────
+// ─── Block 2: Protocol Trait Implementation ─────────────────────────────────
 
 impl ITemplateConformanceProtocol for TemplateConformanceChecker {
     /// Report every section that is present but does not carry the table shape
@@ -191,7 +61,7 @@ impl ITemplateConformanceProtocol for TemplateConformanceChecker {
     }
 }
 
-// ─── Block 3: Constructors, Std Traits, Helpers ───────────
+// ─── Block 3: Constructors, std traits, helpers, regexes, entry checks ──────
 
 impl TemplateConformanceChecker {
     pub fn new() -> Self {
@@ -202,7 +72,7 @@ impl TemplateConformanceChecker {
     /// `Public Interface` and `Reference` H2 tables.
     fn check_frd(&self, parsed: &[Section]) -> Vec<DocFinding> {
         let mut findings = Vec::new();
-        let Some(re) = fr_entry_re() else {
+        let Some(re) = Self::fr_entry_re() else {
             return findings;
         };
         findings.extend(self.check_aspect_entry_tables(
@@ -213,12 +83,16 @@ impl TemplateConformanceChecker {
             consts::FRD_ASPECTS_OPEN,
             consts::FRD_ASPECT_SEED_MIN,
         ));
-        findings.extend(self.check_h2_table(
+        findings.extend(check_h2_table(
             parsed,
             "Public Interface",
             consts::ASPECT_DETAIL_COLUMNS,
         ));
-        findings.extend(self.check_h2_table(parsed, "Reference", consts::REFERENCE_COLUMNS));
+        findings.extend(check_h2_table(
+            parsed,
+            "Reference",
+            consts::REFERENCE_COLUMNS,
+        ));
         findings
     }
 
@@ -226,7 +100,7 @@ impl TemplateConformanceChecker {
     /// H2 table.
     fn check_prd(&self, parsed: &[Section]) -> Vec<DocFinding> {
         let mut findings = Vec::new();
-        let Some(re) = pr_entry_re() else {
+        let Some(re) = Self::pr_entry_re() else {
             return findings;
         };
         findings.extend(self.check_aspect_entry_tables(
@@ -237,14 +111,18 @@ impl TemplateConformanceChecker {
             consts::PRD_ASPECTS_OPEN,
             consts::PRD_ASPECT_SEED_MIN,
         ));
-        findings.extend(self.check_h2_table(parsed, "Reference", consts::REFERENCE_COLUMNS));
+        findings.extend(check_h2_table(
+            parsed,
+            "Reference",
+            consts::REFERENCE_COLUMNS,
+        ));
         findings
     }
 
     /// ROADMAP: `Roadmap Status` entry tables plus `Reference` H2 table.
     fn check_roadmap(&self, parsed: &[Section]) -> Vec<DocFinding> {
         let mut findings = Vec::new();
-        let Some(re) = pr_entry_re() else {
+        let Some(re) = Self::pr_entry_re() else {
             return findings;
         };
         findings.extend(self.check_entry_tables(
@@ -254,14 +132,18 @@ impl TemplateConformanceChecker {
             consts::ASPECT_DETAIL_COLUMNS,
             consts::ROADMAP_ROW_LABELS,
         ));
-        findings.extend(self.check_h2_table(parsed, "Reference", consts::REFERENCE_COLUMNS));
+        findings.extend(check_h2_table(
+            parsed,
+            "Reference",
+            consts::REFERENCE_COLUMNS,
+        ));
         findings
     }
 
     /// BACKLOG: `Backlog Status` entry tables plus `Reference` H2 table.
     fn check_backlog(&self, parsed: &[Section]) -> Vec<DocFinding> {
         let mut findings = Vec::new();
-        let Some(re) = backlog_entry_re() else {
+        let Some(re) = Self::backlog_entry_re() else {
             return findings;
         };
         findings.extend(self.check_entry_tables(
@@ -271,7 +153,11 @@ impl TemplateConformanceChecker {
             consts::ASPECT_DETAIL_COLUMNS,
             consts::BACKLOG_ROW_LABELS,
         ));
-        findings.extend(self.check_h2_table(parsed, "Reference", consts::REFERENCE_COLUMNS));
+        findings.extend(check_h2_table(
+            parsed,
+            "Reference",
+            consts::REFERENCE_COLUMNS,
+        ));
         findings
     }
 
@@ -279,7 +165,7 @@ impl TemplateConformanceChecker {
     /// plus `Reference` H2 table.
     fn check_data(&self, parsed: &[Section]) -> Vec<DocFinding> {
         let mut findings = Vec::new();
-        let Some(re) = dt_entry_re() else {
+        let Some(re) = Self::dt_entry_re() else {
             return findings;
         };
         findings.extend(self.check_entry_tables(
@@ -289,7 +175,11 @@ impl TemplateConformanceChecker {
             consts::DATA_TYPE_DESCRIPTION_COLUMNS,
             &[],
         ));
-        findings.extend(self.check_h2_table(parsed, "Reference", consts::REFERENCE_COLUMNS));
+        findings.extend(check_h2_table(
+            parsed,
+            "Reference",
+            consts::REFERENCE_COLUMNS,
+        ));
         findings
     }
 
@@ -299,7 +189,7 @@ impl TemplateConformanceChecker {
     /// pattern. Public so the test suite can drive the DESIGN branch whole.
     pub fn check_design(&self, parsed: &[Section]) -> Vec<DocFinding> {
         let mut findings = Vec::new();
-        let Some(re) = ds_entry_re() else {
+        let Some(re) = Self::ds_entry_re() else {
             return findings;
         };
         findings.extend(self.check_entry_tables(
@@ -309,7 +199,11 @@ impl TemplateConformanceChecker {
             consts::DESIGN_VARIANT_VALUE_COLUMNS,
             &[],
         ));
-        findings.extend(self.check_h2_table(parsed, "Reference", consts::REFERENCE_COLUMNS));
+        findings.extend(check_h2_table(
+            parsed,
+            "Reference",
+            consts::REFERENCE_COLUMNS,
+        ));
         // The HOW-TO template shows a prose paragraph under `Design Overview`
         // and DS- entry H3s directly under `Design Requirements`; a table in
         // either spot has no template column set to conform to.
@@ -451,52 +345,108 @@ impl TemplateConformanceChecker {
     /// Structure, Commands, Reference.
     fn check_agents(&self, parsed: &[Section]) -> Vec<DocFinding> {
         let mut findings = Vec::new();
-        findings.extend(self.check_h2_fixed_rows(
+        findings.extend(check_h2_fixed_rows(
             parsed,
             "Runtime",
             consts::AGENTS_RUNTIME_ROW_LABELS,
         ));
-        findings.extend(self.check_h2_table(
+        findings.extend(check_h2_table(
             parsed,
             "Project Structure",
             consts::AGENTS_PATH_PURPOSE_COLUMNS,
         ));
-        findings.extend(self.check_h2_table(parsed, "Commands", consts::AGENTS_COMMAND_COLUMNS));
-        findings.extend(self.check_h2_table(parsed, "Reference", consts::REFERENCE_COLUMNS));
+        findings.extend(check_h2_table(
+            parsed,
+            "Commands",
+            consts::AGENTS_COMMAND_COLUMNS,
+        ));
+        findings.extend(check_h2_table(
+            parsed,
+            "Reference",
+            consts::REFERENCE_COLUMNS,
+        ));
         findings
     }
 
     /// README: `Quick Start` and `Reference` H2 tables.
     fn check_readme(&self, parsed: &[Section]) -> Vec<DocFinding> {
         let mut findings = Vec::new();
-        findings.extend(self.check_h2_table(
+        findings.extend(check_h2_table(
             parsed,
             "Quick Start",
             consts::README_QUICK_START_COLUMNS,
         ));
-        findings.extend(self.check_h2_table(parsed, "Reference", consts::REFERENCE_COLUMNS));
+        findings.extend(check_h2_table(
+            parsed,
+            "Reference",
+            consts::REFERENCE_COLUMNS,
+        ));
         findings
     }
 
     /// CONTRIBUTING: `Workflow`, `Commit Convention`, and `Reference` H2 tables.
     fn check_contributing(&self, parsed: &[Section]) -> Vec<DocFinding> {
         let mut findings = Vec::new();
-        findings.extend(self.check_h2_table(
+        findings.extend(check_h2_table(
             parsed,
             "Workflow",
             consts::CONTRIBUTING_WORKFLOW_COLUMNS,
         ));
-        findings.extend(self.check_h2_table(
+        findings.extend(check_h2_table(
             parsed,
             "Commit Convention",
             consts::CONTRIBUTING_COMMIT_COLUMNS,
         ));
-        findings.extend(self.check_h2_table(parsed, "Reference", consts::REFERENCE_COLUMNS));
+        findings.extend(check_h2_table(
+            parsed,
+            "Reference",
+            consts::REFERENCE_COLUMNS,
+        ));
         findings
     }
 
-    // ─── Block 3: Constructors, Std Traits, Helpers ───────────
+    // ─── Entry regexes ────────────────────────────────
 
+    /// `FR-<FEATURE>-NNN:` item heading (FRD `Functional Requirements` entries).
+    fn fr_entry_re() -> Option<&'static regex::Regex> {
+        static PAT: OnceLock<Option<regex::Regex>> = OnceLock::new();
+        PAT.get_or_init(|| regex::Regex::new(r"^FR-[A-Za-z0-9_]+-\d+:").ok())
+            .as_ref()
+    }
+
+    /// `PR-<PROJECT>-NNN:` item heading (PRD `Project Requirements` and ROADMAP
+    /// `Roadmap Status` entries).
+    fn pr_entry_re() -> Option<&'static regex::Regex> {
+        static PAT: OnceLock<Option<regex::Regex>> = OnceLock::new();
+        PAT.get_or_init(|| regex::Regex::new(r"^PR-[A-Za-z0-9_]+-\d+:").ok())
+            .as_ref()
+    }
+
+    /// `DT-<DATA>-NNN:` item heading (DATA `Data Requirements` entries).
+    fn dt_entry_re() -> Option<&'static regex::Regex> {
+        static PAT: OnceLock<Option<regex::Regex>> = OnceLock::new();
+        PAT.get_or_init(|| regex::Regex::new(r"^DT-[A-Za-z0-9_]+-\d+:").ok())
+            .as_ref()
+    }
+
+    /// `DS-<DESIGN>-NNN:` item heading (DESIGN `Design Requirements` entries).
+    fn ds_entry_re() -> Option<&'static regex::Regex> {
+        static PAT: OnceLock<Option<regex::Regex>> = OnceLock::new();
+        PAT.get_or_init(|| regex::Regex::new(r"^DS-[A-Za-z0-9_]+-\d+:").ok())
+            .as_ref()
+    }
+
+    /// `{<qualifier>}` single-qualifier heading (BACKLOG `Backlog Status` entries).
+    fn backlog_entry_re() -> Option<&'static regex::Regex> {
+        static PAT: OnceLock<Option<regex::Regex>> = OnceLock::new();
+        PAT.get_or_init(|| regex::Regex::new(r"^\{[A-Za-z0-9_-]+\}$").ok())
+            .as_ref()
+    }
+}
+
+// ─── Entry table checks ─────────────────────────────────────────────────────
+
+impl TemplateConformanceChecker {
     /// Walk every H3 under *parent_h2* whose title matches *entry_re* and verify
     /// each carries a table with *columns* whose first-column row labels equal
     /// *row_labels* (header-only when empty). Findings anchor to the offending H3
@@ -521,7 +471,7 @@ impl TemplateConformanceChecker {
                 continue;
             }
             // Header/shape check anchored to the H3.
-            if let Some(finding) = self.check_section_shape(parsed, &h3.title, columns, Some(&h3)) {
+            if let Some(finding) = check_section_shape(parsed, &h3.title, columns, Some(&h3)) {
                 findings.push(finding);
                 continue;
             }
@@ -569,8 +519,7 @@ impl TemplateConformanceChecker {
     /// of *aspects*, each H4's `| No | Detail |` table shape, contiguous
     /// `1..N` row numbering, bounded/open-ended row counts against
     /// *seed_min*, and non-empty `Detail` cells. Findings anchor to the
-    /// offending H3 or H4 line. H4 subsections are not entry headings (no
-    /// `FR-`/`PR-` ID), so they stay out of `fr_id_bare_re` counting.
+    /// offending H3 or H4 line.
     pub fn check_aspect_entry_tables(
         &self,
         parsed: &[Section],
@@ -594,15 +543,25 @@ impl TemplateConformanceChecker {
             // Legacy entry shape: one `| Aspect | Detail |` table on the H3,
             // no per-aspect H4 subsections. Enforced by `check_entry_tables`
             // until the doc migrates to the H4 aspect template.
-            if has_table_with_columns(&h3.body, &["Aspect", "Detail"][..]) {
-                findings.extend(self.check_entry_tables(
-                    parsed,
-                    parent_h2,
-                    entry_re,
-                    &["Aspect", "Detail"][..],
-                    aspects,
-                ));
-                continue;
+            if has_any_table(&h3.body)
+                && header_extra_columns(&h3.body, &["Aspect", "Detail"]).is_none()
+            {
+                let columns_match = first_column_values(&h3.body)
+                    .iter()
+                    .any(|v| v.eq_ignore_ascii_case("aspect"))
+                    && first_column_values(&h3.body)
+                        .iter()
+                        .any(|v| v.eq_ignore_ascii_case("detail"));
+                if columns_match {
+                    findings.extend(self.check_entry_tables(
+                        parsed,
+                        parent_h2,
+                        entry_re,
+                        &["Aspect", "Detail"][..],
+                        aspects,
+                    ));
+                    continue;
+                }
             }
             let h4s = h4_subsections(&h3);
             let present: Vec<&Section> = h4s
@@ -637,8 +596,6 @@ impl TemplateConformanceChecker {
             }
 
             // Order: expected-aspect H4s must follow canonical order.
-            // Zip expected aspects against matching H4s in document order;
-            // the first mismatch wins, anchored to that H4's line.
             let mut order_mismatch = false;
             let mut mismatch_line = h3.line;
             for (expected, h4_sec) in aspects.iter().zip(present.iter()) {
@@ -691,7 +648,7 @@ impl TemplateConformanceChecker {
     /// and non-empty `Detail` cells.
     ///
     /// `open`: `None` = bounded exact `seed_min`; `Some(min)` = open-ended,
-    /// at least `min` rows (the `∞` marker counts toward the total).
+    /// at least `min` rows (numbered rows only — `∞` is not written as a marker row).
     fn check_aspect_table(
         &self,
         h3: &Section,
@@ -721,8 +678,7 @@ impl TemplateConformanceChecker {
             return findings;
         }
 
-        // Header must be exactly `| No | Detail |`. Compute missing/extras in
-        // a single pass; derive the equality violation from missing being empty.
+        // Header must be exactly `| No | Detail |`.
         let Some(header_cells) = h4
             .body
             .lines()
@@ -789,7 +745,7 @@ impl TemplateConformanceChecker {
         }
 
         // Inline row scan: skip header + separator + non-pipe lines;
-        // collect (No, Detail) for every data row. `∞` counts toward total.
+        // collect (No, Detail) for every data row.
         let mut rows: Vec<(String, &str)> = Vec::new();
         let mut header_seen = false;
         for line in h4.body.lines() {
@@ -849,9 +805,7 @@ impl TemplateConformanceChecker {
             );
         }
 
-        // Count: `∞` is a valid final marker row for open-ended aspects.
-        let infinity_marker = rows.iter().any(|(no, _)| no == "∞");
-        let total = numbered.len() + usize::from(infinity_marker);
+        let total = numbered.len();
         let count_violation = match open {
             Some(min) => total < min,
             None => total != seed_min,
@@ -876,9 +830,7 @@ impl TemplateConformanceChecker {
                 ),
             };
             let fix = match open {
-                Some(_) => {
-                    "Add numbered rows (or the `∞` marker row) until the aspect carries at least its seed minimum."
-                }
+                Some(_) => "Add numbered rows until the aspect carries at least its seed minimum.",
                 None => "Adjust the row count to exactly the bounded seed.",
             };
             findings.push(
@@ -896,19 +848,14 @@ impl TemplateConformanceChecker {
             );
         }
 
-        // Empty Detail cells on every numbered and `∞` row.
+        // Empty Detail cells on every numbered row.
         for (no, detail) in rows.iter() {
             if !detail.is_empty() {
                 continue;
             }
-            if !no.chars().next().is_some_and(|c| c.is_ascii_digit()) && no != "∞" {
+            if !no.chars().next().is_some_and(|c| c.is_ascii_digit()) {
                 continue;
             }
-            let row_label = if no == "∞" {
-                "`∞` row"
-            } else {
-                &format!("row {no}")
-            };
             findings.push(
                 DocFinding::new_with_line(
                     "",
@@ -916,7 +863,7 @@ impl TemplateConformanceChecker {
                     consts::RULE_CODE_TEMPLATE_CONFORMANCE,
                     consts::TEMPLATE_CONFORMANCE_VIOLATION_EMPTY_DETAIL_CELL,
                     format!(
-                        "line {} `#### {}` {row_label} Detail cell is empty",
+                        "line {} `#### {}` row {no} Detail cell is empty",
                         h4.line, aspect
                     ),
                 )
@@ -929,261 +876,10 @@ impl TemplateConformanceChecker {
 
         findings
     }
-
-    /// H2-level: the section titled *title* must carry a table whose header
-    /// covers *columns*. Finding (if any) anchors to the H2 line.
-    pub fn check_h2_table(
-        &self,
-        parsed: &[Section],
-        title: &str,
-        columns: &[&str],
-    ) -> Vec<DocFinding> {
-        self.check_section_shape(parsed, title, columns, None)
-            .into_iter()
-            .collect()
-    }
-
-    /// H2-level fixed-row check: the section titled *title* must carry an
-    /// `| Aspect | Detail |` table whose first-column row labels equal
-    /// *row_labels*. Finding anchors to the H2 line.
-    pub fn check_h2_fixed_rows(
-        &self,
-        parsed: &[Section],
-        title: &str,
-        row_labels: &[&str],
-    ) -> Vec<DocFinding> {
-        let mut findings = Vec::new();
-        let Some(section) = parsed
-            .iter()
-            .find(|s| s.level == 2 && normalize_heading(&s.title) == normalize_heading(title))
-        else {
-            return findings;
-        };
-        // Shape discrimination (section_not_table / table_missing_columns) is
-        // shared with the entry checks; only the fixed-row comparison is
-        // specific to this H2-level check.
-        if let Some(finding) =
-            self.check_section_shape(parsed, title, consts::ASPECT_DETAIL_COLUMNS, None)
-        {
-            findings.push(finding);
-            return findings;
-        }
-        let values = first_column_values(&section.body);
-        let (missing, extra) = row_label_diff(row_labels, &values);
-        if !missing.is_empty() || !extra.is_empty() {
-            findings.push(
-                DocFinding::new_with_line(
-                    "",
-                    section.line,
-                    consts::RULE_CODE_TEMPLATE_CONFORMANCE,
-                    consts::TEMPLATE_CONFORMANCE_VIOLATION_ENTRY_MISSING_ROW,
-                    format!(
-                        "line {} `## {}` table row labels do not match the template; missing {}, extra {}",
-                        section.line,
-                        section.title,
-                        missing.join(", "),
-                        extra.join(", ")
-                    ),
-                )
-                .with_reason(
-                    format!(
-                        "The `{}` section must carry the fixed row labels {} so the table is complete.",
-                        title,
-                        row_labels.join(", ")
-                    ),
-                    format!(
-                        "Add the missing row(s) {} and remove the extra row(s) {} from the `## {}` table.",
-                        missing.join(", "),
-                        extra.join(", "),
-                        title
-                    ),
-                ),
-            );
-        }
-        findings
-    }
-
-    /// Find the H2 section titled *title* (or use *h3* when given), check that
-    /// its body carries a table with every column in *columns*, and return the
-    /// finding when the shape is wrong. Returns `None` when the section is
-    /// absent (a missing H2 is AES605's question, not this rule's) or when the
-    /// shape conforms. When *h3* is `Some`, the check anchors to that H3; the
-    /// existing H2-level calls pass `None` and keep their H2 anchor.
-    fn check_section_shape(
-        &self,
-        parsed: &[Section],
-        title: &str,
-        columns: &[&str],
-        h3: Option<&Section>,
-    ) -> Option<DocFinding> {
-        let section = match h3 {
-            Some(h3) => h3,
-            None => parsed.iter().find(|s| {
-                s.level == 2 && normalize_heading(&s.title) == normalize_heading(title)
-            })?,
-        };
-        let body = &section.body;
-        if has_table_with_columns(body, columns) {
-            // Exact-header rule: the template fixes the header set, so a cell
-            // outside it is an extra column a reader cannot map to a template
-            // column.
-            if let Some(extras) = header_extra_columns(body, columns) {
-                let marker = if section.level == 2 { "##" } else { "###" };
-                return Some(
-                    DocFinding::new_with_line(
-                        "",
-                        section.line,
-                        consts::RULE_CODE_TEMPLATE_CONFORMANCE,
-                        consts::TEMPLATE_CONFORMANCE_VIOLATION_TABLE_EXTRA_COLUMNS,
-                        format!(
-                            "line {} `{marker} {}` table carries column(s) outside the template: {}",
-                            section.line,
-                            section.title,
-                            extras.join(", ")
-                        ),
-                    )
-                    .with_reason(
-                        format!(
-                            "The HOW-TO template fixes the header of `{}` to exactly {}; an undeclared column breaks the fixed shape.",
-                            section.title,
-                            columns.join(" | ")
-                        ),
-                        format!(
-                            "Remove the extra column(s) ({}) from `{marker} {}` or fold the data into an existing column.",
-                            extras.join(", "),
-                            section.title,
-                        ),
-                    ),
-                );
-            }
-            // Right columns, but a data row copying the header means the
-            // table ships placeholders where the template expects values.
-            if table_repeats_header_row(body) {
-                let marker = if section.level == 2 { "##" } else { "###" };
-                return Some(
-                    DocFinding::new_with_line(
-                        "",
-                        section.line,
-                        consts::RULE_CODE_TEMPLATE_CONFORMANCE,
-                        consts::TEMPLATE_CONFORMANCE_VIOLATION_TABLE_HEADER_REPEATED,
-                        format!(
-                            "line {} `{marker} {}` repeats its header row as a data row",
-                            section.line, section.title
-                        ),
-                    )
-                    .with_reason(
-                        format!(
-                            "The HOW-TO template mandates one header row under `{}`; repeating it in a data-row position ships the column names where filled values belong.",
-                            section.title
-                        ),
-                        format!(
-                            "Replace the duplicated `| {} |` row under `{marker} {}` with real values, or delete it if no values exist yet.",
-                            columns.join(" | "),
-                            section.title
-                        ),
-                    ),
-                );
-            }
-            return None;
-        }
-        // The section is present but wrong-shaped. Distinguish "no table at all"
-        // from "table missing columns" so the fix message can be specific: a
-        // markdown table separator line (`| --- |`) is what turns a header row
-        // into a parseable table.
-        let has_any_table = has_any_table(body);
-        let violation = if has_any_table {
-            consts::TEMPLATE_CONFORMANCE_VIOLATION_TABLE_MISSING_COLUMNS
-        } else {
-            consts::TEMPLATE_CONFORMANCE_VIOLATION_SECTION_NOT_TABLE
-        };
-        let marker = if section.level == 2 { "##" } else { "###" };
-        Some(
-            DocFinding::new_with_line(
-                "",
-                section.line,
-                consts::RULE_CODE_TEMPLATE_CONFORMANCE,
-                violation,
-                format!(
-                    "line {} `{marker} {}` must be a markdown table with columns {}",
-                    section.line,
-                    section.title,
-                    columns.join(" | ")
-                ),
-            )
-            .with_reason(
-                format!(
-                    "The HOW-TO template mandates `{}` under this section; a body carrying bullets, prose, or a table missing required columns is not a report a reader can verify.",
-                    section.title
-                ),
-                format!(
-                    "Replace the body of `{marker} {}` with a table carrying columns {}.",
-                    section.title,
-                    columns.join(" | ")
-                ),
-            ),
-        )
-    }
 }
-
-// ─── Block 3: Constructors, Std Traits, Helpers ───────────
 
 impl Default for TemplateConformanceChecker {
     fn default() -> Self {
         Self::new()
     }
-}
-
-/// First-column cell of every data row in a markdown table body
-pub fn first_column_values(body: &str) -> HashSet<String> {
-    let mut values = HashSet::new();
-    let mut header_seen = false;
-    for raw in body.lines() {
-        let trimmed = raw.trim();
-        if !trimmed.starts_with('|') {
-            continue;
-        }
-        let cells: Vec<&str> = trimmed
-            .trim_matches('|')
-            .split('|')
-            .map(str::trim)
-            .collect();
-        if !header_seen {
-            header_seen = true;
-            continue;
-        }
-        // Separator row: every cell is dashes, colons, or whitespace.
-        if cells
-            .iter()
-            .all(|c| c.chars().all(|c| c == '-' || c == ':' || c.is_whitespace()))
-        {
-            continue;
-        }
-        if let Some(first) = cells.first() {
-            if !first.is_empty() {
-                values.insert(first.to_string());
-            }
-        }
-    }
-    values
-}
-
-/// The (missing, extra) row labels of *values* against the fixed *row_labels*:
-/// labels in *row_labels* absent from *values* and cells in *values* not in
-/// *row_labels*. The entry and H2 fixed-row checks share this diff so the two
-/// sites cannot drift apart.
-pub(crate) fn row_label_diff<'a>(
-    row_labels: &'a [&'a str],
-    values: &HashSet<String>,
-) -> (Vec<&'a str>, Vec<String>) {
-    let missing: Vec<&str> = row_labels
-        .iter()
-        .filter(|label| !values.iter().any(|v| v == *label))
-        .copied()
-        .collect();
-    let extra: Vec<String> = values
-        .iter()
-        .filter(|v| !row_labels.iter().any(|l| *l == *v))
-        .cloned()
-        .collect();
-    (missing, extra)
 }

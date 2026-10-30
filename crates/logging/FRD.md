@@ -41,7 +41,6 @@ flowchart TD
 | --- | --- |
 | 1 | Map a verbosity level to tracing EnvFilter directives for the root and audit targets. |
 | 2 | — |
-| ∞ | — |
 
 #### Business Rules
 
@@ -49,7 +48,6 @@ flowchart TD
 | --- | --- |
 | 1 | Verbosity levels (default, info, debug) map to fixed directives: default yields warn on root plus info on the audit target; info yields info on root plus info on audit; debug yields debug on root plus debug on audit. |
 | 2 | Unknown verbosity falls back to default. Directives are returned as an EnvFilter, never installed here. |
-| ∞ | — |
 
 #### Edge Cases
 
@@ -57,7 +55,6 @@ flowchart TD
 | --- | --- |
 | 1 | Unknown verbosity level falls back to the default mapping rather than panicking; repeated builds with the same level yield identical directives. |
 | 2 | Audit target is always at least info. |
-| ∞ | — |
 
 #### Capability
 
@@ -77,7 +74,6 @@ flowchart TD
 | --- | --- |
 | 1 | Build the EnvFilter string/directives for a given verbosity level. |
 | 2 | — |
-| ∞ | — |
 
 #### Input
 
@@ -92,7 +88,6 @@ flowchart TD
 | --- | --- |
 | 1 | EnvFilter passed to subscriber installation in FR-Logging-002; returned in LoggingResponse::Done. |
 | 2 | — |
-| ∞ | — |
 
 #### Error
 
@@ -107,7 +102,6 @@ flowchart TD
 | --- | --- |
 | 1 | None; pure mapping. |
 | 2 | — |
-| ∞ | — |
 
 #### Test
 
@@ -115,7 +109,6 @@ flowchart TD
 | --- | --- |
 | 1 | fr_001_default_filter_directive, fr_001_info_filter_directive, fr_001_debug_filter_directive assert exact directive strings. |
 | 2 | filter_directive_default_returns_warn_and_audit_info, and filter_directive_debug_returns_debug_and_audit_debug assert exact directive strings. |
-| ∞ | — |
 
 #### Metric
 
@@ -123,7 +116,6 @@ flowchart TD
 | --- | --- |
 | 1 | Each of the three verbosity levels maps to its documented directive pair with zero mismatch on the filter_directive_* suite. |
 | 2 | — |
-| ∞ | — |
 
 ### FR-Logging-002: Install the Global Subscriber
 
@@ -133,7 +125,6 @@ flowchart TD
 | --- | --- |
 | 1 | Install the global tracing subscriber exactly once with the requested filter and ANSI setting. |
 | 2 | — |
-| ∞ | — |
 
 #### Business Rules
 
@@ -141,7 +132,6 @@ flowchart TD
 | --- | --- |
 | 1 | SubscriberInit installs a tracing-subscriber registry with the EnvFilter from FR-Logging-001. First call wins: a second init call is a noop. |
 | 2 | ANSI on/off is honored by the request. Installation never panics for any verbosity level. |
-| ∞ | — |
 
 #### Edge Cases
 
@@ -149,7 +139,6 @@ flowchart TD
 | --- | --- |
 | 1 | Second init call is a noop (no panic, no double subscriber); init with ANSI disabled works. |
 | 2 | Init with debug verbosity works; default verbosity works; container init delegates to the orchestrator. |
-| ∞ | — |
 
 #### Capability
 
@@ -169,7 +158,6 @@ flowchart TD
 | --- | --- |
 | 1 | Install the subscriber with the given filter and ansi flag; returns the EnvFilter used. |
 | 2 | — |
-| ∞ | — |
 
 #### Input
 
@@ -184,7 +172,6 @@ flowchart TD
 | --- | --- |
 | 1 | LoggingResponseKind::Done carrying install status and the EnvFilter. |
 | 2 | — |
-| ∞ | — |
 
 #### Error
 
@@ -199,7 +186,6 @@ flowchart TD
 | --- | --- |
 | 1 | None; subscriber installation is process-global setup. |
 | 2 | — |
-| ∞ | — |
 
 #### Test
 
@@ -207,7 +193,6 @@ flowchart TD
 | --- | --- |
 | 1 | fr_002_init_does_not_panic, second_init_call_is_noop, init_debug_with_ansi_does_not_panic assert idempotence and delegation. |
 | 2 | install_via_protocol_returns_env_filter_for_each_level, and container_init_delegates_to_orchestrator assert idempotence and delegation. |
-| ∞ | — |
 
 #### Metric
 
@@ -215,7 +200,6 @@ flowchart TD
 | --- | --- |
 | 1 | Three verbosity levels each return their EnvFilter from one protocol install call. |
 | 2 | Repeat install leaves process state unchanged. |
-| ∞ | — |
 
 ### FR-Logging-003: Time a Scan Phase
 
@@ -225,7 +209,6 @@ flowchart TD
 | --- | --- |
 | 1 | Time a scan phase and emit a structured duration event when it finishes. |
 | 2 | — |
-| ∞ | — |
 
 #### Business Rules
 
@@ -233,7 +216,6 @@ flowchart TD
 | --- | --- |
 | 1 | PhaseTimer starts when PhaseStarted arrives and records the elapsed time on PhaseFinished, emitting a structured tracing event with the phase name and duration. |
 | 2 | Measurements use a monotonic clock; nested phases are timed independently. |
-| ∞ | — |
 
 #### Edge Cases
 
@@ -241,7 +223,6 @@ flowchart TD
 | --- | --- |
 | 1 | PhaseFinished without a matching PhaseStarted tolerates a zero/unknown duration rather than panicking; two sequential phases each get their own timing. |
 | 2 | Dropping a timer without finishing still returns a response without panic. |
-| ∞ | — |
 
 #### Capability
 
@@ -261,7 +242,6 @@ flowchart TD
 | --- | --- |
 | 1 | Start phase timing, stop it, and return the measured duration. |
 | 2 | — |
-| ∞ | — |
 
 #### Input
 
@@ -276,7 +256,6 @@ flowchart TD
 | --- | --- |
 | 1 | Timing data through LoggingResponseKind::PhaseTimer plus a structured trace event. |
 | 2 | — |
-| ∞ | — |
 
 #### Error
 
@@ -291,7 +270,6 @@ flowchart TD
 | --- | --- |
 | 1 | Structured trace event on phase completion with phase name and elapsed milliseconds. |
 | 2 | — |
-| ∞ | — |
 
 #### Test
 
@@ -299,7 +277,6 @@ flowchart TD
 | --- | --- |
 | 1 | PhaseTimer contract tests in the logging suite assert start/stop pairing and response shape (LoggingResponseKind::PhaseTimer). |
 | 2 | — |
-| ∞ | — |
 
 #### Metric
 
@@ -307,7 +284,6 @@ flowchart TD
 | --- | --- |
 | 1 | Measured duration for a seeded busy phase is greater than zero and within a sane bound of wall clock. |
 | 2 | Unmatched finish returns zero without panic. |
-| ∞ | — |
 
 ### FR-Logging-004: Report Walker Progress
 
@@ -317,7 +293,6 @@ flowchart TD
 | --- | --- |
 | 1 | Emit real-time progress events for files the directory walker enters and skips. |
 | 2 | — |
-| ∞ | — |
 
 #### Business Rules
 
@@ -325,7 +300,6 @@ flowchart TD
 | --- | --- |
 | 1 | WalkerEnter reports a path being considered; WalkerSkip reports a path rejected by ignore rules with a reason; FilesDiscovered aggregates the count found in the batch. |
 | 2 | Events map to tracing at the verbosity tier from FR-Logging-001 so they appear only when enabled. |
-| ∞ | — |
 
 #### Edge Cases
 
@@ -333,7 +307,6 @@ flowchart TD
 | --- | --- |
 | 1 | Skipped files still appear as skip events with reason, not as enter events; empty batch emits nothing. |
 | 2 | Disabled verbosity suppresses emission without dropping counts; walker continuation is unaffected by reporting failures. |
-| ∞ | — |
 
 #### Capability
 
@@ -353,7 +326,6 @@ flowchart TD
 | --- | --- |
 | 1 | Report enter, skip, and discovered-count signals to the tracing backend. |
 | 2 | — |
-| ∞ | — |
 
 #### Input
 
@@ -368,7 +340,6 @@ flowchart TD
 | --- | --- |
 | 1 | LoggingResponseKind::Done plus trace events visible at info/debug. |
 | 2 | — |
-| ∞ | — |
 
 #### Error
 
@@ -383,7 +354,6 @@ flowchart TD
 | --- | --- |
 | 1 | Trace events for enter, skip, and discovered counts. |
 | 2 | — |
-| ∞ | — |
 
 #### Test
 
@@ -391,7 +361,6 @@ flowchart TD
 | --- | --- |
 | 1 | Walker-report contract coverage in the logging tests asserts enter/skip event emission and count reporting through the aggregate. |
 | 2 | — |
-| ∞ | — |
 
 #### Metric
 
@@ -399,7 +368,6 @@ flowchart TD
 | --- | --- |
 | 1 | On a seeded tree, reported enter plus skip events equal the seeded file count. |
 | 2 | Disabled verbosity produces zero emitted events yet identical counts. |
-| ∞ | — |
 
 ## Public Interface
 

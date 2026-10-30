@@ -48,7 +48,6 @@ flowchart TD
 | --- | --- |
 | 1 | Report overall environment health including toolchain state for the doctor command. |
 | 2 | — |
-| ∞ | — |
 
 #### Business Rules
 
@@ -56,7 +55,6 @@ flowchart TD
 | --- | --- |
 | 1 | Doctor aggregates binary availability, toolchain diagnosis, and health status into one result; DiagnoseToolchain returns binary path plus non-empty ok/missing lists. |
 | 2 | Doctor result includes health status; Cancel request aborts an in-flight operation gracefully. |
-| ∞ | — |
 
 #### Edge Cases
 
@@ -64,7 +62,6 @@ flowchart TD
 | --- | --- |
 | 1 | Missing tools produce entries in the missing list while the overall doctor call still succeeds. |
 | 2 | Cancel returns Cancelled rather than a partial error; empty environment yields a doctor result with all entries missing and no panic. |
-| ∞ | — |
 
 #### Capability
 
@@ -84,7 +81,6 @@ flowchart TD
 | --- | --- |
 | 1 | `doctor()` result plus toolchain diagnosis returning binary path and categorized tool lists. |
 | 2 | — |
-| ∞ | — |
 
 #### Input
 
@@ -99,7 +95,6 @@ flowchart TD
 | --- | --- |
 | 1 | MaintenanceResponse::{Doctor, Toolchain, Cancelled} carrying status and tool lists. |
 | 2 | — |
-| ∞ | — |
 
 #### Error
 
@@ -114,7 +109,6 @@ flowchart TD
 | --- | --- |
 | 1 | None; doctor runs synchronously. |
 | 2 | — |
-| ∞ | — |
 
 #### Test
 
@@ -122,7 +116,6 @@ flowchart TD
 | --- | --- |
 | 1 | maintenance_doctor_reports_health_status, diagnose_toolchain_has_binary_path, diagnose_toolchain_returns_non_empty_lists, and doctor_checker_serves_doctor_and_toolchain assert doctor output. |
 | 2 | — |
-| ∞ | — |
 
 #### Metric
 
@@ -130,7 +123,6 @@ flowchart TD
 | --- | --- |
 | 1 | Diagnosis lists are non-empty on a seeded environment; doctor exit status reflects health on every run. |
 | 2 | — |
-| ∞ | — |
 
 ### FR-Maintenance-002: Project Statistics (stats)
 
@@ -140,7 +132,6 @@ flowchart TD
 | --- | --- |
 | 1 | Compute project statistics (counts and language breakdown) for the stats command. |
 | 2 | — |
-| ∞ | — |
 
 #### Business Rules
 
@@ -148,7 +139,6 @@ flowchart TD
 | --- | --- |
 | 1 | Stats counts source files by language and totals for the current directory; counts are internally consistent (sum of per-language equals total). |
 | 2 | Stats operate on the provided directory, not hard-coded paths. |
-| ∞ | — |
 
 #### Edge Cases
 
@@ -156,7 +146,6 @@ flowchart TD
 | --- | --- |
 | 1 | Empty directory yields zero counts without error; nested directories counted; unreadable subtrees skipped. |
 | 2 | Stats on current dir runs without panic. |
-| ∞ | — |
 
 #### Capability
 
@@ -176,7 +165,6 @@ flowchart TD
 | --- | --- |
 | 1 | `stats()` over the target directory returning counts and breakdown. |
 | 2 | — |
-| ∞ | — |
 
 #### Input
 
@@ -191,7 +179,6 @@ flowchart TD
 | --- | --- |
 | 1 | MaintenanceResponse::Stats with count fields. |
 | 2 | — |
-| ∞ | — |
 
 #### Error
 
@@ -206,7 +193,6 @@ flowchart TD
 | --- | --- |
 | 1 | None. |
 | 2 | — |
-| ∞ | — |
 
 #### Test
 
@@ -214,7 +200,6 @@ flowchart TD
 | --- | --- |
 | 1 | maintenance_stats_counts_are_consistent and orchestrator_stats_on_current_dir assert count consistency and current-dir routing. |
 | 2 | — |
-| ∞ | — |
 
 #### Metric
 
@@ -222,7 +207,6 @@ flowchart TD
 | --- | --- |
 | 1 | Sum of per-language counts equals the total on every seeded fixture run. |
 | 2 | — |
-| ∞ | — |
 
 ### FR-Maintenance-003: Cache Cleanup (clean)
 
@@ -232,7 +216,6 @@ flowchart TD
 | --- | --- |
 | 1 | Remove cache artifacts to reclaim disk space for the clean command. |
 | 2 | — |
-| ∞ | — |
 
 #### Business Rules
 
@@ -240,7 +223,6 @@ flowchart TD
 | --- | --- |
 | 1 | Clean removes cache directories the tool owns (AST cache, report cache); it never touches source files or user configuration. |
 | 2 | Repeat cleans are safe. |
-| ∞ | — |
 
 #### Edge Cases
 
@@ -248,7 +230,6 @@ flowchart TD
 | --- | --- |
 | 1 | Missing cache directory is a successful no-op; clean does not panic on any seeded state. |
 | 2 | Read-only cache entries are skipped with a reported warning rather than aborting the rest. |
-| ∞ | — |
 
 #### Capability
 
@@ -268,7 +249,6 @@ flowchart TD
 | --- | --- |
 | 1 | `clean()` removing known cache roots and returning cleanup status. |
 | 2 | — |
-| ∞ | — |
 
 #### Input
 
@@ -283,7 +263,6 @@ flowchart TD
 | --- | --- |
 | 1 | MaintenanceResponse::Clean with removal status. |
 | 2 | — |
-| ∞ | — |
 
 #### Error
 
@@ -298,7 +277,6 @@ flowchart TD
 | --- | --- |
 | 1 | None. |
 | 2 | — |
-| ∞ | — |
 
 #### Test
 
@@ -306,7 +284,6 @@ flowchart TD
 | --- | --- |
 | 1 | orchestrator_clean_does_not_panic and cache_cleanup_checker_implements_cache_cleanup_protocol assert safety and contract. |
 | 2 | — |
-| ∞ | — |
 
 #### Metric
 
@@ -314,7 +291,6 @@ flowchart TD
 | --- | --- |
 | 1 | Clean leaves zero owned cache files on the seeded fixture; source files remain untouched (byte-identical). |
 | 2 | — |
-| ∞ | — |
 
 ### FR-Maintenance-004: Tool Update (update)
 
@@ -324,7 +300,6 @@ flowchart TD
 | --- | --- |
 | 1 | Check for and apply updates to bundled linter tools for the update command. |
 | 2 | — |
-| ∞ | — |
 
 #### Business Rules
 
@@ -332,7 +307,6 @@ flowchart TD
 | --- | --- |
 | 1 | ToolUpdateChecker probes each bundled tool for newer versions and reports/updates per tool; no-op when already current. |
 | 2 | Update does not touch tools the app does not own. |
-| ∞ | — |
 
 #### Edge Cases
 
@@ -340,7 +314,6 @@ flowchart TD
 | --- | --- |
 | 1 | Already-current tool yields no change; a tool that fails to probe is reported but does not block others. |
 | 2 | Offline probe reports unavailable rather than hanging (timeout honored). |
-| ∞ | — |
 
 #### Capability
 
@@ -360,7 +333,6 @@ flowchart TD
 | --- | --- |
 | 1 | `update()` probing and updating managed tools returning per-tool status. |
 | 2 | — |
-| ∞ | — |
 
 #### Input
 
@@ -375,7 +347,6 @@ flowchart TD
 | --- | --- |
 | 1 | MaintenanceResponse::Update with per-tool update outcomes. |
 | 2 | — |
-| ∞ | — |
 
 #### Error
 
@@ -390,7 +361,6 @@ flowchart TD
 | --- | --- |
 | 1 | None. |
 | 2 | — |
-| ∞ | — |
 
 #### Test
 
@@ -398,7 +368,6 @@ flowchart TD
 | --- | --- |
 | 1 | tool_update_checker_implements_tool_update_protocol asserts the protocol contract. |
 | 2 | — |
-| ∞ | — |
 
 #### Metric
 
@@ -406,7 +375,6 @@ flowchart TD
 | --- | --- |
 | 1 | Each probed tool returns a definite status (current, updated, or failed) on a seeded run. |
 | 2 | — |
-| ∞ | — |
 
 ### FR-Maintenance-005: Security Scan
 
@@ -416,7 +384,6 @@ flowchart TD
 | --- | --- |
 | 1 | Scan the project for known security issues for the security scan command. |
 | 2 | — |
-| ∞ | — |
 
 #### Business Rules
 
@@ -424,7 +391,6 @@ flowchart TD
 | --- | --- |
 | 1 | SecurityScan runs advisory/security checks over the dependency set and reports findings with severity; scan complements cargo-audit results surfaced through external-lint. |
 | 2 | Empty dependency set yields zero findings. |
-| ∞ | — |
 
 #### Edge Cases
 
@@ -432,7 +398,6 @@ flowchart TD
 | --- | --- |
 | 1 | No advisories found yields an empty clean result; unreadable manifest is reported as a scan error. |
 | 2 | Network-dependent advisory fetch failing degrades to local-only results. |
-| ∞ | — |
 
 #### Capability
 
@@ -452,7 +417,6 @@ flowchart TD
 | --- | --- |
 | 1 | `security_scan()` returning findings list and scan status. |
 | 2 | — |
-| ∞ | — |
 
 #### Input
 
@@ -467,7 +431,6 @@ flowchart TD
 | --- | --- |
 | 1 | MaintenanceResponse::Security with findings. |
 | 2 | — |
-| ∞ | — |
 
 #### Error
 
@@ -482,7 +445,6 @@ flowchart TD
 | --- | --- |
 | 1 | None. |
 | 2 | — |
-| ∞ | — |
 
 #### Test
 
@@ -490,7 +452,6 @@ flowchart TD
 | --- | --- |
 | 1 | e2e_security_scan_and_dependency_report and orchestrator_security_scan assert scan flow on seeded fixtures. |
 | 2 | — |
-| ∞ | — |
 
 #### Metric
 
@@ -498,7 +459,6 @@ flowchart TD
 | --- | --- |
 | 1 | Seeded vulnerable fixture reports at least one finding; clean fixture reports zero. |
 | 2 | — |
-| ∞ | — |
 
 ### FR-Maintenance-006: Dependency Report
 
@@ -508,7 +468,6 @@ flowchart TD
 | --- | --- |
 | 1 | Produce a dependency report for the project's dependency graph. |
 | 2 | — |
-| ∞ | — |
 
 #### Business Rules
 
@@ -516,7 +475,6 @@ flowchart TD
 | --- | --- |
 | 1 | DependencyReport lists dependencies and their sources; works off the parsed manifest/lock data; consistent with the security scan's data source. |
 | 2 | Missing dependency data yields an empty report rather than failure. |
-| ∞ | — |
 
 #### Edge Cases
 
@@ -524,7 +482,6 @@ flowchart TD
 | --- | --- |
 | 1 | Partial graphs report what was parsed; report works even when security scan finds nothing. |
 | 2 | — |
-| ∞ | — |
 
 #### Capability
 
@@ -544,7 +501,6 @@ flowchart TD
 | --- | --- |
 | 1 | `dependency_report()` returning dependency listing. |
 | 2 | — |
-| ∞ | — |
 
 #### Input
 
@@ -559,7 +515,6 @@ flowchart TD
 | --- | --- |
 | 1 | MaintenanceResponse::Dependencies with the dependency listing. |
 | 2 | — |
-| ∞ | — |
 
 #### Error
 
@@ -574,7 +529,6 @@ flowchart TD
 | --- | --- |
 | 1 | None. |
 | 2 | — |
-| ∞ | — |
 
 #### Test
 
@@ -582,7 +536,6 @@ flowchart TD
 | --- | --- |
 | 1 | orchestrator_dependency_report, dependency_report_checker_implements_dependency_report_protocol, and e2e_security_scan_and_dependency_report assert reporting. |
 | 2 | — |
-| ∞ | — |
 
 #### Metric
 
@@ -590,7 +543,6 @@ flowchart TD
 | --- | --- |
 | 1 | Seeded manifest fixtures produce a listing matching their dependency count. |
 | 2 | — |
-| ∞ | — |
 
 ### FR-Maintenance-007: Adapter Health Check
 
@@ -600,7 +552,6 @@ flowchart TD
 | --- | --- |
 | 1 | Check that every configured linter adapter is installed and runnable. |
 | 2 | — |
-| ∞ | — |
 
 #### Business Rules
 
@@ -608,7 +559,6 @@ flowchart TD
 | --- | --- |
 | 1 | HealthCheck probes all ten default adapters across the four language groups and reports per-adapter availability; all languages are covered. |
 | 2 | Missing adapters are reported, not fatal. |
-| ∞ | — |
 
 #### Edge Cases
 
@@ -616,7 +566,6 @@ flowchart TD
 | --- | --- |
 | 1 | Missing adapter binary reports unavailable for that adapter while others still probe; empty adapter config yields an empty health map. |
 | 2 | Probing continues after a failing adapter. |
-| ∞ | — |
 
 #### Capability
 
@@ -636,7 +585,6 @@ flowchart TD
 | --- | --- |
 | 1 | `health_check()` returning per-adapter availability (ten adapters, all four languages). |
 | 2 | — |
-| ∞ | — |
 
 #### Input
 
@@ -651,7 +599,6 @@ flowchart TD
 | --- | --- |
 | 1 | MaintenanceResponse::Health with availability per adapter. |
 | 2 | — |
-| ∞ | — |
 
 #### Error
 
@@ -666,7 +613,6 @@ flowchart TD
 | --- | --- |
 | 1 | None. |
 | 2 | — |
-| ∞ | — |
 
 #### Test
 
@@ -674,7 +620,6 @@ flowchart TD
 | --- | --- |
 | 1 | health_check_returns_10_adapters, health_check_has_all_languages, maintenance_health_check_covers_all_languages, and orchestrator_health_check assert coverage. |
 | 2 | — |
-| ∞ | — |
 
 #### Metric
 
@@ -682,7 +627,6 @@ flowchart TD
 | --- | --- |
 | 1 | Health check returns exactly ten adapter entries covering Rust, Python, JS, and Markdown groups. |
 | 2 | — |
-| ∞ | — |
 
 ### FR-Maintenance-008: Self-Update (binary)
 
@@ -692,7 +636,6 @@ flowchart TD
 | --- | --- |
 | 1 | Update the lint-arwaky binary itself with integrity verification for the self-update command. |
 | 2 | — |
-| ∞ | — |
 
 #### Business Rules
 
@@ -700,7 +643,6 @@ flowchart TD
 | --- | --- |
 | 1 | SelfUpdate downloads the target release artifact, verifies the checksum/signature when a target exists and always when no target exists, and replaces the binary atomically; corrupt downloads are rejected even when the filename matches. |
 | 2 | Success or already-up-to-date is reported as success. |
-| ∞ | — |
 
 #### Edge Cases
 
@@ -708,7 +650,6 @@ flowchart TD
 | --- | --- |
 | 1 | Already-up-to-date reports success; corrupt download rejected even when target name matches; no existing target triggers full verification. |
 | 2 | Target exists skips redundant re-verify per policy but never skips replace-time check; interrupted download leaves the current binary intact. |
-| ∞ | — |
 
 #### Capability
 
@@ -728,7 +669,6 @@ flowchart TD
 | --- | --- |
 | 1 | `self_update()` downloading, verifying, and replacing the binary. |
 | 2 | — |
-| ∞ | — |
 
 #### Input
 
@@ -743,7 +683,6 @@ flowchart TD
 | --- | --- |
 | 1 | MaintenanceResponse::SelfUpdate with update outcome. |
 | 2 | — |
-| ∞ | — |
 
 #### Error
 
@@ -758,7 +697,6 @@ flowchart TD
 | --- | --- |
 | 1 | None. |
 | 2 | — |
-| ∞ | — |
 
 #### Test
 
@@ -766,7 +704,6 @@ flowchart TD
 | --- | --- |
 | 1 | self_update_checker_implements_self_update_protocol, self_update_rejects_corrupt_download_even_when_target_matches, self_update_verifies_download_when_no_target_exists, and self_update_success_or_already_up_to_date assert integrity and outcomes. |
 | 2 | — |
-| ∞ | — |
 
 #### Metric
 
@@ -774,7 +711,6 @@ flowchart TD
 | --- | --- |
 | 1 | Corrupt payload never replaces the binary on a seeded run; valid payload updates atomically in one call. |
 | 2 | — |
-| ∞ | — |
 
 ## Public Interface
 

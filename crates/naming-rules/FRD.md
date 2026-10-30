@@ -7,6 +7,7 @@
 > default discovery walk prunes, so its input arrives as a second file set.
 
 ---
+
 ## Feature Overview
 
 The naming-rules crate enforces strict naming conventions across the codebase to ensure consistency, readability, and adherence to the 7-layer AES architecture. It validates that files conform to structural naming patterns (AES101) and that file prefixes/suffixes are consistent with their architectural layer (AES102), preventing naming chaos and ensuring every file can be correctly assigned to an architectural layer.
@@ -53,7 +54,6 @@ flowchart TD
 | --- | --- |
 | 1 | Validate file stem shapes against the AES naming convention for each source language. |
 | 2 | — |
-| ∞ | — |
 
 #### Business Rules
 
@@ -61,7 +61,6 @@ flowchart TD
 | --- | --- |
 | 1 | AES101 checks the stem (not the extension) for legal shape: mixed-case identifiers are expected; all-uppercase stems are violations; files are classified by directory so support-directory files are treated as flat; windows-style separators classify the same as forward slashes; barrels in support directories are skipped. |
 | 2 | Violation messages report the observed shape. |
-| ∞ | — |
 
 #### Edge Cases
 
@@ -72,7 +71,6 @@ flowchart TD
 | 3 | Barrel in support dir skipped. |
 | 4 | File outside relevant directories not read at all. |
 | 5 | Unreadable file yields no finding rather than failing the audit. |
-| ∞ | — |
 
 #### Capability
 
@@ -92,7 +90,6 @@ flowchart TD
 | --- | --- |
 | 1 | Stem-shape check over a file path returning violations with the observed shape. |
 | 2 | — |
-| ∞ | — |
 
 #### Input
 
@@ -107,7 +104,6 @@ flowchart TD
 | --- | --- |
 | 1 | Lint results with AES101 codes inside NamingResponse::Audit. |
 | 2 | — |
-| ∞ | — |
 
 #### Error
 
@@ -122,7 +118,6 @@ flowchart TD
 | --- | --- |
 | 1 | None; audit is synchronous. |
 | 2 | — |
-| ∞ | — |
 
 #### Test
 
@@ -130,7 +125,6 @@ flowchart TD
 | --- | --- |
 | 1 | all_uppercase_produces_violation, a_windows_separator_path_is_classified_the_same_way, and a_file_under_the_support_dir_is_treated_as_flat assert shape and classification. |
 | 2 | — |
-| ∞ | — |
 
 #### Metric
 
@@ -138,7 +132,6 @@ flowchart TD
 | --- | --- |
 | 1 | All seeded stem-shape fixtures produce exactly the expected violation count. |
 | 2 | Separator-style variants agree on classification. |
-| ∞ | — |
 
 ### FR-NamingRules-002: Suffix/Prefix Validation (AES102)
 
@@ -148,7 +141,6 @@ flowchart TD
 | --- | --- |
 | 1 | Enforce suffix and prefix policies for special file roles (barrels, registries, regression guards). |
 | 2 | — |
-| ∞ | — |
 
 #### Business Rules
 
@@ -156,7 +148,6 @@ flowchart TD
 | --- | --- |
 | 1 | AES102 checks each file for a legal prefix/suffix descriptor for its role: an allowed suffix yields no violation; a file with no legal prefix produces a violation explaining the missing descriptor; barrel files are skipped (not flagged); a regression guard name is legal even though it is not a category; support directories are flat scope. |
 | 2 | — |
-| ∞ | — |
 
 #### Edge Cases
 
@@ -167,7 +158,6 @@ flowchart TD
 | 3 | A regression-guard name passes despite not matching category prefixes. |
 | 4 | Empty content file (no descriptors found) is handled without panic. |
 | 5 | File outside policy directories is never read. |
-| ∞ | — |
 
 #### Capability
 
@@ -187,7 +177,6 @@ flowchart TD
 | --- | --- |
 | 1 | Suffix/prefix policy check for a file returning violations naming the missing policy. |
 | 2 | — |
-| ∞ | — |
 
 #### Input
 
@@ -202,7 +191,6 @@ flowchart TD
 | --- | --- |
 | 1 | Lint results with AES102 codes inside NamingResponse::Audit. |
 | 2 | — |
-| ∞ | — |
 
 #### Error
 
@@ -217,7 +205,6 @@ flowchart TD
 | --- | --- |
 | 1 | None. |
 | 2 | — |
-| ∞ | — |
 
 #### Test
 
@@ -225,7 +212,6 @@ flowchart TD
 | --- | --- |
 | 1 | allowed_suffix_no_violation, a_file_with_no_legal_prefix_produces_a_violation, aes102_barrel_file_skipped, and a_regression_guard_is_a_legal_name_even_though_it_is_not_a_category assert policy outcomes. |
 | 2 | — |
-| ∞ | — |
 
 #### Metric
 
@@ -233,7 +219,6 @@ flowchart TD
 | --- | --- |
 | 1 | Barrel fixtures contribute zero AES102 findings. |
 | 2 | No-legal-prefix fixture yields exactly one; regression-guard fixture yields zero. |
-| ∞ | — |
 
 ### FR-NamingRules-003: Test File Prefix Discipline (AES103)
 
@@ -243,7 +228,6 @@ flowchart TD
 | --- | --- |
 | 1 | Keep test and bench files disciplined to legal prefixes and correct directories. |
 | 2 | — |
-| ∞ | — |
 
 #### Business Rules
 
@@ -251,7 +235,6 @@ flowchart TD
 | --- | --- |
 | 1 | AES103 classifies files under tests/ and benches/: a test named inside benches reports to move it; a bench named inside tests reports to move it; a mismatched prefix says move rather than rename; a file with no legal prefix in a test directory is named with its legal prefixes in the message; nested depth is reported with flattening guidance; benchmarks belong in benches/; support subdirectories under tests are accepted so shared helpers survive; unclassified paths are reported for classification rather than assumed. |
 | 2 | — |
-| ∞ | — |
 
 #### Edge Cases
 
@@ -264,7 +247,6 @@ flowchart TD
 | 5 | A benches subdirectory is reported. |
 | 6 | Outside-directory files are not read at all. |
 | 7 | Activity of one directory never reads the other. |
-| ∞ | — |
 
 #### Capability
 
@@ -284,7 +266,6 @@ flowchart TD
 | --- | --- |
 | 1 | Test/bench placement and prefix check returning violations with move-or-rename guidance. |
 | 2 | — |
-| ∞ | — |
 
 #### Input
 
@@ -299,7 +280,6 @@ flowchart TD
 | --- | --- |
 | 1 | Lint results with AES103 codes inside NamingResponse::Audit. |
 | 2 | — |
-| ∞ | — |
 
 #### Error
 
@@ -314,7 +294,6 @@ flowchart TD
 | --- | --- |
 | 1 | None. |
 | 2 | — |
-| ∞ | — |
 
 #### Test
 
@@ -322,7 +301,6 @@ flowchart TD
 | --- | --- |
 | 1 | a_benchmark_named_inside_tests_says_move_it, a_bench_prefix_inside_tests_says_move_rather_than_rename, an_unprefixed_test_file_is_named_with_its_legal_prefixes, a_support_directory_is_accepted_so_shared_helpers_survive, and a_nested_file_reports_the_depth_it_sits_at assert guidance. |
 | 2 | — |
-| ∞ | — |
 
 #### Metric
 
@@ -330,7 +308,6 @@ flowchart TD
 | --- | --- |
 | 1 | Misplacement fixtures each produce the documented message family. |
 | 2 | Support-dir and benches-dir legal fixtures produce zero findings. |
-| ∞ | — |
 
 ## Public Interface
 

@@ -57,7 +57,6 @@ flowchart TD
 | --- | --- |
 | 1 | Flag source files whose line count exceeds the configured maximum. |
 | 2 | — |
-| ∞ | — |
 
 #### Business Rules
 
@@ -65,7 +64,6 @@ flowchart TD
 | --- | --- |
 | 1 | AES301 fires FileTooLarge when a file's line count is above the max threshold; the violation message contains the observed count and the limit. |
 | 2 | Files at exactly the limit are allowed. |
-| ∞ | — |
 
 #### Edge Cases
 
@@ -73,7 +71,6 @@ flowchart TD
 | --- | --- |
 | 1 | A file one line over the limit violates; a file at the limit does not; unreadable file yields no finding. |
 | 2 | Empty path list yields no findings; message content includes the line count for diagnosis. |
-| ∞ | — |
 
 #### Capability
 
@@ -93,7 +90,6 @@ flowchart TD
 | --- | --- |
 | 1 | Line-count check against the configured maximum returning an AES301 violation on overflow. |
 | 2 | — |
-| ∞ | — |
 
 #### Input
 
@@ -108,7 +104,6 @@ flowchart TD
 | --- | --- |
 | 1 | Violation (FileTooLarge) inside CodeAnalysisResponse::Analysis. |
 | 2 | — |
-| ∞ | — |
 
 #### Error
 
@@ -123,7 +118,6 @@ flowchart TD
 | --- | --- |
 | 1 | None; analysis is synchronous. |
 | 2 | — |
-| ∞ | — |
 
 #### Test
 
@@ -131,7 +125,6 @@ flowchart TD
 | --- | --- |
 | 1 | file_exceeding_max_lines_produces_aes301_violation asserts violation. |
 | 2 | aes301_violation_message_contains_details asserts message content. |
-| ∞ | — |
 
 #### Metric
 
@@ -139,7 +132,6 @@ flowchart TD
 | --- | --- |
 | 1 | Seeded oversized file produces exactly one FileTooLarge finding. |
 | 2 | At-limit fixture produces zero. |
-| ∞ | — |
 
 ### FR-QualityRules-002: Minimum File Line Count (AES302)
 
@@ -149,7 +141,6 @@ flowchart TD
 | --- | --- |
 | 1 | Flag source files whose line count falls below the configured minimum. |
 | 2 | — |
-| ∞ | — |
 
 #### Business Rules
 
@@ -157,7 +148,6 @@ flowchart TD
 | --- | --- |
 | 1 | AES302 fires FileTooShort when a file's line count is under the min threshold; the violation message contains the observed count and the limit. |
 | 2 | Files at exactly the minimum are allowed. |
-| ∞ | — |
 
 #### Edge Cases
 
@@ -165,7 +155,6 @@ flowchart TD
 | --- | --- |
 | 1 | A file one line under the minimum violates; at-minimum does not; empty file counts as below-minimum and violates. |
 | 2 | Unreadable file yields no finding. |
-| ∞ | — |
 
 #### Capability
 
@@ -185,7 +174,6 @@ flowchart TD
 | --- | --- |
 | 1 | Line-count check against the configured minimum returning an AES302 violation on shortfall. |
 | 2 | — |
-| ∞ | — |
 
 #### Input
 
@@ -200,7 +188,6 @@ flowchart TD
 | --- | --- |
 | 1 | Violation (FileTooShort) inside CodeAnalysisResponse::Analysis. |
 | 2 | — |
-| ∞ | — |
 
 #### Error
 
@@ -215,7 +202,6 @@ flowchart TD
 | --- | --- |
 | 1 | None. |
 | 2 | — |
-| ∞ | — |
 
 #### Test
 
@@ -223,7 +209,6 @@ flowchart TD
 | --- | --- |
 | 1 | file_below_min_lines_produces_aes302_violation asserts violation. |
 | 2 | aes302_violation_message_contains_line_count asserts message content. |
-| ∞ | — |
 
 #### Metric
 
@@ -231,7 +216,6 @@ flowchart TD
 | --- | --- |
 | 1 | Seeded undersized file produces exactly one FileTooShort finding. |
 | 2 | At-minimum fixture produces zero. |
-| ∞ | — |
 
 ### FR-QualityRules-003: Mandatory Definitions & Dead Inheritance (AES303)
 
@@ -241,7 +225,6 @@ flowchart TD
 | --- | --- |
 | 1 | Require struct/enum/trait/class/interface/type definitions and flag dead (never-implemented) inheritance. |
 | 2 | — |
-| ∞ | — |
 
 #### Business Rules
 
@@ -249,7 +232,6 @@ flowchart TD
 | --- | --- |
 | 1 | AES303 sub-check 1 (MandatoryDefinitionChecker) fires when a source file has no mandatory definition kind. |
 | 2 | Sub-check 2 (DeadInheritanceChecker) fires DeadInheritance for a struct declared without an impl block; empty class/interface variants are caught per language: Python empty class, JS empty class, JS empty interface all produce AES303. |
-| ∞ | — |
 
 #### Edge Cases
 
@@ -257,7 +239,6 @@ flowchart TD
 | --- | --- |
 | 1 | File without any struct or class produces AES303; struct without impl produces DeadInheritance. |
 | 2 | Python empty class, JS empty class, JS empty interface each produce AES303; a file that has definitions passes quietly. |
-| ∞ | — |
 
 #### Capability
 
@@ -277,7 +258,6 @@ flowchart TD
 | --- | --- |
 | 1 | Definition-presence check (MandatoryDefinitionChecker) plus dead-inheritance check (DeadInheritanceChecker), both over parsed entries. |
 | 2 | — |
-| ∞ | — |
 
 #### Input
 
@@ -292,7 +272,6 @@ flowchart TD
 | --- | --- |
 | 1 | Violations MandatoryClassDefinition and DeadInheritance inside CodeAnalysisResponse::Analysis. |
 | 2 | — |
-| ∞ | — |
 
 #### Error
 
@@ -307,7 +286,6 @@ flowchart TD
 | --- | --- |
 | 1 | None. |
 | 2 | — |
-| ∞ | — |
 
 #### Test
 
@@ -315,7 +293,6 @@ flowchart TD
 | --- | --- |
 | 1 | file_without_struct_or_class_produces_aes303, python_empty_class_produces_aes303, js_empty_interface_produces_aes303 assert both sub-checks. |
 | 2 | unit_struct_without_impl_produces_aes303_dead_inheritance asserts dead-inheritance. |
-| ∞ | — |
 
 #### Metric
 
@@ -323,7 +300,6 @@ flowchart TD
 | --- | --- |
 | 1 | Each seeded definition-miss fixture produces exactly one definition finding. |
 | 2 | Seeded struct-without-impl produces one DeadInheritance finding. |
-| ∞ | — |
 
 ### FR-QualityRules-004: Bypass Detection (AES304)
 
@@ -333,7 +309,6 @@ flowchart TD
 | --- | --- |
 | 1 | Detect bypass annotations and panic-style shortcuts that dodge quality checks. |
 | 2 | — |
-| ∞ | — |
 
 #### Business Rules
 
@@ -341,7 +316,6 @@ flowchart TD
 | --- | --- |
 | 1 | AES304 fires per ViolationKind: BypassComment (bypass suppressions), UnwrapExpect, Panic, Todo, Unimplemented. Each occurrence in a scanned file is counted as its own finding with the kind carried in the message. |
 | 2 | — |
-| ∞ | — |
 
 #### Edge Cases
 
@@ -349,7 +323,6 @@ flowchart TD
 | --- | --- |
 | 1 | Multiple bypass sites in one file each fire; a file with none passes; comment-only todo still flags Unimplemented/Todo kind as coded. |
 | 2 | Unreadable file yields no finding. |
-| ∞ | — |
 
 #### Capability
 
@@ -369,7 +342,6 @@ flowchart TD
 | --- | --- |
 | 1 | Scan file content for bypass markers and panic constructs returning per-kind violations. |
 | 2 | — |
-| ∞ | — |
 
 #### Input
 
@@ -384,7 +356,6 @@ flowchart TD
 | --- | --- |
 | 1 | Violations (BypassComment, UnwrapExpect, Panic, Todo, Unimplemented) inside CodeAnalysisResponse::Analysis. |
 | 2 | — |
-| ∞ | — |
 
 #### Error
 
@@ -399,7 +370,6 @@ flowchart TD
 | --- | --- |
 | 1 | None. |
 | 2 | — |
-| ∞ | — |
 
 #### Test
 
@@ -407,7 +377,6 @@ flowchart TD
 | --- | --- |
 | 1 | Bypass-checker contract tests in the quality suite assert per-kind detection through IBypassCheckerProtocol (ViolationKind enums: UnwrapExpect, Panic, Todo, Unimplemented, BypassComment). |
 | 2 | — |
-| ∞ | — |
 
 #### Metric
 
@@ -415,7 +384,6 @@ flowchart TD
 | --- | --- |
 | 1 | Seeded kind fixtures produce one finding of the matching kind each. |
 | 2 | Clean fixture produces zero. |
-| ∞ | — |
 
 ### FR-QualityRules-005: Duplicate Code Detection (AES305)
 
@@ -425,7 +393,6 @@ flowchart TD
 | --- | --- |
 | 1 | Detect excessive code duplication across the codebase. |
 | 2 | — |
-| ∞ | — |
 
 #### Business Rules
 
@@ -433,7 +400,6 @@ flowchart TD
 | --- | --- |
 | 1 | AES305 fires CodeDuplication when duplicate regions across scanned files exceed the configured duplication threshold; identical files or near-clones group into a single finding naming the participants. |
 | 2 | — |
-| ∞ | — |
 
 #### Edge Cases
 
@@ -441,7 +407,6 @@ flowchart TD
 | --- | --- |
 | 1 | Fully distinct files yield no duplication finding; exact duplicate pair yields one CodeDuplication finding; a file compared against itself is excluded. |
 | 2 | Empty scan set yields no findings. |
-| ∞ | — |
 
 #### Capability
 
@@ -461,7 +426,6 @@ flowchart TD
 | --- | --- |
 | 1 | Duplication analysis over the scanned file set returning CodeDuplication violations. |
 | 2 | — |
-| ∞ | — |
 
 #### Input
 
@@ -476,7 +440,6 @@ flowchart TD
 | --- | --- |
 | 1 | Violation (CodeDuplication) inside CodeAnalysisResponse::Analysis. |
 | 2 | — |
-| ∞ | — |
 
 #### Error
 
@@ -491,7 +454,6 @@ flowchart TD
 | --- | --- |
 | 1 | None. |
 | 2 | — |
-| ∞ | — |
 
 #### Test
 
@@ -499,7 +461,6 @@ flowchart TD
 | --- | --- |
 | 1 | Duplication contract coverage in the quality suite asserts CodeDuplication on a seeded clone pair and silence on distinct files. |
 | 2 | — |
-| ∞ | — |
 
 #### Metric
 
@@ -507,7 +468,6 @@ flowchart TD
 | --- | --- |
 | 1 | Seeded clone pair produces one CodeDuplication finding. |
 | 2 | Distinct-file fixture set produces zero. |
-| ∞ | — |
 
 ## Public Interface
 

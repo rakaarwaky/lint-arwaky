@@ -41,7 +41,6 @@ flowchart TD
 | --- | --- |
 | 1 | Start, monitor, and stop the filesystem watcher that emits change events for linting. |
 | 2 | — |
-| ∞ | — |
 
 #### Business Rules
 
@@ -49,7 +48,6 @@ flowchart TD
 | --- | --- |
 | 1 | start(config) registers watches per NotifyWatchProvider (notify crate, inotify on Linux); is_available reports readiness as a BooleanVO; subscribe returns a broadcast receiver of WatchEvent; stop tears the watcher down cleanly. |
 | 2 | The service runs under the container lifecycle with an AtomicBool run flag. |
-| ∞ | — |
 
 #### Edge Cases
 
@@ -59,7 +57,6 @@ flowchart TD
 | 2 | start on an already-running service is idempotent. |
 | 3 | watcher errors surface as WatchServiceError. |
 | 4 | subscribe after stop still returns a receiver that simply receives nothing. |
-| ∞ | — |
 
 #### Capability
 
@@ -79,7 +76,6 @@ flowchart TD
 | --- | --- |
 | 1 | start(config), is_available(), subscribe() -> broadcast receiver of WatchEvent, stop(). |
 | 2 | — |
-| ∞ | — |
 
 #### Input
 
@@ -94,7 +90,6 @@ flowchart TD
 | --- | --- |
 | 1 | WatchResponse::Run carrying lifecycle status. |
 | 2 | WatchEvents stream to subscribers. |
-| ∞ | — |
 
 #### Error
 
@@ -109,7 +104,6 @@ flowchart TD
 | --- | --- |
 | 1 | WatchEvent per filesystem change, delivered on the broadcast channel. |
 | 2 | — |
-| ∞ | — |
 
 #### Test
 
@@ -117,7 +111,6 @@ flowchart TD
 | --- | --- |
 | 1 | acceptance_watch_container_creates_successfully, container_lifecycle_accessible, e2e_file_watch_container_creates, and file_watch_container_creates assert construction and lifecycle wiring. |
 | 2 | — |
-| ∞ | — |
 
 #### Metric
 
@@ -125,7 +118,6 @@ flowchart TD
 | --- | --- |
 | 1 | Container constructs and reports available on the seeded fixture tree. |
 | 2 | stop releases resources within one event-loop turn. |
-| ∞ | — |
 
 ### FR-FileWatch-002: Filter and Deduplicate Change Events
 
@@ -135,7 +127,6 @@ flowchart TD
 | --- | --- |
 | 1 | Keep only lintable file changes and remove duplicate events for the same path and kind. |
 | 2 | — |
-| ∞ | — |
 
 #### Business Rules
 
@@ -143,7 +134,6 @@ flowchart TD
 | --- | --- |
 | 1 | is_lintable(path) checks the extension against the lintable set; filter_events(events) drops non-lintable entries and deduplicates repeated (path, kind) pairs preserving first occurrence. |
 | 2 | Input order of kept events is preserved. |
-| ∞ | — |
 
 #### Edge Cases
 
@@ -153,7 +143,6 @@ flowchart TD
 | 2 | An all-non-lintable batch yields empty output. |
 | 3 | Mixed duplicates keep one event per unique key; a list with no duplicates passes through unchanged. |
 | 4 | Temp and ignored paths are non-lintable. |
-| ∞ | — |
 
 #### Capability
 
@@ -173,7 +162,6 @@ flowchart TD
 | --- | --- |
 | 1 | is_lintable(path) -> bool; filter_events(events) -> filtered event list. |
 | 2 | — |
-| ∞ | — |
 
 #### Input
 
@@ -188,7 +176,6 @@ flowchart TD
 | --- | --- |
 | 1 | Vec<WatchEvent> of lintable unique changes, passed to FR-FileWatch-003. |
 | 2 | — |
-| ∞ | — |
 
 #### Error
 
@@ -203,7 +190,6 @@ flowchart TD
 | --- | --- |
 | 1 | None of its own; it only narrows WatchEvents. |
 | 2 | — |
-| ∞ | — |
 
 #### Test
 
@@ -211,7 +197,6 @@ flowchart TD
 | --- | --- |
 | 1 | filter_events_keeps_lintable, filter_events_removes_non_lintable, filter_events_all_non_lintable, filter_events_empty_input, dedup_all_same_path, dedup_mixed_duplicates, and change_filter_implements_change_filter_protocol assert the contract. |
 | 2 | — |
-| ∞ | — |
 
 #### Metric
 
@@ -219,7 +204,6 @@ flowchart TD
 | --- | --- |
 | 1 | Dedup keeps exactly one event per unique key on every seeded batch. |
 | 2 | Non-lintable share of the seeded fixture set drops to zero before lint runs. |
-| ∞ | — |
 
 ### FR-FileWatch-003: Run Lint on Changed Files
 
@@ -229,7 +213,6 @@ flowchart TD
 | --- | --- |
 | 1 | Invoke the linter for each retained change event coming out of the filter. |
 | 2 | — |
-| ∞ | — |
 
 #### Business Rules
 
@@ -237,7 +220,6 @@ flowchart TD
 | --- | --- |
 | 1 | lint_changed(event) resolves the event path and hands it to the linter dependency injected through the container. |
 | 2 | Only events that passed FR-FileWatch-002 reach the handler; failures of one file do not stop processing of the remaining events. |
-| ∞ | — |
 
 #### Edge Cases
 
@@ -246,7 +228,6 @@ flowchart TD
 | 1 | A deleted file between event and lint reports a watch-service error for that file only. |
 | 2 | A non-lintable event reaching the handler by mistake is skipped. |
 | 3 | Handler on an empty queue is a no-op. |
-| ∞ | — |
 
 #### Capability
 
@@ -266,7 +247,6 @@ flowchart TD
 | --- | --- |
 | 1 | lint_changed(event) -> Result<(), WatchServiceError>. |
 | 2 | — |
-| ∞ | — |
 
 #### Input
 
@@ -281,7 +261,6 @@ flowchart TD
 | --- | --- |
 | 1 | Linter invoked per event; Ok(()) on success. |
 | 2 | Aggregated results surface through the watch response. |
-| ∞ | — |
 
 #### Error
 
@@ -296,7 +275,6 @@ flowchart TD
 | --- | --- |
 | 1 | None emitted; lint results flow to the linter dependency. |
 | 2 | — |
-| ∞ | — |
 
 #### Test
 
@@ -304,7 +282,6 @@ flowchart TD
 | --- | --- |
 | 1 | change_lint_protocol_is_object_safe, container_aggregate_needs_linter, and filter_via_container assert the handler contract and container wiring. |
 | 2 | — |
-| ∞ | — |
 
 #### Metric
 
@@ -312,7 +289,6 @@ flowchart TD
 | --- | --- |
 | 1 | Every lintable seeded change file triggers exactly one lint invocation. |
 | 2 | Vanished files produce one scoped error and no panic. |
-| ∞ | — |
 
 ## Public Interface
 

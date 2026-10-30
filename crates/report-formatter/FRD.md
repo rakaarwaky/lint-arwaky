@@ -7,6 +7,7 @@
 The report-formatter crate provides formatting capabilities for scan report output. It has exactly four capabilities, one per output format (text, JSON, SARIF, JUnit), each implementing a dedicated protocol trait. The agent orchestrator routes requests through the aggregate by matching on `Format` and calling the specific protocol method directly — no delegation seam exists.
 
 All formatters are **self-contained** — they operate solely on `ScanReport` data and do not depend on other rule crates.
+
 - **Architecture & Data Flow**
 
 ```mermaid
@@ -63,7 +64,6 @@ flowchart TD
 | --- | --- |
 | 1 | Render a scan report as human-readable console text. |
 | 2 | — |
-| ∞ | — |
 
 #### Business Rules
 
@@ -71,7 +71,6 @@ flowchart TD
 | --- | --- |
 | 1 | format_text converts a ScanReport into DisplayContent with findings grouped per file and a summary line; output is infallible (all_four_formats_are_reachable_and_infallible); empty report renders as a zero-finding message. |
 | 2 | — |
-| ∞ | — |
 
 #### Edge Cases
 
@@ -80,7 +79,6 @@ flowchart TD
 | 1 | Empty report yields a valid empty text body (round-trips through all formats to disk). |
 | 2 | A report with findings lists each finding once. |
 | 3 | Formatting never panics or errors; width/failures in data do not fail formatting. |
-| ∞ | — |
 
 #### Capability
 
@@ -100,7 +98,6 @@ flowchart TD
 | --- | --- |
 | 1 | format_text(report) -> DisplayContent; supported_format() -> Format::Text. |
 | 2 | — |
-| ∞ | — |
 
 #### Input
 
@@ -115,7 +112,6 @@ flowchart TD
 | --- | --- |
 | 1 | DisplayContent (rendered text) written to stdout or returned to the caller. |
 | 2 | — |
-| ∞ | — |
 
 #### Error
 
@@ -130,7 +126,6 @@ flowchart TD
 | --- | --- |
 | 1 | None; formatting is pure rendering. |
 | 2 | — |
-| ∞ | — |
 
 #### Test
 
@@ -138,7 +133,6 @@ flowchart TD
 | --- | --- |
 | 1 | assert_text_format, all_four_formats_are_reachable_and_infallible, and empty_report_round_trips_through_all_formats_to_disk assert reachability and empty handling. |
 | 2 | — |
-| ∞ | — |
 
 #### Metric
 
@@ -146,7 +140,6 @@ flowchart TD
 | --- | --- |
 | 1 | Text path returns content for empty and full reports on every seeded run with zero formatting failures. |
 | 2 | — |
-| ∞ | — |
 
 ### FR-ReportFormatter-002: JSON Format Output
 
@@ -156,7 +149,6 @@ flowchart TD
 | --- | --- |
 | 1 | Render a scan report as canonical JSON with a summary block. |
 | 2 | — |
-| ∞ | — |
 
 #### Business Rules
 
@@ -164,7 +156,6 @@ flowchart TD
 | --- | --- |
 | 1 | format_json emits valid JSON serializing findings and the summary counters; empty report is valid JSON with a zero summary; JSON content parses without error after formatting; external results carry their tool-native rule ids. |
 | 2 | — |
-| ∞ | — |
 
 #### Edge Cases
 
@@ -174,7 +165,6 @@ flowchart TD
 | 2 | Full report round-trips to disk and back. |
 | 3 | A report with external-lint findings keeps tool-native rule ids in the JSON. |
 | 4 | Non-UTF8 corner in data still serializes escaped. |
-| ∞ | — |
 
 #### Capability
 
@@ -194,7 +184,6 @@ flowchart TD
 | --- | --- |
 | 1 | format_json(report) -> DisplayContent; supported_format() -> Format::Json. |
 | 2 | — |
-| ∞ | — |
 
 #### Input
 
@@ -209,7 +198,6 @@ flowchart TD
 | --- | --- |
 | 1 | DisplayContent containing JSON text (parsed by downstream consumers and CI gates). |
 | 2 | — |
-| ∞ | — |
 
 #### Error
 
@@ -224,7 +212,6 @@ flowchart TD
 | --- | --- |
 | 1 | None. |
 | 2 | — |
-| ∞ | — |
 
 #### Test
 
@@ -232,7 +219,6 @@ flowchart TD
 | --- | --- |
 | 1 | json_formatter_returns_valid_json, empty_report_is_valid_json_with_zero_summary, json_formatter_implements_json_format_protocol, and external_results_included_with_tool_native_rule_id assert validity and code preservation. |
 | 2 | — |
-| ∞ | — |
 
 #### Metric
 
@@ -240,7 +226,6 @@ flowchart TD
 | --- | --- |
 | 1 | 100 percent of formatted outputs parse as JSON. |
 | 2 | Summary counters match the input report on every seeded case. |
-| ∞ | — |
 
 ### FR-ReportFormatter-003: SARIF 2.1.0 Format Output
 
@@ -250,7 +235,6 @@ flowchart TD
 | --- | --- |
 | 1 | Render a scan report as SARIF 2.1.0 for code-scanning uploaders. |
 | 2 | — |
-| ∞ | — |
 
 #### Business Rules
 
@@ -258,7 +242,6 @@ flowchart TD
 | --- | --- |
 | 1 | format_sarif produces SARIF 2.1.0 XML/JSON document (runs, tool driver, results); empty report is valid SARIF with zero results; findings map to results with level and rule id; tool-native rule ids are retained for external findings. |
 | 2 | — |
-| ∞ | — |
 
 #### Edge Cases
 
@@ -268,7 +251,6 @@ flowchart TD
 | 2 | Full report round-trips to disk. |
 | 3 | Direct slice formatting works outside the orchestrator routing. |
 | 4 | Unknown severity maps to a default SARIF level rather than failing validation. |
-| ∞ | — |
 
 #### Capability
 
@@ -288,7 +270,6 @@ flowchart TD
 | --- | --- |
 | 1 | format_sarif(report) -> DisplayContent; supported_format() -> Format::Sarif. |
 | 2 | — |
-| ∞ | — |
 
 #### Input
 
@@ -303,7 +284,6 @@ flowchart TD
 | --- | --- |
 | 1 | DisplayContent containing SARIF 2.1.0 document for upload tooling. |
 | 2 | — |
-| ∞ | — |
 
 #### Error
 
@@ -318,7 +298,6 @@ flowchart TD
 | --- | --- |
 | 1 | None. |
 | 2 | — |
-| ∞ | — |
 
 #### Test
 
@@ -326,7 +305,6 @@ flowchart TD
 | --- | --- |
 | 1 | assert_sarif_format, empty_report_is_valid_sarif, direct_format_sarif_slice_works, and orchestrator_routes_sarif_format assert validity and routing. |
 | 2 | — |
-| ∞ | — |
 
 #### Metric
 
@@ -334,7 +312,6 @@ flowchart TD
 | --- | --- |
 | 1 | Every seeded formatted report validates as SARIF 2.1.0. |
 | 2 | Empty report yields a parseable document with zero results. |
-| ∞ | — |
 
 ### FR-ReportFormatter-004: JUnit XML Format Output
 
@@ -344,7 +321,6 @@ flowchart TD
 | --- | --- |
 | 1 | Render a scan report as JUnit XML for CI test-report ingestion. |
 | 2 | — |
-| ∞ | — |
 
 #### Business Rules
 
@@ -352,7 +328,6 @@ flowchart TD
 | --- | --- |
 | 1 | format_junit emits valid JUnit XML (testsuite wrapping testcases); each finding appears as one testcase failure; testcase names carry the rule id; empty report yields a valid empty suite; direct slice formatting works. |
 | 2 | — |
-| ∞ | — |
 
 #### Edge Cases
 
@@ -362,7 +337,6 @@ flowchart TD
 | 2 | Full report round-trips to disk. |
 | 3 | Per-finding testcase naming includes rule id. |
 | 4 | Formatter invoked via orchestrator routing returns the same content as direct calls. |
-| ∞ | — |
 
 #### Capability
 
@@ -382,7 +356,6 @@ flowchart TD
 | --- | --- |
 | 1 | format_junit(report) -> DisplayContent; supported_format() -> Format::JUnit. |
 | 2 | — |
-| ∞ | — |
 
 #### Input
 
@@ -397,7 +370,6 @@ flowchart TD
 | --- | --- |
 | 1 | DisplayContent containing JUnit XML consumed by CI reporters. |
 | 2 | — |
-| ∞ | — |
 
 #### Error
 
@@ -412,7 +384,6 @@ flowchart TD
 | --- | --- |
 | 1 | None. |
 | 2 | — |
-| ∞ | — |
 
 #### Test
 
@@ -420,7 +391,6 @@ flowchart TD
 | --- | --- |
 | 1 | assert_junit_format, junit_formatter_returns_valid_xml, direct_format_junit_slice_works, junit_formatter_implements_junit_format_protocol, and orchestrator_routes_junit_format assert validity and routing. |
 | 2 | — |
-| ∞ | — |
 
 #### Metric
 
@@ -428,7 +398,6 @@ flowchart TD
 | --- | --- |
 | 1 | Every seeded formatted report parses as JUnit XML. |
 | 2 | Empty report yields a suite with zero failures. |
-| ∞ | — |
 
 ## Public Interface
 

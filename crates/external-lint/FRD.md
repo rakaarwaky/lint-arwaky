@@ -55,7 +55,6 @@ flowchart TD
 | --- | --- |
 | 1 | Based on the language flags for a project, select the appropriate set of linter adapters and run them in adapter-list order, aggregating the results. |
 | 2 | — |
-| ∞ | — |
 
 #### Business Rules
 
@@ -65,7 +64,6 @@ flowchart TD
 | 2 | Hardcoded defaults via `with_defaults()`; when no caller-supplied context is present, language flags are requested from the `filesystem` aggregate via `DetectProjectLanguages` — this crate performs no extension walk of its own. |
 | 3 | Iterate the adapter list in that order, each adapter receiving the same target path; optionally filter by `context.config_entries`, then post-filter results against `context.ignored_paths` via `should_ignore()`. |
 | 4 | No threads — execution is strictly sequential; each adapter's scan method invokes subprocess and normalizes output. |
-| ∞ | — |
 
 #### Edge Cases
 
@@ -74,7 +72,6 @@ flowchart TD
 | 1 | No languages detected → empty adapter list, no scans run; all languages detected → up to 10 adapters selected. |
 | 2 | All adapters return empty results → empty result list; one adapter fails → remaining adapters still run, failure logged as a warning. |
 | 3 | Adapter binary not installed → warning printed, results for that adapter empty; adapter timeout exceeded → error logged, other adapters continue. |
-| ∞ | — |
 
 #### Capability
 
@@ -94,7 +91,6 @@ flowchart TD
 | --- | --- |
 | 1 | `select_adapters` |
 | 2 | — |
-| ∞ | — |
 
 #### Input
 
@@ -109,7 +105,6 @@ flowchart TD
 | --- | --- |
 | 1 | Ordered list of adapter names. |
 | 2 | Aggregated lint results from all adapters. |
-| ∞ | — |
 
 #### Error
 
@@ -124,7 +119,6 @@ flowchart TD
 | --- | --- |
 | 1 | None. |
 | 2 | — |
-| ∞ | — |
 
 #### Test
 
@@ -132,7 +126,6 @@ flowchart TD
 | --- | --- |
 | 1 | `select_adapters(true, false, false, false)` yields `clippy`, `rustfmt`, `cargo-audit` in that order. |
 | 2 | Empty flags yield an empty list. |
-| ∞ | — |
 
 #### Metric
 
@@ -140,7 +133,6 @@ flowchart TD
 | --- | --- |
 | 1 | Zero unrequested adapters invoked. |
 | 2 | Zero threads spawned per scan. |
-| ∞ | — |
 
 ### FR-ExternalLint-002: Apply Auto-Fix via Adapters
 
@@ -150,7 +142,6 @@ flowchart TD
 | --- | --- |
 | 1 | Run an external linter tool's native fix command for a specific file, returning whether the fix succeeded. |
 | 2 | — |
-| ∞ | — |
 
 #### Business Rules
 
@@ -159,7 +150,6 @@ flowchart TD
 | 1 | JS adapters resolve the working directory and absolute file path, then execute the tool via `js_apply_fix`. |
 | 2 | Fix-capable adapters and commands: ESLint `npx eslint <file> --fix`; Prettier `npx prettier <file> --write`; Ruff `ruff check <file> --fix --exit-zero`; Clippy `cargo clippy --fix --allow-dirty --allow-staged`; Rustfmt `cargo fmt` (without `--check`). |
 | 3 | Non-fixing adapters (Mypy, Bandit, TSC, cargo-audit) return a no-op result. |
-| ∞ | — |
 
 #### Edge Cases
 
@@ -167,7 +157,6 @@ flowchart TD
 | --- | --- |
 | 1 | Fix command fails → failure status returned, no crash. |
 | 2 | Tool not installed → failure status. |
-| ∞ | — |
 
 #### Capability
 
@@ -187,7 +176,6 @@ flowchart TD
 | --- | --- |
 | 1 | `js_apply_fix` |
 | 2 | — |
-| ∞ | — |
 
 #### Input
 
@@ -202,7 +190,6 @@ flowchart TD
 | --- | --- |
 | 1 | Compliance status indicating success or failure. |
 | 2 | — |
-| ∞ | — |
 
 #### Error
 
@@ -217,7 +204,6 @@ flowchart TD
 | --- | --- |
 | 1 | None. |
 | 2 | — |
-| ∞ | — |
 
 #### Test
 
@@ -225,7 +211,6 @@ flowchart TD
 | --- | --- |
 | 1 | `js_apply_fix` against a fix-capable tool reports success after the tool rewrites the file. |
 | 2 | Against Mypy it reports the no-op status. |
-| ∞ | — |
 
 #### Metric
 
@@ -233,7 +218,6 @@ flowchart TD
 | --- | --- |
 | 1 | One subprocess spawn per invoked fix. |
 | 2 | — |
-| ∞ | — |
 
 ### FR-ExternalLint-003: Normalize External Tool Output
 
@@ -243,7 +227,6 @@ flowchart TD
 | --- | --- |
 | 1 | Each adapter normalizes its external tool's stdout/JSON output into `LintResult` structs compatible with the unified lint-arwaky format. |
 | 2 | Rule codes use tool-native identifiers (e.g., `clippy::needless_return`, `ruff::E501`). |
-| ∞ | — |
 
 #### Business Rules
 
@@ -256,7 +239,6 @@ flowchart TD
 | 5 | cargo-audit `Critical`→CRITICAL, `High`→HIGH, `Medium`→MEDIUM, `Low`/`Unknown`→LOW; Ruff `E999` and all `S*`→CRITICAL, `F8xx`/`B0xx`→HIGH, `F401`→MEDIUM, `E1xx`/`E5xx`/`W2xx`→LOW, default→MEDIUM. |
 | 6 | Mypy `error`→HIGH, `warning`→MEDIUM, `note`→LOW; Bandit HIGH confidence + HIGH severity→CRITICAL, HIGH→HIGH, MEDIUM→MEDIUM, LOW→LOW; ESLint severity 2→HIGH, 1→MEDIUM; Prettier diff→MEDIUM; tsc error→HIGH; markdownlint any rule violation→MEDIUM. |
 | 7 | Ruff severity is determined by the rule code, not the tool's severity field. |
-| ∞ | — |
 
 #### Edge Cases
 
@@ -266,7 +248,6 @@ flowchart TD
 | 2 | Tool output contains zero violations → empty result list, not an error. |
 | 3 | File path in tool output is relative → canonicalized to absolute; unknown tool severity/category → defaults to MEDIUM. |
 | 4 | Mypy extension: any error message containing `syntax` or `parse` is escalated to CRITICAL (a parse failure blocks all type checking). |
-| ∞ | — |
 
 #### Capability
 
@@ -286,7 +267,6 @@ flowchart TD
 | --- | --- |
 | 1 | `normalize` |
 | 2 | — |
-| ∞ | — |
 
 #### Input
 
@@ -301,7 +281,6 @@ flowchart TD
 | --- | --- |
 | 1 | Normalized lint results. |
 | 2 | — |
-| ∞ | — |
 
 #### Error
 
@@ -316,7 +295,6 @@ flowchart TD
 | --- | --- |
 | 1 | None. |
 | 2 | — |
-| ∞ | — |
 
 #### Test
 
@@ -324,7 +302,6 @@ flowchart TD
 | --- | --- |
 | 1 | A ruff JSON report with `E501` normalizes to `ruff::E501` LOW. |
 | 2 | A clippy `correctness` diagnostic normalizes to CRITICAL. |
-| ∞ | — |
 
 #### Metric
 
@@ -332,7 +309,6 @@ flowchart TD
 | --- | --- |
 | 1 | Zero panics on malformed tool output. |
 | 2 | 100% of results carry tool-native rule codes. |
-| ∞ | — |
 
 ### FR-ExternalLint-004: Subprocess Execution
 
@@ -342,7 +318,6 @@ flowchart TD
 | --- | --- |
 | 1 | Spawn external linter tools as blocking subprocesses, capturing stdout/stderr, enforcing per-adapter timeouts, and mapping spawn/timeout errors. |
 | 2 | — |
-| ∞ | — |
 
 #### Business Rules
 
@@ -353,7 +328,6 @@ flowchart TD
 | 3 | No retry — an adapter gets exactly one attempt per scan, for both spawn failures and timeouts, per the Integration resilience decision in `PRD.md` (PR-LA-006). |
 | 4 | No overall budget — each ceiling applies to one adapter; they sum rather than cap, so a scan with every language present can run up to 180 + 120 + 120 + (7 × 60) ≈ 840 s (~14 minutes) before returning. |
 | 5 | Callers that need a bound — notably the MCP surface, which has no timeout of its own — must impose it themselves. |
-| ∞ | — |
 
 #### Edge Cases
 
@@ -362,7 +336,6 @@ flowchart TD
 | 1 | Executable absent from PATH → the adapter is reported unavailable, scan continues. |
 | 2 | Timeout exceeded → error logged, other adapters continue, no retry. |
 | 3 | Every adapter present and slow → the call blocks for the summed worst case; no layer above interrupts it. |
-| ∞ | — |
 
 #### Capability
 
@@ -382,7 +355,6 @@ flowchart TD
 | --- | --- |
 | 1 | `exec_cmd_scan` / `exec_cmd_adapter` |
 | 2 | — |
-| ∞ | — |
 
 #### Input
 
@@ -397,7 +369,6 @@ flowchart TD
 | --- | --- |
 | 1 | Captured stdout/stderr text plus a completion status (ok, timed out, spawn failure). |
 | 2 | — |
-| ∞ | — |
 
 #### Error
 
@@ -412,7 +383,6 @@ flowchart TD
 | --- | --- |
 | 1 | None. |
 | 2 | — |
-| ∞ | — |
 
 #### Test
 
@@ -420,7 +390,6 @@ flowchart TD
 | --- | --- |
 | 1 | A tool exceeding its ceiling returns the timed-out status while the remaining adapters still run. |
 | 2 | A PATH-missing tool returns the unavailable status. |
-| ∞ | — |
 
 #### Metric
 
@@ -428,7 +397,6 @@ flowchart TD
 | --- | --- |
 | 1 | Zero retries per adapter. |
 | 2 | Total worst-case scan wall time ≤ ~840 s. |
-| ∞ | — |
 
 ### FR-ExternalLint-005: JS Tool Path Resolution
 
@@ -438,7 +406,6 @@ flowchart TD
 | --- | --- |
 | 1 | Resolve the binary path for a JS/TS tool, preferring a local `node_modules/.bin/<tool>` installation over a global PATH lookup, and locate the working directory by walking up to 10 parent directories. |
 | 2 | — |
-| ∞ | — |
 
 #### Business Rules
 
@@ -447,7 +414,6 @@ flowchart TD
 | 1 | Check `node_modules/.bin/<tool>` in the resolved working directory; if the local binary exists, use its absolute path. |
 | 2 | Otherwise fall back to global PATH resolution. |
 | 3 | Resolve the working directory by walking up to 10 parent directories looking for config files (`.eslintrc.*`, `prettier.config.*`, `tsconfig.json`, `package.json`). |
-| ∞ | — |
 
 #### Edge Cases
 
@@ -455,7 +421,6 @@ flowchart TD
 | --- | --- |
 | 1 | No local binary and no global PATH entry → tool is reported unavailable. |
 | 2 | Working directory not found within 10 levels → the scan is skipped for that file. |
-| ∞ | — |
 
 #### Capability
 
@@ -475,7 +440,6 @@ flowchart TD
 | --- | --- |
 | 1 | `resolve_js_cmd` / `resolve_js_working_dir` |
 | 2 | — |
-| ∞ | — |
 
 #### Input
 
@@ -490,7 +454,6 @@ flowchart TD
 | --- | --- |
 | 1 | Absolute path to the resolved binary. |
 | 2 | The working directory to run it from. |
-| ∞ | — |
 
 #### Error
 
@@ -505,7 +468,6 @@ flowchart TD
 | --- | --- |
 | 1 | None. |
 | 2 | — |
-| ∞ | — |
 
 #### Test
 
@@ -513,7 +475,6 @@ flowchart TD
 | --- | --- |
 | 1 | A file under `node_modules/.bin`-bearing project resolves to the local binary. |
 | 2 | A bare file with no config within 10 levels reports the tool unavailable. |
-| ∞ | — |
 
 #### Metric
 
@@ -521,7 +482,6 @@ flowchart TD
 | --- | --- |
 | 1 | One lookup per tool invocation. |
 | 2 | Zero global installs required for the local-preference path. |
-| ∞ | — |
 
 ### FR-ExternalLint-006: Rust Working Directory Resolution
 
@@ -531,7 +491,6 @@ flowchart TD
 | --- | --- |
 | 1 | Find the directory containing `Cargo.toml` or `Cargo.lock` for Rust tool execution, walking up the directory tree. |
 | 2 | — |
-| ∞ | — |
 
 #### Business Rules
 
@@ -540,7 +499,6 @@ flowchart TD
 | 1 | Walk up the directory tree looking for `Cargo.toml` (for Clippy/Rustfmt) or `Cargo.lock` (for cargo-audit). |
 | 2 | Return the directory if found; the caller skips the adapter with a warning if not found. |
 | 3 | No directory is created or modified — resolution is read-only. |
-| ∞ | — |
 
 #### Edge Cases
 
@@ -548,7 +506,6 @@ flowchart TD
 | --- | --- |
 | 1 | No `Cargo.toml` or `Cargo.lock` anywhere in the parent chain → the adapter is skipped with a warning. |
 | 2 | — |
-| ∞ | — |
 
 #### Capability
 
@@ -568,7 +525,6 @@ flowchart TD
 | --- | --- |
 | 1 | `resolve_cargo_working_dir` |
 | 2 | — |
-| ∞ | — |
 
 #### Input
 
@@ -583,7 +539,6 @@ flowchart TD
 | --- | --- |
 | 1 | Absolute path to the resolved cargo working directory, or none. |
 | 2 | — |
-| ∞ | — |
 
 #### Error
 
@@ -598,7 +553,6 @@ flowchart TD
 | --- | --- |
 | 1 | None. |
 | 2 | — |
-| ∞ | — |
 
 #### Test
 
@@ -606,7 +560,6 @@ flowchart TD
 | --- | --- |
 | 1 | A path nested in a cargo project resolves to the directory carrying `Cargo.toml`. |
 | 2 | A path with no cargo tree reports none. |
-| ∞ | — |
 
 #### Metric
 
@@ -614,7 +567,6 @@ flowchart TD
 | --- | --- |
 | 1 | One upward walk per invocation. |
 | 2 | Zero files created or modified. |
-| ∞ | — |
 
 ## Public Interface
 

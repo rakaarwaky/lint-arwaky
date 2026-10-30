@@ -17,7 +17,7 @@ General rules for writing an FRD. These apply across all sections.
 3. **A requirement is testable, or it is a wish.** State input, output, business rules, edge cases, error handling.
 4. **Nothing about the current build.** Shipped/backlog status is a BACKLOG.md claim with evidence, never an FRD sentence.
 5. **One observable behaviour per entry.** A reviewer can check it without asking; its `Test` subsection carries observable behaviour + expected result (never "tests pass"), its `Metric` subsection a falsifiable target value.
-6. **No acceptance criteria outside the entry tables.** Each FR entry's twelve H4 aspect subsections — every numbered and marker Detail row, including the seed rows — IS the acceptance specification; don't duplicate acceptance prose elsewhere.
+6. **No acceptance criteria outside the entry tables.** Each FR entry's twelve H4 aspect subsections — every numbered Detail row, including the seed rows — IS the acceptance specification; don't duplicate acceptance prose elsewhere.
 7. **No source-file extensions in a spec.** Never name `.py`, `.rs`, `.ts`, `.tsx`.
 8. **Spec purity — the FRD is a promise.** The FRD states what the feature must do, never how the current build does it. Implementation identifiers (capability names, protocol trait / interface names, capability method names) appear only under the `Capability`, `Protocol`, and `Method` aspect subsections and in `## Public Interface`; every other subsection states behaviour in caller-observable terms.
 9. **Caller-observable identifiers may stay.** Error codes, event names, output destination paths, and similar caller-visible vocabulary belong in the `Input`, `Output`, `Error`, and `Event` subsections; they are part of the promise, not implementation.
@@ -47,21 +47,18 @@ Copy, fill, delete nothing.
 |----|--------|
 | 1 | <what it does — one sentence> |
 | 2 | <optional second observation> |
-| ∞ | <open-ended: more observations may be added> |
 
 #### Business Rules
 | No | Detail |
 |----|--------|
 | 1 | <validation logic, constraints> |
 | 2 | <validation logic, constraint 2> |
-| ∞ | <open-ended> |
 
 #### Edge Cases
 | No | Detail |
 |----|--------|
 | 1 | <boundary conditions and their handling> |
 | 2 | <boundary condition 2 and its handling> |
-| ∞ | <open-ended> |
 
 #### Capability
 | No | Detail |
@@ -78,7 +75,6 @@ Copy, fill, delete nothing.
 |----|--------|
 | 1 | <capability method> |
 | 2 | <second method, if any> |
-| ∞ | <open-ended> |
 
 #### Input
 | No | Detail |
@@ -91,7 +87,6 @@ Copy, fill, delete nothing.
 |----|--------|
 | 1 | <shape, destination> |
 | 2 | <second field, if any> |
-| ∞ | <open-ended> |
 
 #### Error
 | No | Detail |
@@ -104,21 +99,18 @@ Copy, fill, delete nothing.
 |----|--------|
 | 1 | <domain event emitted, if any> |
 | 2 | <second event, if any> |
-| ∞ | <open-ended> |
 
 #### Test
 | No | Detail |
 |----|--------|
 | 1 | <observable behaviour + expected result> |
 | 2 | <second observable behaviour + expected result> |
-| ∞ | <open-ended> |
 
 #### Metric
 | No | Detail |
 |----|--------|
 | 1 | <target value> |
 | 2 | <second target value, if any> |
-| ∞ | <open-ended> |
 
 ### FR-<FEATURE-NAME-ID>-002: <Short imperative name>
 ### FR-<FEATURE-NAME-ID>-003: <Short imperative name>
@@ -145,7 +137,7 @@ Copy, fill, delete nothing.
 | Architecture | <System boundaries, tech stack, and infra>      | [ARCHITECTURE.md](ARCHITECTURE.md) |
 ```
 
-**Seed rows.** `∞` is a literal final seed row — not a placeholder — that marks an open-ended aspect. In every open-ended aspect subsection it must appear as the final `∞` Detail row (in the raw table: a row whose No cell is `∞` and whose Detail cell may carry a free-text note): Description, Business Rules, Edge Cases, Method, Output, Event, Test, Metric. Each open-ended aspect seeds a minimum of 3 total rows: numbered rows `1` and `2` plus the literal `∞` row; alternatively, at least 3 numbered rows with the `∞` row dropped. Bounded aspects carry no `∞` and seed exactly their count: `Capability` and `Protocol` seed exactly 1 row; `Input` and `Error` seed exactly 2 rows. When filling an FR entry, add numbered rows above the `∞` row until the aspect is complete, then keep `∞` as the closing marker (or, once 3+ numbered rows exist, drop it).
+**Seed rows.** Open-ended aspects seed a minimum of 2 numbered rows (`1`, `2`); `∞` is not written in actual FRD docs as an "unlimited" sign — open-ended means any count ≥2, not an explicit infinity marker. Bounded aspects carry no `∞` and seed exactly their count: `Capability` and `Protocol` seed exactly 1 row; `Input` and `Error` seed exactly 2 rows. When filling an FR entry, add numbered rows above the seed until the aspect is complete.
 
 ---
 
@@ -165,11 +157,11 @@ Every section is mandatory; each explains what to fill and what must not appear.
 
 ### Functional Requirements
 
-Each `FR-<FEATURE-NAME-ID>-NNN` entry is an H3 heading followed by twelve H4 aspect subsections in the canonical order: Description, Business Rules, Edge Cases, Capability, Protocol, Method, Input, Output, Error, Event, Test, Metric. Every H4 subsection carries its own numbered and marker Detail table; open-ended aspects seed a minimum of 3 rows ending in the literal `∞` marker row, bounded aspects seed exactly their count with no `∞`.
+Each `FR-<FEATURE-NAME-ID>-NNN` entry is an H3 heading followed by twelve H4 aspect subsections in the canonical order: Description, Business Rules, Edge Cases, Capability, Protocol, Method, Input, Output, Error, Event, Test, Metric. Every H4 subsection carries its own numbered Detail table; open-ended aspects seed a minimum of 2 numbered rows (`1`, `2`) with no `∞` marker row; bounded aspects seed exactly their count with no `∞`.
 
 | Aspect | Detail |
 |---|---|
-| **What it is** | `FR-<FEATURE-NAME-ID>-NNN` items, each an H3 heading plus 12 H4 aspect subsections, each with its own numbered and marker Detail table. |
+| **What it is** | `FR-<FEATURE-NAME-ID>-NNN` items, each an H3 heading plus 12 H4 aspect subsections, each with its own numbered Detail table. |
 | **Naming** | Short imperative name after the ID. |
 | **Description** | One behaviour — what it does. Open-ended. |
 | **Business Rules** | Validation logic, constraints. Open-ended. |
@@ -183,7 +175,7 @@ Each `FR-<FEATURE-NAME-ID>-NNN` entry is an H3 heading followed by twelve H4 asp
 | **Event** | Domain event emitted, if any. Open-ended. |
 | **Test** | Observable behaviour + expected result; never "tests pass". Open-ended. |
 | **Metric** | Target value, falsifiable. Open-ended. |
-| **Seed minimums** | Open-ended aspects: 3 total rows (`1`, `2`, `∞`) or ≥3 numbered rows. Bounded-one: exactly 1 row, no `∞`. Bounded-two: exactly 2 rows, no `∞`. |
+| **Seed minimums** | Open-ended aspects: 2 numbered rows (`1`, `2`) with no `∞` marker row; open count ≥2. Bounded-one: exactly 1 row, no `∞`. Bounded-two: exactly 2 rows, no `∞`. |
 | **Must NOT contain** | Source extensions (`.py`, `.rs`, `.ts`, `.tsx`), build status. |
 
 ### Public Interface

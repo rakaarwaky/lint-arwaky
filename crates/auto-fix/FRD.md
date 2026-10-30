@@ -48,7 +48,6 @@ Each of the 4 FRs maps to exactly 1 protocol trait and exactly 1 capability stru
 | --- | --- |
 | 1 | Remove the unused import at a flagged line, in place or as a dry-run preview. |
 | 2 | — |
-| ∞ | — |
 
 #### Business Rules
 
@@ -56,7 +55,6 @@ Each of the 4 FRs maps to exactly 1 protocol trait and exactly 1 capability stru
 | --- | --- |
 | 1 | One call fixes exactly one flagged line; the flag must sit on an import line (`NotAnImportLine` otherwise) and must not span multiple lines (`MultiLineImport`). |
 | 2 | The import list must not fall out of bounds (`LineOutOfBounds`); dry-run reports the would-be change without writing. |
-| ∞ | — |
 
 #### Edge Cases
 
@@ -64,7 +62,6 @@ Each of the 4 FRs maps to exactly 1 protocol trait and exactly 1 capability stru
 | --- | --- |
 | 1 | A clean file yields no call at all; an already-valid import list skips with `AlreadyValid`. |
 | 2 | A missing or unreadable file fails with `FileNotFound`/`ReadError` rather than succeeding silently; dry-run never modifies the file on disk. |
-| ∞ | — |
 
 #### Capability
 
@@ -84,7 +81,6 @@ Each of the 4 FRs maps to exactly 1 protocol trait and exactly 1 capability stru
 | --- | --- |
 | 1 | `fix_unused_import(&self, file_path: &str, line: LineNumber) -> FixOutcome` |
 | 2 | — |
-| ∞ | — |
 
 #### Input
 
@@ -99,7 +95,6 @@ Each of the 4 FRs maps to exactly 1 protocol trait and exactly 1 capability stru
 | --- | --- |
 | 1 | `FixOutcome` — `Applied { changes }` on a successful rewrite. |
 | 2 | `Skipped(reason)` when the line is not fixable; `Failed(reason)` on I/O trouble. |
-| ∞ | — |
 
 #### Error
 
@@ -114,7 +109,6 @@ Each of the 4 FRs maps to exactly 1 protocol trait and exactly 1 capability stru
 | --- | --- |
 | 1 | `lint-arwaky-cli fix <path> --dry-run` runs the same seam with `dry_run` selected per `FixRequest`. |
 | 2 | `scan`/`check` only detect, they do not fix. |
-| ∞ | — |
 
 #### Test
 
@@ -122,7 +116,6 @@ Each of the 4 FRs maps to exactly 1 protocol trait and exactly 1 capability stru
 | --- | --- |
 | 1 | `acceptance_AES201_fix` suite proves the fix path reports fixable codes. |
 | 2 | `e2e_auto_fix_flow` — `e2e_dry_run_file_with_unused_import`, `e2e_dry_run_clean_file`; `contract_auto_fix` — `unused_import_fix_implements_unused_import_fix_protocol`. |
-| ∞ | — |
 
 #### Metric
 
@@ -130,7 +123,6 @@ Each of the 4 FRs maps to exactly 1 protocol trait and exactly 1 capability stru
 | --- | --- |
 | 1 | Every flagged `AES203` violation under `fix <path> --dry-run` yields `Applied` or an explicit `Skipped` reason. |
 | 2 | Files stay byte-identical in dry-run as pinned by `e2e_dry_run_file_with_unused_import`. |
-| ∞ | — |
 
 ### FR-AutoFix-002: Bypass Fix (AES304)
 
@@ -140,7 +132,6 @@ Each of the 4 FRs maps to exactly 1 protocol trait and exactly 1 capability stru
 | --- | --- |
 | 1 | Strip a bypass comment or bypass macro at the flagged line, in place or as a dry-run preview. |
 | 2 | — |
-| ∞ | — |
 
 #### Business Rules
 
@@ -148,7 +139,6 @@ Each of the 4 FRs maps to exactly 1 protocol trait and exactly 1 capability stru
 | --- | --- |
 | 1 | Known bypass surface only: allow attributes, hack comments, noqa inline markers, and unwrap macros are in scope; an unmatched pattern skips with `NoBypassPattern`. |
 | 2 | Unsafe removals refuse with `UnsafeRemoval`; context-bearing patterns skip with `AlreadyHasContext`. |
-| ∞ | — |
 
 #### Edge Cases
 
@@ -156,7 +146,6 @@ Each of the 4 FRs maps to exactly 1 protocol trait and exactly 1 capability stru
 | --- | --- |
 | 1 | Multiple bypass markers on one line are rewritten in one pass when all are known; an unwrap in a macro context still skips rather than corrupt code. |
 | 2 | Dry-run previews the edit and leaves the file untouched; a missing file fails with `FileNotFound`. |
-| ∞ | — |
 
 #### Capability
 
@@ -176,7 +165,6 @@ Each of the 4 FRs maps to exactly 1 protocol trait and exactly 1 capability stru
 | --- | --- |
 | 1 | `fix_bypass_comments(&self, file_path: &str, line: LineNumber) -> FixOutcome` |
 | 2 | — |
-| ∞ | — |
 
 #### Input
 
@@ -191,7 +179,6 @@ Each of the 4 FRs maps to exactly 1 protocol trait and exactly 1 capability stru
 | --- | --- |
 | 1 | `FixOutcome` — `Applied` with the change count. |
 | 2 | `Skipped(reason)` for an unmatched or unsafe pattern; `Failed(reason)` on I/O trouble. |
-| ∞ | — |
 
 #### Error
 
@@ -206,7 +193,6 @@ Each of the 4 FRs maps to exactly 1 protocol trait and exactly 1 capability stru
 | --- | --- |
 | 1 | `lint-arwaky-cli fix <path> --dry-run` (and without `--dry-run` to apply), routed through `FixRequest::Execute { path, dry_run }`. |
 | 2 | — |
-| ∞ | — |
 
 #### Test
 
@@ -214,7 +200,6 @@ Each of the 4 FRs maps to exactly 1 protocol trait and exactly 1 capability stru
 | --- | --- |
 | 1 | `acceptance_AES304_fix` — `aes304_bypass_comment_is_fixable`, `aes304_unwrap_pattern_detected`, `aes304_dry_run_does_not_modify_file`. |
 | 2 | `unit_auto_fix_fix_processor` — `fix_bypass_strips_allow_attr`, `fix_bypass_strips_hack_comment`, `fix_bypass_strips_noqa_inline`, `fix_bypass_replaces_unwrap`. |
-| ∞ | — |
 
 #### Metric
 
@@ -222,7 +207,6 @@ Each of the 4 FRs maps to exactly 1 protocol trait and exactly 1 capability stru
 | --- | --- |
 | 1 | All in-scope `AES304` bypass patterns are removed by `fix <path>` and only previewed by `--dry-run`. |
 | 2 | Out-of-scope lines come back `Skipped` with a reason. |
-| ∞ | — |
 
 ### FR-AutoFix-003: Symbol Renaming (AES101)
 
@@ -232,7 +216,6 @@ Each of the 4 FRs maps to exactly 1 protocol trait and exactly 1 capability stru
 | --- | --- |
 | 1 | Rename a flagged symbol across the whole file with word-boundary awareness, in place or as a dry-run preview. |
 | 2 | — |
-| ∞ | — |
 
 #### Business Rules
 
@@ -240,7 +223,6 @@ Each of the 4 FRs maps to exactly 1 protocol trait and exactly 1 capability stru
 | --- | --- |
 | 1 | Rename is mechanical: the new name carries the `renamed_` prefix; matching is word-boundary aware so substrings survive. |
 | 2 | A name that collides with a keyword skips with `KeywordConflict`; an absent target skips with `SymbolNotFound`; `AlreadyValid` when the file is already compliant. |
-| ∞ | — |
 
 #### Edge Cases
 
@@ -248,7 +230,6 @@ Each of the 4 FRs maps to exactly 1 protocol trait and exactly 1 capability stru
 | --- | --- |
 | 1 | Symbols appearing inside strings/comments move with the rename because the pass is textual and boundary-based, never AST-based. |
 | 2 | A missing file fails with `FileNotFound`; dry-run prints the would-be rename without writing; zero occurrences skip rather than inventing one. |
-| ∞ | — |
 
 #### Capability
 
@@ -268,7 +249,6 @@ Each of the 4 FRs maps to exactly 1 protocol trait and exactly 1 capability stru
 | --- | --- |
 | 1 | `rename_symbol(&self, file_path: &str, old_name: &SymbolName, new_name: &SymbolName) -> FixOutcome` |
 | 2 | — |
-| ∞ | — |
 
 #### Input
 
@@ -283,7 +263,6 @@ Each of the 4 FRs maps to exactly 1 protocol trait and exactly 1 capability stru
 | --- | --- |
 | 1 | `FixOutcome` — `Applied { changes }` with the replacement count. |
 | 2 | `Skipped(reason)` or `Failed(reason)`. |
-| ∞ | — |
 
 #### Error
 
@@ -298,7 +277,6 @@ Each of the 4 FRs maps to exactly 1 protocol trait and exactly 1 capability stru
 | --- | --- |
 | 1 | `lint-arwaky-cli fix <path> --dry-run` for preview; `lint-arwaky-cli fix <path>` to write. |
 | 2 | Driven per request through `FixRequest::Execute { path, dry_run }`. |
-| ∞ | — |
 
 #### Test
 
@@ -306,7 +284,6 @@ Each of the 4 FRs maps to exactly 1 protocol trait and exactly 1 capability stru
 | --- | --- |
 | 1 | `acceptance_AES101_fix` — `aes101_naming_violation_is_fixable_dry_run`, `aes101_dry_run_does_not_modify_file`. |
 | 2 | `contract_auto_fix` — `symbol_rename_implements_symbol_rename_protocol`; `unit_auto_fix_fix_processor` includes the rename processor cases. |
-| ∞ | — |
 
 #### Metric
 
@@ -314,7 +291,6 @@ Each of the 4 FRs maps to exactly 1 protocol trait and exactly 1 capability stru
 | --- | --- |
 | 1 | Every flagged `AES101` naming violation previews with `Applied` under `--dry-run`. |
 | 2 | Running for real rewrites every word-boundary occurrence. |
-| ∞ | — |
 
 ### FR-AutoFix-004: Violation Reporting (Dry-Run + Non-Fixable)
 
@@ -324,7 +300,6 @@ Each of the 4 FRs maps to exactly 1 protocol trait and exactly 1 capability stru
 | --- | --- |
 | 1 | Run the whole fix pipeline over a path and report what was fixed versus what still needs a human. |
 | 2 | — |
-| ∞ | — |
 
 #### Business Rules
 
@@ -332,7 +307,6 @@ Each of the 4 FRs maps to exactly 1 protocol trait and exactly 1 capability stru
 | --- | --- |
 | 1 | `dry_run` is selectable per request: report what would change without writing, or apply every fixable violation and skip the rest. |
 | 2 | Violations that have no fixer are never rewritten — they are listed as manual work; exit signal comes from the `FixResult`, which merges applied changes with the non-fixable list. |
-| ∞ | — |
 
 #### Edge Cases
 
@@ -340,7 +314,6 @@ Each of the 4 FRs maps to exactly 1 protocol trait and exactly 1 capability stru
 | --- | --- |
 | 1 | An empty path or a project with no violations returns a clean `FixResult` with zero changes. |
 | 2 | A path that does not exist fails the CLI with a non-zero exit; per-file failures never abort other files. |
-| ∞ | — |
 
 #### Capability
 
@@ -360,7 +333,6 @@ Each of the 4 FRs maps to exactly 1 protocol trait and exactly 1 capability stru
 | --- | --- |
 | 1 | `report_violations(&self, path: &FilePath, dry_run: bool) -> FixResult` and `report_non_fixable(&self, violations: &[LintResult]) -> Vec<LintMessage>` |
 | 2 | — |
-| ∞ | — |
 
 #### Input
 
@@ -375,7 +347,6 @@ Each of the 4 FRs maps to exactly 1 protocol trait and exactly 1 capability stru
 | --- | --- |
 | 1 | `FixResult` wrapping applied changes plus the non-fixable manual messages. |
 | 2 | The orchestrator returns it as `FixResponse::Execute { result }`. |
-| ∞ | — |
 
 #### Error
 
@@ -390,7 +361,6 @@ Each of the 4 FRs maps to exactly 1 protocol trait and exactly 1 capability stru
 | --- | --- |
 | 1 | `lint-arwaky-cli fix <path> --dry-run` (preview) and `lint-arwaky-cli fix <path>` (apply); the request factory is `FixRequest::Execute`. |
 | 2 | — |
-| ∞ | — |
 
 #### Test
 
@@ -398,7 +368,6 @@ Each of the 4 FRs maps to exactly 1 protocol trait and exactly 1 capability stru
 | --- | --- |
 | 1 | `integration_auto_fix` — `orchestrator_execute_on_empty_project_dry_run`, `orchestrator_report_no_manual_violations_on_empty`, `orchestrator_execute_per_request_dry_run_false`. |
 | 2 | `e2e_auto_fix_flow` — `e2e_per_request_dry_run_toggle`; `dogfood_auto_fix` — `dogfood_cli_exits_nonzero_on_a_path_that_does_not_exist`; `contract_auto_fix` — protocol/aggregate impl coverage. |
-| ∞ | — |
 
 #### Metric
 
@@ -406,7 +375,6 @@ Each of the 4 FRs maps to exactly 1 protocol trait and exactly 1 capability stru
 | --- | --- |
 | 1 | Under `--dry-run` zero bytes change on disk across the batch while every fixable violation is accounted for. |
 | 2 | A missing path exits non-zero every time. |
-| ∞ | — |
 
 ## Public Interface
 
