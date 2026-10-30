@@ -10,14 +10,57 @@ use doc_rules_lint_arwaky::capabilities_doc_template_conformance_checker::{
     TemplateConformanceChecker, backlog_entry_re, ds_entry_re, dt_entry_re, first_column_values,
     fr_entry_re, pr_entry_re,
 };
+use shared_doc_rules::contract_doc_protocol::ITemplateConformanceProtocol;
+use shared_doc_rules::taxonomy_doc_audit_context_vo::{DocAuditContext, StrictModeOverride};
 use shared_doc_rules::taxonomy_doc_rules_constant as consts;
+use shared_doc_rules::taxonomy_doc_rules_request::{DocFinding, DocSource};
 use shared_doc_rules::taxonomy_doc_section_vo::Section;
 use shared_doc_rules::utility_markdown_scanner::sections;
-use std::collections::HashSet;
+
+use std::path::{Path, PathBuf};
 
 /// Build one parsed heading section.
 fn section(level: usize, title: &str, body: &str, line: usize) -> Section {
     Section::new(level, title.to_string(), body.to_string(), line)
+}
+
+/// Load a fixture file from `tests/fixtures/`.
+fn load_fixture(name: &str) -> String {
+    let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("tests/fixtures")
+        .join(name);
+    std::fs::read_to_string(&path)
+        .unwrap_or_else(|e| panic!("fixture {name} must be readable: {e}"))
+}
+
+/// Build a `DocAuditContext` holding one *doc_name* with *text* as its body.
+fn single_doc_context(doc_name: &str, text: &str) -> DocAuditContext {
+    let root = PathBuf::from("/repo");
+    let documents = vec![DocSource {
+        path: root.join(doc_name),
+        text: text.to_string(),
+    }];
+    let master = documents[0].text.clone();
+    DocAuditContext::new(
+        &root,
+        documents,
+        Some(master),
+        Vec::new(),
+        None,
+        StrictModeOverride::UseConfigFile,
+    )
+}
+
+/// Run the full AES606 audit on a single document and return its findings.
+fn audit_frd(text: &str) -> Vec<DocFinding> {
+    TemplateConformanceChecker::new()
+        .audit_template_conformance(&single_doc_context("FRD.md", text))
+}
+
+/// Run the full AES606 audit on a single PRD document.
+fn audit_prd(text: &str) -> Vec<DocFinding> {
+    TemplateConformanceChecker::new()
+        .audit_template_conformance(&single_doc_context("PRD.md", text))
 }
 
 #[test]
@@ -532,5 +575,149 @@ fn agents_runtime_fixed_rows_rejects_missing_row() {
             .iter()
             .any(|f| f.violation_type == consts::TEMPLATE_CONFORMANCE_VIOLATION_ENTRY_MISSING_ROW),
         "missing AGENTS Runtime rows must fire entry_missing_row; got {findings:?}"
+    );
+}
+
+// ─── H4 aspect entry table tests (fixture-driven) ─────────────────────────
+
+#[test]
+fn frd_conforming_passes_h4_check() {
+    let text = load_fixture("frd-conforming.md");
+    let findings = audit_frd(&text);
+    assert!(
+        findings.is_empty(),
+        "a conforming FRD with H4 aspects must report nothing; got {findings:?}"
+    );
+}
+
+#[test]
+fn frd_old_format_passes_legacy_path() {
+    let text = load_fixture("frd-old-format.md");
+    let findings = audit_frd(&text);
+    // Legacy `| Aspect | Detail |` table routes through `check_entry_tables`
+    // with the FRD aspect list as row labels; a conforming legacy doc passes.
+    assert!(
+        findings.is_empty(),
+        "a legacy FRD with a single Aspect|Detail table must report nothing; got {findings:?}"
+    );
+}
+
+#[test]
+fn prd_conforming_passes_h4_check() {
+    let text = load_fixture("prd-conforming.md");
+    let findings = audit_prd(&text);
+    assert!(
+        findings.is_empty(),
+        "a conforming PRD with H4 aspects must report nothing; got {findings:?}"
+    );
+}
+
+#[test]
+fn prd_old_format_passes_legacy_path() {
+    let text = load_fixture("prd-old-format.md");
+    let findings = audit_prd(&text);
+    assert!(
+        findings.is_empty(),
+        "a legacy PRD with a single Aspect|Detail table must report nothing; got {findings:?}"
+    );
+}
+
+#[test]
+fn missing_h4_aspect_fires() {
+    let text = load_fixture("frd-missing-h4-aspect.md");
+    let findings = audit_frd(&text);
+    let missing: Vec<_> = findings
+        .iter()
+        .filter(|f| f.violation_type == consts::TEMPLATE_CONFORMANCE_VIOLATION_MISSING_H4_ASPECT)
+        .collect();
+    assert_eq!(
+        missing.len(),
+        1,
+        "exactly one missing_h4_aspect finding expected (Error); got {findings:?}"
+    );
+    assert!(
+        missing[0].message.contains("Error"),
+        "the finding must name the missing aspect; got '{}'",
+        missing[0].message
+    );
+    assert_eq!(
+        missing[0].code,
+        consts::RULE_CODE_TEMPLATE_CONFORMANCE,
+        "the finding must carry rule code AES606"
+    );
+}
+
+#[test]
+fn empty_detail_cell_fires() {
+    let text = load_fixture("frd-empty-detail-cell.md");
+    let findings = audit_frd(&text);
+    let empty: Vec<_> = findings
+        .iter()
+        .filter(|f| f.violation_type == consts::TEMPLATE_CONFORMANCE_VIOLATION_EMPTY_DETAIL_CELL)
+        .collect();
+    assert_eq!(
+        empty.len(),
+        1,
+        "exactly one empty_detail_cell finding expected; got {findings:?}"
+    );
+    assert!(
+        empty[0].message.contains("Description"),
+        "the finding must name the offending aspect; got '{}'",
+        empty[0].message
+    );
+    assert_eq!(
+        empty[0].code,
+        consts::RULE_CODE_TEMPLATE_CONFORMANCE,
+        "the finding must carry rule code AES606"
+    );
+}
+
+#[test]
+fn row_numbering_violation_fires() {
+    let text = load_fixture("frd-row-numbering.md");
+    let findings = audit_frd(&text);
+    let bad: Vec<_> = findings
+        .iter()
+        .filter(|f| f.violation_type == consts::TEMPLATE_CONFORMANCE_VIOLATION_ROW_NUMBERING)
+        .collect();
+    assert_eq!(
+        bad.len(),
+        1,
+        "exactly one row_numbering_violation finding expected; got {findings:?}"
+    );
+    assert!(
+        bad[0].message.contains("Description"),
+        "the finding must name the offending aspect; got '{}'",
+        bad[0].message
+    );
+    assert_eq!(
+        bad[0].code,
+        consts::RULE_CODE_TEMPLATE_CONFORMANCE,
+        "the finding must carry rule code AES606"
+    );
+}
+
+#[test]
+fn bounded_row_count_violation_fires() {
+    let text = load_fixture("frd-row-count.md");
+    let findings = audit_frd(&text);
+    let bad: Vec<_> = findings
+        .iter()
+        .filter(|f| f.violation_type == consts::TEMPLATE_CONFORMANCE_VIOLATION_ROW_COUNT)
+        .collect();
+    assert_eq!(
+        bad.len(),
+        1,
+        "exactly one row_count_violation finding expected (Capability has 2 rows, bounded to 1); got {findings:?}"
+    );
+    assert!(
+        bad[0].message.contains("Capability"),
+        "the finding must name the offending aspect; got '{}'",
+        bad[0].message
+    );
+    assert_eq!(
+        bad[0].code,
+        consts::RULE_CODE_TEMPLATE_CONFORMANCE,
+        "the finding must carry rule code AES606"
     );
 }

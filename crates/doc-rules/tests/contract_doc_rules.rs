@@ -2163,7 +2163,7 @@ fn findings_carry_a_1_based_line_and_high_severity() {
     assert_eq!(
         finding.severity,
         shared_common::Severity::HIGH,
-        "AES6xx rules are HIGH per ARCHITECTURE.md §19"
+        "AES6xx rules are HIGH per RULES_AES"
     );
 }
 
