@@ -250,21 +250,15 @@ pub const FRD_SECTION_ORDER: &[&str] = FRD_REQUIRED_H2S;
 /// sanctioned H3s. PR-10 bookkeeping: re-populate when FRD H3 shapes return.
 pub const FRD_H3_TITLES: &[&str] = &[];
 
-/// The twelve row labels every FRD `Functional Requirements` entry table
+/// The six fixed row labels every FRD `Technical Specification` table
 /// carries under its `Aspect | Detail` header, per HOW-TO-MAKE-FRD.
 pub const FR_FIELDS: &[&str] = &[
-    "Description",
-    "Business Rules",
-    "Edge Cases",
-    "Capability",
-    "Protocol",
-    "Method",
     "Input",
     "Output",
-    "Error",
+    "Protocol",
+    "Method",
     "Event",
-    "Test",
-    "Metric",
+    "Error",
 ];
 
 /// H3 subsections of the retired `## API Contract`; still read by
@@ -312,9 +306,10 @@ pub const BACKLOG_ROW_LABELS: &[&str] = &[
     "Updated",
 ];
 
-/// FRD `Functional Requirements` entry row labels — 12. Alias of `FR_FIELDS`:
-/// both are the same twelve labels the entry table in HOW-TO-MAKE-FRD.md
-/// ships, so the AES601 field list and the AES606 row check cannot drift.
+/// FRD `Technical Specification` entry row labels — 6. Alias of
+/// `FR_FIELDS`: both are the same six labels the entry table in
+/// HOW-TO-MAKE-FRD.md ships, so the AES601 field list and the AES606 row
+/// check cannot drift.
 pub const FRD_ROW_LABELS: &[&str] = FR_FIELDS;
 
 /// AGENTS `Runtime` entry row labels — 7, per HOW-TO-MAKE-AGENTS.md.
@@ -430,57 +425,35 @@ pub const RULE_CODE_PR_FOLDER_OWNERSHIP: &str = "AES607";
 /// under `crates|modules|packages`.
 pub const PR_FOLDER_NOT_OWNED_VIOLATION: &str = "pr_folder_not_owned";
 
-// ─── AES606 — Per-aspect H4 subsection constants (modular template) ──────
-// These constants are the source of truth for the open-ended/bounded
-// enforcement contract; HOW-TO-MAKE-FRD.md and HOW-TO-MAKE-PRD.md mirror
-// it. Every aspect seeds exactly one numbered row: row 1 with real
-// content. Row 2 is written only when the aspect carries a second real
-// fact — never padded with a placeholder cell such as `—`.
+// ─── AES606 — FRD Technical Specification constants (modular template) ────
+// These constants are the source of truth for the fixed-row enforcement
+// contract; HOW-TO-MAKE-FRD.md mirrors it. Under the modular template each
+// FR entry carries a `Technical Specification` `| Aspect | Detail |` table
+// fixed to exactly the six rows of `FR_FIELDS`, each with real content.
+// The per-aspect H4 seed/bounded contract of the prior template is retired.
 
-/// Canonical order of the twelve FRD per-aspect H4 subsections. Alias of
-/// `FR_FIELDS`: under the modular template the H4 subsection names are the
-/// FR entry-table field names, matching the `FRD_ROW_LABELS = FR_FIELDS`
-/// pattern, so the AES601 field list and the H4 order check cannot drift.
+/// Canonical order of the six FRD `Technical Specification` table rows.
+/// Alias of `FR_FIELDS`: the entry-table row labels and the AES601 field
+/// list read the same six labels under two names, so the AES601 field
+/// check and the AES606 row check cannot drift.
 pub const FRD_ASPECTS: &[&str] = FR_FIELDS;
 
-/// Aspects whose row list is open-ended: at least one numbered seed row
-/// (row 1 with real content) plus any further rows the aspect genuinely
-/// needs — a second line is created only when a second real fact exists,
-/// never a placeholder cell. `∞` is not written in actual FRD/PRD docs as
-/// an "unlimited" sign.
-pub const FRD_ASPECTS_OPEN: &[&str] = &[
-    "Description",
-    "Business Rules",
-    "Edge Cases",
-    "Method",
-    "Input",
-    "Output",
-    "Error",
-    "Event",
-    "Test",
-    "Metric",
-];
+/// All six `Technical Specification` rows are bounded to exactly one row
+/// each — there is no open-ended aspect under the modular template.
+pub const FRD_ASPECTS_OPEN: &[&str] = &[];
 
-/// Aspects bounded to exactly one printed seed row (no `∞` marker row).
-pub const FRD_ASPECTS_BOUNDED_ONE: &[&str] = &["Capability", "Protocol"];
+/// All six `Technical Specification` rows are bounded to exactly one row.
+pub const FRD_ASPECTS_BOUNDED_ONE: &[&str] = FR_FIELDS;
 
-/// Minimum total row count per FRD aspect (numbered seed rows only;
-/// `∞` is not written as a marker row). Every aspect seeds 1 real row:
-/// open-ended = at least 1 (rows 2+ only when a second real fact exists);
-/// bounded-one = exactly 1.
+/// Exact row count per FRD `Technical Specification` aspect. Every one of
+/// the six fixed rows seeds exactly one row with real content.
 pub const FRD_ASPECT_SEED_MIN: &[(&str, usize)] = &[
-    ("Description", 1),
-    ("Business Rules", 1),
-    ("Edge Cases", 1),
-    ("Capability", 1),
-    ("Protocol", 1),
-    ("Method", 1),
     ("Input", 1),
     ("Output", 1),
-    ("Error", 1),
+    ("Protocol", 1),
+    ("Method", 1),
     ("Event", 1),
-    ("Test", 1),
-    ("Metric", 1),
+    ("Error", 1),
 ];
 
 /// Canonical order of the five PRD per-aspect H4 subsections, per the new
@@ -654,7 +627,7 @@ mod tests {
     #[test]
     fn frd_row_labels_are_the_fr_fields() {
         assert_eq!(FRD_ROW_LABELS, FR_FIELDS, "must stay byte-identical");
-        assert_eq!(FRD_ROW_LABELS.len(), 12, "twelve labels, one per row");
+        assert_eq!(FRD_ROW_LABELS.len(), 6, "six labels, one per row");
     }
 
     /// The two FRD aspect sets (open, bounded-one) are disjoint and
@@ -678,26 +651,20 @@ mod tests {
         expected.sort_unstable();
         assert_eq!(union, expected, "open ∪ bounded-one = FRD_ASPECTS");
 
-        // FRD_ASPECTS is the canonical order PR 3's
-        // TEMPLATE_CONFORMANCE_VIOLATION_H4_ORDER check enforces, so pin
-        // the exact ordered sequence, not just set equality.
+        // FRD_ASPECTS is the canonical order of the six Technical
+        // Specification table rows, so pin the exact ordered sequence, not
+        // just set equality.
         assert_eq!(
             FRD_ASPECTS,
             &[
-                "Description",
-                "Business Rules",
-                "Edge Cases",
-                "Capability",
-                "Protocol",
-                "Method",
                 "Input",
                 "Output",
-                "Error",
+                "Protocol",
+                "Method",
                 "Event",
-                "Test",
-                "Metric"
+                "Error"
             ],
-            "canonical H4 subsection order"
+            "canonical Technical Specification row order"
         );
     }
 
