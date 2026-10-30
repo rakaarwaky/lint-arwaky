@@ -125,14 +125,9 @@ pub const TEMPLATE_PROFILES: &[TemplateProfile] = &[
 
         required_h2s: PRD_REQUIRED_H2S,
         placeholder_catalog: &[
-            "<project-name>",
             "<PROJECT-NAME-ID>",
-            "<Short imperative name>",
-            "<one behaviour — what it does>",
-            "<as a..., I want..., so that...>",
-            "<functional boundary — what must exist>",
-            "<functional boundary — what must not exist. Name them so the argument ends here>",
-            "<how to measure the outcome of this requirement>",
+            "<Business goals and scope>",
+            "<What is true now, with evidence>",
             "<Timeline, phasing, and dependencies>",
             "<System boundaries, tech stack, and infra>",
         ],

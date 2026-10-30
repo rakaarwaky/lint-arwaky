@@ -191,15 +191,6 @@ pub const ARCHITECTURE_REQUIRED_H2S: &[&str] = &[
     "Surface Layer",
     "Root Layer",
     "Finding rendering notes",
-    "Rule Inventory Overview",
-    "Group 1: Naming",
-    "Group 2: Layer & Import Boundary",
-    "Group 3: File & Content Quality",
-    "Group 4: Role Violations",
-    "Group 5: Orphan Code",
-    "Group 6: Document Invariants",
-    "Group 7: Folder Structure",
-    "Rule Source of Truth & Parity",
 ];
 
 /// Per-crate BACKLOG section order, per HOW-TO-MAKE-BACKLOG.
@@ -430,96 +421,6 @@ pub const RULE_CODE_PR_FOLDER_OWNERSHIP: &str = "AES607";
 /// under `crates|modules|packages`.
 pub const PR_FOLDER_NOT_OWNED_VIOLATION: &str = "pr_folder_not_owned";
 
-// ─── AES606 — Per-aspect H4 subsection constants (modular template) ──────
-// These constants are the source of truth for the open-ended/bounded
-// enforcement contract until PRs 5/6 update HOW-TO-MAKE-FRD.md and
-// HOW-TO-MAKE-PRD.md to print the seed rows verbatim. The
-// open-ended/bounded enforcement contract is defined in this section.
-
-/// Canonical order of the twelve FRD per-aspect H4 subsections. Alias of
-/// `FR_FIELDS`: under the modular template the H4 subsection names are the
-/// FR entry-table field names, matching the `FRD_ROW_LABELS = FR_FIELDS`
-/// pattern, so the AES601 field list and the H4 order check cannot drift.
-pub const FRD_ASPECTS: &[&str] = FR_FIELDS;
-
-/// Aspects whose row list is open-ended (any count ≥ seed minimum).
-/// These are exactly the aspects whose owner sample carries a literal
-/// `| ∞ |  |` seed row as the final open-ended marker row.
-pub const FRD_ASPECTS_OPEN: &[&str] = &[
-    "Description",
-    "Business Rules",
-    "Edge Cases",
-    "Method",
-    "Output",
-    "Event",
-    "Test",
-    "Metric",
-];
-
-/// Aspects bounded to exactly one printed seed row (no `∞` marker row).
-pub const FRD_ASPECTS_BOUNDED_ONE: &[&str] = &["Capability", "Protocol"];
-
-/// Aspects bounded to exactly two printed seed rows (no `∞` marker row).
-pub const FRD_ASPECTS_BOUNDED_TWO: &[&str] = &["Input", "Error"];
-
-/// Minimum total row count per FRD aspect (numbered seed rows + the `∞`
-/// marker row where applicable). Open-ended aspects: 3; bounded-one: 1;
-/// bounded-two: 2.
-pub const FRD_ASPECT_SEED_MIN: &[(&str, usize)] = &[
-    ("Description", 3),
-    ("Business Rules", 3),
-    ("Edge Cases", 3),
-    ("Capability", 1),
-    ("Protocol", 1),
-    ("Method", 3),
-    ("Input", 2),
-    ("Output", 3),
-    ("Error", 2),
-    ("Event", 3),
-    ("Test", 3),
-    ("Metric", 3),
-];
-
-/// Canonical order of the five PRD per-aspect H4 subsections, per the new
-/// modular HOW-TO-MAKE-PRD.md template.
-pub const PRD_ASPECTS: &[&str] = &[
-    "Description",
-    "User Story",
-    "In Scope",
-    "Out of Scope",
-    "Success Metric",
-];
-
-/// All five PRD aspects are open-ended (seed minimum 3 each).
-pub const PRD_ASPECTS_OPEN: &[&str] = PRD_ASPECTS;
-
-/// Minimum total row count per PRD aspect. All five are open-ended at 3.
-pub const PRD_ASPECT_SEED_MIN: &[(&str, usize)] = &[
-    ("Description", 3),
-    ("User Story", 3),
-    ("In Scope", 3),
-    ("Out of Scope", 3),
-    ("Success Metric", 3),
-];
-
-/// An expected per-aspect H4 subsection is missing under an FR/PR entry.
-pub const TEMPLATE_CONFORMANCE_VIOLATION_MISSING_H4_ASPECT: &str = "missing_h4_aspect";
-
-/// Per-aspect H4 subsections are out of canonical order.
-pub const TEMPLATE_CONFORMANCE_VIOLATION_H4_ORDER: &str = "h4_order_violation";
-
-/// Numbered rows are not contiguous 1..N.
-pub const TEMPLATE_CONFORMANCE_VIOLATION_ROW_NUMBERING: &str = "row_numbering_violation";
-
-/// A bounded aspect does not carry exactly its seed row count.
-pub const TEMPLATE_CONFORMANCE_VIOLATION_ROW_COUNT: &str = "row_count_violation";
-
-/// An open-ended aspect carries fewer rows than its seed minimum.
-pub const TEMPLATE_CONFORMANCE_VIOLATION_ROW_MINIMUM: &str = "row_minimum_violation";
-
-/// A numbered or `∞` row whose `Detail` cell trims to empty.
-pub const TEMPLATE_CONFORMANCE_VIOLATION_EMPTY_DETAIL_CELL: &str = "empty_detail_cell";
-
 // Re-export template conformance types from the template module so that
 // `shared_doc_rules::taxonomy_doc_rules_constant` remains the canonical import.
 pub use crate::taxonomy_doc_rules_template_vo::{TEMPLATE_PROFILES, TemplateProfile};
@@ -564,29 +465,20 @@ mod tests {
         ships_columns("HOW-TO-MAKE-AGENTS.md", AGENTS_RUNTIME_ROW_LABELS);
     }
 
-    /// The reverse of `ships_columns`, for the PRD entry table only: a row
-    /// added to the shipped template without `PRD_ROW_LABELS` (or dropped
-    /// from the constant alone) fails here instead of failing a user who
-    /// copies the template verbatim.
+    /// Reverse of `ships_columns`, for the PRD template only: the H4 aspect
+    /// titles must carry exactly `PRD_ROW_LABELS`, so a label renamed in
+    /// either file fails here instead of drifting.
     #[test]
     fn prd_entry_table_carries_exactly_prd_row_labels() {
         let text = load_reference_template("HOW-TO-MAKE-PRD.md");
         let mut labels: Vec<&str> = Vec::new();
-        let mut in_table = false;
-        for line in text.lines().map(str::trim) {
-            if !in_table {
-                in_table = line.starts_with("| Aspect");
-                continue;
-            }
-            if !line.starts_with('|') {
-                break;
-            }
-            if line.starts_with("|--") {
-                continue;
-            }
-            let label = line.split('|').nth(1).unwrap_or_default().trim();
-            if !label.is_empty() {
-                labels.push(label);
+        for line in text.lines() {
+            let trimmed = line.trim();
+            if let Some(title) = trimmed.strip_prefix("#### ") {
+                let title = title.trim();
+                if !title.is_empty() {
+                    labels.push(title);
+                }
             }
         }
         let mut expected: Vec<&str> = PRD_ROW_LABELS.to_vec();
@@ -594,7 +486,7 @@ mod tests {
         expected.sort_unstable();
         assert_eq!(
             labels, expected,
-            "HOW-TO-MAKE-PRD.md entry table must carry exactly PRD_ROW_LABELS"
+            "HOW-TO-MAKE-PRD.md H4 aspect titles must carry exactly PRD_ROW_LABELS"
         );
     }
 
@@ -648,102 +540,5 @@ mod tests {
     fn frd_row_labels_are_the_fr_fields() {
         assert_eq!(FRD_ROW_LABELS, FR_FIELDS, "must stay byte-identical");
         assert_eq!(FRD_ROW_LABELS.len(), 12, "twelve labels, one per row");
-    }
-
-    /// The three FRD aspect sets (open, bounded-one, bounded-two) are
-    /// pairwise disjoint and together partition `FRD_ASPECTS`.
-    #[test]
-    fn frd_aspect_sets_are_disjoint_and_partition_frd_aspects() {
-        fn disjoint(a: &[&str], b: &[&str]) {
-            for x in a {
-                assert!(!b.contains(x), "aspect {x} appears in both sets");
-            }
-        }
-        disjoint(FRD_ASPECTS_OPEN, FRD_ASPECTS_BOUNDED_ONE);
-        disjoint(FRD_ASPECTS_OPEN, FRD_ASPECTS_BOUNDED_TWO);
-        disjoint(FRD_ASPECTS_BOUNDED_ONE, FRD_ASPECTS_BOUNDED_TWO);
-
-        let mut union: Vec<&str> = FRD_ASPECTS_OPEN
-            .iter()
-            .chain(FRD_ASPECTS_BOUNDED_ONE)
-            .chain(FRD_ASPECTS_BOUNDED_TWO)
-            .copied()
-            .collect();
-        union.sort_unstable();
-        let mut expected: Vec<&str> = FRD_ASPECTS.to_vec();
-        expected.sort_unstable();
-        assert_eq!(
-            union, expected,
-            "open ∪ bounded-one ∪ bounded-two = FRD_ASPECTS"
-        );
-
-        // FRD_ASPECTS is the canonical order PR 3's
-        // TEMPLATE_CONFORMANCE_VIOLATION_H4_ORDER check enforces, so pin
-        // the exact ordered sequence, not just set equality.
-        assert_eq!(
-            FRD_ASPECTS,
-            &[
-                "Description",
-                "Business Rules",
-                "Edge Cases",
-                "Capability",
-                "Protocol",
-                "Method",
-                "Input",
-                "Output",
-                "Error",
-                "Event",
-                "Test",
-                "Metric"
-            ],
-            "canonical H4 subsection order"
-        );
-    }
-
-    /// `FRD_ASPECT_SEED_MIN` covers every FRD aspect exactly once and the
-    /// minimum values match the open/bounded contract: open-ended = 3,
-    /// bounded-one = 1, bounded-two = 2.
-    #[test]
-    fn frd_aspect_seed_min_matches_open_bounded_contract() {
-        let mut names: Vec<&str> = FRD_ASPECT_SEED_MIN.iter().map(|(n, _)| *n).collect();
-        names.sort_unstable();
-        let mut expected: Vec<&str> = FRD_ASPECTS.to_vec();
-        expected.sort_unstable();
-        assert_eq!(
-            names, expected,
-            "seed-min map covers every FRD aspect exactly once"
-        );
-
-        for (name, min) in FRD_ASPECT_SEED_MIN {
-            if FRD_ASPECTS_OPEN.contains(name) {
-                assert_eq!(*min, 3, "open-ended aspect {name} must seed at 3");
-            } else if FRD_ASPECTS_BOUNDED_ONE.contains(name) {
-                assert_eq!(*min, 1, "bounded-one aspect {name} must seed at 1");
-            } else if FRD_ASPECTS_BOUNDED_TWO.contains(name) {
-                assert_eq!(*min, 2, "bounded-two aspect {name} must seed at 2");
-            } else {
-                panic!("aspect {name} not in any known set");
-            }
-        }
-    }
-
-    /// All five PRD aspects are open-ended and seed at 3.
-    #[test]
-    fn prd_aspect_seed_min_all_open_at_three() {
-        let mut names: Vec<&str> = PRD_ASPECT_SEED_MIN.iter().map(|(n, _)| *n).collect();
-        names.sort_unstable();
-        let mut expected: Vec<&str> = PRD_ASPECTS.to_vec();
-        expected.sort_unstable();
-        assert_eq!(
-            names, expected,
-            "PRD seed-min map covers every PRD aspect exactly once"
-        );
-        assert_eq!(
-            PRD_ASPECTS_OPEN, PRD_ASPECTS,
-            "all PRD aspects are open-ended"
-        );
-        for (_, min) in PRD_ASPECT_SEED_MIN {
-            assert_eq!(*min, 3, "PRD aspects seed at 3");
-        }
     }
 }
