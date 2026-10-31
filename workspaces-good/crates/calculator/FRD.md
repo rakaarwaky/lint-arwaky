@@ -7,7 +7,7 @@ the orchestrator applies the capability, and the result returns to the caller.
 
 ## Functional Requirements
 
-### FR-CALCULATOR-001: Check the request
+### FR-Calculator-001: Check the request
 
 **Description:** The feature validates the request and returns the result.
 
@@ -44,7 +44,7 @@ the orchestrator applies the capability, and the result returns to the caller.
 |---------------|-------|
 | 0 doc-rule findings | 0 |
 
-### FR-CALCULATOR-002: Run the request
+### FR-Calculator-002: Run the request
 
 **Description:** The feature executes the request and returns the result.
 
