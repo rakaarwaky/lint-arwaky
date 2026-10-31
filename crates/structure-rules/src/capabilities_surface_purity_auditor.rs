@@ -25,24 +25,15 @@ impl IStructureSurfacePurityProtocol for SurfacePurityAuditor {
         let ws_root = workspace_root(&root);
         let mut findings = Vec::new();
 
-        // If root is a member sub-dir (like crates/cli-commands), check it directly
-        let root_abs = std::fs::canonicalize(&root).unwrap_or_else(|_| root.clone());
-        let ws_root_abs = std::fs::canonicalize(&ws_root).unwrap_or_else(|_| ws_root.clone());
-        if root_abs != ws_root_abs
-            && root_abs.starts_with(&ws_root_abs)
-            && !root_abs.join("crates").is_dir()
-            && !root_abs.join("modules").is_dir()
-            && !root_abs.join("packages").is_dir()
-        {
-            check_member_folder(&root_abs, &ws_root, &mut findings);
-        }
-
-        for member in utility_structure_parsers::member_dirs(&ws_root) {
+        // When the target is a member dir, the walk is scoped to that
+        // member; when it is the workspace root, all members are walked.
+        let scoped = utility_structure_parsers::scoped_member_dirs(&root, &ws_root);
+        for member in &scoped {
             // Check the member folder itself
-            check_member_folder(&member, &ws_root, &mut findings);
+            check_member_folder(member, &ws_root, &mut findings);
 
             // Check subdirectories (feature folders)
-            for folder in utility_structure_parsers::feature_dirs(&member) {
+            for folder in utility_structure_parsers::feature_dirs(member) {
                 if folder_name(&folder) == consts::KERNEL_DIR {
                     continue;
                 }

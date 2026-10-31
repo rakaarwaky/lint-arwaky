@@ -1,22 +1,16 @@
 # README
 
 ## Project Overview
-Gap workspace used as a scanner fixture; documents intentionally carry violations.
+Gap workspace: README intentionally carries violations.
 
 ## Prerequisites
-None; the fixture has no build.
 
 ## Quick Start
 
-| Step | Action | Command|
-|---|---|---|
-| 1 | Run the scanner over the folder | `lint-arwaky-cli docs .`|
-| 2 | Compare the report | against the expected violation set|
+Runs the scanner over the tree.
 
 ## Reference
 
-| Artifact | Purpose | Link|
-|---|---|---|
-| PRD | Product requirements | [PRD.md](PRD.md)|
-| ROADMAP | Roadmap and state vocabulary | [ROADMAP.md](ROADMAP.md)|
-| ARCHITECTURE | Layer contract | [ARCHITECTURE.md](ARCHITECTURE.md)|
+| Artifact | Purpose | Link |
+|----------|---------|------|
+| PRD | Product requirements | [PRD.md](PRD.md) |

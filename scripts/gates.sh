@@ -174,12 +174,17 @@ run_gate "Self-Lint (check .)" bash -c '
 ' &
 SELF_LINT_PID=$!
 
-run_gate "False Negatives (workspaces-bad >= 29)" bash -c '
-    codes_rust=$($CLI scan workspaces-bad/crates 2>&1 | grep -oP "AES\d+" | sort -u | wc -l)
-    codes_python=$($CLI scan workspaces-bad/modules 2>&1 | grep -oP "AES\d+" | sort -u | wc -l)
-    codes_ts=$($CLI scan workspaces-bad/packages 2>&1 | grep -oP "AES\d+" | sort -u | wc -l)
-    echo "  Rust: ${codes_rust:-0} codes, Python: ${codes_python:-0} codes, TS: ${codes_ts:-0} codes"
-    [ "${codes_rust:-0}" -ge 29 ] && [ "${codes_python:-0}" -ge 29 ] && [ "${codes_ts:-0}" -ge 29 ]
+run_gate "False Negatives (workspaces-bad)" bash -c '
+    # Per member: every scan target surfaces all 41 AES codes in its JSON
+    # output — the 41-code inventory is the gate floor, per ARCHITECTURE.md.
+    codes_crates=$($CLI scan workspaces-bad/crates --format json 2>/dev/null | python3 -c "import sys,json; print(len({r[\"code\"] for r in json.load(sys.stdin).get(\"results\",[]) if str(r.get(\"code\",\"\")).startswith(\"AES\")}))")
+    codes_modules=$($CLI scan workspaces-bad/modules --format json 2>/dev/null | python3 -c "import sys,json; print(len({r[\"code\"] for r in json.load(sys.stdin).get(\"results\",[]) if str(r.get(\"code\",\"\")).startswith(\"AES\")}))")
+    codes_packages=$($CLI scan workspaces-bad/packages --format json 2>/dev/null | python3 -c "import sys,json; print(len({r[\"code\"] for r in json.load(sys.stdin).get(\"results\",[]) if str(r.get(\"code\",\"\")).startswith(\"AES\")}))")
+    echo "  crates: ${codes_crates:-0} codes, modules: ${codes_modules:-0} codes, packages: ${codes_packages:-0} codes"
+    [ "${codes_crates:-0}" -ge 41 ] && [ "${codes_modules:-0}" -ge 41 ] && [ "${codes_packages:-0}" -ge 41 ]
+    codes_tree=$($CLI scan workspaces-bad --format json 2>/dev/null | python3 -c "import sys,json,collections; print(len({r[\"code\"] for r in json.load(sys.stdin).get(\"results\",[]) if r.get(\"code\",\"\").startswith(\"AES\")}))")
+    echo "  Whole tree: ${codes_tree:-0} distinct AES codes (41 expected)"
+    [ "${codes_tree:-0}" -ge 41 ]
 ' &
 FN_PID=$!
 

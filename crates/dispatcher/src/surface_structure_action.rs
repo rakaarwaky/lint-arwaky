@@ -41,14 +41,18 @@ pub fn collect_structure(
         .filter(|f| !crate::surface_suppression_hook::is_rule_suppressed(&suppressed, &f.code))
         .map(|f| {
             let code = shared_common::ErrorCode::raw(f.code.clone());
-            // Structure findings carry paths relative to the audited root. Resolve them
-            // here, or a finding that names a file inside a member arrives as
-            // `member/file.rs`, which the report cannot place in its tree.
+            // Structure findings carry paths relative to the audit's findings
+            // base — the workspace parent for a member-dir target, the target
+            // itself otherwise. Resolve against that base, or a finding that
+            // names a file inside a member arrives as `member/file.rs`,
+            // which the report cannot place in its tree.
             let file = shared_common::FilePath::new(
-                std::path::Path::new(root)
-                    .join(&f.file)
-                    .to_string_lossy()
-                    .into_owned(),
+                shared_structure_rules::utility_structure_parsers::findings_base(
+                    std::path::Path::new(root),
+                )
+                .join(&f.file)
+                .to_string_lossy()
+                .into_owned(),
             )
             .unwrap_or_default();
             let message = shared_common::LintMessage::new(f.message.clone());

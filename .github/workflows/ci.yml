@@ -147,15 +147,14 @@ jobs:
 
       - name: AES Codes Check
         # Threshold must match the reconciled scan-visible rule count in
-        # TEST.md §3.1/§3.2 exactly: 38 total AES rules across 7 groups.
-        # All 36 are now surfaced by `scan workspaces-bad` via the doc-audit
-        # pass. AES606 fires `section_not_table` on workspaces-bad's
-        # ROADMAP.md, whose Feature Roll-up and State Definitions carry
-        # prose instead of the mandated tables. The required-doc half of
-        # AES606 is root-gated (it fires only when the audit root carries
-        # a workspace marker file) and is covered by unit tests rather
-        # than by this gate. When rules are added/removed, update this
-        # threshold and TEST.md §3.2 in lockstep (QA #636).
+        # TEST.md §3.1/§3.2 exactly: 41 total AES rules across 7 groups.
+        # All 41 are surfaced by `scan workspaces-bad` via the doc-audit
+        # pass (AES6xx per-doc codes fire on the root docs: AGENTS,
+        # ARCHITECTURE, CONTRIBUTING, PRD, ROADMAP, DATA, BACKLOG, FRD,
+        # DESIGN, README). The required-doc half of the root-gated rules
+        # is covered by unit tests rather than by this gate. When rules
+        # are added/removed, update this threshold and TEST.md §3.2 in
+        # lockstep (QA #636).
         # `|| true` on the assignment: `scan` exits 1 whenever it reports
         # violations, which is its contract — under `pipefail` that status
         # would abort the step before the threshold check could print its
@@ -163,12 +162,12 @@ jobs:
         # failure still yields 0 codes, which fails the threshold below.
         #
         # Subset check: every code that scan emits must have a row in
-        # ARCHITECTURE.md. The `>= 36` floor is unchanged.
+        # ARCHITECTURE.md. The `>= 41` floor matches the 41-code inventory.
         run: |
-          # --- emit-count floor (unchanged) ---
+          # --- emit-count floor ---
           codes=$(./target/debug/lint-arwaky-cli scan workspaces-bad --format json 2>/dev/null | grep -oP '"code": *"[A-Z0-9_:]+"' | grep -oP '(?<="code": ")[A-Z0-9_:]+' | grep '^AES' | sort -u | wc -l) || true
           echo "Unique codes: ${codes:-0}"
-          [ "${codes:-0}" -ge 36 ]
+          [ "${codes:-0}" -ge 41 ]
 
           # --- scan-emitted ⊆ doc-codes subset check ---
           doc_codes=$(grep -hE '^\| AES[0-9]{3} \|' ARCHITECTURE.md | awk -F'|' '{gsub(/ /,"",$2); print $2}' | sort -u)
