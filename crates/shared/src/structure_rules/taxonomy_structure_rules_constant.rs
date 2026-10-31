@@ -1,14 +1,14 @@
 // PURPOSE: structure invariant rule codes, violation types, and folder vocabulary for AES701–AES703
 
 /// ─── AES701 — Shared folder rules ───────────────────────────────────────────
-/// `shared/` is the kernel: taxonomy, utility, and contract files only.
+/// `shared/` is the layer: taxonomy, utility, and contract files only.
 /// Shared folders carry DATA.md (spec) and BACKLOG.md (tracking).
 pub const RULE_CODE_SHARED_PURITY: &str = "AES701";
 
 /// A shared folder holds a file whose layer does not belong there.
 pub const SHARED_PURITY_VIOLATION_FORBIDDEN_FILES: &str = "shared_has_forbidden_files";
 
-/// A shared (kernel) folder is missing its required DATA.md + BACKLOG.md pair.
+/// A shared (layer) folder is missing its required DATA.md + BACKLOG.md pair.
 pub const SHARED_PURITY_VIOLATION_NO_DOC_PAIR: &str = "shared_missing_doc_pair";
 
 /// ─── AES702 — Feature folder rules ──────────────────────────────────────────
@@ -34,7 +34,7 @@ pub const FEATURE_HEALTH_VIOLATION_NO_DOC_PAIR: &str = "feature_missing_doc_pair
 pub const FEATURE_HEALTH_VIOLATION_MISSING_ROOT_CONTAINER: &str = "feature_missing_root_container";
 
 /// A feature folder is not mirrored as a `shared/src/<feature>/` subfolder in
-/// its member's kernel, so its contract and taxonomy modules have no home.
+/// its member's layer, so its contract and taxonomy modules have no home.
 pub const FEATURE_HEALTH_VIOLATION_MISSING_SHARED_SUBFOLDER: &str =
     "feature_missing_shared_subfolder";
 

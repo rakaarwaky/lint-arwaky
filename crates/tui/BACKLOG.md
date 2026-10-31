@@ -14,167 +14,141 @@ Last Updated: 2026-09-29
 
 ## Backlog Status
 
-### {DS-TUIC-001}
+### DS-TUIC-001
 
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | TUIC                                      |
-| In Progress  | None                                       |
-| Blocked      | None                                       |
-| Next         | Ship                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | TUIC |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
-### {DS-TUIC-002}
+### DS-TUIC-002
 
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | TUIC                                      |
-| In Progress  | None                                       |
-| Blocked      | None                                       |
-| Next         | Ship                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | TUIC |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
-### {DS-TUIC-003}
+### DS-TUIC-003
 
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | TUIC                                      |
-| In Progress  | None                                       |
-| Blocked      | None                                       |
-| Next         | Ship                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | TUIC |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
-### {DS-TUIC-004}
+### DS-TUIC-004
 
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | TUIC                                      |
-| In Progress  | None                                       |
-| Blocked      | None                                       |
-| Next         | Ship                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | TUIC |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
-### {DS-TUIC-005}
+### DS-TUIC-005
 
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | TUIC                                      |
-| In Progress  | None                                       |
-| Blocked      | None                                       |
-| Next         | Ship                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | TUIC |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
-### {DS-TUIC-006}
+### DS-TUIC-006
 
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | TUIC                                      |
-| In Progress  | None                                       |
-| Blocked      | None                                       |
-| Next         | Ship                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | TUIC |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
-### {DS-TUIC-007}
+### DS-TUIC-007
 
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | TUIC                                      |
-| In Progress  | None                                       |
-| Blocked      | None                                       |
-| Next         | Ship                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | TUIC |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
-### {DS-TUIC-008}
+### DS-TUIC-008
 
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | TUIC                                      |
-| In Progress  | None                                       |
-| Blocked      | None                                       |
-| Next         | Ship                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | TUIC |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
-### {DS-TUIC-009}
+### DS-TUIC-009
 
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | TUIC                                      |
-| In Progress  | None                                       |
-| Blocked      | None                                       |
-| Next         | Ship                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | TUIC |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
-### {DS-TUIC-010}
+### DS-TUIC-010
 
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | TUIC                                      |
-| In Progress  | None                                       |
-| Blocked      | None                                       |
-| Next         | Ship                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | TUIC |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
-### {DS-TUIC-011}
+### DS-TUIC-011
 
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | TUIC                                      |
-| In Progress  | None                                       |
-| Blocked      | None                                       |
-| Next         | Ship                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | TUIC |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
-### {DS-TUIC-012}
+### DS-TUIC-012
 
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | TUIC                                      |
-| In Progress  | None                                       |
-| Blocked      | None                                       |
-| Next         | Ship                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | TUIC |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
-### {DS-TUIC-013}
+### DS-TUIC-013
 
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | TUIC                                      |
-| In Progress  | None                                       |
-| Blocked      | None                                       |
-| Next         | Ship                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | TUIC |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
 ## Reference
 
-| Artifact | Purpose | Link|
-|----------|---------|------|
-| PRD.md | Product requirements | [PRD.md](../../PRD.md)|
-| DESIGN.md | Surface design | [DESIGN.md](DESIGN.md)|
-| ROADMAP.md | Roadmap status | [ROADMAP.md](../../ROADMAP.md)|
-| ARCHITECTURE.md | Layer contract | [ARCHITECTURE.md](../../ARCHITECTURE.md)|
+| Artifact | Purpose | Link |
+| ---------- | --------- | ------ |
+| PRD.md | Product requirements | [PRD.md](../../PRD.md) |
+| DESIGN.md | Surface design | [DESIGN.md](DESIGN.md) |
+| ROADMAP.md | Roadmap status | [ROADMAP.md](../../ROADMAP.md) |
+| ARCHITECTURE.md | Layer contract | [ARCHITECTURE.md](../../ARCHITECTURE.md) |

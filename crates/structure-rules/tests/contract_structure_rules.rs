@@ -466,7 +466,7 @@ fn conforming_workspace_reports_no_findings() {
         root.join("crates/calculator/BACKLOG.md").as_path(),
         "# Calculator — BACKLOG",
     );
-    // the shared kernel mirror that a complete feature owes (AES702).
+    // the shared layer mirror that a complete feature owes (AES702).
     write(
         root.join("crates/shared/src/calculator/contract_calculator_protocol.rs")
             .as_path(),

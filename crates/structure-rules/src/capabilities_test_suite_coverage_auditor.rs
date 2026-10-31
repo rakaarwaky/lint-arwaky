@@ -22,7 +22,7 @@ use std::path::Path;
 ///
 /// A folder with no `tests/` directory at all is still a feature that owes a
 /// suite, so the missing directory is reported rather than treated as an
-/// exemption. Folders that own no source — a pure `shared/` kernel or a
+/// exemption. Folders that own no source — a pure `shared/` layer or a
 /// surface — are out of scope.
 pub struct TestSuiteCoverageAuditor {}
 

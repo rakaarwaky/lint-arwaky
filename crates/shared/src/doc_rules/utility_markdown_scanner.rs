@@ -65,7 +65,7 @@ pub fn source_ext_pattern() -> Option<&'static regex::Regex> {
 /// Heading matcher.
 pub fn heading_re() -> Option<&'static regex::Regex> {
     static PAT: OnceLock<Option<regex::Regex>> = OnceLock::new();
-    PAT.get_or_init(|| regex::Regex::new(r"(?m)^(#{1,6})\s+(.*?)\s*$").ok())
+    PAT.get_or_init(|| regex::Regex::new(consts::HEADING_PATTERN).ok())
         .as_ref()
 }
 
@@ -270,6 +270,49 @@ pub fn h3_subsections(section: &Section) -> Vec<Section> {
                     .unwrap_or_default()
                     .to_string(),
                 // +1 for the parent's own heading line.
+                line: section.line + line,
+            }
+        })
+        .collect()
+}
+
+/// Level-4 subsections of one level-3 section, with document-absolute lines.
+///
+/// Mirrors `h3_subsections` structurally: scans the body for `####` headings and
+/// returns each as a `Section` whose `line` is the document-absolute 1-based
+/// line of the H4 heading itself.
+pub fn h4_subsections(section: &Section) -> Vec<Section> {
+    let Some(re) = heading_re() else {
+        return Vec::new();
+    };
+    let mut all: Vec<(usize, String, usize, usize)> = Vec::new();
+    for caps in re.captures_iter(&section.body) {
+        let full = match caps.get(0) {
+            Some(f) => f,
+            None => continue,
+        };
+        let Some(marker) = caps.get(1) else { continue };
+        if marker.as_str().len() != 4 {
+            continue;
+        }
+        let line = section.body[..full.start()].lines().count().max(1);
+        let title = caps.get(2).map_or("", |m| m.as_str()).to_string();
+        all.push((full.start(), title, line, full.end()));
+    }
+    all.iter()
+        .enumerate()
+        .map(|(i, (_start, title, line, body_start))| {
+            let body_end = all
+                .get(i + 1)
+                .map_or_else(|| section.body.len(), |(start, _, _, _)| *start);
+            Section {
+                level: 4,
+                title: title.clone(),
+                body: section
+                    .body
+                    .get(*body_start..body_end)
+                    .unwrap_or_default()
+                    .to_string(),
                 line: section.line + line,
             }
         })
@@ -719,5 +762,84 @@ mod tests {
             "the marker is reported verbatim"
         );
         assert_eq!(hits[0].0, 1, "the hit anchors to its line");
+    }
+
+    /// Basic H4 extraction: two `####` headings under an H3 body are returned
+    /// with document-absolute lines.
+    #[test]
+    fn h4_subsections_returns_level4_children() {
+        // H3 starts at document line 5; its body has two H4 headings at body lines 1 and 3.
+        let parent = Section {
+            level: 3,
+            title: "FR-X-001: Name".to_string(),
+            body: "#### Description\ntext1\n#### Method\ntext2\n".to_string(),
+            line: 5,
+        };
+        let subs = h4_subsections(&parent);
+        assert_eq!(subs.len(), 2, "two H4 headings must be returned");
+        assert_eq!(subs[0].title, "Description");
+        assert_eq!(subs[1].title, "Method");
+        assert_eq!(subs[0].level, 4);
+        assert_eq!(subs[1].level, 4);
+    }
+
+    /// Line arithmetic: the H3's `line` is 1-based and already counts the H3
+    /// heading line; the body-relative offset adds the 1-based body line of
+    /// the H4 heading itself.
+    #[test]
+    fn h4_subsections_line_offsets_are_document_absolute() {
+        // H3 heading is at document line 10; its body starts at document line 11.
+        // Body "#### Foo\nrest\n" has the H4 at body line 1, so document line is 10 + 1 = 11.
+        let parent = Section {
+            level: 3,
+            title: "Entry".to_string(),
+            body: "#### Foo\nrest\n".to_string(),
+            line: 10,
+        };
+        let subs = h4_subsections(&parent);
+        assert_eq!(subs.len(), 1);
+        assert_eq!(subs[0].line, 11, "document-absolute line");
+        assert_eq!(subs[0].title, "Foo");
+    }
+
+    /// Each H4 subsection's body ends where the next H4 heading begins.
+    #[test]
+    fn h4_subsections_body_ends_at_next_heading() {
+        let parent = Section {
+            level: 3,
+            title: "Entry".to_string(),
+            body: "#### A\nbody-a\n#### B\nbody-b\n".to_string(),
+            line: 1,
+        };
+        let subs = h4_subsections(&parent);
+        // `body` starts at `full.end()`, which includes the newline terminating the H4 heading line, and ends at the start of the next H4 heading (or end of parent body).
+        assert_eq!(subs[0].body, "\nbody-a\n");
+        assert_eq!(subs[1].body, "\nbody-b\n");
+    }
+
+    /// An H3 body with no H4 headings returns an empty vec.
+    #[test]
+    fn h4_subsections_empty_when_no_h4() {
+        let parent = Section {
+            level: 3,
+            title: "Entry".to_string(),
+            body: "prose only, no H4\n".to_string(),
+            line: 1,
+        };
+        assert!(h4_subsections(&parent).is_empty());
+    }
+
+    /// H2 and H3 headings inside an H3 body are not treated as H4.
+    #[test]
+    fn h4_subsections_ignores_lower_and_equal_levels() {
+        let parent = Section {
+            level: 3,
+            title: "Entry".to_string(),
+            body: "## Other\n### Sub\n#### Real\nx\n".to_string(),
+            line: 1,
+        };
+        let subs = h4_subsections(&parent);
+        assert_eq!(subs.len(), 1, "only the H4 heading is returned");
+        assert_eq!(subs[0].title, "Real");
     }
 }

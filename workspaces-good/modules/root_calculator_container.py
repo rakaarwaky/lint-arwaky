@@ -88,7 +88,7 @@ class CalculatorContainer:
         multiplication_log = MultiplicationLog()
         division_log = DivisionLog()
 
-        # Wire feature protocol contracts so the shared kernel consumes them.
+        # Wire feature protocol contracts so the shared layer consumes them.
         # The protocols are abstract capability seams; importing them registers
         # them as reachable from the container entry point.
         addition_check_protocol = AdditionCheckProtocol

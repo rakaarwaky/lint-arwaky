@@ -1,7 +1,7 @@
 /**
  * Subtraction feature shared mirror (AES101 `_aggregate` / AES102 `_protocol`).
  *
- * Mirror of the `packages/subtraction` feature into the `packages/shared` kernel.
+ * Mirror of the `packages/subtraction` feature into the `packages/shared` layer.
  * Two FR requirements map to two protocol classes here.
  */
 

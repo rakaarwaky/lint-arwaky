@@ -6,6 +6,8 @@ description = "AES doc rules foundation: taxonomy (`_vo`, `_entity`, `_event`, `
 license = "MIT"
 repository = "https://github.com/rakaarwaky/lint-arwaky"
 publish = true
+# The shared build script runs this crate's Comrak doc-rules codegen.
+build = "../../build.rs"
 
 # The folder *is* the crate root, so the manifest lives beside `mod.rs`.
 [lib]
@@ -21,3 +23,6 @@ regex.workspace = true
 
 [dev-dependencies]
 tempfile = "3"
+
+[build-dependencies]
+comrak.workspace = true

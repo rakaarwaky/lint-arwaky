@@ -1,192 +1,373 @@
-# FRD — role-rules (v2.0.0)
-
----
+# FRD — role-rules
 
 ## Feature Overview
 
-The role-rules crate enforces architectural boundaries and responsibility rules for each layer (Taxonomy, Contract, Capabilities, Agent, Surface, Utility) as defined by the 7-layer AES architecture. It receives pre-parsed file data from the external filesystem crate, classifies files by their filename prefix, and dispatches to 6 layer-specific role checkers (AES401–AES406). Root layer files are skipped (pure DI wiring only).
-
-File discovery, raw content reads, and AST parsing are handled by the external `filesystem` crate. The Surface calls `filesystem.build_file_index(root)` to populate caches, then passes pre-fetched `&[FileEntry]` (with parse_metadata) to the role-rules orchestrator via `run_audit_with_entries`. The role-rules crate does zero I/O — it only performs business logic analysis on pre-fetched data.
-
-Import checking is NOT performed by role-rules. All import validation (forbidden imports, mandatory imports, unused imports) is the responsibility of the import-rules crate (AES201–AES205). Role-rules only validates structural and responsibility constraints within each file.
-
-- **Architecture & Data Flow**
+The role-rules crate enforces architectural boundaries and responsibility rules per AES layer (Taxonomy, Contract, Capabilities, Agent, Surface, Utility). It sits in the audit stage of the check command: the Surface calls its audit entry point with pre-fetched file data, and the crate runs zero-I/O business logic that dispatches to six layer-specific role checkers (AES401–AES406) and returns findings to the caller.
 
 ```mermaid
 flowchart TD
-    A["Surface"] -->|"build_file_index(root)"| D["filesystem_aggregate\n(external crate)"]
-    A -->|"file_list()"| D
-
-    subgraph FS ["filesystem crate (external)"]
-        D --> E1["file_walker"]
-        D --> E2["AST parser\n(parse_metadata)"]
-        E1 --> G1["FileEntry[]\n+ content_map"]
-        E2 --> G1
-    end
-
-    G1 -->|"return"| D
-    D -->|"FileEntry[]\n(pre-fetched)"| A
-
-    A -->|"run_audit_with_entries(&[FileEntry])"| B["role_aggregate"]
-    B --> C["role_orchestrator\n(zero I/O)"]
-
-    C -->|"classify by prefix"| H1["taxonomy_check"]
-    C -->|"classify by prefix"| H2["contract_check"]
-    C -->|"classify by prefix"| H3["capabilities_check"]
-    C -->|"classify by prefix"| H4["utility_check"]
-    C -->|"classify by prefix"| H5["agent_check"]
-    C -->|"classify by prefix"| H6["surface_check"]
-
-    H1 --> I["Violations"]
-    H2 --> I
-    H3 --> I
-    H4 --> I
-    H5 --> I
-    H6 --> I
-    I --> J["LintResult"]
-    J --> C
-    C --> B
-    B -->|output| A
-
+    S["Surface"] -->|"audit entries"| R["role-rules audit entry point"]
+    R -->|"classify by prefix"| O["orchestrator"]
+    O --> C1["taxonomy checker AES401"]
+    O --> C2["contract checker AES402"]
+    O --> C3["capabilities checker AES403"]
+    O --> C4["utility checker AES404"]
+    O --> C5["agent checker AES405"]
+    O --> C6["surface checker AES406"]
+    C1 --> V["findings"]
+    C2 --> V
+    C3 --> V
+    C4 --> V
+    C5 --> V
+    C6 --> V
+    V --> R
 ```
 
 ## Functional Requirements
 
 ### FR-RoleRules-001: File Classification and Dispatch
 
-| Aspect | Detail|
-|--------|-------|
-| Description | Classify each file into its AES layer role so the right role checker runs on it. |
-| Business Rules | RoleClassifier maps file path prefixes to layer roles (agent, capabilities, contract, taxonomy, utility, surface); every layer prefix maps (role_classifier_maps_every_layer_prefix); capability prefix classifies by file prefix; non-classified files are ignored by role checkers; classification is language-neutral (same rule for Rust, Python, TS). |
-| Edge Cases | Windows separator paths classify the same as posix; file outside all layer dirs unclassified (no checker runs, no violation); bucketed subdirectories (capabilities subfolders) classify to capabilities; a file never classified against two roles at once. |
-| Capability | RoleClassifier performs layer classification. |
-| Protocol | IClassificationProtocol. |
-| Method | classify(path) -> layer role for routing to AES401-AES406 checkers. |
-| Input | File path; source is RoleRequest::RunAuditWithEntries via IRoleRunnerAggregate::execute entries. |
-| Output | Role tag consumed by FR-RoleRules-002..007; audit result in RoleResponse::Audit. |
-| Error | Unclassified path yields no role and therefore no finding for that file. |
-| Event | None; classification is pure. |
-| Test | role_classifier_maps_every_layer_prefix and role_classifier_capability_classifies_file_prefix assert prefix mapping. |
-| Metric | Every seeded layer prefix classifies to its documented role; unclassified fixtures produce zero downstream findings. |
+**Description:** The role-rules crate shall classify every audited file into one AES layer role (agent, capabilities, contract, taxonomy, utility, surface, or root) so the correct layer checker runs on it, and shall ignore files that fall outside every layer directory.
+
+#### Business Logic
+
+- Every file path prefix maps to exactly one layer role; a file never resolves to two roles at once.
+- Classification is language-neutral: the same prefix rules apply to Rust, Python, and TypeScript files.
+- Windows and POSIX path separators classify identically.
+- Bucketed subdirectories under the capabilities layer classify to the capabilities role.
+- Root-layer files (DI wiring only) are skipped, not flagged.
+- Files outside every layer directory are left unclassified and produce no finding.
+
+#### Edge Cases
+
+- An unclassified path yields no role and therefore no downstream finding.
+- A file matching a layer prefix but sitting in a nested bucket still classifies to that layer.
+- A file with an unknown prefix is unclassified and ignored.
+
+#### Technical Specification
+
+| Aspect | Detail |
+|--------|--------|
+| **Input** | Pre-fetched file entries with paths; provided by the Surface through the audit aggregate's execute entry point. |
+| **Output** | A single layer role tag per classified file, consumed by AES401–AES406 checkers; audit result returned to the caller. |
+| **Protocol** | IClassificationProtocol |
+| **Method** | classify(path) |
+| **Event** | None; classification is pure and emits no domain event. |
+| **Error** | Unclassified path: no role, no finding; parse failure: no finding, audit continues. |
+
+#### Test
+
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| A fixtures directory holds one file per layer prefix | The classifier runs on each path | Each file resolves to its documented layer role exactly once |
+| A file sits outside every layer directory | The classifier runs on that path | No role is assigned and no checker runs on the file |
+| Windows and POSIX separators name the same layer file | Both path forms are classified | Both classify to the same layer role |
+| A nested capabilities bucket file is classified | The classifier runs on it | It resolves to the capabilities role |
+
+#### Metric
+
+| Target Metric | Value |
+|---------------|-------|
+| Seeded layer-prefix fixtures classified to their documented role | 100% |
+| Unclassified fixtures producing downstream findings | 0 |
 
 ### FR-RoleRules-002: Taxonomy Purity and Primitive Restriction (AES401)
 
-| Aspect | Detail|
-|--------|-------|
-| Description | Enforce taxonomy files use only taxonomy primitives and remain constant-pure (AES401). |
-| Business Rules | Taxonomy files may declare values, enums, and error/runtime/event markers using taxonomy primitives; primitive entities (struct, error, event) with non-taxonomy primitives are flagged; constant-only files must hold no impl blocks; non-taxonomy files are ignored entirely. |
-| Edge Cases | Clean constant file no violation; constant file with struct detected; entity/error/event with primitive detected; non-taxonomy file ignored; metadata cases per language handled by same protocol. |
-| Capability | TaxonomyRoleChecker audits taxonomy role compliance. |
-| Protocol | ITaxonomyRoleProtocol. |
-| Method | Taxonomy role audit over classified taxonomy files returning AES401 violations. |
-| Input | Classified taxonomy file entries (path plus content); source is RoleRequest::RunAuditWithEntries. |
-| Output | Violations with AES401 codes inside RoleResponse::Audit. |
-| Error | Unparseable file yields no finding; non-taxonomy file skipped by classification. |
-| Event | None. |
-| Test | aes401_clean_constant_file_no_violation, aes401_constant_file_with_struct_detected, aes401_entity_with_primitive_detected, and aes401_non_taxonomy_file_ignored assert Firing and silence. |
-| Metric | Seeded impurity fixtures each produce one AES401 finding; clean constant fixture and ignored files produce zero. |
+**Description:** The role-rules crate shall audit taxonomy files so they use only taxonomy primitives and stay constant-pure, and shall flag any primitive entity (struct, error, or event) declared with a non-taxonomy primitive as an AES401 violation.
+
+#### Business Logic
+
+- Taxonomy files may declare values, enums, and error/runtime/event markers using taxonomy primitives only.
+- Constant-only taxonomy files must hold no impl blocks.
+- A primitive entity declared with a non-taxonomy primitive is flagged as AES401.
+- Files not classified as taxonomy are ignored entirely.
+
+#### Edge Cases
+
+- A clean constant taxonomy file produces no violation.
+- A constant taxonomy file containing a struct is flagged.
+- An entity, error, or event carrying a primitive is flagged.
+- A non-taxonomy file is ignored by classification and produces no finding.
+
+#### Technical Specification
+
+| Aspect | Detail |
+|--------|--------|
+| **Input** | Classified taxonomy file entries (path plus content). |
+| **Output** | AES401 violations inside the audit response returned to the caller. |
+| **Protocol** | ITaxonomyRoleProtocol |
+| **Method** | taxonomy role audit |
+| **Event** | None. |
+| **Error** | An unparseable taxonomy file yields no finding rather than failing the audit. |
+
+#### Test
+
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| A clean constant taxonomy file is audited | The taxonomy checker runs | No AES401 violation is reported |
+| A taxonomy file declares a primitive-typed struct | The taxonomy checker runs | One AES401 violation is reported |
+| A non-taxonomy file is audited | Classification runs first | The file is ignored and no violation is reported |
+
+#### Metric
+
+| Target Metric | Value |
+|---------------|-------|
+| Seeded impurity fixtures each producing one AES401 finding | 100% |
+| Clean constant and ignored fixtures producing findings | 0 |
 
 ### FR-RoleRules-003: Contract Primitive Restriction (AES402)
 
-| Aspect | Detail|
-|--------|-------|
-| Description | Restrict contract files to declarations: no builtin primitives, no dispatch bags, no default bodies (AES402). |
-| Business Rules | Contract files declare traits/interfaces only; default method bodies (Python default body, Python dispatch bag, Python docstring-then-stub patterns handled: docstring-then-stub is clean) are flagged; builtin primitive usage inside contracts is flagged; non-contract files ignored; multi-method aggregates on Python contracts detected. |
-| Edge Cases | Clean protocol no violation; python docstring-then-stub clean (single and multi-line); python aggregate with multiple methods detected; python default body detected; python dispatch bag detected; non-contract file ignored. |
-| Capability | ContractRoleAuditors (Python, Rust, TypeScript variants) audit contract purity. |
-| Protocol | IContractRoleProtocol. |
-| Method | Contract role audit per language returning AES402 violations. |
-| Input | Classified contract file entries; source is RoleRequest::RunAuditWithEntries. |
-| Output | Violations with AES402 codes inside RoleResponse::Audit. |
-| Error | Unparseable contract yields no finding rather than failing the audit. |
-| Event | None. |
-| Test | aes402_clean_protocol_no_violation, aes402_python_docstring_then_stub_is_clean, aes402_python_dispatch_bag_detected, aes402_python_contract_default_body_detected, and aes402_non_contract_file_ignored assert rules. |
-| Metric | Seeded contract-violation fixtures each produce one AES402 finding; clean protocol fixtures produce zero. |
+**Description:** The role-rules crate shall restrict contract files to declarations only, flagging builtin primitives, dispatch bags, and default method bodies, while accepting clean protocol declarations and docstring-then-stub patterns.
+
+#### Business Logic
+
+- Contract files declare traits/interfaces only; no builtin primitives and no dispatch bags are permitted.
+- Default method bodies are flagged; a docstring-then-stub (single or multi-line) is accepted as clean.
+- Multi-method aggregates on Python contracts are detected.
+- Non-contract files are ignored.
+
+#### Edge Cases
+
+- A clean protocol declaration produces no violation.
+- A Python docstring-then-stub (single and multi-line) is clean.
+- A Python aggregate with multiple methods is detected.
+- A Python default body, dispatch bag, or builtin primitive usage is flagged.
+- A non-contract file is ignored.
+
+#### Technical Specification
+
+| Aspect | Detail |
+|--------|--------|
+| **Input** | Classified contract file entries. |
+| **Output** | AES402 violations inside the audit response. |
+| **Protocol** | IContractRoleProtocol |
+| **Method** | contract role audit |
+| **Event** | None. |
+| **Error** | An unparseable contract yields no finding rather than failing the audit. |
+
+#### Test
+
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| A clean protocol declaration is audited | The contract auditor runs | No AES402 violation is reported |
+| A Python contract carries a default body | The contract auditor runs | One AES402 violation is reported |
+| A Python dispatch bag is present | The contract auditor runs | One AES402 violation is reported |
+| A non-contract file is audited | Classification runs first | The file is ignored and no violation is reported |
+
+#### Metric
+
+| Target Metric | Value |
+|---------------|-------|
+| Seeded contract-violation fixtures each producing one AES402 finding | 100% |
+| Clean protocol fixtures producing findings | 0 |
 
 ### FR-RoleRules-004: Capability Protocol Implementation (AES403)
 
-| Aspect | Detail|
-|--------|-------|
-| Description | Require capability files to implement their protocol with banner and block discipline (AES403). |
-| Business Rules | Capability files must carry the three banners (missing middle/first over three detected); inherent impl must precede protocol impl (block order); no embedded tests, no local constants outside constants blocks; exactly one protocol unless explicitly multi-protocol (multi-protocol rust single-no-violation, multi-protocol detected when applicable per language); capability without implementor detected; banner count over three detected; non-capability files ignored; python multi-protocol allowed. |
-| Edge Cases | All three banners exact => no violation; banner above three detected; block order correct=>clean, inherent-before-protocol =>violation; embedded test detected; local constant detected; missing banner detected; missing implementor detected; multi-protocol rust single clean; multi-protocol python detected; non-capability file ignored. |
-| Capability | CapabilitiesRoleAuditors (Rust, Python, TypeScript) audit capability discipline. |
-| Protocol | ICapabilitiesRoleProtocol. |
-| Method | Capability role audit returning AES403 violations per finding kind. |
-| Input | Classified capability file entries; source is RoleRequest::RunAuditWithEntries. |
-| Output | Violations with AES403 codes inside RoleResponse::Audit. |
-| Error | Unparseable file yields no finding. |
-| Event | None. |
-| Test | aes403_all_three_banners_no_violation, aes403_banner_above_three_detected, aes403_block_order_inherent_before_protocol_detected, and aes403_embedded_test_detected assert discipline, |
-| Metric | Each seeded discipline break fires its own AES403 finding; pristine capability fixture fires zero. |
+**Description:** The role-rules crate shall require capability files to implement their protocol with banner and block discipline, flagging missing banners, wrong block order, embedded tests, and local constants outside constants blocks.
+
+#### Business Logic
+
+- Capability files must carry the three banners; a missing middle or first banner over three is flagged.
+- The inherent impl must precede the protocol impl (block order); inherent-before-protocol is flagged.
+- No embedded tests and no local constants outside constants blocks are permitted.
+- Exactly one protocol per capability unless explicitly multi-protocol; multi-protocol Rust is clean single, multi-protocol Python is detected.
+- A capability without an implementor is detected; non-capability files are ignored.
+
+#### Edge Cases
+
+- All three banners exact produces no violation.
+- Banner count over three is flagged.
+- Correct block order is clean; inherent-before-protocol is flagged.
+- Embedded test and local constant are flagged.
+- Missing banner and missing implementor are flagged.
+- Multi-protocol Rust single is clean; multi-protocol Python is detected.
+- Non-capability files are ignored.
+
+#### Technical Specification
+
+| Aspect | Detail |
+|--------|--------|
+| **Input** | Classified capability file entries. |
+| **Output** | AES403 violations inside the audit response. |
+| **Protocol** | ICapabilitiesRoleProtocol |
+| **Method** | capability role audit |
+| **Event** | None. |
+| **Error** | An unparseable file yields no finding rather than failing the audit. |
+
+#### Test
+
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| A capability file carries all three exact banners | The capability auditor runs | No AES403 violation is reported |
+| A capability file exceeds three banners | The capability auditor runs | One AES403 violation is reported |
+| A capability file places the protocol impl before the inherent impl | The capability auditor runs | One AES403 violation is reported |
+| A capability file embeds a test | The capability auditor runs | One AES403 violation is reported |
+
+#### Metric
+
+| Target Metric | Value |
+|---------------|-------|
+| Seeded discipline-break fixtures each firing its own AES403 finding | 100% |
+| Pristine capability fixture firing findings | 0 |
 
 ### FR-RoleRules-005: Utility Purity (AES404)
 
-| Aspect | Detail|
-|--------|-------|
-| Description | Keep utility files pure: no inherent impls, types, or side-effect structures beyond allowed forms (AES404). |
-| Business Rules | Utility files may hold free functions (Python functions-only NOT flagged); inherent impls, structs, enums, metadata/impl traits, TS enums/interfaces/type aliases are flagged; Rust macro-body impl not flagged; Python class inutility flagged; non-utility files ignored; clean metadata no violation. |
-| Edge Cases | Clean utility no violation; python utility with only functions not flagged; python utility with class detected; rust utility with struct/enum/impl detected; rust macro-body impl not flagged; metadata inherent impl/trait/enum/interface/type reported; non-utility file ignored. |
-| Capability | UtilityRoleAuditors (Python, Rust, TypeScript) audit utility purity. |
-| Protocol | IUtilityRoleProtocol. |
-| Method | Utility role audit returning AES404 violations. |
-| Input | Classified utility file entries; source is RoleRequest::RunAuditWithEntries. |
-| Output | Violations with AES404 codes inside RoleResponse::Audit. |
-| Error | Unparseable file yields no finding. |
-| Event | None. |
-| Test | aes404_clean_utility_no_violation, aes404_python_utility_with_only_functions_not_flagged, aes404_rust_utility_with_macro_body_impl_not_flagged, and aes404_non_utility_file_ignored assert purity rules. |
-| Metric | Seeded impure utility fixtures fire one AES404 finding each; functions-only Python utility and macro-body Rust impl fire zero. |
+**Description:** The role-rules crate shall keep utility files pure, flagging inherent impls, types, and side-effect structures beyond allowed forms, while accepting free functions and macro-body impls.
+
+#### Business Logic
+
+- Utility files may hold free functions only; functions-only Python utilities are not flagged.
+- Inherent impls, structs, enums, metadata/impl traits, TS enums/interfaces/type aliases are flagged.
+- Rust macro-body impl is not flagged; a Python class in a utility file is flagged.
+- Clean metadata produces no violation; non-utility files ignored.
+
+#### Edge Cases
+
+- A clean utility file produces no violation.
+- A Python utility with only functions is not flagged.
+- A Python utility with a class is flagged.
+- A Rust utility with struct/enum/impl is flagged; macro-body impl is not flagged.
+- Metadata inherent impl/trait/enum/interface/type alias is reported.
+- A non-utility file is ignored.
+
+#### Technical Specification
+
+| Aspect | Detail |
+|--------|--------|
+| **Input** | Classified utility file entries. |
+| **Output** | AES404 violations inside the audit response. |
+| **Protocol** | IUtilityRoleProtocol |
+| **Method** | utility role audit |
+| **Event** | None. |
+| **Error** | An unparseable file yields no finding rather than failing the audit. |
+
+#### Test
+
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| A clean utility file is audited | The utility auditor runs | No AES404 violation is reported |
+| A Python utility holds only free functions | The utility auditor runs | No violation is reported |
+| A Python utility holds a class | The utility auditor runs | One AES404 violation is reported |
+| A Rust utility holds struct/enum/impl | The utility auditor runs | One AES404 violation is reported |
+| A non-utility file is audited | Classification runs first | The file is ignored and no violation is reported |
+
+#### Metric
+
+| Target Metric | Value |
+|---------------|-------|
+| Seeded impure-utility fixtures each firing one AES404 finding | 100% |
+| Functions-only Python and macro-body Rust fixtures firing findings | 0 |
 
 ### FR-RoleRules-006: Agent Orchestrator Composition (AES405)
 
-| Aspect | Detail|
-|--------|-------|
-| Description | Validate agent orchestrator composition: proper agent structure per language (AES405). |
-| Business Rules | Agent files must follow orchestrator composition rules (aggregate trait, capability wiring, no stray primitives); per-language auditors (Python, Rust, TypeScript) check the structure; files not classified as agent are ignored. |
-| Edge Cases | Well-formed agent files pass; structural gaps (missing aggregate usage, misplaced capability calls) detected per language; non-agent files ignored by classification; clean fixtures produce zero findings. |
-| Capability | AgentRoleAuditors (Python, Rust, TypeScript) audit agent composition. |
-| Protocol | IAgentRoleProtocol. |
-| Method | Agent composition audit returning AES405 violations. |
-| Input | Classified agent file entries; source is RoleRequest::RunAuditWithEntries. |
-| Output | Violations with AES405 codes inside RoleResponse::Audit. |
-| Error | Unparseable agent yields no finding. |
-| Event | None. |
-| Test | Agent-role suite coverage in the role rust tests asserts AES405 detection on seeded composition breaks and silence on well-formed agents. |
-| Metric | Seeded broken composition fixtures produce one AES405 finding each; well-formed agent fixtures produce zero. |
+**Description:** The role-rules crate shall validate agent orchestrator composition per language, checking aggregate trait usage, capability wiring, and absence of stray primitives, and shall ignore files not classified as agent.
+
+#### Business Logic
+
+- Agent files must follow orchestrator composition rules: aggregate trait, capability wiring, no stray primitives.
+- Per-language auditors (Python, Rust, TypeScript) check the structure.
+- Files not classified as agent are ignored by classification.
+- Well-formed agent files pass; structural gaps (missing aggregate usage, misplaced capability calls) are detected per language.
+
+#### Edge Cases
+
+- A well-formed agent file produces no violation.
+- Structural gaps such as missing aggregate usage or misplaced capability calls are detected per language.
+- A non-agent file is ignored and produces no finding.
+- Clean fixtures produce zero findings.
+
+#### Technical Specification
+
+| Aspect | Detail |
+|--------|--------|
+| **Input** | Classified agent file entries. |
+| **Output** | AES405 violations inside the audit response. |
+| **Protocol** | IAgentRoleProtocol |
+| **Method** | agent composition audit |
+| **Event** | None. |
+| **Error** | An unparseable agent yields no finding rather than failing the audit. |
+
+#### Test
+
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| A well-formed agent file is audited | The agent auditor runs | No AES405 violation is reported |
+| An agent file lacks aggregate usage | The agent auditor runs | One AES405 violation is reported |
+| An agent file misplaces capability calls | The agent auditor runs | One AES405 violation is reported |
+| A non-agent file is audited | Classification runs first | The file is ignored and no violation is reported |
+
+#### Metric
+
+| Target Metric | Value |
+|---------------|-------|
+| Seeded broken-composition fixtures each firing one AES405 finding | 100% |
+| Well-formed agent fixtures firing findings | 0 |
 
 ### FR-RoleRules-007: Surface Passive Role (AES406)
 
-| Aspect | Detail|
-|--------|-------|
-| Description | Keep surface files passive: tier-aware limits on logic, no bypass shortcuts (AES406). |
-| Business Rules | Surface tier (smart vs passive) is aware; passive surfaces have a function-count limit and control-flow budget; smart surfaces exempt from the passive limits; utility calls from surface are allowed (not flagged); logic bypass flagged; fallback path flags passive control flow with fallback message; non-surface files ignored. |
-| Edge Cases | Clean surface no violation; passive fn count under limit clean; many functions flagged; passive excess control flow detected (fallback message variant); smart surface exempt; surface utility calls not flagged; surface logic bypass flagged; non-surface file ignored. |
-| Capability | SurfaceRoleChecker audits surface passivity. |
-| Protocol | ISurfaceRoleProtocol. |
-| Method | Surface role audit returning AES406 violations with tier awareness. |
-| Input | Classified surface file entries; source is RoleRequest::RunAuditWithEntries. |
-| Output | Violations with AES406 codes inside RoleResponse::Audit. |
-| Error | Unclassified tier treats file as passive (conservative); unparseable file yields no finding. |
-| Event | None. |
-| Test | aes406_clean_surface_no_violation, aes406_passive_surface_excess_control_flow_detected, aes406_smart_surface_exempt, aes406_surface_utility_calls_not_flagged, and e2e_surface_violation_detected assert tier rules. |
-| Metric | Passive fixtures over budget fire exactly one AES406 finding; smart-tier and utility-call fixtures fire zero. |
+**Description:** The role-rules crate shall keep surface files passive, enforcing tier-aware limits on function count and control-flow budget for passive surfaces while exempting smart surfaces, and shall flag logic bypasses while allowing surface utility calls.
+
+#### Business Logic
+
+- Surface tier (smart vs passive) is tier-aware; passive surfaces have a function-count limit and control-flow budget; smart surfaces are exempt from passive limits.
+- Utility calls from surface are allowed and not flagged.
+- Logic bypass is flagged.
+- Fallback path flags passive control flow with a fallback message.
+- Non-surface files ignored.
+
+#### Edge Cases
+
+- A clean surface produces no violation.
+- A passive surface under the function-count limit is clean.
+- Too many functions in a passive surface is flagged.
+- Excess passive control flow is flagged with the fallback message variant.
+- A smart surface is exempt from passive limits.
+- Surface utility calls are not flagged; surface logic bypass is flagged.
+- A non-surface file is ignored.
+
+#### Technical Specification
+
+| Aspect | Detail |
+|--------|--------|
+| **Input** | Classified surface file entries. |
+| **Output** | AES406 violations inside the audit response. |
+| **Protocol** | ISurfaceRoleProtocol |
+| **Method** | surface role audit |
+| **Event** | None. |
+| **Error** | An unclassified tier treats the file as passive (conservative); an unparseable file yields no finding. |
+
+#### Test
+
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| A clean surface file is audited | The surface auditor runs | No AES406 violation is reported |
+| A passive surface exceeds the control-flow budget | The surface auditor runs | One AES406 violation is reported |
+| A smart surface exceeds the passive budget | The surface auditor runs | No violation is reported (exempt) |
+| A surface calls only utilities | The surface auditor runs | No violation is reported |
+| A non-surface file is audited | Classification runs first | The file is ignored and no violation is reported |
+
+#### Metric
+
+| Target Metric | Value |
+|---------------|-------|
+| Passive fixtures over budget each firing exactly one AES406 finding | 100% |
+| Smart-tier and utility-call fixtures firing findings | 0 |
 
 ## Public Interface
 
-| Aspect | Detail|
-|--------|-------|
-| Agent | RoleOrchestrator — the agent-layer orchestrator behind the role-rule stage of the check command. |
-| Aggregate | IRoleRunnerAggregate — the feature's single front door. |
+| Aspect | Detail |
+|--------|--------|
+| Agent | RoleOrchestrator |
+| Aggregate | IRoleRunnerAggregate |
 | Method | execute(&self, request: RoleRequest) -> RoleResponse |
 | Request | RoleRequest::{RunAuditWithEntries, Name} |
 | Response | RoleResponse::{Audit, Name} |
 
 ## Reference
 
-| Artifact | Purpose | Link|
+| Artifact | Purpose | Link |
 |----------|---------|------|
-| BACKLOG.md | Backlog tracking | [BACKLOG.md](BACKLOG.md)|
-| PRD.md | Product requirements | [PRD.md](../../PRD.md)|
-| FRD.md | Feature requirements | [FRD.md](FRD.md)|
-| ROADMAP.md | Roadmap status | [ROADMAP.md](../../ROADMAP.md)|
-| ARCHITECTURE.md | Layer contract | [ARCHITECTURE.md](../../ARCHITECTURE.md)|
+| PRD | Business goals, user stories, and scope | [PRD.md](../../PRD.md) |
+| Backlog | Task tracking, epics, and implementation status | [BACKLOG.md](./BACKLOG.md) |
+| Roadmap | Timeline, phasing, and dependencies | [ROADMAP.md](../../ROADMAP.md) |
+| Architecture | System boundaries, tech stack, and infra | [ARCHITECTURE.md](../../ARCHITECTURE.md) |

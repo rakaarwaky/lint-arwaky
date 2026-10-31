@@ -1,6 +1,6 @@
 """Calculator feature shared mirror (AES101 `_aggregate` / AES102 `_protocol`).
 
-Mirror of the `modules/calculator` feature into the `modules/shared` kernel.
+Mirror of the `modules/calculator` feature into the `modules/shared` layer.
 Two FR requirements (FR-CALCULATOR-001, FR-CALCULATOR-002) map to two protocol
 classes here.
 """

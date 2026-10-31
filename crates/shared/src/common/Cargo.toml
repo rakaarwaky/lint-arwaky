@@ -8,7 +8,11 @@ repository = "https://github.com/rakaarwaky/lint-arwaky"
 publish = true
 # Emits the release version from the workspace `VERSION` file, so every crate
 # that prints a version reads one number instead of its own package version.
-build = "build.rs"
+# The shared build script lives two levels above this manifest.
+build = "../../build.rs"
+
+[build-dependencies]
+comrak.workspace = true
 
 # The folder *is* the crate root, so the manifest lives beside `mod.rs`.
 [lib]

@@ -33,7 +33,7 @@ pub struct MemberDescriptor {
 pub enum MemberRole {
     /// Owns a vertical slice: `FRD.md` + `BACKLOG.md`.
     Feature,
-    /// Shared kernel: `DATA.md` + `BACKLOG.md`.
+    /// Shared layer: `DATA.md` + `BACKLOG.md`.
     Kernel,
     /// Surface/utility crate: `DESIGN.md` + `BACKLOG.md`.
     Surface,

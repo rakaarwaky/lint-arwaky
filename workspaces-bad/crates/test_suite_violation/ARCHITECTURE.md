@@ -210,7 +210,7 @@ Utility role suffixes are unlimited. The role name is chosen based on demand and
 
 Utility may depend only on Taxonomy.
 
-Utility files live only in the `shared/` kernel folder (AES701). Feature
+Utility files live only in the `shared/` layer folder (AES701). Feature
 and surface crates consume utility functions via import; they do not own
 or co-locate `utility_*` files. A `utility_*` file in a feature folder is
 misplaced (AES702 `feature_has_forbidden_files`); a `utility_*` file in a

@@ -1,138 +1,210 @@
 # FRD — git-hooks
 
----
-
 ## Feature Overview
 
-The git-hooks crate implements a pre-commit hook system that enforces AES
-compliance before code enters the repository. It detects changed files via
-git diff, runs linting only on modified files, and blocks commits that
-violate AES rules.
+The git-hooks feature sits in the capability layer and is invoked by the CLI surface for pre-commit enforcement, hook installation, hook removal, and configuration bootstrap. It orchestrates git diff inspection and lint pipeline execution over the changed-file set, writing and removing the pre-commit hook file inside the repository's hook directory.
 
-The crate follows the AES 7-layer architecture: the diff checker (capability)
-implements the diff protocol, the git hook adapter (capability) implements
-both the install and uninstall protocols, the hook manager (capability)
-implements the config protocol, the git hooks orchestrator (agent) composes
-the four protocols, and the git container (root) wires dependencies.
-
-- **Architecture & Data Flow**
-
-```mermaid
-flowchart TD
-    A["Surface"] -->|input| B["git hooks orchestrator"]
-    B --> C{"action"}
-
-    C -->|"check / git-diff"| D["diff checker"]
-    C -->|"install-hook"| E["hook adapter"]
-    C -->|"uninstall-hook"| F["hook adapter"]
-    C -->|"init-config / ignore-rule"| G["hook manager"]
-
-    D --> H["filesystem\n(run git commands)"]
-    H --> I["changed files\n(lintable filter)"]
-    I --> J["lint pipeline\n(via linter aggregates)"]
-    J --> K["Lint Results"]
-
-    E --> L[".git/hooks/pre-commit"]
-    L --> M["Success / Error"]
-
-    F --> M
-    G --> N["Config Update"]
-
-    K --> B
-    M --> B
-    N --> B
-
-    B -->|output| A
+```text
+[CLI surface] --> [git-hooks orchestrator]
+                   |-- diff & lint check  --> [git diff / lint pipeline]
+                   |-- install hook       --> [repo hook directory]
+                   |-- uninstall hook     --> [repo hook directory]
+                   |-- config & identity  --> [config file]
 ```
-
----
 
 ## Functional Requirements
 
-### FR-GitHooks-001: Git Diff Detection
+### FR-GitHooks-001: Detect Changed Files and Run Lint Check
 
-| Aspect | Detail|
-|--------|-------|
-| Description | Detect changed files in the working tree and run lint checks over them before commit. |
-| Business Rules | get_diff(path) computes the diff status VO (Unchanged, Modified, MissingFirst, MissingSecond, BothMissing, NotAFile); get_changed_files(path, base) lists changed files against the base branch; get_default_branch(path) resolves the repository default branch; run_git_diff_check(path) lints the changed set and returns violations. A clean changed file produces no violations; a changed file with an AES violation produces blocking results. |
-| Edge Cases | NotAFile sides of the diff are tolerated; a missing feature branch falls back to the default branch lookup; a path that is not a git repository reports diff failure; empty diff yields an empty violation list. |
-| Capability | DiffChecker implements diff detection and the pre-commit check. |
-| Protocol | IDiffDetectionProtocol. |
-| Method | get_diff, get_changed_files, get_default_branch, run_git_diff_check(path). |
-| Input | FilePath of the repository plus base branch name; source is GitHooksRequest::RunCheck { path } from the pre-commit hook. |
-| Output | GitDiffResultVO, FilePathList, GitBranchName, and LintResultList returned in GitHooksResponse::RunCheck. |
-| Error | Not a repository or unreadable paths surface as a diff/detection error on the response; callers see an empty or partial LintResultList plus the error reason. |
-| Event | None; results return synchronously to the hook process. |
-| Test | changed_file_with_aes_violation_produces_blocking_results, clean_changed_file_produces_no_violations, e2e_orchestrator_delegates_to_diff_protocol, and assert_diff_detection_trait cover the contract. |
-| Metric | Seeded violation file blocks with at least one violation; seeded clean file exits with an empty LintResultList. |
+**Description:** The feature shall detect the changed-file set in the working tree against the repository base branch and run the lint pipeline over that set before a commit is accepted. For every changed file that is lintable, the feature shall evaluate AES rule compliance and return the collected lint findings. A clean changed file shall contribute zero findings, and any file carrying an AES violation shall surface as a blocking result so the commit is refused.
 
-### FR-GitHooks-002: Pre-Commit Hook Installation
+#### Business Logic
 
-| Aspect | Detail|
-|--------|-------|
-| Description | Install the pre-commit hook into the repository so every commit runs the lint check. |
-| Business Rules | install_pre_commit(executable_path) writes the hook script into .git/hooks pointing at the given binary path; the hooks directory is created when missing; get_hook_manager_identity returns the identity used in the config (git hook manager); identity is stable across runs. |
-| Edge Cases | Existing hooks directory is reused; missing .git/hooks is created; reinstall over an existing hook overwrites cleanly; a repository without .git directory fails with a GitHookError rather than writing outside the repo. |
-| Capability | HookInstaller implements hook installation. |
-| Protocol | IHookInstallProtocol. |
-| Method | install_pre_commit(executable_path); get_hook_manager_identity(). |
-| Input | FilePath of the lint-arwaky binary; source is GitHooksRequest::Install { executable_path }. |
-| Output | GitHooksResponse::Install carrying success status and identity. |
-| Error | GitHookError when the repository lacks a .git directory or the write is denied; the caller sees the error variant on the response. |
-| Event | None; installation is a filesystem write. |
-| Test | e2e_install_creates_hooks_directory_when_missing, e2e_full_user_workflow_init_install_check, and config_init_identity_is_git_hook_manager assert install behavior and identity. |
-| Metric | Install on a seeded hook-less repo creates .git/hooks/pre-commit in one call; reininstall is idempotent. |
+- The diff status of any path pair shall be classified as `Unchanged`, `Modified`, `MissingFirst`, `MissingSecond`, `BothMissing`, or `NotAFile`.
+- The changed-file list shall be computed against an explicit base branch, falling back to the repository default branch when no base branch is supplied.
+- Lint findings shall be produced only for files inside the changed set; unchanged files shall not be linted.
+- An empty changed-file set shall yield an empty lint result list without blocking the commit.
+- A changed file that carries at least one AES violation shall yield one or more blocking findings.
 
-### FR-GitHooks-003: Pre-Commit Hook Uninstallation
+#### Edge Cases
 
-| Aspect | Detail|
-|--------|-------|
-| Description | Uninstall the pre-commit hook and restore the repository to its pre-install state. |
-| Business Rules | uninstall_pre_commit removes the hook file it installed and returns SuccessStatus. Uninstalling when no hook exists still succeeds (idempotent). Round trip install then uninstall leaves the repository clean. |
-| Edge Cases | A user-replaced hook that no longer points at the manager is left in place by safety check. A missing .git directory reports GitHookError. Repeated uninstall calls keep succeeding. |
-| Capability | HookUninstaller implements hook removal. |
-| Protocol | IHookUninstallProtocol::uninstall_pre_commit. |
-| Method | uninstall_pre_commit() -> Result<SuccessStatus, GitHookError>. |
-| Input | Repository path from context; source is GitHooksRequest::Uninstall. |
-| Output | GitHooksResponse::Uninstall with success status. |
-| Error | GitHookError when the repository is unusable or removal is denied. |
-| Event | None; uninstallation is a filesystem delete. |
-| Test | e2e_hook_install_then_uninstall_round_trip and assert_hook_uninstall_trait assert the round trip and protocol contract. |
-| Metric | Round trip on a seeded repo restores the original hooks directory state exactly. |
+- A diff side that is not a regular file (`NotAFile`) shall be tolerated and shall not fail the check.
+- A missing feature branch shall fall back to the default-branch lookup instead of erroring.
+- A path that is not a git repository shall surface a diff detection error to the caller.
+- An empty diff (no changed files) shall return an empty lint result list.
 
-### FR-GitHooks-004: Project Config Initialization
+#### Technical Specification
 
-| Aspect | Detail|
-|--------|-------|
-| Description | Initialize the git-hooks project configuration and manage its ignore rules. |
-| Business Rules | initialize_config(path) creates or reads the hook configuration and returns a description; update_ignore_rule(request) adds or removes an ignore rule via HookIgnoreUpdateVO; config must identify the manager as git hook manager; a missing config file is reported rather than silently created unless initializing. |
-| Edge Cases | config file not found on read returns a not-found description; updating an ignored rule twice does not duplicate it; initialize on an existing config is idempotent; paths outside the repository are rejected early. |
-| Capability | ConfigInit implements configuration bootstrap and ignore-rule updates. |
-| Protocol | IConfigInitProtocol. |
-| Method | initialize_config(path) -> DescriptionVO; update_ignore_rule(request: HookIgnoreUpdateVO) -> DescriptionVO. |
-| Input | Path string plus HookIgnoreUpdateVO (rule, add or remove); source is GitHooksRequest::GetManagerIdentity and config-init flows through the orchestrator. |
-| Output | GitHooksResponse::GetManagerIdentity and description text describing the operation result. |
-| Error | Missing config on read yields config_file_not_found; malformed update requests are rejected with a description of the failure. |
-| Event | None; configuration write is synchronous. |
-| Test | config_file_not_found, config_init_identity_is_git_hook_manager, and e2e_full_user_workflow_init_install_check assert init, identity, and missing-config handling. |
-| Metric | Initialize then update leaves the seeded config with exactly the requested ignore rules; identity readback matches git hook manager. |
+| Aspect | Detail |
+|--------|--------|
+| **Input** | `GitHooksRequest::RunCheck { path }` carrying the repository file path, plus an optional base branch name. |
+| **Output** | `GitHooksResponse::RunCheck` carrying `LintResultList`; empty when no lintable file changed. |
+| **Protocol** | `IDiffDetectionProtocol` |
+| **Method** | `get_diff`, `get_changed_files`, `get_default_branch`, `run_git_diff_check` |
+| **Event** | None; results are returned synchronously to the hook process. |
+| **Error** | `GitHookError` surfaced on the response when the path is not a repository or a file is unreadable; a missing base branch degrades to the default branch. |
+
+#### Test
+
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| A changed file carries an AES violation | The pre-commit check runs over the changed set | The response carries at least one blocking finding for that file and the commit is refused |
+| All changed files are clean | The pre-commit check runs over the changed set | The response carries an empty lint result list and the commit proceeds |
+| The path is not a git repository | The pre-commit check runs | The response carries a `GitHookError` diff detection failure |
+| No files are changed against the base branch | The pre-commit check runs | The response carries an empty lint result list |
+
+#### Metric
+
+| Target Metric | Value |
+|---------------|-------|
+| Blocking accuracy on seeded violation | 100% of seeded violations surface as at least one blocking finding |
+| Clean-file false positive rate | 0 blocking findings for a seeded clean changed file |
+
+### FR-GitHooks-002: Install Pre-Commit Hook
+
+**Description:** The feature shall install the pre-commit hook into the repository so that every commit runs the lint check before acceptance. Installation shall create the repository hook directory when it is missing, write the hook file pointing at the supplied executable path, and return the stable manager identity used in the configuration.
+
+#### Business Logic
+
+- The feature shall write the pre-commit hook file into the repository hook directory pointing at the supplied executable path.
+- The hook directory shall be created when it does not exist and reused when it does.
+- The feature shall return a stable manager identity value across repeated invocations.
+- Reinstallation over an existing hook file shall overwrite it cleanly.
+
+#### Edge Cases
+
+- An existing hook directory shall be reused without duplication.
+- A missing hook directory shall be created before the hook file is written.
+- A repository without a `.git` directory shall fail with `GitHookError` rather than writing outside the repository.
+
+#### Technical Specification
+
+| Aspect | Detail |
+|--------|--------|
+| **Input** | `GitHooksRequest::Install { executable_path }` carrying the file path of the lint executable. |
+| **Output** | `GitHooksResponse::Install` carrying `SuccessStatus` on success or `GitHookError` on failure. |
+| **Protocol** | `IHookInstallProtocol` |
+| **Method** | `install_pre_commit`, `get_hook_manager_identity` |
+| **Event** | None; installation is a synchronous filesystem write. |
+| **Error** | `GitHookError` when the repository lacks a `.git` directory or the hook file write is denied. |
+
+#### Test
+
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| A repository has no hook directory yet | The install action runs | The hook directory is created and the pre-commit hook file exists pointing at the supplied executable path |
+| A repository already has a hook file | The install action runs again | The existing hook file is overwritten cleanly and the install reports success |
+| The path is not a git repository | The install action runs | The response carries `GitHookError` and no file is written outside the repository |
+
+#### Metric
+
+| Target Metric | Value |
+|---------------|-------|
+| Install-on-missing-repo success rate | 100% of seeded hook-less repositories gain a pre-commit hook file in one call |
+| Reinstall idempotency | 0 residual duplicates after repeated installs on the same repository |
+
+### FR-GitHooks-003: Uninstall Pre-Commit Hook
+
+**Description:** The feature shall uninstall the pre-commit hook and restore the repository to its pre-install state. Uninstallation shall remove the hook file the feature installed and report success; it shall remain idempotent so that repeated or no-op removals still succeed.
+
+#### Business Logic
+
+- The feature shall remove the pre-commit hook file it installed and return a success status.
+- Uninstalling when no hook exists shall succeed without error.
+- A round trip of install followed by uninstall shall leave the repository hook directory in its original state.
+
+#### Edge Cases
+
+- A user-replaced hook that no longer points at the manager shall be left in place by a safety check rather than deleted.
+- A missing `.git` directory shall report `GitHookError` instead of panicking.
+- Repeated uninstall calls shall keep succeeding.
+
+#### Technical Specification
+
+| Aspect | Detail |
+|--------|--------|
+| **Input** | `GitHooksRequest::Uninstall` carried with the repository path in context. |
+| **Output** | `GitHooksResponse::Uninstall` carrying `SuccessStatus` on success or `GitHookError` on failure. |
+| **Protocol** | `IHookUninstallProtocol` |
+| **Method** | `uninstall_pre_commit` |
+| **Event** | None; uninstallation is a synchronous filesystem delete. |
+| **Error** | `GitHookError` when the repository is unusable or the removal is denied. |
+
+#### Test
+
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| A hook was installed by this feature | The uninstall action runs | The hook file is removed and the response carries success |
+| No hook exists | The uninstall action runs | The response carries success without modification of any user file |
+| A user-replaced hook no longer points at the manager | The uninstall action runs | The replaced hook file is left in place and the response still carries success |
+
+#### Metric
+
+| Target Metric | Value |
+|---------------|-------|
+| Install-uninstall round trip fidelity | 100% of seeded repositories restore the original hook directory state exactly |
+| No-op uninstall success rate | 100% of repeated uninstalls report success |
+
+### FR-GitHooks-004: Initialize Project Config and Manage Ignore Rules
+
+**Description:** The feature shall initialize the git-hooks project configuration and manage its ignore rules. Initialization shall create or read the configuration and describe the outcome; ignore-rule updates shall add or remove a single rule without duplicating it.
+
+#### Business Logic
+
+- Initialization shall create the configuration on first use or read it when it exists, returning a description of the result.
+- An ignore-rule update shall add or remove a single ignore rule per invocation and shall not duplicate a rule updated twice.
+- The configuration shall identify its manager as the git hook manager.
+- A missing configuration file on a read shall be reported as not found rather than silently created unless initialization is the requested flow.
+
+#### Edge Cases
+
+- A configuration file not found on a read shall return a not-found description.
+- Updating the same ignored rule twice shall not duplicate the entry.
+- Initialization on an existing configuration shall be idempotent.
+- Paths outside the repository shall be rejected early.
+
+#### Technical Specification
+
+| Aspect | Detail |
+|--------|--------|
+| **Input** | A path string, plus an optional `HookIgnoreUpdateVO` carrying the rule and the add-or-remove flag, sourced from `GitHooksRequest::GetManagerIdentity` and the config-init flow. |
+| **Output** | `GitHooksResponse::GetManagerIdentity` carrying the manager identity, plus a description text reporting the config operation result. |
+| **Protocol** | `IConfigInitProtocol` |
+| **Method** | `initialize_config`, `update_ignore_rule` |
+| **Event** | None; configuration writes are synchronous. |
+| **Error** | A missing configuration on a read yields a `config_file_not_found` description; malformed update requests are rejected with a failure description. |
+
+#### Test
+
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| No configuration exists | The config-init flow runs | The configuration is created and the description reports initialization |
+| The configuration is missing on a read | A read runs without initialization | The response reports `config_file_not_found` |
+| The same ignore rule is updated twice | Both updates run | The configuration holds exactly one entry for that rule |
+| The manager identity is requested | The identity flow runs | The readback identity matches the git hook manager |
+
+#### Metric
+
+| Target Metric | Value |
+|---------------|-------|
+| Config round trip fidelity | 100% of initialize-then-update sequences leave the configuration with exactly the requested ignore rules |
+| Identity readback accuracy | 100% of identity reads return the git hook manager value |
 
 ## Public Interface
 
-| Aspect | Detail|
-|--------|-------|
-| Agent | GitHooksOrchestrator — the agent-layer orchestrator behind install, uninstall, init, and pre-commit check flows. |
-| Aggregate | IGitHooksAggregate — the feature's single front door. |
-| Method | execute(&self, request: GitHooksRequest) -> GitHooksResponse |
-| Request | GitHooksRequest::{RunCheck { path }, Install { executable_path }, Uninstall, GetManagerIdentity} |
-| Response | GitHooksResponse::{RunCheck, Install, Uninstall, GetManagerIdentity} |
+| Aspect | Detail |
+|--------|--------|
+| Agent | `GitHooksOrchestrator` |
+| Aggregate | `IGitHooksAggregate` |
+| Method | `execute` |
+| Request | `GitHooksRequest` (`RunCheck`, `Install`, `Uninstall`, `GetManagerIdentity`) |
+| Response | `GitHooksResponse` (`RunCheck`, `Install`, `Uninstall`, `GetManagerIdentity`) |
 
 ## Reference
 
-| Artifact | Purpose | Link|
+| Artifact | Purpose | Link |
 |----------|---------|------|
-| BACKLOG.md | Backlog tracking | [BACKLOG.md](BACKLOG.md)|
-| PRD.md | Product requirements | [PRD.md](../../PRD.md)|
-| FRD.md | Feature requirements | [FRD.md](FRD.md)|
-| ROADMAP.md | Roadmap status | [ROADMAP.md](../../ROADMAP.md)|
-| ARCHITECTURE.md | Layer contract | [ARCHITECTURE.md](../../ARCHITECTURE.md)|
+| PRD | Business goals, user stories, and scope | [PRD.md](../../PRD.md) |
+| Backlog | Task tracking, epics, and implementation status | [BACKLOG.md](./BACKLOG.md) |
+| Roadmap | Timeline, phasing, and dependencies | [ROADMAP.md](../../ROADMAP.md) |
+| Architecture | System boundaries, tech stack, and layer contract | [ARCHITECTURE.md](../../ARCHITECTURE.md) |

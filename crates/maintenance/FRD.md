@@ -1,197 +1,394 @@
-# FRD — maintenance (v2.1.0)
-
----
+# FRD — maintenance
 
 ## Feature Overview
 
-The maintenance crate provides operational health and upkeep commands for the
-lint-arwaky system: environment diagnostics, toolchain verification, adapter
-health checking, cache cleanup, tool updates, binary self-update from
-GitHub releases, security scanning, dependency reporting, and project
-statistics. It is the ops-focused crate — it handles environment health,
-not code quality analysis.
-
-The crate follows the AES 7-layer architecture. Each of the eight business
-capabilities below corresponds to one `_protocol` trait in `shared/maintenance`
-and one implementation in `capabilities_maintenance_checker`.
-
-- **Architecture & Data Flow**
-
 ```mermaid
 flowchart TD
-    A["Surface"] -->|input| B["maintenance aggregate"]
-    B --> C{"action"}
-
-    C -->|"doctor / diagnose / health"| D["MaintenanceChecker"]
-    C -->|"security / dependencies"| D
-    C -->|"stats / clean / update"| D
-    C -->|"self-update"| D
-
-    D --> F["filesystem IO protocol"]
-    F -->|subprocess| G["Tool Output"]
-    G --> D
-    D --> H["Maintenance Result"]
-
-    H --> B
-    B -->|output| A
+    A["Surface Commands"] -->|MaintenanceRequest| B["MaintenanceCommandsOrchestrator"]
+    B --> C["Doctor / Toolchain"]
+    B --> D["Project Statistics"]
+    B --> E["Cache Cleanup"]
+    B --> F["Tool Update"]
+    B --> G["Security Scan"]
+    B --> H["Dependency Report"]
+    B --> I["Adapter Health"]
+    B --> J["Binary Self-Update"]
+    C & D & E & F & G & H & I & J -->|Outcome| B
+    B -->|MaintenanceResponse| A
 ```
 
----
+The **maintenance** feature provides operational health, diagnostics, and upkeep capabilities for the system, sitting in the infrastructure layer between surface commands and system tools. It is invoked by surface commands through `IMaintenanceAggregate` to diagnose environments, inspect dependencies, verify adapter availability, reclaim disk space, and update tools and binaries. In turn, it coordinates per-capability protocol implementations that interact with the underlying execution environment and filesystem.
 
 ## Functional Requirements
 
-### FR-Maintenance-001: Environment Health Check (doctor + toolchain)
+### FR-Maintenance-001: Environment Health Check
 
-| Aspect | Detail|
-|--------|-------|
-| Description | Report overall environment health including toolchain state for the doctor command. |
-| Business Rules | Doctor aggregates binary availability, toolchain diagnosis, and health status into one result; DiagnoseToolchain returns binary path plus non-empty ok/missing lists; doctor result includes health status; Cancel request aborts an in-flight operation gracefully. |
-| Edge Cases | Missing tools produce entries in the missing list while the overall doctor call still succeeds; cancel returns Cancelled rather than a partial error; empty environment yields a doctor result with all entries missing and no panic. |
-| Capability | DoctorChecker implements doctor and toolchain diagnosis. |
-| Protocol | IDoctorProtocol. |
-| Method | doctor() result plus toolchain diagnosis returning binary path and categorized tool lists. |
-| Input | MaintenanceRequest::{Doctor, DiagnoseToolchain, Cancel}; source is the doctor surface command. |
-| Output | MaintenanceResponse::{Doctor, Toolchain, Cancelled} carrying status and tool lists. |
-| Error | Unavailable tools are reported in lists, not as top-level failures; cancellation surfaces as Cancelled. |
-| Event | None; doctor runs synchronously. |
-| Test | maintenance_doctor_reports_health_status, diagnose_toolchain_has_binary_path, diagnose_toolchain_returns_non_empty_lists, and doctor_checker_serves_doctor_and_toolchain assert doctor output. |
-| Metric | Diagnosis lists are non-empty on a seeded environment; doctor exit status reflects health on every run. |
+**Description:**
+The system shall aggregate environment diagnostics, toolchain readiness, and execution health into a unified diagnostic report, and shall support graceful cancellation of in-flight diagnostic runs upon request.
 
-### FR-Maintenance-002: Project Statistics (stats)
+#### Business Logic
 
-| Aspect | Detail|
-|--------|-------|
-| Description | Compute project statistics (counts and language breakdown) for the stats command. |
-| Business Rules | Stats counts source files by language and totals for the current directory; counts are internally consistent (sum of per-language equals total); stats operate on the provided directory, not hard-coded paths. |
-| Edge Cases | Empty directory yields zero counts without error; nested directories counted; unreadable subtrees skipped; stats on current dir runs without panic. |
-| Capability | ProjectStatsChecker computes project statistics. |
-| Protocol | IProjectStatsProtocol. |
-| Method | stats() over the target directory returning counts and breakdown. |
-| Input | Directory path; source is MaintenanceRequest::Stats. |
-| Output | MaintenanceResponse::Stats with count fields. |
-| Error | Unreadable path reports zero/partial counts rather than failing. |
-| Event | None. |
-| Test | maintenance_stats_counts_are_consistent and orchestrator_stats_on_current_dir assert count consistency and current-dir routing. |
-| Metric | Sum of per-language counts equals the total on every seeded fixture run. |
+- The system shall aggregate binary availability, toolchain diagnosis, and overall health status into a single response.
+- The toolchain diagnosis shall report the active binary path alongside categorized ok and missing tool lists.
+- Unavailable tools shall be categorized in the missing list without causing the overall diagnostic operation to fail.
+- A cancel request shall terminate an in-flight operation gracefully and return a cancelled outcome.
 
-### FR-Maintenance-003: Cache Cleanup (clean)
+#### Edge Cases
 
-| Aspect | Detail|
-|--------|-------|
-| Description | Remove cache artifacts to reclaim disk space for the clean command. |
-| Business Rules | Clean removes cache directories the tool owns (AST cache, report cache); it never touches source files or user configuration; repeat cleans are safe. |
-| Edge Cases | Missing cache directory is a successful no-op; clean does not panic on any seeded state (orchestrator_clean_does_not_panic); read-only cache entries are skipped with a reported warning rather than aborting the rest. |
-| Capability | CacheCleanupChecker removes owned cache artifacts. |
-| Protocol | ICacheCleanupProtocol. |
-| Method | clean() removing known cache roots and returning cleanup status. |
-| Input | Cache root locations (default: configured cache dir); source is MaintenanceRequest::Clean. |
-| Output | MaintenanceResponse::Clean with removal status. |
-| Error | Permission failures on individual entries are reported; overall call still completes. |
-| Event | None. |
-| Test | orchestrator_clean_does_not_panic and cache_cleanup_checker_implements_cache_cleanup_protocol assert safety and contract. |
-| Metric | Clean leaves zero owned cache files on the seeded fixture; source files remain untouched (byte-identical). |
+- When external tool binaries are absent from the environment, the system shall record them in the missing list and return a successful diagnostic outcome.
+- When the execution environment is completely empty, the system shall report all probed tools as missing without raising a panic.
+- When an operation is cancelled in flight, the system shall return a cancelled response rather than a partial error.
 
-### FR-Maintenance-004: Tool Update (update)
+#### Technical Specification
 
-| Aspect | Detail|
-|--------|-------|
-| Description | Check for and apply updates to bundled linter tools for the update command. |
-| Business Rules | ToolUpdateChecker probes each bundled tool for newer versions and reports/updates per tool; no-op when already current; update does not touch tools the app does not own. |
-| Edge Cases | Already-current tool yields no change; a tool that fails to probe is reported but does not block others; offline probe reports unavailable rather than hanging (timeout honored). |
-| Capability | ToolUpdateChecker performs tool update checks and installs. |
-| Protocol | IToolUpdateProtocol. |
-| Method | update() probing and updating managed tools returning per-tool status. |
-| Input | Tool list from configuration; source is MaintenanceRequest::Update. |
-| Output | MaintenanceResponse::Update with per-tool update outcomes. |
-| Error | Per-tool probe or install failure is reported on that entry; overall response still returns. |
-| Event | None. |
-| Test | tool_update_checker_implements_tool_update_protocol asserts the protocol contract. |
-| Metric | Each probed tool returns a definite status (current, updated, or failed) on a seeded run. |
+| Aspect | Detail |
+|--------|--------|
+| **Input** | `MaintenanceRequest::Doctor`, `MaintenanceRequest::DiagnoseToolchain`, or `MaintenanceRequest::Cancel` from surface commands. |
+| **Output** | `MaintenanceResponse::Doctor`, `MaintenanceResponse::Toolchain`, or `MaintenanceResponse::Cancelled`. |
+| **Protocol** | `IDoctorProtocol` |
+| **Method** | `doctor`, `diagnose_toolchain` |
+| **Event** | `EnvironmentHealthDiagnosed` |
+| **Error** | `TOOLCHAIN_PROBE_FAILED`, `DIAGNOSTIC_CANCELLED` |
+
+#### Test
+
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| Seeded environment with healthy toolchain | Surface command requests environment health diagnosis | Returns doctor result reflecting health status with binary path and non-empty tool lists |
+| External tools are absent from PATH | Surface command requests toolchain diagnosis | Returns toolchain diagnostic with missing tools recorded in missing list and no panic |
+| Diagnostic operation is running | Surface command issues cancel request | In-flight execution aborts gracefully and returns cancelled response |
+
+#### Metric
+
+| Target Metric | Value |
+|---------------|-------|
+| Doctor Diagnostic Accuracy | 100% |
+| Cancellation Response Latency | < 50ms |
+
+### FR-Maintenance-002: Project Statistics
+
+**Description:**
+The system shall compute aggregate project statistics, language breakdowns, and file counts across a specified target directory without hard-coded path constraints.
+
+#### Business Logic
+
+- The system shall count source files by language and compute total counts across the provided target directory.
+- The sum of individual per-language file counts shall strictly equal the reported total count.
+- The system shall operate dynamically over any provided directory path rather than hard-coded locations.
+- Unreadable or inaccessible subtrees shall be skipped gracefully while processing readable paths.
+
+#### Edge Cases
+
+- When executed against an empty directory, the system shall return zero counts without reporting an error.
+- When unreadable subtrees or permission errors are encountered, the system shall report partial counts for readable entries rather than failing.
+- When directory structures contain deeply nested subdirectories, the system shall traverse all readable levels without stack overflow or panic.
+
+#### Technical Specification
+
+| Aspect | Detail |
+|--------|--------|
+| **Input** | `MaintenanceRequest::Stats` containing target directory path. |
+| **Output** | `MaintenanceResponse::Stats` containing total count and per-language metrics. |
+| **Protocol** | `IProjectStatsProtocol` |
+| **Method** | `stats` |
+| **Event** | `ProjectStatsCalculated` |
+| **Error** | `DIRECTORY_UNREADABLE`, `STATS_CALCULATION_FAILED` |
+
+#### Test
+
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| Seeded multi-language project directory | Surface command requests project statistics | Total count matches the exact sum of per-language file counts |
+| Empty directory path | Surface command requests project statistics | Returns zero counts with successful status and no error |
+| Directory tree containing unreadable subdirectories | Surface command requests project statistics | Processes readable subtrees, skips unreadable subtrees, and returns partial counts |
+
+#### Metric
+
+| Target Metric | Value |
+|---------------|-------|
+| Count Internal Consistency | 100% |
+| Processing Throughput | > 1000 files/s |
+
+### FR-Maintenance-003: Cache Cleanup
+
+**Description:**
+The system shall remove application-owned cache directories and temporary reporting artifacts to reclaim disk space without modifying user configurations or source code.
+
+#### Business Logic
+
+- The system shall remove only managed cache directories, including AST caches and report caches.
+- The system shall never alter or remove source files, workspace configuration, or user settings.
+- Cache cleanup operations shall be idempotent; consecutive clean executions shall succeed safely.
+- Inaccessible or read-only cache entries shall be reported with warnings without aborting the remaining cleanup.
+
+#### Edge Cases
+
+- When targeted cache directories do not exist, the system shall complete cleanly as a successful no-op.
+- When specific cache entries have restrictive permissions, the system shall report a warning and proceed with deleting remaining artifacts.
+- When run consecutively multiple times, each execution shall succeed without error.
+
+#### Technical Specification
+
+| Aspect | Detail |
+|--------|--------|
+| **Input** | `MaintenanceRequest::Clean` with configured or default cache roots. |
+| **Output** | `MaintenanceResponse::Clean` reporting cache cleanup status. |
+| **Protocol** | `ICacheCleanupProtocol` |
+| **Method** | `clean` |
+| **Event** | `CacheCleaned` |
+| **Error** | `CACHE_DIR_INACCESSIBLE`, `CACHE_ENTRY_LOCKED` |
+
+#### Test
+
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| Seeded cache directory with AST and report artifacts | Surface command requests cache cleanup | Owned cache files are deleted while source files remain byte-identical |
+| Cache directory has already been cleared | Surface command requests cache cleanup | Command completes safely as an idempotent no-op |
+| Cache contains read-only entry alongside removable entries | Surface command requests cache cleanup | Removable entries are purged, permission issue is reported, and command completes |
+
+#### Metric
+
+| Target Metric | Value |
+|---------------|-------|
+| Non-Cache File Invariance | 100% |
+| Owned Cache Reclamation Rate | 100% |
+
+### FR-Maintenance-004: Tool Update
+
+**Description:**
+The system shall inspect configured bundled linter tools for available updates, install applicable updates, and report outcome status per tool without mutating unmanaged tools.
+
+#### Business Logic
+
+- The system shall probe configured bundled tools for newer compatible versions.
+- The system shall apply updates only to managed tools that have an available newer version.
+- The system shall never modify tools outside the managed configuration set.
+- Probing or update failures for an individual tool shall be recorded without blocking the update cycle of other tools.
+
+#### Edge Cases
+
+- When all tools are currently up to date, the system shall report unchanged status for each tool without modifying files.
+- When network access fails or times out during probing, the system shall report unavailable status without hanging.
+- When an individual tool update fails, remaining tools shall continue their update check uninterrupted.
+
+#### Technical Specification
+
+| Aspect | Detail |
+|--------|--------|
+| **Input** | `MaintenanceRequest::Update` containing target tool configuration. |
+| **Output** | `MaintenanceResponse::Update` with per-tool status outcomes. |
+| **Protocol** | `IToolUpdateProtocol` |
+| **Method** | `update` |
+| **Event** | `ToolsUpdated` |
+| **Error** | `TOOL_PROBE_FAILED`, `TOOL_DOWNLOAD_FAILED`, `TOOL_INSTALL_FAILED` |
+
+#### Test
+
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| Managed tools have newer versions available | Surface command requests tool update | Tools are updated and per-tool success outcomes are returned |
+| All managed tools are already current | Surface command requests tool update | Returns current status for all tools with no modifications |
+| Network probe for one tool times out | Surface command requests tool update | Probing error is recorded for timed-out tool while others complete |
+
+#### Metric
+
+| Target Metric | Value |
+|---------------|-------|
+| Update Status Determinism | 100% |
+| Probe Timeout Enforcement | < 5000ms |
 
 ### FR-Maintenance-005: Security Scan
 
-| Aspect | Detail|
-|--------|-------|
-| Description | Scan the project for known security issues for the security scan command. |
-| Business Rules | SecurityScan runs advisory/security checks over the dependency set and reports findings with severity; scan complements cargo-audit results surfaced through external-lint; empty dependency set yields zero findings. |
-| Edge Cases | No advisories found yields an empty clean result; unreadable manifest is reported as a scan error; network-dependent advisory fetch failing degrades to local-only results. |
-| Capability | SecurityScanChecker performs the security scan. |
-| Protocol | ISecurityScanProtocol. |
-| Method | security_scan() returning findings list and scan status. |
-| Input | Project path; source is MaintenanceRequest::SecurityScan. |
-| Output | MaintenanceResponse::Security with findings. |
-| Error | Manifest/lock unreadable yields a scoped error in the response; never panics. |
-| Event | None. |
-| Test | e2e_security_scan_and_dependency_report and orchestrator_security_scan assert scan flow on seeded fixtures. |
-| Metric | Seeded vulnerable fixture reports at least one finding; clean fixture reports zero. |
+**Description:**
+The system shall scan the project dependency graph and manifest artifacts for known security advisories, vulnerability alerts, and unsafe configurations.
+
+#### Business Logic
+
+- The system shall inspect declared dependencies against security advisories and emit severity ratings for discovered vulnerabilities.
+- When the dependency set is empty, the system shall emit zero findings and report a clean security state.
+- Manifest and dependency lock files shall be parsed without executing unverified build scripts.
+- Unreadable manifests or lock files shall produce scoped diagnostic errors rather than panics.
+
+#### Edge Cases
+
+- When no security advisories exist for dependencies, the system shall return an empty findings list with clean status.
+- When remote advisory feeds are unreachable, the system shall fall back to local advisory databases and record a degraded scan warning.
+- When manifest files are corrupted or unparseable, the system shall return a scoped error in the response without crashing.
+
+#### Technical Specification
+
+| Aspect | Detail |
+|--------|--------|
+| **Input** | `MaintenanceRequest::SecurityScan` with target project path. |
+| **Output** | `MaintenanceResponse::Security` containing list of security findings. |
+| **Protocol** | `ISecurityScanProtocol` |
+| **Method** | `run_security_scan` |
+| **Event** | `SecurityScanCompleted` |
+| **Error** | `MANIFEST_UNREADABLE`, `ADVISORY_FEED_UNAVAILABLE` |
+
+#### Test
+
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| Project fixture containing a known vulnerable dependency | Surface command requests security scan | Returns findings list with at least one security alert and severity |
+| Clean project fixture with zero known vulnerabilities | Surface command requests security scan | Returns zero findings with clean scan status |
+| Unreadable or corrupt dependency lock file | Surface command requests security scan | Returns response with scoped unreadable manifest error and no panic |
+
+#### Metric
+
+| Target Metric | Value |
+|---------------|-------|
+| Known Vulnerability Detection Rate | 100% |
+| False Positive Finding Rate | 0% |
 
 ### FR-Maintenance-006: Dependency Report
 
-| Aspect | Detail|
-|--------|-------|
-| Description | Produce a dependency report for the project's dependency graph. |
-| Business Rules | DependencyReport lists dependencies and their sources; works off the parsed manifest/lock data; consistent with the security scan's data source. |
-| Edge Cases | Missing dependency data yields an empty report rather than failure; partial graphs report what was parsed; report works even when security scan finds nothing. |
-| Capability | DependencyReportChecker aggregates dependency information. |
-| Protocol | IDependencyReportProtocol. |
-| Method | dependency_report() returning dependency listing. |
-| Input | Project path; source is MaintenanceRequest::DependencyReport. |
-| Output | MaintenanceResponse::Dependencies with the dependency listing. |
-| Error | Unreadable input yields empty listing plus error note. |
-| Event | None. |
-| Test | orchestrator_dependency_report, dependency_report_checker_implements_dependency_report_protocol, and e2e_security_scan_and_dependency_report assert reporting. |
-| Metric | Seeded manifest fixtures produce a listing matching their dependency count. |
+**Description:**
+The system shall generate a structured dependency report from parsed manifest and lock artifacts, enumerating dependencies, versions, and origin sources.
+
+#### Business Logic
+
+- The system shall enumerate declared dependencies, versions, and resolution sources from project manifests.
+- Missing dependency manifests shall yield an empty dependency report rather than raising an unhandled failure.
+- When dependency resolution data is partial, the report shall include all successfully parsed entries alongside diagnostic notes.
+- The dependency data source shall remain consistent with the input data used by the security scan capability.
+
+#### Edge Cases
+
+- When a project carries no dependencies, the system shall return an empty dependency list.
+- When manifest syntax contains errors in certain dependency blocks, the system shall report all valid entries and append a parse error note.
+- When project manifests are completely missing, the system shall return an empty listing with an informative status.
+
+#### Technical Specification
+
+| Aspect | Detail |
+|--------|--------|
+| **Input** | `MaintenanceRequest::DependencyReport` with project path. |
+| **Output** | `MaintenanceResponse::Dependencies` with dependency listing or scoped error. |
+| **Protocol** | `IDependencyReportProtocol` |
+| **Method** | `run_dependency_report` |
+| **Event** | `DependencyReportGenerated` |
+| **Error** | `MANIFEST_NOT_FOUND`, `DEPENDENCY_PARSE_FAILED` |
+
+#### Test
+
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| Seeded project fixture with manifest and lock file | Surface command requests dependency report | Returns dependency listing matching the fixture's dependency count |
+| Project with no declared dependencies | Surface command requests dependency report | Returns empty dependency listing with successful status |
+| Unreadable or missing manifest file | Surface command requests dependency report | Returns empty listing with scoped error note and no panic |
+
+#### Metric
+
+| Target Metric | Value |
+|---------------|-------|
+| Dependency Enumeration Completeness | 100% |
+| Manifest Parsing Accuracy | 100% |
 
 ### FR-Maintenance-007: Adapter Health Check
 
-| Aspect | Detail|
-|--------|-------|
-| Description | Check that every configured linter adapter is installed and runnable. |
-| Business Rules | HealthCheck probes all ten default adapters across the four language groups and reports per-adapter availability; all languages are covered; missing adapters are reported, not fatal. |
-| Edge Cases | Missing adapter binary reports unavailable for that adapter while others still probe; empty adapter config yields an empty health map; probing continues after a failing adapter. |
-| Capability | AdapterHealthChecker probes adapter availability. |
-| Protocol | IAdapterHealthProtocol. |
-| Method | health_check() returning per-adapter availability (ten adapters, all four languages). |
-| Input | Adapter configuration; source is MaintenanceRequest::HealthCheck. |
-| Output | MaintenanceResponse::Health with availability per adapter. |
-| Error | Individual probe failure marks that adapter unhealthy; overall response completes. |
-| Event | None. |
-| Test | health_check_returns_10_adapters, health_check_has_all_languages, maintenance_health_check_covers_all_languages, and orchestrator_health_check assert coverage. |
-| Metric | Health check returns exactly ten adapter entries covering Rust, Python, JS, and Markdown groups. |
+**Description:**
+The system shall verify the installation and operational readiness of all configured linter adapters across all supported language groups and report per-adapter availability.
 
-### FR-Maintenance-008: Self-Update (binary)
+#### Business Logic
 
-| Aspect | Detail|
-|--------|-------|
-| Description | Update the lint-arwaky binary itself with integrity verification for the self-update command. |
-| Business Rules | SelfUpdate downloads the target release artifact, verifies the checksum/signature when a target exists and always when no target exists, and replaces the binary atomically; corrupt downloads are rejected even when the filename matches; success or already-up-to-date is reported as success. |
-| Edge Cases | Already-up-to-date reports success; corrupt download rejected even when target name matches; no existing target triggers full verification; target exists skips redundant re-verify per policy but never skips replace-time check; interrupted download leaves the current binary intact. |
-| Capability | SelfUpdateChecker performs download, verify, and replace. |
-| Protocol | ISelfUpdateProtocol. |
-| Method | self_update() downloading, verifying, and replacing the binary. |
-| Input | Release source and current binary path; source is MaintenanceRequest::SelfUpdate. |
-| Output | MaintenanceResponse::SelfUpdate with update outcome. |
-| Error | Corrupt or unverifiable download aborts before replace; caller sees failure with the current binary untouched. |
-| Event | None. |
-| Test | self_update_checker_implements_self_update_protocol, self_update_rejects_corrupt_download_even_when_target_matches, self_update_verifies_download_when_no_target_exists, and self_update_success_or_already_up_to_date assert integrity and outcomes. |
-| Metric | Corrupt payload never replaces the binary on a seeded run; valid payload updates atomically in one call. |
+- The system shall check availability across all configured adapters spanning Rust, Python, JavaScript, and Markdown language groups.
+- The health check shall probe each adapter independently, ensuring missing binaries do not halt execution.
+- Missing or non-executable adapter binaries shall be flagged as unhealthy in the status report without failing the overall command.
+- The returned health report shall explicitly categorize health status for each probed adapter.
+
+#### Edge Cases
+
+- When an adapter binary is missing from the environment, that adapter shall be marked unhealthy while probing of other adapters continues.
+- When adapter configurations are empty, the system shall return an empty health map without error.
+- When an adapter binary crashes during execution probe, the failure shall be isolated to that adapter's health entry.
+
+#### Technical Specification
+
+| Aspect | Detail |
+|--------|--------|
+| **Input** | `MaintenanceRequest::HealthCheck` with adapter configurations. |
+| **Output** | `MaintenanceResponse::Health` with per-adapter availability results. |
+| **Protocol** | `IAdapterHealthProtocol` |
+| **Method** | `health_check` |
+| **Event** | `AdapterHealthChecked` |
+| **Error** | `ADAPTER_PROBE_FAILED`, `ADAPTER_BINARY_MISSING` |
+
+#### Test
+
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| Standard environment with installed adapters | Surface command requests adapter health check | Returns health entries covering all configured adapters across all four language groups |
+| Specific adapter binary is missing from PATH | Surface command requests adapter health check | Missing adapter is marked unhealthy while remaining adapters report valid status |
+| Configuration with zero adapters defined | Surface command requests adapter health check | Returns empty health mapping with successful status |
+
+#### Metric
+
+| Target Metric | Value |
+|---------------|-------|
+| Language Group Coverage | 100% |
+| Adapter Probe Isolation | 100% |
+
+### FR-Maintenance-008: Self-Update
+
+**Description:**
+The system shall download release artifacts from authorized release distribution endpoints, verify artifact integrity and checksums, and atomically replace the active binary.
+
+#### Business Logic
+
+- The system shall fetch release metadata and download candidate binaries from the configured distribution source.
+- Checksum and signature verification shall be enforced for all downloads prior to installation.
+- Corrupted, truncated, or unverified download payloads shall be rejected immediately, even if filename patterns match.
+- Binary replacement shall execute atomically so that interrupted updates leave the existing binary unharmed.
+- When the currently running binary is already at the latest release version, the system shall report success with an up-to-date notice.
+
+#### Edge Cases
+
+- When an update payload fails checksum verification, the update process shall abort and retain the original binary unmodified.
+- When the active binary is already at the latest version, the system shall complete cleanly without initiating a download.
+- When download streams disconnect mid-transfer, all partial files shall be discarded and the active binary left untouched.
+
+#### Technical Specification
+
+| Aspect | Detail |
+|--------|--------|
+| **Input** | `MaintenanceRequest::SelfUpdate` specifying release source and check-only flag. |
+| **Output** | `MaintenanceResponse::SelfUpdate` with operation outcome. |
+| **Protocol** | `ISelfUpdateProtocol` |
+| **Method** | `self_update` |
+| **Event** | `BinarySelfUpdated` |
+| **Error** | `RELEASE_NOT_FOUND`, `INTEGRITY_CHECK_FAILED`, `ATOMIC_REPLACE_FAILED` |
+
+#### Test
+
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| Active binary is older than published release | Surface command requests binary self-update | Downloads release, validates checksum, atomically replaces binary, and reports success |
+| Downloaded payload is corrupted or tampered | Surface command requests binary self-update | Integrity verification fails, binary remains untouched, and error is returned |
+| Active binary already matches latest release | Surface command requests binary self-update | Returns up-to-date status without modifying active binary |
+
+#### Metric
+
+| Target Metric | Value |
+|---------------|-------|
+| Integrity Verification Enforcement | 100% |
+| Atomic Replacement Failure Rate | 0% |
 
 ## Public Interface
 
-| Aspect | Detail|
-|--------|-------|
-| Agent | MaintenanceCommandsOrchestrator — the agent-layer orchestrator behind doctor, stats, clean, update, security, dependencies, health, and self-update commands. |
-| Aggregate | IMaintenanceAggregate — the feature's single front door. |
-| Method | execute(&self, request: MaintenanceRequest) -> MaintenanceResponse |
-| Request | MaintenanceRequest::{Stats, Clean, Update, SelfUpdate, Doctor, Cancel, DiagnoseToolchain, HealthCheck, SecurityScan, DependencyReport} |
-| Response | MaintenanceResponse::{Stats, Clean, Update, SelfUpdate, Doctor, Cancelled, Toolchain, Health, Security, Dependencies} |
+| Aspect | Detail |
+|--------|--------|
+| Agent | `MaintenanceCommandsOrchestrator` |
+| Aggregate | `IMaintenanceAggregate` |
+| Method | `execute` |
+| Request | `MaintenanceRequest` |
+| Response | `MaintenanceResponse` |
 
 ## Reference
 
-| Artifact | Purpose | Link|
+| Artifact | Purpose | Link |
 |----------|---------|------|
-| BACKLOG.md | Backlog tracking | [BACKLOG.md](BACKLOG.md)|
-| PRD.md | Product requirements | [PRD.md](../../PRD.md)|
-| FRD.md | Feature requirements | [FRD.md](FRD.md)|
-| ROADMAP.md | Roadmap status | [ROADMAP.md](../../ROADMAP.md)|
-| ARCHITECTURE.md | Layer contract | [ARCHITECTURE.md](../../ARCHITECTURE.md)|
+| PRD | Business goals, user stories, and scope | [PRD.md](../../PRD.md) |
+| Backlog | Task tracking, epics, and implementation status | [BACKLOG.md](./BACKLOG.md) |
+| Roadmap | Timeline, phasing, and dependencies | [ROADMAP.md](../../ROADMAP.md) |
+| Architecture | System boundaries, tech stack, and infra | [ARCHITECTURE.md](../../ARCHITECTURE.md) |

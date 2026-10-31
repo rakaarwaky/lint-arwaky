@@ -10,7 +10,7 @@ State machine restated here.
 
 ## Feature Roll-up
 
-- FR-SHAR: shared kernel feature
+- FR-SHAR: shared layer feature
 - FR-CONF: config-system feature
 
 ## Reference
