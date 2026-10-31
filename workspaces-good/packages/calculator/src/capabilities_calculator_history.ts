@@ -1,29 +1,37 @@
-import { IOperationLogProtocol } from "../../shared/src/contract_operation_log_protocol";
-import { OperationLogVO } from "../../shared/src/taxonomy_operation_log_vo";
+/**
+ * Calculator history merge capability (AES `_capability`, `IMergeProtocol`).
+ *
+ * The calculator member owns the cross-operation view of every feature log, so
+ * one capability merges the logs into a single newest-first list that the
+ * orchestrator returns for history reads.
+ */
+
+import { IMergeProtocol } from "calculator-shared/src/calculator/contract_calculator_protocol";
+import { ResultVO } from "../../shared/src/taxonomy_result_vo";
 
 // ─── Block 1: Struct Definition ─────────────────────────────
 
-/** Merge the four operation logs into the history the caller reads. */
-export class CalculatorHistoryCapability implements IOperationLogProtocol {
+/** Merge the operation results into the history the caller reads. */
+export class CalculatorHistoryCapability implements IMergeProtocol {
   // ─── Block 2: Protocol Trait Implementation ────────────────
 
   /** Record one evaluated result into the merged history. */
-  public record(result: OperationLogVO): void {
+  public record(result: ResultVO): void {
     this.entries.push(result);
   }
 
-  /** Return every operation log entry, newest first. */
-  public merge(logs: OperationLogVO[]): OperationLogVO[] {
-    const entries: OperationLogVO[] = [];
+  /** Return every recorded result, newest first. */
+  public merge(logs: ResultVO[][]): ResultVO[] {
+    const entries: ResultVO[] = [];
     for (const log of logs) {
-      entries.push(...log.entries);
+      entries.push(...log);
     }
-    return entries.sort((a, b) => b.when - a.when);
+    return entries.reverse();
   }
 
-  // ─── Block 3: Constructors, Std Traits, Helpers ─────────────
+  // ─── Block 3: Constructors, Std Traits, Helpers ───────────
 
-  private readonly entries: OperationLogVO[] = [];
+  private readonly entries: ResultVO[] = [];
 
   /** A fresh capability holds no entries yet. */
   public constructor() {

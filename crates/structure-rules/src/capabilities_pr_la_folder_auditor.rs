@@ -34,9 +34,10 @@ impl IStructurePrLaProtocol for PrLaFolderAuditor {
         // Part A: every *feature* crate folder's FR ids must match its folder
         // name. Surface and layer folders owe DESIGN.md/DATA.md, not FRD.md,
         // so FRD.md presence is only checked on feature folders.
-        for member in utility_structure_parsers::member_dirs(&ws_root) {
+        for member in utility_structure_parsers::scoped_member_dirs(&root, &ws_root) {
+            let lang = member_lang(&member);
             for folder in crate_folders(&member) {
-                if member_role(&folder) != MemberRole::Feature {
+                if member_role(&folder, lang) != MemberRole::Feature {
                     continue;
                 }
                 let folder_name = match folder.file_name().and_then(|n| n.to_str()) {
@@ -67,7 +68,14 @@ impl IStructurePrLaProtocol for PrLaFolderAuditor {
                 };
                 for fr_id in extract_fr_ids(&contents) {
                     let prefix = fr_prefix(&folder_name);
-                    if !fr_id.starts_with(&format!("FR-{prefix}")) {
+                    // Ids match when the feature prefix equals the folder's
+                    // PascalCase prefix. The leading `FR-` token is
+                    // case-insensitive: an id may read `FR-ADDITION-001` while
+                    // the folder is `addition`.
+                    if !fr_id
+                        .to_ascii_uppercase()
+                        .starts_with(&format!("FR-{}", prefix.to_ascii_uppercase()))
+                    {
                         findings.push(StructureFinding::new(
                             consts::RULE_CODE_PR_LA_FOLDER,
                             consts::PR_LA_VIOLATION_FR_ID_MISMATCH,
@@ -91,7 +99,7 @@ impl IStructurePrLaProtocol for PrLaFolderAuditor {
         // crate folder by order (PR-LA-001 → first folder), the folder exists
         // under a member dir, and the heading's title names that folder.
         let order = consts::PR_LA_FOLDER_ORDER;
-        let members = utility_structure_parsers::member_dirs(&ws_root);
+        let members = utility_structure_parsers::scoped_member_dirs(&root, &ws_root);
         for doc_name in consts::PR_LA_DOCUMENTS {
             let doc = ws_root.join(doc_name);
             if !doc.is_file() {
@@ -217,18 +225,34 @@ enum MemberRole {
 
 /// Classify *folder* by its crate structure, mirroring the doc-rules
 /// collector.
-fn member_role(folder: &Path) -> MemberRole {
+fn member_role(folder: &Path, lang: &str) -> MemberRole {
     let name = folder.file_name().and_then(|n| n.to_str()).unwrap_or("");
     if name == "shared" || name == "kernel" {
         return MemberRole::Kernel;
     }
-    if has_orchestrator_file(folder) || exposes_capability_in_cargo_toml(folder) {
+    if has_orchestrator_file(folder, lang)
+        || (lang == "rust" && exposes_capability_in_cargo_toml(folder))
+    {
         return MemberRole::Feature;
     }
-    if has_surface_files(folder) || has_surface_cargo_deps(folder) {
+    if has_surface_files(folder, lang) || has_surface_cargo_deps(folder) {
         return MemberRole::Surface;
     }
     MemberRole::None
+}
+
+/// The audit language of a member dir: `modules` is Python, `packages` is
+/// JS/TS, and every other layout is Rust.
+fn member_lang(member: &Path) -> &'static str {
+    match member
+        .file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or_default()
+    {
+        "modules" => "python",
+        "packages" => "ts",
+        _ => "rust",
+    }
 }
 
 /// Walk *folder*'s own entries and its `src/` sub-entries, returning true when
@@ -266,14 +290,27 @@ fn walk_top_and_src(folder: &Path, pred: impl Fn(&str) -> bool) -> bool {
 
 /// Does *folder* contain an `agent_*_orchestrator*.rs` file (top level or
 /// under `src/`)?
-fn has_orchestrator_file(folder: &Path) -> bool {
-    walk_top_and_src(folder, |n| {
-        n.contains("agent_") && n.contains("_orchestrator") && n.ends_with(".rs")
-    })
+fn has_orchestrator_file(folder: &Path, lang: &str) -> bool {
+    match lang {
+        "rust" => walk_top_and_src(folder, |n| {
+            n.contains("agent_") && n.contains("_orchestrator") && n.ends_with(".rs")
+        }),
+        "python" => walk_top_and_src(folder, |n| {
+            n.contains("agent_") && n.contains("orchestrator")
+        }),
+        "ts" => walk_top_and_src(folder, |n| {
+            n.contains("agent")
+                && (n.contains("orchestrator") || n.contains("composition-root"))
+                && (n.ends_with(".ts") || n.ends_with(".js"))
+        }),
+        _ => false,
+    }
 }
 
 /// Does *folder* contain a `surface_*` file (top level or under `src/`)?
-fn has_surface_files(folder: &Path) -> bool {
+/// Language-aware: a `surface_` token in any file name classifies the folder,
+/// because Python and TypeScript surface modules mirror the Rust prefix.
+fn has_surface_files(folder: &Path, _lang: &str) -> bool {
     walk_top_and_src(folder, |n| n.starts_with("surface_"))
 }
 
@@ -320,7 +357,7 @@ fn relative_to(path: &Path, ws_root: &Path) -> String {
     }
 }
 
-/// The feature prefix for a folder name: kebab-case → PascalCase, with
+/// The feature prefix for a folder name: kebab/snake-case → PascalCase, with
 /// explicit overrides for abbreviation folders (doc-rules → DOC).
 fn fr_prefix(folder_name: &str) -> String {
     if let Some(override_) = consts::FR_PREFIX_OVERRIDES
@@ -331,7 +368,7 @@ fn fr_prefix(folder_name: &str) -> String {
         return override_.to_string();
     }
     folder_name
-        .split('-')
+        .split(['-', '_'])
         .map(|part| {
             let mut chars = part.chars();
             match chars.next() {

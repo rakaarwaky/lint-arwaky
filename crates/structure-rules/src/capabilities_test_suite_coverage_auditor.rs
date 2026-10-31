@@ -34,7 +34,7 @@ impl IStructureTestSuiteProtocol for TestSuiteCoverageAuditor {
         let ws_root = workspace_root(&root);
         let mut findings = Vec::new();
 
-        for member in utility_structure_parsers::member_dirs(&ws_root) {
+        for member in utility_structure_parsers::scoped_member_dirs(&root, &ws_root) {
             for folder in utility_structure_parsers::feature_dirs(&member) {
                 if folder_name(&folder) == consts::KERNEL_DIR {
                     continue;
