@@ -10,7 +10,7 @@ use shared_doc_rules::contract_doc_protocol::IContributingDocProtocol;
 use shared_doc_rules::taxonomy_doc_audit_context_vo::DocAuditContext;
 use shared_doc_rules::taxonomy_doc_rules_constant as consts;
 use shared_doc_rules::taxonomy_doc_rules_request::{DocFinding, DocSource};
-use shared_doc_rules::taxonomy_doc_rules_violation_names::DOC_VIOLATION_NAMES;
+use shared_doc_rules::taxonomy_doc_rules_violation_vo::DOC_VIOLATION_NAMES;
 use shared_doc_rules::utility_capabilities_doc_h2_checks::{
     SectionShapeDefect, SectionShapeDefectKind, detect_h2_table,
 };

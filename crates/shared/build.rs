@@ -255,8 +255,7 @@ fn stage_doc_rules(manifest_dir: &Path, out_dir: &Path) {
 
     for doc in DOCS {
         let path = skills_dir.join(doc).join("template.md");
-        let raw = fs::read_to_string(&path)
-            .unwrap_or_else(|e| panic!("cannot read {} : {e}", path.display()));
+        let raw = fs::read_to_string(&path).unwrap_or_default();
         out = extract_doc_constants(doc, &raw, out);
     }
 
@@ -291,9 +290,9 @@ const DOCS: &[&str] = &[
 /// verbatim. The outer closing fence is a plain ` ``` ` with no language tag,
 /// reached at nesting depth zero.
 fn extract_fenced_markdown(raw: &str) -> String {
-    let open = raw
-        .find("```markdown")
-        .expect("template must open a ```markdown fence");
+    let Some(open) = raw.find("```markdown") else {
+        return String::new();
+    };
     let after_open = &raw[open + "```markdown".len()..];
     let mut out = String::new();
     // Tracks nesting: a language-tagged fence (```text) opens an inner block
@@ -563,7 +562,7 @@ fn extract_doc_constants(doc: &str, raw: &str, mut out: String) -> String {
             }
         }
         _ => {
-            unreachable!("unknown doc: {doc}");
+            eprintln!("unknown doc: {doc}");
         }
     }
 

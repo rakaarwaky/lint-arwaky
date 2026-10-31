@@ -1,7 +1,7 @@
 // PURPOSE: Shared line-drift finding converter for AES601–AES610 capabilities.
 
 use super::taxonomy_doc_rules_request::DocFinding;
-use super::taxonomy_doc_rules_violation_names::DOC_VIOLATION_NAMES;
+use super::taxonomy_doc_rules_violation_vo::DOC_VIOLATION_NAMES;
 use super::utility_doc_common_checks::LineDriftDefect;
 
 /// Convert line-drift defects into `DocFinding`s stamped with `doc_name` and
