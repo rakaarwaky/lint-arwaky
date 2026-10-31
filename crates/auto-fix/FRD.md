@@ -38,17 +38,20 @@ Every fix attempt shall return a **reason-coded outcome** (`Applied` / `Skipped(
 **Description:** The auto-fix feature shall remove the unused import flagged at a specific line, in place or as a dry-run preview. One call fixes exactly one flagged line; when the flag sits on an import line, the fix deletes that line. The result shall carry a reason-coded outcome so the caller distinguishes applied changes from skipped and failed attempts.
 
 #### Business Logic
+
 - One call shall fix exactly one flagged line; a flag that does not sit on an import line shall be rejected with `NotAnImportLine`
 - A flagged import that spans multiple lines shall be rejected with `MultiLineImport`
 - The flagged line shall not fall outside the file's line range; out-of-bounds flags shall fail with `LineOutOfBounds`
 - Dry-run shall report the would-be change without writing the file on disk
 
 #### Edge Cases
+
 - A clean file yields no fix call at all; a file whose import list is already valid shall skip with `AlreadyValid`
 - A missing or unreadable file shall fail with `FileNotFound` or `ReadError` rather than succeed silently
 - Dry-run shall never modify the file on disk
 
 #### Technical Specification
+
 | Aspect | Detail |
 |--------|--------|
 | **Input** | `file_path` and flagged line number carried by the violation. Source: the fix pipeline driven by the CLI `fix` command. |
@@ -59,6 +62,7 @@ Every fix attempt shall return a **reason-coded outcome** (`Applied` / `Skipped(
 | **Error** | `FileNotFound`, `ReadError`, `NotAnImportLine`, `MultiLineImport`, `LineOutOfBounds`, `AlreadyValid` |
 
 #### Test
+
 | Context | When Action | Then Observable Result |
 |---------|-------------|------------------------|
 | A file contains one unused import at a flagged line | The unused import fix is invoked in place | `FixOutcome::Applied` is returned and the import line is removed from the file on disk |
@@ -67,6 +71,7 @@ Every fix attempt shall return a **reason-coded outcome** (`Applied` / `Skipped(
 | Dry-run is selected for a file with an unused import | The fix pipeline runs with dry-run | The preview lists the would-be removal and the file on disk stays byte-identical |
 
 #### Metric
+
 | Target Metric | Value |
 |---------------|-------|
 | Unused-import flags resolved per batch | 100% |
@@ -78,17 +83,20 @@ Every fix attempt shall return a **reason-coded outcome** (`Applied` / `Skipped(
 **Description:** The auto-fix feature shall strip a bypass marker at a flagged line, in place or as a dry-run preview. Known bypass surface — allow-attribute macros, hack comments, no-qa inline markers, and unwrap macro replacements — is in scope; an unmatched pattern skips with a reason so the caller can keep walking other violations.
 
 #### Business Logic
+
 - Only known bypass patterns shall be removed: allow-attribute macros, hack comments, no-qa inline markers, and unwrap macro replacements
 - An unmatched pattern on the flagged line shall skip with `NoBypassPattern`
 - A removal that would drop an error-handling context shall refuse with `UnsafeRemoval`
 - A pattern that already carries its own context marker shall skip with `AlreadyHasContext`
 
 #### Edge Cases
+
 - Multiple bypass markers on one line are rewritten in one pass when all are known
 - An unwrap macro in a context that needs error handling skips rather than corrupting the code
 - Dry-run previews the edit and leaves the file untouched; a missing file fails with `FileNotFound`
 
 #### Technical Specification
+
 | Aspect | Detail |
 |--------|--------|
 | **Input** | `file_path` and flagged line number from the flagged violation. Source: the fix pipeline driven by the CLI `fix` command. |
@@ -99,6 +107,7 @@ Every fix attempt shall return a **reason-coded outcome** (`Applied` / `Skipped(
 | **Error** | `NoBypassPattern`, `UnsafeRemoval`, `AlreadyHasContext`, `FileNotFound`, `ReadError` |
 
 #### Test
+
 | Context | When Action | Then Observable Result |
 |---------|-------------|------------------------|
 | A file carries a known bypass marker at a flagged line | The bypass fix is invoked in place | `FixOutcome::Applied` is returned and the marker is removed from the file on disk |
@@ -107,6 +116,7 @@ Every fix attempt shall return a **reason-coded outcome** (`Applied` / `Skipped(
 | Dry-run is selected for a file with a bypass marker | The fix pipeline runs with dry-run | The preview lists the would-be removal and the file on disk stays byte-identical |
 
 #### Metric
+
 | Target Metric | Value |
 |---------------|-------|
 | In-scope bypass markers removed per batch | 100% |
@@ -118,17 +128,20 @@ Every fix attempt shall return a **reason-coded outcome** (`Applied` / `Skipped(
 **Description:** The auto-fix feature shall rename a flagged symbol across its entire file with word-boundary awareness, in place or as a dry-run preview. The rename is mechanical: the new name carries the `renamed_` prefix, and matching is word-boundary aware so substrings survive.
 
 #### Business Logic
+
 - The new name shall carry the `renamed_` prefix
 - Occurrence matching shall be word-boundary aware so substrings of longer identifiers are not touched
 - A new name that collides with a keyword shall skip with `KeywordConflict`
 - A symbol with zero occurrences shall skip with `SymbolNotFound`; a file already compliant shall skip with `AlreadyValid`
 
 #### Edge Cases
+
 - Symbol occurrences inside string literals or comments move with the rename because the pass is textual and boundary-based
 - A missing file fails with `FileNotFound`; dry-run previews the would-be rename without writing
 - Zero occurrences skip rather than inventing one
 
 #### Technical Specification
+
 | Aspect | Detail |
 |--------|--------|
 | **Input** | `file_path`, `old_name`, and `new_name`. Source: the fix pipeline driven by the CLI `fix` command. |
@@ -139,6 +152,7 @@ Every fix attempt shall return a **reason-coded outcome** (`Applied` / `Skipped(
 | **Error** | `KeywordConflict`, `SymbolNotFound`, `AlreadyValid`, `FileNotFound`, `ReadError` |
 
 #### Test
+
 | Context | When Action | Then Observable Result |
 |---------|-------------|------------------------|
 | A file contains occurrences of a flagged symbol | The symbol rename is invoked in place | `FixOutcome::Applied` is returned and every word-boundary occurrence is rewritten with the `renamed_` prefix |
@@ -147,6 +161,7 @@ Every fix attempt shall return a **reason-coded outcome** (`Applied` / `Skipped(
 | Dry-run is selected for a file with a flagged symbol | The fix pipeline runs with dry-run | The preview lists the would-be rename and the file on disk stays byte-identical |
 
 #### Metric
+
 | Target Metric | Value |
 |---------------|-------|
 | Flagged symbol occurrences rewritten per file | 100% |
@@ -158,17 +173,20 @@ Every fix attempt shall return a **reason-coded outcome** (`Applied` / `Skipped(
 **Description:** The auto-fix feature shall run the whole fix pipeline over a path and report what was fixed versus what still needs a human. `dry_run` is selectable per request: report what would change without writing, or apply every fixable violation and skip the rest. Violations that have no fixer shall never be rewritten — they shall be listed as manual work.
 
 #### Business Logic
+
 - `dry_run` shall be selectable per request: report would-be changes without writing, or apply every fixable violation and skip the rest
 - Violations that have no fixer shall be listed as manual work and never rewritten
 - The result shall merge applied changes with the non-fixable list in one `FixResult`
 - Per-file failures shall never abort other files in the same batch
 
 #### Edge Cases
+
 - An empty path or a project with no violations shall return a clean result with zero changes
 - A path that does not exist shall fail the CLI with a non-zero exit
 - Per-file failures are reported as reason-coded entries and never abort the remaining files
 
 #### Technical Specification
+
 | Aspect | Detail |
 |--------|--------|
 | **Input** | `path` (file or directory) and `dry_run` flag from the fix request. Source: the CLI `fix` command. |
@@ -179,6 +197,7 @@ Every fix attempt shall return a **reason-coded outcome** (`Applied` / `Skipped(
 | **Error** | Missing path fails the CLI with a non-zero exit; per-file failures are reason-coded entries that never abort other files |
 
 #### Test
+
 | Context | When Action | Then Observable Result |
 |---------|-------------|------------------------|
 | The target project has no violations | The fix pipeline runs over the path | A clean result with zero changes is returned |
@@ -187,6 +206,7 @@ Every fix attempt shall return a **reason-coded outcome** (`Applied` / `Skipped(
 | One file in the batch fails | The fix pipeline runs over the batch | The failure is reported as a reason-coded entry and the remaining files are processed |
 
 #### Metric
+
 | Target Metric | Value |
 |---------------|-------|
 | Bytes changed on disk under dry-run | 0 |
