@@ -11,6 +11,7 @@ pub mod contract_doc_aggregate;
 pub mod contract_doc_protocol;
 pub mod taxonomy_doc_audit_context_vo;
 pub mod taxonomy_doc_rules_constant;
+pub mod taxonomy_doc_rules_defect_vo;
 pub mod taxonomy_doc_rules_request;
 pub mod taxonomy_doc_rules_response;
 pub mod taxonomy_doc_rules_template_vo;

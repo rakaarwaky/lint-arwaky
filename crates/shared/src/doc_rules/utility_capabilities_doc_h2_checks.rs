@@ -10,40 +10,8 @@ use crate::taxonomy_doc_section_vo::Section;
 use crate::utility_markdown_scanner::normalize_heading;
 use std::collections::HashSet;
 
-/// Why a section's table shape failed.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum SectionShapeDefectKind {
-    /// Table ships columns outside the template's fixed header set.
-    ExtraColumns,
-    /// A data row repeats the header row.
-    HeaderRepeated,
-    /// Table is present but missing required column(s).
-    MissingColumns,
-    /// The section body carries no table at all.
-    NotTable,
-}
+pub use crate::taxonomy_doc_rules_defect_vo::{H2FixedRowsDefect, SectionShapeDefect, SectionShapeDefectKind};
 
-/// A detected table-shape defect in a section.
-#[derive(Debug, Clone)]
-pub struct SectionShapeDefect {
-    pub line: usize,
-    pub marker: &'static str,
-    pub title: String,
-    pub columns: Vec<String>,
-    pub kind: SectionShapeDefectKind,
-    pub extra_columns: Vec<String>,
-}
-
-/// A detected fixed-row defect in an H2-level `| Aspect | Detail |` table.
-#[derive(Debug, Clone)]
-pub struct H2FixedRowsDefect {
-    pub line: usize,
-    pub title: String,
-    pub missing: Vec<String>,
-    pub extra: Vec<String>,
-}
-
-/// H2-level: the section titled *title* must carry a table whose header
 /// covers *columns*. Returns the defect (if any) anchored to the H2 line.
 pub fn detect_h2_table(
     parsed: &[Section],

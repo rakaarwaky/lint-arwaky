@@ -21,76 +21,10 @@ use std::path::PathBuf;
 
 // ─── Defect data ─────────────────────────────────────────────────────────
 
-/// A defect found by `detect_fr_id_format`.
-#[derive(Debug, Clone)]
-pub struct FrIdDefect {
-    pub line: usize,
-    pub num: String,
-    pub title: String,
-}
+pub use crate::taxonomy_doc_rules_defect_vo::{
+    ApiMethodDefect, FrIdDefect, PrIdParityDefect, ProtocolParityDefect,
+};
 
-impl FrIdDefect {
-    pub fn line(&self) -> usize {
-        self.line
-    }
-}
-
-/// A defect found by `detect_pr_id_parity`.
-#[derive(Debug, Clone)]
-pub enum PrIdParityDefect {
-    /// PR-ID declared in the PRD has no ROADMAP `Roadmap Status` entry.
-    PrMissingFromRoadmap { line: usize, id: String },
-    /// ROADMAP `PR-` item is not declared in the PRD.
-    RoadmapNotInPrd {
-        line: usize,
-        id: String,
-        valid: Vec<String>,
-    },
-}
-
-impl PrIdParityDefect {
-    pub fn line(&self) -> usize {
-        match self {
-            PrIdParityDefect::PrMissingFromRoadmap { line, .. } => *line,
-            PrIdParityDefect::RoadmapNotInPrd { line, .. } => *line,
-        }
-    }
-}
-
-/// A defect found by `detect_api_method_existence`.
-#[derive(Debug, Clone)]
-pub struct ApiMethodDefect {
-    pub line: usize,
-    pub subsection: String,
-    pub method: String,
-}
-
-impl ApiMethodDefect {
-    pub fn line(&self) -> usize {
-        self.line
-    }
-}
-
-/// A defect found by `detect_fr_protocol_parity`.
-#[derive(Debug, Clone)]
-pub struct ProtocolParityDefect {
-    pub line: usize,
-    pub fr_count: usize,
-    pub protocol_count: usize,
-    pub direction: String,
-}
-
-impl ProtocolParityDefect {
-    pub fn line(&self) -> usize {
-        self.line
-    }
-}
-
-// ─── FR-ID format ────────────────────────────────────────────────────────
-
-/// FR-ID must be `FR-<FEATURENAME>-NNN: <name>`. A bare `FR-NNN` (no feature
-/// prefix) is a violation; the heading itself is reported at its own line.
-/// Returns pure defect data; the calling capability stamps with its own rule
 /// code and violation type.
 pub fn detect_fr_id_format(document: &DocSource) -> Vec<FrIdDefect> {
     let Some(re) = fr_id_bare_re() else {

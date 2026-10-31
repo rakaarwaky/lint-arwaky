@@ -10,7 +10,7 @@ use crate::taxonomy_doc_rules_constant as consts;
 use crate::taxonomy_doc_rules_request::DocSource;
 use crate::taxonomy_doc_section_vo::Section;
 use crate::utility_capabilities_doc_h2_checks::{
-    SectionShapeDefect, first_column_values, row_label_diff,
+    first_column_values, row_label_diff,
 };
 use crate::utility_doc_entry_regexes::fr_entry_re;
 use crate::utility_markdown_scanner::{h3_subsections, normalize_heading, sections};
@@ -19,152 +19,10 @@ use std::path::Path;
 
 // ─── Defect data ─────────────────────────────────────────────────────────
 
-/// A defect found by `detect_entry_tables`.
-#[derive(Debug, Clone)]
-pub enum EntryTableDefect {
-    /// The entry's table shape is wrong (extra columns, repeated header,
-    /// missing columns, or no table at all).
-    Shape(SectionShapeDefect),
-    /// The entry's first-column row labels do not match the template.
-    RowLabelsMismatch {
-        line: usize,
-        title: String,
-        missing: Vec<String>,
-        extra: Vec<String>,
-    },
-}
+pub use crate::taxonomy_doc_rules_defect_vo::{
+    BacklogQualifierDefect, EntryTableDefect, HeadingDefect, LineDriftDefect, MemberDocDefect,
+};
 
-impl EntryTableDefect {
-    /// The anchor line of this defect, for `DocFinding` construction by the
-    /// calling capability.
-    pub fn line(&self) -> usize {
-        match self {
-            EntryTableDefect::Shape(d) => d.line,
-            EntryTableDefect::RowLabelsMismatch { line, .. } => *line,
-        }
-    }
-}
-
-/// A defect found by `detect_doc_heading`.
-#[derive(Debug, Clone)]
-pub enum HeadingDefect {
-    /// The document opens with a number of H1 headings other than one.
-    H1Count { line: usize, count: usize },
-    /// A required H2 heading is missing.
-    H2Missing { line: usize, missing: Vec<String> },
-    /// An H2 heading appears outside the template's required+allowed set.
-    H2Unexpected {
-        line: usize,
-        unexpected: Vec<String>,
-    },
-}
-
-impl HeadingDefect {
-    pub fn line(&self) -> usize {
-        match self {
-            HeadingDefect::H1Count { line, .. } => *line,
-            HeadingDefect::H2Missing { line, .. } => *line,
-            HeadingDefect::H2Unexpected { line, .. } => *line,
-        }
-    }
-}
-
-/// A defect found by `detect_doc_line_drift`.
-#[derive(Debug, Clone)]
-pub enum LineDriftDefect {
-    /// The document has a section the template does not declare.
-    SectionNotInTemplate { line: usize, section: String },
-    /// The document is missing a template section.
-    MissingTemplateSection { line: usize, section: String },
-    /// A template-fixed line does not match.
-    LineMismatch {
-        line: usize,
-        section: String,
-        expected: String,
-        found: String,
-    },
-    /// The document H1 has no title.
-    H1NoTitle { line: usize },
-}
-
-impl LineDriftDefect {
-    pub fn line(&self) -> usize {
-        match self {
-            LineDriftDefect::SectionNotInTemplate { line, .. } => *line,
-            LineDriftDefect::MissingTemplateSection { line, .. } => *line,
-            LineDriftDefect::LineMismatch { line, .. } => *line,
-            LineDriftDefect::H1NoTitle { line } => *line,
-        }
-    }
-}
-
-/// A defect found by `detect_backlog_qualifier_alignment`.
-#[derive(Debug, Clone)]
-pub enum BacklogQualifierDefect {
-    /// BACKLOG entry token has no matching ID in the paired spec.
-    TokenNotDeclared {
-        line: usize,
-        token: String,
-        valid: Vec<String>,
-    },
-    /// Spec-declared ID has no BACKLOG entry.
-    IdNoEntry { line: usize, id: String },
-    /// BACKLOG row cites an id the paired spec does not declare.
-    StrayId {
-        line: usize,
-        token: String,
-        id: String,
-        valid: Vec<String>,
-    },
-}
-
-impl BacklogQualifierDefect {
-    pub fn line(&self) -> usize {
-        match self {
-            BacklogQualifierDefect::TokenNotDeclared { line, .. } => *line,
-            BacklogQualifierDefect::IdNoEntry { line, .. } => *line,
-            BacklogQualifierDefect::StrayId { line, .. } => *line,
-        }
-    }
-}
-
-/// A defect found by `detect_member_docs`.
-#[derive(Debug, Clone)]
-pub enum MemberDocDefect {
-    /// Member folder is missing a required specification doc.
-    MissingRequiredDoc {
-        doc_rel_path: String,
-        line: usize,
-        role_name: String,
-        doc: String,
-    },
-    /// Member folder carries a forbidden specification doc.
-    ForbiddenDoc {
-        doc_rel_path: String,
-        line: usize,
-        role_name: String,
-        doc: String,
-    },
-}
-
-impl MemberDocDefect {
-    pub fn line(&self) -> usize {
-        match self {
-            MemberDocDefect::MissingRequiredDoc { line, .. } => *line,
-            MemberDocDefect::ForbiddenDoc { line, .. } => *line,
-        }
-    }
-}
-
-// ─── Entry tables (AES606) ───────────────────────────────────────────────
-
-/// Walk every H3 under *parent_h2* whose title matches *entry_re* and detect
-/// table-shape defects and row-label mismatches. Findings anchor to the
-/// offending H3 line. The calling capability builds its own DocFinding with
-/// its own AES code.
-///
-/// When the H3 entry carries H4 subsections (modular template shape), the
-/// checks scope to the H4 whose body contains a table matching *columns* —
 /// so the gate follows the template without hardcoding the H4 title.
 pub fn detect_entry_tables(
     parsed: &[Section],
