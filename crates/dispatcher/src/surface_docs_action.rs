@@ -210,7 +210,8 @@ pub fn load_doc_rules_config_from_yaml(
 
 /// Scaffold missing template files in place (or preview with `dry_run`).
 ///
-/// Reads the embedded `HOW-TO-MAKE-*.md` files from `EMBEDDED_SKILLS` and
+/// Reads the embedded reference templates (`references/<doc>/template.md`)
+/// from `EMBEDDED_SKILLS` and
 /// writes any missing documents — root-level master docs plus per-member
 /// docs — so the tree passes FR-DOC-008/009 immediately after the call.
 ///
@@ -423,34 +424,29 @@ pub fn collect_scaffold(
 
 /// Look up the embedded template body for *doc_name* from the compiled-in
 /// `EMBEDDED_SKILLS` catalog. `doc_name` is the bare filename, e.g. `FRD.md`;
-/// the lookup key is `HOW-TO-MAKE-FRD.md`. Returns `None` when no matching
+/// the lookup key is `frd/template.md`. Returns `None` when no matching
 /// template is embedded.
 fn embedded_template_content(doc_name: &str) -> Option<String> {
     // Exact match on known template filenames (not a glob ends_with) so two
     // skill files ending with the same suffix in different subdirectories
-    // cannot silently collide. Compares against the file-name component of the
-    // embedded skill's relative_path.
+    // cannot silently collide. Compares against the last two path segments of
+    // the embedded skill's relative_path.
     let key = match doc_name {
-        "PRD.md" => "HOW-TO-MAKE-PRD.md",
-        "ROADMAP.md" => "HOW-TO-MAKE-ROADMAP.md",
-        "README.md" => "HOW-TO-MAKE-README.md",
-        "AGENTS.md" => "HOW-TO-MAKE-AGENTS.md",
-        "ARCHITECTURE.md" => "HOW-TO-MAKE-ARCHITECTURE.md",
-        "CONTRIBUTING.md" => "HOW-TO-MAKE-CONTRIBUTING.md",
-        "FRD.md" => "template.md",
-        "BACKLOG.md" => "HOW-TO-MAKE-BACKLOG.md",
-        "DATA.md" => "HOW-TO-MAKE-DATA.md",
-        "DESIGN.md" => "HOW-TO-MAKE-DESIGN.md",
+        "PRD.md" => "prd/template.md",
+        "ROADMAP.md" => "roadmap/template.md",
+        "README.md" => "readme/template.md",
+        "AGENTS.md" => "agents/template.md",
+        "ARCHITECTURE.md" => "architecture/template.md",
+        "CONTRIBUTING.md" => "contributing/template.md",
+        "FRD.md" => "frd/template.md",
+        "BACKLOG.md" => "backlog/template.md",
+        "DATA.md" => "data/template.md",
+        "DESIGN.md" => "design/template.md",
         _ => return None,
     };
     EMBEDDED_SKILLS
         .iter()
-        .find(|s| {
-            s.relative_path
-                .rsplit_once('/')
-                .map(|(_, name)| name == key)
-                .unwrap_or(s.relative_path == key)
-        })
+        .find(|s| s.relative_path.ends_with(key))
         .map(|s| s.content.to_string())
 }
 

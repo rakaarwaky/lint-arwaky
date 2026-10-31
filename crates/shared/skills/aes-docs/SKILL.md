@@ -22,16 +22,16 @@ The aggregated efines which document exists, where it lives, and  to improve mak
 
 | Document          | Location                                   | Focus                                       | workflow                                                                                           |
 | ----------------- | ------------------------------------------ | ------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| `PRD.md`          | Root workspace                             | *What* &amp; *Why*                          | [references/HOW-TO-MAKE-PRD/workflow.md.](references/HOW-TO-MAKE-PRD/workflow.md)                   |
-| `ROADMAP.md`      | Root workspace                             | How the priority progrees                   | [references/HOW-TO-MAKE-ROADMAP/workflow.md](references/HOW-TO-MAKE-ROADMAP/workflow.md)           |
-| `FRD.md`          | Each Feature Folder                        | *How* functionally                          | [references/HOW-TO-MAKE-FRD/workflow.md](references/HOW-TO-MAKE-FRD/workflow.md)                   |
-| `BACKLOG.md`      | Each feature **|** surface | shared folder | *What is true now*                          | [references/HOW-TO-MAKE-BACKLOG/workflow.md](references/HOW-TO-MAKE-BACKLOG/workflow.md)           |
-| `README.md`       | Root workspace                             | *How to use/run*                            | [references/HOW-TO-MAKE-README/workflow.md](references/HOW-TO-MAKE-README/workflow.md)             |
-| `AGENTS.md`       | Root workspace                             | *How to work here safely*                   | [references/HOW-TO-MAKE-AGENTS/workflow.md](references/HOW-TO-MAKE-AGENTS/workflow.md)             |
-| `ARCHITECTURE.md` | Root workspace                             | *Layer boundaries and allowed dependencies* | [references/HOW-TO-MAKE-ARCHITECTURE/workflow.md](references/HOW-TO-MAKE-ARCHITECTURE/workflow.md) |
-| `CONTRIBUTING.md` | Root workspace                             | *How to set up and ship a change*           | [references/HOW-TO-MAKE-CONTRIBUTING/workflow.md](references/HOW-TO-MAKE-CONTRIBUTING/workflow.md) |
-| `DESIGN.md`       | Each surface folder                        | *Visual &amp; interaction contract*         | [references/HOW-TO-MAKE-DESIGN/workflow.md](references/HOW-TO-MAKE-DESIGN/workflow.md)             |
-| `DATA.md`         | Shared folder                              | *What the kernel manages*                   | [references/HOW-TO-MAKE-DATA/workflow.md](references/HOW-TO-MAKE-DATA/workflow.md)                 |
+| `PRD.md`          | Root workspace                             | *What* &amp; *Why*                          | [references/prd/workflow.md.](references/prd/workflow.md)                   |
+| `ROADMAP.md`      | Root workspace                             | How the priority progrees                   | [references/roadmap/workflow.md](references/roadmap/workflow.md)           |
+| `FRD.md`          | Each Feature Folder                        | *How* functionally                          | [references/frd/workflow.md](references/frd/workflow.md)                   |
+| `BACKLOG.md`      | Each feature **|** surface | shared folder | *What is true now*                          | [references/backlog/workflow.md](references/backlog/workflow.md)           |
+| `README.md`       | Root workspace                             | *How to use/run*                            | [references/readme/workflow.md](references/readme/workflow.md)             |
+| `AGENTS.md`       | Root workspace                             | *How to work here safely*                   | [references/agents/workflow.md](references/agents/workflow.md)             |
+| `ARCHITECTURE.md` | Root workspace                             | *Layer boundaries and allowed dependencies* | [references/architecture/workflow.md](references/architecture/workflow.md) |
+| `CONTRIBUTING.md` | Root workspace                             | *How to set up and ship a change*           | [references/contributing/workflow.md](references/contributing/workflow.md) |
+| `DESIGN.md`       | Each surface folder                        | *Visual &amp; interaction contract*         | [references/design/workflow.md](references/design/workflow.md)             |
+| `DATA.md`         | Shared folder                              | *What the kernel manages*                   | [references/data/workflow.md](references/data/workflow.md)                 |
 
 
 

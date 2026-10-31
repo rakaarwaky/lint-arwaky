@@ -671,7 +671,7 @@ pub fn detect_doc_heading(
 
 // ─── AGENTS line-drift mechanics (AES605) ────────────────────────────────
 
-/// AGENTS line-drift check against `AGENTS_TEMPLATE`. Returns pure defect
+/// AGENTS line-drift check against `AGENTS_TEMPLATE_LINES`. Returns pure defect
 /// data; the calling capability stamps with its own rule code.
 pub fn detect_agents_line_drift(
     text: &str,

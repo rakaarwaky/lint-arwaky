@@ -298,11 +298,11 @@ pub fn detect_fr_protocol_parity(
     let direction = if protocol_count > fr_count {
         "the code has more protocol classes than requirements; either split the requirements \
          up to match, or merge the classes down — see the 4-direction table in \
-         HOW-TO-MAKE-FRD/template.md"
+         references/frd/template.md"
     } else {
         "the code has fewer protocol classes than requirements; either merge the requirements \
          down to match, or split the methods into more classes — see the 4-direction table in \
-         HOW-TO-MAKE-FRD/template.md"
+         references/frd/template.md"
     };
     let line = document
         .text

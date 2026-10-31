@@ -109,7 +109,7 @@ impl AspectEntryDefect {
 /// non-empty `Detail` cells.
 ///
 /// When *is_prd* is true, PRD aspects are free-form prose/tables per the
-/// HOW-TO-MAKE-PRD template: only presence and non-empty body are enforced.
+/// references/prd/template.md template: only presence and non-empty body are enforced.
 /// When false (FRD), the strict `| No | Detail |` aspect-table contract is
 /// enforced. A legacy entry carrying a single `| Aspect | Detail |` table is
 /// routed to `detect_entry_tables` instead.

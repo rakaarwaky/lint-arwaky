@@ -1,4 +1,12 @@
 // doc_rules — doc-invariant auditors for the AES document chain
+
+// Build-time generated doc-linter shape constants (required H2s, table
+// column headers, fixed row labels), extracted from the
+// `references/*/template.md` files by `build.rs` via Comrak.
+mod doc_generated {
+    include!(concat!(env!("OUT_DIR"), "/doc_generated.rs"));
+}
+
 pub mod contract_doc_aggregate;
 pub mod contract_doc_protocol;
 pub mod taxonomy_doc_audit_context_vo;
@@ -16,6 +24,10 @@ pub mod utility_doc_entry_regexes;
 pub mod utility_doc_fr_format_checks;
 pub mod utility_markdown_scanner;
 pub mod utility_protocol_counter;
+
+// The generated shape constants are re-exported through
+// `taxonomy_doc_rules_constant` (which does `pub use super::doc_generated::*;`),
+// so `pub use taxonomy_doc_rules_constant::*;` below is the public surface.
 
 // ─── Re-exports ────────────────────────────────────────────
 pub use contract_doc_aggregate::IDocRunnerAggregate;

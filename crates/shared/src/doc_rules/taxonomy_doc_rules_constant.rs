@@ -1,5 +1,11 @@
 // PURPOSE: doc invariant rule codes, violation types, and shared vocabulary for the doc-rules feature
 
+// Re-export the build-time generated shape constants (required H2s, table
+// column headers, fixed row labels) extracted from `references/*/template.md`
+// by `build.rs`. These used to be hand-maintained below; they are now
+// generated so the linter tracks template changes automatically.
+pub use super::doc_generated::*;
+
 /// ─── AES601 — FR format ─────────────────────────────────────────────────────
 /// Violation types for FR-ID and FR-field violations.
 pub const RULE_CODE_FR_FORMAT: &str = "AES601";
@@ -151,7 +157,62 @@ pub const CONTRIBUTING_DOC: &str = "CONTRIBUTING.md";
 /// A legacy root BACKLOG.md is accepted so a workspace can migrate in place.
 pub const MASTER_DOC_CANDIDATES: &[&str] = &[ROADMAP_DOC, BACKLOG_DOC];
 
-/// Sections that exist only in the root master, per HOW-TO-MAKE-ROADMAP.
+/// Canonical AGENTS.md template lines — the reference shape AGENTS.md must
+/// match line-by-line (modulo `{...}` placeholder slots) for the AES601
+/// line-drift check. Transcribed from `references/agents/template.md`.
+pub const AGENTS_TEMPLATE_LINES: &[&str] = &[
+    "---",
+    "trigger: always",
+    "description: \"Sample.\"",
+    "---",
+    "",
+    "# Sample AGENTS.md",
+    "",
+    "## Agent Overview",
+    "",
+    "{One paragraph: what AI agents must know before generating code, docs, or suggestions in this workspace.}",
+    "",
+    "## Runtime",
+    "",
+    "| Aspect          | Detail                                          |",
+    "|-----------------|-------------------------------------------------|",
+    "| Language        | {language and pinned version}                   |",
+    "| Environment     | {environment manager and creation method}       |",
+    "| Artifacts       | {reviewable artifact location}                  |",
+    "| Package Manager | {package manager and lockfile}                  |",
+    "| Version Probe   | `{version probe command}`                       |",
+    "| Setup           | `{environment setup command}`                    |",
+    "| Activation      | `{optional environment activation command}`      |",
+    "",
+    "## Project Structure",
+    "",
+    "| Path       | Purpose              |",
+    "|------------|----------------------|",
+    "| {path}     | {what lives here}    |",
+    "",
+    "## Commands",
+    "",
+    "| Category    | Command                              | Scope      | CI Gate              |",
+    "|-------------|--------------------------------------|------------|----------------------|",
+    "| Test (all)  | `<whole-workspace test command>`     | All        | ci.yml: <job name>   |",
+    "| Test (unit) | `<single-package test command>`      | One unit   | ci.yml: <job name>   |",
+    "| Test (file) | `<single-file test command>`         | One file   | ci.yml: <job name>   |",
+    "| Lint        | `<formatter or linter command>`      | All        | ci.yml: <job name>   |",
+    "| Type Check  | `<type checker command>`             | All        | ci.yml: <job name>   |",
+    "| Arch Scan   | `<architecture scanner command>`     | All        | ci.yml: <job name>   |",
+    "",
+    "## Reference",
+    "",
+    "| Artifact     | Purpose                                    | Link |",
+    "|--------------|--------------------------------------------|------|",
+    "| README       | What the tool does, every command, install | [README.md](README.md) |",
+    "| CONTRIBUTING | Branch, commit, and PR conventions         | [CONTRIBUTING.md](CONTRIBUTING.md) |",
+    "| ARCHITECTURE | Layer contract for every crate             | [ARCHITECTURE.md](ARCHITECTURE.md) |",
+    "| ROADMAP      | What ships next, in order                  | [ROADMAP.md](ROADMAP.md) |",
+    "| PRD          | What the product does and why              | [PRD.md](PRD.md) |",
+];
+
+/// Sections that exist only in the root master, per references/roadmap/template.md.
 /// `Roadmap Status` is root-only: feature backlogs carry `Backlog Status`
 /// and legitimately reuse `Progress Overview`.
 pub const MASTER_ONLY_SECTIONS: &[&str] = &["Roadmap Status"];
@@ -162,165 +223,38 @@ pub const ORCHESTRATOR_SUFFIX: &str = "_orchestrator";
 /// Kernel folders are not features and carry DATA.md + BACKLOG.md.
 pub const KERNEL_DIR: &str = "shared";
 
-// Required H2 sets by document — one canonical list per doc. The AES605
-// `DOC_HEADING_CONTRACTS` entries and the AES606 `TemplateProfile`s both
-// read these, so a template change lands in one place. Each set is
-// transcribed from the Section Contract table of its HOW-TO-MAKE-*.md
-// reference template.
-
-/// AGENTS required H2s, per HOW-TO-MAKE-AGENTS.md.
-pub const AGENTS_REQUIRED_H2S: &[&str] = &[
-    "Agent Overview",
-    "Runtime",
-    "Project Structure",
-    "Commands",
-    "Reference",
-];
-
-/// ARCHITECTURE required H2s, per HOW-TO-MAKE-ARCHITECTURE.md.
-pub const ARCHITECTURE_REQUIRED_H2S: &[&str] = &[
-    "Purpose",
-    "Workspace Organization",
-    "Naming Convention",
-    "Vertical Slicing Layout",
-    "Taxonomy Layer",
-    "Contract Layer",
-    "Utility Layer",
-    "Capabilities Layer",
-    "Agent Layer",
-    "Surface Layer",
-    "Root Layer",
-    "Finding rendering notes",
-    "Rule Inventory Overview",
-    "Group 1: Naming",
-    "Group 2: Layer & Import Boundary",
-    "Group 3: File & Content Quality",
-    "Group 4: Role Violations",
-    "Group 5: Orphan Code",
-    "Group 6: Document Invariants",
-    "Group 7: Folder Structure",
-    "Rule Source of Truth & Parity",
-];
-
-/// Per-crate BACKLOG section order, per HOW-TO-MAKE-BACKLOG.
-pub const BACKLOG_REQUIRED_H2S: &[&str] = &["Progress Overview", "Backlog Status", "Reference"];
-
-/// CONTRIBUTING required H2s, per HOW-TO-MAKE-CONTRIBUTING.md.
-pub const CONTRIBUTING_REQUIRED_H2S: &[&str] = &[
-    "Contribution Overview",
-    "Contribution Guidelines",
-    "Workflow",
-    "Commit Convention",
-    "Reference",
-];
-
-/// DATA required H2s, per HOW-TO-MAKE-DATA.md.
-pub const DATA_REQUIRED_H2S: &[&str] = &["Data Overview", "Data Requirements", "Reference"];
-
-/// DESIGN required H2s, per HOW-TO-MAKE-DESIGN.md.
-pub const DESIGN_REQUIRED_H2S: &[&str] = &["Design Overview", "Design Requirements", "Reference"];
-
-/// Per-crate FRD section order, per HOW-TO-MAKE-FRD.
-pub const FRD_REQUIRED_H2S: &[&str] = &[
-    "Feature Overview",
-    "Functional Requirements",
-    "Public Interface",
-    "Reference",
-];
-
-/// PRD required H2s, per HOW-TO-MAKE-PRD.md.
-pub const PRD_REQUIRED_H2S: &[&str] = &[
-    "Project Overview",
-    "Goals",
-    "Non-Goals",
-    "Target Users",
-    "Scope",
-    "Project Requirements",
-    "Reference",
-];
-
-/// README required H2s, per HOW-TO-MAKE-README.md.
-pub const README_REQUIRED_H2S: &[&str] = &[
-    "Project Overview",
-    "Prerequisites",
-    "Quick Start",
-    "Reference",
-];
-
-/// ROADMAP required H2s, per HOW-TO-MAKE-ROADMAP.md.
-pub const ROADMAP_REQUIRED_H2S: &[&str] = &["Progress Overview", "Roadmap Status", "Reference"];
-
-/// Template section order, per HOW-TO-MAKE-FRD. Alias: AES602's order check
-/// and the required-H2 set read the same four headings under two names.
-pub const FRD_SECTION_ORDER: &[&str] = FRD_REQUIRED_H2S;
+// Required H2 sets by document, table column headers, and fixed row labels
+// are now generated at build time from the reference templates in
+// `crates/shared/skills/aes-docs/references/*/template.md` by
+// `crates/shared/src/doc_rules/build.rs` (via Comrak) and re-exported
+// through `pub use super::doc_generated::*;` at the top of this module.
+// When a template changes, the next `cargo build` regenerates these
+// constants automatically; no manual editing is required here.
+//
+// `DOC_HEADING_CONTRACTS` (below) still names each doc's `*_REQUIRED_H2S`
+// and `DOC_HEADING_CONTRACTS` is hand-maintained — it is a cross-doc
+// contract table, not a template shape.
 
 /// Empty under the 9-doc layout; `fr_id_heading_re` is the authority on
 /// sanctioned H3s. PR-10 bookkeeping: re-populate when FRD H3 shapes return.
 pub const FRD_H3_TITLES: &[&str] = &[];
 
-/// The six fixed row labels every FRD `Technical Specification` table
-/// carries under its `Aspect | Detail` header, per HOW-TO-MAKE-FRD.
-pub const FR_FIELDS: &[&str] = &["Input", "Output", "Protocol", "Method", "Event", "Error"];
-
 /// H3 subsections of the retired `## API Contract`; still read by
 /// `utility_markdown_scanner::api_contract_methods` (AES601 method check).
 pub const API_CONTRACT_SUBSECTIONS: &[&str] = &["Protocol API", "Aggregate API"];
 
-/// File extensions a spec must never name, per HOW-TO-MAKE-FRD Rule 7.
+/// File extensions a spec must never name, per references/frd/template.md Rule 7.
 pub const SOURCE_EXTENSIONS: &[&str] = &["py", "rs", "ts", "tsx"];
 
 // ─── AES606 — Template body-shape conformance ──────────────────────────────
-// Table shapes of the 9-doc layout, transcribed from the fenced template of
-// each `HOW-TO-MAKE-*.md`. `ASPECT_DETAIL_COLUMNS` is the shared
-// `| Aspect | Detail |` header; the per-doc sets below are its fixed rows
-// and the per-section headers. The AES606 entry-table checks that consume
-// them arrive with the checker migration; the tests at the bottom of this
-// module pin each set to its source template until then.
-
-/// Shared `| Aspect | Detail |` header of every entry table.
-pub const ASPECT_DETAIL_COLUMNS: &[&str] = &["Aspect", "Detail"];
-
-/// Shared `| Artifact | Purpose | Link |` header of every document's
-/// `## Reference` table, per the HOW-TO-MAKE templates.
-pub const REFERENCE_COLUMNS: &[&str] = &["Artifact", "Purpose", "Link"];
-
-/// PRD `Project Requirements` entry row labels — mirrors `PRD_ASPECTS`
-/// (defined below), kept in sync so the fenced-template H4-aspect test and
-/// the required-aspect constant cannot drift.
-pub const PRD_ROW_LABELS: &[&str] = PRD_ASPECTS;
-
-/// ROADMAP `Roadmap Status` entry row labels — 3, per HOW-TO-MAKE-ROADMAP.md.
-pub const ROADMAP_ROW_LABELS: &[&str] = &["Priority", "State", "Backlog"];
-
-/// BACKLOG `Backlog Status` entry row labels — 5, per HOW-TO-MAKE-BACKLOG.md.
-pub const BACKLOG_ROW_LABELS: &[&str] = &["State", "Done", "In Progress", "Risk", "Updated"];
-
-/// FRD `Technical Specification` entry row labels — 6. Alias of
-/// `FR_FIELDS`: both are the same six labels the entry table in
-/// HOW-TO-MAKE-FRD.md ships, so the AES601 field list and the AES606 row
-/// check cannot drift.
-pub const FRD_ROW_LABELS: &[&str] = FR_FIELDS;
-
-/// AGENTS `Runtime` entry row labels — 7, per HOW-TO-MAKE-AGENTS.md.
-pub const AGENTS_RUNTIME_ROW_LABELS: &[&str] = &[
-    "Language",
-    "Environment",
-    "Artifacts",
-    "Package Manager",
-    "Version Probe",
-    "Setup",
-    "Activation",
-];
-
-/// Header-based table sets per document (AES606 header checks, not row checks).
-pub const AGENTS_PATH_PURPOSE_COLUMNS: &[&str] = &["Path", "Purpose"];
-pub const AGENTS_COMMAND_COLUMNS: &[&str] = &["Category", "Command", "Scope", "CI Gate"];
-pub const AGENTS_DOCUMENT_AGENT_COLUMNS: &[&str] = &["Document", "Agent Must"];
-pub const README_QUICK_START_COLUMNS: &[&str] = &["Step", "Action", "Command"];
-pub const CONTRIBUTING_WORKFLOW_COLUMNS: &[&str] = &["Step", "Action", "Detail"];
-pub const CONTRIBUTING_COMMIT_COLUMNS: &[&str] = &["Type", "Usage", "Example"];
-pub const DATA_TYPE_DESCRIPTION_COLUMNS: &[&str] = &["Type", "Description"];
-pub const DESIGN_VARIANT_VALUE_COLUMNS: &[&str] = &["Variant", "Use case", "Token", "Value"];
+// Table shapes are now generated at build time from the reference templates
+// in `crates/shared/skills/aes-docs/references/*/template.md` by
+// `crates/shared/src/doc_rules/build.rs` (via Comrak) and re-exported
+// through `pub use super::doc_generated::*;` at the top of this module.
+//
+// `ASPECT_DETAIL_COLUMNS`, `REFERENCE_COLUMNS`, `*_ROW_LABELS`, and
+// `*_COLUMNS` sets used to be hand-maintained here; they are now generated
+// so the linter tracks template changes automatically.
 
 /// The documents the template requires at the workspace root. `DESIGN.md`,
 /// `FRD.md`, `DATA.md`, and root `BACKLOG.md` are intentionally absent: the
@@ -341,7 +275,8 @@ pub const WORKSPACE_ROOT_MARKERS: &[&str] = &["Cargo.toml", "pyproject.toml", "p
 /// ─── AES605 — Document heading structure ──────────────────────────────
 /// Mapping from root-document filename to the H2 contracts derived from
 /// each document's Section Contract table in the corresponding
-/// HOW-TO-MAKE-*.md template. The `required` set is mandatory; the
+/// reference template (`references/<doc>/template.md`). The `required`
+/// set is mandatory; the
 /// `allowed` set is recognized but not enforced. Level-3+ headings stay
 /// free-form per project. Matching is by leading words, so
 /// `## Architecture: AES 7-Layer System` satisfies "Architecture".
@@ -357,7 +292,7 @@ pub const WORKSPACE_ROOT_MARKERS: &[&str] = &["Cargo.toml", "pyproject.toml", "p
 /// AES605 only polices H2 shape, while AES601's qualified `DT-<NAME>-NNN`
 /// regex is the authority on which H2s count as item ids. The
 /// `DESIGN_DOC` entry is transcribed verbatim from the fenced template in
-/// `skills/aes-docs/references/HOW-TO-MAKE-DESIGN.md`, and `allowed` is empty
+/// `skills/aes-docs/references/references/design/template.md.md`, and `allowed` is empty
 /// on purpose: copying that template must produce a file AES605 accepts with
 /// no edit. An empty `allowed` makes the set closed, so a DESIGN.md carrying an
 /// H2 the template does not name — including the surface-behaviour headings
@@ -416,7 +351,7 @@ pub const PR_FOLDER_NOT_OWNED_VIOLATION: &str = "pr_folder_not_owned";
 
 // ─── AES606 — FRD Technical Specification constants (modular template) ────
 // These constants are the source of truth for the fixed-row enforcement
-// contract; HOW-TO-MAKE-FRD.md mirrors it. Under the modular template each
+// contract; references/frd/template.md.md mirrors it. Under the modular template each
 // FR entry carries a `Technical Specification` `| Aspect | Detail |` table
 // fixed to exactly the six rows of `FR_FIELDS`, each with real content.
 // The per-aspect H4 seed/bounded contract of the prior template is retired.
@@ -446,7 +381,7 @@ pub const FRD_ASPECT_SEED_MIN: &[(&str, usize)] = &[
 ];
 
 /// Canonical order of the three PRD per-aspect H4 subsections, per the new
-/// modular HOW-TO-MAKE-PRD.md template.
+/// modular references/prd/template.md.md template.
 pub const PRD_ASPECTS: &[&str] = &["User Stories", "Proposed Solution", "Main User Flow"];
 
 /// All three PRD aspects are open-ended (seed minimum 1 each).
@@ -501,40 +436,41 @@ pub use crate::taxonomy_doc_rules_template_vo::{TEMPLATE_PROFILES, TemplateProfi
 mod tests {
     use super::*;
 
-    /// Load a reference template from skills/aes-docs/references/.
-    fn load_reference_template(file: &str) -> String {
+    /// Load a reference template from skills/aes-docs/references/<doc>/template.md.
+    fn load_reference_template(doc: &str) -> String {
         let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
             .join("../../skills/aes-docs/references")
-            .join(file);
+            .join(doc)
+            .join("template.md");
         match std::fs::read_to_string(&path) {
             Ok(text) => text,
-            Err(e) => panic!("reference template {file} must be readable: {e}"),
+            Err(e) => panic!("reference template {doc}/template.md must be readable: {e}"),
         }
     }
 
-    /// *columns* must all appear somewhere in the reference template *file*.
-    fn ships_columns(file: &str, columns: &[&str]) {
-        let text = load_reference_template(file);
+    /// *columns* must all appear somewhere in the reference template *doc*.
+    fn ships_columns(doc: &str, columns: &[&str]) {
+        let text = load_reference_template(doc);
         for column in columns {
             assert!(
                 text.contains(*column),
-                "{file} must ship the `{column}` label"
+                "{doc}/template.md must ship the `{column}` label"
             );
         }
     }
 
-    /// The 14 AES606 row-label / column constants must map to a live
-    /// reference template: each set transcribes a table the shipped
-    /// HOW-TO-MAKE template actually contains, so a constant with no
-    /// template behind it fails here instead of silently drifting.
+    /// The AES606 row-label / column constants must map to a live reference
+    /// template: each set transcribes a table the shipped template actually
+    /// contains, so a constant with no template behind it fails here instead
+    /// of silently drifting.
     #[test]
     fn row_label_sets_transcribe_their_reference_templates() {
-        ships_columns("HOW-TO-MAKE-PRD.md", PRD_ROW_LABELS);
-        ships_columns("HOW-TO-MAKE-ROADMAP.md", ROADMAP_ROW_LABELS);
-        ships_columns("HOW-TO-MAKE-BACKLOG.md", BACKLOG_ROW_LABELS);
-        ships_columns("HOW-TO-MAKE-FRD/template.md", FRD_ROW_LABELS);
-        ships_columns("HOW-TO-MAKE-FRD/template.md", ASPECT_DETAIL_COLUMNS);
-        ships_columns("HOW-TO-MAKE-AGENTS.md", AGENTS_RUNTIME_ROW_LABELS);
+        ships_columns("prd", PRD_ROW_LABELS);
+        ships_columns("roadmap", ROADMAP_ROW_LABELS);
+        ships_columns("backlog", BACKLOG_ROW_LABELS);
+        ships_columns("frd", FRD_ROW_LABELS);
+        ships_columns("frd", ASPECT_DETAIL_COLUMNS);
+        ships_columns("agents", AGENTS_RUNTIME_ROW_LABELS);
     }
 
     /// The reverse of `ships_columns`, for the PRD entry shape only: the
@@ -544,27 +480,28 @@ mod tests {
     /// here instead of failing a user who copies the template verbatim).
     #[test]
     fn prd_entry_table_carries_exactly_prd_row_labels() {
-        let text = load_reference_template("HOW-TO-MAKE-PRD.md");
+        let text = load_reference_template("prd");
         let open = "```markdown";
         let start = text
             .find(open)
-            .expect("HOW-TO-MAKE-PRD.md opens a template block")
+            .expect("prd/template.md opens a template block")
             + open.len();
         let rest = &text[start..];
         let end = rest
             .find("```")
-            .expect("HOW-TO-MAKE-PRD.md closes its template block");
+            .expect("prd/template.md closes its template block");
         let fence = &rest[..end];
         let entry_start = fence
             .find("### PR-")
-            .expect("HOW-TO-MAKE-PRD.md ships a PR entry in its fence");
+            .expect("prd/template.md ships a PR entry in its fence");
         let mut labels: Vec<&str> = fence[entry_start..]
             .lines()
             .filter_map(|line| line.strip_prefix("#### "))
             .map(str::trim)
             .collect();
-        let mut expected: Vec<&str> = PRD_ROW_LABELS.to_vec();
         labels.sort_unstable();
+        labels.dedup();
+        let mut expected: Vec<&str> = PRD_ROW_LABELS.to_vec();
         expected.sort_unstable();
         assert_eq!(
             labels, expected,
@@ -574,15 +511,15 @@ mod tests {
 
     #[test]
     fn header_column_sets_transcribe_their_reference_templates() {
-        ships_columns("HOW-TO-MAKE-AGENTS.md", AGENTS_PATH_PURPOSE_COLUMNS);
-        ships_columns("HOW-TO-MAKE-AGENTS.md", AGENTS_COMMAND_COLUMNS);
+        ships_columns("agents", AGENTS_PATH_PURPOSE_COLUMNS);
+        ships_columns("agents", AGENTS_COMMAND_COLUMNS);
 
-        ships_columns("HOW-TO-MAKE-README.md", README_QUICK_START_COLUMNS);
-        ships_columns("HOW-TO-MAKE-CONTRIBUTING.md", CONTRIBUTING_WORKFLOW_COLUMNS);
-        ships_columns("HOW-TO-MAKE-CONTRIBUTING.md", CONTRIBUTING_COMMIT_COLUMNS);
-        ships_columns("HOW-TO-MAKE-DATA.md", DATA_TYPE_DESCRIPTION_COLUMNS);
-        ships_columns("HOW-TO-MAKE-DESIGN.md", DESIGN_VARIANT_VALUE_COLUMNS);
-        ships_columns("HOW-TO-MAKE-AGENTS.md", REFERENCE_COLUMNS);
+        ships_columns("readme", README_QUICK_START_COLUMNS);
+        ships_columns("contributing", CONTRIBUTING_WORKFLOW_COLUMNS);
+        ships_columns("contributing", CONTRIBUTING_COMMIT_COLUMNS);
+        ships_columns("data", DATA_TYPE_DESCRIPTION_COLUMNS);
+        ships_columns("design", DESIGN_VARIANT_VALUE_COLUMNS);
+        ships_columns("agents", REFERENCE_COLUMNS);
     }
 
     /// The AES601 new violation codes added by the PR-ID family and the
@@ -591,22 +528,22 @@ mod tests {
     /// template behind it fails here instead of silently drifting.
     #[test]
     fn pr_id_and_backlog_alignment_codes_map_to_their_templates() {
-        let prd = load_reference_template("HOW-TO-MAKE-PRD.md");
-        let roadmap = load_reference_template("HOW-TO-MAKE-ROADMAP.md");
-        let backlog = load_reference_template("HOW-TO-MAKE-BACKLOG.md");
+        let prd = load_reference_template("prd");
+        let roadmap = load_reference_template("roadmap");
+        let backlog = load_reference_template("backlog");
         assert!(
             prd.contains("PR-<PROJECT-NAME-ID>"),
-            "HOW-TO-MAKE-PRD.md ships the `PR-` item shape"
+            "prd/template.md ships the `PR-` item shape"
         );
         assert!(
             roadmap.contains("PR-<PROJECT-NAME-ID>"),
-            "HOW-TO-MAKE-ROADMAP.md ships the `PR-` item shape"
+            "roadmap/template.md ships the `PR-` item shape"
         );
         assert!(
-            backlog.contains("DATA-NAME-ID")
-                && backlog.contains("FEATURE-NAME-ID")
-                && backlog.contains("DESIGN-NAME-ID"),
-            "HOW-TO-MAKE-BACKLOG.md ships the family-ID disjunction"
+            backlog.contains("FEATURE-NAME-ID")
+                && backlog.contains("DS-NAME-ID")
+                && backlog.contains("DT-NAME-ID"),
+            "backlog/template.md ships the family-ID disjunction"
         );
         assert_eq!(PR_ROADMAP_ID_MISSING, "pr_roadmap_id_missing");
         assert_eq!(ROADMAP_PR_ID_NOT_PR, "roadmap_pr_id_not_pr");
