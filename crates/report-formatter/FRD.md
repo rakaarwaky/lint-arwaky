@@ -15,12 +15,14 @@ All formatters are self-contained: each operates solely on `ScanReport` data and
 **Description:** The feature shall render a `ScanReport` as human-readable console text. The text output shall group findings per file, end with a summary line, and be infallible: every `ScanReport`, including an empty one, shall produce a valid text body without raising an error.
 
 #### Business Logic
+
 - The renderer shall group findings by source file and append a summary line carrying total counts.
 - The renderer shall preserve AES violation codes, external-linter rule ids, and `PARSE_WARN` entries in the rendered text.
 - The renderer shall never fail or panic on any `ScanReport` input.
 - An empty `ScanReport` shall render as a valid text body with a zero-finding summary.
 
 #### Edge Cases
+
 - Empty report: the renderer shall produce a valid text body with zero findings, and the body shall round-trip to disk unchanged.
 - Width/failure fields inside findings: rendering shall not fail on long or invalid-width data.
 - Findings are rendered once each; the renderer shall not duplicate a finding across files.
@@ -55,12 +57,14 @@ All formatters are self-contained: each operates solely on `ScanReport` data and
 **Description:** The feature shall render a `ScanReport` as canonical JSON. The JSON document shall serialize every finding and the summary counters, and shall parse back to the same logical report; an empty `ScanReport` shall serialize as valid JSON with a zero summary.
 
 #### Business Logic
+
 - The renderer shall emit JSON that serializes all findings and the summary counters.
 - The emitted JSON shall parse without error when consumed by a JSON parser.
 - Findings sourced from external linters shall retain their tool-native rule ids in the JSON.
 - An empty `ScanReport` shall serialize as valid JSON with a zero summary.
 
 #### Edge Cases
+
 - Empty report: the JSON shall parse with a zero summary block.
 - A full report shall round-trip to disk and parse back with identical summary counters.
 - Non-UTF-8 corner values in findings shall serialize as escaped JSON strings.
@@ -95,12 +99,14 @@ All formatters are self-contained: each operates solely on `ScanReport` data and
 **Description:** The feature shall render a `ScanReport` as a SARIF 2.1.0 document for code-scanning uploaders. The document shall map findings to SARIF results with a severity level and rule id, retain tool-native rule ids for external findings, and validate as SARIF 2.1.0 even when the report is empty.
 
 #### Business Logic
+
 - The renderer shall emit a SARIF 2.1.0 document carrying `runs`, a tool driver block, and result entries.
 - Each finding shall map to a SARIF result with a severity level and a rule id.
 - Findings sourced from external linters shall retain their tool-native rule ids.
 - An empty `ScanReport` shall emit a valid SARIF 2.1.0 document with zero results.
 
 #### Edge Cases
+
 - Empty report: the document shall validate as SARIF 2.1.0 with zero results.
 - A full report shall round-trip to disk and re-validate against the SARIF 2.1.0 schema.
 - A finding with an unknown severity shall map to a default SARIF level rather than failing validation.
@@ -134,12 +140,14 @@ All formatters are self-contained: each operates solely on `ScanReport` data and
 **Description:** The feature shall render a `ScanReport` as JUnit XML for CI test-report ingestion. The XML shall wrap test cases in a test suite, represent each finding as one failing test case named with the rule id, and parse as valid XML even when the report is empty.
 
 #### Business Logic
+
 - The renderer shall emit JUnit XML with a test suite wrapping test cases.
 - Each finding shall appear as exactly one failing test case.
 - Each test case name shall carry the rule id of its finding.
 - An empty `ScanReport` shall emit a valid test suite with zero failing test cases.
 
 #### Edge Cases
+
 - Empty report: the XML shall parse as valid XML with zero failing test cases.
 - A full report shall round-trip to disk and parse with one test case per finding.
 - A formatter invoked through the aggregate routing shall return the same content as a direct call.

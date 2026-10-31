@@ -14,51 +14,51 @@ Last Updated: 2026-09-29
 
 ## Backlog Status
 
-### FR-ReportFormatter-001: 
+### FR-ReportFormatter-001
 
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | ReportFormatter                                      |
-| In Progress  | None                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | ReportFormatter |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
-### FR-ReportFormatter-002: 
+### FR-ReportFormatter-002
 
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | ReportFormatter                                      |
-| In Progress  | None                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | ReportFormatter |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
-### FR-ReportFormatter-003: 
+### FR-ReportFormatter-003
 
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | ReportFormatter                                      |
-| In Progress  | None                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | ReportFormatter |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
-### FR-ReportFormatter-004: 
+### FR-ReportFormatter-004
 
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | ReportFormatter                                      |
-| In Progress  | None                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | ReportFormatter |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
 ## Reference
 
-| Artifact | Purpose | Link|
-|----------|---------|------|
-| PRD.md | Product requirements | [PRD.md](../../PRD.md)|
-| FRD.md | Feature requirements | [FRD.md](FRD.md)|
-| ROADMAP.md | Roadmap status | [ROADMAP.md](../../ROADMAP.md)|
-| ARCHITECTURE.md | Layer contract | [ARCHITECTURE.md](../../ARCHITECTURE.md)|
+| Artifact | Purpose | Link |
+| ---------- | --------- | ------ |
+| PRD.md | Product requirements | [PRD.md](../../PRD.md) |
+| FRD.md | Feature requirements | [FRD.md](FRD.md) |
+| ROADMAP.md | Roadmap status | [ROADMAP.md](../../ROADMAP.md) |
+| ARCHITECTURE.md | Layer contract | [ARCHITECTURE.md](../../ARCHITECTURE.md) |
