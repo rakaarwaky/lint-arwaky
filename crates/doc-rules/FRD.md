@@ -3,7 +3,7 @@
 ## Feature Overview
 
 [lint-arwaky-cli docs .] --> [DocOrchestrator] --> [ten per-doc capabilities]
-[per-doc capability] --> [shared doc-rules kernel]
+[per-doc capability] --> [shared doc-rules layer]
 
 The **Doc Rules** feature audits every recognized Markdown document against AES601–AES610 and emits one finding per violation. `lint-arwaky-cli docs <root>` discovers the document chain once, hands the same audit context to each capability, merges their findings, and stamps every finding with a machine-readable `violation_type`. The feature owns zero implementation detail — it is a spec layer, not a build layer.
 
@@ -64,7 +64,7 @@ Each functional requirement below implements exactly one capability behind one A
 #### Edge Cases
 - Quick Start table missing `Command` fires `table_missing_columns`
 - Prose that names a source file with a language extension fires `source_file_named`
-- Prose stating "released as v3.8.0" fires `status_leak`
+- Prose stating "released as vX.Y.Z" fires `status_leak`
 
 #### Technical Specification
 
@@ -175,7 +175,7 @@ Each functional requirement below implements exactly one capability behind one A
 
 #### Business Logic
 - Shall require a `Project Requirements` section stating business goals, user stories, and scope
-- Shall reject spec prose that names a `.rs`, `.py`, `.ts`, or `.tsx` file
+- Shall reject spec prose that names a source file with a language extension
 - Shall reject status vocabulary (shipped, backlog, in progress, done) in requirement statements
 - Shall link to `ROADMAP.md` and `ARCHITECTURE.md` in its Reference section
 
@@ -335,13 +335,13 @@ Each functional requirement below implements exactly one capability behind one A
 #### Business Logic
 - Shall require every FR heading to match `FR-<FEATURE-NAME-ID>-NNN: <name>`
 - Shall require exactly six `Technical Specification` rows: Input, Output, Protocol, Method, Event, Error
-- Shall reject spec prose naming `.rs`, `.py`, `.ts`, `.tsx` files
+- Shall reject spec prose that names a source file with a language extension
 - Shall link to `PRD.md` and `BACKLOG.md` in its Reference section
 
 #### Edge Cases
 - Heading `FR-001: Do The Thing` fires `id_missing_feature_prefix`
 - Technical Specification missing the `Event` row fires `entry_missing_row`
-- Prose naming `agent_doc_orchestrator.rs` fires `source_file_named`
+- Prose naming the orchestrator source file fires `source_file_named`
 
 #### Technical Specification
 

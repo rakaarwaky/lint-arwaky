@@ -10,7 +10,7 @@
 
 **Length:** 50–500 lines.
 
-**Not a feature → still needs BACKLOG.** Feature folders (with an `agent_*_orchestrator`) carry `FRD.md` + `BACKLOG.md`. Shared/kernel folders carry `DATA.md` + `BACKLOG.md`. Surface folders (DESIGN-only) carry `DESIGN.md` + `BACKLOG.md`. Every folder type has a BACKLOG.
+**Not a feature → still needs BACKLOG.** Feature folders (with an `agent_*_orchestrator`) carry `FRD.md` + `BACKLOG.md`. Shared/layer folders carry `DATA.md` + `BACKLOG.md`. Surface folders (DESIGN-only) carry `DESIGN.md` + `BACKLOG.md`. Every folder type has a BACKLOG.
 
 ## Rules
 

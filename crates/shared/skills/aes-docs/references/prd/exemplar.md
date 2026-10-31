@@ -61,12 +61,12 @@ A filled PRD against the Ecommerce Application project, matching the Template sh
 
 | As a | I want | So that | Priority |
 |------|--------|---------|----------|
-| Developer | to find taxonomy, contract, and utility in one shared kernel | I can reuse domain definitions across features | P0 |
+| Developer | to find taxonomy, contract, and utility in one shared layer | I can reuse domain definitions across features | P0 |
 | Engineer | to import shared contracts and utilities without circular dependencies | I can build features on stable foundations | P0 |
 
 #### Proposed Solution
 
-The shared kernel holds taxonomy value objects, contract protocols and aggregates, and stateless utilities. Feature and surface crates import from shared, but shared imports nothing from them.
+The shared layer holds taxonomy value objects, contract protocols and aggregates, and stateless utilities. Feature and surface crates import from shared, but shared imports nothing from them.
 
 #### Main User Flow
 

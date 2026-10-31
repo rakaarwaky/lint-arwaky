@@ -32,7 +32,7 @@ impl IStructurePrLaProtocol for PrLaFolderAuditor {
         let mut findings = Vec::new();
 
         // Part A: every *feature* crate folder's FR ids must match its folder
-        // name. Surface and kernel folders owe DESIGN.md/DATA.md, not FRD.md,
+        // name. Surface and layer folders owe DESIGN.md/DATA.md, not FRD.md,
         // so FRD.md presence is only checked on feature folders.
         for member in utility_structure_parsers::member_dirs(&ws_root) {
             for folder in crate_folders(&member) {
@@ -201,7 +201,7 @@ fn crate_folders(member: &Path) -> Vec<PathBuf> {
 /// AES706 Part A only requires FRD.md from feature folders.
 ///
 /// Mirrors doc-rules' `classify_member` exactly so the two classifiers cannot
-/// silently diverge: `shared`/`kernel` → Kernel, `agent_*_orchestrator` file
+/// silently diverge: `shared`/`layer` → Layer, `agent_*_orchestrator` file
 /// or Cargo.toml carrying `agent_`/`capability`/`orchestrator` → Feature,
 /// `surface_*` file or Cargo.toml depending on cli/mcp/tui/dispatcher →
 /// Surface, everything else → None. Reading Cargo.toml here is layer-legal:

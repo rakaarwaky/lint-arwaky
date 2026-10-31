@@ -1,6 +1,6 @@
 """Division feature shared mirror (AES101 `_aggregate` / AES102 `_protocol`).
 
-Mirror of the `modules/division` feature into the `modules/shared` kernel.
+Mirror of the `modules/division` feature into the `modules/shared` layer.
 Two FR requirements (FR-DIVISION-001, FR-DIVISION-002) map to two protocol
 classes here.
 """

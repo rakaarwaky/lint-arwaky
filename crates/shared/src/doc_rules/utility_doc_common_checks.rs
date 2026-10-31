@@ -521,7 +521,7 @@ pub fn backlog_required_links(
 fn required_docs_for_role(role: MemberRole) -> Option<(&'static [&'static str], &'static str)> {
     match role {
         MemberRole::Feature => Some((&[consts::FRD_DOC, consts::BACKLOG_DOC][..], "feature")),
-        MemberRole::Kernel => Some((&[consts::DATA_DOC, consts::BACKLOG_DOC][..], "kernel")),
+        MemberRole::Kernel => Some((&[consts::DATA_DOC, consts::BACKLOG_DOC][..], "layer")),
         MemberRole::Surface => Some((&[consts::DESIGN_DOC, consts::BACKLOG_DOC][..], "surface")),
         MemberRole::None => None,
     }

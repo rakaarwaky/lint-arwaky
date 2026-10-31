@@ -8,10 +8,10 @@ The structure-rules crate enforces the 7-layer AES folder discipline by auditing
 
 ### FR-STR-001: Shared Folder Purity and Documentation
 
-**Description:** The structure auditor shall enforce shared folder purity and documentation by verifying that the shared kernel folder holds only permitted layers and carries its required documentation pair.
+**Description:** The structure auditor shall enforce shared folder purity and documentation by verifying that the shared layer folder holds only permitted layers and carries its required documentation pair.
 
 #### Business Logic
-- The shared folder shall hold only kernel contracts, utilities, and taxonomy files.
+- The shared folder shall hold only layer contracts, utilities, and taxonomy files.
 - The shared folder shall carry its documentation pair consisting of DATA.md and BACKLOG.md.
 - A capability file detected inside the shared folder shall fire an individual AES701 finding.
 - A missing documentation pair in the shared folder shall fire an AES701 finding.
@@ -53,7 +53,7 @@ The structure-rules crate enforces the 7-layer AES folder discipline by auditing
 #### Business Logic
 - Every feature folder shall hold an agent orchestrator, at least one capability, and a root container.
 - Every feature folder shall carry its documentation pair consisting of FRD.md and BACKLOG.md.
-- Every feature folder shall be mirrored as a shared kernel subfolder in its member.
+- Every feature folder shall be mirrored as a shared layer subfolder in its member.
 - A documentation pair folder without an orchestrator shall fire an AES702 finding.
 - A feature folder lacking capabilities or root container shall fire an AES702 finding.
 - An audit root that is itself a member directory holding the orchestrator shall fire an AES702 finding.
@@ -62,7 +62,7 @@ The structure-rules crate enforces the 7-layer AES folder discipline by auditing
 - When a feature folder defines a language-extension root container, the auditor shall accept it as valid container composition.
 - When capabilities exist without an orchestrator, the auditor shall fire an orchestrator-missing finding.
 - When an orchestrator exists without capabilities, the auditor shall fire a capability-missing finding.
-- When a feature lacks a shared kernel mirror subfolder, the auditor shall emit an AES702 missing mirror finding.
+- When a feature lacks a shared layer mirror subfolder, the auditor shall emit an AES702 missing mirror finding.
 - When an unreadable subtree is encountered, the auditor shall skip it and continue auditing.
 
 #### Technical Specification

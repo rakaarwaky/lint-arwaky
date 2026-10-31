@@ -168,7 +168,7 @@ Utility contains reusable low-level mechanics that can be shared across capabili
 | Purpose      | Reusable low-level mechanics shared across capabilities                |
 | Role Naming  | Unlimited; chosen based on demand to describe technical responsibility |
 | Dependencies | Taxonomy only                                                          |
-| Location     | Only in `shared/` kernel folder (AES701)                               |
+| Location     | Only in `shared/` layer folder (AES701)                               |
 
 
 ### Components
@@ -1184,7 +1184,7 @@ Group 7 enforces folder structure invariants to maintain vertical slicing and la
 | --------------- | -------------------------------------------------------------------------------------------------------------------- |
 | Code / Severity | AES701 / MEDIUM (report)                                                                                             |
 | Fires when      | A shared folder holds a `capabilities_*`, `agent_*`, or `surface_*` file, or lacks its DATA.md + BACKLOG.md doc pair |
-| Scope           | `shared/` kernel folders under member dirs                                                                           |
+| Scope           | `shared/` layer folders under member dirs                                                                           |
 | Fix             | Move misplaced layer files to a feature or surface folder; add DATA.md and BACKLOG.md                                |
 
 
@@ -1218,7 +1218,7 @@ Group 7 enforces folder structure invariants to maintain vertical slicing and la
 | `feature_has_forbidden_files`      | A feature folder holds a `utility_*`, `surface_*`, `taxonomy_*`, or `contract_*` file                |
 | `feature_missing_doc_pair`         | The feature folder lacks FRD.md or BACKLOG.md                                                        |
 | `feature_missing_root_container`   | No `root_*_container`/`root_*_entry` file under the folder, its `src/` subfolder, or the member root |
-| `feature_missing_shared_subfolder` | The feature has no `shared/src/<feature>/` mirror subfolder in its member's kernel                   |
+| `feature_missing_shared_subfolder` | The feature has no `shared/src/<feature>/` mirror subfolder in its member's layer                   |
 | `doc_pair_without_orchestrator`    | A folder carries a doc pair but holds no orchestrator                                                |
 
 

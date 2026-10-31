@@ -10,7 +10,7 @@ This architecture guards against tangled imports, undiscoverable behavior, and a
 | ------------------ | -------------------------------------------------------------|
 | Project Workspace  | The root containing all configuration and language members   |
 | Workspace Member   | One self-contained crate, package, or module inside the workspace|
-| Shared / kernel    | Cross-cutting domain models and contracts, never a feature   |
+| Shared / layer    | Cross-cutting domain models and contracts, never a feature   |
 
 ## 3. Naming Convention
 

@@ -1,673 +1,331 @@
-# FRD — project-setup (v3.0.0)
-
----
+# FRD — Project Setup
 
 ## Feature Overview
 
-The project-setup crate provides scaffolding facilities and adapter installation
-for new and existing projects. It detects project languages (Rust, Python,
-JavaScript/TypeScript), generates MCP configuration for different AI clients,
-generates `.env` files, installs linter adapters via pip/npm, and manages XDG
-config directories.
-
-The crate follows the AES 7-layer architecture. Four capability seams provide
-MCP config generation, environment file creation, language detection, and adapter
-installation. Auxiliary technical operations are delegated through the aggregate
-contract and the injected utility protocols.
-
-> **Note**: Environment diagnostics (`doctor`, `diagnose`) are handled by the
-> **maintenance** crate, not project-setup. This crate focuses on scaffolding
-> and installation only.
-
-- **Architecture & Data Flow**
-
-```mermaid
-flowchart TD
-    A["Surface"] -->|input| B["setup aggregate"]
-    B --> C{"action"}
-
-    C -->|"init/mcp-config"| D["mcp config generator"]
-    C -->|"init/env"| E["env file generator"]
-    C -->|"init/detect"| F["language detector"]
-    C -->|"install"| G["adapter installer"]
-
-    D --> H["MCP JSON"]
-    E --> I[".env file"]
-    F --> J["Language list"]
-    G --> K["pip / npm"]
-    K --> L["Success / Error"]
-
-    H --> B
-    I --> B
-    J --> B
-    L --> B
-    B -->|output| A
-
-```
-
----
+Project setup delivers per-client MCP configuration, per-language `.env` files, language detection, and linter-adapter installation through one `execute` seam on the setup aggregate. Surface entry points route `SetupRequest` variants to the matching capability; capabilities write MCP JSON, `.env` content, config files, and invoke pip/npm installs; the aggregate returns one `SetupResponse` per request.
 
 ## Functional Requirements
 
-### FR-ProjectSetup-001: MCP Configuration Generation
+### FR-ProjectSetup-001: Generate MCP Configuration
 
-#### Description
+**Description:** The feature shall generate a per-client MCP client configuration file for any supported target client (Claude, Cursor, Windsurf, Copilot, Hermes, VSCode, or All), wrapping the server entries under the correct key (`mcp_servers` vs `mcpServers`) per client convention, and returning the rendered config content so the caller can write it to disk. Each target variant produces one config file; `All` generates every target in a single call.
 
-| No | Detail |
-| --- | --- |
-| 1 | Generate MCP client configuration files for supported editors and agents. |
-
-#### Business Rules
-
-| No | Detail |
-| --- | --- |
-| 1 | One request variant per target (Claude, Claude, Cursor, Windsurf, Copilot, Hermes, VSCode) plus McpConfigAll; each output wraps servers in the right key (mcp_servers vs mcpServers per client conventions). |
-| 2 | Generated config parses as valid JSON/TOML for the target; Claude/Copilot/Cursor/VSCode/Windsurf wrappers asserted by fr001 tests. |
+#### Business Logic
+- One request variant per supported target client generates exactly one config file for that client.
+- Generated content parses as valid JSON/TOML for the target and wraps server entries under the client's convention key (`mcp_servers` vs `mcpServers`).
+- `McpConfigAll` generates every target config in one call, wrapping each target under its own key.
+- Unknown targets are rejected rather than silently falling back to a default.
+- Generated server lists omit entries whose command list is empty.
 
 #### Edge Cases
+- `McpConfigAll` produces seven distinct target configs (one per client) in one response.
+- Header/comment lines are preserved where the target format permits comments.
+- An unknown target returns an error instead of writing a wrong-shaped file.
 
-| No | Detail |
-| --- | --- |
-| 1 | McpConfigAll generates every target in one call; an unknown target does not silently pick a default; generated servers block omits empty command lists. |
-| 2 | Header/comment lines preserved where the target format allows comments. |
-
-#### Capability
-
-| No | Detail |
-| --- | --- |
-| 1 | SetupMcpConfigGenerator builds per-client MCP configuration. |
-
-#### Protocol
-
-| No | Detail |
-| --- | --- |
-| 1 | IMcpConfigGenerationProtocol |
-
-#### Method
-
-| No | Detail |
-| --- | --- |
-| 1 | Generate MCP config for a named target returning the config content. |
-
-#### Input
-
-| No | Detail |
-| --- | --- |
-| 1 | Target client identifier; source is SetupRequest::{GenerateMcpConfig, McpConfigClaude, McpConfigCursor, McpConfigWindsurf, McpConfigCopilot, McpConfigHermes, McpConfigVscode, McpConfigAll}. |
-
-#### Output
-
-| No | Detail |
-| --- | --- |
-| 1 | SetupResponse::Mcp with per-target config content ready to write. |
-
-#### Error
-
-| No | Detail |
-| --- | --- |
-| 1 | Unknown target returns an error description rather than writing a wrong-shaped file. |
-
-#### Event
-
-| No | Detail |
-| --- | --- |
-| 1 | None. |
+#### Technical Specification
+| Aspect | Detail |
+|--------|--------|
+| **Input** | Target client identifier; source is `SetupRequest::{GenerateMcpConfig, McpConfigClaude, McpConfigCursor, McpConfigWindsurf, McpConfigCopilot, McpConfigHermes, McpConfigVscode, McpConfigAll}`. |
+| **Output** | `SetupResponse::Mcp` carrying per-target config content ready to write. |
+| **Protocol** | `IMcpConfigGenerationProtocol` |
+| **Method** | `generate_mcp_config`, `mcp_config_claude`, `mcp_config_cursor`, `mcp_config_windsurf`, `mcp_config_copilot`, `mcp_config_hermes`, `mcp_config_vscode`, `mcp_config_all` |
+| **Event** | None. |
+| **Error** | Unknown target returns an error description rather than writing a wrong-shaped file. |
 
 #### Test
-
-| No | Detail |
-| --- | --- |
-| 1 | fr001_claude_config_wraps_in_mcp_servers, fr001_cursor_config_wraps_in_mcp_servers, fr001_vscode_config_wraps_in_mcp_servers, e2e_generate_mcp_config_claude_and_write, and e2e_generate_mcp_config_vscode_and_write assert wrapping and round trip. |
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| A supported target client is requested | The caller invokes `generate_mcp_config` for that target | One config file with servers wrapped under the client's key is returned |
+| `McpConfigAll` is requested | The caller invokes `mcp_config_all` | Seven target configs are returned, one per client, each under its key |
+| An unknown target is requested | The caller invokes a variant for an unsupported client | An error description is returned instead of a config file |
 
 #### Metric
+| Target Metric | Value |
+|---------------|-------|
+| Target configs per `McpConfigAll` call | 7 |
+| Unknown-target acceptance rate | 0 |
 
-| No | Detail |
-| --- | --- |
-| 1 | All seven target variants produce parseable wrapper output; McpConfigAll yields seven files' worth of content in one response. |
+### FR-ProjectSetup-002: Generate Environment File
 
-### FR-ProjectSetup-002: Environment File Generation
+**Description:** The feature shall generate a project `.env` file containing a documented header and a phantom-root (HOME-style) entry for hermetic runs, producing deterministic output that round-trips through write without clobbering an existing env file silently.
 
-#### Description
-
-| No | Detail |
-| --- | --- |
-| 1 | Generate the project environment file with a documented header and required roots. |
-
-#### Business Rules
-
-| No | Detail |
-| --- | --- |
-| 1 | Generated env contains a header comment explaining the file and a phantom-root entry (HOME-style variable) for hermetic runs; env generation is deterministic. |
-| 2 | Output round-trips through write (e2e_generate_and_write_env). |
+#### Business Logic
+- Generated env content contains a header comment explaining the file.
+- Generated env content contains a phantom-root entry (HOME-style variable) for hermetic runs.
+- Env generation is deterministic: identical project context yields identical bytes on every run.
+- Existing env content is not clobbered silently; overwrite is governed by `WriteConfigFile`.
 
 #### Edge Cases
+- Empty project path still produces a well-formed env body with header and phantom-root entry.
+- Repeated generation of the same project yields byte-identical content.
 
-| No | Detail |
-| --- | --- |
-| 1 | Existing env is not clobbered silently (WriteConfigFile governs overwrite); generated content identical on repeat calls; empty project path still produces a well-formed env body. |
-
-#### Capability
-
-| No | Detail |
-| --- | --- |
-| 1 | SetupEnvGenerator renders the environment file content. |
-
-#### Protocol
-
-| No | Detail |
-| --- | --- |
-| 1 | IEnvGenerationProtocol |
-
-#### Method
-
-| No | Detail |
-| --- | --- |
-| 1 | `generate_env()` -> env file content. |
-
-#### Input
-
-| No | Detail |
-| --- | --- |
-| 1 | Project path/context; source is SetupRequest::GenerateEnv. |
-
-#### Output
-
-| No | Detail |
-| --- | --- |
-| 1 | SetupResponse::Env with content for .env-style file. |
-
-#### Error
-
-| No | Detail |
-| --- | --- |
-| 1 | Generation itself never fails; write failures fall to FR-ProjectSetup-006. |
-
-#### Event
-
-| No | Detail |
-| --- | --- |
-| 1 | None. |
+#### Technical Specification
+| Aspect | Detail |
+|--------|--------|
+| **Input** | Project path/context; source is `SetupRequest::GenerateEnv`. |
+| **Output** | `SetupResponse::Env` with `.env`-style file content. |
+| **Protocol** | `IEnvGenerationProtocol` |
+| **Method** | `generate_env` |
+| **Event** | None. |
+| **Error** | Generation itself never fails; write failures fall to `FR-ProjectSetup-006`. |
 
 #### Test
-
-| No | Detail |
-| --- | --- |
-| 1 | fr002_env_contains_header, fr002_env_contains_phantom_root, and e2e_generate_and_write_env assert content and round trip. |
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| A project context is provided | The caller invokes `generate_env` | Returned content contains a header comment and a phantom-root entry |
+| The same project is generated twice | The caller invokes `generate_env` twice with identical input | Output bytes are identical on both runs |
+| An empty project path is given | The caller invokes `generate_env` with an empty path | A well-formed env body (header + phantom root) is produced |
 
 #### Metric
+| Target Metric | Value |
+|---------------|-------|
+| Byte-identical regeneration rate | 100% |
+| Header-and-root presence | Every generated env |
 
-| No | Detail |
-| --- | --- |
-| 1 | Generated env contains header and root lines on every run; e2e write matches the generated bytes. |
+### FR-ProjectSetup-003: Detect Languages
 
-### FR-ProjectSetup-003: Language Detection
+**Description:** The feature shall detect the project's primary language (`detect_language`, returning `Language` or `None`) and all present language groups (`detect_languages`, returning every language group present), scanning the project layout (manifests, source extensions). Unknown or empty projects return none rather than an error; detection results feed template selection.
 
-#### Description
-
-| No | Detail |
-| --- | --- |
-| 1 | Detect the project's primary and all present programming languages. |
-
-#### Business Rules
-
-| No | Detail |
-| --- | --- |
-| 1 | detect_language returns the primary language (or None); detect_languages returns every present language group. |
-| 2 | Detection scans project layout (manifests, source extensions); result feeds template selection in FR-ProjectSetup-005. |
+#### Business Logic
+- `detect_language` returns the primary language or `None` when no language is detected.
+- `detect_languages` returns every language group present in the project.
+- Detection scans project layout (manifests, source extensions) and result feeds template selection.
+- Unknown/empty project returns `None`/empty rather than an error.
 
 #### Edge Cases
+- Unreadable project tree yields empty results rather than panicking.
+- Multiple languages present: `detect_languages` returns all groups; `detect_language` returns one deterministic primary.
 
-| No | Detail |
-| --- | --- |
-| 1 | Unknown/empty project returns none; manifests of several languages present returns all in detect_languages while primary is deterministic; unreadable tree yields empty; fr003 asserts valid-language-or-none. |
-
-#### Capability
-
-| No | Detail |
-| --- | --- |
-| 1 | SetupLanguageDetector detects project languages. |
-
-#### Protocol
-
-| No | Detail |
-| --- | --- |
-| 1 | ILanguageDetectionProtocol |
-
-#### Method
-
-| No | Detail |
-| --- | --- |
-| 1 | `detect_language()` -> Language or none; `detect_languages()` -> list. |
-
-#### Input
-
-| No | Detail |
-| --- | --- |
-| 1 | Project root path; source is SetupRequest::{DetectLanguage, DetectLanguages}. |
-
-#### Output
-
-| No | Detail |
-| --- | --- |
-| 1 | SetupResponse::{Language, Languages}. |
-
-#### Error
-
-| No | Detail |
-| --- | --- |
-| 1 | No signal yields None/empty rather than an error. |
-
-#### Event
-
-| No | Detail |
-| --- | --- |
-| 1 | None. |
+#### Technical Specification
+| Aspect | Detail |
+|--------|--------|
+| **Input** | Project root path; source is `SetupRequest::{DetectLanguage, DetectLanguages}`. |
+| **Output** | `SetupResponse::{Language, Languages}`. |
+| **Protocol** | `ILanguageDetectionProtocol` |
+| **Method** | `detect_language`, `detect_languages` |
+| **Event** | None. |
+| **Error** | No signal yields `None`/empty rather than an error. |
 
 #### Test
-
-| No | Detail |
-| --- | --- |
-| 1 | fr003_detect_language_returns_valid_language_or_none, fr003_detect_languages_returns_list, detect_language_returns_non_empty, e2e_detect_language_and_write_config assert detection. |
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| A seeded fixture tree of one language is scanned | The caller invokes `detect_language` | That language is reported |
+| A mixed-language fixture tree is scanned | The caller invokes `detect_languages` | All present language groups are reported |
+| An unknown/empty project is scanned | The caller invokes `detect_language` | `None` or empty result is returned, not an error |
 
 #### Metric
+| Target Metric | Value |
+|---------------|-------|
+| Seeded single-language fixtures correctly identified | 100% |
+| Mixed-fixture group coverage | All present groups |
 
-| No | Detail |
-| --- | --- |
-| 1 | Seeded fixtures of each language report that language; mixed fixture reports all present groups. |
+### FR-ProjectSetup-004: Install Adapters
 
-### FR-ProjectSetup-004: Adapter Installation
+**Description:** The feature shall install linter adapters for detected languages via npm (JavaScript/TypeScript) or pip (Python). Installing an empty package list returns `Ok` without spawning a package manager; failed package-manager exits are reported as failures rather than panics.
 
-#### Description
-
-| No | Detail |
-| --- | --- |
-| 1 | Install linter adapters for the detected languages via npm or pip. |
-
-#### Business Rules
-
-| No | Detail |
-| --- | --- |
-| 1 | InstallPythonAdapters runs pip install of the Python adapter set; InstallJavascriptAdapters runs npm install of the JS adapter set; empty package list returns Ok without invoking a package manager. |
-| 2 | Sudo variants prepend privilege escalation; installers are idempotent. |
+#### Business Logic
+- `InstallPythonAdapters` runs pip install of the Python adapter set.
+- `InstallJavascriptAdapters` runs npm install of the JavaScript adapter set.
+- Empty package list returns `Ok` without invoking a package manager.
+- Installers are idempotent: already-installed packages reinstall cleanly.
+- Sudo variants prepend privilege escalation; otherwise behave like plain variants.
 
 #### Edge Cases
+- Empty list returns `Ok` with no subprocess spawned.
+- Non-zero package-manager exit returns failure status with captured output; caller sees failure, not panic.
+- Already-installed packages reinstall cleanly (idempotent).
+- Sudo variants behave like plain variants otherwise.
 
-| No | Detail |
-| --- | --- |
-| 1 | Empty list returns Ok with no subprocess; failed package manager exit reported as failure; already-installed packages reinstall cleanly; sudo variants behave like plain variants otherwise. |
-
-#### Capability
-
-| No | Detail |
-| --- | --- |
-| 1 | SetupInstallerAdapter shells out to pip/npm install. |
-
-#### Protocol
-
-| No | Detail |
-| --- | --- |
-| 1 | IAdapterInstallationProtocol |
-
-#### Method
-
-| No | Detail |
-| --- | --- |
-| 1 | `install_python_packages(list)`, `install_npm_packages(list)` with optional sudo, returning install status. |
-
-#### Input
-
-| No | Detail |
-| --- | --- |
-| 1 | Package list plus sudo flag; source is SetupRequest::{InstallPythonAdapters, InstallJavascriptAdapters}. |
-
-#### Output
-
-| No | Detail |
-| --- | --- |
-| 1 | SetupResponse::Installed with per-run status. |
-
-#### Error
-
-| No | Detail |
-| --- | --- |
-| 1 | Non-zero package-manager exit returns failure status with captured output; caller sees failed install, not a panic. |
-
-#### Event
-
-| No | Detail |
-| --- | --- |
-| 1 | None. |
+#### Technical Specification
+| Aspect | Detail |
+|--------|--------|
+| **Input** | Package list plus sudo flag; source is `SetupRequest::{InstallPythonAdapters, InstallJavascriptAdapters}`. |
+| **Output** | `SetupResponse::Installed` with per-run status. |
+| **Protocol** | `IAdapterInstallationProtocol` |
+| **Method** | `install_python_packages`, `install_npm_packages` |
+| **Event** | None. |
+| **Error** | Non-zero package-manager exit returns failure status with captured output. |
 
 #### Test
-
-| No | Detail |
-| --- | --- |
-| 1 | install_python_packages_empty_returns_ok, install_python_packages_empty_with_sudo, install_npm_packages_empty_returns_ok, and install_npm_packages_empty_with_sudo assert empty-list and sudo behavior. |
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| Empty package list is given to pip | The caller invokes `install_python_packages` with an empty list | `Ok` is returned and no pip subprocess is spawned |
+| Empty package list is given to npm with sudo | The caller invokes `install_npm_packages` with sudo and an empty list | `Ok` is returned and no npm subprocess is spawned |
+| Package manager exits non-zero | The caller invokes an adapter install with a failing package | Failure status with captured output is returned, not a panic |
 
 #### Metric
+| Target Metric | Value |
+|---------------|-------|
+| Empty-list invocations spawning a package manager | 0 |
+| Status truthfulness vs process exit | 100% |
 
-| No | Detail |
-| --- | --- |
-| 1 | Empty-list invocations never spawn a package manager; seeded install runs return truthful status matching the process exit. |
+### FR-ProjectSetup-005: Load Config Templates
 
-### FR-ProjectSetup-005: Config Template Loading
+**Description:** The feature shall load the embedded config template for a requested key, returning byte-stable template content. Unknown keys return a not-found description rather than empty filler; empty keys return not-found; template existence does not depend on project emptiness (write policy decides merge).
 
-#### Description
-
-| No | Detail |
-| --- | --- |
-| 1 | Load the embedded config template for a target file or project type. |
-
-#### Business Rules
-
-| No | Detail |
-| --- | --- |
-| 1 | GetConfigTemplate returns the embedded template for the requested key; templates are bundled (get embedded skills listed as GetEmbeddedSkills); template content is byte-stable across runs. |
-| 2 | Container exposes aggregate_get_config_template. |
+#### Business Logic
+- `GetConfigTemplate` returns the embedded template for the requested key.
+- Template content is byte-stable across runs.
+- Unknown template key returns a not-found description instead of empty filler.
+- Empty key returns not-found.
 
 #### Edge Cases
+- Unknown key yields a not-found-style description instead of empty filler.
+- Empty key returns not-found.
+- Template exists but project is non-empty still returns template (write policy decides merge).
 
-| No | Detail |
-| --- | --- |
-| 1 | Unknown template key returns not-found description; empty key returns not-found; template exists but project is non-empty still returns template (write policy decides merge). |
-
-#### Capability
-
-| No | Detail |
-| --- | --- |
-| 1 | Config template loading via the setup aggregate's template protocol. |
-
-#### Protocol
-
-| No | Detail |
-| --- | --- |
-| 1 | IConfigTemplateProtocol |
-
-#### Method
-
-| No | Detail |
-| --- | --- |
-| 1 | `get_config_template(key)` -> template content. |
-
-#### Input
-
-| No | Detail |
-| --- | --- |
-| 1 | Template key; source is SetupRequest::{GetConfigTemplate, GetEmbeddedSkills}. |
-
-#### Output
-
-| No | Detail |
-| --- | --- |
-| 1 | SetupResponse::{Template, Skills}. |
-
-#### Error
-
-| No | Detail |
-| --- | --- |
-| 1 | Unknown key yields a not-found-style description instead of empty filler. |
-
-#### Event
-
-| No | Detail |
-| --- | --- |
-| 1 | None. |
+#### Technical Specification
+| Aspect | Detail |
+|--------|--------|
+| **Input** | Template key; source is `SetupRequest::{GetConfigTemplate, GetEmbeddedSkills}`. |
+| **Output** | `SetupResponse::{Template, Skills}`. |
+| **Protocol** | `IConfigTemplateProtocol` |
+| **Method** | `get_config_template` |
+| **Event** | None. |
+| **Error** | Unknown key yields a not-found-style description instead of empty filler. |
 
 #### Test
-
-| No | Detail |
-| --- | --- |
-| 1 | aggregate_get_config_template asserts template retrieval through the aggregate. |
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| A known template key is requested | The caller invokes `get_config_template` | Non-empty byte-stable template content is returned |
+| An unknown template key is requested | The caller invokes `get_config_template` with a bogus key | A not-found description is returned, not empty filler |
+| An empty key is requested | The caller invokes `get_config_template` with an empty key | A not-found result is returned |
 
 #### Metric
+| Target Metric | Value |
+|---------------|-------|
+| Known-key non-empty byte-stable rate | 100% |
+| Unknown-key not-found rate | 100% |
 
-| No | Detail |
-| --- | --- |
-| 1 | Known keys return non-empty byte-stable templates; unknown keys report not found. |
+### FR-ProjectSetup-006: Write Config Files
 
-### FR-ProjectSetup-006: Config File Writing
+**Description:** The feature shall write configuration files to disk from generated or templated content, creating parent directories as needed. Writes avoid partial files on normal error paths; existing files are overwritten only when the request implies it. `CreateGlobalConfigDir` ensures the user-level config directory exists.
 
-#### Description
-
-| No | Detail |
-| --- | --- |
-| 1 | Write configuration files to disk from generated or templated content. |
-
-#### Business Rules
-
-| No | Detail |
-| --- | --- |
-| 1 | WriteConfigFile writes content to the target path creating parent dirs as needed; CreateGlobalConfigDir ensures the user-level config directory exists. |
-| 2 | Write is atomic enough to avoid partial files on normal error paths; existing files overwritten only when the request implies it. |
+#### Business Logic
+- `WriteConfigFile` writes content to the target path, creating parent dirs as needed.
+- Writes are atomic enough to avoid partial files on normal error paths.
+- Existing files are overwritten only when the request implies it.
+- `CreateGlobalConfigDir` ensures the user-level config directory exists; on an existing dir it is a no-op success.
 
 #### Edge Cases
+- Missing parent directories are created on write.
+- Read-only targets fail with an error description rather than leaving a partial file.
+- Same content written twice leaves the file byte-identical.
+- `CreateGlobalConfigDir` on an existing dir is a no-op success.
 
-| No | Detail |
-| --- | --- |
-| 1 | Missing parent directories created; read-only target fails with error description; same content written twice leaves file byte-identical. |
-| 2 | CreateGlobalConfigDir on existing dir is a no-op success. |
-
-#### Capability
-
-| No | Detail |
-| --- | --- |
-| 1 | Config writing through the setup aggregate. |
-
-#### Protocol
-
-| No | Detail |
-| --- | --- |
-| 1 | IConfigWritingProtocol |
-
-#### Method
-
-| No | Detail |
-| --- | --- |
-| 1 | `write_config(path, content)` and `create_global_config_dir()`. |
-
-#### Input
-
-| No | Detail |
-| --- | --- |
-| 1 | Target path plus content; source is SetupRequest::{WriteConfigFile, CreateGlobalConfigDir}. |
-
-#### Output
-
-| No | Detail |
-| --- | --- |
-| 1 | SetupResponse::{ConfigWritten, ConfigDir}. |
-
-#### Error
-
-| No | Detail |
-| --- | --- |
-| 1 | Permission or path errors return failure description; no partial file left behind. |
-
-#### Event
-
-| No | Detail |
-| --- | --- |
-| 1 | None. |
+#### Technical Specification
+| Aspect | Detail |
+|--------|--------|
+| **Input** | Target path plus content; source is `SetupRequest::{WriteConfigFile, CreateGlobalConfigDir}`. |
+| **Output** | `SetupResponse::{ConfigWritten, ConfigDir}`. |
+| **Protocol** | `IConfigWritingProtocol` |
+| **Method** | `write_config_file`, `create_global_config_dir` |
+| **Event** | None. |
+| **Error** | Permission or path errors return a failure description; no partial file left behind. |
 
 #### Test
-
-| No | Detail |
-| --- | --- |
-| 1 | e2e_detect_language_and_write_config, e2e_generate_and_write_env, and e2e_generate_mcp_config_claude_and_write exercise write round trips. |
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| Content is written to a path whose parent dirs do not exist | The caller invokes `write_config_file` | Parent dirs are created and the file is written |
+| The same content is written twice | The caller invokes `write_config_file` twice with identical content | The file is byte-identical on both runs |
+| A read-only target is written | The caller invokes `write_config_file` on a read-only path | An error description is returned, no partial file left behind |
 
 #### Metric
+| Target Metric | Value |
+|---------------|-------|
+| Written files parsing as intended format | 100% |
+| E2e round-trip byte match | Every seeded round trip |
 
-| No | Detail |
-| --- | --- |
-| 1 | Written files parse as their intended format; e2e round trips assert written bytes match generated content. |
+### FR-ProjectSetup-007: Run Pre-flight Check
 
-### FR-ProjectSetup-007: Pre-flight Check
+**Description:** The feature shall run pre-project-setup checks before any generation or installation proceeds. `PreFlightCheck` verifies prerequisites (working directory usable, required tools discovered, no blocking conflicts) and returns a pass/fail report with reasons; generation flows consult it first.
 
-#### Description
-
-| No | Detail |
-| --- | --- |
-| 1 | Run pre-project setup checks before any generation or installation proceeds. |
-
-#### Business Rules
-
-| No | Detail |
-| --- | --- |
-| 1 | PreFlightCheck verifies prerequisites (working directory usable, required tools discovered, no blocking conflicts) and returns a pass/fail report with reasons; generation flows consult it first. |
-| 2 | Missing prerequisite reports failing item without performing generation; clean environment passes. |
+#### Business Logic
+- `PreFlightCheck` verifies prerequisites and returns a pass/fail report with reasons.
+- Missing prerequisite reports the failing item without performing generation.
+- Clean environment passes.
+- Generation flows consult the pre-flight report before proceeding.
+- `CheckHttp` probes a URL and reports reachability.
 
 #### Edge Cases
+- Partial failures list each failed item rather than stopping at the first.
+- Failing check returns a failure report (not an exception); caller decides whether to proceed.
 
-| No | Detail |
-| --- | --- |
-| 1 | CheckHttp variant probes a URL and reports reachability; partial failures list each failed item. |
-
-#### Capability
-
-| No | Detail |
-| --- | --- |
-| 1 | Pre-flight gate inside the setup aggregate. |
-
-#### Protocol
-
-| No | Detail |
-| --- | --- |
-| 1 | IPreFlightProtocol |
-
-#### Method
-
-| No | Detail |
-| --- | --- |
-| 1 | `pre_flight_check()` -> pass/fail report; `check_http` for reachability probes. |
-
-#### Input
-
-| No | Detail |
-| --- | --- |
-| 1 | Project path and optional HTTP target; source is SetupRequest::{PreFlightCheck, CheckHttp}. |
-
-#### Output
-
-| No | Detail |
-| --- | --- |
-| 1 | SetupResponse::{PreFlight, CheckHttp} with per-item status. |
-
-#### Error
-
-| No | Detail |
-| --- | --- |
-| 1 | Failing check returns failure report (not an exception); caller decides whether to proceed. |
-
-#### Event
-
-| No | Detail |
-| --- | --- |
-| 1 | None. |
+#### Technical Specification
+| Aspect | Detail |
+|--------|--------|
+| **Input** | Project path and optional HTTP target; source is `SetupRequest::{PreFlightCheck, CheckHttp}`. |
+| **Output** | `SetupResponse::{PreFlight, CheckHttp}` with per-item status. |
+| **Protocol** | `IPreFlightProtocol` |
+| **Method** | `pre_flight_check`, `check_http` |
+| **Event** | None. |
+| **Error** | Failing check returns a failure report (not an exception); caller decides whether to proceed. |
 
 #### Test
-
-| No | Detail |
-| --- | --- |
-| 1 | fr005_pre_flight_check asserts pre-flight reporting on seeded pass and fail scenarios. |
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| A clean environment is checked | The caller invokes `pre_flight_check` | All-green pass report |
+| A missing-tool environment is checked | The caller invokes `pre_flight_check` | Failing report naming the missing item |
+| Partial failures occur | The caller invokes `pre_flight_check` | Each failed item is listed |
 
 #### Metric
+| Target Metric | Value |
+|---------------|-------|
+| Passing environment all-green rate | 100% |
+| Seeded missing-tool failing reports | Every seeded environment |
 
-| No | Detail |
-| --- | --- |
-| 1 | Passing environment yields all-green report; seeded missing-tool environment yields a failing report naming the missing item. |
+### FR-ProjectSetup-008: Probe File Existence
 
-### FR-ProjectSetup-008: File Existence Probe
+**Description:** The feature shall probe whether a config file already exists before writing. `FileExists` returns a boolean existence check for the given path; callers use it to avoid clobbering user files. Non-existent path returns `Exists=false` without error; existing file returns `Exists=true`; unreadable parent returns false rather than panicking.
 
-#### Description
-
-| No | Detail |
-| --- | --- |
-| 1 | Probe whether a config file already exists before writing. |
-
-#### Business Rules
-
-| No | Detail |
-| --- | --- |
-| 1 | FileExists returns a boolean existence check for the given path; callers use it to avoid clobbering user files. |
-| 2 | e2e file-exists round trip asserts create-then-detect. |
+#### Business Logic
+- `FileExists` returns `Exists=true` when the path points to an existing file.
+- `FileExists` returns `Exists=false` when the path does not exist.
+- Callers use the result to avoid clobbering user files.
 
 #### Edge Cases
+- Non-existent path returns `Exists=false` without error.
+- Existing file returns `Exists=true`.
+- Path inside an unreadable parent returns false rather than panicking.
+- Round trip after create returns true.
 
-| No | Detail |
-| --- | --- |
-| 1 | Non-existent path returns Exists=false without error; existing file returns Exists=true; path inside unreadable parent returns false rather than panicking. |
-| 2 | Round trip after create returns true. |
-
-#### Capability
-
-| No | Detail |
-| --- | --- |
-| 1 | File path existence probe. |
-
-#### Protocol
-
-| No | Detail |
-| --- | --- |
-| 1 | IFilePathExistenceProtocol |
-
-#### Method
-
-| No | Detail |
-| --- | --- |
-| 1 | `file_exists(path)` -> bool. |
-
-#### Input
-
-| No | Detail |
-| --- | --- |
-| 1 | File path; source is SetupRequest::FileExists. |
-
-#### Output
-
-| No | Detail |
-| --- | --- |
-| 1 | SetupResponse::Exists. |
-
-#### Error
-
-| No | Detail |
-| --- | --- |
-| 1 | Unreadable parents resolve to false, not an error. |
-
-#### Event
-
-| No | Detail |
-| --- | --- |
-| 1 | None. |
+#### Technical Specification
+| Aspect | Detail |
+|--------|--------|
+| **Input** | File path; source is `SetupRequest::FileExists`. |
+| **Output** | `SetupResponse::Exists`. |
+| **Protocol** | `IFilePathExistenceProtocol` |
+| **Method** | `file_exists` |
+| **Event** | None. |
+| **Error** | Unreadable parents resolve to false, not an error. |
 
 #### Test
-
-| No | Detail |
-| --- | --- |
-| 1 | e2e_file_exists_round_trip asserts create-then-exists detection. |
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| A non-existent path is probed | The caller invokes `file_exists` | `Exists=false` without error |
+| An existing file is probed | The caller invokes `file_exists` | `Exists=true` |
+| A file is created then probed | The caller creates then invokes `file_exists` | `Exists=true` |
 
 #### Metric
-
-| No | Detail |
-| --- | --- |
-| 1 | Existence probe agrees with on-disk state on every seeded fixture path. |
+| Target Metric | Value |
+|---------------|-------|
+| Existence probe agreement with on-disk state | Every seeded fixture path |
 
 ## Public Interface
 
-| Aspect | Detail|
-|--------|-------|
-| Agent | SetupManagementOrchestrator — the agent-layer orchestrator behind the init/setup surface command. |
-| Aggregate | ISetupAggregate — the feature's single front door. |
-| Method | execute(&self, request: SetupRequest) -> SetupResponse |
-| Request | SetupRequest::{CheckHttp, GenerateEnv, GenerateMcpConfig, McpConfigClaude, McpConfigCursor, McpConfigWindsurf, McpConfigCopilot, McpConfigHermes, McpConfigVscode, McpConfigAll, InstallPythonAdapters, InstallJavascriptAdapters, DetectLanguage, DetectLanguages, GetConfigTemplate, PreFlightCheck, GetEmbeddedSkills, WriteConfigFile, CreateGlobalConfigDir, FileExists} |
-| Response | SetupResponse::{CheckHttp, Env, Mcp, Installed, Language, Languages, Template, PreFlight, Skills, ConfigWritten, ConfigDir, Exists} |
+| Aspect | Detail |
+|--------|--------|
+| Agent | SetupManagementOrchestrator |
+| Aggregate | `ISetupAggregate` |
+| Method | `execute` |
+| Request | `SetupRequest` |
+| Response | `SetupResponse` |
 
 ## Reference
 
-| Artifact | Purpose | Link|
+| Artifact | Purpose | Link |
 |----------|---------|------|
-| BACKLOG.md | Backlog tracking | [BACKLOG.md](BACKLOG.md)|
-| PRD.md | Product requirements | [PRD.md](../../PRD.md)|
-| FRD.md | Feature requirements | [FRD.md](FRD.md)|
-| ROADMAP.md | Roadmap status | [ROADMAP.md](../../ROADMAP.md)|
-| ARCHITECTURE.md | Layer contract | [ARCHITECTURE.md](../../ARCHITECTURE.md)|
+| PRD | Business goals, user stories, and scope | [PRD.md](../../PRD.md) |
+| Backlog | Task tracking, epics, and implementation status | [./BACKLOG.md](./BACKLOG.md) |
+| Roadmap | Timeline, phasing, and dependencies | [../../ROADMAP.md](../../ROADMAP.md) |
+| Architecture | System boundaries, tech stack, and infra | [../../ARCHITECTURE.md](../../ARCHITECTURE.md) |

@@ -319,7 +319,7 @@ pub fn collect_scaffold(
     // strictness gates the audit, not the scaffold — scaffold always writes missing docs.
 
     for member in &members {
-        // Skip kernel members (shared/kernel) unless explicitly requested.
+        // Skip layer members (shared/layer) unless explicitly requested.
         let member_name = member
             .path
             .file_name()

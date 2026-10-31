@@ -14,7 +14,7 @@
 | Project Workspace  | The root containing all configuration and language members  |
 | Workspace Member   | One self-contained crate, package, or module inside the work-|
 |                    | space                                                         |
-| Shared / kernel    | Cross-cutting domain models and contracts, never a feature  |
+| Shared / layer    | Cross-cutting domain models and contracts, never a feature  |
 
 ## 3. Naming Convention
 
@@ -138,7 +138,7 @@ project-root/
 | Purpose      | Utility contains reusable low-level mechanics that can be shared across capabilities. It exists so that Capabilities can remain clean. |
 | Role Naming  | Utility role suffixes are unlimited. The role name is chosen based on demand and must describe the technical responsibility and concern of the file. |
 | Dependencies | Utility may depend only on Taxonomy.                                                                                                    |
-| Location     | Utility files live only in the `shared/` kernel folder (AES701).                                                                        |
+| Location     | Utility files live only in the `shared/` layer folder (AES701).                                                                        |
 
 ### Component
 

@@ -5,7 +5,7 @@
 
 ## Data Overview
 
-<One paragraph: what data shapes this kernel manages, who reads/writes them, what business domain they serve. No code.>
+<One paragraph: what data shapes this shared layer manages, who reads/writes them, what business domain they serve. No code.>
 
 ## Data Requirements
 

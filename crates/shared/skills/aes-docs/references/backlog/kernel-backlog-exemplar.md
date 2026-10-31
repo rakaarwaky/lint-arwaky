@@ -1,13 +1,13 @@
 # Kernel BACKLOG Exemplar
 
-A filled BACKLOG against a shared/kernel (DATA.md) folder, matching the Template shape exactly. A shared/kernel folder carries `DATA.md` + `BACKLOG.md`. Each entry carries one ID from the `DT-<NAME>` family; the example below tracks five value-object IDs across entries.
+A filled BACKLOG against a shared/layer (DATA.md) folder, matching the Template shape exactly. A shared/layer folder carries `DATA.md` + `BACKLOG.md`. Each entry carries one ID from the `DT-<NAME>` family; the example below tracks five value-object IDs across entries.
 
 ```markdown
 # BACKLOG — Ecommerce Shared Kernel
 
 ## Progress Overview
 
-The shared kernel value objects are declared but only half are implemented across feature crates. Products, cart items, orders, addresses, and payment methods are modeled as immutable domain objects with no behavior, and no feature crate defines its own copy. Remaining risk is migrating feature-local shapes onto the kernel types.
+The shared layer value objects are declared but only half are implemented across feature crates. Products, cart items, orders, addresses, and payment methods are modeled as immutable domain objects with no behavior, and no feature crate defines its own copy. Remaining risk is migrating feature-local shapes onto the layer types.
 
 ## Backlog Status 
 

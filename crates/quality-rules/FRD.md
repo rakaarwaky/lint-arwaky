@@ -22,15 +22,35 @@ It sits behind the `ICodeAnalysisAggregate` front door and is called by the Surf
 - An unreadable file shall yield no finding rather than failing the analysis.
 - An empty scan set shall yield no findings.
 
-#### Technical Specification
-| Aspect | Detail |
-|--------|--------|
-| **Input** | File path plus content; source is `CodeAnalysisRequest::RunAnalysis` via `ICodeAnalysisAggregate::execute`. |
-| **Output** | A `FileTooLarge` violation inside `CodeAnalysisResponse::Analysis`. |
-| **Protocol** | `ILineCheckerProtocol` |
-| **Method** | `check_line_counts` |
-| **Event** | None; the analysis is synchronous. |
-| **Error** | An unreadable file reports no finding for that path rather than failing the analysis. |
+#### Input
+| No | Detail |
+|----|--------|
+| 1 | File path plus content; source is `CodeAnalysisRequest::RunAnalysis` via `ICodeAnalysisAggregate::execute`. |
+
+#### Output
+| No | Detail |
+|----|--------|
+| 1 | A `FileTooLarge` violation inside `CodeAnalysisResponse::Analysis`. |
+
+#### Protocol
+| No | Detail |
+|----|--------|
+| 1 | `ILineCheckerProtocol` |
+
+#### Method
+| No | Detail |
+|----|--------|
+| 1 | `check_line_counts` |
+
+#### Event
+| No | Detail |
+|----|--------|
+| 1 | None; the analysis is synchronous. |
+
+#### Error
+| No | Detail |
+|----|--------|
+| 1 | An unreadable file reports no finding for that path rather than failing the analysis. |
 
 #### Test
 | Context | When Action | Then Observable Result |
@@ -59,15 +79,35 @@ It sits behind the `ICodeAnalysisAggregate` front door and is called by the Surf
 - An empty file counts as below the minimum and shall produce a finding.
 - An unreadable file shall yield no finding rather than failing the analysis.
 
-#### Technical Specification
-| Aspect | Detail |
-|--------|--------|
-| **Input** | File path plus content; source is `CodeAnalysisRequest::RunAnalysis`. |
-| **Output** | A `FileTooShort` violation inside `CodeAnalysisResponse::Analysis`. |
-| **Protocol** | `ILineCheckerProtocol` |
-| **Method** | `check_line_counts` |
-| **Event** | None; the analysis is synchronous. |
-| **Error** | An unreadable file reports no finding rather than failing the analysis. |
+#### Input
+| No | Detail |
+|----|--------|
+| 1 | File path plus content; source is `CodeAnalysisRequest::RunAnalysis`. |
+
+#### Output
+| No | Detail |
+|----|--------|
+| 1 | A `FileTooShort` violation inside `CodeAnalysisResponse::Analysis`. |
+
+#### Protocol
+| No | Detail |
+|----|--------|
+| 1 | `ILineCheckerProtocol` |
+
+#### Method
+| No | Detail |
+|----|--------|
+| 1 | `check_line_counts` |
+
+#### Event
+| No | Detail |
+|----|--------|
+| 1 | None; the analysis is synchronous. |
+
+#### Error
+| No | Detail |
+|----|--------|
+| 1 | An unreadable file reports no finding rather than failing the analysis. |
 
 #### Test
 | Context | When Action | Then Observable Result |
@@ -96,15 +136,35 @@ It sits behind the `ICodeAnalysisAggregate` front door and is called by the Surf
 - A struct declared without an impl block shall produce a `DeadInheritance` finding.
 - An empty Python class, an empty JS class, and an empty JS interface shall each produce a mandatory-definition finding.
 
-#### Technical Specification
-| Aspect | Detail |
-|--------|--------|
-| **Input** | Parsed file entries (definitions, impls) plus file content; source is `CodeAnalysisRequest::RunAnalysis`. |
-| **Output** | `MandatoryClassDefinition` and `DeadInheritance` violations inside `CodeAnalysisResponse::Analysis`. |
-| **Protocol** | `IMandatoryClassProtocol`, `IDeadInheritanceProtocol` |
-| **Method** | `check_mandatory_class_definition`, `check_dead_inheritance` |
-| **Event** | None; the analysis is synchronous. |
-| **Error** | An unparseable file contributes no findings and the analysis continues across files. |
+#### Input
+| No | Detail |
+|----|--------|
+| 1 | Parsed file entries (definitions, impls) plus file content; source is `CodeAnalysisRequest::RunAnalysis`. |
+
+#### Output
+| No | Detail |
+|----|--------|
+| 1 | `MandatoryClassDefinition` and `DeadInheritance` violations inside `CodeAnalysisResponse::Analysis`. |
+
+#### Protocol
+| No | Detail |
+|----|--------|
+| 1 | `IMandatoryClassProtocol`, `IDeadInheritanceProtocol` |
+
+#### Method
+| No | Detail |
+|----|--------|
+| 1 | `check_mandatory_class_definition`, `check_dead_inheritance` |
+
+#### Event
+| No | Detail |
+|----|--------|
+| 1 | None; the analysis is synchronous. |
+
+#### Error
+| No | Detail |
+|----|--------|
+| 1 | An unparseable file contributes no findings and the analysis continues across files. |
 
 #### Test
 | Context | When Action | Then Observable Result |
@@ -124,24 +184,45 @@ It sits behind the `ICodeAnalysisAggregate` front door and is called by the Surf
 **Description:** The quality-rules feature shall detect bypass annotations and panic-style shortcuts that dodge quality checks, and shall count each occurrence as its own finding.
 
 #### Business Logic
-- The AES304 check shall fire one finding per occurrence for each bypass kind: `BypassComment` (suppression comments), `UnwrapExpect`, `Panic`, `Todo`, and `Unimplemented`.
+- The AES304 check shall fire one finding per occurrence for each bypass kind: `BypassComment` (suppression comments), `UnwrapExpect`, `Panic`, `Todo`, and dead-body shortcuts.
 - Each finding shall carry its kind in the violation message.
 - A file with no bypass markers shall produce no AES304 finding.
 
 #### Edge Cases
 - Multiple bypass sites in one file shall each fire a finding.
 - A comment-only todo marker shall flag the `Todo` kind.
+- An unreachable-body marker shall be counted as a dead-body shortcut finding.
 - An unreadable file shall yield no finding rather than failing the analysis.
 
-#### Technical Specification
-| Aspect | Detail |
-|--------|--------|
-| **Input** | File content plus path; source is `CodeAnalysisRequest::RunAnalysis`. |
-| **Output** | Violations of kind `BypassComment`, `UnwrapExpect`, `Panic`, `Todo`, or `Unimplemented` inside `CodeAnalysisResponse::Analysis`. |
-| **Protocol** | `IBypassCheckerProtocol` |
-| **Method** | `check_bypass_comments` |
-| **Event** | None; the analysis is synchronous. |
-| **Error** | An unreadable file contributes no findings; no analysis failure occurs. |
+#### Input
+| No | Detail |
+|----|--------|
+| 1 | File content plus path; source is `CodeAnalysisRequest::RunAnalysis`. |
+
+#### Output
+| No | Detail |
+|----|--------|
+| 1 | Violations of kind `BypassComment`, `UnwrapExpect`, `Panic`, `Todo`, or dead-body shortcuts inside `CodeAnalysisResponse::Analysis`. |
+
+#### Protocol
+| No | Detail |
+|----|--------|
+| 1 | `IBypassCheckerProtocol` |
+
+#### Method
+| No | Detail |
+|----|--------|
+| 1 | `check_bypass_comments` |
+
+#### Event
+| No | Detail |
+|----|--------|
+| 1 | None; the analysis is synchronous. |
+
+#### Error
+| No | Detail |
+|----|--------|
+| 1 | An unreadable file contributes no findings; no analysis failure occurs. |
 
 #### Test
 | Context | When Action | Then Observable Result |
@@ -172,15 +253,35 @@ It sits behind the `ICodeAnalysisAggregate` front door and is called by the Surf
 - An unreadable file shall drop out of the comparison set rather than failing the run.
 - An empty scan set shall produce no findings.
 
-#### Technical Specification
-| Aspect | Detail |
-|--------|--------|
-| **Input** | Set of file contents from the analysis request; source is `CodeAnalysisRequest::RunAnalysis`. |
-| **Output** | A `CodeDuplication` violation inside `CodeAnalysisResponse::Analysis`. |
-| **Protocol** | `ICodeMetricAnalyzerProtocol` |
-| **Method** | `handle_duplicates_entries` |
-| **Event** | None; the analysis is synchronous. |
-| **Error** | An unreadable file drops out of the comparison set rather than failing the run. |
+#### Input
+| No | Detail |
+|----|--------|
+| 1 | Set of file contents from the analysis request; source is `CodeAnalysisRequest::RunAnalysis`. |
+
+#### Output
+| No | Detail |
+|----|--------|
+| 1 | A `CodeDuplication` violation inside `CodeAnalysisResponse::Analysis`. |
+
+#### Protocol
+| No | Detail |
+|----|--------|
+| 1 | `ICodeMetricAnalyzerProtocol` |
+
+#### Method
+| No | Detail |
+|----|--------|
+| 1 | `handle_duplicates_entries` |
+
+#### Event
+| No | Detail |
+|----|--------|
+| 1 | None; the analysis is synchronous. |
+
+#### Error
+| No | Detail |
+|----|--------|
+| 1 | An unreadable file drops out of the comparison set rather than failing the run. |
 
 #### Test
 | Context | When Action | Then Observable Result |
@@ -209,6 +310,6 @@ It sits behind the `ICodeAnalysisAggregate` front door and is called by the Surf
 | Artifact | Purpose | Link |
 |----------|---------|------|
 | PRD | Business goals, user stories, and scope | [PRD.md](../../PRD.md) |
-| Backlog | Task tracking, epics, and implementation status | [BACKLOG.md](./BACKLOG.md) |
+| Backlog | Task tracking and epics | [BACKLOG.md](./BACKLOG.md) |
 | Roadmap | Timeline, phasing, and dependencies | [ROADMAP.md](../../ROADMAP.md) |
 | Architecture | System boundaries, tech stack, and infra | [ARCHITECTURE.md](../../ARCHITECTURE.md) |

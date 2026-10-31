@@ -1,41 +1,41 @@
 # DATA Exemplar
 
-A filled DATA against the Ecommerce shared kernel (DATA-ECOM), matching the Template shape exactly.
+A filled DATA against the Ecommerce shared layer (DATA-ECOM), matching the Template shape exactly.
 
 ```markdown
 # DATA — Ecommerce Shared Kernel
 
 ## Data Overview
 
-The shared kernel owns the stable domain data shapes that every feature and surface reads and writes: products in the catalog, cart items a shopper selects, orders placed at checkout, shipping addresses, and payment methods. These value objects are immutable domain concepts with no behavior, and no feature crate defines its own copy.
+The shared layer owns the stable domain data shapes that every feature and surface reads and writes: products in the catalog, cart items a shopper selects, orders placed at checkout, shipping addresses, and payment methods. These value objects are immutable domain concepts with no behavior, and no feature crate defines its own copy.
 
 ## Data Requirements
 
-### DT-SHARED-001: Product value object
+### DT-SHARED-001: Product
 
 | Type | Description |
 |------|-------------|
 | Product | A sellable item: name, price, stock quantity, category, and image reference. |
 
-### DT-SHARED-002: CartItem value object
+### DT-SHARED-002: CartItem
 
 | Type | Description |
 |------|-------------|
 | CartItem | One product in a shopper's cart with a quantity and a line total. |
 
-### DT-SHARED-003: Order value object
+### DT-SHARED-003: Order
 
 | Type | Description |
 |------|-------------|
 | Order | A placed order: shopper, items, total, status, and confirmation timestamp. |
 
-### DT-SHARED-004: Address value object
+### DT-SHARED-004: Address
 
 | Type | Description |
 |------|-------------|
 | Address | A saved shipping or billing address: name, street, city, postal code, country. |
 
-### DT-SHARED-005: PaymentMethod value object
+### DT-SHARED-005: PaymentMethod
 
 | Type | Description |
 |------|-------------|

@@ -15,7 +15,7 @@ flowchart TD
     C4 --> G["walker progress events"]
 ```
 
-The logging feature sits between the CLI entry points and the observability kernel: CLI commands call it to configure log density and install the global subscriber, and the scan pipeline calls it for phase timing and directory-walker progress reporting. It emits all output on stderr so stdout remains clean for piping machine-readable results.
+The logging feature sits between the CLI entry points and the observability layer: CLI commands call it to configure log density and install the global subscriber, and the scan pipeline calls it for phase timing and directory-walker progress reporting. It emits all output on stderr so stdout remains clean for piping machine-readable results.
 
 ## Functional Requirements
 

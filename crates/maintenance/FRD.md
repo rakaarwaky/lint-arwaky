@@ -5,14 +5,14 @@
 ```mermaid
 flowchart TD
     A["Surface Commands"] -->|MaintenanceRequest| B["MaintenanceCommandsOrchestrator"]
-    B -->|IDoctorProtocol| C["Doctor / Toolchain"]
-    B -->|IProjectStatsProtocol| D["Project Statistics"]
-    B -->|ICacheCleanupProtocol| E["Cache Cleanup"]
-    B -->|IToolUpdateProtocol| F["Tool Update"]
-    B -->|ISecurityScanProtocol| G["Security Scan"]
-    B -->|IDependencyReportProtocol| H["Dependency Report"]
-    B -->|IAdapterHealthProtocol| I["Adapter Health"]
-    B -->|ISelfUpdateProtocol| J["Binary Self-Update"]
+    B --> C["Doctor / Toolchain"]
+    B --> D["Project Statistics"]
+    B --> E["Cache Cleanup"]
+    B --> F["Tool Update"]
+    B --> G["Security Scan"]
+    B --> H["Dependency Report"]
+    B --> I["Adapter Health"]
+    B --> J["Binary Self-Update"]
     C & D & E & F & G & H & I & J -->|Outcome| B
     B -->|MaintenanceResponse| A
 ```

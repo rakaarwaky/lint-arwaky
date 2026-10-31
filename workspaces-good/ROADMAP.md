@@ -2,7 +2,7 @@
 
 ## Progress Overview
 
-All six root documents created and all feature kernel mirrors in place.
+All six root documents created and all feature layer mirrors in place.
 
 ## Roadmap Status 
 

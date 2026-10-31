@@ -31,7 +31,7 @@ The aggregated efines which document exists, where it lives, and  to improve mak
 | `ARCHITECTURE.md` | Root workspace                             | *Layer boundaries and allowed dependencies* | [references/architecture/workflow.md](references/architecture/workflow.md) |
 | `CONTRIBUTING.md` | Root workspace                             | *How to set up and ship a change*           | [references/contributing/workflow.md](references/contributing/workflow.md) |
 | `DESIGN.md`       | Each surface folder                        | *Visual &amp; interaction contract*         | [references/design/workflow.md](references/design/workflow.md)             |
-| `DATA.md`         | Shared folder                              | *What the kernel manages*                   | [references/data/workflow.md](references/data/workflow.md)                 |
+| `DATA.md`         | Shared folder                              | *What the shared layer manages*             | [references/data/workflow.md](references/data/workflow.md)                 |
 
 
 

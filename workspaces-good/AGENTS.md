@@ -28,7 +28,7 @@ AI agents working in this workspace must know the AES 7-layer naming convention,
 | crates/    | Rust workspace crates|
 | modules/   | Python feature layers|
 | packages/  | TypeScript feature layers|
-| shared/    | Shared kernel code   |
+| shared/    | Shared layer code   |
 
 ## Commands
 

@@ -33,7 +33,7 @@ const FEATURE_LAYOUTS: &[&str] = &["crates", "modules", "packages"];
 /// Collect every document the chain recognises under *root*.
 ///
 /// Three passes per layout: the root documents, the feature folder's FRD and
-/// BACKLOG pair, and the kernel's DATA and BACKLOG pair. A layout that is
+/// BACKLOG pair, and the layer's DATA and BACKLOG pair. A layout that is
 /// absent simply contributes nothing, which is what makes a sub-directory audit
 /// self-contained rather than an error.
 pub fn collect_documents(root: &Path) -> Vec<DocSource> {
@@ -124,8 +124,8 @@ fn collect_feature_docs(base: &Path, out: &mut Vec<DocSource>) {
     }
 }
 
-/// Collect the DATA/BACKLOG pair from the kernel folder under *base*. A layout
-/// with no shared kernel carries no DATA document, which is not a finding.
+/// Collect the DATA/BACKLOG pair from the layer folder under *base*. A layout
+/// with no shared layer carries no DATA document, which is not a finding.
 fn collect_shared_docs(base: &Path, out: &mut Vec<DocSource>) {
     let kernel = base.join(consts::KERNEL_DIR);
     if !kernel.is_dir() {
@@ -196,7 +196,7 @@ pub fn collect_members(root: &Path) -> Vec<MemberDescriptor> {
 /// A folder counts as "owned" when its name matches the project identifier
 /// segment of some declared PR-ID (`PR-<PROJECT>-NNN` → `PROJECT`). Only
 /// top-level subfolders under each layout root are considered; `shared` and
-/// `kernel` are skipped as kernel dirs, not project-owned feature folders.
+/// `layer` are skipped as layer dirs, not project-owned feature folders.
 /// Returns `None` when no layout root exists at all, leaving the caller
 /// silent rather than flagging every declared PR-ID.
 pub fn collect_pr_owned_module_folders(root: &Path) -> Option<BTreeSet<String>> {
@@ -228,11 +228,11 @@ pub fn collect_pr_owned_module_folders(root: &Path) -> Option<BTreeSet<String>> 
 
 /// Classify one folder by objective crate structure.
 ///
-/// Kernel: directory named `shared` or `kernel`.
+/// Layer: directory named `shared` or `kernel`.
 /// Feature: contains `*agent_*_orchestrator*.rs` or exposes capability/agent
 ///   in Cargo.toml.
 /// Surface: contains `surface_*` files or surface crate dependencies, not
-///   kernel/feature.
+///   layer/feature.
 /// None: anything else.
 fn classify_member(folder: &Path) -> MemberRole {
     let name = folder.file_name().and_then(|n| n.to_str()).unwrap_or("");

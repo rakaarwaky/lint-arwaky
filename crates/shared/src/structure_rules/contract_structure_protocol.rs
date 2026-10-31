@@ -1,12 +1,12 @@
 // PURPOSE: structure-rules capability contracts — three seams, one per rule group
 ///
-/// IStructureSharedPurityProtocol  → AES701 (shared/kernel folder rules)
+/// IStructureSharedPurityProtocol  → AES701 (shared/layer folder rules)
 /// IStructureFeatureHealthProtocol → AES702 (feature folder health + docs)
 /// IStructureSurfacePurityProtocol → AES703 (surface folder purity + docs)
 use crate::taxonomy_structure_rules_request::StructureRequest;
 use crate::taxonomy_structure_rules_response::StructureResponse;
 
-/// Shared (kernel) folder purity: no forbidden layers, no doc pair.
+/// Shared (layer) folder purity: no forbidden layers, no doc pair.
 pub trait IStructureSharedPurityProtocol: Send + Sync {
     fn audit_shared(&self, request: StructureRequest) -> StructureResponse;
 }

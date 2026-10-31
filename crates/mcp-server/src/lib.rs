@@ -6,7 +6,7 @@ pub mod surface_mcp_tool_command;
 pub mod taxonomy_mcp_server_vo;
 
 // ─── Re-exports ────────────────────────────────────────────
-// The MCP taxonomy used to live in the shared kernel crate (shared-mcp-server);
+// The MCP taxonomy used to live in the shared layer crate (shared-mcp-server);
 // it moved here because the MCP server is its only consumer (issue #572).
 
 pub use taxonomy_mcp_server_vo::ExecuteCommandArgs;

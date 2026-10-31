@@ -1,464 +1,252 @@
-# FRD — import-rules (v1.13.0)
+# FRD — import-rules
 
 ## Feature Overview
 
-The import-rules crate enforces correct structural boundaries and dependency flows across the 7-layer AES architecture. It validates every import statement against a config-driven dependency, detects dummy/stub code created to circumvent unused-import warnings, and identifies circular dependencies at the layer level. File discovery, raw content reads, AST parsing (import extraction + identifier extraction), and barrel resolution are handled by the filesystem aggregate (`IFilesystemAggregate`). The Surface fetches file entries, import data, and `used_identifiers` (via `used_identifiers_for(path)`) from filesystem first, then passes pre-fetched data to the import orchestrator. The import-rules crate receives `&[FileEntry]`, `content_map`, `imports_map`, and `used_identifiers_map` — all pre-fetched by the caller. The import orchestrator does **zero I/O** — it only performs business logic analysis. All rule behavior is governed by YAML configuration. The crate makes no assumptions about allowed/forbidden dependencies beyond what is explicitly defined in config.
+    [CLI `check` command] --> [import-rules aggregate] --> [import orchestrator]
+    [import orchestrator] --> [forbidden, mandatory, unused, dummy, cycle checkers]
+    [checkers] --> [lint violations]
 
-- **Architecture & Data Flow**
-
-```mermaid
-flowchart TD
-    A["Surface"] -->|"fetch file data"| D["filesystem_aggregate\n(external crate)"]
-
-    subgraph FS ["filesystem crate (external)"]
-        D --> E1["file_walker"]
-        D --> E2["AST parser\n(imports_map)"]
-        E1 --> G1["FileEntry[]\n+ content_map"]
-        E2 --> G2["ImportEntry[]\n(resolved_path populated)"]
-    end
-
-    G1 -->|"return"| D
-    G2 -->|"return"| D
-    D -->|"file entries\ncontent_map\nimports_map"| A
-
-    A -->|"pass pre-fetched data"| B["import_aggregate\n(IImportRunnerAggregate)"]
-    B --> C["import_orchestrator\n(zero I/O)"]
-
-    subgraph IR ["import-rules (business logic only)"]
-        C --> P1["import_resolver\n(scope / barrel via resolved_path)"]
-        C --> P2["symbol_extractor\n(usage tracking)"]
-        C --> P3["module_parser + cycle_detector\n(dependency edges)"]
-    end
-
-    C --> H1["forbidden_check"]
-    C --> H2["mandatory_check"]
-    C --> H3["unused_check"]
-    C --> H4["dummy_check"]
-    C --> H5["cycle_analysis"]
-    H1 --> I["Violations"]
-    H2 --> I
-    H3 --> I
-    H4 --> I
-    H5 --> I
-
-    I --> J["LintResult"]
-    J --> C
-    C --> B
-    B -->|output| A
-
-```
-
----
+The **import-rules** feature sits in the capabilities layer of the AES 7-layer architecture. It is invoked by the `check` command stage dedicated to import-rule auditing, and in turn calls the forbidden-layer checker, the mandatory-import checker, the unused-import checker, the dummy-constructor checker, and the circular-dependency analyzer. The feature performs zero I/O: all file discovery, content reading, and AST parsing are handled upstream by the filesystem aggregate, and the import orchestrator receives pre-fetched entries, imports, and used identifiers. All rule behavior is governed by YAML configuration; the crate makes no assumptions about allowed or forbidden dependencies beyond what the config declares.
 
 ## Functional Requirements
 
-### FR-ImportRules-001: Layer Dependency Violation (AES201)
+### FR-ImportRules-001: Layer Dependency Violation
 
-#### Description
+**Description:** The import orchestrator shall reject every import whose source module and target module cross a forbidden layer boundary as declared in the config-driven dependency matrix. For each violating import it shall emit a finding whose code names the rule and whose location is the import's reported source line, not the internal import index.
 
-| No | Detail |
-| --- | --- |
-| 1 | Flag imports that cross architectural layers against the forbidden-layer matrix. |
-
-#### Business Rules
-
-| No | Detail |
-| --- | --- |
-| 1 | AES201 rejects a lower layer importing a higher one (agent, surface, capabilities, taxonomy are each forbidden from specific importers; utility remains allowed from taxonomy/capabilities). |
-| 2 | Entry is matched by its first segment; index fallback applies when the entry line is zero; Python and Rust import sources both report the source line, not the import index. |
+#### Business Logic
+- AES201 rejects a lower layer importing a higher one; agent, surface, capabilities, and taxonomy are each forbidden from specific importers, and utility remains allowed from taxonomy and capabilities.
+- The entry's first path segment determines the layer; index fallback applies only when the entry's line number is zero.
+- Both Python and Rust import sources report the original source line, not the internal import index.
+- Every forbidden import in a file produces its own finding; no silent coalescing.
 
 #### Edge Cases
+- A forbidden import whose entry line is zero falls back to the import index and still produces a locatable finding.
+- Allowed pairs (taxonomy importing utility, capabilities importing taxonomy or utility) produce zero AES201 findings.
+- Multiple forbidden imports in one file each produce a separate finding; line extraction prefers the reported source line and degrades to the entry index only when line info is absent.
 
-| No | Detail |
-| --- | --- |
-| 1 | A forbidden Python import with entry line zero falls back to index; allowed pairs (taxonomy importing utility, capabilities importing taxonomy/utility) stay silent. |
-| 2 | Multiple forbidden imports in one file each produce a violation; line-number extraction prefers the reported source line and degrades to entry index only when line info is absent. |
+#### Technical Specification
 
-#### Capability
-
-| No | Detail |
-| --- | --- |
-| 1 | ArchImportForbiddenChecker enforces the layer matrix; ScopeMatcher utility resolves layer from import segment. |
-
-#### Protocol
-
-| No | Detail |
-| --- | --- |
-| 1 | IImportForbiddenProtocol. |
-
-#### Method
-
-| No | Detail |
-| --- | --- |
-| 1 | Check on the forbidden-import protocol returning lint messages per violating import. |
-
-#### Input
-
-| No | Detail |
-| --- | --- |
-| 1 | File path plus parsed imports (and optional entries); source is ImportRequest::RunAudit variants from the aggregate. |
-
-#### Output
-
-| No | Detail |
-| --- | --- |
-| 1 | Lint results inside ImportResponse::Audit with AES201 rule codes and source line numbers. |
-
-#### Error
-
-| No | Detail |
-| --- | --- |
-| 1 | Unreadable file contributes no findings rather than failing the audit. |
-| 2 | A zero entry line still yields a locatable violation. |
-
-#### Event
-
-| No | Detail |
-| --- | --- |
-| 1 | None; audit is synchronous. |
+| Aspect | Detail |
+|--------|--------|
+| **Input** | File path plus parsed import entries and optional file entries, delivered through the aggregate's audit request variants. |
+| **Output** | Findings with code AES201, carrying the source module, target module, and source line number; returned inside the audit response. |
+| **Protocol** | `IImportForbiddenProtocol` |
+| **Method** | `check` |
+| **Event** | None; audit is synchronous. |
+| **Error** | An unreadable file contributes no AES201 findings rather than failing the audit; a zero entry line still yields a locatable finding. |
 
 #### Test
 
-| No | Detail |
-| --- | --- |
-| 1 | aes201_agent_importing_surface_is_forbidden, aes201_taxonomy_importing_utility_is_allowed, aes201_falls_back_to_index_when_entry_line_is_zero. |
-| 2 | aes201_reports_source_line_not_import_index, and e2e_capabilities_importing_agent_detected assert the matrix and line reporting. |
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| An agent-layer file imports a surface-layer module | The forbidden-layer check runs | One AES201 finding is reported at the import's source line |
+| A taxonomy-layer file imports a utility-layer module | The forbidden-layer check runs | No AES201 finding is reported (allowed pair) |
+| A forbidden import has an entry line of zero | The forbidden-layer check runs | An AES201 finding is reported using the import index as the location |
+| A file contains two forbidden imports | The forbidden-layer check runs | Two AES201 findings are reported, one per import, each at its source line |
 
 #### Metric
 
-| No | Detail |
-| --- | --- |
-| 1 | All seeded forbidden pairs report violations with correct source lines. |
-| 2 | All seeded allowed pairs report zero AES201 findings. |
+| Target Metric | Value |
+|---------------|-------|
+| AES201 finding rate for seeded forbidden pairs | 100% |
+| AES201 false-positive rate for seeded allowed pairs | 0% |
+| AES201 source-line accuracy for seeded imports | 100% |
 
-### FR-ImportRules-002: Mandatory Layer Imports (AES202)
+### FR-ImportRules-002: Mandatory Layer Imports
 
-#### Description
+**Description:** The import orchestrator shall require imports that a layer must carry to function, and report a finding whenever such a mandated dependency is absent from a classified file. Files outside the mandated scope shall be skipped.
 
-| No | Detail |
-| --- | --- |
-| 1 | Require mandatory imports for layers that cannot function without them. |
-
-#### Business Rules
-
-| No | Detail |
-| --- | --- |
-| 1 | AES202 fires when a file in a layer that must import a mandated dependency does not (for example a feature orchestrator lacking its contract import). |
-| 2 | Check operates per file classification; files outside the mandated scope are skipped. |
+#### Business Logic
+- AES202 fires when a file classified into a layer that mandates a specific dependency does not contain that import.
+- The check operates per file classification; files outside the mandated scope produce no AES202 finding.
+- A file that already imports the mandated dependency produces no finding.
 
 #### Edge Cases
+- A clean fixture (all mandates satisfied) produces zero AES202 findings.
+- A missing or empty input file contributes no AES202 findings rather than failing the audit.
+- Unclassified files are ignored.
 
-| No | Detail |
-| --- | --- |
-| 1 | A file already importing the dependency yields no violation; unclassified files are ignored. |
-| 2 | Clean fixture exits with zero AES202 findings. |
+#### Technical Specification
 
-#### Capability
-
-| No | Detail |
-| --- | --- |
-| 1 | ArchImportMandatoryChecker enforces mandatory-import requirements. |
-
-#### Protocol
-
-| No | Detail |
-| --- | --- |
-| 1 | IImportMandatoryProtocol. |
-
-#### Method
-
-| No | Detail |
-| --- | --- |
-| 1 | Mandatory-import check on parsed file imports returning lint messages when the required import is absent. |
-
-#### Input
-
-| No | Detail |
-| --- | --- |
-| 1 | File path plus its import list; source is the import audit pipeline through IImportRunnerAggregate::execute. |
-
-#### Output
-
-| No | Detail |
-| --- | --- |
-| 1 | Lint results with AES202 codes inside ImportResponse::Audit. |
-
-#### Error
-
-| No | Detail |
-| --- | --- |
-| 1 | Missing or empty input file yields no findings for that file rather than failing the run. |
-
-#### Event
-
-| No | Detail |
-| --- | --- |
-| 1 | None. |
+| Aspect | Detail |
+|--------|--------|
+| **Input** | File path plus its parsed import list, delivered through the import audit pipeline. |
+| **Output** | Findings with code AES202, naming the missing dependency; returned inside the audit response. |
+| **Protocol** | `IImportMandatoryProtocol` |
+| **Method** | `check` |
+| **Event** | None; audit is synchronous. |
+| **Error** | A missing or empty input file yields no AES202 findings for that file rather than failing the run. |
 
 #### Test
 
-| No | Detail |
-| --- | --- |
-| 1 | mandatory_checker_implements_import_mandatory_protocol asserts object safety. |
-| 2 | smoke_import_rules exercises the checker on a clean fixture expecting zero AES202 findings. |
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| A file classified into a layer that mandates an import lacks that import | The mandatory-import check runs | One AES202 finding is reported naming the missing dependency |
+| A file already imports the mandated dependency | The mandatory-import check runs | No AES202 finding is reported |
+| A clean fixture satisfies all mandates | The mandatory-import check runs | Zero AES202 findings are reported |
 
 #### Metric
 
-| No | Detail |
-| --- | --- |
-| 1 | Seeded missing-mandate fixture produces exactly one AES202 finding. |
-| 2 | Clean fixture produces zero. |
+| Target Metric | Value |
+|---------------|-------|
+| AES202 finding rate for seeded missing-mandate fixtures | 100% |
+| AES202 false-positive rate for clean fixtures | 0% |
 
-### FR-ImportRules-003: Unused Import Detection (AES203)
+### FR-ImportRules-003: Unused Import Detection
 
-#### Description
+**Description:** The import orchestrator shall flag imports whose symbol never appears in the file body outside the import statement itself. An aliased import is considered used only when referenced by its alias. Barrel and mod-re-export index files are excluded from this check.
 
-| No | Detail |
-| --- | --- |
-| 1 | Detect imports that are never referenced in the file body. |
-
-#### Business Rules
-
-| No | Detail |
-| --- | --- |
-| 1 | AES203 flags imports whose symbol never appears outside the import statement; Python plain imports use the first-segment binding; aliased imports must be used via their alias. |
-| 2 | Alias used via alias name is NOT flagged; truly unused alias is flagged; ignored files: mod_rs, lib_rs, and index_ts are skipped; future-dated imports are never flagged; empty content or files with no imports yield no violation. |
+#### Business Logic
+- AES203 flags imports whose symbol never appears outside the import statement; Python plain imports use the first-segment binding.
+- An aliased import must be referenced via its alias to count as used; usage of the original name does not count.
+- Truly unused aliases are flagged.
+- Barrel, mod-re-export, and index files are skipped entirely.
+- Future-dated imports (imports that will become used after a pending edit) are never flagged.
+- An empty file or a file with no imports yields no finding.
 
 #### Edge Cases
+- An actual unused import is flagged exactly once, even when multiple unused imports exist.
+- An aliased Python import used only via its alias produces no finding; a truly unused alias is flagged.
+- Barrel, mod-re-export, and index files produce no AES203 findings.
+- A parse failure of the file body yields no AES203 findings for that file rather than false positives.
 
-| No | Detail |
-| --- | --- |
-| 1 | Actual unused import flags exactly once; multiple unused imports each flag; empty file/content no violation. |
-| 2 | Aliased Python import used only via alias not flagged; aliased and truly unused flagged; barrel/mod/lib index files skipped. |
+#### Technical Specification
 
-#### Capability
-
-| No | Detail |
-| --- | --- |
-| 1 | UnusedImportRuleChecker computes usage sets from parsed identifiers. |
-
-#### Protocol
-
-| No | Detail |
-| --- | --- |
-| 1 | IUnusedImportProtocol. |
-
-#### Method
-
-| No | Detail |
-| --- | --- |
-| 1 | Unused-import check over parse entries returning lint messages per unused binding. |
-
-#### Input
-
-| No | Detail |
-| --- | --- |
-| 1 | File path plus parsed imports and used identifiers; source is ImportRequest::RunAudit variants. |
-
-#### Output
-
-| No | Detail |
-| --- | --- |
-| 1 | Lint results with AES203 codes inside ImportResponse::Audit. |
-
-#### Error
-
-| No | Detail |
-| --- | --- |
-| 1 | Parse failure of the body yields no findings for that file instead of false positives. |
-
-#### Event
-
-| No | Detail |
-| --- | --- |
-| 1 | None. |
+| Aspect | Detail |
+|--------|--------|
+| **Input** | File path plus parsed import entries and used identifiers, delivered through the aggregate's audit request variants. |
+| **Output** | Findings with code AES203, naming the unused binding and its source line; returned inside the audit response. |
+| **Protocol** | `IUnusedImportProtocol` |
+| **Method** | `check` |
+| **Event** | None; audit is synchronous. |
+| **Error** | A parse failure of the body yields no AES203 findings for that file instead of false positives. |
 
 #### Test
 
-| No | Detail |
-| --- | --- |
-| 1 | aes203_actual_unused_still_flagged, aes203_python_aliased_import_used_via_alias_not_flagged, aes203_future_import_not_flagged. |
-| 2 | aes203_mod_rs_skipped, aes203_multiple_unused_imports, and aes203_no_imports_no_violation cover the rules. |
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| A file imports a symbol that is never referenced in the body | The unused-import check runs | One AES203 finding is reported for that import |
+| A Python import is aliased and referenced only by its alias | The unused-import check runs | No AES203 finding is reported |
+| A Python import is aliased and never referenced | The unused-import check runs | One AES203 finding is reported |
+| A mod-re-export index file contains unused-looking symbols | The unused-import check runs | No AES203 findings are reported |
+| A file contains two unused imports | The unused-import check runs | Two AES203 findings are reported, one per import |
 
 #### Metric
 
-| No | Detail |
-| --- | --- |
-| 1 | Seeded unused fixtures produce one finding per unused import. |
-| 2 | Skipped-file family (mod, lib, index) always yields zero AES203 findings. |
+| Target Metric | Value |
+|---------------|-------|
+| AES203 finding rate for seeded unused-import fixtures | 100% |
+| AES203 false-positive rate for skipped-file families | 0% |
+| AES203 false-positive rate for aliased-but-used imports | 0% |
 
-### FR-ImportRules-004: Dummy Import Detection (AES204)
+### FR-ImportRules-004: Dummy Import Detection
 
-#### Description
+**Description:** The import orchestrator shall catch dummy imports, dummy functions, and dummy trait implementations that exist only to satisfy a checker or a linter rather than to express real behavior.
 
-| No | Detail |
-| --- | --- |
-| 1 | Catch dummy imports, dummy functions, and dummy trait impls that exist only to satisfy a checker. |
-
-#### Business Rules
-
-| No | Detail |
-| --- | --- |
-| 1 | AES204 flags imports pointing at symbols that are never callably used, functions whose bodies are empty stubs, and trait impls with no real method bodies beyond placeholders. |
-| 2 | Clean files pass. |
+#### Business Logic
+- AES204 flags imports pointing at symbols that are never callably used.
+- AES204 flags functions whose bodies are empty stubs.
+- AES204 flags trait implementations with no real method bodies beyond placeholders.
+- Clean files produce no findings.
 
 #### Edge Cases
+- A clean fixture yields zero AES204 findings.
+- A file with a stub function still yields a finding for that stub.
+- An unreadable file yields no AES204 findings.
+- A mixed file with multiple dummy constructs reports each dummy independently.
+- A parse failure skips that file's dummy analysis rather than failing the audit.
 
-| No | Detail |
-| --- | --- |
-| 1 | A clean fixture yields zero findings; a file with a stub function still yields a finding for the stub. |
-| 2 | Unreadable file yields no findings; classification of a mixed file reports each dummy independently. |
+#### Technical Specification
 
-#### Capability
-
-| No | Detail |
-| --- | --- |
-| 1 | DummyImportChecker detects dummy constructs. |
-
-#### Protocol
-
-| No | Detail |
-| --- | --- |
-| 1 | IDummyImportCheckerProtocol. |
-
-#### Method
-
-| No | Detail |
-| --- | --- |
-| 1 | Dummy-import/function/impl check over parsed file content returning lint messages. |
-
-#### Input
-
-| No | Detail |
-| --- | --- |
-| 1 | File path plus parsed content; source is the import audit pipeline. |
-
-#### Output
-
-| No | Detail |
-| --- | --- |
-| 1 | Lint results with AES204 codes inside ImportResponse::Audit. |
-
-#### Error
-
-| No | Detail |
-| --- | --- |
-| 1 | Parse failure skips the file's dummy analysis rather than failing the audit. |
-
-#### Event
-
-| No | Detail |
-| --- | --- |
-| 1 | None. |
+| Aspect | Detail |
+|--------|--------|
+| **Input** | File path plus parsed content, delivered through the import audit pipeline. |
+| **Output** | Findings with code AES204, naming the dummy construct and its location; returned inside the audit response. |
+| **Protocol** | `IDummyImportCheckerProtocol` |
+| **Method** | `check` |
+| **Event** | None; audit is synchronous. |
+| **Error** | A parse failure skips the file's dummy analysis rather than failing the audit. |
 
 #### Test
 
-| No | Detail |
-| --- | --- |
-| 1 | dummy_checker_implements_dummy_import_checker_protocol (object safety). |
-| 2 | smoke_dummy_checker_with_clean_file (clean file has zero findings) assert the contract. |
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| A clean file contains no dummy constructs | The dummy-check runs | Zero AES204 findings are reported |
+| A file contains a stub function with an empty body | The dummy-check runs | One AES204 finding is reported for the stub |
+| A file contains a trait implementation with placeholder method bodies | The dummy-check runs | One AES204 finding is reported for the dummy impl |
+| An unreadable file is passed to the audit | The dummy-check runs | No AES204 findings are reported for that file; the audit completes |
 
 #### Metric
 
-| No | Detail |
-| --- | --- |
-| 1 | Clean fixture produces zero AES204 findings. |
-| 2 | Seeded dummy fixture produces at least one per seeded dummy construct. |
+| Target Metric | Value |
+|---------------|-------|
+| AES204 finding rate for seeded dummy-constructor fixtures | 100% |
+| AES204 false-positive rate for clean fixtures | 0% |
 
-### FR-ImportRules-005: Circular Dependency Detection (AES205)
+### FR-ImportRules-005: Circular Dependency Detection
 
-#### Description
+**Description:** The import orchestrator shall detect circular cross-layer dependencies among parsed import edges. Module paths are normalized to layer segments, a directed graph is built, and strongly connected components are reported as findings.
 
-| No | Detail |
-| --- | --- |
-| 1 | Detect circular cross-layer dependencies among parsed import edges. |
-
-#### Business Rules
-
-| No | Detail |
-| --- | --- |
-| 1 | AES205 normalizes module paths to layer segments (strip crate prefix when present), builds a directed graph of edges, and reports strongly connected components. |
-| 2 | Cycle detection covers two-node, three-node, and cross-layer mutual cycles; acyclic graphs report none; disabled-by-config audit returns an empty result. |
+#### Business Logic
+- AES205 normalizes module paths to layer segments, stripping the crate prefix when present.
+- A directed graph is built from the normalized edges.
+- Strongly connected components of the graph are reported as cycle findings.
+- Two-node, three-node, and cross-layer mutual cycles are all detected.
+- An acyclic graph reports no cycles.
+- An audit disabled by configuration returns an empty result.
 
 #### Edge Cases
+- An empty edge set yields no cycle findings.
+- Mutual cross-layer cycles are detected.
+- Normalization with and without a crate prefix both resolve to the same layer.
+- Unparseable edge entries are dropped; the scan still completes on the remaining edges.
+- A disabled configuration returns an empty audit without failing.
+- A missing entry in the graph does not cause a panic.
 
-| No | Detail |
-| --- | --- |
-| 1 | Empty edge set yields no cycles; mutual cross-layer cycles detected; normalize with and without crate prefix both resolve to the same layer. |
-| 2 | Disabled configuration returns an empty audit; missing entry in graph does not panic. |
+#### Technical Specification
 
-#### Capability
-
-| No | Detail |
-| --- | --- |
-| 1 | DependencyCycleAnalyzer builds the layer graph and finds cycles. |
-
-#### Protocol
-
-| No | Detail |
-| --- | --- |
-| 1 | ICycleImportProtocol. |
-
-#### Method
-
-| No | Detail |
-| --- | --- |
-| 1 | Cycle scan over edge list returning detected cycles as lint messages. |
-
-#### Input
-
-| No | Detail |
-| --- | --- |
-| 1 | Import edge list (or file discovery then edges); source is ImportRequest::RunAudit variants. |
-
-#### Output
-
-| No | Detail |
-| --- | --- |
-| 1 | Lint results with AES205 codes inside ImportResponse::Audit; empty list when acyclic or disabled. |
-
-#### Error
-
-| No | Detail |
-| --- | --- |
-| 1 | Unparseable edge entries are dropped; the scan still completes on remaining edges. |
-
-#### Event
-
-| No | Detail |
-| --- | --- |
-| 1 | None. |
+| Aspect | Detail |
+|--------|--------|
+| **Input** | Import edge list (or file discovery followed by edges), delivered through the aggregate's audit request variants. |
+| **Output** | Findings with code AES205, naming each detected cycle; an empty list when acyclic or when the rule is disabled. Returned inside the audit response. |
+| **Protocol** | `ICycleImportProtocol` |
+| **Method** | `check` |
+| **Event** | None; audit is synchronous. |
+| **Error** | Unparseable edge entries are dropped; the scan completes on the remaining edges. |
 
 #### Test
 
-| No | Detail |
-| --- | --- |
-| 1 | aes205_detects_simple_cycle_two_nodes, aes205_detects_three_node_cycle, aes205_no_cycle_with_acyclic_edges. |
-| 2 | aes205_scan_disabled_config_returns_empty, and aes205_normalize_to_layer_strips_prefix cover cycle logic. |
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| A two-node cycle exists between two layers | The cycle scan runs | At least one AES205 finding is reported |
+| A three-node cycle exists among three layers | The cycle scan runs | At least one AES205 finding is reported |
+| The import graph is acyclic | The cycle scan runs | Zero AES205 findings are reported |
+| The cycle rule is disabled by configuration | The cycle scan runs | The audit returns an empty result |
+| A module path with a crate prefix and the same path without it are both present | Normalization runs | Both resolve to the same layer segment |
 
 #### Metric
 
-| No | Detail |
-| --- | --- |
-| 1 | Every seeded cycle fixture reports at least one cycle; acyclic fixtures report zero. |
-| 2 | Disabled config yields an empty result. |
+| Target Metric | Value |
+|---------------|-------|
+| AES205 detection rate for seeded cycle fixtures | 100% |
+| AES205 false-positive rate for acyclic fixtures | 0% |
 
 ## Public Interface
 
-| Aspect | Detail|
-|--------|-------|
-| Agent | ImportOrchestrator — the agent-layer orchestrator behind the check command's import-rule stage. |
-| Aggregate | IImportRunnerAggregate — the feature's single front door. |
-| Method | execute(&self, request: ImportRequest) -> ImportResponse |
-| Request | ImportRequest::{RunAudit, RunAuditWithEntries, RunAuditWithEntriesAndImports, Name} |
-| Response | ImportResponse::{Audit, AuditEntries, Name} |
+| Aspect | Detail |
+|--------|--------|
+| Agent | `ImportOrchestrator` |
+| Aggregate | `IImportRunnerAggregate` |
+| Method | `execute` |
+| Request | `ImportRequest::{RunAudit, RunAuditWithEntries, RunAuditWithEntriesAndImports, Name}` |
+| Response | `ImportResponse::{Audit, AuditEntries, Name}` |
 
 ## Reference
 
-| Artifact | Purpose | Link|
+| Artifact | Purpose | Link |
 |----------|---------|------|
-| BACKLOG.md | Backlog tracking | [BACKLOG.md](BACKLOG.md)|
-| PRD.md | Product requirements | [PRD.md](../../PRD.md)|
-| FRD.md | Feature requirements | [FRD.md](FRD.md)|
-| ROADMAP.md | Roadmap status | [ROADMAP.md](../../ROADMAP.md)|
-| ARCHITECTURE.md | Layer contract | [ARCHITECTURE.md](../../ARCHITECTURE.md)|
+| PRD | Business goals, user stories, and scope | [PRD.md](../../PRD.md) |
+| Backlog | Task tracking, epics, and implementation status | [BACKLOG.md](./BACKLOG.md) |
+| Roadmap | Timeline, phasing, and dependencies | [ROADMAP.md](../../ROADMAP.md) |
+| Architecture | System boundaries, tech stack, and infra | [ARCHITECTURE.md](../../ARCHITECTURE.md) |

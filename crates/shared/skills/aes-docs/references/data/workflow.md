@@ -4,7 +4,7 @@ Follow these steps in order. The output must match the Template exactly, and the
 
 ## 0. Choose the entry scenario
 
-The entry point depends on the starting state. In every scenario the DATA.md is a data contract: it states what the kernel manages, never what the current source code does. The user's `<instruction>` overrides the code — code never edits the spec. No DATA.md is placed outside a `shared/` folder.
+The entry point depends on the starting state. In every scenario the DATA.md is a data contract: it states what the shared layer manages, never what the current source code does. The user's `<instruction>` overrides the code — code never edits the spec. No DATA.md is placed outside a `shared/` folder.
 
 ### Scenario 1 — Update existing DATA.md
 
@@ -17,17 +17,17 @@ The entry point depends on the starting state. In every scenario the DATA.md is 
 
 ### Scenario 2 — Create new DATA.md, no source code yet
 
-**When:** the kernel has no implementation and no `DATA.md`.
+**When:** the shared layer has no implementation and no `DATA.md`.
 **Argument hint:** `--design --docpath <docpath>`
 
-`<docpath>` is the target path for the new `DATA.md`, inside a `shared/` directory. `<instruction>` describes what the kernel manages. The delegate enumerates the data-concept ID set from the instruction and the feature's PRD/ROADMAP/DESIGN context, then writes the DATA.md purely from the promised behavior. No source code exists to consult, so the instruction is the sole source of truth. The document must be paired with a `BACKLOG.md` in the same folder so that every `DT-SHARED-NNN` ID has a matching row (AES601 backlog alignment).
+`<docpath>` is the target path for the new `DATA.md`, inside a `shared/` directory. `<instruction>` describes what the shared layer manages. The delegate enumerates the data-concept ID set from the instruction and the feature's PRD/ROADMAP/DESIGN context, then writes the DATA.md purely from the promised behavior. No source code exists to consult, so the instruction is the sole source of truth. The document must be paired with a `BACKLOG.md` in the same folder so that every `DT-SHARED-NNN` ID has a matching row (AES601 backlog alignment).
 
 ### Scenario 3 — Create DATA.md for a project that already has source code
 
 **When:** source code exists but there is no `DATA.md`, or the contract must be written independently of the build.
 **Argument hint:** `--make --docpath <docpath>`
 
-`<docpath>` is the target path for the new `DATA.md`, inside a `shared/` directory. `<instruction>` describes what the kernel manages. Existing source code is reference only: it may inform naming of caller-observable identifiers (error codes, event names, output paths), but the DATA.md never names `.py`/`.rs`/`.ts`/`.tsx` files, class names, or type signatures, and never states how the current build works. Where code and instruction conflict, the instruction wins. The document must be paired with a `BACKLOG.md` in the same folder so that every `DT-SHARED-NNN` ID has a matching row.
+`<docpath>` is the target path for the new `DATA.md`, inside a `shared/` directory. `<instruction>` describes what the shared layer manages. Existing source code is reference only: it may inform naming of caller-observable identifiers (error codes, event names, output paths), but the DATA.md never names `.py`/`.rs`/`.ts`/`.tsx` files, class names, or type signatures, and never states how the current build works. Where code and instruction conflict, the instruction wins. The document must be paired with a `BACKLOG.md` in the same folder so that every `DT-SHARED-NNN` ID has a matching row.
 
 ## 1. Create file
 
@@ -35,7 +35,7 @@ Create `DATA.md` at `<docpath>` inside the crate's `shared/` directory.
 
 ## 2. Section: Data Overview
 
-One paragraph: what data shapes the kernel manages, who reads and writes them, and what business domain they serve. No code.
+One paragraph: what data shapes the shared layer manages, who reads and writes them, and what business domain they serve. No code.
 
 ## 3. Items: `### DT-SHARED-NNN: <short imperative name>`
 

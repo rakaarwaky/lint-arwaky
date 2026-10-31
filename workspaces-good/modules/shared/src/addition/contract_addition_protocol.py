@@ -1,6 +1,6 @@
 """Addition feature shared mirror (AES101 `_aggregate` / AES102 `_protocol`).
 
-Mirror of the `modules/addition` feature into the `modules/shared` kernel.
+Mirror of the `modules/addition` feature into the `modules/shared` layer.
 Two FR requirements (FR-ADDITION-001, FR-ADDITION-002) map to two protocol
 classes here.
 """

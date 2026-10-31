@@ -18,7 +18,7 @@ pub mod taxonomy_tui_event;
 pub mod taxonomy_tui_vo;
 
 // ─── Re-exports ────────────────────────────────────────────
-// The TUI taxonomy used to live in the shared kernel crate (shared-tui); it
+// The TUI taxonomy used to live in the shared layer crate (shared-tui); it
 // moved here because the TUI is its only consumer (issue #572).
 
 pub use shared_tui::{LintExecutionResult, LintOutcome};

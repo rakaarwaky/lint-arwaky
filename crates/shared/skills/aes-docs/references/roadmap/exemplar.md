@@ -7,7 +7,7 @@ A filled ROADMAP against the Ecommerce Application workspace, matching the Templ
 
 ## Progress Overview
 
-The shared kernel value objects are ready, the product catalog and cart are in progress, checkout is starting, and the web surface is building its design tokens. Cross-cutting risk is the responsive grid on narrow screens.
+The shared layer value objects are ready, the product catalog and cart are in progress, checkout is starting, and the web surface is building its design tokens. Cross-cutting risk is the responsive grid on narrow screens.
 
 ## Roadmap Status
 
