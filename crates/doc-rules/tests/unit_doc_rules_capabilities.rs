@@ -130,7 +130,7 @@ fn aes602_rejects_a_frd_out_of_template_order() {
     );
     let findings = FrdCapability::new().audit_frd(&context("FRD.md", &text));
     assert!(
-        codes(&findings).contains(&consts::RULE_CODE_SECTION_STRUCTURE),
-        "sections out of template order must fire AES602; got {findings:?}"
+        findings.iter().any(|f| f.code == consts::RULE_CODE_FRD_DOC && f.violation_type == consts::SECTION_STRUCTURE_VIOLATION_ORDER),
+        "sections out of template order must fire AES609 order_violation; got {findings:?}"
     );
 }

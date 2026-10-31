@@ -8,7 +8,7 @@ use shared_doc_rules::taxonomy_doc_rules_response::DocResponse;
 use std::fs;
 use std::path::Path;
 
-const CODE: &str = "AES601";
+const CODE: &str = "AES609";
 const VIOLATION: &str = "protocol_count_mismatch";
 
 /// A minimal FRD carrying *count* well-formed requirement headings.

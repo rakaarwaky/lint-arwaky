@@ -39,6 +39,9 @@ impl IFrdDocProtocol for FrdCapability {
             }
             Self::audit_one(document, context, &mut findings);
             context.stamp(document, &mut findings);
+            for f in &mut findings {
+                f.code = consts::RULE_CODE_FRD_DOC;
+            }
         }
         findings
     }
@@ -49,8 +52,8 @@ impl FrdCapability {
         let text = &document.text;
         let parsed = sections(text);
 
-        // AES601 — FR-ID format (bare FR-NNN without feature prefix).
-        check_fr_id_format(document, findings);
+        // AES609 — FR-ID format (bare FR-NNN without feature prefix).
+        check_fr_id_format(consts::RULE_CODE_FRD_DOC, document, findings);
 
         // AES601 — FR protocol parity (requirement count vs contract seams).
         check_fr_protocol_parity(document, context, findings);

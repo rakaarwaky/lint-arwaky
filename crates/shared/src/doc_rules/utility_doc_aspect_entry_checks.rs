@@ -152,7 +152,7 @@ pub fn check_aspect_entry_tables(
 /// (that shape is handled by `check_entry_tables` instead of the H4 aspect
 /// template). PRD entries never use the legacy shape.
 fn h4_candidate_entries(
-    parsed: &[Section],
+    _parsed: &[Section],
     parent: &Section,
     entry_re: &regex::Regex,
 ) -> Vec<Section> {

@@ -37,6 +37,9 @@ impl IDataDocProtocol for DataCapability {
             }
             Self::audit_one(document, context, &mut findings);
             context.stamp(document, &mut findings);
+            for f in &mut findings {
+                f.code = consts::RULE_CODE_DATA_DOC;
+            }
         }
         findings
     }
@@ -47,8 +50,8 @@ impl DataCapability {
         let text = &document.text;
         let parsed = sections(text);
 
-        // AES601 — bare-ID format (DT-<NAME>-NNN without qualified form).
-        check_fr_id_format(document, findings);
+        // AES608 — bare-ID format (DT-<NAME>-NNN without qualified form).
+        check_fr_id_format(consts::RULE_CODE_DATA_DOC, document, findings);
 
         // AES604 — crosslinks (PRD, BACKLOG, ROADMAP, ARCHITECTURE).
         Self::check_crosslinks(document, context, consts::RULE_CODE_CROSSLINKS, findings);

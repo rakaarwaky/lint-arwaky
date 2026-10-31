@@ -35,6 +35,9 @@ impl IContributingDocProtocol for ContributingCapability {
             }
             Self::audit_one(document, context, &mut findings);
             context.stamp(document, &mut findings);
+            for f in &mut findings {
+                f.code = consts::RULE_CODE_CONTRIBUTING_DOC;
+            }
         }
         findings
     }
@@ -53,14 +56,16 @@ impl ContributingCapability {
             check_doc_heading(consts::RULE_CODE_CONTRIBUTING_DOC, text, consts::CONTRIBUTING_DOC, required, allowed, findings);
         }
 
-        // AES606 — Workflow table carries fixed columns.
+        // AES604 — Workflow table carries fixed columns.
         findings.extend(check_h2_table(
+            consts::RULE_CODE_CONTRIBUTING_DOC,
             &parsed,
             "Workflow",
             consts::CONTRIBUTING_WORKFLOW_COLUMNS,
         ));
-        // AES606 — Commit Convention table carries fixed columns.
+        // AES604 — Commit Convention table carries fixed columns.
         findings.extend(check_h2_table(
+            consts::RULE_CODE_CONTRIBUTING_DOC,
             &parsed,
             "Commit Convention",
             consts::CONTRIBUTING_COMMIT_COLUMNS,

@@ -60,10 +60,13 @@ fn write_faulty_workspace(root: &Path) {
     );
     write(&root.join("PRD.md"), "# PRD\n");
     write(&root.join("ROADMAP.md"), "# ROADMAP\n");
+    write(&root.join("README.md"), "# README\n");
+    write(&root.join("ARCHITECTURE.md"), "# ARCHITECTURE\n");
     // Four independent defects in one document: an FR-ID missing its feature
-    // prefix (AES601), Public Interface placed before Feature Overview so the
-    // sections are out of template order (AES602), a spec naming a source file
-    // (AES603), and PRD.md carrying no mandated H2 (AES605).
+    // prefix (AES609 — FRD per-doc code), Public Interface placed before
+    // Feature Overview so the sections are out of template order (AES602), a
+    // spec naming a source file (AES603), and PRD.md carrying no mandated H2
+    // (AES605).
     write(
         &feature.join("FRD.md"),
         "# FRD — sample\n\n\
@@ -97,7 +100,7 @@ fn one_request_runs_every_invariant_and_reports_each_defect() {
         .map(|(code, _, _, _)| code.as_str())
         .collect();
 
-    for expected in ["AES601", "AES602", "AES603"] {
+    for expected in ["AES609", "AES605", "AES606", "AES602", "AES603"] {
         assert!(
             codes.contains(expected),
             "a single request must reach the {expected} capability; the aggregate \

@@ -24,79 +24,73 @@ The feature does the work a surface delegates to.
 
 ### FR-SAMPLE-001: Document Invariant Enforcement
 
+| Aspect         | Detail                                      |
+|---|---|
+| Input          | A workspace root and the list of recognized document paths. |
+| Output         | `Vec<LintResult>` carrying one finding per invariant violation. |
+| Protocol       | doc_rules::DocStructure |
+| Method         | check_doc_heading |
+| Event          | Finding emitted |
+| Error          | Unreadable files produce no findings. |
+
 #### Input
 
-| No | Detail |
-|---|---|
-| 1 | A workspace root and the list of recognized document paths. |
+A workspace root and the list of recognized document paths.
 
 #### Output
 
-| No | Detail |
-|---|---|
-| 1 | `Vec<LintResult>` carrying one finding per invariant violation. |
+`Vec<LintResult>` carrying one finding per invariant violation.
 
 #### Protocol
 
-| No | Detail |
-|---|---|
-| 1 | doc_rules::DocStructure |
+doc_rules::DocStructure
 
 #### Method
 
-| No | Detail |
-|---|---|
-| 1 | check_doc_heading |
+check_doc_heading
 
 #### Event
 
-| No | Detail |
-|---|---|
-| 1 | Finding emitted |
+Finding emitted
 
 #### Error
 
-| No | Detail |
-|---|---|
-| 1 | Unreadable files produce no findings. |
+Unreadable files produce no findings.
 
 ### FR-SAMPLE-002: Audit Orchestration
 
+| Aspect         | Detail                                      |
+|---|---|
+| Input          | A `DocRequest` describing the workspace root to audit. |
+| Output         | A `DocResponse` carrying a deduplicated, stable-sorted list of findings. |
+| Protocol       | doc_rules::DocStructure |
+| Method         | execute |
+| Event          | Finding emitted |
+| Error          | Failures inside the checker are propagated as `DocResponse::Findings` with no partial results. |
+
 #### Input
 
-| No | Detail |
-|---|---|
-| 1 | A `DocRequest` describing the workspace root to audit. |
+A `DocRequest` describing the workspace root to audit.
 
 #### Output
 
-| No | Detail |
-|---|---|
-| 1 | A `DocResponse` carrying a deduplicated, stable-sorted list of findings. |
+A `DocResponse` carrying a deduplicated, stable-sorted list of findings.
 
 #### Protocol
 
-| No | Detail |
-|---|---|
-| 1 | doc_rules::DocStructure |
+doc_rules::DocStructure
 
 #### Method
 
-| No | Detail |
-|---|---|
-| 1 | execute |
+execute
 
 #### Event
 
-| No | Detail |
-|---|---|
-| 1 | Finding emitted |
+Finding emitted
 
 #### Error
 
-| No | Detail |
-|---|---|
-| 1 | Failures inside the checker are propagated as `DocResponse::Findings` with no partial results. |
+Failures inside the checker are propagated as `DocResponse::Findings` with no partial results.
 
 ## Public Interface
 

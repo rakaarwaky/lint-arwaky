@@ -12,8 +12,8 @@ use crate::utility_markdown_scanner::normalize_heading;
 
 /// H2-level: the section titled *title* must carry a table whose header
 /// covers *columns*. Finding (if any) anchors to the H2 line.
-pub fn check_h2_table(parsed: &[Section], title: &str, columns: &[&str]) -> Vec<DocFinding> {
-    check_section_shape(parsed, title, columns, None)
+pub fn check_h2_table(rule_code: &'static str, parsed: &[Section], title: &str, columns: &[&str]) -> Vec<DocFinding> {
+    check_section_shape(rule_code, parsed, title, columns, None)
         .into_iter()
         .collect()
 }
@@ -22,6 +22,7 @@ pub fn check_h2_table(parsed: &[Section], title: &str, columns: &[&str]) -> Vec<
 /// `| Aspect | Detail |` table whose first-column row labels equal
 /// *row_labels*. Finding anchors to the H2 line.
 pub fn check_h2_fixed_rows(
+    rule_code: &'static str,
     parsed: &[Section],
     title: &str,
     row_labels: &[&str],
@@ -36,7 +37,7 @@ pub fn check_h2_fixed_rows(
     // Shape discrimination (section_not_table / table_missing_columns) is
     // shared with the entry checks; only the fixed-row comparison is
     // specific to this H2-level check.
-    if let Some(finding) = check_section_shape(parsed, title, consts::ASPECT_DETAIL_COLUMNS, None) {
+    if let Some(finding) = check_section_shape(rule_code, parsed, title, consts::ASPECT_DETAIL_COLUMNS, None) {
         findings.push(finding);
         return findings;
     }
@@ -47,7 +48,7 @@ pub fn check_h2_fixed_rows(
             DocFinding::new_with_line(
                 "",
                 section.line,
-                consts::RULE_CODE_TEMPLATE_CONFORMANCE,
+                rule_code,
                 consts::TEMPLATE_CONFORMANCE_VIOLATION_ENTRY_MISSING_ROW,
                 format!(
                     "line {} `## {}` table row labels do not match the template; missing {}, extra {}",
@@ -82,6 +83,7 @@ pub fn check_h2_fixed_rows(
 /// shape conforms. When *h3* is `Some`, the check anchors to that H3; the
 /// existing H2-level calls pass `None` and keep their H2 anchor.
 pub fn check_section_shape(
+    rule_code: &'static str,
     parsed: &[Section],
     title: &str,
     columns: &[&str],
@@ -104,7 +106,7 @@ pub fn check_section_shape(
                 DocFinding::new_with_line(
                     "",
                     section.line,
-                    consts::RULE_CODE_TEMPLATE_CONFORMANCE,
+                    rule_code,
                     consts::TEMPLATE_CONFORMANCE_VIOLATION_TABLE_EXTRA_COLUMNS,
                     format!(
                         "line {} `{marker} {}` table carries column(s) outside the template: {}",
@@ -135,7 +137,7 @@ pub fn check_section_shape(
                 DocFinding::new_with_line(
                     "",
                     section.line,
-                    consts::RULE_CODE_TEMPLATE_CONFORMANCE,
+                    rule_code,
                     consts::TEMPLATE_CONFORMANCE_VIOLATION_TABLE_HEADER_REPEATED,
                     format!(
                         "line {} `{marker} {}` repeats its header row as a data row",
@@ -171,7 +173,7 @@ pub fn check_section_shape(
         DocFinding::new_with_line(
             "",
             section.line,
-            consts::RULE_CODE_TEMPLATE_CONFORMANCE,
+            rule_code,
             violation,
             format!(
                 "line {} `{marker} {}` must be a markdown table with columns {}",

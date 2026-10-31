@@ -32,13 +32,16 @@ impl IReadmeDocProtocol for ReadmeCapability {
             }
             Self::audit_one(document, context, &mut findings);
             context.stamp(document, &mut findings);
+            for f in &mut findings {
+                f.code = consts::RULE_CODE_README_DOC;
+            }
         }
         findings
     }
 }
 
 impl ReadmeCapability {
-    fn audit_one(document: &DocSource, context: &DocAuditContext, findings: &mut Vec<DocFinding>) {
+    fn audit_one(document: &DocSource, _context: &DocAuditContext, findings: &mut Vec<DocFinding>) {
         let text = &document.text;
         let parsed = sections(text);
 
@@ -47,8 +50,9 @@ impl ReadmeCapability {
             check_doc_heading(consts::RULE_CODE_README_DOC, text, consts::README_DOC, required, allowed, findings);
         }
 
-        // AES606 — Quick Start table carries the fixed columns.
+        // AES602 — Quick Start table carries the fixed columns.
         findings.extend(check_h2_table(
+            consts::RULE_CODE_README_DOC,
             &parsed,
             "Quick Start",
             consts::README_QUICK_START_COLUMNS,

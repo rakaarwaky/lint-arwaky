@@ -31,13 +31,16 @@ impl IArchitectureDocProtocol for ArchitectureCapability {
             }
             Self::audit_one(document, context, &mut findings);
             context.stamp(document, &mut findings);
+            for f in &mut findings {
+                f.code = consts::RULE_CODE_ARCHITECTURE_DOC;
+            }
         }
         findings
     }
 }
 
 impl ArchitectureCapability {
-    fn audit_one(document: &DocSource, context: &DocAuditContext, findings: &mut Vec<DocFinding>) {
+    fn audit_one(document: &DocSource, _context: &DocAuditContext, findings: &mut Vec<DocFinding>) {
         let text = &document.text;
         let parsed = sections(text);
 

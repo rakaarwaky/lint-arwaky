@@ -90,6 +90,9 @@ impl IAgentsDocProtocol for AgentsCapability {
             }
             Self::audit_one(document, context, &mut findings);
             context.stamp(document, &mut findings);
+            for f in &mut findings {
+                f.code = consts::RULE_CODE_AGENTS_DOC;
+            }
         }
         findings
     }
@@ -102,6 +105,7 @@ impl AgentsCapability {
 
         // AES601 — AGENTS line drift against the template.
         check_agents_line_drift(
+            consts::RULE_CODE_AGENTS_DOC,
             text,
             &AGENTS_TEMPLATE.lines().collect::<Vec<&str>>(),
             findings,
@@ -116,15 +120,17 @@ impl AgentsCapability {
             check_doc_heading(consts::RULE_CODE_AGENTS_DOC, text, consts::AGENTS_DOC, required, allowed, findings);
         }
 
-        // AES606 — Runtime table carries the fixed row labels.
+        // AES601 — Runtime table carries the fixed row labels.
         findings.extend(check_h2_fixed_rows(
+            consts::RULE_CODE_AGENTS_DOC,
             &parsed,
             "Runtime",
             consts::AGENTS_RUNTIME_ROW_LABELS,
         ));
 
-        // AES606 — Commands table carries the fixed columns.
+        // AES601 — Commands table carries the fixed columns.
         findings.extend(check_h2_table(
+            consts::RULE_CODE_AGENTS_DOC,
             &parsed,
             "Commands",
             consts::AGENTS_COMMAND_COLUMNS,

@@ -68,29 +68,59 @@ fn write_workspace(root: &Path) {
 - PRD: [PRD.md](../../PRD.md)\n\
 - ROADMAP: [ROADMAP.md](../../ROADMAP.md)\n",
     );
-    write(&root.join("PRD.md"), "# PRD\n");
+    write(
+        &root.join("PRD.md"),
+        "# PRD — sample\n\n\
+## Project Overview\n\n\
+The project lints docs.\n\n\
+## Goals\n\n\
+- Zero doc-rule findings.\n\n\
+## Non-Goals\n\n\
+- Enforce runtime behavior.\n\n\
+## Target Users\n\n\
+- AI agents and contributors.\n\n\
+## Scope\n\n\
+Doc structure and heading contracts only.\n\n\
+## Project Requirements\n\n\
+- Fewer defects.\n\n\
+## Reference\n\n\
+| Artifact     | Purpose                                    | Link |\n\
+|--------------|--------------------------------------------|------|\n\
+| ROADMAP      | What ships next, in order                  | [ROADMAP.md](../../ROADMAP.md) |\n\
+| Architecture | {System boundaries, tech stack, and infra} | [ARCHITECTURE.md](../../ARCHITECTURE.md) |\n",
+    );
     write(&root.join("ROADMAP.md"), "# ROADMAP\n");
 }
 
 /// A requirement block carrying every field the FRD template mandates, as
-/// the `Aspect | Detail` table AES606 checks entry-by-entry.
+/// the per-aspect H4 subsections under `Functional Requirements` check.
 fn requirement(id: &str, title: &str) -> String {
     format!(
-        "### id: : {title}\n\n\
-         | Aspect         | Detail                                       |\n\
-         |----------------|----------------------------------------------|\n\
-         | Description    | The feature performs a responsibility.       |\n\
-         | Business Rules | The capability is stateless.                 |\n\
-         | Edge Cases     | An absent input yields a default.           |\n\
-         | Capability     | sample::SampleChecker                       |\n\
-         | Protocol       | sample::SampleOrchestrator                  |\n\
-         | Method         | execute                                      |\n\
-         | Input          | A request value object.                     |\n\
-         | Output         | A response value object.                    |\n\
-         | Error          | Failures surface as a reason-coded system.  |\n\
-         | Event          | Finding emitted                             |\n\
-         | Test           | e2e_doc_rules_flow exercises the pair        |\n\
-         | Metric         | Every invariant answers on the FRD          |\n\n"
+        "### {id}: {title}\n\n\
+         #### Input\n\n\
+         | No | Detail |\n\
+         |---|---|\n\
+         | 1 | A request value object. |\n\n\
+         #### Output\n\n\
+         | No | Detail |\n\
+         |---|---|\n\
+         | 1 | A response value object. |\n\n\
+         #### Protocol\n\n\
+         | No | Detail |\n\
+         |---|---|\n\
+         | 1 | sample::SampleOrchestrator |\n\n\
+         #### Method\n\n\
+         | No | Detail |\n\
+         |---|---|\n\
+         | 1 | execute |\n\n\
+         #### Event\n\n\
+         | No | Detail |\n\
+         |---|---|\n\
+         | 1 | Finding emitted |\n\n\
+         #### Error\n\n\
+         | No | Detail |\n\
+         |---|---|\n\
+         | 1 | Failures surface as a reason-coded system. |\n\n"
     )
 }
 
@@ -188,10 +218,10 @@ fn e2e_a_complete_frd_survives_the_whole_pipeline() {
 
 #[test]
 fn e2e_a_missing_mandated_section_surfaces_as_a_heading_finding_on_that_document() {
-    // AES605 owns the presence of a mandated H2, so dropping one is reported
-    // there rather than by the shape rules — a shape rule judges a section that
-    // is present. Each case drops a different one to prove the rule names the
-    // section the template lost.
+    // The FRD capability (AES609) owns the presence of a mandated H2, so
+    // dropping one is reported there rather than by the shape rules — a
+    // shape rule judges a section that is present. Each case drops a different
+    // one to prove the rule names the section the template lost.
     for section in [
         "Feature Overview",
         "Functional Requirements",
@@ -207,7 +237,7 @@ fn e2e_a_missing_mandated_section_surfaces_as_a_heading_finding_on_that_document
         assert!(
             for_document(&findings, FRD_PATH)
                 .iter()
-                .any(|(code, violation, _)| code == "AES605" && violation == "h2_missing"),
+                .any(|(code, violation, _)| code == "AES609" && violation == "h2_missing"),
             "dropping '## {section}' must surface as AES605/h2_missing on the FRD; \
              got {:?}",
             for_document(&findings, FRD_PATH)
@@ -227,9 +257,9 @@ fn e2e_a_requirement_id_without_its_feature_prefix_is_rejected_by_the_fr_format_
     let findings = audit(root);
     assert!(
         for_document(&findings, FRD_PATH).iter().any(
-            |(code, violation, _)| code == "AES601" && violation == "id_missing_feature_prefix"
+            |(code, violation, _)| code == "AES609" && violation == "id_missing_feature_prefix"
         ),
-        "an FR-NNN heading without its feature prefix must fire AES601 on the FRD; \
+        "an FR-NNN heading without its feature prefix must fire AES609 on the FRD; \
          got {:?}",
         for_document(&findings, FRD_PATH)
     );
@@ -396,7 +426,7 @@ fn e2e_a_data_backlog_pair_rejects_do_headings() {
         for_document(&findings, KERNEL_BACKLOG_PATH)
             .iter()
             .any(|(code, violation, _)| {
-                code == "AES601" && violation == "dt_backlog_id_not_dt"
+                code == "AES607" && violation == "dt_backlog_id_not_dt"
             }),
         "a DO-derived row citing an id DATA does not declare must fire dt_backlog_id_not_dt; got {:?}",
         for_document(&findings, KERNEL_BACKLOG_PATH)

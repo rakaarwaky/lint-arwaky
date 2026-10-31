@@ -74,25 +74,97 @@ The feature reads its settings from main.rs at startup.
 
 ### FR-SAMPLE-001: Document Invariant Enforcement
 
-| Aspect | Detail |
+| Aspect       | Detail                                      |
+|--------------|---------------------------------------------|
+| Input        | A workspace root and recognized document paths. |
+| Output       | One finding per invariant violation.        |
+| Protocol     | doc_rules::DocStructure                     |
+| Method       | check_doc_heading                           |
+| Event        | Finding emitted                             |
+| Error        | Unreadable files produce no findings.       |
+
+#### Input
+
+| No | Detail |
 |---|---|
-| Input | A workspace root and recognized document paths. |
-| Output | One finding per invariant violation. |
-| Protocol | doc_rules::DocStructure |
-| Method | check_doc_heading |
-| Event | Finding emitted |
-| Error | Unreadable files produce no findings. |
+| 1 | A workspace root and recognized document paths. |
+
+#### Output
+
+| No | Detail |
+|---|---|
+| 1 | One finding per invariant violation. |
+
+#### Protocol
+
+| No | Detail |
+|---|---|
+| 1 | doc_rules::DocStructure |
+
+#### Method
+
+| No | Detail |
+|---|---|
+| 1 | check_doc_heading |
+
+#### Event
+
+| No | Detail |
+|---|---|
+| 1 | Finding emitted |
+
+#### Error
+
+| No | Detail |
+|---|---|
+| 1 | Unreadable files produce no findings. |
 
 ### FR-SAMPLE-002: Audit Orchestration
 
-| Aspect | Detail |
+| Aspect       | Detail                                      |
+|--------------|---------------------------------------------|
+| Input        | A workspace root and recognized document paths. |
+| Output       | A response carrying a deduplicated finding list. |
+| Protocol     | doc_rules::DocStructure                     |
+| Method       | execute                                     |
+| Event        | Finding emitted                             |
+| Error        | Failures inside the checker are propagated as DocResponse::Findings with no partial results. |
+
+#### Input
+
+| No | Detail |
 |---|---|
-| Input | A workspace root and the list of recognized document paths. |
-| Output | A response carrying a deduplicated finding list. |
-| Protocol | doc_rules::DocStructure |
-| Method | execute |
-| Event | Finding emitted |
-| Error | Failures inside the checker are propagated as DocResponse::Findings with no partial results. |
+| 1 | A workspace root and recognized document paths. |
+
+#### Output
+
+| No | Detail |
+|---|---|
+| 1 | A response carrying a deduplicated finding list. |
+
+#### Protocol
+
+| No | Detail |
+|---|---|
+| 1 | doc_rules::DocStructure |
+
+#### Method
+
+| No | Detail |
+|---|---|
+| 1 | execute |
+
+#### Event
+
+| No | Detail |
+|---|---|
+| 1 | Finding emitted |
+
+#### Error
+
+| No | Detail |
+|---|---|
+| 1 | Failures inside the checker are propagated as DocResponse::Findings with no partial results. |
 
 ## Public Interface
 
@@ -126,21 +198,24 @@ fn purity_clean_frd() -> String {
         )
 }
 
-/// A PRD that violates exactly one rule: it drops its BACKLOG link is not
-/// possible on a PRD, so instead it drops a required H2, exercising AES605
+/// A PRD that violates exactly one rule: it drops a required H2, exercising AES605
 /// alone.
 fn prd_missing_required_h2() -> String {
     r"# PRD — sample
 
-## Problem Statement
+## Project Overview
 
-The problem.
+The project.
 
-## Goals & Success Metrics
+## Goals
 
 - Fewer defects.
 
-## User Personas
+## Non-Goals
+
+- None.
+
+## Target Users
 
 - A maintainer.
 
@@ -148,15 +223,12 @@ The problem.
 
 In scope: the checker.
 
-## Feature Requirements
+## Reference
 
-- P0 — the checker reports every violation.
-
-## Non-functional Requirements
-
-| Metric | Target |
-| --- | --- |
-| Dispatch | One call |
+| Artifact     | Purpose                          | Link |
+|--------------|----------------------------------|------|
+| ROADMAP      | What ships next, in order        | [ROADMAP.md](../../ROADMAP.md) |
+| Architecture | System boundaries and infra      | [ARCHITECTURE.md](../../ARCHITECTURE.md) |
 "
     .to_string()
 }
@@ -171,7 +243,7 @@ fn write_feature(root: &Path) {
 ## Progress Overview\n\n\
 Baseline.\n\n\
 ## Backlog Status\n\n\
-### FR-SAMPLE-001: \n\
+### FR-SAMPLE-001: Overview\n\
 | Aspect       | Detail                                      |\n\
 |--------------|---------------------------------------------|\n\
 | State        | Ready                                       |\n\
@@ -179,7 +251,7 @@ Baseline.\n\n\
 | In Progress  | None                                        |\n\
 | Risk         | None                                        |\n\
 | Updated      | 2026-09-29                                  |\n\n\
-### FR-SAMPLE-002: \n\
+### FR-SAMPLE-002: Overview\n\
 | Aspect       | Detail                                      |\n\
 |--------------|---------------------------------------------|\n\
 | State        | Ready                                       |\n\
@@ -211,7 +283,7 @@ fn frd_capability_is_the_only_one_answering_a_source_file_reference() {
     let context = context_for(tmp.path());
     let findings = FrdCapability::new().audit_frd(&context);
     assert!(
-        findings.iter().any(|f| f.code == consts::RULE_CODE_SPEC_PURITY),
+        findings.iter().any(|f| f.code == consts::RULE_CODE_FRD_DOC && f.violation_type == consts::SPEC_PURITY_VIOLATION_SOURCE_FILE_NAMED),
         "the FRD capability answers a source-file reference; got: {findings:#?}"
     );
     // The FRD capability stays silent on FR-format codes for its own doc.
@@ -250,13 +322,29 @@ fn running_all_seams_over_a_clean_workspace_reports_nothing() {
         tmp.path().join("PRD.md"),
         r"# PRD — sample
 
-## Problem Statement
+## Project Overview
 
-The problem.
+The project.
+
+## Goals
+
+- Fewer defects.
+
+## Non-Goals
+
+- None.
+
+## Target Users
+
+- A maintainer.
+
+## Scope
+
+In scope: the checker.
 
 ## Project Requirements
 
-- Fewer defects.
+- P0 — the checker reports every violation.
 
 ## Reference
 
@@ -339,16 +427,12 @@ fn a_document_violating_two_rules_reports_both_codes() {
 
     let codes = codes_from_all(tmp.path());
     assert!(
-        codes.contains(&consts::RULE_CODE_SPEC_PURITY),
+        codes.contains(&consts::RULE_CODE_FRD_DOC),
         "the FRD capability must report source-file reference; got: {codes:?}"
     );
     assert!(
-        codes.contains(&consts::RULE_CODE_CROSSLINKS),
+        codes.contains(&consts::RULE_CODE_PRD_DOC),
         "the PRD capability must report missing crosslink; got: {codes:?}"
-    );
-    assert!(
-        codes.contains(&consts::RULE_CODE_DOC_STRUCTURE),
-        "the PRD capability must report missing H2; got: {codes:?}"
     );
 }
 
@@ -551,7 +635,7 @@ fn backlog_capability_surface_missing_design_fires_no_design_link() {
     let findings = BacklogCapability::new().audit_backlog(&context_for(tmp.path()));
     let missing: Vec<&DocFinding> = findings
         .iter()
-        .filter(|f| f.code == consts::RULE_CODE_CROSSLINKS && f.violation_type == "no_design_link")
+        .filter(|f| f.code == consts::RULE_CODE_BACKLOG_DOC && f.violation_type == "no_design_link")
         .collect();
     assert!(
         missing.len() == 1 && missing[0].doc == "crates/sample/BACKLOG.md",
@@ -598,7 +682,7 @@ fn backlog_capability_kernel_missing_data_fires_no_data_link() {
     // document owes the missing link.
     let missing: Vec<&DocFinding> = findings
         .iter()
-        .filter(|f| f.code == consts::RULE_CODE_CROSSLINKS && f.violation_type == "no_data_link")
+        .filter(|f| f.code == consts::RULE_CODE_BACKLOG_DOC && f.violation_type == "no_data_link")
         .collect();
     assert!(
         !missing.is_empty() && missing.iter().all(|f| f.doc == "crates/shared/BACKLOG.md"),
@@ -621,7 +705,7 @@ fn backlog_capability_feature_missing_frd_still_fires_no_frd_link() {
     let findings = BacklogCapability::new().audit_backlog(&context_for(tmp.path()));
     let missing: Vec<&DocFinding> = findings
         .iter()
-        .filter(|f| f.code == consts::RULE_CODE_CROSSLINKS && f.violation_type == "no_frd_link")
+        .filter(|f| f.code == consts::RULE_CODE_BACKLOG_DOC && f.violation_type == "no_frd_link")
         .collect();
     assert!(
         missing.len() == 1 && missing[0].doc == "crates/sample/BACKLOG.md",

@@ -39,6 +39,9 @@ impl IPrdDocProtocol for PrdCapability {
             }
             Self::audit_one(document, context, &mut findings);
             context.stamp(document, &mut findings);
+            for f in &mut findings {
+                f.code = consts::RULE_CODE_PRD_DOC;
+            }
         }
         findings
     }

@@ -37,6 +37,9 @@ impl IRoadmapDocProtocol for RoadmapCapability {
             }
             Self::audit_one(document, context, &mut findings);
             context.stamp(document, &mut findings);
+            for f in &mut findings {
+                f.code = consts::RULE_CODE_ROADMAP_DOC;
+            }
         }
         findings
     }

@@ -14,7 +14,7 @@ use shared_doc_rules::utility_doc_aspect_entry_checks::check_aspect_entry_tables
 use shared_doc_rules::utility_doc_common_checks::{
     backlog_required_links, check_doc_heading, collect_union_id_set, missing_link_violation_type,
 };
-use shared_doc_rules::utility_doc_entry_regexes::{backlog_entry_re, fr_entry_re};
+use shared_doc_rules::utility_doc_entry_regexes::backlog_entry_re;
 use shared_doc_rules::utility_doc_fr_format_checks::collect_any_id_set;
 use shared_doc_rules::utility_markdown_scanner::{
     doc_h2_contract, sections,
@@ -37,6 +37,9 @@ impl IBacklogDocProtocol for BacklogCapability {
             }
             Self::audit_one(document, context, &mut findings);
             context.stamp(document, &mut findings);
+            for f in &mut findings {
+                f.code = consts::RULE_CODE_BACKLOG_DOC;
+            }
         }
         findings
     }
@@ -146,23 +149,5 @@ impl BacklogCapability {
         }
     }
 
-    /// FR entry tables under Backlog Status (legacy format support).
-    fn check_legacy_fr_entry_tables(
-        document: &DocSource,
-        findings: &mut Vec<DocFinding>,
-    ) {
-        if let Some(re) = fr_entry_re() {
-            let parsed = sections(&document.text);
-            findings.extend(
-                shared_doc_rules::utility_doc_common_checks::check_entry_tables(
-                    consts::RULE_CODE_BACKLOG_DOC,
-                    &parsed,
-                    "Backlog Status",
-                    re,
-                    consts::ASPECT_DETAIL_COLUMNS,
-                    consts::FRD_ROW_LABELS,
-                ),
-            );
-        }
-    }
+
 }

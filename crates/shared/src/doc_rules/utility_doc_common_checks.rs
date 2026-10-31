@@ -4,7 +4,7 @@
 // Lives in `crates/shared/src/doc_rules` so no per-doc capability re-implements
 // a table/shape/crosslink/mechanic a sibling also uses.
 
-use crate::taxonomy_doc_audit_context_vo::{DocAuditContext, MemberDescriptor, MemberRole};
+use crate::taxonomy_doc_audit_context_vo::{DocAuditContext, MemberRole};
 use crate::taxonomy_doc_rules_constant as consts;
 use crate::taxonomy_doc_rules_request::{DocFinding, DocSource};
 use crate::taxonomy_doc_section_vo::Section;
@@ -13,7 +13,7 @@ use crate::utility_capabilities_doc_h2_checks::{
 };
 use crate::utility_doc_entry_regexes::fr_entry_re;
 use crate::utility_markdown_scanner::{
-    h3_subsections, normalize_heading, sections,
+    h3_subsections, h4_subsections, normalize_heading, sections,
 };
 use std::collections::{BTreeSet, HashSet};
 use std::path::Path;
@@ -51,6 +51,12 @@ pub fn check_entry_tables(
     };
     for h3 in h3_subsections(parent) {
         if !entry_re.is_match(&h3.title) {
+            continue;
+        }
+        // H4-aspect entries carry per-aspect `####` subsections; the H4
+        // contract is enforced by `check_aspect_entry_tables`, so
+        // `check_entry_tables` skips them to avoid double-processing.
+        if !h4_subsections(&h3).is_empty() {
             continue;
         }
         // Header/shape check anchored to the H3.
@@ -639,6 +645,7 @@ pub fn check_doc_heading(
 
 /// AGENTS line-drift check against `AGENTS_TEMPLATE`.
 pub fn check_agents_line_drift(
+    rule_code: &'static str,
     text: &str,
     template: &[&str],
     findings: &mut Vec<DocFinding>,
@@ -651,7 +658,7 @@ pub fn check_agents_line_drift(
             DocFinding::new_with_line(
                 doc_name,
                 1,
-                consts::RULE_CODE_DOC_STRUCTURE,
+                rule_code,
                 consts::DOC_STRUCTURE_VIOLATION_FRONTMATTER_MISSING,
                 "AGENTS.md must have YAML frontmatter (---) at the start".to_string(),
             )
@@ -677,7 +684,7 @@ pub fn check_agents_line_drift(
                 DocFinding::new_with_line(
                     doc_name,
                     0,
-                    consts::RULE_CODE_DOC_STRUCTURE,
+                    rule_code,
                     consts::DOC_STRUCTURE_VIOLATION_LINE_DRIFT,
                     format!(
                         "AGENTS.md has the section `## {name}`, which the template does not declare"
@@ -696,7 +703,7 @@ pub fn check_agents_line_drift(
                 DocFinding::new_with_line(
                     doc_name,
                     0,
-                    consts::RULE_CODE_DOC_STRUCTURE,
+                    rule_code,
                     consts::DOC_STRUCTURE_VIOLATION_LINE_DRIFT,
                     format!("AGENTS.md is missing the template section `## {name}`, or renamed it"),
                 )
@@ -729,7 +736,7 @@ pub fn check_agents_line_drift(
                         DocFinding::new_with_line(
                             doc_name,
                             0,
-                            consts::RULE_CODE_DOC_STRUCTURE,
+                            rule_code,
                             consts::DOC_STRUCTURE_VIOLATION_LINE_DRIFT,
                             format!(
                                 "AGENTS.md section `{name}` does not match the template: expected the line '{want}' (or a {{...}} placeholder), but found '{offending}'"
@@ -750,7 +757,7 @@ pub fn check_agents_line_drift(
             DocFinding::new_with_line(
                 doc_name,
                 0,
-                consts::RULE_CODE_DOC_STRUCTURE,
+                rule_code,
                 consts::DOC_STRUCTURE_VIOLATION_LINE_DRIFT,
                 "AGENTS.md must open with a level-1 heading naming the project".to_string(),
             )
@@ -767,7 +774,7 @@ pub fn check_agents_line_drift(
                 DocFinding::new_with_line(
                     doc_name,
                     0,
-                    consts::RULE_CODE_DOC_STRUCTURE,
+                    rule_code,
                     consts::DOC_STRUCTURE_VIOLATION_LINE_DRIFT,
                     "AGENTS.md H1 has no title".to_string(),
                 )

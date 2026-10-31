@@ -12,19 +12,24 @@ use crate::utility_markdown_scanner::{
     api_contract_methods, fr_id_bare_re, h3_subsections, normalize_heading, sections,
 };
 use crate::utility_protocol_counter::{
-    collect_ds_id_set, collect_dt_id_set, collect_pr_id_set, collect_pr_id_set as protocol_collect_pr_id_set,
+    collect_ds_id_set, collect_dt_id_set, collect_pr_id_set,
     contract_method_names, count_fr_headings, count_protocol_traits, fr_id_heading_re,
     locate_kernel_srcs, pr_id_heading_re,
 };
 
 use std::collections::{BTreeMap, BTreeSet, HashSet};
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 // ─── FR-ID format ─────────────────────────────────────────────────────────
 
 /// FR-ID must be `FR-<FEATURENAME>-NNN: <name>`. A bare `FR-NNN` (no feature
 /// prefix) is a violation; the heading itself is reported at its own line.
-pub fn check_fr_id_format(document: &DocSource, findings: &mut Vec<DocFinding>) {
+/// *rule_code* is the per-document code (FRD → AES609, DATA → AES608).
+pub fn check_fr_id_format(
+    rule_code: &'static str,
+    document: &DocSource,
+    findings: &mut Vec<DocFinding>,
+) {
     let Some(re) = fr_id_bare_re() else {
         return;
     };
@@ -39,7 +44,7 @@ pub fn check_fr_id_format(document: &DocSource, findings: &mut Vec<DocFinding>) 
             DocFinding::new_with_line(
                 "",
                 line,
-                consts::RULE_CODE_FR_FORMAT,
+                rule_code,
                 consts::FR_ID_VIOLATION_MISSING_FEATURE_PREFIX,
                 format!("line {line} heading 'FR-{num}: {title}' is missing its feature prefix"),
             )
@@ -133,6 +138,7 @@ pub fn section_line(text: &str, title: &str) -> Option<usize> {
 /// entry, and vice versa. The two directions fire separate violation types
 /// so a reader can tell which document drifted.
 pub fn check_pr_id_parity(
+    rule_code: &'static str,
     prd: &DocSource,
     roadmap: &DocSource,
     findings: &mut Vec<DocFinding>,
@@ -149,7 +155,7 @@ pub fn check_pr_id_parity(
                 DocFinding::new_with_line(
                     "",
                     roadmap_heading_line,
-                    consts::RULE_CODE_FR_FORMAT,
+                    rule_code,
                     consts::PR_ROADMAP_ID_MISSING,
                     format!("PR-ID `{id}` declared in the PRD has no ROADMAP `Roadmap Status` entry"),
                 )
@@ -169,7 +175,7 @@ pub fn check_pr_id_parity(
                 DocFinding::new_with_line(
                     "",
                     line,
-                    consts::RULE_CODE_FR_FORMAT,
+                    rule_code,
                     consts::ROADMAP_PR_ID_NOT_PR,
                     format!("line {line} ROADMAP item `{id}` is not declared in the PRD"),
                 )
@@ -192,6 +198,7 @@ pub fn check_pr_id_parity(
 /// whose method no protocol/aggregate trait declares is a promise the code
 /// does not keep.
 pub fn check_api_method_existence(
+    rule_code: &'static str,
     document: &DocSource,
     context: &DocAuditContext,
     findings: &mut Vec<DocFinding>,
@@ -223,7 +230,7 @@ pub fn check_api_method_existence(
             DocFinding::new_with_line(
                 "",
                 line,
-                consts::RULE_CODE_FR_FORMAT,
+                rule_code,
                 consts::FR_API_METHOD_VIOLATION_NOT_FOUND,
                 format!(
                     "line {line} method `{method}` in the '{subsection}' table is not declared \
@@ -250,6 +257,7 @@ pub fn check_api_method_existence(
 /// capability seam and one seam is one requirement, so the two counts must
 /// be equal. Aggregate traits are not capability seams and are excluded.
 pub fn check_fr_protocol_parity(
+    rule_code: &'static str,
     document: &DocSource,
     context: &DocAuditContext,
     findings: &mut Vec<DocFinding>,
@@ -300,7 +308,7 @@ pub fn check_fr_protocol_parity(
         DocFinding::new_with_line(
             "",
             line,
-            consts::RULE_CODE_FR_FORMAT,
+            rule_code,
             consts::FR_PROTOCOL_PARITY_VIOLATION_COUNT_MISMATCH,
             format!(
                 "line {line} FRD declares {fr_count} requirements but the feature's contract \
@@ -408,7 +416,7 @@ pub fn check_backlog_qualifier_alignment(
                     DocFinding::new_with_line(
                         "",
                         *line,
-                        consts::RULE_CODE_FR_FORMAT,
+                        rule_code,
                         consts::BACKLOG_QUALIFIER_MISMATCH,
                         format!(
                             "line {line} BACKLOG entry `{{{token}}}` has no matching ID in the paired spec"
@@ -429,7 +437,7 @@ pub fn check_backlog_qualifier_alignment(
                     DocFinding::new_with_line(
                         "",
                         section_line,
-                        consts::RULE_CODE_FR_FORMAT,
+                        rule_code,
                         missing_code,
                         format!(
                             "spec-declared ID `{id}` has no BACKLOG `## Backlog Status` entry"
@@ -455,7 +463,7 @@ pub fn check_backlog_qualifier_alignment(
                 DocFinding::new_with_line(
                     "",
                     *line,
-                    consts::RULE_CODE_FR_FORMAT,
+                    rule_code,
                     not_code,
                     format!(
                         "line {line} BACKLOG entry `{{{token}}}` cites `{id}`, which the paired spec does not declare"
@@ -476,7 +484,7 @@ pub fn check_backlog_qualifier_alignment(
 /// ID-alignment sub-checks can pair them.
 pub fn group_documents_by_folder<'a>(
     documents: &'a [DocSource],
-    context: &DocAuditContext,
+    _context: &DocAuditContext,
 ) -> BTreeMap<PathBuf, Vec<&'a DocSource>> {
     let mut by_folder: BTreeMap<PathBuf, Vec<&DocSource>> = BTreeMap::new();
     for document in documents {
