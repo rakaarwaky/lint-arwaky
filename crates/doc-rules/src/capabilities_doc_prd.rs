@@ -15,8 +15,8 @@ use shared_doc_rules::utility_doc_aspect_entry_checks::{
     detect_aspect_entry_tables, AspectEntryDefect,
 };
 use shared_doc_rules::utility_doc_common_checks::{
-    detect_backlog_qualifier_alignment, detect_doc_heading, missing_link_violation_type,
-    required_links,
+    detect_backlog_qualifier_alignment, detect_doc_heading, HeadingDefect,
+    missing_link_violation_type, required_links,
 };
 use shared_doc_rules::utility_doc_entry_regexes::pr_entry_re;
 use shared_doc_rules::utility_doc_fr_format_checks::{
@@ -81,19 +81,19 @@ impl PrdCapability {
                     ),
                 };
                 findings.push(
-                    DocFinding::new_with_line("", defect.line(), consts::RULE_CODE_FR_FORMAT, violation, message)
+                    DocFinding::new_with_line("", defect.line(), consts::RULE_CODE_PRD_DOC, violation, message)
                         .with_reason(reason, fix),
                 );
             }
         }
 
-        // AES601 — promised API method existence.
+        // Promised API method existence.
         for defect in detect_api_method_existence(document, context) {
             findings.push(
                 DocFinding::new_with_line(
                     "",
                     defect.line,
-                    consts::RULE_CODE_FR_FORMAT,
+                    consts::RULE_CODE_PRD_DOC,
                     consts::FR_API_METHOD_VIOLATION_NOT_FOUND,
                     format!(
                         "`{}` section: promised API method `{}` is not declared by any protocol/aggregate trait",
@@ -107,10 +107,10 @@ impl PrdCapability {
             );
         }
 
-        // AES604 — crosslinks (ROADMAP, ARCHITECTURE).
+        // Crosslinks (ROADMAP, ARCHITECTURE).
         Self::check_crosslinks(document, context, consts::RULE_CODE_CROSSLINKS, findings);
 
-        // AES605 — heading structure.
+        // Heading structure.
         if let Some((required, allowed)) = doc_h2_contract(consts::PRD_DOC) {
             for defect in detect_doc_heading(text, consts::PRD_DOC, required, allowed) {
                 let (violation, message, reason, fix) = match &defect {
@@ -140,7 +140,7 @@ impl PrdCapability {
             }
         }
 
-        // AES606 — entry tables under Project Requirements.
+        // Entry tables under Project Requirements.
         if let Some(re) = pr_entry_re() {
             for defect in detect_aspect_entry_tables(
                 &parsed,

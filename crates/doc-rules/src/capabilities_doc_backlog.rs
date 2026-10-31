@@ -297,13 +297,6 @@ impl BacklogCapability {
         let missing_code = if context.is_root_document(document) {
             consts::PR_BACKLOG_ID_MISSING
         } else {
-            consts::BACKLOG_QUALIFIER_MISMATCH
-        };
-        let not_code = if context.is_root_document(document) {
-            consts::BACKLOG_ID_NOT_PR
-        } else {
-            consts::DT_BACKLOG_ID_NOT_DT
-        };
         let defects = shared_doc_rules::utility_doc_common_checks::detect_backlog_qualifier_alignment(
             document,
             union.as_ref(),

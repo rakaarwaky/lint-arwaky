@@ -15,8 +15,8 @@ use shared_doc_rules::utility_doc_aspect_entry_checks::{
     detect_aspect_entry_tables, AspectEntryDefect,
 };
 use shared_doc_rules::utility_doc_common_checks::{
-    detect_backlog_qualifier_alignment, detect_doc_heading, missing_link_violation_type,
-    required_links,
+    detect_backlog_qualifier_alignment, detect_doc_heading, HeadingDefect,
+    missing_link_violation_type, required_links,
 };
 use shared_doc_rules::utility_doc_entry_regexes::pr_entry_re;
 use shared_doc_rules::utility_doc_fr_format_checks::{
@@ -64,13 +64,13 @@ impl RoadmapCapability {
             for defect in detect_pr_id_parity(prd, document) {
                 let (violation, message, reason, fix) = match &defect {
                     PrIdParityDefect::PrMissingFromRoadmap { line, id } => (
-                        consts::PR_ROADMAP_ID_MISSING,
+                        DOC_VIOLATION_NAMES.pr_roadmap_id_missing(),
                         format!("line {} PR `{}` declared in PRD has no ROADMAP `Roadmap Status` entry", line, id),
                         format!("Add `{}` to ROADMAP's `Roadmap Status` table.", id),
                         format!("Add `{}` under `Roadmap Status` in ROADMAP.md.", id),
                     ),
                     PrIdParityDefect::RoadmapNotInPrd { line, id, valid } => (
-                        consts::ROADMAP_PR_ID_NOT_PR,
+                        DOC_VIOLATION_NAMES.roadmap_pr_id_not_pr(),
                         format!("line {} ROADMAP `PR-` item `{}` is not declared in the PRD", line, id),
                         format!("The PRD declares `Project Requirements`; `{}` must appear there first.", id),
                         format!("Declare `{}` in PRD's `Project Requirements`. Valid ids: {}", id, valid.join(", ")),
@@ -91,19 +91,19 @@ impl RoadmapCapability {
             for defect in detect_doc_heading(text, consts::ROADMAP_DOC, required, allowed) {
                 let (violation, message, reason, fix) = match &defect {
                     HeadingDefect::H1Count { line, count } => (
-                        consts::DOC_STRUCTURE_VIOLATION_H1_COUNT,
+                        DOC_VIOLATION_NAMES.h1_count_violation(),
                         format!("{} H1 headings; template requires exactly one", count),
                         format!("{} has {} H1 headings; the template fixes exactly one H1 at the top.", consts::ROADMAP_DOC, count),
                         format!("Remove the extra H1 heading(s) so {} keeps exactly one H1.", consts::ROADMAP_DOC),
                     ),
                     HeadingDefect::H2Missing { line, missing } => (
-                        consts::DOC_STRUCTURE_VIOLATION_H2_MISSING,
+                        DOC_VIOLATION_NAMES.h2_missing(),
                         format!("missing required H2 section(s): {}", missing.join(", ")),
                         format!("{} is missing required H2 section(s): {}", consts::ROADMAP_DOC, missing.join(", ")),
                         format!("Add the missing H2 section(s): {}", missing.join(", ")),
                     ),
                     HeadingDefect::H2Unexpected { line, unexpected } => (
-                        consts::DOC_STRUCTURE_VIOLATION_H2_UNEXPECTED,
+                        DOC_VIOLATION_NAMES.h2_unexpected(),
                         format!("unexpected H2 section(s): {}", unexpected.join(", ")),
                         format!("{} carries H2 section(s) outside the template: {}", consts::ROADMAP_DOC, unexpected.join(", ")),
                         format!("Remove the off-template H2 section(s): {}", unexpected.join(", ")),
@@ -139,7 +139,7 @@ impl RoadmapCapability {
     fn convert_aspect_entry_defect_common(defect: AspectEntryDefect, rule_code: &'static str) -> DocFinding {
         let (violation, message, reason, fix) = match &defect {
             AspectEntryDefect::MissingAspect { line, h3_title, aspect } => (
-                consts::TEMPLATE_CONFORMANCE_VIOLATION_MISSING_H4_ASPECT,
+                DOC_VIOLATION_NAMES.missing_h4_aspect(),
                 format!(
                     "line {} `### {}` missing aspect H4 `#### {}`",
                     line, h3_title, aspect
@@ -154,7 +154,7 @@ impl RoadmapCapability {
                 ),
             ),
             AspectEntryDefect::OrderMismatch { line, h3_title, aspects } => (
-                consts::TEMPLATE_CONFORMANCE_VIOLATION_H4_ORDER,
+                DOC_VIOLATION_NAMES.h4_order_violation(),
                 format!(
                     "line {} `### {}` aspect H4s out of canonical order: expected {}",
                     line, h3_title, aspects.join(", ")
@@ -169,7 +169,7 @@ impl RoadmapCapability {
                 ),
             ),
             AspectEntryDefect::EmptyBody { line, aspect, h3_title } => (
-                consts::TEMPLATE_CONFORMANCE_VIOLATION_MISSING_H4_ASPECT,
+                DOC_VIOLATION_NAMES.missing_h4_aspect(),
                 format!(
                     "line {} `#### {}` under `### {}` carries an empty body",
                     line, aspect, h3_title
@@ -184,7 +184,7 @@ impl RoadmapCapability {
                 ),
             ),
             AspectEntryDefect::NotATable { line, aspect, h3_title } => (
-                consts::TEMPLATE_CONFORMANCE_VIOLATION_SECTION_NOT_TABLE,
+                DOC_VIOLATION_NAMES.section_not_table(),
                 format!(
                     "line {} `#### {}` under `### {}` must be a markdown table",
                     line, aspect, h3_title
@@ -199,7 +199,7 @@ impl RoadmapCapability {
                 ),
             ),
             AspectEntryDefect::HeaderMissing { line, aspect } => (
-                consts::TEMPLATE_CONFORMANCE_VIOLATION_TABLE_MISSING_COLUMNS,
+                DOC_VIOLATION_NAMES.table_missing_columns(),
                 format!(
                     "line {} `#### {}` aspect table header missing required columns",
                     line, aspect
@@ -214,7 +214,7 @@ impl RoadmapCapability {
                 ),
             ),
             AspectEntryDefect::HeaderExtra { line, aspect, extras } => (
-                consts::TEMPLATE_CONFORMANCE_VIOLATION_TABLE_EXTRA_COLUMNS,
+                DOC_VIOLATION_NAMES.table_extra_columns(),
                 format!(
                     "line {} `#### {}` aspect table carries extra column(s): {}",
                     line, aspect, extras.join(", ")
@@ -230,7 +230,7 @@ impl RoadmapCapability {
                 ),
             ),
             AspectEntryDefect::RowNumbering { line, aspect, h3_title } => (
-                consts::TEMPLATE_CONFORMANCE_VIOLATION_ROW_NUMBERING,
+                DOC_VIOLATION_NAMES.row_numbering_violation(),
                 format!(
                     "line {} `#### {}` under `### {}` row numbers are not contiguous 1..N",
                     line, aspect, h3_title
@@ -245,7 +245,7 @@ impl RoadmapCapability {
                 ),
             ),
             AspectEntryDefect::RowCount { line, aspect, h3_title, total, seed_min } => (
-                consts::TEMPLATE_CONFORMANCE_VIOLATION_ROW_COUNT,
+                DOC_VIOLATION_NAMES.row_count_violation(),
                 format!(
                     "line {} `#### {}` under `### {}` bounded aspect carries {} rows, expected exactly {}",
                     line, aspect, h3_title, total, seed_min
@@ -260,7 +260,7 @@ impl RoadmapCapability {
                 ),
             ),
             AspectEntryDefect::RowMinimum { line, aspect, h3_title, total, min } => (
-                consts::TEMPLATE_CONFORMANCE_VIOLATION_ROW_MINIMUM,
+                DOC_VIOLATION_NAMES.row_minimum_violation(),
                 format!(
                     "line {} `#### {}` under `### {}` open-ended aspect carries {} rows, need at least {}",
                     line, aspect, h3_title, total, min
@@ -275,7 +275,7 @@ impl RoadmapCapability {
                 ),
             ),
             AspectEntryDefect::EmptyDetailCell { line, aspect, row_no } => (
-                consts::TEMPLATE_CONFORMANCE_VIOLATION_EMPTY_DETAIL_CELL,
+                DOC_VIOLATION_NAMES.empty_detail_cell(),
                 format!(
                     "line {} `#### {}` row `{}` Detail cell is empty or a placeholder dash",
                     line, aspect, row_no
