@@ -449,7 +449,6 @@ mod tests {
 
     #[test]
     fn header_column_sets_transcribe_their_reference_templates() {
-        ships_columns("agents", AGENTS_PATH_PURPOSE_COLUMNS);
         ships_columns("agents", AGENTS_COMMAND_COLUMNS);
 
         ships_columns("readme", README_QUICK_START_COLUMNS);

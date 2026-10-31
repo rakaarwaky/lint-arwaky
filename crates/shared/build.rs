@@ -296,25 +296,35 @@ fn extract_fenced_markdown(raw: &str) -> String {
         .expect("template must open a ```markdown fence");
     let after_open = &raw[open + "```markdown".len()..];
     let mut out = String::new();
-    let mut inner_depth: u32 = 0; // >0 when inside a language-tagged inner fence
+    // Tracks nesting: a language-tagged fence (```text) opens an inner block
+    // (depth += 1); a plain ``` closes one (depth -= 1). The outer
+    // ```markdown template closes when a plain ``` brings depth from 0 to 0,
+    // i.e. the very first plain ``` we meet at depth 0 after any inner blocks
+    // have opened and closed. We stop there.
+    let mut depth: i32 = 0;
     for line in after_open.lines() {
         let trimmed = line.trim();
-        let is_fence = trimmed.starts_with("```");
-        if is_fence && inner_depth == 0 {
-            // The outer closing fence (plain ``` at depth 0) ends the body.
-            break;
-        }
-        if is_fence {
-            if trimmed == "```" {
-                // Closes an inner language-tagged fence we opened earlier.
-                inner_depth = inner_depth.saturating_sub(1);
+        if trimmed.starts_with("```") {
+            let tagged = trimmed.len() > 3;
+            if tagged {
+                depth += 1;
+                out.push_str(line);
+                out.push('\n');
             } else {
-                // A language-tagged ``` opens a new inner fence.
-                inner_depth += 1;
+                // Plain ``` closes the most recent inner block if depth > 0;
+                // at depth 0 it is the outer template boundary, so stop.
+                if depth > 0 {
+                    depth -= 1;
+                    out.push_str(line);
+                    out.push('\n');
+                } else {
+                    break;
+                }
             }
+        } else {
+            out.push_str(line);
+            out.push('\n');
         }
-        out.push_str(line);
-        out.push('\n');
     }
     out.trim_end().to_string()
 }
