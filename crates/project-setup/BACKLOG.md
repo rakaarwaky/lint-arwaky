@@ -14,91 +14,91 @@ Last Updated: 2026-09-29
 
 ## Backlog Status
 
-### FR-ProjectSetup-001: 
+### FR-ProjectSetup-001
 
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | ProjectSetup                                      |
-| In Progress  | None                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | ProjectSetup |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
-### FR-ProjectSetup-002: 
+### FR-ProjectSetup-002
 
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | ProjectSetup                                      |
-| In Progress  | None                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | ProjectSetup |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
-### FR-ProjectSetup-003: 
+### FR-ProjectSetup-003
 
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | ProjectSetup                                      |
-| In Progress  | None                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | ProjectSetup |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
-### FR-ProjectSetup-004: 
+### FR-ProjectSetup-004
 
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | ProjectSetup                                      |
-| In Progress  | None                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | ProjectSetup |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
-### FR-ProjectSetup-005: 
+### FR-ProjectSetup-005
 
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | ProjectSetup                                      |
-| In Progress  | None                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | ProjectSetup |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
-### FR-ProjectSetup-006: 
+### FR-ProjectSetup-006
 
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | ProjectSetup                                      |
-| In Progress  | None                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | ProjectSetup |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
-### FR-ProjectSetup-007: 
+### FR-ProjectSetup-007
 
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | ProjectSetup                                      |
-| In Progress  | None                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | ProjectSetup |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
-### FR-ProjectSetup-008: 
+### FR-ProjectSetup-008
 
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | ProjectSetup                                      |
-| In Progress  | None                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | ProjectSetup |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
 ## Reference
 
-| Artifact | Purpose | Link|
-|----------|---------|------|
-| PRD.md | Product requirements | [PRD.md](../../PRD.md)|
-| FRD.md | Feature requirements | [FRD.md](FRD.md)|
-| ROADMAP.md | Roadmap status | [ROADMAP.md](../../ROADMAP.md)|
-| ARCHITECTURE.md | Layer contract | [ARCHITECTURE.md](../../ARCHITECTURE.md)|
+| Artifact | Purpose | Link |
+| ---------- | --------- | ------ |
+| PRD.md | Product requirements | [PRD.md](../../PRD.md) |
+| FRD.md | Feature requirements | [FRD.md](FRD.md) |
+| ROADMAP.md | Roadmap status | [ROADMAP.md](../../ROADMAP.md) |
+| ARCHITECTURE.md | Layer contract | [ARCHITECTURE.md](../../ARCHITECTURE.md) |
