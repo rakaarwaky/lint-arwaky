@@ -16,71 +16,71 @@ Last Updated: 2026-10-02
 
 ## Backlog Status
 
-### FR-STR-001: 
+### FR-STR-001
 
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | STR                                      |
-| In Progress  | None                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | STR |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
-### FR-STR-002: 
+### FR-STR-002
 
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | STR                                      |
-| In Progress  | None                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | STR |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
-### FR-STR-003: 
+### FR-STR-003
 
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | STR                                      |
-| In Progress  | None                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | STR |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
-### FR-STR-004: 
+### FR-STR-004
 
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | STR                                      |
-| In Progress  | None                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | STR |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
-### FR-STR-005: 
+### FR-STR-005
 
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | STR                                      |
-| In Progress  | None                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | STR |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
-### FR-STR-006: 
+### FR-STR-006
 
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | STR                                        |
-| In Progress  | None                                       |
-| Risk         | None                                       |
-| Updated      | 2026-10-28                                 |
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | STR |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-10-28 |
 
 ## Reference
 
-| Artifact | Purpose | Link|
-|----------|---------|------|
-| PRD.md | Product requirements | [PRD.md](../../PRD.md)|
-| FRD.md | Feature requirements | [FRD.md](FRD.md)|
-| ROADMAP.md | Roadmap status | [ROADMAP.md](../../ROADMAP.md)|
-| ARCHITECTURE.md | Layer contract | [ARCHITECTURE.md](../../ARCHITECTURE.md)|
+| Artifact | Purpose | Link |
+| ---------- | --------- | ------ |
+| PRD.md | Product requirements | [PRD.md](../../PRD.md) |
+| FRD.md | Feature requirements | [FRD.md](FRD.md) |
+| ROADMAP.md | Roadmap status | [ROADMAP.md](../../ROADMAP.md) |
+| ARCHITECTURE.md | Layer contract | [ARCHITECTURE.md](../../ARCHITECTURE.md) |
