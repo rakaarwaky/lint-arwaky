@@ -12,9 +12,9 @@ Without one gate, drift across naming, layering, imports, quality, roles, orphan
 
 ## Goals
 
-- One unified architectural audit that blocks cross-language drift in CI/CD before it reaches a release.
-- Autonomous remediation of naming, layering, import, quality, role, orphan, document, and structure violations for humans and AI agents.
-- Sub-minute violation reporting on a 10k-file mixed-language tree at CI scale.
+- On a 10k-file mixed-language tree, `lint-arwaky-cli scan .` returns p95 under 60 s on a 4-core CI runner, so the audit completes inside a single CI step.
+- Every flagged naming, layering, import, quality, role, orphan, document, and structure violation is machine-detectable and machine-actionable: the tool names the violated rule and the file, and `lint-arwaky-cli fix .` remediates every safe, deterministic correction without a human edit.
+- Cross-language drift surfaces in CI as a failed gate, not a manual merge report: `lint-arwaky-cli ci . --threshold N` exits non-zero the moment any enabled rule group finds a violation, and the report lists every offending file and rule.
 
 ## Non-Goals
 
@@ -27,7 +27,7 @@ Without one gate, drift across naming, layering, imports, quality, roles, orphan
 
 | Persona | Need | Current Pain | Desired Outcome |
 |---------|------|--------------|-----------------|
-| Rule-crate developer | One filesystem aggregate supplying parsed files, dependency graphs, file contents, tool availability, and language flags | Touching the filesystem directly in every rule crate | Implement rules without writing filesystem code |
+| Rule developer | One place to get parsed files, dependency graphs, file contents, tool availability, and language flags | Reaching into the filesystem directly from every rule | Implement rules without writing any filesystem code |
 | CI engineer | `scan .` reporting violations and `ci . --threshold N` gating a release | Merging three per-language reports by hand | Branch on exit code instead of parsing text output |
 | Platform engineer | Every import validated against the layer-dependency matrix | Forbidden cross-layer imports surfacing late | Forbidden edges, missing mandatory imports, unused imports, dummy stubs, and cycles surface as lint failures |
 | Maintainer | Dead, unused, or unreachable code flagged per layer | Dead code compounding across layers until audit takes hours | Each orphan yields a rule-coded finding naming the file and reachability gap |
@@ -40,7 +40,7 @@ Without one gate, drift across naming, layering, imports, quality, roles, orphan
 - Safe, deterministic auto-fix corrections (unused-import removal, bypass-marker stripping, mechanical symbol renaming) applied only when requested, with a preview mode reporting would-be changes without touching disk.
 - Terminal surface: one surface command module per subcommand (scan, check, fix, ci, report, git, watch, setup, plugin, skill, config, maintenance) parsing arguments, invoking dispatch, and formatting results.
 - Single source of truth for configuration: discovery across a bounded priority chain, workspace-type detection, merging user settings onto embedded defaults, threshold and adapter validation, ignored-path assembly.
-- Dispatcher action modules for each workspace verb (check, scan, ci, fix, config, git, setup, watch, docs, import, external, maintenance, naming, orphan, plugin, quality, role, structure, layer scan, version, suppression) merging findings from every enabled rule group into one report.
+- Dispatcher action entry points for each workspace verb (check, scan, ci, fix, config, git, setup, watch, docs, import, external, maintenance, naming, orphan, plugin, quality, role, structure, layer scan, version, suppression) merging findings from every enabled rule group into one report.
 - Document-invariant audit across AES601–AES607 with machine-readable violation types.
 - External-lint aggregation of Clippy, Rustfmt, cargo-audit, Ruff, Mypy, Bandit, ESLint, Prettier, TSC, and markdownlint-cli normalized into unified violations.
 - Real-time file watching with debouncing, filtering, deduplication, and an initial full-project scan.
@@ -54,11 +54,11 @@ Without one gate, drift across naming, layering, imports, quality, roles, orphan
 
 ### Out of Scope
 
-- Rule evaluation and violation reporting driven by the filesystem crate itself; auto-fix or file mutation driven by lint findings.
+- Rule evaluation and violation reporting driven by the filesystem source itself; auto-fix or file mutation driven by lint findings.
 - Multi-file renames, structural refactors, adding new imports or types, semantic rewrites such as panic removal, formatting-only passes.
 - Business logic and orchestration living outside the dispatcher and capability layers; IDE plugins, web dashboard, and cloud SaaS surfaces.
 - Secret or credential scanning; semantic analysis beyond AST extraction; network or remote filesystem access.
-- Language detection and tree walking owned outside the filesystem aggregate; concurrent or parallel adapter execution.
+- Language detection and tree walking owned outside the filesystem source; concurrent or parallel adapter execution.
 - IDE plugins or editor integrations; hot-reloading configuration during a running watch session; remote or cloud-based watching.
 - Post-commit and pre-push hooks; whole-repository scans in the commit gate; auto-fixing of violations the hook blocks on.
 - Compilation, type checking, or runtime behaviour analysis; dependency installation or package management.
@@ -77,18 +77,18 @@ Without one gate, drift across naming, layering, imports, quality, roles, orphan
 
 | As a | I want | So that | Priority |
 |------|--------|---------|----------|
-| Rule-crate developer adding a new architecture check | one filesystem aggregate supplying parsed files, dependency graphs, file contents, tool availability, and language flags | I can implement the rule without writing any filesystem code | P0 |
-| Rule-crate developer | parsed source files and extracted imports, identifiers, and declared symbols in one aggregate | I never touch the filesystem directly from a rule crate | P1 |
+| Rule developer adding a new architecture check | one place to get parsed files, dependency graphs, file contents, tool availability, and language flags | I can implement the rule without writing any filesystem code | P0 |
+| Rule developer | parsed source files and extracted imports, identifiers, and declared symbols from a single source | I never reach into the filesystem directly from a rule | P1 |
 
 #### Proposed Solution
 
-The filesystem crate is the single source of filesystem-derived data for every other crate: it parses source files into structured entries and imports, builds a project-wide dependency graph, performs read/write/discovery/copy/remove and permission operations, probes for external tool binaries, and detects the workspace root plus which languages are present. All of this is exposed through one aggregate so rule and feature crates never touch the filesystem directly.
+A single source supplies every piece of filesystem-derived data the other capabilities need: it parses source files into structured entries and imports, builds a project-wide dependency graph, performs read, write, discovery, copy, remove, and permission operations, probes for external tool binaries, and detects the workspace root plus which languages are present. Rule and feature code consumes this data and never touches the filesystem directly.
 
 #### Main User Flow
 
-1. A rule crate requests filesystem-derived data through the filesystem aggregate.
-2. The aggregate parses source files, extracts imports/identifiers/symbols, and builds the import/dependency graph with forward and reverse edges plus symbol maps.
-3. The rule crate consumes parsed files, tool availability, and language-presence flags without writing filesystem code.
+1. A rule requests filesystem-derived data through the single source.
+2. The source parses source files, extracts imports, identifiers, and symbols, and builds the import and dependency graph with forward and reverse edges plus symbol maps.
+3. The rule consumes parsed files, tool availability, and language-presence flags without writing any filesystem code.
 
 ---
 
@@ -124,7 +124,7 @@ Applies safe, deterministic corrections to source files that violate architectur
 
 #### Proposed Solution
 
-The cli-commands crate is the terminal surface of the tool: one surface command module per subcommand (scan, check, fix, ci, report, git, watch, setup, plugin, skill, config, maintenance) parses arguments, invokes the dispatch layer, and formats the returned result. Report-oriented subcommands render snapshots, per-member deltas, and formatted text through shared kernel output helpers; every command exits with the code the workspace exit-code contract assigns to its outcome.
+The terminal surface of the tool: one module per subcommand (scan, check, fix, ci, report, git, watch, setup, plugin, skill, config, maintenance) parses arguments, delegates to the dispatcher, and formats the returned result. Report-oriented subcommands render snapshots and per-member deltas through shared output helpers. Every command exits with the code the workspace exit-code contract assigns to its outcome.
 
 #### Main User Flow
 
@@ -145,7 +145,7 @@ The cli-commands crate is the terminal surface of the tool: one surface command 
 
 #### Proposed Solution
 
-The config-system crate is the single source of truth for lint-arwaky configuration: it discovers a project's config file across a bounded priority chain, detects the workspace type and its member directories, merges user settings onto embedded defaults, validates thresholds and adapter enablement, and assembles the ignored-path set that every command honours. It caches each parsed config by content so repeated reads stay cheap, and refuses unsafe inputs such as symlinks escaping the project root or crafted language values.
+The config system is the single source of truth for lint-arwaky configuration: it discovers a project's config file across a bounded priority chain, detects the workspace type and its member directories, merges user settings onto embedded defaults, validates thresholds and adapter enablement, and assembles the ignored-path set that every command honours. Every read returns the same validated, merged configuration regardless of how many times the file is opened in one run.
 
 #### Main User Flow
 
@@ -166,11 +166,11 @@ The config-system crate is the single source of truth for lint-arwaky configurat
 
 #### Proposed Solution
 
-The dispatcher crate is the single source of truth for workspace action business logic: the CLI, MCP, and TUI surfaces call its action modules for each workspace verb and format the returned results themselves. It supports single-file, subfolder, and whole-workspace scans, merges findings from every enabled rule group into one report, honors cooperative cancellation, and filters external tool output to workspace members.
+The dispatcher is the single source of truth for workspace action business logic: the CLI, MCP, and TUI surfaces call it for each workspace verb and format the returned results themselves. It supports single-file, subfolder, and whole-workspace scans, merges findings from every enabled rule group into one report, honours cooperative cancellation, and filters external tool output to workspace members.
 
 #### Main User Flow
 
-1. A surface invokes the dispatcher action module for a workspace verb.
+1. A surface invokes the dispatcher for a workspace verb.
 2. The dispatcher runs the scan mode (single-file, subfolder, or whole-workspace) with cancellation flags, merges findings across enabled rule groups, and filters external-tool output to workspace members.
 3. Each lint result round-trips to a violation item with fields preserved; a canceled scan stops before its completion milestone.
 
@@ -182,18 +182,18 @@ The dispatcher crate is the single source of truth for workspace action business
 
 | As a | I want | So that | Priority |
 |------|--------|---------|----------|
-| Release manager auditing a multi-crate workspace before merge | the document chain checked for invariant drift with machine-readable findings | I can block a pull request on concrete violations instead of relying on manual document review | P0 |
+| Release manager auditing a multi-package workspace before merge | the document chain checked for invariant drift with machine-readable findings | I can block a pull request on concrete violations instead of relying on manual document review | P0 |
 | Reviewer | one finding per seam carrying its expected machine-readable violation type | the audit is concrete and comparable across seams | P1 |
 
 #### Proposed Solution
 
-The doc-rules crate enforces the AES document-invariant contract across a workspace by auditing every recognized Markdown document against the seven named document rules (AES601–AES607) and reporting findings that carry machine-readable violation types. A whole-workspace audit is the intended default; a sub-directory run audits only what it discovers there, with crosslink and master-document invariants resolving against that audit root rather than the whole workspace.
+Audits every recognized Markdown document against the seven document rules (AES601–AES607) and reports findings that carry machine-readable violation types. A whole-workspace audit is the intended default; a sub-directory run audits only what it discovers there, with crosslink and master-document invariants resolving against that audit root rather than the whole workspace.
 
 #### Main User Flow
 
-1. The auditor runs `lint-arwaky-cli docs .` for a whole-workspace audit (or targets a sub-directory).
-2. The crate audits every recognized Markdown document against AES601–AES607.
-3. On a conforming workspace the run reports zero findings; a workspace with one violation per seam yields at least one finding per seam carrying its expected machine-readable violation type.
+1. The auditor runs `lint-arwaky-cli docs .` for a whole-workspace audit or targets a sub-directory.
+2. The document audit inspects every recognized Markdown document against AES601–AES607.
+3. The auditor reviews the reported findings, each carrying a machine-readable violation type and the offending document path.
 
 ---
 
@@ -208,12 +208,12 @@ The doc-rules crate enforces the AES document-invariant contract across a worksp
 
 #### Proposed Solution
 
-The external-lint crate aggregates industry-standard linters and formatters — Cargo Clippy, Rustfmt, cargo-audit, Ruff, Mypy, Bandit, ESLint, Prettier, TSC, and markdownlint-cli — across Rust, Python, JS/TS, and Markdown, normalizing their reports into the unified violation format using tool-native rule codes and mapped severities. It also exposes auto-fix through each adapter's native fix command. All adapters run sequentially as subprocesses, and language detection is delegated to the filesystem aggregate rather than performed by this crate.
+Aggregates industry-standard linters and formatters — Clippy, Rustfmt, cargo-audit, Ruff, Mypy, Bandit, ESLint, Prettier, TSC, and markdownlint-cli — across Rust, Python, JS/TS, and Markdown, normalizing their reports into the unified violation format using tool-native rule codes and mapped severities. Auto-fix runs through each tool's native fix command. The tools run sequentially, and language detection is delegated to the filesystem source rather than performed here.
 
 #### Main User Flow
 
-1. The run detects present languages via the filesystem aggregate and selects adapters accordingly.
-2. Each adapter runs sequentially as a subprocess with per-tool timeouts; raw JSON/text output is normalized into unified violations carrying tool-native rule codes and mapped severities.
+1. The run detects present languages via the filesystem source and selects adapters accordingly.
+2. Each adapter runs sequentially with per-tool timeouts; raw JSON/text output is normalized into unified violations carrying tool-native rule codes and mapped severities.
 3. Results are post-filtered by ignored paths and suppressed rule codes; auto-fix is available through each adapter's native fix command.
 
 ---
@@ -271,13 +271,13 @@ Installs, uninstalls, and runs a pre-commit hook that lints only the files chang
 
 #### Proposed Solution
 
-The import-rules crate enforces correct structural boundaries and dependency flows across the 7-layer AES architecture by validating every import statement against a config-driven dependency matrix. It detects forbidden cross-layer imports, missing mandatory imports, unused imports, dummy stubs created to satisfy checkers, and circular cross-layer dependencies in Rust, Python, and TypeScript sources. All rule behaviour is governed by YAML configuration.
+The import-rules capability enforces correct structural boundaries and dependency flows across the 7-layer AES architecture by validating every import statement against a config-driven dependency matrix. It detects forbidden cross-layer imports, missing mandatory imports, unused imports, dummy stubs created to satisfy checkers, and circular cross-layer dependencies in Rust, Python, and TypeScript sources. All rule behaviour is governed by YAML configuration.
 
 #### Main User Flow
 
-1. The run parses every import statement in Rust, Python, and TypeScript sources.
-2. Each import is validated against the config-driven dependency matrix (AES201 forbidden-layer, AES202 mandatory-layer, AES203 unused-import, AES204 dummy construct, AES205 circular dependency).
-3. A clean repository exits 0 with zero findings; any violation names the forbidden layer and the importing file.
+1. The system parses every import statement across the workspace.
+2. Each import is validated against the config-driven dependency matrix.
+3. The user reviews any reported boundary violations, each naming the forbidden layer and importing file.
 
 ---
 
@@ -287,17 +287,17 @@ The import-rules crate enforces correct structural boundaries and dependency flo
 
 | As a | I want | So that | Priority |
 |------|--------|---------|----------|
-| Maintainer debugging a slow `la scan .` on a large tree | raising log verbosity at runtime through the CLI flag without rebuilding or exporting an environment variable | I can pinpoint where the scan stalls | P0 |
+| Maintainer debugging a slow `lint-arwaky-cli scan .` on a large tree | raising log verbosity at runtime through the CLI flag without rebuilding or exporting an environment variable | I can pinpoint where the scan stalls | P0 |
 | Operator | per-phase timings and skipped-directory reasons on stderr with stdout kept clean for piping | I can diagnose scan performance without polluting machine-readable output | P1 |
 
 #### Proposed Solution
 
-The logging crate centralizes the scan's real-time diagnostic feed behind a single orchestrator so that `lint-arwaky scan -v` writes to stderr what it is doing: which directories it walks, which it skips and why, how long each linter phase takes, and what the final result is. It exposes a verbosity value type driven by the `-v`/`--verbose` flag and keeps stdout clean for piping.
+A single verbose flag (`-v`/`--verbose`) turns on the scan's real-time diagnostic feed on stderr: which directories it walks, which it skips and why, how long each linter phase takes, and the final result. Stdout stays clean for piping.
 
 #### Main User Flow
 
 1. The user runs `lint-arwaky scan -v` to enable verbosity.
-2. The crate emits structured phase-timing events (phase name + elapsed milliseconds) and walker-progress events (enter, skip-with-reason, discovered-count) on stderr at the enabled verbosity tier.
+2. The run emits structured phase-timing events (phase name + elapsed milliseconds) and walker-progress events (enter, skip-with-reason, discovered-count) on stderr at the enabled verbosity tier.
 3. With verbosity disabled, zero events are emitted while the underlying scan counts remain identical.
 
 ---
@@ -313,13 +313,13 @@ The logging crate centralizes the scan's real-time diagnostic feed behind a sing
 
 #### Proposed Solution
 
-The maintenance capability answers "is this environment healthy and current" before any lint run. It reports environment health across the Rust, Python, and JS toolchains, audits the availability of the bundled external-linter adapters, reclaims tool-owned cache artifacts, probes for newer versions of those adapters, reports a dependency and security summary for the target project, and can atomically replace the installed lint-arwaky binary with a verified release. The outcome is structured data returned to the calling surface, never a lint verdict and never a code-change patch. All commands return codes 0/1/2/3 per the contract; MCP `execute_command` carries `exit_code`.
+Before any lint run, answers "is this environment healthy and current": reports toolchain health across the Rust, Python, and JS toolchains; audits the availability of the ten bundled external-linter adapters; reclaims tool-owned cache artifacts; probes for newer versions of those adapters; and reports a dependency and security summary for the target project. It can atomically replace the installed lint-arwaky binary with a verified release. The outcome is structured data returned to the calling surface, never a lint verdict and never a code-change patch.
 
 #### Main User Flow
 
 1. The operator requests a maintenance health check.
 2. The capability reports toolchain health, per-adapter availability across all ten external-linter adapters and the four language groups, and cache/tool/version statistics.
-3. At least one missing adapter is flagged unavailable while every other entry still reports a definite status; no entry is dropped and no probe failure blocks the remaining probes.
+3. The operator reviews the health report with per-tool availability, version currency, and cache statistics.
 
 ---
 
@@ -334,7 +334,7 @@ The maintenance capability answers "is this environment healthy and current" bef
 
 #### Proposed Solution
 
-The mcp-server crate exposes the linter to MCP clients over a local server: a listable, domain-filterable command catalog, execute and config tools wired straight into the dispatcher actions, a skill reader for prompt material, and a docs scaffold capability. It confines every client-supplied path to the workspace and classifies mutating actions so a read-only authorization mode can refuse them, keeping MCP results identical to the CLI for the same operation.
+The MCP server exposes the linter to MCP clients: a listable, domain-filterable command catalog, execute and config tools wired into the shared dispatcher, a skill reader for prompt material, and a docs scaffold capability. It confines every client-supplied path to the workspace and classifies mutating actions so a read-only authorization mode can refuse them, keeping MCP results identical to the CLI for the same operation.
 
 #### Main User Flow
 
@@ -359,8 +359,8 @@ Enforces the AES 7-layer naming convention across file names so every file's nam
 
 #### Main User Flow
 
-1. The run checks every file name for stem shape (AES101), per-layer suffix/prefix policy (AES102), and test/bench prefix and placement discipline (AES103).
-2. A fully conforming tree exits 0 with zero findings; any single violating file name exits 1 with at least one finding naming the violated rule.
+1. The system checks every file name against stem shape, per-layer policy, and test prefix rules.
+2. The user reviews the naming violations report, with each entry showing the non-conforming name and suggested correction.
 
 ---
 
@@ -375,13 +375,13 @@ Enforces the AES 7-layer naming convention across file names so every file's nam
 
 #### Proposed Solution
 
-Detects dead, unused, or unreachable code components across the 7-layer AES architecture by tracing reachability from valid entry points (containers, binary entries, main files) through import and dependency-injection relationships, then flagging orphaned files in each layer. Graph data is supplied by the filesystem layer, so analysis performs no I/O itself. Each orphan yields a rule-coded finding (AES501–AES506) naming the file and the reason it is unreachable.
+Detects dead, unused, or unreachable code components across the 7-layer AES architecture by tracing reachability from valid entry points (composition roots, binary entries, main files) through import and dependency-injection relationships, then flagging orphaned files in each layer. Each orphan yields a rule-coded finding (AES501–AES506) naming the file and the reason it is unreachable.
 
 #### Main User Flow
 
 1. The run traces reachability from container/main/binary entry points across import and DI relationships using graph data from the filesystem layer.
 2. Per-layer orphan detection fires for taxonomy (AES501), contract (AES502), capabilities (AES503), utility (AES504), agent (AES505), and surface (AES506).
-3. Each orphaned file yields exactly one finding of its layer code; each live/wired/referenced file yields zero.
+3. The user reviews the orphan report to identify unreachable components and their missing reference paths.
 
 ---
 

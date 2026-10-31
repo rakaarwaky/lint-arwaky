@@ -1,383 +1,213 @@
-# FRD — auto-fix (v3.0.0)
-
----
+# FRD — auto-fix
 
 ## Feature Overview
 
-The auto-fix crate applies safe, deterministic corrections to source files that violate AES rules. It consumes lint results from the analysis pipeline, filters violations by fixable error code, and writes corrected files back to disk.
-
-- **Allowed Operation Classes (product policy — locked)**
-| Class       | Examples                                                          | Notes                                   |
-| ----------- | ----------------------------------------------------------------- | ----------------------------------------|
-| **Remove**  | Delete unused import lines; delete `#[allow(...)]` / bypass comment lines | No new code introduced                 |
-| **Replace** | `unwrap()` → `expect("safe")` on the same line                    | Local token/line substitution only     |
-| **Rename**  | Prepend `renamed_` (or keep valid snake_case) for AES101 symbols   | Mechanical rename of extracted symbol tokens|
-
-**Out of scope:** multi-file renames, structural refactors, adding new imports/types, semantic rewrites, formatting-only passes, `panic!` removal (requires semantic error handling).
-
-Every fix attempt MUST return a **reason-coded outcome** (`Applied` / `Skipped(reason)` / `Failed(reason)`), not a bare boolean. Dry-run reports the same outcomes without writing files.
-
-- **Architecture & Data Flow**
-
 ```mermaid
 flowchart TD
-    A["Surface"] -->|input| B["FixOrchestrator"]
-    B --> C1["UnusedImportFix"]
-    B --> C2["BypassFix"]
-    B --> C3["SymbolRename"]
-    B --> C4["ViolationReport"]
+    A["CLI fix command"] -->|"FixRequest { path, dry_run }"| B["FixOrchestrator"]
+    B --> C1["Unused Import Fix"]
+    B --> C2["Bypass Fix"]
+    B --> C3["Symbol Rename"]
+    B --> C4["Violation Report"]
     C1 --> I["FixOutcome"]
     C2 --> I
     C3 --> I
     C4 --> I
     I --> B
-    B -->|output| A
+    B -->|"FixResponse { result }"| A
 ```
 
-Each of the 4 FRs maps to exactly 1 protocol trait and exactly 1 capability struct.
+The **auto-fix** feature sits in the infrastructure layer and is called by the CLI `fix` command through the agent-layer orchestrator. It consumes lint findings from the analysis pipeline, applies safe, deterministic corrections, and returns a reason-coded result. It calls the filesystem layer for read/write of source files and returns a `FixResult` that separates applied changes from violations that need a human.
 
----
+**Allowed operation classes (product policy — locked):**
+
+| Class | Examples | Notes |
+|-------|----------|-------|
+| **Remove** | Delete unused import lines; delete allow-attribute or bypass marker lines | No new code introduced |
+| **Replace** | Replace an unwrap macro with an equivalent safe call on the same line | Local token/line substitution only |
+| **Rename** | Prepend `renamed_` to flagged symbol names | Mechanical rename of symbol tokens, word-boundary aware |
+
+**Out of scope:** multi-file renames, structural refactors, adding new imports or types, semantic rewrites, formatting-only passes, and panic-removal that requires semantic error handling.
+
+Every fix attempt shall return a **reason-coded outcome** (`Applied` / `Skipped(reason)` / `Failed(reason)`), never a bare boolean. Dry-run shall report the same outcomes without writing files.
 
 ## Functional Requirements
 
-### FR-AutoFix-001: Unused Import Removal (AES203)
+### FR-AutoFix-001: Unused Import Removal
 
-#### Description
+**Description:** The auto-fix feature shall remove the unused import flagged at a specific line, in place or as a dry-run preview. One call fixes exactly one flagged line; when the flag sits on an import line, the fix deletes that line. The result shall carry a reason-coded outcome so the caller distinguishes applied changes from skipped and failed attempts.
 
-| No | Detail |
-| --- | --- |
-| 1 | Remove the unused import at a flagged line, in place or as a dry-run preview. |
-
-#### Business Rules
-
-| No | Detail |
-| --- | --- |
-| 1 | One call fixes exactly one flagged line; the flag must sit on an import line (`NotAnImportLine` otherwise) and must not span multiple lines (`MultiLineImport`). |
-| 2 | The import list must not fall out of bounds (`LineOutOfBounds`); dry-run reports the would-be change without writing. |
+#### Business Logic
+- One call shall fix exactly one flagged line; a flag that does not sit on an import line shall be rejected with `NotAnImportLine`
+- A flagged import that spans multiple lines shall be rejected with `MultiLineImport`
+- The flagged line shall not fall outside the file's line range; out-of-bounds flags shall fail with `LineOutOfBounds`
+- Dry-run shall report the would-be change without writing the file on disk
 
 #### Edge Cases
+- A clean file yields no fix call at all; a file whose import list is already valid shall skip with `AlreadyValid`
+- A missing or unreadable file shall fail with `FileNotFound` or `ReadError` rather than succeed silently
+- Dry-run shall never modify the file on disk
 
-| No | Detail |
-| --- | --- |
-| 1 | A clean file yields no call at all; an already-valid import list skips with `AlreadyValid`. |
-| 2 | A missing or unreadable file fails with `FileNotFound`/`ReadError` rather than succeeding silently; dry-run never modifies the file on disk. |
-
-#### Capability
-
-| No | Detail |
-| --- | --- |
-| 1 | `UnusedImportFix` implements `IUnusedImportFixProtocol` (`fix_unused_import`, plus the `fix_unused_import_dry` seam the FR-AutoFix-004 pipeline drives). |
-
-#### Protocol
-
-| No | Detail |
-| --- | --- |
-| 1 | `IUnusedImportFixProtocol` in `shared/auto_fix`. |
-
-#### Method
-
-| No | Detail |
-| --- | --- |
-| 1 | `fix_unused_import(&self, file_path: &str, line: LineNumber) -> FixOutcome` |
-
-#### Input
-
-| No | Detail |
-| --- | --- |
-| 1 | `file_path: &str` and `line: LineNumber` carried by the flagged violation. |
-
-#### Output
-
-| No | Detail |
-| --- | --- |
-| 1 | `FixOutcome` — `Applied { changes }` on a successful rewrite. |
-| 2 | `Skipped(reason)` when the line is not fixable; `Failed(reason)` on I/O trouble. |
-
-#### Error
-
-| No | Detail |
-| --- | --- |
-| 1 | Read/write failures surface as `FixOutcome::Failed(FailReason::...)`. |
-| 2 | An unfixable line returns `Skipped`, so the caller still gets a structured outcome, never a panic. |
-
-#### Event
-
-| No | Detail |
-| --- | --- |
-| 1 | `lint-arwaky-cli fix <path> --dry-run` runs the same seam with `dry_run` selected per `FixRequest`. |
-| 2 | `scan`/`check` only detect, they do not fix. |
+#### Technical Specification
+| Aspect | Detail |
+|--------|--------|
+| **Input** | `file_path` and flagged line number carried by the violation. Source: the fix pipeline driven by the CLI `fix` command. |
+| **Output** | `FixOutcome` — `Applied { changes }` on a successful rewrite; `Skipped(reason)` when the line is not fixable; `Failed(reason)` on I/O trouble. Destination: the fix orchestrator. |
+| **Protocol** | `IUnusedImportFixProtocol` |
+| **Method** | `fix_unused_import` |
+| **Event** | `FixApplied`, `FixSkipped`, `FixFailed` |
+| **Error** | `FileNotFound`, `ReadError`, `NotAnImportLine`, `MultiLineImport`, `LineOutOfBounds`, `AlreadyValid` |
 
 #### Test
-
-| No | Detail |
-| --- | --- |
-| 1 | `acceptance_AES201_fix` suite proves the fix path reports fixable codes. |
-| 2 | `e2e_auto_fix_flow` — `e2e_dry_run_file_with_unused_import`, `e2e_dry_run_clean_file`; `contract_auto_fix` — `unused_import_fix_implements_unused_import_fix_protocol`. |
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| A file contains one unused import at a flagged line | The unused import fix is invoked in place | `FixOutcome::Applied` is returned and the import line is removed from the file on disk |
+| The flagged line is not an import line | The unused import fix is invoked | `FixOutcome::Skipped(NotAnImportLine)` is returned and the file is untouched |
+| The file does not exist | The unused import fix is invoked | `FixOutcome::Failed(FileNotFound)` is returned |
+| Dry-run is selected for a file with an unused import | The fix pipeline runs with dry-run | The preview lists the would-be removal and the file on disk stays byte-identical |
 
 #### Metric
+| Target Metric | Value |
+|---------------|-------|
+| Unused-import flags resolved per batch | 100% |
+| Files modified by dry-run | 0 |
+| Unreasoned skipped outcomes | 0 |
 
-| No | Detail |
-| --- | --- |
-| 1 | Every flagged `AES203` violation under `fix <path> --dry-run` yields `Applied` or an explicit `Skipped` reason. |
-| 2 | Files stay byte-identical in dry-run as pinned by `e2e_dry_run_file_with_unused_import`. |
+### FR-AutoFix-002: Bypass Fix
 
-### FR-AutoFix-002: Bypass Fix (AES304)
+**Description:** The auto-fix feature shall strip a bypass marker at a flagged line, in place or as a dry-run preview. Known bypass surface — allow-attribute macros, hack comments, no-qa inline markers, and unwrap macro replacements — is in scope; an unmatched pattern skips with a reason so the caller can keep walking other violations.
 
-#### Description
-
-| No | Detail |
-| --- | --- |
-| 1 | Strip a bypass comment or bypass macro at the flagged line, in place or as a dry-run preview. |
-
-#### Business Rules
-
-| No | Detail |
-| --- | --- |
-| 1 | Known bypass surface only: allow attributes, hack comments, noqa inline markers, and unwrap macros are in scope; an unmatched pattern skips with `NoBypassPattern`. |
-| 2 | Unsafe removals refuse with `UnsafeRemoval`; context-bearing patterns skip with `AlreadyHasContext`. |
+#### Business Logic
+- Only known bypass patterns shall be removed: allow-attribute macros, hack comments, no-qa inline markers, and unwrap macro replacements
+- An unmatched pattern on the flagged line shall skip with `NoBypassPattern`
+- A removal that would drop an error-handling context shall refuse with `UnsafeRemoval`
+- A pattern that already carries its own context marker shall skip with `AlreadyHasContext`
 
 #### Edge Cases
+- Multiple bypass markers on one line are rewritten in one pass when all are known
+- An unwrap macro in a context that needs error handling skips rather than corrupting the code
+- Dry-run previews the edit and leaves the file untouched; a missing file fails with `FileNotFound`
 
-| No | Detail |
-| --- | --- |
-| 1 | Multiple bypass markers on one line are rewritten in one pass when all are known; an unwrap in a macro context still skips rather than corrupt code. |
-| 2 | Dry-run previews the edit and leaves the file untouched; a missing file fails with `FileNotFound`. |
-
-#### Capability
-
-| No | Detail |
-| --- | --- |
-| 1 | `BypassFix` implements `IBypassFixProtocol` (`fix_bypass_comments`, plus the `fix_bypass_dry` seam the FR-AutoFix-004 pipeline drives). |
-
-#### Protocol
-
-| No | Detail |
-| --- | --- |
-| 1 | `IBypassFixProtocol` in `shared/auto_fix`. |
-
-#### Method
-
-| No | Detail |
-| --- | --- |
-| 1 | `fix_bypass_comments(&self, file_path: &str, line: LineNumber) -> FixOutcome` |
-
-#### Input
-
-| No | Detail |
-| --- | --- |
-| 1 | `file_path: &str` plus `line: LineNumber` from the flagged violation. |
-
-#### Output
-
-| No | Detail |
-| --- | --- |
-| 1 | `FixOutcome` — `Applied` with the change count. |
-| 2 | `Skipped(reason)` for an unmatched or unsafe pattern; `Failed(reason)` on I/O trouble. |
-
-#### Error
-
-| No | Detail |
-| --- | --- |
-| 1 | Read/write failures return `Failed(FailReason::...)`. |
-| 2 | A non-bypass line returns `Skipped(NoBypassPattern)` so the orchestrator can keep walking other violations. |
-
-#### Event
-
-| No | Detail |
-| --- | --- |
-| 1 | `lint-arwaky-cli fix <path> --dry-run` (and without `--dry-run` to apply), routed through `FixRequest::Execute { path, dry_run }`. |
+#### Technical Specification
+| Aspect | Detail |
+|--------|--------|
+| **Input** | `file_path` and flagged line number from the flagged violation. Source: the fix pipeline driven by the CLI `fix` command. |
+| **Output** | `FixOutcome` — `Applied` with the change count; `Skipped(reason)` for an unmatched or unsafe pattern; `Failed(reason)` on I/O trouble. Destination: the fix orchestrator. |
+| **Protocol** | `IBypassFixProtocol` |
+| **Method** | `fix_bypass_comments` |
+| **Event** | `FixApplied`, `FixSkipped`, `FixFailed` |
+| **Error** | `NoBypassPattern`, `UnsafeRemoval`, `AlreadyHasContext`, `FileNotFound`, `ReadError` |
 
 #### Test
-
-| No | Detail |
-| --- | --- |
-| 1 | `acceptance_AES304_fix` — `aes304_bypass_comment_is_fixable`, `aes304_unwrap_pattern_detected`, `aes304_dry_run_does_not_modify_file`. |
-| 2 | `unit_auto_fix_fix_processor` — `fix_bypass_strips_allow_attr`, `fix_bypass_strips_hack_comment`, `fix_bypass_strips_noqa_inline`, `fix_bypass_replaces_unwrap`. |
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| A file carries a known bypass marker at a flagged line | The bypass fix is invoked in place | `FixOutcome::Applied` is returned and the marker is removed from the file on disk |
+| The flagged line carries no known bypass pattern | The bypass fix is invoked | `FixOutcome::Skipped(NoBypassPattern)` is returned and the file is untouched |
+| The bypass marker guards error handling that is still needed | The bypass fix is invoked | `FixOutcome::Skipped(UnsafeRemoval)` is returned |
+| Dry-run is selected for a file with a bypass marker | The fix pipeline runs with dry-run | The preview lists the would-be removal and the file on disk stays byte-identical |
 
 #### Metric
+| Target Metric | Value |
+|---------------|-------|
+| In-scope bypass markers removed per batch | 100% |
+| Out-of-scope lines skipped with a reason | 100% |
+| Files modified by dry-run | 0 |
 
-| No | Detail |
-| --- | --- |
-| 1 | All in-scope `AES304` bypass patterns are removed by `fix <path>` and only previewed by `--dry-run`. |
-| 2 | Out-of-scope lines come back `Skipped` with a reason. |
+### FR-AutoFix-003: Symbol Renaming
 
-### FR-AutoFix-003: Symbol Renaming (AES101)
+**Description:** The auto-fix feature shall rename a flagged symbol across its entire file with word-boundary awareness, in place or as a dry-run preview. The rename is mechanical: the new name carries the `renamed_` prefix, and matching is word-boundary aware so substrings survive.
 
-#### Description
-
-| No | Detail |
-| --- | --- |
-| 1 | Rename a flagged symbol across the whole file with word-boundary awareness, in place or as a dry-run preview. |
-
-#### Business Rules
-
-| No | Detail |
-| --- | --- |
-| 1 | Rename is mechanical: the new name carries the `renamed_` prefix; matching is word-boundary aware so substrings survive. |
-| 2 | A name that collides with a keyword skips with `KeywordConflict`; an absent target skips with `SymbolNotFound`; `AlreadyValid` when the file is already compliant. |
+#### Business Logic
+- The new name shall carry the `renamed_` prefix
+- Occurrence matching shall be word-boundary aware so substrings of longer identifiers are not touched
+- A new name that collides with a keyword shall skip with `KeywordConflict`
+- A symbol with zero occurrences shall skip with `SymbolNotFound`; a file already compliant shall skip with `AlreadyValid`
 
 #### Edge Cases
+- Symbol occurrences inside string literals or comments move with the rename because the pass is textual and boundary-based
+- A missing file fails with `FileNotFound`; dry-run previews the would-be rename without writing
+- Zero occurrences skip rather than inventing one
 
-| No | Detail |
-| --- | --- |
-| 1 | Symbols appearing inside strings/comments move with the rename because the pass is textual and boundary-based, never AST-based. |
-| 2 | A missing file fails with `FileNotFound`; dry-run prints the would-be rename without writing; zero occurrences skip rather than inventing one. |
-
-#### Capability
-
-| No | Detail |
-| --- | --- |
-| 1 | `SymbolRename` implements `ISymbolRenameProtocol` (`rename_symbol`, plus the `rename_symbol_dry` seam the FR-AutoFix-004 pipeline drives). |
-
-#### Protocol
-
-| No | Detail |
-| --- | --- |
-| 1 | `ISymbolRenameProtocol` in `shared/auto_fix`. |
-
-#### Method
-
-| No | Detail |
-| --- | --- |
-| 1 | `rename_symbol(&self, file_path: &str, old_name: &SymbolName, new_name: &SymbolName) -> FixOutcome` |
-
-#### Input
-
-| No | Detail |
-| --- | --- |
-| 1 | `file_path: &str`, `old_name: &SymbolName`, `new_name: &SymbolName`; the dry variant additionally takes `dry_run: bool`. |
-
-#### Output
-
-| No | Detail |
-| --- | --- |
-| 1 | `FixOutcome` — `Applied { changes }` with the replacement count. |
-| 2 | `Skipped(reason)` or `Failed(reason)`. |
-
-#### Error
-
-| No | Detail |
-| --- | --- |
-| 1 | Keyword collisions return `Skipped(KeywordConflict)`; missing symbols return `Skipped(SymbolNotFound)`. |
-| 2 | I/O errors return `Failed(FailReason::...)`. |
-
-#### Event
-
-| No | Detail |
-| --- | --- |
-| 1 | `lint-arwaky-cli fix <path> --dry-run` for preview; `lint-arwaky-cli fix <path>` to write. |
-| 2 | Driven per request through `FixRequest::Execute { path, dry_run }`. |
+#### Technical Specification
+| Aspect | Detail |
+|--------|--------|
+| **Input** | `file_path`, `old_name`, and `new_name`. Source: the fix pipeline driven by the CLI `fix` command. |
+| **Output** | `FixOutcome` — `Applied { changes }` with the replacement count; `Skipped(reason)` or `Failed(reason)`. Destination: the fix orchestrator. |
+| **Protocol** | `ISymbolRenameProtocol` |
+| **Method** | `rename_symbol` |
+| **Event** | `FixApplied`, `FixSkipped`, `FixFailed` |
+| **Error** | `KeywordConflict`, `SymbolNotFound`, `AlreadyValid`, `FileNotFound`, `ReadError` |
 
 #### Test
-
-| No | Detail |
-| --- | --- |
-| 1 | `acceptance_AES101_fix` — `aes101_naming_violation_is_fixable_dry_run`, `aes101_dry_run_does_not_modify_file`. |
-| 2 | `contract_auto_fix` — `symbol_rename_implements_symbol_rename_protocol`; `unit_auto_fix_fix_processor` includes the rename processor cases. |
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| A file contains occurrences of a flagged symbol | The symbol rename is invoked in place | `FixOutcome::Applied` is returned and every word-boundary occurrence is rewritten with the `renamed_` prefix |
+| The new name collides with a language keyword | The symbol rename is invoked | `FixOutcome::Skipped(KeywordConflict)` is returned and the file is untouched |
+| The flagged symbol has zero occurrences in the file | The symbol rename is invoked | `FixOutcome::Skipped(SymbolNotFound)` is returned |
+| Dry-run is selected for a file with a flagged symbol | The fix pipeline runs with dry-run | The preview lists the would-be rename and the file on disk stays byte-identical |
 
 #### Metric
+| Target Metric | Value |
+|---------------|-------|
+| Flagged symbol occurrences rewritten per file | 100% |
+| Substring collisions introduced by a rename | 0 |
+| Files modified by dry-run | 0 |
 
-| No | Detail |
-| --- | --- |
-| 1 | Every flagged `AES101` naming violation previews with `Applied` under `--dry-run`. |
-| 2 | Running for real rewrites every word-boundary occurrence. |
+### FR-AutoFix-004: Violation Reporting
 
-### FR-AutoFix-004: Violation Reporting (Dry-Run + Non-Fixable)
+**Description:** The auto-fix feature shall run the whole fix pipeline over a path and report what was fixed versus what still needs a human. `dry_run` is selectable per request: report what would change without writing, or apply every fixable violation and skip the rest. Violations that have no fixer shall never be rewritten — they shall be listed as manual work.
 
-#### Description
-
-| No | Detail |
-| --- | --- |
-| 1 | Run the whole fix pipeline over a path and report what was fixed versus what still needs a human. |
-
-#### Business Rules
-
-| No | Detail |
-| --- | --- |
-| 1 | `dry_run` is selectable per request: report what would change without writing, or apply every fixable violation and skip the rest. |
-| 2 | Violations that have no fixer are never rewritten — they are listed as manual work; exit signal comes from the `FixResult`, which merges applied changes with the non-fixable list. |
+#### Business Logic
+- `dry_run` shall be selectable per request: report would-be changes without writing, or apply every fixable violation and skip the rest
+- Violations that have no fixer shall be listed as manual work and never rewritten
+- The result shall merge applied changes with the non-fixable list in one `FixResult`
+- Per-file failures shall never abort other files in the same batch
 
 #### Edge Cases
+- An empty path or a project with no violations shall return a clean result with zero changes
+- A path that does not exist shall fail the CLI with a non-zero exit
+- Per-file failures are reported as reason-coded entries and never abort the remaining files
 
-| No | Detail |
-| --- | --- |
-| 1 | An empty path or a project with no violations returns a clean `FixResult` with zero changes. |
-| 2 | A path that does not exist fails the CLI with a non-zero exit; per-file failures never abort other files. |
-
-#### Capability
-
-| No | Detail |
-| --- | --- |
-| 1 | `ViolationReport` implements `IViolationReportProtocol` (`report_violations`, `report_non_fixable`); it walks the tree, delegates each fixable violation to the three fix capabilities, and keeps non-fixable codes as a manual report. |
-
-#### Protocol
-
-| No | Detail |
-| --- | --- |
-| 1 | `IViolationReportProtocol` in `shared/auto_fix`. |
-
-#### Method
-
-| No | Detail |
-| --- | --- |
-| 1 | `report_violations(&self, path: &FilePath, dry_run: bool) -> FixResult` and `report_non_fixable(&self, violations: &[LintResult]) -> Vec<LintMessage>` |
-
-#### Input
-
-| No | Detail |
-| --- | --- |
-| 1 | `path: &FilePath` (file or directory) and `dry_run: bool` from `FixRequest::Execute { path, dry_run }`. |
-
-#### Output
-
-| No | Detail |
-| --- | --- |
-| 1 | `FixResult` wrapping applied changes plus the non-fixable manual messages. |
-| 2 | The orchestrator returns it as `FixResponse::Execute { result }`. |
-
-#### Error
-
-| No | Detail |
-| --- | --- |
-| 1 | Failure outcomes set the error half of the result so the CLI can exit non-zero; a missing path is a hard CLI error. |
-| 2 | Per-file failures are `SkipReason`/`FailReason` entries; they never abort other files. |
-
-#### Event
-
-| No | Detail |
-| --- | --- |
-| 1 | `lint-arwaky-cli fix <path> --dry-run` (preview) and `lint-arwaky-cli fix <path>` (apply); the request factory is `FixRequest::Execute`. |
+#### Technical Specification
+| Aspect | Detail |
+|--------|--------|
+| **Input** | `path` (file or directory) and `dry_run` flag from the fix request. Source: the CLI `fix` command. |
+| **Output** | `FixResult` wrapping applied changes plus the non-fixable manual messages. Destination: the fix orchestrator. |
+| **Protocol** | `IViolationReportProtocol` |
+| **Method** | `report_violations` |
+| **Event** | `FixApplied`, `FixSkipped`, `FixFailed` |
+| **Error** | Missing path fails the CLI with a non-zero exit; per-file failures are reason-coded entries that never abort other files |
 
 #### Test
-
-| No | Detail |
-| --- | --- |
-| 1 | `integration_auto_fix` — `orchestrator_execute_on_empty_project_dry_run`, `orchestrator_report_no_manual_violations_on_empty`, `orchestrator_execute_per_request_dry_run_false`. |
-| 2 | `e2e_auto_fix_flow` — `e2e_per_request_dry_run_toggle`; `dogfood_auto_fix` — `dogfood_cli_exits_nonzero_on_a_path_that_does_not_exist`; `contract_auto_fix` — protocol/aggregate impl coverage. |
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| The target project has no violations | The fix pipeline runs over the path | A clean result with zero changes is returned |
+| The path does not exist | The CLI fix command runs | The CLI exits with a non-zero exit code |
+| A project mixes fixable and non-fixable violations | The fix pipeline runs with dry-run off | Applied changes are reported and the non-fixable violations are listed as manual work |
+| One file in the batch fails | The fix pipeline runs over the batch | The failure is reported as a reason-coded entry and the remaining files are processed |
 
 #### Metric
-
-| No | Detail |
-| --- | --- |
-| 1 | Under `--dry-run` zero bytes change on disk across the batch while every fixable violation is accounted for. |
-| 2 | A missing path exits non-zero every time. |
+| Target Metric | Value |
+|---------------|-------|
+| Bytes changed on disk under dry-run | 0 |
+| Fixable violations accounted for in the result | 100% |
+| Missing-path batches exiting non-zero | 100% |
 
 ## Public Interface
 
-| Aspect | Detail|
-|--------|-------|
-| Agent | `FixOrchestrator` — the agent-layer orchestrator behind the fix command (built by the auto-fix container from `FixOrchestratorDeps`: violation report, unused-import fix, bypass fix, symbol rename). |
-| Aggregate | `IFixAggregate` — the feature's single front door. |
-| Method | `execute(&self, request: FixRequest) -> FixResponse`. |
-| Request | `FixRequest::Execute { path, dry_run }` — the sole variant; dry-run is chosen per request, not by global state. |
-| Response | `FixResponse::Execute { result: FixResult }` — applied change count plus the non-fixable manual report. |
+| Aspect | Detail |
+|--------|--------|
+| Agent | `FixOrchestrator` |
+| Aggregate | `IFixAggregate` |
+| Method | `execute` |
+| Request | `FixRequest::Execute { path, dry_run }` |
+| Response | `FixResponse::Execute { result }` |
 
 ## Reference
 
-| Artifact | Purpose | Link|
+| Artifact | Purpose | Link |
 |----------|---------|------|
-| BACKLOG.md | Backlog tracking | [BACKLOG.md](BACKLOG.md)|
-| PRD.md | Product requirements | [PRD.md](../../PRD.md)|
-| FRD.md | Feature requirements | [FRD.md](FRD.md)|
-| ROADMAP.md | Roadmap status | [ROADMAP.md](../../ROADMAP.md)|
-| ARCHITECTURE.md | Layer contract | [ARCHITECTURE.md](../../ARCHITECTURE.md)|
+| PRD | Business goals, user stories, and scope | [PRD.md](../../PRD.md) |
+| Backlog | Task tracking, epics, and implementation status | [BACKLOG.md](./BACKLOG.md) |
+| Roadmap | Timeline, phasing, and dependencies | [ROADMAP.md](../../ROADMAP.md) |
+| Architecture | System boundaries, tech stack, and infra | [ARCHITECTURE.md](../../ARCHITECTURE.md) |

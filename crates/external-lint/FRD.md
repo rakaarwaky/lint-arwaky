@@ -1,572 +1,266 @@
-# FRD — external-lint (v1.14.0)
-
----
+# FRD — external-lint
 
 ## Feature Overview
 
-The external-lint crate is an aggregate bridge to external, industry-standard linters and formatters. It coordinates and executes Cargo Clippy, Rustfmt, cargo-audit, Ruff, Mypy, Bandit, ESLint, Prettier, TSC, and markdownlint-cli on Rust, Python, JS/TS, and Markdown files. It normalizes their JSON/text reports into the unified lint-arwaky violation format using **tool-native rule codes** (e.g., `clippy::needless_return`, `ruff::E501`, `markdownlint::MD041`) and integrates them into the compliance report.
-
-The crate also provides **auto-fix** capabilities — each adapter exposes an `apply_fix` method that runs the tool's native fix command (e.g., `cargo clippy --fix`, `ruff check --fix`, `eslint --fix`).
-
-All adapters execute **sequentially** (no threads, no async runtime). Each adapter runs its external tool as a subprocess, captures output, and normalizes results. The entry point is the DI container, which wires all adapters and exposes the aggregate trait.
-
-The crate does **not** own language detection. Project-level language detection belongs to the `filesystem` aggregate, which serves it as `FilesystemRequest::DetectProjectLanguages` (see [crates/filesystem/FRD.md](../filesystem/FRD.md)). When a caller supplies no pre-computed context, the orchestrator asks the filesystem aggregate which language groups are present and uses the returned flags. It never walks the tree itself.
-
-- **Architecture & Data Flow**
-
-```mermaid
-flowchart TD
-    A["Surface / Dispatcher"] -->|input| B["ExternalLintContainer"]
-    B --> C["ExternalLintOrchestrator\n(IExternalLintAggregate)"]
-
-    C -->|"DetectProjectLanguages\n(no caller context)"| FS["filesystem aggregate"]
-    FS -->|"has_rust / has_python\nhas_js / has_markdown"| C
-
-    C -->|"select_adapters()"| D["ExternalLintSelector\n(IExternalLintSelectorProtocol)"]
-    D -->|"adapter names"| C
-
-    C -->|"scan(path)"| E["9 Adapters\n(ILinterAdapterProtocol)"]
-    C -->|"context.ignored_paths\npost-filter"| F["Lint Results"]
-
-    E -->|"Rust adapters\n(ICommandExecutorProtocol\ndirect, 120-180s timeout)"| R["clippy\nrustfmt\ncargo-audit"]
-    E -->|"Python adapters\n(StdioClient 60s timeout)"| P["ruff\nmypy\nbandit"]
-    E -->|"JS adapters\n(StdioClient 60s timeout)"| J["eslint\nprettier\ntsc"]
-    E -->|"Markdown adapter\n(StdioClient 60s timeout)"| M["markdownlint-cli"]
-
-    R -->|"subprocess\n(std::process::Command)"| G["result normalization\n(tool-native codes\n+ severity mapping)"]
-    P -->|"subprocess"| G
-    J -->|"subprocess"| G
-    M -->|"subprocess"| G
-
-    G --> F
-    F --> B
-    B -->|output| A
-```
-
----
+The external-lint feature sits in the feature layer, invoked by the surface CLI and dispatcher. It coordinates external linter and formatter adapters across supported language groups, querying the filesystem aggregate for project language presence when caller context is absent. Each adapter invokes external tool processes sequentially and normalizes tool diagnostic output into unified violation records.
 
 ## Functional Requirements
 
 ### FR-ExternalLint-001: Select and Execute Adapters by Language
 
-#### Description
+**Description:** The feature shall select the set of external linter adapters that matches the detected project languages and execute each selected adapter sequentially in language-group order, aggregating normalized violations across every invoked adapter.
 
-| No | Detail |
-| --- | --- |
-| 1 | Based on the language flags for a project, select the appropriate set of linter adapters and run them in adapter-list order, aggregating the results. |
-
-#### Business Rules
-
-| No | Detail |
-| --- | --- |
-| 1 | Append adapters in language-group order (Rust → Python → JS → Markdown): Rust `clippy`, `rustfmt`, `cargo-audit`; Python `ruff`, `mypy`, `bandit`; JS/TS `eslint`, `prettier`, `tsc`; Markdown `markdownlint`. |
-| 2 | Hardcoded defaults via `with_defaults()`; when no caller-supplied context is present, language flags are requested from the `filesystem` aggregate via `DetectProjectLanguages` — this crate performs no extension walk of its own. |
-| 3 | Iterate the adapter list in that order, each adapter receiving the same target path; optionally filter by `context.config_entries`, then post-filter results against `context.ignored_paths` via `should_ignore()`. |
-| 4 | No threads — execution is strictly sequential; each adapter's scan method invokes subprocess and normalizes output. |
+#### Business Logic
+- Adapters shall be selected in deterministic language-group order: Rust (`clippy`, `rustfmt`, `cargo-audit`), Python (`ruff`, `mypy`, `bandit`), JS/TS (`eslint`, `prettier`, `tsc`), and Markdown (`markdownlint`).
+- When caller context does not supply language flags, the feature shall query the filesystem aggregate for project language presence without scanning directory trees directly.
+- The adapter list shall be executed sequentially without threading, passing the target path to each selected adapter.
+- Results shall be filtered against configured rules and ignored path patterns before returning to the caller.
 
 #### Edge Cases
+- If no languages are detected, the feature shall return an empty adapter list and run zero scans.
+- If all languages are detected, the feature shall select up to ten adapters.
+- If an adapter fails during execution, the feature shall log a warning and continue executing subsequent adapters.
+- If an adapter binary is missing from the environment, the feature shall log a warning, treat that adapter's results as empty, and continue the scan.
 
-| No | Detail |
-| --- | --- |
-| 1 | No languages detected → empty adapter list, no scans run; all languages detected → up to 10 adapters selected. |
-| 2 | All adapters return empty results → empty result list; one adapter fails → remaining adapters still run, failure logged as a warning. |
-| 3 | Adapter binary not installed → warning printed, results for that adapter empty; adapter timeout exceeded → error logged, other adapters continue. |
-
-#### Capability
-
-| No | Detail |
-| --- | --- |
-| 1 | capabilities_external_lint_selector |
-
-#### Protocol
-
-| No | Detail |
-| --- | --- |
-| 1 | IExternalLintSelectorProtocol |
-
-#### Method
-
-| No | Detail |
-| --- | --- |
-| 1 | `select_adapters` |
-
-#### Input
-
-| No | Detail |
-| --- | --- |
-| 1 | Target path, booleans `has_rust`, `has_python`, `has_js`, `has_markdown`, and optional context (config entries, ignored paths). |
-| 2 | The target path flows through `ExternalLintRequest` request variants carried by the aggregate entry point (`execute`). |
-
-#### Output
-
-| No | Detail |
-| --- | --- |
-| 1 | Ordered list of adapter names. |
-| 2 | Aggregated lint results from all adapters. |
-
-#### Error
-
-| No | Detail |
-| --- | --- |
-| 1 | No error on selection; empty list for no matches. |
-| 2 | Per-adapter errors caught at the loop boundary; missing tool detected via OS error string matching; a failing adapter does not stop subsequent adapters. |
-
-#### Event
-
-| No | Detail |
-| --- | --- |
-| 1 | None. |
+#### Technical Specification
+| Aspect | Detail |
+|--------|--------|
+| **Input** | Target file path, boolean flags (`has_rust`, `has_python`, `has_js`, `has_markdown`), and optional audit context with configuration entries and ignored path patterns. Source: caller scan request. |
+| **Output** | Ordered list of selected adapter names and aggregated normalized lint results. Destination: caller. |
+| **Protocol** | `IExternalLintSelectorProtocol` |
+| **Method** | `select_adapters` |
+| **Event** | None |
+| **Error** | Missing tool binary surfaces as unavailable adapter; adapter execution failure surfaces as a warning without aborting the scan. |
 
 #### Test
-
-| No | Detail |
-| --- | --- |
-| 1 | `select_adapters(true, false, false, false)` yields `clippy`, `rustfmt`, `cargo-audit` in that order. |
-| 2 | Empty flags yield an empty list. |
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| Project language flags indicate only Rust is present | `select_adapters` receives `has_rust = true` and all other flags `false` | Adapters `clippy`, `rustfmt`, and `cargo-audit` are selected in that exact order |
+| No languages are detected in the project | `select_adapters` receives all flags `false` | An empty adapter list is returned and zero adapter subprocesses are spawned |
+| An external tool fails during sequential execution | The scan pipeline executes the selected adapters | The failing adapter logs a warning and remaining adapters complete execution |
+| An adapter binary is missing from the environment | The scan executes that adapter | The adapter reports unavailable and subsequent adapters still execute |
 
 #### Metric
-
-| No | Detail |
-| --- | --- |
-| 1 | Zero unrequested adapters invoked. |
-| 2 | Zero threads spawned per scan. |
+| Target Metric | Value |
+|---------------|-------|
+| Unrequested Adapter Invocations | 0 |
+| Concurrency Threads Spawned | 0 |
+| Adapter Selection Accuracy | 100% |
 
 ### FR-ExternalLint-002: Apply Auto-Fix via Adapters
 
-#### Description
+**Description:** The feature shall run the native fix command of an external linter tool against a specific file and report whether the fix succeeded, using a no-op result for tools that provide no fix command.
 
-| No | Detail |
-| --- | --- |
-| 1 | Run an external linter tool's native fix command for a specific file, returning whether the fix succeeded. |
-
-#### Business Rules
-
-| No | Detail |
-| --- | --- |
-| 1 | JS adapters resolve the working directory and absolute file path, then execute the tool via `js_apply_fix`. |
-| 2 | Fix-capable adapters and commands: ESLint `npx eslint <file> --fix`; Prettier `npx prettier <file> --write`; Ruff `ruff check <file> --fix --exit-zero`; Clippy `cargo clippy --fix --allow-dirty --allow-staged`; Rustfmt `cargo fmt` (without `--check`). |
-| 3 | Non-fixing adapters (Mypy, Bandit, TSC, cargo-audit) return a no-op result. |
+#### Business Logic
+- Fix-capable adapters shall execute their tool's native rewrite command: ESLint `npx eslint <file> --fix`, Prettier `npx prettier <file> --write`, Ruff `ruff check <file> --fix --exit-zero`, Clippy `cargo clippy --fix --allow-dirty --allow-staged`, and Rustfmt `cargo fmt` without `--check`.
+- JS tool fixes shall resolve both the working directory and the absolute file path before executing the fix command.
+- Non-fixing adapters (Mypy, Bandit, TSC, and cargo-audit) shall return a no-op status without invoking a subprocess.
+- A fix invocation shall report a compliance status indicating success, failure, or no-op to the caller.
 
 #### Edge Cases
+- If the fix command exits with a failure status, the feature shall return a failure status without crashing.
+- If the target tool is not installed, the feature shall return a failure status.
+- If the target tool is non-fixing, the feature shall return a no-op status without running a subprocess.
 
-| No | Detail |
-| --- | --- |
-| 1 | Fix command fails → failure status returned, no crash. |
-| 2 | Tool not installed → failure status. |
-
-#### Capability
-
-| No | Detail |
-| --- | --- |
-| 1 | capabilities_js_tool_resolver (executed through capabilities_command_executor) |
-
-#### Protocol
-
-| No | Detail |
-| --- | --- |
-| 1 | IJsToolResolutionProtocol |
-
-#### Method
-
-| No | Detail |
-| --- | --- |
-| 1 | `js_apply_fix` |
-
-#### Input
-
-| No | Detail |
-| --- | --- |
-| 1 | Tool name, file path, fix argument (e.g., `--fix`, `--write`). |
-
-#### Output
-
-| No | Detail |
-| --- | --- |
-| 1 | Compliance status indicating success or failure. |
-
-#### Error
-
-| No | Detail |
-| --- | --- |
-| 1 | Subprocess failure mapped to an adapter error; caller decides next step. |
-
-#### Event
-
-| No | Detail |
-| --- | --- |
-| 1 | None. |
+#### Technical Specification
+| Aspect | Detail |
+|--------|--------|
+| **Input** | Tool name, target file path, and fix argument (`--fix`, `--write`). Source: caller fix request. |
+| **Output** | Compliance status indicating success, failure, or no-op. Destination: caller. |
+| **Protocol** | `IJsToolResolutionProtocol` |
+| **Method** | `js_apply_fix` |
+| **Event** | None |
+| **Error** | Subprocess failure mapped to an adapter error without crashing; caller decides next step. |
 
 #### Test
-
-| No | Detail |
-| --- | --- |
-| 1 | `js_apply_fix` against a fix-capable tool reports success after the tool rewrites the file. |
-| 2 | Against Mypy it reports the no-op status. |
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| A fix-capable tool rewrites the target file | The fix command is executed | The file is rewritten and compliance status reports success |
+| A non-fixing tool such as Mypy is requested | The fix command is executed | Compliance status reports no-op and zero subprocesses run |
+| The external fix command exits with an error | The fix command is executed | Compliance status reports failure and the process does not terminate abnormally |
 
 #### Metric
-
-| No | Detail |
-| --- | --- |
-| 1 | One subprocess spawn per invoked fix. |
+| Target Metric | Value |
+|---------------|-------|
+| Subprocess Spawns per Invoked Fix | 1 |
+| Crash Rate on Failed Fix | 0% |
+| Non-Fixing Subprocess Invocations | 0 |
 
 ### FR-ExternalLint-003: Normalize External Tool Output
 
-#### Description
+**Description:** The feature shall normalize each external tool's stdout or JSON report into unified violation records that carry tool-native rule codes and mapped severities.
 
-| No | Detail |
-| --- | --- |
-| 1 | Each adapter normalizes its external tool's stdout/JSON output into `LintResult` structs compatible with the unified lint-arwaky format. |
-| 2 | Rule codes use tool-native identifiers (e.g., `clippy::needless_return`, `ruff::E501`). |
-
-#### Business Rules
-
-| No | Detail |
-| --- | --- |
-| 1 | Rule codes — tool-native identifiers prefixed with the tool name: Clippy `clippy::<lint_name>` (e.g. `clippy::needless_return`); Rustfmt `rustfmt::unformatted`; cargo-audit `cargo-audit::<RUSTSEC-ID>` (e.g. `cargo-audit::RUSTSEC-2021-0124`). |
-| 2 | Ruff `ruff::<code>` (e.g. `ruff::E501`, `ruff::F401`); Mypy `mypy::<error-code>` (e.g. `mypy::arg-type`); Bandit `bandit::<test-id>` (e.g. `bandit::B101`); ESLint `eslint::<rule-id>` (e.g. `eslint::no-unused-vars`); Prettier `prettier::diff`; tsc `tsc::<error-code>` (e.g. `tsc::TS2345`); markdownlint `markdownlint::<MD-id>` (e.g. `markdownlint::MD041`). |
-| 3 | File paths canonicalized to absolute; line numbers extracted from tool-specific JSON fields; severity mapped per tool. |
-| 4 | Clippy `correctness`→CRITICAL, `suspicious`/`perf`→HIGH, `style`/`complexity`→MEDIUM, `pedantic`/`nursery`/`restriction`→LOW; Rustfmt diff→MEDIUM. |
-| 5 | cargo-audit `Critical`→CRITICAL, `High`→HIGH, `Medium`→MEDIUM, `Low`/`Unknown`→LOW; Ruff `E999` and all `S*`→CRITICAL, `F8xx`/`B0xx`→HIGH, `F401`→MEDIUM, `E1xx`/`E5xx`/`W2xx`→LOW, default→MEDIUM. |
-| 6 | Mypy `error`→HIGH, `warning`→MEDIUM, `note`→LOW; Bandit HIGH confidence + HIGH severity→CRITICAL, HIGH→HIGH, MEDIUM→MEDIUM, LOW→LOW; ESLint severity 2→HIGH, 1→MEDIUM; Prettier diff→MEDIUM; tsc error→HIGH; markdownlint any rule violation→MEDIUM. |
-| 7 | Ruff severity is determined by the rule code, not the tool's severity field. |
+#### Business Logic
+- Rule codes shall use tool-native identifiers prefixed with the tool name: Clippy `clippy::<lint_name>`, Rustfmt `rustfmt::unformatted`, cargo-audit `cargo-audit::<RUSTSEC-ID>`, Ruff `ruff::<code>`, Mypy `mypy::<error-code>`, Bandit `bandit::<test-id>`, ESLint `eslint::<rule-id>`, Prettier `prettier::diff`, tsc `tsc::<error-code>`, and markdownlint `markdownlint::<MD-id>`.
+- File paths in tool reports shall be canonicalized to absolute paths, and line numbers shall be extracted from tool-specific diagnostic fields.
+- Diagnostic severity shall follow the per-tool mapping: Clippy `correctness`→CRITICAL, `suspicious`/`perf`→HIGH, `style`/`complexity`→MEDIUM, `pedantic`/`nursery`/`restriction`→LOW; Rustfmt diff→MEDIUM.
+- cargo-audit `Critical`→CRITICAL, `High`→HIGH, `Medium`→MEDIUM, `Low`/`Unknown`→LOW; Ruff `E999` and all `S*`→CRITICAL, `F8xx`/`B0xx`→HIGH, `F401`→MEDIUM, `E1xx`/`E5xx`/`W2xx`→LOW, default→MEDIUM.
+- Mypy `error`→HIGH, `warning`→MEDIUM, `note`→LOW; Bandit HIGH confidence with HIGH severity→CRITICAL, HIGH→HIGH, MEDIUM→MEDIUM, LOW→LOW; ESLint severity 2→HIGH, 1→MEDIUM; Prettier diff→MEDIUM; tsc error→HIGH; markdownlint rule violation→MEDIUM.
+- Ruff severity shall be determined by the rule code rather than the tool's own severity field.
 
 #### Edge Cases
+- If a tool produces invalid JSON or unparseable output, the feature shall return empty results and log a warning.
+- If a tool produces zero violations, the feature shall return an empty result list rather than an error.
+- If a tool outputs a relative file path, the feature shall canonicalize it to an absolute path.
+- If a tool diagnostic carries an unknown severity or category, the feature shall default to MEDIUM.
+- If a Mypy error message contains `syntax` or `parse`, the feature shall escalate severity to CRITICAL.
 
-| No | Detail |
-| --- | --- |
-| 1 | Tool produces invalid JSON → empty results with error logged. |
-| 2 | Tool output contains zero violations → empty result list, not an error. |
-| 3 | File path in tool output is relative → canonicalized to absolute; unknown tool severity/category → defaults to MEDIUM. |
-| 4 | Mypy extension: any error message containing `syntax` or `parse` is escalated to CRITICAL (a parse failure blocks all type checking). |
-
-#### Capability
-
-| No | Detail |
-| --- | --- |
-| 1 | capabilities_output_normalizer |
-
-#### Protocol
-
-| No | Detail |
-| --- | --- |
-| 1 | INormalizeProtocol |
-
-#### Method
-
-| No | Detail |
-| --- | --- |
-| 1 | `normalize` |
-
-#### Input
-
-| No | Detail |
-| --- | --- |
-| 1 | Raw output from an external linter subprocess (JSON or text). |
-
-#### Output
-
-| No | Detail |
-| --- | --- |
-| 1 | Normalized lint results. |
-
-#### Error
-
-| No | Detail |
-| --- | --- |
-| 1 | Parse failures return empty results with a warning; no crash on malformed output. |
-
-#### Event
-
-| No | Detail |
-| --- | --- |
-| 1 | None. |
+#### Technical Specification
+| Aspect | Detail |
+|--------|--------|
+| **Input** | Raw stdout or JSON output from an external linter subprocess. Source: adapter command execution. |
+| **Output** | Normalized `LintResult` violations with tool-native rule codes and mapped severities. Destination: caller. |
+| **Protocol** | `INormalizeProtocol` |
+| **Method** | `normalize` |
+| **Event** | None |
+| **Error** | Parse failures return empty results with a warning; unparseable content causes no panic. |
 
 #### Test
-
-| No | Detail |
-| --- | --- |
-| 1 | A ruff JSON report with `E501` normalizes to `ruff::E501` LOW. |
-| 2 | A clippy `correctness` diagnostic normalizes to CRITICAL. |
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| A Ruff JSON report contains rule `E501` | Normalization is executed | Normalized violation carries rule code `ruff::E501` with severity LOW |
+| A Clippy diagnostic carries category `correctness` | Normalization is executed | Normalized violation carries severity CRITICAL |
+| A tool produces malformed JSON text | Normalization is executed | Empty results are returned and a warning is logged without panic |
+| A tool report contains a relative file path | Normalization is executed | Violation file path is canonicalized to an absolute path |
+| A Mypy error message contains `syntax` | Normalization is executed | Violation severity is escalated to CRITICAL |
 
 #### Metric
-
-| No | Detail |
-| --- | --- |
-| 1 | Zero panics on malformed tool output. |
-| 2 | 100% of results carry tool-native rule codes. |
+| Target Metric | Value |
+|---------------|-------|
+| Panics on Malformed Tool Output | 0 |
+| Results Carrying Tool-Native Rule Codes | 100% |
+| Unknown-Severity Default to MEDIUM | 100% |
 
 ### FR-ExternalLint-004: Subprocess Execution
 
-#### Description
+**Description:** The feature shall execute external linter tools as blocking subprocesses, capture their stdout and stderr, enforce a per-adapter timeout, and map spawn and timeout failures into adapter errors.
 
-| No | Detail |
-| --- | --- |
-| 1 | Spawn external linter tools as blocking subprocesses, capturing stdout/stderr, enforcing per-adapter timeouts, and mapping spawn/timeout errors. |
-
-#### Business Rules
-
-| No | Detail |
-| --- | --- |
-| 1 | Python/JS adapters run with a 60-second timeout; Rust adapter Clippy with 180 seconds; Rust adapters Rustfmt and cargo-audit with 120 seconds. |
-| 2 | `PYTHONUNBUFFERED=1` is set on all subprocesses; a spawn failure or timeout is reported as an adapter error; the scan continues with the next adapter. |
-| 3 | No retry — an adapter gets exactly one attempt per scan, for both spawn failures and timeouts, per the Integration resilience decision in `PRD.md` (PR-LA-006). |
-| 4 | No overall budget — each ceiling applies to one adapter; they sum rather than cap, so a scan with every language present can run up to 180 + 120 + 120 + (7 × 60) ≈ 840 s (~14 minutes) before returning. |
-| 5 | Callers that need a bound — notably the MCP surface, which has no timeout of its own — must impose it themselves. |
+#### Business Logic
+- Python and JS adapters shall execute with a 60-second timeout; Clippy with a 180-second timeout; Rustfmt and cargo-audit with a 120-second timeout.
+- `PYTHONUNBUFFERED=1` shall be set on all subprocess environments.
+- Subprocess spawn failures and timeouts shall be reported as adapter errors, allowing the scan to continue with the next adapter.
+- An adapter shall receive exactly one attempt per scan with no retry for spawn failures or timeouts.
+- No overall scan ceiling shall be enforced across adapters; per-adapter timeouts sum sequentially to a worst-case wall time of approximately 840 seconds.
+- Callers requiring an aggregate time bound shall enforce the ceiling at the outer invocation layer.
 
 #### Edge Cases
+- If an executable is absent from PATH, the feature shall report the adapter as unavailable and proceed with remaining adapters.
+- If an adapter exceeds its timeout ceiling, the feature shall log an error, avoid retry, and proceed with remaining adapters.
+- If all adapters run slowly, execution shall block for the summed worst case without interruption from intermediate layers.
 
-| No | Detail |
-| --- | --- |
-| 1 | Executable absent from PATH → the adapter is reported unavailable, scan continues. |
-| 2 | Timeout exceeded → error logged, other adapters continue, no retry. |
-| 3 | Every adapter present and slow → the call blocks for the summed worst case; no layer above interrupts it. |
-
-#### Capability
-
-| No | Detail |
-| --- | --- |
-| 1 | capabilities_stdio_client (error mapping in capabilities_command_executor) |
-
-#### Protocol
-
-| No | Detail |
-| --- | --- |
-| 1 | ICommandExecutorProtocol |
-
-#### Method
-
-| No | Detail |
-| --- | --- |
-| 1 | `exec_cmd_scan` / `exec_cmd_adapter` |
-
-#### Input
-
-| No | Detail |
-| --- | --- |
-| 1 | Tool name, argument list, target path, and timeout in seconds. |
-
-#### Output
-
-| No | Detail |
-| --- | --- |
-| 1 | Captured stdout/stderr text plus a completion status (ok, timed out, spawn failure). |
-
-#### Error
-
-| No | Detail |
-| --- | --- |
-| 1 | Spawn and timeout errors are surfaced as `LinterOperationError`. |
-
-#### Event
-
-| No | Detail |
-| --- | --- |
-| 1 | None. |
+#### Technical Specification
+| Aspect | Detail |
+|--------|--------|
+| **Input** | Tool name, argument list, target working directory, and timeout in seconds. Source: linter adapter. |
+| **Output** | Captured stdout and stderr text with execution completion status. Destination: linter adapter. |
+| **Protocol** | `ICommandExecutorProtocol` |
+| **Method** | `exec_cmd_scan` / `exec_cmd_adapter` |
+| **Event** | None |
+| **Error** | Spawn and timeout errors surface as `LinterOperationError` variants. |
 
 #### Test
-
-| No | Detail |
-| --- | --- |
-| 1 | A tool exceeding its ceiling returns the timed-out status while the remaining adapters still run. |
-| 2 | A PATH-missing tool returns the unavailable status. |
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| An external tool exceeds its allotted timeout ceiling | The tool process executes | The adapter receives a timed-out status and subsequent adapters still execute |
+| An external tool binary is absent from PATH | The tool process is spawned | The adapter receives an unavailable status and subsequent adapters still execute |
+| An external tool executes successfully | The tool process finishes | Captured stdout and stderr text are returned with an ok completion status |
 
 #### Metric
-
-| No | Detail |
-| --- | --- |
-| 1 | Zero retries per adapter. |
-| 2 | Total worst-case scan wall time ≤ ~840 s. |
+| Target Metric | Value |
+|---------------|-------|
+| Retries per Adapter Execution | 0 |
+| Total Scan Worst-Case Wall Time | ≤ 840s |
+| Spawn Failure Handling Rate | 100% |
 
 ### FR-ExternalLint-005: JS Tool Path Resolution
 
-#### Description
+**Description:** The feature shall resolve the binary path for a JS or TS tool, preferring a local installation under `node_modules/.bin` over a global PATH lookup, and shall locate the working directory by walking up to ten parent directories for a tool configuration file.
 
-| No | Detail |
-| --- | --- |
-| 1 | Resolve the binary path for a JS/TS tool, preferring a local `node_modules/.bin/<tool>` installation over a global PATH lookup, and locate the working directory by walking up to 10 parent directories. |
-
-#### Business Rules
-
-| No | Detail |
-| --- | --- |
-| 1 | Check `node_modules/.bin/<tool>` in the resolved working directory; if the local binary exists, use its absolute path. |
-| 2 | Otherwise fall back to global PATH resolution. |
-| 3 | Resolve the working directory by walking up to 10 parent directories looking for config files (`.eslintrc.*`, `prettier.config.*`, `tsconfig.json`, `package.json`). |
+#### Business Logic
+- The feature shall check `node_modules/.bin/<tool>` in the resolved working directory; if the local binary exists, its absolute path shall be used.
+- If no local binary exists, the feature shall fall back to global PATH resolution.
+- The feature shall resolve the working directory by walking up to ten parent directories searching for `.eslintrc.*`, `prettier.config.*`, `tsconfig.json`, or `package.json`.
 
 #### Edge Cases
+- If neither a local binary nor a global PATH entry exists, the feature shall report the tool as unavailable.
+- If no configuration file is located within ten parent directory levels, the feature shall skip the scan for that target file.
 
-| No | Detail |
-| --- | --- |
-| 1 | No local binary and no global PATH entry → tool is reported unavailable. |
-| 2 | Working directory not found within 10 levels → the scan is skipped for that file. |
-
-#### Capability
-
-| No | Detail |
-| --- | --- |
-| 1 | capabilities_js_tool_resolver |
-
-#### Protocol
-
-| No | Detail |
-| --- | --- |
-| 1 | IJsToolResolutionProtocol |
-
-#### Method
-
-| No | Detail |
-| --- | --- |
-| 1 | `resolve_js_cmd` / `resolve_js_working_dir` |
-
-#### Input
-
-| No | Detail |
-| --- | --- |
-| 1 | Tool name and a starting path. |
-
-#### Output
-
-| No | Detail |
-| --- | --- |
-| 1 | Absolute path to the resolved binary. |
-| 2 | The working directory to run it from. |
-
-#### Error
-
-| No | Detail |
-| --- | --- |
-| 1 | Resolution failures are reported as adapter errors; other adapters continue. |
-
-#### Event
-
-| No | Detail |
-| --- | --- |
-| 1 | None. |
+#### Technical Specification
+| Aspect | Detail |
+|--------|--------|
+| **Input** | Tool name and target starting path. Source: JS adapter. |
+| **Output** | Absolute path to the resolved binary and the directory to execute from. Destination: JS adapter. |
+| **Protocol** | `IJsToolResolutionProtocol` |
+| **Method** | `resolve_js_cmd` / `resolve_js_working_dir` |
+| **Event** | None |
+| **Error** | Tool resolution failure surfaces as an adapter error; remaining adapters continue execution. |
 
 #### Test
-
-| No | Detail |
-| --- | --- |
-| 1 | A file under `node_modules/.bin`-bearing project resolves to the local binary. |
-| 2 | A bare file with no config within 10 levels reports the tool unavailable. |
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| Target file resides in a project with `node_modules/.bin/<tool>` | Binary resolution is executed | The returned command path points to the local binary |
+| Target file resides in a project without local `node_modules/.bin` | Binary resolution is executed | The returned command path falls back to the global PATH executable |
+| Neither local binary nor global PATH entry exists | Binary resolution is executed | The tool is reported as unavailable |
+| No configuration file exists within ten parent directory levels | Working directory resolution is executed | Scan for the target file is skipped with a warning |
 
 #### Metric
-
-| No | Detail |
-| --- | --- |
-| 1 | One lookup per tool invocation. |
-| 2 | Zero global installs required for the local-preference path. |
+| Target Metric | Value |
+|---------------|-------|
+| Directory Lookups per Tool Invocation | 1 |
+| Global Installations Required for Local Binaries | 0 |
+| Resolution Fallback Success Rate | 100% |
 
 ### FR-ExternalLint-006: Rust Working Directory Resolution
 
-#### Description
+**Description:** The feature shall locate the directory containing `Cargo.toml` or `Cargo.lock` for a Rust tool execution by walking up the directory tree.
 
-| No | Detail |
-| --- | --- |
-| 1 | Find the directory containing `Cargo.toml` or `Cargo.lock` for Rust tool execution, walking up the directory tree. |
-
-#### Business Rules
-
-| No | Detail |
-| --- | --- |
-| 1 | Walk up the directory tree looking for `Cargo.toml` (for Clippy/Rustfmt) or `Cargo.lock` (for cargo-audit). |
-| 2 | Return the directory if found; the caller skips the adapter with a warning if not found. |
-| 3 | No directory is created or modified — resolution is read-only. |
+#### Business Logic
+- The feature shall walk up the directory tree looking for `Cargo.toml` for Clippy and Rustfmt, or `Cargo.lock` for cargo-audit.
+- When the manifest file is found, the feature shall return the containing directory; if not found, the adapter shall be skipped with a warning.
+- Working directory resolution shall be strictly read-only, never creating or modifying any file or directory.
 
 #### Edge Cases
+- If neither `Cargo.toml` nor `Cargo.lock` appears in the parent directory chain, the feature shall skip the adapter with a warning.
 
-| No | Detail |
-| --- | --- |
-| 1 | No `Cargo.toml` or `Cargo.lock` anywhere in the parent chain → the adapter is skipped with a warning. |
-
-#### Capability
-
-| No | Detail |
-| --- | --- |
-| 1 | capabilities_cargo_dir_resolver |
-
-#### Protocol
-
-| No | Detail |
-| --- | --- |
-| 1 | ICargoDirProtocol |
-
-#### Method
-
-| No | Detail |
-| --- | --- |
-| 1 | `resolve_cargo_working_dir` |
-
-#### Input
-
-| No | Detail |
-| --- | --- |
-| 1 | Starting path. |
-
-#### Output
-
-| No | Detail |
-| --- | --- |
-| 1 | Absolute path to the resolved cargo working directory, or none. |
-
-#### Error
-
-| No | Detail |
-| --- | --- |
-| 1 | Resolution failure is reported as an adapter error; other adapters continue. |
-
-#### Event
-
-| No | Detail |
-| --- | --- |
-| 1 | None. |
+#### Technical Specification
+| Aspect | Detail |
+|--------|--------|
+| **Input** | Starting target path. Source: Rust adapter. |
+| **Output** | Absolute path to the resolved cargo working directory, or none if not found. Destination: Rust adapter. |
+| **Protocol** | `ICargoDirProtocol` |
+| **Method** | `resolve_cargo_working_dir` |
+| **Event** | None |
+| **Error** | Missing cargo manifest surfaces as an adapter error; remaining adapters continue execution. |
 
 #### Test
-
-| No | Detail |
-| --- | --- |
-| 1 | A path nested in a cargo project resolves to the directory carrying `Cargo.toml`. |
-| 2 | A path with no cargo tree reports none. |
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| Target path is nested inside a cargo project directory | Cargo working directory resolution is executed | The directory containing `Cargo.toml` is returned |
+| Target path has no `Cargo.toml` or `Cargo.lock` in its parent chain | Cargo working directory resolution is executed | None is returned and the adapter logs a skip warning |
+| Cargo working directory resolution is performed | The directory tree is inspected | Zero files or directories are created or modified |
 
 #### Metric
-
-| No | Detail |
-| --- | --- |
-| 1 | One upward walk per invocation. |
-| 2 | Zero files created or modified. |
+| Target Metric | Value |
+|---------------|-------|
+| Upward Directory Walks per Invocation | 1 |
+| Files Created or Modified | 0 |
+| Resolution Determinism | 100% |
 
 ## Public Interface
 
-| Aspect     | Detail |
-|------------|--------|
-| Agent      | agent_external_lint_orchestrator (ExternalLintOrchestrator) |
-| Aggregate  | IExternalLintAggregate — single composite entry point over the feature |
-| Method     | `execute` |
-| Request    | ExternalLintRequest: `ScanAll { path }`, `ScanAllWithContext { path, context }`, `AdapterNames` |
-| Response   | ExternalLintResponse: `Scan { violations }` or `AdapterNames { names }` |
-
-### Protocol API
-
-| Method | Input | Output | Error | Event | Description |
-|---|---|---|---|---|---|
-| `scan` | &FilePath | `LintResultList` | `LinterOperationError` | — | Scan. |
-| `fix` | &FilePath | `ComplianceStatus` | `LinterOperationError` | — | Apply fix. |
-| `exec_cmd_scan` | Vec<String>, FilePath, f64, Option<AdapterName>, &FilePath | `ResponseData` | `LinterOperationError` | — | Exec cmd scan. |
-| `exec_cmd_adapter` | Vec<String>, FilePath, f64, AdapterName | `ResponseData` | `LinterOperationError` | — | Exec cmd adapter. |
-| `js_apply_fix` | &FilePath, &str, &str | `ComplianceStatus` | `LinterOperationError` | — | Js apply fix. |
-| `select_adapters` | bool, bool, bool, bool | `AdapterNameList` | — | — | Select adapters. |
-
-### Aggregate API
-
-| Method | Input | Output | Error | Event | Description |
-|---|---|---|---|---|---|
-| `execute` | ExternalLintRequest | `ExternalLintResponse` | — | — | Single composite entry point over the feature. |
+| Aspect | Detail |
+|--------|--------|
+| Agent | `ExternalLintOrchestrator` |
+| Aggregate | `IExternalLintAggregate` |
+| Method | `execute` |
+| Request | `ExternalLintRequest` (`ScanAll`, `ScanAllWithContext`, `AdapterNames`) |
+| Response | `ExternalLintResponse` (`Scan`, `AdapterNames`) |
 
 ## Reference
 
-| Artifact     | Purpose                                                | Link |
-|--------------|--------------------------------------------------------|------|
-| PRD          | Business goals and scope for external lint adapters    | [PRD.md](../../PRD.md) |
-| Backlog      | Real condition for this feature; specification only here | [BACKLOG.md](BACKLOG.md) |
-| Roadmap      | Timeline and dependencies                              | [ROADMAP.md](../../ROADMAP.md) |
-| Architecture | System boundaries, tech stack, and infra               | [ARCHITECTURE.md](../../ARCHITECTURE.md)|
+| Artifact | Purpose | Link |
+|----------|---------|------|
+| PRD | Business goals, user stories, and scope for external lint adapters | [PRD.md](../../PRD.md) |
+| Backlog | Task tracking, epics, and implementation status for this feature | [BACKLOG.md](./BACKLOG.md) |
+| Roadmap | Phasing, timeline, and dependencies across project releases | [ROADMAP.md](../../ROADMAP.md) |
+| Architecture | System boundaries, tech stack, and vertical slicing structure | [ARCHITECTURE.md](../../ARCHITECTURE.md) |

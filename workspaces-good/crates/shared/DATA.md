@@ -7,11 +7,16 @@ data of its own: callers supply the request, and each feature returns the resolv
 
 ## Data Requirements
 
-### DT-SHAR-001: Protocol shape
+### DT-SHARED-001: Request value object
 
-| Type | Description|
+| Type | Description |
 |------|-------------|
 | Request | The shape callers supply before a run. |
+
+### DT-SHARED-002: Response value object
+
+| Type | Description |
+|------|-------------|
 | Response | The resolved value returned to the caller. |
 
 ## Reference

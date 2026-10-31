@@ -24,6 +24,7 @@ Each functional requirement below implements exactly one capability behind one A
 #### Edge Cases
 - A line diverging from the canonical template fires `line_drift`
 - An H2 not in the template fires `h2_unexpected`
+- An empty Runtime section fires `empty_section`
 
 #### Technical Specification
 
@@ -57,12 +58,12 @@ Each functional requirement below implements exactly one capability behind one A
 #### Business Logic
 - Shall require a `Quick Start` table with columns `Step`, `Action`, `Command`
 - Shall describe what the tool does, every command, and how to install
-- Shall reject spec prose naming `.rs`, `.py`, `.ts`, `.tsx` files
+- Shall reject spec prose that names a source file with a language extension
 - Shall link to `ARCHITECTURE.md`, `TEST.md`, `CONTRIBUTING.md`, `LICENSE` in Reference
 
 #### Edge Cases
 - Quick Start table missing `Command` fires `table_missing_columns`
-- Prose naming `src/lib.rs` fires `source_file_named`
+- Prose that names a source file with a language extension fires `source_file_named`
 - Prose stating "released as v3.8.0" fires `status_leak`
 
 #### Technical Specification
@@ -81,7 +82,7 @@ Each functional requirement below implements exactly one capability behind one A
 | Context | When Action | Then Observable Result |
 |---------|-------------|------------------------|
 | Quick Start table lacks `Command` column | The audit checks table shape | A `table_missing_columns` finding fires |
-| README prose names `src/lib.rs` as implementation | The audit scans `README.md` | A `source_file_named` finding fires |
+| README prose names a source file with a language extension | The audit scans `README.md` | A `source_file_named` finding fires |
 
 #### Metric
 
@@ -102,7 +103,7 @@ Each functional requirement below implements exactly one capability behind one A
 
 #### Edge Cases
 - Missing required H2 fires `h2_missing`
-- Prose naming `agent_doc_orchestrator.rs` fires `source_file_named`
+- Prose that names a source file with a language extension fires `source_file_named`
 
 #### Technical Specification
 
@@ -180,8 +181,8 @@ Each functional requirement below implements exactly one capability behind one A
 
 #### Edge Cases
 - `PRD.md` without `Project Requirements` fires `missing_project_requirements`
-- `PRD.md` naming `src/lib.rs` in scope prose fires `source_file_named`
-- `PRD.md` stating "v3.8.0 released" fires `status_leak`
+- `PRD.md` scope prose that names a source file with a language extension fires `source_file_named`
+- `PRD.md` stating a release version in requirement prose fires `status_leak`
 
 #### Technical Specification
 
@@ -199,8 +200,8 @@ Each functional requirement below implements exactly one capability behind one A
 | Context | When Action | Then Observable Result |
 |---------|-------------|------------------------|
 | `PRD.md` lacks `Project Requirements` | The audit runs `audit_prd` | A `missing_project_requirements` finding fires |
-| `PRD.md` names `crates/cli-commands/src/main.rs` in scope prose | The audit scans `PRD.md` | A `source_file_named` finding fires |
-| `PRD.md` says "v3.8.0 released" in a requirement | The audit scans `PRD.md` | A `status_leak` finding fires |
+| `PRD.md` names a source file with a language extension in scope prose | The audit scans `PRD.md` | A `source_file_named` finding fires |
+| `PRD.md` states a release version in a requirement | The audit scans `PRD.md` | A `status_leak` finding fires |
 
 #### Metric
 
@@ -300,7 +301,7 @@ Each functional requirement below implements exactly one capability behind one A
 
 #### Edge Cases
 - Heading `DT-001` without `SHARED` fires `id_missing_feature_prefix`
-- Prose naming `taxonomy_project_setup_constant.rs` fires `source_file_named`
+- Prose that names a source file with a language extension fires `source_file_named`
 
 #### Technical Specification
 

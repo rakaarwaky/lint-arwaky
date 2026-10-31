@@ -32,9 +32,9 @@ AI agents working in this workspace must know the AES 7-layer naming convention,
 
 | Category    | Command                              | Scope      | CI Gate              |
 |-------------|--------------------------------------|------------|----------------------|
-| Test (all)  | `CARGO_INCREMENTAL=0 cargo nextest run --workspace --lib --tests -j 2`     | All        | ci.yml: Test         |
-| Test (unit) | `CARGO_INCREMENTAL=0 cargo nextest run -p <crate>`                      | One unit   | ci.yml: Test         |
-| Test (file) | `CARGO_INCREMENTAL=0 cargo nextest run -p <crate> --test <file>`        | One file   | ci.yml: Test         |
+| Test (all)  | `CARGO_INCREMENTAL=0 cargo nextest run --workspace --lib --tests -j 2`     | All        | ci.yml: Tests        |
+| Test (unit) | `CARGO_INCREMENTAL=0 cargo nextest run -p <crate>`                      | One unit   | ci.yml: Tests        |
+| Test (file) | `CARGO_INCREMENTAL=0 cargo nextest run -p <crate> --test <file>`        | One file   | ci.yml: Tests        |
 | Lint        | `CARGO_INCREMENTAL=0 cargo fmt --all -- --check`                         | All        | ci.yml: Format       |
 | Type Check  | `CARGO_INCREMENTAL=0 cargo clippy --all-targets -- -D warnings`          | All        | ci.yml: Clippy       |
 | Arch Scan   | `lint-arwaky-cli check .`                                                | All        | ci.yml: Self-Lint    |
