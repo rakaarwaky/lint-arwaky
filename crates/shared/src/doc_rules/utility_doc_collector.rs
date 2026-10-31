@@ -49,6 +49,17 @@ pub fn collect_documents(root: &Path) -> Vec<DocSource> {
         collect_shared_docs(&base, &mut out);
         collect_surface_docs(&base, &mut out);
     }
+    // A member-dir target (`crates`, `modules`, or `packages`) lays its
+    // surface and feature folders out directly under itself; its own
+    // children are where the DESIGN and FRD pairs live.
+    if matches!(
+        root.file_name().and_then(|n| n.to_str()),
+        Some("crates" | "modules" | "packages")
+    ) {
+        collect_surface_docs(root, &mut out);
+        collect_feature_docs(root, &mut out);
+        collect_shared_docs(root, &mut out);
+    }
     out
 }
 

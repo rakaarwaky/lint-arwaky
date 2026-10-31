@@ -46,23 +46,26 @@ workspaces-good/
 
 | Workspace | Language | Files | Violations | False Positives | Expected AES Codes|
 | --------- | -------- | ----- | ---------- | --------------- | ------------------|
-| bad       | Rust     | 156   | ≥ 100 (non-regressing floor) | — | 38 unique codes|
-| bad       | Python   | 160   | ≥ 100 (non-regressing floor) | — | 38 unique codes|
-| bad       | JS/TS    | 114   | ≥ 100 (non-regressing floor) | — | 38 unique codes|
+| bad       | Rust     | 156   | ≥ 100 (non-regressing floor) | — | 41 unique codes|
+| bad       | Python   | 160   | ≥ 100 (non-regressing floor) | — | 41 unique codes|
+| bad       | JS/TS    | 114   | ≥ 100 (non-regressing floor) | — | 41 unique codes|
 | good      | Rust     | 35    | 0          | 0               | —                 |
 | good      | Python   | 42    | 0          | 0               | —                 |
 | good      | JS/TS    | 33    | 0          | 0               | —                 |
 
 > **Note**: workspaces-good must produce exactly 0 violations. If any violation
-> appears, it is a false positive that must be fixed. Bad workspaces must not regress
-> below the documented ≥ 100 violation floor per language.
+> appears, it is a false positive that must be fixed. Bad workspaces must not
+> regress below the documented ≥ 100 violation floor per language.
 >
 > **Reconciled rule count (single source of truth — §3.2):** the product
-> enforces **38 AES rules** total (per ARCHITECTURE.md §13 inventory table
-> and the §3.2 Per-Rule Detection Matrix). `scan` now surfaces **all 38** —
-> including the six doc-invariant codes AES601–AES606, which the doc-audit
-> pass folds into every scan target. The CI "AES Codes Check" gate enforces
-> all 38 unique codes per scan — no safety margin (QA #636).
+> enforces **41 AES rules** total (per ARCHITECTURE.md §13 inventory table
+> and the §3.2 Per-Rule Detection Matrix). `scan` surfaces **all 41** in a
+> whole-workspace scan. Each member folder (`crates`, `modules`, `packages`)
+> carries its own root-doc set so that a per-member scan also surfaces all
+> 41 codes — the linter's doc-audit walk roots at the scan target, so a
+> per-member scan collects root docs from the member directory itself. The
+> CI "AES Codes Check" gate enforces all 41 unique codes per scan — no
+> safety margin (QA #636).
 >
 > **External tools prerequisite**: Python & JS/TS scans require external tools
 > installed (ruff, mypy, bandit, eslint, prettier, tsc, markdownlint-cli2) for
@@ -97,7 +100,7 @@ cd <repo-root>
 cargo run --bin lint-arwaky-cli -- scan .
 ```
 
-> `scan .` runs ALL 7 code linters (naming, import, quality, role, orphan, structure, external) on the lint-arwaky codebase itself. Expected: **0 violations**. Document invariants (AES601–AES606) are audited separately with `docs .`.
+> `scan .` runs ALL 7 code linters (naming, import, quality, role, orphan, structure, external) on the lint-arwaky codebase itself. Expected: **0 violations**. Document invariants (AES601–AES610) are audited separately with `docs .`.
 
 ### 2.2 Scan Test Projects
 
@@ -223,62 +226,77 @@ Thresholds match the §1 Expected Violation Counts table (≥ 100 violations flo
 | Total violations (Rust scan)   | >= 100 | < 100 or 0|
 | Total violations (Python scan) | >= 100 | < 100 or 0|
 | Total violations (JS/TS scan)  | >= 100 | < 100 or 0|
-| Unique AES codes (Rust)        | >= 38  | < 38      |
-| Unique AES codes (Python)      | >= 38  | < 38      |
-| Unique AES codes (JS/TS)       | >= 38  | < 38      |
+| Unique AES codes (crates)      | >= 41  | < 41      |
+| Unique AES codes (modules)     | >= 41  | < 41      |
+| Unique AES codes (packages)    | >= 41  | < 41      |
 | Self-lint violations           | 0      | > 0       |
 | Doc-consistency gate failures  | 0      | > 0       |
 
-> The "Unique AES codes" threshold is the reconciled scan-visible count from
-> §1/§3.2 (all 38 AES rules; AES601–AES606 are now surfaced by the doc-audit
-> pass inside `scan`). The CI "AES Codes Check" step enforces exactly 38
+> The "Unique AES codes" thresholds are the reconciled scan-visible counts
+> from §3.2 (41 AES rules total). Each member folder carries its own
+> root-doc set so that a per-member scan (`scan workspaces-bad/crates`,
+> `scan workspaces-bad/modules`, `scan workspaces-bad/packages`) surfaces
+> all 41 codes. The CI "AES Codes Check" step enforces the 41-code floor
 > with no lower safety margin, so a detection regression in any one of the
-> 38 rules fails CI (QA #636). When rules are added/removed, update §3.2, this table,
-> §1, and the `ci.yml` threshold in lockstep.
+> 41 rules fails CI (QA #636). When rules are added/removed, update §3.2,
+> this table, §1, and the `ci.yml` threshold in lockstep.
 
 ### 3.2 Per-Rule Detection Matrix
 
 Every AES rule MUST produce at least 1 violation in the test workspaces.
 If any rule produces 0 violations, the test project is missing a trigger file.
 
-| Rule   | Description                            | Rust | Python | JS/TS|
-| ------ | -------------------------------------- | ---- | ------ | -----|
-| AES101 | Naming convention                      | ✓   | ✓     | ✓   |
-| AES102 | Suffix/prefix validation               | ✓   | ✓     | ✓   |
-| AES103 | Test/bench file prefix                 | ✓   | ✓     | ✓   |
-| AES201 | Layer dependency violation             | ✓   | ✓     | ✓   |
-| AES202 | Mandatory import missing               | ✓   | ✓     | ✓   |
-| AES203 | Unused import                          | ✓   | ✓     | ✓   |
-| AES204 | Dummy import / function                | ✓   | ✓     | ✓   |
-| AES205 | Circular dependency                    | ✓   | ✓     | ✓   |
-| AES301 | Max line count exceeded                | ✓   | ✓     | ✓   |
-| AES302 | Min line count below                   | ✓   | ✓     | ✓   |
-| AES303 | Missing definitions / dead inheritance | ✓   | ✓     | ✓   |
-| AES304 | Bypass detection                       | ✓   | ✓     | ✓   |
-| AES305 | Duplicate code                         | ✓   | ✓     | ✓   |
-| AES401 | Taxonomy purity                        | ✓   | ✓     | ✓   |
-| AES402 | Contract primitives                    | ✓   | ✓     | ✓   |
-| AES403 | Capability implementation              | ✓   | ✓     | ✓   |
-| AES404 | Utility purity                         | ✓   | ✓     | ✓   |
-| AES405 | Agent composition, delegation, blocks   | ✓   | ✓     | ✓   |
-| AES406 | Surface passive role                   | ✓   | ✓     | ✓   |
-| AES501 | Taxonomy orphan                        | ✓   | ✓     | ✓   |
-| AES502 | Contract orphan                        | ✓   | ✓     | ✓   |
-| AES503 | Capabilities orphan                    | ✓   | ✓     | ✓   |
-| AES504 | Utility orphan                         | ✓   | ✓     | ✓   |
-| AES505 | Agent orphan                           | ✓   | ✓     | ✓   |
-| AES506 | Surface orphan                         | ✓   | ✓     | ✓   |
-| AES601 | FR Format                              | ✓   |       |     |
-| AES602 | Section Structure                      | ✓   |       |     |
-| AES602 | Section Structure — level-3 template parity (`h3_off_template`) | ✓ |  | |
-| AES603 | Spec Purity                            | ✓   |       |     |
-| AES604 | Crosslinks                             | ✓   |       |     |
-| AES605 | Doc Heading Structure                  | ✓   |       |     |
-| AES606 | Doc Template Conformance               | ✓   |       |     |
-| AES701 | Shared folder purity                   | ✓   | ✓     | ✓   |
-| AES702 | Feature folder health                  | ✓   | ✓     | ✓   |
-| AES703 | Surface folder purity                  | ✓   | ✓     | ✓   |
-| AES704 | Test-suite category coverage           | ✓   | ✓     | ✓   |
+| Rule   | Description                            | Rust | Python | JS/TS| Whole Tree¹|
+| ------ | -------------------------------------- | ---- | ------ | ---- | -----------|
+| AES101 | Naming convention                      | ✓   | ✓     | ✓   | ✓          |
+| AES102 | Suffix/prefix validation               | ✓   | ✓     | ✓   | ✓          |
+| AES103 | Test/bench file prefix                 | ✓   | ✓     | ✓   | ✓          |
+| AES201 | Layer dependency violation             | ✓   | ✓     | ✓   | ✓          |
+| AES202 | Mandatory import missing               | ✓   | ✓     | ✓   | ✓          |
+| AES203 | Unused import                          | ✓   | ✓     | ✓   | ✓          |
+| AES204 | Dummy import / function                | ✓   | ✓     | ✓   | ✓          |
+| AES205 | Circular dependency                    | ✓   | ✓     | ✓   | ✓          |
+| AES301 | Max line count exceeded                | ✓   | ✓     | ✓   | ✓          |
+| AES302 | Min line count below                   | ✓   | ✓     | ✓   | ✓          |
+| AES303 | Missing definitions / dead inheritance | ✓   | ✓     | ✓   | ✓          |
+| AES304 | Bypass detection                       | ✓   | ✓     | ✓   | ✓          |
+| AES305 | Duplicate code                         | ✓   | ✓     | ✓   | ✓          |
+| AES401 | Taxonomy purity                        | ✓   | ✓     | ✓   | ✓          |
+| AES402 | Contract primitives                    | ✓   | ✓     | ✓   | ✓          |
+| AES403 | Capability implementation              | ✓   | ✓     | ✓   | ✓          |
+| AES404 | Utility purity                         | ✓   | ✓     | ✓   | ✓          |
+| AES405 | Agent composition, delegation, blocks   | ✓   | ✓     | ✓   | ✓          |
+| AES406 | Surface passive role                   | ✓   | ✓     | ✓   | ✓          |
+| AES501 | Taxonomy orphan                        | ✓   | ✓     | ✓   | ✓          |
+| AES502 | Contract orphan                        | ✓   | ✓     | ✓   | ✓          |
+| AES503 | Capabilities orphan                    | ✓   | ✓     | ✓   | ✓          |
+| AES504 | Utility orphan                         | ✓   | ✓     | ✓   | ✓          |
+| AES505 | Agent orphan                           | ✓   | ✓     | ✓   | ✓          |
+| AES506 | Surface orphan                         | ✓   | ✓     | ✓   | ✓          |
+| AES601 | AGENTS doc invariants                  |  |   |  | ✓          |
+| AES602 | README doc invariants                  |  |   |  | ✓          |
+| AES603 | ARCHITECTURE doc invariants            |  |   |  | ✓          |
+| AES604 | CONTRIBUTING doc invariants            |  |   |  | ✓          |
+| AES605 | PRD doc invariants                     |  |   |  | ✓          |
+| AES606 | ROADMAP doc invariants                 |  |   |  | ✓          |
+| AES607 | BACKLOG doc invariants                 |  |   |  | ✓          |
+| AES608 | DATA doc invariants                    |  |   |  | ✓          |
+| AES609 | FRD doc invariants                     |  |   |  | ✓          |
+| AES610 | DESIGN doc invariants                  |  |   |  | ✓          |
+| AES701 | Shared folder purity                   | ✓   | ✓     | ✓   | ✓          |
+| AES702 | Feature folder health                  | ✓   | ✓     | ✓   | ✓          |
+| AES703 | Surface folder purity                  | ✓   | ✓     | ✓   | ✓          |
+| AES704 | Test-suite category coverage           | ✓   | ✓     | ✓   | ✓          |
+| AES705 | Member-root placement                  | ✓   | ✓     | ✓   | ✓          |
+| AES706 | PR folder mapping                      | ✓   | ✓     | ✓   | ✓          |
+
+¹ The AES6xx doc-invariant codes fire on the root spec documents (AGENTS.md,
+README.md, ARCHITECTURE.md, CONTRIBUTING.md, PRD.md, ROADMAP.md, DATA.md,
+BACKLOG.md, FRD.md, DESIGN.md) via the doc-audit pass folded into `scan`.
+Each member folder carries its own copy of the root docs plus a
+`surface_probe` folder with a DESIGN.md, so a per-member scan
+(`scan workspaces-bad/crates`, `scan workspaces-bad/modules`,
+`scan workspaces-bad/packages`) surfaces all 41 codes individually.
 
 ### 3.3 Negative Tests (must produce 0 violations)
 
@@ -425,7 +443,7 @@ The base codebase must be clean of internal architecture rule violations.
 
 - [ ] **Criteria**: Bad workspaces meet aggregate thresholds (Section 3.1).
 - [ ] **Criteria**: Good workspaces produce 0 violations (false positive test).
-- [ ] **Criteria**: All 38 unique AES codes detected per language (Section 3.2).
+- [ ] **Criteria**: All 41 unique AES codes detected per language (Section 3.2).
 - [ ] **Criteria**: All negative tests pass (Section 3.3).
 - [ ] **Criteria**: All exit code tests pass (Section 3.4).
 

@@ -21,20 +21,14 @@ pub(crate) fn structure_violations_in_scope(
     agg: &ScanAggregates,
 ) -> Vec<ViolationItem> {
     let target_path = std::path::Path::new(target);
-    // The audit resolves the workspace root the same way; mirror that here so
-    // a finding path joins onto the right base.
-    let has_members = ["crates", "modules", "packages"]
-        .iter()
-        .any(|m| target_path.join(m).is_dir());
-    let ws_root: std::path::PathBuf = if has_members {
-        target_path.to_path_buf()
-    } else {
-        target_path
-            .parent()
-            .map(|p| p.to_path_buf())
-            .unwrap_or_else(|| target_path.to_path_buf())
-    };
-
+    // Mirror the audit's ws_root resolution: when the target is a member dir
+    // (`crates`, `modules`, or `packages`), the workspace root is its
+    // parent. The audit anchors findings relative to ws_root, so a member-dir
+    // target resolves them via the parent path; any other target anchors at
+    // itself.
+    let ws_root_buf =
+        shared_structure_rules::utility_structure_parsers::find_workspace_root(target_path);
+    let ws_root = ws_root_buf.as_path();
     crate::surface_structure_action::collect_structure(
         target,
         agg.structure.clone(),
@@ -44,11 +38,12 @@ pub(crate) fn structure_violations_in_scope(
     .unwrap_or_default()
     .into_iter()
     .filter(|v| {
-        // A finding names a folder (AES702) or a file (AES701/AES703); both
-        // resolve under the workspace root. The audit always walks every
-        // member dir under that root, so a member-dir scan target must
-        // additionally keep only the findings inside itself.
-        let resolved = ws_root.join(&v.file.value);
+        let file = std::path::Path::new(&v.file.value);
+        let resolved = if file.is_absolute() {
+            file.to_path_buf()
+        } else {
+            ws_root.join(file)
+        };
         let exists = resolved.is_dir()
             || agg
                 .fs_seam
