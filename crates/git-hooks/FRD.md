@@ -4,7 +4,7 @@
 
 The git-hooks feature sits in the capability layer and is invoked by the CLI surface for pre-commit enforcement, hook installation, hook removal, and configuration bootstrap. It orchestrates git diff inspection and lint pipeline execution over the changed-file set, writing and removing the pre-commit hook file inside the repository's hook directory.
 
-```
+```text
 [CLI surface] --> [git-hooks orchestrator]
                    |-- diff & lint check  --> [git diff / lint pipeline]
                    |-- install hook       --> [repo hook directory]
