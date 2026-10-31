@@ -1,21 +1,18 @@
-# ROADMAP — Gap
+# ROADMAP
 
-## Progress Overview
+## Current Condition
 
-Gap workspace: roadmap intentionally carries violations.
+State machine restated here.
 
-## Roadmap Status
+## State Definitions
 
-### PR-GAP-001: Fixtures intentionally off-template
+State machine restated here.
 
-| Aspect       | Detail                                    |
-|--------------|-------------------------------------------|
-| Priority     | P0                                          |
-| State        | Not a valid state token                 |
-| Backlog      | [BACKLOG.md](BACKLOG.md)                    |
+## Feature Roll-up
+
+- FR-SHAR: shared layer feature
+- FR-CONF: config-system feature
 
 ## Reference
-
-| Artifact | Purpose | Link |
-|----------|---------|------|
-| PRD | Product requirements | [PRD.md](PRD.md) |
+| Prd | {Link to PRD.md} | [{link}](PRD.md)|
+| Architecture | {Link to ARCHITECTURE.md} | [{link}](ARCHITECTURE.md)|

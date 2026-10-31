@@ -6,7 +6,7 @@ Calculator is implemented, tested, and gated. Nothing is blocked.
 
 ## Backlog Status
 
-### FR-Calculator-001: Check the request
+### FR-CALCULATOR-001: Check the request
 
 #### State
 
@@ -38,7 +38,7 @@ Calculator is implemented, tested, and gated. Nothing is blocked.
 |----|--------|
 | 1  | 2026-09-29 |
 
-### FR-Calculator-002: Run the request
+### FR-CALCULATOR-002: Run the request
 
 #### State
 
