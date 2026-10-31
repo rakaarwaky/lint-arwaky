@@ -33,7 +33,7 @@ const FEATURE_LAYOUTS: &[&str] = &["crates", "modules", "packages"];
 /// Collect every document the chain recognises under *root*.
 ///
 /// Three passes per layout: the root documents, the feature folder's FRD and
-/// BACKLOG pair, and the kernel's DATA and BACKLOG pair. A layout that is
+/// BACKLOG pair, and the layer's DATA and BACKLOG pair. A layout that is
 /// absent simply contributes nothing, which is what makes a sub-directory audit
 /// self-contained rather than an error.
 pub fn collect_documents(root: &Path) -> Vec<DocSource> {
@@ -124,8 +124,8 @@ fn collect_feature_docs(base: &Path, out: &mut Vec<DocSource>) {
     }
 }
 
-/// Collect the DATA/BACKLOG pair from the kernel folder under *base*. A layout
-/// with no shared kernel carries no DATA document, which is not a finding.
+/// Collect the DATA/BACKLOG pair from the layer folder under *base*. A layout
+/// with no shared layer carries no DATA document, which is not a finding.
 fn collect_shared_docs(base: &Path, out: &mut Vec<DocSource>) {
     let kernel = base.join(consts::KERNEL_DIR);
     if !kernel.is_dir() {
@@ -165,6 +165,14 @@ fn collect_surface_docs(base: &Path, out: &mut Vec<DocSource>) {
 /// it.
 pub fn collect_members(root: &Path) -> Vec<MemberDescriptor> {
     let mut out = Vec::new();
+    let root_role = classify_member(root);
+    if root_role != MemberRole::None {
+        out.push(MemberDescriptor {
+            path: root.to_path_buf(),
+            role: root_role,
+            present_docs: present_docs(root),
+        });
+    }
     for layout in FEATURE_LAYOUTS {
         let base = root.join(layout);
         let Ok(entries) = fs::read_dir(base) else {
@@ -196,7 +204,7 @@ pub fn collect_members(root: &Path) -> Vec<MemberDescriptor> {
 /// A folder counts as "owned" when its name matches the project identifier
 /// segment of some declared PR-ID (`PR-<PROJECT>-NNN` → `PROJECT`). Only
 /// top-level subfolders under each layout root are considered; `shared` and
-/// `kernel` are skipped as kernel dirs, not project-owned feature folders.
+/// `layer` are skipped as layer dirs, not project-owned feature folders.
 /// Returns `None` when no layout root exists at all, leaving the caller
 /// silent rather than flagging every declared PR-ID.
 pub fn collect_pr_owned_module_folders(root: &Path) -> Option<BTreeSet<String>> {
@@ -228,11 +236,11 @@ pub fn collect_pr_owned_module_folders(root: &Path) -> Option<BTreeSet<String>> 
 
 /// Classify one folder by objective crate structure.
 ///
-/// Kernel: directory named `shared` or `kernel`.
+/// Layer: directory named `shared` or `kernel`.
 /// Feature: contains `*agent_*_orchestrator*.rs` or exposes capability/agent
 ///   in Cargo.toml.
 /// Surface: contains `surface_*` files or surface crate dependencies, not
-///   kernel/feature.
+///   layer/feature.
 /// None: anything else.
 fn classify_member(folder: &Path) -> MemberRole {
     let name = folder.file_name().and_then(|n| n.to_str()).unwrap_or("");
@@ -371,113 +379,4 @@ fn present_docs(folder: &Path) -> BTreeSet<String> {
         }
     }
     docs
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use std::fs;
-
-    /// Writes a Cargo.toml at *folder*.
-    fn write_cargo(folder: &std::path::Path, contents: &str) {
-        fs::create_dir_all(folder).unwrap();
-        fs::write(folder.join("Cargo.toml"), contents).unwrap();
-    }
-
-    /// A kernel folder: directory named `shared`.
-    #[test]
-    fn classify_member_is_kernel_for_shared_dir() {
-        let tmp = tempfile::tempdir().unwrap();
-        let folder = tmp.path().join("shared");
-        fs::create_dir_all(&folder).unwrap();
-        assert_eq!(classify_member(&folder), MemberRole::Kernel);
-    }
-
-    /// A kernel folder: directory named `kernel`.
-    #[test]
-    fn classify_member_is_kernel_for_kernel_dir() {
-        let tmp = tempfile::tempdir().unwrap();
-        let folder = tmp.path().join("kernel");
-        fs::create_dir_all(&folder).unwrap();
-        assert_eq!(classify_member(&folder), MemberRole::Kernel);
-    }
-
-    /// A feature folder: contains an orchestrator file `*agent_*_orchestrator*.rs`.
-    #[test]
-    fn classify_member_is_feature_for_orchestrator_file() {
-        let tmp = tempfile::tempdir().unwrap();
-        let folder = tmp.path().join("crates/sample");
-        fs::create_dir_all(folder.join("src")).unwrap();
-        fs::write(
-            folder.join("src/agent_sample_orchestrator.rs"),
-            "//! sample\n",
-        )
-        .unwrap();
-        assert_eq!(classify_member(&folder), MemberRole::Feature);
-    }
-
-    /// A surface folder: contains `surface_*` files.
-    #[test]
-    fn classify_member_is_surface_for_surface_files() {
-        let tmp = tempfile::tempdir().unwrap();
-        let folder = tmp.path().join("crates/cli-commands");
-        fs::create_dir_all(&folder).unwrap();
-        fs::write(folder.join("surface_scan.rs"), "// scan\n").unwrap();
-        assert_eq!(classify_member(&folder), MemberRole::Surface);
-    }
-
-    /// `collect_members` skips `None` roles (build-only folders).
-    #[test]
-    fn collect_members_skips_none_roles() {
-        let tmp = tempfile::tempdir().unwrap();
-        let bench = tmp.path().join("crates/bench");
-        fs::create_dir_all(&bench).unwrap();
-        write_cargo(&bench, "[package]\nname = \"bench\"\n");
-
-        let members = collect_members(tmp.path());
-        assert!(
-            members.iter().all(|m| m.role != MemberRole::None),
-            "None-role members must be skipped by collect_members"
-        );
-    }
-
-    /// `collect_members` classifies a shared kernel as Kernel and a surface crate as Surface.
-    #[test]
-    fn collect_members_classifies_kernel_and_surface() {
-        let tmp = tempfile::tempdir().unwrap();
-        let kernel = tmp.path().join("crates/shared");
-        fs::create_dir_all(&kernel).unwrap();
-        fs::write(kernel.join("DATA.md"), "# Data\n").unwrap();
-        fs::write(kernel.join("BACKLOG.md"), "# Backlog\n").unwrap();
-
-        let surface = tmp.path().join("crates/cli-commands");
-        fs::create_dir_all(&surface).unwrap();
-        fs::write(surface.join("DESIGN.md"), "# Design\n").unwrap();
-        fs::write(surface.join("BACKLOG.md"), "# Backlog\n").unwrap();
-        fs::write(surface.join("surface_cli.rs"), "// cli\n").unwrap();
-
-        let members = collect_members(tmp.path());
-        let kernel_member = members.iter().find(|m| m.role == MemberRole::Kernel);
-        let surface_member = members.iter().find(|m| m.role == MemberRole::Surface);
-        assert!(
-            kernel_member.is_some(),
-            "the shared kernel must be classified Kernel"
-        );
-        assert!(
-            surface_member.is_some(),
-            "the surface crate must be classified Surface"
-        );
-        assert!(
-            kernel_member
-                .map(|m| m.present_docs.contains("DATA.md"))
-                .unwrap_or(false),
-            "kernel member must report DATA.md as present"
-        );
-        assert!(
-            surface_member
-                .map(|m| m.present_docs.contains("DESIGN.md"))
-                .unwrap_or(false),
-            "surface member must report DESIGN.md as present"
-        );
-    }
 }

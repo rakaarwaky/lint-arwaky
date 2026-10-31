@@ -22,9 +22,11 @@ description: "Lint Arwaky operational guide."
 
 ## Project Structure
 
-| Path       | Purpose              |
-|------------|----------------------|
-| {path}     | {what lives here}    |
+```text
+.
+├── <path>   # <what lives here>
+└── <path>   # <what lives here>
+```
 
 ## Commands
 
@@ -54,6 +56,6 @@ description: "Lint Arwaky operational guide."
 |--------------|--------------------------------------------|------|
 | PRD          | {Business goals, user stories, and scope}  | [PRD.md](PRD.md) |
 | FRD          | {Functional requirements specification}    | [FRD.md](FRD.md) |
-| DATA         | {Data shapes and kernel definitions}        | [DATA.md](DATA.md) |
+| DATA         | {Data shapes and layer definitions}        | [DATA.md](DATA.md) |
 | DESIGN       | {UI/UX and visual system}                  | [DESIGN.md](DESIGN.md) |
 | Architecture | {System boundaries, tech stack, and infra} | [ARCHITECTURE.md](ARCHITECTURE.md) |

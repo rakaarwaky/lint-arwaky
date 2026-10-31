@@ -6,27 +6,23 @@ Multiplication is implemented, tested, and gated. Nothing is blocked.
 
 ## Backlog Status
 
-### {FR-MULTIPLICATION-001}
+### FR-MULTIPLICATION-001: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
 | State        | Ready                                      |
 | Done         | —                                          |
 | In Progress  | None                                       |
-| Blocked      | None                                       |
-| Next         | —                                          |
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
-### {FR-MULTIPLICATION-002}
+### FR-MULTIPLICATION-002: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
 | State        | Ready                                      |
 | Done         | —                                          |
 | In Progress  | None                                       |
-| Blocked      | None                                       |
-| Next         | —                                          |
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 

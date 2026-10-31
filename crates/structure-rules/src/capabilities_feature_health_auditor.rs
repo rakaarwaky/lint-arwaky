@@ -238,8 +238,8 @@ fn missing_docs<'a>(folder: &std::path::Path, names: &'a [&'a str]) -> Vec<&'a s
 }
 
 /// AES702 mirror check: a feature folder's module name must exist as a
-/// subfolder under its member's `shared/src/`. The shared kernel holds the
-/// feature's contract and taxonomy modules, so a feature with no kernel
+/// subfolder under its member's `shared/src/`. The shared layer holds the
+/// feature's contract and taxonomy modules, so a feature with no layer
 /// subfolder has no home for them. Surface folders never reach this check —
 /// their shared subfolders are optional.
 fn check_feature_shared_mirror(
@@ -250,7 +250,7 @@ fn check_feature_shared_mirror(
 ) {
     let module = folder_name(folder).replace('-', "_");
     let kernel_src = member.join(consts::KERNEL_DIR).join("src");
-    // A missing kernel (`shared/src/`) means no mirror can exist for the
+    // A missing layer (`shared/src/`) means no mirror can exist for the
     // feature, so the finding fires rather than the check skipping.
     if utility_structure_parsers::subdirectory_names(&kernel_src)
         .into_iter()
@@ -263,10 +263,10 @@ fn check_feature_shared_mirror(
             consts::RULE_CODE_FEATURE_HEALTH,
             consts::FEATURE_HEALTH_VIOLATION_MISSING_SHARED_SUBFOLDER,
             rel.to_string(),
-            format!("feature folder '{rel}' has no mirror subfolder '{module}' in the shared kernel"),
+            format!("feature folder '{rel}' has no mirror subfolder '{module}' in the shared layer"),
         )
         .with_reason(
-            "A feature folder's contract and taxonomy modules live in the shared kernel under a subfolder named after the feature, so a feature without that subfolder has no home for its kernel modules.",
+            "A feature folder's contract and taxonomy modules live in the shared layer under a subfolder named after the feature, so a feature without that subfolder has no home for its layer modules.",
             format!("Create the '{module}/' subfolder under '{member_display}/shared/src/'.", member_display = member.display()),
         ),
     );

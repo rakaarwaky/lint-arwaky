@@ -14,47 +14,41 @@ Last Updated: 2026-09-29
 
 ## Backlog Status
 
-### {FR-FileWatch-001}
+### FR-FileWatch-001
 
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | FileWatch                                      |
-| In Progress  | None                                       |
-| Blocked      | None                                       |
-| Next         | Ship                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | FileWatch |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
-### {FR-FileWatch-002}
+### FR-FileWatch-002
 
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | FileWatch                                      |
-| In Progress  | None                                       |
-| Blocked      | None                                       |
-| Next         | Ship                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | FileWatch |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
-### {FR-FileWatch-003}
+### FR-FileWatch-003
 
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | FileWatch                                      |
-| In Progress  | None                                       |
-| Blocked      | None                                       |
-| Next         | Ship                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | FileWatch |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
 ## Reference
 
-| Artifact | Purpose | Link|
-|----------|---------|------|
-| PRD.md | Product requirements | [PRD.md](../../PRD.md)|
-| FRD.md | Feature requirements | [FRD.md](FRD.md)|
-| ROADMAP.md | Roadmap status | [ROADMAP.md](../../ROADMAP.md)|
-| ARCHITECTURE.md | Layer contract | [ARCHITECTURE.md](../../ARCHITECTURE.md)|
+| Artifact | Purpose | Link |
+| ---------- | --------- | ------ |
+| PRD.md | Product requirements | [PRD.md](../../PRD.md) |
+| FRD.md | Feature requirements | [FRD.md](FRD.md) |
+| ROADMAP.md | Roadmap status | [ROADMAP.md](../../ROADMAP.md) |
+| ARCHITECTURE.md | Layer contract | [ARCHITECTURE.md](../../ARCHITECTURE.md) |

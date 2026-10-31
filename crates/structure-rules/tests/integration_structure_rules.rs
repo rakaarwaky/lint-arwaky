@@ -39,7 +39,7 @@ fn has(findings: &[(String, String)], code: &str, violation_type: &str) -> bool 
 }
 
 /// A complete feature folder: both layers plus its doc pair, and the shared
-/// kernel subfolder that mirrors the feature.
+/// layer subfolder that mirrors the feature.
 fn write_feature(root: &Path, layout: &str, name: &str) {
     let feature = root.join(layout).join(name);
     write(
@@ -56,7 +56,7 @@ fn write_feature(root: &Path, layout: &str, name: &str) {
     );
     write(&feature.join("FRD.md"), "# FRD\n");
     write(&feature.join("BACKLOG.md"), "# BACKLOG\n");
-    // The shared kernel mirror every feature owes (AES702)
+    // The shared layer mirror every feature owes (AES702)
     write(
         &root
             .join(layout)
@@ -101,7 +101,7 @@ fn container_orchestrator_answers_a_request_over_a_workspace() {
     let root = tmp.path();
     write_feature(root, "crates", "calc");
     write_complete_test_suite(root, "crates", "calc");
-    // write_feature creates the shared mirror subfolder, so the kernel now owes
+    // write_feature creates the shared mirror subfolder, so the layer now owes
     // its doc pair; a complete workspace supplies it.
     write(&root.join("crates/shared/DATA.md"), "# DATA\n");
     write(&root.join("crates/shared/BACKLOG.md"), "# BACKLOG\n");
@@ -121,7 +121,7 @@ fn container_reaches_every_auditor_seam() {
     let tmp = tempfile::tempdir().expect("temp dir must be creatable");
     let root = tmp.path();
 
-    // AES701 — a shared kernel holding a capability file.
+    // AES701 — a shared layer holding a capability file.
     write(
         &root.join("crates/shared/src/capabilities_stray_analyzer.rs"),
         "pub struct Stray;\n",
@@ -205,7 +205,7 @@ fn container_stays_silent_on_a_workspace_whose_every_folder_is_complete() {
     let tmp = tempfile::tempdir().expect("temp dir must be creatable");
     let root = tmp.path();
 
-    // A shared kernel holding only permitted layers, with its doc pair.
+    // A shared layer holding only permitted layers, with its doc pair.
     write(
         &root.join("crates/shared/src/taxonomy_domain_vo.rs"),
         "pub struct Domain;\n",

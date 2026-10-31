@@ -1,0 +1,458 @@
+// PURPOSE: H4 aspect entry-table detection for AES606 template conformance.
+// Shared by the FRD and PRD per-doc capabilities: every item H3 under
+// `Functional Requirements` / `Project Requirements` mandates per-aspect H4
+// subsections whose `| No | Detail |` tables carry contiguous numbering and
+// the bounded/open-ended row count the template fixes. Pure functions — no
+// checker state — so both capabilities consume the same decision and cannot
+// drift. Lives in the shared utility layer (AES201: capability does not
+// import capability). Pure defect data — no DocFinding construction or
+// rule_code parameter.
+
+use crate::taxonomy_doc_section_vo::Section;
+use std::collections::HashSet;
+
+// ─── Defect data ─────────────────────────────────────────────────────────────
+pub use crate::taxonomy_doc_rules_defect_vo::AspectEntryDefect;
+
+fn normalize_heading(title: &str) -> String {
+    let lowered = title.to_lowercase();
+    let stripped: String = lowered
+        .chars()
+        .map(|c| {
+            if c.is_alphanumeric() || c.is_whitespace() {
+                c
+            } else {
+                ' '
+            }
+        })
+        .collect();
+    stripped.split_whitespace().collect::<Vec<_>>().join(" ")
+}
+
+fn h3_subsections(section: &Section) -> Vec<Section> {
+    let mut out = Vec::new();
+    let lines: Vec<&str> = section.body.lines().collect();
+    let mut i = 0;
+    while i < lines.len() {
+        let line = lines[i];
+        if line.starts_with("### ") && !line.starts_with("#### ") {
+            let title = line.trim_start_matches('#').trim().to_string();
+            let start_line = section.line + i + 1;
+            let mut body_lines = Vec::new();
+            i += 1;
+            while i < lines.len() {
+                let inner = lines[i];
+                if inner.starts_with('#') {
+                    let level = inner.chars().take_while(|&c| c == '#').count();
+                    if level <= 3 {
+                        break;
+                    }
+                }
+                body_lines.push(inner);
+                i += 1;
+            }
+            out.push(Section {
+                level: 3,
+                title,
+                body: body_lines.join("\n"),
+                line: start_line,
+            });
+            continue;
+        }
+        i += 1;
+    }
+    out
+}
+
+fn h4_subsections(section: &Section) -> Vec<Section> {
+    let mut out = Vec::new();
+    let lines: Vec<&str> = section.body.lines().collect();
+    let mut i = 0;
+    while i < lines.len() {
+        let line = lines[i];
+        if line.starts_with("#### ") {
+            let title = line.trim_start_matches('#').trim().to_string();
+            let start_line = section.line + i + 1;
+            let mut body_lines = Vec::new();
+            i += 1;
+            while i < lines.len() {
+                let inner = lines[i];
+                if inner.starts_with('#') {
+                    let level = inner.chars().take_while(|&c| c == '#').count();
+                    if level <= 4 {
+                        break;
+                    }
+                }
+                body_lines.push(inner);
+                i += 1;
+            }
+            out.push(Section {
+                level: 4,
+                title,
+                body: body_lines.join("\n"),
+                line: start_line,
+            });
+            continue;
+        }
+        i += 1;
+    }
+    out
+}
+
+fn has_any_table(body: &str) -> bool {
+    let lines = body.lines().collect::<Vec<_>>();
+    lines.iter().enumerate().any(|(i, line)| {
+        if !line.trim().starts_with('|') || i == 0 || !is_table_separator(line) {
+            return false;
+        }
+        lines[..i].iter().any(|prev| prev.trim().starts_with('|'))
+    })
+}
+
+fn is_table_separator(line: &str) -> bool {
+    let t = line.trim();
+    if !t.starts_with('|') {
+        return false;
+    }
+    let inner = t
+        .trim_start_matches(['|', ' '])
+        .trim_end_matches(['|', ' '])
+        .split('|')
+        .map(|cell| cell.trim())
+        .collect::<Vec<_>>();
+    !inner.is_empty()
+        && inner
+            .iter()
+            .all(|cell| !cell.is_empty() && cell.chars().all(|c| c == '-' || c == ':'))
+        && inner.iter().any(|cell| cell.contains('-'))
+}
+
+fn header_extra_columns(body: &str, columns: &[&str]) -> Option<Vec<String>> {
+    for line in body.lines() {
+        let trimmed = line.trim();
+        if !trimmed.starts_with('|') {
+            continue;
+        }
+        let cells: Vec<String> = trimmed
+            .trim_matches('|')
+            .split('|')
+            .map(|c| c.trim().to_lowercase())
+            .collect();
+        if !columns
+            .iter()
+            .all(|want| cells.iter().any(|cell| cell.contains(&want.to_lowercase())))
+        {
+            continue;
+        }
+        let extras: Vec<String> = cells
+            .iter()
+            .filter(|cell| !columns.iter().any(|c| cell.contains(&c.to_lowercase())))
+            .cloned()
+            .collect();
+        return (!extras.is_empty()).then_some(extras);
+    }
+    None
+}
+
+fn first_column_values(body: &str) -> HashSet<String> {
+    let mut values = HashSet::new();
+    let mut header_seen = false;
+    for raw in body.lines() {
+        let trimmed = raw.trim();
+        if !trimmed.starts_with('|') {
+            continue;
+        }
+        let cells: Vec<&str> = trimmed
+            .trim_matches('|')
+            .split('|')
+            .map(str::trim)
+            .collect();
+        if !header_seen {
+            header_seen = true;
+            continue;
+        }
+        if is_table_separator(trimmed) {
+            continue;
+        }
+        if let Some(first) = cells.first() {
+            if !first.is_empty() {
+                values.insert(first.to_string());
+            }
+        }
+    }
+    values
+}
+
+/// routed to `detect_entry_tables` instead.
+pub fn detect_aspect_entry_tables(
+    parsed: &[Section],
+    parent_h2: &str,
+    entry_re: &regex::Regex,
+    aspects: &[&str],
+    open: &[&str],
+    seed_min: &[(&str, usize)],
+    is_prd: bool,
+) -> Vec<AspectEntryDefect> {
+    let mut defects = Vec::new();
+    let Some(parent) = parsed
+        .iter()
+        .find(|s| s.level == 2 && normalize_heading(&s.title) == normalize_heading(parent_h2))
+    else {
+        return defects;
+    };
+    for h3 in h4_candidate_entries(parsed, parent, entry_re) {
+        let h4s = h4_subsections(&h3);
+        let present: Vec<&Section> = h4s
+            .iter()
+            .filter(|s| aspects.iter().any(|a| *a == s.title))
+            .collect();
+
+        // Presence: every expected aspect H4 must exist under the entry.
+        for aspect in aspects {
+            if !h4s.iter().any(|s| s.title == *aspect) {
+                defects.push(AspectEntryDefect::MissingAspect {
+                    line: h3.line,
+                    h3_title: h3.title.clone(),
+                    aspect: aspect.to_string(),
+                });
+            }
+        }
+
+        // Order: expected-aspect H4s must follow canonical order.
+        let mut order_mismatch = false;
+        let mut mismatch_line = h3.line;
+        for (expected, h4_sec) in aspects.iter().zip(present.iter()) {
+            if *expected != h4_sec.title.as_str() {
+                order_mismatch = true;
+                mismatch_line = h4_sec.line;
+                break;
+            }
+        }
+        if order_mismatch {
+            defects.push(AspectEntryDefect::OrderMismatch {
+                line: mismatch_line,
+                h3_title: h3.title.clone(),
+                aspects: aspects.iter().map(|&a| a.to_string()).collect(),
+            });
+        }
+
+        // Per-aspect body checks.
+        for aspect in aspects {
+            let Some(h4) = h4s.iter().find(|s| s.title == *aspect) else {
+                continue;
+            };
+            if is_prd {
+                if h4.body.trim().is_empty() {
+                    defects.push(AspectEntryDefect::EmptyBody {
+                        line: h4.line,
+                        aspect: aspect.to_string(),
+                        h3_title: h3.title.clone(),
+                    });
+                }
+                continue;
+            }
+            let Some(min) = seed_min.iter().find(|(n, _)| n == aspect).map(|&(_, m)| m) else {
+                continue;
+            };
+            let open_min = open.contains(aspect).then_some(min);
+            defects.extend(detect_aspect_table(&h3, h4, aspect, open_min, min));
+        }
+    }
+    defects
+}
+
+/// The entry H3s under *parent* whose titles match *entry_re*, excluding any
+/// legacy entry that already carries a single `| Aspect | Detail |` table
+/// (that shape is handled by `detect_entry_tables` instead of the H4 aspect
+/// template). PRD entries never use the legacy shape.
+fn h4_candidate_entries(
+    _parsed: &[Section],
+    parent: &Section,
+    entry_re: &regex::Regex,
+) -> Vec<Section> {
+    let mut out = Vec::new();
+    for h3 in h3_subsections(parent) {
+        if !entry_re.is_match(&h3.title) {
+            continue;
+        }
+        if has_any_table(&h3.body)
+            && header_extra_columns(&h3.body, &["Aspect", "Detail"]).is_none()
+        {
+            let columns_match = first_column_values(&h3.body)
+                .iter()
+                .any(|v| v.eq_ignore_ascii_case("aspect"))
+                && first_column_values(&h3.body)
+                    .iter()
+                    .any(|v| v.eq_ignore_ascii_case("detail"));
+            if columns_match {
+                continue; // legacy Aspect|Detail table; not an H4-aspect entry
+            }
+        }
+        out.push(h3);
+    }
+    out
+}
+
+/// One aspect H4's `| No | Detail |` table: presence, exact header,
+/// contiguous numbering, row count (bounded exact / open-ended minimum),
+/// and non-empty `Detail` cells.
+///
+/// `open`: `None` = bounded exact `seed_min`; `Some(min)` = open-ended,
+/// at least `min` rows (numbered rows only — `∞` is not written as a marker row).
+pub fn detect_aspect_table(
+    h3: &Section,
+    h4: &Section,
+    aspect: &str,
+    open: Option<usize>,
+    seed_min: usize,
+) -> Vec<AspectEntryDefect> {
+    let mut defects = Vec::new();
+    if !has_any_table(&h4.body) {
+        defects.push(AspectEntryDefect::NotATable {
+            line: h4.line,
+            aspect: aspect.to_string(),
+            h3_title: h3.title.clone(),
+        });
+        return defects;
+    }
+
+    // Header must be exactly `| No | Detail |`.
+    let Some(header_cells) = h4
+        .body
+        .lines()
+        .map(str::trim)
+        .find(|l| l.starts_with('|'))
+        .map(|l| {
+            l.trim_matches('|')
+                .split('|')
+                .map(str::trim)
+                .collect::<Vec<_>>()
+        })
+    else {
+        return defects;
+    };
+    let missing: Vec<&str> = ["No", "Detail"]
+        .into_iter()
+        .filter(|label| {
+            !header_cells
+                .iter()
+                .any(|cell| cell.to_lowercase().contains(&label.to_lowercase()))
+        })
+        .collect();
+    let extras: Vec<&str> = header_cells
+        .iter()
+        .filter(|cell| {
+            let c = cell.to_lowercase();
+            !c.contains("no") && !c.contains("detail")
+        })
+        .copied()
+        .collect();
+    if !missing.is_empty() {
+        defects.push(AspectEntryDefect::HeaderMissing {
+            line: h4.line,
+            aspect: aspect.to_string(),
+        });
+        return defects;
+    }
+    if !extras.is_empty() {
+        defects.push(AspectEntryDefect::HeaderExtra {
+            line: h4.line,
+            aspect: aspect.to_string(),
+            extras: extras.iter().map(|s| s.to_string()).collect(),
+        });
+        return defects;
+    }
+
+    // Inline row scan: skip header + separator + non-pipe lines;
+    // collect (No, Detail) for every data row.
+    let mut rows: Vec<(String, &str)> = Vec::new();
+    let mut header_seen = false;
+    for line in h4.body.lines() {
+        let trimmed = line.trim();
+        if !trimmed.starts_with('|') {
+            continue;
+        }
+        let cells: Vec<&str> = trimmed
+            .trim_matches('|')
+            .split('|')
+            .map(str::trim)
+            .collect();
+        if cells.len() < 2 {
+            continue;
+        }
+        if !header_seen {
+            header_seen = true;
+            continue;
+        }
+        let is_separator = cells
+            .iter()
+            .all(|c| c.chars().all(|c| c == '-' || c == ':' || c.is_whitespace()));
+        if is_separator {
+            continue;
+        }
+        rows.push((cells[0].to_string(), cells[1]));
+    }
+    let numbered: Vec<&(String, &str)> = rows
+        .iter()
+        .filter(|(no, _)| no.chars().next().is_some_and(|c| c.is_ascii_digit()))
+        .collect();
+
+    // Numbering: 1, 2, … N with no gaps.
+    let mut numbering_ok = true;
+    for (idx, row) in numbered.iter().enumerate() {
+        if row.0 != (idx + 1).to_string() {
+            numbering_ok = false;
+            break;
+        }
+    }
+    if !numbering_ok {
+        defects.push(AspectEntryDefect::RowNumbering {
+            line: h4.line,
+            aspect: aspect.to_string(),
+            h3_title: h3.title.clone(),
+        });
+    }
+
+    let total = numbered.len();
+    let count_violation = match open {
+        Some(min) => total < min,
+        None => total != seed_min,
+    };
+    if count_violation {
+        match open {
+            Some(min) => defects.push(AspectEntryDefect::RowMinimum {
+                line: h4.line,
+                aspect: aspect.to_string(),
+                h3_title: h3.title.clone(),
+                total,
+                min,
+            }),
+            None => defects.push(AspectEntryDefect::RowCount {
+                line: h4.line,
+                aspect: aspect.to_string(),
+                h3_title: h3.title.clone(),
+                total,
+                seed_min,
+            }),
+        }
+    }
+
+    // Empty or placeholder Detail cells on every numbered row: a lone dash
+    // cell carries no content, so it fires like an empty one.
+    for (no, detail) in rows.iter() {
+        let trimmed = detail.trim();
+        if !trimmed.is_empty() && !matches!(trimmed, "—" | "–" | "-") {
+            continue;
+        }
+        if !no.chars().next().is_some_and(|c| c.is_ascii_digit()) {
+            continue;
+        }
+        defects.push(AspectEntryDefect::EmptyDetailCell {
+            line: h4.line,
+            aspect: aspect.to_string(),
+            row_no: no.clone(),
+        });
+    }
+
+    defects
+}

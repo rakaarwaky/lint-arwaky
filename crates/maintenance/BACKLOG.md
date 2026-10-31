@@ -14,107 +14,91 @@ Last Updated: 2026-09-30
 
 ## Backlog Status
 
-### {FR-Maintenance-001}
+### FR-Maintenance-001
 
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | Maintenance                                      |
-| In Progress  | None                                       |
-| Blocked      | None                                       |
-| Next         | Ship                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | Maintenance |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
-### {FR-Maintenance-002}
+### FR-Maintenance-002
 
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | Maintenance                                      |
-| In Progress  | None                                       |
-| Blocked      | None                                       |
-| Next         | Ship                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | Maintenance |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
-### {FR-Maintenance-003}
+### FR-Maintenance-003
 
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | Maintenance                                      |
-| In Progress  | None                                       |
-| Blocked      | None                                       |
-| Next         | Ship                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | Maintenance |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
-### {FR-Maintenance-004}
+### FR-Maintenance-004
 
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | Maintenance                                      |
-| In Progress  | None                                       |
-| Blocked      | None                                       |
-| Next         | Ship                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | Maintenance |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
-### {FR-Maintenance-005}
+### FR-Maintenance-005
 
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | Maintenance                                      |
-| In Progress  | None                                       |
-| Blocked      | None                                       |
-| Next         | Ship                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | Maintenance |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
-### {FR-Maintenance-006}
+### FR-Maintenance-006
 
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | Maintenance                                      |
-| In Progress  | None                                       |
-| Blocked      | None                                       |
-| Next         | Ship                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | Maintenance |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
-### {FR-Maintenance-007}
+### FR-Maintenance-007
 
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | Maintenance                                      |
-| In Progress  | None                                       |
-| Blocked      | None                                       |
-| Next         | Ship                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | Maintenance |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
-### {FR-Maintenance-008}
+### FR-Maintenance-008
 
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | Maintenance                                      |
-| In Progress  | None                                       |
-| Blocked      | None                                       |
-| Next         | Ship                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | Maintenance |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
 ## Reference
 
-| Artifact | Purpose | Link|
-|----------|---------|------|
-| PRD.md | Product requirements | [PRD.md](../../PRD.md)|
-| FRD.md | Feature requirements | [FRD.md](FRD.md)|
-| ROADMAP.md | Roadmap status | [ROADMAP.md](../../ROADMAP.md)|
-| ARCHITECTURE.md | Layer contract | [ARCHITECTURE.md](../../ARCHITECTURE.md)|
+| Artifact | Purpose | Link |
+| ---------- | --------- | ------ |
+| PRD.md | Product requirements | [PRD.md](../../PRD.md) |
+| FRD.md | Feature requirements | [FRD.md](FRD.md) |
+| ROADMAP.md | Roadmap status | [ROADMAP.md](../../ROADMAP.md) |
+| ARCHITECTURE.md | Layer contract | [ARCHITECTURE.md](../../ARCHITECTURE.md) |

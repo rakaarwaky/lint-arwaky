@@ -23,7 +23,7 @@ pub struct TemplateProfile {
 /// Hard-coded per-template placeholder catalogs (Decision Q3).
 ///
 /// Each entry mirrors the fenced template in
-/// `crates/shared/skills/aes-docs/references/HOW-TO-MAKE-<doc_name>.md`. The
+/// `crates/shared/crates/shared/skills/aes-docs/references/<doc_name>/template.md`. The
 /// catalog lists the placeholder tokens the template ships unfilled, so a
 /// draft copied verbatim from the template is caught by FR-DOC-009 rather
 /// than passing silently. Every entry must appear unwrapped in that fenced
@@ -34,7 +34,7 @@ pub struct TemplateProfile {
 pub const TEMPLATE_PROFILES: &[TemplateProfile] = &[
     TemplateProfile {
         doc_name: FRD_DOC,
-        template_file: "HOW-TO-MAKE-FRD.md",
+        template_file: "frd/template.md",
 
         required_h2s: FRD_REQUIRED_H2S,
         placeholder_catalog: &[
@@ -42,18 +42,20 @@ pub const TEMPLATE_PROFILES: &[TemplateProfile] = &[
             "<FEATURE-NAME-ID>",
             "<Short imperative name>",
             "<One diagram or ≤ 3 sentences: where this feature sits, what calls it, what it calls.>",
-            "<what it does — one sentence>",
-            "<validation logic, constraints>",
-            "<boundary conditions and their handling>",
-            "<capability name>",
+            "<what it does — one paragraph>",
+            "<validation logic>",
+            "<boundary condition & handling>",
             "<protocol trait / interface>",
             "<capability method>",
             "<shape, source>",
             "<shape, destination>",
             "<what fails, what the caller sees>",
             "<domain event emitted, if any>",
-            "<observable behaviour + expected result>",
-            "<target value>",
+            "<context>",
+            "<action>",
+            "<observable result>",
+            "<metric, e.g. Latency / Success Rate>",
+            "<target value, e.g. 200ms / 99.9%>",
             "<agent name>",
             "<aggregate name>",
             "<execute>",
@@ -65,25 +67,23 @@ pub const TEMPLATE_PROFILES: &[TemplateProfile] = &[
             "<System boundaries, tech stack, and infra>",
         ],
     },
-    // The BACKLOG H3 title line ships the whole `{<DATA-NAME-ID> |
-    // <FEATURE-NAME-ID> | DESIGN-NAME-ID}` qualifier line, so all three
-    // members are catalogued: the two angle-bracketed ones plus the bare
-    // `DESIGN-NAME-ID`, which the substring matcher fires on even without
-    // angle brackets (curly-slot markers prove the matcher needs no `<>`).
+    // The BACKLOG H3 title lines ship the family-ID qualifier tokens
+    // `<FEATURE-NAME-ID>`, `<DS-NAME-ID>`, and `<DT-NAME-ID>`, so all three
+    // are catalogued: the angle-bracketed markers fire on the substring
+    // matcher (curly-slot markers prove the matcher needs no `<>`).
     TemplateProfile {
         doc_name: BACKLOG_DOC,
-        template_file: "HOW-TO-MAKE-BACKLOG.md",
+        template_file: "backlog/template.md",
 
         required_h2s: BACKLOG_REQUIRED_H2S,
         placeholder_catalog: &[
             "<feature-name>",
-            "<DATA-NAME-ID>",
             "<FEATURE-NAME-ID>",
-            "DESIGN-NAME-ID",
+            "<DS-NAME-ID>",
+            "<DT-NAME-ID>",
             "<One paragraph of progress summary.>",
             "<evidence>",
             "<None / item name>",
-            "<open row IDs>",
             "<what ships broken / None>",
             "<YYYY-MM-DD>",
             "<Business goals and scope>",
@@ -92,13 +92,13 @@ pub const TEMPLATE_PROFILES: &[TemplateProfile] = &[
             "<System boundaries, tech stack, and infra>",
         ],
     },
-    // The migrated HOW-TO-MAKE-AGENTS.md ships its tokens as angle
+    // The migrated references/agents/template.md.md ships its tokens as angle
     // brackets — the form that reference ships — not `{...}` slots;
     // command cells stay backtick-wrapped in the template and are
     // therefore not catalogued.
     TemplateProfile {
         doc_name: AGENTS_DOC,
-        template_file: "HOW-TO-MAKE-AGENTS.md",
+        template_file: "agents/template.md",
 
         required_h2s: AGENTS_REQUIRED_H2S,
         placeholder_catalog: &[
@@ -121,41 +121,55 @@ pub const TEMPLATE_PROFILES: &[TemplateProfile] = &[
     },
     TemplateProfile {
         doc_name: PRD_DOC,
-        template_file: "HOW-TO-MAKE-PRD.md",
+        template_file: "prd/template.md",
 
         required_h2s: PRD_REQUIRED_H2S,
         placeholder_catalog: &[
-            "<project-name>",
+            "<PROJECT-NAME>",
             "<PROJECT-NAME-ID>",
             "<Short imperative name>",
-            "<one behaviour — what it does>",
-            "<as a..., I want..., so that...>",
-            "<functional boundary — what must exist>",
-            "<functional boundary — what must not exist. Name them so the argument ends here>",
-            "<how to measure the outcome of this requirement>",
-            "<Timeline, phasing, and dependencies>",
-            "<System boundaries, tech stack, and infra>",
+            "<Primary business goal>",
+            "<Primary user goal>",
+            "<Strategic objective>",
+            "<Explicitly excluded scope for this project>",
+            "<Related problems not being solved in this release>",
+            "<Future considerations not included now>",
+            "<persona>",
+            "<need>",
+            "<pain>",
+            "<outcome>",
+            "<Major capability or module included in this project>",
+            "<User journey included>",
+            "<Integration included>",
+            "<Major capability excluded from this project>",
+            "<User journey excluded>",
+            "<Future enhancement>",
+            "<role>",
+            "<capability>",
+            "<benefit>",
+            "<Step 1>",
+            "<Step 2>",
+            "<Step 3>",
         ],
     },
     TemplateProfile {
         doc_name: ROADMAP_DOC,
-        template_file: "HOW-TO-MAKE-ROADMAP.md",
+        template_file: "roadmap/template.md",
 
         required_h2s: ROADMAP_REQUIRED_H2S,
         placeholder_catalog: &[
             "<workspace name>",
             "<PROJECT-NAME-ID>",
-            "<One paragraph of progress summary.>",
             "<Short imperative name>",
-            "<DATA-NAME-ID> / <FEATURE-NAME-ID> / <DESIGN-NAME-ID>",
-            "<YYYY-MM-DD>",
-            "<Business goals, user stories, and scope>",
-            "<System boundaries, tech stack, and infra>",
+            "<One paragraph of progress summary.>",
+            "P0 / P1 / P2",
+            "Ready / In Progress / In Review / Done",
+            "<feature>",
         ],
     },
     TemplateProfile {
         doc_name: README_DOC,
-        template_file: "HOW-TO-MAKE-README.md",
+        template_file: "readme/template.md",
 
         required_h2s: README_REQUIRED_H2S,
         placeholder_catalog: &["<project-name>", "<requiretment>"],
@@ -167,14 +181,14 @@ pub const TEMPLATE_PROFILES: &[TemplateProfile] = &[
     // reaches the catalog matcher.
     TemplateProfile {
         doc_name: ARCHITECTURE_DOC,
-        template_file: "HOW-TO-MAKE-ARCHITECTURE.md",
+        template_file: "architecture/template.md",
 
         required_h2s: ARCHITECTURE_REQUIRED_H2S,
         placeholder_catalog: &["<Project>", "<One paragraph."],
     },
     TemplateProfile {
         doc_name: CONTRIBUTING_DOC,
-        template_file: "HOW-TO-MAKE-CONTRIBUTING.md",
+        template_file: "contributing/template.md",
 
         required_h2s: CONTRIBUTING_REQUIRED_H2S,
         placeholder_catalog: &[
@@ -197,13 +211,13 @@ pub const TEMPLATE_PROFILES: &[TemplateProfile] = &[
     // substrings.
     TemplateProfile {
         doc_name: DATA_DOC,
-        template_file: "HOW-TO-MAKE-DATA.md",
+        template_file: "data/template.md",
 
         required_h2s: DATA_REQUIRED_H2S,
         placeholder_catalog: &[
             "<project-name>",
             "<Short imperative name>",
-            "<DATA-NAME-ID>",
+            "DT-SHARED-001",
             "<Business goals, user stories, and scope>",
             "<Task tracking, epics, and implementation status>",
             "<Timeline, phasing, and dependencies>",
@@ -212,7 +226,7 @@ pub const TEMPLATE_PROFILES: &[TemplateProfile] = &[
     },
     TemplateProfile {
         doc_name: DESIGN_DOC,
-        template_file: "HOW-TO-MAKE-DESIGN.md",
+        template_file: "design/template.md",
 
         required_h2s: DESIGN_REQUIRED_H2S,
         placeholder_catalog: &[
@@ -232,7 +246,7 @@ pub const TEMPLATE_PROFILES: &[TemplateProfile] = &[
 mod tests {
     use super::*;
 
-    /// Load a reference template from skills/aes-docs/references/.
+    /// Load a reference template from skills/aes-docs/references/<file>.
     fn load_reference_template(file: &str) -> String {
         let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
             .join("../../skills/aes-docs/references")
@@ -244,6 +258,9 @@ mod tests {
     }
 
     /// The document an author gets by copying the fenced template verbatim.
+    /// Uses fence-depth-aware extraction: a language-tagged ``` (e.g. ```text)
+    /// opens an inner block; a plain ``` closes it; the first plain ``` at
+    /// depth 0 is the outer template boundary.
     fn verbatim_copy(profile: &TemplateProfile) -> String {
         let text = load_reference_template(profile.template_file);
         let open = "```markdown";
@@ -252,10 +269,23 @@ mod tests {
             .unwrap_or_else(|| panic!("{} opens a template block", profile.template_file))
             + open.len();
         let rest = &text[start..];
-        let end = rest
-            .find("```")
-            .unwrap_or_else(|| panic!("{} closes its template block", profile.template_file));
-        rest[..end].to_string()
+        let mut out = String::new();
+        let mut depth: i32 = 0;
+        for line in rest.lines() {
+            let trimmed = line.trim();
+            if trimmed.starts_with("```") {
+                if trimmed.len() > 3 {
+                    depth += 1;
+                } else if depth > 0 {
+                    depth -= 1;
+                } else {
+                    break;
+                }
+            }
+            out.push_str(line);
+            out.push('\n');
+        }
+        out.trim_end().to_string()
     }
 
     /// Inline placeholder matcher for tests — taxonomy(vo) must not import

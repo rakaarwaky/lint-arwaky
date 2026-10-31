@@ -1,4 +1,4 @@
-// PURPOSE: SharedPurityAuditor — AES701: shared/kernel folder purity and docs
+// PURPOSE: SharedPurityAuditor — AES701: shared/layer folder purity and docs
 
 use shared_structure_rules::utility_structure_parsers;
 
@@ -14,7 +14,7 @@ use shared_structure_rules::taxonomy_structure_rules_response::StructureResponse
 // ─── Block 1: Struct Definition ────────────────────────────
 
 /// AES701: checks that shared folders contain only taxonomy, utility, and contract
-/// files, and that kernel folders carry no doc pair.
+/// files, and that layer folders carry no doc pair.
 pub struct SharedPurityAuditor {}
 
 // ─── Block 2: Protocol Trait Implementation ────────────────
@@ -83,7 +83,7 @@ fn check_shared_purity(
         )
         .with_reason(
             format!(
-                "Shared holds only taxonomy, utility, and contract files. A {} file there puts feature logic in the kernel every member depends on.",
+                "Shared holds only taxonomy, utility, and contract files. A {} file there puts feature logic in the layer every member depends on.",
                 layer_label(prefix)
             ),
             "Move it to the feature folder that owns its layer.",
@@ -91,7 +91,7 @@ fn check_shared_purity(
     }
 }
 
-/// AES701 kernel check: a shared/kernel folder must carry DATA.md + BACKLOG.md.
+/// AES701 layer check: a shared/layer folder must carry DATA.md + BACKLOG.md.
 fn check_shared_has_docs(
     folder: &std::path::Path,
     rel: &str,
@@ -107,7 +107,7 @@ fn check_shared_has_docs(
         )
         .with_reason(
             format!(
-                "A shared folder carries {} beside its source, so a reader of the kernel knows what it is for.",
+                "A shared folder carries {} beside its source, so a reader of the layer knows what it is for.",
                 consts::SHARED_DOC_PAIR.join(" and ")
             ),
             format!("Add {} to the shared folder.", missing.join(" and ")),

@@ -6,27 +6,23 @@ Subtraction is implemented, tested, and gated. Nothing is blocked.
 
 ## Backlog Status
 
-### {FR-SUBTRACTION-001}
+### FR-SUBTRACTION-001: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
 | State        | Ready                                      |
 | Done         | —                                          |
 | In Progress  | None                                       |
-| Blocked      | None                                       |
-| Next         | —                                          |
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 
-### {FR-SUBTRACTION-002}
+### FR-SUBTRACTION-002: 
 
 | Aspect       | Detail                                     |
 |--------------|---------------------------------------------|
 | State        | Ready                                      |
 | Done         | —                                          |
 | In Progress  | None                                       |
-| Blocked      | None                                       |
-| Next         | —                                          |
 | Risk         | None                                       |
 | Updated      | 2026-09-29                                 |
 

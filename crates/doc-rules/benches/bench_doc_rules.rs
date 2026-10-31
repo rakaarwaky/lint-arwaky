@@ -1,6 +1,6 @@
 use criterion::{Criterion, criterion_group, criterion_main};
-use doc_rules_lint_arwaky::capabilities_doc_heading_structure_checker::HeadingStructureChecker;
-use shared_doc_rules::contract_doc_protocol::IDocHeadingProtocol;
+use doc_rules_lint_arwaky::capabilities_doc_agents::AgentsCapability;
+use shared_doc_rules::contract_doc_protocol::IAgentsDocProtocol;
 use shared_doc_rules::taxonomy_doc_audit_context_vo::DocAuditContext;
 use shared_doc_rules::taxonomy_doc_rules_request::DocSource;
 use std::path::PathBuf;
@@ -12,12 +12,12 @@ use std::path::PathBuf;
 /// document with many level-2 headings and measures the audit over it — the
 /// shape a large PRD/FRD chain has at scan time.
 fn bench_doc_heading_audit(c: &mut Criterion) {
-    let checker = HeadingStructureChecker::new();
+    let capability = AgentsCapability::new();
     let context = heading_context(200);
 
     c.bench_function("doc_heading_audit", |b| {
         b.iter(|| {
-            let findings = checker.audit_doc_heading(&context);
+            let findings = capability.audit_agents(&context);
             std::hint::black_box(findings);
         });
     });

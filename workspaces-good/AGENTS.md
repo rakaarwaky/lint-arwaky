@@ -23,12 +23,29 @@ AI agents working in this workspace must know the AES 7-layer naming convention,
 
 ## Project Structure
 
-| Path       | Purpose              |
-|------------|----------------------|
-| crates/    | Rust workspace crates|
-| modules/   | Python feature layers|
-| packages/  | TypeScript feature layers|
-| shared/    | Shared kernel code   |
+```text
+.
+├── crates/            # Rust workspace members
+│   ├── calculator/    # feature: calculator (agent + capabilities + root)
+│   ├── cli/           # surface: CLI entry
+│   ├── shared/        # shared kernel: contracts + VOs
+│   └── single_orchestrator/
+├── modules/           # Python feature layers
+│   ├── addition/
+│   ├── calculator/
+│   ├── division/
+│   ├── multiplication/
+│   ├── subtraction/
+│   └── shared/
+├── packages/          # TypeScript feature layers
+│   ├── addition/
+│   ├── calculator/
+│   ├── division/
+│   ├── multiplication/
+│   ├── subtraction/
+│   └── shared/
+└── AGENTS.md          # this file
+```
 
 ## Commands
 

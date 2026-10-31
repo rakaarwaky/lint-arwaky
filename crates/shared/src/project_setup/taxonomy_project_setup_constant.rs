@@ -14,19 +14,19 @@ use crate::taxonomy_project_setup_vo::EmbeddedSkillVO;
 /// renaming a skill file —
 /// `catalog_matches_the_skills_directory` in
 /// `crates/dispatcher/tests/unit_dispatcher_setup_skills.rs` fails otherwise.
-pub const EMBEDDED_SKILLS_COUNT: usize = 58;
+pub const EMBEDDED_SKILLS_COUNT: usize = 91;
 
 pub const EMBEDDED_SKILLS: &[EmbeddedSkillVO] = &[
-    EmbeddedSkillVO::new(
-        "README",
-        "README.md",
-        include_str!(concat!(env!("OUT_DIR"), "/skills/README.md")),
-        None,
-    ),
     EmbeddedSkillVO::new(
         "description",
         "DESCRIPTION.md",
         include_str!(concat!(env!("OUT_DIR"), "/skills/DESCRIPTION.md")),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "README",
+        "README.md",
+        include_str!(concat!(env!("OUT_DIR"), "/skills/README.md")),
         None,
     ),
     EmbeddedSkillVO::new(
@@ -132,6 +132,42 @@ pub const EMBEDDED_SKILLS: &[EmbeddedSkillVO] = &[
         Some("typescript"),
     ),
     EmbeddedSkillVO::new(
+        "aes-doc-comments",
+        "aes-doc-comments/SKILL.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-doc-comments/SKILL.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-doc-comments",
+        "aes-doc-comments/references/HOW-TO-MAKE-PYTHON-DOC.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-doc-comments/references/HOW-TO-MAKE-PYTHON-DOC.md"
+        )),
+        Some("python"),
+    ),
+    EmbeddedSkillVO::new(
+        "aes-doc-comments",
+        "aes-doc-comments/references/HOW-TO-MAKE-RUST-DOC.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-doc-comments/references/HOW-TO-MAKE-RUST-DOC.md"
+        )),
+        Some("rust"),
+    ),
+    EmbeddedSkillVO::new(
+        "aes-doc-comments",
+        "aes-doc-comments/references/HOW-TO-MAKE-TYPESCRIPT-DOC.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-doc-comments/references/HOW-TO-MAKE-TYPESCRIPT-DOC.md"
+        )),
+        Some("typescript"),
+    ),
+    EmbeddedSkillVO::new(
         "aes-docs",
         "aes-docs/SKILL.md",
         include_str!(concat!(env!("OUT_DIR"), "/skills/aes-docs/SKILL.md")),
@@ -139,120 +175,381 @@ pub const EMBEDDED_SKILLS: &[EmbeddedSkillVO] = &[
     ),
     EmbeddedSkillVO::new(
         "aes-docs",
-        "aes-docs/references/HOW-TO-MAKE-AGENTS.md",
+        "aes-docs/references/agents/exemplar.md",
         include_str!(concat!(
             env!("OUT_DIR"),
-            "/skills/aes-docs/references/HOW-TO-MAKE-AGENTS.md"
+            "/skills/aes-docs/references/agents/exemplar.md"
         )),
         None,
     ),
     EmbeddedSkillVO::new(
         "aes-docs",
-        "aes-docs/references/HOW-TO-MAKE-ARCHITECTURE.md",
+        "aes-docs/references/agents/rules.md",
         include_str!(concat!(
             env!("OUT_DIR"),
-            "/skills/aes-docs/references/HOW-TO-MAKE-ARCHITECTURE.md"
+            "/skills/aes-docs/references/agents/rules.md"
         )),
         None,
     ),
     EmbeddedSkillVO::new(
         "aes-docs",
-        "aes-docs/references/HOW-TO-MAKE-BACKLOG.md",
+        "aes-docs/references/agents/template.md",
         include_str!(concat!(
             env!("OUT_DIR"),
-            "/skills/aes-docs/references/HOW-TO-MAKE-BACKLOG.md"
+            "/skills/aes-docs/references/agents/template.md"
         )),
         None,
     ),
     EmbeddedSkillVO::new(
         "aes-docs",
-        "aes-docs/references/HOW-TO-MAKE-CONTRIBUTING.md",
+        "aes-docs/references/agents/workflow.md",
         include_str!(concat!(
             env!("OUT_DIR"),
-            "/skills/aes-docs/references/HOW-TO-MAKE-CONTRIBUTING.md"
+            "/skills/aes-docs/references/agents/workflow.md"
         )),
         None,
     ),
     EmbeddedSkillVO::new(
         "aes-docs",
-        "aes-docs/references/HOW-TO-MAKE-DATA.md",
+        "aes-docs/references/architecture/exemplar.md",
         include_str!(concat!(
             env!("OUT_DIR"),
-            "/skills/aes-docs/references/HOW-TO-MAKE-DATA.md"
+            "/skills/aes-docs/references/architecture/exemplar.md"
         )),
         None,
     ),
     EmbeddedSkillVO::new(
         "aes-docs",
-        "aes-docs/references/HOW-TO-MAKE-DESIGN.md",
+        "aes-docs/references/architecture/rules.md",
         include_str!(concat!(
             env!("OUT_DIR"),
-            "/skills/aes-docs/references/HOW-TO-MAKE-DESIGN.md"
+            "/skills/aes-docs/references/architecture/rules.md"
         )),
         None,
     ),
     EmbeddedSkillVO::new(
         "aes-docs",
-        "aes-docs/references/HOW-TO-MAKE-FRD.md",
+        "aes-docs/references/architecture/template.md",
         include_str!(concat!(
             env!("OUT_DIR"),
-            "/skills/aes-docs/references/HOW-TO-MAKE-FRD.md"
+            "/skills/aes-docs/references/architecture/template.md"
         )),
         None,
     ),
     EmbeddedSkillVO::new(
         "aes-docs",
-        "aes-docs/references/HOW-TO-MAKE-PRD.md",
+        "aes-docs/references/architecture/workflow.md",
         include_str!(concat!(
             env!("OUT_DIR"),
-            "/skills/aes-docs/references/HOW-TO-MAKE-PRD.md"
+            "/skills/aes-docs/references/architecture/workflow.md"
         )),
         None,
     ),
     EmbeddedSkillVO::new(
         "aes-docs",
-        "aes-docs/references/HOW-TO-MAKE-PYTHON-DOC.md",
+        "aes-docs/references/backlog/feature-exemplar.md",
         include_str!(concat!(
             env!("OUT_DIR"),
-            "/skills/aes-docs/references/HOW-TO-MAKE-PYTHON-DOC.md"
-        )),
-        Some("python"),
-    ),
-    EmbeddedSkillVO::new(
-        "aes-docs",
-        "aes-docs/references/HOW-TO-MAKE-README.md",
-        include_str!(concat!(
-            env!("OUT_DIR"),
-            "/skills/aes-docs/references/HOW-TO-MAKE-README.md"
+            "/skills/aes-docs/references/backlog/feature-exemplar.md"
         )),
         None,
     ),
     EmbeddedSkillVO::new(
         "aes-docs",
-        "aes-docs/references/HOW-TO-MAKE-ROADMAP.md",
+        "aes-docs/references/backlog/shared-exemplar.md",
         include_str!(concat!(
             env!("OUT_DIR"),
-            "/skills/aes-docs/references/HOW-TO-MAKE-ROADMAP.md"
+            "/skills/aes-docs/references/backlog/shared-exemplar.md"
         )),
         None,
     ),
     EmbeddedSkillVO::new(
         "aes-docs",
-        "aes-docs/references/HOW-TO-MAKE-RUST-DOC.md",
+        "aes-docs/references/backlog/rules.md",
         include_str!(concat!(
             env!("OUT_DIR"),
-            "/skills/aes-docs/references/HOW-TO-MAKE-RUST-DOC.md"
+            "/skills/aes-docs/references/backlog/rules.md"
         )),
-        Some("rust"),
+        None,
     ),
     EmbeddedSkillVO::new(
         "aes-docs",
-        "aes-docs/references/HOW-TO-MAKE-TYPESCRIPT-DOC.md",
+        "aes-docs/references/backlog/surface-exemplar.md",
         include_str!(concat!(
             env!("OUT_DIR"),
-            "/skills/aes-docs/references/HOW-TO-MAKE-TYPESCRIPT-DOC.md"
+            "/skills/aes-docs/references/backlog/surface-exemplar.md"
         )),
-        Some("typescript"),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-docs",
+        "aes-docs/references/backlog/template.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-docs/references/backlog/template.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-docs",
+        "aes-docs/references/backlog/workflow.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-docs/references/backlog/workflow.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-docs",
+        "aes-docs/references/contributing/exemplar.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-docs/references/contributing/exemplar.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-docs",
+        "aes-docs/references/contributing/rules.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-docs/references/contributing/rules.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-docs",
+        "aes-docs/references/contributing/template.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-docs/references/contributing/template.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-docs",
+        "aes-docs/references/contributing/workflow.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-docs/references/contributing/workflow.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-docs",
+        "aes-docs/references/data/exemplar.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-docs/references/data/exemplar.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-docs",
+        "aes-docs/references/data/rules.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-docs/references/data/rules.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-docs",
+        "aes-docs/references/data/template.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-docs/references/data/template.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-docs",
+        "aes-docs/references/data/workflow.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-docs/references/data/workflow.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-docs",
+        "aes-docs/references/design/exemplar.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-docs/references/design/exemplar.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-docs",
+        "aes-docs/references/design/rules.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-docs/references/design/rules.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-docs",
+        "aes-docs/references/design/template.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-docs/references/design/template.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-docs",
+        "aes-docs/references/design/workflow.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-docs/references/design/workflow.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-docs",
+        "aes-docs/references/frd/exemplar.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-docs/references/frd/exemplar.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-docs",
+        "aes-docs/references/frd/rules.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-docs/references/frd/rules.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-docs",
+        "aes-docs/references/frd/template.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-docs/references/frd/template.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-docs",
+        "aes-docs/references/frd/workflow.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-docs/references/frd/workflow.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-docs",
+        "aes-docs/references/prd/exemplar.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-docs/references/prd/exemplar.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-docs",
+        "aes-docs/references/prd/rules.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-docs/references/prd/rules.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-docs",
+        "aes-docs/references/prd/template.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-docs/references/prd/template.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-docs",
+        "aes-docs/references/prd/workflow.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-docs/references/prd/workflow.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-docs",
+        "aes-docs/references/readme/exemplar.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-docs/references/readme/exemplar.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-docs",
+        "aes-docs/references/readme/rules.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-docs/references/readme/rules.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-docs",
+        "aes-docs/references/readme/template.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-docs/references/readme/template.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-docs",
+        "aes-docs/references/readme/workflow.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-docs/references/readme/workflow.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-docs",
+        "aes-docs/references/roadmap/exemplar.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-docs/references/roadmap/exemplar.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-docs",
+        "aes-docs/references/roadmap/rules.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-docs/references/roadmap/rules.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-docs",
+        "aes-docs/references/roadmap/template.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-docs/references/roadmap/template.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-docs",
+        "aes-docs/references/roadmap/workflow.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-docs/references/roadmap/workflow.md"
+        )),
+        None,
     ),
     EmbeddedSkillVO::new(
         "aes-lint-arwaky",

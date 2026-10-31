@@ -1,4 +1,4 @@
-# FRD — Structure Rules (AES701–AES705)
+# FRD — Structure Rules
 
 ## Feature Overview
 
@@ -6,124 +6,291 @@ The structure-rules crate enforces the 7-layer AES folder discipline by auditing
 
 ## Functional Requirements
 
-### FR-STR-001: Shared Folder Purity and Documentation (AES701)
+### FR-STR-001: Shared Folder Purity and Documentation
 
-| Aspect | Detail|
-|--------|-------|
-| Description | Enforce that the shared/kernel folder holds only permitted layers and carries its doc pair. |
-| Business Rules | AES701 fires when a capability file sits inside shared (shared must hold only kernel contracts/utilities/taxonomy); fires when shared lacks its documentation pair; each forbidden file gets its own violation kind; a shared tree holding only permitted layers stays silent. |
-| Edge Cases | Shared with only permitted layers produces zero findings; each forbidden file reported individually (not merged); missing doc pair fires once; empty shared root yields no findings; member-root files are classified before purity rules. |
-| Capability | SharedPurityAuditor checks shared-folder purity and docs. |
-| Protocol | IStructureSharedPurityProtocol. |
-| Method | Shared purity audit returning findings per forbidden file and missing doc pair. |
-| Input | Audit root plus tree entries; source is StructureRequest::AuditAll via IStructureAggregate::execute. |
-| Output | Findings in StructureResponse::Findings with AES701 codes. |
-| Error | Unreadable directories skip their subtree instead of failing the audit. |
-| Event | None; audit is synchronous. |
-| Test | aes701_fires_when_shared_holds_a_capability_file, aes701_fires_when_shared_lacks_doc_pair, aes701_reports_each_forbidden_file_with_its_own_kind, and aes701_stays_silent_when_shared_holds_only_permitted_layers assert firing and silence. |
-| Metric | Seeded forbidden-file fixture yields one finding per file; clean shared fixture yields zero AES701 findings. |
+**Description:** The structure auditor shall enforce shared folder purity and documentation by verifying that the shared layer folder holds only permitted layers and carries its required documentation pair.
 
-### FR-STR-002: Feature Folder Health and Documentation (AES702)
+#### Business Logic
 
-| Aspect | Detail|
-|--------|-------|
-| Description | Validate feature folder health: orchestrator, capabilities, root container, and documentation conventions. |
-| Business Rules | AES702 fires when a feature folder lacks its orchestrator, capabilities, root container (language-extension containers accepted), or shared mirror; fires when a doc-pair folder has no orchestrator; fires when an audit root is itself a member directory; fires when the member holds the orchestrator instead of the feature; forbidden files inside a feature fire individually; missing doc pair fires once. |
-| Edge Cases | Doc-pair folder without orchestrator fires; capabilities without orchestrator fires; orchestrator without capabilities fires; feature without root container fires; python feature accepts language-extension container; audit root being a member directory fires; member-holding-orchestrator fires; features with complete structure stay silent. |
-| Capability | FeatureHealthAuditor checks feature folder structure and docs. |
-| Protocol | IStructureFeatureHealthProtocol. |
-| Method | Feature health audit over the tree returning AES702 findings per structural gap. |
-| Input | Audit root plus entries; source is StructureRequest::AuditAll. |
-| Output | Findings in StructureResponse::Findings with AES702 codes. |
-| Error | Unreadable subtree skipped; root that is a member directory is reported, not mis-audited. |
-| Event | None. |
-| Test | aes702_fires_when_feature_lacks_root_container, aes702_fires_when_orchestrator_lacks_capabilities, aes702_fires_when_a_doc_pair_folder_has_no_orchestrator, and aes702_root_container_accepts_language_extension assert firing rules. |
-| Metric | Each seeded structural gap fires its own AES702 finding; a complete seeded feature yields zero findings. |
+- The shared folder shall hold only layer contracts, utilities, and taxonomy files.
+- The shared folder shall carry its documentation pair consisting of DATA.md and BACKLOG.md.
+- A capability file detected inside the shared folder shall fire an individual AES701 finding.
+- A missing documentation pair in the shared folder shall fire an AES701 finding.
+- A shared folder containing only permitted layers and its documentation pair shall produce zero findings.
 
-### FR-STR-003: Surface Folder Purity and Documentation (AES703)
+#### Edge Cases
 
-| Aspect | Detail|
-|--------|-------|
-| Description | Enforce surface folder purity: only surface-layer files plus its documentation pair live there. |
-| Business Rules | AES703 fires when non-surface files (other layers' code) sit in a surface folder; fires when the surface folder lacks its documentation pair; permitted surface files (render trees, passive handlers, orchestrators) stay silent. |
-| Edge Cases | A pure surface folder yields zero findings; a foreign capability/agent file inside surface fires individually; missing doc pair fires once; empty surface root yields nothing. |
-| Capability | SurfacePurityAuditor checks surface-folder purity and docs. |
-| Protocol | IStructureSurfacePurityProtocol. |
-| Method | Surface purity audit returning AES703 findings per violation. |
-| Input | Audit root plus entries; source is StructureRequest::AuditAll. |
-| Output | Findings in StructureResponse::Findings with AES703 codes. |
-| Error | Unreadable subtree skipped. |
-| Event | None. |
-| Test | Surface purity suite tests in the structure rust suite assert AES703 firing on foreign files and silence on pure surface trees. |
-| Metric | Seeded foreign-file fixture yields one finding per file; pure surface fixture yields zero AES703 findings. |
+- When a shared folder contains multiple forbidden capability files, the auditor shall report each forbidden file as an individual finding.
+- When an empty shared folder is scanned, the auditor shall report the missing documentation pair and no purity findings.
+- When member-root files are evaluated, they shall be classified before applying shared purity rules.
+- When an unreadable directory is encountered, the auditor shall skip that subtree rather than terminating the audit.
 
-### FR-STR-004: Test Suite Category Coverage (AES704)
+#### Technical Specification
 
-| Aspect | Detail|
-|--------|-------|
-| Description | Verify every test-suite category has its required test coverage layout. |
-| Business Rules | AES704 audits test directories per category (unit, contract, e2e, integration, acceptance, dogfood) and fires when a category expected for the tree is absent or empty; coverage checks run against the discovered tree, not a hard-coded list. |
-| Edge Cases | A tree missing an entire category fires a coverage finding; a category directory that exists but is empty is treated as missing; extra categories beyond the required set never fire; unreadable test dirs skip without failing the audit. |
-| Capability | TestSuiteCoverageAuditor computes per-category coverage. |
-| Protocol | IStructureTestSuiteProtocol. |
-| Method | Test-suite coverage audit returning AES704 findings for absent categories. |
-| Input | Audit root plus test-dir entries; source is StructureRequest::AuditAll. |
-| Output | Findings in StructureResponse::Findings with AES704 codes. |
-| Error | Unreadable test directories yield no findings for their category rather than an audit failure. |
-| Event | None. |
-| Test | Test-suite coverage suite tests in the structure rust tests assert AES704 on seeded missing-category trees and silence on fully covered trees. |
-| Metric | Seeded tree missing one category fires exactly one finding; fully covered tree fires zero. |
+| Aspect | Detail |
+|---|---|
+| **Input** | Audit root path and discovered filesystem entries from StructureRequest::AuditAll |
+| **Output** | StructureResponse::Findings containing AES701 findings |
+| **Protocol** | `IStructureSharedPurityProtocol` |
+| **Method** | `audit_shared` |
+| **Event** | None; audit is synchronous |
+| **Error** | Unreadable directory subtree skipped; findings emitted for missing documentation pair or foreign capability files |
 
-### FR-STR-005: Member-Root File Placement (AES705)
+#### Test
 
-| Aspect | Detail|
-|--------|-------|
-| Description | Require member directories to place config and docs at their own root, not scattered inside. |
-| Business Rules | AES705 fires when a member directory (a real member module/package) lacks required root-level files such as its manifest/config or docs; root placement is checked relative to the member root so nested files do not satisfy it. |
-| Edge Cases | Member with config only in a nested subdir fires (root placement not satisfied); member with root files passes; non-member directories are not checked; nested file does not count as root placement. |
-| Capability | MemberRootPlacementAuditor enforces member-root file placement. |
-| Protocol | IStructureMemberRootProtocol. |
-| Method | Member-root placement audit returning AES705 findings when required root files are absent. |
-| Input | Audit root plus entries; source is StructureRequest::AuditAll. |
-| Output | Findings in StructureResponse::Findings with AES705 codes. |
-| Error | Non-member or unreadable directories are skipped. |
-| Event | None. |
-| Test | Member-root suite tests in the structure rust tests assert AES705 on nested-only-file members and silence on properly rooted members. |
-| Metric | Seeded nested-only member yields exactly one finding; properly rooted member yields zero. |
+| Context | When Action | Then Observable Result |
+|---|---|---|
+| A shared folder holds a capability file | The auditor audits shared folder purity | An AES701 finding naming the foreign capability file is emitted |
+| A shared folder lacks its documentation pair | The auditor audits shared folder purity | An AES701 finding reporting missing DATA.md and BACKLOG.md is emitted |
+| A shared folder holds only permitted layers and its doc pair | The auditor audits shared folder purity | Zero AES701 findings are emitted |
 
-### FR-STR-006: PR-LA Folder Alignment (AES706)
+#### Metric
 
-| Aspect | Detail|
-|--------|-------|
-| Description | Enforce the 1:1 mapping between PR-LA ids at each position, the crate folder that sits there, and the feature requirement prefix that folder's FRD carries. |
-| Business Rules | AES706 fires when a crate folder's requirement ids use a prefix that does not derive from the folder name; fires when a crate folder listed by position has no FRD.md; fires when a PR-LA id in the root spec documents has no crate folder at its position; fires when a PR-LA heading title after the colon does not name its folder. |
-| Edge Cases | A PR-LA id beyond the known folder order fires once per document; requirement ids with the correct prefix stay silent; a documented folder with no FRD.md fires pr_la_missing_frd; a title that names its folder reports no mismatch; PRD.md and ROADMAP.md are read together so both must agree with the folder list. |
-| Capability | PrLaFolderAuditor checks its PR-LA id to crate folder mapping. |
-| Protocol | IStructurePrLaProtocol. |
-| Method | PR-LA folder audit returning AES706 findings per wrong prefix, missing FRD, dangling id, and misnamed title. |
-| Input | Audit entries plus the contents of PRD.md and ROADMAP.md; source is StructureRequest::AuditAll via IStructureAggregate::execute. |
-| Output | Findings in StructureResponse::Findings with AES706 codes. |
-| Error | An unreadable spec document skips its checks instead of failing the audit. |
-| Event | None; audit is synchronous. |
-| Test | conforming_workspace_reports_no_aes706_findings, pr_la_id_without_folder_fires_aes706, fr_id_wrong_prefix_fires_aes706, and missing_frd_fires_aes706 assert firing and silence. |
-| Metric | Each wrong prefix or dangling id yields one AES706 finding per document that carries it; a conforming workspace yields zero. |
+| Target Metric | Value |
+|---|---|
+| Forbidden capability file detection accuracy | 100% |
+| False positive rate on conforming shared trees | 0% |
+
+### FR-STR-002: Feature Folder Health and Documentation
+
+**Description:** The structure auditor shall validate feature folder health and documentation by ensuring every feature folder contains its required orchestrator, capabilities, root container, documentation pair, and shared mirror.
+
+#### Business Logic
+
+- Every feature folder shall hold an agent orchestrator, at least one capability, and a root container.
+- Every feature folder shall carry its documentation pair consisting of FRD.md and BACKLOG.md.
+- Every feature folder shall be mirrored as a shared layer subfolder in its member.
+- A documentation pair folder without an orchestrator shall fire an AES702 finding.
+- A feature folder lacking capabilities or root container shall fire an AES702 finding.
+- An audit root that is itself a member directory holding the orchestrator shall fire an AES702 finding.
+
+#### Edge Cases
+
+- When a feature folder defines a language-extension root container, the auditor shall accept it as valid container composition.
+- When capabilities exist without an orchestrator, the auditor shall fire an orchestrator-missing finding.
+- When an orchestrator exists without capabilities, the auditor shall fire a capability-missing finding.
+- When a feature lacks a shared layer mirror subfolder, the auditor shall emit an AES702 missing mirror finding.
+- When an unreadable subtree is encountered, the auditor shall skip it and continue auditing.
+
+#### Technical Specification
+
+| Aspect | Detail |
+|---|---|
+| **Input** | Audit root path and discovered filesystem entries from StructureRequest::AuditAll |
+| **Output** | StructureResponse::Findings containing AES702 findings |
+| **Protocol** | `IStructureFeatureHealthProtocol` |
+| **Method** | `audit_feature` |
+| **Event** | None; audit is synchronous |
+| **Error** | Unreadable directory subtree skipped; findings emitted for missing orchestrator, capabilities, root container, or doc pair |
+
+#### Test
+
+| Context | When Action | Then Observable Result |
+|---|---|---|
+| A feature folder lacks a root container | The auditor audits feature folder health | An AES702 finding reporting missing root container is emitted |
+| A feature folder has capabilities without an orchestrator | The auditor audits feature folder health | An AES702 finding reporting missing orchestrator is emitted |
+| A feature folder has its doc pair without an orchestrator | The auditor audits feature folder health | An AES702 finding reporting doc pair without orchestrator is emitted |
+| A feature folder conforms to all health and doc rules | The auditor audits feature folder health | Zero AES702 findings are emitted |
+
+#### Metric
+
+| Target Metric | Value |
+|---|---|
+| Structural gap detection accuracy | 100% |
+| Conforming feature false positive findings | 0 |
+
+### FR-STR-003: Surface Folder Purity and Documentation
+
+**Description:** The structure auditor shall enforce surface folder purity and documentation by verifying that only surface-layer files and the required documentation pair reside in surface folders.
+
+#### Business Logic
+
+- A surface folder shall contain only surface-layer files (render trees, passive handlers, surface commands/actions).
+- A surface folder shall carry its documentation pair consisting of DESIGN.md and BACKLOG.md.
+- Any non-surface file (such as a capability or agent orchestrator) located inside a surface folder shall fire an individual AES703 finding.
+- A missing documentation pair in a surface folder shall fire an AES703 finding.
+- Conforming surface trees shall produce zero findings.
+
+#### Edge Cases
+
+- When multiple foreign capability or agent files are located inside a surface folder, each foreign file shall fire its own individual finding.
+- When an empty surface folder is scanned, the auditor shall emit a missing documentation pair finding.
+- When an unreadable subtree is encountered, the auditor shall skip the unreadable subtree without failing the audit.
+
+#### Technical Specification
+
+| Aspect | Detail |
+|---|---|
+| **Input** | Audit root path and discovered filesystem entries from StructureRequest::AuditAll |
+| **Output** | StructureResponse::Findings containing AES703 findings |
+| **Protocol** | `IStructureSurfacePurityProtocol` |
+| **Method** | `audit_surface` |
+| **Event** | None; audit is synchronous |
+| **Error** | Unreadable directory subtree skipped; findings emitted for foreign layers or missing documentation pair |
+
+#### Test
+
+| Context | When Action | Then Observable Result |
+|---|---|---|
+| A foreign capability file sits in a surface folder | The auditor audits surface folder purity | An AES703 finding naming the foreign file is emitted |
+| A surface folder lacks its documentation pair | The auditor audits surface folder purity | An AES703 finding reporting missing DESIGN.md and BACKLOG.md is emitted |
+| A surface folder contains only surface files and doc pair | The auditor audits surface folder purity | Zero AES703 findings are emitted |
+
+#### Metric
+
+| Target Metric | Value |
+|---|---|
+| Foreign layer detection accuracy in surface folders | 100% |
+| Conforming surface false positive findings | 0 |
+
+### FR-STR-004: Test Suite Category Coverage
+
+**Description:** The structure auditor shall verify test suite category coverage by ensuring every feature folder owning source code contains required test directories and files across all defined testing categories.
+
+#### Business Logic
+
+- Every feature folder that owns source shall provide test coverage across required test categories: unit, contract, integration, e2e, acceptance, dogfood, and benches.
+- The auditor shall discover categories dynamically against the discovered tree rather than a hardcoded list.
+- An expected test category that is absent or empty shall fire an AES704 finding.
+- Non-feature members or members without source code shall not be required to maintain feature test suites.
+
+#### Edge Cases
+
+- When an entire test category directory is missing, the auditor shall fire an AES704 coverage finding.
+- When a test category directory exists but contains no test files, the auditor shall treat the category as missing and emit an AES704 finding.
+- When optional or supplementary test categories exist beyond the required set, the auditor shall accept them without emitting findings.
+- When an unreadable test directory is encountered, the auditor shall skip it without failing the overall audit.
+
+#### Technical Specification
+
+| Aspect | Detail |
+|---|---|
+| **Input** | Audit root path and discovered test directory entries from StructureRequest::AuditAll |
+| **Output** | StructureResponse::Findings containing AES704 findings |
+| **Protocol** | `IStructureTestSuiteProtocol` |
+| **Method** | `audit_test_suite` |
+| **Event** | None; audit is synchronous |
+| **Error** | Unreadable test directory skipped; findings emitted for missing or empty test categories |
+
+#### Test
+
+| Context | When Action | Then Observable Result |
+|---|---|---|
+| A feature folder lacks an integration test category | The auditor audits test suite coverage | An AES704 finding for the missing integration test category is emitted |
+| A feature folder contains an empty contract test directory | The auditor audits test suite coverage | An AES704 finding for the empty contract category is emitted |
+| A feature folder provides all required test categories | The auditor audits test suite coverage | Zero AES704 findings are emitted |
+
+#### Metric
+
+| Target Metric | Value |
+|---|---|
+| Missing test category detection rate | 100% |
+| Fully covered test suite false positive findings | 0 |
+
+### FR-STR-005: Member-Root File Placement
+
+**Description:** The structure auditor shall enforce member-root file placement by verifying that member directories place configuration, manifest, and documentation files at their root rather than nested in subdirectories.
+
+#### Business Logic
+
+- A member directory shall place its configuration, manifest, and root documentation directly at its root.
+- A required root file located only inside a nested subdirectory shall not satisfy root placement and shall fire an AES705 finding.
+- Root placement checks shall evaluate paths relative to the member root.
+- Non-member directories shall be excluded from member-root file placement checks.
+
+#### Edge Cases
+
+- When a member directory contains configuration only in a nested subdirectory, the auditor shall emit an AES705 finding.
+- When a member directory has its configuration and manifest at the root level, the auditor shall emit zero findings.
+- When a non-member or unreadable directory is encountered, the auditor shall skip it.
+
+#### Technical Specification
+
+| Aspect | Detail |
+|---|---|
+| **Input** | Audit root path and discovered member directory entries from StructureRequest::AuditAll |
+| **Output** | StructureResponse::Findings containing AES705 findings |
+| **Protocol** | `IStructureMemberRootProtocol` |
+| **Method** | `audit_member_root` |
+| **Event** | None; audit is synchronous |
+| **Error** | Non-member or unreadable directories skipped; findings emitted for misplaced root files |
+
+#### Test
+
+| Context | When Action | Then Observable Result |
+|---|---|---|
+| A member holds its configuration only in a nested subdirectory | The auditor audits member-root file placement | An AES705 finding reporting missing member-root configuration is emitted |
+| A member holds required configuration and docs at its root | The auditor audits member-root file placement | Zero AES705 findings are emitted |
+
+#### Metric
+
+| Target Metric | Value |
+|---|---|
+| Misplaced member-root file detection rate | 100% |
+| Conforming member-root false positive findings | 0 |
+
+### FR-STR-006: PR-LA Folder Alignment
+
+**Description:** The structure auditor shall enforce PR-LA folder alignment by verifying a strict 1:1 mapping between PR-LA identifiers, crate folder locations, and the feature requirement prefix in each folder's requirement document.
+
+#### Business Logic
+
+- Every PR-LA identifier declared in the root specification documents shall map 1:1 to a crate folder by positional order.
+- Every crate folder at an assigned position shall carry an FRD.md document.
+- The requirement identifiers in a crate folder's FRD.md shall carry a feature prefix derived from the crate folder name.
+- A PR-LA heading title following the colon separator shall match the crate folder name.
+- Root specification documents PRD.md and ROADMAP.md shall be evaluated together to verify mutual agreement with the folder list.
+
+#### Edge Cases
+
+- When a PR-LA identifier in a root document has no matching crate folder at its position, the auditor shall emit an AES706 finding.
+- When a crate folder has no FRD.md document, the auditor shall emit an AES706 missing FRD finding.
+- When requirement identifiers in an FRD use a prefix that does not match the crate folder, the auditor shall emit an AES706 prefix mismatch finding.
+- When a heading title after the colon does not match the crate folder name, the auditor shall emit an AES706 title mismatch finding.
+- When an unreadable specification document is encountered, the auditor shall skip checks for that document without failing the audit.
+
+#### Technical Specification
+
+| Aspect | Detail |
+|---|---|
+| **Input** | Audit filesystem entries and contents of PRD.md and ROADMAP.md from StructureRequest::AuditAll |
+| **Output** | StructureResponse::Findings containing AES706 findings |
+| **Protocol** | `IStructurePrLaProtocol` |
+| **Method** | `audit_pr_la_folder` |
+| **Event** | None; audit is synchronous |
+| **Error** | Unreadable specification document skipped; findings emitted for missing crate folder, missing FRD, prefix mismatch, or title mismatch |
+
+#### Test
+
+| Context | When Action | Then Observable Result |
+|---|---|---|
+| A PR-LA identifier lacks a corresponding crate folder | The auditor audits PR-LA folder alignment | An AES706 finding for the unmapped PR-LA identifier is emitted |
+| A crate folder's FRD uses a requirement prefix differing from its folder name | The auditor audits PR-LA folder alignment | An AES706 finding for the requirement prefix mismatch is emitted |
+| A crate folder at an expected PR-LA position lacks FRD.md | The auditor audits PR-LA folder alignment | An AES706 finding for missing FRD is emitted |
+| All PR-LA identifiers, crate folders, titles, and FR prefixes align | The auditor audits PR-LA folder alignment | Zero AES706 findings are emitted |
+
+#### Metric
+
+| Target Metric | Value |
+|---|---|
+| PR-LA folder misalignment detection accuracy | 100% |
+| Conforming workspace false positive findings | 0 |
 
 ## Public Interface
 
-| Aspect | Detail|
-|--------|-------|
-| Agent | StructureOrchestrator — the agent-layer orchestrator behind the structural audit of the check command. |
-| Aggregate | IStructureAggregate — the feature's single front door. |
-| Method | execute(&self, request: StructureRequest) -> StructureResponse |
-| Request | StructureRequest::AuditAll |
-| Response | StructureResponse::Findings |
+| Aspect | Detail |
+|---|---|
+| Agent | `StructureOrchestrator` |
+| Aggregate | `IStructureAggregate` |
+| Method | `execute` |
+| Request | `StructureRequest::AuditAll` |
+| Response | `StructureResponse::Findings` |
 
 ## Reference
 
-| Artifact | Purpose | Link|
-|----------|---------|------|
-| BACKLOG.md | Backlog tracking | [BACKLOG.md](BACKLOG.md)|
-| PRD.md | Product requirements | [PRD.md](../../PRD.md)|
-| FRD.md | Feature requirements | [FRD.md](FRD.md)|
-| ROADMAP.md | Roadmap status | [ROADMAP.md](../../ROADMAP.md)|
-| ARCHITECTURE.md | Layer contract | [ARCHITECTURE.md](../../ARCHITECTURE.md)|
+| Artifact | Purpose | Link |
+|---|---|---|
+| PRD | Business goals, user stories, and scope | [PRD.md](../../PRD.md) |
+| Backlog | Task tracking, epics, and implementation status | [BACKLOG.md](BACKLOG.md) |
+| Roadmap | Timeline, phasing, and dependencies | [ROADMAP.md](../../ROADMAP.md) |
+| Architecture | System boundaries, tech stack, and infra | [ARCHITECTURE.md](../../ARCHITECTURE.md) |

@@ -34,7 +34,7 @@ fn audit(root: &Path) -> Vec<(String, String, String)> {
 /// A workspace carrying one defect per rule, so one request must surface one code
 /// from each of the four folder rules the aggregate promises to route to.
 fn write_faulty_workspace(root: &Path) {
-    // AES701 — a shared kernel holding a capability file.
+    // AES701 — a shared layer holding a capability file.
     write(
         &root.join("crates/shared/src/capabilities_stray_analyzer.rs"),
         "pub struct Stray;\n",

@@ -17,7 +17,7 @@ use std::sync::OnceLock;
 /// `FR-AutoFix-001` exactly as `frautoFix` and `fr_auto_fix`; the documented
 /// form is CamelCase, but case is never a violation. Feature crates use
 /// `-` where the shared module uses `_`.
-const FR_ID_HEADING_PATTERN: &str = r"(?m)^#{2,4}\s+(?P<id>FR-[A-Za-z0-9_]+-\d+):";
+const FR_ID_HEADING_PATTERN: &str = consts::FR_ID_HEADING_PATTERN;
 
 /// The shared FR-ID heading pattern, compiled once.
 ///
@@ -38,7 +38,7 @@ pub fn fr_id_heading_re() -> Option<&'static regex::Regex> {
 /// Requirements` or a ROADMAP's `Roadmap Status`. Same H2–H4 colon
 /// shape as the FR/DS/DT patterns so the accepted ID sets cannot drift
 /// between the parity check and the counter.
-const PR_ID_HEADING_PATTERN: &str = r"(?m)^#{2,4}\s+(?P<id>PR-[A-Za-z0-9_]+-\d+):";
+const PR_ID_HEADING_PATTERN: &str = consts::PR_ID_HEADING_PATTERN;
 
 /// The shared PR-ID heading pattern, compiled once.
 pub fn pr_id_heading_re() -> Option<&'static regex::Regex> {
@@ -64,7 +64,7 @@ pub fn collect_pr_id_set(text: &str) -> Option<Vec<String>> {
 /// colon-terminated. The NAME token (e.g. DISP, CLIC, MCPS, TUIC) is a
 /// per-folder qualifier, so the qualified `DS-<NAME>-NNN` form is mandatory;
 /// a bare `DS-001` (digits only after the prefix, no NAME) no longer matches.
-const DS_ID_HEADING_PATTERN: &str = r"(?m)^#{2,4}\s+(?P<id>DS-[A-Za-z0-9_]+-\d+):";
+const DS_ID_HEADING_PATTERN: &str = consts::DS_ID_HEADING_PATTERN;
 
 /// The shared DS-ID heading pattern, compiled once.
 pub fn ds_id_heading_re() -> Option<&'static regex::Regex> {
@@ -87,7 +87,7 @@ pub fn collect_ds_id_set(text: &str) -> Option<Vec<String>> {
 /// colon-terminated. The NAME token (e.g. SHAR, MCPS, TUIC) is a per-folder
 /// qualifier, so the qualified `DT-<NAME>-NNN` form is mandatory; a bare
 /// `DT-001` (digits only after the prefix, no NAME) no longer matches.
-const DT_ID_HEADING_PATTERN: &str = r"(?m)^#{2,4}\s+(?P<id>DT-[A-Za-z0-9_]+-\d+):";
+const DT_ID_HEADING_PATTERN: &str = consts::DT_ID_HEADING_PATTERN;
 
 /// The shared DT-ID heading pattern, compiled once.
 pub fn dt_id_heading_re() -> Option<&'static regex::Regex> {
@@ -117,7 +117,7 @@ pub fn count_fr_headings(text: &str) -> Option<usize> {
 
 /// True when the text contains at least one requirement heading in the
 ///
-/// The kernel `src` roots the shared contract modules live in: the feature's
+/// The layer `src` roots the shared contract modules live in: the feature's
 /// contract module is resolved against each documented workspace layout
 /// (`crates/shared`, `modules/shared`, `packages/shared`), so a feature in
 /// any of them finds the right base instead of silently skipping the check.

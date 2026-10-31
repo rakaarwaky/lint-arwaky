@@ -8,138 +8,123 @@ RELEASED as v3.8.0. It supersedes 3.7.1 and 3.7.2, which were declared in `Cargo
 
 ### PR-LA-001: filesystem
 
-| Aspect       | Detail                             |
-|--------------|-----------------------------------|
+| Aspect       | Detail                            |
+|--------------|----------------------------------|
 | Priority     | P0                                |
 | State        | Done                              |
-| Dependencies | —                                |
-| Updated      | 2026-10-02                       |
+| Backlog      | [BACKLOG.md](crates/filesystem/BACKLOG.md) |
 
 ### PR-LA-002: auto-fix
 
-| Aspect       | Detail                                 |
-|--------------|----------------------------------------|
-| Priority     | P0                                      |
-| State        | Done                                    |
-| Dependencies | BE config-wipe CRITICAL finding (#522) |
-| Updated      | 2026-10-02                             |
+| Aspect       | Detail                              |
+|--------------|-------------------------------------|
+| Priority     | P0                                    |
+| State        | Done                                  |
+| Backlog      | [BACKLOG.md](crates/auto-fix/BACKLOG.md) |
 
 ### PR-LA-003: cli-commands
 
-| Aspect       | Detail                                 |
-|--------------|----------------------------------------|
-| Priority     | P0                                      |
-| State        | Done                                    |
-| Dependencies | #606, #611 (re-verification pending)   |
-| Updated      | 2026-10-01                             |
+| Aspect       | Detail                              |
+|--------------|-------------------------------------|
+| Priority     | P0                                    |
+| State        | Done                                  |
+| Backlog      | [BACKLOG.md](crates/cli-commands/BACKLOG.md) |
 
 ### PR-LA-004: config-system
 
-| Aspect       | Detail                                 |
-|--------------|----------------------------------------|
-| Priority     | P0                                      |
-| State        | Done                                    |
-| Dependencies | BE path-validation CRITICAL finding (#608)|
-| Updated      | 2026-10-01                             |
+| Aspect       | Detail                              |
+|--------------|-------------------------------------|
+| Priority     | P0                                    |
+| State        | Done                                  |
+| Backlog      | [BACKLOG.md](crates/config-system/BACKLOG.md) |
 
 ### PR-LA-005: dispatcher
 
-| Aspect       | Detail                                 |
-|--------------|----------------------------------------|
-| Priority     | P0                                      |
-| State        | Done                                    |
-| Dependencies | —                                      |
-| Updated      | 2026-10-02                             |
-
-### PR-LA-006: doc-rules
-
-| Aspect       | Detail                                 |
-|--------------|----------------------------------------|
-| Priority     | P1                                      |
-| State        | Done                                    |
-| Dependencies | —                                      |
-| Updated      | 2026-10-02                             |
-
-### PR-LA-007: external-lint
-
-| Aspect       | Detail                                 |
-|--------------|----------------------------------------|
-| Priority     | P1                                      |
-| State        | Done                                    |
-| Dependencies | —                                      |
-| Updated      | 2026-09-30                             |
-
-### PR-LA-008: file-watch
-
-| Aspect       | Detail                                 |
-|--------------|----------------------------------------|
-| Priority     | P1                                      |
-| State        | Done                                    |
-| Dependencies | BE hook-overwrite finding (#522)       |
-| Updated      | 2026-10-01                             |
-
-### PR-LA-009: git-hooks
-
-| Aspect       | Detail                                 |
-|--------------|----------------------------------------|
-| Priority     | P1                                      |
-| State        | Done                                    |
-| Dependencies | —                                      |
-| Updated      | 2026-09-30                             |
-
-### PR-LA-010: import-rules
-
-| Aspect       | Detail                                 |
-|--------------|----------------------------------------|
-| Priority     | P1                                      |
-| State        | Done                                    |
-| Dependencies | —                                      |
-| Updated      | 2026-09-30                             |
-
-### PR-LA-011: logging
-
-| Aspect       | Detail                                 |
-|--------------|----------------------------------------|
-| Priority     | P2                                      |
-| State        | Done                                    |
-| Dependencies | #552, #606, #611, #608 (re-verification pending)|
-| Updated      | 2026-10-01                             |
+| Aspect       | Detail                              |
+|--------------|-------------------------------------|
+| Priority     | P0                                    |
+| State        | Done                                  |
+| Backlog      | [BACKLOG.md](crates/dispatcher/BACKLOG.md) |
 
 ### PR-LA-012: maintenance
 
-| Aspect       | Detail                                 |
-|--------------|----------------------------------------|
-| Priority     | P0                                      |
-| State        | Done                                    |
-| Dependencies | —                                      |
-| Updated      | 2026-09-30                             |
+| Aspect       | Detail                              |
+|--------------|-------------------------------------|
+| Priority     | P0                                    |
+| State        | Done                                  |
+| Backlog      | [BACKLOG.md](crates/maintenance/BACKLOG.md) |
+
+### PR-LA-006: doc-rules
+
+| Aspect       | Detail                              |
+|--------------|-------------------------------------|
+| Priority     | P1                                    |
+| State        | Done                                  |
+| Backlog      | [BACKLOG.md](crates/doc-rules/BACKLOG.md) |
+
+### PR-LA-007: external-lint
+
+| Aspect       | Detail                              |
+|--------------|-------------------------------------|
+| Priority     | P1                                    |
+| State        | Done                                  |
+| Backlog      | [BACKLOG.md](crates/external-lint/BACKLOG.md) |
+
+### PR-LA-008: file-watch
+
+| Aspect       | Detail                              |
+|--------------|-------------------------------------|
+| Priority     | P1                                    |
+| State        | Done                                  |
+| Backlog      | [BACKLOG.md](crates/file-watch/BACKLOG.md) |
+
+### PR-LA-009: git-hooks
+
+| Aspect       | Detail                              |
+|--------------|-------------------------------------|
+| Priority     | P1                                    |
+| State        | Done                                  |
+| Backlog      | [BACKLOG.md](crates/git-hooks/BACKLOG.md) |
+
+### PR-LA-010: import-rules
+
+| Aspect       | Detail                              |
+|--------------|-------------------------------------|
+| Priority     | P1                                    |
+| State        | Done                                  |
+| Backlog      | [BACKLOG.md](crates/import-rules/BACKLOG.md) |
 
 ### PR-LA-013: mcp-server
 
-| Aspect       | Detail                                 |
-|--------------|----------------------------------------|
-| Priority     | P1                                      |
-| State        | Done                                    |
-| Dependencies | —                                      |
-| Updated      | 2026-10-02                             |
+| Aspect       | Detail                              |
+|--------------|-------------------------------------|
+| Priority     | P1                                    |
+| State        | Done                                  |
+| Backlog      | [BACKLOG.md](crates/mcp-server/BACKLOG.md) |
+
+### PR-LA-011: logging
+
+| Aspect       | Detail                              |
+|--------------|-------------------------------------|
+| Priority     | P2                                    |
+| State        | Done                                  |
+| Backlog      | [BACKLOG.md](crates/logging/BACKLOG.md) |
 
 ### PR-LA-014: naming-rules
 
-| Aspect       | Detail                                 |
-|--------------|----------------------------------------|
-| Priority     | P2                                      |
-| State        | In Review                               |
-| Dependencies | Dedicated Windows CI runner (deferred) |
-| Updated      | 2026-10-02                             |
+| Aspect       | Detail                              |
+|--------------|-------------------------------------|
+| Priority     | P2                                    |
+| State        | In Review                             |
+| Backlog      | [BACKLOG.md](crates/naming-rules/BACKLOG.md) |
 
 ### PR-LA-015: orphan-rules
 
-| Aspect       | Detail                                 |
-|--------------|----------------------------------------|
-| Priority     | P2                                      |
-| State        | In Review                               |
-| Dependencies | —                                      |
-| Updated      | 2026-10-02                             |
+| Aspect       | Detail                              |
+|--------------|-------------------------------------|
+| Priority     | P2                                    |
+| State        | In Review                             |
+| Backlog      | [BACKLOG.md](crates/orphan-rules/BACKLOG.md) |
 
 ## Reference
 
