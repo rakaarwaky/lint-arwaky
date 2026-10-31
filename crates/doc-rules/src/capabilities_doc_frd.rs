@@ -22,6 +22,7 @@ use shared_doc_rules::utility_markdown_scanner::{
     status_leak_patterns,
 };
 
+#[derive(Default)]
 pub struct FrdCapability;
 
 impl FrdCapability {
@@ -53,13 +54,13 @@ impl FrdCapability {
         let parsed = sections(text);
 
         // AES609 — FR-ID format (bare FR-NNN without feature prefix).
-        check_fr_id_format(consts::RULE_CODE_FR_FORMAT, document, findings);
+        check_fr_id_format(consts::RULE_CODE_FR_FORMAT, consts::FR_ID_VIOLATION_MISSING_FEATURE_PREFIX, document, findings);
 
         // AES601 — FR protocol parity (requirement count vs contract seams).
-        check_fr_protocol_parity(consts::RULE_CODE_FR_FORMAT, document, context, findings);
+        check_fr_protocol_parity(consts::RULE_CODE_FR_FORMAT, consts::FR_PROTOCOL_PARITY_VIOLATION_COUNT_MISMATCH, document, context, findings);
 
         // AES601 — promised API method existence.
-        check_api_method_existence(consts::RULE_CODE_FR_FORMAT, document, context, findings);
+        check_api_method_existence(consts::RULE_CODE_FR_FORMAT, consts::FR_API_METHOD_VIOLATION_NOT_FOUND, document, context, findings);
 
         // AES603 — spec purity (no source file names, no implementation state).
         Self::check_spec_purity(document, findings);

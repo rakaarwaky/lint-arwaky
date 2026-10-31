@@ -6,6 +6,7 @@ pub mod taxonomy_doc_rules_constant;
 pub mod taxonomy_doc_rules_request;
 pub mod taxonomy_doc_rules_response;
 pub mod taxonomy_doc_rules_template_vo;
+pub mod taxonomy_doc_rules_violation_names;
 pub mod taxonomy_doc_section_vo;
 pub mod utility_capabilities_doc_h2_checks;
 pub mod utility_doc_aspect_entry_checks;

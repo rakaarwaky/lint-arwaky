@@ -69,6 +69,7 @@ description: \"Sample.\"
 | PRD          | What the product does and why              | [PRD.md](PRD.md) |
 ";
 
+#[derive(Default)]
 pub struct AgentsCapability;
 
 impl AgentsCapability {
@@ -129,6 +130,7 @@ impl AgentsCapability {
             &parsed,
             "Runtime",
             consts::AGENTS_RUNTIME_ROW_LABELS,
+            &shared_doc_rules::taxonomy_doc_rules_violation_names::DocViolationNames,
         ));
 
         // AES601 — Commands table carries the fixed columns.
@@ -137,6 +139,7 @@ impl AgentsCapability {
             &parsed,
             "Commands",
             consts::AGENTS_COMMAND_COLUMNS,
+            &shared_doc_rules::taxonomy_doc_rules_violation_names::DocViolationNames,
         ));
     }
 

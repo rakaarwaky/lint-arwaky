@@ -7,6 +7,7 @@
 
 use crate::taxonomy_doc_rules_constant as consts;
 use crate::taxonomy_doc_rules_request::DocFinding;
+use crate::taxonomy_doc_rules_violation_names::DocViolationNames;
 use crate::taxonomy_doc_section_vo::Section;
 use crate::utility_markdown_scanner::normalize_heading;
 
@@ -17,8 +18,9 @@ pub fn check_h2_table(
     parsed: &[Section],
     title: &str,
     columns: &[&str],
+    names: &DocViolationNames,
 ) -> Vec<DocFinding> {
-    check_section_shape(rule_code, parsed, title, columns, None)
+    check_section_shape(rule_code, parsed, title, columns, None, names)
         .into_iter()
         .collect()
 }
@@ -31,6 +33,7 @@ pub fn check_h2_fixed_rows(
     parsed: &[Section],
     title: &str,
     row_labels: &[&str],
+    names: &DocViolationNames,
 ) -> Vec<DocFinding> {
     let mut findings = Vec::new();
     let Some(section) = parsed
@@ -48,6 +51,7 @@ pub fn check_h2_fixed_rows(
         title,
         consts::ASPECT_DETAIL_COLUMNS,
         None,
+        names,
     ) {
         findings.push(finding);
         return findings;
@@ -60,7 +64,7 @@ pub fn check_h2_fixed_rows(
                 "",
                 section.line,
                 rule_code,
-                consts::TEMPLATE_CONFORMANCE_VIOLATION_ENTRY_MISSING_ROW,
+                names.entry_missing_row(),
                 format!(
                     "line {} `## {}` table row labels do not match the template; missing {}, extra {}",
                     section.line,
@@ -99,6 +103,7 @@ pub fn check_section_shape(
     title: &str,
     columns: &[&str],
     h3: Option<&Section>,
+    names: &DocViolationNames,
 ) -> Option<DocFinding> {
     let section = match h3 {
         Some(h3) => h3,
@@ -118,7 +123,7 @@ pub fn check_section_shape(
                     "",
                     section.line,
                     rule_code,
-                    consts::TEMPLATE_CONFORMANCE_VIOLATION_TABLE_EXTRA_COLUMNS,
+                    names.table_extra_columns(),
                     format!(
                         "line {} `{marker} {}` table carries column(s) outside the template: {}",
                         section.line,
@@ -149,7 +154,7 @@ pub fn check_section_shape(
                     "",
                     section.line,
                     rule_code,
-                    consts::TEMPLATE_CONFORMANCE_VIOLATION_TABLE_HEADER_REPEATED,
+                    names.table_header_repeated(),
                     format!(
                         "line {} `{marker} {}` repeats its header row as a data row",
                         section.line, section.title
@@ -175,9 +180,9 @@ pub fn check_section_shape(
     // markdown table separator line (`| --- |`) is what turns a header row
     // into a parseable table.
     let violation = if has_any_table(body) {
-        consts::TEMPLATE_CONFORMANCE_VIOLATION_TABLE_MISSING_COLUMNS
+        names.table_missing_columns()
     } else {
-        consts::TEMPLATE_CONFORMANCE_VIOLATION_SECTION_NOT_TABLE
+        names.section_not_table()
     };
     let marker = if section.level == 2 { "##" } else { "###" };
     Some(

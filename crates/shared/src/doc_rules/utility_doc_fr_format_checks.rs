@@ -27,6 +27,7 @@ use std::path::PathBuf;
 /// *rule_code* is the per-document code (FRD → AES609, DATA → AES608).
 pub fn check_fr_id_format(
     rule_code: &'static str,
+    missing_prefix_code: &'static str,
     document: &DocSource,
     findings: &mut Vec<DocFinding>,
 ) {
@@ -45,7 +46,7 @@ pub fn check_fr_id_format(
                 "",
                 line,
                 rule_code,
-                consts::FR_ID_VIOLATION_MISSING_FEATURE_PREFIX,
+                missing_prefix_code,
                 format!("line {line} heading 'FR-{num}: {title}' is missing its feature prefix"),
             )
             .with_reason(
@@ -127,6 +128,8 @@ pub fn section_line(text: &str, title: &str) -> Option<usize> {
 /// so a reader can tell which document drifted.
 pub fn check_pr_id_parity(
     rule_code: &'static str,
+    pr_missing_code: &'static str,
+    roadmap_not_pr_code: &'static str,
     prd: &DocSource,
     roadmap: &DocSource,
     findings: &mut Vec<DocFinding>,
@@ -144,7 +147,7 @@ pub fn check_pr_id_parity(
                     "",
                     roadmap_heading_line,
                     rule_code,
-                    consts::PR_ROADMAP_ID_MISSING,
+                    pr_missing_code,
                     format!("PR-ID `{id}` declared in the PRD has no ROADMAP `Roadmap Status` entry"),
                 )
                 .with_reason(
@@ -164,7 +167,7 @@ pub fn check_pr_id_parity(
                     "",
                     line,
                     rule_code,
-                    consts::ROADMAP_PR_ID_NOT_PR,
+                    roadmap_not_pr_code,
                     format!("line {line} ROADMAP item `{id}` is not declared in the PRD"),
                 )
                 .with_reason(
@@ -187,6 +190,7 @@ pub fn check_pr_id_parity(
 /// does not keep.
 pub fn check_api_method_existence(
     rule_code: &'static str,
+    not_found_code: &'static str,
     document: &DocSource,
     context: &DocAuditContext,
     findings: &mut Vec<DocFinding>,
@@ -219,7 +223,7 @@ pub fn check_api_method_existence(
                 "",
                 line,
                 rule_code,
-                consts::FR_API_METHOD_VIOLATION_NOT_FOUND,
+                not_found_code,
                 format!(
                     "line {line} method `{method}` in the '{subsection}' table is not declared \
                      by any protocol/aggregate trait in the feature's contract module"
@@ -246,6 +250,7 @@ pub fn check_api_method_existence(
 /// be equal. Aggregate traits are not capability seams and are excluded.
 pub fn check_fr_protocol_parity(
     rule_code: &'static str,
+    count_mismatch_code: &'static str,
     document: &DocSource,
     context: &DocAuditContext,
     findings: &mut Vec<DocFinding>,
@@ -297,7 +302,7 @@ pub fn check_fr_protocol_parity(
             "",
             line,
             rule_code,
-            consts::FR_PROTOCOL_PARITY_VIOLATION_COUNT_MISMATCH,
+            count_mismatch_code,
             format!(
                 "line {line} FRD declares {fr_count} requirements but the feature's contract \
                  module declares {protocol_count} protocol classes"

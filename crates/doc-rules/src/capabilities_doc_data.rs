@@ -18,6 +18,7 @@ use shared_doc_rules::utility_doc_entry_regexes::dt_entry_re;
 use shared_doc_rules::utility_doc_fr_format_checks::check_fr_id_format;
 use shared_doc_rules::utility_markdown_scanner::{doc_h2_contract, sections};
 
+#[derive(Default)]
 pub struct DataCapability;
 
 impl DataCapability {
@@ -49,7 +50,7 @@ impl DataCapability {
         let parsed = sections(text);
 
         // AES608 — bare-ID format (DT-<NAME>-NNN without qualified form).
-        check_fr_id_format(consts::RULE_CODE_DATA_DOC, document, findings);
+        check_fr_id_format(consts::RULE_CODE_DATA_DOC, consts::FR_ID_VIOLATION_MISSING_FEATURE_PREFIX, document, findings);
 
         // AES604 — crosslinks (PRD, BACKLOG, ROADMAP, ARCHITECTURE).
         Self::check_crosslinks(document, context, consts::RULE_CODE_CROSSLINKS, findings);

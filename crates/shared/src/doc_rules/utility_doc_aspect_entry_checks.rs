@@ -1,32 +1,122 @@
-// PURPOSE: H4 aspect entry-table checks for AES606 template conformance.
+// PURPOSE: H4 aspect entry-table detection for AES606 template conformance.
 // Shared by the FRD and PRD per-doc capabilities: every item H3 under
 // `Functional Requirements` / `Project Requirements` mandates per-aspect H4
 // subsections whose `| No | Detail |` tables carry contiguous numbering and
 // the bounded/open-ended row count the template fixes. Pure functions — no
 // checker state — so both capabilities consume the same decision and cannot
 // drift. Lives in the shared utility layer (AES201: capability does not
-// import capability).
-use crate::taxonomy_doc_rules_constant as consts;
-use crate::taxonomy_doc_rules_request::DocFinding;
+// import capability). Pure defect data — no DocFinding construction or
+// rule_code parameter.
+
 use crate::taxonomy_doc_section_vo::Section;
 use crate::utility_capabilities_doc_h2_checks::{
     first_column_values, has_any_table, header_extra_columns,
 };
 use crate::utility_markdown_scanner::{h4_subsections, normalize_heading};
 
+// ─── Defect data ─────────────────────────────────────────────────────────────
+
+/// A defect detected by `detect_aspect_entry_tables` / `detect_aspect_table`.
+#[derive(Debug, Clone)]
+pub enum AspectEntryDefect {
+    /// Expected aspect H4 is missing under the entry H3.
+    MissingAspect {
+        line: usize,
+        h3_title: String,
+        aspect: String,
+    },
+    /// H4 aspect subsections are out of canonical order under the entry H3.
+    OrderMismatch {
+        line: usize,
+        h3_title: String,
+        aspects: Vec<String>,
+    },
+    /// PRD aspect H4 carries an empty body.
+    EmptyBody {
+        line: usize,
+        aspect: String,
+        h3_title: String,
+    },
+    /// Aspect H4 body is not a markdown table.
+    NotATable {
+        line: usize,
+        aspect: String,
+        h3_title: String,
+    },
+    /// Aspect H4 table header is missing required columns.
+    HeaderMissing {
+        line: usize,
+        aspect: String,
+    },
+    /// Aspect H4 table header carries extra columns.
+    HeaderExtra {
+        line: usize,
+        aspect: String,
+        extras: Vec<String>,
+    },
+    /// Rows are not numbered 1..N contiguously.
+    RowNumbering {
+        line: usize,
+        aspect: String,
+        h3_title: String,
+    },
+    /// Bounded aspect row count differs from seed_min.
+    RowCount {
+        line: usize,
+        aspect: String,
+        h3_title: String,
+        total: usize,
+        seed_min: usize,
+    },
+    /// Open-ended aspect row count is below its minimum.
+    RowMinimum {
+        line: usize,
+        aspect: String,
+        h3_title: String,
+        total: usize,
+        min: usize,
+    },
+    /// A numbered row's Detail cell is empty or a placeholder dash.
+    EmptyDetailCell {
+        line: usize,
+        aspect: String,
+        row_no: String,
+    },
+}
+
+impl AspectEntryDefect {
+    /// The anchor line of this defect, for `DocFinding` construction by the
+    /// calling capability.
+    pub fn line(&self) -> usize {
+        match self {
+            AspectEntryDefect::MissingAspect { line, .. }
+            | AspectEntryDefect::OrderMismatch { line, .. }
+            | AspectEntryDefect::EmptyBody { line, .. }
+            | AspectEntryDefect::NotATable { line, .. }
+            | AspectEntryDefect::HeaderMissing { line, .. }
+            | AspectEntryDefect::HeaderExtra { line, .. }
+            | AspectEntryDefect::RowNumbering { line, .. }
+            | AspectEntryDefect::RowCount { line, .. }
+            | AspectEntryDefect::RowMinimum { line, .. }
+            | AspectEntryDefect::EmptyDetailCell { line, .. } => *line,
+        }
+    }
+}
+
+// ─── detect functions ────────────────────────────────────────────────────────
+
 /// Walk every entry H3 under *parent_h2* whose title matches *entry_re* and
-/// verify the per-aspect H4 subsections: presence and canonical order of
+/// detect per-aspect H4 subsection defects: presence and canonical order of
 /// *aspects*, each H4's `| No | Detail |` table shape, contiguous `1..N`
 /// row numbering, bounded/open-ended row counts against *seed_min*, and
-/// non-empty `Detail` cells. Findings anchor to the offending H3 or H4 line.
+/// non-empty `Detail` cells.
 ///
 /// When *is_prd* is true, PRD aspects are free-form prose/tables per the
 /// HOW-TO-MAKE-PRD template: only presence and non-empty body are enforced.
 /// When false (FRD), the strict `| No | Detail |` aspect-table contract is
 /// enforced. A legacy entry carrying a single `| Aspect | Detail |` table is
-/// routed to `check_entry_tables` instead.
-pub fn check_aspect_entry_tables(
-    rule_code: &'static str,
+/// routed to `detect_entry_tables` instead.
+pub fn detect_aspect_entry_tables(
     parsed: &[Section],
     parent_h2: &str,
     entry_re: &regex::Regex,
@@ -34,13 +124,13 @@ pub fn check_aspect_entry_tables(
     open: &[&str],
     seed_min: &[(&str, usize)],
     is_prd: bool,
-) -> Vec<DocFinding> {
-    let mut findings = Vec::new();
+) -> Vec<AspectEntryDefect> {
+    let mut defects = Vec::new();
     let Some(parent) = parsed
         .iter()
         .find(|s| s.level == 2 && normalize_heading(&s.title) == normalize_heading(parent_h2))
     else {
-        return findings;
+        return defects;
     };
     for h3 in h4_candidate_entries(parsed, parent, entry_re) {
         let h4s = h4_subsections(&h3);
@@ -52,26 +142,11 @@ pub fn check_aspect_entry_tables(
         // Presence: every expected aspect H4 must exist under the entry.
         for aspect in aspects {
             if !h4s.iter().any(|s| s.title == *aspect) {
-                findings.push(
-                    DocFinding::new_with_line(
-                        "",
-                        h3.line,
-                        rule_code,
-                        consts::TEMPLATE_CONFORMANCE_VIOLATION_MISSING_H4_ASPECT,
-                        format!(
-                            "line {} `### {}` is missing H4 aspect `{aspect}`",
-                            h3.line, h3.title
-                        ),
-                    )
-                    .with_reason(
-                        format!(
-                            "The {parent_h2} template requires the per-aspect H4 subsections in order under every entry.",
-                        ),
-                        format!(
-                            "Add `#### {aspect}` in its canonical position with a `| No | Detail |` table carrying at least one numbered row.",
-                        ),
-                    ),
-                );
+                defects.push(AspectEntryDefect::MissingAspect {
+                    line: h3.line,
+                    h3_title: h3.title.clone(),
+                    aspect: aspect.to_string(),
+                });
             }
         }
 
@@ -86,26 +161,11 @@ pub fn check_aspect_entry_tables(
             }
         }
         if order_mismatch {
-            findings.push(
-                DocFinding::new_with_line(
-                    "",
-                    mismatch_line,
-                    rule_code,
-                    consts::TEMPLATE_CONFORMANCE_VIOLATION_H4_ORDER,
-                    format!(
-                        "line {} `### {}` H4 aspects are out of canonical order",
-                        mismatch_line, h3.title
-                    ),
-                )
-                .with_reason(
-                    "The entry template fixes the per-aspect H4 order; a reader navigating the entry cannot rely on it otherwise.",
-                    format!(
-                        "Reorder the aspect H4s of `### {}` to: {}.",
-                        h3.title,
-                        aspects.join(" → ")
-                    ),
-                ),
-            );
+            defects.push(AspectEntryDefect::OrderMismatch {
+                line: mismatch_line,
+                h3_title: h3.title.clone(),
+                aspects: aspects.iter().map(|&a| a.to_string()).collect(),
+            });
         }
 
         // Per-aspect body checks.
@@ -114,26 +174,12 @@ pub fn check_aspect_entry_tables(
                 continue;
             };
             if is_prd {
-                // PRD aspect: require the H4 to exist (checked above) and
-                // carry a non-empty body. No table-shape, numbering, or
-                // seed-min count enforcement.
                 if h4.body.trim().is_empty() {
-                    findings.push(
-                        DocFinding::new_with_line(
-                            "",
-                            h4.line,
-                            rule_code,
-                            consts::TEMPLATE_CONFORMANCE_VIOLATION_EMPTY_DETAIL_CELL,
-                            format!(
-                                "line {} `#### {}` under `### {}` has an empty body",
-                                h4.line, aspect, h3.title
-                            ),
-                        )
-                        .with_reason(
-                            "Each PRD aspect H4 must carry real content.",
-                            "Fill `#### {aspect}` with prose, a table, or a numbered list.",
-                        ),
-                    );
+                    defects.push(AspectEntryDefect::EmptyBody {
+                        line: h4.line,
+                        aspect: aspect.to_string(),
+                        h3_title: h3.title.clone(),
+                    });
                 }
                 continue;
             }
@@ -141,17 +187,15 @@ pub fn check_aspect_entry_tables(
                 continue;
             };
             let open_min = open.contains(aspect).then_some(min);
-            findings.extend(check_aspect_table(
-                rule_code, &h3, h4, aspect, open_min, min,
-            ));
+            defects.extend(detect_aspect_table(&h3, h4, aspect, open_min, min));
         }
     }
-    findings
+    defects
 }
 
 /// The entry H3s under *parent* whose titles match *entry_re*, excluding any
 /// legacy entry that already carries a single `| Aspect | Detail |` table
-/// (that shape is handled by `check_entry_tables` instead of the H4 aspect
+/// (that shape is handled by `detect_entry_tables` instead of the H4 aspect
 /// template). PRD entries never use the legacy shape.
 fn h4_candidate_entries(
     _parsed: &[Section],
@@ -187,33 +231,21 @@ fn h4_candidate_entries(
 ///
 /// `open`: `None` = bounded exact `seed_min`; `Some(min)` = open-ended,
 /// at least `min` rows (numbered rows only — `∞` is not written as a marker row).
-pub fn check_aspect_table(
-    rule_code: &'static str,
+pub fn detect_aspect_table(
     h3: &Section,
     h4: &Section,
     aspect: &str,
     open: Option<usize>,
     seed_min: usize,
-) -> Vec<DocFinding> {
-    let mut findings = Vec::new();
+) -> Vec<AspectEntryDefect> {
+    let mut defects = Vec::new();
     if !has_any_table(&h4.body) {
-        findings.push(
-            DocFinding::new_with_line(
-                "",
-                h4.line,
-                rule_code,
-                consts::TEMPLATE_CONFORMANCE_VIOLATION_SECTION_NOT_TABLE,
-                format!(
-                    "line {} `#### {}` under `### {}` must be a markdown table with columns No | Detail",
-                    h4.line, aspect, h3.title
-                ),
-            )
-            .with_reason(
-                "Each aspect subsection carries a `| No | Detail |` table; a body of prose or bullets is not verifiable.",
-                "Replace the body with a `| No | Detail |` table.",
-            ),
-        );
-        return findings;
+        defects.push(AspectEntryDefect::NotATable {
+            line: h4.line,
+            aspect: aspect.to_string(),
+            h3_title: h3.title.clone(),
+        });
+        return defects;
     }
 
     // Header must be exactly `| No | Detail |`.
@@ -229,7 +261,7 @@ pub fn check_aspect_table(
                 .collect::<Vec<_>>()
         })
     else {
-        return findings;
+        return defects;
     };
     let missing: Vec<&str> = ["No", "Detail"]
         .into_iter()
@@ -247,39 +279,20 @@ pub fn check_aspect_table(
         })
         .copied()
         .collect();
-    if !missing.is_empty() || !extras.is_empty() {
-        let violation = if missing.is_empty() {
-            consts::TEMPLATE_CONFORMANCE_VIOLATION_TABLE_EXTRA_COLUMNS
-        } else {
-            consts::TEMPLATE_CONFORMANCE_VIOLATION_TABLE_MISSING_COLUMNS
-        };
-        findings.push(
-            DocFinding::new_with_line(
-                "",
-                h4.line,
-                rule_code,
-                violation,
-                format!(
-                    "line {} `#### {}` table header must be exactly `| No | Detail |`",
-                    h4.line, aspect
-                ),
-            )
-            .with_reason(
-                "The aspect table is a fixed two-column shape; a different header breaks the shared row contract.",
-                {
-                    let extras_joined = extras.join(", ");
-                    format!(
-                        "Rename the columns to `No` and `Detail` (remove extras: {}).",
-                        if extras.is_empty() {
-                            "none"
-                        } else {
-                            extras_joined.as_str()
-                        }
-                    )
-                },
-            ),
-        );
-        return findings;
+    if !missing.is_empty() {
+        defects.push(AspectEntryDefect::HeaderMissing {
+            line: h4.line,
+            aspect: aspect.to_string(),
+        });
+        return defects;
+    }
+    if !extras.is_empty() {
+        defects.push(AspectEntryDefect::HeaderExtra {
+            line: h4.line,
+            aspect: aspect.to_string(),
+            extras: extras.iter().map(|s| s.to_string()).collect(),
+        });
+        return defects;
     }
 
     // Inline row scan: skip header + separator + non-pipe lines;
@@ -325,22 +338,11 @@ pub fn check_aspect_table(
         }
     }
     if !numbering_ok {
-        findings.push(
-            DocFinding::new_with_line(
-                "",
-                h4.line,
-                rule_code,
-                consts::TEMPLATE_CONFORMANCE_VIOLATION_ROW_NUMBERING,
-                format!(
-                    "line {} `#### {}` under `### {}` rows are not numbered 1..N",
-                    h4.line, aspect, h3.title
-                ),
-            )
-            .with_reason(
-                "Each aspect table must carry contiguous numbered rows starting at 1.",
-                "Renumber rows 1, 2, … without gaps.",
-            ),
-        );
+        defects.push(AspectEntryDefect::RowNumbering {
+            line: h4.line,
+            aspect: aspect.to_string(),
+            h3_title: h3.title.clone(),
+        });
     }
 
     let total = numbered.len();
@@ -349,34 +351,22 @@ pub fn check_aspect_table(
         None => total != seed_min,
     };
     if count_violation {
-        let violation = match open {
-            Some(_) => consts::TEMPLATE_CONFORMANCE_VIOLATION_ROW_MINIMUM,
-            None => consts::TEMPLATE_CONFORMANCE_VIOLATION_ROW_COUNT,
-        };
-        let message = match open {
-            Some(min) => format!(
-                "line {} `#### {}` under `### {}` has {} rows; open-ended aspect {aspect} needs at least {min}",
-                h4.line, aspect, h3.title, total
-            ),
-            None => format!(
-                "line {} `#### {}` under `### {}` has {} rows; bounded aspect {aspect} must carry exactly {seed_min} row{}",
-                h4.line,
-                aspect,
-                h3.title,
+        match open {
+            Some(min) => defects.push(AspectEntryDefect::RowMinimum {
+                line: h4.line,
+                aspect: aspect.to_string(),
+                h3_title: h3.title.clone(),
                 total,
-                if seed_min == 1 { "" } else { "s" }
-            ),
-        };
-        let fix = match open {
-            Some(_) => "Add numbered rows until the aspect carries at least its seed minimum.",
-            None => "Adjust the row count to exactly the bounded seed.",
-        };
-        findings.push(
-            DocFinding::new_with_line("", h4.line, rule_code, violation, message).with_reason(
-                "The open/bounded contract fixes each aspect's minimum or exact seed row count.",
-                fix,
-            ),
-        );
+                min,
+            }),
+            None => defects.push(AspectEntryDefect::RowCount {
+                line: h4.line,
+                aspect: aspect.to_string(),
+                h3_title: h3.title.clone(),
+                total,
+                seed_min,
+            }),
+        }
     }
 
     // Empty or placeholder Detail cells on every numbered row: a lone dash
@@ -389,23 +379,12 @@ pub fn check_aspect_table(
         if !no.chars().next().is_some_and(|c| c.is_ascii_digit()) {
             continue;
         }
-        findings.push(
-            DocFinding::new_with_line(
-                "",
-                h4.line,
-                rule_code,
-                consts::TEMPLATE_CONFORMANCE_VIOLATION_EMPTY_DETAIL_CELL,
-                format!(
-                    "line {} `#### {}` row {no} Detail cell is empty or a placeholder dash",
-                    h4.line, aspect
-                ),
-            )
-            .with_reason(
-                "Every numbered row's Detail cell must carry real content; a lone `—` is a placeholder, not content. A second row belongs in the table only when a second fact exists.",
-                "Fill the Detail cell with real content, or remove the row.",
-            ),
-        );
+        defects.push(AspectEntryDefect::EmptyDetailCell {
+            line: h4.line,
+            aspect: aspect.to_string(),
+            row_no: no.clone(),
+        });
     }
 
-    findings
+    defects
 }

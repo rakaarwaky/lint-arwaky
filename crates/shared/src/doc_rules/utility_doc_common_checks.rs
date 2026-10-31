@@ -64,6 +64,7 @@ pub fn check_entry_tables(
             &h3.title,
             columns,
             Some(&h3),
+            &crate::taxonomy_doc_rules_violation_names::DocViolationNames,
         ) {
             findings.push(finding);
             continue;

@@ -19,6 +19,7 @@ use shared_doc_rules::utility_doc_fr_format_checks::collect_any_id_set;
 use shared_doc_rules::utility_markdown_scanner::{doc_h2_contract, sections};
 use shared_doc_rules::utility_protocol_counter::ds_id_heading_re;
 
+#[derive(Default)]
 pub struct DesignCapability;
 
 impl DesignCapability {

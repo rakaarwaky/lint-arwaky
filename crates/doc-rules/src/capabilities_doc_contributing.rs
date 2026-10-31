@@ -16,6 +16,7 @@ use shared_doc_rules::utility_doc_common_checks::{
 };
 use shared_doc_rules::utility_markdown_scanner::{doc_h2_contract, sections};
 
+#[derive(Default)]
 pub struct ContributingCapability;
 
 impl ContributingCapability {
@@ -67,6 +68,7 @@ impl ContributingCapability {
             &parsed,
             "Workflow",
             consts::CONTRIBUTING_WORKFLOW_COLUMNS,
+            &shared_doc_rules::taxonomy_doc_rules_violation_names::DocViolationNames,
         ));
         // AES604 — Commit Convention table carries fixed columns.
         findings.extend(check_h2_table(
@@ -74,6 +76,7 @@ impl ContributingCapability {
             &parsed,
             "Commit Convention",
             consts::CONTRIBUTING_COMMIT_COLUMNS,
+            &shared_doc_rules::taxonomy_doc_rules_violation_names::DocViolationNames,
         ));
     }
 

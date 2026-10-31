@@ -13,6 +13,7 @@ use shared_doc_rules::utility_capabilities_doc_h2_checks::check_h2_table;
 use shared_doc_rules::utility_doc_common_checks::check_doc_heading;
 use shared_doc_rules::utility_markdown_scanner::{doc_h2_contract, sections};
 
+#[derive(Default)]
 pub struct ReadmeCapability;
 
 impl ReadmeCapability {
@@ -61,6 +62,7 @@ impl ReadmeCapability {
             &parsed,
             "Quick Start",
             consts::README_QUICK_START_COLUMNS,
+            &shared_doc_rules::taxonomy_doc_rules_violation_names::DocViolationNames,
         ));
     }
 }

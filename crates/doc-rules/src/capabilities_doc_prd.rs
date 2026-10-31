@@ -20,6 +20,7 @@ use shared_doc_rules::utility_doc_fr_format_checks::{
 };
 use shared_doc_rules::utility_markdown_scanner::{doc_h2_contract, sections};
 
+#[derive(Default)]
 pub struct PrdCapability;
 
 impl PrdCapability {
@@ -60,11 +61,11 @@ impl PrdCapability {
             .iter()
             .find(|d| context.document_name(d) == consts::ROADMAP_DOC)
         {
-            check_pr_id_parity(consts::RULE_CODE_FR_FORMAT, document, roadmap, findings);
+            check_pr_id_parity(consts::RULE_CODE_FR_FORMAT, consts::PR_ROADMAP_ID_MISSING, consts::ROADMAP_PR_ID_NOT_PR, document, roadmap, findings);
         }
 
         // AES601 — promised API method existence.
-        check_api_method_existence(consts::RULE_CODE_FR_FORMAT, document, context, findings);
+        check_api_method_existence(consts::RULE_CODE_FR_FORMAT, consts::FR_API_METHOD_VIOLATION_NOT_FOUND, document, context, findings);
 
         // AES604 — crosslinks (ROADMAP, ARCHITECTURE).
         Self::check_crosslinks(document, context, consts::RULE_CODE_CROSSLINKS, findings);
