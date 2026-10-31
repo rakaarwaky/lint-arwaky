@@ -11,18 +11,21 @@ The external-lint feature sits in the feature layer, invoked by the surface CLI 
 **Description:** The feature shall select the set of external linter adapters that matches the detected project languages and execute each selected adapter sequentially in language-group order, aggregating normalized violations across every invoked adapter.
 
 #### Business Logic
+
 - Adapters shall be selected in deterministic language-group order: Rust (`clippy`, `rustfmt`, `cargo-audit`), Python (`ruff`, `mypy`, `bandit`), JS/TS (`eslint`, `prettier`, `tsc`), and Markdown (`markdownlint`).
 - When caller context does not supply language flags, the feature shall query the filesystem aggregate for project language presence without scanning directory trees directly.
 - The adapter list shall be executed sequentially without threading, passing the target path to each selected adapter.
 - Results shall be filtered against configured rules and ignored path patterns before returning to the caller.
 
 #### Edge Cases
+
 - If no languages are detected, the feature shall return an empty adapter list and run zero scans.
 - If all languages are detected, the feature shall select up to ten adapters.
 - If an adapter fails during execution, the feature shall log a warning and continue executing subsequent adapters.
 - If an adapter binary is missing from the environment, the feature shall log a warning, treat that adapter's results as empty, and continue the scan.
 
 #### Technical Specification
+
 | Aspect | Detail |
 |--------|--------|
 | **Input** | Target file path, boolean flags (`has_rust`, `has_python`, `has_js`, `has_markdown`), and optional audit context with configuration entries and ignored path patterns. Source: caller scan request. |
@@ -33,6 +36,7 @@ The external-lint feature sits in the feature layer, invoked by the surface CLI 
 | **Error** | Missing tool binary surfaces as unavailable adapter; adapter execution failure surfaces as a warning without aborting the scan. |
 
 #### Test
+
 | Context | When Action | Then Observable Result |
 |---------|-------------|------------------------|
 | Project language flags indicate only Rust is present | `select_adapters` receives `has_rust = true` and all other flags `false` | Adapters `clippy`, `rustfmt`, and `cargo-audit` are selected in that exact order |
@@ -41,6 +45,7 @@ The external-lint feature sits in the feature layer, invoked by the surface CLI 
 | An adapter binary is missing from the environment | The scan executes that adapter | The adapter reports unavailable and subsequent adapters still execute |
 
 #### Metric
+
 | Target Metric | Value |
 |---------------|-------|
 | Unrequested Adapter Invocations | 0 |
@@ -52,17 +57,20 @@ The external-lint feature sits in the feature layer, invoked by the surface CLI 
 **Description:** The feature shall run the native fix command of an external linter tool against a specific file and report whether the fix succeeded, using a no-op result for tools that provide no fix command.
 
 #### Business Logic
+
 - Fix-capable adapters shall execute their tool's native rewrite command: ESLint `npx eslint <file> --fix`, Prettier `npx prettier <file> --write`, Ruff `ruff check <file> --fix --exit-zero`, Clippy `cargo clippy --fix --allow-dirty --allow-staged`, and Rustfmt `cargo fmt` without `--check`.
 - JS tool fixes shall resolve both the working directory and the absolute file path before executing the fix command.
 - Non-fixing adapters (Mypy, Bandit, TSC, and cargo-audit) shall return a no-op status without invoking a subprocess.
 - A fix invocation shall report a compliance status indicating success, failure, or no-op to the caller.
 
 #### Edge Cases
+
 - If the fix command exits with a failure status, the feature shall return a failure status without crashing.
 - If the target tool is not installed, the feature shall return a failure status.
 - If the target tool is non-fixing, the feature shall return a no-op status without running a subprocess.
 
 #### Technical Specification
+
 | Aspect | Detail |
 |--------|--------|
 | **Input** | Tool name, target file path, and fix argument (`--fix`, `--write`). Source: caller fix request. |
@@ -73,6 +81,7 @@ The external-lint feature sits in the feature layer, invoked by the surface CLI 
 | **Error** | Subprocess failure mapped to an adapter error without crashing; caller decides next step. |
 
 #### Test
+
 | Context | When Action | Then Observable Result |
 |---------|-------------|------------------------|
 | A fix-capable tool rewrites the target file | The fix command is executed | The file is rewritten and compliance status reports success |
@@ -80,6 +89,7 @@ The external-lint feature sits in the feature layer, invoked by the surface CLI 
 | The external fix command exits with an error | The fix command is executed | Compliance status reports failure and the process does not terminate abnormally |
 
 #### Metric
+
 | Target Metric | Value |
 |---------------|-------|
 | Subprocess Spawns per Invoked Fix | 1 |
@@ -91,6 +101,7 @@ The external-lint feature sits in the feature layer, invoked by the surface CLI 
 **Description:** The feature shall normalize each external tool's stdout or JSON report into unified violation records that carry tool-native rule codes and mapped severities.
 
 #### Business Logic
+
 - Rule codes shall use tool-native identifiers prefixed with the tool name: Clippy `clippy::<lint_name>`, Rustfmt `rustfmt::unformatted`, cargo-audit `cargo-audit::<RUSTSEC-ID>`, Ruff `ruff::<code>`, Mypy `mypy::<error-code>`, Bandit `bandit::<test-id>`, ESLint `eslint::<rule-id>`, Prettier `prettier::diff`, tsc `tsc::<error-code>`, and markdownlint `markdownlint::<MD-id>`.
 - File paths in tool reports shall be canonicalized to absolute paths, and line numbers shall be extracted from tool-specific diagnostic fields.
 - Diagnostic severity shall follow the per-tool mapping: Clippy `correctness`→CRITICAL, `suspicious`/`perf`→HIGH, `style`/`complexity`→MEDIUM, `pedantic`/`nursery`/`restriction`→LOW; Rustfmt diff→MEDIUM.
@@ -99,6 +110,7 @@ The external-lint feature sits in the feature layer, invoked by the surface CLI 
 - Ruff severity shall be determined by the rule code rather than the tool's own severity field.
 
 #### Edge Cases
+
 - If a tool produces invalid JSON or unparseable output, the feature shall return empty results and log a warning.
 - If a tool produces zero violations, the feature shall return an empty result list rather than an error.
 - If a tool outputs a relative file path, the feature shall canonicalize it to an absolute path.
@@ -106,6 +118,7 @@ The external-lint feature sits in the feature layer, invoked by the surface CLI 
 - If a Mypy error message contains `syntax` or `parse`, the feature shall escalate severity to CRITICAL.
 
 #### Technical Specification
+
 | Aspect | Detail |
 |--------|--------|
 | **Input** | Raw stdout or JSON output from an external linter subprocess. Source: adapter command execution. |
@@ -116,6 +129,7 @@ The external-lint feature sits in the feature layer, invoked by the surface CLI 
 | **Error** | Parse failures return empty results with a warning; unparseable content causes no panic. |
 
 #### Test
+
 | Context | When Action | Then Observable Result |
 |---------|-------------|------------------------|
 | A Ruff JSON report contains rule `E501` | Normalization is executed | Normalized violation carries rule code `ruff::E501` with severity LOW |
@@ -125,6 +139,7 @@ The external-lint feature sits in the feature layer, invoked by the surface CLI 
 | A Mypy error message contains `syntax` | Normalization is executed | Violation severity is escalated to CRITICAL |
 
 #### Metric
+
 | Target Metric | Value |
 |---------------|-------|
 | Panics on Malformed Tool Output | 0 |
@@ -136,6 +151,7 @@ The external-lint feature sits in the feature layer, invoked by the surface CLI 
 **Description:** The feature shall execute external linter tools as blocking subprocesses, capture their stdout and stderr, enforce a per-adapter timeout, and map spawn and timeout failures into adapter errors.
 
 #### Business Logic
+
 - Python and JS adapters shall execute with a 60-second timeout; Clippy with a 180-second timeout; Rustfmt and cargo-audit with a 120-second timeout.
 - `PYTHONUNBUFFERED=1` shall be set on all subprocess environments.
 - Subprocess spawn failures and timeouts shall be reported as adapter errors, allowing the scan to continue with the next adapter.
@@ -144,11 +160,13 @@ The external-lint feature sits in the feature layer, invoked by the surface CLI 
 - Callers requiring an aggregate time bound shall enforce the ceiling at the outer invocation layer.
 
 #### Edge Cases
+
 - If an executable is absent from PATH, the feature shall report the adapter as unavailable and proceed with remaining adapters.
 - If an adapter exceeds its timeout ceiling, the feature shall log an error, avoid retry, and proceed with remaining adapters.
 - If all adapters run slowly, execution shall block for the summed worst case without interruption from intermediate layers.
 
 #### Technical Specification
+
 | Aspect | Detail |
 |--------|--------|
 | **Input** | Tool name, argument list, target working directory, and timeout in seconds. Source: linter adapter. |
@@ -159,6 +177,7 @@ The external-lint feature sits in the feature layer, invoked by the surface CLI 
 | **Error** | Spawn and timeout errors surface as `LinterOperationError` variants. |
 
 #### Test
+
 | Context | When Action | Then Observable Result |
 |---------|-------------|------------------------|
 | An external tool exceeds its allotted timeout ceiling | The tool process executes | The adapter receives a timed-out status and subsequent adapters still execute |
@@ -166,6 +185,7 @@ The external-lint feature sits in the feature layer, invoked by the surface CLI 
 | An external tool executes successfully | The tool process finishes | Captured stdout and stderr text are returned with an ok completion status |
 
 #### Metric
+
 | Target Metric | Value |
 |---------------|-------|
 | Retries per Adapter Execution | 0 |
@@ -177,15 +197,18 @@ The external-lint feature sits in the feature layer, invoked by the surface CLI 
 **Description:** The feature shall resolve the binary path for a JS or TS tool, preferring a local installation under `node_modules/.bin` over a global PATH lookup, and shall locate the working directory by walking up to ten parent directories for a tool configuration file.
 
 #### Business Logic
+
 - The feature shall check `node_modules/.bin/<tool>` in the resolved working directory; if the local binary exists, its absolute path shall be used.
 - If no local binary exists, the feature shall fall back to global PATH resolution.
 - The feature shall resolve the working directory by walking up to ten parent directories searching for `.eslintrc.*`, `prettier.config.*`, `tsconfig.json`, or `package.json`.
 
 #### Edge Cases
+
 - If neither a local binary nor a global PATH entry exists, the feature shall report the tool as unavailable.
 - If no configuration file is located within ten parent directory levels, the feature shall skip the scan for that target file.
 
 #### Technical Specification
+
 | Aspect | Detail |
 |--------|--------|
 | **Input** | Tool name and target starting path. Source: JS adapter. |
@@ -196,6 +219,7 @@ The external-lint feature sits in the feature layer, invoked by the surface CLI 
 | **Error** | Tool resolution failure surfaces as an adapter error; remaining adapters continue execution. |
 
 #### Test
+
 | Context | When Action | Then Observable Result |
 |---------|-------------|------------------------|
 | Target file resides in a project with `node_modules/.bin/<tool>` | Binary resolution is executed | The returned command path points to the local binary |
@@ -204,6 +228,7 @@ The external-lint feature sits in the feature layer, invoked by the surface CLI 
 | No configuration file exists within ten parent directory levels | Working directory resolution is executed | Scan for the target file is skipped with a warning |
 
 #### Metric
+
 | Target Metric | Value |
 |---------------|-------|
 | Directory Lookups per Tool Invocation | 1 |
@@ -215,14 +240,17 @@ The external-lint feature sits in the feature layer, invoked by the surface CLI 
 **Description:** The feature shall locate the directory containing `Cargo.toml` or `Cargo.lock` for a Rust tool execution by walking up the directory tree.
 
 #### Business Logic
+
 - The feature shall walk up the directory tree looking for `Cargo.toml` for Clippy and Rustfmt, or `Cargo.lock` for cargo-audit.
 - When the manifest file is found, the feature shall return the containing directory; if not found, the adapter shall be skipped with a warning.
 - Working directory resolution shall be strictly read-only, never creating or modifying any file or directory.
 
 #### Edge Cases
+
 - If neither `Cargo.toml` nor `Cargo.lock` appears in the parent directory chain, the feature shall skip the adapter with a warning.
 
 #### Technical Specification
+
 | Aspect | Detail |
 |--------|--------|
 | **Input** | Starting target path. Source: Rust adapter. |
@@ -233,6 +261,7 @@ The external-lint feature sits in the feature layer, invoked by the surface CLI 
 | **Error** | Missing cargo manifest surfaces as an adapter error; remaining adapters continue execution. |
 
 #### Test
+
 | Context | When Action | Then Observable Result |
 |---------|-------------|------------------------|
 | Target path is nested inside a cargo project directory | Cargo working directory resolution is executed | The directory containing `Cargo.toml` is returned |
@@ -240,6 +269,7 @@ The external-lint feature sits in the feature layer, invoked by the surface CLI 
 | Cargo working directory resolution is performed | The directory tree is inspected | Zero files or directories are created or modified |
 
 #### Metric
+
 | Target Metric | Value |
 |---------------|-------|
 | Upward Directory Walks per Invocation | 1 |
