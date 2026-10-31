@@ -22,17 +22,20 @@ flowchart TD
 **Description:** This requirement shall build the pre-built graph context, compute entry points, and perform BFS reachability tracing so that downstream layer analyzers (FR-OrphanRules-002..007) can determine which files are alive.
 
 #### Business Logic
+
 - The graph context shall be built from the `GraphAnalysisContext` returned by `IFilesystemAggregate::build_orphan_graph_context(root, ignored)`.
 - Entry points shall be computed from container files, main entry points, and surface files that call aggregates.
 - BFS reachability shall trace forward from entry points through the import graph.
 - The alive set shall be computed before dispatching to any layer analyzer.
 
 #### Edge Cases
+
 - An empty graph shall yield an empty entry-point set and an empty alive set, with no error.
 - Unreadable tree nodes shall be skipped without crashing.
 - Missing entry points shall yield an empty alive set, causing all files to be classified as orphans downstream.
 
 #### Technical Specification
+
 | Aspect | Detail |
 |--------|--------|
 | **Input** | `GraphAnalysisContext` (import graph, inbound links, inheritance map, file list) plus an optional entry-point subset. Source: `IFilesystemAggregate::build_orphan_graph_context(root, ignored)`. |
@@ -43,6 +46,7 @@ flowchart TD
 | **Error** | Unreadable tree nodes are skipped; missing entry points yield an empty alive set (correct behaviour, no error). |
 
 #### Test
+
 | Context | When Action | Then Observable Result |
 |---------|-------------|------------------------|
 | Seeded graph with entry points | Context is built and reachability traced | The expected alive set is returned |
@@ -50,6 +54,7 @@ flowchart TD
 | Entry points computed from a partial subset | Reachability traced | Alive set is consistent with the subset |
 
 #### Metric
+
 | Target Metric | Value |
 |---------------|-------|
 | Empty graph produces zero errors | 100% |
@@ -60,17 +65,20 @@ flowchart TD
 **Description:** This requirement shall flag taxonomy-layer files that no other layer imports (AES501 violation).
 
 #### Business Logic
+
 - A taxonomy file shall be considered alive only when it is imported by an agent, capabilities, or surface layer file.
 - Imports from other taxonomy files do not count as a rescue; self-import only shall still be classified as an orphan.
 - Helper- or utility-suffixed taxonomy files shall be categorised as utility files and checked under utility rules; they shall also be flagged under taxonomy rules.
 
 #### Edge Cases
+
 - A taxonomy file imported by an agent, capabilities, or surface file is not an orphan.
 - A taxonomy file imported only by other taxonomy files is an orphan.
 - A taxonomy file whose only inbound link is a self-import is an orphan.
 - A helper-suffixed taxonomy file is categorised as utility and also checked under taxonomy rules.
 
 #### Technical Specification
+
 | Aspect | Detail |
 |--------|--------|
 | **Input** | `GraphAnalysisContext`, entry points, and parsed entries. Source: `OrphanRequest::{Check, CheckWithContext, CheckWithEntries}`. |
@@ -81,6 +89,7 @@ flowchart TD
 | **Error** | A missing context triggers a pre-check build rather than a crash; unreadable files are skipped. |
 
 #### Test
+
 | Context | When Action | Then Observable Result |
 |---------|-------------|------------------------|
 | Taxonomy file imported by a surface layer | Taxonomy orphan check runs | No AES501 violation is emitted |
@@ -89,6 +98,7 @@ flowchart TD
 | Helper-suffixed taxonomy file | Taxonomy orphan check runs | The file is categorised as utility; an AES501 violation is also emitted |
 
 #### Metric
+
 | Target Metric | Value |
 |---------------|-------|
 | Seeded taxonomy orphan fires exactly one AES501 finding | 100% |
@@ -99,12 +109,14 @@ flowchart TD
 **Description:** This requirement shall flag contract-layer files whose traits have no alive implementor wired into the application (AES502 violation).
 
 #### Business Logic
+
 - A contract is alive when at least one implementor is reachable from entry points via a DI bridge or direct wiring.
 - Matching shall use absolute-path suffix comparison so that same-basename files at different paths stay distinct.
 - Multiple traits in one file shall each be evaluated independently; an implementor that is itself unreachable does not rescue the contract.
 - A surface file that does not call an aggregate marks that aggregate's contract as an orphan.
 
 #### Edge Cases
+
 - An aggregate not called by any surface file is an orphan.
 - An implementor matched by absolute-path suffix is alive even if a same-basename file at a different path is unreachable.
 - A file with the same basename but a different path is not considered a match.
@@ -112,6 +124,7 @@ flowchart TD
 - A multi-trait file with only one alive implementor keeps only that trait alive.
 
 #### Technical Specification
+
 | Aspect | Detail |
 |--------|--------|
 | **Input** | `GraphAnalysisContext`, entry points, and parsed entries. Source: `OrphanRequest::{Check, CheckWithContext, CheckWithEntries, Scan}`. |
@@ -122,6 +135,7 @@ flowchart TD
 | **Error** | An unmatched reference reports an orphan rather than an error; unreadable files are skipped. |
 
 #### Test
+
 | Context | When Action | Then Observable Result |
 |---------|-------------|------------------------|
 | A contract trait has an implementor reachable from entry points | Contract orphan check runs | No AES502 violation is emitted |
@@ -130,6 +144,7 @@ flowchart TD
 | Same-basename implementor at a different path | Contract orphan check runs | The implementor is not matched; one AES502 violation is emitted |
 
 #### Metric
+
 | Target Metric | Value |
 |---------------|-------|
 | Wired contract fires zero AES502 findings | 100% |
@@ -140,6 +155,7 @@ flowchart TD
 **Description:** This requirement shall flag capability-layer files that are unreachable from entry points through the DI wiring (AES503 violation).
 
 #### Business Logic
+
 - Reachability shall flow entry point to contract to implementation to capability.
 - DI implementation-bridge edges shall extend reachability, wiring implementors to capabilities.
 - A broken chain shall detect unreachable capability files.
@@ -147,6 +163,7 @@ flowchart TD
 - Python class bases shall register bridges for multiple inheritance; a class without bases registers no bridge.
 
 #### Edge Cases
+
 - A reachable capability file is not an orphan.
 - A broken DI chain detects the unreachable capability file.
 - An unwired reachable file reports a DI bridge gap in its message.
@@ -154,6 +171,7 @@ flowchart TD
 - Multiple implementations on one contract shall all be examined.
 
 #### Technical Specification
+
 | Aspect | Detail |
 |--------|--------|
 | **Input** | `GraphAnalysisContext` with implementation-bridge edges. Source: `OrphanRequest::{Check, CheckWithContext, CheckWithEntries}`. |
@@ -164,6 +182,7 @@ flowchart TD
 | **Error** | A gap in DI wiring is reported as the violation itself (the message mentions the DI bridge gap), not as a tool error. |
 
 #### Test
+
 | Context | When Action | Then Observable Result |
 |---------|-------------|------------------------|
 | A capability is reachable from entry points | Capabilities orphan check runs | No AES503 violation is emitted |
@@ -172,6 +191,7 @@ flowchart TD
 | A Python file uses chained imports | Capabilities orphan check runs | The reachable capability is not flagged |
 
 #### Metric
+
 | Target Metric | Value |
 |---------------|-------|
 | Seeded reachable capability fires zero findings | 100% |
@@ -182,17 +202,20 @@ flowchart TD
 **Description:** This requirement shall flag utility-layer files that no other alive file references (AES504 violation).
 
 #### Business Logic
+
 - A utility file shall be considered alive when any alive file imports or references it.
 - Pure helpers with no importers shall be classified as orphans.
 - Files with helper or utility suffixes shall be routed to this requirement for checking.
 
 #### Edge Cases
+
 - A utility file imported by any alive file is not an orphan.
 - An unimported utility file is an orphan.
 - Self-references do not count as a rescue.
 - An empty-content file shall be handled without panic.
 
 #### Technical Specification
+
 | Aspect | Detail |
 |--------|--------|
 | **Input** | `GraphAnalysisContext` and entry points. Source: `OrphanRequest::{Check, CheckWithContext, CheckWithEntries}`. |
@@ -203,6 +226,7 @@ flowchart TD
 | **Error** | Missing references produce a violation (the orphan), not a tool error. |
 
 #### Test
+
 | Context | When Action | Then Observable Result |
 |---------|-------------|------------------------|
 | A utility file is imported by an alive file | Utility orphan check runs | No AES504 violation is emitted |
@@ -211,6 +235,7 @@ flowchart TD
 | An empty-content utility file | Utility orphan check runs | No panic; the file is classified as an orphan |
 
 #### Metric
+
 | Target Metric | Value |
 |---------------|-------|
 | Seeded unimported utility fires exactly one AES504 finding | 100% |
@@ -221,18 +246,21 @@ flowchart TD
 **Description:** This requirement shall flag agent orchestrator files whose aggregate is never used by any surface, container, or main entry point (AES505 violation).
 
 #### Business Logic
+
 - An agent file shall be considered alive when its aggregate trait appears in the alive set via usage by a surface, container, or main file.
 - An agent file with no aggregate traits in the alive set is an orphan.
 - An agent file with aggregate traits not in the alive set is an orphan.
 - An agent file that is reachable but has no aggregate traits shall not be judged harshly: with an empty alive set, no orphan finding is emitted.
 
 #### Edge Cases
+
 - An agent aggregate used by a surface, container, or main file is not an orphan.
 - An aggregate trait never in the alive set is an orphan.
 - An empty alive set yields no agent orphan findings.
 - An empty file is not an orphan.
 
 #### Technical Specification
+
 | Aspect | Detail |
 |--------|--------|
 | **Input** | `GraphAnalysisContext`, entry points, and the alive aggregate set. Source: `OrphanRequest::{Check, CheckWithContext, CheckWithEntries}`. |
@@ -243,6 +271,7 @@ flowchart TD
 | **Error** | An unreachable aggregate registers as an orphan rather than a tool failure. |
 
 #### Test
+
 | Context | When Action | Then Observable Result |
 |---------|-------------|------------------------|
 | An agent aggregate is used by a surface file | Agent orphan check runs | No AES505 violation is emitted |
@@ -251,6 +280,7 @@ flowchart TD
 | An empty agent file | Agent orphan check runs | No AES505 violation is emitted |
 
 #### Metric
+
 | Target Metric | Value |
 |---------------|-------|
 | Seeded used agent fires zero findings | 100% |
@@ -261,17 +291,20 @@ flowchart TD
 **Description:** This requirement shall flag surface files (render trees) that never get invoked from any entry point (AES506 violation).
 
 #### Business Logic
+
 - A surface file shall be considered alive when it is invoked from an entry-point flow, such as container or main wiring.
 - An uninvoked render tree is an orphan.
 - Classification shall be deterministic: unchanged inputs produce the same classification.
 
 #### Edge Cases
+
 - A surface file used from container or main wiring is not an orphan.
 - An unused surface file is an orphan.
 - Parsing a surface tree with no entries yields no finding.
 - A parse error in a surface file skips the entry without crashing.
 
 #### Technical Specification
+
 | Aspect | Detail |
 |--------|--------|
 | **Input** | `GraphAnalysisContext` and registration data. Source: `OrphanRequest::{Check, CheckWithContext, CheckWithEntries}`. |
@@ -282,6 +315,7 @@ flowchart TD
 | **Error** | A missing registration entry maps to an orphan finding; parse errors skip the entry. |
 
 #### Test
+
 | Context | When Action | Then Observable Result |
 |---------|-------------|------------------------|
 | A surface file is wired from container/main | Surface orphan check runs | No AES506 violation is emitted |
@@ -290,6 +324,7 @@ flowchart TD
 | Two surface files with unchanged inputs | Surface orphan check runs | Classification is deterministic |
 
 #### Metric
+
 | Target Metric | Value |
 |---------------|-------|
 | Seeded wired surface fires zero findings | 100% |
