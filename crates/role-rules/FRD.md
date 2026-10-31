@@ -30,6 +30,7 @@ flowchart TD
 **Description:** The role-rules crate shall classify every audited file into one AES layer role (agent, capabilities, contract, taxonomy, utility, surface, or root) so the correct layer checker runs on it, and shall ignore files that fall outside every layer directory.
 
 #### Business Logic
+
 - Every file path prefix maps to exactly one layer role; a file never resolves to two roles at once.
 - Classification is language-neutral: the same prefix rules apply to Rust, Python, and TypeScript files.
 - Windows and POSIX path separators classify identically.
@@ -38,11 +39,13 @@ flowchart TD
 - Files outside every layer directory are left unclassified and produce no finding.
 
 #### Edge Cases
+
 - An unclassified path yields no role and therefore no downstream finding.
 - A file matching a layer prefix but sitting in a nested bucket still classifies to that layer.
 - A file with an unknown prefix is unclassified and ignored.
 
 #### Technical Specification
+
 | Aspect | Detail |
 |--------|--------|
 | **Input** | Pre-fetched file entries with paths; provided by the Surface through the audit aggregate's execute entry point. |
@@ -53,6 +56,7 @@ flowchart TD
 | **Error** | Unclassified path: no role, no finding; parse failure: no finding, audit continues. |
 
 #### Test
+
 | Context | When Action | Then Observable Result |
 |---------|-------------|------------------------|
 | A fixtures directory holds one file per layer prefix | The classifier runs on each path | Each file resolves to its documented layer role exactly once |
@@ -61,6 +65,7 @@ flowchart TD
 | A nested capabilities bucket file is classified | The classifier runs on it | It resolves to the capabilities role |
 
 #### Metric
+
 | Target Metric | Value |
 |---------------|-------|
 | Seeded layer-prefix fixtures classified to their documented role | 100% |
@@ -71,18 +76,21 @@ flowchart TD
 **Description:** The role-rules crate shall audit taxonomy files so they use only taxonomy primitives and stay constant-pure, and shall flag any primitive entity (struct, error, or event) declared with a non-taxonomy primitive as an AES401 violation.
 
 #### Business Logic
+
 - Taxonomy files may declare values, enums, and error/runtime/event markers using taxonomy primitives only.
 - Constant-only taxonomy files must hold no impl blocks.
 - A primitive entity declared with a non-taxonomy primitive is flagged as AES401.
 - Files not classified as taxonomy are ignored entirely.
 
 #### Edge Cases
+
 - A clean constant taxonomy file produces no violation.
 - A constant taxonomy file containing a struct is flagged.
 - An entity, error, or event carrying a primitive is flagged.
 - A non-taxonomy file is ignored by classification and produces no finding.
 
 #### Technical Specification
+
 | Aspect | Detail |
 |--------|--------|
 | **Input** | Classified taxonomy file entries (path plus content). |
@@ -93,6 +101,7 @@ flowchart TD
 | **Error** | An unparseable taxonomy file yields no finding rather than failing the audit. |
 
 #### Test
+
 | Context | When Action | Then Observable Result |
 |---------|-------------|------------------------|
 | A clean constant taxonomy file is audited | The taxonomy checker runs | No AES401 violation is reported |
@@ -100,6 +109,7 @@ flowchart TD
 | A non-taxonomy file is audited | Classification runs first | The file is ignored and no violation is reported |
 
 #### Metric
+
 | Target Metric | Value |
 |---------------|-------|
 | Seeded impurity fixtures each producing one AES401 finding | 100% |
@@ -110,12 +120,14 @@ flowchart TD
 **Description:** The role-rules crate shall restrict contract files to declarations only, flagging builtin primitives, dispatch bags, and default method bodies, while accepting clean protocol declarations and docstring-then-stub patterns.
 
 #### Business Logic
+
 - Contract files declare traits/interfaces only; no builtin primitives and no dispatch bags are permitted.
 - Default method bodies are flagged; a docstring-then-stub (single or multi-line) is accepted as clean.
 - Multi-method aggregates on Python contracts are detected.
 - Non-contract files are ignored.
 
 #### Edge Cases
+
 - A clean protocol declaration produces no violation.
 - A Python docstring-then-stub (single and multi-line) is clean.
 - A Python aggregate with multiple methods is detected.
@@ -123,6 +135,7 @@ flowchart TD
 - A non-contract file is ignored.
 
 #### Technical Specification
+
 | Aspect | Detail |
 |--------|--------|
 | **Input** | Classified contract file entries. |
@@ -133,6 +146,7 @@ flowchart TD
 | **Error** | An unparseable contract yields no finding rather than failing the audit. |
 
 #### Test
+
 | Context | When Action | Then Observable Result |
 |---------|-------------|------------------------|
 | A clean protocol declaration is audited | The contract auditor runs | No AES402 violation is reported |
@@ -141,6 +155,7 @@ flowchart TD
 | A non-contract file is audited | Classification runs first | The file is ignored and no violation is reported |
 
 #### Metric
+
 | Target Metric | Value |
 |---------------|-------|
 | Seeded contract-violation fixtures each producing one AES402 finding | 100% |
@@ -151,6 +166,7 @@ flowchart TD
 **Description:** The role-rules crate shall require capability files to implement their protocol with banner and block discipline, flagging missing banners, wrong block order, embedded tests, and local constants outside constants blocks.
 
 #### Business Logic
+
 - Capability files must carry the three banners; a missing middle or first banner over three is flagged.
 - The inherent impl must precede the protocol impl (block order); inherent-before-protocol is flagged.
 - No embedded tests and no local constants outside constants blocks are permitted.
@@ -158,6 +174,7 @@ flowchart TD
 - A capability without an implementor is detected; non-capability files are ignored.
 
 #### Edge Cases
+
 - All three banners exact produces no violation.
 - Banner count over three is flagged.
 - Correct block order is clean; inherent-before-protocol is flagged.
@@ -167,6 +184,7 @@ flowchart TD
 - Non-capability files are ignored.
 
 #### Technical Specification
+
 | Aspect | Detail |
 |--------|--------|
 | **Input** | Classified capability file entries. |
@@ -177,6 +195,7 @@ flowchart TD
 | **Error** | An unparseable file yields no finding rather than failing the audit. |
 
 #### Test
+
 | Context | When Action | Then Observable Result |
 |---------|-------------|------------------------|
 | A capability file carries all three exact banners | The capability auditor runs | No AES403 violation is reported |
@@ -185,6 +204,7 @@ flowchart TD
 | A capability file embeds a test | The capability auditor runs | One AES403 violation is reported |
 
 #### Metric
+
 | Target Metric | Value |
 |---------------|-------|
 | Seeded discipline-break fixtures each firing its own AES403 finding | 100% |
@@ -195,12 +215,14 @@ flowchart TD
 **Description:** The role-rules crate shall keep utility files pure, flagging inherent impls, types, and side-effect structures beyond allowed forms, while accepting free functions and macro-body impls.
 
 #### Business Logic
+
 - Utility files may hold free functions only; functions-only Python utilities are not flagged.
 - Inherent impls, structs, enums, metadata/impl traits, TS enums/interfaces/type aliases are flagged.
 - Rust macro-body impl is not flagged; a Python class in a utility file is flagged.
 - Clean metadata produces no violation; non-utility files ignored.
 
 #### Edge Cases
+
 - A clean utility file produces no violation.
 - A Python utility with only functions is not flagged.
 - A Python utility with a class is flagged.
@@ -209,6 +231,7 @@ flowchart TD
 - A non-utility file is ignored.
 
 #### Technical Specification
+
 | Aspect | Detail |
 |--------|--------|
 | **Input** | Classified utility file entries. |
@@ -219,6 +242,7 @@ flowchart TD
 | **Error** | An unparseable file yields no finding rather than failing the audit. |
 
 #### Test
+
 | Context | When Action | Then Observable Result |
 |---------|-------------|------------------------|
 | A clean utility file is audited | The utility auditor runs | No AES404 violation is reported |
@@ -228,6 +252,7 @@ flowchart TD
 | A non-utility file is audited | Classification runs first | The file is ignored and no violation is reported |
 
 #### Metric
+
 | Target Metric | Value |
 |---------------|-------|
 | Seeded impure-utility fixtures each firing one AES404 finding | 100% |
@@ -238,18 +263,21 @@ flowchart TD
 **Description:** The role-rules crate shall validate agent orchestrator composition per language, checking aggregate trait usage, capability wiring, and absence of stray primitives, and shall ignore files not classified as agent.
 
 #### Business Logic
+
 - Agent files must follow orchestrator composition rules: aggregate trait, capability wiring, no stray primitives.
 - Per-language auditors (Python, Rust, TypeScript) check the structure.
 - Files not classified as agent are ignored by classification.
 - Well-formed agent files pass; structural gaps (missing aggregate usage, misplaced capability calls) are detected per language.
 
 #### Edge Cases
+
 - A well-formed agent file produces no violation.
 - Structural gaps such as missing aggregate usage or misplaced capability calls are detected per language.
 - A non-agent file is ignored and produces no finding.
 - Clean fixtures produce zero findings.
 
 #### Technical Specification
+
 | Aspect | Detail |
 |--------|--------|
 | **Input** | Classified agent file entries. |
@@ -260,6 +288,7 @@ flowchart TD
 | **Error** | An unparseable agent yields no finding rather than failing the audit. |
 
 #### Test
+
 | Context | When Action | Then Observable Result |
 |---------|-------------|------------------------|
 | A well-formed agent file is audited | The agent auditor runs | No AES405 violation is reported |
@@ -268,6 +297,7 @@ flowchart TD
 | A non-agent file is audited | Classification runs first | The file is ignored and no violation is reported |
 
 #### Metric
+
 | Target Metric | Value |
 |---------------|-------|
 | Seeded broken-composition fixtures each firing one AES405 finding | 100% |
@@ -278,6 +308,7 @@ flowchart TD
 **Description:** The role-rules crate shall keep surface files passive, enforcing tier-aware limits on function count and control-flow budget for passive surfaces while exempting smart surfaces, and shall flag logic bypasses while allowing surface utility calls.
 
 #### Business Logic
+
 - Surface tier (smart vs passive) is tier-aware; passive surfaces have a function-count limit and control-flow budget; smart surfaces are exempt from passive limits.
 - Utility calls from surface are allowed and not flagged.
 - Logic bypass is flagged.
@@ -285,6 +316,7 @@ flowchart TD
 - Non-surface files ignored.
 
 #### Edge Cases
+
 - A clean surface produces no violation.
 - A passive surface under the function-count limit is clean.
 - Too many functions in a passive surface is flagged.
@@ -294,6 +326,7 @@ flowchart TD
 - A non-surface file is ignored.
 
 #### Technical Specification
+
 | Aspect | Detail |
 |--------|--------|
 | **Input** | Classified surface file entries. |
@@ -304,6 +337,7 @@ flowchart TD
 | **Error** | An unclassified tier treats the file as passive (conservative); an unparseable file yields no finding. |
 
 #### Test
+
 | Context | When Action | Then Observable Result |
 |---------|-------------|------------------------|
 | A clean surface file is audited | The surface auditor runs | No AES406 violation is reported |
@@ -313,6 +347,7 @@ flowchart TD
 | A non-surface file is audited | Classification runs first | The file is ignored and no violation is reported |
 
 #### Metric
+
 | Target Metric | Value |
 |---------------|-------|
 | Passive fixtures over budget each firing exactly one AES406 finding | 100% |

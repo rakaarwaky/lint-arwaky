@@ -14,81 +14,81 @@ Last Updated: 2026-09-28
 
 ## Backlog Status
 
-### FR-RoleRules-001: 
+### FR-RoleRules-001
 
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | RoleRules                                      |
-| In Progress  | None                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | RoleRules |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
-### FR-RoleRules-002: 
+### FR-RoleRules-002
 
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | RoleRules                                      |
-| In Progress  | None                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | RoleRules |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
-### FR-RoleRules-003: 
+### FR-RoleRules-003
 
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | RoleRules                                      |
-| In Progress  | None                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | RoleRules |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
-### FR-RoleRules-004: 
+### FR-RoleRules-004
 
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | RoleRules                                      |
-| In Progress  | None                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | RoleRules |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
-### FR-RoleRules-005: 
+### FR-RoleRules-005
 
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | RoleRules                                      |
-| In Progress  | None                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | RoleRules |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
-### FR-RoleRules-006: 
+### FR-RoleRules-006
 
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | RoleRules                                      |
-| In Progress  | None                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | RoleRules |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
-### FR-RoleRules-007: 
+### FR-RoleRules-007
 
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | RoleRules                                      |
-| In Progress  | None                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | RoleRules |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
 ## Reference
 
-| Artifact | Purpose | Link|
-|----------|---------|------|
-| PRD.md | Product requirements | [PRD.md](../../PRD.md)|
-| FRD.md | Feature requirements | [FRD.md](FRD.md)|
-| ROADMAP.md | Roadmap status | [ROADMAP.md](../../ROADMAP.md)|
-| ARCHITECTURE.md | Layer contract | [ARCHITECTURE.md](../../ARCHITECTURE.md)|
+| Artifact | Purpose | Link |
+| ---------- | --------- | ------ |
+| PRD.md | Product requirements | [PRD.md](../../PRD.md) |
+| FRD.md | Feature requirements | [FRD.md](FRD.md) |
+| ROADMAP.md | Roadmap status | [ROADMAP.md](../../ROADMAP.md) |
+| ARCHITECTURE.md | Layer contract | [ARCHITECTURE.md](../../ARCHITECTURE.md) |
