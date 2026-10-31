@@ -14,9 +14,7 @@ use shared_doc_rules::utility_capabilities_doc_h2_checks::check_h2_table;
 use shared_doc_rules::utility_doc_common_checks::{
     check_doc_heading, missing_link_violation_type, required_links,
 };
-use shared_doc_rules::utility_markdown_scanner::{
-    doc_h2_contract, sections,
-};
+use shared_doc_rules::utility_markdown_scanner::{doc_h2_contract, sections};
 
 pub struct ContributingCapability;
 
@@ -53,7 +51,14 @@ impl ContributingCapability {
 
         // AES605 — heading structure.
         if let Some((required, allowed)) = doc_h2_contract(consts::CONTRIBUTING_DOC) {
-            check_doc_heading(consts::RULE_CODE_CONTRIBUTING_DOC, text, consts::CONTRIBUTING_DOC, required, allowed, findings);
+            check_doc_heading(
+                consts::RULE_CODE_CONTRIBUTING_DOC,
+                text,
+                consts::CONTRIBUTING_DOC,
+                required,
+                allowed,
+                findings,
+            );
         }
 
         // AES604 — Workflow table carries fixed columns.

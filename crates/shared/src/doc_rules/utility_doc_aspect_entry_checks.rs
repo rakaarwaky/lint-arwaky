@@ -141,7 +141,9 @@ pub fn check_aspect_entry_tables(
                 continue;
             };
             let open_min = open.contains(aspect).then_some(min);
-            findings.extend(check_aspect_table(rule_code, &h3, h4, aspect, open_min, min));
+            findings.extend(check_aspect_table(
+                rule_code, &h3, h4, aspect, open_min, min,
+            ));
         }
     }
     findings
@@ -370,14 +372,7 @@ pub fn check_aspect_table(
             None => "Adjust the row count to exactly the bounded seed.",
         };
         findings.push(
-            DocFinding::new_with_line(
-                "",
-                h4.line,
-                rule_code,
-                violation,
-                message,
-            )
-            .with_reason(
+            DocFinding::new_with_line("", h4.line, rule_code, violation, message).with_reason(
                 "The open/bounded contract fixes each aspect's minimum or exact seed row count.",
                 fix,
             ),

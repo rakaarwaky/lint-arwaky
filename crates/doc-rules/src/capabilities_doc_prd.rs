@@ -18,9 +18,7 @@ use shared_doc_rules::utility_doc_entry_regexes::pr_entry_re;
 use shared_doc_rules::utility_doc_fr_format_checks::{
     check_api_method_existence, check_pr_id_parity,
 };
-use shared_doc_rules::utility_markdown_scanner::{
-    doc_h2_contract, sections,
-};
+use shared_doc_rules::utility_markdown_scanner::{doc_h2_contract, sections};
 
 pub struct PrdCapability;
 
@@ -57,19 +55,30 @@ impl PrdCapability {
         // PRD carries no bare-FR-ID shape; FR-ID format applies to FRD only.
 
         // AES601 — PR-ID parity (PRD ↔ ROADMAP).
-        if let Some(roadmap) = context.documents().iter().find(|d| context.document_name(d) == consts::ROADMAP_DOC) {
-            check_pr_id_parity(document, roadmap, findings);
+        if let Some(roadmap) = context
+            .documents()
+            .iter()
+            .find(|d| context.document_name(d) == consts::ROADMAP_DOC)
+        {
+            check_pr_id_parity(consts::RULE_CODE_FR_FORMAT, document, roadmap, findings);
         }
 
         // AES601 — promised API method existence.
-        check_api_method_existence(document, context, findings);
+        check_api_method_existence(consts::RULE_CODE_FR_FORMAT, document, context, findings);
 
         // AES604 — crosslinks (ROADMAP, ARCHITECTURE).
         Self::check_crosslinks(document, context, consts::RULE_CODE_CROSSLINKS, findings);
 
         // AES605 — heading structure.
         if let Some((required, allowed)) = doc_h2_contract(consts::PRD_DOC) {
-            check_doc_heading(consts::RULE_CODE_PRD_DOC, text, consts::PRD_DOC, required, allowed, findings);
+            check_doc_heading(
+                consts::RULE_CODE_PRD_DOC,
+                text,
+                consts::PRD_DOC,
+                required,
+                allowed,
+                findings,
+            );
         }
 
         // AES606 — entry tables under Project Requirements.

@@ -53,13 +53,13 @@ impl FrdCapability {
         let parsed = sections(text);
 
         // AES609 — FR-ID format (bare FR-NNN without feature prefix).
-        check_fr_id_format(consts::RULE_CODE_FRD_DOC, document, findings);
+        check_fr_id_format(consts::RULE_CODE_FR_FORMAT, document, findings);
 
         // AES601 — FR protocol parity (requirement count vs contract seams).
-        check_fr_protocol_parity(document, context, findings);
+        check_fr_protocol_parity(consts::RULE_CODE_FR_FORMAT, document, context, findings);
 
         // AES601 — promised API method existence.
-        check_api_method_existence(document, context, findings);
+        check_api_method_existence(consts::RULE_CODE_FR_FORMAT, document, context, findings);
 
         // AES603 — spec purity (no source file names, no implementation state).
         Self::check_spec_purity(document, findings);
@@ -69,7 +69,14 @@ impl FrdCapability {
 
         // AES605 — heading structure (exactly one H1, required H2s, no off-template H2s).
         if let Some((required, allowed)) = doc_h2_contract(consts::FRD_DOC) {
-            check_doc_heading(consts::RULE_CODE_FRD_DOC, text, consts::FRD_DOC, required, allowed, findings);
+            check_doc_heading(
+                consts::RULE_CODE_FRD_DOC,
+                text,
+                consts::FRD_DOC,
+                required,
+                allowed,
+                findings,
+            );
         }
 
         // AES602 — section order follows the template.
@@ -151,7 +158,7 @@ impl FrdCapability {
                             line,
                             consts::RULE_CODE_SPEC_PURITY,
                             consts::SPEC_PURITY_VIOLATION_STATUS_LEAK,
-                            format!("{desc}"),
+                            desc.to_string(),
                         )
                         .with_reason(
                             "A spec is a contract, not a status report; implementation state belongs in the backlog.",
@@ -201,7 +208,10 @@ impl FrdCapability {
         findings: &mut Vec<DocFinding>,
     ) {
         let parsed = sections(text);
-        let required_norm: Vec<String> = required.iter().map(|title: &&str| normalize_heading(title)).collect();
+        let required_norm: Vec<String> = required
+            .iter()
+            .map(|title: &&str| normalize_heading(title))
+            .collect();
         let mut indices: Vec<usize> = Vec::new();
         for s in &parsed {
             if s.level == 2 {

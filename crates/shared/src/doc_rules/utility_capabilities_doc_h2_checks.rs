@@ -12,7 +12,12 @@ use crate::utility_markdown_scanner::normalize_heading;
 
 /// H2-level: the section titled *title* must carry a table whose header
 /// covers *columns*. Finding (if any) anchors to the H2 line.
-pub fn check_h2_table(rule_code: &'static str, parsed: &[Section], title: &str, columns: &[&str]) -> Vec<DocFinding> {
+pub fn check_h2_table(
+    rule_code: &'static str,
+    parsed: &[Section],
+    title: &str,
+    columns: &[&str],
+) -> Vec<DocFinding> {
     check_section_shape(rule_code, parsed, title, columns, None)
         .into_iter()
         .collect()
@@ -37,7 +42,13 @@ pub fn check_h2_fixed_rows(
     // Shape discrimination (section_not_table / table_missing_columns) is
     // shared with the entry checks; only the fixed-row comparison is
     // specific to this H2-level check.
-    if let Some(finding) = check_section_shape(rule_code, parsed, title, consts::ASPECT_DETAIL_COLUMNS, None) {
+    if let Some(finding) = check_section_shape(
+        rule_code,
+        parsed,
+        title,
+        consts::ASPECT_DETAIL_COLUMNS,
+        None,
+    ) {
         findings.push(finding);
         return findings;
     }

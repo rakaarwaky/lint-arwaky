@@ -8,9 +8,7 @@ use crate::taxonomy_doc_audit_context_vo::{DocAuditContext, MemberRole};
 use crate::taxonomy_doc_rules_constant as consts;
 use crate::taxonomy_doc_rules_request::{DocFinding, DocSource};
 use crate::taxonomy_doc_section_vo::Section;
-use crate::utility_capabilities_doc_h2_checks::{
-    first_column_values, row_label_diff,
-};
+use crate::utility_capabilities_doc_h2_checks::{first_column_values, row_label_diff};
 use crate::utility_doc_entry_regexes::fr_entry_re;
 use crate::utility_markdown_scanner::{
     h3_subsections, h4_subsections, normalize_heading, sections,
@@ -60,14 +58,13 @@ pub fn check_entry_tables(
             continue;
         }
         // Header/shape check anchored to the H3.
-        if let Some(finding) =
-            crate::utility_capabilities_doc_h2_checks::check_section_shape(
-                parsed,
-                &h3.title,
-                columns,
-                Some(&h3),
-            )
-        {
+        if let Some(finding) = crate::utility_capabilities_doc_h2_checks::check_section_shape(
+            rule_code,
+            parsed,
+            &h3.title,
+            columns,
+            Some(&h3),
+        ) {
             findings.push(finding);
             continue;
         }
@@ -114,9 +111,7 @@ pub fn check_entry_tables(
 /// stray ids in the entry's Next/Done/Blocked rows)` — one tuple per entry.
 /// Returns `(entries, section_line)`; `section_line` is `0` only when no
 /// `## Backlog Status` section exists.
-pub fn parse_backlog_entries(
-    backlog: &DocSource,
-) -> (Vec<(String, usize, Vec<String>)>, usize) {
+pub fn parse_backlog_entries(backlog: &DocSource) -> (Vec<(String, usize, Vec<String>)>, usize) {
     let parsed = sections(&backlog.text);
     let Some(section) = parsed
         .iter()
@@ -124,8 +119,7 @@ pub fn parse_backlog_entries(
     else {
         return (Vec::new(), 0);
     };
-    let Some(stray_re) = regex::Regex::new(r"\b((?:PR|FR|DS|DT)-[A-Za-z0-9_]+-\d+)").ok()
-    else {
+    let Some(stray_re) = regex::Regex::new(r"\b((?:PR|FR|DS|DT)-[A-Za-z0-9_]+-\d+)").ok() else {
         return (Vec::new(), section.line + 1);
     };
     let mut entries: Vec<(String, usize, Vec<String>)> = Vec::new();
@@ -388,20 +382,14 @@ pub fn backlog_required_links(
     }
     // Resolve the member role for this BACKLOG's parent folder.
     let rel = context.relative_path(document);
-    let parent_folder = rel
-        .rsplit('/')
-        .nth(1)
-        .map(|s| s.to_owned());
-    let role = context
-        .members()
-        .iter()
-        .find_map(|m| {
-            m.path
-                .file_name()
-                .and_then(|n| n.to_str())
-                .filter(|folder| Some(folder.to_string()) == parent_folder.clone())
-                .map(|_| m.role.clone())
-        });
+    let parent_folder = rel.rsplit('/').nth(1).map(|s| s.to_owned());
+    let role = context.members().iter().find_map(|m| {
+        m.path
+            .file_name()
+            .and_then(|n| n.to_str())
+            .filter(|folder| Some(folder.to_string()) == parent_folder.clone())
+            .map(|_| m.role.clone())
+    });
     match role {
         Some(MemberRole::Surface) => vec![
             consts::PRD_DOC,
@@ -444,10 +432,7 @@ fn forbidden_docs_for_role(role: MemberRole) -> &'static [&'static str] {
 /// Member-doc presence and forbidden-doc checks for every member folder.
 /// Root-gated: silent when the audit root is not a real workspace root.
 /// Gated on `effective_strict_member_docs`.
-pub fn check_member_docs(
-    context: &DocAuditContext,
-    findings: &mut Vec<DocFinding>,
-) {
+pub fn check_member_docs(context: &DocAuditContext, findings: &mut Vec<DocFinding>) {
     if !context.effective_strict_member_docs() {
         return;
     }
@@ -517,7 +502,8 @@ pub fn check_member_docs(
                     .join(doc)
                     .to_string_lossy()
                     .replace('\\', "/");
-                let (required_docs, _role_name) = required_docs_for_role(member.role.clone()).expect("role owes docs");
+                let (required_docs, _role_name) =
+                    required_docs_for_role(member.role.clone()).expect("role owes docs");
                 findings.push(
                     DocFinding::new_with_line(
                         doc_rel_path,
@@ -767,7 +753,10 @@ pub fn check_agents_line_drift(
             ),
         );
     }
-    for line in doc_lines.iter().filter(|l| l.trim_start().starts_with("# ")) {
+    for line in doc_lines
+        .iter()
+        .filter(|l| l.trim_start().starts_with("# "))
+    {
         let title = line.trim_start().trim_start_matches('#').trim();
         if title.is_empty() {
             findings.push(
@@ -821,8 +810,7 @@ fn placeholder_lines(lines: &[&str]) -> HashSet<usize> {
         } else if closes > opens || (opens > 0 && closes > 0) {
             inside.insert(idx);
         }
-        if depth == 0 {
-        }
+        if depth == 0 {}
     }
     inside
 }

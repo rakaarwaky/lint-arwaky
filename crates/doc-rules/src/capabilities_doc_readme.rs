@@ -11,9 +11,7 @@ use shared_doc_rules::taxonomy_doc_rules_constant as consts;
 use shared_doc_rules::taxonomy_doc_rules_request::{DocFinding, DocSource};
 use shared_doc_rules::utility_capabilities_doc_h2_checks::check_h2_table;
 use shared_doc_rules::utility_doc_common_checks::check_doc_heading;
-use shared_doc_rules::utility_markdown_scanner::{
-    doc_h2_contract, sections,
-};
+use shared_doc_rules::utility_markdown_scanner::{doc_h2_contract, sections};
 
 pub struct ReadmeCapability;
 
@@ -47,7 +45,14 @@ impl ReadmeCapability {
 
         // AES602 — heading structure.
         if let Some((required, allowed)) = doc_h2_contract(consts::README_DOC) {
-            check_doc_heading(consts::RULE_CODE_README_DOC, text, consts::README_DOC, required, allowed, findings);
+            check_doc_heading(
+                consts::RULE_CODE_README_DOC,
+                text,
+                consts::README_DOC,
+                required,
+                allowed,
+                findings,
+            );
         }
 
         // AES602 — Quick Start table carries the fixed columns.

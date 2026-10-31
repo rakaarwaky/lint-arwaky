@@ -9,15 +9,11 @@ use shared_doc_rules::contract_doc_protocol::IAgentsDocProtocol;
 use shared_doc_rules::taxonomy_doc_audit_context_vo::DocAuditContext;
 use shared_doc_rules::taxonomy_doc_rules_constant as consts;
 use shared_doc_rules::taxonomy_doc_rules_request::{DocFinding, DocSource};
-use shared_doc_rules::utility_capabilities_doc_h2_checks::{
-    check_h2_fixed_rows, check_h2_table,
-};
+use shared_doc_rules::utility_capabilities_doc_h2_checks::{check_h2_fixed_rows, check_h2_table};
 use shared_doc_rules::utility_doc_common_checks::{
-    check_doc_heading, check_agents_line_drift, missing_link_violation_type, required_links,
+    check_agents_line_drift, check_doc_heading, missing_link_violation_type, required_links,
 };
-use shared_doc_rules::utility_markdown_scanner::{
-    doc_h2_contract, sections,
-};
+use shared_doc_rules::utility_markdown_scanner::{doc_h2_contract, sections};
 
 /// Canonical AGENTS.md template — the reference shape AGENTS.md must match
 /// verbatim (modulo `{...}` placeholder slots). Transcribed from
@@ -117,7 +113,14 @@ impl AgentsCapability {
 
         // AES605 — heading structure (exactly one H1, required H2s, no off-template H2s).
         if let Some((required, allowed)) = doc_h2_contract(consts::AGENTS_DOC) {
-            check_doc_heading(consts::RULE_CODE_AGENTS_DOC, text, consts::AGENTS_DOC, required, allowed, findings);
+            check_doc_heading(
+                consts::RULE_CODE_AGENTS_DOC,
+                text,
+                consts::AGENTS_DOC,
+                required,
+                allowed,
+                findings,
+            );
         }
 
         // AES601 — Runtime table carries the fixed row labels.

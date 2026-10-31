@@ -16,9 +16,7 @@ use shared_doc_rules::utility_doc_common_checks::{
 };
 use shared_doc_rules::utility_doc_entry_regexes::ds_entry_re;
 use shared_doc_rules::utility_doc_fr_format_checks::collect_any_id_set;
-use shared_doc_rules::utility_markdown_scanner::{
-    doc_h2_contract, sections,
-};
+use shared_doc_rules::utility_markdown_scanner::{doc_h2_contract, sections};
 use shared_doc_rules::utility_protocol_counter::ds_id_heading_re;
 
 pub struct DesignCapability;
@@ -52,7 +50,11 @@ impl DesignCapability {
         let parsed = sections(text);
 
         // AES601 — DS-ID alignment with BACKLOG.
-        if let Some(backlog) = context.documents().iter().find(|d| context.document_name(d) == consts::BACKLOG_DOC) {
+        if let Some(backlog) = context
+            .documents()
+            .iter()
+            .find(|d| context.document_name(d) == consts::BACKLOG_DOC)
+        {
             let union = shared_doc_rules::utility_doc_common_checks::collect_union_id_set(
                 collect_any_id_set,
                 Some(document),
@@ -73,7 +75,14 @@ impl DesignCapability {
 
         // AES605 — heading structure.
         if let Some((required, allowed)) = doc_h2_contract(consts::DESIGN_DOC) {
-            check_doc_heading(consts::RULE_CODE_DESIGN_DOC, text, consts::DESIGN_DOC, required, allowed, findings);
+            check_doc_heading(
+                consts::RULE_CODE_DESIGN_DOC,
+                text,
+                consts::DESIGN_DOC,
+                required,
+                allowed,
+                findings,
+            );
         }
 
         // AES606 — entry tables under Design Requirements + H3 sweep.
@@ -156,7 +165,9 @@ impl DesignCapability {
                         0,
                         consts::RULE_CODE_TEMPLATE_CONFORMANCE,
                         consts::TEMPLATE_CONFORMANCE_VIOLATION_H3_UNEXPECTED,
-                        format!("Design Requirements H3 `{title}` does not match the DS-ID pattern"),
+                        format!(
+                            "Design Requirements H3 `{title}` does not match the DS-ID pattern"
+                        ),
                     ));
                 }
             }

@@ -16,9 +16,7 @@ use shared_doc_rules::utility_doc_common_checks::{
 };
 use shared_doc_rules::utility_doc_entry_regexes::backlog_entry_re;
 use shared_doc_rules::utility_doc_fr_format_checks::collect_any_id_set;
-use shared_doc_rules::utility_markdown_scanner::{
-    doc_h2_contract, sections,
-};
+use shared_doc_rules::utility_markdown_scanner::{doc_h2_contract, sections};
 
 pub struct BacklogCapability;
 
@@ -58,7 +56,14 @@ impl BacklogCapability {
 
         // AES605 — heading structure.
         if let Some((required, allowed)) = doc_h2_contract(consts::BACKLOG_DOC) {
-            check_doc_heading(consts::RULE_CODE_BACKLOG_DOC, text, consts::BACKLOG_DOC, required, allowed, findings);
+            check_doc_heading(
+                consts::RULE_CODE_BACKLOG_DOC,
+                text,
+                consts::BACKLOG_DOC,
+                required,
+                allowed,
+                findings,
+            );
         }
 
         // AES606 — entry tables under Backlog Status.
@@ -70,7 +75,13 @@ impl BacklogCapability {
                 re,
                 consts::BACKLOG_ROW_LABELS,
                 consts::BACKLOG_ROW_LABELS,
-                &[("State", 1), ("Done", 1), ("In Progress", 1), ("Risk", 1), ("Updated", 1)],
+                &[
+                    ("State", 1),
+                    ("Done", 1),
+                    ("In Progress", 1),
+                    ("Risk", 1),
+                    ("Updated", 1),
+                ],
                 false,
             ));
         }
@@ -148,6 +159,4 @@ impl BacklogCapability {
             }
         }
     }
-
-
 }

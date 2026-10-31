@@ -10,9 +10,7 @@ use shared_doc_rules::taxonomy_doc_audit_context_vo::DocAuditContext;
 use shared_doc_rules::taxonomy_doc_rules_constant as consts;
 use shared_doc_rules::taxonomy_doc_rules_request::{DocFinding, DocSource};
 use shared_doc_rules::utility_doc_common_checks::check_doc_heading;
-use shared_doc_rules::utility_markdown_scanner::{
-    doc_h2_contract, sections,
-};
+use shared_doc_rules::utility_markdown_scanner::{doc_h2_contract, sections};
 
 pub struct ArchitectureCapability;
 
@@ -46,7 +44,14 @@ impl ArchitectureCapability {
 
         // AES603 — heading structure.
         if let Some((required, allowed)) = doc_h2_contract(consts::ARCHITECTURE_DOC) {
-            check_doc_heading(consts::RULE_CODE_ARCHITECTURE_DOC, text, consts::ARCHITECTURE_DOC, required, allowed, findings);
+            check_doc_heading(
+                consts::RULE_CODE_ARCHITECTURE_DOC,
+                text,
+                consts::ARCHITECTURE_DOC,
+                required,
+                allowed,
+                findings,
+            );
         }
 
         // AES603 — template body conformance is exercised through the

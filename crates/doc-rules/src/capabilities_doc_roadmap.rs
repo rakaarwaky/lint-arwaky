@@ -16,9 +16,7 @@ use shared_doc_rules::utility_doc_common_checks::{
 };
 use shared_doc_rules::utility_doc_entry_regexes::pr_entry_re;
 use shared_doc_rules::utility_doc_fr_format_checks::check_pr_id_parity;
-use shared_doc_rules::utility_markdown_scanner::{
-    doc_h2_contract, sections,
-};
+use shared_doc_rules::utility_markdown_scanner::{doc_h2_contract, sections};
 
 pub struct RoadmapCapability;
 
@@ -51,8 +49,12 @@ impl RoadmapCapability {
         let parsed = sections(text);
 
         // AES601 — PR-ID parity (PRD ↔ ROADMAP).
-        if let Some(prd) = context.documents().iter().find(|d| context.document_name(d) == consts::PRD_DOC) {
-            check_pr_id_parity(prd, document, findings);
+        if let Some(prd) = context
+            .documents()
+            .iter()
+            .find(|d| context.document_name(d) == consts::PRD_DOC)
+        {
+            check_pr_id_parity(consts::RULE_CODE_FR_FORMAT, prd, document, findings);
         }
 
         // AES604 — crosslinks (PRD, ARCHITECTURE).
@@ -60,7 +62,14 @@ impl RoadmapCapability {
 
         // AES605 — heading structure.
         if let Some((required, allowed)) = doc_h2_contract(consts::ROADMAP_DOC) {
-            check_doc_heading(consts::RULE_CODE_ROADMAP_DOC, text, consts::ROADMAP_DOC, required, allowed, findings);
+            check_doc_heading(
+                consts::RULE_CODE_ROADMAP_DOC,
+                text,
+                consts::ROADMAP_DOC,
+                required,
+                allowed,
+                findings,
+            );
         }
 
         // AES606 — entry tables under Roadmap Status.

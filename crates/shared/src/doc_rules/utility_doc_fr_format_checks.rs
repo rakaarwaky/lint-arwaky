@@ -12,9 +12,9 @@ use crate::utility_markdown_scanner::{
     api_contract_methods, fr_id_bare_re, h3_subsections, normalize_heading, sections,
 };
 use crate::utility_protocol_counter::{
-    collect_ds_id_set, collect_dt_id_set, collect_pr_id_set,
-    contract_method_names, count_fr_headings, count_protocol_traits, fr_id_heading_re,
-    locate_kernel_srcs, pr_id_heading_re,
+    collect_ds_id_set, collect_dt_id_set, collect_pr_id_set, contract_method_names,
+    count_fr_headings, count_protocol_traits, fr_id_heading_re, locate_kernel_srcs,
+    pr_id_heading_re,
 };
 
 use std::collections::{BTreeMap, BTreeSet, HashSet};
@@ -63,11 +63,7 @@ pub fn collect_fr_id_set(frd: &str) -> Option<Vec<String>> {
         .captures_iter(frd)
         .filter_map(|caps| caps.name("id").map(|m| m.as_str().to_string()))
         .collect();
-    if ids.is_empty() {
-        None
-    } else {
-        Some(ids)
-    }
+    if ids.is_empty() { None } else { Some(ids) }
 }
 
 /// Accepted PR/FR/DS/DT ID set from a document, whichever families its
@@ -78,11 +74,7 @@ pub fn collect_any_id_set(text: &str) -> Option<Vec<String>> {
     ids.extend(collect_fr_id_set(text).unwrap_or_default());
     ids.extend(collect_ds_id_set(text).unwrap_or_default());
     ids.extend(collect_dt_id_set(text).unwrap_or_default());
-    if ids.is_empty() {
-        None
-    } else {
-        Some(ids)
-    }
+    if ids.is_empty() { None } else { Some(ids) }
 }
 
 /// Union of the accepted ID sets of up to two documents under a shared
@@ -100,11 +92,7 @@ pub fn collect_union_id_set(
     if let Some(document) = second {
         ids.extend(collect(&document.text).unwrap_or_default());
     }
-    if ids.is_empty() {
-        None
-    } else {
-        Some(ids)
-    }
+    if ids.is_empty() { None } else { Some(ids) }
 }
 
 /// `(1-based heading line, id)` for every PR-ID heading in *text*.
@@ -326,9 +314,7 @@ pub fn check_fr_protocol_parity(
 /// line, stray ids in the entry's Next/Done/Blocked rows)` — one tuple per
 /// entry. Returns `(entries, section_line)`; `section_line` is `0` only when
 /// no `## Backlog Status` section exists.
-pub fn parse_backlog_entries(
-    backlog: &DocSource,
-) -> (Vec<(String, usize, Vec<String>)>, usize) {
+pub fn parse_backlog_entries(backlog: &DocSource) -> (Vec<(String, usize, Vec<String>)>, usize) {
     let parsed = sections(&backlog.text);
     let Some(section) = parsed
         .iter()
@@ -336,8 +322,7 @@ pub fn parse_backlog_entries(
     else {
         return (Vec::new(), 0);
     };
-    let Some(stray_re) = regex::Regex::new(r"\b((?:PR|FR|DS|DT)-[A-Za-z0-9_]+-\d+)").ok()
-    else {
+    let Some(stray_re) = regex::Regex::new(r"\b((?:PR|FR|DS|DT)-[A-Za-z0-9_]+-\d+)").ok() else {
         return (Vec::new(), section.line + 1);
     };
     let mut entries: Vec<(String, usize, Vec<String>)> = Vec::new();
@@ -389,93 +374,6 @@ fn extract_qualifier(title: &str) -> Option<String> {
         return None;
     }
     Some(id.trim().to_string())
-}
-
-/// BACKLOG ID-level alignment against a paired spec union, parameterized by
-/// the family's missing-code and not-code.
-pub fn check_backlog_qualifier_alignment(
-    backlog: &DocSource,
-    union: Option<&Vec<String>>,
-    missing_code: &'static str,
-    not_code: &'static str,
-    findings: &mut Vec<DocFinding>,
-) {
-    let ids: Vec<String> = union.cloned().unwrap_or_default();
-    let id_set: HashSet<&str> = ids.iter().map(String::as_str).collect();
-    let (entries, section_line) = parse_backlog_entries(backlog);
-    if section_line == 0 {
-        return;
-    }
-
-    if !ids.is_empty() {
-        for (token, line, _) in &entries {
-            if !id_set.contains(token.as_str()) {
-                let mut valid: Vec<&str> = ids.iter().map(String::as_str).collect();
-                valid.sort();
-                findings.push(
-                    DocFinding::new_with_line(
-                        "",
-                        *line,
-                        rule_code,
-                        consts::BACKLOG_QUALIFIER_MISMATCH,
-                        format!(
-                            "line {line} BACKLOG entry `{{{token}}}` has no matching ID in the paired spec"
-                        ),
-                    )
-                    .with_reason(
-                        "A BACKLOG entry traces to its spec through the ID, so a token no spec ID equals cannot be aligned.",
-                        format!("Rename the entry to an ID the spec declares: {}.", valid.join(", ")),
-                    ),
-                );
-            }
-        }
-
-        let entry_set: HashSet<&str> = entries.iter().map(|(t, _, _)| t.as_str()).collect();
-        for id in &ids {
-            if !entry_set.contains(id.as_str()) {
-                findings.push(
-                    DocFinding::new_with_line(
-                        "",
-                        section_line,
-                        rule_code,
-                        missing_code,
-                        format!(
-                            "spec-declared ID `{id}` has no BACKLOG `## Backlog Status` entry"
-                        ),
-                    )
-                    .with_reason(
-                        "Every spec-declared ID must have a BACKLOG entry so the backlog tracks every requirement.",
-                        format!("Add a BACKLOG entry `### {id}: ` under `## Backlog Status`."),
-                    ),
-                );
-            }
-        }
-    }
-
-    for (token, line, stray_ids) in &entries {
-        for id in stray_ids {
-            if id_set.contains(id.as_str()) {
-                continue;
-            }
-            let mut valid: Vec<&str> = ids.iter().map(String::as_str).collect();
-            valid.sort();
-            findings.push(
-                DocFinding::new_with_line(
-                    "",
-                    *line,
-                    rule_code,
-                    not_code,
-                    format!(
-                        "line {line} BACKLOG entry `{{{token}}}` cites `{id}`, which the paired spec does not declare"
-                    ),
-                )
-                .with_reason(
-                    "A BACKLOG row cites an id its paired spec does not declare, so the citation is untraceable.",
-                    format!("Replace `{id}` with one of: {}.", valid.join(", ")),
-                ),
-            );
-        }
-    }
 }
 
 /// Group documents by parent folder so the FRD/BACKLOG alignment sub-check

@@ -30,9 +30,11 @@ impl RootDocRulesContainer {
     /// Return a fresh orchestrator for this workspace.
     pub fn orchestrator() -> Arc<dyn IDocRunnerAggregate> {
         let agents: Arc<dyn IAgentsDocProtocol> = Arc::new(AgentsCapability::new());
-        let architecture: Arc<dyn IArchitectureDocProtocol> = Arc::new(ArchitectureCapability::new());
+        let architecture: Arc<dyn IArchitectureDocProtocol> =
+            Arc::new(ArchitectureCapability::new());
         let backlog: Arc<dyn IBacklogDocProtocol> = Arc::new(BacklogCapability::new());
-        let contributing: Arc<dyn IContributingDocProtocol> = Arc::new(ContributingCapability::new());
+        let contributing: Arc<dyn IContributingDocProtocol> =
+            Arc::new(ContributingCapability::new());
         let data: Arc<dyn IDataDocProtocol> = Arc::new(DataCapability::new());
         let design: Arc<dyn IDesignDocProtocol> = Arc::new(DesignCapability::new());
         let frd: Arc<dyn IFrdDocProtocol> = Arc::new(FrdCapability::new());
