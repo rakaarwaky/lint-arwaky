@@ -326,6 +326,6 @@ Project setup delivers per-client MCP configuration, per-language `.env` files, 
 | Artifact | Purpose | Link |
 |----------|---------|------|
 | PRD | Business goals, user stories, and scope | [PRD.md](../../PRD.md) |
-| Backlog | Task tracking, epics, and implementation status | [./BACKLOG.md](./BACKLOG.md) |
-| Roadmap | Timeline, phasing, and dependencies | [../../ROADMAP.md](../../ROADMAP.md) |
-| Architecture | System boundaries, tech stack, and infra | [../../ARCHITECTURE.md](../../ARCHITECTURE.md) |
+| Backlog | Task tracking, epics, and implementation status | [BACKLOG.md](./BACKLOG.md) |
+| Roadmap | Timeline, phasing, and dependencies | [ROADMAP.md](../../ROADMAP.md) |
+| Architecture | System boundaries, tech stack, and infra | [ARCHITECTURE.md](../../ARCHITECTURE.md) |

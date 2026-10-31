@@ -80,9 +80,9 @@ The git-hooks feature sits in the capability layer and is invoked by the CLI sur
 **Description:** The feature shall install the pre-commit hook into the repository so that every commit runs the lint check before acceptance. Installation shall create the repository hook directory when it is missing, write the hook file pointing at the supplied executable path, and return the stable manager identity used in the configuration.
 
 #### Business Logic
-- `install_pre_commit` shall write the pre-commit hook file into the repository hook directory pointing at the supplied executable path.
+- The feature shall write the pre-commit hook file into the repository hook directory pointing at the supplied executable path.
 - The hook directory shall be created when it does not exist and reused when it does.
-- `get_hook_manager_identity` shall return a stable identity value across repeated invocations.
+- The feature shall return a stable manager identity value across repeated invocations.
 - Reinstallation over an existing hook file shall overwrite it cleanly.
 
 #### Edge Cases
@@ -138,7 +138,7 @@ The git-hooks feature sits in the capability layer and is invoked by the CLI sur
 **Description:** The feature shall uninstall the pre-commit hook and restore the repository to its pre-install state. Uninstallation shall remove the hook file the feature installed and report success; it shall remain idempotent so that repeated or no-op removals still succeed.
 
 #### Business Logic
-- `uninstall_pre_commit` shall remove the pre-commit hook file this feature installed and return a success status.
+- The feature shall remove the pre-commit hook file it installed and return a success status.
 - Uninstalling when no hook exists shall succeed without error.
 - A round trip of install followed by uninstall shall leave the repository hook directory in its original state.
 
@@ -195,8 +195,8 @@ The git-hooks feature sits in the capability layer and is invoked by the CLI sur
 **Description:** The feature shall initialize the git-hooks project configuration and manage its ignore rules. Initialization shall create or read the configuration and describe the outcome; ignore-rule updates shall add or remove a single rule without duplicating it.
 
 #### Business Logic
-- `initialize_config` shall create the configuration on first use or read it when it exists, returning a description of the result.
-- `update_ignore_rule` shall add or remove a single ignore rule per invocation and shall not duplicate a rule updated twice.
+- Initialization shall create the configuration on first use or read it when it exists, returning a description of the result.
+- An ignore-rule update shall add or remove a single ignore rule per invocation and shall not duplicate a rule updated twice.
 - The configuration shall identify its manager as the git hook manager.
 - A missing configuration file on a read shall be reported as not found rather than silently created unless initialization is the requested flow.
 

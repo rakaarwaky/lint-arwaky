@@ -37,15 +37,35 @@ The system shall aggregate environment diagnostics, toolchain readiness, and exe
 - When the execution environment is completely empty, the system shall report all probed tools as missing without raising a panic.
 - When an operation is cancelled in flight, the system shall return a cancelled response rather than a partial error.
 
-#### Technical Specification
-| Aspect | Detail |
-|--------|--------|
-| **Input** | `MaintenanceRequest::Doctor`, `MaintenanceRequest::DiagnoseToolchain`, or `MaintenanceRequest::Cancel` from surface commands |
-| **Output** | `MaintenanceResponse::Doctor`, `MaintenanceResponse::Toolchain`, or `MaintenanceResponse::Cancelled` |
-| **Protocol** | `IDoctorProtocol` |
-| **Method** | `doctor`, `diagnose_toolchain` |
-| **Event** | `EnvironmentHealthDiagnosed` |
-| **Error** | `TOOLCHAIN_PROBE_FAILED`, `DIAGNOSTIC_CANCELLED` |
+#### Input
+| No | Detail |
+| --- | --- |
+| 1 | `MaintenanceRequest::Doctor`, `MaintenanceRequest::DiagnoseToolchain`, or `MaintenanceRequest::Cancel` from surface commands |
+
+#### Output
+| No | Detail |
+| --- | --- |
+| 1 | `MaintenanceResponse::Doctor`, `MaintenanceResponse::Toolchain`, or `MaintenanceResponse::Cancelled` |
+
+#### Protocol
+| No | Detail |
+| --- | --- |
+| 1 | `IDoctorProtocol` |
+
+#### Method
+| No | Detail |
+| --- | --- |
+| 1 | `doctor`, `diagnose_toolchain` |
+
+#### Event
+| No | Detail |
+| --- | --- |
+| 1 | `EnvironmentHealthDiagnosed` |
+
+#### Error
+| No | Detail |
+| --- | --- |
+| 1 | `TOOLCHAIN_PROBE_FAILED`, `DIAGNOSTIC_CANCELLED` |
 
 #### Test
 | Context | When Action | Then Observable Result |
@@ -76,15 +96,35 @@ The system shall compute aggregate project statistics, language breakdowns, and 
 - When unreadable subtrees or permission errors are encountered, the system shall report partial counts for readable entries rather than failing.
 - When directory structures contain deeply nested subdirectories, the system shall traverse all readable levels without stack overflow or panic.
 
-#### Technical Specification
-| Aspect | Detail |
-|--------|--------|
-| **Input** | `MaintenanceRequest::Stats` containing target directory path |
-| **Output** | `MaintenanceResponse::Stats` containing total count and per-language metrics |
-| **Protocol** | `IProjectStatsProtocol` |
-| **Method** | `stats` |
-| **Event** | `ProjectStatsCalculated` |
-| **Error** | `DIRECTORY_UNREADABLE`, `STATS_CALCULATION_FAILED` |
+#### Input
+| No | Detail |
+| --- | --- |
+| 1 | `MaintenanceRequest::Stats` containing target directory path |
+
+#### Output
+| No | Detail |
+| --- | --- |
+| 1 | `MaintenanceResponse::Stats` containing total count and per-language metrics |
+
+#### Protocol
+| No | Detail |
+| --- | --- |
+| 1 | `IProjectStatsProtocol` |
+
+#### Method
+| No | Detail |
+| --- | --- |
+| 1 | `stats` |
+
+#### Event
+| No | Detail |
+| --- | --- |
+| 1 | `ProjectStatsCalculated` |
+
+#### Error
+| No | Detail |
+| --- | --- |
+| 1 | `DIRECTORY_UNREADABLE`, `STATS_CALCULATION_FAILED` |
 
 #### Test
 | Context | When Action | Then Observable Result |
@@ -115,15 +155,35 @@ The system shall remove application-owned cache directories and temporary report
 - When specific cache entries have restrictive permissions, the system shall report a warning and proceed with deleting remaining artifacts.
 - When run consecutively multiple times, each execution shall succeed without error.
 
-#### Technical Specification
-| Aspect | Detail |
-|--------|--------|
-| **Input** | `MaintenanceRequest::Clean` with configured or default cache roots |
-| **Output** | `MaintenanceResponse::Clean` reporting cache cleanup status |
-| **Protocol** | `ICacheCleanupProtocol` |
-| **Method** | `clean` |
-| **Event** | `CacheCleaned` |
-| **Error** | `CACHE_DIR_INACCESSIBLE`, `CACHE_ENTRY_LOCKED` |
+#### Input
+| No | Detail |
+| --- | --- |
+| 1 | `MaintenanceRequest::Clean` with configured or default cache roots |
+
+#### Output
+| No | Detail |
+| --- | --- |
+| 1 | `MaintenanceResponse::Clean` reporting cache cleanup status |
+
+#### Protocol
+| No | Detail |
+| --- | --- |
+| 1 | `ICacheCleanupProtocol` |
+
+#### Method
+| No | Detail |
+| --- | --- |
+| 1 | `clean` |
+
+#### Event
+| No | Detail |
+| --- | --- |
+| 1 | `CacheCleaned` |
+
+#### Error
+| No | Detail |
+| --- | --- |
+| 1 | `CACHE_DIR_INACCESSIBLE`, `CACHE_ENTRY_LOCKED` |
 
 #### Test
 | Context | When Action | Then Observable Result |
@@ -154,15 +214,35 @@ The system shall inspect configured bundled linter tools for available updates, 
 - When network access fails or times out during probing, the system shall report unavailable status without hanging.
 - When an individual tool update fails, remaining tools shall continue their update check uninterrupted.
 
-#### Technical Specification
-| Aspect | Detail |
-|--------|--------|
-| **Input** | `MaintenanceRequest::Update` containing target tool configuration |
-| **Output** | `MaintenanceResponse::Update` with per-tool status outcomes |
-| **Protocol** | `IToolUpdateProtocol` |
-| **Method** | `update` |
-| **Event** | `ToolsUpdated` |
-| **Error** | `TOOL_PROBE_FAILED`, `TOOL_DOWNLOAD_FAILED`, `TOOL_INSTALL_FAILED` |
+#### Input
+| No | Detail |
+| --- | --- |
+| 1 | `MaintenanceRequest::Update` containing target tool configuration |
+
+#### Output
+| No | Detail |
+| --- | --- |
+| 1 | `MaintenanceResponse::Update` with per-tool status outcomes |
+
+#### Protocol
+| No | Detail |
+| --- | --- |
+| 1 | `IToolUpdateProtocol` |
+
+#### Method
+| No | Detail |
+| --- | --- |
+| 1 | `update` |
+
+#### Event
+| No | Detail |
+| --- | --- |
+| 1 | `ToolsUpdated` |
+
+#### Error
+| No | Detail |
+| --- | --- |
+| 1 | `TOOL_PROBE_FAILED`, `TOOL_DOWNLOAD_FAILED`, `TOOL_INSTALL_FAILED` |
 
 #### Test
 | Context | When Action | Then Observable Result |
@@ -193,15 +273,35 @@ The system shall scan the project dependency graph and manifest artifacts for kn
 - When remote advisory feeds are unreachable, the system shall fall back to local advisory databases and record a degraded scan warning.
 - When manifest files are corrupted or unparseable, the system shall return a scoped error in the response without crashing.
 
-#### Technical Specification
-| Aspect | Detail |
-|--------|--------|
-| **Input** | `MaintenanceRequest::SecurityScan` with target project path |
-| **Output** | `MaintenanceResponse::Security` containing list of security findings |
-| **Protocol** | `ISecurityScanProtocol` |
-| **Method** | `run_security_scan` |
-| **Event** | `SecurityScanCompleted` |
-| **Error** | `MANIFEST_UNREADABLE`, `ADVISORY_FEED_UNAVAILABLE` |
+#### Input
+| No | Detail |
+| --- | --- |
+| 1 | `MaintenanceRequest::SecurityScan` with target project path |
+
+#### Output
+| No | Detail |
+| --- | --- |
+| 1 | `MaintenanceResponse::Security` containing list of security findings |
+
+#### Protocol
+| No | Detail |
+| --- | --- |
+| 1 | `ISecurityScanProtocol` |
+
+#### Method
+| No | Detail |
+| --- | --- |
+| 1 | `run_security_scan` |
+
+#### Event
+| No | Detail |
+| --- | --- |
+| 1 | `SecurityScanCompleted` |
+
+#### Error
+| No | Detail |
+| --- | --- |
+| 1 | `MANIFEST_UNREADABLE`, `ADVISORY_FEED_UNAVAILABLE` |
 
 #### Test
 | Context | When Action | Then Observable Result |
@@ -232,15 +332,35 @@ The system shall generate a structured dependency report from parsed manifest an
 - When manifest syntax contains errors in certain dependency blocks, the system shall report all valid entries and append a parse error note.
 - When project manifests are completely missing, the system shall return an empty listing with an informative status.
 
-#### Technical Specification
-| Aspect | Detail |
-|--------|--------|
-| **Input** | `MaintenanceRequest::DependencyReport` with project path |
-| **Output** | `MaintenanceResponse::Dependencies` with dependency listing or scoped error |
-| **Protocol** | `IDependencyReportProtocol` |
-| **Method** | `run_dependency_report` |
-| **Event** | `DependencyReportGenerated` |
-| **Error** | `MANIFEST_NOT_FOUND`, `DEPENDENCY_PARSE_FAILED` |
+#### Input
+| No | Detail |
+| --- | --- |
+| 1 | `MaintenanceRequest::DependencyReport` with project path |
+
+#### Output
+| No | Detail |
+| --- | --- |
+| 1 | `MaintenanceResponse::Dependencies` with dependency listing or scoped error |
+
+#### Protocol
+| No | Detail |
+| --- | --- |
+| 1 | `IDependencyReportProtocol` |
+
+#### Method
+| No | Detail |
+| --- | --- |
+| 1 | `run_dependency_report` |
+
+#### Event
+| No | Detail |
+| --- | --- |
+| 1 | `DependencyReportGenerated` |
+
+#### Error
+| No | Detail |
+| --- | --- |
+| 1 | `MANIFEST_NOT_FOUND`, `DEPENDENCY_PARSE_FAILED` |
 
 #### Test
 | Context | When Action | Then Observable Result |
@@ -271,15 +391,35 @@ The system shall verify the installation and operational readiness of all config
 - When adapter configurations are empty, the system shall return an empty health map without error.
 - When an adapter binary crashes during execution probe, the failure shall be isolated to that adapter's health entry.
 
-#### Technical Specification
-| Aspect | Detail |
-|--------|--------|
-| **Input** | `MaintenanceRequest::HealthCheck` with adapter configurations |
-| **Output** | `MaintenanceResponse::Health` with per-adapter availability results |
-| **Protocol** | `IAdapterHealthProtocol` |
-| **Method** | `health_check` |
-| **Event** | `AdapterHealthChecked` |
-| **Error** | `ADAPTER_PROBE_FAILED`, `ADAPTER_BINARY_MISSING` |
+#### Input
+| No | Detail |
+| --- | --- |
+| 1 | `MaintenanceRequest::HealthCheck` with adapter configurations |
+
+#### Output
+| No | Detail |
+| --- | --- |
+| 1 | `MaintenanceResponse::Health` with per-adapter availability results |
+
+#### Protocol
+| No | Detail |
+| --- | --- |
+| 1 | `IAdapterHealthProtocol` |
+
+#### Method
+| No | Detail |
+| --- | --- |
+| 1 | `health_check` |
+
+#### Event
+| No | Detail |
+| --- | --- |
+| 1 | `AdapterHealthChecked` |
+
+#### Error
+| No | Detail |
+| --- | --- |
+| 1 | `ADAPTER_PROBE_FAILED`, `ADAPTER_BINARY_MISSING` |
 
 #### Test
 | Context | When Action | Then Observable Result |
@@ -311,15 +451,35 @@ The system shall download release artifacts from authorized release distribution
 - When the active binary is already at the latest version, the system shall complete cleanly without initiating a download.
 - When download streams disconnect mid-transfer, all partial files shall be discarded and the active binary left untouched.
 
-#### Technical Specification
-| Aspect | Detail |
-|--------|--------|
-| **Input** | `MaintenanceRequest::SelfUpdate` specifying release source and check-only flag |
-| **Output** | `MaintenanceResponse::SelfUpdate` with operation outcome |
-| **Protocol** | `ISelfUpdateProtocol` |
-| **Method** | `self_update` |
-| **Event** | `BinarySelfUpdated` |
-| **Error** | `RELEASE_NOT_FOUND`, `INTEGRITY_CHECK_FAILED`, `ATOMIC_REPLACE_FAILED` |
+#### Input
+| No | Detail |
+| --- | --- |
+| 1 | `MaintenanceRequest::SelfUpdate` specifying release source and check-only flag |
+
+#### Output
+| No | Detail |
+| --- | --- |
+| 1 | `MaintenanceResponse::SelfUpdate` with operation outcome |
+
+#### Protocol
+| No | Detail |
+| --- | --- |
+| 1 | `ISelfUpdateProtocol` |
+
+#### Method
+| No | Detail |
+| --- | --- |
+| 1 | `self_update` |
+
+#### Event
+| No | Detail |
+| --- | --- |
+| 1 | `BinarySelfUpdated` |
+
+#### Error
+| No | Detail |
+| --- | --- |
+| 1 | `RELEASE_NOT_FOUND`, `INTEGRITY_CHECK_FAILED`, `ATOMIC_REPLACE_FAILED` |
 
 #### Test
 | Context | When Action | Then Observable Result |
