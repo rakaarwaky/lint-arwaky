@@ -10,7 +10,6 @@ AI agents working in this workspace must know the AES 7-layer naming convention,
 
 ## Runtime
 
-
 | Aspect          | Detail                                      |
 | --------------- | ------------------------------------------- |
 | Language        | Rust edition 2024 via rust-toolchain.toml   |
@@ -20,7 +19,6 @@ AI agents working in this workspace must know the AES 7-layer naming convention,
 | Version Probe   | `rustc --version`                           |
 | Setup           | `CARGO_INCREMENTAL=0 cargo build --release` |
 | Activation      | None                                        |
-
 
 ## Project Structure  
 
@@ -57,7 +55,6 @@ AI agents working in this workspace must know the AES 7-layer naming convention,
 
 ## Commands
 
-
 | Category    | Command                                                                | Scope    | CI Gate           |
 | ----------- | ---------------------------------------------------------------------- | -------- | ----------------- |
 | Test (all)  | `CARGO_INCREMENTAL=0 cargo nextest run --workspace --lib --tests -j 2` | All      | ci.yml: Tests     |
@@ -67,9 +64,7 @@ AI agents working in this workspace must know the AES 7-layer naming convention,
 | Type Check  | `CARGO_INCREMENTAL=0 cargo clippy --all-targets -- -D warnings`        | All      | ci.yml: Clippy    |
 | Arch Scan   | `lint-arwaky-cli check .`                                              | All      | ci.yml: Self-Lint |
 
-
 ## Reference
-
 
 | Artifact     | Purpose                                    | Link                               |
 | ------------ | ------------------------------------------ | ---------------------------------- |

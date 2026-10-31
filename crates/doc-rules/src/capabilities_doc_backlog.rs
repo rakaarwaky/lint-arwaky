@@ -391,7 +391,7 @@ impl BacklogCapability {
         findings: &mut Vec<DocFinding>,
     ) {
         // Build the union from any FRD/DATA/DESIGN present in the same
-        // folder; fall back to root PRD/ROADMAP.
+        // folder. PRD/ROADMAP carry PR-IDs, which a BACKLOG must not mirror.
         let doc_parent = document.path.parent();
         let union = collect_union_id_set(
             collect_any_id_set,
@@ -401,11 +401,7 @@ impl BacklogCapability {
                         || context.document_name(d) == consts::DATA_DOC
                         || context.document_name(d) == consts::DESIGN_DOC)
             }),
-            context.documents().iter().find(|d| {
-                context.is_root_document(d)
-                    && (context.document_name(d) == consts::PRD_DOC
-                        || context.document_name(d) == consts::ROADMAP_DOC)
-            }),
+            None,
         );
 
         let defects =
