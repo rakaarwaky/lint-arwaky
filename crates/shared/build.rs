@@ -285,15 +285,38 @@ const DOCS: &[&str] = &[
 /// Strip the outer `# <X> Template` title line and the wrapping
 /// ` ```markdown ... ``` ` fence, returning only the inner document body
 /// that the linter actually checks.
-fn extract_fenced_markdown(raw: &str) -> &str {
+///
+/// The outer template fence is the one written by the reference author; any
+/// inner fences (e.g. a ` ```text ` tree block inside the template) are kept
+/// verbatim. The outer closing fence is a plain ` ``` ` with no language tag,
+/// reached at nesting depth zero.
+fn extract_fenced_markdown(raw: &str) -> String {
     let open = raw
         .find("```markdown")
         .expect("template must open a ```markdown fence");
     let after_open = &raw[open + "```markdown".len()..];
-    let close = after_open
-        .find("\n```")
-        .expect("template must close its ```markdown fence");
-    after_open[..close].trim_end_matches('\n')
+    let mut out = String::new();
+    let mut inner_depth: u32 = 0; // >0 when inside a language-tagged inner fence
+    for line in after_open.lines() {
+        let trimmed = line.trim();
+        let is_fence = trimmed.starts_with("```");
+        if is_fence && inner_depth == 0 {
+            // The outer closing fence (plain ``` at depth 0) ends the body.
+            break;
+        }
+        if is_fence {
+            if trimmed == "```" {
+                // Closes an inner language-tagged fence we opened earlier.
+                inner_depth = inner_depth.saturating_sub(1);
+            } else {
+                // A language-tagged ``` opens a new inner fence.
+                inner_depth += 1;
+            }
+        }
+        out.push_str(line);
+        out.push('\n');
+    }
+    out.trim_end().to_string()
 }
 
 fn parse_options<'o>() -> Options<'o> {
@@ -419,7 +442,7 @@ fn extract_doc_constants(doc: &str, raw: &str, mut out: String) -> String {
     let body = extract_fenced_markdown(raw);
     let arena = Arena::new();
     let opts = parse_options();
-    let root = parse_document(&arena, body, &opts);
+    let root = parse_document(&arena, &body, &opts);
 
     let h2s = collect_h2s(root);
 
@@ -428,11 +451,8 @@ fn extract_doc_constants(doc: &str, raw: &str, mut out: String) -> String {
             out = push_const(out, "AGENTS_REQUIRED_H2S", &h2s);
             // The full canonical template body, line-by-line, so the AES601
             // line-drift check tracks the reference template automatically.
-            out = push_const(
-                out,
-                "AGENTS_TEMPLATE_LINES",
-                &body.lines().map(String::from).collect(),
-            );
+            let template_lines: Vec<String> = body.lines().map(String::from).collect();
+            out = push_const(out, "AGENTS_TEMPLATE_LINES", &template_lines);
             if let Some(labels) = table_row_labels(root, "Aspect") {
                 out = push_const(out, "AGENTS_RUNTIME_ROW_LABELS", &labels);
             }

@@ -26,9 +26,32 @@ AI agents working in this workspace must know the AES 7-layer naming convention,
 ```text
 .
 ├── crates/
-│   ├── shared/    # shared layer code (AES contracts, VO)
-│   └── cli/       # lint-arwaky binary + surface
-└── AGENTS.md      # this file
+│   ├── auto-fix/
+│   ├── cli-commands/
+│   ├── config-system/
+│   ├── dispatcher/
+│   ├── doc-rules/
+│   ├── external-lint/
+│   ├── filesystem/
+│   ├── file-watch/
+│   ├── git-hooks/
+│   ├── import-rules/
+│   ├── logging/
+│   ├── maintenance/
+│   ├── mcp-server/
+│   ├── naming-rules/
+│   ├── orphan-rules/
+│   ├── project-setup/
+│   ├── quality-rules/
+│   ├── report-formatter/
+│   ├── role-rules/
+│   ├── shared/
+│   ├── structure-rules/
+│   └── tui/
+├── workspaces-bad/
+├── workspaces-good/
+├── scripts/
+└── AGENTS.md
 ```
 
 ## Commands

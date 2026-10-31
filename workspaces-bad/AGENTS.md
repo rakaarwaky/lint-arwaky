@@ -23,12 +23,43 @@ This workspace is a scanner fixture; do not add implementation code.
 
 ```text
 .
-├── crates/    # Member fixture crates
-│   ├── shared/    # Shared kernel
-│   └── test-suite/  # Fixture test-suite crate
-├── modules/   # Member fixture modules
-├── packages/  # Member fixture packages
-└── AGENTS.md  # this file
+├── crates/
+│   ├── cli_commands/
+│   ├── code_analysis/
+│   ├── di_containers/
+│   ├── import_violations/
+│   ├── layer_rules/
+│   ├── naming_violations/
+│   ├── orphan_feature/
+│   ├── shared/
+│   ├── shared_common/
+│   ├── surface_orphan_test/
+│   ├── taxonomy/
+│   ├── test_suite_violation/
+│   └── utility_orphan_test/
+├── modules/
+│   ├── cli_commands/
+│   ├── code_analysis/
+│   ├── contract/
+│   ├── di_containers/
+│   ├── import_violations/
+│   ├── language_adapters/
+│   ├── layer_rules/
+│   ├── naming_violations/
+│   ├── shared/
+│   ├── shared_common/
+│   ├── surface_layer/
+│   └── test_suite_violation/
+├── packages/
+│   ├── cli_commands/
+│   ├── import_violations/
+│   ├── layer_rules/
+│   ├── naming_violations/
+│   ├── shared/
+│   ├── shared_common/
+│   ├── surface_layer_probe/
+│   └── test_suite_violation/
+└── AGENTS.md
 ```
 
 ## Commands
