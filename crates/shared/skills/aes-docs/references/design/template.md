@@ -1,6 +1,6 @@
 # DESIGN Template
 
-```markdown
+````markdown
 # DESIGN — <project-name>
 
 ## Design Overview
@@ -29,4 +29,4 @@
 | Backlog      | <Task tracking, epics, and implementation status>| [BACKLOG.md](BACKLOG.md)|
 | Roadmap      | <Timeline, phasing, and dependencies>           | [ROADMAP.md](ROADMAP.md)|
 | Architecture | <System boundaries, tech stack, and infra>      | [ARCHITECTURE.md](ARCHITECTURE.md)|
-```
+````

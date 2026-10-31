@@ -1,6 +1,6 @@
 # CONTRIBUTING Template
 
-```markdown
+````markdown
 # CONTRIBUTING — <project-name>
 
 ## Contribution Overview
@@ -37,4 +37,4 @@
 |----------|---------|------|
 | PRD | <Business goals, user stories, and scope> | [PRD.md](PRD.md) |
 | Architecture | <System boundaries, tech stack, and infra> | [ARCHITECTURE.md](ARCHITECTURE.md) |
-```
+````

@@ -1,6 +1,6 @@
 # README Template
 
-```markdown
+````markdown
 # README — <project-name>
 
 ## Project Overview
@@ -21,4 +21,4 @@
 
 | Artifact | Purpose | Link |
 |----------|---------|------|
-```
+````

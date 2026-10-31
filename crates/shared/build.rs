@@ -282,44 +282,36 @@ const DOCS: &[&str] = &[
 ];
 
 /// Strip the outer `# <X> Template` title line and the wrapping
-/// ` ```markdown ... ``` ` fence, returning only the inner document body
-/// that the linter actually checks.
+/// 4-tick ` ````markdown ... ```` ` fence, returning only the inner document
+/// body that the linter actually checks.
 ///
-/// The outer template fence is the one written by the reference author; any
-/// inner fences (e.g. a ` ```text ` tree block inside the template) are kept
-/// verbatim. The outer closing fence is a plain ` ``` ` with no language tag,
-/// reached at nesting depth zero.
+/// The outer template fence is 4 ticks so that inner 3-tick fences (e.g.
+/// a ` ```text ` tree block inside the template) can nest without
+/// colliding with the outer boundary. Inner fences are kept verbatim.
 fn extract_fenced_markdown(raw: &str) -> String {
-    let Some(open) = raw.find("```markdown") else {
+    let Some(open) = raw.find("````markdown") else {
         return String::new();
     };
-    let after_open = &raw[open + "```markdown".len()..];
+    let after_open = &raw[open + "````markdown".len()..];
     let mut out = String::new();
-    // Tracks nesting: a language-tagged fence (```text) opens an inner block
-    // (depth += 1); a plain ``` closes one (depth -= 1). The outer
-    // ```markdown template closes when a plain ``` brings depth from 0 to 0,
-    // i.e. the very first plain ``` we meet at depth 0 after any inner blocks
-    // have opened and closed. We stop there.
+    // Tracks nesting: a language-tagged 3-tick fence (```text) opens an
+    // inner block (depth += 1); a plain 3-tick ``` closes one (depth -= 1).
+    // The outer 4-tick ```` markdown template closes when we meet a plain
+    // ```` line at depth 0, which stops the walk.
     let mut depth: i32 = 0;
     for line in after_open.lines() {
         let trimmed = line.trim();
-        if trimmed.starts_with("```") {
-            let tagged = trimmed.len() > 3;
-            if tagged {
-                depth += 1;
-                out.push_str(line);
-                out.push('\n');
-            } else {
-                // Plain ``` closes the most recent inner block if depth > 0;
-                // at depth 0 it is the outer template boundary, so stop.
-                if depth > 0 {
-                    depth -= 1;
-                    out.push_str(line);
-                    out.push('\n');
-                } else {
-                    break;
-                }
+        if trimmed == "````" {
+            if depth == 0 {
+                break;
             }
+            depth -= 1;
+            out.push_str(line);
+            out.push('\n');
+        } else if trimmed.starts_with("```") && trimmed.len() > 3 {
+            depth += 1;
+            out.push_str(line);
+            out.push('\n');
         } else {
             out.push_str(line);
             out.push('\n');

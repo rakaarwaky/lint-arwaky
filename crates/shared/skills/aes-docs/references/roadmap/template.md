@@ -1,6 +1,6 @@
 # ROADMAP Template
 
-```markdown
+````markdown
 # ROADMAP — <workspace name>
 
 ## Progress Overview
@@ -39,4 +39,4 @@
 |--------------|--------------------------------------------|----------------------------|
 | PRD          | Business goals, user stories, and scope    | [PRD.md](PRD.md)           |
 | Architecture | System boundaries, tech stack, and infra   | [ARCHITECTURE.md](ARCHITECTURE.md) |
-```
+````

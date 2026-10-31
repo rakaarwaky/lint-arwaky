@@ -1,9 +1,5 @@
 # lint_arwaky.config.yaml — Unified configuration for all languages
 
-thresholds:
-  score: 100.0
-  complexity: 15
-
 # ─── Adapters ─────────────────────────────────────────────────────────
 adapters:
   # Rust
@@ -39,6 +35,7 @@ ignored_rules:
   - "markdownlint::MD060"
   - "markdownlint::MD033"
   - "markdownlint::MD024"
+  
 ignored_paths: []
 
 # ─── Architecture rules ─────────────────────────────────────────────────
@@ -84,7 +81,6 @@ architecture:
     AES305:
       enabled: true
       exceptions: []
-      duplication_threshold: 75
     # ─── AES400 ───
     AES401:
       enabled: true
@@ -150,12 +146,3 @@ architecture:
       enabled: true
       exceptions: []
 
-# ─── Doc rules strictness (Decision Q4) ──────────────────────────────────
-# Staged `false` in Stages 1–2 (migration window); flip to `true` in Stage 3.
-# The `docs audit --strict` flag forces both toggles on for that single audit
-# invocation without modifying this file.
-docs:
-  strict_member_docs: true
-  strict_placeholders: false
-  # Member paths exempt from FR-DOC-008 (e.g. build-only crates that owe no docs).
-  exempt_members: []

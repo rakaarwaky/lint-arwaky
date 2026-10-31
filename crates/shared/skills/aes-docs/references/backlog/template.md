@@ -1,6 +1,6 @@
 # BACKLOG Template
 
-```markdown
+````markdown
 # BACKLOG — <feature-name>
 
 ## Progress Overview
@@ -31,4 +31,4 @@
 | FRD          | <Functional requirements specification>    | [FRD.md](FRD.md) |
 | Roadmap      | <Timeline, phasing, and dependencies>      | [ROADMAP.md](ROADMAP.md) |
 | Architecture | <System boundaries, tech stack, and infra> | [ARCHITECTURE.md](ARCHITECTURE.md) |
-```
+````

@@ -142,7 +142,14 @@ fn split_sections<'a>(lines: &'a [&'a str]) -> Vec<(String, Vec<&'a str>)> {
     let mut sections_out: Vec<(String, Vec<&str>)> = Vec::new();
     let mut in_fence = false;
     for line in lines {
-        if line.trim_start().starts_with("```") {
+        let trimmed = line.trim_start();
+        // A 4-tick fence (` ```` `) is an outer template boundary, not part of
+        // the document body — skip it entirely so it does not unbalance the
+        // fence-depth tracking used for section splitting.
+        if trimmed.starts_with("````") {
+            continue;
+        }
+        if trimmed.starts_with("```") {
             in_fence = !in_fence;
             match sections_out.last_mut() {
                 Some((_, body)) => body.push(line),

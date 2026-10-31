@@ -1,6 +1,6 @@
 # PRD Template
 
-```markdown
+````markdown
 # PRD — <PROJECT-NAME>
 
 ## Project Overview
@@ -104,4 +104,4 @@
 | Backlog      | <What is true now, with evidence>                | [BACKLOG.md](BACKLOG.md) |
 | Roadmap      | <Timeline, phasing, and dependencies>            | [ROADMAP.md](ROADMAP.md) |
 | Architecture | <System boundaries, tech stack, and infra>       | [ARCHITECTURE.md](ARCHITECTURE.md) |
-```
+````
