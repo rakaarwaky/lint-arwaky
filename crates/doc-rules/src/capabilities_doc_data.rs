@@ -21,14 +21,11 @@ use shared_doc_rules::utility_doc_entry_regexes::dt_entry_re;
 use shared_doc_rules::utility_doc_fr_format_checks::detect_fr_id_format;
 use shared_doc_rules::utility_markdown_scanner::{doc_h2_contract, sections};
 
-#[derive(Default)]
+// ─── Block 1: Struct Definition ───────────────────────────
+
 pub struct DataCapability;
 
-impl DataCapability {
-    pub fn new() -> Self {
-        Self
-    }
-}
+// ─── Block 2: Protocol Implementation ─────────────────────
 
 impl IDataDocProtocol for DataCapability {
     fn audit_data(&self, context: &DocAuditContext) -> Vec<DocFinding> {
@@ -47,6 +44,20 @@ impl IDataDocProtocol for DataCapability {
     }
 }
 
+// ─── Block 3: Inherent Implementation and Helpers ─────────
+
+impl Default for DataCapability {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl DataCapability {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
 impl DataCapability {
     fn audit_one(document: &DocSource, context: &DocAuditContext, findings: &mut Vec<DocFinding>) {
         let text = &document.text;
@@ -54,7 +65,7 @@ impl DataCapability {
 
         // Template body conformance.
         let drift = detect_doc_line_drift(text, consts::DATA_TEMPLATE_LINES);
-        findings.extend(crate::utility_doc_line_drift::line_drift_findings(
+        findings.extend(shared_doc_rules::utility_doc_line_drift::line_drift_findings(
             drift,
             consts::DATA_DOC,
             consts::RULE_CODE_DATA_DOC,

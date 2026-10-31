@@ -13,14 +13,11 @@ use shared_doc_rules::taxonomy_doc_rules_violation_names::DOC_VIOLATION_NAMES;
 use shared_doc_rules::utility_doc_common_checks::{detect_doc_heading, detect_doc_line_drift};
 use shared_doc_rules::utility_markdown_scanner::{doc_h2_contract, sections};
 
-#[derive(Default)]
+// ─── Block 1: Struct Definition ───────────────────────────
+
 pub struct ArchitectureCapability;
 
-impl ArchitectureCapability {
-    pub fn new() -> Self {
-        Self
-    }
-}
+// ─── Block 2: Protocol Implementation ─────────────────────
 
 impl IArchitectureDocProtocol for ArchitectureCapability {
     fn audit_architecture(&self, context: &DocAuditContext) -> Vec<DocFinding> {
@@ -39,6 +36,20 @@ impl IArchitectureDocProtocol for ArchitectureCapability {
     }
 }
 
+// ─── Block 3: Inherent Implementation and Helpers ─────────
+
+impl Default for ArchitectureCapability {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl ArchitectureCapability {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
 impl ArchitectureCapability {
     fn audit_one(document: &DocSource, _context: &DocAuditContext, findings: &mut Vec<DocFinding>) {
         let text = &document.text;
@@ -46,7 +57,7 @@ impl ArchitectureCapability {
 
         // Template body conformance.
         let drift = detect_doc_line_drift(text, consts::ARCHITECTURE_TEMPLATE_LINES);
-        findings.extend(crate::utility_doc_line_drift::line_drift_findings(
+        findings.extend(shared_doc_rules::utility_doc_line_drift::line_drift_findings(
             drift,
             consts::ARCHITECTURE_DOC,
             consts::RULE_CODE_ARCHITECTURE_DOC,

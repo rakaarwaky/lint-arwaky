@@ -27,14 +27,11 @@ use shared_doc_rules::utility_markdown_scanner::{
     status_leak_patterns,
 };
 
-#[derive(Default)]
+// ─── Block 1: Struct Definition ───────────────────────────
+
 pub struct FrdCapability;
 
-impl FrdCapability {
-    pub fn new() -> Self {
-        Self
-    }
-}
+// ─── Block 2: Protocol Implementation ─────────────────────
 
 impl IFrdDocProtocol for FrdCapability {
     fn audit_frd(&self, context: &DocAuditContext) -> Vec<DocFinding> {
@@ -53,6 +50,20 @@ impl IFrdDocProtocol for FrdCapability {
     }
 }
 
+// ─── Block 3: Inherent Implementation and Helpers ─────────
+
+impl Default for FrdCapability {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl FrdCapability {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
 impl FrdCapability {
     fn audit_one(document: &DocSource, context: &DocAuditContext, findings: &mut Vec<DocFinding>) {
         let text = &document.text;
@@ -60,7 +71,7 @@ impl FrdCapability {
 
         // Template body conformance.
         let drift = detect_doc_line_drift(text, consts::FRD_TEMPLATE_LINES);
-        findings.extend(crate::utility_doc_line_drift::line_drift_findings(
+        findings.extend(shared_doc_rules::utility_doc_line_drift::line_drift_findings(
             drift,
             consts::FRD_DOC,
             consts::RULE_CODE_FRD_DOC,

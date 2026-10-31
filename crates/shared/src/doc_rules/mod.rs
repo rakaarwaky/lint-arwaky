@@ -22,6 +22,7 @@ pub mod utility_doc_collector;
 pub mod utility_doc_common_checks;
 pub mod utility_doc_entry_regexes;
 pub mod utility_doc_fr_format_checks;
+pub mod utility_doc_line_drift;
 pub mod utility_markdown_scanner;
 pub mod utility_protocol_counter;
 

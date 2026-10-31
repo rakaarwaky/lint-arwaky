@@ -21,14 +21,11 @@ use shared_doc_rules::utility_doc_entry_regexes::pr_entry_re;
 use shared_doc_rules::utility_doc_fr_format_checks::{PrIdParityDefect, detect_pr_id_parity};
 use shared_doc_rules::utility_markdown_scanner::{doc_h2_contract, sections};
 
-#[derive(Default)]
+// ─── Block 1: Struct Definition ───────────────────────────
+
 pub struct RoadmapCapability;
 
-impl RoadmapCapability {
-    pub fn new() -> Self {
-        Self
-    }
-}
+// ─── Block 2: Protocol Implementation ─────────────────────
 
 impl IRoadmapDocProtocol for RoadmapCapability {
     fn audit_roadmap(&self, context: &DocAuditContext) -> Vec<DocFinding> {
@@ -47,6 +44,20 @@ impl IRoadmapDocProtocol for RoadmapCapability {
     }
 }
 
+// ─── Block 3: Inherent Implementation and Helpers ─────────
+
+impl Default for RoadmapCapability {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl RoadmapCapability {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
 impl RoadmapCapability {
     fn audit_one(document: &DocSource, context: &DocAuditContext, findings: &mut Vec<DocFinding>) {
         let text = &document.text;
@@ -54,7 +65,7 @@ impl RoadmapCapability {
 
         // Template body conformance.
         let drift = detect_doc_line_drift(text, consts::ROADMAP_TEMPLATE_LINES);
-        findings.extend(crate::utility_doc_line_drift::line_drift_findings(
+        findings.extend(shared_doc_rules::utility_doc_line_drift::line_drift_findings(
             drift,
             consts::ROADMAP_DOC,
             consts::RULE_CODE_ROADMAP_DOC,

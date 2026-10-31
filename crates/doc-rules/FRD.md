@@ -16,12 +16,14 @@ Each functional requirement below implements exactly one capability behind one A
 **Description:** The `docs` command shall audit `AGENTS.md` (AES601) and report a finding whenever any line drifts from the canonical template, or when an H2 heading falls outside the template's required set.
 
 #### Business Logic
+
 - Shall require the Runtime, Project Structure, Commands, and Reference sections verbatim
 - Shall name the AES 7-layer naming convention and pinned Rust edition 2024 toolchain
 - Shall list every CI gate command with scope and CI job
 - Shall link to `README.md`, `CONTRIBUTING.md`, `ARCHITECTURE.md`, `ROADMAP.md`, `PRD.md` in Reference
 
 #### Edge Cases
+
 - A line diverging from the canonical template fires `line_drift`
 - An H2 not in the template fires `h2_unexpected`
 - An empty Runtime section fires `empty_section`
@@ -56,12 +58,14 @@ Each functional requirement below implements exactly one capability behind one A
 **Description:** The `docs` command shall audit `README.md` (AES602) and report a finding whenever its `Quick Start` table lacks the fixed `Step | Action | Command` columns, or when spec prose names a concrete source file or leaks build status.
 
 #### Business Logic
+
 - Shall require a `Quick Start` table with columns `Step`, `Action`, `Command`
 - Shall describe what the tool does, every command, and how to install
 - Shall reject spec prose that names a source file with a language extension
 - Shall link to `ARCHITECTURE.md`, `TEST.md`, `CONTRIBUTING.md`, `LICENSE` in Reference
 
 #### Edge Cases
+
 - Quick Start table missing `Command` fires `table_missing_columns`
 - Prose that names a source file with a language extension fires `source_file_named`
 - Prose stating "released as vX.Y.Z" fires `status_leak`
@@ -96,12 +100,14 @@ Each functional requirement below implements exactly one capability behind one A
 **Description:** The `docs` command shall audit `ARCHITECTURE.md` (AES603) and report a finding whenever a required H2 section is missing, or when spec prose names a concrete source file.
 
 #### Business Logic
+
 - Shall define the 7-layer AES architecture: Taxonomy, Contract, Utility, Capabilities, Agent, Surface, Root
 - Shall give the import matrix with allowed, mandatory, forbidden dependencies per scope
 - Shall list member types (feature, surface, shared) and their document pairs
 - Shall link to `PRD.md` and `ROADMAP.md` in Reference
 
 #### Edge Cases
+
 - Missing required H2 fires `h2_missing`
 - Prose that names a source file with a language extension fires `source_file_named`
 
@@ -135,12 +141,14 @@ Each functional requirement below implements exactly one capability behind one A
 **Description:** The `docs` command shall audit `CONTRIBUTING.md` (AES604) and report a finding whenever its `Workflow` table lacks fixed columns, or when an H2 falls outside the template.
 
 #### Business Logic
+
 - Shall define worktree discipline, no-bypass fixes, and test-first changes
 - Shall give a commit convention table with Type, Usage, Example
 - Shall carry Workflow and Commit Convention tables with fixed columns
 - Shall link to `PRD.md` and `ARCHITECTURE.md` in Reference
 
 #### Edge Cases
+
 - Workflow table missing `Detail` fires `table_missing_columns`
 - Off-template H2 fires `h2_unexpected`
 
@@ -174,12 +182,14 @@ Each functional requirement below implements exactly one capability behind one A
 **Description:** The `docs` command shall audit `PRD.md` (AES605) and report a finding whenever its `Project Requirements` section is missing, when its spec prose names a concrete source file, or when it leaks build status vocabulary.
 
 #### Business Logic
+
 - Shall require a `Project Requirements` section stating business goals, user stories, and scope
 - Shall reject spec prose that names a source file with a language extension
 - Shall reject status vocabulary (shipped, backlog, in progress, done) in requirement statements
 - Shall link to `ROADMAP.md` and `ARCHITECTURE.md` in its Reference section
 
 #### Edge Cases
+
 - `PRD.md` without `Project Requirements` fires `missing_project_requirements`
 - `PRD.md` scope prose that names a source file with a language extension fires `source_file_named`
 - `PRD.md` stating a release version in requirement prose fires `status_leak`
@@ -216,11 +226,13 @@ Each functional requirement below implements exactly one capability behind one A
 **Description:** The `docs` command shall audit `ROADMAP.md` (AES606) and report a finding whenever a `Roadmap Status` entry declares an ID with no matching `PR-<PROJECT>-NNN` in `PRD.md`, or when `PRD.md` declares a PR-ID with no matching roadmap entry.
 
 #### Business Logic
+
 - Shall require every `Roadmap Status` entry to carry Priority, State, Dependencies, Updated
 - Shall enforce PR-ID parity between `PRD.md` `Project Requirements` and `ROADMAP.md` `Roadmap Status`
 - Shall link to `PRD.md` and `ARCHITECTURE.md` in its Reference section
 
 #### Edge Cases
+
 - ROADMAP entry `PR-LA-001` with no `PR-LA-001` in PRD fires `pr_roadmap_id_missing`
 - PRD declares `PR-LA-016` with no roadmap entry fires `roadmap_pr_id_not_pr`
 - Roadmap row missing `State` fires `entry_missing_row`
@@ -255,13 +267,15 @@ Each functional requirement below implements exactly one capability behind one A
 **Description:** The `docs` command shall audit `BACKLOG.md` (AES607) and report a finding whenever a `## Backlog` row's ID cell is not a valid `FR-<FEATURE>-NNN` ID, or when a declared FR ID has no matching backlog row.
 
 #### Business Logic
+
 - Shall require one `## Backlog` row per declared FR, DS, DT, or PR ID
 - Shall require each row's ID cell to match its spec document's ID family
 - Shall require State, Done, In Progress, Risk, Updated columns per row
 - Shall link to `FRD.md` in its Reference section
 
 #### Edge Cases
-- Row ID `FR-001` with no feature prefix fires `backlog_id_not_fr`
+
+- Row ID `FR-DOC-001` with no feature prefix fires `backlog_id_not_fr`
 - Declared `FR-DOC-009` with no matching backlog row fires `backlog_id_missing`
 
 #### Technical Specification
@@ -280,7 +294,7 @@ Each functional requirement below implements exactly one capability behind one A
 | Context | When Action | Then Observable Result |
 |---------|-------------|------------------------|
 | `FRD.md` declares `FR-DOC-009` but `BACKLOG.md` has no row | The audit runs ID alignment | A `backlog_id_missing` finding fires |
-| `BACKLOG.md` row ID reads `FR-001` | The audit scans `BACKLOG.md` | A `backlog_id_not_fr` finding fires |
+| `BACKLOG.md` row ID reads `FR-DOC-001` | The audit scans `BACKLOG.md` | A `backlog_id_not_fr` finding fires |
 
 #### Metric
 
@@ -294,12 +308,14 @@ Each functional requirement below implements exactly one capability behind one A
 **Description:** The `docs` command shall audit `DATA.md` (AES608) and report a finding whenever a data ID uses a bare `DT-NNN` without the `SHARED` qualifier, or when spec prose names a concrete source file.
 
 #### Business Logic
+
 - Shall require Data Overview, Data Requirements, and Reference sections
 - Shall declare `DT-SHARED-NNN` items, one per data concept
 - Shall keep data concepts free from technical and behavioural concerns
 - Shall link to `PRD.md`, `BACKLOG.md`, `ROADMAP.md`, `ARCHITECTURE.md` in Reference
 
 #### Edge Cases
+
 - Heading `DT-001` without `SHARED` fires `id_missing_feature_prefix`
 - Prose that names a source file with a language extension fires `source_file_named`
 
@@ -333,13 +349,15 @@ Each functional requirement below implements exactly one capability behind one A
 **Description:** The `docs` command shall audit each `FRD.md` entry (AES609) and report a finding whenever an FR heading lacks the `FR-<FEATURE>-NNN` prefix, when its `Technical Specification` table omits any of the six fixed rows, or when spec prose names a concrete source file.
 
 #### Business Logic
+
 - Shall require every FR heading to match `FR-<FEATURE-NAME-ID>-NNN: <name>`
 - Shall require exactly six `Technical Specification` rows: Input, Output, Protocol, Method, Event, Error
 - Shall reject spec prose that names a source file with a language extension
 - Shall link to `PRD.md` and `BACKLOG.md` in its Reference section
 
 #### Edge Cases
-- Heading `FR-001: Do The Thing` fires `id_missing_feature_prefix`
+
+- Heading `FR-DOC-001: Do The Thing` fires `id_missing_feature_prefix`
 - Technical Specification missing the `Event` row fires `entry_missing_row`
 - Prose naming the orchestrator source file fires `source_file_named`
 
@@ -358,7 +376,7 @@ Each functional requirement below implements exactly one capability behind one A
 
 | Context | When Action | Then Observable Result |
 |---------|-------------|------------------------|
-| Heading `FR-001: Do The Thing` with no feature prefix | The audit scans `FRD.md` | An `id_missing_feature_prefix` finding fires |
+| Heading `FR-DOC-001: Do The Thing` with no feature prefix | The audit scans `FRD.md` | An `id_missing_feature_prefix` finding fires |
 | Technical Specification omits `Event` | The audit checks entry tables | An `entry_missing_row` finding fires |
 
 #### Metric
@@ -373,12 +391,14 @@ Each functional requirement below implements exactly one capability behind one A
 **Description:** The `docs` command shall audit `DESIGN.md` (AES610) and report a finding whenever a `Design Requirements` H3 does not match the `DS-<NAME>-NNN` pattern, or when a table appears under a section the template does not mandate.
 
 #### Business Logic
+
 - Shall require Design Overview, Design Requirements, and Reference sections
 - Shall sanction H3 headings only under Design Requirements, matching `DS-<NAME>-NNN`
 - Shall link to `PRD.md`, `BACKLOG.md`, `ROADMAP.md`, `ARCHITECTURE.md` in Reference
 - Shall permit no H3 under Design Overview or Reference
 
 #### Edge Cases
+
 - H3 `Tokens` under Design Requirements fires `h3_unexpected`
 - A table under Design Requirements fires `table_not_in_template`
 

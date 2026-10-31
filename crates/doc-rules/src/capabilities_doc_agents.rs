@@ -20,14 +20,11 @@ use shared_doc_rules::utility_doc_common_checks::{
 };
 use shared_doc_rules::utility_markdown_scanner::{doc_h2_contract, sections};
 
-#[derive(Default)]
+// ─── Block 1: Struct Definition ───────────────────────────
+
 pub struct AgentsCapability;
 
-impl AgentsCapability {
-    pub fn new() -> Self {
-        Self
-    }
-}
+// ─── Block 2: Protocol Implementation ─────────────────────
 
 impl IAgentsDocProtocol for AgentsCapability {
     fn audit_agents(&self, context: &DocAuditContext) -> Vec<DocFinding> {
@@ -43,6 +40,20 @@ impl IAgentsDocProtocol for AgentsCapability {
             }
         }
         findings
+    }
+}
+
+// ─── Block 3: Inherent Implementation and Helpers ─────────
+
+impl Default for AgentsCapability {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl AgentsCapability {
+    pub fn new() -> Self {
+        Self
     }
 }
 
@@ -77,7 +88,7 @@ impl AgentsCapability {
 
         // AGENTS line drift against the template.
         let drift = detect_doc_line_drift(text, consts::AGENTS_TEMPLATE_LINES);
-        findings.extend(crate::utility_doc_line_drift::line_drift_findings(
+        findings.extend(shared_doc_rules::utility_doc_line_drift::line_drift_findings(
             drift,
             consts::AGENTS_DOC,
             consts::RULE_CODE_AGENTS_DOC,

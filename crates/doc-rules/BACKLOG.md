@@ -14,111 +14,111 @@ Last Updated: 2026-09-29
 
 ## Backlog Status
 
-### FR-DOC-001: 
+### FR-DOC-001
 
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | DOC                                      |
-| In Progress  | None                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | DOC |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
-### FR-DOC-002: 
+### FR-DOC-002
 
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | DOC                                      |
-| In Progress  | None                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | DOC |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
-### FR-DOC-003: 
+### FR-DOC-003
 
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | DOC                                      |
-| In Progress  | None                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | DOC |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
-### FR-DOC-004: 
+### FR-DOC-004
 
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | DOC                                      |
-| In Progress  | None                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | DOC |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
-### FR-DOC-005: 
+### FR-DOC-005
 
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | DOC                                      |
-| In Progress  | None                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | DOC |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
-### FR-DOC-006: 
+### FR-DOC-006
 
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | DOC                                      |
-| In Progress  | None                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | DOC |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
-### FR-DOC-007: 
+### FR-DOC-007
 
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | DOC                                      |
-| In Progress  | None                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | DOC |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
-### FR-DOC-008: 
+### FR-DOC-008
 
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | DOC                                      |
-| In Progress  | None                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | DOC |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
-### FR-DOC-009: 
+### FR-DOC-009
 
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | DOC                                      |
-| In Progress  | None                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | DOC |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
-### FR-DOC-010: 
+### FR-DOC-010
 
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | DOC                                      |
-| In Progress  | None                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | DOC |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
 ## Reference
 
-| Artifact | Purpose | Link|
-|----------|---------|------|
-| PRD.md | Product requirements | [PRD.md](../../PRD.md)|
-| FRD.md | Feature requirements | [FRD.md](FRD.md)|
-| ROADMAP.md | Roadmap status | [ROADMAP.md](../../ROADMAP.md)|
-| ARCHITECTURE.md | Layer contract | [ARCHITECTURE.md](../../ARCHITECTURE.md)|
+| Artifact | Purpose | Link |
+| ---------- | --------- | ------ |
+| PRD.md | Product requirements | [PRD.md](../../PRD.md) |
+| FRD.md | Feature requirements | [FRD.md](FRD.md) |
+| ROADMAP.md | Roadmap status | [ROADMAP.md](../../ROADMAP.md) |
+| ARCHITECTURE.md | Layer contract | [ARCHITECTURE.md](../../ARCHITECTURE.md) |

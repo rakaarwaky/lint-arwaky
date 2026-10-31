@@ -19,14 +19,11 @@ use shared_doc_rules::utility_doc_common_checks::{
 };
 use shared_doc_rules::utility_markdown_scanner::{doc_h2_contract, sections};
 
-#[derive(Default)]
+// ─── Block 1: Struct Definition ───────────────────────────
+
 pub struct ContributingCapability;
 
-impl ContributingCapability {
-    pub fn new() -> Self {
-        Self
-    }
-}
+// ─── Block 2: Protocol Implementation ─────────────────────
 
 impl IContributingDocProtocol for ContributingCapability {
     fn audit_contributing(&self, context: &DocAuditContext) -> Vec<DocFinding> {
@@ -45,6 +42,20 @@ impl IContributingDocProtocol for ContributingCapability {
     }
 }
 
+// ─── Block 3: Inherent Implementation and Helpers ─────────
+
+impl Default for ContributingCapability {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl ContributingCapability {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
 impl ContributingCapability {
     fn audit_one(document: &DocSource, context: &DocAuditContext, findings: &mut Vec<DocFinding>) {
         let text = &document.text;
@@ -52,7 +63,7 @@ impl ContributingCapability {
 
         // Template body conformance.
         let drift = detect_doc_line_drift(text, consts::CONTRIBUTING_TEMPLATE_LINES);
-        findings.extend(crate::utility_doc_line_drift::line_drift_findings(
+        findings.extend(shared_doc_rules::utility_doc_line_drift::line_drift_findings(
             drift,
             consts::CONTRIBUTING_DOC,
             consts::RULE_CODE_CONTRIBUTING_DOC,

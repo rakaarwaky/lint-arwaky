@@ -22,14 +22,11 @@ use shared_doc_rules::utility_doc_fr_format_checks::collect_any_id_set;
 use shared_doc_rules::utility_markdown_scanner::{doc_h2_contract, sections};
 use shared_doc_rules::utility_protocol_counter::ds_id_heading_re;
 
-#[derive(Default)]
+// ─── Block 1: Struct Definition ───────────────────────────
+
 pub struct DesignCapability;
 
-impl DesignCapability {
-    pub fn new() -> Self {
-        Self
-    }
-}
+// ─── Block 2: Protocol Implementation ─────────────────────
 
 impl IDesignDocProtocol for DesignCapability {
     fn audit_design(&self, context: &DocAuditContext) -> Vec<DocFinding> {
@@ -48,6 +45,20 @@ impl IDesignDocProtocol for DesignCapability {
     }
 }
 
+// ─── Block 3: Inherent Implementation and Helpers ─────────
+
+impl Default for DesignCapability {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl DesignCapability {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
 impl DesignCapability {
     fn audit_one(document: &DocSource, context: &DocAuditContext, findings: &mut Vec<DocFinding>) {
         let text = &document.text;
@@ -55,7 +66,7 @@ impl DesignCapability {
 
         // Template body conformance.
         let drift = detect_doc_line_drift(text, consts::DESIGN_TEMPLATE_LINES);
-        findings.extend(crate::utility_doc_line_drift::line_drift_findings(
+        findings.extend(shared_doc_rules::utility_doc_line_drift::line_drift_findings(
             drift,
             consts::DESIGN_DOC,
             consts::RULE_CODE_DESIGN_DOC,

@@ -16,14 +16,11 @@ use shared_doc_rules::utility_capabilities_doc_h2_checks::{
 use shared_doc_rules::utility_doc_common_checks::{detect_doc_heading, detect_doc_line_drift};
 use shared_doc_rules::utility_markdown_scanner::{doc_h2_contract, sections};
 
-#[derive(Default)]
+// ─── Block 1: Struct Definition ───────────────────────────
+
 pub struct ReadmeCapability;
 
-impl ReadmeCapability {
-    pub fn new() -> Self {
-        Self
-    }
-}
+// ─── Block 2: Protocol Implementation ─────────────────────
 
 impl IReadmeDocProtocol for ReadmeCapability {
     fn audit_readme(&self, context: &DocAuditContext) -> Vec<DocFinding> {
@@ -42,6 +39,20 @@ impl IReadmeDocProtocol for ReadmeCapability {
     }
 }
 
+// ─── Block 3: Inherent Implementation and Helpers ─────────
+
+impl Default for ReadmeCapability {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl ReadmeCapability {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
 impl ReadmeCapability {
     fn audit_one(document: &DocSource, _context: &DocAuditContext, findings: &mut Vec<DocFinding>) {
         let text = &document.text;
@@ -49,7 +60,7 @@ impl ReadmeCapability {
 
         // Template body conformance.
         let drift = detect_doc_line_drift(text, consts::README_TEMPLATE_LINES);
-        findings.extend(crate::utility_doc_line_drift::line_drift_findings(
+        findings.extend(shared_doc_rules::utility_doc_line_drift::line_drift_findings(
             drift,
             consts::README_DOC,
             consts::RULE_CODE_README_DOC,
