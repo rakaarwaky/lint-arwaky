@@ -426,15 +426,23 @@ fn extract_doc_constants(doc: &str, raw: &str, mut out: String) -> String {
     match doc {
         "agents" => {
             out = push_const(out, "AGENTS_REQUIRED_H2S", &h2s);
+            // The full canonical template body, line-by-line, so the AES601
+            // line-drift check tracks the reference template automatically.
+            out = push_const(
+                out,
+                "AGENTS_TEMPLATE_LINES",
+                &body.lines().map(String::from).collect(),
+            );
             if let Some(labels) = table_row_labels(root, "Aspect") {
                 out = push_const(out, "AGENTS_RUNTIME_ROW_LABELS", &labels);
-            }
-            if let Some(cols) = table_header_columns(root, "Path") {
-                out = push_const(out, "AGENTS_PATH_PURPOSE_COLUMNS", &cols);
             }
             if let Some(cols) = table_header_columns(root, "Category") {
                 out = push_const(out, "AGENTS_COMMAND_COLUMNS", &cols);
             }
+            // The Project Structure section carries a fenced `text` tree block
+            // rather than a `Path | Purpose` table, so no column constant is
+            // generated for it. The tree shape is enforced by the line-drift
+            // check above against `AGENTS_TEMPLATE_LINES`.
         }
         "architecture" => {
             out = push_const(out, "ARCHITECTURE_REQUIRED_H2S", &h2s);

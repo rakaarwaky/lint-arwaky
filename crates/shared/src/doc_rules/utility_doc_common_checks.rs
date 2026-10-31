@@ -758,12 +758,27 @@ pub fn detect_agents_line_drift(
 }
 
 /// Split a document into `H2 heading -> body lines` sections.
+///
+/// Lines inside a fenced code block stay in the current section's body
+/// (the Project Structure tree block must reach the consumer), but a
+/// `## ` marker inside a fence is content, not a heading.
 fn split_sections<'a>(lines: &'a [&'a str]) -> Vec<(String, Vec<&'a str>)> {
     let mut sections_out: Vec<(String, Vec<&str>)> = Vec::new();
+    let mut in_fence = false;
     for line in lines {
-        if let Some(title) = line.strip_prefix("## ") {
-            sections_out.push((title.trim().to_string(), Vec::new()));
+        if line.trim_start().starts_with("```") {
+            in_fence = !in_fence;
+            match sections_out.last_mut() {
+                Some((_, body)) => body.push(line),
+                None => sections_out.push((String::new(), vec![line])),
+            }
             continue;
+        }
+        if !in_fence {
+            if let Some(title) = line.strip_prefix("## ") {
+                sections_out.push((title.trim().to_string(), Vec::new()));
+                continue;
+            }
         }
         match sections_out.last_mut() {
             Some((_, body)) => body.push(line),

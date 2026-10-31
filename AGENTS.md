@@ -23,10 +23,13 @@ AI agents working in this workspace must know the AES 7-layer naming convention,
 
 ## Project Structure
 
-| Path       | Purpose              |
-|------------|----------------------|
-| crates/    | Rust workspace crates|
-| shared/    | Shared layer code   |
+```text
+.
+├── crates/
+│   ├── shared/    # shared layer code (AES contracts, VO)
+│   └── cli/       # lint-arwaky binary + surface
+└── AGENTS.md      # this file
+```
 
 ## Commands
 

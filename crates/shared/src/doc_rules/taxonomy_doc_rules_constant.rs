@@ -157,61 +157,6 @@ pub const CONTRIBUTING_DOC: &str = "CONTRIBUTING.md";
 /// A legacy root BACKLOG.md is accepted so a workspace can migrate in place.
 pub const MASTER_DOC_CANDIDATES: &[&str] = &[ROADMAP_DOC, BACKLOG_DOC];
 
-/// Canonical AGENTS.md template lines — the reference shape AGENTS.md must
-/// match line-by-line (modulo `{...}` placeholder slots) for the AES601
-/// line-drift check. Transcribed from `references/agents/template.md`.
-pub const AGENTS_TEMPLATE_LINES: &[&str] = &[
-    "---",
-    "trigger: always",
-    "description: \"Sample.\"",
-    "---",
-    "",
-    "# Sample AGENTS.md",
-    "",
-    "## Agent Overview",
-    "",
-    "{One paragraph: what AI agents must know before generating code, docs, or suggestions in this workspace.}",
-    "",
-    "## Runtime",
-    "",
-    "| Aspect          | Detail                                          |",
-    "|-----------------|-------------------------------------------------|",
-    "| Language        | {language and pinned version}                   |",
-    "| Environment     | {environment manager and creation method}       |",
-    "| Artifacts       | {reviewable artifact location}                  |",
-    "| Package Manager | {package manager and lockfile}                  |",
-    "| Version Probe   | `{version probe command}`                       |",
-    "| Setup           | `{environment setup command}`                    |",
-    "| Activation      | `{optional environment activation command}`      |",
-    "",
-    "## Project Structure",
-    "",
-    "| Path       | Purpose              |",
-    "|------------|----------------------|",
-    "| {path}     | {what lives here}    |",
-    "",
-    "## Commands",
-    "",
-    "| Category    | Command                              | Scope      | CI Gate              |",
-    "|-------------|--------------------------------------|------------|----------------------|",
-    "| Test (all)  | `<whole-workspace test command>`     | All        | ci.yml: <job name>   |",
-    "| Test (unit) | `<single-package test command>`      | One unit   | ci.yml: <job name>   |",
-    "| Test (file) | `<single-file test command>`         | One file   | ci.yml: <job name>   |",
-    "| Lint        | `<formatter or linter command>`      | All        | ci.yml: <job name>   |",
-    "| Type Check  | `<type checker command>`             | All        | ci.yml: <job name>   |",
-    "| Arch Scan   | `<architecture scanner command>`     | All        | ci.yml: <job name>   |",
-    "",
-    "## Reference",
-    "",
-    "| Artifact     | Purpose                                    | Link |",
-    "|--------------|--------------------------------------------|------|",
-    "| README       | What the tool does, every command, install | [README.md](README.md) |",
-    "| CONTRIBUTING | Branch, commit, and PR conventions         | [CONTRIBUTING.md](CONTRIBUTING.md) |",
-    "| ARCHITECTURE | Layer contract for every crate             | [ARCHITECTURE.md](ARCHITECTURE.md) |",
-    "| ROADMAP      | What ships next, in order                  | [ROADMAP.md](ROADMAP.md) |",
-    "| PRD          | What the product does and why              | [PRD.md](PRD.md) |",
-];
-
 /// Sections that exist only in the root master, per references/roadmap/template.md.
 /// `Roadmap Status` is root-only: feature backlogs carry `Backlog Status`
 /// and legitimately reuse `Progress Overview`.

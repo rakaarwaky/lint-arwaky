@@ -40,7 +40,7 @@ Fill each section in order, matching the Template shape:
 
 1. **Agent Overview** — one paragraph: what agents must know before generating code, docs, or suggestions.
 2. **Runtime** — `Aspect | Detail` table: Language, Environment, Artifacts, Package Manager, Version Probe, Setup, Activation.
-3. **Project Structure** — `Path | Purpose` table, one row per crate/workspace member.
+3. **Project Structure** — fenced `text` tree block (`├──`/`└──` connectors with `# <what lives here>` comments), one node per crate/workspace member.
 4. **Commands** — `Category | Command | Scope | CI Gate` table. Every command verbatim from the CI gate.
 5. **Reference** — `Artifact | Purpose | Link` table: README, CONTRIBUTING, ARCHITECTURE, ROADMAP, PRD.
 

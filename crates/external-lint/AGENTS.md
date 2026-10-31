@@ -22,9 +22,11 @@ description: "Lint Arwaky operational guide."
 
 ## Project Structure
 
-| Path       | Purpose              |
-|------------|----------------------|
-| {path}     | {what lives here}    |
+```text
+.
+├── <path>   # <what lives here>
+└── <path>   # <what lives here>
+```
 
 ## Commands
 

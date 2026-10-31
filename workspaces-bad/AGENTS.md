@@ -21,11 +21,15 @@ This workspace is a scanner fixture; do not add implementation code.
 
 ## Project Structure
 
-| Path | Purpose|
-|---|---|
-| crates/ | Member fixture crates|
-| modules/ | Member fixture modules|
-| packages/ | Member fixture packages|
+```text
+.
+├── crates/    # Member fixture crates
+│   ├── shared/    # Shared kernel
+│   └── test-suite/  # Fixture test-suite crate
+├── modules/   # Member fixture modules
+├── packages/  # Member fixture packages
+└── AGENTS.md  # this file
+```
 
 ## Commands
 

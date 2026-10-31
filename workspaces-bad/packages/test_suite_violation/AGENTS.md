@@ -16,9 +16,11 @@
 
 ## Project Structure
 
-| Path       | Purpose             |
-|------------|----------------------|
-| {path}     | {what lives here}   |
+```text
+.
+├── src/         # fixture package sources
+└── AGENTS.md    # this file
+```
 
 ## Commands
 
