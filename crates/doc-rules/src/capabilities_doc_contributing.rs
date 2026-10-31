@@ -50,7 +50,7 @@ impl ContributingCapability {
 
         // AES605 — heading structure.
         if let Some((required, allowed)) = doc_h2_contract(consts::CONTRIBUTING_DOC) {
-            check_doc_heading(text, consts::CONTRIBUTING_DOC, required, allowed, findings);
+            check_doc_heading(consts::RULE_CODE_CONTRIBUTING_DOC, text, consts::CONTRIBUTING_DOC, required, allowed, findings);
         }
 
         // AES606 — Workflow table carries fixed columns.

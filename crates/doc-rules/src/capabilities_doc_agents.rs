@@ -113,7 +113,7 @@ impl AgentsCapability {
 
         // AES605 — heading structure (exactly one H1, required H2s, no off-template H2s).
         if let Some((required, allowed)) = doc_h2_contract(consts::AGENTS_DOC) {
-            check_doc_heading(text, consts::AGENTS_DOC, required, allowed, findings);
+            check_doc_heading(consts::RULE_CODE_AGENTS_DOC, text, consts::AGENTS_DOC, required, allowed, findings);
         }
 
         // AES606 — Runtime table carries the fixed row labels.

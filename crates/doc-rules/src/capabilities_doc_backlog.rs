@@ -55,7 +55,7 @@ impl BacklogCapability {
 
         // AES605 — heading structure.
         if let Some((required, allowed)) = doc_h2_contract(consts::BACKLOG_DOC) {
-            check_doc_heading(text, consts::BACKLOG_DOC, required, allowed, findings);
+            check_doc_heading(consts::RULE_CODE_BACKLOG_DOC, text, consts::BACKLOG_DOC, required, allowed, findings);
         }
 
         // AES606 — entry tables under Backlog Status.

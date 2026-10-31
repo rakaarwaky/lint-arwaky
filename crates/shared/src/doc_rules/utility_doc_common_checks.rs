@@ -618,7 +618,7 @@ pub fn check_doc_heading(
             DocFinding::new_with_line(
                 "",
                 0,
-                consts::RULE_CODE_DOC_STRUCTURE,
+                rule_code,
                 consts::DOC_STRUCTURE_VIOLATION_H2_UNEXPECTED,
                 format!(
                     "{name} carries H2 heading(s) outside the template: {}",

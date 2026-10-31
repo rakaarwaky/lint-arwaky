@@ -43,7 +43,7 @@ impl ArchitectureCapability {
 
         // AES603 — heading structure.
         if let Some((required, allowed)) = doc_h2_contract(consts::ARCHITECTURE_DOC) {
-            check_doc_heading(text, consts::ARCHITECTURE_DOC, required, allowed, findings);
+            check_doc_heading(consts::RULE_CODE_ARCHITECTURE_DOC, text, consts::ARCHITECTURE_DOC, required, allowed, findings);
         }
 
         // AES603 — template body conformance is exercised through the
