@@ -7,22 +7,43 @@ the orchestrator applies the capability, and the result returns to the caller.
 
 ## Functional Requirements
 
-### FR-SINGLE-001: Check the request
+### FR-SingleOrchestrator-001: Check the request
 
-| Aspect         | Detail                                      |
-|----------------|---------------------------------------------|
-| Description    | The feature validates the request and returns the result. |
-| Business Rules | The caller never sees a partial result.     |
-| Edge Cases     | An empty request is rejected before work runs. |
-| Capability     | single_orchestrator::Capability             |
-| Protocol       | single_orchestrator::Protocol               |
-| Method         | audit                                       |
-| Input          | A request supplied by the caller.           |
-| Output         | The resolved value, or an error.            |
-| Error          | Returns an error; never panics.             |
-| Event          | Finding emitted                             |
-| Test           | lint-arwaky-cli docs . reports 0 findings   |
-| Metric         | 0 doc-rule findings                         |
+**Description:** The feature validates the request and returns the result.
+
+#### Business Logic
+
+- The caller never sees a partial result.
+- The request is validated before the capability runs.
+- The orchestrator applies the capability and returns the result.
+
+#### Edge Cases
+
+- An empty request is rejected before work runs.
+- A malformed request returns an error.
+
+#### Technical Specification
+
+| Aspect | Detail |
+|--------|--------|
+| **Input** | A request supplied by the caller. |
+| **Output** | The resolved value, or an error. |
+| **Protocol** | single_orchestrator::Protocol |
+| **Method** | audit |
+| **Event** | Finding emitted |
+| **Error** | Returns an error; never panics. |
+
+#### Test
+
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| single_orchestrator | caller supplies a valid request | result returned without partial output |
+
+#### Metric
+
+| Target Metric | Value |
+|---------------|-------|
+| Latency | 200ms |
 
 ## Public Interface
 

@@ -1,12 +1,5 @@
-## Feature Overview
-
 ## Functional Requirements
 
-## Public Interface
+### FR-Probe-001: Broken FR id
 
-## Reference
-
-| Prd | {Link to PRD.md} | [{link}](PRD.md)|
-| Backlog | {Link to BACKLOG.md} | [{link}](BACKLOG.md)|
-| Roadmap | {Link to ROADMAP.md} | [{link}](ROADMAP.md)|
-| Architecture | {Link to ARCHITECTURE.md} | [{link}](ARCHITECTURE.md)|
+The FR id prefix  does not match the folder name  (slug token ), so a per-folder prefix check must flag it.
