@@ -69,14 +69,12 @@ impl HeadingDefect {
     }
 }
 
-/// A defect found by `detect_agents_line_drift`.
+/// A defect found by `detect_doc_line_drift`.
 #[derive(Debug, Clone)]
 pub enum LineDriftDefect {
-    /// AGENTS.md has no YAML frontmatter block.
-    FrontmatterMissing { line: usize, doc_name: String },
-    /// AGENTS.md has a section the template does not declare.
+    /// The document has a section the template does not declare.
     SectionNotInTemplate { line: usize, section: String },
-    /// AGENTS.md is missing a template section.
+    /// The document is missing a template section.
     MissingTemplateSection { line: usize, section: String },
     /// A template-fixed line does not match.
     LineMismatch {
@@ -85,14 +83,13 @@ pub enum LineDriftDefect {
         expected: String,
         found: String,
     },
-    /// AGENTS.md H1 has no title.
+    /// The document H1 has no title.
     H1NoTitle { line: usize },
 }
 
 impl LineDriftDefect {
     pub fn line(&self) -> usize {
         match self {
-            LineDriftDefect::FrontmatterMissing { line, .. } => *line,
             LineDriftDefect::SectionNotInTemplate { line, .. } => *line,
             LineDriftDefect::MissingTemplateSection { line, .. } => *line,
             LineDriftDefect::LineMismatch { line, .. } => *line,
@@ -703,29 +700,15 @@ pub fn detect_doc_heading(
     defects
 }
 
-// ─── AGENTS line-drift mechanics (AES605) ────────────────────────────────
+// ─── Doc line-drift mechanics (AES605) ──────────────────────────────────
 
-/// AGENTS line-drift check against `AGENTS_TEMPLATE_LINES`. Returns pure defect
-/// data; the calling capability stamps with its own rule code.
-pub fn detect_agents_line_drift(
-    text: &str,
-    template: &[&str],
-    doc_name: &str,
-) -> Vec<LineDriftDefect> {
+/// Doc line-drift check against a doc's `*_TEMPLATE_LINES`. Compares the
+/// document's H2 sections and their fixed (non-placeholder) body lines
+/// against the template. Returns pure defect data; the calling capability
+/// stamps with its own rule code.
+pub fn detect_doc_line_drift(text: &str, template: &[&str]) -> Vec<LineDriftDefect> {
     let mut defects = Vec::new();
     let doc_lines: Vec<&str> = text.lines().collect();
-    let has_frontmatter = doc_lines.first().is_some_and(|l| l.trim() == "---");
-    if !has_frontmatter {
-        defects.push(LineDriftDefect::FrontmatterMissing {
-            line: 1,
-            doc_name: doc_name.to_string(),
-        });
-    }
-    let first_line = doc_lines.first().map_or("", |v| *v);
-    let looks_like_agents = first_line.trim() == "---" || first_line.starts_with("# ");
-    if !looks_like_agents {
-        return defects;
-    }
     if template.is_empty() {
         return defects;
     }

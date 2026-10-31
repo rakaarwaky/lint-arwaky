@@ -476,15 +476,21 @@ fn extract_doc_constants(doc: &str, raw: &str, mut out: String) -> String {
         }
         "architecture" => {
             out = push_const(out, "ARCHITECTURE_REQUIRED_H2S", &h2s);
+            let template_lines: Vec<String> = body.lines().map(String::from).collect();
+            out = push_const(out, "ARCHITECTURE_TEMPLATE_LINES", &template_lines);
         }
         "backlog" => {
             out = push_const(out, "BACKLOG_REQUIRED_H2S", &h2s);
+            let template_lines: Vec<String> = body.lines().map(String::from).collect();
+            out = push_const(out, "BACKLOG_TEMPLATE_LINES", &template_lines);
             if let Some(labels) = table_row_labels(root, "Aspect") {
                 out = push_const(out, "BACKLOG_ROW_LABELS", &labels);
             }
         }
         "contributing" => {
             out = push_const(out, "CONTRIBUTING_REQUIRED_H2S", &h2s);
+            let template_lines: Vec<String> = body.lines().map(String::from).collect();
+            out = push_const(out, "CONTRIBUTING_TEMPLATE_LINES", &template_lines);
             if let Some(cols) = table_header_columns(root, "Step") {
                 out = push_const(out, "CONTRIBUTING_WORKFLOW_COLUMNS", &cols);
             }
@@ -494,18 +500,24 @@ fn extract_doc_constants(doc: &str, raw: &str, mut out: String) -> String {
         }
         "data" => {
             out = push_const(out, "DATA_REQUIRED_H2S", &h2s);
+            let template_lines: Vec<String> = body.lines().map(String::from).collect();
+            out = push_const(out, "DATA_TEMPLATE_LINES", &template_lines);
             if let Some(cols) = table_header_columns(root, "Type") {
                 out = push_const(out, "DATA_TYPE_DESCRIPTION_COLUMNS", &cols);
             }
         }
         "design" => {
             out = push_const(out, "DESIGN_REQUIRED_H2S", &h2s);
+            let template_lines: Vec<String> = body.lines().map(String::from).collect();
+            out = push_const(out, "DESIGN_TEMPLATE_LINES", &template_lines);
             if let Some(cols) = table_header_columns(root, "Variant") {
                 out = push_const(out, "DESIGN_VARIANT_VALUE_COLUMNS", &cols);
             }
         }
         "frd" => {
             out = push_const(out, "FRD_REQUIRED_H2S", &h2s);
+            let template_lines: Vec<String> = body.lines().map(String::from).collect();
+            out = push_const(out, "FRD_TEMPLATE_LINES", &template_lines);
             out = push_alias(out, "FRD_SECTION_ORDER", "FRD_REQUIRED_H2S");
             if let Some(labels) = table_row_labels(root, "Aspect") {
                 out = push_const(out, "FR_FIELDS", &labels);
@@ -520,6 +532,8 @@ fn extract_doc_constants(doc: &str, raw: &str, mut out: String) -> String {
         }
         "prd" => {
             out = push_const(out, "PRD_REQUIRED_H2S", &h2s);
+            let template_lines: Vec<String> = body.lines().map(String::from).collect();
+            out = push_const(out, "PRD_TEMPLATE_LINES", &template_lines);
             if let Some(cols) = table_header_columns(root, "As a") {
                 out = push_const(out, "PRD_USER_STORIES_COLUMNS", &cols);
             }
@@ -534,12 +548,16 @@ fn extract_doc_constants(doc: &str, raw: &str, mut out: String) -> String {
         }
         "readme" => {
             out = push_const(out, "README_REQUIRED_H2S", &h2s);
+            let template_lines: Vec<String> = body.lines().map(String::from).collect();
+            out = push_const(out, "README_TEMPLATE_LINES", &template_lines);
             if let Some(cols) = table_header_columns(root, "Step") {
                 out = push_const(out, "README_QUICK_START_COLUMNS", &cols);
             }
         }
         "roadmap" => {
             out = push_const(out, "ROADMAP_REQUIRED_H2S", &h2s);
+            let template_lines: Vec<String> = body.lines().map(String::from).collect();
+            out = push_const(out, "ROADMAP_TEMPLATE_LINES", &template_lines);
             if let Some(labels) = table_row_labels(root, "Aspect") {
                 out = push_const(out, "ROADMAP_ROW_LABELS", &labels);
             }
