@@ -1,7 +1,5 @@
 # PRD Template
 
-Copy, fill, delete nothing.
-
 ```markdown
 # PRD — <PROJECT-NAME>
 

@@ -1,7 +1,5 @@
 # FRD Template
 
-Copy, fill, delete nothing.
-
 ```markdown
 # FRD — <feature-name>
 

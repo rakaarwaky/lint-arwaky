@@ -1,7 +1,5 @@
 # DESIGN Template
 
-Copy, fill, delete nothing.
-
 ```markdown
 # DESIGN — <project-name>
 

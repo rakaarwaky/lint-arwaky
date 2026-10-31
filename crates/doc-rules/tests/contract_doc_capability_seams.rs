@@ -5,19 +5,24 @@
 // end. These prove the thing the split introduced: a capability wired to the
 // wrong trait, or answering a second rule, is caught here rather than by a
 // consumer's surprise report.
-use doc_rules_lint_arwaky::capabilities_doc_crosslink_checker::CrosslinkChecker;
-use doc_rules_lint_arwaky::capabilities_doc_fr_format_checker::FrFormatChecker;
-use doc_rules_lint_arwaky::capabilities_doc_heading_structure_checker::HeadingStructureChecker;
-use doc_rules_lint_arwaky::capabilities_doc_required_doc_checker::RequiredDocChecker;
-use doc_rules_lint_arwaky::capabilities_doc_section_structure_checker::SectionStructureChecker;
-use doc_rules_lint_arwaky::capabilities_doc_spec_purity_checker::SpecPurityChecker;
-use doc_rules_lint_arwaky::capabilities_doc_template_conformance_checker::TemplateConformanceChecker;
+use doc_rules_lint_arwaky::capabilities_doc_agents::AgentsCapability;
+use doc_rules_lint_arwaky::capabilities_doc_architecture::ArchitectureCapability;
+use doc_rules_lint_arwaky::capabilities_doc_backlog::BacklogCapability;
+use doc_rules_lint_arwaky::capabilities_doc_contributing::ContributingCapability;
+use doc_rules_lint_arwaky::capabilities_doc_data::DataCapability;
+use doc_rules_lint_arwaky::capabilities_doc_design::DesignCapability;
+use doc_rules_lint_arwaky::capabilities_doc_frd::FrdCapability;
+use doc_rules_lint_arwaky::capabilities_doc_prd::PrdCapability;
+use doc_rules_lint_arwaky::capabilities_doc_readme::ReadmeCapability;
+use doc_rules_lint_arwaky::capabilities_doc_roadmap::RoadmapCapability;
 use shared_doc_rules::contract_doc_protocol::{
-    ICrosslinkProtocol, IDocHeadingProtocol, IFrFormatProtocol, IRequiredDocProtocol,
-    ISectionStructureProtocol, ISpecPurityProtocol, ITemplateConformanceProtocol,
+    IAgentsDocProtocol, IArchitectureDocProtocol, IBacklogDocProtocol, IContributingDocProtocol,
+    IDataDocProtocol, IDesignDocProtocol, IFrdDocProtocol, IPrdDocProtocol, IReadmeDocProtocol,
+    IRoadmapDocProtocol,
 };
 use shared_doc_rules::taxonomy_doc_audit_context_vo::DocAuditContext;
 use shared_doc_rules::taxonomy_doc_rules_request::DocFinding;
+use shared_doc_rules::taxonomy_doc_rules_constant as consts;
 use shared_doc_rules::utility_doc_collector;
 
 use std::path::Path;
@@ -43,13 +48,16 @@ fn context_for(root: &Path) -> DocAuditContext {
 fn codes_from_all(root: &Path) -> Vec<&'static str> {
     let context = context_for(root);
     let mut findings: Vec<DocFinding> = Vec::new();
-    findings.extend(FrFormatChecker::new().audit_fr_format(&context));
-    findings.extend(SectionStructureChecker::new().audit_section_structure(&context));
-    findings.extend(SpecPurityChecker::new().audit_spec_purity(&context));
-    findings.extend(CrosslinkChecker::new().audit_crosslinks(&context));
-    findings.extend(HeadingStructureChecker::new().audit_doc_heading(&context));
-    findings.extend(TemplateConformanceChecker::new().audit_template_conformance(&context));
-    findings.extend(RequiredDocChecker::new().audit_required_docs(&context));
+    findings.extend(AgentsCapability::new().audit_agents(&context));
+    findings.extend(ArchitectureCapability::new().audit_architecture(&context));
+    findings.extend(BacklogCapability::new().audit_backlog(&context));
+    findings.extend(ContributingCapability::new().audit_contributing(&context));
+    findings.extend(DataCapability::new().audit_data(&context));
+    findings.extend(DesignCapability::new().audit_design(&context));
+    findings.extend(FrdCapability::new().audit_frd(&context));
+    findings.extend(PrdCapability::new().audit_prd(&context));
+    findings.extend(ReadmeCapability::new().audit_readme(&context));
+    findings.extend(RoadmapCapability::new().audit_roadmap(&context));
     findings.into_iter().map(|f| f.code).collect()
 }
 
@@ -203,7 +211,7 @@ Baseline.\n\n\
 }
 
 #[test]
-fn the_spec_purity_seam_is_the_only_one_answering_a_source_file_reference() {
+fn frd_capability_is_the_only_one_answering_a_source_file_reference() {
     let tmp = tempfile::tempdir().unwrap();
     write_feature(tmp.path());
     std::fs::write(
@@ -213,77 +221,40 @@ fn the_spec_purity_seam_is_the_only_one_answering_a_source_file_reference() {
     .unwrap();
 
     let context = context_for(tmp.path());
-    let purity = SpecPurityChecker::new().audit_spec_purity(&context);
+    let findings = FrdCapability::new().audit_frd(&context);
     assert!(
-        purity.iter().any(|f| f.code == "AES603"),
-        "the AES603 seam answers a source-file reference; got: {purity:#?}"
+        findings.iter().any(|f| f.code == consts::RULE_CODE_SPEC_PURITY),
+        "the FRD capability answers a source-file reference; got: {findings:#?}"
     );
-    // The AES601 seam may answer a BACKLOG ID misalignment on the fixture
-    // backlog; no FR-format finding is owed for the document itself.
-    let fr_findings = FrFormatChecker::new().audit_fr_format(&context);
+    // The FRD capability stays silent on FR-format codes for its own doc.
     assert!(
-        fr_findings
-            .iter()
-            .all(|f| f.violation_type != "id_missing_feature_prefix"
-                && f.violation_type != "field_missing"
-                && f.violation_type != "protocol_count_mismatch"
-                && f.violation_type != "api_method_not_found"),
-        "the AES601 seam must stay silent on the FR document; got: {fr_findings:#?}"
-    );
-    assert!(
-        SectionStructureChecker::new()
-            .audit_section_structure(&context)
-            .is_empty(),
-        "the AES602 seam must stay silent on a conforming section shape"
-    );
-    assert!(
-        CrosslinkChecker::new()
-            .audit_crosslinks(&context)
-            .is_empty(),
-        "the AES604 seam must stay silent when both Reference links are present"
-    );
-    assert!(
-        HeadingStructureChecker::new()
-            .audit_doc_heading(&context)
-            .is_empty(),
-        "the AES605 seam must stay silent on a conforming heading structure"
+        findings.iter().all(|f| f.code != consts::RULE_CODE_FR_FORMAT),
+        "the FRD capability must stay silent on FR-format codes; got: {findings:#?}"
     );
 }
 
 #[test]
-fn the_doc_heading_seam_is_the_only_one_answering_a_missing_h2() {
+fn prd_capability_is_the_only_one_answering_a_missing_h2() {
     let tmp = tempfile::tempdir().unwrap();
     write_feature(tmp.path());
     std::fs::write(tmp.path().join("PRD.md"), prd_missing_required_h2()).unwrap();
 
     let context = context_for(tmp.path());
-    let heading = HeadingStructureChecker::new().audit_doc_heading(&context);
+    let findings = PrdCapability::new().audit_prd(&context);
     assert!(
-        heading
+        findings
             .iter()
-            .any(|f| f.code == "AES605" && f.violation_type == "h2_missing"),
-        "the AES605 seam answers a missing H2; got: {heading:#?}"
+            .any(|f| f.code == consts::RULE_CODE_PRD_DOC && f.violation_type == "h2_missing"),
+        "the PRD capability answers a missing H2; got: {findings:#?}"
     );
     assert!(
-        FrFormatChecker::new().audit_fr_format(&context).is_empty(),
-        "the AES601 seam must stay silent on a document with no requirement headings"
-    );
-    assert!(
-        SectionStructureChecker::new()
-            .audit_section_structure(&context)
-            .is_empty(),
-        "the AES602 seam is scoped to requirement documents, not a PRD"
-    );
-    assert!(
-        CrosslinkChecker::new()
-            .audit_crosslinks(&context)
-            .is_empty(),
-        "the AES604 seam is scoped to requirement documents, not a PRD"
+        findings.iter().all(|f| f.code != consts::RULE_CODE_FR_FORMAT),
+        "the PRD capability must stay silent on FR-format codes; got: {findings:#?}"
     );
 }
 
 #[test]
-fn running_all_five_seams_over_a_clean_workspace_reports_nothing() {
+fn running_all_seams_over_a_clean_workspace_reports_nothing() {
     let tmp = tempfile::tempdir().unwrap();
     write_feature(tmp.path());
     std::fs::write(tmp.path().join("crates/sample/FRD.md"), purity_clean_frd()).unwrap();
@@ -337,12 +308,12 @@ The problem.
     let codes = codes_from_all(tmp.path());
     assert!(
         codes.is_empty(),
-        "six seams over a conforming workspace must report nothing; got codes: {codes:?}"
+        "all capabilities over a conforming workspace must report nothing; got codes: {codes:?}"
     );
 }
 
 #[test]
-fn the_spec_purity_seam_answers_specs_only_and_never_a_backlog() {
+fn frd_capability_answers_specs_only_and_never_a_backlog() {
     // A backlog's job is to report progress, so a status leak there is that
     // document working as intended. Only the promise-bearing documents are held
     // to purity, and this is the test that pins that scoping down.
@@ -361,10 +332,10 @@ fn the_spec_purity_seam_answers_specs_only_and_never_a_backlog() {
     )
     .unwrap();
 
-    let purity = SpecPurityChecker::new().audit_spec_purity(&context_for(tmp.path()));
+    let findings = FrdCapability::new().audit_frd(&context_for(tmp.path()));
     assert!(
-        purity.is_empty(),
-        "a backlog reporting progress is not a spec-purity violation; got: {purity:#?}"
+        findings.is_empty(),
+        "a backlog reporting progress is not a spec-purity violation; got: {findings:#?}"
     );
 }
 
@@ -380,16 +351,16 @@ fn a_document_violating_two_rules_reports_both_codes() {
 
     let codes = codes_from_all(tmp.path());
     assert!(
-        codes.contains(&"AES603"),
-        "the source-file reference must be reported; got: {codes:?}"
+        codes.contains(&consts::RULE_CODE_SPEC_PURITY),
+        "the FRD capability must report source-file reference; got: {codes:?}"
     );
     assert!(
-        codes.contains(&"AES604"),
-        "the missing PRD crosslink must be reported; got: {codes:?}"
+        codes.contains(&consts::RULE_CODE_CROSSLINKS),
+        "the PRD capability must report missing crosslink; got: {codes:?}"
     );
     assert!(
-        codes.contains(&"AES605"),
-        "the missing PRD H2 must be reported; got: {codes:?}"
+        codes.contains(&consts::RULE_CODE_DOC_STRUCTURE),
+        "the PRD capability must report missing H2; got: {codes:?}"
     );
 }
 
@@ -439,7 +410,7 @@ fn backlog_with_entries(ids: &[&str]) -> String {
 }
 
 #[test]
-fn the_fr_format_seam_is_the_only_one_answering_a_ds_backlog_mismatch() {
+fn design_capability_answers_a_ds_backlog_mismatch() {
     let tmp = tempfile::tempdir().unwrap();
     let feature = tmp.path().join("crates/sample");
     std::fs::create_dir_all(feature.join("src")).unwrap();
@@ -459,8 +430,8 @@ fn the_fr_format_seam_is_the_only_one_answering_a_ds_backlog_mismatch() {
     .unwrap();
 
     let context = context_for(tmp.path());
-    let fr_findings = FrFormatChecker::new().audit_fr_format(&context);
-    let ds_codes: Vec<&str> = fr_findings
+    let findings = DesignCapability::new().audit_design(&context);
+    let ds_codes: Vec<&str> = findings
         .iter()
         .filter(|f| {
             f.violation_type == "ds_backlog_id_not_ds"
@@ -470,16 +441,16 @@ fn the_fr_format_seam_is_the_only_one_answering_a_ds_backlog_mismatch() {
         .collect();
     assert!(
         !ds_codes.is_empty(),
-        "the AES601 seam must answer a DS BACKLOG mismatch; got: {fr_findings:#?}"
+        "the Design capability must answer a DS BACKLOG mismatch; got: {findings:#?}"
     );
     assert!(
-        ds_codes.iter().all(|code| *code == "AES601"),
-        "DS alignment findings must carry AES601; got: {ds_codes:?}"
+        ds_codes.iter().all(|code| *code == consts::RULE_CODE_DESIGN_DOC),
+        "DS alignment findings must carry AES610; got: {ds_codes:?}"
     );
 }
 
 #[test]
-fn the_fr_format_seam_stays_silent_when_ds_backlog_is_aligned() {
+fn design_capability_stays_silent_when_ds_backlog_is_aligned() {
     let tmp = tempfile::tempdir().unwrap();
     let feature = tmp.path().join("crates/sample");
     std::fs::create_dir_all(feature.join("src")).unwrap();
@@ -496,13 +467,13 @@ fn the_fr_format_seam_stays_silent_when_ds_backlog_is_aligned() {
     )
     .unwrap();
 
-    let fr_findings = FrFormatChecker::new().audit_fr_format(&context_for(tmp.path()));
+    let findings = DesignCapability::new().audit_design(&context_for(tmp.path()));
     assert!(
-        fr_findings
+        findings
             .iter()
             .all(|f| f.violation_type != "ds_backlog_id_not_ds"
                 && f.violation_type != "ds_backlog_id_missing"),
-        "an aligned DS pair must report no ds_* findings; got: {fr_findings:#?}"
+        "an aligned DS pair must report no ds_* findings; got: {findings:#?}"
     );
 }
 
@@ -552,7 +523,7 @@ const ARCHITECTURE_ROW: &str = "| ARCHITECTURE.md | [ARCHITECTURE.md](../../ARCH
 /// PRD/DESIGN/ROADMAP/ARCHITECTURE and omits FRD.md → zero AES604 findings,
 /// because surface owes DESIGN, not FRD.
 #[test]
-fn crosslink_surface_backlog_design_not_frd_is_clean() {
+fn backlog_capability_surface_design_not_frd_is_clean() {
     let tmp = tempfile::tempdir().unwrap();
     write_member_backlog(
         tmp.path(),
@@ -561,21 +532,21 @@ fn crosslink_surface_backlog_design_not_frd_is_clean() {
         &backlog_reference(&[PRD_ROW, DESIGN_ROW, ROADMAP_ROW, ARCHITECTURE_ROW]),
     );
 
-    let findings = CrosslinkChecker::new().audit_crosslinks(&context_for(tmp.path()));
-    let aes604: Vec<&str> = findings
+    let findings = BacklogCapability::new().audit_backlog(&context_for(tmp.path()));
+    let aes607: Vec<&str> = findings
         .iter()
-        .filter(|f| f.code == "AES604")
+        .filter(|f| f.code == consts::RULE_CODE_BACKLOG_DOC)
         .map(|f| f.violation_type)
         .collect();
     assert!(
-        aes604.is_empty(),
-        "surface BACKLOG with DESIGN (no FRD) must be AES604-clean; got: {aes604:?}"
+        aes607.is_empty(),
+        "surface BACKLOG with DESIGN (no FRD) must be AES607-clean; got: {aes607:?}"
     );
 }
 
 /// Same surface BACKLOG missing the DESIGN link → `no_design_link`.
 #[test]
-fn crosslink_surface_backlog_missing_design_fires_no_design_link() {
+fn backlog_capability_surface_missing_design_fires_no_design_link() {
     let tmp = tempfile::tempdir().unwrap();
     write_member_backlog(
         tmp.path(),
@@ -584,10 +555,10 @@ fn crosslink_surface_backlog_missing_design_fires_no_design_link() {
         &backlog_reference(&[PRD_ROW, ROADMAP_ROW, ARCHITECTURE_ROW]),
     );
 
-    let findings = CrosslinkChecker::new().audit_crosslinks(&context_for(tmp.path()));
+    let findings = BacklogCapability::new().audit_backlog(&context_for(tmp.path()));
     let missing: Vec<&DocFinding> = findings
         .iter()
-        .filter(|f| f.code == "AES604" && f.violation_type == "no_design_link")
+        .filter(|f| f.code == consts::RULE_CODE_CROSSLINKS && f.violation_type == "no_design_link")
         .collect();
     assert!(
         missing.len() == 1 && missing[0].doc == "crates/sample/BACKLOG.md",
@@ -596,9 +567,9 @@ fn crosslink_surface_backlog_missing_design_fires_no_design_link() {
 }
 
 /// Kernel BACKLOG (`crates/shared`) with DATA link and no FRD link → zero
-/// AES604 findings; without the DATA link → `no_data_link`.
+/// AES607 findings; without the DATA link → `no_data_link`.
 #[test]
-fn crosslink_kernel_backlog_data_not_frd_is_clean() {
+fn backlog_capability_kernel_data_not_frd_is_clean() {
     let tmp = tempfile::tempdir().unwrap();
     write_member_backlog(
         tmp.path(),
@@ -607,20 +578,20 @@ fn crosslink_kernel_backlog_data_not_frd_is_clean() {
         &backlog_reference(&[PRD_ROW, DATA_ROW, ROADMAP_ROW, ARCHITECTURE_ROW]),
     );
 
-    let findings = CrosslinkChecker::new().audit_crosslinks(&context_for(tmp.path()));
-    let aes604: Vec<&str> = findings
+    let findings = BacklogCapability::new().audit_backlog(&context_for(tmp.path()));
+    let aes607: Vec<&str> = findings
         .iter()
-        .filter(|f| f.code == "AES604")
+        .filter(|f| f.code == consts::RULE_CODE_BACKLOG_DOC)
         .map(|f| f.violation_type)
         .collect();
     assert!(
-        aes604.is_empty(),
-        "kernel BACKLOG with DATA (no FRD) must be AES604-clean; got: {aes604:?}"
+        aes607.is_empty(),
+        "kernel BACKLOG with DATA (no FRD) must be AES607-clean; got: {aes607:?}"
     );
 }
 
 #[test]
-fn crosslink_kernel_backlog_missing_data_fires_no_data_link() {
+fn backlog_capability_kernel_missing_data_fires_no_data_link() {
     let tmp = tempfile::tempdir().unwrap();
     write_member_backlog(
         tmp.path(),
@@ -629,12 +600,12 @@ fn crosslink_kernel_backlog_missing_data_fires_no_data_link() {
         &backlog_reference(&[PRD_ROW, ROADMAP_ROW, ARCHITECTURE_ROW]),
     );
 
-    let findings = CrosslinkChecker::new().audit_crosslinks(&context_for(tmp.path()));
+    let findings = BacklogCapability::new().audit_backlog(&context_for(tmp.path()));
     // The fixture writes only BACKLOG.md (no DATA.md), so exactly one
     // document owes the missing link.
     let missing: Vec<&DocFinding> = findings
         .iter()
-        .filter(|f| f.code == "AES604" && f.violation_type == "no_data_link")
+        .filter(|f| f.code == consts::RULE_CODE_CROSSLINKS && f.violation_type == "no_data_link")
         .collect();
     assert!(
         !missing.is_empty() && missing.iter().all(|f| f.doc == "crates/shared/BACKLOG.md"),
@@ -645,7 +616,7 @@ fn crosslink_kernel_backlog_missing_data_fires_no_data_link() {
 /// Feature BACKLOG missing its FRD link still fires `no_frd_link` — the
 /// role-aware rule preserves the legacy requirement for feature folders.
 #[test]
-fn crosslink_feature_backlog_missing_frd_still_fires_no_frd_link() {
+fn backlog_capability_feature_missing_frd_still_fires_no_frd_link() {
     let tmp = tempfile::tempdir().unwrap();
     write_member_backlog(
         tmp.path(),
@@ -654,10 +625,10 @@ fn crosslink_feature_backlog_missing_frd_still_fires_no_frd_link() {
         &backlog_reference(&[PRD_ROW, ROADMAP_ROW, ARCHITECTURE_ROW]),
     );
 
-    let findings = CrosslinkChecker::new().audit_crosslinks(&context_for(tmp.path()));
+    let findings = BacklogCapability::new().audit_backlog(&context_for(tmp.path()));
     let missing: Vec<&DocFinding> = findings
         .iter()
-        .filter(|f| f.code == "AES604" && f.violation_type == "no_frd_link")
+        .filter(|f| f.code == consts::RULE_CODE_CROSSLINKS && f.violation_type == "no_frd_link")
         .collect();
     assert!(
         missing.len() == 1 && missing[0].doc == "crates/sample/BACKLOG.md",

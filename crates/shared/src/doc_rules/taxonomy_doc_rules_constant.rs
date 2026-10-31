@@ -479,6 +479,20 @@ pub const TEMPLATE_CONFORMANCE_VIOLATION_ROW_MINIMUM: &str = "row_minimum_violat
 /// A numbered or `∞` row whose `Detail` cell trims to empty.
 pub const TEMPLATE_CONFORMANCE_VIOLATION_EMPTY_DETAIL_CELL: &str = "empty_detail_cell";
 
+// ─── Per-doc rule codes: 1 document = 1 AES code = 1 protocol = 1 capability.
+// Each per-doc capability stamps every finding it emits with its own code,
+// so a finding's code alone names the document it governs.
+pub const RULE_CODE_AGENTS_DOC: &str = "AES601";
+pub const RULE_CODE_README_DOC: &str = "AES602";
+pub const RULE_CODE_ARCHITECTURE_DOC: &str = "AES603";
+pub const RULE_CODE_CONTRIBUTING_DOC: &str = "AES604";
+pub const RULE_CODE_PRD_DOC: &str = "AES605";
+pub const RULE_CODE_ROADMAP_DOC: &str = "AES606";
+pub const RULE_CODE_BACKLOG_DOC: &str = "AES607";
+pub const RULE_CODE_DATA_DOC: &str = "AES608";
+pub const RULE_CODE_FRD_DOC: &str = "AES609";
+pub const RULE_CODE_DESIGN_DOC: &str = "AES610";
+
 // Re-export template conformance types from the template module so that
 // `shared_doc_rules::taxonomy_doc_rules_constant` remains the canonical import.
 pub use crate::taxonomy_doc_rules_template_vo::{TEMPLATE_PROFILES, TemplateProfile};

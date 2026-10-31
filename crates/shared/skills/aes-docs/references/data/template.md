@@ -1,7 +1,5 @@
 # DATA Template
 
-Copy, fill, delete nothing.
-
 ```markdown
 # DATA — <project-name>
 

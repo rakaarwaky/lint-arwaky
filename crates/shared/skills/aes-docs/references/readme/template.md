@@ -1,7 +1,5 @@
 # README Template
 
-Copy, fill, delete nothing.
-
 ```markdown
 # README — <project-name>
 

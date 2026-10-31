@@ -1,7 +1,5 @@
 # ARCHITECTURE Template
 
-Copy, fill, delete nothing.
-
 ```markdown
 # <Project> Architecture
 

@@ -1,16 +1,16 @@
-// PURPOSE: DocOrchestrator — agent that orchestrates doc-invariant checks
+// doc-rules — DocOrchestrator: agent that orchestrates doc-invariant checks
 //
 // The single entry point over the doc-rules feature. Consumers call
 // `execute(DocRequest)`; the agent collects the document chain once, builds
-// the shared audit context, and fans the request out to the nine AES doc-rule
-// capabilities through their protocol traits. It holds the capabilities only as
-// `Arc<dyn I*Protocol>` trait objects, so the agent never names a concrete
+// the shared audit context, and fans the request out to the ten per-doc
+// capabilities through their protocol traits. It holds the capabilities only
+// as `Arc<dyn I*Protocol>` trait objects, so the agent never names a concrete
 // capability and stays free of capability imports.
 use shared_doc_rules::contract_doc_aggregate::IDocRunnerAggregate;
 use shared_doc_rules::contract_doc_protocol::{
-    ICrosslinkProtocol, IDocHeadingProtocol, IFrFormatProtocol, IMemberDocProtocol,
-    IPrFolderOwnershipProtocol, IRequiredDocProtocol, ISectionStructureProtocol,
-    ISpecPurityProtocol, ITemplateBodyProtocol, ITemplateConformanceProtocol,
+    IAgentsDocProtocol, IArchitectureDocProtocol, IBacklogDocProtocol, IContributingDocProtocol,
+    IDataDocProtocol, IDesignDocProtocol, IFrdDocProtocol, IPrdDocProtocol, IReadmeDocProtocol,
+    IRoadmapDocProtocol,
 };
 use shared_doc_rules::taxonomy_doc_audit_context_vo::DocAuditContext;
 use shared_doc_rules::taxonomy_doc_rules_request::DocRequest;
@@ -20,19 +20,19 @@ use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ──────────────────────────────────────────
 
-/// Holds one injected capability per AES doc rule, keyed by the rule each
+/// Holds one injected capability per AES document type, keyed by the doc each
 /// answers. The agent is the only place that knows all ten exist.
 pub struct DocOrchestrator {
-    fr_format: Arc<dyn IFrFormatProtocol>,
-    section_structure: Arc<dyn ISectionStructureProtocol>,
-    spec_purity: Arc<dyn ISpecPurityProtocol>,
-    crosslink: Arc<dyn ICrosslinkProtocol>,
-    doc_heading: Arc<dyn IDocHeadingProtocol>,
-    template_conformance: Arc<dyn ITemplateConformanceProtocol>,
-    required_doc: Arc<dyn IRequiredDocProtocol>,
-    member_doc: Arc<dyn IMemberDocProtocol>,
-    template_body: Arc<dyn ITemplateBodyProtocol>,
-    pr_folder_ownership: Arc<dyn IPrFolderOwnershipProtocol>,
+    agents: Arc<dyn IAgentsDocProtocol>,
+    architecture: Arc<dyn IArchitectureDocProtocol>,
+    backlog: Arc<dyn IBacklogDocProtocol>,
+    contributing: Arc<dyn IContributingDocProtocol>,
+    data: Arc<dyn IDataDocProtocol>,
+    design: Arc<dyn IDesignDocProtocol>,
+    frd: Arc<dyn IFrdDocProtocol>,
+    prd: Arc<dyn IPrdDocProtocol>,
+    readme: Arc<dyn IReadmeDocProtocol>,
+    roadmap: Arc<dyn IRoadmapDocProtocol>,
 }
 
 // ─── Block 2: Protocol Trait Implementation ──────────────────────────────
@@ -56,19 +56,16 @@ impl IDocRunnerAggregate for DocOrchestrator {
             DocAuditContext::new(&root, documents, master, members, config, strict_override);
 
         let mut findings = Vec::new();
-        findings.extend(self.fr_format.audit_fr_format(&context));
-        findings.extend(self.section_structure.audit_section_structure(&context));
-        findings.extend(self.spec_purity.audit_spec_purity(&context));
-        findings.extend(self.crosslink.audit_crosslinks(&context));
-        findings.extend(self.doc_heading.audit_doc_heading(&context));
-        findings.extend(
-            self.template_conformance
-                .audit_template_conformance(&context),
-        );
-        findings.extend(self.required_doc.audit_required_docs(&context));
-        findings.extend(self.member_doc.audit_member_docs(&context));
-        findings.extend(self.template_body.audit_template_body(&context));
-        findings.extend(self.pr_folder_ownership.audit_pr_folder_ownership(&context));
+        findings.extend(self.agents.audit_agents(&context));
+        findings.extend(self.architecture.audit_architecture(&context));
+        findings.extend(self.backlog.audit_backlog(&context));
+        findings.extend(self.contributing.audit_contributing(&context));
+        findings.extend(self.data.audit_data(&context));
+        findings.extend(self.design.audit_design(&context));
+        findings.extend(self.frd.audit_frd(&context));
+        findings.extend(self.prd.audit_prd(&context));
+        findings.extend(self.readme.audit_readme(&context));
+        findings.extend(self.roadmap.audit_roadmap(&context));
 
         DocResponse::Findings {
             findings: utility_doc_collector::sorted(findings),
@@ -80,28 +77,28 @@ impl IDocRunnerAggregate for DocOrchestrator {
 
 impl DocOrchestrator {
     pub fn new(
-        fr_format: Arc<dyn IFrFormatProtocol>,
-        section_structure: Arc<dyn ISectionStructureProtocol>,
-        spec_purity: Arc<dyn ISpecPurityProtocol>,
-        crosslink: Arc<dyn ICrosslinkProtocol>,
-        doc_heading: Arc<dyn IDocHeadingProtocol>,
-        template_conformance: Arc<dyn ITemplateConformanceProtocol>,
-        required_doc: Arc<dyn IRequiredDocProtocol>,
-        member_doc: Arc<dyn IMemberDocProtocol>,
-        template_body: Arc<dyn ITemplateBodyProtocol>,
-        pr_folder_ownership: Arc<dyn IPrFolderOwnershipProtocol>,
+        agents: Arc<dyn IAgentsDocProtocol>,
+        architecture: Arc<dyn IArchitectureDocProtocol>,
+        backlog: Arc<dyn IBacklogDocProtocol>,
+        contributing: Arc<dyn IContributingDocProtocol>,
+        data: Arc<dyn IDataDocProtocol>,
+        design: Arc<dyn IDesignDocProtocol>,
+        frd: Arc<dyn IFrdDocProtocol>,
+        prd: Arc<dyn IPrdDocProtocol>,
+        readme: Arc<dyn IReadmeDocProtocol>,
+        roadmap: Arc<dyn IRoadmapDocProtocol>,
     ) -> Self {
         Self {
-            fr_format,
-            section_structure,
-            spec_purity,
-            crosslink,
-            doc_heading,
-            template_conformance,
-            required_doc,
-            member_doc,
-            template_body,
-            pr_folder_ownership,
+            agents,
+            architecture,
+            backlog,
+            contributing,
+            data,
+            design,
+            frd,
+            prd,
+            readme,
+            roadmap,
         }
     }
 }

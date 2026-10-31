@@ -1,0 +1,820 @@
+// PURPOSE: Shared doc-invariant mechanics used by more than one per-doc
+// capability. Every function here is stateless over its inputs and returns
+// `DocFinding`s that the calling capability stamps with its document.
+// Lives in `crates/shared/src/doc_rules` so no per-doc capability re-implements
+// a table/shape/crosslink/mechanic a sibling also uses.
+
+use crate::taxonomy_doc_audit_context_vo::{DocAuditContext, MemberDescriptor, MemberRole};
+use crate::taxonomy_doc_rules_constant as consts;
+use crate::taxonomy_doc_rules_request::{DocFinding, DocSource};
+use crate::taxonomy_doc_section_vo::Section;
+use crate::utility_capabilities_doc_h2_checks::{
+    first_column_values, row_label_diff,
+};
+use crate::utility_doc_entry_regexes::fr_entry_re;
+use crate::utility_markdown_scanner::{
+    h3_subsections, normalize_heading, sections,
+};
+use std::collections::{BTreeSet, HashSet};
+use std::path::Path;
+
+/// The single brace-wrapped ID token of a BACKLOG entry H3 title
+/// (`{FR-SAMPLE-001}` → `FR-SAMPLE-001`), or `None` for any other shape.
+fn extract_qualifier(title: &str) -> Option<String> {
+    let inner = title.trim();
+    let id = inner.split(':').next()?.trim();
+    let id = id.chars().filter(|c| *c != '|').collect::<String>();
+    if id.is_empty() {
+        return None;
+    }
+    Some(id.trim().to_string())
+}
+
+/// Walk every H3 under *parent_h2* whose title matches *entry_re* and verify
+/// each carries a table with *columns* whose first-column row labels equal
+/// *row_labels* (header-only when empty). Findings anchor to the offending H3
+/// line.
+pub fn check_entry_tables(
+    parsed: &[Section],
+    parent_h2: &str,
+    entry_re: &regex::Regex,
+    columns: &[&str],
+    row_labels: &[&str],
+) -> Vec<DocFinding> {
+    let mut findings = Vec::new();
+    let Some(parent) = parsed
+        .iter()
+        .find(|s| s.level == 2 && normalize_heading(&s.title) == normalize_heading(parent_h2))
+    else {
+        return findings;
+    };
+    for h3 in h3_subsections(parent) {
+        if !entry_re.is_match(&h3.title) {
+            continue;
+        }
+        // Header/shape check anchored to the H3.
+        if let Some(finding) =
+            crate::utility_capabilities_doc_h2_checks::check_section_shape(
+                parsed,
+                &h3.title,
+                columns,
+                Some(&h3),
+            )
+        {
+            findings.push(finding);
+            continue;
+        }
+        // Row-label check (skipped when the doc has no fixed rows).
+        if !row_labels.is_empty() {
+            let values = first_column_values(&h3.body);
+            let (missing, extra) = row_label_diff(row_labels, &values);
+            if !missing.is_empty() || !extra.is_empty() {
+                findings.push(
+                    DocFinding::new_with_line(
+                        "",
+                        h3.line,
+                        consts::RULE_CODE_TEMPLATE_CONFORMANCE,
+                        consts::TEMPLATE_CONFORMANCE_VIOLATION_ENTRY_MISSING_ROW,
+                        format!(
+                            "line {} `### {}` entry table row labels do not match the template; missing {}, extra {}",
+                            h3.line,
+                            h3.title,
+                            missing.join(", "),
+                            extra.join(", ")
+                        ),
+                    )
+                    .with_reason(
+                        format!(
+                            "Every `{}` entry must carry the fixed row labels {} so the table is complete and comparable across items.",
+                            parent_h2,
+                            row_labels.join(", ")
+                        ),
+                        format!(
+                            "Add the missing row(s) {} and remove the extra row(s) {} from the `### {}` table.",
+                            missing.join(", "),
+                            extra.join(", "),
+                            h3.title
+                        ),
+                    ),
+                );
+            }
+        }
+    }
+    findings
+}
+
+/// BACKLOG entry H3s under `## Backlog Status`: `(token, 1-based heading line,
+/// stray ids in the entry's Next/Done/Blocked rows)` — one tuple per entry.
+/// Returns `(entries, section_line)`; `section_line` is `0` only when no
+/// `## Backlog Status` section exists.
+pub fn parse_backlog_entries(
+    backlog: &DocSource,
+) -> (Vec<(String, usize, Vec<String>)>, usize) {
+    let parsed = sections(&backlog.text);
+    let Some(section) = parsed
+        .iter()
+        .find(|s| s.level == 2 && normalize_heading(&s.title) == "backlog status")
+    else {
+        return (Vec::new(), 0);
+    };
+    let Some(stray_re) = regex::Regex::new(r"\b((?:PR|FR|DS|DT)-[A-Za-z0-9_]+-\d+)").ok()
+    else {
+        return (Vec::new(), section.line + 1);
+    };
+    let mut entries: Vec<(String, usize, Vec<String>)> = Vec::new();
+    for sub in h3_subsections(section) {
+        let token = match extract_qualifier(&sub.title) {
+            Some(t) => t,
+            None => continue,
+        };
+        if token.is_empty() {
+            continue;
+        }
+        let mut stray_ids = Vec::new();
+        let label_row: BTreeSet<&str> = consts::BACKLOG_ROW_LABELS
+            .iter()
+            .filter(|l| **l != "State")
+            .cloned()
+            .collect();
+        for raw in sub.body.lines() {
+            let trimmed = raw.trim();
+            if !trimmed.starts_with('|') {
+                continue;
+            }
+            let cells: Vec<&str> = trimmed
+                .trim_matches('|')
+                .split('|')
+                .map(str::trim)
+                .collect();
+            let Some(label) = cells.first().copied() else {
+                continue;
+            };
+            if !label_row.contains(label) {
+                continue;
+            }
+            let detail = cells.get(1).copied().unwrap_or("");
+            for caps in stray_re.captures_iter(detail) {
+                if let Some(m) = caps.get(1) {
+                    stray_ids.push(m.as_str().to_string());
+                }
+            }
+        }
+        entries.push((token, sub.line + 1, stray_ids));
+    }
+    (entries, section.line + 1)
+}
+
+/// BACKLOG ID-level alignment against a paired spec union, parameterized by
+/// the family's missing-code and not-code.
+pub fn check_backlog_qualifier_alignment(
+    rule_code: &'static str,
+    backlog: &DocSource,
+    union: Option<&Vec<String>>,
+    missing_code: &'static str,
+    not_code: &'static str,
+    findings: &mut Vec<DocFinding>,
+) {
+    let ids: Vec<String> = union.cloned().unwrap_or_default();
+    let id_set: HashSet<&str> = ids.iter().map(String::as_str).collect();
+    let (entries, section_line) = parse_backlog_entries(backlog);
+    if section_line == 0 {
+        return;
+    }
+
+    // (a) entry token not equal to any declared ID.
+    if !ids.is_empty() {
+        for (token, line, _) in &entries {
+            if !id_set.contains(token.as_str()) {
+                let mut valid: Vec<&str> = ids.iter().map(String::as_str).collect();
+                valid.sort();
+                findings.push(
+                    DocFinding::new_with_line(
+                        "",
+                        *line,
+                        rule_code,
+                        consts::BACKLOG_QUALIFIER_MISMATCH,
+                        format!(
+                            "line {line} BACKLOG entry `{{{token}}}` has no matching ID in the paired spec"
+                        ),
+                    )
+                    .with_reason(
+                        "A BACKLOG entry traces to its spec through the ID, so a token no spec ID equals cannot be aligned.",
+                        format!("Rename the entry to an ID the spec declares: {}.", valid.join(", ")),
+                    ),
+                );
+            }
+        }
+    }
+
+    // (b) declared ID with no BACKLOG entry, once per ID.
+    if !ids.is_empty() {
+        let entry_set: HashSet<&str> = entries.iter().map(|(t, _, _)| t.as_str()).collect();
+        for id in &ids {
+            if !entry_set.contains(id.as_str()) {
+                findings.push(
+                    DocFinding::new_with_line(
+                        "",
+                        section_line,
+                        rule_code,
+                        missing_code,
+                        format!("spec-declared ID `{id}` has no BACKLOG `## Backlog Status` entry"),
+                    )
+                    .with_reason(
+                        "Every spec-declared ID must have a BACKLOG entry so the backlog tracks every requirement.",
+                        format!("Add a BACKLOG entry `### {id}: ` under `## Backlog Status`."),
+                    ),
+                );
+            }
+        }
+    }
+
+    // (c) stray id token in an entry's Next/Done/Blocked row.
+    for (token, line, stray_ids) in &entries {
+        for id in stray_ids {
+            if id_set.contains(id.as_str()) {
+                continue;
+            }
+            let mut valid: Vec<&str> = ids.iter().map(String::as_str).collect();
+            valid.sort();
+            findings.push(
+                DocFinding::new_with_line(
+                    "",
+                    *line,
+                    rule_code,
+                    not_code,
+                    format!(
+                        "line {line} BACKLOG entry `{{{token}}}` cites `{id}`, which the paired spec does not declare"
+                    ),
+                )
+                .with_reason(
+                    "A BACKLOG row cites an id its paired spec does not declare, so the citation is untraceable.",
+                    format!("Replace `{id}` with one of: {}.", valid.join(", ")),
+                ),
+            );
+        }
+    }
+}
+
+/// Union of the accepted ID sets of up to two documents under a shared
+/// collector. `None` documents are skipped.
+pub fn collect_union_id_set(
+    collect: fn(&str) -> Option<Vec<String>>,
+    first: Option<&DocSource>,
+    second: Option<&DocSource>,
+) -> Option<Vec<String>> {
+    let mut ids: Vec<String> = Vec::new();
+    if let Some(document) = first {
+        ids.extend(collect(&document.text).unwrap_or_default());
+    }
+    if let Some(document) = second {
+        ids.extend(collect(&document.text).unwrap_or_default());
+    }
+    if ids.is_empty() { None } else { Some(ids) }
+}
+
+/// Accepted FR-ID set from an FRD's `FR-<feature>-NNN:` headings.
+pub fn collect_fr_id_set(frd: &str) -> Option<Vec<String>> {
+    let re = fr_entry_re()?;
+    let ids: Vec<String> = re
+        .captures_iter(frd)
+        .filter_map(|caps| caps.get(0).map(|m| m.as_str().to_string()))
+        .collect();
+    if ids.is_empty() { None } else { Some(ids) }
+}
+
+/// `(1-based heading line, id)` for every PR-ID heading in *text*.
+pub fn pr_id_heading_lines(text: &str) -> Vec<(usize, String)> {
+    let re = match crate::utility_protocol_counter::pr_id_heading_re() {
+        Some(r) => r,
+        None => return Vec::new(),
+    };
+    re.captures_iter(text)
+        .filter_map(|caps| {
+            let id = caps.name("id")?.as_str().to_string();
+            let start = caps.get(0)?.start();
+            let line = text[..start].matches('\n').count() + 1;
+            Some((line, id))
+        })
+        .collect()
+}
+
+/// Extract the project identifier segment from `PR-<PROJECT>-NNN`, e.g.
+/// `PR-LA-001` → `LA`. Returns `None` for any other shape.
+pub fn project_identifier(id: &str) -> Option<String> {
+    id.strip_prefix("PR-")?
+        .split_once('-')
+        .map(|(project, _)| project.to_string())
+}
+
+// ─── Cross-capability crosslink mechanics (AES604) ─────────────────────────
+
+/// The mandatory reference links per document, one entry per the AES604
+/// target state; empty for README, which carries a placeholder table.
+pub fn required_links(name: &str) -> &'static [&'static str] {
+    match name {
+        consts::AGENTS_DOC => &[
+            consts::README_DOC,
+            consts::CONTRIBUTING_DOC,
+            consts::ARCHITECTURE_DOC,
+            consts::ROADMAP_DOC,
+            consts::PRD_DOC,
+        ],
+        consts::PRD_DOC => &[consts::ROADMAP_DOC, consts::ARCHITECTURE_DOC],
+        consts::ROADMAP_DOC => &[consts::PRD_DOC, consts::ARCHITECTURE_DOC],
+        consts::BACKLOG_DOC => &[
+            consts::PRD_DOC,
+            consts::FRD_DOC,
+            consts::ROADMAP_DOC,
+            consts::ARCHITECTURE_DOC,
+        ],
+        consts::FRD_DOC => &[
+            consts::PRD_DOC,
+            consts::BACKLOG_DOC,
+            consts::ROADMAP_DOC,
+            consts::ARCHITECTURE_DOC,
+        ],
+        consts::DATA_DOC => &[
+            consts::PRD_DOC,
+            consts::BACKLOG_DOC,
+            consts::ROADMAP_DOC,
+            consts::ARCHITECTURE_DOC,
+        ],
+        consts::DESIGN_DOC => &[
+            consts::PRD_DOC,
+            consts::BACKLOG_DOC,
+            consts::ROADMAP_DOC,
+            consts::ARCHITECTURE_DOC,
+        ],
+        consts::CONTRIBUTING_DOC => &[consts::PRD_DOC, consts::ARCHITECTURE_DOC],
+        // README.md mandates no links; its Reference section is a
+        // placeholder table. ARCHITECTURE.md is out of scope for AES604.
+        _ => &[],
+    }
+}
+
+/// Map a required link to its violation type.
+pub fn missing_link_violation_type(link: &str) -> &'static str {
+    match link {
+        consts::BACKLOG_DOC => consts::CROSSLINKS_VIOLATION_NO_BACKLOG_LINK,
+        consts::PRD_DOC => consts::CROSSLINKS_VIOLATION_NO_PRD_LINK,
+        consts::ROADMAP_DOC => "no_roadmap_link",
+        consts::ARCHITECTURE_DOC => "no_architecture_link",
+        consts::README_DOC => "no_readme_link",
+        consts::CONTRIBUTING_DOC => "no_contributing_link",
+        consts::FRD_DOC => "no_frd_link",
+        consts::DATA_DOC => "no_data_link",
+        consts::DESIGN_DOC => "no_design_link",
+        _ => "no_required_link",
+    }
+}
+
+/// Role-aware required link set for a non-root BACKLOG doc: Surface owes
+/// DESIGN instead of FRD; Kernel owes DATA instead of FRD; everything else
+/// uses the legacy set.
+pub fn backlog_required_links(
+    name: &str,
+    document: &DocSource,
+    context: &DocAuditContext,
+) -> Vec<&'static str> {
+    if name != consts::BACKLOG_DOC {
+        return required_links(name).to_vec();
+    }
+    // Resolve the member role for this BACKLOG's parent folder.
+    let rel = context.relative_path(document);
+    let parent_folder = rel
+        .rsplit('/')
+        .nth(1)
+        .map(|s| s.to_owned());
+    let role = context
+        .members()
+        .iter()
+        .find_map(|m| {
+            m.path
+                .file_name()
+                .and_then(|n| n.to_str())
+                .filter(|folder| Some(folder.to_string()) == parent_folder.clone())
+                .map(|_| m.role.clone())
+        });
+    match role {
+        Some(MemberRole::Surface) => vec![
+            consts::PRD_DOC,
+            consts::DESIGN_DOC,
+            consts::ROADMAP_DOC,
+            consts::ARCHITECTURE_DOC,
+        ],
+        Some(MemberRole::Kernel) => vec![
+            consts::PRD_DOC,
+            consts::DATA_DOC,
+            consts::ROADMAP_DOC,
+            consts::ARCHITECTURE_DOC,
+        ],
+        _ => required_links(consts::BACKLOG_DOC).to_vec(),
+    }
+}
+
+// ─── Cross-capability member-doc mechanics (AES606) ────────────────────────
+
+/// Required doc pair per member role.
+fn required_docs_for_role(role: MemberRole) -> Option<(&'static [&'static str], &'static str)> {
+    match role {
+        MemberRole::Feature => Some((&[consts::FRD_DOC, consts::BACKLOG_DOC][..], "feature")),
+        MemberRole::Kernel => Some((&[consts::DATA_DOC, consts::BACKLOG_DOC][..], "kernel")),
+        MemberRole::Surface => Some((&[consts::DESIGN_DOC, consts::BACKLOG_DOC][..], "surface")),
+        MemberRole::None => None,
+    }
+}
+
+/// Forbidden docs per member role.
+fn forbidden_docs_for_role(role: MemberRole) -> &'static [&'static str] {
+    match role {
+        MemberRole::Feature => &[consts::DATA_DOC],
+        MemberRole::Surface => &[consts::FRD_DOC, consts::DATA_DOC],
+        MemberRole::Kernel => &[consts::FRD_DOC, consts::DESIGN_DOC],
+        MemberRole::None => &[],
+    }
+}
+
+/// Member-doc presence and forbidden-doc checks for every member folder.
+/// Root-gated: silent when the audit root is not a real workspace root.
+/// Gated on `effective_strict_member_docs`.
+pub fn check_member_docs(
+    context: &DocAuditContext,
+    findings: &mut Vec<DocFinding>,
+) {
+    if !context.effective_strict_member_docs() {
+        return;
+    }
+    if !context.is_workspace_root() {
+        return;
+    }
+    let exempt_members = context
+        .config()
+        .map(|c| c.exempt_members.as_slice())
+        .unwrap_or(&[]);
+
+    for member in context.members() {
+        if exempt_members.iter().any(|exempt| {
+            member.path == Path::new(exempt) || member.path.ends_with(Path::new(exempt))
+        }) {
+            continue;
+        }
+
+        let Some((required_docs, role_name)) = required_docs_for_role(member.role.clone()) else {
+            continue;
+        };
+
+        for &doc in required_docs {
+            if !member.present_docs.contains(doc) {
+                let doc_rel_path = member
+                    .path
+                    .strip_prefix(context.root())
+                    .unwrap_or(&member.path)
+                    .join(doc)
+                    .to_string_lossy()
+                    .replace('\\', "/");
+                findings.push(
+                    DocFinding::new_with_line(
+                        doc_rel_path,
+                        0,
+                        consts::RULE_CODE_TEMPLATE_CONFORMANCE,
+                        consts::MEMBER_DOC_VIOLATION,
+                        format!(
+                            "Member folder `{}` is a {role_name} member but is missing required specification `{doc}`.",
+                            member.path.display()
+                        ),
+                    )
+                    .with_reason(
+                        format!(
+                            "Every {role_name} member must maintain its mandated documentation pair to preserve architectural contract and status traceability."
+                        ),
+                        format!(
+                            "Run `lint-arwaky-cli docs scaffold --member {}` or create `{doc}` in `{}`.",
+                            member
+                                .path
+                                .file_name()
+                                .and_then(|n| n.to_str())
+                                .unwrap_or(""),
+                            member.path.display()
+                        ),
+                    ),
+                );
+            }
+        }
+
+        for &doc in forbidden_docs_for_role(member.role.clone()) {
+            if member.present_docs.contains(doc) {
+                let doc_rel_path = member
+                    .path
+                    .strip_prefix(context.root())
+                    .unwrap_or(&member.path)
+                    .join(doc)
+                    .to_string_lossy()
+                    .replace('\\', "/");
+                let (required_docs, _role_name) = required_docs_for_role(member.role.clone()).expect("role owes docs");
+                findings.push(
+                    DocFinding::new_with_line(
+                        doc_rel_path,
+                        0,
+                        consts::RULE_CODE_TEMPLATE_CONFORMANCE,
+                        consts::MEMBER_DOC_FORBIDDEN_VIOLATION,
+                        format!(
+                            "Member folder `{}` is a {role_name} member but carries forbidden specification `{doc}`.",
+                            member.path.display()
+                        ),
+                    )
+                    .with_reason(
+                        format!(
+                            "A {role_name} member's mandated pair is `{}`; `{doc}` belongs to another role, so it must not live here.",
+                            required_docs.join(" + ")
+                        ),
+                        format!("Remove `{doc}` from `{}`.", member.path.display()),
+                    ),
+                );
+            }
+        }
+    }
+}
+
+// ─── Cross-capability heading mechanics (AES605) ───────────────────────────
+
+/// H1/H2 heading contract check: exactly one H1, every required H2, no H2
+/// outside required+allowed. Findings anchor to line 0.
+pub fn check_doc_heading(
+    rule_code: &'static str,
+    text: &str,
+    name: &str,
+    required: &[&str],
+    allowed: &[&str],
+    findings: &mut Vec<DocFinding>,
+) {
+    let Some(re) = crate::utility_markdown_scanner::heading_re() else {
+        return;
+    };
+    let prose = crate::utility_markdown_scanner::blank_fenced(text);
+    let captures: Vec<_> = re.captures_iter(&prose).collect();
+    let h1_count: usize = captures
+        .iter()
+        .filter(|c| c.get(1).is_some_and(|m| m.as_str().len() == 1))
+        .count();
+    if h1_count != 1 {
+        findings.push(
+            DocFinding::new_with_line(
+                "",
+                0,
+                rule_code,
+                consts::DOC_STRUCTURE_VIOLATION_H1_COUNT,
+                format!("{name} opens with {h1_count} level-1 headings"),
+            )
+            .with_reason(
+                "The template names exactly one H1 at the top of the file, so a reader knows where the document starts.",
+                "Reduce the document to a single level-1 heading at the top.",
+            ),
+        );
+    }
+    let h2: Vec<String> = captures
+        .iter()
+        .filter(|c| c.get(1).is_some_and(|m| m.as_str().len() == 2))
+        .map(|c| normalize_heading(c.get(2).map_or("", |m| m.as_str())))
+        .collect();
+    let missing: Vec<&str> = required
+        .iter()
+        .copied()
+        .filter(|want| {
+            let want = normalize_heading(want);
+            !h2.iter()
+                .any(|title| title == &want || title.starts_with(&want))
+        })
+        .collect();
+    if !missing.is_empty() {
+        findings.push(
+            DocFinding::new_with_line(
+                "",
+                0,
+                rule_code,
+                consts::DOC_STRUCTURE_VIOLATION_H2_MISSING,
+                format!("{name} has no H2 heading for {}", missing.join(", ")),
+            )
+            .with_reason(
+                "Each of these level-2 sections is mandatory in the document's registered template.",
+                format!(
+                    "Add the missing level-2 heading(s) {} to the document.",
+                    missing.join(", ")
+                ),
+            ),
+        );
+    }
+    let permitted: Vec<String> = required
+        .iter()
+        .copied()
+        .chain(allowed.iter().copied())
+        .map(normalize_heading)
+        .collect();
+    let unexpected_h2: Vec<String> = h2
+        .into_iter()
+        .filter(|title| !permitted.iter().any(|a| title == a || title.starts_with(a)))
+        .collect();
+    if !unexpected_h2.is_empty() {
+        findings.push(
+            DocFinding::new_with_line(
+                "",
+                0,
+                consts::RULE_CODE_DOC_STRUCTURE,
+                consts::DOC_STRUCTURE_VIOLATION_H2_UNEXPECTED,
+                format!(
+                    "{name} carries H2 heading(s) outside the template: {}",
+                    unexpected_h2.join(", ")
+                ),
+            )
+            .with_reason(
+                "The H2 set is closed.",
+                format!(
+                    "Demote each unexpected H2 in {} to a level-3 heading or remove it.",
+                    unexpected_h2.join(", ")
+                ),
+            ),
+        );
+    }
+}
+
+/// AGENTS line-drift check against `AGENTS_TEMPLATE`.
+pub fn check_agents_line_drift(
+    text: &str,
+    template: &[&str],
+    findings: &mut Vec<DocFinding>,
+    doc_name: &str,
+) {
+    let doc_lines: Vec<&str> = text.lines().collect();
+    let has_frontmatter = doc_lines.first().is_some_and(|l| l.trim() == "---");
+    if !has_frontmatter {
+        findings.push(
+            DocFinding::new_with_line(
+                doc_name,
+                1,
+                consts::RULE_CODE_DOC_STRUCTURE,
+                consts::DOC_STRUCTURE_VIOLATION_FRONTMATTER_MISSING,
+                "AGENTS.md must have YAML frontmatter (---) at the start".to_string(),
+            )
+            .with_reason(
+                "The frontmatter declares the tool contract (trigger, description) that consumers rely on to decide when the file applies.",
+                "Add YAML frontmatter (---) at the top of AGENTS.md.",
+            ),
+        );
+    }
+    let first_line = doc_lines.first().map_or("", |v| *v);
+    let looks_like_agents = first_line.trim() == "---" || first_line.starts_with("# ");
+    if !looks_like_agents {
+        return;
+    }
+    if template.is_empty() {
+        return;
+    }
+    let doc_sections = split_sections(&doc_lines);
+    let template_sections = split_sections(template);
+    for (name, _) in &doc_sections {
+        if !template_sections.iter().any(|(key, _)| key == name) {
+            findings.push(
+                DocFinding::new_with_line(
+                    doc_name,
+                    0,
+                    consts::RULE_CODE_DOC_STRUCTURE,
+                    consts::DOC_STRUCTURE_VIOLATION_LINE_DRIFT,
+                    format!(
+                        "AGENTS.md has the section `## {name}`, which the template does not declare"
+                    ),
+                )
+                .with_reason(
+                    "The template fixes the section set, so an undeclared section is drift from the reference shape.",
+                    format!("Remove or rename the section `## {name}` to one the template declares."),
+                ),
+            );
+        }
+    }
+    for (name, want_lines) in &template_sections {
+        let Some((_, have_lines)) = doc_sections.iter().find(|(key, _)| key == name) else {
+            findings.push(
+                DocFinding::new_with_line(
+                    doc_name,
+                    0,
+                    consts::RULE_CODE_DOC_STRUCTURE,
+                    consts::DOC_STRUCTURE_VIOLATION_LINE_DRIFT,
+                    format!("AGENTS.md is missing the template section `## {name}`, or renamed it"),
+                )
+                .with_reason(
+                    "The template fixes this heading, so a renamed or dropped section drifts from the reference shape.",
+                    format!("Restore the template section `## {name}` with its exact heading."),
+                ),
+            );
+            continue;
+        };
+        let want_placeholders = placeholder_lines(want_lines);
+        let want_strict: Vec<&str> = want_lines
+            .iter()
+            .enumerate()
+            .filter(|(idx, l)| !l.trim().is_empty() && !want_placeholders.contains(idx))
+            .map(|(_, l)| *l)
+            .collect();
+        let mut cursor = 0usize;
+        for want in want_strict {
+            let start = cursor.min(have_lines.len());
+            match have_lines[start..].iter().position(|have| *have == want) {
+                Some(offset) => cursor = start + offset + 1,
+                None => {
+                    let offending = have_lines
+                        .get(start)
+                        .copied()
+                        .or_else(|| have_lines.last().copied())
+                        .unwrap_or("");
+                    findings.push(
+                        DocFinding::new_with_line(
+                            doc_name,
+                            0,
+                            consts::RULE_CODE_DOC_STRUCTURE,
+                            consts::DOC_STRUCTURE_VIOLATION_LINE_DRIFT,
+                            format!(
+                                "AGENTS.md section `{name}` does not match the template: expected the line '{want}' (or a {{...}} placeholder), but found '{offending}'"
+                            ),
+                        )
+                        .with_reason(
+                            "Every line the template fixes must appear verbatim and in order; only {{...}} placeholder slots may differ.",
+                            format!("Replace '{offending}' in section `{name}` with the template line '{want}' or a {{...}} placeholder."),
+                        ),
+                    );
+                    cursor = start + 1;
+                }
+            }
+        }
+    }
+    if !doc_lines.iter().any(|l| l.trim_start().starts_with("# ")) {
+        findings.push(
+            DocFinding::new_with_line(
+                doc_name,
+                0,
+                consts::RULE_CODE_DOC_STRUCTURE,
+                consts::DOC_STRUCTURE_VIOLATION_LINE_DRIFT,
+                "AGENTS.md must open with a level-1 heading naming the project".to_string(),
+            )
+            .with_reason(
+                "The H1 names the project and anchors the document for a reader at the top of the file.",
+                "Add a level-1 heading naming the project at the top of AGENTS.md.",
+            ),
+        );
+    }
+    for line in doc_lines.iter().filter(|l| l.trim_start().starts_with("# ")) {
+        let title = line.trim_start().trim_start_matches('#').trim();
+        if title.is_empty() {
+            findings.push(
+                DocFinding::new_with_line(
+                    doc_name,
+                    0,
+                    consts::RULE_CODE_DOC_STRUCTURE,
+                    consts::DOC_STRUCTURE_VIOLATION_LINE_DRIFT,
+                    "AGENTS.md H1 has no title".to_string(),
+                )
+                .with_reason(
+                    "A level-1 heading with no title leaves the document unnamed at the top.",
+                    "Fill in the H1 title of AGENTS.md.",
+                ),
+            );
+        }
+    }
+}
+
+/// Split a document into `H2 heading -> body lines` sections.
+fn split_sections<'a>(lines: &'a [&'a str]) -> Vec<(String, Vec<&'a str>)> {
+    let mut sections_out: Vec<(String, Vec<&str>)> = Vec::new();
+    for line in lines {
+        if let Some(title) = line.strip_prefix("## ") {
+            sections_out.push((title.trim().to_string(), Vec::new()));
+            continue;
+        }
+        match sections_out.last_mut() {
+            Some((_, body)) => body.push(line),
+            None => sections_out.push((String::new(), vec![line])),
+        }
+    }
+    sections_out
+}
+
+/// Every line that belongs to a `{...}` slot, including slots that wrap across
+/// physical lines.
+fn placeholder_lines(lines: &[&str]) -> HashSet<usize> {
+    let mut inside = HashSet::new();
+    let mut depth = 0usize;
+    for (idx, line) in lines.iter().enumerate() {
+        let opens = line.matches('{').count();
+        let closes = line.matches('}').count();
+        if opens > closes {
+            inside.insert(idx);
+            depth += opens - closes;
+        } else if depth > 0 {
+            inside.insert(idx);
+            depth = depth.saturating_sub(closes);
+            depth = depth.saturating_sub(opens);
+        } else if closes > opens || (opens > 0 && closes > 0) {
+            inside.insert(idx);
+        }
+        if depth == 0 {
+        }
+    }
+    inside
+}

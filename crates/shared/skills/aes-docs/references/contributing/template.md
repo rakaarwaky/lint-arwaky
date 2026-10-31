@@ -1,7 +1,5 @@
 # CONTRIBUTING Template
 
-Copy, fill, delete what does not apply to the project.
-
 ```markdown
 # CONTRIBUTING — <project-name>
 

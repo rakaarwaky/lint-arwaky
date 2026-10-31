@@ -1,7 +1,5 @@
 # ROADMAP Template
 
-Copy, fill, delete nothing.
-
 ```markdown
 # ROADMAP — <workspace name>
 

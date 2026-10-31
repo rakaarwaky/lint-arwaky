@@ -1,7 +1,5 @@
 # AGENTS Template
 
-Copy, fill, delete nothing.
-
 ```markdown
 # AGENTS — <project-name>
 

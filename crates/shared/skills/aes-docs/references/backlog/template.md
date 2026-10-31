@@ -1,7 +1,5 @@
 # BACKLOG Template
 
-Copy, fill, delete nothing.
-
 ```markdown
 # BACKLOG — <feature-name>
 

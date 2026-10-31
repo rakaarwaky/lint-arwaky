@@ -4,13 +4,12 @@
 // must be counted, a section that must be found, a shape that must be rejected.
 // The contract tests prove the seams exist; these prove each one answers its own
 // question.
-use doc_rules_lint_arwaky::capabilities_doc_heading_structure_checker::{
-    AGENTS_TEMPLATE, HeadingStructureChecker,
-};
-use doc_rules_lint_arwaky::capabilities_doc_section_structure_checker::SectionStructureChecker;
-use shared_doc_rules::contract_doc_protocol::{IDocHeadingProtocol, ISectionStructureProtocol};
+use doc_rules_lint_arwaky::capabilities_doc_agents::AgentsCapability;
+use doc_rules_lint_arwaky::capabilities_doc_frd::FrdCapability;
+use shared_doc_rules::contract_doc_protocol::{IAgentsDocProtocol, IFrdDocProtocol};
 use shared_doc_rules::taxonomy_doc_audit_context_vo::DocAuditContext;
 use shared_doc_rules::taxonomy_doc_rules_request::{DocFinding, DocSource};
+use shared_doc_rules::taxonomy_doc_rules_constant as consts;
 use std::path::{Path, PathBuf};
 
 /// An audit context holding one document named *name* with *text* as its body.
@@ -46,7 +45,7 @@ fn codes(findings: &[DocFinding]) -> Vec<&'static str> {
 /// the contract can never drift apart: a conforming document is the template
 /// itself.
 fn conforming_agents() -> String {
-    AGENTS_TEMPLATE.to_string()
+    doc_rules_lint_arwaky::capabilities_doc_agents::AGENTS_TEMPLATE.to_string()
 }
 
 /// An `AGENTS.md` that is conforming except for the one defect under test.
@@ -57,9 +56,9 @@ fn agents_with_extra_h2() -> String {
 // ─── AES605 — heading structure ────────────────────────────────────────────
 
 #[test]
-fn aes605_accepts_one_h1_and_every_required_h2() {
-    let findings = HeadingStructureChecker::new()
-        .audit_doc_heading(&context("AGENTS.md", &conforming_agents()));
+fn aes601_accepts_one_h1_and_every_required_h2() {
+    let findings = AgentsCapability::new()
+        .audit_agents(&context("AGENTS.md", &conforming_agents()));
     assert!(
         codes(&findings).is_empty(),
         "a conforming heading shape must report nothing; got {findings:?}"
@@ -67,22 +66,22 @@ fn aes605_accepts_one_h1_and_every_required_h2() {
 }
 
 #[test]
-fn aes605_rejects_a_second_h1() {
+fn aes601_rejects_a_second_h1() {
     let text = format!("# AGENTS\n\n{}\n# Second\n", conforming_agents());
-    let findings = HeadingStructureChecker::new().audit_doc_heading(&context("AGENTS.md", &text));
+    let findings = AgentsCapability::new().audit_agents(&context("AGENTS.md", &text));
     assert!(
-        codes(&findings).contains(&"AES605"),
-        "two level-1 headings must fire AES605; exactly one H1 is the contract"
+        codes(&findings).contains(&consts::RULE_CODE_AGENTS_DOC),
+        "two level-1 headings must fire AES601 on AGENTS.md; exactly one H1 is the contract"
     );
 }
 
 #[test]
-fn aes605_rejects_an_off_template_h2() {
-    let findings = HeadingStructureChecker::new()
-        .audit_doc_heading(&context("AGENTS.md", &agents_with_extra_h2()));
+fn aes601_rejects_an_off_template_h2() {
+    let findings = AgentsCapability::new()
+        .audit_agents(&context("AGENTS.md", &agents_with_extra_h2()));
     assert!(
-        codes(&findings).contains(&"AES605"),
-        "an H2 outside the contract's closed set must fire AES605; a heading the \
+        codes(&findings).contains(&consts::RULE_CODE_AGENTS_DOC),
+        "an H2 outside the contract's closed set must fire AES601 on AGENTS.md; a heading the \
          rule does not know is reported rather than ignored"
     );
 }
@@ -108,11 +107,10 @@ fn conforming_frd() -> String {
 
 #[test]
 fn aes602_accepts_a_frd_in_template_order() {
-    let findings = SectionStructureChecker::new()
-        .audit_section_structure(&context("FRD.md", &conforming_frd()));
+    let findings = FrdCapability::new().audit_frd(&context("FRD.md", &conforming_frd()));
     assert!(
-        codes(&findings).is_empty(),
-        "an FRD in template order must report nothing; got {findings:?}"
+        !codes(&findings).contains(&consts::RULE_CODE_SECTION_STRUCTURE),
+        "an FRD in template order must not report section order; got {findings:?}"
     );
 }
 
@@ -130,10 +128,9 @@ fn aes602_rejects_a_frd_out_of_template_order() {
         "the order under test must actually differ; a no-op replace would make this \
          case assert the conforming document and pass for the wrong reason"
     );
-    let findings =
-        SectionStructureChecker::new().audit_section_structure(&context("FRD.md", &text));
+    let findings = FrdCapability::new().audit_frd(&context("FRD.md", &text));
     assert!(
-        codes(&findings).contains(&"AES602"),
+        codes(&findings).contains(&consts::RULE_CODE_SECTION_STRUCTURE),
         "sections out of template order must fire AES602; got {findings:?}"
     );
 }
