@@ -258,6 +258,9 @@ mod tests {
     }
 
     /// The document an author gets by copying the fenced template verbatim.
+    /// Uses fence-depth-aware extraction: a language-tagged ``` (e.g. ```text)
+    /// opens an inner block; a plain ``` closes it; the first plain ``` at
+    /// depth 0 is the outer template boundary.
     fn verbatim_copy(profile: &TemplateProfile) -> String {
         let text = load_reference_template(profile.template_file);
         let open = "```markdown";
@@ -266,10 +269,23 @@ mod tests {
             .unwrap_or_else(|| panic!("{} opens a template block", profile.template_file))
             + open.len();
         let rest = &text[start..];
-        let end = rest
-            .find("```")
-            .unwrap_or_else(|| panic!("{} closes its template block", profile.template_file));
-        rest[..end].to_string()
+        let mut out = String::new();
+        let mut depth: i32 = 0;
+        for line in rest.lines() {
+            let trimmed = line.trim();
+            if trimmed.starts_with("```") {
+                if trimmed.len() > 3 {
+                    depth += 1;
+                } else if depth > 0 {
+                    depth -= 1;
+                } else {
+                    break;
+                }
+            }
+            out.push_str(line);
+            out.push('\n');
+        }
+        out.trim_end().to_string()
     }
 
     /// Inline placeholder matcher for tests — taxonomy(vo) must not import

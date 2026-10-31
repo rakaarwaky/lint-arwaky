@@ -25,33 +25,33 @@ AI agents working in this workspace must know the AES 7-layer naming convention,
 
 ```text
 .
-├── crates/
-│   ├── auto-fix/
-│   ├── cli-commands/
-│   ├── config-system/
-│   ├── dispatcher/
-│   ├── doc-rules/
-│   ├── external-lint/
-│   ├── filesystem/
-│   ├── file-watch/
-│   ├── git-hooks/
-│   ├── import-rules/
-│   ├── logging/
-│   ├── maintenance/
-│   ├── mcp-server/
-│   ├── naming-rules/
-│   ├── orphan-rules/
-│   ├── project-setup/
-│   ├── quality-rules/
-│   ├── report-formatter/
-│   ├── role-rules/
-│   ├── shared/
-│   ├── structure-rules/
-│   └── tui/
-├── workspaces-bad/
-├── workspaces-good/
-├── scripts/
-└── AGENTS.md
+├── crates/                            # Rust workspace crates
+│   ├── auto-fix/                      # auto-fix engine (bypass, symbol rename, unused import)
+│   ├── cli-commands/                  # CLI command handlers (surface)
+│   ├── config-system/                 # config parsing + workspace detection
+│   ├── dispatcher/                    # command dispatch + panic isolation (surface)
+│   ├── doc-rules/                     # doc-shape + line-drift checks (AES601 family)
+│   ├── external-lint/                 # shells out to clippy/ruff/eslint/mypy
+│   ├── file-watch/                    # watch mode (notify-based)
+│   ├── filesystem/                    # filesystem scanning / repo discovery
+│   ├── git-hooks/                     # pre-commit / pre-push hook integration
+│   ├── import-rules/                  # import graph validation (AES4xx)
+│   ├── logging/                       # structured logging
+│   ├── maintenance/                   # codebase maintenance checks
+│   ├── mcp-server/                    # MCP protocol adapter (surface)
+│   ├── naming-rules/                  # naming rule checks (AES1xx)
+│   ├── orphan-rules/                  # orphan detection (AES2xx)
+│   ├── project-setup/                 # scaffold / init
+│   ├── quality-rules/                 # quality checks (AES5xx)
+│   ├── report-formatter/              # violation report formatting
+│   ├── role-rules/                    # role/layer enforcement (AES3xx)
+│   ├── shared/                        # shared layer: contracts, VOs, doc-rules codegen, skill templates
+│   ├── structure-rules/               # structure/doc checks (AES6xx/7xx)
+│   └── tui/                           # terminal UI (surface)
+├── workspaces-bad/                    # scanner fixtures: intentional AES violations
+├── workspaces-good/                   # scanner fixtures: clean AES-conformant code
+├── scripts/                           # release, install, gates, podman helpers
+└── AGENTS.md                          # this file
 ```
 
 ## Commands

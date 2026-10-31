@@ -52,11 +52,9 @@ impl AgentsCapability {
         let parsed = sections(text);
 
         // AGENTS line drift against the template.
-        for defect in detect_agents_line_drift(
-            text,
-            consts::AGENTS_TEMPLATE_LINES,
-            consts::AGENTS_DOC,
-        ) {
+        for defect in
+            detect_agents_line_drift(text, consts::AGENTS_TEMPLATE_LINES, consts::AGENTS_DOC)
+        {
             let (violation, message, reason, fix) = match &defect {
                 LineDriftDefect::FrontmatterMissing { line: _, doc_name } => (
                     DOC_VIOLATION_NAMES.frontmatter_missing(),

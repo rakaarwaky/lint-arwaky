@@ -13,9 +13,7 @@ use crate::utility_capabilities_doc_h2_checks::{
     SectionShapeDefect, first_column_values, row_label_diff,
 };
 use crate::utility_doc_entry_regexes::fr_entry_re;
-use crate::utility_markdown_scanner::{
-    h3_subsections, normalize_heading, sections,
-};
+use crate::utility_markdown_scanner::{h3_subsections, normalize_heading, sections};
 use std::collections::{BTreeSet, HashSet};
 use std::path::Path;
 
@@ -169,9 +167,8 @@ impl MemberDocDefect {
 /// its own AES code.
 ///
 /// When the H3 entry carries H4 subsections (modular template shape), the
-/// shape check is anchored to the H4 whose body contains a table matching
-/// *columns* — so the gate follows the template without hardcoding the
-/// H4 title. The row-label check scopes to that same H4 body.
+/// checks scope to the H4 whose body contains a table matching *columns* —
+/// so the gate follows the template without hardcoding the H4 title.
 pub fn detect_entry_tables(
     parsed: &[Section],
     parent_h2: &str,
@@ -192,84 +189,55 @@ pub fn detect_entry_tables(
         }
         let h4s = crate::utility_markdown_scanner::h4_subsections(&h3);
 
-        // When the entry carries H4 subsections, scope the checks to the H4
-        // whose body contains a table whose header matches *columns*. This is
-        // what makes the gate template-adaptive: the H4 title is discovered
-        // by its table header, never hardcoded.
-        let scope_body: &str = if h4s.is_empty() {
-            &h3.body
-        } else {
-            h4s
-                .iter()
-                .find(|h4| {
-                    let cols_owned: Vec<String> = columns.iter().map(|&c| c.to_string()).collect();
-                    crate::utility_capabilities_doc_h2_checks::header_extra_columns(
-                        &h4.body, &cols_owned,
-                    )
-                    .is_none()
-                        && crate::utility_capabilities_doc_h2_checks::has_any_table(&h4.body)
-                })
-                .map_or(&h3.body, |h4| &h4.body)
-        };
-
-        // Header/shape check anchored to the scope body.
-        let shape_scope = if h4s.is_empty() {
-            crate::utility_capabilities_doc_h2_checks::detect_section_shape(
-                parsed,
-                &h3.title,
-                columns,
-                Some(&h3),
-            )
-        } else {
-            crate::utility_capabilities_doc_h2_checks::detect_section_shape(
-                parsed,
-                &h3.title,
-                columns,
-                None,
-            )
-        };
-        let shape_defect = if shape_scope.is_some() {
-            shape_scope
-        } else if !h4s.is_empty() {
-            // For H4-scoped entries, run the shape check against the H4 that
-            // carries the matching table.
-            h4s
-                .iter()
-                .find(|h4| {
-                    let cols_owned: Vec<String> = columns.iter().map(|&c| c.to_string()).collect();
-                    crate::utility_capabilities_doc_h2_checks::header_extra_columns(
-                        &h4.body, &cols_owned,
-                    )
-                    .is_none()
-                        && crate::utility_capabilities_doc_h2_checks::has_any_table(&h4.body)
-                })
-                .map(|h4| {
-                    let section = Section {
-                        level: 3,
-                        title: h3.title.clone(),
-                        body: h4.body.clone(),
-                        line: h3.line + h4.line,
-                    };
-                    crate::utility_capabilities_doc_h2_checks::detect_section_shape(
-                        parsed,
-                        &section.title,
-                        columns,
-                        Some(&section),
-                    )
-                })
-                .flatten()
-        } else {
+        // Identify the H4 (if any) that carries the template table.
+        // The H4 is discovered by its table header matching *columns*, so
+        // the gate is template-adaptive: renaming the H4 in the template
+        // requires no code change.
+        let scope_h4: Option<&Section> = if h4s.is_empty() {
             None
+        } else {
+            h4s.iter().find(|h4| {
+                crate::utility_capabilities_doc_h2_checks::header_extra_columns(&h4.body, columns)
+                    .is_none()
+                    && crate::utility_capabilities_doc_h2_checks::has_any_table(&h4.body)
+            })
         };
 
-        if let Some(shape) = shape_defect {
+        // Shape check: run against the H4 body when scoped, the H3 body otherwise.
+        if let Some(h4) = scope_h4 {
+            let scoped = Section {
+                level: 3,
+                title: h3.title.clone(),
+                body: h4.body.clone(),
+                line: h3.line + h4.line,
+            };
+            if let Some(shape) = crate::utility_capabilities_doc_h2_checks::detect_section_shape(
+                parsed,
+                &scoped.title,
+                columns,
+                Some(&scoped),
+            ) {
+                defects.push(EntryTableDefect::Shape(shape));
+                continue;
+            }
+        } else if let Some(shape) = crate::utility_capabilities_doc_h2_checks::detect_section_shape(
+            parsed,
+            &h3.title,
+            columns,
+            Some(&h3),
+        ) {
             defects.push(EntryTableDefect::Shape(shape));
             continue;
         }
 
-        // Row-label check (skipped when the doc has no fixed rows).
+        // Row-label check: scoped to the matching H4 body when H4 subsections
+        // exist; the H3 body otherwise.
         if !row_labels.is_empty() {
-            let values = first_column_values(scope_body);
+            let body = match scope_h4 {
+                Some(h4) => &h4.body,
+                None => &h3.body,
+            };
+            let values = first_column_values(body);
             let (missing, extra) = row_label_diff(row_labels, &values);
             if !missing.is_empty() || !extra.is_empty() {
                 defects.push(EntryTableDefect::RowLabelsMismatch {

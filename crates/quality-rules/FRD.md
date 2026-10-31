@@ -22,37 +22,18 @@ It sits behind the `ICodeAnalysisAggregate` front door and is called by the Surf
 - An unreadable file shall yield no finding rather than failing the analysis.
 - An empty scan set shall yield no findings.
 
-#### Input
-| No | Detail |
-|----|--------|
-| 1 | File path plus content; source is `CodeAnalysisRequest::RunAnalysis` via `ICodeAnalysisAggregate::execute`. |
+#### Technical Specification
 
-#### Output
-| No | Detail |
-|----|--------|
-| 1 | A `FileTooLarge` violation inside `CodeAnalysisResponse::Analysis`. |
-
-#### Protocol
-| No | Detail |
-|----|--------|
-| 1 | `ILineCheckerProtocol` |
-
-#### Method
-| No | Detail |
-|----|--------|
-| 1 | `check_line_counts` |
-
-#### Event
-| No | Detail |
-|----|--------|
-| 1 | None; the analysis is synchronous. |
-
-#### Error
-| No | Detail |
-|----|--------|
-| 1 | An unreadable file reports no finding for that path rather than failing the analysis. |
-
+| Aspect | Detail |
+|--------|--------|
+| **Input** | File path plus content; source is `CodeAnalysisRequest::RunAnalysis` via `ICodeAnalysisAggregate::execute`. |
+| **Output** | A `FileTooLarge` violation inside `CodeAnalysisResponse::Analysis`. |
+| **Protocol** | `ILineCheckerProtocol` |
+| **Method** | `check_line_counts` |
+| **Event** | None; the analysis is synchronous. |
+| **Error** | An unreadable file reports no finding for that path rather than failing the analysis. |
 #### Test
+
 | Context | When Action | Then Observable Result |
 |---------|-------------|------------------------|
 | A source file exceeds the configured maximum | The quality-rules audit runs AES301 on that file | One `FileTooLarge` finding is produced and its message contains the observed line count and the limit |
@@ -60,6 +41,7 @@ It sits behind the `ICodeAnalysisAggregate` front door and is called by the Surf
 | The file content cannot be read | The quality-rules audit runs AES301 on that path | No finding is produced and the analysis continues |
 
 #### Metric
+
 | Target Metric | Value |
 |---------------|-------|
 | Findings per oversized file seeded into the scan | Exactly 1 |
@@ -79,37 +61,18 @@ It sits behind the `ICodeAnalysisAggregate` front door and is called by the Surf
 - An empty file counts as below the minimum and shall produce a finding.
 - An unreadable file shall yield no finding rather than failing the analysis.
 
-#### Input
-| No | Detail |
-|----|--------|
-| 1 | File path plus content; source is `CodeAnalysisRequest::RunAnalysis`. |
+#### Technical Specification
 
-#### Output
-| No | Detail |
-|----|--------|
-| 1 | A `FileTooShort` violation inside `CodeAnalysisResponse::Analysis`. |
-
-#### Protocol
-| No | Detail |
-|----|--------|
-| 1 | `ILineCheckerProtocol` |
-
-#### Method
-| No | Detail |
-|----|--------|
-| 1 | `check_line_counts` |
-
-#### Event
-| No | Detail |
-|----|--------|
-| 1 | None; the analysis is synchronous. |
-
-#### Error
-| No | Detail |
-|----|--------|
-| 1 | An unreadable file reports no finding rather than failing the analysis. |
-
+| Aspect | Detail |
+|--------|--------|
+| **Input** | File path plus content; source is `CodeAnalysisRequest::RunAnalysis`. |
+| **Output** | A `FileTooShort` violation inside `CodeAnalysisResponse::Analysis`. |
+| **Protocol** | `ILineCheckerProtocol` |
+| **Method** | `check_line_counts` |
+| **Event** | None; the analysis is synchronous. |
+| **Error** | An unreadable file reports no finding rather than failing the analysis. |
 #### Test
+
 | Context | When Action | Then Observable Result |
 |---------|-------------|------------------------|
 | A source file is under the configured minimum | The quality-rules audit runs AES302 on that file | One `FileTooShort` finding is produced and its message contains the observed line count and the limit |
@@ -117,6 +80,7 @@ It sits behind the `ICodeAnalysisAggregate` front door and is called by the Surf
 | An empty file is scanned | The quality-rules audit runs AES302 on that file | One `FileTooShort` finding is produced |
 
 #### Metric
+
 | Target Metric | Value |
 |---------------|-------|
 | Findings per undersized file seeded into the scan | Exactly 1 |
@@ -136,37 +100,18 @@ It sits behind the `ICodeAnalysisAggregate` front door and is called by the Surf
 - A struct declared without an impl block shall produce a `DeadInheritance` finding.
 - An empty Python class, an empty JS class, and an empty JS interface shall each produce a mandatory-definition finding.
 
-#### Input
-| No | Detail |
-|----|--------|
-| 1 | Parsed file entries (definitions, impls) plus file content; source is `CodeAnalysisRequest::RunAnalysis`. |
+#### Technical Specification
 
-#### Output
-| No | Detail |
-|----|--------|
-| 1 | `MandatoryClassDefinition` and `DeadInheritance` violations inside `CodeAnalysisResponse::Analysis`. |
-
-#### Protocol
-| No | Detail |
-|----|--------|
-| 1 | `IMandatoryClassProtocol`, `IDeadInheritanceProtocol` |
-
-#### Method
-| No | Detail |
-|----|--------|
-| 1 | `check_mandatory_class_definition`, `check_dead_inheritance` |
-
-#### Event
-| No | Detail |
-|----|--------|
-| 1 | None; the analysis is synchronous. |
-
-#### Error
-| No | Detail |
-|----|--------|
-| 1 | An unparseable file contributes no findings and the analysis continues across files. |
-
+| Aspect | Detail |
+|--------|--------|
+| **Input** | Parsed file entries (definitions, impls) plus file content; source is `CodeAnalysisRequest::RunAnalysis`. |
+| **Output** | `MandatoryClassDefinition` and `DeadInheritance` violations inside `CodeAnalysisResponse::Analysis`. |
+| **Protocol** | `IMandatoryClassProtocol`, `IDeadInheritanceProtocol` |
+| **Method** | `check_mandatory_class_definition`, `check_dead_inheritance` |
+| **Event** | None; the analysis is synchronous. |
+| **Error** | An unparseable file contributes no findings and the analysis continues across files. |
 #### Test
+
 | Context | When Action | Then Observable Result |
 |---------|-------------|------------------------|
 | A file has no struct or class | The quality-rules audit runs AES303 on that file | One mandatory-definition finding is produced |
@@ -174,6 +119,7 @@ It sits behind the `ICodeAnalysisAggregate` front door and is called by the Surf
 | An empty JS interface is scanned | The quality-rules audit runs AES303 on that file | One mandatory-definition finding is produced |
 
 #### Metric
+
 | Target Metric | Value |
 |---------------|-------|
 | Findings per definition-miss fixture seeded into the scan | Exactly 1 |
@@ -194,37 +140,18 @@ It sits behind the `ICodeAnalysisAggregate` front door and is called by the Surf
 - An unreachable-body marker shall be counted as a dead-body shortcut finding.
 - An unreadable file shall yield no finding rather than failing the analysis.
 
-#### Input
-| No | Detail |
-|----|--------|
-| 1 | File content plus path; source is `CodeAnalysisRequest::RunAnalysis`. |
+#### Technical Specification
 
-#### Output
-| No | Detail |
-|----|--------|
-| 1 | Violations of kind `BypassComment`, `UnwrapExpect`, `Panic`, `Todo`, or dead-body shortcuts inside `CodeAnalysisResponse::Analysis`. |
-
-#### Protocol
-| No | Detail |
-|----|--------|
-| 1 | `IBypassCheckerProtocol` |
-
-#### Method
-| No | Detail |
-|----|--------|
-| 1 | `check_bypass_comments` |
-
-#### Event
-| No | Detail |
-|----|--------|
-| 1 | None; the analysis is synchronous. |
-
-#### Error
-| No | Detail |
-|----|--------|
-| 1 | An unreadable file contributes no findings; no analysis failure occurs. |
-
+| Aspect | Detail |
+|--------|--------|
+| **Input** | File content plus path; source is `CodeAnalysisRequest::RunAnalysis`. |
+| **Output** | Violations of kind `BypassComment`, `UnwrapExpect`, `Panic`, `Todo`, or dead-body shortcuts inside `CodeAnalysisResponse::Analysis`. |
+| **Protocol** | `IBypassCheckerProtocol` |
+| **Method** | `check_bypass_comments` |
+| **Event** | None; the analysis is synchronous. |
+| **Error** | An unreadable file contributes no findings; no analysis failure occurs. |
 #### Test
+
 | Context | When Action | Then Observable Result |
 |---------|-------------|------------------------|
 | A file contains one panic-style call | The quality-rules audit runs AES304 on that file | One `Panic` finding is produced |
@@ -232,6 +159,7 @@ It sits behind the `ICodeAnalysisAggregate` front door and is called by the Surf
 | A clean file is scanned | The quality-rules audit runs AES304 on that file | No AES304 finding is produced |
 
 #### Metric
+
 | Target Metric | Value |
 |---------------|-------|
 | Findings per bypass occurrence seeded into the scan | Exactly 1, of the matching kind |
@@ -253,43 +181,25 @@ It sits behind the `ICodeAnalysisAggregate` front door and is called by the Surf
 - An unreadable file shall drop out of the comparison set rather than failing the run.
 - An empty scan set shall produce no findings.
 
-#### Input
-| No | Detail |
-|----|--------|
-| 1 | Set of file contents from the analysis request; source is `CodeAnalysisRequest::RunAnalysis`. |
+#### Technical Specification
 
-#### Output
-| No | Detail |
-|----|--------|
-| 1 | A `CodeDuplication` violation inside `CodeAnalysisResponse::Analysis`. |
-
-#### Protocol
-| No | Detail |
-|----|--------|
-| 1 | `ICodeMetricAnalyzerProtocol` |
-
-#### Method
-| No | Detail |
-|----|--------|
-| 1 | `handle_duplicates_entries` |
-
-#### Event
-| No | Detail |
-|----|--------|
-| 1 | None; the analysis is synchronous. |
-
-#### Error
-| No | Detail |
-|----|--------|
-| 1 | An unreadable file drops out of the comparison set rather than failing the run. |
-
+| Aspect | Detail |
+|--------|--------|
+| **Input** | Set of file contents from the analysis request; source is `CodeAnalysisRequest::RunAnalysis`. |
+| **Output** | A `CodeDuplication` violation inside `CodeAnalysisResponse::Analysis`. |
+| **Protocol** | `ICodeMetricAnalyzerProtocol` |
+| **Method** | `handle_duplicates_entries` |
+| **Event** | None; the analysis is synchronous. |
+| **Error** | An unreadable file drops out of the comparison set rather than failing the run. |
 #### Test
+
 | Context | When Action | Then Observable Result |
 |---------|-------------|------------------------|
 | A seeded clone pair exceeds the duplication threshold | The quality-rules audit runs AES305 on that set | One `CodeDuplication` finding is produced naming both participants |
 | A set of fully distinct files is scanned | The quality-rules audit runs AES305 on that set | No `CodeDuplication` finding is produced |
 
 #### Metric
+
 | Target Metric | Value |
 |---------------|-------|
 | Findings per seeded clone pair | Exactly 1 `CodeDuplication` |

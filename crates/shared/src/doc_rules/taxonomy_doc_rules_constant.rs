@@ -504,13 +504,21 @@ mod tests {
     #[test]
     fn frd_aspects_are_the_fr_fields() {
         assert_eq!(
-            FRD_ASPECTS,
-            FR_FIELDS,
+            FRD_ASPECTS, FR_FIELDS,
             "FRD_ASPECTS must stay byte-identical to FR_FIELDS"
         );
-        assert_eq!(FRD_ASPECTS_OPEN, &[], "no open-ended aspects under modular template");
-        assert_eq!(FRD_ASPECTS_BOUNDED_ONE, &[], "no bounded-one aspects under modular template");
-        assert!(FRD_ASPECT_SEED_MIN.is_empty(), "per-aspect H4 seed-min contract is retired");
+        assert!(
+            FRD_ASPECTS_OPEN.is_empty(),
+            "no open-ended aspects under modular template"
+        );
+        assert!(
+            FRD_ASPECTS_BOUNDED_ONE.is_empty(),
+            "no bounded-one aspects under modular template"
+        );
+        assert!(
+            FRD_ASPECT_SEED_MIN.is_empty(),
+            "per-aspect H4 seed-min contract is retired"
+        );
     }
 
     /// All five PRD aspects are open-ended and seed at 1 real row; row 2

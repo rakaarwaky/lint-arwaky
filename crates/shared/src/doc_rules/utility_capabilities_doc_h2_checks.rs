@@ -262,8 +262,9 @@ pub fn first_column_values(body: &str) -> HashSet<String> {
             continue;
         }
         if let Some(first) = cells.first() {
-            if !first.is_empty() {
-                values.insert(first.to_string());
+            let label = first.trim_matches('*').trim();
+            if !label.is_empty() {
+                values.insert(label.to_string());
             }
         }
     }

@@ -27,6 +27,7 @@ The naming-rules feature sits in the capabilities and agent layer, called by the
 **Description:** The naming-rules orchestrator shall check every file stem against the AES naming convention for each source language. File stems shall adhere to standard shape constraints without uppercase characters, and support-directory files or barrel files shall be handled in accordance with flat classification rules across both slash separator styles.
 
 #### Business Logic
+
 - File stem shape shall be checked for legal casing according to language rules.
 - Stems consisting entirely of uppercase characters shall produce a violation.
 - Files under support directories shall be treated as flat scope.
@@ -34,46 +35,22 @@ The naming-rules feature sits in the capabilities and agent layer, called by the
 - Barrel files located in support directories shall be skipped.
 
 #### Edge Cases
+
 - All-uppercase file stem produces an AES101 violation.
 - Windows-style separator paths are classified identically to POSIX paths.
 - Unreadable files yield no findings rather than causing audit failure.
 - Files outside configured scan roots are excluded from evaluation.
 
-#### Input
+#### Technical Specification
 
-| No | Detail |
-| --- | --- |
-| 1 | `NamingRequest::RunAuditWithEntries` or `NamingRequest::RunAuditWithTestEntries` containing `FileEntry` slices |
-
-#### Output
-
-| No | Detail |
-| --- | --- |
-| 1 | `NamingResponse::Audit` containing `Vec<ViolationItem>` with AES101 violation codes |
-
-#### Protocol
-
-| No | Detail |
-| --- | --- |
-| 1 | `INamingConventionProtocol` |
-
-#### Method
-
-| No | Detail |
-| --- | --- |
-| 1 | `check_file_naming` |
-
-#### Event
-
-| No | Detail |
-| --- | --- |
-| 1 | `NamingConventionAudited` |
-
-#### Error
-
-| No | Detail |
-| --- | --- |
-| 1 | `AES101` on invalid stem shape, or silent pass on unreadable file path |
+| Aspect | Detail |
+|--------|--------|
+| **Input** | `NamingRequest::RunAuditWithEntries` or `NamingRequest::RunAuditWithTestEntries` containing `FileEntry` slices |
+| **Output** | `NamingResponse::Audit` containing `Vec<ViolationItem>` with AES101 violation codes |
+| **Protocol** | `INamingConventionProtocol` |
+| **Method** | `check_file_naming` |
+| **Event** | `NamingConventionAudited` |
+| **Error** | `AES101` on invalid stem shape, or silent pass on unreadable file path |
 
 #### Test
 
@@ -92,6 +69,7 @@ The naming-rules feature sits in the capabilities and agent layer, called by the
 **Description:** The naming-rules orchestrator shall enforce layer suffix and prefix policies for special file roles including barrels, registries, and regression guards. Every file shall carry an allowed prefix or suffix descriptor matching its designated architectural layer role, skipping exempted files without raising false positives.
 
 #### Business Logic
+
 - Every file within scoped layer directories shall carry an allowed prefix or suffix descriptor.
 - Files lacking a legal prefix or suffix descriptor for their assigned role shall produce an AES102 violation.
 - Barrel files matching layer conventions shall be skipped from suffix requirements.
@@ -99,46 +77,22 @@ The naming-rules feature sits in the capabilities and agent layer, called by the
 - Files residing in support directories shall evaluate under flat scope rules.
 
 #### Edge Cases
+
 - File with no legal prefix produces an AES102 violation detailing the missing descriptor.
 - Barrel files within scope are skipped without generating violations.
 - Regression guard files pass validation despite category prefix discrepancies.
 - Empty content files produce no panic and evaluate against path descriptors only.
 
-#### Input
+#### Technical Specification
 
-| No | Detail |
-| --- | --- |
-| 1 | `NamingRequest::RunAuditWithEntries` or `NamingRequest::RunAuditWithTestEntries` containing `FileEntry` slices |
-
-#### Output
-
-| No | Detail |
-| --- | --- |
-| 1 | `NamingResponse::Audit` containing `Vec<ViolationItem>` with AES102 violation codes |
-
-#### Protocol
-
-| No | Detail |
-| --- | --- |
-| 1 | `ISuffixPolicyProtocol` |
-
-#### Method
-
-| No | Detail |
-| --- | --- |
-| 1 | `check_domain_suffixes` |
-
-#### Event
-
-| No | Detail |
-| --- | --- |
-| 1 | `SuffixPolicyAudited` |
-
-#### Error
-
-| No | Detail |
-| --- | --- |
-| 1 | `AES102` on missing or invalid layer prefix or suffix descriptor |
+| Aspect | Detail |
+|--------|--------|
+| **Input** | `NamingRequest::RunAuditWithEntries` or `NamingRequest::RunAuditWithTestEntries` containing `FileEntry` slices |
+| **Output** | `NamingResponse::Audit` containing `Vec<ViolationItem>` with AES102 violation codes |
+| **Protocol** | `ISuffixPolicyProtocol` |
+| **Method** | `check_domain_suffixes` |
+| **Event** | `SuffixPolicyAudited` |
+| **Error** | `AES102` on missing or invalid layer prefix or suffix descriptor |
 
 #### Test
 
@@ -157,6 +111,7 @@ The naming-rules feature sits in the capabilities and agent layer, called by the
 **Description:** The naming-rules orchestrator shall enforce prefix and placement discipline for test and benchmark files located in test directories. Files placed in tests or benches directories shall conform to registered virtual prefix naming standards, providing relocation and renaming guidance whenever misplaced files or mismatched prefixes are discovered.
 
 #### Business Logic
+
 - Benchmark files discovered under tests directories shall be flagged with guidance to move them to benches directories.
 - Test files discovered under benches directories shall be flagged with guidance to move them to tests directories.
 - Test files lacking registered prefix prefixes shall produce an AES103 violation listing legal prefixes.
@@ -164,46 +119,22 @@ The naming-rules feature sits in the capabilities and agent layer, called by the
 - Unclassified file paths shall report classification requirements rather than making ambiguous assumptions.
 
 #### Edge Cases
+
 - Benchmark file placed inside a tests directory produces guidance to move the file.
 - Test file placed inside a benches directory produces guidance to move the file.
 - Nested test files report the observed directory depth alongside flattening guidance.
 - Accepted support directories under test roots pass without raising misplacement violations.
 
-#### Input
+#### Technical Specification
 
-| No | Detail |
-| --- | --- |
-| 1 | `NamingRequest::RunAuditWithTestEntries` containing source and test `FileEntry` collections |
-
-#### Output
-
-| No | Detail |
-| --- | --- |
-| 1 | `NamingResponse::Audit` containing `Vec<ViolationItem>` with AES103 violation codes |
-
-#### Protocol
-
-| No | Detail |
-| --- | --- |
-| 1 | `ITestFilePrefixProtocol` |
-
-#### Method
-
-| No | Detail |
-| --- | --- |
-| 1 | `check_test_file_prefixes` |
-
-#### Event
-
-| No | Detail |
-| --- | --- |
-| 1 | `TestFilePrefixAudited` |
-
-#### Error
-
-| No | Detail |
-| --- | --- |
-| 1 | `AES103` on misplaced test file or unapproved test prefix |
+| Aspect | Detail |
+|--------|--------|
+| **Input** | `NamingRequest::RunAuditWithTestEntries` containing source and test `FileEntry` collections |
+| **Output** | `NamingResponse::Audit` containing `Vec<ViolationItem>` with AES103 violation codes |
+| **Protocol** | `ITestFilePrefixProtocol` |
+| **Method** | `check_test_file_prefixes` |
+| **Event** | `TestFilePrefixAudited` |
+| **Error** | `AES103` on misplaced test file or unapproved test prefix |
 
 #### Test
 
@@ -219,25 +150,13 @@ The naming-rules feature sits in the capabilities and agent layer, called by the
 
 ## Public Interface
 
-| Agent | Detail |
-|-------|--------|
-| 1 | NamingOrchestrator |
-
-| Aggregate | Detail |
-|-----------|--------|
-| 1 | INamingRunnerAggregate |
-
-| Method | Detail |
-|---------|--------|
-| 1 | execute |
-
-| Request | Detail |
-|----------|--------|
-| 1 | NamingRequest |
-
-| Response | Detail |
-|-----------|--------|
-| 1 | NamingResponse |
+| Aspect | Detail |
+|--------|--------|
+| Agent | NamingOrchestrator |
+| Aggregate | INamingRunnerAggregate |
+| Method | execute |
+| Request | NamingRequest |
+| Response | NamingResponse |
 
 ## Reference
 
