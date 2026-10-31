@@ -24,20 +24,35 @@ The entry point depends on the starting state. In every scenario the AGENTS.md i
 `<docpath>` is the target path for the new `AGENTS.md`. `<instruction>` describes how the agent should act. Existing source code is reference only: it may inform naming of caller-observable identifiers (tool names, command flags), but the AGENTS.md never names `.py`/`.rs`/`.ts`/`.tsx` files and never states how the current build works. Where code and instruction conflict, the instruction wins.
 
 ## 1. Determine context
-Agent config for single tool or multi-agent system.
+
+Identify the target scope: a single tool or a multi-agent system. This decides which sections carry content and which stay `None`.
 
 ## 2. Write frontmatter
-name, description, persona, tools.
 
-## 3. Write AGENTS.md
-behavior rules, guardrails, response format.
+```yaml
+trigger: always
+description: "<one-line: what this AGENTS.md governs>"
+```
+
+## 3. Write AGENTS.md body
+
+Fill each section in order, matching the Template shape:
+
+1. **Agent Overview** — one paragraph: what agents must know before generating code, docs, or suggestions.
+2. **Runtime** — `Aspect | Detail` table: Language, Environment, Artifacts, Package Manager, Version Probe, Setup, Activation.
+3. **Project Structure** — `Path | Purpose` table, one row per crate/workspace member.
+4. **Commands** — `Category | Command | Scope | CI Gate` table. Every command verbatim from the CI gate.
+5. **Reference** — `Artifact | Purpose | Link` table: README, CONTRIBUTING, ARCHITECTURE, ROADMAP, PRD.
+
+Rules: no absolute personal paths, no secrets, no code-file references, no restating other documents.
 
 ## 4. Verify
-validate with command `lint-arwaky-cli docs`.
+
+`lint-arwaky-cli docs` passes; every required section is present.
 
 ## Verify
 
 ```bash
 lint-arwaky-cli docs .
-# Checks: agents-section-missing, ci-command-drift, absolute-path, secret-in-docs, dead-link, doc-length.
+# Checks: frontmatter, H1/H2 shape, line drift vs template, crosslinks, table columns, dead-link.
 ```

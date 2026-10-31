@@ -8,7 +8,7 @@
 
 **Location:** Project root.
 
-**Length:** 50–500 lines (flat budget shared by every document type).
+**Length:** 50–500 lines.
 
 ## Rules
 
@@ -17,8 +17,6 @@
 3. **No secrets or credentials.** Never put tokens, passwords, or keys in this file.
 4. **Do not restate other documents.** Use links instead.
 5. **Mark optional sections clearly.** Do not force fake sections like pipeline diagrams just to fill a template.
-6. **Use** `main`, `.worktrees/`.
-7. **Respect the length budget.** Target 50–500 lines.
 
 ## Section Contract
 
