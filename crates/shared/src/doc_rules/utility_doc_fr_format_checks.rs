@@ -2,11 +2,11 @@
 // than one per-doc capability (FRD, PRD). Pure functions over documents and
 // context; the calling capability stamps findings with its own AES code.
 // Lives in crates/shared/src/doc_rules so the FR-format decision cannot drift
-// between the FRD and PRD capabilities.
+// between the FRD and PRD capabilities. No DocFinding construction, no
+// format! messages here.
 
 use crate::taxonomy_doc_audit_context_vo::DocAuditContext;
 use crate::taxonomy_doc_rules_constant as consts;
-use crate::taxonomy_doc_rules_request::DocFinding;
 use crate::taxonomy_doc_rules_request::DocSource;
 use crate::utility_markdown_scanner::{
     api_contract_methods, fr_id_bare_re, h3_subsections, normalize_heading, sections,
@@ -16,24 +16,90 @@ use crate::utility_protocol_counter::{
     count_fr_headings, count_protocol_traits, fr_id_heading_re, locate_kernel_srcs,
     pr_id_heading_re,
 };
-
 use std::collections::{BTreeMap, BTreeSet, HashSet};
 use std::path::PathBuf;
 
-// ─── FR-ID format ─────────────────────────────────────────────────────────
+// ─── Defect data ─────────────────────────────────────────────────────────
+
+/// A defect found by `detect_fr_id_format`.
+#[derive(Debug, Clone)]
+pub struct FrIdDefect {
+    pub line: usize,
+    pub num: String,
+    pub title: String,
+}
+
+impl FrIdDefect {
+    pub fn line(&self) -> usize {
+        self.line
+    }
+}
+
+/// A defect found by `detect_pr_id_parity`.
+#[derive(Debug, Clone)]
+pub enum PrIdParityDefect {
+    /// PR-ID declared in the PRD has no ROADMAP `Roadmap Status` entry.
+    PrMissingFromRoadmap {
+        line: usize,
+        id: String,
+    },
+    /// ROADMAP `PR-` item is not declared in the PRD.
+    RoadmapNotInPrd {
+        line: usize,
+        id: String,
+        valid: Vec<String>,
+    },
+}
+
+impl PrIdParityDefect {
+    pub fn line(&self) -> usize {
+        match self {
+            PrIdParityDefect::PrMissingFromRoadmap { line, .. } => *line,
+            PrIdParityDefect::RoadmapNotInPrd { line, .. } => *line,
+        }
+    }
+}
+
+/// A defect found by `detect_api_method_existence`.
+#[derive(Debug, Clone)]
+pub struct ApiMethodDefect {
+    pub line: usize,
+    pub subsection: String,
+    pub method: String,
+}
+
+impl ApiMethodDefect {
+    pub fn line(&self) -> usize {
+        self.line
+    }
+}
+
+/// A defect found by `detect_fr_protocol_parity`.
+#[derive(Debug, Clone)]
+pub struct ProtocolParityDefect {
+    pub line: usize,
+    pub fr_count: usize,
+    pub protocol_count: usize,
+    pub direction: String,
+}
+
+impl ProtocolParityDefect {
+    pub fn line(&self) -> usize {
+        self.line
+    }
+}
+
+// ─── FR-ID format ────────────────────────────────────────────────────────
 
 /// FR-ID must be `FR-<FEATURENAME>-NNN: <name>`. A bare `FR-NNN` (no feature
 /// prefix) is a violation; the heading itself is reported at its own line.
-/// *rule_code* is the per-document code (FRD → AES609, DATA → AES608).
-pub fn check_fr_id_format(
-    rule_code: &'static str,
-    missing_prefix_code: &'static str,
-    document: &DocSource,
-    findings: &mut Vec<DocFinding>,
-) {
+/// Returns pure defect data; the calling capability stamps with its own rule
+/// code and violation type.
+pub fn detect_fr_id_format(document: &DocSource) -> Vec<FrIdDefect> {
     let Some(re) = fr_id_bare_re() else {
-        return;
+        return Vec::new();
     };
+    let mut defects = Vec::new();
     for caps in re.captures_iter(&document.text) {
         let title = caps.get(3).map_or("", |m| m.as_str());
         let line = document.text[..caps.get(0).map_or(0, |m| m.start())]
@@ -41,20 +107,13 @@ pub fn check_fr_id_format(
             .count()
             .max(1);
         let num = caps.get(2).map_or("", |m| m.as_str());
-        findings.push(
-            DocFinding::new_with_line(
-                "",
-                line,
-                rule_code,
-                missing_prefix_code,
-                format!("line {line} heading 'FR-{num}: {title}' is missing its feature prefix"),
-            )
-            .with_reason(
-                "A requirement without its feature prefix cannot be traced back to the feature it belongs to.",
-                "Rename the heading to 'FR-<FEATURE>-NNN: <imperative name>'.",
-            ),
-        );
+        defects.push(FrIdDefect {
+            line,
+            num: num.to_string(),
+            title: title.to_string(),
+        });
     }
+    defects
 }
 
 /// Accepted FR-ID set from an FRD's `FR-<feature>-NNN:` headings.
@@ -64,7 +123,11 @@ pub fn collect_fr_id_set(frd: &str) -> Option<Vec<String>> {
         .captures_iter(frd)
         .filter_map(|caps| caps.name("id").map(|m| m.as_str().to_string()))
         .collect();
-    if ids.is_empty() { None } else { Some(ids) }
+    if ids.is_empty() {
+        None
+    } else {
+        Some(ids)
+    }
 }
 
 /// Accepted PR/FR/DS/DT ID set from a document, whichever families its
@@ -75,7 +138,11 @@ pub fn collect_any_id_set(text: &str) -> Option<Vec<String>> {
     ids.extend(collect_fr_id_set(text).unwrap_or_default());
     ids.extend(collect_ds_id_set(text).unwrap_or_default());
     ids.extend(collect_dt_id_set(text).unwrap_or_default());
-    if ids.is_empty() { None } else { Some(ids) }
+    if ids.is_empty() {
+        None
+    } else {
+        Some(ids)
+    }
 }
 
 /// Union of the accepted ID sets of up to two documents under a shared
@@ -93,7 +160,11 @@ pub fn collect_union_id_set(
     if let Some(document) = second {
         ids.extend(collect(&document.text).unwrap_or_default());
     }
-    if ids.is_empty() { None } else { Some(ids) }
+    if ids.is_empty() {
+        None
+    } else {
+        Some(ids)
+    }
 }
 
 /// `(1-based heading line, id)` for every PR-ID heading in *text*.
@@ -124,37 +195,26 @@ pub fn section_line(text: &str, title: &str) -> Option<usize> {
 
 /// PRD ↔ ROADMAP PR-ID parity. Every `PR-<PROJECT>-NNN` declared in the PRD's
 /// `Project Requirements` must have a matching ROADMAP `Roadmap Status`
-/// entry, and vice versa. The two directions fire separate violation types
-/// so a reader can tell which document drifted.
-pub fn check_pr_id_parity(
-    rule_code: &'static str,
-    pr_missing_code: &'static str,
-    roadmap_not_pr_code: &'static str,
+/// entry, and vice versa. Returns pure defect data; the calling capability
+/// stamps with its own rule code and violation types.
+pub fn detect_pr_id_parity(
     prd: &DocSource,
     roadmap: &DocSource,
-    findings: &mut Vec<DocFinding>,
-) {
+) -> Vec<PrIdParityDefect> {
+    let mut defects = Vec::new();
     let pr_ids = collect_pr_id_set(&prd.text).unwrap_or_default();
     let roadmap_ids = collect_pr_id_set(&roadmap.text).unwrap_or_default();
     let pr_set: HashSet<&str> = pr_ids.iter().map(String::as_str).collect();
     let roadmap_set: HashSet<&str> = roadmap_ids.iter().map(String::as_str).collect();
 
-    let roadmap_heading_line = section_line(&roadmap.text, "roadmap status").unwrap_or(1);
+    let roadmap_heading_line =
+        section_line(&roadmap.text, "roadmap status").unwrap_or(1);
     for id in &pr_ids {
         if !roadmap_set.contains(id.as_str()) {
-            findings.push(
-                DocFinding::new_with_line(
-                    "",
-                    roadmap_heading_line,
-                    rule_code,
-                    pr_missing_code,
-                    format!("PR-ID `{id}` declared in the PRD has no ROADMAP `Roadmap Status` entry"),
-                )
-                .with_reason(
-                    "Every PRD `PR-` item must appear in the ROADMAP so the master tracks the project's whole promise.",
-                    format!("Add a ROADMAP `Roadmap Status` entry `### {id}: <name>`."),
-                ),
-            );
+            defects.push(PrIdParityDefect::PrMissingFromRoadmap {
+                line: roadmap_heading_line,
+                id: id.clone(),
+            });
         }
     }
 
@@ -162,24 +222,14 @@ pub fn check_pr_id_parity(
         if !pr_set.contains(id.as_str()) {
             let mut valid: Vec<&str> = pr_ids.iter().map(String::as_str).collect();
             valid.sort();
-            findings.push(
-                DocFinding::new_with_line(
-                    "",
-                    line,
-                    rule_code,
-                    roadmap_not_pr_code,
-                    format!("line {line} ROADMAP item `{id}` is not declared in the PRD"),
-                )
-                .with_reason(
-                    "Every ROADMAP `PR-` item must be a PRD-declared requirement so the master does not invent promises.",
-                    format!(
-                        "Declare `{id}` in the PRD, or remove it from the ROADMAP. Valid PR-IDs: {}.",
-                        valid.join(", ")
-                    ),
-                ),
-            );
+            defects.push(PrIdParityDefect::RoadmapNotInPrd {
+                line,
+                id,
+                valid: valid.into_iter().map(|s| s.to_string()).collect(),
+            });
         }
     }
+    defects
 }
 
 // ─── Promised API method existence ────────────────────────────────────────
@@ -187,21 +237,20 @@ pub fn check_pr_id_parity(
 /// Every method the FRD promises must be declared in the code. The `Protocol
 /// API` and `Aggregate API` tables are a promise to the integrator; a row
 /// whose method no protocol/aggregate trait declares is a promise the code
-/// does not keep.
-pub fn check_api_method_existence(
-    rule_code: &'static str,
-    not_found_code: &'static str,
+/// does not keep. Returns pure defect data; the calling capability stamps
+/// with its own rule code and violation type.
+pub fn detect_api_method_existence(
     document: &DocSource,
     context: &DocAuditContext,
-    findings: &mut Vec<DocFinding>,
-) {
+) -> Vec<ApiMethodDefect> {
+    let mut defects = Vec::new();
     let Some(feature) = document
         .path
         .parent()
         .and_then(|p| p.file_name())
         .and_then(|n| n.to_str())
     else {
-        return;
+        return defects;
     };
     let module = feature.replace('-', "_");
     let mut declared = None;
@@ -212,34 +261,19 @@ pub fn check_api_method_existence(
         }
     }
     let Some(declared) = declared else {
-        return;
+        return defects;
     };
     for (subsection, method, line) in api_contract_methods(&document.text) {
         if declared.contains(&method) {
             continue;
         }
-        findings.push(
-            DocFinding::new_with_line(
-                "",
-                line,
-                rule_code,
-                not_found_code,
-                format!(
-                    "line {line} method `{method}` in the '{subsection}' table is not declared \
-                     by any protocol/aggregate trait in the feature's contract module"
-                ),
-            )
-            .with_reason(
-                "The `Protocol API` and `Aggregate API` tables are a promise to the integrator; \
-                 a row whose method no protocol/aggregate trait declares is a promise the code \
-                 does not keep.",
-                format!(
-                    "Remove `{method}` from the '{subsection}' table or create the \
-                     protocol/aggregate method."
-                ),
-            ),
-        );
+        defects.push(ApiMethodDefect {
+            line,
+            subsection: subsection.to_string(),
+            method: method.to_string(),
+        });
     }
+    defects
 }
 
 // ─── FR protocol parity (requirement count vs contract seam count) ─────────
@@ -248,15 +282,15 @@ pub fn check_api_method_existence(
 /// contract module declares protocol classes. One protocol class is one
 /// capability seam and one seam is one requirement, so the two counts must
 /// be equal. Aggregate traits are not capability seams and are excluded.
-pub fn check_fr_protocol_parity(
-    rule_code: &'static str,
-    count_mismatch_code: &'static str,
+/// Returns pure defect data; the calling capability stamps with its own rule
+/// code and violation type.
+pub fn detect_fr_protocol_parity(
     document: &DocSource,
     context: &DocAuditContext,
-    findings: &mut Vec<DocFinding>,
-) {
+) -> Vec<ProtocolParityDefect> {
+    let mut defects = Vec::new();
     let Some(fr_count) = count_fr_headings(&document.text) else {
-        return;
+        return defects;
     };
     let Some(feature) = document
         .path
@@ -264,7 +298,7 @@ pub fn check_fr_protocol_parity(
         .and_then(|p| p.file_name())
         .and_then(|n| n.to_str())
     else {
-        return;
+        return defects;
     };
     let module = feature.replace('-', "_");
     let mut protocol_count = None;
@@ -275,10 +309,10 @@ pub fn check_fr_protocol_parity(
         }
     }
     let Some(protocol_count) = protocol_count else {
-        return;
+        return defects;
     };
     if fr_count == protocol_count {
-        return;
+        return defects;
     }
     let direction = if protocol_count > fr_count {
         "the code has more protocol classes than requirements; either split the requirements \
@@ -297,28 +331,19 @@ pub fn check_fr_protocol_parity(
             l.starts_with("## ") && l.contains("Requirements")
         })
         .map_or(1, |index| index + 1);
-    findings.push(
-        DocFinding::new_with_line(
-            "",
-            line,
-            rule_code,
-            count_mismatch_code,
-            format!(
-                "line {line} FRD declares {fr_count} requirements but the feature's contract \
-                 module declares {protocol_count} protocol classes"
-            ),
-        )
-        .with_reason(
-            "One protocol class is one capability seam and one seam is one requirement, so the two counts must be equal.",
-            direction,
-        ),
-    );
+    defects.push(ProtocolParityDefect {
+        line,
+        fr_count,
+        protocol_count,
+        direction: direction.to_string(),
+    });
+    defects
 }
 
-/// BACKLOG entry H3s under `## Backlog Status`: `(token, 1-based heading
-/// line, stray ids in the entry's Next/Done/Blocked rows)` — one tuple per
-/// entry. Returns `(entries, section_line)`; `section_line` is `0` only when
-/// no `## Backlog Status` section exists.
+/// BACKLOG entry H3s under `## Backlog Status`: `(token, 1-based heading line,
+/// stray ids in the entry's Next/Done/Blocked rows)` — one tuple per entry.
+/// Returns `(entries, section_line)`; `section_line` is `0` only when no
+/// `## Backlog Status` section exists.
 pub fn parse_backlog_entries(backlog: &DocSource) -> (Vec<(String, usize, Vec<String>)>, usize) {
     let parsed = sections(&backlog.text);
     let Some(section) = parsed

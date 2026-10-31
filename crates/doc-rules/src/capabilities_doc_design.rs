@@ -10,11 +10,13 @@ use shared_doc_rules::contract_doc_protocol::IDesignDocProtocol;
 use shared_doc_rules::taxonomy_doc_audit_context_vo::DocAuditContext;
 use shared_doc_rules::taxonomy_doc_rules_constant as consts;
 use shared_doc_rules::taxonomy_doc_rules_request::{DocFinding, DocSource};
+use shared_doc_rules::taxonomy_doc_rules_violation_names::DOC_VIOLATION_NAMES;
 use shared_doc_rules::utility_doc_aspect_entry_checks::{
     detect_aspect_entry_tables, AspectEntryDefect,
 };
 use shared_doc_rules::utility_doc_common_checks::{
-    check_doc_heading, missing_link_violation_type, required_links,
+    detect_backlog_qualifier_alignment, detect_doc_heading, BacklogQualifierDefect, HeadingDefect,
+    missing_link_violation_type, required_links,
 };
 use shared_doc_rules::utility_doc_entry_regexes::ds_entry_re;
 use shared_doc_rules::utility_doc_fr_format_checks::collect_any_id_set;
@@ -63,14 +65,32 @@ impl DesignCapability {
                 Some(document),
                 Some(backlog),
             );
-            shared_doc_rules::utility_doc_common_checks::check_backlog_qualifier_alignment(
-                consts::RULE_CODE_DESIGN_DOC,
-                backlog,
-                union.as_ref(),
-                consts::DS_BACKLOG_ID_MISSING,
-                consts::DS_BACKLOG_ID_NOT_DS,
-                findings,
-            );
+            for defect in shared_doc_rules::utility_doc_common_checks::detect_backlog_qualifier_alignment(backlog, union.as_ref()) {
+                let (violation, message, reason, fix) = match &defect {
+                    BacklogQualifierDefect::TokenNotDeclared { line, token, valid } => (
+                        consts::DS_BACKLOG_ID_MISSING,
+                        format!("line {} BACKLOG token `{}` is not declared in any spec union", line, token),
+                        format!("The BACKLOG entry `{}` has no matching ID in the paired spec union.", token),
+                        format!("Declare `{}` in a spec ID (`DS-`, `PR-`, `FR-`, or `DT-` family). Valid: {}", token, valid.join(", ")),
+                    ),
+                    BacklogQualifierDefect::IdNoEntry { line, id } => (
+                        consts::BACKLOG_QUALIFIER_MISMATCH,
+                        format!("line {} declared ID `{}` has no BACKLOG entry", line, id),
+                        format!("ID `{}` is declared by a spec but has no corresponding BACKLOG entry.", id),
+                        format!("Add a BACKLOG entry for `{}`.", id),
+                    ),
+                    BacklogQualifierDefect::StrayId { line, token, id, valid } => (
+                        consts::BACKLOG_QUALIFIER_MISMATCH,
+                        format!("line {} BACKLOG entry `{}` cites undeclared id `{}`", line, token, id),
+                        format!("BACKLOG entry `{}` references id `{}` which no spec declares.", token, id),
+                        format!("Remove the stray id `{}` or declare it in a spec. Valid: {}", id, valid.join(", ")),
+                    ),
+                };
+                findings.push(
+                    DocFinding::new_with_line("", defect.line(), consts::RULE_CODE_DESIGN_DOC, violation, message)
+                        .with_reason(reason, fix),
+                );
+            }
         }
 
         // AES604 — crosslinks (PRD, BACKLOG, ROADMAP, ARCHITECTURE).
@@ -84,6 +104,7 @@ impl DesignCapability {
                 consts::DESIGN_DOC,
                 required,
                 allowed,
+                &DOC_VIOLATION_NAMES,
                 findings,
             );
         }

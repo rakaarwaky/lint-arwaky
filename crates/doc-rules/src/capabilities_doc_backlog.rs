@@ -10,6 +10,7 @@ use shared_doc_rules::contract_doc_protocol::IBacklogDocProtocol;
 use shared_doc_rules::taxonomy_doc_audit_context_vo::DocAuditContext;
 use shared_doc_rules::taxonomy_doc_rules_constant as consts;
 use shared_doc_rules::taxonomy_doc_rules_request::{DocFinding, DocSource};
+use shared_doc_rules::taxonomy_doc_rules_violation_names::DOC_VIOLATION_NAMES;
 use shared_doc_rules::utility_doc_aspect_entry_checks::{
     detect_aspect_entry_tables, AspectEntryDefect,
 };
@@ -59,15 +60,32 @@ impl BacklogCapability {
 
         // AES605 — heading structure.
         if let Some((required, allowed)) = doc_h2_contract(consts::BACKLOG_DOC) {
-            check_doc_heading(
-                consts::RULE_CODE_BACKLOG_DOC,
-                text,
-                consts::BACKLOG_DOC,
-                required,
-                allowed,
-                &DOC_VIOLATION_NAMES,
-                findings,
-            );
+            for defect in detect_doc_heading(text, consts::BACKLOG_DOC, required, allowed) {
+                let (violation, message, reason, fix) = match &defect {
+                    shared_doc_rules::utility_doc_common_checks::HeadingDefect::H1Count { line, count } => (
+                        DOC_VIOLATION_NAMES.h1_count_violation(),
+                        format!("{} opens with {} level-1 headings", consts::BACKLOG_DOC, count),
+                        format!("{} must open with exactly one H1 naming the project", consts::BACKLOG_DOC),
+                        format!("Keep exactly one `# {}` line at the top of {}", consts::BACKLOG_DOC, consts::BACKLOG_DOC),
+                    ),
+                    shared_doc_rules::utility_doc_common_checks::HeadingDefect::H2Missing { line, missing } => (
+                        DOC_VIOLATION_NAMES.h2_missing(),
+                        format!("{} has no H2 heading for {}", consts::BACKLOG_DOC, missing.join(", ")),
+                        format!("{} needs a level-2 heading for every template-required section", consts::BACKLOG_DOC),
+                        format!("Add the missing `## {}` section(s) to {}", missing.join(" `## `"), consts::BACKLOG_DOC),
+                    ),
+                    shared_doc_rules::utility_doc_common_checks::HeadingDefect::H2Unexpected { line, unexpected } => (
+                        DOC_VIOLATION_NAMES.h2_unexpected(),
+                        format!("{} carries H2 heading(s) outside the template: {}", consts::BACKLOG_DOC, unexpected.join(", ")),
+                        format!("{} must not carry H2 headings the template does not declare", consts::BACKLOG_DOC),
+                        format!("Remove or rename the unexpected heading(s): {}", unexpected.join(", ")),
+                    ),
+                };
+                findings.push(
+                    DocFinding::new_with_line("", defect.line(), consts::RULE_CODE_BACKLOG_DOC, violation, message)
+                        .with_reason(reason, fix),
+                );
+            }
         }
 
         // AES606 — entry tables under Backlog Status.
@@ -286,15 +304,56 @@ impl BacklogCapability {
         } else {
             consts::DT_BACKLOG_ID_NOT_DT
         };
-
-        shared_doc_rules::utility_doc_common_checks::check_backlog_qualifier_alignment(
-            consts::RULE_CODE_BACKLOG_DOC,
+        let defects = shared_doc_rules::utility_doc_common_checks::detect_backlog_qualifier_alignment(
             document,
             union.as_ref(),
-            missing_code,
-            not_code,
-            findings,
         );
+        for defect in defects {
+            let (violation, message, reason, fix) = match defect {
+                shared_doc_rules::utility_doc_common_checks::BacklogQualifierDefect::TokenNotDeclared {
+                    line, token, valid,
+                } => {
+                    let code = if context.is_root_document(document) {
+                        consts::PR_BACKLOG_ID_MISSING
+                    } else {
+                        consts::BACKLOG_QUALIFIER_MISMATCH
+                    };
+                    (
+                        code,
+                        format!(
+                            "line {line} BACKLOG entry `{{{token}}}` has no matching ID in the paired spec"
+                        ),
+                        "A BACKLOG entry traces to its spec through the ID".to_string(),
+                        format!("Rename the entry to an ID the spec declares: {}.", valid.join(", ")),
+                    )
+                }
+                shared_doc_rules::utility_doc_common_checks::BacklogQualifierDefect::IdNoEntry { line, id } => {
+                    let code = if context.is_root_document(document) {
+                        consts::BACKLOG_ID_NOT_PR
+                    } else {
+                        consts::DT_BACKLOG_ID_NOT_DT
+                    };
+                    (
+                        code,
+                        format!("Spec ID `{id}` has no BACKLOG entry at line {line}"),
+                        "Every declared spec ID needs a matching BACKLOG entry".to_string(),
+                        format!("Add a BACKLOG entry `{{{id}}}`"),
+                    )
+                }
+                shared_doc_rules::utility_doc_common_checks::BacklogQualifierDefect::StrayId {
+                    line, token, id, valid,
+                } => (
+                    consts::BACKLOG_QUALIFIER_MISMATCH,
+                    format!("line {line} BACKLOG entry `{{{token}}}` cites undeclared id `{id}`"),
+                    "An entry can only cite IDs the paired spec declares".to_string(),
+                    format!("Remove `{id}` or add it to the spec's declared IDs: {}.", valid.join(", ")),
+                ),
+            };
+            findings.push(
+                DocFinding::new_with_line("", defect.line(), consts::RULE_CODE_BACKLOG_DOC, violation, message)
+                    .with_reason(reason, fix),
+            );
+        }
     }
 
     /// Crosslink check: every required link target must appear as a link in

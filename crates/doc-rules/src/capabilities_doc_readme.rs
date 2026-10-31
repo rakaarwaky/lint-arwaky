@@ -1,9 +1,9 @@
 // PURPOSE: Per-doc capability for README.md — AES602
 //
 // Answers ALL invariants scoped to README.md behind IReadmeDocProtocol.
-// Crosslinks (none; placeholder table), heading structure (AES605),
-// entry-table conformance (AES606) are stamped with RULE_CODE_README_DOC
-// ("AES602"). The capability stamps the document path on every finding.
+// Heading structure and entry-table conformance are stamped with
+// RULE_CODE_README_DOC ("AES602"). The capability stamps the document
+// path on every finding.
 
 use shared_doc_rules::contract_doc_protocol::IReadmeDocProtocol;
 use shared_doc_rules::taxonomy_doc_audit_context_vo::DocAuditContext;
@@ -13,7 +13,9 @@ use shared_doc_rules::taxonomy_doc_rules_violation_names::DOC_VIOLATION_NAMES;
 use shared_doc_rules::utility_capabilities_doc_h2_checks::{
     detect_h2_table, SectionShapeDefect, SectionShapeDefectKind,
 };
-use shared_doc_rules::utility_doc_common_checks::check_doc_heading;
+use shared_doc_rules::utility_doc_common_checks::{
+    detect_doc_heading, missing_link_violation_type, required_links,
+};
 use shared_doc_rules::utility_markdown_scanner::{doc_h2_contract, sections};
 
 #[derive(Default)]
@@ -47,20 +49,37 @@ impl ReadmeCapability {
         let text = &document.text;
         let parsed = sections(text);
 
-        // AES602 — heading structure.
+        // Heading structure.
         if let Some((required, allowed)) = doc_h2_contract(consts::README_DOC) {
-            check_doc_heading(
-                consts::RULE_CODE_README_DOC,
-                text,
-                consts::README_DOC,
-                required,
-                allowed,
-                &DOC_VIOLATION_NAMES,
-                findings,
-            );
+            for defect in detect_doc_heading(text, consts::README_DOC, required, allowed) {
+                let (violation, message, reason, fix) = match &defect {
+                    shared_doc_rules::utility_doc_common_checks::HeadingDefect::H1Count { line, count } => (
+                        DOC_VIOLATION_NAMES.h1_count_violation(),
+                        format!("{} opens with {} level-1 headings", consts::README_DOC, count),
+                        format!("{} must open with exactly one H1 naming the project", consts::README_DOC),
+                        format!("Keep exactly one `# {}` line at the top of {}", consts::README_DOC, consts::README_DOC),
+                    ),
+                    shared_doc_rules::utility_doc_common_checks::HeadingDefect::H2Missing { line, missing } => (
+                        DOC_VIOLATION_NAMES.h2_missing(),
+                        format!("{} has no H2 heading for {}", consts::README_DOC, missing.join(", ")),
+                        format!("{} needs a level-2 heading for every template-required section", consts::README_DOC),
+                        format!("Add the missing `## {}` section(s) to {}", missing.join(" `## `"), consts::README_DOC),
+                    ),
+                    shared_doc_rules::utility_doc_common_checks::HeadingDefect::H2Unexpected { line, unexpected } => (
+                        DOC_VIOLATION_NAMES.h2_unexpected(),
+                        format!("{} carries H2 heading(s) outside the template: {}", consts::README_DOC, unexpected.join(", ")),
+                        format!("{} must not carry H2 headings the template does not declare", consts::README_DOC),
+                        format!("Remove or rename the unexpected heading(s): {}", unexpected.join(", ")),
+                    ),
+                };
+                findings.push(
+                    DocFinding::new_with_line("", defect.line(), consts::RULE_CODE_README_DOC, violation, message)
+                        .with_reason(reason, fix),
+                );
+            }
         }
 
-        // AES602 — Quick Start table carries the fixed columns.
+        // Quick Start table carries the fixed columns.
         if let Some(defect) = detect_h2_table(&parsed, "Quick Start", consts::README_QUICK_START_COLUMNS) {
             findings.push(Self::convert_shape_defect(defect));
         }
@@ -69,7 +88,7 @@ impl ReadmeCapability {
     fn convert_shape_defect(defect: SectionShapeDefect) -> DocFinding {
         let (violation, message, reason, fix) = match defect.kind {
             SectionShapeDefectKind::ExtraColumns => (
-                consts::TEMPLATE_CONFORMANCE_VIOLATION_TABLE_EXTRA_COLUMNS,
+                DOC_VIOLATION_NAMES.table_extra_columns(),
                 format!(
                     "line {} `{} {}` table carries column(s) outside the template: {}",
                     defect.line,
@@ -90,7 +109,7 @@ impl ReadmeCapability {
                 ),
             ),
             SectionShapeDefectKind::HeaderRepeated => (
-                consts::TEMPLATE_CONFORMANCE_VIOLATION_TABLE_HEADER_REPEATED,
+                DOC_VIOLATION_NAMES.table_header_repeated(),
                 format!(
                     "line {} `{} {}` repeats its header row as a data row",
                     defect.line, defect.marker, defect.title
@@ -107,7 +126,7 @@ impl ReadmeCapability {
                 ),
             ),
             SectionShapeDefectKind::MissingColumns => (
-                consts::TEMPLATE_CONFORMANCE_VIOLATION_TABLE_MISSING_COLUMNS,
+                DOC_VIOLATION_NAMES.table_missing_columns(),
                 format!(
                     "line {} `{} {}` must be a markdown table with columns {}",
                     defect.line,
@@ -127,7 +146,7 @@ impl ReadmeCapability {
                 ),
             ),
             SectionShapeDefectKind::NotTable => (
-                consts::TEMPLATE_CONFORMANCE_VIOLATION_SECTION_NOT_TABLE,
+                DOC_VIOLATION_NAMES.section_not_table(),
                 format!(
                     "line {} `{} {}` must be a markdown table with columns {}",
                     defect.line,

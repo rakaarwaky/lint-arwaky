@@ -1,10 +1,10 @@
 // PURPOSE: H2-level table-shape detection for AES606 template conformance.
 // Extracted from capabilities_doc_template_conformance_checker.rs to keep
 // that file under the AES301 1000-line file-size limit. Pure functions — no
-// checker state, no `DocFinding` construction: the calling capability
-// formats its own violation message, reason, and fix with its own rule
-// code. Lives in the shared utility layer so the capabilities layer can
-// consume it without importing itself (AES201).
+// checker state, no `DocFinding` construction, no violation names: the
+// calling capability formats its own violation message, reason, and fix with
+// its own rule code. Lives in the shared utility layer so the capabilities
+// layer can consume it without importing itself (AES201).
 
 use crate::taxonomy_doc_section_vo::Section;
 use crate::utility_markdown_scanner::normalize_heading;

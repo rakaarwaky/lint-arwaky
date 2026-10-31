@@ -9,15 +9,18 @@ use shared_doc_rules::contract_doc_protocol::IFrdDocProtocol;
 use shared_doc_rules::taxonomy_doc_audit_context_vo::DocAuditContext;
 use shared_doc_rules::taxonomy_doc_rules_constant as consts;
 use shared_doc_rules::taxonomy_doc_rules_request::{DocFinding, DocSource};
+use shared_doc_rules::taxonomy_doc_rules_violation_names::DOC_VIOLATION_NAMES;
 use shared_doc_rules::utility_doc_aspect_entry_checks::{
     detect_aspect_entry_tables, AspectEntryDefect,
 };
 use shared_doc_rules::utility_doc_common_checks::{
-    check_doc_heading, check_entry_tables, missing_link_violation_type, required_links,
+    detect_doc_heading, detect_entry_tables, EntryTableDefect, HeadingDefect,
+    missing_link_violation_type, required_links,
 };
 use shared_doc_rules::utility_doc_entry_regexes::fr_entry_re;
 use shared_doc_rules::utility_doc_fr_format_checks::{
-    check_api_method_existence, check_fr_id_format, check_fr_protocol_parity,
+    detect_api_method_existence, detect_fr_id_format, detect_fr_protocol_parity,
+    FrIdDefect, ProtocolParityDefect,
 };
 use shared_doc_rules::utility_markdown_scanner::{
     blank_fenced, doc_h2_contract, normalize_heading, sections, source_ext_pattern,
@@ -56,13 +59,67 @@ impl FrdCapability {
         let parsed = sections(text);
 
         // AES609 — FR-ID format (bare FR-NNN without feature prefix).
-        check_fr_id_format(consts::RULE_CODE_FR_FORMAT, consts::FR_ID_VIOLATION_MISSING_FEATURE_PREFIX, document, findings);
+        for defect in detect_fr_id_format(document) {
+            findings.push(
+                DocFinding::new_with_line(
+                    "",
+                    defect.line,
+                    consts::RULE_CODE_FR_FORMAT,
+                    consts::FR_ID_VIOLATION_MISSING_FEATURE_PREFIX,
+                    format!(
+                        "line {} `FR-{}:\ {}` is a bare FR-ID without its `FR-<FEATURE>` prefix",
+                        defect.line, defect.num, defect.title
+                    ),
+                )
+                .with_reason(
+                    "An FR-ID must carry its feature prefix so it stays unique across the doc chain.",
+                    format!(
+                        "Rename to `FR-<FEATURENAME>-{}: {}` in `## Functional Requirements`.",
+                        defect.num, defect.title
+                    ),
+                ),
+            );
+        }
 
         // AES601 — FR protocol parity (requirement count vs contract seams).
-        check_fr_protocol_parity(consts::RULE_CODE_FR_FORMAT, consts::FR_PROTOCOL_PARITY_VIOLATION_COUNT_MISMATCH, document, context, findings);
+        for defect in detect_fr_protocol_parity(document, context) {
+            findings.push(
+                DocFinding::new_with_line(
+                    "",
+                    defect.line,
+                    consts::RULE_CODE_FR_FORMAT,
+                    consts::FR_PROTOCOL_PARITY_VIOLATION_COUNT_MISMATCH,
+                    format!(
+                        "FR protocol parity: {} requirement(s) vs {} protocol class(es) — {}",
+                        defect.fr_count, defect.protocol_count, defect.direction
+                    ),
+                )
+                .with_reason(
+                    "One protocol class is one capability seam and one seam is one requirement; the two counts must match.",
+                    format!("Bring the FR count ({}) and protocol class count ({}) into alignment.", defect.fr_count, defect.protocol_count),
+                ),
+            );
+        }
 
         // AES601 — promised API method existence.
-        check_api_method_existence(consts::RULE_CODE_FR_FORMAT, consts::FR_API_METHOD_VIOLATION_NOT_FOUND, document, context, findings);
+        for defect in detect_api_method_existence(document, context) {
+            findings.push(
+                DocFinding::new_with_line(
+                    "",
+                    defect.line,
+                    consts::RULE_CODE_FR_FORMAT,
+                    consts::FR_API_METHOD_VIOLATION_NOT_FOUND,
+                    format!(
+                        "`{}` section: promised API method `{}` is not declared by any protocol/aggregate trait",
+                        defect.subsection, defect.method
+                    ),
+                )
+                .with_reason(
+                    "Every method the FRD promises must exist in the code so the contract seam the feature relies on is real.",
+                    format!("Add `{}` to a protocol or aggregate trait, or remove the promise from the FRD.", defect.method),
+                ),
+            );
+        }
 
         // AES603 — spec purity (no source file names, no implementation state).
         Self::check_spec_purity(document, findings);
@@ -72,14 +129,32 @@ impl FrdCapability {
 
         // AES605 — heading structure (exactly one H1, required H2s, no off-template H2s).
         if let Some((required, allowed)) = doc_h2_contract(consts::FRD_DOC) {
-            check_doc_heading(
-                consts::RULE_CODE_FRD_DOC,
-                text,
-                consts::FRD_DOC,
-                required,
-                allowed,
-                findings,
-            );
+            for defect in detect_doc_heading(text, consts::FRD_DOC, required, allowed) {
+                let (violation, message, reason, fix) = match &defect {
+                    HeadingDefect::H1Count { line, count } => (
+                        consts::DOC_STRUCTURE_VIOLATION_H1_COUNT,
+                        format!("{} H1 headings; template requires exactly one", count),
+                        format!("{} has {} H1 headings; the template fixes exactly one H1 at the top.", consts::FRD_DOC, count),
+                        format!("Remove the extra H1 heading(s) so {} keeps exactly one H1.", consts::FRD_DOC),
+                    ),
+                    HeadingDefect::H2Missing { line, missing } => (
+                        consts::DOC_STRUCTURE_VIOLATION_H2_MISSING,
+                        format!("missing required H2 section(s): {}", missing.join(", ")),
+                        format!("{} is missing required H2 section(s): {}", consts::FRD_DOC, missing.join(", ")),
+                        format!("Add the missing H2 section(s): {}", missing.join(", ")),
+                    ),
+                    HeadingDefect::H2Unexpected { line, unexpected } => (
+                        consts::DOC_STRUCTURE_VIOLATION_H2_UNEXPECTED,
+                        format!("unexpected H2 section(s): {}", unexpected.join(", ")),
+                        format!("{} carries H2 section(s) outside the template: {}", consts::FRD_DOC, unexpected.join(", ")),
+                        format!("Remove the off-template H2 section(s): {}", unexpected.join(", ")),
+                    ),
+                };
+                findings.push(
+                    DocFinding::new_with_line("", defect.line(), consts::RULE_CODE_FRD_DOC, violation, message)
+                        .with_reason(reason, fix),
+                );
+            }
         }
 
         // AES602 — section order follows the template.
@@ -93,14 +168,45 @@ impl FrdCapability {
 
         // AES606 — entry tables under Functional Requirements.
         if let Some(re) = fr_entry_re() {
-            findings.extend(check_entry_tables(
-                consts::RULE_CODE_FRD_DOC,
+            for defect in crate::utility_doc_common_checks::detect_entry_tables(
                 &parsed,
                 "Functional Requirements",
                 re,
                 consts::ASPECT_DETAIL_COLUMNS,
                 consts::FRD_ROW_LABELS,
-            ));
+            ) {
+                match defect {
+                    EntryTableDefect::Shape(shape) => {
+                        findings.push(Self::convert_shape_defect(shape));
+                    }
+                    EntryTableDefect::RowLabelsMismatch { line, missing, extra, .. } => {
+                        let missing_str = missing.join(", ");
+                        let extra_str = extra.join(", ");
+                        let violation = if missing.is_empty() {
+                            consts::TEMPLATE_CONFORMANCE_VIOLATION_ENTRY_MISSING_ROW
+                        } else if extra.is_empty() {
+                            consts::TEMPLATE_CONFORMANCE_VIOLATION_ENTRY_MISSING_ROW
+                        } else {
+                            consts::TEMPLATE_CONFORMANCE_VIOLATION_TABLE_MISSING_COLUMNS
+                        };
+                        findings.push(
+                            DocFinding::new_with_line(
+                                "",
+                                line,
+                                consts::RULE_CODE_FRD_DOC,
+                                violation,
+                                format!(
+                                    "entry table row labels mismatch: missing [{missing_str}] extra [{extra_str}]"
+                                ),
+                            )
+                            .with_reason(
+                                "The HOW-TO template fixes the row labels of each entry table; undeclared rows break the fixed shape.",
+                                format!("Add missing row(s) [{missing_str}] and remove extra row(s) [{extra_str}]."),
+                            ),
+                        );
+                    }
+                }
+            }
         }
 
         // AES606 — H4 aspect entry tables under Functional Requirements.

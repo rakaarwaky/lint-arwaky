@@ -10,14 +10,17 @@ use shared_doc_rules::contract_doc_protocol::IDataDocProtocol;
 use shared_doc_rules::taxonomy_doc_audit_context_vo::DocAuditContext;
 use shared_doc_rules::taxonomy_doc_rules_constant as consts;
 use shared_doc_rules::taxonomy_doc_rules_request::{DocFinding, DocSource};
+use shared_doc_rules::taxonomy_doc_rules_violation_names::DOC_VIOLATION_NAMES;
 use shared_doc_rules::utility_doc_aspect_entry_checks::{
     detect_aspect_entry_tables, AspectEntryDefect,
 };
 use shared_doc_rules::utility_doc_common_checks::{
-    check_doc_heading, missing_link_violation_type, required_links,
+    detect_doc_heading, HeadingDefect, missing_link_violation_type, required_links,
 };
 use shared_doc_rules::utility_doc_entry_regexes::dt_entry_re;
-use shared_doc_rules::utility_doc_fr_format_checks::check_fr_id_format;
+use shared_doc_rules::utility_doc_fr_format_checks::{
+    detect_fr_id_format, FrIdDefect,
+};
 use shared_doc_rules::utility_markdown_scanner::{doc_h2_contract, sections};
 
 #[derive(Default)]
@@ -52,21 +55,59 @@ impl DataCapability {
         let parsed = sections(text);
 
         // AES608 — bare-ID format (DT-<NAME>-NNN without qualified form).
-        check_fr_id_format(consts::RULE_CODE_DATA_DOC, consts::FR_ID_VIOLATION_MISSING_FEATURE_PREFIX, document, findings);
+        for defect in detect_fr_id_format(document) {
+            findings.push(
+                DocFinding::new_with_line(
+                    "",
+                    defect.line,
+                    consts::RULE_CODE_DATA_DOC,
+                    consts::FR_ID_VIOLATION_MISSING_FEATURE_PREFIX,
+                    format!(
+                        "line {} bare ID `{}: {}` without its `<FEATURE>` prefix",
+                        defect.line, defect.num, defect.title
+                    ),
+                )
+                .with_reason(
+                    "A DATA ID must carry its feature prefix so it stays unique across the doc chain.",
+                    format!(
+                        "Rename to `<FEATURENAME>-{}: {}` in `## Data Requirements`.",
+                        defect.num, defect.title
+                    ),
+                ),
+            );
+        }
 
         // AES604 — crosslinks (PRD, BACKLOG, ROADMAP, ARCHITECTURE).
         Self::check_crosslinks(document, context, consts::RULE_CODE_CROSSLINKS, findings);
 
         // AES605 — heading structure (DT-prefixed H2s allowed).
         if let Some((required, allowed)) = doc_h2_contract(consts::DATA_DOC) {
-            check_doc_heading(
-                consts::RULE_CODE_DATA_DOC,
-                text,
-                consts::DATA_DOC,
-                required,
-                allowed,
-                findings,
-            );
+            for defect in detect_doc_heading(text, consts::DATA_DOC, required, allowed) {
+                let (violation, message, reason, fix) = match &defect {
+                    HeadingDefect::H1Count { line, count } => (
+                        consts::DOC_STRUCTURE_VIOLATION_H1_COUNT,
+                        format!("{} H1 headings; template requires exactly one", count),
+                        format!("{} has {} H1 headings; the template fixes exactly one H1 at the top.", consts::DATA_DOC, count),
+                        format!("Remove the extra H1 heading(s) so {} keeps exactly one H1.", consts::DATA_DOC),
+                    ),
+                    HeadingDefect::H2Missing { line, missing } => (
+                        consts::DOC_STRUCTURE_VIOLATION_H2_MISSING,
+                        format!("missing required H2 section(s): {}", missing.join(", ")),
+                        format!("{} is missing required H2 section(s): {}", consts::DATA_DOC, missing.join(", ")),
+                        format!("Add the missing H2 section(s): {}", missing.join(", ")),
+                    ),
+                    HeadingDefect::H2Unexpected { line, unexpected } => (
+                        consts::DOC_STRUCTURE_VIOLATION_H2_UNEXPECTED,
+                        format!("unexpected H2 section(s): {}", unexpected.join(", ")),
+                        format!("{} carries H2 section(s) outside the template: {}", consts::DATA_DOC, unexpected.join(", ")),
+                        format!("Remove the off-template H2 section(s): {}", unexpected.join(", ")),
+                    ),
+                };
+                findings.push(
+                    DocFinding::new_with_line("", defect.line(), consts::RULE_CODE_DATA_DOC, violation, message)
+                        .with_reason(reason, fix),
+                );
+            }
         }
 
         // AES606 — entry tables under Data Requirements.

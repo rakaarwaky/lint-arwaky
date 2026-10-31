@@ -10,14 +10,18 @@ use shared_doc_rules::contract_doc_protocol::IRoadmapDocProtocol;
 use shared_doc_rules::taxonomy_doc_audit_context_vo::DocAuditContext;
 use shared_doc_rules::taxonomy_doc_rules_constant as consts;
 use shared_doc_rules::taxonomy_doc_rules_request::{DocFinding, DocSource};
+use shared_doc_rules::taxonomy_doc_rules_violation_names::DOC_VIOLATION_NAMES;
 use shared_doc_rules::utility_doc_aspect_entry_checks::{
     detect_aspect_entry_tables, AspectEntryDefect,
 };
 use shared_doc_rules::utility_doc_common_checks::{
-    check_doc_heading, missing_link_violation_type, required_links,
+    detect_backlog_qualifier_alignment, detect_doc_heading, missing_link_violation_type,
+    required_links,
 };
 use shared_doc_rules::utility_doc_entry_regexes::pr_entry_re;
-use shared_doc_rules::utility_doc_fr_format_checks::check_pr_id_parity;
+use shared_doc_rules::utility_doc_fr_format_checks::{
+    detect_pr_id_parity, PrIdParityDefect,
+};
 use shared_doc_rules::utility_markdown_scanner::{doc_h2_contract, sections};
 
 #[derive(Default)]
@@ -57,7 +61,26 @@ impl RoadmapCapability {
             .iter()
             .find(|d| context.document_name(d) == consts::PRD_DOC)
         {
-            check_pr_id_parity(consts::RULE_CODE_FR_FORMAT, consts::PR_ROADMAP_ID_MISSING, consts::ROADMAP_PR_ID_NOT_PR, prd, document, findings);
+            for defect in detect_pr_id_parity(prd, document) {
+                let (violation, message, reason, fix) = match &defect {
+                    PrIdParityDefect::PrMissingFromRoadmap { line, id } => (
+                        consts::PR_ROADMAP_ID_MISSING,
+                        format!("line {} PR `{}` declared in PRD has no ROADMAP `Roadmap Status` entry", line, id),
+                        format!("Add `{}` to ROADMAP's `Roadmap Status` table.", id),
+                        format!("Add `{}` under `Roadmap Status` in ROADMAP.md.", id),
+                    ),
+                    PrIdParityDefect::RoadmapNotInPrd { line, id, valid } => (
+                        consts::ROADMAP_PR_ID_NOT_PR,
+                        format!("line {} ROADMAP `PR-` item `{}` is not declared in the PRD", line, id),
+                        format!("The PRD declares `Project Requirements`; `{}` must appear there first.", id),
+                        format!("Declare `{}` in PRD's `Project Requirements`. Valid ids: {}", id, valid.join(", ")),
+                    ),
+                };
+                findings.push(
+                    DocFinding::new_with_line("", defect.line(), consts::RULE_CODE_FR_FORMAT, violation, message)
+                        .with_reason(reason, fix),
+                );
+            }
         }
 
         // AES604 — crosslinks (PRD, ARCHITECTURE).
@@ -65,14 +88,32 @@ impl RoadmapCapability {
 
         // AES605 — heading structure.
         if let Some((required, allowed)) = doc_h2_contract(consts::ROADMAP_DOC) {
-            check_doc_heading(
-                consts::RULE_CODE_ROADMAP_DOC,
-                text,
-                consts::ROADMAP_DOC,
-                required,
-                allowed,
-                findings,
-            );
+            for defect in detect_doc_heading(text, consts::ROADMAP_DOC, required, allowed) {
+                let (violation, message, reason, fix) = match &defect {
+                    HeadingDefect::H1Count { line, count } => (
+                        consts::DOC_STRUCTURE_VIOLATION_H1_COUNT,
+                        format!("{} H1 headings; template requires exactly one", count),
+                        format!("{} has {} H1 headings; the template fixes exactly one H1 at the top.", consts::ROADMAP_DOC, count),
+                        format!("Remove the extra H1 heading(s) so {} keeps exactly one H1.", consts::ROADMAP_DOC),
+                    ),
+                    HeadingDefect::H2Missing { line, missing } => (
+                        consts::DOC_STRUCTURE_VIOLATION_H2_MISSING,
+                        format!("missing required H2 section(s): {}", missing.join(", ")),
+                        format!("{} is missing required H2 section(s): {}", consts::ROADMAP_DOC, missing.join(", ")),
+                        format!("Add the missing H2 section(s): {}", missing.join(", ")),
+                    ),
+                    HeadingDefect::H2Unexpected { line, unexpected } => (
+                        consts::DOC_STRUCTURE_VIOLATION_H2_UNEXPECTED,
+                        format!("unexpected H2 section(s): {}", unexpected.join(", ")),
+                        format!("{} carries H2 section(s) outside the template: {}", consts::ROADMAP_DOC, unexpected.join(", ")),
+                        format!("Remove the off-template H2 section(s): {}", unexpected.join(", ")),
+                    ),
+                };
+                findings.push(
+                    DocFinding::new_with_line("", defect.line(), consts::RULE_CODE_ROADMAP_DOC, violation, message)
+                        .with_reason(reason, fix),
+                );
+            }
         }
 
         // AES606 — entry tables under Roadmap Status.

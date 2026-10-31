@@ -15,7 +15,7 @@ use shared_doc_rules::utility_capabilities_doc_h2_checks::{
     detect_h2_table, SectionShapeDefect, SectionShapeDefectKind,
 };
 use shared_doc_rules::utility_doc_common_checks::{
-    check_doc_heading, missing_link_violation_type, required_links,
+    detect_doc_heading, missing_link_violation_type, required_links,
 };
 use shared_doc_rules::utility_markdown_scanner::{doc_h2_contract, sections};
 
@@ -55,15 +55,32 @@ impl ContributingCapability {
 
         // AES605 — heading structure.
         if let Some((required, allowed)) = doc_h2_contract(consts::CONTRIBUTING_DOC) {
-            check_doc_heading(
-                consts::RULE_CODE_CONTRIBUTING_DOC,
-                text,
-                consts::CONTRIBUTING_DOC,
-                required,
-                allowed,
-                &DOC_VIOLATION_NAMES,
-                findings,
-            );
+            for defect in detect_doc_heading(text, consts::CONTRIBUTING_DOC, required, allowed) {
+                let (violation, message, reason, fix) = match &defect {
+                    shared_doc_rules::utility_doc_common_checks::HeadingDefect::H1Count { line, count } => (
+                        DOC_VIOLATION_NAMES.h1_count_violation(),
+                        format!("{} opens with {} level-1 headings", consts::CONTRIBUTING_DOC, count),
+                        format!("{} must open with exactly one H1 naming the project", consts::CONTRIBUTING_DOC),
+                        format!("Keep exactly one `# {}` line at the top of {}", consts::CONTRIBUTING_DOC, consts::CONTRIBUTING_DOC),
+                    ),
+                    shared_doc_rules::utility_doc_common_checks::HeadingDefect::H2Missing { line, missing } => (
+                        DOC_VIOLATION_NAMES.h2_missing(),
+                        format!("{} has no H2 heading for {}", consts::CONTRIBUTING_DOC, missing.join(", ")),
+                        format!("{} needs a level-2 heading for every template-required section", consts::CONTRIBUTING_DOC),
+                        format!("Add the missing `## {}` section(s) to {}", missing.join(" `## `"), consts::CONTRIBUTING_DOC),
+                    ),
+                    shared_doc_rules::utility_doc_common_checks::HeadingDefect::H2Unexpected { line, unexpected } => (
+                        DOC_VIOLATION_NAMES.h2_unexpected(),
+                        format!("{} carries H2 heading(s) outside the template: {}", consts::CONTRIBUTING_DOC, unexpected.join(", ")),
+                        format!("{} must not carry H2 headings the template does not declare", consts::CONTRIBUTING_DOC),
+                        format!("Remove or rename the unexpected heading(s): {}", unexpected.join(", ")),
+                    ),
+                };
+                findings.push(
+                    DocFinding::new_with_line("", defect.line(), consts::RULE_CODE_CONTRIBUTING_DOC, violation, message)
+                        .with_reason(reason, fix),
+                );
+            }
         }
 
         // AES604 — Workflow table carries fixed columns.
@@ -79,7 +96,7 @@ impl ContributingCapability {
     fn convert_shape_defect(defect: SectionShapeDefect) -> DocFinding {
         let (violation, message, reason, fix) = match defect.kind {
             SectionShapeDefectKind::ExtraColumns => (
-                consts::TEMPLATE_CONFORMANCE_VIOLATION_TABLE_EXTRA_COLUMNS,
+                DOC_VIOLATION_NAMES.table_extra_columns(),
                 format!(
                     "line {} `{} {}` table carries column(s) outside the template: {}",
                     defect.line,
@@ -100,7 +117,7 @@ impl ContributingCapability {
                 ),
             ),
             SectionShapeDefectKind::HeaderRepeated => (
-                consts::TEMPLATE_CONFORMANCE_VIOLATION_TABLE_HEADER_REPEATED,
+                DOC_VIOLATION_NAMES.table_header_repeated(),
                 format!(
                     "line {} `{} {}` repeats its header row as a data row",
                     defect.line, defect.marker, defect.title
@@ -117,7 +134,7 @@ impl ContributingCapability {
                 ),
             ),
             SectionShapeDefectKind::MissingColumns => (
-                consts::TEMPLATE_CONFORMANCE_VIOLATION_TABLE_MISSING_COLUMNS,
+                DOC_VIOLATION_NAMES.table_missing_columns(),
                 format!(
                     "line {} `{} {}` must be a markdown table with columns {}",
                     defect.line,
@@ -137,7 +154,7 @@ impl ContributingCapability {
                 ),
             ),
             SectionShapeDefectKind::NotTable => (
-                consts::TEMPLATE_CONFORMANCE_VIOLATION_SECTION_NOT_TABLE,
+                DOC_VIOLATION_NAMES.section_not_table(),
                 format!(
                     "line {} `{} {}` must be a markdown table with columns {}",
                     defect.line,

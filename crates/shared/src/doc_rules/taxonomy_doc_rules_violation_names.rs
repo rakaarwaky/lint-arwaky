@@ -129,6 +129,11 @@ impl DocViolationNames {
     pub const fn protocol_count_mismatch(self) -> &'static str {
         consts::FR_PROTOCOL_PARITY_VIOLATION_COUNT_MISMATCH
     }
+
+    /// AES606 — the shared `| Aspect | Detail |` column set.
+    pub const fn aspect_detail_columns(self) -> &'static [&'static str] {
+        consts::ASPECT_DETAIL_COLUMNS
+    }
 }
 
 /// The documented violation-name set used by every per-doc capability.
