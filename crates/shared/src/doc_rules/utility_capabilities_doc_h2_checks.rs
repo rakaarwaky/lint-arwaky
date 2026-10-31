@@ -1,110 +1,96 @@
-// PURPOSE: H2-level table-shape checks for AES606 template conformance.
+// PURPOSE: H2-level table-shape detection for AES606 template conformance.
 // Extracted from capabilities_doc_template_conformance_checker.rs to keep
 // that file under the AES301 1000-line file-size limit. Pure functions — no
-// checker state — so they can be unit-tested independently. Lives in the
-// shared utility layer so the capabilities layer can consume it without
-// importing itself (AES201).
+// checker state, no `DocFinding` construction: the calling capability
+// formats its own violation message, reason, and fix with its own rule
+// code. Lives in the shared utility layer so the capabilities layer can
+// consume it without importing itself (AES201).
 
-use crate::taxonomy_doc_rules_constant as consts;
-use crate::taxonomy_doc_rules_request::DocFinding;
-use crate::taxonomy_doc_rules_violation_names::DocViolationNames;
 use crate::taxonomy_doc_section_vo::Section;
 use crate::utility_markdown_scanner::normalize_heading;
+use std::collections::HashSet;
+
+/// Why a section's table shape failed.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SectionShapeDefectKind {
+    /// Table ships columns outside the template's fixed header set.
+    ExtraColumns,
+    /// A data row repeats the header row.
+    HeaderRepeated,
+    /// Table is present but missing required column(s).
+    MissingColumns,
+    /// The section body carries no table at all.
+    NotTable,
+}
+
+/// A detected table-shape defect in a section.
+#[derive(Debug, Clone)]
+pub struct SectionShapeDefect {
+    pub line: usize,
+    pub marker: &'static str,
+    pub title: String,
+    pub columns: Vec<String>,
+    pub kind: SectionShapeDefectKind,
+    pub extra_columns: Vec<String>,
+}
+
+/// A detected fixed-row defect in an H2-level `| Aspect | Detail |` table.
+#[derive(Debug, Clone)]
+pub struct H2FixedRowsDefect {
+    pub line: usize,
+    pub title: String,
+    pub missing: Vec<String>,
+    pub extra: Vec<String>,
+}
 
 /// H2-level: the section titled *title* must carry a table whose header
-/// covers *columns*. Finding (if any) anchors to the H2 line.
-pub fn check_h2_table(
-    rule_code: &'static str,
+/// covers *columns*. Returns the defect (if any) anchored to the H2 line.
+pub fn detect_h2_table(
     parsed: &[Section],
     title: &str,
     columns: &[&str],
-    names: &DocViolationNames,
-) -> Vec<DocFinding> {
-    check_section_shape(rule_code, parsed, title, columns, None, names)
-        .into_iter()
-        .collect()
+) -> Option<SectionShapeDefect> {
+    detect_section_shape(parsed, title, columns, None)
 }
 
 /// H2-level fixed-row check: the section titled *title* must carry an
 /// `| Aspect | Detail |` table whose first-column row labels equal
-/// *row_labels*. Finding anchors to the H2 line.
-pub fn check_h2_fixed_rows(
-    rule_code: &'static str,
+/// *row_labels*. Returns the defect (if any) anchored to the H2 line.
+pub fn detect_h2_fixed_rows(
     parsed: &[Section],
     title: &str,
     row_labels: &[&str],
-    names: &DocViolationNames,
-) -> Vec<DocFinding> {
-    let mut findings = Vec::new();
+) -> Option<H2FixedRowsDefect> {
     let Some(section) = parsed
         .iter()
         .find(|s| s.level == 2 && normalize_heading(&s.title) == normalize_heading(title))
     else {
-        return findings;
+        return None;
     };
-    // Shape discrimination (section_not_table / table_missing_columns) is
-    // shared with the entry checks; only the fixed-row comparison is
-    // specific to this H2-level check.
-    if let Some(finding) = check_section_shape(
-        rule_code,
-        parsed,
-        title,
-        consts::ASPECT_DETAIL_COLUMNS,
-        None,
-        names,
-    ) {
-        findings.push(finding);
-        return findings;
-    }
     let values = first_column_values(&section.body);
     let (missing, extra) = row_label_diff(row_labels, &values);
     if !missing.is_empty() || !extra.is_empty() {
-        findings.push(
-            DocFinding::new_with_line(
-                "",
-                section.line,
-                rule_code,
-                names.entry_missing_row(),
-                format!(
-                    "line {} `## {}` table row labels do not match the template; missing {}, extra {}",
-                    section.line,
-                    section.title,
-                    missing.join(", "),
-                    extra.join(", ")
-                ),
-            )
-            .with_reason(
-                format!(
-                    "The `{}` section must carry the fixed row labels {} so the table is complete.",
-                    title,
-                    row_labels.join(", ")
-                ),
-                format!(
-                    "Add the missing row(s) {} and remove the extra row(s) {} from the `## {}` table.",
-                    missing.join(", "),
-                    extra.join(", "),
-                    title
-                ),
-            ),
-        );
+        return Some(H2FixedRowsDefect {
+            line: section.line,
+            title: section.title.clone(),
+            missing: missing.into_iter().map(String::from).collect(),
+            extra,
+        });
     }
-    findings
+    None
 }
 
 /// Find the H2 section titled *title* (or use *h3* when given), check that
 /// its body carries a table with every column in *columns*, and return the
-/// finding when the shape is wrong. Returns `None` when the section is
-/// absent (a missing H2 is AES605's question, not this rule's) or when the
-/// shape conforms. When *h3* is `Some`, the check anchors to that H3; the
-/// existing H2-level calls pass `None` and keep their H2 anchor.
-pub fn check_section_shape(
-    rule_code: &'static str,
+/// defect when the shape is wrong. Returns `None` when the section is
+/// absent or when the shape conforms. When *h3* is `Some`, the check anchors
+/// to that H3; H2-level calls pass `None`.
+pub fn detect_section_shape(
     parsed: &[Section],
     title: &str,
     columns: &[&str],
     h3: Option<&Section>,
-    names: &DocViolationNames,
-) -> Option<DocFinding> {
+) -> Option<SectionShapeDefect> {
     let section = match h3 {
         Some(h3) => h3,
         None => parsed
@@ -112,117 +98,60 @@ pub fn check_section_shape(
             .find(|s| s.level == 2 && normalize_heading(&s.title) == normalize_heading(title))?,
     };
     let body = &section.body;
+    let marker = if section.level == 2 { "##" } else { "###" };
+    let cols_owned: Vec<String> = columns.iter().map(|&s| s.to_string()).collect();
+
     if has_any_table(body) {
         // Exact-header rule: the template fixes the header set, so a cell
         // outside it is an extra column a reader cannot map to a template
         // column.
         if let Some(extras) = header_extra_columns(body, columns) {
-            let marker = if section.level == 2 { "##" } else { "###" };
-            return Some(
-                DocFinding::new_with_line(
-                    "",
-                    section.line,
-                    rule_code,
-                    names.table_extra_columns(),
-                    format!(
-                        "line {} `{marker} {}` table carries column(s) outside the template: {}",
-                        section.line,
-                        section.title,
-                        extras.join(", ")
-                    ),
-                )
-                .with_reason(
-                    format!(
-                        "The HOW-TO template fixes the header of `{}` to exactly {}; an undeclared column breaks the fixed shape.",
-                        section.title,
-                        columns.join(" | ")
-                    ),
-                    format!(
-                        "Remove the extra column(s) ({}) from `{marker} {}` or fold the data into an existing column.",
-                        extras.join(", "),
-                        section.title,
-                    ),
-                ),
-            );
+            return Some(SectionShapeDefect {
+                line: section.line,
+                marker,
+                title: section.title.clone(),
+                columns: cols_owned,
+                kind: SectionShapeDefectKind::ExtraColumns,
+                extra_columns: extras,
+            });
         }
         // Right columns, but a data row copying the header means the
         // table ships placeholders where the template expects values.
         if table_repeats_header_row(body) {
-            let marker = if section.level == 2 { "##" } else { "###" };
-            return Some(
-                DocFinding::new_with_line(
-                    "",
-                    section.line,
-                    rule_code,
-                    names.table_header_repeated(),
-                    format!(
-                        "line {} `{marker} {}` repeats its header row as a data row",
-                        section.line, section.title
-                    ),
-                )
-                .with_reason(
-                    format!(
-                        "The HOW-TO template mandates one header row under `{}`; repeating it in a data-row position ships the column names where filled values belong.",
-                        section.title
-                    ),
-                    format!(
-                        "Replace the duplicated `| {} |` row under `{marker} {}` with real values, or delete it if no values exist yet.",
-                        columns.join(" | "),
-                        section.title
-                    ),
-                ),
-            );
+            return Some(SectionShapeDefect {
+                line: section.line,
+                marker,
+                title: section.title.clone(),
+                columns: cols_owned,
+                kind: SectionShapeDefectKind::HeaderRepeated,
+                extra_columns: Vec::new(),
+            });
         }
         return None;
     }
     // The section is present but wrong-shaped. Distinguish "no table at all"
     // from "table missing columns" so the fix message can be specific: a
-    // markdown table separator line (`| --- |`) is what turns a header row
-    // into a parseable table.
-    let violation = if has_any_table(body) {
-        names.table_missing_columns()
+    // markdown table separator line (`| --- |`) turns a header row into a
+    // parseable table.
+    let kind = if has_any_table(body) {
+        SectionShapeDefectKind::MissingColumns
     } else {
-        names.section_not_table()
+        SectionShapeDefectKind::NotTable
     };
-    let marker = if section.level == 2 { "##" } else { "###" };
-    Some(
-        DocFinding::new_with_line(
-            "",
-            section.line,
-            rule_code,
-            violation,
-            format!(
-                "line {} `{marker} {}` must be a markdown table with columns {}",
-                section.line,
-                section.title,
-                columns.join(" | ")
-            ),
-        )
-        .with_reason(
-            format!(
-                "The HOW-TO template mandates `{}` under this section; a body carrying bullets, prose, or a table missing required columns is not a report a reader can verify.",
-                section.title
-            ),
-            format!(
-                "Replace the body of `{marker} {}` with a table carrying columns {}.",
-                section.title,
-                columns.join(" | ")
-            ),
-        ),
-    )
+    Some(SectionShapeDefect {
+        line: section.line,
+        marker,
+        title: section.title.clone(),
+        columns: cols_owned,
+        kind,
+        extra_columns: Vec::new(),
+    })
 }
 
 // ─── Pure markdown-table scanner helpers (inlined; AES201 forbids utility→utility) ───
 
-// PURPOSE: Pure markdown-table scanner helpers for AES606 template
-// conformance. No document-model logic — only `|`-line parsing.
-// Lives in the shared utility layer so the capabilities layer can consume it
-// without importing itself (AES201).
-
-use std::collections::HashSet;
-
 /// The body carries a markdown table: a `|`-prefixed header row followed by a
-/// table separator row. Header rows alone are not tables in markdown.
+/// table separator row.
 pub fn has_any_table(body: &str) -> bool {
     let lines = body.lines().collect::<Vec<_>>();
     lines.iter().enumerate().any(|(i, line)| {
@@ -328,7 +257,6 @@ pub fn first_column_values(body: &str) -> HashSet<String> {
             header_seen = true;
             continue;
         }
-        // Separator row: every cell is dashes, colons, or whitespace.
         if cells
             .iter()
             .all(|c| c.chars().all(|c| c == '-' || c == ':' || c.is_whitespace()))

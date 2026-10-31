@@ -7,6 +7,7 @@
 use crate::taxonomy_doc_audit_context_vo::{DocAuditContext, MemberRole};
 use crate::taxonomy_doc_rules_constant as consts;
 use crate::taxonomy_doc_rules_request::{DocFinding, DocSource};
+use crate::taxonomy_doc_rules_violation_names::DocViolationNames;
 use crate::taxonomy_doc_section_vo::Section;
 use crate::utility_capabilities_doc_h2_checks::{first_column_values, row_label_diff};
 use crate::utility_doc_entry_regexes::fr_entry_re;
@@ -39,6 +40,7 @@ pub fn check_entry_tables(
     entry_re: &regex::Regex,
     columns: &[&str],
     row_labels: &[&str],
+    names: &DocViolationNames,
 ) -> Vec<DocFinding> {
     let mut findings = Vec::new();
     let Some(parent) = parsed
@@ -64,7 +66,7 @@ pub fn check_entry_tables(
             &h3.title,
             columns,
             Some(&h3),
-            &crate::taxonomy_doc_rules_violation_names::DocViolationNames,
+            names,
         ) {
             findings.push(finding);
             continue;
@@ -79,7 +81,7 @@ pub fn check_entry_tables(
                         "",
                         h3.line,
                         rule_code,
-                        consts::TEMPLATE_CONFORMANCE_VIOLATION_ENTRY_MISSING_ROW,
+                        names.entry_missing_row(),
                         format!(
                             "line {} `### {}` entry table row labels do not match the template; missing {}, extra {}",
                             h3.line,
@@ -539,6 +541,7 @@ pub fn check_doc_heading(
     name: &str,
     required: &[&str],
     allowed: &[&str],
+    names: &DocViolationNames,
     findings: &mut Vec<DocFinding>,
 ) {
     let Some(re) = crate::utility_markdown_scanner::heading_re() else {
@@ -556,7 +559,7 @@ pub fn check_doc_heading(
                 "",
                 0,
                 rule_code,
-                consts::DOC_STRUCTURE_VIOLATION_H1_COUNT,
+                names.h1_count_violation(),
                 format!("{name} opens with {h1_count} level-1 headings"),
             )
             .with_reason(
@@ -585,7 +588,7 @@ pub fn check_doc_heading(
                 "",
                 0,
                 rule_code,
-                consts::DOC_STRUCTURE_VIOLATION_H2_MISSING,
+                names.h2_missing(),
                 format!("{name} has no H2 heading for {}", missing.join(", ")),
             )
             .with_reason(
@@ -613,7 +616,7 @@ pub fn check_doc_heading(
                 "",
                 0,
                 rule_code,
-                consts::DOC_STRUCTURE_VIOLATION_H2_UNEXPECTED,
+                names.h2_unexpected(),
                 format!(
                     "{name} carries H2 heading(s) outside the template: {}",
                     unexpected_h2.join(", ")
@@ -635,6 +638,7 @@ pub fn check_agents_line_drift(
     rule_code: &'static str,
     text: &str,
     template: &[&str],
+    names: &DocViolationNames,
     findings: &mut Vec<DocFinding>,
     doc_name: &str,
 ) {
@@ -646,7 +650,7 @@ pub fn check_agents_line_drift(
                 doc_name,
                 1,
                 rule_code,
-                consts::DOC_STRUCTURE_VIOLATION_FRONTMATTER_MISSING,
+                names.frontmatter_missing(),
                 "AGENTS.md must have YAML frontmatter (---) at the start".to_string(),
             )
             .with_reason(
@@ -672,7 +676,7 @@ pub fn check_agents_line_drift(
                     doc_name,
                     0,
                     rule_code,
-                    consts::DOC_STRUCTURE_VIOLATION_LINE_DRIFT,
+                    names.line_drift(),
                     format!(
                         "AGENTS.md has the section `## {name}`, which the template does not declare"
                     ),
@@ -691,7 +695,7 @@ pub fn check_agents_line_drift(
                     doc_name,
                     0,
                     rule_code,
-                    consts::DOC_STRUCTURE_VIOLATION_LINE_DRIFT,
+                    names.line_drift(),
                     format!("AGENTS.md is missing the template section `## {name}`, or renamed it"),
                 )
                 .with_reason(
@@ -724,7 +728,7 @@ pub fn check_agents_line_drift(
                             doc_name,
                             0,
                             rule_code,
-                            consts::DOC_STRUCTURE_VIOLATION_LINE_DRIFT,
+                            names.line_drift(),
                             format!(
                                 "AGENTS.md section `{name}` does not match the template: expected the line '{want}' (or a {{...}} placeholder), but found '{offending}'"
                             ),
@@ -745,7 +749,7 @@ pub fn check_agents_line_drift(
                 doc_name,
                 0,
                 rule_code,
-                consts::DOC_STRUCTURE_VIOLATION_LINE_DRIFT,
+                names.line_drift(),
                 "AGENTS.md must open with a level-1 heading naming the project".to_string(),
             )
             .with_reason(
@@ -765,7 +769,7 @@ pub fn check_agents_line_drift(
                     doc_name,
                     0,
                     rule_code,
-                    consts::DOC_STRUCTURE_VIOLATION_LINE_DRIFT,
+                    names.line_drift(),
                     "AGENTS.md H1 has no title".to_string(),
                 )
                 .with_reason(

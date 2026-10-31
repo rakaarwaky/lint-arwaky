@@ -130,3 +130,6 @@ impl DocViolationNames {
         consts::FR_PROTOCOL_PARITY_VIOLATION_COUNT_MISMATCH
     }
 }
+
+/// The documented violation-name set used by every per-doc capability.
+pub const DOC_VIOLATION_NAMES: DocViolationNames = DocViolationNames;

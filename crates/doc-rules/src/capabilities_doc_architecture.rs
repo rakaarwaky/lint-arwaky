@@ -10,6 +10,7 @@ use shared_doc_rules::taxonomy_doc_audit_context_vo::DocAuditContext;
 use shared_doc_rules::taxonomy_doc_rules_constant as consts;
 use shared_doc_rules::taxonomy_doc_rules_request::{DocFinding, DocSource};
 use shared_doc_rules::utility_doc_common_checks::check_doc_heading;
+use shared_doc_rules::taxonomy_doc_rules_violation_names::DOC_VIOLATION_NAMES;
 use shared_doc_rules::utility_markdown_scanner::{doc_h2_contract, sections};
 
 #[derive(Default)]
@@ -51,6 +52,7 @@ impl ArchitectureCapability {
                 consts::ARCHITECTURE_DOC,
                 required,
                 allowed,
+                &DOC_VIOLATION_NAMES,
                 findings,
             );
         }

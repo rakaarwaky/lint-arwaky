@@ -9,7 +9,11 @@ use shared_doc_rules::contract_doc_protocol::IAgentsDocProtocol;
 use shared_doc_rules::taxonomy_doc_audit_context_vo::DocAuditContext;
 use shared_doc_rules::taxonomy_doc_rules_constant as consts;
 use shared_doc_rules::taxonomy_doc_rules_request::{DocFinding, DocSource};
-use shared_doc_rules::utility_capabilities_doc_h2_checks::{check_h2_fixed_rows, check_h2_table};
+use shared_doc_rules::taxonomy_doc_rules_violation_names::DOC_VIOLATION_NAMES;
+use shared_doc_rules::utility_capabilities_doc_h2_checks::{
+    detect_h2_fixed_rows, detect_h2_table, H2FixedRowsDefect, SectionShapeDefect,
+    SectionShapeDefectKind,
+};
 use shared_doc_rules::utility_doc_common_checks::{
     check_agents_line_drift, check_doc_heading, missing_link_violation_type, required_links,
 };
@@ -105,6 +109,7 @@ impl AgentsCapability {
             consts::RULE_CODE_AGENTS_DOC,
             text,
             &AGENTS_TEMPLATE.lines().collect::<Vec<&str>>(),
+            &DOC_VIOLATION_NAMES,
             findings,
             consts::AGENTS_DOC,
         );
@@ -120,27 +125,134 @@ impl AgentsCapability {
                 consts::AGENTS_DOC,
                 required,
                 allowed,
+                &DOC_VIOLATION_NAMES,
                 findings,
             );
         }
 
         // AES601 — Runtime table carries the fixed row labels.
-        findings.extend(check_h2_fixed_rows(
-            consts::RULE_CODE_AGENTS_DOC,
-            &parsed,
-            "Runtime",
-            consts::AGENTS_RUNTIME_ROW_LABELS,
-            &shared_doc_rules::taxonomy_doc_rules_violation_names::DocViolationNames,
-        ));
+        if let Some(defect) = detect_h2_fixed_rows(&parsed, "Runtime", consts::AGENTS_RUNTIME_ROW_LABELS) {
+            findings.push(Self::convert_fixed_rows_defect(defect, consts::AGENTS_RUNTIME_ROW_LABELS));
+        }
 
         // AES601 — Commands table carries the fixed columns.
-        findings.extend(check_h2_table(
+        if let Some(defect) = detect_h2_table(&parsed, "Commands", consts::AGENTS_COMMAND_COLUMNS) {
+            findings.push(Self::convert_shape_defect(defect));
+        }
+    }
+
+    fn convert_shape_defect(defect: SectionShapeDefect) -> DocFinding {
+        let (violation, message, reason, fix) = match defect.kind {
+            SectionShapeDefectKind::ExtraColumns => (
+                consts::TEMPLATE_CONFORMANCE_VIOLATION_TABLE_EXTRA_COLUMNS,
+                format!(
+                    "line {} `{} {}` table carries column(s) outside the template: {}",
+                    defect.line,
+                    defect.marker,
+                    defect.title,
+                    defect.extra_columns.join(", ")
+                ),
+                format!(
+                    "The HOW-TO template fixes the header of `{}` to exactly {}; an undeclared column breaks the fixed shape.",
+                    defect.title,
+                    defect.columns.join(" | ")
+                ),
+                format!(
+                    "Remove the extra column(s) ({}) from `{} {}` or fold the data into an existing column.",
+                    defect.extra_columns.join(", "),
+                    defect.marker,
+                    defect.title,
+                ),
+            ),
+            SectionShapeDefectKind::HeaderRepeated => (
+                consts::TEMPLATE_CONFORMANCE_VIOLATION_TABLE_HEADER_REPEATED,
+                format!(
+                    "line {} `{} {}` repeats its header row as a data row",
+                    defect.line, defect.marker, defect.title
+                ),
+                format!(
+                    "The HOW-TO template mandates one header row under `{}`; repeating it in a data-row position ships the column names where filled values belong.",
+                    defect.title
+                ),
+                format!(
+                    "Replace the duplicated `| {} |` row under `{} {}` with real values, or delete it if no values exist yet.",
+                    defect.columns.join(" | "),
+                    defect.marker,
+                    defect.title
+                ),
+            ),
+            SectionShapeDefectKind::MissingColumns => (
+                consts::TEMPLATE_CONFORMANCE_VIOLATION_TABLE_MISSING_COLUMNS,
+                format!(
+                    "line {} `{} {}` must be a markdown table with columns {}",
+                    defect.line,
+                    defect.marker,
+                    defect.title,
+                    defect.columns.join(" | ")
+                ),
+                format!(
+                    "The HOW-TO template mandates `{}` under this section; a body carrying bullets, prose, or a table missing required columns is not a report a reader can verify.",
+                    defect.title
+                ),
+                format!(
+                    "Replace the body of `{} {}` with a table carrying columns {}.",
+                    defect.marker,
+                    defect.title,
+                    defect.columns.join(" | ")
+                ),
+            ),
+            SectionShapeDefectKind::NotTable => (
+                consts::TEMPLATE_CONFORMANCE_VIOLATION_SECTION_NOT_TABLE,
+                format!(
+                    "line {} `{} {}` must be a markdown table with columns {}",
+                    defect.line,
+                    defect.marker,
+                    defect.title,
+                    defect.columns.join(" | ")
+                ),
+                format!(
+                    "The HOW-TO template mandates `{}` under this section; a body carrying bullets, prose, or a table missing required columns is not a report a reader can verify.",
+                    defect.title
+                ),
+                format!(
+                    "Replace the body of `{} {}` with a table carrying columns {}.",
+                    defect.marker,
+                    defect.title,
+                    defect.columns.join(" | ")
+                ),
+            ),
+        };
+        DocFinding::new_with_line("", defect.line, consts::RULE_CODE_AGENTS_DOC, violation, message)
+            .with_reason(reason, fix)
+    }
+
+    fn convert_fixed_rows_defect(defect: H2FixedRowsDefect, row_labels: &[&str]) -> DocFinding {
+        DocFinding::new_with_line(
+            "",
+            defect.line,
             consts::RULE_CODE_AGENTS_DOC,
-            &parsed,
-            "Commands",
-            consts::AGENTS_COMMAND_COLUMNS,
-            &shared_doc_rules::taxonomy_doc_rules_violation_names::DocViolationNames,
-        ));
+            consts::TEMPLATE_CONFORMANCE_VIOLATION_ENTRY_MISSING_ROW,
+            format!(
+                "line {} `## {}` table row labels do not match the template; missing {}, extra {}",
+                defect.line,
+                defect.title,
+                defect.missing.join(", "),
+                defect.extra.join(", ")
+            ),
+        )
+        .with_reason(
+            format!(
+                "The `{}` section must carry the fixed row labels {} so the table is complete.",
+                defect.title,
+                row_labels.join(", ")
+            ),
+            format!(
+                "Add the missing row(s) {} and remove the extra row(s) {} from the `## {}` table.",
+                defect.missing.join(", "),
+                defect.extra.join(", "),
+                defect.title
+            ),
+        )
     }
 
     /// Crosslink check: every required link target must appear as a link in

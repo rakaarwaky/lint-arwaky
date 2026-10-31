@@ -65,6 +65,7 @@ impl BacklogCapability {
                 consts::BACKLOG_DOC,
                 required,
                 allowed,
+                &DOC_VIOLATION_NAMES,
                 findings,
             );
         }
