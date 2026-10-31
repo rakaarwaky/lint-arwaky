@@ -734,13 +734,25 @@ pub fn detect_doc_line_drift(text: &str, template: &[&str]) -> Vec<LineDriftDefe
         let want_strict: Vec<&str> = want_lines
             .iter()
             .enumerate()
-            .filter(|(idx, l)| !l.trim().is_empty() && !want_placeholders.contains(idx))
+            .filter(|(idx, l)| {
+                let t = l.trim();
+                !t.is_empty() && !want_placeholders.contains(idx) && !is_table_row(t)
+            })
             .map(|(_, l)| *l)
+            .collect();
+        let have_norm: Vec<String> = have_lines
+            .iter()
+            .filter(|l| !is_table_row(l.trim()))
+            .map(|l| normalize_line(l))
             .collect();
         let mut cursor = 0usize;
         for want in want_strict {
-            let start = cursor.min(have_lines.len());
-            match have_lines[start..].iter().position(|have| *have == want) {
+            let start = cursor.min(have_norm.len());
+            let want_norm = normalize_line(want);
+            match have_norm[start..]
+                .iter()
+                .position(|have| *have == want_norm)
+            {
                 Some(offset) => cursor = start + offset + 1,
                 None => {
                     let offending = have_lines
@@ -805,15 +817,31 @@ fn split_sections<'a>(lines: &'a [&'a str]) -> Vec<(String, Vec<&'a str>)> {
     sections_out
 }
 
-/// Every line that belongs to a `{...}` slot, including slots that wrap across
-/// physical lines.
+/// Collapse runs of internal whitespace to a single space and trim, so the
+/// line-drift check matches template lines to document lines regardless of
+/// table-cell padding.
+fn normalize_line(line: &str) -> String {
+    let trimmed = line.trim();
+    trimmed.split_whitespace().collect::<Vec<_>>().join(" ")
+}
+
+/// A markdown table row or its `|---|` separator. Line-drift skips these:
+/// cell content and dash counts vary between template and doc.
+fn is_table_row(line: &str) -> bool {
+    line.starts_with('|')
+}
+
+/// Every line that belongs to a placeholder slot, including slots that wrap
+/// across physical lines. A slot is either a `{...}` brace slot or a `<...>`
+/// angle slot (the templates use both conventions).
 fn placeholder_lines(lines: &[&str]) -> HashSet<usize> {
     let mut inside = HashSet::new();
     let mut depth = 0usize;
     for (idx, line) in lines.iter().enumerate() {
         let opens = line.matches('{').count();
         let closes = line.matches('}').count();
-        if opens > closes {
+        let has_angle_slot = has_angle_placeholder(line);
+        if has_angle_slot || opens > closes {
             inside.insert(idx);
             depth += opens - closes;
         } else if depth > 0 {
@@ -823,7 +851,19 @@ fn placeholder_lines(lines: &[&str]) -> HashSet<usize> {
         } else if closes > opens || (opens > 0 && closes > 0) {
             inside.insert(idx);
         }
-        if depth == 0 {}
     }
     inside
+}
+
+/// A line carries an inline `<placeholder>` angle slot.
+///
+/// Code spans are exempt: a `<` inside a `` `code` `` span is content, not a
+/// slot. Bold labels like `**Description:** <fill this in>` still carry a
+/// slot on the same line, so `**` does not exempt.
+fn has_angle_placeholder(line: &str) -> bool {
+    let in_code = line.contains('`');
+    if in_code {
+        return false;
+    }
+    line.contains('<') && line.contains('>')
 }

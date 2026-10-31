@@ -378,7 +378,7 @@ Group 6 (Document Invariants) and Group 7 (Folder Structure) findings carry a `v
 
 ## 13. Rule Inventory Overview
 
-38 rules across 7 groups. 
+41 rules across 7 groups. 
 
 ### Group Coverage and Counts
 
@@ -390,9 +390,9 @@ Group 6 (Document Invariants) and Group 7 (Folder Structure) findings carry a `v
 | 3 Quality   | AES301–AES305 | 5     | check/scan, `quality` |
 | 4 Role      | AES401–AES406 | 6     | check/scan, `role`    |
 | 5 Orphan    | AES501–AES506 | 6     | check/scan, `orphan`  |
-| 6 Doc       | AES601–AES607 | 7     | check/scan, `docs`    |
+| 6 Doc       | AES601–AES610 | 10    | check/scan, `docs`    |
 | 7 Structure | AES701–AES706 | 6     | check/scan            |
-| Total       | AES101–AES706 | 38    | —                     |
+| Total       | AES101–AES706 | 41    | —                     |
 
 
 ### Rule inventory
@@ -425,13 +425,16 @@ Group 6 (Document Invariants) and Group 7 (Folder Structure) findings carry a `v
 | AES504 | Orphan    | Utility Orphan           | MEDIUM          | check/scan, orphan  |
 | AES505 | Orphan    | Agent Orphan             | HIGH            | check/scan, orphan  |
 | AES506 | Orphan    | Surface Orphan           | HIGH/MEDIUM/LOW | check/scan, orphan  |
-| AES601 | Doc       | FR Format                | HIGH            | check/scan, docs    |
-| AES602 | Doc       | Section Structure        | HIGH            | check/scan, docs    |
-| AES603 | Doc       | Spec Purity              | HIGH            | check/scan, docs    |
-| AES604 | Doc       | Crosslinks               | HIGH            | check/scan, docs    |
-| AES605 | Doc       | Doc Heading Structure    | HIGH            | check/scan, docs    |
-| AES606 | Doc       | Doc Template Conformance | HIGH            | check/scan, docs    |
-| AES607 | Doc       | PR Folder Ownership      | HIGH            | check/scan, docs    |
+| AES601 | Doc       | AGENTS Document          | HIGH            | check/scan, docs    |
+| AES602 | Doc       | README Document          | HIGH            | check/scan, docs    |
+| AES603 | Doc       | ARCHITECTURE Document    | HIGH            | check/scan, docs    |
+| AES604 | Doc       | CONTRIBUTING Document    | HIGH            | check/scan, docs    |
+| AES605 | Doc       | PRD Document             | HIGH            | check/scan, docs    |
+| AES606 | Doc       | ROADMAP Document         | HIGH            | check/scan, docs    |
+| AES607 | Doc       | BACKLOG Document         | HIGH            | check/scan, docs    |
+| AES608 | Doc       | DATA Document            | HIGH            | check/scan, docs    |
+| AES609 | Doc       | FRD Document             | HIGH            | check/scan, docs    |
+| AES610 | Doc       | DESIGN Document          | HIGH            | check/scan, docs    |
 | AES701 | Structure | Shared Folder Purity     | MEDIUM          | check/scan          |
 | AES702 | Structure | Feature Folder Health    | MEDIUM          | check/scan          |
 | AES703 | Structure | Surface Folder Purity    | MEDIUM          | check/scan          |

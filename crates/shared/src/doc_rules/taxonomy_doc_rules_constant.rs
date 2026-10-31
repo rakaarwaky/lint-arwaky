@@ -427,7 +427,11 @@ mod tests {
             README_TEMPLATE_LINES,
             ROADMAP_TEMPLATE_LINES,
         ];
-        assert_eq!(all.len(), 10, "ten doc types, one template-lines constant each");
+        assert_eq!(
+            all.len(),
+            10,
+            "ten doc types, one template-lines constant each"
+        );
         for constant in all {
             assert!(
                 !constant.is_empty(),

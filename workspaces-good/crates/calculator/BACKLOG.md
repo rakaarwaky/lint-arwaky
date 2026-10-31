@@ -6,25 +6,69 @@ Calculator is implemented, tested, and gated. Nothing is blocked.
 
 ## Backlog Status
 
-### FR-CALCULATOR-001: 
+### FR-CALCULATOR-001: Check the request
 
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | —                                          |
-| In Progress  | None                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
+#### State
 
-### FR-CALCULATOR-002: 
+| No | Detail |
+|----|--------|
+| 1  | Ready |
 
-| Aspect       | Detail                                     |
-|--------------|---------------------------------------------|
-| State        | Ready                                      |
-| Done         | —                                          |
-| In Progress  | None                                       |
-| Risk         | None                                       |
-| Updated      | 2026-09-29                                 |
+#### Done
+
+| No | Detail |
+|----|--------|
+| 1  | Implemented and gated |
+
+#### In Progress
+
+| No | Detail |
+|----|--------|
+| 1  | None |
+
+#### Risk
+
+| No | Detail |
+|----|--------|
+| 1  | None |
+
+#### Updated
+
+| No | Detail |
+|----|--------|
+| 1  | 2026-09-29 |
+
+### FR-CALCULATOR-002: Run the request
+
+#### State
+
+| No | Detail |
+|----|--------|
+| 1  | Ready |
+
+#### Done
+
+| No | Detail |
+|----|--------|
+| 1  | Implemented and gated |
+
+#### In Progress
+
+| No | Detail |
+|----|--------|
+| 1  | None |
+
+#### Risk
+
+| No | Detail |
+|----|--------|
+| 1  | None |
+
+#### Updated
+
+| No | Detail |
+|----|--------|
+| 1  | 2026-09-29 |
 
 ## Reference
 

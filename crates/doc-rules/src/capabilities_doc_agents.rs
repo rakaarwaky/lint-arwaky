@@ -55,7 +55,10 @@ impl AgentsCapability {
         let first_line = text.lines().next().unwrap_or("").trim();
         if first_line != "---" {
             findings.push(
-                DocFinding::new_with_line("", 1, consts::RULE_CODE_AGENTS_DOC,
+                DocFinding::new_with_line(
+                    "",
+                    1,
+                    consts::RULE_CODE_AGENTS_DOC,
                     DOC_VIOLATION_NAMES.frontmatter_missing(),
                     format!("{} has no YAML frontmatter block", consts::AGENTS_DOC),
                 )
