@@ -9,7 +9,7 @@ use shared_doc_rules::utility_doc_common_checks::LineDriftDefect;
 pub fn line_drift_findings(
     defects: Vec<LineDriftDefect>,
     doc_name: &str,
-    code: &str,
+    code: &'static str,
 ) -> Vec<DocFinding> {
     defects
         .into_iter()

@@ -14,7 +14,8 @@ use shared_doc_rules::utility_doc_aspect_entry_checks::{
     AspectEntryDefect, detect_aspect_entry_tables,
 };
 use shared_doc_rules::utility_doc_common_checks::{
-    HeadingDefect, detect_doc_heading, missing_link_violation_type, required_links,
+    HeadingDefect, detect_doc_heading, detect_doc_line_drift, missing_link_violation_type,
+    required_links,
 };
 use shared_doc_rules::utility_doc_entry_regexes::pr_entry_re;
 use shared_doc_rules::utility_doc_fr_format_checks::{PrIdParityDefect, detect_pr_id_parity};
@@ -50,6 +51,14 @@ impl RoadmapCapability {
     fn audit_one(document: &DocSource, context: &DocAuditContext, findings: &mut Vec<DocFinding>) {
         let text = &document.text;
         let parsed = sections(text);
+
+        // Template body conformance.
+        let drift = detect_doc_line_drift(text, consts::ROADMAP_TEMPLATE_LINES);
+        findings.extend(crate::utility_doc_line_drift::line_drift_findings(
+            drift,
+            consts::ROADMAP_DOC,
+            consts::RULE_CODE_ROADMAP_DOC,
+        ));
 
         // PR-ID parity (PRD ↔ ROADMAP).
         if let Some(prd) = context

@@ -13,7 +13,7 @@
 
 | Aspect       | Detail                                      |
 |--------------|---------------------------------------------|
-| State        | Ready / In Progress / In Review / Done      |
+| State        | <Ready / In Progress / In Review / Done>    |
 | Done         | <evidence>                                  |
 | In Progress  | <None / item name>                          |
 | Risk         | <what ships broken / None>                  |

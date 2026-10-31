@@ -411,6 +411,31 @@ mod tests {
         ships_columns("agents", AGENTS_RUNTIME_ROW_LABELS);
     }
 
+    /// Every doc ships a `*_TEMPLATE_LINES` constant so the line-drift
+    /// check tracks template changes. The set covers all 10 doc types.
+    #[test]
+    fn every_doc_ships_a_template_lines_constant() {
+        let all: &[&[&str]] = &[
+            AGENTS_TEMPLATE_LINES,
+            ARCHITECTURE_TEMPLATE_LINES,
+            BACKLOG_TEMPLATE_LINES,
+            CONTRIBUTING_TEMPLATE_LINES,
+            DATA_TEMPLATE_LINES,
+            DESIGN_TEMPLATE_LINES,
+            FRD_TEMPLATE_LINES,
+            PRD_TEMPLATE_LINES,
+            README_TEMPLATE_LINES,
+            ROADMAP_TEMPLATE_LINES,
+        ];
+        assert_eq!(all.len(), 10, "ten doc types, one template-lines constant each");
+        for constant in all {
+            assert!(
+                !constant.is_empty(),
+                "every *_TEMPLATE_LINES constant must be non-empty"
+            );
+        }
+    }
+
     /// The reverse of `ships_columns`, for the PRD entry shape only: the
     /// fenced Project Requirements entry must carry exactly PRD_ROW_LABELS
     /// as its `####` aspect subsections (a label added to the template

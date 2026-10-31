@@ -58,6 +58,14 @@ impl FrdCapability {
         let text = &document.text;
         let parsed = sections(text);
 
+        // Template body conformance.
+        let drift = detect_doc_line_drift(text, consts::FRD_TEMPLATE_LINES);
+        findings.extend(crate::utility_doc_line_drift::line_drift_findings(
+            drift,
+            consts::FRD_DOC,
+            consts::RULE_CODE_FRD_DOC,
+        ));
+
         // FR-ID format (bare FR-NNN without feature prefix).
         for defect in detect_fr_id_format(document) {
             findings.push(
