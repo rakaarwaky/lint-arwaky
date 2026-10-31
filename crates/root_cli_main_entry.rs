@@ -175,40 +175,73 @@ fn parse_format(s: &str) -> Format {
     })
 }
 
+/// CLI scalar values flowing from the parsed `scan`/`check` command.
+struct GroupScanValues {
+    group: Option<ScanGroup>,
+    path: String,
+    format: String,
+    rules: Option<String>,
+    member: Option<String>,
+}
+
+/// Injected dependency graph handed to `dispatch_group_scan`. Bundling the
+/// orchestrators and aggregates into one struct keeps the dispatch function's
+/// signature short, mirroring the `*CommandParams` pattern used by the
+/// `cli_commands` surface handlers.
+struct GroupScanDeps {
+    filesystem: Arc<dyn shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate>,
+    fs_seam: dispatcher::surface_check_action::FilesystemSeam,
+    config_orchestrator: Arc<dyn shared_config_system::IConfigOrchestratorAggregate>,
+    code_analysis_linter: Arc<dyn shared_quality_rules::ICodeAnalysisAggregate>,
+    import_orchestrator: Arc<dyn shared_import_rules::IImportRunnerAggregate>,
+    naming_orchestrator: Arc<dyn shared_naming_rules::INamingRunnerAggregate>,
+    orphan_orchestrator: Arc<dyn shared_orphan_rules::IOrphanAggregate>,
+    role_orchestrator: Arc<dyn shared_role_rules::IRoleRunnerAggregate>,
+    external_lint: Arc<dyn shared_external_lint::IExternalLintAggregate>,
+    structure_orchestrator: Arc<dyn shared_structure_rules::IStructureAggregate>,
+    doc_orchestrator: Arc<dyn shared_doc_rules::IDocRunnerAggregate>,
+    report_formatter: Arc<dyn shared_report_formatter::IReportFormatterAggregate>,
+    config_file_reader: Arc<dyn shared_config_system::IConfigFileReaderAggregate>,
+    scan_aggregates: dispatcher::surface_check_action::ScanAggregates,
+    ignored_paths: Vec<String>,
+}
+
 /// Dispatch `scan`/`check` to a single linter group or all linters based on
 /// the `--group` flag.
-#[allow(clippy::too_many_arguments)]
-fn dispatch_group_scan(
-    group: Option<ScanGroup>,
-    path: &str,
-    format: &str,
-    rules: &Option<String>,
-    member: &Option<String>,
-    filesystem: &Arc<dyn shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate>,
-    fs_seam: &dispatcher::surface_check_action::FilesystemSeam,
-    config_orchestrator: &Arc<dyn shared_config_system::IConfigOrchestratorAggregate>,
-    code_analysis_linter: &Arc<dyn shared_quality_rules::ICodeAnalysisAggregate>,
-    import_orchestrator: &Arc<dyn shared_import_rules::IImportRunnerAggregate>,
-    naming_orchestrator: &Arc<dyn shared_naming_rules::INamingRunnerAggregate>,
-    orphan_orchestrator: &Arc<dyn shared_orphan_rules::IOrphanAggregate>,
-    role_orchestrator: &Arc<dyn shared_role_rules::IRoleRunnerAggregate>,
-    external_lint: &Arc<dyn shared_external_lint::IExternalLintAggregate>,
-    structure_orchestrator: &Arc<dyn shared_structure_rules::IStructureAggregate>,
-    doc_orchestrator: &Arc<dyn shared_doc_rules::IDocRunnerAggregate>,
-    report_formatter: &Arc<dyn shared_report_formatter::IReportFormatterAggregate>,
-    config_file_reader: &Arc<dyn shared_config_system::IConfigFileReaderAggregate>,
-    scan_aggregates: &dispatcher::surface_check_action::ScanAggregates,
-    ignored_paths: &[String],
-) -> shared_common::ExitCode {
-    match group.unwrap_or(ScanGroup::All) {
+fn dispatch_group_scan(values: &GroupScanValues, deps: &GroupScanDeps) -> shared_common::ExitCode {
+    let group = values.group.as_ref();
+    let path = &values.path;
+    let format = &values.format;
+    let rules = &values.rules;
+    let member = &values.member;
+    let GroupScanDeps {
+        filesystem,
+        fs_seam,
+        config_orchestrator,
+        code_analysis_linter,
+        import_orchestrator,
+        naming_orchestrator,
+        orphan_orchestrator,
+        role_orchestrator,
+        external_lint,
+        structure_orchestrator,
+        doc_orchestrator,
+        report_formatter,
+        config_file_reader,
+        scan_aggregates,
+        ignored_paths,
+    } = deps;
+    match group.unwrap_or(&ScanGroup::All) {
         ScanGroup::Quality => cli_commands::surface_scan_command::handle_quality(
-            Some(FilePath::new(path.to_string()).unwrap_or_default()),
-            parse_format(format),
-            code_analysis_linter.clone(),
-            filesystem.clone(),
-            fs_seam.clone(),
-            rules.clone(),
-            ignored_paths.to_vec(),
+            cli_commands::surface_scan_command::QualityCommandParams {
+                path: Some(FilePath::new(path.to_string()).unwrap_or_default()),
+                format: parse_format(format),
+                code_analysis_linter: code_analysis_linter.clone(),
+                filesystem: filesystem.clone(),
+                filesystem_seam: fs_seam.clone(),
+                filter: rules.clone(),
+                ignored_paths: ignored_paths.to_vec(),
+            },
         ),
         ScanGroup::Role => cli_commands::surface_scan_command::handle_role(
             cli_commands::surface_scan_command::RoleCommandParams {
@@ -246,37 +279,36 @@ fn dispatch_group_scan(
                 ignored_paths: ignored_paths.to_vec(),
             },
         ),
-        ScanGroup::Orphan => cli_commands::surface_scan_command::handle_orphan(
-            cli_commands::surface_scan_command::OrphanCommandParams {
-                path: Some(FilePath::new(path.to_string()).unwrap_or_default()),
-                member: member.clone(),
-                format: parse_format(format),
-                orphan_orchestrator: orphan_orchestrator.clone(),
-                config_orchestrator: config_orchestrator.clone(),
-                report_formatter: report_formatter.clone(),
-                filesystem: filesystem.clone(),
-                filesystem_seam: fs_seam.clone(),
-                filter: rules.clone(),
-                fs_factory: Arc::new(|| {
-                    let c = filesystem::root_filesystem_container::FilesystemContainer::new();
-                    let orchestrator = c.orchestrator();
-                    dispatcher::surface_check_action::FilesystemSeam {
-                        workspace: orchestrator.clone(),
-                        parser: orchestrator.clone(),
-                        aggregate: orchestrator,
-                    }
-                }),
-                orphan_factory: Arc::new(|config, fs, _fs2| {
-                    let c = filesystem::root_filesystem_container::FilesystemContainer::new();
-                    orphan_rules::root_orphan_detector_container::OrphanContainer::new_with_config(
-                        config,
-                        fs,
-                        c.workspace(),
-                    )
-                    .analyzer()
-                }),
-            },
-        ),
+        ScanGroup::Orphan => {
+            cli_commands::surface_scan_command::handle_orphan(
+                cli_commands::surface_scan_command::OrphanCommandParams {
+                    path: Some(FilePath::new(path.to_string()).unwrap_or_default()),
+                    member: member.clone(),
+                    format: parse_format(format),
+                    orphan_orchestrator: orphan_orchestrator.clone(),
+                    config_orchestrator: config_orchestrator.clone(),
+                    report_formatter: report_formatter.clone(),
+                    filesystem: filesystem.clone(),
+                    filesystem_seam: fs_seam.clone(),
+                    filter: rules.clone(),
+                    fs_factory: Arc::new(|| {
+                        let c = filesystem::root_filesystem_container::FilesystemContainer::new();
+                        let orchestrator = c.orchestrator();
+                        dispatcher::surface_check_action::FilesystemSeam {
+                            workspace: orchestrator.clone(),
+                            parser: orchestrator.clone(),
+                            aggregate: orchestrator,
+                        }
+                    }),
+                    orphan_factory: Arc::new(|config, fs, _fs2| {
+                        let c = filesystem::root_filesystem_container::FilesystemContainer::new();
+                        orphan_rules::root_orphan_detector_container::OrphanContainer
+                        ::new_with_config(config, fs, c.workspace())
+                        .analyzer()
+                    }),
+                },
+            )
+        }
         ScanGroup::External => cli_commands::surface_scan_command::handle_external(
             cli_commands::surface_scan_command::ExternalCommandParams {
                 path: Some(FilePath::new(path.to_string()).unwrap_or_default()),
@@ -511,28 +543,33 @@ fn main() {
             rules,
             member,
             group,
-        } => dispatch_group_scan(
-            group,
-            &path,
-            &format,
-            &rules,
-            &member,
-            &filesystem,
-            &fs_seam,
-            &config_orchestrator,
-            &code_analysis_linter,
-            &import_orchestrator,
-            &naming_orchestrator,
-            &orphan_orchestrator,
-            &role_orchestrator,
-            &external_lint,
-            &structure_orchestrator,
-            &doc_orchestrator,
-            &report_formatter,
-            &config_container.file_reader(),
-            &scan_aggregates,
-            &ignored_paths,
-        ),
+        } => {
+            let values = GroupScanValues {
+                group,
+                path,
+                format,
+                rules,
+                member,
+            };
+            let deps = GroupScanDeps {
+                filesystem: filesystem.clone(),
+                fs_seam: fs_seam.clone(),
+                config_orchestrator: config_orchestrator.clone(),
+                code_analysis_linter: code_analysis_linter.clone(),
+                import_orchestrator: import_orchestrator.clone(),
+                naming_orchestrator: naming_orchestrator.clone(),
+                orphan_orchestrator: orphan_orchestrator.clone(),
+                role_orchestrator: role_orchestrator.clone(),
+                external_lint: external_lint.clone(),
+                structure_orchestrator: structure_orchestrator.clone(),
+                doc_orchestrator: doc_orchestrator.clone(),
+                report_formatter: report_formatter.clone(),
+                config_file_reader: config_container.file_reader(),
+                scan_aggregates: scan_aggregates.clone(),
+                ignored_paths: ignored_paths.clone(),
+            };
+            dispatch_group_scan(&values, &deps)
+        }
         Command::Report { path } => cli_commands::surface_report_command::handle_report(
             cli_commands::surface_report_command::ReportCommandParams {
                 path: Some(FilePath::new(path).unwrap_or_default()),

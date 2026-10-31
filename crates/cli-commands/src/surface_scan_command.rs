@@ -28,6 +28,17 @@ pub struct ScanCommandParams {
     pub scan_aggregates: Option<dispatcher::surface_check_action::ScanAggregates>,
 }
 
+/// Parameters for the `quality` command.
+pub struct QualityCommandParams {
+    pub path: Option<FilePath>,
+    pub format: Format,
+    pub code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
+    pub filesystem: Arc<dyn IFilesystemAggregate>,
+    pub filesystem_seam: FilesystemSeam,
+    pub filter: Option<String>,
+    pub ignored_paths: Vec<String>,
+}
+
 /// Parameters for the `import` command.
 pub struct ImportCommandParams {
     pub path: Option<FilePath>,
@@ -168,29 +179,21 @@ pub fn handle_scan(params: ScanCommandParams) -> ExitCode {
 }
 
 /// `quality` — quality rules scan.
-pub fn handle_quality(
-    path: Option<FilePath>,
-    format: Format,
-    code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
-    filesystem: Arc<dyn IFilesystemAggregate>,
-    filesystem_seam: FilesystemSeam,
-    filter: Option<String>,
-    ignored_paths: Vec<String>,
-) -> ExitCode {
-    let root = resolve_root(&path);
+pub fn handle_quality(params: QualityCommandParams) -> ExitCode {
+    let root = resolve_root(&params.path);
     match dispatcher::surface_quality_action::collect_quality(
-        path.clone(),
-        code_analysis_linter,
-        filter,
-        filesystem.clone(),
-        &ignored_paths,
+        params.path.clone(),
+        params.code_analysis_linter,
+        params.filter,
+        params.filesystem.clone(),
+        &params.ignored_paths,
     ) {
         Ok(violations) => {
             output_violations(
                 &violations,
                 &root,
-                format_as_str(format),
-                is_member(&path, &filesystem_seam),
+                format_as_str(params.format),
+                is_member(&params.path, &params.filesystem_seam),
             );
             exit_for(violations.len())
         }
