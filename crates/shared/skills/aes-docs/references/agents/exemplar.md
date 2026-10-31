@@ -23,10 +23,43 @@ AI agents working in this workspace must know the AES 7-layer naming convention,
 
 ## Project Structure
 
-| Path       | Purpose              |
-|------------|----------------------|
-| crates/    | Rust workspace crates|
-| shared/    | Shared layer code   |
+```text
+ecommerce-app/
+├── crates/
+│   ├── shared/                              # shared kernel: domain contracts + VOs
+│   │   ├── product/                         # shared subdomain: product
+│   │   │   ├── contract_product_protocol.rs # IProductProtocol (Contract layer)
+│   │   │   ├── taxonomy_product_vo.rs       # product value objects (Taxonomy layer)
+│   │   │   ├── utility_product_helpers.rs   # shared stateless helpers (Utility layer)
+│   │   │   ├── DATA.md                      # shared subdomain data shapes
+│   │   │   └── BACKLOG.md                   # shared subdomain status
+│   │   └── order/                           # shared subdomain: order
+│   │       ├── contract_order_protocol.rs
+│   │       ├── taxonomy_order_vo.rs
+│   │       ├── utility_order_helpers.rs
+│   │       ├── DATA.md
+│   │       └── BACKLOG.md
+│   ├── checkout/                            # feature: order processing
+│   │   ├── capabilities_checkout.rs         # checkout invariants + mutations
+│   │   ├── agent_checkout_orchestrator.rs   # checkout orchestration
+│   │   ├── root.rs                          # wires contract -> capabilities
+│   │   ├── FRD.md                           # feature spec
+│   │   └── BACKLOG.md                       # feature status
+│   ├── catalog/                             # feature: product catalog
+│   │   ├── capabilities_catalog.rs
+│   │   ├── agent_catalog_orchestrator.rs
+│   │   ├── root.rs
+│   │   ├── FRD.md
+│   │   └── BACKLOG.md
+│   └── web/                                 # surface: browser storefront + seller dashboard
+│       ├── surface_web.rs                   # surface layer
+│       ├── DESIGN.md                        # surface design system
+│       └── BACKLOG.md                       # surface status
+├── Cargo.toml                               # workspace manifest
+├── AGENTS.md                                # this file
+├── PRD.md                                   # product spec (root)
+└── ROADMAP.md                               # root master (roadmap + status)
+```
 
 ## Commands
 
