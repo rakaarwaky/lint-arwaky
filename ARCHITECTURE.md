@@ -969,209 +969,244 @@ Group 5 detects orphaned code that is not wired into the system's composition la
 
 ---
 
-## 19. Group 6: Document Invariants (AES601–AES607)
+## 19. Group 6: Document Invariants (AES601–AES610)
 
-Group 6 enforces document structure and cross-reference integrity across specification files.
+Group 6 enforces document structure, cross-reference integrity, and template conformance across the ten recognized spec documents. Each per-doc capability stamps every finding it emits with its own document's AES code, so a finding's code alone names the document it governs.
 
-### AES601 — FR Format
+### AES601 — AGENTS Document
 
 
-| Field           | Value                                                                                                                                                                                               |
-| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Code / Severity | AES601 / HIGH                                                                                                                                                                                       |
-| Fires when      | FR-ID is bare (`FR-NNN`) without feature prefix; a requirement omits a field; FRD requirement count differs from contract `I*Protocol` count; BACKLOG/DESIGN/DATA row ID mismatches or missing rows |
-| Scope           | Recognized docs: `PRD.md`, `FRD.md`, `BACKLOG.md`, `DESIGN.md`, `DATA.md`                                                                                                                           |
-| Fix             | Merge/split requirements or protocol classes; align row IDs                                                                                                                                         |
+| Field           | Value                                                                                                     |
+| --------------- | --------------------------------------------------------------------------------------------------------- |
+| Code / Severity | AES601 / HIGH                                                                                             |
+| Fires when      | `AGENTS.md` drifts from the `AGENTS` template, lacks required H2s, or is missing required crosslinks      |
+| Scope           | `AGENTS.md`                                                                                               |
+| Fix             | Restore the template shape; add the missing H2; add the missing crosslink                                 |
 
 
-#### Violation Types
+#### Invariants
 
 
-| Violation type               | Fires when                                                                                                                                                           |
-| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `id_missing_feature_prefix`  | An ID reads `FR-NNN` with no feature prefix                                                                                                                          |
-| `api_method_not_found`       | A method named in the Protocol API / Aggregate API table has no matching declaration in the contract module                                                          |
-| `backlog_id_not_fr`          | A BACKLOG `## Backlog` row's ID cell is not a valid FRD FR-ID                                                                                                        |
-| `backlog_id_missing`         | An FRD FR-ID has no corresponding BACKLOG `## Backlog` row                                                                                                           |
-| `ds_backlog_id_not_ds`       | A BACKLOG `## Backlog` row's ID cell is not a valid DESIGN.md `DS-<DESIGNNAME>-NNN` ID                                                                               |
-| `ds_backlog_id_missing`      | A DESIGN.md `DS-<DESIGNNAME>-NNN` ID has no corresponding BACKLOG `## Backlog` row                                                                                   |
-| `dt_backlog_id_not_dt`       | A BACKLOG `## Backlog` row's ID cell is not a valid DATA.md `DT-<DATANAME>-NNN` ID                                                                                   |
-| `dt_backlog_id_missing`      | A DATA.md `DT-<DATANAME>-NNN` ID has no corresponding BACKLOG `## Backlog` row                                                                                       |
-| `pr_roadmap_id_missing`      | A PRD `PR-<PROJECT>-NNN` item has no ROADMAP `Roadmap Status` entry                                                                                                  |
-| `roadmap_pr_id_not_pr`       | A ROADMAP `Roadmap Status` item is not declared in the PRD's `Project Requirements`                                                                                  |
-| `backlog_qualifier_mismatch` | A BACKLOG entry's H3 qualifier does not equal any ID declared by the paired spec                                                                                     |
-| `pr_backlog_id_missing`      | A BACKLOG `## Backlog Status` entry H3 whose qualifier has no matching PR-ID in the root ROADMAP/PRD pair                                                            |
-| `backlog_id_not_pr`          | A token in a BACKLOG entry's `Next`/`Done`/`Blocked` row that is not a valid PR-ID of the root ROADMAP/PRD pair                                                      |
-| `protocol_count_mismatch`    | The FRD requirement count and the module's `I*Protocol` class count differ; one protocol class is one capability seam; aggregate traits (`I*Aggregate`) are excluded |
+| Invariant                | Fires when                                                                                                  |
+| ------------------------ | --------------------------------------------------------------------------------------------------------- |
+| Frontmatter              | `AGENTS.md` does not open with a `---` YAML frontmatter block                                            |
+| Line drift               | A non-placeholder `AGENTS` template line was edited away from its template                                 |
+| Heading structure        | Zero or &gt;1 H1; a required H2 is absent; an H2 is outside required ∪ allowed                            |
+| `Runtime` entry table    | `Runtime` section table misses a required row label in `AGENTS_RUNTIME_ROW_LABELS`                       |
+| `Commands` entry table   | `Commands` section table lacks a required column in `AGENTS_COMMAND_COLUMNS`                              |
+| Crosslinks               | `AGENTS.md` Reference section lacks a link to `README`, `CONTRIBUTING`, `ARCHITECTURE`, `ROADMAP`, `PRD` |
 
 
-### AES602 — Section Structure
+### AES602 — README Document
 
 
-| Field           | Value                                                                                                                                                       |
-| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Code / Severity | AES602 / HIGH                                                                                                                                               |
-| Fires when      | The FRD's level-2 sections are out of template order, or the API Contract subsections do not match                                                          |
-| Scope           | `FRD.md`                                                                                                                                                    |
-| Fix             | Reorder sections to `Feature Overview → Functional Requirements → Public Interface → Reference`; accept exactly `### Protocol API` then `### Aggregate API` |
+| Field           | Value                                                                                                   |
+| --------------- | ------------------------------------------------------------------------------------------------------- |
+| Code / Severity | AES602 / HIGH                                                                                           |
+| Fires when      | `README.md` drifts from the `README` template, lacks required H2s, or its `Quick Start` table is off-shape |
+| Scope           | `README.md`                                                                                             |
+| Fix             | Restore the template shape; add the missing H2; add the missing `Quick Start` table column             |
 
 
-#### Violation Types
+#### Invariants
 
 
-| Violation type    | Fires when                                                                                  |
-| ----------------- | ------------------------------------------------------------------------------------------- |
-| `order_violation` | Level-2 sections appear out of template order, or API Contract subsections are out of order |
+| Invariant                | Fires when                                                                                 |
+| ------------------------ | ------------------------------------------------------------------------------------------ |
+| Line drift               | A non-placeholder `README` template line was edited away from its template                |
+| Heading structure        | Zero or &gt;1 H1; a required H2 is absent; an H2 is outside required ∪ allowed           |
+| `Quick Start` entry table | `Quick Start` section table lacks a required column in `README_QUICK_START_COLUMNS`       |
 
 
-### AES603 — Spec Purity
+### AES603 — ARCHITECTURE Document
 
 
-| Field           | Value                                                                                                                                           |
-| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| Code / Severity | AES603 / HIGH                                                                                                                                   |
-| Fires when      | A promise-bearing spec names a concrete source file or carries implementation state                                                             |
-| Scope           | Exactly four promise-bearing documents: `PRD.md`, `FRD.md`, `DATA.md`, `ROADMAP.md`; `ARCHITECTURE.md`, `CONTRIBUTING.md`, `DESIGN.md` excluded |
-| Fix             | Remove source-file names and status/checkbox/progress state from the spec                                                                       |
+| Field           | Value                                                                                              |
+| --------------- | ---------------------------------------------------------------------------------------------------- |
+| Code / Severity | AES603 / HIGH                                                                                        |
+| Fires when      | `ARCHITECTURE.md` drifts from the `ARCHITECTURE` template or lacks required H2s                     |
+| Scope           | `ARCHITECTURE.md`                                                                                    |
+| Fix             | Restore the template shape; add the missing H2                                                       |
 
 
-#### Violation Types
+#### Invariants
 
 
-| Violation type      | Fires when                                                                                                                  |
-| ------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| `source_file_named` | The spec names a concrete source file (`.py`, `.rs`, `.ts`, `.tsx`)                                                         |
-| `status_leak`       | The spec carries checkboxes, a Status field, implementation state, release state, a status marker, or a progress percentage |
+| Invariant           | Fires when                                                                                |
+| ------------------- | ------------------------------------------------------------------------------------------ |
+| Line drift          | A non-placeholder `ARCHITECTURE` template line was edited away from its template          |
+| Heading structure   | Zero or &gt;1 H1; a required H2 is absent; an H2 is outside required ∪ allowed           |
 
 
-### AES604 — Crosslinks
+### AES604 — CONTRIBUTING Document
 
 
-| Field           | Value                                                                                                                       |
-| --------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| Code / Severity | AES604 / HIGH                                                                                                               |
-| Fires when      | A document's Reference section lacks a mandatory link, or a feature backlog restates a root-master state-vocabulary section |
-| Scope           | Recognized docs with Reference sections; `MASTER_ONLY_SECTIONS = ["Roadmap Status"]`                                        |
-| Fix             | Add the missing link; remove restated master sections from the backlog                                                      |
+| Field           | Value                                                                                                       |
+| --------------- | ----------------------------------------------------------------------------------------------- |
+| Code / Severity | AES604 / HIGH                                                                                         |
+| Fires when      | `CONTRIBUTING.md` drifts from the `CONTRIBUTING` template, lacks required H2s, or entry tables are off-shape |
+| Scope           | `CONTRIBUTING.md`                                                                                   |
+| Fix             | Restore the template shape; add the missing H2; add the missing entry-table column                 |
 
 
-#### Violation Types
+#### Invariants
 
 
-| Violation type         | Fires when                                                        |
-| ---------------------- | ----------------------------------------------------------------- |
-| `no_backlog_link`      | An FRD's Reference section does not link its BACKLOG.md           |
-| `no_prd_link`          | An FRD's Reference section does not link its PRD.md               |
-| `no_roadmap_link`      | Reference section lacks a ROADMAP.md link                         |
-| `no_architecture_link` | Reference section lacks an ARCHITECTURE.md link                   |
-| `no_readme_link`       | Reference section lacks a README.md link                          |
-| `no_contributing_link` | Reference section lacks a CONTRIBUTING.md link                    |
-| `no_frd_link`          | Reference section lacks an FRD.md link                            |
-| `no_data_link`         | Reference section lacks a DATA.md link                            |
-| `no_design_link`       | Reference section lacks a DESIGN.md link                          |
-| `no_required_link`     | Fallback link violation for unmapped targets                      |
-| `state_vocab_restated` | A feature backlog restates a root-master state-vocabulary section |
+| Invariant                   | Fires when                                                                                    |
+| --------------------------- | -------------------------------------------------------------------------------------------- |
+| Line drift                  | A non-placeholder `CONTRIBUTING` template line was edited away from its template            |
+| Heading structure           | Zero or &gt;1 H1; a required H2 is absent; an H2 is outside required ∪ allowed             |
+| `Workflow` entry table      | `Workflow` section table lacks a required column in `CONTRIBUTING_WORKFLOW_COLUMNS`         |
+| `Commit Convention` table   | `Commit Convention` section table lacks a required column in `CONTRIBUTING_COMMIT_COLUMNS` |
+| Crosslinks                  | `CONTRIBUTING.md` Reference section lacks a link to `PRD` or `ARCHITECTURE`                 |
 
 
-### AES605 — Doc Heading Structure
+### AES605 — PRD Document
 
 
-| Field           | Value                                                                                                                                                        |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Code / Severity | AES605 / HIGH                                                                                                                                                |
-| Fires when      | Zero or &gt;1 H1; a required H2 is absent; an H2 is outside required ∪ allowed; a non-placeholder line drifts from its template; YAML frontmatter is missing |
-| Scope           | Ten recognized docs: `PRD, ROADMAP, FRD, BACKLOG, DATA, DESIGN, README, AGENTS, ARCHITECTURE, CONTRIBUTING`                                                  |
-| Fix             | Restore the missing H2, demote/remove off-template H2s, match template lines verbatim, add frontmatter                                                       |
+| Field           | Value                                                                                           |
+| --------------- | ----------------------------------------------------------------------------------------------- |
+| Code / Severity | AES605 / HIGH                                                                                   |
+| Fires when      | `PRD.md` drifts from the `PRD` template, PR-ID is out of parity with `ROADMAP`, or entry tables under `Project Requirements` are off-shape |
+| Scope           | `PRD.md`                                                                                        |
+| Fix             | Restore the template shape; align PR-IDs with `ROADMAP`; add missing entry-table rows/columns |
 
 
-#### Required and Allowed H2s
+#### Invariants
 
 
-| Document          | Required H2s                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | Allowed extra           |
-| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
-| `AGENTS.md`       | Agent Overview · Runtime · Project Structure · Commands · Reference                                                                                                                                                                                                                                                                                                                                                                                                                                  | —                       |
-| `ARCHITECTURE.md` | Purpose · Workspace Organization · Naming Convention · Vertical Slicing Layout · Taxonomy Layer · Contract Layer · Utility Layer · Capabilities Layer · Agent Layer · Surface Layer · Root Layer · Finding rendering notes · Rule Inventory Overview · Group 1: Naming · Group 2: Layer & Import Boundary · Group 3: File & Content Quality · Group 4: Role Violations · Group 5: Orphan Code · Group 6: Document Invariants · Group 7: Folder Structure · Rule Source of Truth & Parity | —                       |
-| `CONTRIBUTING.md` | Contribution Overview · Contribution Guidelines · Workflow · Commit Convention · Reference                                                                                                                                                                                                                                                                                                                                                                                                           | —                       |
-| `PRD.md`          | Problem Statement · Project Requirements · Reference                                                                                                                                                                                                                                                                                                                                                                                                                                                 | —                       |
-| `README.md`       | Project Overview · Prerequisites · Quick Start · Reference                                                                                                                                                                                                                                                                                                                                                                                                                                           | —                       |
-| `ROADMAP.md`      | Progress Overview · Roadmap Status · Reference                                                                                                                                                                                                                                                                                                                                                                                                                                                       | —                       |
-| `FRD.md`          | Feature Overview · Functional Requirements · Public Interface · Reference                                                                                                                                                                                                                                                                                                                                                                                                                            | `API Contract` (legacy) |
-| `BACKLOG.md`      | Progress Overview · Backlog Status · Reference                                                                                                                                                                                                                                                                                                                                                                                                                                                       | —                       |
-| `DATA.md`         | Data Overview · Data Requirements · Reference                                                                                                                                                                                                                                                                                                                                                                                                                                                        | `DT-` item H2s          |
-| `DESIGN.md`       | Design Overview · Design Requirements · Reference                                                                                                                                                                                                                                                                                                                                                                                                                                                    | —                       |
+| Invariant                   | Fires when                                                                                     |
+| --------------------------- | ---------------------------------------------------------------------------------------------- |
+| Line drift                  | A non-placeholder `PRD` template line was edited away from its template                     |
+| PR-ID parity                | A `PR-<PROJECT>-NNN` item in `Project Requirements` has no matching `ROADMAP` `Roadmap Status` entry, or vice versa |
+| API method existence        | A method named in the PRD's promised API has no matching declaration in the contract module   |
+| Crosslinks                  | `PRD.md` Reference section lacks a link to `ROADMAP` or `ARCHITECTURE`                       |
+| Heading structure           | Zero or &gt;1 H1; a required H2 is absent; an H2 is outside required ∪ allowed               |
+| `Project Requirements` table | Per-aspect H4 subsections (`User Stories`, `Proposed Solution`, `Main User Flow`) are missing, out of order, or carry fewer rows than the seed minimum |
 
 
-#### Violation Types
+### AES606 — ROADMAP Document
 
 
-| Violation type        | Fires when                                                          |
-| --------------------- | ------------------------------------------------------------------- |
-| `h1_count`            | Zero or &gt;1 H1                                                    |
-| `h2_missing`          | A required H2 is absent                                             |
-| `h2_unexpected`       | H2 outside required ∪ allowed                                       |
-| `line_drift`          | A non-placeholder scaffolded line was edited away from its template |
-| `frontmatter_missing` | YAML frontmatter block absent                                       |
+| Field           | Value                                                                                          |
+| --------------- | ------------------------------------------------------------------------------ |
+| Code / Severity | AES606 / HIGH                                                                                |
+| Fires when      | `ROADMAP.md` drifts from the `ROADMAP` template, PR-ID is out of parity with `PRD`, or entry tables under `Roadmap Status` are off-shape |
+| Scope           | `ROADMAP.md`                                                                                   |
+| Fix             | Restore the template shape; align PR-IDs with `PRD`; add missing entry-table rows/columns  |
 
 
-### AES606 — Doc Template Conformance
+#### Invariants
 
 
-| Field           | Value                                                                                                                        |
-| --------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| Code / Severity | AES606 / HIGH                                                                                                                |
-| Fires when      | A recognized document's body, entry table, or root/member document presence drifts from the shipped `HOW-TO-MAKE-*` template |
-| Scope           | Ten recognized docs: `PRD, ROADMAP, FRD, BACKLOG, DATA, DESIGN, README, AGENTS, ARCHITECTURE, CONTRIBUTING`                  |
-| Fix             | Re-shape the section to its template row (`docs scaffold` regenerates missing docs)                                          |
+| Invariant                   | Fires when                                                                                       |
+| --------------------------- | ----------------------------------------------------------------------------------------------- |
+| Line drift                  | A non-placeholder `ROADMAP` template line was edited away from its template                   |
+| PR-ID parity                | A `PR-<PROJECT>-NNN` item in `Roadmap Status` is not declared in `PRD.md`'s `Project Requirements`, or vice versa |
+| Crosslinks                  | `ROADMAP.md` Reference section lacks a link to `PRD` or `ARCHITECTURE`                        |
+| Heading structure           | Zero or &gt;1 H1; a required H2 is absent; an H2 is outside required ∪ allowed                 |
+| `Roadmap Status` table      | Entry table's first-column row labels do not match `ROADMAP_ROW_LABELS`                        |
+| Missing / forbidden member docs | Cross-cutting check (stamped with `RULE_CODE_ROADMAP_DOC`): a member folder is missing its required doc pair (`FRD+BACKLOG` / `DATA+BACKLOG` / `DESIGN+BACKLOG`) or carries a forbidden doc for its role |
+| Missing required root doc   | Cross-cutting check: a required root doc (`PRD`, `ROADMAP`, `README`, `AGENTS`, `ARCHITECTURE`, `CONTRIBUTING`) is absent at the audit root |
 
 
-#### Violation Types
+### AES607 — BACKLOG Document
 
 
-| Violation type          | Fires when                                                                                  |
-| ----------------------- | ------------------------------------------------------------------------------------------- |
-| `section_not_table`     | A mandated section carries bullets/prose instead of a table                                 |
-| `table_missing_columns` | A mandated table lacks a required column                                                    |
-| `table_extra_columns`   | Header carries a column the template never declares                                         |
-| `table_header_repeated` | A data row repeats the header row                                                           |
-| `table_not_in_template` | A section whose template prescribes no table still carries one                              |
-| `entry_missing_row`     | Entry table's first column misses a required row label (`FRD_ROW_LABELS` family)            |
-| `h3_unexpected`         | `###` in a position only `DS-<NAME>-NNN` may occupy                                         |
-| `missing_required_doc`  | A required root doc absent at a real workspace root                                         |
-| `missing_member_doc`    | Member folder missing its required doc pair (`FRD+BACKLOG`/`DATA+BACKLOG`/`DESIGN+BACKLOG`) |
-| `unfilled_placeholder`  | Template placeholder token survived into a non-prose line                                   |
-| `section_deleted`       | A non-deletable template section is entirely absent                                         |
+| Field           | Value                                                                                          |
+| --------------- | --------------------------------------------------------------------------------------------- |
+| Code / Severity | AES607 / HIGH                                                                                  |
+| Fires when      | `BACKLOG.md` drifts from the `BACKLOG` template, BACKLOG ID-level alignment fails against its paired spec, role-aware crosslinks are missing, or entry tables under `Backlog Status` are off-shape |
+| Scope           | `BACKLOG.md`                                                                                   |
+| Fix             | Restore the template shape; align BACKLOG IDs with the paired spec; add missing crosslinks    |
 
 
-#### Required Table Shapes
+#### Invariants
 
 
-| Document     | Section / role                                                    | Required shape                                                          |
-| ------------ | ----------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| `PRD.md`     | `Project Requirements` entry (Aspect/Detail)                      | rows: `Description, User Story, In Scope, Out of Scope, Success Metric` |
-| `ROADMAP.md` | `Roadmap Status` entry                                            | rows: `Priority, State, Dependencies, Updated`                          |
-| `BACKLOG.md` | `Backlog Status` entry                                            | rows: `State, Done, In Progress, Blocked, Next, Risk, Updated`          |
-| `FRD.md`     | `Functional Requirements` entry                                   | rows: the 12 `FRD_ROW_LABELS`                                           |
-| `AGENTS.md`  | `Runtime` entry; `Path/Purpose`; `Category/Command/Scope/CI Gate` | `AGENTS_RUNTIME_ROW_LABELS` / column sets                               |
-| all          | `Reference`                                                       | `Artifact, Purpose, Link`                                               |
+| Invariant                      | Fires when                                                                                  |
+| ------------------------------ | --------------------------------------------------------------------------------------------- |
+| Line drift                     | A non-placeholder `BACKLOG` template line was edited away from its template                 |
+| BACKLOG qualifier alignment    | A BACKLOG entry's H3 qualifier does not equal any ID declared by the paired spec, so the entry cannot be traced back to the spec it mirrors |
+| Crosslinks (role-aware)        | `BACKLOG.md` Reference section lacks a required link per its role (`PRD`/`ARCHITECTURE`/`ROADMAP`, plus `FRD`/`DATA`/`DESIGN` by role) |
+| Heading structure              | Zero or &gt;1 H1; a required H2 is absent; an H2 is outside required ∪ allowed                |
+| `Backlog Status` table         | Per-aspect H4 subsections are missing, out of order, or carry fewer rows than the seed minimum |
 
 
-### AES607 — PR Folder Ownership
+### AES608 — DATA Document
 
 
-| Field           | Value                                                                                                                              |
-| --------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| Code / Severity | AES607 / HIGH                                                                                                                      |
-| Fires when      | A PR-ID declared in the root PRD's `Project Requirements` owns no matching top-level module folder under `crates|modules|packages` |
-| Scope           | Root PRD's `Project Requirements` entries                                                                                          |
-| Fix             | Create the module folder named after the requirement id's project identifier                                                       |
+| Field           | Value                                                                                        |
+| --------------- | --------------------------------------------------------------------------------------------- |
+| Code / Severity | AES608 / HIGH                                                                                |
+| Fires when      | `DATA.md` DT-ID is not in `DT-<NAME>-NNN` bare form, section order drifts from template, spec purity violations, role-aware crosslinks missing, or entry tables under `Data Requirements` are off-shape |
+| Scope           | `DATA.md`                                                                                     |
+| Fix             | Rename DT-IDs to the qualified form; reorder sections; remove source-file / status claims; add missing crosslinks |
 
 
-#### Violation Types
+#### Invariants
 
 
-| Violation type        | Fires when                                                               |
-| --------------------- | ------------------------------------------------------------------------ |
-| `pr_folder_not_owned` | A PRD-declared PR-ID's project identifier owns no matching module folder |
+| Invariant                    | Fires when                                                                                |
+| --------------------------- | ------------------------------------------------------------------------------------------- |
+| Line drift                   | A non-placeholder `DATA` template line was edited away from its template                  |
+| DT-ID format                 | A DT-ID is not in the qualified `DT-<NAME>-NNN` bare form                                 |
+| Spec purity                  | `DATA.md` names a concrete source file or carries implementation / status / progress state |
+| Crosslinks                   | `DATA.md` Reference section lacks a link to `PRD`, `BACKLOG`, `ROADMAP`, or `ARCHITECTURE` |
+| Heading structure            | Zero or &gt;1 H1; a required H2 is absent; an H2 is outside required ∪ allowed (`DT-` item H2s are permitted) |
+| `Data Requirements` table    | Per-aspect H4 subsections are missing, out of order, or carry fewer rows than the seed minimum |
+
+
+### AES609 — FRD Document
+
+
+| Field           | Value                                                                                          |
+| --------------- | ----------------------------------------------------------------------------------------------- |
+| Code / Severity | AES609 / HIGH                                                                                   |
+| Fires when      | `FRD.md` FR-ID format, FR protocol parity, or promised API methods drift from the template, spec purity violations, crosslinks missing, or entry tables under `Functional Requirements` are off-shape |
+| Scope           | `FRD.md`                                                                                         |
+| Fix             | Rename FR-IDs to the qualified form; align FR-requirement count with the contract's `I*Protocol` count; remove source-file / status claims; add missing crosslinks |
+
+
+#### Invariants
+
+
+| Invariant                    | Fires when                                                                                   |
+| --------------------------- | --------------------------------------------------------------------------------------------------- |
+| Line drift                   | A non-placeholder `FRD` template line was edited away from its template                       |
+| FR-ID format                 | An FR-ID is not in the qualified `FR-<NAME>-NNN` form                                           |
+| FR protocol parity           | The FRD requirement count and the module's `I*Protocol` class count differ; one protocol class is one capability seam; aggregate traits (`I*Aggregate`) are excluded |
+| API method existence         | A method named in the FRD's `Protocol API` / `Aggregate API` table has no matching declaration in the contract module |
+| Spec purity                  | `FRD.md` names a concrete source file or carries implementation / status / progress state      |
+| Crosslinks                   | `FRD.md` Reference section lacks a link to `PRD`, `BACKLOG`, `ROADMAP`, or `ARCHITECTURE`     |
+| Section order                | `Feature Overview` → `Functional Requirements` → `Public Interface` → `Reference`; `Protocol API` then `Aggregate API` under `Public Interface` |
+| Heading structure            | Zero or &gt;1 H1; a required H2 is absent; an H2 is outside required ∪ allowed (`API Contract` legacy H2 allowed) |
+| `Functional Requirements` table | The six `Technical Specification` rows (`Input`, `Output`, `Protocol`, `Method`, `Event`, `Error`) are missing or out of order, or a row's `Detail` cell is empty |
+
+
+### AES610 — DESIGN Document
+
+
+| Field           | Value                                                                                          |
+| --------------- | --------------------------------------------------------------------------------------------- |
+| Code / Severity | AES610 / HIGH                                                                                  |
+| Fires when      | `DESIGN.md` DS-ID alignment fails against `BACKLOG`, crosslinks missing, H3 outside the sanctioned position, off-template tables, or entry tables under `Design Requirements` are off-shape |
+| Scope           | `DESIGN.md`                                                                                   |
+| Fix             | Rename DS-IDs to the qualified form; align DS-IDs with `BACKLOG`; add missing crosslinks; remove off-template H3s / tables |
+
+
+#### Invariants
+
+
+| Invariant                    | Fires when                                                                                   |
+| --------------------------- | --------------------------------------------------------------------------------------------- |
+| Line drift                   | A non-placeholder `DESIGN` template line was edited away from its template                   |
+| DS-ID alignment              | A DESIGN.md `DS-<NAME>-NNN` ID has no corresponding `BACKLOG` `## Backlog Status` row, or a `BACKLOG` row's ID is not a valid `DS-<NAME>-NNN` |
+| Crosslinks                   | `DESIGN.md` Reference section lacks a link to `PRD`, `BACKLOG`, `ROADMAP`, or `ARCHITECTURE` |
+| Heading structure            | Zero or &gt;1 H1; a required H2 is absent; an H2 is outside required ∪ allowed                |
+| H3 sweep                     | An H3 in a position only `DS-<NAME>-NNN` may occupy (Design Overview and Reference sanction no H3; Design Requirements sanctions only `DS-`-prefixed H3s) |
+| Table not in template        | A section whose template prescribes no table still carries one                              |
+| `Design Requirements` table  | Per-aspect H4 subsections are missing, out of order, or carry fewer rows than the seed minimum |
 
 
 ---
@@ -1339,7 +1374,7 @@ The rule codes emitted by the rules engine are the source of truth. This documen
 | Inventory table | §13, first-cell AES-rows: code, group, name, severity, ran-by |
 | Per-rule detail | §14–20 |
 | Parity test | the parity test in the rules crate (`doc_codes_match_emitted_inventory`) |
-| Validation | First-cell AES-rows in this document equal the pinned emitted inventory of 38 codes |
+| Validation | First-cell AES-rows in this document equal the pinned emitted inventory of 41 codes |
 
 ### Config Switches
 

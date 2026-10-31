@@ -1,5 +1,5 @@
 // Parity test: the first-cell `| AESxxx |` rows of ARCHITECTURE.md §13 must
-// match the pinned emitted inventory (38 codes) so later format work cannot
+// match the pinned emitted inventory (41 codes) so later format work cannot
 // drop a rule. ARCHITECTURE.md is the single rules document (formerly
 // RULES_AES.md, retired when the inventory table moved into §13).
 
@@ -26,14 +26,14 @@ fn doc_codes_match_emitted_inventory() {
         "AES101", "AES102", "AES103", "AES201", "AES202", "AES203", "AES204", "AES205", "AES301",
         "AES302", "AES303", "AES304", "AES305", "AES401", "AES402", "AES403", "AES404", "AES405",
         "AES406", "AES501", "AES502", "AES503", "AES504", "AES505", "AES506", "AES601", "AES602",
-        "AES603", "AES604", "AES605", "AES606", "AES607", "AES701", "AES702", "AES703", "AES704",
-        "AES705", "AES706",
+        "AES603", "AES604", "AES605", "AES606", "AES607", "AES608", "AES609", "AES610", "AES701",
+        "AES702", "AES703", "AES704", "AES705", "AES706",
     ];
 
     assert_eq!(
         codes.len(),
         expected.len(),
-        "ARCHITECTURE.md inventory must equal the pinned 38-code emitted set"
+        "ARCHITECTURE.md inventory must equal the pinned 41-code emitted set"
     );
     for code in &expected {
         assert!(
@@ -44,7 +44,7 @@ fn doc_codes_match_emitted_inventory() {
 }
 
 #[test]
-fn metadata_states_38_rules() {
+fn metadata_states_41_rules() {
     let doc = include_str!("../../../ARCHITECTURE.md");
     let summary_end = doc
         .lines()
@@ -53,12 +53,12 @@ fn metadata_states_38_rules() {
     let summary = doc.lines().take(summary_end).collect::<Vec<_>>().join("\n");
 
     assert!(
-        summary.contains("38 rules across 7 groups"),
-        "summary must state the 38-rule count"
+        summary.contains("41 rules across 7 groups"),
+        "summary must state the 41-rule count"
     );
 }
 
-// ARCHITECTURE.md §13 now holds the 38-row inventory table; the structure
+// ARCHITECTURE.md §13 now holds the 41-row inventory table; the structure
 // invariants the old RULES_AES.md had (heading-then-table-first, H1-first,
 // no-H5) applied to that dedicated table file, not to a prose architecture
 // document, so they are no longer asserted here. What remains is the
@@ -127,9 +127,9 @@ fn no_legacy_surfaces_in_rules_doc() {
     }
 }
 
-// Distinct codes == 38 == summary total cell.
+// Distinct codes == 41 == summary total cell.
 #[test]
-fn distinct_codes_equal_38_and_inventory_total() {
+fn distinct_codes_equal_41_and_inventory_total() {
     let doc = include_str!("../../../ARCHITECTURE.md");
     let mut codes = aes_codes_from_rules_doc();
     codes.sort();
@@ -138,17 +138,17 @@ fn distinct_codes_equal_38_and_inventory_total() {
     // One `### AESxxx` heading per rule in §14–20.
     let h3_aes_count = doc.lines().filter(|l| l.starts_with("### AES")).count();
     assert_eq!(
-        h3_aes_count, 38,
-        "expected 38 `### AES` headings in ARCHITECTURE.md §14–20"
+        h3_aes_count, 41,
+        "expected 41 `### AES` headings in ARCHITECTURE.md §14–20"
     );
 
     let actual = codes.len();
-    assert_eq!(actual, 38, "expected 38 distinct AES codes, found {actual}");
+    assert_eq!(actual, 41, "expected 41 distinct AES codes, found {actual}");
 
-    // The "Total" row of the Group coverage and counts table must show 38.
+    // The "Total" row of the Group coverage and counts table must show 41.
     let total_row = doc.lines().find(|l| l.starts_with("| Total |"));
     assert!(
-        total_row.is_some_and(|r| r.split('|').any(|c| c.trim() == "38")),
-        "Group coverage total row must contain the numeral 38"
+        total_row.is_some_and(|r| r.split('|').any(|c| c.trim() == "41")),
+        "Group coverage total row must contain the numeral 41"
     );
 }
