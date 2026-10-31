@@ -10,7 +10,7 @@ use crate::taxonomy_doc_rules_constant as consts;
 use crate::taxonomy_doc_rules_request::DocSource;
 use crate::taxonomy_doc_section_vo::Section;
 use crate::utility_capabilities_doc_h2_checks::{
-    first_column_values, row_label_diff, SectionShapeDefect, SectionShapeDefectKind,
+    SectionShapeDefect, first_column_values, row_label_diff,
 };
 use crate::utility_doc_entry_regexes::fr_entry_re;
 use crate::utility_markdown_scanner::{
@@ -55,7 +55,10 @@ pub enum HeadingDefect {
     /// A required H2 heading is missing.
     H2Missing { line: usize, missing: Vec<String> },
     /// An H2 heading appears outside the template's required+allowed set.
-    H2Unexpected { line: usize, unexpected: Vec<String> },
+    H2Unexpected {
+        line: usize,
+        unexpected: Vec<String>,
+    },
 }
 
 impl HeadingDefect {
@@ -366,11 +369,7 @@ pub fn collect_union_id_set(
     if let Some(document) = second {
         ids.extend(collect(&document.text).unwrap_or_default());
     }
-    if ids.is_empty() {
-        None
-    } else {
-        Some(ids)
-    }
+    if ids.is_empty() { None } else { Some(ids) }
 }
 
 /// Accepted FR-ID set from an FRD's `FR-<feature>-NNN:` headings.
@@ -380,11 +379,7 @@ pub fn collect_fr_id_set(frd: &str) -> Option<Vec<String>> {
         .captures_iter(frd)
         .filter_map(|caps| caps.get(0).map(|m| m.as_str().to_string()))
         .collect();
-    if ids.is_empty() {
-        None
-    } else {
-        Some(ids)
-    }
+    if ids.is_empty() { None } else { Some(ids) }
 }
 
 /// `(1-based heading line, id)` for every PR-ID heading in *text*.
@@ -615,7 +610,7 @@ pub fn detect_member_docs(context: &DocAuditContext) -> Vec<MemberDocDefect> {
 /// outside required+allowed. Returns pure defect data anchored to line 0.
 pub fn detect_doc_heading(
     text: &str,
-    name: &str,
+    _name: &str,
     required: &[&str],
     allowed: &[&str],
 ) -> Vec<HeadingDefect> {
@@ -750,7 +745,10 @@ pub fn detect_agents_line_drift(
     if !doc_lines.iter().any(|l| l.trim_start().starts_with("# ")) {
         defects.push(LineDriftDefect::H1NoTitle { line: 0 });
     }
-    for line in doc_lines.iter().filter(|l| l.trim_start().starts_with("# ")) {
+    for line in doc_lines
+        .iter()
+        .filter(|l| l.trim_start().starts_with("# "))
+    {
         let title = line.trim_start().trim_start_matches('#').trim();
         if title.is_empty() {
             defects.push(LineDriftDefect::H1NoTitle { line: 0 });

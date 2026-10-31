@@ -1,10 +1,9 @@
 // PURPOSE: Per-doc capability for DESIGN.md — AES610
 //
 // Answers ALL invariants scoped to DESIGN.md behind IDesignDocProtocol.
-// DS-ID alignment with BACKLOG (AES601), crosslinks (AES604), heading
-// structure (AES605), entry-table conformance + H3 sweep (AES606) are
-// stamped with RULE_CODE_DESIGN_DOC ("AES610"). The capability stamps the
-// document path on every finding.
+// DS-ID alignment, crosslinks, heading structure, entry-table
+// conformance, and H3 sweep are stamped with RULE_CODE_DESIGN_DOC
+// ("AES610"). The capability stamps the document path on every finding.
 
 use shared_doc_rules::contract_doc_protocol::IDesignDocProtocol;
 use shared_doc_rules::taxonomy_doc_audit_context_vo::DocAuditContext;
@@ -12,11 +11,11 @@ use shared_doc_rules::taxonomy_doc_rules_constant as consts;
 use shared_doc_rules::taxonomy_doc_rules_request::{DocFinding, DocSource};
 use shared_doc_rules::taxonomy_doc_rules_violation_names::DOC_VIOLATION_NAMES;
 use shared_doc_rules::utility_doc_aspect_entry_checks::{
-    detect_aspect_entry_tables, AspectEntryDefect,
+    AspectEntryDefect, detect_aspect_entry_tables,
 };
 use shared_doc_rules::utility_doc_common_checks::{
-    detect_backlog_qualifier_alignment, detect_doc_heading, BacklogQualifierDefect, HeadingDefect,
-    missing_link_violation_type, required_links,
+    BacklogQualifierDefect, HeadingDefect, detect_doc_heading, missing_link_violation_type,
+    required_links,
 };
 use shared_doc_rules::utility_doc_entry_regexes::ds_entry_re;
 use shared_doc_rules::utility_doc_fr_format_checks::collect_any_id_set;
@@ -54,7 +53,7 @@ impl DesignCapability {
         let text = &document.text;
         let parsed = sections(text);
 
-        // AES601 — DS-ID alignment with BACKLOG.
+        // DS-ID alignment with BACKLOG.
         if let Some(backlog) = context
             .documents()
             .iter()
@@ -65,78 +64,138 @@ impl DesignCapability {
                 Some(document),
                 Some(backlog),
             );
-            for defect in shared_doc_rules::utility_doc_common_checks::detect_backlog_qualifier_alignment(backlog, union.as_ref()) {
+            for defect in
+                shared_doc_rules::utility_doc_common_checks::detect_backlog_qualifier_alignment(
+                    backlog,
+                    union.as_ref(),
+                )
+            {
                 let (violation, message, reason, fix) = match &defect {
                     BacklogQualifierDefect::TokenNotDeclared { line, token, valid } => (
                         consts::DS_BACKLOG_ID_MISSING,
-                        format!("line {} BACKLOG token `{}` is not declared in any spec union", line, token),
-                        format!("The BACKLOG entry `{}` has no matching ID in the paired spec union.", token),
-                        format!("Declare `{}` in a spec ID (`DS-`, `PR-`, `FR-`, or `DT-` family). Valid: {}", token, valid.join(", ")),
+                        format!(
+                            "line {} BACKLOG token `{}` is not declared in any spec union",
+                            line, token
+                        ),
+                        format!(
+                            "The BACKLOG entry `{}` has no matching ID in the paired spec union.",
+                            token
+                        ),
+                        format!(
+                            "Declare `{}` in a spec ID (`DS-`, `PR-`, `FR-`, or `DT-` family). Valid: {}",
+                            token,
+                            valid.join(", ")
+                        ),
                     ),
                     BacklogQualifierDefect::IdNoEntry { line, id } => (
                         consts::BACKLOG_QUALIFIER_MISMATCH,
                         format!("line {} declared ID `{}` has no BACKLOG entry", line, id),
-                        format!("ID `{}` is declared by a spec but has no corresponding BACKLOG entry.", id),
+                        format!(
+                            "ID `{}` is declared by a spec but has no corresponding BACKLOG entry.",
+                            id
+                        ),
                         format!("Add a BACKLOG entry for `{}`.", id),
                     ),
-                    BacklogQualifierDefect::StrayId { line, token, id, valid } => (
+                    BacklogQualifierDefect::StrayId {
+                        line,
+                        token,
+                        id,
+                        valid,
+                    } => (
                         consts::BACKLOG_QUALIFIER_MISMATCH,
-                        format!("line {} BACKLOG entry `{}` cites undeclared id `{}`", line, token, id),
-                        format!("BACKLOG entry `{}` references id `{}` which no spec declares.", token, id),
-                        format!("Remove the stray id `{}` or declare it in a spec. Valid: {}", id, valid.join(", ")),
+                        format!(
+                            "line {} BACKLOG entry `{}` cites undeclared id `{}`",
+                            line, token, id
+                        ),
+                        format!(
+                            "BACKLOG entry `{}` references id `{}` which no spec declares.",
+                            token, id
+                        ),
+                        format!(
+                            "Remove the stray id `{}` or declare it in a spec. Valid: {}",
+                            id,
+                            valid.join(", ")
+                        ),
                     ),
                 };
                 findings.push(
-                    DocFinding::new_with_line("", defect.line(), consts::RULE_CODE_DESIGN_DOC, violation, message)
-                        .with_reason(reason, fix),
+                    DocFinding::new_with_line(
+                        "",
+                        defect.line(),
+                        consts::RULE_CODE_DESIGN_DOC,
+                        violation,
+                        message,
+                    )
+                    .with_reason(reason, fix),
                 );
             }
         }
 
-        // AES604 — crosslinks (PRD, BACKLOG, ROADMAP, ARCHITECTURE).
-        Self::check_crosslinks(document, context, consts::RULE_CODE_CROSSLINKS, findings);
+        // Crosslinks (PRD, BACKLOG, ROADMAP, ARCHITECTURE).
+        Self::check_crosslinks(document, context, consts::RULE_CODE_DESIGN_DOC, findings);
 
-        // AES605 — heading structure.
+        // Heading structure.
         if let Some((required, allowed)) = doc_h2_contract(consts::DESIGN_DOC) {
             for defect in detect_doc_heading(text, consts::DESIGN_DOC, required, allowed) {
                 let (violation, message, reason, fix) = match &defect {
-                    HeadingDefect::H1Count { line, count } => (
+                    HeadingDefect::H1Count { line: _, count } => (
                         DOC_VIOLATION_NAMES.h1_count_violation(),
                         format!("{} H1 headings; template requires exactly one", count),
-                        format!("{} has {} H1 headings; the template fixes exactly one H1 at the top.", consts::DESIGN_DOC, count),
-                        format!("Remove the extra H1 heading(s) so {} keeps exactly one H1.", consts::DESIGN_DOC),
+                        format!(
+                            "{} has {} H1 headings; the template fixes exactly one H1 at the top.",
+                            consts::DESIGN_DOC,
+                            count
+                        ),
+                        format!(
+                            "Remove the extra H1 heading(s) so {} keeps exactly one H1.",
+                            consts::DESIGN_DOC
+                        ),
                     ),
-                    HeadingDefect::H2Missing { line, missing } => (
+                    HeadingDefect::H2Missing { line: _, missing } => (
                         DOC_VIOLATION_NAMES.h2_missing(),
                         format!("missing required H2 section(s): {}", missing.join(", ")),
-                        format!("{} is missing required H2 section(s): {}", consts::DESIGN_DOC, missing.join(", ")),
+                        format!(
+                            "{} is missing required H2 section(s): {}",
+                            consts::DESIGN_DOC,
+                            missing.join(", ")
+                        ),
                         format!("Add the missing H2 section(s): {}", missing.join(", ")),
                     ),
-                    HeadingDefect::H2Unexpected { line, unexpected } => (
+                    HeadingDefect::H2Unexpected {
+                        line: _,
+                        unexpected,
+                    } => (
                         DOC_VIOLATION_NAMES.h2_unexpected(),
                         format!("unexpected H2 section(s): {}", unexpected.join(", ")),
-                        format!("{} carries H2 section(s) outside the template: {}", consts::DESIGN_DOC, unexpected.join(", ")),
-                        format!("Remove the off-template H2 section(s): {}", unexpected.join(", ")),
+                        format!(
+                            "{} carries H2 section(s) outside the template: {}",
+                            consts::DESIGN_DOC,
+                            unexpected.join(", ")
+                        ),
+                        format!(
+                            "Remove the off-template H2 section(s): {}",
+                            unexpected.join(", ")
+                        ),
                     ),
                 };
                 findings.push(
-                    DocFinding::new_with_line("", defect.line(), consts::RULE_CODE_DESIGN_DOC, violation, message)
-                        .with_reason(reason, fix),
+                    DocFinding::new_with_line(
+                        "",
+                        defect.line(),
+                        consts::RULE_CODE_DESIGN_DOC,
+                        violation,
+                        message,
+                    )
+                    .with_reason(reason, fix),
                 );
             }
         }
 
-        // AES606 — entry tables under Design Requirements + H3 sweep.
+        // Entry tables under Design Requirements + H3 sweep.
         if let Some(re) = ds_entry_re() {
-            for defect in detect_aspect_entry_tables(
-                &parsed,
-                "Design Requirements",
-                re,
-                &[],
-                &[],
-                &[],
-                false,
-            ) {
+            for defect in
+                detect_aspect_entry_tables(&parsed, "Design Requirements", re, &[], &[], &[], false)
+            {
                 findings.push(Self::convert_aspect_entry_defect(defect));
             }
         }
@@ -147,9 +206,16 @@ impl DesignCapability {
         Self::convert_aspect_entry_defect_common(defect, consts::RULE_CODE_DESIGN_DOC)
     }
 
-    fn convert_aspect_entry_defect_common(defect: AspectEntryDefect, rule_code: &'static str) -> DocFinding {
+    fn convert_aspect_entry_defect_common(
+        defect: AspectEntryDefect,
+        rule_code: &'static str,
+    ) -> DocFinding {
         let (violation, message, reason, fix) = match &defect {
-            AspectEntryDefect::MissingAspect { line, h3_title, aspect } => (
+            AspectEntryDefect::MissingAspect {
+                line,
+                h3_title,
+                aspect,
+            } => (
                 DOC_VIOLATION_NAMES.missing_h4_aspect(),
                 format!(
                     "line {} `### {}` missing aspect H4 `#### {}`",
@@ -159,27 +225,36 @@ impl DesignCapability {
                     "The HOW-TO template requires every entry H3 under `### {}` to carry a `#### {}` subsection.",
                     h3_title, aspect
                 ),
-                format!(
-                    "Add `#### {}` under `### {}`.",
-                    aspect, h3_title
-                ),
+                format!("Add `#### {}` under `### {}`.", aspect, h3_title),
             ),
-            AspectEntryDefect::OrderMismatch { line, h3_title, aspects } => (
+            AspectEntryDefect::OrderMismatch {
+                line,
+                h3_title,
+                aspects,
+            } => (
                 DOC_VIOLATION_NAMES.h4_order_violation(),
                 format!(
                     "line {} `### {}` aspect H4s out of canonical order: expected {}",
-                    line, h3_title, aspects.join(", ")
+                    line,
+                    h3_title,
+                    aspects.join(", ")
                 ),
                 format!(
                     "Reorder the `####` aspect subsections under `### {}` to match the template order: {}.",
-                    h3_title, aspects.join(", ")
+                    h3_title,
+                    aspects.join(", ")
                 ),
                 format!(
                     "Move the aspect H4s under `### {}` into canonical order: {}.",
-                    h3_title, aspects.join(", ")
+                    h3_title,
+                    aspects.join(", ")
                 ),
             ),
-            AspectEntryDefect::EmptyBody { line, aspect, h3_title } => (
+            AspectEntryDefect::EmptyBody {
+                line,
+                aspect,
+                h3_title,
+            } => (
                 DOC_VIOLATION_NAMES.missing_h4_aspect(),
                 format!(
                     "line {} `#### {}` under `### {}` carries an empty body",
@@ -189,12 +264,13 @@ impl DesignCapability {
                     "Every PRD aspect `#### {}` under `### {}` must carry non-empty content.",
                     aspect, h3_title
                 ),
-                format!(
-                    "Add content to `#### {}` under `### {}`.",
-                    aspect, h3_title
-                ),
+                format!("Add content to `#### {}` under `### {}`.", aspect, h3_title),
             ),
-            AspectEntryDefect::NotATable { line, aspect, h3_title } => (
+            AspectEntryDefect::NotATable {
+                line,
+                aspect,
+                h3_title,
+            } => (
                 DOC_VIOLATION_NAMES.section_not_table(),
                 format!(
                     "line {} `#### {}` under `### {}` must be a markdown table",
@@ -224,11 +300,17 @@ impl DesignCapability {
                     aspect
                 ),
             ),
-            AspectEntryDefect::HeaderExtra { line, aspect, extras } => (
+            AspectEntryDefect::HeaderExtra {
+                line,
+                aspect,
+                extras,
+            } => (
                 DOC_VIOLATION_NAMES.table_extra_columns(),
                 format!(
                     "line {} `#### {}` aspect table carries extra column(s): {}",
-                    line, aspect, extras.join(", ")
+                    line,
+                    aspect,
+                    extras.join(", ")
                 ),
                 format!(
                     "The aspect table header under `#### {}` must be exactly `| No | Detail |`; extra columns break the fixed shape.",
@@ -240,7 +322,11 @@ impl DesignCapability {
                     aspect
                 ),
             ),
-            AspectEntryDefect::RowNumbering { line, aspect, h3_title } => (
+            AspectEntryDefect::RowNumbering {
+                line,
+                aspect,
+                h3_title,
+            } => (
                 DOC_VIOLATION_NAMES.row_numbering_violation(),
                 format!(
                     "line {} `#### {}` under `### {}` row numbers are not contiguous 1..N",
@@ -255,7 +341,13 @@ impl DesignCapability {
                     aspect, h3_title
                 ),
             ),
-            AspectEntryDefect::RowCount { line, aspect, h3_title, total, seed_min } => (
+            AspectEntryDefect::RowCount {
+                line,
+                aspect,
+                h3_title,
+                total,
+                seed_min,
+            } => (
                 DOC_VIOLATION_NAMES.row_count_violation(),
                 format!(
                     "line {} `#### {}` under `### {}` bounded aspect carries {} rows, expected exactly {}",
@@ -270,7 +362,13 @@ impl DesignCapability {
                     aspect, h3_title, seed_min
                 ),
             ),
-            AspectEntryDefect::RowMinimum { line, aspect, h3_title, total, min } => (
+            AspectEntryDefect::RowMinimum {
+                line,
+                aspect,
+                h3_title,
+                total,
+                min,
+            } => (
                 DOC_VIOLATION_NAMES.row_minimum_violation(),
                 format!(
                     "line {} `#### {}` under `### {}` open-ended aspect carries {} rows, need at least {}",
@@ -285,7 +383,11 @@ impl DesignCapability {
                     aspect, h3_title, min
                 ),
             ),
-            AspectEntryDefect::EmptyDetailCell { line, aspect, row_no } => (
+            AspectEntryDefect::EmptyDetailCell {
+                line,
+                aspect,
+                row_no,
+            } => (
                 DOC_VIOLATION_NAMES.empty_detail_cell(),
                 format!(
                     "line {} `#### {}` row `{}` Detail cell is empty or a placeholder dash",
@@ -357,7 +459,7 @@ impl DesignCapability {
                     findings.push(DocFinding::new_with_line(
                         "",
                         0,
-                        consts::RULE_CODE_TEMPLATE_CONFORMANCE,
+                        consts::RULE_CODE_DESIGN_DOC,
                         consts::TEMPLATE_CONFORMANCE_VIOLATION_H3_UNEXPECTED,
                         format!("Design has an H3 `{title}` where the template sanctions none"),
                     ));
@@ -367,7 +469,7 @@ impl DesignCapability {
                     findings.push(DocFinding::new_with_line(
                         "",
                         0,
-                        consts::RULE_CODE_TEMPLATE_CONFORMANCE,
+                        consts::RULE_CODE_DESIGN_DOC,
                         consts::TEMPLATE_CONFORMANCE_VIOLATION_H3_UNEXPECTED,
                         format!(
                             "Design Requirements H3 `{title}` does not match the DS-ID pattern"

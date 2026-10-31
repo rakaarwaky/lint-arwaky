@@ -39,10 +39,7 @@ impl FrIdDefect {
 #[derive(Debug, Clone)]
 pub enum PrIdParityDefect {
     /// PR-ID declared in the PRD has no ROADMAP `Roadmap Status` entry.
-    PrMissingFromRoadmap {
-        line: usize,
-        id: String,
-    },
+    PrMissingFromRoadmap { line: usize, id: String },
     /// ROADMAP `PR-` item is not declared in the PRD.
     RoadmapNotInPrd {
         line: usize,
@@ -123,11 +120,7 @@ pub fn collect_fr_id_set(frd: &str) -> Option<Vec<String>> {
         .captures_iter(frd)
         .filter_map(|caps| caps.name("id").map(|m| m.as_str().to_string()))
         .collect();
-    if ids.is_empty() {
-        None
-    } else {
-        Some(ids)
-    }
+    if ids.is_empty() { None } else { Some(ids) }
 }
 
 /// Accepted PR/FR/DS/DT ID set from a document, whichever families its
@@ -138,11 +131,7 @@ pub fn collect_any_id_set(text: &str) -> Option<Vec<String>> {
     ids.extend(collect_fr_id_set(text).unwrap_or_default());
     ids.extend(collect_ds_id_set(text).unwrap_or_default());
     ids.extend(collect_dt_id_set(text).unwrap_or_default());
-    if ids.is_empty() {
-        None
-    } else {
-        Some(ids)
-    }
+    if ids.is_empty() { None } else { Some(ids) }
 }
 
 /// Union of the accepted ID sets of up to two documents under a shared
@@ -160,11 +149,7 @@ pub fn collect_union_id_set(
     if let Some(document) = second {
         ids.extend(collect(&document.text).unwrap_or_default());
     }
-    if ids.is_empty() {
-        None
-    } else {
-        Some(ids)
-    }
+    if ids.is_empty() { None } else { Some(ids) }
 }
 
 /// `(1-based heading line, id)` for every PR-ID heading in *text*.
@@ -197,18 +182,14 @@ pub fn section_line(text: &str, title: &str) -> Option<usize> {
 /// `Project Requirements` must have a matching ROADMAP `Roadmap Status`
 /// entry, and vice versa. Returns pure defect data; the calling capability
 /// stamps with its own rule code and violation types.
-pub fn detect_pr_id_parity(
-    prd: &DocSource,
-    roadmap: &DocSource,
-) -> Vec<PrIdParityDefect> {
+pub fn detect_pr_id_parity(prd: &DocSource, roadmap: &DocSource) -> Vec<PrIdParityDefect> {
     let mut defects = Vec::new();
     let pr_ids = collect_pr_id_set(&prd.text).unwrap_or_default();
     let roadmap_ids = collect_pr_id_set(&roadmap.text).unwrap_or_default();
     let pr_set: HashSet<&str> = pr_ids.iter().map(String::as_str).collect();
     let roadmap_set: HashSet<&str> = roadmap_ids.iter().map(String::as_str).collect();
 
-    let roadmap_heading_line =
-        section_line(&roadmap.text, "roadmap status").unwrap_or(1);
+    let roadmap_heading_line = section_line(&roadmap.text, "roadmap status").unwrap_or(1);
     for id in &pr_ids {
         if !roadmap_set.contains(id.as_str()) {
             defects.push(PrIdParityDefect::PrMissingFromRoadmap {

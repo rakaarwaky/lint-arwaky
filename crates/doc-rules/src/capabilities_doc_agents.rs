@@ -11,11 +11,11 @@ use shared_doc_rules::taxonomy_doc_rules_constant as consts;
 use shared_doc_rules::taxonomy_doc_rules_request::{DocFinding, DocSource};
 use shared_doc_rules::taxonomy_doc_rules_violation_names::DOC_VIOLATION_NAMES;
 use shared_doc_rules::utility_capabilities_doc_h2_checks::{
-    detect_h2_fixed_rows, detect_h2_table, H2FixedRowsDefect, SectionShapeDefect,
-    SectionShapeDefectKind,
+    H2FixedRowsDefect, SectionShapeDefect, SectionShapeDefectKind, detect_h2_fixed_rows,
+    detect_h2_table,
 };
 use shared_doc_rules::utility_doc_common_checks::{
-    detect_agents_line_drift, detect_doc_heading, HeadingDefect, LineDriftDefect,
+    HeadingDefect, LineDriftDefect, detect_agents_line_drift, detect_doc_heading,
     missing_link_violation_type, required_links,
 };
 use shared_doc_rules::utility_markdown_scanner::{doc_h2_contract, sections};
@@ -112,31 +112,56 @@ impl AgentsCapability {
             consts::AGENTS_DOC,
         ) {
             let (violation, message, reason, fix) = match &defect {
-                LineDriftDefect::FrontmatterMissing { line, doc_name } => (
+                LineDriftDefect::FrontmatterMissing { line: _, doc_name } => (
                     DOC_VIOLATION_NAMES.frontmatter_missing(),
                     format!("{} has no YAML frontmatter block", doc_name),
-                    format!("{} must open with a `---` YAML frontmatter block.", doc_name),
-                    format!("Add a `---` YAML frontmatter block at the top of {} .", doc_name),
+                    format!(
+                        "{} must open with a `---` YAML frontmatter block.",
+                        doc_name
+                    ),
+                    format!(
+                        "Add a `---` YAML frontmatter block at the top of {} .",
+                        doc_name
+                    ),
                 ),
-                LineDriftDefect::SectionNotInTemplate { line, section } => (
+                LineDriftDefect::SectionNotInTemplate { line: _, section } => (
                     DOC_VIOLATION_NAMES.line_drift(),
                     format!("{} section is not in the AGENTS template", section),
-                    format!("{} carries a section the template does not declare.", section),
+                    format!(
+                        "{} carries a section the template does not declare.",
+                        section
+                    ),
                     format!("Remove the off-template section `{}`.", section),
                 ),
-                LineDriftDefect::MissingTemplateSection { line, section } => (
+                LineDriftDefect::MissingTemplateSection { line: _, section } => (
                     DOC_VIOLATION_NAMES.line_drift(),
                     format!("missing template section: {}", section),
-                    format!("{} is missing the template section `{}`.", consts::AGENTS_DOC, section),
+                    format!(
+                        "{} is missing the template section `{}`.",
+                        consts::AGENTS_DOC,
+                        section
+                    ),
                     format!("Add `{}`.", section),
                 ),
-                LineDriftDefect::LineMismatch { line, section, expected, found } => (
+                LineDriftDefect::LineMismatch {
+                    line: _,
+                    section,
+                    expected,
+                    found,
+                } => (
                     DOC_VIOLATION_NAMES.line_drift(),
-                    format!("{} section line drift: expected `{}` found `{}`", section, expected, found),
-                    format!("{} section of `{}` must match the template line-by-line.", section, consts::AGENTS_DOC),
+                    format!(
+                        "{} section line drift: expected `{}` found `{}`",
+                        section, expected, found
+                    ),
+                    format!(
+                        "{} section of `{}` must match the template line-by-line.",
+                        section,
+                        consts::AGENTS_DOC
+                    ),
                     format!("Align `{}` section with the template.", section),
                 ),
-                LineDriftDefect::H1NoTitle { line } => (
+                LineDriftDefect::H1NoTitle { line: _ } => (
                     DOC_VIOLATION_NAMES.line_drift(),
                     "AGENTS.md H1 has no title".to_string(),
                     format!("{} H1 heading carries no title.", consts::AGENTS_DOC),
@@ -144,47 +169,85 @@ impl AgentsCapability {
                 ),
             };
             findings.push(
-                DocFinding::new_with_line("", defect.line(), consts::RULE_CODE_AGENTS_DOC, violation, message)
-                    .with_reason(reason, fix),
+                DocFinding::new_with_line(
+                    "",
+                    defect.line(),
+                    consts::RULE_CODE_AGENTS_DOC,
+                    violation,
+                    message,
+                )
+                .with_reason(reason, fix),
             );
         }
 
         // Crosslinks (README, CONTRIBUTING, ARCHITECTURE, ROADMAP, PRD).
-        Self::check_crosslinks(document, context, consts::RULE_CODE_CROSSLINKS, findings);
+        Self::check_crosslinks(document, context, consts::RULE_CODE_AGENTS_DOC, findings);
 
         // Heading structure (exactly one H1, required H2s, no off-template H2s).
         if let Some((required, allowed)) = doc_h2_contract(consts::AGENTS_DOC) {
             for defect in detect_doc_heading(text, consts::AGENTS_DOC, required, allowed) {
                 let (violation, message, reason, fix) = match &defect {
-                    HeadingDefect::H1Count { line, count } => (
+                    HeadingDefect::H1Count { line: _, count } => (
                         consts::DOC_STRUCTURE_VIOLATION_H1_COUNT,
                         format!("{} H1 headings; template requires exactly one", count),
-                        format!("{} has {} H1 headings; the template fixes exactly one H1 at the top.", consts::AGENTS_DOC, count),
-                        format!("Remove the extra H1 heading(s) so {} keeps exactly one H1.", consts::AGENTS_DOC),
+                        format!(
+                            "{} has {} H1 headings; the template fixes exactly one H1 at the top.",
+                            consts::AGENTS_DOC,
+                            count
+                        ),
+                        format!(
+                            "Remove the extra H1 heading(s) so {} keeps exactly one H1.",
+                            consts::AGENTS_DOC
+                        ),
                     ),
-                    HeadingDefect::H2Missing { line, missing } => (
+                    HeadingDefect::H2Missing { line: _, missing } => (
                         consts::DOC_STRUCTURE_VIOLATION_H2_MISSING,
                         format!("missing required H2 section(s): {}", missing.join(", ")),
-                        format!("{} is missing required H2 section(s): {}", consts::AGENTS_DOC, missing.join(", ")),
+                        format!(
+                            "{} is missing required H2 section(s): {}",
+                            consts::AGENTS_DOC,
+                            missing.join(", ")
+                        ),
                         format!("Add the missing H2 section(s): {}", missing.join(", ")),
                     ),
-                    HeadingDefect::H2Unexpected { line, unexpected } => (
+                    HeadingDefect::H2Unexpected {
+                        line: _,
+                        unexpected,
+                    } => (
                         consts::DOC_STRUCTURE_VIOLATION_H2_UNEXPECTED,
                         format!("unexpected H2 section(s): {}", unexpected.join(", ")),
-                        format!("{} carries H2 section(s) outside the template: {}", consts::AGENTS_DOC, unexpected.join(", ")),
-                        format!("Remove the off-template H2 section(s): {}", unexpected.join(", ")),
+                        format!(
+                            "{} carries H2 section(s) outside the template: {}",
+                            consts::AGENTS_DOC,
+                            unexpected.join(", ")
+                        ),
+                        format!(
+                            "Remove the off-template H2 section(s): {}",
+                            unexpected.join(", ")
+                        ),
                     ),
                 };
                 findings.push(
-                    DocFinding::new_with_line("", defect.line(), consts::RULE_CODE_AGENTS_DOC, violation, message)
-                        .with_reason(reason, fix),
+                    DocFinding::new_with_line(
+                        "",
+                        defect.line(),
+                        consts::RULE_CODE_AGENTS_DOC,
+                        violation,
+                        message,
+                    )
+                    .with_reason(reason, fix),
                 );
             }
         }
 
         // Runtime table carries the fixed row labels.
-        if let Some(defect) = detect_h2_fixed_rows(&parsed, "Runtime", consts::AGENTS_RUNTIME_ROW_LABELS) {
-            findings.push(Self::convert_fixed_rows_defect(defect, consts::AGENTS_RUNTIME_ROW_LABELS));
+        if let Some(defect) =
+            detect_h2_fixed_rows(&parsed, "Runtime", consts::AGENTS_RUNTIME_ROW_LABELS)
+        {
+            findings.push(Self::convert_fixed_rows_defect(
+                defect,
+                consts::AGENTS_RUNTIME_ROW_LABELS,
+            ));
         }
 
         // Commands table carries the fixed columns.
@@ -274,8 +337,14 @@ impl AgentsCapability {
                 ),
             ),
         };
-        DocFinding::new_with_line("", defect.line, consts::RULE_CODE_AGENTS_DOC, violation, message)
-            .with_reason(reason, fix)
+        DocFinding::new_with_line(
+            "",
+            defect.line,
+            consts::RULE_CODE_AGENTS_DOC,
+            violation,
+            message,
+        )
+        .with_reason(reason, fix)
     }
 
     fn convert_fixed_rows_defect(defect: H2FixedRowsDefect, row_labels: &[&str]) -> DocFinding {

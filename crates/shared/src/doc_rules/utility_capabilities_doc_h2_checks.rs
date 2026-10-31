@@ -61,23 +61,21 @@ pub fn detect_h2_fixed_rows(
     title: &str,
     row_labels: &[&str],
 ) -> Option<H2FixedRowsDefect> {
-    let Some(section) = parsed
+    let section = parsed
         .iter()
-        .find(|s| s.level == 2 && normalize_heading(&s.title) == normalize_heading(title))
-    else {
-        return None;
-    };
+        .find(|s| s.level == 2 && normalize_heading(&s.title) == normalize_heading(title))?;
     let values = first_column_values(&section.body);
     let (missing, extra) = row_label_diff(row_labels, &values);
     if !missing.is_empty() || !extra.is_empty() {
-        return Some(H2FixedRowsDefect {
+        Some(H2FixedRowsDefect {
             line: section.line,
             title: section.title.clone(),
             missing: missing.into_iter().map(String::from).collect(),
             extra,
-        });
+        })
+    } else {
+        None
     }
-    None
 }
 
 /// Find the H2 section titled *title* (or use *h3* when given), check that

@@ -1,10 +1,9 @@
 // PURPOSE: Per-doc capability for DATA.md — AES608
 //
 // Answers ALL invariants scoped to DATA.md behind IDataDocProtocol.
-// Crosslinks (AES604), heading structure (AES605), entry-table conformance
-// (AES606) are stamped with RULE_CODE_DATA_DOC ("AES608"). FR-ID bare-ID
-// format carries RULE_CODE_FR_FORMAT ("AES601"). The capability stamps the
-// document path on every finding.
+// Bare-ID format, crosslinks, heading structure, and entry-table
+// conformance are stamped with RULE_CODE_DATA_DOC ("AES608").
+// The capability stamps the document path on every finding.
 
 use shared_doc_rules::contract_doc_protocol::IDataDocProtocol;
 use shared_doc_rules::taxonomy_doc_audit_context_vo::DocAuditContext;
@@ -12,15 +11,13 @@ use shared_doc_rules::taxonomy_doc_rules_constant as consts;
 use shared_doc_rules::taxonomy_doc_rules_request::{DocFinding, DocSource};
 use shared_doc_rules::taxonomy_doc_rules_violation_names::DOC_VIOLATION_NAMES;
 use shared_doc_rules::utility_doc_aspect_entry_checks::{
-    detect_aspect_entry_tables, AspectEntryDefect,
+    AspectEntryDefect, detect_aspect_entry_tables,
 };
 use shared_doc_rules::utility_doc_common_checks::{
-    detect_doc_heading, HeadingDefect, missing_link_violation_type, required_links,
+    HeadingDefect, detect_doc_heading, missing_link_violation_type, required_links,
 };
 use shared_doc_rules::utility_doc_entry_regexes::dt_entry_re;
-use shared_doc_rules::utility_doc_fr_format_checks::{
-    detect_fr_id_format, FrIdDefect,
-};
+use shared_doc_rules::utility_doc_fr_format_checks::detect_fr_id_format;
 use shared_doc_rules::utility_markdown_scanner::{doc_h2_contract, sections};
 
 #[derive(Default)]
@@ -54,7 +51,7 @@ impl DataCapability {
         let text = &document.text;
         let parsed = sections(text);
 
-        // AES608 — bare-ID format (DT-<NAME>-NNN without qualified form).
+        // Bare-ID format (DT-<NAME>-NNN without qualified form).
         for defect in detect_fr_id_format(document) {
             findings.push(
                 DocFinding::new_with_line(
@@ -77,50 +74,71 @@ impl DataCapability {
             );
         }
 
-        // AES604 — crosslinks (PRD, BACKLOG, ROADMAP, ARCHITECTURE).
-        Self::check_crosslinks(document, context, consts::RULE_CODE_CROSSLINKS, findings);
+        // Crosslinks (PRD, BACKLOG, ROADMAP, ARCHITECTURE).
+        Self::check_crosslinks(document, context, consts::RULE_CODE_DATA_DOC, findings);
 
-        // AES605 — heading structure (DT-prefixed H2s allowed).
+        // Heading structure (DT-prefixed H2s allowed).
         if let Some((required, allowed)) = doc_h2_contract(consts::DATA_DOC) {
             for defect in detect_doc_heading(text, consts::DATA_DOC, required, allowed) {
                 let (violation, message, reason, fix) = match &defect {
-                    HeadingDefect::H1Count { line, count } => (
+                    HeadingDefect::H1Count { line: _, count } => (
                         consts::DOC_STRUCTURE_VIOLATION_H1_COUNT,
                         format!("{} H1 headings; template requires exactly one", count),
-                        format!("{} has {} H1 headings; the template fixes exactly one H1 at the top.", consts::DATA_DOC, count),
-                        format!("Remove the extra H1 heading(s) so {} keeps exactly one H1.", consts::DATA_DOC),
+                        format!(
+                            "{} has {} H1 headings; the template fixes exactly one H1 at the top.",
+                            consts::DATA_DOC,
+                            count
+                        ),
+                        format!(
+                            "Remove the extra H1 heading(s) so {} keeps exactly one H1.",
+                            consts::DATA_DOC
+                        ),
                     ),
-                    HeadingDefect::H2Missing { line, missing } => (
+                    HeadingDefect::H2Missing { line: _, missing } => (
                         consts::DOC_STRUCTURE_VIOLATION_H2_MISSING,
                         format!("missing required H2 section(s): {}", missing.join(", ")),
-                        format!("{} is missing required H2 section(s): {}", consts::DATA_DOC, missing.join(", ")),
+                        format!(
+                            "{} is missing required H2 section(s): {}",
+                            consts::DATA_DOC,
+                            missing.join(", ")
+                        ),
                         format!("Add the missing H2 section(s): {}", missing.join(", ")),
                     ),
-                    HeadingDefect::H2Unexpected { line, unexpected } => (
+                    HeadingDefect::H2Unexpected {
+                        line: _,
+                        unexpected,
+                    } => (
                         consts::DOC_STRUCTURE_VIOLATION_H2_UNEXPECTED,
                         format!("unexpected H2 section(s): {}", unexpected.join(", ")),
-                        format!("{} carries H2 section(s) outside the template: {}", consts::DATA_DOC, unexpected.join(", ")),
-                        format!("Remove the off-template H2 section(s): {}", unexpected.join(", ")),
+                        format!(
+                            "{} carries H2 section(s) outside the template: {}",
+                            consts::DATA_DOC,
+                            unexpected.join(", ")
+                        ),
+                        format!(
+                            "Remove the off-template H2 section(s): {}",
+                            unexpected.join(", ")
+                        ),
                     ),
                 };
                 findings.push(
-                    DocFinding::new_with_line("", defect.line(), consts::RULE_CODE_DATA_DOC, violation, message)
-                        .with_reason(reason, fix),
+                    DocFinding::new_with_line(
+                        "",
+                        defect.line(),
+                        consts::RULE_CODE_DATA_DOC,
+                        violation,
+                        message,
+                    )
+                    .with_reason(reason, fix),
                 );
             }
         }
 
-        // AES606 — entry tables under Data Requirements.
+        // Entry tables under Data Requirements.
         if let Some(re) = dt_entry_re() {
-            for defect in detect_aspect_entry_tables(
-                &parsed,
-                "Data Requirements",
-                re,
-                &[],
-                &[],
-                &[],
-                false,
-            ) {
+            for defect in
+                detect_aspect_entry_tables(&parsed, "Data Requirements", re, &[], &[], &[], false)
+            {
                 findings.push(Self::convert_aspect_entry_defect(defect));
             }
         }
@@ -130,9 +148,16 @@ impl DataCapability {
         Self::convert_aspect_entry_defect_common(defect, consts::RULE_CODE_DATA_DOC)
     }
 
-    fn convert_aspect_entry_defect_common(defect: AspectEntryDefect, rule_code: &'static str) -> DocFinding {
+    fn convert_aspect_entry_defect_common(
+        defect: AspectEntryDefect,
+        rule_code: &'static str,
+    ) -> DocFinding {
         let (violation, message, reason, fix) = match &defect {
-            AspectEntryDefect::MissingAspect { line, h3_title, aspect } => (
+            AspectEntryDefect::MissingAspect {
+                line,
+                h3_title,
+                aspect,
+            } => (
                 consts::TEMPLATE_CONFORMANCE_VIOLATION_MISSING_H4_ASPECT,
                 format!(
                     "line {} `### {}` missing aspect H4 `#### {}`",
@@ -142,27 +167,36 @@ impl DataCapability {
                     "The HOW-TO template requires every entry H3 under `### {}` to carry a `#### {}` subsection.",
                     h3_title, aspect
                 ),
-                format!(
-                    "Add `#### {}` under `### {}`.",
-                    aspect, h3_title
-                ),
+                format!("Add `#### {}` under `### {}`.", aspect, h3_title),
             ),
-            AspectEntryDefect::OrderMismatch { line, h3_title, aspects } => (
+            AspectEntryDefect::OrderMismatch {
+                line,
+                h3_title,
+                aspects,
+            } => (
                 consts::TEMPLATE_CONFORMANCE_VIOLATION_H4_ORDER,
                 format!(
                     "line {} `### {}` aspect H4s out of canonical order: expected {}",
-                    line, h3_title, aspects.join(", ")
+                    line,
+                    h3_title,
+                    aspects.join(", ")
                 ),
                 format!(
                     "Reorder the `####` aspect subsections under `### {}` to match the template order: {}.",
-                    h3_title, aspects.join(", ")
+                    h3_title,
+                    aspects.join(", ")
                 ),
                 format!(
                     "Move the aspect H4s under `### {}` into canonical order: {}.",
-                    h3_title, aspects.join(", ")
+                    h3_title,
+                    aspects.join(", ")
                 ),
             ),
-            AspectEntryDefect::EmptyBody { line, aspect, h3_title } => (
+            AspectEntryDefect::EmptyBody {
+                line,
+                aspect,
+                h3_title,
+            } => (
                 consts::TEMPLATE_CONFORMANCE_VIOLATION_MISSING_H4_ASPECT,
                 format!(
                     "line {} `#### {}` under `### {}` carries an empty body",
@@ -172,12 +206,13 @@ impl DataCapability {
                     "Every PRD aspect `#### {}` under `### {}` must carry non-empty content.",
                     aspect, h3_title
                 ),
-                format!(
-                    "Add content to `#### {}` under `### {}`.",
-                    aspect, h3_title
-                ),
+                format!("Add content to `#### {}` under `### {}`.", aspect, h3_title),
             ),
-            AspectEntryDefect::NotATable { line, aspect, h3_title } => (
+            AspectEntryDefect::NotATable {
+                line,
+                aspect,
+                h3_title,
+            } => (
                 consts::TEMPLATE_CONFORMANCE_VIOLATION_SECTION_NOT_TABLE,
                 format!(
                     "line {} `#### {}` under `### {}` must be a markdown table",
@@ -207,11 +242,17 @@ impl DataCapability {
                     aspect
                 ),
             ),
-            AspectEntryDefect::HeaderExtra { line, aspect, extras } => (
+            AspectEntryDefect::HeaderExtra {
+                line,
+                aspect,
+                extras,
+            } => (
                 consts::TEMPLATE_CONFORMANCE_VIOLATION_TABLE_EXTRA_COLUMNS,
                 format!(
                     "line {} `#### {}` aspect table carries extra column(s): {}",
-                    line, aspect, extras.join(", ")
+                    line,
+                    aspect,
+                    extras.join(", ")
                 ),
                 format!(
                     "The aspect table header under `#### {}` must be exactly `| No | Detail |`; extra columns break the fixed shape.",
@@ -223,7 +264,11 @@ impl DataCapability {
                     aspect
                 ),
             ),
-            AspectEntryDefect::RowNumbering { line, aspect, h3_title } => (
+            AspectEntryDefect::RowNumbering {
+                line,
+                aspect,
+                h3_title,
+            } => (
                 consts::TEMPLATE_CONFORMANCE_VIOLATION_ROW_NUMBERING,
                 format!(
                     "line {} `#### {}` under `### {}` row numbers are not contiguous 1..N",
@@ -238,7 +283,13 @@ impl DataCapability {
                     aspect, h3_title
                 ),
             ),
-            AspectEntryDefect::RowCount { line, aspect, h3_title, total, seed_min } => (
+            AspectEntryDefect::RowCount {
+                line,
+                aspect,
+                h3_title,
+                total,
+                seed_min,
+            } => (
                 consts::TEMPLATE_CONFORMANCE_VIOLATION_ROW_COUNT,
                 format!(
                     "line {} `#### {}` under `### {}` bounded aspect carries {} rows, expected exactly {}",
@@ -253,7 +304,13 @@ impl DataCapability {
                     aspect, h3_title, seed_min
                 ),
             ),
-            AspectEntryDefect::RowMinimum { line, aspect, h3_title, total, min } => (
+            AspectEntryDefect::RowMinimum {
+                line,
+                aspect,
+                h3_title,
+                total,
+                min,
+            } => (
                 consts::TEMPLATE_CONFORMANCE_VIOLATION_ROW_MINIMUM,
                 format!(
                     "line {} `#### {}` under `### {}` open-ended aspect carries {} rows, need at least {}",
@@ -268,7 +325,11 @@ impl DataCapability {
                     aspect, h3_title, min
                 ),
             ),
-            AspectEntryDefect::EmptyDetailCell { line, aspect, row_no } => (
+            AspectEntryDefect::EmptyDetailCell {
+                line,
+                aspect,
+                row_no,
+            } => (
                 consts::TEMPLATE_CONFORMANCE_VIOLATION_EMPTY_DETAIL_CELL,
                 format!(
                     "line {} `#### {}` row `{}` Detail cell is empty or a placeholder dash",

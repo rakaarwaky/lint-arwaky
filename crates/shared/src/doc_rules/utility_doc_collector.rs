@@ -372,4 +372,3 @@ fn present_docs(folder: &Path) -> BTreeSet<String> {
     }
     docs
 }
-

@@ -44,10 +44,7 @@ pub enum AspectEntryDefect {
         h3_title: String,
     },
     /// Aspect H4 table header is missing required columns.
-    HeaderMissing {
-        line: usize,
-        aspect: String,
-    },
+    HeaderMissing { line: usize, aspect: String },
     /// Aspect H4 table header carries extra columns.
     HeaderExtra {
         line: usize,

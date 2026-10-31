@@ -11,11 +11,9 @@ use shared_doc_rules::taxonomy_doc_rules_constant as consts;
 use shared_doc_rules::taxonomy_doc_rules_request::{DocFinding, DocSource};
 use shared_doc_rules::taxonomy_doc_rules_violation_names::DOC_VIOLATION_NAMES;
 use shared_doc_rules::utility_capabilities_doc_h2_checks::{
-    detect_h2_table, SectionShapeDefect, SectionShapeDefectKind,
+    SectionShapeDefect, SectionShapeDefectKind, detect_h2_table,
 };
-use shared_doc_rules::utility_doc_common_checks::{
-    detect_doc_heading, missing_link_violation_type, required_links,
-};
+use shared_doc_rules::utility_doc_common_checks::detect_doc_heading;
 use shared_doc_rules::utility_markdown_scanner::{doc_h2_contract, sections};
 
 #[derive(Default)]
@@ -53,34 +51,83 @@ impl ReadmeCapability {
         if let Some((required, allowed)) = doc_h2_contract(consts::README_DOC) {
             for defect in detect_doc_heading(text, consts::README_DOC, required, allowed) {
                 let (violation, message, reason, fix) = match &defect {
-                    shared_doc_rules::utility_doc_common_checks::HeadingDefect::H1Count { line, count } => (
+                    shared_doc_rules::utility_doc_common_checks::HeadingDefect::H1Count {
+                        line: _,
+                        count,
+                    } => (
                         DOC_VIOLATION_NAMES.h1_count_violation(),
-                        format!("{} opens with {} level-1 headings", consts::README_DOC, count),
-                        format!("{} must open with exactly one H1 naming the project", consts::README_DOC),
-                        format!("Keep exactly one `# {}` line at the top of {}", consts::README_DOC, consts::README_DOC),
+                        format!(
+                            "{} opens with {} level-1 headings",
+                            consts::README_DOC,
+                            count
+                        ),
+                        format!(
+                            "{} must open with exactly one H1 naming the project",
+                            consts::README_DOC
+                        ),
+                        format!(
+                            "Keep exactly one `# {}` line at the top of {}",
+                            consts::README_DOC,
+                            consts::README_DOC
+                        ),
                     ),
-                    shared_doc_rules::utility_doc_common_checks::HeadingDefect::H2Missing { line, missing } => (
+                    shared_doc_rules::utility_doc_common_checks::HeadingDefect::H2Missing {
+                        line: _,
+                        missing,
+                    } => (
                         DOC_VIOLATION_NAMES.h2_missing(),
-                        format!("{} has no H2 heading for {}", consts::README_DOC, missing.join(", ")),
-                        format!("{} needs a level-2 heading for every template-required section", consts::README_DOC),
-                        format!("Add the missing `## {}` section(s) to {}", missing.join(" `## `"), consts::README_DOC),
+                        format!(
+                            "{} has no H2 heading for {}",
+                            consts::README_DOC,
+                            missing.join(", ")
+                        ),
+                        format!(
+                            "{} needs a level-2 heading for every template-required section",
+                            consts::README_DOC
+                        ),
+                        format!(
+                            "Add the missing `## {}` section(s) to {}",
+                            missing.join(" `## `"),
+                            consts::README_DOC
+                        ),
                     ),
-                    shared_doc_rules::utility_doc_common_checks::HeadingDefect::H2Unexpected { line, unexpected } => (
+                    shared_doc_rules::utility_doc_common_checks::HeadingDefect::H2Unexpected {
+                        line: _,
+                        unexpected,
+                    } => (
                         DOC_VIOLATION_NAMES.h2_unexpected(),
-                        format!("{} carries H2 heading(s) outside the template: {}", consts::README_DOC, unexpected.join(", ")),
-                        format!("{} must not carry H2 headings the template does not declare", consts::README_DOC),
-                        format!("Remove or rename the unexpected heading(s): {}", unexpected.join(", ")),
+                        format!(
+                            "{} carries H2 heading(s) outside the template: {}",
+                            consts::README_DOC,
+                            unexpected.join(", ")
+                        ),
+                        format!(
+                            "{} must not carry H2 headings the template does not declare",
+                            consts::README_DOC
+                        ),
+                        format!(
+                            "Remove or rename the unexpected heading(s): {}",
+                            unexpected.join(", ")
+                        ),
                     ),
                 };
                 findings.push(
-                    DocFinding::new_with_line("", defect.line(), consts::RULE_CODE_README_DOC, violation, message)
-                        .with_reason(reason, fix),
+                    DocFinding::new_with_line(
+                        "",
+                        defect.line(),
+                        consts::RULE_CODE_README_DOC,
+                        violation,
+                        message,
+                    )
+                    .with_reason(reason, fix),
                 );
             }
         }
 
         // Quick Start table carries the fixed columns.
-        if let Some(defect) = detect_h2_table(&parsed, "Quick Start", consts::README_QUICK_START_COLUMNS) {
+        if let Some(defect) =
+            detect_h2_table(&parsed, "Quick Start", consts::README_QUICK_START_COLUMNS)
+        {
             findings.push(Self::convert_shape_defect(defect));
         }
     }
@@ -166,7 +213,13 @@ impl ReadmeCapability {
                 ),
             ),
         };
-        DocFinding::new_with_line("", defect.line, consts::RULE_CODE_README_DOC, violation, message)
-            .with_reason(reason, fix)
+        DocFinding::new_with_line(
+            "",
+            defect.line,
+            consts::RULE_CODE_README_DOC,
+            violation,
+            message,
+        )
+        .with_reason(reason, fix)
     }
 }

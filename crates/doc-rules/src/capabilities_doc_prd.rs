@@ -12,15 +12,14 @@ use shared_doc_rules::taxonomy_doc_rules_constant as consts;
 use shared_doc_rules::taxonomy_doc_rules_request::{DocFinding, DocSource};
 use shared_doc_rules::taxonomy_doc_rules_violation_names::DOC_VIOLATION_NAMES;
 use shared_doc_rules::utility_doc_aspect_entry_checks::{
-    detect_aspect_entry_tables, AspectEntryDefect,
+    AspectEntryDefect, detect_aspect_entry_tables,
 };
 use shared_doc_rules::utility_doc_common_checks::{
-    detect_backlog_qualifier_alignment, detect_doc_heading, HeadingDefect,
-    missing_link_violation_type, required_links,
+    HeadingDefect, detect_doc_heading, missing_link_violation_type, required_links,
 };
 use shared_doc_rules::utility_doc_entry_regexes::pr_entry_re;
 use shared_doc_rules::utility_doc_fr_format_checks::{
-    detect_api_method_existence, detect_pr_id_parity, ApiMethodDefect, PrIdParityDefect,
+    PrIdParityDefect, detect_api_method_existence, detect_pr_id_parity,
 };
 use shared_doc_rules::utility_markdown_scanner::{doc_h2_contract, sections};
 
@@ -69,20 +68,39 @@ impl PrdCapability {
                 let (violation, message, reason, fix) = match &defect {
                     PrIdParityDefect::PrMissingFromRoadmap { line, id } => (
                         DOC_VIOLATION_NAMES.pr_roadmap_id_missing(),
-                        format!("line {} PR `{}` declared in PRD has no ROADMAP `Roadmap Status` entry", line, id),
+                        format!(
+                            "line {} PR `{}` declared in PRD has no ROADMAP `Roadmap Status` entry",
+                            line, id
+                        ),
                         format!("Add `{}` to ROADMAP's `Roadmap Status` table.", id),
                         format!("Add `{}` under `Roadmap Status` in ROADMAP.md.", id),
                     ),
                     PrIdParityDefect::RoadmapNotInPrd { line, id, valid } => (
                         DOC_VIOLATION_NAMES.roadmap_pr_id_not_pr(),
-                        format!("line {} ROADMAP `PR-` item `{}` is not declared in the PRD", line, id),
-                        format!("The PRD declares `Project Requirements`; `{}` must appear there first.", id),
-                        format!("Declare `{}` in PRD's `Project Requirements`. Valid ids: {}", id, valid.join(", ")),
+                        format!(
+                            "line {} ROADMAP `PR-` item `{}` is not declared in the PRD",
+                            line, id
+                        ),
+                        format!(
+                            "The PRD declares `Project Requirements`; `{}` must appear there first.",
+                            id
+                        ),
+                        format!(
+                            "Declare `{}` in PRD's `Project Requirements`. Valid ids: {}",
+                            id,
+                            valid.join(", ")
+                        ),
                     ),
                 };
                 findings.push(
-                    DocFinding::new_with_line("", defect.line(), consts::RULE_CODE_PRD_DOC, violation, message)
-                        .with_reason(reason, fix),
+                    DocFinding::new_with_line(
+                        "",
+                        defect.line(),
+                        consts::RULE_CODE_PRD_DOC,
+                        violation,
+                        message,
+                    )
+                    .with_reason(reason, fix),
                 );
             }
         }
@@ -108,34 +126,61 @@ impl PrdCapability {
         }
 
         // Crosslinks (ROADMAP, ARCHITECTURE).
-        Self::check_crosslinks(document, context, consts::RULE_CODE_CROSSLINKS, findings);
+        Self::check_crosslinks(document, context, consts::RULE_CODE_PRD_DOC, findings);
 
         // Heading structure.
         if let Some((required, allowed)) = doc_h2_contract(consts::PRD_DOC) {
             for defect in detect_doc_heading(text, consts::PRD_DOC, required, allowed) {
                 let (violation, message, reason, fix) = match &defect {
-                    HeadingDefect::H1Count { line, count } => (
+                    HeadingDefect::H1Count { line: _, count } => (
                         consts::DOC_STRUCTURE_VIOLATION_H1_COUNT,
                         format!("{} H1 headings; template requires exactly one", count),
-                        format!("{} has {} H1 headings; the template fixes exactly one H1 at the top.", consts::PRD_DOC, count),
-                        format!("Remove the extra H1 heading(s) so {} keeps exactly one H1.", consts::PRD_DOC),
+                        format!(
+                            "{} has {} H1 headings; the template fixes exactly one H1 at the top.",
+                            consts::PRD_DOC,
+                            count
+                        ),
+                        format!(
+                            "Remove the extra H1 heading(s) so {} keeps exactly one H1.",
+                            consts::PRD_DOC
+                        ),
                     ),
-                    HeadingDefect::H2Missing { line, missing } => (
+                    HeadingDefect::H2Missing { line: _, missing } => (
                         consts::DOC_STRUCTURE_VIOLATION_H2_MISSING,
                         format!("missing required H2 section(s): {}", missing.join(", ")),
-                        format!("{} is missing required H2 section(s): {}", consts::PRD_DOC, missing.join(", ")),
+                        format!(
+                            "{} is missing required H2 section(s): {}",
+                            consts::PRD_DOC,
+                            missing.join(", ")
+                        ),
                         format!("Add the missing H2 section(s): {}", missing.join(", ")),
                     ),
-                    HeadingDefect::H2Unexpected { line, unexpected } => (
+                    HeadingDefect::H2Unexpected {
+                        line: _,
+                        unexpected,
+                    } => (
                         consts::DOC_STRUCTURE_VIOLATION_H2_UNEXPECTED,
                         format!("unexpected H2 section(s): {}", unexpected.join(", ")),
-                        format!("{} carries H2 section(s) outside the template: {}", consts::PRD_DOC, unexpected.join(", ")),
-                        format!("Remove the off-template H2 section(s): {}", unexpected.join(", ")),
+                        format!(
+                            "{} carries H2 section(s) outside the template: {}",
+                            consts::PRD_DOC,
+                            unexpected.join(", ")
+                        ),
+                        format!(
+                            "Remove the off-template H2 section(s): {}",
+                            unexpected.join(", ")
+                        ),
                     ),
                 };
                 findings.push(
-                    DocFinding::new_with_line("", defect.line(), consts::RULE_CODE_PRD_DOC, violation, message)
-                        .with_reason(reason, fix),
+                    DocFinding::new_with_line(
+                        "",
+                        defect.line(),
+                        consts::RULE_CODE_PRD_DOC,
+                        violation,
+                        message,
+                    )
+                    .with_reason(reason, fix),
                 );
             }
         }
@@ -160,9 +205,16 @@ impl PrdCapability {
         Self::convert_aspect_entry_defect_common(defect, consts::RULE_CODE_PRD_DOC)
     }
 
-    fn convert_aspect_entry_defect_common(defect: AspectEntryDefect, rule_code: &'static str) -> DocFinding {
+    fn convert_aspect_entry_defect_common(
+        defect: AspectEntryDefect,
+        rule_code: &'static str,
+    ) -> DocFinding {
         let (violation, message, reason, fix) = match &defect {
-            AspectEntryDefect::MissingAspect { line, h3_title, aspect } => (
+            AspectEntryDefect::MissingAspect {
+                line,
+                h3_title,
+                aspect,
+            } => (
                 consts::TEMPLATE_CONFORMANCE_VIOLATION_MISSING_H4_ASPECT,
                 format!(
                     "line {} `### {}` missing aspect H4 `#### {}`",
@@ -172,27 +224,36 @@ impl PrdCapability {
                     "The HOW-TO template requires every entry H3 under `### {}` to carry a `#### {}` subsection.",
                     h3_title, aspect
                 ),
-                format!(
-                    "Add `#### {}` under `### {}`.",
-                    aspect, h3_title
-                ),
+                format!("Add `#### {}` under `### {}`.", aspect, h3_title),
             ),
-            AspectEntryDefect::OrderMismatch { line, h3_title, aspects } => (
+            AspectEntryDefect::OrderMismatch {
+                line,
+                h3_title,
+                aspects,
+            } => (
                 consts::TEMPLATE_CONFORMANCE_VIOLATION_H4_ORDER,
                 format!(
                     "line {} `### {}` aspect H4s out of canonical order: expected {}",
-                    line, h3_title, aspects.join(", ")
+                    line,
+                    h3_title,
+                    aspects.join(", ")
                 ),
                 format!(
                     "Reorder the `####` aspect subsections under `### {}` to match the template order: {}.",
-                    h3_title, aspects.join(", ")
+                    h3_title,
+                    aspects.join(", ")
                 ),
                 format!(
                     "Move the aspect H4s under `### {}` into canonical order: {}.",
-                    h3_title, aspects.join(", ")
+                    h3_title,
+                    aspects.join(", ")
                 ),
             ),
-            AspectEntryDefect::EmptyBody { line, aspect, h3_title } => (
+            AspectEntryDefect::EmptyBody {
+                line,
+                aspect,
+                h3_title,
+            } => (
                 consts::TEMPLATE_CONFORMANCE_VIOLATION_MISSING_H4_ASPECT,
                 format!(
                     "line {} `#### {}` under `### {}` carries an empty body",
@@ -202,12 +263,13 @@ impl PrdCapability {
                     "Every PRD aspect `#### {}` under `### {}` must carry non-empty content.",
                     aspect, h3_title
                 ),
-                format!(
-                    "Add content to `#### {}` under `### {}`.",
-                    aspect, h3_title
-                ),
+                format!("Add content to `#### {}` under `### {}`.", aspect, h3_title),
             ),
-            AspectEntryDefect::NotATable { line, aspect, h3_title } => (
+            AspectEntryDefect::NotATable {
+                line,
+                aspect,
+                h3_title,
+            } => (
                 consts::TEMPLATE_CONFORMANCE_VIOLATION_SECTION_NOT_TABLE,
                 format!(
                     "line {} `#### {}` under `### {}` must be a markdown table",
@@ -237,11 +299,17 @@ impl PrdCapability {
                     aspect
                 ),
             ),
-            AspectEntryDefect::HeaderExtra { line, aspect, extras } => (
+            AspectEntryDefect::HeaderExtra {
+                line,
+                aspect,
+                extras,
+            } => (
                 consts::TEMPLATE_CONFORMANCE_VIOLATION_TABLE_EXTRA_COLUMNS,
                 format!(
                     "line {} `#### {}` aspect table carries extra column(s): {}",
-                    line, aspect, extras.join(", ")
+                    line,
+                    aspect,
+                    extras.join(", ")
                 ),
                 format!(
                     "The aspect table header under `#### {}` must be exactly `| No | Detail |`; extra columns break the fixed shape.",
@@ -253,7 +321,11 @@ impl PrdCapability {
                     aspect
                 ),
             ),
-            AspectEntryDefect::RowNumbering { line, aspect, h3_title } => (
+            AspectEntryDefect::RowNumbering {
+                line,
+                aspect,
+                h3_title,
+            } => (
                 consts::TEMPLATE_CONFORMANCE_VIOLATION_ROW_NUMBERING,
                 format!(
                     "line {} `#### {}` under `### {}` row numbers are not contiguous 1..N",
@@ -268,7 +340,13 @@ impl PrdCapability {
                     aspect, h3_title
                 ),
             ),
-            AspectEntryDefect::RowCount { line, aspect, h3_title, total, seed_min } => (
+            AspectEntryDefect::RowCount {
+                line,
+                aspect,
+                h3_title,
+                total,
+                seed_min,
+            } => (
                 consts::TEMPLATE_CONFORMANCE_VIOLATION_ROW_COUNT,
                 format!(
                     "line {} `#### {}` under `### {}` bounded aspect carries {} rows, expected exactly {}",
@@ -283,7 +361,13 @@ impl PrdCapability {
                     aspect, h3_title, seed_min
                 ),
             ),
-            AspectEntryDefect::RowMinimum { line, aspect, h3_title, total, min } => (
+            AspectEntryDefect::RowMinimum {
+                line,
+                aspect,
+                h3_title,
+                total,
+                min,
+            } => (
                 consts::TEMPLATE_CONFORMANCE_VIOLATION_ROW_MINIMUM,
                 format!(
                     "line {} `#### {}` under `### {}` open-ended aspect carries {} rows, need at least {}",
@@ -298,7 +382,11 @@ impl PrdCapability {
                     aspect, h3_title, min
                 ),
             ),
-            AspectEntryDefect::EmptyDetailCell { line, aspect, row_no } => (
+            AspectEntryDefect::EmptyDetailCell {
+                line,
+                aspect,
+                row_no,
+            } => (
                 consts::TEMPLATE_CONFORMANCE_VIOLATION_EMPTY_DETAIL_CELL,
                 format!(
                     "line {} `#### {}` row `{}` Detail cell is empty or a placeholder dash",

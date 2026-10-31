@@ -1,26 +1,29 @@
 // PURPOSE: Per-doc capability for FRD.md — AES609
 //
 // Answers ALL invariants scoped to FRD.md behind IFrdDocProtocol.
-// FR-format family violations carry RULE_CODE_FR_FORMAT ("AES601");
-// heading/structure/spec/crosslink/template findings carry their own rule
-// codes. The capability stamps the document path on every finding.
+// FR-ID format, protocol parity, API method existence, spec purity,
+// crosslinks, heading structure, section order, and entry-table
+// conformance are stamped with RULE_CODE_FRD_DOC ("AES609").
+// The capability stamps the document path on every finding.
 
 use shared_doc_rules::contract_doc_protocol::IFrdDocProtocol;
 use shared_doc_rules::taxonomy_doc_audit_context_vo::DocAuditContext;
 use shared_doc_rules::taxonomy_doc_rules_constant as consts;
 use shared_doc_rules::taxonomy_doc_rules_request::{DocFinding, DocSource};
 use shared_doc_rules::taxonomy_doc_rules_violation_names::DOC_VIOLATION_NAMES;
+use shared_doc_rules::utility_capabilities_doc_h2_checks::{
+    SectionShapeDefect, SectionShapeDefectKind,
+};
 use shared_doc_rules::utility_doc_aspect_entry_checks::{
-    detect_aspect_entry_tables, AspectEntryDefect,
+    AspectEntryDefect, detect_aspect_entry_tables,
 };
 use shared_doc_rules::utility_doc_common_checks::{
-    detect_doc_heading, detect_entry_tables, EntryTableDefect, HeadingDefect,
-    missing_link_violation_type, required_links,
+    EntryTableDefect, HeadingDefect, detect_doc_heading, missing_link_violation_type,
+    required_links,
 };
 use shared_doc_rules::utility_doc_entry_regexes::fr_entry_re;
 use shared_doc_rules::utility_doc_fr_format_checks::{
     detect_api_method_existence, detect_fr_id_format, detect_fr_protocol_parity,
-    FrIdDefect, ProtocolParityDefect,
 };
 use shared_doc_rules::utility_markdown_scanner::{
     blank_fenced, doc_h2_contract, normalize_heading, sections, source_ext_pattern,
@@ -58,13 +61,13 @@ impl FrdCapability {
         let text = &document.text;
         let parsed = sections(text);
 
-        // AES609 — FR-ID format (bare FR-NNN without feature prefix).
+        // FR-ID format (bare FR-NNN without feature prefix).
         for defect in detect_fr_id_format(document) {
             findings.push(
                 DocFinding::new_with_line(
                     "",
                     defect.line,
-                    consts::RULE_CODE_FR_FORMAT,
+                    consts::RULE_CODE_FRD_DOC,
                     DOC_VIOLATION_NAMES.fr_id_missing_feature_prefix(),
                     format!(
                         "line {} `FR-{}: {}` is a bare FR-ID without its `FR-<FEATURE>` prefix",
@@ -81,13 +84,13 @@ impl FrdCapability {
             );
         }
 
-        // AES601 — FR protocol parity (requirement count vs contract seams).
+        // FR protocol parity (requirement count vs contract seams).
         for defect in detect_fr_protocol_parity(document, context) {
             findings.push(
                 DocFinding::new_with_line(
                     "",
                     defect.line,
-                    consts::RULE_CODE_FR_FORMAT,
+                    consts::RULE_CODE_FRD_DOC,
                     DOC_VIOLATION_NAMES.protocol_count_mismatch(),
                     format!(
                         "FR protocol parity: {} requirement(s) vs {} protocol class(es) — {}",
@@ -101,13 +104,13 @@ impl FrdCapability {
             );
         }
 
-        // AES601 — promised API method existence.
+        // Promised API method existence.
         for defect in detect_api_method_existence(document, context) {
             findings.push(
                 DocFinding::new_with_line(
                     "",
                     defect.line,
-                    consts::RULE_CODE_FR_FORMAT,
+                    consts::RULE_CODE_FRD_DOC,
                     DOC_VIOLATION_NAMES.fr_api_method_not_found(),
                     format!(
                         "`{}` section: promised API method `{}` is not declared by any protocol/aggregate trait",
@@ -121,52 +124,79 @@ impl FrdCapability {
             );
         }
 
-        // AES603 — spec purity (no source file names, no implementation state).
+        // Spec purity (no source file names, no implementation state).
         Self::check_spec_purity(document, findings);
 
-        // AES604 — crosslinks (PRD, BACKLOG, ROADMAP, ARCHITECTURE).
-        Self::check_crosslinks(document, context, consts::RULE_CODE_CROSSLINKS, findings);
+        // Crosslinks (PRD, BACKLOG, ROADMAP, ARCHITECTURE).
+        Self::check_crosslinks(document, context, consts::RULE_CODE_FRD_DOC, findings);
 
-        // AES605 — heading structure (exactly one H1, required H2s, no off-template H2s).
+        // Heading structure (exactly one H1, required H2s, no off-template H2s).
         if let Some((required, allowed)) = doc_h2_contract(consts::FRD_DOC) {
             for defect in detect_doc_heading(text, consts::FRD_DOC, required, allowed) {
                 let (violation, message, reason, fix) = match &defect {
-                    HeadingDefect::H1Count { line, count } => (
+                    HeadingDefect::H1Count { line: _, count } => (
                         DOC_VIOLATION_NAMES.h1_count_violation(),
                         format!("{} H1 headings; template requires exactly one", count),
-                        format!("{} has {} H1 headings; the template fixes exactly one H1 at the top.", consts::FRD_DOC, count),
-                        format!("Remove the extra H1 heading(s) so {} keeps exactly one H1.", consts::FRD_DOC),
+                        format!(
+                            "{} has {} H1 headings; the template fixes exactly one H1 at the top.",
+                            consts::FRD_DOC,
+                            count
+                        ),
+                        format!(
+                            "Remove the extra H1 heading(s) so {} keeps exactly one H1.",
+                            consts::FRD_DOC
+                        ),
                     ),
-                    HeadingDefect::H2Missing { line, missing } => (
+                    HeadingDefect::H2Missing { line: _, missing } => (
                         DOC_VIOLATION_NAMES.h2_missing(),
                         format!("missing required H2 section(s): {}", missing.join(", ")),
-                        format!("{} is missing required H2 section(s): {}", consts::FRD_DOC, missing.join(", ")),
+                        format!(
+                            "{} is missing required H2 section(s): {}",
+                            consts::FRD_DOC,
+                            missing.join(", ")
+                        ),
                         format!("Add the missing H2 section(s): {}", missing.join(", ")),
                     ),
-                    HeadingDefect::H2Unexpected { line, unexpected } => (
+                    HeadingDefect::H2Unexpected {
+                        line: _,
+                        unexpected,
+                    } => (
                         DOC_VIOLATION_NAMES.h2_unexpected(),
                         format!("unexpected H2 section(s): {}", unexpected.join(", ")),
-                        format!("{} carries H2 section(s) outside the template: {}", consts::FRD_DOC, unexpected.join(", ")),
-                        format!("Remove the off-template H2 section(s): {}", unexpected.join(", ")),
+                        format!(
+                            "{} carries H2 section(s) outside the template: {}",
+                            consts::FRD_DOC,
+                            unexpected.join(", ")
+                        ),
+                        format!(
+                            "Remove the off-template H2 section(s): {}",
+                            unexpected.join(", ")
+                        ),
                     ),
                 };
                 findings.push(
-                    DocFinding::new_with_line("", defect.line(), consts::RULE_CODE_FRD_DOC, violation, message)
-                        .with_reason(reason, fix),
+                    DocFinding::new_with_line(
+                        "",
+                        defect.line(),
+                        consts::RULE_CODE_FRD_DOC,
+                        violation,
+                        message,
+                    )
+                    .with_reason(reason, fix),
                 );
             }
         }
 
-        // AES602 — section order follows the template.
+        // Section order follows the template.
         Self::check_section_order(
             text,
             consts::FRD_SECTION_ORDER,
-            consts::RULE_CODE_SECTION_STRUCTURE,
+            consts::RULE_CODE_FRD_DOC,
             consts::SECTION_STRUCTURE_VIOLATION_ORDER,
             findings,
         );
 
-        // AES606 — entry tables under Functional Requirements.
+        // Entry tables under Functional Requirements.
         if let Some(re) = fr_entry_re() {
             for defect in shared_doc_rules::utility_doc_common_checks::detect_entry_tables(
                 &parsed,
@@ -179,12 +209,15 @@ impl FrdCapability {
                     EntryTableDefect::Shape(shape) => {
                         findings.push(Self::convert_shape_defect(shape));
                     }
-                    EntryTableDefect::RowLabelsMismatch { line, missing, extra, .. } => {
+                    EntryTableDefect::RowLabelsMismatch {
+                        line,
+                        missing,
+                        extra,
+                        ..
+                    } => {
                         let missing_str = missing.join(", ");
                         let extra_str = extra.join(", ");
-                        let violation = if missing.is_empty() {
-                            DOC_VIOLATION_NAMES.entry_missing_row()
-                        } else if extra.is_empty() {
+                        let violation = if missing.is_empty() || extra.is_empty() {
                             DOC_VIOLATION_NAMES.entry_missing_row()
                         } else {
                             DOC_VIOLATION_NAMES.table_missing_columns()
@@ -209,7 +242,7 @@ impl FrdCapability {
             }
         }
 
-        // AES606 — H4 aspect entry tables under Functional Requirements.
+        // H4 aspect entry tables under Functional Requirements.
         if let Some(re) = fr_entry_re() {
             for defect in detect_aspect_entry_tables(
                 &parsed,
@@ -229,9 +262,16 @@ impl FrdCapability {
         Self::convert_aspect_entry_defect_common(defect, consts::RULE_CODE_FRD_DOC)
     }
 
-    fn convert_aspect_entry_defect_common(defect: AspectEntryDefect, rule_code: &'static str) -> DocFinding {
+    fn convert_aspect_entry_defect_common(
+        defect: AspectEntryDefect,
+        rule_code: &'static str,
+    ) -> DocFinding {
         let (violation, message, reason, fix) = match &defect {
-            AspectEntryDefect::MissingAspect { line, h3_title, aspect } => (
+            AspectEntryDefect::MissingAspect {
+                line,
+                h3_title,
+                aspect,
+            } => (
                 DOC_VIOLATION_NAMES.missing_h4_aspect(),
                 format!(
                     "line {} `### {}` missing aspect H4 `#### {}`",
@@ -241,27 +281,36 @@ impl FrdCapability {
                     "The HOW-TO template requires every entry H3 under `### {}` to carry a `#### {}` subsection.",
                     h3_title, aspect
                 ),
-                format!(
-                    "Add `#### {}` under `### {}`.",
-                    aspect, h3_title
-                ),
+                format!("Add `#### {}` under `### {}`.", aspect, h3_title),
             ),
-            AspectEntryDefect::OrderMismatch { line, h3_title, aspects } => (
+            AspectEntryDefect::OrderMismatch {
+                line,
+                h3_title,
+                aspects,
+            } => (
                 DOC_VIOLATION_NAMES.h4_order_violation(),
                 format!(
                     "line {} `### {}` aspect H4s out of canonical order: expected {}",
-                    line, h3_title, aspects.join(", ")
+                    line,
+                    h3_title,
+                    aspects.join(", ")
                 ),
                 format!(
                     "Reorder the `####` aspect subsections under `### {}` to match the template order: {}.",
-                    h3_title, aspects.join(", ")
+                    h3_title,
+                    aspects.join(", ")
                 ),
                 format!(
                     "Move the aspect H4s under `### {}` into canonical order: {}.",
-                    h3_title, aspects.join(", ")
+                    h3_title,
+                    aspects.join(", ")
                 ),
             ),
-            AspectEntryDefect::EmptyBody { line, aspect, h3_title } => (
+            AspectEntryDefect::EmptyBody {
+                line,
+                aspect,
+                h3_title,
+            } => (
                 DOC_VIOLATION_NAMES.missing_h4_aspect(),
                 format!(
                     "line {} `#### {}` under `### {}` carries an empty body",
@@ -271,12 +320,13 @@ impl FrdCapability {
                     "Every PRD aspect `#### {}` under `### {}` must carry non-empty content.",
                     aspect, h3_title
                 ),
-                format!(
-                    "Add content to `#### {}` under `### {}`.",
-                    aspect, h3_title
-                ),
+                format!("Add content to `#### {}` under `### {}`.", aspect, h3_title),
             ),
-            AspectEntryDefect::NotATable { line, aspect, h3_title } => (
+            AspectEntryDefect::NotATable {
+                line,
+                aspect,
+                h3_title,
+            } => (
                 DOC_VIOLATION_NAMES.section_not_table(),
                 format!(
                     "line {} `#### {}` under `### {}` must be a markdown table",
@@ -306,11 +356,17 @@ impl FrdCapability {
                     aspect
                 ),
             ),
-            AspectEntryDefect::HeaderExtra { line, aspect, extras } => (
+            AspectEntryDefect::HeaderExtra {
+                line,
+                aspect,
+                extras,
+            } => (
                 consts::TEMPLATE_CONFORMANCE_VIOLATION_TABLE_EXTRA_COLUMNS,
                 format!(
                     "line {} `#### {}` aspect table carries extra column(s): {}",
-                    line, aspect, extras.join(", ")
+                    line,
+                    aspect,
+                    extras.join(", ")
                 ),
                 format!(
                     "The aspect table header under `#### {}` must be exactly `| No | Detail |`; extra columns break the fixed shape.",
@@ -322,7 +378,11 @@ impl FrdCapability {
                     aspect
                 ),
             ),
-            AspectEntryDefect::RowNumbering { line, aspect, h3_title } => (
+            AspectEntryDefect::RowNumbering {
+                line,
+                aspect,
+                h3_title,
+            } => (
                 DOC_VIOLATION_NAMES.row_numbering_violation(),
                 format!(
                     "line {} `#### {}` under `### {}` row numbers are not contiguous 1..N",
@@ -337,7 +397,13 @@ impl FrdCapability {
                     aspect, h3_title
                 ),
             ),
-            AspectEntryDefect::RowCount { line, aspect, h3_title, total, seed_min } => (
+            AspectEntryDefect::RowCount {
+                line,
+                aspect,
+                h3_title,
+                total,
+                seed_min,
+            } => (
                 DOC_VIOLATION_NAMES.row_count_violation(),
                 format!(
                     "line {} `#### {}` under `### {}` bounded aspect carries {} rows, expected exactly {}",
@@ -352,7 +418,13 @@ impl FrdCapability {
                     aspect, h3_title, seed_min
                 ),
             ),
-            AspectEntryDefect::RowMinimum { line, aspect, h3_title, total, min } => (
+            AspectEntryDefect::RowMinimum {
+                line,
+                aspect,
+                h3_title,
+                total,
+                min,
+            } => (
                 DOC_VIOLATION_NAMES.row_minimum_violation(),
                 format!(
                     "line {} `#### {}` under `### {}` open-ended aspect carries {} rows, need at least {}",
@@ -367,7 +439,11 @@ impl FrdCapability {
                     aspect, h3_title, min
                 ),
             ),
-            AspectEntryDefect::EmptyDetailCell { line, aspect, row_no } => (
+            AspectEntryDefect::EmptyDetailCell {
+                line,
+                aspect,
+                row_no,
+            } => (
                 DOC_VIOLATION_NAMES.empty_detail_cell(),
                 format!(
                     "line {} `#### {}` row `{}` Detail cell is empty or a placeholder dash",
@@ -387,8 +463,100 @@ impl FrdCapability {
             .with_reason(reason, fix)
     }
 
+    fn convert_shape_defect(defect: SectionShapeDefect) -> DocFinding {
+        Self::convert_shape_defect_common(defect, consts::RULE_CODE_FRD_DOC)
+    }
+
+    fn convert_shape_defect_common(
+        defect: SectionShapeDefect,
+        rule_code: &'static str,
+    ) -> DocFinding {
+        let (violation, message, reason, fix) = match defect.kind {
+            SectionShapeDefectKind::ExtraColumns => (
+                DOC_VIOLATION_NAMES.table_extra_columns(),
+                format!(
+                    "line {} `{} {}` table carries column(s) outside the template: {}",
+                    defect.line,
+                    defect.marker,
+                    defect.title,
+                    defect.extra_columns.join(", ")
+                ),
+                format!(
+                    "The HOW-TO template fixes the header of `{}` to exactly {}; an undeclared column breaks the fixed shape.",
+                    defect.title,
+                    defect.columns.join(" | ")
+                ),
+                format!(
+                    "Remove the extra column(s) ({}) from `{} {}` or fold the data into an existing column.",
+                    defect.extra_columns.join(", "),
+                    defect.marker,
+                    defect.title,
+                ),
+            ),
+            SectionShapeDefectKind::HeaderRepeated => (
+                DOC_VIOLATION_NAMES.table_header_repeated(),
+                format!(
+                    "line {} `{} {}` repeats its header row as a data row",
+                    defect.line, defect.marker, defect.title
+                ),
+                format!(
+                    "The HOW-TO template mandates one header row under `{}`; repeating it in a data-row position ships the column names where filled values belong.",
+                    defect.title
+                ),
+                format!(
+                    "Replace the duplicated `| {} |` row under `{} {}` with real values, or delete it if no values exist yet.",
+                    defect.columns.join(" | "),
+                    defect.marker,
+                    defect.title
+                ),
+            ),
+            SectionShapeDefectKind::MissingColumns => (
+                DOC_VIOLATION_NAMES.table_missing_columns(),
+                format!(
+                    "line {} `{} {}` must be a markdown table with columns {}",
+                    defect.line,
+                    defect.marker,
+                    defect.title,
+                    defect.columns.join(" | ")
+                ),
+                format!(
+                    "The HOW-TO template mandates `{}` under this section; a body carrying bullets, prose, or a table missing required columns is not a report a reader can verify.",
+                    defect.title
+                ),
+                format!(
+                    "Replace the body of `{} {}` with a table carrying columns {}.",
+                    defect.marker,
+                    defect.title,
+                    defect.columns.join(" | ")
+                ),
+            ),
+            SectionShapeDefectKind::NotTable => (
+                DOC_VIOLATION_NAMES.section_not_table(),
+                format!(
+                    "line {} `{} {}` must be a markdown table with columns {}",
+                    defect.line,
+                    defect.marker,
+                    defect.title,
+                    defect.columns.join(" | ")
+                ),
+                format!(
+                    "The HOW-TO template mandates `{}` under this section; a body carrying bullets, prose, or a table missing required columns is not a report a reader can verify.",
+                    defect.title
+                ),
+                format!(
+                    "Replace the body of `{} {}` with a table carrying columns {}.",
+                    defect.marker,
+                    defect.title,
+                    defect.columns.join(" | ")
+                ),
+            ),
+        };
+        DocFinding::new_with_line("", defect.line, rule_code, violation, message)
+            .with_reason(reason, fix)
+    }
+
     /// Inline spec-purity check: no concrete source-file names, no
-    /// implementation-state claims. Stamped with RULE_CODE_SPEC_PURITY ("AES603").
+    /// implementation-state claims. Stamped with RULE_CODE_FRD_DOC ("AES609").
     fn check_spec_purity(document: &DocSource, findings: &mut Vec<DocFinding>) {
         let prose = blank_fenced(&document.text);
 
@@ -404,7 +572,7 @@ impl FrdCapability {
                     DocFinding::new_with_line(
                         "",
                         line,
-                        consts::RULE_CODE_SPEC_PURITY,
+                        consts::RULE_CODE_FRD_DOC,
                         consts::SPEC_PURITY_VIOLATION_SOURCE_FILE_NAMED,
                         format!("{name} names a concrete source file"),
                     )
@@ -428,7 +596,7 @@ impl FrdCapability {
                         DocFinding::new_with_line(
                             "",
                             line,
-                            consts::RULE_CODE_SPEC_PURITY,
+                            consts::RULE_CODE_FRD_DOC,
                             consts::SPEC_PURITY_VIOLATION_STATUS_LEAK,
                             desc.to_string(),
                         )

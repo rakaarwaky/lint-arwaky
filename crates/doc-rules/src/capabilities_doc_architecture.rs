@@ -48,28 +48,75 @@ impl ArchitectureCapability {
         if let Some((required, allowed)) = doc_h2_contract(consts::ARCHITECTURE_DOC) {
             for defect in detect_doc_heading(text, consts::ARCHITECTURE_DOC, required, allowed) {
                 let (violation, message, reason, fix) = match &defect {
-                    shared_doc_rules::utility_doc_common_checks::HeadingDefect::H1Count { line, count } => (
+                    shared_doc_rules::utility_doc_common_checks::HeadingDefect::H1Count {
+                        line: _,
+                        count,
+                    } => (
                         DOC_VIOLATION_NAMES.h1_count_violation(),
-                        format!("{} opens with {} level-1 headings", consts::ARCHITECTURE_DOC, count),
-                        format!("{} must open with exactly one H1 naming the project", consts::ARCHITECTURE_DOC),
-                        format!("Keep exactly one `# {}` line at the top of {}", consts::ARCHITECTURE_DOC, consts::ARCHITECTURE_DOC),
+                        format!(
+                            "{} opens with {} level-1 headings",
+                            consts::ARCHITECTURE_DOC,
+                            count
+                        ),
+                        format!(
+                            "{} must open with exactly one H1 naming the project",
+                            consts::ARCHITECTURE_DOC
+                        ),
+                        format!(
+                            "Keep exactly one `# {}` line at the top of {}",
+                            consts::ARCHITECTURE_DOC,
+                            consts::ARCHITECTURE_DOC
+                        ),
                     ),
-                    shared_doc_rules::utility_doc_common_checks::HeadingDefect::H2Missing { line, missing } => (
+                    shared_doc_rules::utility_doc_common_checks::HeadingDefect::H2Missing {
+                        line: _,
+                        missing,
+                    } => (
                         DOC_VIOLATION_NAMES.h2_missing(),
-                        format!("{} has no H2 heading for {}", consts::ARCHITECTURE_DOC, missing.join(", ")),
-                        format!("{} needs a level-2 heading for every template-required section", consts::ARCHITECTURE_DOC),
-                        format!("Add the missing `## {}` section(s) to {}", missing.join(" `## `"), consts::ARCHITECTURE_DOC),
+                        format!(
+                            "{} has no H2 heading for {}",
+                            consts::ARCHITECTURE_DOC,
+                            missing.join(", ")
+                        ),
+                        format!(
+                            "{} needs a level-2 heading for every template-required section",
+                            consts::ARCHITECTURE_DOC
+                        ),
+                        format!(
+                            "Add the missing `## {}` section(s) to {}",
+                            missing.join(" `## `"),
+                            consts::ARCHITECTURE_DOC
+                        ),
                     ),
-                    shared_doc_rules::utility_doc_common_checks::HeadingDefect::H2Unexpected { line, unexpected } => (
+                    shared_doc_rules::utility_doc_common_checks::HeadingDefect::H2Unexpected {
+                        line: _,
+                        unexpected,
+                    } => (
                         DOC_VIOLATION_NAMES.h2_unexpected(),
-                        format!("{} carries H2 heading(s) outside the template: {}", consts::ARCHITECTURE_DOC, unexpected.join(", ")),
-                        format!("{} must not carry H2 headings the template does not declare", consts::ARCHITECTURE_DOC),
-                        format!("Remove or rename the unexpected heading(s): {}", unexpected.join(", ")),
+                        format!(
+                            "{} carries H2 heading(s) outside the template: {}",
+                            consts::ARCHITECTURE_DOC,
+                            unexpected.join(", ")
+                        ),
+                        format!(
+                            "{} must not carry H2 headings the template does not declare",
+                            consts::ARCHITECTURE_DOC
+                        ),
+                        format!(
+                            "Remove or rename the unexpected heading(s): {}",
+                            unexpected.join(", ")
+                        ),
                     ),
                 };
                 findings.push(
-                    DocFinding::new_with_line("", defect.line(), consts::RULE_CODE_ARCHITECTURE_DOC, violation, message)
-                        .with_reason(reason, fix),
+                    DocFinding::new_with_line(
+                        "",
+                        defect.line(),
+                        consts::RULE_CODE_ARCHITECTURE_DOC,
+                        violation,
+                        message,
+                    )
+                    .with_reason(reason, fix),
                 );
             }
         }
