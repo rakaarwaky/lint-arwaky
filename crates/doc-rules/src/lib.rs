@@ -14,6 +14,9 @@ pub mod capabilities_doc_prd;
 pub mod capabilities_doc_readme;
 pub mod capabilities_doc_roadmap;
 
+// ── Utility (shared check mechanics) ─────────────────────────────────────────
+pub mod utility_doc_line_drift;
+
 // ── Agent (orchestration) ─────────────────────────────────────────────────────
 pub mod agent_doc_orchestrator;
 

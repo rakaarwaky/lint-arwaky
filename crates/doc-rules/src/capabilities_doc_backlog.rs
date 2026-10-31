@@ -14,7 +14,8 @@ use shared_doc_rules::utility_doc_aspect_entry_checks::{
     AspectEntryDefect, detect_aspect_entry_tables,
 };
 use shared_doc_rules::utility_doc_common_checks::{
-    backlog_required_links, collect_union_id_set, detect_doc_heading, missing_link_violation_type,
+    backlog_required_links, collect_union_id_set, detect_doc_heading, detect_doc_line_drift,
+    missing_link_violation_type,
 };
 use shared_doc_rules::utility_doc_entry_regexes::backlog_entry_re;
 use shared_doc_rules::utility_doc_fr_format_checks::collect_any_id_set;
@@ -50,6 +51,14 @@ impl BacklogCapability {
     fn audit_one(document: &DocSource, context: &DocAuditContext, findings: &mut Vec<DocFinding>) {
         let text = &document.text;
         let parsed = sections(text);
+
+        // Template body conformance.
+        let drift = detect_doc_line_drift(text, consts::BACKLOG_TEMPLATE_LINES);
+        findings.extend(crate::utility_doc_line_drift::line_drift_findings(
+            drift,
+            consts::BACKLOG_DOC,
+            consts::RULE_CODE_BACKLOG_DOC,
+        ));
 
         // BACKLOG ID-level alignment against its paired spec union.
         Self::check_backlog_alignment(document, context, findings);

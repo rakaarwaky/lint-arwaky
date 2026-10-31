@@ -74,10 +74,10 @@ AI agents frequently make this mistake: do NOT create `surface/`, `taxonomy/`, `
 project-root/
 ├── crates|packages|modules/
 │   ├── shared/                          # taxonomy + contract + utility
-│   ├── <feature-a>/                     # agent + capabilities + root
-│   ├── <feature-b>/
-│   ├── <surface-a>/                     # surface
-│   └── <surface-b>/
+│   ├── [[ORCA_RICH_MD:4a7d4c61f7c291a52a3535736d35377b:inline-html:%3Cfeature-a%3E]]/                     # agent + capabilities + root
+│   ├── [[ORCA_RICH_MD:4a7d4c61f7c291a52a3535736d35377b:inline-html:%3Cfeature-b%3E]]/
+│   ├── [[ORCA_RICH_MD:4a7d4c61f7c291a52a3535736d35377b:inline-html:%3Csurface-a%3E]]/                     # surface
+│   └── [[ORCA_RICH_MD:4a7d4c61f7c291a52a3535736d35377b:inline-html:%3Csurface-b%3E]]/
 ├── Cargo.toml / package.json / pyproject.toml
 ```
 
@@ -168,7 +168,7 @@ Utility contains reusable low-level mechanics that can be shared across capabili
 | Purpose      | Reusable low-level mechanics shared across capabilities                |
 | Role Naming  | Unlimited; chosen based on demand to describe technical responsibility |
 | Dependencies | Taxonomy only                                                          |
-| Location     | Only in `shared/` layer folder (AES701)                               |
+| Location     | Only in `shared/` layer folder (AES701)                                |
 
 
 ### Components
@@ -392,15 +392,15 @@ Group 6 (Document Invariants) and Group 7 (Folder Structure) findings carry a `v
 | 5 Orphan    | AES501–AES506 | 6     | check/scan, `orphan`  |
 | 6 Doc       | AES601–AES607 | 7     | check/scan, `docs`    |
 | 7 Structure | AES701–AES706 | 6     | check/scan            |
-| Total | AES101–AES706 | 38 | — |
+| Total       | AES101–AES706 | 38    | —                     |
 
 
 ### Rule inventory
 
 
-| Code | Group | Name | Severity | Ran by |
-|------|-------|------|----------|--------|
-| AES101 | Naming | Naming Convention | HIGH | check/scan, naming |
+| Code   | Group     | Name                     | Severity        | Ran by              |
+| ------ | --------- | ------------------------ | --------------- | ------------------- |
+| AES101 | Naming    | Naming Convention        | HIGH            | check/scan, naming  |
 | AES102 | Naming    | Suffix/Prefix Rules      | HIGH            | check/scan, naming  |
 | AES103 | Naming    | Test File Prefix         | HIGH            | check/scan, naming  |
 | AES201 | Import    | Forbidden Import         | CRITICAL        | check/scan, import  |
@@ -546,7 +546,7 @@ Group 1 enforces file naming conventions to ensure clarity and consistency acros
 
 ---
 
-## 15. Group 2: Layer & Import Boundary (AES201–AES205)
+## 15. Group 2: Layer &amp; Import Boundary (AES201–AES205)
 
 Group 2 enforces layer dependency boundaries to maintain architectural integrity.
 
@@ -636,7 +636,7 @@ Group 2 enforces layer dependency boundaries to maintain architectural integrity
 
 ---
 
-## 16. Group 3: File & Content Quality (AES301–AES305)
+## 16. Group 3: File &amp; Content Quality (AES301–AES305)
 
 Group 3 enforces file size limits and content quality standards to maintain code readability.
 
@@ -1087,7 +1087,7 @@ Group 6 enforces document structure and cross-reference integrity across specifi
 | Document          | Required H2s                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | Allowed extra           |
 | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
 | `AGENTS.md`       | Agent Overview · Runtime · Project Structure · Commands · Reference                                                                                                                                                                                                                                                                                                                                                                                                                                  | —                       |
-| `ARCHITECTURE.md` | Purpose · Workspace Organization · Naming Convention · Vertical Slicing Layout · Taxonomy Layer · Contract Layer · Utility Layer · Capabilities Layer · Agent Layer · Surface Layer · Root Layer · Finding rendering notes · Rule Inventory Overview · Group 1: Naming · Group 2: Layer & Import Boundary · Group 3: File & Content Quality · Group 4: Role Violations · Group 5: Orphan Code · Group 6: Document Invariants · Group 7: Folder Structure · Rule Source of Truth & Parity | —                       |
+| `ARCHITECTURE.md` | Purpose · Workspace Organization · Naming Convention · Vertical Slicing Layout · Taxonomy Layer · Contract Layer · Utility Layer · Capabilities Layer · Agent Layer · Surface Layer · Root Layer · Finding rendering notes · Rule Inventory Overview · Group 1: Naming · Group 2: Layer &amp; Import Boundary · Group 3: File &amp; Content Quality · Group 4: Role Violations · Group 5: Orphan Code · Group 6: Document Invariants · Group 7: Folder Structure · Rule Source of Truth &amp; Parity | —                       |
 | `CONTRIBUTING.md` | Contribution Overview · Contribution Guidelines · Workflow · Commit Convention · Reference                                                                                                                                                                                                                                                                                                                                                                                                           | —                       |
 | `PRD.md`          | Problem Statement · Project Requirements · Reference                                                                                                                                                                                                                                                                                                                                                                                                                                                 | —                       |
 | `README.md`       | Project Overview · Prerequisites · Quick Start · Reference                                                                                                                                                                                                                                                                                                                                                                                                                                           | —                       |
@@ -1184,7 +1184,7 @@ Group 7 enforces folder structure invariants to maintain vertical slicing and la
 | --------------- | -------------------------------------------------------------------------------------------------------------------- |
 | Code / Severity | AES701 / MEDIUM (report)                                                                                             |
 | Fires when      | A shared folder holds a `capabilities_*`, `agent_*`, or `surface_*` file, or lacks its DATA.md + BACKLOG.md doc pair |
-| Scope           | `shared/` layer folders under member dirs                                                                           |
+| Scope           | `shared/` layer folders under member dirs                                                                            |
 | Fix             | Move misplaced layer files to a feature or surface folder; add DATA.md and BACKLOG.md                                |
 
 
@@ -1218,7 +1218,7 @@ Group 7 enforces folder structure invariants to maintain vertical slicing and la
 | `feature_has_forbidden_files`      | A feature folder holds a `utility_*`, `surface_*`, `taxonomy_*`, or `contract_*` file                |
 | `feature_missing_doc_pair`         | The feature folder lacks FRD.md or BACKLOG.md                                                        |
 | `feature_missing_root_container`   | No `root_*_container`/`root_*_entry` file under the folder, its `src/` subfolder, or the member root |
-| `feature_missing_shared_subfolder` | The feature has no `shared/src/<feature>/` mirror subfolder in its member's layer                   |
+| `feature_missing_shared_subfolder` | The feature has no `shared/src/<feature>/` mirror subfolder in its member's layer                    |
 | `doc_pair_without_orchestrator`    | A folder carries a doc pair but holds no orchestrator                                                |
 
 
@@ -1321,55 +1321,38 @@ Group 7 enforces folder structure invariants to maintain vertical slicing and la
 | `pr_la_fr_id_mismatch` | A module folder's FRD carries an FR id whose prefix does not match the folder name |
 | `pr_la_id_mismatch`    | A `PR-LA-001..N` id does not map to an existing crate folder by order              |
 
+
 ---
 
-## 21. Rule Source of Truth & Parity
+## 21. Rule Source of Truth &amp; Parity
 
 The rule codes emitted by the rules engine are the source of truth. This document is the readable mirror, single-sourced.
 
 ### Source of Truth
 
-| Aspect | Detail |
-|--------|--------|
-| Source of truth | Rule codes emitted by the rules engine |
-| Document role | Readable mirror, single-sourced |
-| Inventory table | §13, first-cell AES-rows: code, group, name, severity, ran-by |
-| Per-rule detail | §14–20 |
-| Parity test | the parity test in the rules crate (`doc_codes_match_emitted_inventory`) |
-| Validation | First-cell AES-rows in this document equal the pinned emitted inventory of 38 codes |
+
+| Aspect          | Detail                                                                              |
+| --------------- | ----------------------------------------------------------------------------------- |
+| Source of truth | Rule codes emitted by the rules engine                                              |
+| Document role   | Readable mirror, single-sourced                                                     |
+| Inventory table | §13, first-cell AES-rows: code, group, name, severity, ran-by                       |
+| Per-rule detail | §14–20                                                                              |
+| Parity test     | the parity test in the rules crate (`doc_codes_match_emitted_inventory`)            |
+| Validation      | First-cell AES-rows in this document equal the pinned emitted inventory of 38 codes |
+
 
 ### Config Switches
 
-| Switch | Meaning |
-|--------|---------|
-| `architecture.rules.<CODE>.enabled` | Toggle a rule on/off (absent entry = enabled) |
-| `architecture.rules.<CODE>.exceptions` | Paths/globs the checker skips |
-| `architecture.rules.<CODE>.ignored_rules` | Rule codes to ignore for a path |
 
-### Mermaid: Doc-Merge Flow
+| Switch                                    | Meaning                                       |
+| ----------------------------------------- | --------------------------------------------- |
+| `architecture.rules.<CODE>.enabled`       | Toggle a rule on/off (absent entry = enabled) |
+| `architecture.rules.<CODE>.exceptions`    | Paths/globs the checker skips                 |
+| `architecture.rules.<CODE>.ignored_rules` | Rule codes to ignore for a path               |
 
-```mermaid
-graph LR
-    EMIT[emitted codes]:::source
-    ARCH[ARCHITECTURE.md]:::authoritative
-    EMIT --> ARCH
-    classDef authoritative fill:#e1f5e1,stroke:#2e7d32
-    classDef source fill:#e3f2fd,stroke:#1565c0
-```
 
-### Single-Source Note
 
-| Aspect | Detail |
-|--------|--------|
-| Sole rules documentation | `ARCHITECTURE.md` |
-| Inventory table location | §13 |
-| Per-rule detail location | §14–20 |
-| Former rules pointer file | retired (inventory moved inline into §13) |
-| Reason for retirement | Prevent inventory table and per-rule blocks from drifting apart |
-| Per-finding rendering | `why`/`fix` rendering notes remain authoritative in `DocFinding` / `StructureFinding` JSON (§12) |
 
 
 
 ---
-
-```

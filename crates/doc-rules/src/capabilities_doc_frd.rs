@@ -15,8 +15,8 @@ use shared_doc_rules::utility_capabilities_doc_h2_checks::{
     SectionShapeDefect, SectionShapeDefectKind,
 };
 use shared_doc_rules::utility_doc_common_checks::{
-    EntryTableDefect, HeadingDefect, detect_doc_heading, missing_link_violation_type,
-    required_links,
+    EntryTableDefect, HeadingDefect, detect_doc_heading, detect_doc_line_drift,
+    missing_link_violation_type, required_links,
 };
 use shared_doc_rules::utility_doc_entry_regexes::fr_entry_re;
 use shared_doc_rules::utility_doc_fr_format_checks::{

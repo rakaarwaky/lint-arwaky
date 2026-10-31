@@ -14,8 +14,8 @@ use shared_doc_rules::utility_doc_aspect_entry_checks::{
     AspectEntryDefect, detect_aspect_entry_tables,
 };
 use shared_doc_rules::utility_doc_common_checks::{
-    BacklogQualifierDefect, HeadingDefect, detect_doc_heading, missing_link_violation_type,
-    required_links,
+    BacklogQualifierDefect, HeadingDefect, detect_doc_heading, detect_doc_line_drift,
+    missing_link_violation_type, required_links,
 };
 use shared_doc_rules::utility_doc_entry_regexes::ds_entry_re;
 use shared_doc_rules::utility_doc_fr_format_checks::collect_any_id_set;
@@ -52,6 +52,14 @@ impl DesignCapability {
     fn audit_one(document: &DocSource, context: &DocAuditContext, findings: &mut Vec<DocFinding>) {
         let text = &document.text;
         let parsed = sections(text);
+
+        // Template body conformance.
+        let drift = detect_doc_line_drift(text, consts::DESIGN_TEMPLATE_LINES);
+        findings.extend(crate::utility_doc_line_drift::line_drift_findings(
+            drift,
+            consts::DESIGN_DOC,
+            consts::RULE_CODE_DESIGN_DOC,
+        ));
 
         // DS-ID alignment with BACKLOG.
         if let Some(backlog) = context

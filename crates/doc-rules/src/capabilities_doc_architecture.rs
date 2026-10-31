@@ -10,7 +10,9 @@ use shared_doc_rules::taxonomy_doc_audit_context_vo::DocAuditContext;
 use shared_doc_rules::taxonomy_doc_rules_constant as consts;
 use shared_doc_rules::taxonomy_doc_rules_request::{DocFinding, DocSource};
 use shared_doc_rules::taxonomy_doc_rules_violation_names::DOC_VIOLATION_NAMES;
-use shared_doc_rules::utility_doc_common_checks::detect_doc_heading;
+use shared_doc_rules::utility_doc_common_checks::{
+    detect_doc_heading, detect_doc_line_drift, HeadingDefect,
+};
 use shared_doc_rules::utility_markdown_scanner::{doc_h2_contract, sections};
 
 #[derive(Default)]
@@ -43,6 +45,14 @@ impl ArchitectureCapability {
     fn audit_one(document: &DocSource, _context: &DocAuditContext, findings: &mut Vec<DocFinding>) {
         let text = &document.text;
         let parsed = sections(text);
+
+        // Template body conformance.
+        let drift = detect_doc_line_drift(text, consts::ARCHITECTURE_TEMPLATE_LINES);
+        findings.extend(crate::utility_doc_line_drift::line_drift_findings(
+            drift,
+            consts::ARCHITECTURE_DOC,
+            consts::RULE_CODE_ARCHITECTURE_DOC,
+        ));
 
         // Heading structure.
         if let Some((required, allowed)) = doc_h2_contract(consts::ARCHITECTURE_DOC) {

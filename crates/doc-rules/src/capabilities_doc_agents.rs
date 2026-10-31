@@ -15,8 +15,8 @@ use shared_doc_rules::utility_capabilities_doc_h2_checks::{
     detect_h2_table,
 };
 use shared_doc_rules::utility_doc_common_checks::{
-    HeadingDefect, LineDriftDefect, detect_doc_heading, detect_doc_line_drift,
-    missing_link_violation_type, required_links,
+    HeadingDefect, detect_doc_heading, detect_doc_line_drift, missing_link_violation_type,
+    required_links,
 };
 use shared_doc_rules::utility_markdown_scanner::{doc_h2_contract, sections};
 
@@ -73,63 +73,12 @@ impl AgentsCapability {
         }
 
         // AGENTS line drift against the template.
-        for defect in detect_doc_line_drift(text, consts::AGENTS_TEMPLATE_LINES) {
-            let (violation, message, reason, fix) = match &defect {
-                LineDriftDefect::SectionNotInTemplate { line: _, section } => (
-                    DOC_VIOLATION_NAMES.line_drift(),
-                    format!("{} section is not in the AGENTS template", section),
-                    format!(
-                        "{} carries a section the template does not declare.",
-                        section
-                    ),
-                    format!("Remove the off-template section `{}`.", section),
-                ),
-                LineDriftDefect::MissingTemplateSection { line: _, section } => (
-                    DOC_VIOLATION_NAMES.line_drift(),
-                    format!("missing template section: {}", section),
-                    format!(
-                        "{} is missing the template section `{}`.",
-                        consts::AGENTS_DOC,
-                        section
-                    ),
-                    format!("Add `{}`.", section),
-                ),
-                LineDriftDefect::LineMismatch {
-                    line: _,
-                    section,
-                    expected,
-                    found,
-                } => (
-                    DOC_VIOLATION_NAMES.line_drift(),
-                    format!(
-                        "{} section line drift: expected `{}` found `{}`",
-                        section, expected, found
-                    ),
-                    format!(
-                        "{} section of `{}` must match the template line-by-line.",
-                        section,
-                        consts::AGENTS_DOC
-                    ),
-                    format!("Align `{}` section with the template.", section),
-                ),
-                LineDriftDefect::H1NoTitle { line: _ } => (
-                    DOC_VIOLATION_NAMES.line_drift(),
-                    "AGENTS.md H1 has no title".to_string(),
-                    format!("{} H1 heading carries no title.", consts::AGENTS_DOC),
-                    format!("Give the {} H1 a title.", consts::AGENTS_DOC),
-                ),
-            };
-            findings.push(
-                DocFinding::new_with_line(
-                    "",
-                    defect.line(),
-                    consts::RULE_CODE_AGENTS_DOC,
-                    violation,
-                    message,
-                )
-                .with_reason(reason, fix),
-            );
-        }
+        let drift = detect_doc_line_drift(text, consts::AGENTS_TEMPLATE_LINES);
+        findings.extend(crate::utility_doc_line_drift::line_drift_findings(
+            drift,
+            consts::AGENTS_DOC,
+            consts::RULE_CODE_AGENTS_DOC,
+        ));
 
         // Crosslinks (README, CONTRIBUTING, ARCHITECTURE, ROADMAP, PRD).
         Self::check_crosslinks(document, context, consts::RULE_CODE_AGENTS_DOC, findings);
