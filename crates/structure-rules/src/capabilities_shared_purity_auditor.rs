@@ -25,7 +25,7 @@ impl IStructureSharedPurityProtocol for SharedPurityAuditor {
         let ws_root = workspace_root(&root);
         let mut findings = Vec::new();
 
-        for member in utility_structure_parsers::member_dirs(&ws_root) {
+        for member in utility_structure_parsers::scoped_member_dirs(&root, &ws_root) {
             let shared = member.join("shared");
             if !shared.is_dir() {
                 continue;
