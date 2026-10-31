@@ -1,7 +1,5 @@
 # AGENTS Exemplar
 
-A filled AGENTS against the Ecommerce Application project, matching the Template shape exactly.
-
 ````markdown
 # AGENTS — Ecommerce Application
 

@@ -1,7 +1,5 @@
 # Feature BACKLOG Exemplar
 
-A filled BACKLOG against a feature (FRD.md) folder, matching the Template shape exactly. A feature folder carries `FRD.md` + `BACKLOG.md`. Each entry carries one ID from the `FR-<NAME>` family; the example below tracks three checkout requirement IDs across entries.
-
 ```markdown
 # BACKLOG — Ecommerce Checkout
 

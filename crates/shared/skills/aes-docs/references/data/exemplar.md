@@ -1,7 +1,5 @@
 # DATA Exemplar
 
-A filled DATA against the Ecommerce shared layer (DATA-ECOM), matching the Template shape exactly.
-
 ```markdown
 # DATA — Ecommerce Shared Kernel
 

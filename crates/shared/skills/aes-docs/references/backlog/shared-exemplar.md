@@ -1,6 +1,4 @@
-# Kernel BACKLOG Exemplar
-
-A filled BACKLOG against a shared/layer (DATA.md) folder, matching the Template shape exactly. A shared/layer folder carries `DATA.md` + `BACKLOG.md`. Each entry carries one ID from the `DT-<NAME>` family; the example below tracks five value-object IDs across entries.
+# Shared BACKLOG Exemplar
 
 ```markdown
 # BACKLOG — Ecommerce Shared Kernel

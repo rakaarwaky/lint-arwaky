@@ -1,7 +1,5 @@
 # README Exemplar
 
-A filled README against the Ecommerce Application project, matching the Template shape exactly.
-
 ```markdown
 # README — Ecommerce Application
 

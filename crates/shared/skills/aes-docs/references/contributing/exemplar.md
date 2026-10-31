@@ -1,7 +1,5 @@
 # CONTRIBUTING Exemplar
 
-A filled CONTRIBUTING against the Ecommerce Application project, matching the Template shape exactly.
-
 ```markdown
 # CONTRIBUTING — Ecommerce Application
 

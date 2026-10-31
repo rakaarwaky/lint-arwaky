@@ -3,275 +3,200 @@
 ````markdown
 # <Project> Architecture
 
-## 1. Purpose
+## Overview
 
 <One paragraph. Name the failure modes this architecture prevents: tangled imports, undiscoverable behavior, agent misrouting. Keep it to what the boundary rules guard.>
 
-## 2. Workspace Organization
+## Rule Index
 
-| Term               | Meaning                                                     |
-| ------------------ | -------------------------------------------------------------|
-| Project Workspace  | The root containing all configuration and language members  |
-| Workspace Member   | One self-contained crate, package, or module inside the work-|
-|                    | space                                                         |
-| Shared / layer    | Cross-cutting domain models and contracts, never a feature  |
+| Code | Group | Name | Severity |
+| ---- | ----- | ---- | -------- |
+| AES101 | Naming | Naming Convention | HIGH |
+| AES102 | Naming | Suffix/Prefix Rules | HIGH |
+| AES103 | Naming | Test File Prefix | HIGH |
+| AES201 | Import | Forbidden Import | CRITICAL |
+| AES202 | Import | Mandatory Import | HIGH |
+| AES203 | Import | Unused Import | MEDIUM |
+| AES204 | Import | Dummy Import | HIGH |
+| AES205 | Import | Circular Import | CRITICAL |
+| AES301 | Quality | File Maximum Limit | HIGH |
+| AES302 | Quality | File Minimum Limit | HIGH |
+| AES303 | Quality | Mandatory Definition | HIGH/MEDIUM |
+| AES304 | Quality | Bypass Comment | CRITICAL |
+| AES305 | Quality | Duplication Code | MEDIUM |
+| AES401 | Role | Taxonomy Role | HIGH |
+| AES402 | Role | Contract Role | HIGH |
+| AES403 | Role | Capabilities Role | HIGH/MEDIUM/LOW |
+| AES404 | Role | Utility Role | MEDIUM |
+| AES405 | Role | Agent Role | HIGH/MEDIUM/LOW |
+| AES406 | Role | Surface Role | HIGH |
+| AES501 | Orphan | Taxonomy Orphan | LOW |
+| AES502 | Orphan | Contract Orphan | MEDIUM |
+| AES503 | Orphan | Capabilities Orphan | MEDIUM |
+| AES504 | Orphan | Utility Orphan | MEDIUM |
+| AES505 | Orphan | Agent Orphan | HIGH |
+| AES506 | Orphan | Surface Orphan | HIGH/MEDIUM/LOW |
+| AES601 | Doc | AGENTS Document | HIGH |
+| AES602 | Doc | README Document | HIGH |
+| AES603 | Doc | ARCHITECTURE Document | HIGH |
+| AES604 | Doc | CONTRIBUTING Document | HIGH |
+| AES605 | Doc | PRD Document | HIGH |
+| AES606 | Doc | ROADMAP Document | HIGH |
+| AES607 | Doc | BACKLOG Document | HIGH |
+| AES608 | Doc | DATA Document | HIGH |
+| AES609 | Doc | FRD Document | HIGH |
+| AES610 | Doc | DESIGN Document | HIGH |
+| AES701 | Structure | Shared Folder Purity | MEDIUM |
+| AES702 | Structure | Feature Folder Health | MEDIUM |
+| AES703 | Structure | Surface Folder Purity | MEDIUM |
+| AES704 | Structure | Test Suite Coverage | MEDIUM |
+| AES705 | Structure | Member-Root Placement | MEDIUM |
+| AES706 | Structure | PR-LA Folder Mapping | MEDIUM |
 
-## 3. Naming Convention
+---
 
-File names communicate three parts, joined by underscores, then the language extension:
+## Group 1: Naming (AES101–AES103)
 
-`layer_concern_role.<ext>`
+Group 1 enforces file naming conventions to ensure clarity and consistency across the codebase.
 
-| Part    | Where it lives         | Example                      |
-| ------- | ---------------------- | ------------------------------|
-| Layer   | Prefix                 | `taxonomy_`, `contract_`, ...|
-| Concern | Middle                 | `tool`, `doc`, `x509`        |
-| Role    | Suffix                 | `vo`, `protocol`, `orchestrator`|
+### Naming Format
 
-Exceptions: `main.rs`, `lib.rs`, `mod.rs`, `__init__.py`, `index.ts`, `index.js`.
+| Component | Position | Example |
+| --------- | -------- | ------- |
+| Layer | Prefix | `capabilities` |
+| Concern | Middle | `user` |
+| Role | Suffix | `checker` |
+| Extension | End | `.rs` / `.py` / `.ts` |
 
-## 4. Vertical Slicing Folder Structure
+**Pattern:** `layer_concern_role.rs|py|ts`
 
-#### Feature member
+### AES101 — Naming Convention
 
-```
+### AES102 — Suffix/Prefix Rules
 
-modules/<feature-name>/src/
-├── agent_<feature>*orchestrator.py        # Agent layer — only allowed role
-├── capabilities*<feature>*<role>.py       # Capabilities layer
-├── utility*<feature>*<role>.py            # Utility layer
-└── root*<feature>_container.py            # Root layer
+### AES103 — Test File Prefix
 
-```
+---
 
-Do **not** create `surface/`, `taxonomy/`, `contract/`, `capabilities/`, `utility/`,
-`agent/` folders. Layers live in file names, not directories.
+## Group 2: Layer & Import Boundary (AES201–AES205)
 
-#### Shared member
+Group 2 enforces layer dependency boundaries to maintain architectural integrity. The Import Matrix below is the canonical source for all allowed/mandatory/forbidden dependency rules.
 
-```
+### AES201 — Forbidden Import
 
-modules/shared/src/
-├── taxonomy_<domain>*vo.py
-├── taxonomy*<domain>*event.py
-├── taxonomy*<domain>*error.py
-├── contract*<domain>*protocol.py
-└── contract*<domain>_aggregate.py
+### AES202 — Mandatory Import
 
-```
+### AES203 — Unused Import
 
-`shared/common/` holds generic utilities not tied to a domain.
+### AES204 — Dummy Import
 
-### General Workspace Layout
+### AES205 — Circular Import
 
-```
+---
 
+## Group 3: File & Content Quality (AES301–AES305)
+
+Group 3 enforces file size limits and content quality standards to maintain code readability.
+
+### AES301 / AES302 — File Line-Count Limits
+
+### AES303 — Mandatory Definition
+
+### AES304 — Bypass Comment
+
+### AES305 — Duplication Code
+
+---
+
+## Group 4: Role Violations (AES401–AES406)
+
+Group 4 enforces role-specific constraints to ensure each layer maintains its intended responsibility. The layer reference tables below summarize each layer's purpose and rules; the per-rule cards that follow encode the violations.
+
+### Layer Reference
+
+#### Taxonomy (AES401)
+
+#### Contract (AES402)
+
+#### Capabilities (AES403)
+
+#### Utility (AES404)
+
+#### Agent (AES405)
+
+#### Surface (AES406)
+
+#### Root
+
+### AES401 — Taxonomy Role
+
+### AES402 — Contract Role
+
+### AES403 — Capabilities Role
+
+### AES404 — Utility Role
+
+### AES405 — Agent Role
+
+### AES406 — Surface Role
+
+---
+
+## Group 5: Orphan Code (AES501–AES506)
+
+Group 5 detects orphaned code that is not wired into the system's composition layer. A file is orphaned when no other layer imports or references it; the composition root's container/entry files are the wiring point.
+
+### Orphan Rules
+
+### AES506 Category / Severity / Consumer
+
+---
+
+## Group 6: Document Invariants (AES601–AES610)
+
+Group 6 enforces document structure, cross-reference integrity, and template conformance across the ten recognized spec documents.
+
+### Shared invariants (apply to every AES6xx rule below)
+
+### Document × Invariant
+
+---
+
+## Group 7: Folder Structure (AES701–AES706)
+
+Group 7 enforces folder structure invariants to maintain vertical slicing and layer purity.
+
+### Terms
+
+### Vertical Slicing Layout
+
+AI agents frequently make this mistake: do NOT create `surface/`, `taxonomy/`, `contract/`, `capabilities/`, `utility/`, `agent/` folders. The correct structure groups files by feature, with layers as filenames, not directories.
+
+### General Layout
+
+```text
 project-root/
-├── modules/
-│   ├── shared/src/           <- Taxonomy + Contract (all features)
-│   ├── <feature-a>/src/
-│   ├── <feature-b>/src/
-│   └── ...
-├── PRD.md
-├── README.md
-└── AGENTS.md
-
+├── crates|packages|modules/
+│   ├── shared/
+│   ├── <feature-a>/
+│   ├── <feature-b>/
+│   ├── <surface-a>/
+│   └── <surface-b>/
+├── Cargo.toml / package.json / pyproject.toml
 ```
 
-## 5. Taxonomy Layer
+### Member Types
 
-### Overview
+### AES701 — Shared Folder Purity
 
-| Aspect       | Detail                                                                                                                                  |
-| ------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
-| Purpose      | Taxonomy is the domain foundation layer. It defines the stable language of the domain and must remain free from technical or behavioral concerns. |
-| Dependencies | Taxonomy depends on nothing.                                                                                                            |
+### AES702 — Feature Folder Health
 
-### Component
+### AES703 — Surface Folder Purity
 
-| Role         | Meaning                               | Allowed Dependencies | Forbidden Dependencies |
-| ------------ | ------------------------------------- | -------------------- | ---------------------- |
-| Value object | Immutable data concept                | None                 | All other layers       |
-| Entity       | Stateful domain concept with identity | None                 | All other layers       |
-| Event        | Immutable domain fact                 | None                 | All other layers       |
-| Error        | Domain-level error                    | None                 | All other layers       |
-| Constant     | Compile-time literal value            | None                 | All other layers       |
+### AES704 — Test Suite Coverage
 
-### Rules
+### AES705 — Member-Root Placement
 
-| Rules                      | Detail                                                                                                    |
-| -------------------------- | --------------------------------------------------------------------------------------------------------- |
-| Primitive usage            | Value objects and Constants may use all primitive types.                                                  |
-| No raw primitives          | Entities, Events, and Errors must use Value objects/Constants instead of primitive types (bool/str is an exception). |
-| Compile-time constants     | Constants must be compile-time values.                                                                    |
-| Purity                     | Taxonomy must not contain business rules, infrastructure, or imports from other layers.                   |
+### AES706 — PR Folder Mapping
 
-## 6. Contract Layer
-
-### Overview
-
-| Aspect       | Detail                                                                                                                                      |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| Purpose      | Contract defines the public behavior of the system without exposing implementation. It allows callers to depend on stable interfaces instead of concrete logic. |
-| Dependencies | Contract may depend on Taxonomy only.                                                                                                       |
-
-### Component
-
-| Role      | Meaning                                                                                           | Allowed Dependencies | Forbidden Dependencies                      |
-| --------- | ------------------------------------------------------------------------------------------------- | -------------------- | ------------------------------------------- |
-| Protocol  | Interface defining inbound behavior. It is implemented by Capabilities and consumed by the Agent. | Taxonomy             | Utility, Capabilities, Agent, Surface, Root |
-| Aggregate | Facade definition implemented by Agent, used by Surface to access feature behavior.               | Taxonomy             | Utility, Capabilities, Agent, Surface, Root |
-
-### Rules
-
-| Rules              | Detail                                              |
-| ------------------ | --------------------------------------------------- |
-| Behavior only      | Protocol defines behavior only, without implementation. |
-| Capability hiding  | Aggregate hides Capabilities from Surface.          |
-
-## 7. Utility Layer
-
-### Overview
-
-| Aspect       | Detail                                                                                                                                  |
-| ------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
-| Purpose      | Utility contains reusable low-level mechanics that can be shared across capabilities. It exists so that Capabilities can remain clean. |
-| Role Naming  | Utility role suffixes are unlimited. The role name is chosen based on demand and must describe the technical responsibility and concern of the file. |
-| Dependencies | Utility may depend only on Taxonomy.                                                                                                    |
-| Location     | Utility files live only in the `shared/` layer folder (AES701).                                                                        |
-
-### Component
-
-| Concern                 | Responsibility                                      | Allowed Dependencies | Forbidden Dependencies                      |
-| ----------------------- | --------------------------------------------------- | -------------------- | ------------------------------------------- |
-| File discovery          | Walk directories, detect files, apply ignore        | Taxonomy             | Contract, Capabilities, Agent, Surface, Root |
-| External tool execution | Run linters, compilers, formatters, analyzers       | Taxonomy             | Contract, Capabilities, Agent, Surface, Root |
-| Parsing and matching    | Parse text, match patterns, extract structured data | Taxonomy             | Contract, Capabilities, Agent, Surface, Root |
-| Path normalization      | Normalize paths across platforms                    | Taxonomy             | Contract, Capabilities, Agent, Surface, Root |
-| System operations       | Handle process or environment mechanics             | Taxonomy             | Contract, Capabilities, Agent, Surface, Root |
-
-### Rules
-
-| Rules                    | Detail                                                                                                                                                       |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Stateless functions      | Utility must use stateless standalone functions only.                                                                                                        |
-| No objects or contracts  | Utility must not contain stateful objects, behavior definitions, or contract implementations.                                                                |
-| No business decisions    | Utility must not make business decisions. It may perform technical operations if needed.                                                                     |
-| Technical scope          | Utility role names may expand freely, but the layer must remain technical and standalone.                                                                    |
-| Kernel-only location     | Feature and surface crates consume utility functions via import; they do not own or co-locate `utility_*` files.                                             |
-| Misplacement             | A `utility_*` file in a feature folder is misplaced (AES702 `feature_has_forbidden_files`); in a surface folder it is misplaced (AES703 `surface_has_misplaced_files`). |
-
-## 8. Capabilities Layer
-
-### Overview
-
-| Aspect       | Detail                                                                                                                                                                                                                                                       |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Purpose      | Capabilities contain the concrete implementation of the system's behavior. This layer encapsulates both **pure business logic** (computations, validations) and **external adaptations** (database access, third-party API calls, infrastructure mechanics). By hiding these behind Contracts, behavior stays modular, swappable, and isolated from orchestration. |
-| Role Naming  | Capabilities role suffixes are unlimited. The role name is chosen based on demand and must describe the technical responsibility and concern of the file.                                                                                                    |
-| Dependencies | Capabilities may depend on Taxonomy, Contract, and Utility. Capabilities must not depend on or import other Capabilities.                                                                                                                                    |
-
-### Component
-
-| Category                | Concern        | Responsibility                                 | Allowed Dependencies             | Forbidden Dependencies                 |
-| ----------------------- | -------------- | ---------------------------------------------- | -------------------------------- | -------------------------------------- |
-| **Business Logic**      | Validation     | Check domain conditions or input correctness   | Taxonomy, Contract, Utility      | Other Capabilities, Agent, Surface, Root |
-|                         | Computation    | Calculate scores, totals, or derived values    | Taxonomy, Contract, Utility      | Other Capabilities, Agent, Surface, Root |
-|                         | Transformation | Map, filter, reduce, or reshape data           | Taxonomy, Contract, Utility      | Other Capabilities, Agent, Surface, Root |
-|                         | Resolution     | Apply rules and decide outcomes                | Taxonomy, Contract, Utility      | Other Capabilities, Agent, Surface, Root |
-|                         | Assessment     | Judge severity, compliance, grade, or quality  | Taxonomy, Contract, Utility      | Other Capabilities, Agent, Surface, Root |
-| **External Adaptation** | Repository     | Fetch or persist domain entities to a database | Taxonomy, Contract, Utility      | Other Capabilities, Agent, Surface, Root |
-|                         | Integration    | Communicate with third-party services or APIs  | Taxonomy, Contract, Utility      | Other Capabilities, Agent, Surface, Root |
-|                         | Provider       | Generate data from external systems            | Taxonomy, Contract, Utility      | Other Capabilities, Agent, Surface, Root |
-
-### Rules
-
-| Rules                         | Detail                                                                                                                                                              |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| No inter-capability dependency | Capabilities must never import or call other Capabilities directly. They are standalone execution units.                                                           |
-| Pipeline aggregation          | Multiple Capabilities (e.g., A for data fetching, B for business calculation) are composed into a sequential pipeline by the **Agent Layer**, not by themselves.    |
-| Shared logic extraction (DRY) | If multiple Capabilities need the same technical mechanics, extract them into a reusable standalone function in the **Utility Layer**. Do not duplicate technical code. |
-| Contract implementation       | Capabilities must implement the `protocol_` defined in the Contract Layer.                                                                                          |
-| State ownership               | Capabilities own business and technical state within their execution scope.                                                                                         |
-| No domain definition          | Capabilities must not define domain models (Entities, Value Objects); they only consume Taxonomy.                                                                   |
-
-## 9. Agent Layer
-
-### Overview
-
-| Aspect       | Detail                                                                                                    |
-| ------------ | --------------------------------------------------------------------------------------------------------- |
-| Purpose      | Agent coordinates multiple capabilities into executable flows. It controls sequence and movement, not business calculation. |
-| Allowed Role | The only Agent role is orchestrator.                                                                      |
-| Dependencies | Agent may depend only on Taxonomy, Contract, and Utility.                                                 |
-
-### Component
-
-| Flow Type               | Purpose                               | Allowed Dependencies        | Forbidden Dependencies          |
-| ----------------------- | ------------------------------------- | --------------------------- | ------------------------------- |
-| Sequential execution    | Run steps in order                    | Taxonomy, Contract, Utility | Capabilities, Surface, Root     |
-| Looping                 | Process multiple items or events      | Taxonomy, Contract, Utility | Capabilities, Surface, Root     |
-| Branching               | Choose path based on result           | Taxonomy, Contract, Utility | Capabilities, Surface, Root     |
-| Error handling          | Recover, abort, continue, or escalate | Taxonomy, Contract, Utility | Capabilities, Surface, Root     |
-| Timeout or cancellation | Stop long-running or asynchronous work | Taxonomy, Contract, Utility | Capabilities, Surface, Root     |
-
-### Rules
-
-| Rules                    | Detail                                                                              |
-| ------------------------ | ----------------------------------------------------------------------------------- |
-| Contract dependency      | Agent must depend on Contract, not concrete implementations.                        |
-| Capability ignorance     | Agent must not use and must be completely ignorant of Capabilities implementations. |
-| No business calculation  | Agent must not calculate business results.                                          |
-| No domain definition     | Agent must not define domain models.                                                |
-
-## 10. Surface Layer
-
-### Overview
-
-| Aspect        | Detail                                                                                                                                         |
-| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| Purpose       | Surface is the outer boundary of the system. It handles user-facing or external-facing interaction and translates it into architectural actions. |
-| Allowed Roles | command, controller, page, view, component, router, layout, hook, store, action, screen                                                        |
-
-### Component
-
-| Group            | Roles                             | Allowed Dependencies                  | Forbidden Dependencies                                       | Detail                                          |
-| ---------------- | --------------------------------- | ------------------------------------- | ------------------------------------------------------------ | ----------------------------------------------- |
-| Smart surfaces   | command, controller, page, router | Taxonomy, Contract Aggregate, Utility | Agent, Capabilities, Contract Protocol, Root                 | May initiate feature behavior through aggregate |
-| Utility surfaces | hook, store, action, screen       | Taxonomy                              | Agent, Capabilities, Contract, Utility, Other surfaces, Root | Support smart surfaces, data/state only         |
-| Passive surfaces | component, view, layout           | Taxonomy                              | Agent, Contract, Capabilities, Other surfaces, Root          | Presentation-only, no logic or orchestration    |
-
-### Rules
-
-| Rules                         | Detail                                                                                  |
-| ----------------------------- | --------------------------------------------------------------------------------------- |
-| Aggregate consumption         | Smart surfaces must consume Contract Aggregates to reach capabilities/agent.            |
-| Utility import restriction    | Only smart surfaces may import Utility layer files.                                     |
-| Direct dependency restriction | Utility and passive surfaces must not import Capabilities, Contract, or Agent directly. |
-| Business logic restriction    | Surfaces must not contain business calculation or orchestration.                        |
-
-## 11. Root Layer
-
-### Overview
-
-| Aspect       | Detail                                                                                                                                   |
-| ------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| Purpose      | Root is the composition layer. It assembles the system by connecting concrete implementations to contracts and starting the application. |
-| Dependencies | Root may depend on all layers.                                                                                                           |
-
-### Component
-
-| Role      | Allowed Dependencies | Forbidden Dependencies | Detail                                                                             |
-| --------- | -------------------- | ---------------------- | ---------------------------------------------------------------------------------- |
-| Container | All layers           | None                   | Wires one feature by connecting Capabilities to Contract protocols and aggregates. |
-| Entry     | All layers           | None                   | Bootstraps the application and composes feature containers.                        |
-
-### Rules
-
-| Rules                    | Detail                                                              |
-| ------------------------ | ------------------------------------------------------------------- |
-| Wiring                   | Root may instantiate and wire components.                           |
-| No business logic        | Root must not contain business logic.                               |
-| No orchestration         | Root must not contain orchestration policy.                         |
-| No technical/UI behavior | Root must not contain technical parsing or user interface behavior. |
 ````

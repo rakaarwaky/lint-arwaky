@@ -1,7 +1,5 @@
 # ROADMAP Exemplar
 
-A filled ROADMAP against the Ecommerce Application workspace, matching the Template shape exactly.
-
 ```markdown
 # ROADMAP — Ecommerce Workspace
 

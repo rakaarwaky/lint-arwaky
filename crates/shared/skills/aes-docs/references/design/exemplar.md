@@ -1,7 +1,5 @@
 # DESIGN Exemplar
 
-A filled DESIGN against the Ecommerce Web surface (PR-ECOMMERCE-004), matching the Template shape exactly.
-
 ```markdown
 # DESIGN — Ecommerce Web
 

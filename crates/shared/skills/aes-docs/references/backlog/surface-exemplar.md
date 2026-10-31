@@ -1,7 +1,5 @@
 # Surface BACKLOG Exemplar
 
-A filled BACKLOG against a surface (DESIGN.md) folder, matching the Template shape exactly. A surface folder carries `DESIGN.md` + `BACKLOG.md`. Each entry carries one ID from the `DS-<NAME>` family; the example below tracks three design-token IDs across entries.
-
 ```markdown
 # BACKLOG — Ecommerce Web Surface
 

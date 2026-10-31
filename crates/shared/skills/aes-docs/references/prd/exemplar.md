@@ -1,7 +1,5 @@
 # PRD Exemplar
 
-A filled PRD against the Ecommerce Application project, matching the Template shape exactly.
-
 ```markdown
 
 # PRD — Ecommerce Application

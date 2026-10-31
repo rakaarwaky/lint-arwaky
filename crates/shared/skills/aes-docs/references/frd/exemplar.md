@@ -1,7 +1,5 @@
 # FRD Exemplar
 
-A filled FRD against the Ecommerce Checkout Order feature, matching the Template shape exactly.
-
 ```markdown
 # FRD — Ecommerce Checkout Order
 
