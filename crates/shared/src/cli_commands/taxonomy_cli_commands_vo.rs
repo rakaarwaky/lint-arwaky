@@ -1,6 +1,6 @@
 // PURPOSE: CLI value objects — clap-based Cli/Commands, transport endpoints/URLs,
 //          command catalog, scan report, and lint-result aliases.
-use clap::{Parser, Subcommand};
+use clap::{Parser, Subcommand, ValueEnum};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 
@@ -30,11 +30,34 @@ pub struct Cli {
     pub output_dir: Option<String>,
 
     /// Filter output by AES rule code (e.g. AES101, AES102, AES301, AES303)
-    #[arg(long, global = true)]
-    pub filter: Option<String>,
+    #[arg(long, alias = "filter", global = true)]
+    pub rules: Option<String>,
 
     #[command(subcommand)]
     pub command: Commands,
+}
+
+/// Linter groups selectable via `--group` on `scan` / `check`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, ValueEnum)]
+pub enum ScanGroup {
+    /// Run every linter (default when `--group` is omitted).
+    All,
+    /// Quality rules (AES301–AES305).
+    Quality,
+    /// Role rules (AES401–AES406).
+    Role,
+    /// Import rules (AES201–AES205).
+    Import,
+    /// Naming rules (AES101–AES103).
+    Naming,
+    /// Orphan detection.
+    Orphan,
+    /// External linters (ruff, eslint, clippy, …).
+    External,
+    /// Doc invariants (AES601–AES607).
+    Doc,
+    /// Folder layout (AES701–AES703).
+    Structure,
 }
 
 #[derive(Subcommand, Debug)]
@@ -50,6 +73,9 @@ pub enum Commands {
         /// Output format: text, json, sarif, junit
         #[arg(long, default_value_t = Format::Text)]
         format: Format,
+        /// Run only a specific linter group; omit for all linters.
+        #[arg(long, value_enum)]
+        group: Option<ScanGroup>,
     },
 
     /// Apply safe automatic fixes
@@ -72,139 +98,6 @@ pub enum Commands {
 
     /// Diagnose environment health
     Doctor,
-
-    /// Check orphan: file path → check single file, directory path → scan all files in directory
-    Orphan {
-        /// File or directory path to check
-        path: String,
-        /// Scan only a specific workspace member by name (only for directory mode)
-        #[arg(long)]
-        member: Option<String>,
-        /// Output format: text, json, sarif, junit
-        #[arg(long, default_value_t = Format::Text)]
-        format: Format,
-    },
-
-    /// Run code-quality analysis only (AES301-AES305)
-    #[command(name = "quality")]
-    ScanQuality {
-        /// Path to scan
-        path: Option<String>,
-        /// Output format: text, json, sarif, junit
-        #[arg(long, default_value_t = Format::Text)]
-        format: Format,
-    },
-
-    /// Run import-rule checks only (AES201-AES205)
-    #[command(name = "import")]
-    ScanImport {
-        /// Path to scan
-        path: Option<String>,
-        /// Output format: text, json, sarif, junit
-        #[arg(long, default_value_t = Format::Text)]
-        format: Format,
-    },
-
-    /// Run naming-rule checks only (AES101-AES103)
-    #[command(name = "naming")]
-    ScanNaming {
-        /// Path to scan
-        path: Option<String>,
-        /// Output format: text, json, sarif, junit
-        #[arg(long, default_value_t = Format::Text)]
-        format: Format,
-    },
-
-    /// Run role-rule checks only (AES401-AES406)
-    #[command(name = "role")]
-    ScanRole {
-        /// Path to scan
-        path: Option<String>,
-        /// Output format: text, json, sarif, junit
-        #[arg(long, default_value_t = Format::Text)]
-        format: Format,
-    },
-
-    /// Run every rule group but report only taxonomy-layer violations
-    #[command(name = "taxonomy")]
-    ScanTaxonomy {
-        /// Path to scan
-        path: Option<String>,
-        /// Output format: text, json, sarif, junit
-        #[arg(long, default_value_t = Format::Text)]
-        format: Format,
-    },
-
-    /// Run every rule group but report only contract-layer violations
-    #[command(name = "contract")]
-    ScanContract {
-        /// Path to scan
-        path: Option<String>,
-        /// Output format: text, json, sarif, junit
-        #[arg(long, default_value_t = Format::Text)]
-        format: Format,
-    },
-
-    /// Run every rule group but report only capabilities-layer violations
-    #[command(name = "capabilities")]
-    ScanCapabilities {
-        /// Path to scan
-        path: Option<String>,
-        /// Output format: text, json, sarif, junit
-        #[arg(long, default_value_t = Format::Text)]
-        format: Format,
-    },
-
-    /// Run every rule group but report only utility-layer violations
-    #[command(name = "utility")]
-    ScanUtility {
-        /// Path to scan
-        path: Option<String>,
-        /// Output format: text, json, sarif, junit
-        #[arg(long, default_value_t = Format::Text)]
-        format: Format,
-    },
-
-    /// Run every rule group but report only agent-layer violations
-    #[command(name = "agents")]
-    ScanAgents {
-        /// Path to scan
-        path: Option<String>,
-        /// Output format: text, json, sarif, junit
-        #[arg(long, default_value_t = Format::Text)]
-        format: Format,
-    },
-
-    /// Run every rule group but report only surface-layer violations
-    #[command(name = "surface")]
-    ScanSurface {
-        /// Path to scan
-        path: Option<String>,
-        /// Output format: text, json, sarif, junit
-        #[arg(long, default_value_t = Format::Text)]
-        format: Format,
-    },
-
-    /// Run external linter checks only (Clippy, Ruff, ESLint, etc.)
-    #[command(name = "external")]
-    ScanExternal {
-        /// Path to scan
-        path: Option<String>,
-        /// Output format: text, json, sarif, junit
-        #[arg(long, default_value_t = Format::Text)]
-        format: Format,
-    },
-
-    /// Doc invariants audit (AES601–AES607) and template scaffolding
-    #[command(name = "docs", subcommand_required = false)]
-    Docs {
-        /// Subcommand: `audit` (default) or `scaffold`
-        #[command(subcommand)]
-        action: Option<DocsAction>,
-        /// Path to audit or scaffold [default: .]
-        #[arg(value_name = "PATH", default_value = ".")]
-        path: String,
-    },
 
     /// Scan for security vulnerabilities
     Security {
@@ -267,33 +160,6 @@ pub enum Commands {
 
     /// Show active configuration
     ConfigShow,
-}
-
-/// Subcommands of `docs`. `audit` is the default; `scaffold` writes missing
-/// template files in place unless `--dry-run` is passed (Decision Q1).
-#[derive(Subcommand, Debug)]
-pub enum DocsAction {
-    /// Run the doc invariants audit (AES601–AES607)
-    Audit {
-        /// Path to audit
-        #[arg(value_name = "PATH", default_value = ".")]
-        path: Option<String>,
-        /// Output format: text, json, sarif, junit
-        #[arg(long, default_value_t = Format::Text)]
-        format: Format,
-        /// Force strict doc-rules enforcement for this run (overrides config).
-        #[arg(long, default_value_t = false)]
-        strict: bool,
-    },
-    /// Generate documentation templates from embedded skills, in place
-    Scaffold {
-        /// Scope to a specific member crate (e.g. `billing`). Omit to scaffold all.
-        #[arg(long)]
-        member: Option<String>,
-        /// Preview what would be written without modifying the filesystem
-        #[arg(long)]
-        dry_run: bool,
-    },
 }
 
 // ─── Transport / protocol VOs (from taxonomy_protocol_vo) ─────────────
@@ -400,66 +266,6 @@ pub static COMMAND_CATALOG: &[(&str, &str, &str)] = &[
         "lint-arwaky-cli ci /path --threshold 80",
     ),
     (
-        "quality",
-        "Quality rules scan (single linter)",
-        "lint-arwaky-cli quality ./src/",
-    ),
-    (
-        "role",
-        "Role rules scan (single linter)",
-        "lint-arwaky-cli role ./src/",
-    ),
-    (
-        "import",
-        "Import rules scan (single linter)",
-        "lint-arwaky-cli import ./src/",
-    ),
-    (
-        "naming",
-        "Naming rules scan (single linter)",
-        "lint-arwaky-cli naming ./src/",
-    ),
-    (
-        "orphan",
-        "Orphan detection scan (single linter)",
-        "lint-arwaky-cli orphan ./src/",
-    ),
-    (
-        "taxonomy",
-        "Scan only the taxonomy layer (taxonomy_* files)",
-        "lint-arwaky-cli taxonomy ./src/",
-    ),
-    (
-        "contract",
-        "Scan only the contract layer (contract_* files)",
-        "lint-arwaky-cli contract ./src/",
-    ),
-    (
-        "capabilities",
-        "Scan only the capabilities layer (capabilities_* files)",
-        "lint-arwaky-cli capabilities ./src/",
-    ),
-    (
-        "utility",
-        "Scan only the utility layer (utility_* files)",
-        "lint-arwaky-cli utility ./src/",
-    ),
-    (
-        "agents",
-        "Scan only the agent layer (agent_* files)",
-        "lint-arwaky-cli agents ./src/",
-    ),
-    (
-        "surface",
-        "Scan only the surface layer (surface_* files)",
-        "lint-arwaky-cli surface ./src/",
-    ),
-    (
-        "external",
-        "External lint scan (ruff, eslint, ...)",
-        "lint-arwaky-cli external ./src/",
-    ),
-    (
         "doctor",
         "System health diagnostics",
         "lint-arwaky-cli doctor",
@@ -518,11 +324,6 @@ pub static COMMAND_CATALOG: &[(&str, &str, &str)] = &[
         "uninstall-hook",
         "Uninstall git pre-commit hook",
         "lint-arwaky-cli uninstall-hook",
-    ),
-    (
-        "docs",
-        "Doc invariants audit (AES601–AES607) over the document chain",
-        "lint-arwaky-cli docs ./",
     ),
     (
         "watch",

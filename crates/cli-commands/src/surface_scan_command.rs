@@ -13,7 +13,6 @@ use std::sync::Arc;
 use tracing::error;
 
 use shared_cli_commands::Format;
-use shared_cli_commands::taxonomy_cli_commands_vo::DocsAction;
 use shared_cli_commands::utility_output_text_formatter::output_violations;
 
 /// Parameters for the `scan` command.
@@ -27,6 +26,17 @@ pub struct ScanCommandParams {
     pub member: Option<String>,
     /// In-process aggregate bundle (W10); `None` falls back to subprocess.
     pub scan_aggregates: Option<dispatcher::surface_check_action::ScanAggregates>,
+}
+
+/// Parameters for the `quality` command.
+pub struct QualityCommandParams {
+    pub path: Option<FilePath>,
+    pub format: Format,
+    pub code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
+    pub filesystem: Arc<dyn IFilesystemAggregate>,
+    pub filesystem_seam: FilesystemSeam,
+    pub filter: Option<String>,
+    pub ignored_paths: Vec<String>,
 }
 
 /// Parameters for the `import` command.
@@ -93,14 +103,6 @@ pub struct ExternalCommandParams {
     pub ignored_paths: Vec<String>,
 }
 
-/// The wiring a layer-scoped command needs, so six subcommands share one
-/// parameter list instead of repeating it per layer.
-pub struct LayerScanContext {
-    pub filesystem_seam: FilesystemSeam,
-    pub config_orchestrator: Option<Arc<dyn IConfigOrchestratorAggregate>>,
-    pub scan_aggregates: Option<dispatcher::surface_check_action::ScanAggregates>,
-}
-
 /// Parameters for the `docs` command.
 pub struct DocsCommandParams {
     pub path: Option<FilePath>,
@@ -109,17 +111,7 @@ pub struct DocsCommandParams {
     pub fs_seam: FilesystemSeam,
     pub config_file_reader: Arc<dyn shared_config_system::IConfigFileReaderAggregate>,
     pub strict: bool,
-}
-
-/// Parameters for the `docs scaffold` subcommand.
-pub struct DocsScaffoldCommandParams {
-    pub path: Option<FilePath>,
-    /// Scope to a specific member crate. `None` scaffolds every member.
-    pub member: Option<String>,
-    /// Preview without writing to disk.
-    pub dry_run: bool,
-    pub fs_seam: FilesystemSeam,
-    pub config_file_reader: Arc<dyn shared_config_system::IConfigFileReaderAggregate>,
+    pub rules: Option<String>,
 }
 
 /// Parameters for the `structure` command.
@@ -186,35 +178,22 @@ pub fn handle_scan(params: ScanCommandParams) -> ExitCode {
     }
 }
 
-/// `check` — 1:1 alias of `scan` per FR-001.
-pub fn handle_check(params: ScanCommandParams) -> ExitCode {
-    handle_scan(params)
-}
-
 /// `quality` — quality rules scan.
-pub fn handle_quality(
-    path: Option<FilePath>,
-    format: Format,
-    code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
-    filesystem: Arc<dyn IFilesystemAggregate>,
-    filesystem_seam: FilesystemSeam,
-    filter: Option<String>,
-    ignored_paths: Vec<String>,
-) -> ExitCode {
-    let root = resolve_root(&path);
+pub fn handle_quality(params: QualityCommandParams) -> ExitCode {
+    let root = resolve_root(&params.path);
     match dispatcher::surface_quality_action::collect_quality(
-        path.clone(),
-        code_analysis_linter,
-        filter,
-        filesystem.clone(),
-        &ignored_paths,
+        params.path.clone(),
+        params.code_analysis_linter,
+        params.filter,
+        params.filesystem.clone(),
+        &params.ignored_paths,
     ) {
         Ok(violations) => {
             output_violations(
                 &violations,
                 &root,
-                format_as_str(format),
-                is_member(&path, &filesystem_seam),
+                format_as_str(params.format),
+                is_member(&params.path, &params.filesystem_seam),
             );
             exit_for(violations.len())
         }
@@ -277,42 +256,7 @@ pub fn handle_naming(params: NamingCommandParams) -> ExitCode {
     }
 }
 
-/// A layer-scoped command — run every rule group, report only the violations
-/// whose file belongs to `layer`.
-pub fn handle_layer_scan(
-    context: &LayerScanContext,
-    layer: &'static str,
-    path: String,
-    format: Format,
-    filter: Option<String>,
-    member: Option<String>,
-) -> ExitCode {
-    let path = Some(FilePath::new(path).unwrap_or_default());
-    let member_flag = is_member(&path, &context.filesystem_seam);
-    let root = resolve_root(&path);
-    let opts = dispatcher::surface_check_action::ScanOptions {
-        path,
-        multi_project_orchestrator: context.config_orchestrator.clone(),
-        filter,
-        member,
-        filesystem: Arc::new(context.filesystem_seam.clone()),
-        scan_aggregates: context.scan_aggregates.clone(),
-    };
-    match dispatcher::surface_layer_scan_action::collect_layer_scan(opts, layer) {
-        Ok(violations) => {
-            output_violations(&violations, &root, format_as_str(format), member_flag);
-            exit_for(violations.len())
-        }
-        Err(e) => {
-            error!(error = %e, "operation failed");
-            ExitCode::RUNTIME_ERROR
-        }
-    }
-}
-
-/// `docs` — doc invariant audit (AES601–AES606) over the workspace document
-/// chain. This is a markdown-only check, so it bypasses the filesystem index
-/// and calls the doc orchestrator directly on the target path.
+/// `docs` — doc-invariant audit (AES601–AES607).
 pub fn handle_docs(params: DocsCommandParams) -> ExitCode {
     let root = resolve_root(&params.path);
     let strict_override = if params.strict {
@@ -328,40 +272,14 @@ pub fn handle_docs(params: DocsCommandParams) -> ExitCode {
         strict_override,
     ) {
         Ok(findings) => {
-            let violations =
+            let mut violations =
                 dispatcher::surface_docs_action::docs_findings_to_violations(&findings);
+            if let Some(ref rules_str) = params.rules {
+                let rules_upper = rules_str.to_uppercase();
+                violations.retain(|v| v.code.code().contains(&rules_upper));
+            }
             output_violations(&violations, &root, format_as_str(params.format), false);
             exit_for(violations.len())
-        }
-        Err(e) => {
-            error!(error = %e, "operation failed");
-            ExitCode::RUNTIME_ERROR
-        }
-    }
-}
-
-/// `docs scaffold` — write missing template files in place from embedded
-/// skills. `dry_run` prints the planned writes without touching disk.
-/// Strictness gates the audit path, not scaffolding.
-pub fn handle_docs_scaffold(params: DocsScaffoldCommandParams) -> ExitCode {
-    let root = resolve_root(&params.path);
-    match dispatcher::surface_docs_action::collect_scaffold(
-        &root,
-        params.member.as_deref(),
-        params.dry_run,
-        &params.fs_seam,
-    ) {
-        Ok(items) => {
-            let lines = dispatcher::surface_docs_action::scaffold_items_to_report_lines(&items);
-            for line in &lines {
-                println!("{line}");
-            }
-            let any_error = items.iter().any(|i| !i.ok);
-            if any_error {
-                ExitCode::RUNTIME_ERROR
-            } else {
-                ExitCode::OK
-            }
         }
         Err(e) => {
             error!(error = %e, "operation failed");
@@ -471,56 +389,5 @@ pub fn handle_structure(params: StructureCommandParams) -> ExitCode {
             error!(error = %e, "operation failed");
             ExitCode::RUNTIME_ERROR
         }
-    }
-}
-
-// ─── Docs dispatch ─────────────────────────────────────────────────────────
-
-/// Dispatch one of the docs subcommands. Every path reuses the shared
-/// `handle_docs` / `handle_docs_scaffold` helpers and differs only in which
-/// subcommand variant is routed.
-///
-/// `action` is the parsed `DocsAction` (or `None` for a bare `docs` / `docs <path>`),
-/// which falls through to the audit default. `--strict` applies to the audit
-/// path only; the scaffold path never gates on strictness.
-pub fn handle_docs_dispatch(
-    action: &Option<DocsAction>,
-    path: &str,
-    doc_orchestrator: Arc<dyn shared_doc_rules::IDocRunnerAggregate>,
-    fs_seam: FilesystemSeam,
-    config_file_reader: Arc<dyn shared_config_system::IConfigFileReaderAggregate>,
-) -> ExitCode {
-    match action {
-        Some(DocsAction::Audit {
-            path: audit_path,
-            format,
-            strict,
-        }) => handle_docs(DocsCommandParams {
-            path: audit_path
-                .clone()
-                .map(|p| FilePath::new(p).unwrap_or_default()),
-            format: *format,
-            doc_orchestrator,
-            fs_seam,
-            config_file_reader,
-            strict: *strict,
-        }),
-        Some(DocsAction::Scaffold { member, dry_run }) => {
-            handle_docs_scaffold(DocsScaffoldCommandParams {
-                path: Some(FilePath::new(path).unwrap_or_default()),
-                member: member.clone(),
-                dry_run: *dry_run,
-                fs_seam,
-                config_file_reader,
-            })
-        }
-        None => handle_docs(DocsCommandParams {
-            path: Some(FilePath::new(path).unwrap_or_default()),
-            format: Format::Text,
-            doc_orchestrator,
-            fs_seam,
-            config_file_reader,
-            strict: false,
-        }),
     }
 }
