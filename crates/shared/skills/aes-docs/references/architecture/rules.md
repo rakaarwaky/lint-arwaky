@@ -20,3 +20,42 @@
 6. **Name the naming convention.** File names must communicate three parts — layer, concern, role — joined by underscores, followed by the language extension: `layer_concern_role.<ext>`.
 7. **No implementation detail.** Concrete class names, API signatures, and library choices belong in `FRD.md`. This file owns the boundary rules; FRD owns the per-feature mechanics.
 8. **Nothing about the current build.** Whether a layer shipped or not is a backlog claim with evidence, not an architecture sentence.
+
+## Rule Inventory Overview
+
+Carries the pinned AES rule inventory table (first-cell AES-rows: code, group, name, severity, ran-by) plus the group-coverage counts, so a reader can navigate the full inventory in-file.
+
+| Code | Group | Name | Severity | Ran by |
+|------|-------|------|----------|--------|
+
+## Group 1: Naming
+
+Groups the naming rules (AES101–AES103) with their fires-on and exception conditions.
+
+## Group 2: Layer & Import Boundary
+
+Groups the import-boundary rules (AES201–AES205).
+
+## Group 3: File & Content Quality
+
+Groups the quality rules (AES301–AES305).
+
+## Group 4: Role Violations
+
+Groups the role rules (AES401–AES406).
+
+## Group 5: Orphan Code
+
+Groups the orphan-code rules (AES501–AES506).
+
+## Group 6: Document Invariants
+
+Groups the document-invariant rules (AES601–AES607).
+
+## Group 7: Folder Structure
+
+Groups the folder-structure rules (AES701–AES706).
+
+## Rule Source of Truth & Parity
+
+States that emitted rule codes are the source of truth and names the parity test that keeps the inventory table in sync.

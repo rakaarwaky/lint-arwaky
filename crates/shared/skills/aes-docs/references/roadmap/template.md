@@ -40,15 +40,3 @@
 | PRD          | Business goals, user stories, and scope    | [PRD.md](PRD.md)           |
 | Architecture | System boundaries, tech stack, and infra   | [ARCHITECTURE.md](ARCHITECTURE.md) |
 ```
-
-## Section Contract
-
-Every section is required unless marked optional. Each exists for one reason.
-
-| Section          | Why it belongs here                                                   |
-| ---------------- | -----------------------------------------------------------------------|
-| Progress Overview| Workspace progress summary in one paragraph.                          |
-| Roadmap Status   | `PR-<PROJECT-NAME-ID>-NNN` items with Priority / State / Backlog.     |
-| Reference        | Connects the roadmap to the problem spec and the layer contract.      |
-
-Status Policy is removed from the template and not allowed (the `ROADMAP_DOC` allowed set is `[]`).

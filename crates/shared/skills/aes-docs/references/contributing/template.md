@@ -38,15 +38,3 @@
 | PRD | <Business goals, user stories, and scope> | [PRD.md](PRD.md) |
 | Architecture | <System boundaries, tech stack, and infra> | [ARCHITECTURE.md](ARCHITECTURE.md) |
 ```
-
-## Section Contract
-
-Every section is required unless marked optional. Each exists for one reason.
-
-| Section              | Why it belongs here                                                     |
-| -------------------- | ----------------------------------------------------------------------- |
-| Contribution Overview| Sets contributor mindset and "ready to merge" definition.               |
-| Contribution Guidelines | The contribution rules every change must respect.                      |
-| Workflow             | `Step &#124; Action &#124; Detail` contribution pipeline.                             |
-| Commit Convention    | `Type &#124; Usage &#124; Example` conventional-commit prefixes.                         |
-| Reference            | Connects contribution policy to PRD and Architecture.                   |

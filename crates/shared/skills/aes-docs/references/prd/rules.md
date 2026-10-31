@@ -22,3 +22,11 @@ General rules for writing a PRD. These apply across all sections.
 10. **Purity test.** If a row could be edited by an engineer without a stakeholder noticing, it is not a PRD row. Rewrite it as observable behaviour or delete it.
 11. **Priority-ordered IDs.** `PR-<PROJECT-NAME-ID>-NNN` entries are listed in strict priority order: all P0 entries first, then P1, then P2. The `NNN` counter increments across all entries; the first entry is `-001` and is always P0. No P1 entry may appear before a P0 entry, and no P2 entry before a P1. Within the same tier, NNN order is the author's call, but it must not jump tiers.
 12. **Priority tier is the User Stories table's Priority column.** Each `#### User Stories` row's `Priority` cell is the entry's tier. If multiple rows carry different tiers within one entry, the entry's tier is the highest-priority (lowest P-number) row in that table.
+
+## Seed rows
+
+Each `### PR-<PROJECT-NAME-ID>-NNN:` entry carries three H4 aspect subsections in canonical order: `#### User Stories`, `#### Proposed Solution`, `#### Main User Flow`. `User Stories` is a `| As a | I want | So that | Priority |` table seeded with at least one real row (priority `P0`/`P1`/`P2`). `Proposed Solution` states one observable behaviour per entry — no implementation detail, SQL, API signatures, or class names. `Main User Flow` is a numbered list of user-facing steps (1., 2., 3.). Every aspect seeds at least one real content row/bullet/step; add further rows only when a second real fact exists — never a placeholder cell. This is the `PRD_ASPECT_SEED_MIN` contract (open-ended at 1 per aspect).
+
+## Priority ordering
+
+`PR-<PROJECT-NAME-ID>-NNN` entries must be listed in priority order: all P0 entries first, then P1, then P2. The NNN counter is global across tiers; the first entry (`-001`) is always P0. No P1 entry may appear before a P0 entry, and no P2 entry before a P1 entry. Within the same tier the author may reorder entries, but tier jumps are forbidden.

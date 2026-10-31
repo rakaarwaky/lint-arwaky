@@ -30,13 +30,3 @@
 | Roadmap      | <Timeline, phasing, and dependencies>           | [ROADMAP.md](ROADMAP.md)|
 | Architecture | <System boundaries, tech stack, and infra>      | [ARCHITECTURE.md](ARCHITECTURE.md)|
 ```
-
-## Section Contract
-
-Only `Design Overview`, `Design Requirements`, `Reference` are required. Each exists for one reason.
-
-| Section              | Why it belongs here                                         |
-| -------------------- | -------------------------------------------------------------|
-| Design Overview      | Orients the reader before the requirements begin.           |
-| Design Requirements  | `DS-<DESIGN-NAME-ID>-NNN` items the surface must carry.     |
-| Reference            | Connects the spec back to the spec chain.                   |

@@ -29,13 +29,3 @@
 | Roadmap      | <Timeline, phasing, and dependencies>           | [ROADMAP.md](ROADMAP.md)|
 | Architecture | <System boundaries, tech stack, and infra>      | [ARCHITECTURE.md](ARCHITECTURE.md)|
 ```
-
-## Section Contract
-
-Only `Data Overview`, `Data Requirements`, `Reference` are required. Each exists for one reason.
-
-| Section         | Why it belongs here                                                |
-| --------------- | --------------------------------------------------------------------|
-| Data Overview   | Orients the reader before the data items begin.                    |
-| Data Requirements | `DT-SHARED-NNN` items, each with Type / Description table.|
-| Reference       | Separates spec promise from backlog claim.                         |
