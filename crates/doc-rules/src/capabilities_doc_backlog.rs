@@ -61,6 +61,7 @@ impl BacklogCapability {
         // AES606 — entry tables under Backlog Status.
         if let Some(re) = backlog_entry_re() {
             findings.extend(check_aspect_entry_tables(
+                consts::RULE_CODE_BACKLOG_DOC,
                 &parsed,
                 "Backlog Status",
                 re,
@@ -154,6 +155,7 @@ impl BacklogCapability {
             let parsed = sections(&document.text);
             findings.extend(
                 shared_doc_rules::utility_doc_common_checks::check_entry_tables(
+                    consts::RULE_CODE_BACKLOG_DOC,
                     &parsed,
                     "Backlog Status",
                     re,

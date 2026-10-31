@@ -20,3 +20,11 @@
 4. **No implementation state.** The document must survive every refactor. If renaming a struct or moving a module would require updating DATA.md, the document is too implementation-bound.
 5. **Cross-link to BACKLOG.md** in `## Reference`. A reader landing on DATA.md must immediately see the tracking claim.
 6. **Keep it minimal.** Only `Data Overview`, `Data Requirements`, `Reference` are required; the `DT-` item headings are H3s under `Data Requirements`.
+
+## Section Contract
+
+| Section | Why it belongs here |
+|---------|---------------------|
+| Data Overview | Orients the reader before the data items begin. |
+| Data Requirements | `DT-SHARED-NNN` items, each with Type / Description table. |
+| Reference | Separates spec promise from backlog claim. |

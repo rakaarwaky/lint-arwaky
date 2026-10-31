@@ -66,7 +66,7 @@ impl FrdCapability {
 
         // AES605 — heading structure (exactly one H1, required H2s, no off-template H2s).
         if let Some((required, allowed)) = doc_h2_contract(consts::FRD_DOC) {
-            check_doc_heading(text, consts::FRD_DOC, required, allowed, findings);
+            check_doc_heading(consts::RULE_CODE_FRD_DOC, text, consts::FRD_DOC, required, allowed, findings);
         }
 
         // AES602 — section order follows the template.
@@ -81,6 +81,7 @@ impl FrdCapability {
         // AES606 — entry tables under Functional Requirements.
         if let Some(re) = fr_entry_re() {
             findings.extend(check_entry_tables(
+                consts::RULE_CODE_FRD_DOC,
                 &parsed,
                 "Functional Requirements",
                 re,
@@ -92,6 +93,7 @@ impl FrdCapability {
         // AES606 — H4 aspect entry tables under Functional Requirements.
         if let Some(re) = fr_entry_re() {
             findings.extend(check_aspect_entry_tables(
+                consts::RULE_CODE_FRD_DOC,
                 &parsed,
                 "Functional Requirements",
                 re,

@@ -24,37 +24,79 @@ The feature does the work a surface delegates to.
 
 ### FR-SAMPLE-001: Document Invariant Enforcement
 
-| Aspect         | Detail                                      |
-|----------------|---------------------------------------------|
-| Description    | Every `.md` document satisfies the AES heading and section contract. |
-| Business Rules | Validates FR-ID format, section structure, spec purity, crosslinks, heading structure, and parity. |
-| Edge Cases     | Root-level legacy `BACKLOG.md` is accepted during migration. |
-| Capability     | doc_rules::DocStructure                     |
-| Protocol       | doc_rules::DocStructure                     |
-| Method         | check_doc_heading                           |
-| Input          | A workspace root and the list of recognized document paths. |
-| Output         | `Vec<LintResult>` carrying one finding per invariant violation. |
-| Error          | Unreadable files produce no findings.        |
-| Event          | Finding emitted                               |
-| Test           | `lint-arwaky-cli docs .` reports 0 findings |
-| Metric         | 0 doc-rule findings                         |
+#### Input
+
+| No | Detail |
+|---|---|
+| 1 | A workspace root and the list of recognized document paths. |
+
+#### Output
+
+| No | Detail |
+|---|---|
+| 1 | `Vec<LintResult>` carrying one finding per invariant violation. |
+
+#### Protocol
+
+| No | Detail |
+|---|---|
+| 1 | doc_rules::DocStructure |
+
+#### Method
+
+| No | Detail |
+|---|---|
+| 1 | check_doc_heading |
+
+#### Event
+
+| No | Detail |
+|---|---|
+| 1 | Finding emitted |
+
+#### Error
+
+| No | Detail |
+|---|---|
+| 1 | Unreadable files produce no findings. |
 
 ### FR-SAMPLE-002: Audit Orchestration
 
-| Aspect         | Detail                                      |
-|----------------|---------------------------------------------|
-| Description    | The doc auditor is reachable through a single aggregate entry point dispatching to the invariant checker. |
-| Business Rules | The aggregate orchestrates all invariants under one seam so consumers need only invoke `execute`. |
-| Edge Cases     | A request with an empty root produces no findings rather than an error. |
-| Capability     | doc_rules::DocStructure                     |
-| Protocol       | doc_rules::DocStructure                     |
-| Method         | execute                                     |
-| Input          | A `DocRequest` describing the workspace root to audit. |
-| Output         | A `DocResponse` carrying a deduplicated, stable-sorted list of findings. |
-| Error          | Failures inside the checker are propagated as `DocResponse::Findings` with no partial results. |
-| Event          | Finding emitted                               |
-| Test           | `lint-arwaky-cli docs .` reports 0 findings |
-| Metric         | Deterministic finding order                 |
+#### Input
+
+| No | Detail |
+|---|---|
+| 1 | A `DocRequest` describing the workspace root to audit. |
+
+#### Output
+
+| No | Detail |
+|---|---|
+| 1 | A `DocResponse` carrying a deduplicated, stable-sorted list of findings. |
+
+#### Protocol
+
+| No | Detail |
+|---|---|
+| 1 | doc_rules::DocStructure |
+
+#### Method
+
+| No | Detail |
+|---|---|
+| 1 | execute |
+
+#### Event
+
+| No | Detail |
+|---|---|
+| 1 | Finding emitted |
+
+#### Error
+
+| No | Detail |
+|---|---|
+| 1 | Failures inside the checker are propagated as `DocResponse::Findings` with no partial results. |
 
 ## Public Interface
 
@@ -96,9 +138,25 @@ The feature does the work a surface delegates to.
 fn conforming_prd() -> &'static str {
     r"# PRD — sample
 
-## Problem Statement
+## Project Overview
 
-The problem.
+The project lints docs.
+
+## Goals
+
+- Zero doc-rule findings.
+
+## Non-Goals
+
+- Enforce runtime behavior.
+
+## Target Users
+
+- AI agents and contributors.
+
+## Scope
+
+Doc structure and heading contracts only.
 
 ## Project Requirements
 

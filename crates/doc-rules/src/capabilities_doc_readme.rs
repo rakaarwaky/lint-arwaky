@@ -44,7 +44,7 @@ impl ReadmeCapability {
 
         // AES602 — heading structure.
         if let Some((required, allowed)) = doc_h2_contract(consts::README_DOC) {
-            check_doc_heading(text, consts::README_DOC, required, allowed, findings);
+            check_doc_heading(consts::RULE_CODE_README_DOC, text, consts::README_DOC, required, allowed, findings);
         }
 
         // AES606 — Quick Start table carries the fixed columns.

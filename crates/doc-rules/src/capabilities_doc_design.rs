@@ -70,12 +70,13 @@ impl DesignCapability {
 
         // AES605 — heading structure.
         if let Some((required, allowed)) = doc_h2_contract(consts::DESIGN_DOC) {
-            check_doc_heading(text, consts::DESIGN_DOC, required, allowed, findings);
+            check_doc_heading(consts::RULE_CODE_DESIGN_DOC, text, consts::DESIGN_DOC, required, allowed, findings);
         }
 
         // AES606 — entry tables under Design Requirements + H3 sweep.
         if let Some(re) = ds_entry_re() {
             findings.extend(check_aspect_entry_tables(
+                consts::RULE_CODE_DESIGN_DOC,
                 &parsed,
                 "Design Requirements",
                 re,

@@ -21,3 +21,15 @@
 5. **Priority-ordered IDs.** `PR-<PROJECT-NAME-ID>-NNN` entries are listed in strict priority order: all P0 entries first, then P1, then P2. The `NNN` counter increments across all entries; the first entry is `-001` and is always P0. No P1 entry may appear before a P0 entry, and no P2 entry before a P1 entry. Within the same tier, NNN order is the author's call, but it must not jump tiers.
 6. **Priority comes from the PRD.** Each entry's `Priority` row must match the tier assigned to that same PR-ID in the root `PRD.md`. The ROADMAP cannot demote or promote an entry the PRD declared at a different tier.
 7. **Every entry links its BACKLOG.** Each `PR-<PROJECT-NAME-ID>-NNN` row carries a `Backlog` cell pointing at the feature's `BACKLOG.md` path.
+
+## Section Contract
+
+Every section is required unless marked optional. Each exists for one reason.
+
+| Section | Why it belongs here |
+|---------|---------------------|
+| Progress Overview | Workspace progress summary in one paragraph. |
+| Roadmap Status | `PR-<PROJECT-NAME-ID>-NNN` items with Priority / State / Backlog. |
+| Reference | Connects the roadmap to the problem spec and the layer contract. |
+
+Status Policy is removed from the template and not allowed (the `ROADMAP_DOC` allowed set is `[]`).

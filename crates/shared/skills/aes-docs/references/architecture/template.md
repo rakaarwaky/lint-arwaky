@@ -1,10 +1,13 @@
 # <Project> Architecture
 
+```markdown
+# <Project> Architecture
+
 ## 1. Purpose
 
 <One paragraph. Name the failure modes this architecture prevents: tangled imports, undiscoverable behavior, agent misrouting. Keep it to what the boundary rules guard.>
 
-10→## 2. Workspace Organization
+## 2. Workspace Organization
 
 | Term               | Meaning                                                     |
 | ------------------ | -------------------------------------------------------------|
@@ -14,7 +17,7 @@
 | Shared / kernel    | Cross-cutting domain models and contracts, never a feature  |
 
 ## 3. Naming Convention
-20→
+
 File names communicate three parts, joined by underscores, then the language extension:
 
 `layer_concern_role.<ext>`
@@ -24,7 +27,7 @@ File names communicate three parts, joined by underscores, then the language ext
 | Layer   | Prefix                 | `taxonomy_`, `contract_`, ...|
 | Concern | Middle                 | `tool`, `doc`, `x509`        |
 | Role    | Suffix                 | `vo`, `protocol`, `orchestrator`|
-30→
+
 Exceptions: `main.rs`, `lib.rs`, `mod.rs`, `__init__.py`, `index.ts`, `index.js`.
 
 ## 4. Vertical Slicing Folder Structure
@@ -34,7 +37,7 @@ Exceptions: `main.rs`, `lib.rs`, `mod.rs`, `__init__.py`, `index.ts`, `index.js`
 ```
 
 modules/<feature-name>/src/
-40→├── agent_<feature>*orchestrator.py        # Agent layer — only allowed role
+├── agent_<feature>*orchestrator.py        # Agent layer — only allowed role
 ├── capabilities*<feature>*<role>.py       # Capabilities layer
 ├── utility*<feature>*<role>.py            # Utility layer
 └── root*<feature>_container.py            # Root layer
@@ -44,7 +47,7 @@ modules/<feature-name>/src/
 Do **not** create `surface/`, `taxonomy/`, `contract/`, `capabilities/`, `utility/`,
 `agent/` folders. Layers live in file names, not directories.
 
-50→#### Shared member
+#### Shared member
 
 ```
 
@@ -54,7 +57,7 @@ modules/shared/src/
 ├── taxonomy*<domain>*error.py
 ├── contract*<domain>*protocol.py
 └── contract*<domain>_aggregate.py
-60→
+
 ```
 
 `shared/common/` holds generic utilities not tied to a domain.
@@ -64,7 +67,7 @@ modules/shared/src/
 ```
 
 project-root/
-70→├── modules/
+├── modules/
 │   ├── shared/src/           <- Taxonomy + Contract (all features)
 │   ├── <feature-a>/src/
 │   ├── <feature-b>/src/
@@ -74,7 +77,7 @@ project-root/
 └── AGENTS.md
 
 ```
-80→
+
 ## 5. Taxonomy Layer
 
 ### Overview
@@ -84,7 +87,7 @@ project-root/
 | Purpose      | Taxonomy is the domain foundation layer. It defines the stable language of the domain and must remain free from technical or behavioral concerns. |
 | Dependencies | Taxonomy depends on nothing.                                                                                                            |
 
-90→### Component
+### Component
 
 | Role         | Meaning                               | Allowed Dependencies | Forbidden Dependencies |
 | ------------ | ------------------------------------- | -------------------- | ---------------------- |
@@ -94,7 +97,7 @@ project-root/
 | Error        | Domain-level error                    | None                 | All other layers       |
 | Constant     | Compile-time literal value            | None                 | All other layers       |
 
-100→### Rules
+### Rules
 
 | Rules                      | Detail                                                                                                    |
 | -------------------------- | --------------------------------------------------------------------------------------------------------- |
@@ -104,7 +107,7 @@ project-root/
 | Purity                     | Taxonomy must not contain business rules, infrastructure, or imports from other layers.                   |
 
 ## 6. Contract Layer
-110→
+
 ### Overview
 
 | Aspect       | Detail                                                                                                                                      |
@@ -114,7 +117,7 @@ project-root/
 
 ### Component
 
-120→| Role      | Meaning                                                                                           | Allowed Dependencies | Forbidden Dependencies                      |
+| Role      | Meaning                                                                                           | Allowed Dependencies | Forbidden Dependencies                      |
 | --------- | ------------------------------------------------------------------------------------------------- | -------------------- | ------------------------------------------- |
 | Protocol  | Interface defining inbound behavior. It is implemented by Capabilities and consumed by the Agent. | Taxonomy             | Utility, Capabilities, Agent, Surface, Root |
 | Aggregate | Facade definition implemented by Agent, used by Surface to access feature behavior.               | Taxonomy             | Utility, Capabilities, Agent, Surface, Root |
@@ -125,7 +128,7 @@ project-root/
 | ------------------ | --------------------------------------------------- |
 | Behavior only      | Protocol defines behavior only, without implementation. |
 | Capability hiding  | Aggregate hides Capabilities from Surface.          |
-130→
+
 ## 7. Utility Layer
 
 ### Overview
@@ -134,7 +137,7 @@ project-root/
 | ------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
 | Purpose      | Utility contains reusable low-level mechanics that can be shared across capabilities. It exists so that Capabilities can remain clean. |
 | Role Naming  | Utility role suffixes are unlimited. The role name is chosen based on demand and must describe the technical responsibility and concern of the file. |
-140→| Dependencies | Utility may depend only on Taxonomy.                                                                                                    |
+| Dependencies | Utility may depend only on Taxonomy.                                                                                                    |
 | Location     | Utility files live only in the `shared/` kernel folder (AES701).                                                                        |
 
 ### Component
@@ -145,7 +148,7 @@ project-root/
 | External tool execution | Run linters, compilers, formatters, analyzers       | Taxonomy             | Contract, Capabilities, Agent, Surface, Root |
 | Parsing and matching    | Parse text, match patterns, extract structured data | Taxonomy             | Contract, Capabilities, Agent, Surface, Root |
 | Path normalization      | Normalize paths across platforms                    | Taxonomy             | Contract, Capabilities, Agent, Surface, Root |
-150→| System operations       | Handle process or environment mechanics             | Taxonomy             | Contract, Capabilities, Agent, Surface, Root |
+| System operations       | Handle process or environment mechanics             | Taxonomy             | Contract, Capabilities, Agent, Surface, Root |
 
 ### Rules
 
@@ -154,7 +157,7 @@ project-root/
 | Stateless functions      | Utility must use stateless standalone functions only.                                                                                                        |
 | No objects or contracts  | Utility must not contain stateful objects, behavior definitions, or contract implementations.                                                                |
 | No business decisions    | Utility must not make business decisions. It may perform technical operations if needed.                                                                     |
-160→| Technical scope          | Utility role names may expand freely, but the layer must remain technical and standalone.                                                                    |
+| Technical scope          | Utility role names may expand freely, but the layer must remain technical and standalone.                                                                    |
 | Kernel-only location     | Feature and surface crates consume utility functions via import; they do not own or co-locate `utility_*` files.                                             |
 | Misplacement             | A `utility_*` file in a feature folder is misplaced (AES702 `feature_has_forbidden_files`); in a surface folder it is misplaced (AES703 `surface_has_misplaced_files`). |
 
@@ -164,7 +167,7 @@ project-root/
 
 | Aspect       | Detail                                                                                                                                                                                                                                                       |
 | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-170→| Purpose      | Capabilities contain the concrete implementation of the system's behavior. This layer encapsulates both **pure business logic** (computations, validations) and **external adaptations** (database access, third-party API calls, infrastructure mechanics). By hiding these behind Contracts, behavior stays modular, swappable, and isolated from orchestration. |
+| Purpose      | Capabilities contain the concrete implementation of the system's behavior. This layer encapsulates both **pure business logic** (computations, validations) and **external adaptations** (database access, third-party API calls, infrastructure mechanics). By hiding these behind Contracts, behavior stays modular, swappable, and isolated from orchestration. |
 | Role Naming  | Capabilities role suffixes are unlimited. The role name is chosen based on demand and must describe the technical responsibility and concern of the file.                                                                                                    |
 | Dependencies | Capabilities may depend on Taxonomy, Contract, and Utility. Capabilities must not depend on or import other Capabilities.                                                                                                                                    |
 
@@ -174,7 +177,7 @@ project-root/
 | ----------------------- | -------------- | ---------------------------------------------- | -------------------------------- | -------------------------------------- |
 | **Business Logic**      | Validation     | Check domain conditions or input correctness   | Taxonomy, Contract, Utility      | Other Capabilities, Agent, Surface, Root |
 |                         | Computation    | Calculate scores, totals, or derived values    | Taxonomy, Contract, Utility      | Other Capabilities, Agent, Surface, Root |
-180→|                         | Transformation | Map, filter, reduce, or reshape data           | Taxonomy, Contract, Utility      | Other Capabilities, Agent, Surface, Root |
+|                         | Transformation | Map, filter, reduce, or reshape data           | Taxonomy, Contract, Utility      | Other Capabilities, Agent, Surface, Root |
 |                         | Resolution     | Apply rules and decide outcomes                | Taxonomy, Contract, Utility      | Other Capabilities, Agent, Surface, Root |
 |                         | Assessment     | Judge severity, compliance, grade, or quality  | Taxonomy, Contract, Utility      | Other Capabilities, Agent, Surface, Root |
 | **External Adaptation** | Repository     | Fetch or persist domain entities to a database | Taxonomy, Contract, Utility      | Other Capabilities, Agent, Surface, Root |
@@ -184,7 +187,7 @@ project-root/
 ### Rules
 
 | Rules                         | Detail                                                                                                                                                              |
-190→| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | No inter-capability dependency | Capabilities must never import or call other Capabilities directly. They are standalone execution units.                                                           |
 | Pipeline aggregation          | Multiple Capabilities (e.g., A for data fetching, B for business calculation) are composed into a sequential pipeline by the **Agent Layer**, not by themselves.    |
 | Shared logic extraction (DRY) | If multiple Capabilities need the same technical mechanics, extract them into a reusable standalone function in the **Utility Layer**. Do not duplicate technical code. |
@@ -194,7 +197,7 @@ project-root/
 
 ## 9. Agent Layer
 
-200→### Overview
+### Overview
 
 | Aspect       | Detail                                                                                                    |
 | ------------ | --------------------------------------------------------------------------------------------------------- |
@@ -204,7 +207,7 @@ project-root/
 
 ### Component
 
-210→| Flow Type               | Purpose                               | Allowed Dependencies        | Forbidden Dependencies          |
+| Flow Type               | Purpose                               | Allowed Dependencies        | Forbidden Dependencies          |
 | ----------------------- | ------------------------------------- | --------------------------- | ------------------------------- |
 | Sequential execution    | Run steps in order                    | Taxonomy, Contract, Utility | Capabilities, Surface, Root     |
 | Looping                 | Process multiple items or events      | Taxonomy, Contract, Utility | Capabilities, Surface, Root     |
@@ -214,7 +217,7 @@ project-root/
 
 ### Rules
 
-220→| Rules                    | Detail                                                                              |
+| Rules                    | Detail                                                                              |
 | ------------------------ | ----------------------------------------------------------------------------------- |
 | Contract dependency      | Agent must depend on Contract, not concrete implementations.                        |
 | Capability ignorance     | Agent must not use and must be completely ignorant of Capabilities implementations. |
@@ -224,7 +227,7 @@ project-root/
 ## 10. Surface Layer
 
 ### Overview
-230→
+
 | Aspect        | Detail                                                                                                                                         |
 | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
 | Purpose       | Surface is the outer boundary of the system. It handles user-facing or external-facing interaction and translates it into architectural actions. |
@@ -234,7 +237,7 @@ project-root/
 
 | Group            | Roles                             | Allowed Dependencies                  | Forbidden Dependencies                                       | Detail                                          |
 | ---------------- | --------------------------------- | ------------------------------------- | ------------------------------------------------------------ | ----------------------------------------------- |
-240→| Smart surfaces   | command, controller, page, router | Taxonomy, Contract Aggregate, Utility | Agent, Capabilities, Contract Protocol, Root                 | May initiate feature behavior through aggregate |
+| Smart surfaces   | command, controller, page, router | Taxonomy, Contract Aggregate, Utility | Agent, Capabilities, Contract Protocol, Root                 | May initiate feature behavior through aggregate |
 | Utility surfaces | hook, store, action, screen       | Taxonomy                              | Agent, Capabilities, Contract, Utility, Other surfaces, Root | Support smart surfaces, data/state only         |
 | Passive surfaces | component, view, layout           | Taxonomy                              | Agent, Contract, Capabilities, Other surfaces, Root          | Presentation-only, no logic or orchestration    |
 
@@ -244,7 +247,7 @@ project-root/
 | ----------------------------- | --------------------------------------------------------------------------------------- |
 | Aggregate consumption         | Smart surfaces must consume Contract Aggregates to reach capabilities/agent.            |
 | Utility import restriction    | Only smart surfaces may import Utility layer files.                                     |
-250→| Direct dependency restriction | Utility and passive surfaces must not import Capabilities, Contract, or Agent directly. |
+| Direct dependency restriction | Utility and passive surfaces must not import Capabilities, Contract, or Agent directly. |
 | Business logic restriction    | Surfaces must not contain business calculation or orchestration.                        |
 
 ## 11. Root Layer
@@ -254,7 +257,7 @@ project-root/
 | Aspect       | Detail                                                                                                                                   |
 | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | Purpose      | Root is the composition layer. It assembles the system by connecting concrete implementations to contracts and starting the application. |
-260→| Dependencies | Root may depend on all layers.                                                                                                           |
+| Dependencies | Root may depend on all layers.                                                                                                           |
 
 ### Component
 
@@ -264,28 +267,11 @@ project-root/
 | Entry     | All layers           | None                   | Bootstraps the application and composes feature containers.                        |
 
 ### Rules
-270→
+
 | Rules                    | Detail                                                              |
 | ------------------------ | ------------------------------------------------------------------- |
 | Wiring                   | Root may instantiate and wire components.                           |
 | No business logic        | Root must not contain business logic.                               |
 | No orchestration         | Root must not contain orchestration policy.                         |
 | No technical/UI behavior | Root must not contain technical parsing or user interface behavior. |
-
-## Section Contract
-
-Every section is required unless marked optional. Each exists for one reason.
-320→
-| Section                        | Why it belongs here                                                                      |
-| ------------------------------ | ------------------------------------------------------------------------------------------|
-| Purpose                        | Names the failure modes the architecture prevents. Watch for descriptive prose instead of rules.|
-| Workspace Organization         | Defines terms so engineers and agents share a vocabulary. Watch for unstated implicit terms. |
-| Naming Convention              | Makes file names self-documenting. Watch for missing exceptions list.                        |
-| Vertical Slicing Layout        | Shows where each file lands; prevents the `surface/` folder mistake. Watch for missing shared layout.|
-| Taxonomy Layer                 | The foundation — if it drifts, everything above drifts. Watch for missing dependency rule.   |
-| Contract Layer                 | The stability boundary. Watch for missing "no implementation" guard.                         |
-| Utility Layer                  | Shared mechanics that keep Capabilities clean. Watch for business logic leaking into Utility.|
-330→| Capabilities Layer             | The behavior implementation. Watch for inter-capability imports.                             |
-| Agent Layer                    | The orchestrator — sequence, not business. Watch for business calculation here.              |
-| Surface Layer                  | The outer boundary. Watch for orchestration or business logic leaking into Surface.          |
-| Root Layer                     | The composition entry. Watch for business logic in the container.                            |
+```

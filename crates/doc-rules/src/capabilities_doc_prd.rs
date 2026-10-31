@@ -66,12 +66,13 @@ impl PrdCapability {
 
         // AES605 — heading structure.
         if let Some((required, allowed)) = doc_h2_contract(consts::PRD_DOC) {
-            check_doc_heading(text, consts::PRD_DOC, required, allowed, findings);
+            check_doc_heading(consts::RULE_CODE_PRD_DOC, text, consts::PRD_DOC, required, allowed, findings);
         }
 
         // AES606 — entry tables under Project Requirements.
         if let Some(re) = pr_entry_re() {
             findings.extend(check_aspect_entry_tables(
+                consts::RULE_CODE_PRD_DOC,
                 &parsed,
                 "Project Requirements",
                 re,

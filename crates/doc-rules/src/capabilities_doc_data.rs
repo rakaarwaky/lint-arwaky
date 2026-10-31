@@ -55,12 +55,13 @@ impl DataCapability {
 
         // AES605 — heading structure (DT-prefixed H2s allowed).
         if let Some((required, allowed)) = doc_h2_contract(consts::DATA_DOC) {
-            check_doc_heading(text, consts::DATA_DOC, required, allowed, findings);
+            check_doc_heading(consts::RULE_CODE_DATA_DOC, text, consts::DATA_DOC, required, allowed, findings);
         }
 
         // AES606 — entry tables under Data Requirements.
         if let Some(re) = dt_entry_re() {
             findings.extend(check_aspect_entry_tables(
+                consts::RULE_CODE_DATA_DOC,
                 &parsed,
                 "Data Requirements",
                 re,

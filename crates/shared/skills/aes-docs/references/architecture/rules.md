@@ -59,3 +59,19 @@ Groups the folder-structure rules (AES701–AES706).
 ## Rule Source of Truth & Parity
 
 States that emitted rule codes are the source of truth and names the parity test that keeps the inventory table in sync.
+
+## Section Contract
+
+| Section | Why it belongs here |
+|---------|---------------------|
+| Purpose | Names the failure modes the architecture prevents. Watch for descriptive prose instead of rules. |
+| Workspace Organization | Defines terms so engineers and agents share a vocabulary. Watch for unstated implicit terms. |
+| Naming Convention | Makes file names self-documenting. Watch for missing exceptions list. |
+| Vertical Slicing Layout | Shows where each file lands; prevents the `surface/` folder mistake. Watch for missing shared layout. |
+| Taxonomy Layer | The foundation — if it drifts, everything above drifts. Watch for missing dependency rule. |
+| Contract Layer | The stability boundary. Watch for missing "no implementation" guard. |
+| Utility Layer | Shared mechanics that keep Capabilities clean. Watch for business logic leaking into Utility. |
+| Capabilities Layer | The behavior implementation. Watch for inter-capability imports. |
+| Agent Layer | The orchestrator — sequence, not business. Watch for business calculation here. |
+| Surface Layer | The outer boundary. Watch for orchestration or business logic leaking into Surface. |
+| Root Layer | The composition entry. Watch for business logic in the container. |

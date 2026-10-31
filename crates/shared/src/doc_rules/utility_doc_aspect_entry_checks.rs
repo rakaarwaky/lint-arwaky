@@ -26,6 +26,7 @@ use crate::utility_markdown_scanner::{h4_subsections, normalize_heading};
 /// enforced. A legacy entry carrying a single `| Aspect | Detail |` table is
 /// routed to `check_entry_tables` instead.
 pub fn check_aspect_entry_tables(
+    rule_code: &'static str,
     parsed: &[Section],
     parent_h2: &str,
     entry_re: &regex::Regex,
@@ -55,7 +56,7 @@ pub fn check_aspect_entry_tables(
                     DocFinding::new_with_line(
                         "",
                         h3.line,
-                        consts::RULE_CODE_TEMPLATE_CONFORMANCE,
+                        rule_code,
                         consts::TEMPLATE_CONFORMANCE_VIOLATION_MISSING_H4_ASPECT,
                         format!(
                             "line {} `### {}` is missing H4 aspect `{aspect}`",
@@ -89,7 +90,7 @@ pub fn check_aspect_entry_tables(
                 DocFinding::new_with_line(
                     "",
                     mismatch_line,
-                    consts::RULE_CODE_TEMPLATE_CONFORMANCE,
+                    rule_code,
                     consts::TEMPLATE_CONFORMANCE_VIOLATION_H4_ORDER,
                     format!(
                         "line {} `### {}` H4 aspects are out of canonical order",
@@ -121,7 +122,7 @@ pub fn check_aspect_entry_tables(
                         DocFinding::new_with_line(
                             "",
                             h4.line,
-                            consts::RULE_CODE_TEMPLATE_CONFORMANCE,
+                            rule_code,
                             consts::TEMPLATE_CONFORMANCE_VIOLATION_EMPTY_DETAIL_CELL,
                             format!(
                                 "line {} `#### {}` under `### {}` has an empty body",
@@ -140,7 +141,7 @@ pub fn check_aspect_entry_tables(
                 continue;
             };
             let open_min = open.contains(aspect).then_some(min);
-            findings.extend(check_aspect_table(&h3, h4, aspect, open_min, min));
+            findings.extend(check_aspect_table(rule_code, &h3, h4, aspect, open_min, min));
         }
     }
     findings
@@ -185,6 +186,7 @@ fn h4_candidate_entries(
 /// `open`: `None` = bounded exact `seed_min`; `Some(min)` = open-ended,
 /// at least `min` rows (numbered rows only — `∞` is not written as a marker row).
 pub fn check_aspect_table(
+    rule_code: &'static str,
     h3: &Section,
     h4: &Section,
     aspect: &str,
@@ -197,7 +199,7 @@ pub fn check_aspect_table(
             DocFinding::new_with_line(
                 "",
                 h4.line,
-                consts::RULE_CODE_TEMPLATE_CONFORMANCE,
+                rule_code,
                 consts::TEMPLATE_CONFORMANCE_VIOLATION_SECTION_NOT_TABLE,
                 format!(
                     "line {} `#### {}` under `### {}` must be a markdown table with columns No | Detail",
@@ -253,7 +255,7 @@ pub fn check_aspect_table(
             DocFinding::new_with_line(
                 "",
                 h4.line,
-                consts::RULE_CODE_TEMPLATE_CONFORMANCE,
+                rule_code,
                 violation,
                 format!(
                     "line {} `#### {}` table header must be exactly `| No | Detail |`",
@@ -325,7 +327,7 @@ pub fn check_aspect_table(
             DocFinding::new_with_line(
                 "",
                 h4.line,
-                consts::RULE_CODE_TEMPLATE_CONFORMANCE,
+                rule_code,
                 consts::TEMPLATE_CONFORMANCE_VIOLATION_ROW_NUMBERING,
                 format!(
                     "line {} `#### {}` under `### {}` rows are not numbered 1..N",
@@ -371,7 +373,7 @@ pub fn check_aspect_table(
             DocFinding::new_with_line(
                 "",
                 h4.line,
-                consts::RULE_CODE_TEMPLATE_CONFORMANCE,
+                rule_code,
                 violation,
                 message,
             )
@@ -396,7 +398,7 @@ pub fn check_aspect_table(
             DocFinding::new_with_line(
                 "",
                 h4.line,
-                consts::RULE_CODE_TEMPLATE_CONFORMANCE,
+                rule_code,
                 consts::TEMPLATE_CONFORMANCE_VIOLATION_EMPTY_DETAIL_CELL,
                 format!(
                     "line {} `#### {}` row {no} Detail cell is empty or a placeholder dash",

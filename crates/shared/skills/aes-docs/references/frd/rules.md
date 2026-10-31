@@ -20,3 +20,14 @@ General rules for writing an FRD. These apply across all sections.
 8. **Spec purity — the FRD is a promise.** The FRD states what the feature must do, never how the current build does it. Implementation identifiers (capability names, protocol trait / interface names, capability method names) appear only under the `Capability`, `Protocol`, and `Method` aspect subsections and in `## Public Interface`; every other subsection states behaviour in caller-observable terms.
 9. **Caller-observable identifiers may stay.** Error codes, event names, output destination paths, and similar caller-visible vocabulary belong in the `Input`, `Output`, `Error`, and `Event` subsections; they are part of the promise, not implementation.
 10. **Purity test.** If a sentence in any subsection names an implementation identifier that is not one of the `Capability` / `Protocol` / `Method` / Public-Interface identifiers above, or leaks build status, move the identifier or cut the sentence.
+
+## Section Contract
+
+Every section is mandatory; each explains what to fill and what must not appear.
+
+| Section | What it is | What to fill | What must not appear |
+|---------|------------|--------------|----------------------|
+| Feature Overview | One diagram or ≤ 3 sentences locating the feature. | Where the feature sits, what calls it, what it calls. | Source extensions (`.py`, `.rs`, `.ts`, `.tsx`), build status. |
+| Functional Requirements | `FR-<FEATURE-NAME-ID>-NNN` items, each an H3 heading, a `**Description:**` paragraph, and five H4 subsections in canonical order: `#### Business Logic`, `#### Edge Cases`, `#### Technical Specification`, `#### Test`, `#### Metric`. | One behaviour per entry — what it does. | Source extensions, build status. |
+| Public Interface | Agent / Aggregate / Method / Request / Response surface. | `<agent name>`, `<aggregate name>`, `<execute>`, `<request>`, `<response>`. | Internals of those calls. |
+| Reference | Connects the FRD to PRD, Backlog, Roadmap, Architecture. | Exactly four rows: PRD, Backlog, Roadmap, Architecture. | Additional links beyond the four artifacts. |

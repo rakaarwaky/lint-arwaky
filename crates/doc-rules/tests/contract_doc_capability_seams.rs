@@ -74,37 +74,25 @@ The feature reads its settings from main.rs at startup.
 
 ### FR-SAMPLE-001: Document Invariant Enforcement
 
-| Aspect         | Detail                                                          |
-|----------------|-----------------------------------------------------------------|
-| Description    | Every `.md` document satisfies the heading and section contract. |
-| Business Rules | Validates FR-ID format, section order, heading structure.       |
-| Edge Cases     | A root-level legacy `BACKLOG.md` is accepted during migration.  |
-| Capability     | doc_rules::DocStructure                                         |
-| Protocol       | doc_rules::DocStructure                                         |
-| Method         | check_doc_heading                                               |
-| Input          | A workspace root and recognized document paths.                 |
-| Output         | One finding per invariant violation.                            |
-| Error          | Unreadable files produce no findings.                           |
-| Event          | Finding emitted                                                 |
-| Test           | The seam contract tests stay green                               |
-| Metric         | Deterministic finding order                                      |
+| Aspect | Detail |
+|---|---|
+| Input | A workspace root and recognized document paths. |
+| Output | One finding per invariant violation. |
+| Protocol | doc_rules::DocStructure |
+| Method | check_doc_heading |
+| Event | Finding emitted |
+| Error | Unreadable files produce no findings. |
 
 ### FR-SAMPLE-002: Audit Orchestration
 
-| Aspect         | Detail                                                          |
-|----------------|-----------------------------------------------------------------|
-| Description    | The auditor is reachable through a single aggregate entry point. |
-| Business Rules | The aggregate orchestrates all invariants under one seam.       |
-| Edge Cases     | An empty root produces no findings rather than an error.         |
-| Capability     | doc_rules::DocStructure                                         |
-| Protocol       | doc_rules::DocStructure                                         |
-| Method         | execute                                                         |
-| Input          | A request describing the workspace root to audit.                |
-| Output         | A response carrying a deduplicated finding list.                 |
-| Error          | Failures propagate with no partial results.                      |
-| Event          | Finding emitted                                                 |
-| Test           | The seam contract tests stay green                               |
-| Metric         | Deterministic finding order                                      |
+| Aspect | Detail |
+|---|---|
+| Input | A workspace root and the list of recognized document paths. |
+| Output | A response carrying a deduplicated finding list. |
+| Protocol | doc_rules::DocStructure |
+| Method | execute |
+| Event | Finding emitted |
+| Error | Failures inside the checker are propagated as DocResponse::Findings with no partial results. |
 
 ## Public Interface
 
@@ -497,10 +485,15 @@ fn write_member_backlog(
 }
 
 /// The Reference table every BACKLOG crosslink test writes, with the given
-/// link rows.
+/// link rows. Satisfies BACKLOG's AES605 H2 contract: Progress Overview,
+/// Backlog Status, Reference.
 fn backlog_reference(rows: &[&str]) -> String {
     format!(
-        "# Backlog\n\n## Reference\n\n\
+        "# Feature Backlog: Sample\n\n\
+         ## Progress Overview\n\n\
+         Baseline.\n\n\
+         ## Backlog Status\n\n\
+         ## Reference\n\n\
          | Artifact | Purpose | Link |\n\
          |--------|---------|------|\n\
          {}",

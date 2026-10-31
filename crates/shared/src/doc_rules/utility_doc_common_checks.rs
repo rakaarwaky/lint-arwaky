@@ -35,6 +35,7 @@ fn extract_qualifier(title: &str) -> Option<String> {
 /// *row_labels* (header-only when empty). Findings anchor to the offending H3
 /// line.
 pub fn check_entry_tables(
+    rule_code: &'static str,
     parsed: &[Section],
     parent_h2: &str,
     entry_re: &regex::Regex,
@@ -73,7 +74,7 @@ pub fn check_entry_tables(
                     DocFinding::new_with_line(
                         "",
                         h3.line,
-                        consts::RULE_CODE_TEMPLATE_CONFORMANCE,
+                        rule_code,
                         consts::TEMPLATE_CONFORMANCE_VIOLATION_ENTRY_MISSING_ROW,
                         format!(
                             "line {} `### {}` entry table row labels do not match the template; missing {}, extra {}",

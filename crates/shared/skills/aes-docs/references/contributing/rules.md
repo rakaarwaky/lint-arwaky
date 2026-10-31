@@ -21,3 +21,13 @@
 7. **Respect the length budget.** Target 50–500 lines. Move verbose prose to linked sub-pages; keep this file scannable.
 8. **Do not restate AGENTS.md.** The AGENTS.md file owns operational guardrails (security, worktree discipline, session memory). CONTRIBUTING.md owns the *what to do to ship a change*, not the *how to behave in a session*.
 9. **Only include paths your project has.** A contributing guide names the directories and lifecycle steps that exist in this repo. If the project ships no submodules, no shared tool registry, and no generated manifests, those sections are deleted, not filled with placeholders.
+
+## Section Contract
+
+| Section | Why it belongs here |
+|---------|---------------------|
+| Contribution Overview | Sets contributor mindset and "ready to merge" definition. |
+| Contribution Guidelines | The contribution rules every change must respect. |
+| Workflow | `Step | Action | Detail` contribution pipeline. |
+| Commit Convention | `Type | Usage | Example` conventional-commit prefixes. |
+| Reference | Connects contribution policy to PRD and Architecture. |
