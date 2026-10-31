@@ -15,7 +15,7 @@ use shared_doc_rules::utility_doc_aspect_entry_checks::{
     detect_aspect_entry_tables, AspectEntryDefect,
 };
 use shared_doc_rules::utility_doc_common_checks::{
-    backlog_required_links, check_doc_heading, collect_union_id_set, missing_link_violation_type,
+    BacklogQualifierDefect, backlog_required_links, collect_union_id_set, detect_doc_heading, detect_backlog_qualifier_alignment, HeadingDefect, missing_link_violation_type,
 };
 use shared_doc_rules::utility_doc_entry_regexes::backlog_entry_re;
 use shared_doc_rules::utility_doc_fr_format_checks::collect_any_id_set;

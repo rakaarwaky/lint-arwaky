@@ -1,10 +1,10 @@
 // PURPOSE: Per-doc capability for PRD.md — AES605
 //
 // Answers ALL invariants scoped to PRD.md behind IPrdDocProtocol.
-// Crosslinks (AES604), heading structure (AES605), entry-table conformance
-// (AES606) are stamped with RULE_CODE_PRD_DOC ("AES605"); FR-format family
-// violations (PR-ID parity, API method existence) carry their own AES601
-// code. The capability stamps the document path on every finding.
+// Spec purity, PR-ID parity, API method existence, crosslinks,
+// heading structure, and entry-table conformance are stamped with
+// RULE_CODE_PRD_DOC ("AES605"). The capability stamps the document
+// path on every finding.
 
 use shared_doc_rules::contract_doc_protocol::IPrdDocProtocol;
 use shared_doc_rules::taxonomy_doc_audit_context_vo::DocAuditContext;
@@ -55,11 +55,11 @@ impl PrdCapability {
         let text = &document.text;
         let parsed = sections(text);
 
-        // AES605 — spec purity: PRD names no source file and carries no status.
+        // Spec purity: PRD names no source file and carries no status.
         // (Implemented via shared checks below where a root master exists.)
         // PRD carries no bare-FR-ID shape; FR-ID format applies to FRD only.
 
-        // AES601 — PR-ID parity (PRD ↔ ROADMAP).
+        // PR-ID parity (PRD ↔ ROADMAP).
         if let Some(roadmap) = context
             .documents()
             .iter()
@@ -68,13 +68,13 @@ impl PrdCapability {
             for defect in detect_pr_id_parity(document, roadmap) {
                 let (violation, message, reason, fix) = match &defect {
                     PrIdParityDefect::PrMissingFromRoadmap { line, id } => (
-                        consts::PR_ROADMAP_ID_MISSING,
+                        DOC_VIOLATION_NAMES.pr_roadmap_id_missing(),
                         format!("line {} PR `{}` declared in PRD has no ROADMAP `Roadmap Status` entry", line, id),
                         format!("Add `{}` to ROADMAP's `Roadmap Status` table.", id),
                         format!("Add `{}` under `Roadmap Status` in ROADMAP.md.", id),
                     ),
                     PrIdParityDefect::RoadmapNotInPrd { line, id, valid } => (
-                        consts::ROADMAP_PR_ID_NOT_PR,
+                        DOC_VIOLATION_NAMES.roadmap_pr_id_not_pr(),
                         format!("line {} ROADMAP `PR-` item `{}` is not declared in the PRD", line, id),
                         format!("The PRD declares `Project Requirements`; `{}` must appear there first.", id),
                         format!("Declare `{}` in PRD's `Project Requirements`. Valid ids: {}", id, valid.join(", ")),

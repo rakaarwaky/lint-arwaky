@@ -2,7 +2,7 @@
 //
 // Answers ALL invariants scoped to CONTRIBUTING.md behind
 // IContributingDocProtocol. Crosslinks (PRD, ARCHITECTURE), heading
-// structure (AES605), and entry-table conformance (AES606) are stamped with
+// structure, and entry-table conformance are stamped with
 // RULE_CODE_CONTRIBUTING_DOC ("AES604"). The capability stamps the document
 // path on every finding.
 
@@ -50,10 +50,10 @@ impl ContributingCapability {
         let text = &document.text;
         let parsed = sections(text);
 
-        // AES604 — crosslinks (PRD, ARCHITECTURE).
+        // Crosslinks (PRD, ARCHITECTURE).
         Self::check_crosslinks(document, context, consts::RULE_CODE_CROSSLINKS, findings);
 
-        // AES605 — heading structure.
+        // Heading structure.
         if let Some((required, allowed)) = doc_h2_contract(consts::CONTRIBUTING_DOC) {
             for defect in detect_doc_heading(text, consts::CONTRIBUTING_DOC, required, allowed) {
                 let (violation, message, reason, fix) = match &defect {
@@ -83,11 +83,11 @@ impl ContributingCapability {
             }
         }
 
-        // AES604 — Workflow table carries fixed columns.
+        // Workflow table carries fixed columns.
         if let Some(defect) = detect_h2_table(&parsed, "Workflow", consts::CONTRIBUTING_WORKFLOW_COLUMNS) {
             findings.push(Self::convert_shape_defect(defect));
         }
-        // AES604 — Commit Convention table carries fixed columns.
+        // Commit Convention table carries fixed columns.
         if let Some(defect) = detect_h2_table(&parsed, "Commit Convention", consts::CONTRIBUTING_COMMIT_COLUMNS) {
             findings.push(Self::convert_shape_defect(defect));
         }

@@ -61,7 +61,7 @@ impl DataCapability {
                     "",
                     defect.line,
                     consts::RULE_CODE_DATA_DOC,
-                    consts::FR_ID_VIOLATION_MISSING_FEATURE_PREFIX,
+                    DOC_VIOLATION_NAMES.fr_id_missing_feature_prefix(),
                     format!(
                         "line {} bare ID `{}: {}` without its `<FEATURE>` prefix",
                         defect.line, defect.num, defect.title

@@ -98,15 +98,32 @@ impl DesignCapability {
 
         // AES605 — heading structure.
         if let Some((required, allowed)) = doc_h2_contract(consts::DESIGN_DOC) {
-            check_doc_heading(
-                consts::RULE_CODE_DESIGN_DOC,
-                text,
-                consts::DESIGN_DOC,
-                required,
-                allowed,
-                &DOC_VIOLATION_NAMES,
-                findings,
-            );
+            for defect in detect_doc_heading(text, consts::DESIGN_DOC, required, allowed) {
+                let (violation, message, reason, fix) = match &defect {
+                    HeadingDefect::H1Count { line, count } => (
+                        consts::DOC_STRUCTURE_VIOLATION_H1_COUNT,
+                        format!("{} H1 headings; template requires exactly one", count),
+                        format!("{} has {} H1 headings; the template fixes exactly one H1 at the top.", consts::DESIGN_DOC, count),
+                        format!("Remove the extra H1 heading(s) so {} keeps exactly one H1.", consts::DESIGN_DOC),
+                    ),
+                    HeadingDefect::H2Missing { line, missing } => (
+                        consts::DOC_STRUCTURE_VIOLATION_H2_MISSING,
+                        format!("missing required H2 section(s): {}", missing.join(", ")),
+                        format!("{} is missing required H2 section(s): {}", consts::DESIGN_DOC, missing.join(", ")),
+                        format!("Add the missing H2 section(s): {}", missing.join(", ")),
+                    ),
+                    HeadingDefect::H2Unexpected { line, unexpected } => (
+                        consts::DOC_STRUCTURE_VIOLATION_H2_UNEXPECTED,
+                        format!("unexpected H2 section(s): {}", unexpected.join(", ")),
+                        format!("{} carries H2 section(s) outside the template: {}", consts::DESIGN_DOC, unexpected.join(", ")),
+                        format!("Remove the off-template H2 section(s): {}", unexpected.join(", ")),
+                    ),
+                };
+                findings.push(
+                    DocFinding::new_with_line("", defect.line(), consts::RULE_CODE_DESIGN_DOC, violation, message)
+                        .with_reason(reason, fix),
+                );
+            }
         }
 
         // AES606 — entry tables under Design Requirements + H3 sweep.
