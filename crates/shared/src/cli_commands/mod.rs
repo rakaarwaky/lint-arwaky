@@ -15,6 +15,7 @@ pub use taxonomy_cli_commands_request::ScanScope;
 pub use taxonomy_cli_commands_request::classify_scan_scope;
 pub use taxonomy_cli_commands_vo::DiagnosticSeverity;
 pub use taxonomy_cli_commands_vo::PipelineDiagnostic;
+pub use taxonomy_cli_commands_vo::ScanGroup;
 pub use taxonomy_cli_commands_vo::ScanReport;
 pub use utility_skill_hint_resolver::resolve_skill_hint_for_file;
 pub use utility_skill_hint_resolver::resolve_skill_hint_for_file_typed;

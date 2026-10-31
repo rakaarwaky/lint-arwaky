@@ -1,6 +1,7 @@
 // Unit tests — shared/cli_commands taxonomy types.
 use clap::Parser;
 use shared_cli_commands::Format;
+use shared_cli_commands::ScanGroup;
 use shared_cli_commands::taxonomy_cli_commands_request::{ScanMode, ScanRequest, ScanTarget};
 use shared_cli_commands::taxonomy_cli_commands_vo::{COMMAND_CATALOG, command_catalog};
 use shared_cli_commands::taxonomy_cli_commands_vo::{Cli, Commands};
@@ -24,13 +25,81 @@ fn cli_parses_scan_command() {
             path,
             format,
             member,
+            group,
         } => {
             assert_eq!(path.as_deref(), Some("src/"));
             assert_eq!(format, Format::Json);
             assert!(member.is_none());
+            assert!(group.is_none());
         }
         other => panic!("expected Scan, got {other:?}"),
     }
+    assert!(
+        cli.rules.is_none(),
+        "rules must default to None when omitted"
+    );
+}
+
+/// `--rules` is a global flag on `Cli`, so it is accepted regardless of the
+/// subcommand and is not a field on `Commands::Scan`.
+#[test]
+fn cli_parses_scan_with_rules() {
+    let cli =
+        Cli::try_parse_from(["lint-arwaky", "scan", "--rules", "AES101"]).expect("valid clap args");
+    assert_eq!(cli.rules.as_deref(), Some("AES101"));
+}
+
+/// `--filter` is a backward-compat alias for the global `--rules` flag.
+#[test]
+fn cli_parses_scan_with_filter_alias() {
+    let cli = Cli::try_parse_from(["lint-arwaky", "scan", "--filter", "AES101"])
+        .expect("valid clap args");
+    assert_eq!(cli.rules.as_deref(), Some("AES101"));
+}
+
+#[test]
+fn cli_parses_scan_with_group() {
+    for (group_value, expected) in [
+        ("all", ScanGroup::All),
+        ("quality", ScanGroup::Quality),
+        ("role", ScanGroup::Role),
+        ("import", ScanGroup::Import),
+        ("naming", ScanGroup::Naming),
+        ("orphan", ScanGroup::Orphan),
+        ("external", ScanGroup::External),
+        ("doc", ScanGroup::Doc),
+        ("structure", ScanGroup::Structure),
+    ] {
+        let cli = Cli::try_parse_from(["lint-arwaky", "scan", "--group", group_value])
+            .unwrap_or_else(|e| panic!("scan --group {group_value} must parse: {e}"));
+        match cli.command {
+            Commands::Scan { group, .. } => {
+                assert_eq!(group, Some(expected), "group {group_value}");
+            }
+            other => panic!("expected Scan, got {other:?}"),
+        }
+    }
+}
+
+#[test]
+fn cli_parses_check_with_group() {
+    let cli = Cli::try_parse_from(["lint-arwaky", "check", "--group", "quality"])
+        .expect("valid clap args");
+    match cli.command {
+        Commands::Scan { group, .. } => {
+            assert_eq!(group, Some(ScanGroup::Quality));
+        }
+        other => panic!("expected Scan, got {other:?}"),
+    }
+}
+
+#[test]
+fn cli_rejects_invalid_group_value() {
+    let result = Cli::try_parse_from(["lint-arwaky", "scan", "--group", "unknown_group"]);
+    assert!(
+        result.is_err(),
+        "unknown group value must be rejected by clap"
+    );
 }
 
 #[test]
@@ -78,42 +147,6 @@ fn cli_parses_flagless_commands() {
 }
 
 #[test]
-fn cli_parses_each_layer_scoped_command() {
-    // One subcommand per AES layer except `root`: a layer command runs every
-    // rule group and reports only that layer's files, so each must parse under
-    // its own name and default to the current directory in text format.
-    for (name, variant) in [
-        ("taxonomy", "ScanTaxonomy"),
-        ("contract", "ScanContract"),
-        ("capabilities", "ScanCapabilities"),
-        ("utility", "ScanUtility"),
-        ("agents", "ScanAgents"),
-        ("surface", "ScanSurface"),
-    ] {
-        let cli = Cli::try_parse_from(["lint-arwaky", name])
-            .unwrap_or_else(|e| panic!("{name} must parse: {e}"));
-        let debug = format!("{:?}", cli.command);
-        assert!(
-            debug.starts_with(variant),
-            "{name} must map to {variant}, got {debug}"
-        );
-    }
-}
-
-#[test]
-fn cli_parses_layer_scoped_command_with_path_and_format() {
-    let cli = Cli::try_parse_from(["lint-arwaky", "capabilities", "src/", "--format", "json"])
-        .expect("valid clap args");
-    match cli.command {
-        Commands::ScanCapabilities { path, format } => {
-            assert_eq!(path.as_deref(), Some("src/"));
-            assert_eq!(format, Format::Json);
-        }
-        other => panic!("expected ScanCapabilities, got {other:?}"),
-    }
-}
-
-#[test]
 fn cli_global_flags_propagate() {
     let cli = Cli::try_parse_from(["lint-arwaky", "--verbose", "--quiet", "doctor"])
         .expect("valid clap args");
@@ -125,7 +158,7 @@ fn cli_global_flags_propagate() {
 #[test]
 fn command_catalog_contains_core_commands() {
     let catalog = command_catalog();
-    assert!(catalog.len() >= 22);
+    assert_eq!(catalog.len(), COMMAND_CATALOG.len());
     for (name, _, _) in COMMAND_CATALOG {
         assert!(catalog.contains_key(&shared_cli_commands::ActionName::from(*name)));
     }
@@ -135,11 +168,17 @@ fn command_catalog_contains_core_commands() {
 }
 
 #[test]
-fn command_catalog_lists_every_layer_scoped_command() {
-    // MCP `list_commands` advertises the catalog, so a layer command missing
-    // from it would exist in the CLI but be undiscoverable over MCP.
+fn command_catalog_does_not_advertise_removed_subcommands() {
     let catalog = command_catalog();
     for name in [
+        "quality",
+        "role",
+        "import",
+        "naming",
+        "orphan",
+        "external",
+        "docs",
+        "structure",
         "taxonomy",
         "contract",
         "capabilities",
@@ -147,11 +186,10 @@ fn command_catalog_lists_every_layer_scoped_command() {
         "agents",
         "surface",
     ] {
-        let entry = catalog
-            .get(&shared_cli_commands::ActionName::from(name))
-            .unwrap_or_else(|| panic!("catalog must advertise '{name}'"));
-        assert!(!entry.description.value.is_empty(), "{name}");
-        assert!(!entry.example.value.is_empty(), "{name}");
+        assert!(
+            !catalog.contains_key(&shared_cli_commands::ActionName::from(name)),
+            "catalog must not advertise standalone '{name}' — it is a scan group, not a command"
+        );
     }
 }
 
