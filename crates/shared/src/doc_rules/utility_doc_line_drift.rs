@@ -170,7 +170,7 @@ fn normalize_line(line: &str) -> String {
 }
 
 fn is_table_row(line: &str) -> bool {
-    line.starts_with('|')
+    line.trim_start().starts_with('|')
 }
 
 fn placeholder_lines(lines: &[&str]) -> HashSet<usize> {

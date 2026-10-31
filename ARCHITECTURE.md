@@ -424,7 +424,7 @@ Group 5 detects orphaned code that is not wired into the system's composition la
 | AES505 | Agent | An agent orchestrator file (suffix `_orchestrator`) is not wired in any `_container` | Agent orchestrator files | Wire the orchestrator into a container |
 | AES506 | Surface | A surface file is not imported by its required consumer; severity depends on surface category | Surface files (suffix set: see AES102 Layer Suffix Policy, `surface` row) | Import the surface from its required consumer |
 
-#### AES506 Category / Severity / Consumer
+### AES506 Category / Severity / Consumer
 
 | Category | Severity    | Must be imported by      |
 | -------- | ----------- | ------------------------ |
@@ -489,10 +489,10 @@ AI agents frequently make this mistake: do NOT create `surface/`, `taxonomy/`, `
 ```text
 project-root/
 ├── crates|packages|modules/
-│   ├── shared/                          # taxonomy + contract + utility
-│   ├── <feature-a>/                     # agent + capabilities + root
+│   ├── shared/
+│   ├── <feature-a>/
 │   ├── <feature-b>/
-│   ├── <surface-a>/                     # surface
+│   ├── <surface-a>/
 │   └── <surface-b>/
 ├── Cargo.toml / package.json / pyproject.toml
 ```
