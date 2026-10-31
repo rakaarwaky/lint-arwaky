@@ -15,7 +15,7 @@ use shared_doc_rules::utility_capabilities_doc_h2_checks::{
     detect_h2_table,
 };
 use shared_doc_rules::utility_doc_common_checks::{
-    HeadingDefect, LineDriftDefect, detect_agents_line_drift, detect_doc_heading,
+    HeadingDefect, LineDriftDefect, detect_doc_heading, detect_doc_line_drift,
     missing_link_violation_type, required_links,
 };
 use shared_doc_rules::utility_markdown_scanner::{doc_h2_contract, sections};
@@ -51,23 +51,30 @@ impl AgentsCapability {
         let text = &document.text;
         let parsed = sections(text);
 
-        // AGENTS line drift against the template.
-        for defect in
-            detect_agents_line_drift(text, consts::AGENTS_TEMPLATE_LINES, consts::AGENTS_DOC)
-        {
-            let (violation, message, reason, fix) = match &defect {
-                LineDriftDefect::FrontmatterMissing { line: _, doc_name } => (
+        // AGENTS.md must open with a YAML frontmatter block.
+        let first_line = text.lines().next().unwrap_or("").trim();
+        if first_line != "---" {
+            findings.push(
+                DocFinding::new_with_line("", 1, consts::RULE_CODE_AGENTS_DOC,
                     DOC_VIOLATION_NAMES.frontmatter_missing(),
-                    format!("{} has no YAML frontmatter block", doc_name),
+                    format!("{} has no YAML frontmatter block", consts::AGENTS_DOC),
+                )
+                .with_reason(
                     format!(
                         "{} must open with a `---` YAML frontmatter block.",
-                        doc_name
+                        consts::AGENTS_DOC
                     ),
                     format!(
                         "Add a `---` YAML frontmatter block at the top of {} .",
-                        doc_name
+                        consts::AGENTS_DOC
                     ),
                 ),
+            );
+        }
+
+        // AGENTS line drift against the template.
+        for defect in detect_doc_line_drift(text, consts::AGENTS_TEMPLATE_LINES) {
+            let (violation, message, reason, fix) = match &defect {
                 LineDriftDefect::SectionNotInTemplate { line: _, section } => (
                     DOC_VIOLATION_NAMES.line_drift(),
                     format!("{} section is not in the AGENTS template", section),
