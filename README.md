@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-Lint Arwaky is a single-tool, multi-language architecture linter for monorepos. One scan reports 36 AES rule codes across 7 groups (naming, import, quality, role, orphan, structure, and doc), drives CI exit codes, auto-fixes mechanical violations, and self-audits the project itself. It serves developers, AI agents, and DevOps/CI engineers on Rust/Python/TypeScript monorepos with 10k+ files.
+Lint Arwaky is a single-tool, multi-language architecture linter for monorepos. One scan reports 41 AES rule codes across 7 groups (naming, import, quality, role, orphan, structure, and doc), drives CI exit codes, auto-fixes mechanical violations, and self-audits the project itself. It serves developers, AI agents, and DevOps/CI engineers on Rust/Python/TypeScript monorepos with 10k+ files.
 
 ## Prerequisites
 

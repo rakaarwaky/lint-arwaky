@@ -247,19 +247,19 @@ pub const EMBEDDED_SKILLS: &[EmbeddedSkillVO] = &[
     ),
     EmbeddedSkillVO::new(
         "aes-docs",
-        "aes-docs/references/backlog/feature-backlog-exemplar.md",
+        "aes-docs/references/backlog/feature-exemplar.md",
         include_str!(concat!(
             env!("OUT_DIR"),
-            "/skills/aes-docs/references/backlog/feature-backlog-exemplar.md"
+            "/skills/aes-docs/references/backlog/feature-exemplar.md"
         )),
         None,
     ),
     EmbeddedSkillVO::new(
         "aes-docs",
-        "aes-docs/references/backlog/kernel-backlog-exemplar.md",
+        "aes-docs/references/backlog/shared-exemplar.md",
         include_str!(concat!(
             env!("OUT_DIR"),
-            "/skills/aes-docs/references/backlog/kernel-backlog-exemplar.md"
+            "/skills/aes-docs/references/backlog/shared-exemplar.md"
         )),
         None,
     ),
@@ -274,10 +274,10 @@ pub const EMBEDDED_SKILLS: &[EmbeddedSkillVO] = &[
     ),
     EmbeddedSkillVO::new(
         "aes-docs",
-        "aes-docs/references/backlog/surface-backlog-exemplar.md",
+        "aes-docs/references/backlog/surface-exemplar.md",
         include_str!(concat!(
             env!("OUT_DIR"),
-            "/skills/aes-docs/references/backlog/surface-backlog-exemplar.md"
+            "/skills/aes-docs/references/backlog/surface-exemplar.md"
         )),
         None,
     ),
