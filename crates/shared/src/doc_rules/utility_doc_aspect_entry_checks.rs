@@ -9,13 +9,179 @@
 // rule_code parameter.
 
 use crate::taxonomy_doc_section_vo::Section;
-use crate::utility_capabilities_doc_h2_checks::{
-    first_column_values, has_any_table, header_extra_columns,
-};
-use crate::utility_markdown_scanner::{h4_subsections, normalize_heading};
+use std::collections::HashSet;
 
 // ─── Defect data ─────────────────────────────────────────────────────────────
 pub use crate::taxonomy_doc_rules_defect_vo::AspectEntryDefect;
+
+fn normalize_heading(title: &str) -> String {
+    let lowered = title.to_lowercase();
+    let stripped: String = lowered
+        .chars()
+        .map(|c| {
+            if c.is_alphanumeric() || c.is_whitespace() {
+                c
+            } else {
+                ' '
+            }
+        })
+        .collect();
+    stripped.split_whitespace().collect::<Vec<_>>().join(" ")
+}
+
+fn h3_subsections(section: &Section) -> Vec<Section> {
+    let mut out = Vec::new();
+    let lines: Vec<&str> = section.body.lines().collect();
+    let mut i = 0;
+    while i < lines.len() {
+        let line = lines[i];
+        if line.starts_with("### ") && !line.starts_with("#### ") {
+            let title = line.trim_start_matches('#').trim().to_string();
+            let start_line = section.line + i + 1;
+            let mut body_lines = Vec::new();
+            i += 1;
+            while i < lines.len() {
+                let inner = lines[i];
+                if inner.starts_with('#') {
+                    let level = inner.chars().take_while(|&c| c == '#').count();
+                    if level <= 3 {
+                        break;
+                    }
+                }
+                body_lines.push(inner);
+                i += 1;
+            }
+            out.push(Section {
+                level: 3,
+                title,
+                body: body_lines.join("\n"),
+                line: start_line,
+            });
+            continue;
+        }
+        i += 1;
+    }
+    out
+}
+
+fn h4_subsections(section: &Section) -> Vec<Section> {
+    let mut out = Vec::new();
+    let lines: Vec<&str> = section.body.lines().collect();
+    let mut i = 0;
+    while i < lines.len() {
+        let line = lines[i];
+        if line.starts_with("#### ") {
+            let title = line.trim_start_matches('#').trim().to_string();
+            let start_line = section.line + i + 1;
+            let mut body_lines = Vec::new();
+            i += 1;
+            while i < lines.len() {
+                let inner = lines[i];
+                if inner.starts_with('#') {
+                    let level = inner.chars().take_while(|&c| c == '#').count();
+                    if level <= 4 {
+                        break;
+                    }
+                }
+                body_lines.push(inner);
+                i += 1;
+            }
+            out.push(Section {
+                level: 4,
+                title,
+                body: body_lines.join("\n"),
+                line: start_line,
+            });
+            continue;
+        }
+        i += 1;
+    }
+    out
+}
+
+fn has_any_table(body: &str) -> bool {
+    let lines = body.lines().collect::<Vec<_>>();
+    lines.iter().enumerate().any(|(i, line)| {
+        if !line.trim().starts_with('|') || i == 0 || !is_table_separator(line) {
+            return false;
+        }
+        lines[..i].iter().any(|prev| prev.trim().starts_with('|'))
+    })
+}
+
+fn is_table_separator(line: &str) -> bool {
+    let t = line.trim();
+    if !t.starts_with('|') {
+        return false;
+    }
+    let inner = t
+        .trim_start_matches(['|', ' '])
+        .trim_end_matches(['|', ' '])
+        .split('|')
+        .map(|cell| cell.trim())
+        .collect::<Vec<_>>();
+    !inner.is_empty()
+        && inner
+            .iter()
+            .all(|cell| !cell.is_empty() && cell.chars().all(|c| c == '-' || c == ':'))
+        && inner.iter().any(|cell| cell.contains('-'))
+}
+
+fn header_extra_columns(body: &str, columns: &[&str]) -> Option<Vec<String>> {
+    for line in body.lines() {
+        let trimmed = line.trim();
+        if !trimmed.starts_with('|') {
+            continue;
+        }
+        let cells: Vec<String> = trimmed
+            .trim_matches('|')
+            .split('|')
+            .map(|c| c.trim().to_lowercase())
+            .collect();
+        if !columns
+            .iter()
+            .all(|want| cells.iter().any(|cell| cell.contains(&want.to_lowercase())))
+        {
+            continue;
+        }
+        let extras: Vec<String> = cells
+            .iter()
+            .filter(|cell| !columns.iter().any(|c| cell.contains(&c.to_lowercase())))
+            .cloned()
+            .collect();
+        return (!extras.is_empty()).then_some(extras);
+    }
+    None
+}
+
+fn first_column_values(body: &str) -> HashSet<String> {
+    let mut values = HashSet::new();
+    let mut header_seen = false;
+    for raw in body.lines() {
+        let trimmed = raw.trim();
+        if !trimmed.starts_with('|') {
+            continue;
+        }
+        let cells: Vec<&str> = trimmed
+            .trim_matches('|')
+            .split('|')
+            .map(str::trim)
+            .collect();
+        if !header_seen {
+            header_seen = true;
+            continue;
+        }
+        if is_table_separator(trimmed) {
+            continue;
+        }
+        if let Some(first) = cells.first() {
+            if !first.is_empty() {
+                values.insert(first.to_string());
+            }
+        }
+    }
+    values
+}
 
 /// routed to `detect_entry_tables` instead.
 pub fn detect_aspect_entry_tables(
@@ -105,7 +271,7 @@ fn h4_candidate_entries(
     entry_re: &regex::Regex,
 ) -> Vec<Section> {
     let mut out = Vec::new();
-    for h3 in crate::utility_markdown_scanner::h3_subsections(parent) {
+    for h3 in h3_subsections(parent) {
         if !entry_re.is_match(&h3.title) {
             continue;
         }

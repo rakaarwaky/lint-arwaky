@@ -15,9 +15,9 @@ use shared_doc_rules::utility_capabilities_doc_h2_checks::{
     detect_h2_table,
 };
 use shared_doc_rules::utility_doc_common_checks::{
-    HeadingDefect, detect_doc_heading, detect_doc_line_drift, missing_link_violation_type,
-    required_links,
+    HeadingDefect, detect_doc_heading, missing_link_violation_type, required_links,
 };
+use shared_doc_rules::utility_doc_line_drift::detect_doc_line_drift;
 use shared_doc_rules::utility_markdown_scanner::{doc_h2_contract, sections};
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -88,11 +88,13 @@ impl AgentsCapability {
 
         // AGENTS line drift against the template.
         let drift = detect_doc_line_drift(text, consts::AGENTS_TEMPLATE_LINES);
-        findings.extend(shared_doc_rules::utility_doc_line_drift::line_drift_findings(
-            drift,
-            consts::AGENTS_DOC,
-            consts::RULE_CODE_AGENTS_DOC,
-        ));
+        findings.extend(
+            shared_doc_rules::utility_doc_line_drift::line_drift_findings(
+                drift,
+                consts::AGENTS_DOC,
+                consts::RULE_CODE_AGENTS_DOC,
+            ),
+        );
 
         // Crosslinks (README, CONTRIBUTING, ARCHITECTURE, ROADMAP, PRD).
         Self::check_crosslinks(document, context, consts::RULE_CODE_AGENTS_DOC, findings);

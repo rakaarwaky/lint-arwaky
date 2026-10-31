@@ -19,8 +19,8 @@
 ## Section Contract
 
 | Section | Why it belongs here |
-|---------|---------------------|
+| --------- | --------------------- |
 | Project Overview | Decides in five seconds whether to keep reading. |
 | Prerequisites | Prevents a build failure with no cause. Watch for optional tooling listed as required. |
-| Quick Start | The 10-minute promise, as `Step | Action | Command`. |
-| Reference | Required H2; carries an empty `Artifact | Purpose | Link` table when no artifact is mandated. |
+| Quick Start | The 10-minute promise, as `Step \| Action \| Command`. |
+| Reference | Required H2; carries an empty `Artifact \| Purpose \| Link` table when no artifact is mandated. |

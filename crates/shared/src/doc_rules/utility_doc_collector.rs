@@ -165,6 +165,14 @@ fn collect_surface_docs(base: &Path, out: &mut Vec<DocSource>) {
 /// it.
 pub fn collect_members(root: &Path) -> Vec<MemberDescriptor> {
     let mut out = Vec::new();
+    let root_role = classify_member(root);
+    if root_role != MemberRole::None {
+        out.push(MemberDescriptor {
+            path: root.to_path_buf(),
+            role: root_role,
+            present_docs: present_docs(root),
+        });
+    }
     for layout in FEATURE_LAYOUTS {
         let base = root.join(layout);
         let Ok(entries) = fs::read_dir(base) else {

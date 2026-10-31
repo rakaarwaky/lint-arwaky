@@ -63,7 +63,7 @@ States that emitted rule codes are the source of truth and names the parity test
 ## Section Contract
 
 | Section | Why it belongs here |
-|---------|---------------------|
+| --------- | --------------------- |
 | Purpose | Names the failure modes the architecture prevents. Watch for descriptive prose instead of rules. |
 | Workspace Organization | Defines terms so engineers and agents share a vocabulary. Watch for unstated implicit terms. |
 | Naming Convention | Makes file names self-documenting. Watch for missing exceptions list. |

@@ -15,8 +15,9 @@ use shared_doc_rules::utility_capabilities_doc_h2_checks::{
     SectionShapeDefect, SectionShapeDefectKind, detect_h2_table,
 };
 use shared_doc_rules::utility_doc_common_checks::{
-    detect_doc_heading, detect_doc_line_drift, missing_link_violation_type, required_links,
+    detect_doc_heading, missing_link_violation_type, required_links,
 };
+use shared_doc_rules::utility_doc_line_drift::detect_doc_line_drift;
 use shared_doc_rules::utility_markdown_scanner::{doc_h2_contract, sections};
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -63,11 +64,13 @@ impl ContributingCapability {
 
         // Template body conformance.
         let drift = detect_doc_line_drift(text, consts::CONTRIBUTING_TEMPLATE_LINES);
-        findings.extend(shared_doc_rules::utility_doc_line_drift::line_drift_findings(
-            drift,
-            consts::CONTRIBUTING_DOC,
-            consts::RULE_CODE_CONTRIBUTING_DOC,
-        ));
+        findings.extend(
+            shared_doc_rules::utility_doc_line_drift::line_drift_findings(
+                drift,
+                consts::CONTRIBUTING_DOC,
+                consts::RULE_CODE_CONTRIBUTING_DOC,
+            ),
+        );
 
         // Crosslinks (PRD, ARCHITECTURE).
         Self::check_crosslinks(

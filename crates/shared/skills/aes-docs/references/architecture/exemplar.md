@@ -89,15 +89,12 @@ Taxonomy is the domain foundation layer. It defines the stable language of the d
 
 ### Overview
 
-
 | Aspect       | Detail                                                                             |
 | ------------ | ---------------------------------------------------------------------------------- |
 | Purpose      | Domain foundation; stable domain language; free from technical/behavioral concerns |
 | Dependencies | None                                                                               |
 
-
 ### Components
-
 
 | Role         | Meaning                               | Allowed Dependencies | Forbidden Dependencies |
 | ------------ | ------------------------------------- | -------------------- | ---------------------- |
@@ -109,9 +106,7 @@ Taxonomy is the domain foundation layer. It defines the stable language of the d
 | Request      | Domain request message                | None                 | All other layers       |
 | Response     | Domain response message               | None                 | All other layers       |
 
-
 ### Rules
-
 
 | Rule                   | Detail                                                                                                        |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------- |
@@ -119,7 +114,6 @@ Taxonomy is the domain foundation layer. It defines the stable language of the d
 | No raw primitives      | Entities, Events, and Errors must use Value objects/Constants instead of primitive types (bool/str exception) |
 | Compile-time constants | Constants must be compile-time values                                                                         |
 | Purity                 | Taxonomy must not contain business rules, infrastructure, or imports from other layers                        |
-
 
 ---
 
@@ -129,30 +123,24 @@ Contract defines the public behavior of the system without exposing implementati
 
 ### Overview
 
-
 | Aspect       | Detail                                                                    |
 | ------------ | ------------------------------------------------------------------------- |
 | Purpose      | Define public behavior without exposing implementation; stable interfaces |
 | Dependencies | Taxonomy only                                                             |
 
-
 ### Components
-
 
 | Role      | Meaning                                                                             | Allowed Dependencies | Forbidden Dependencies                      |
 | --------- | ----------------------------------------------------------------------------------- | -------------------- | ------------------------------------------- |
 | Protocol  | Interface defining inbound behavior; implemented by Capabilities, consumed by Agent | Taxonomy             | Utility, Capabilities, Agent, Surface, Root |
 | Aggregate | Facade definition implemented by Agent, used by Surface to access feature behavior  | Taxonomy             | Utility, Capabilities, Agent, Surface, Root |
 
-
 ### Rules
-
 
 | Rule              | Detail                                                 |
 | ----------------- | ------------------------------------------------------ |
 | Behavior only     | Protocol defines behavior only, without implementation |
 | Capability hiding | Aggregate hides Capabilities from Surface              |
-
 
 ---
 
@@ -162,7 +150,6 @@ Utility contains reusable low-level mechanics that can be shared across capabili
 
 ### Overview
 
-
 | Aspect       | Detail                                                                 |
 | ------------ | ---------------------------------------------------------------------- |
 | Purpose      | Reusable low-level mechanics shared across capabilities                |
@@ -170,9 +157,7 @@ Utility contains reusable low-level mechanics that can be shared across capabili
 | Dependencies | Taxonomy only                                                          |
 | Location     | Only in `shared/` layer folder (AES701)                                |
 
-
 ### Components
-
 
 | Concern                 | Responsibility                                      | Allowed Dependencies | Forbidden Dependencies                       |
 | ----------------------- | --------------------------------------------------- | -------------------- | -------------------------------------------- |
@@ -182,9 +167,7 @@ Utility contains reusable low-level mechanics that can be shared across capabili
 | Path normalization      | Normalize paths across platforms                    | Taxonomy             | Contract, Capabilities, Agent, Surface, Root |
 | System operations       | Handle process or environment mechanics             | Taxonomy             | Contract, Capabilities, Agent, Surface, Root |
 
-
 ### Rules
-
 
 | Rule                    | Detail                                                                                             |
 | ----------------------- | -------------------------------------------------------------------------------------------------- |
@@ -195,7 +178,6 @@ Utility contains reusable low-level mechanics that can be shared across capabili
 | Kernel-only location    | Feature and surface crates consume utility functions via import; they do not own `utility_*` files |
 | Misplacement            | `utility_*` in feature folder → AES702; in surface folder → AES703                                 |
 
-
 ---
 
 ## 8. Capabilities Layer
@@ -204,16 +186,13 @@ Capabilities contain the concrete implementation of the system's behavior. This 
 
 ### Overview
 
-
 | Aspect       | Detail                                                                          |
 | ------------ | ------------------------------------------------------------------------------- |
 | Purpose      | Concrete implementation of behavior; pure business logic + external adaptations |
 | Role Naming  | Unlimited; chosen based on demand to describe technical responsibility          |
 | Dependencies | Taxonomy, Contract, Utility; must NOT depend on other Capabilities              |
 
-
 ### Components — Business Logic
-
 
 | Concern        | Responsibility                                | Allowed Dependencies        | Forbidden Dependencies                   |
 | -------------- | --------------------------------------------- | --------------------------- | ---------------------------------------- |
@@ -223,9 +202,7 @@ Capabilities contain the concrete implementation of the system's behavior. This 
 | Resolution     | Apply rules and decide outcomes               | Taxonomy, Contract, Utility | Other Capabilities, Agent, Surface, Root |
 | Assessment     | Judge severity, compliance, grade, or quality | Taxonomy, Contract, Utility | Other Capabilities, Agent, Surface, Root |
 
-
 ### Components — External Adaptation
-
 
 | Concern     | Responsibility                                 | Allowed Dependencies        | Forbidden Dependencies                   |
 | ----------- | ---------------------------------------------- | --------------------------- | ---------------------------------------- |
@@ -233,9 +210,7 @@ Capabilities contain the concrete implementation of the system's behavior. This 
 | Integration | Communicate with third-party services or APIs  | Taxonomy, Contract, Utility | Other Capabilities, Agent, Surface, Root |
 | Provider    | Generate data from external systems            | Taxonomy, Contract, Utility | Other Capabilities, Agent, Surface, Root |
 
-
 ### Rules
-
 
 | Rule                           | Detail                                                                                         |
 | ------------------------------ | ---------------------------------------------------------------------------------------------- |
@@ -246,7 +221,6 @@ Capabilities contain the concrete implementation of the system's behavior. This 
 | State ownership                | Capabilities own business and technical state within their execution scope                     |
 | No domain definition           | Capabilities must not define domain models (Entities, Value Objects); only consume Taxonomy    |
 
-
 ---
 
 ## 9. Agent Layer
@@ -255,16 +229,13 @@ Agent coordinates multiple capabilities into executable flows. It controls seque
 
 ### Overview
 
-
 | Aspect       | Detail                                                                                |
 | ------------ | ------------------------------------------------------------------------------------- |
 | Purpose      | Coordinate multiple capabilities into executable flows; control sequence and movement |
 | Allowed Role | orchestrator only                                                                     |
 | Dependencies | Taxonomy, Contract, Utility                                                           |
 
-
 ### Components
-
 
 | Flow Type               | Purpose                                | Allowed Dependencies        | Forbidden Dependencies      |
 | ----------------------- | -------------------------------------- | --------------------------- | --------------------------- |
@@ -274,9 +245,7 @@ Agent coordinates multiple capabilities into executable flows. It controls seque
 | Error handling          | Recover, abort, continue, or escalate  | Taxonomy, Contract, Utility | Capabilities, Surface, Root |
 | Timeout or cancellation | Stop long-running or asynchronous work | Taxonomy, Contract, Utility | Capabilities, Surface, Root |
 
-
 ### Rules
-
 
 | Rule                    | Detail                                                                             |
 | ----------------------- | ---------------------------------------------------------------------------------- |
@@ -284,7 +253,6 @@ Agent coordinates multiple capabilities into executable flows. It controls seque
 | Capability ignorance    | Agent must not use and must be completely ignorant of Capabilities implementations |
 | No business calculation | Agent must not calculate business results                                          |
 | No domain definition    | Agent must not define domain models                                                |
-
 
 ---
 
@@ -294,15 +262,12 @@ Surface is the outer boundary of the system. It handles user-facing or external-
 
 ### Overview
 
-
 | Aspect        | Detail                                                                                          |
 | ------------- | ----------------------------------------------------------------------------------------------- |
 | Purpose       | Outer boundary; handles user/external-facing interaction; translates into architectural actions |
 | Allowed Roles | command, controller, page, view, component, router, layout, hook, store, action, screen         |
 
-
 ### Components
-
 
 | Group            | Roles                             | Allowed Dependencies                  | Forbidden Dependencies                                       | Detail                                          |
 | ---------------- | --------------------------------- | ------------------------------------- | ------------------------------------------------------------ | ----------------------------------------------- |
@@ -310,9 +275,7 @@ Surface is the outer boundary of the system. It handles user-facing or external-
 | Utility surfaces | hook, store, action, screen       | Taxonomy                              | Agent, Capabilities, Contract, Utility, Other surfaces, Root | Support smart surfaces, data/state only         |
 | Passive surfaces | component, view, layout           | Taxonomy                              | Agent, Contract, Capabilities, Other surfaces, Root          | Presentation-only, no logic or orchestration    |
 
-
 ### Rules
-
 
 | Rule                          | Detail                                                                                 |
 | ----------------------------- | -------------------------------------------------------------------------------------- |
@@ -320,7 +283,6 @@ Surface is the outer boundary of the system. It handles user-facing or external-
 | Utility import restriction    | Only smart surfaces may import Utility layer files                                     |
 | Direct dependency restriction | Utility and passive surfaces must not import Capabilities, Contract, or Agent directly |
 | Business logic restriction    | Surfaces must not contain business calculation or orchestration                        |
-
 
 ---
 
@@ -330,24 +292,19 @@ Root is the composition layer. It assembles the system by connecting concrete im
 
 ### Overview
 
-
 | Aspect       | Detail                                                                                         |
 | ------------ | ---------------------------------------------------------------------------------------------- |
 | Purpose      | Composition layer; assembles system by connecting concrete impls to contracts and starting app |
 | Dependencies | All layers                                                                                     |
 
-
 ### Components
-
 
 | Role      | Allowed Dependencies | Forbidden Dependencies | Detail                                                                            |
 | --------- | -------------------- | ---------------------- | --------------------------------------------------------------------------------- |
 | Container | All layers           | None                   | Wires one feature by connecting Capabilities to Contract protocols and aggregates |
 | Entry     | All layers           | None                   | Bootstraps the application and composes feature containers                        |
 
-
 ### Rules
-
 
 | Rule                     | Detail                                                             |
 | ------------------------ | ------------------------------------------------------------------ |
@@ -355,7 +312,6 @@ Root is the composition layer. It assembles the system by connecting concrete im
 | No business logic        | Root must not contain business logic                               |
 | No orchestration         | Root must not contain orchestration policy                         |
 | No technical/UI behavior | Root must not contain technical parsing or user interface behavior |
-
 
 ---
 
@@ -365,7 +321,6 @@ Group 6 (Document Invariants) and Group 7 (Folder Structure) findings carry a `v
 
 ### Details
 
-
 | Aspect                     | Detail                                                                   |
 | -------------------------- | ------------------------------------------------------------------------ |
 | Authoritative explanations | Per-finding `why` and `fix` strings in `DocFinding` / `StructureFinding` |
@@ -373,15 +328,13 @@ Group 6 (Document Invariants) and Group 7 (Folder Structure) findings carry a `v
 | Rule detail reference      | §13 Rule Inventory Overview and per-group sections §14–20                |
 | Remediation guidance       | Use JSON `why` and `fix` fields in scan output                           |
 
-
 ---
 
 ## 13. Rule Inventory Overview
 
-41 rules across 7 groups. 
+41 rules across 7 groups.
 
 ### Group Coverage and Counts
-
 
 | Group       | Code range    | Count | Command scope         |
 | ----------- | ------------- | ----- | --------------------- |
@@ -394,9 +347,7 @@ Group 6 (Document Invariants) and Group 7 (Folder Structure) findings carry a `v
 | 7 Structure | AES701–AES706 | 6     | check/scan            |
 | Total       | AES101–AES706 | 41    | —                     |
 
-
 ### Rule inventory
-
 
 | Code   | Group     | Name                     | Severity        | Ran by              |
 | ------ | --------- | ------------------------ | --------------- | ------------------- |
@@ -442,16 +393,13 @@ Group 6 (Document Invariants) and Group 7 (Folder Structure) findings carry a `v
 | AES705 | Structure | Member-Root Placement    | MEDIUM          | check/scan          |
 | AES706 | Structure | PR-LA Folder Mapping     | MEDIUM          | check/scan          |
 
-
 ### Common Rule Exceptions
-
 
 | Item         | Detail                                                                                                |
 | ------------ | ----------------------------------------------------------------------------------------------------- |
 | Carries      | `lib.rs`, `mod.rs`, `build.rs`, `__init__.py`, `index.js`, `index.ts`, `index.tsx`                    |
 | Effect       | Barrel/entry files are skipped by the rule checkers                                                   |
 | Not included | `main.rs`, `main.py`, `main.ts` — excluded because checkers exempt entry files via `is_entry_point()` |
-
 
 ---
 
@@ -461,7 +409,6 @@ Group 1 enforces file naming conventions to ensure clarity and consistency acros
 
 ### AES101 — Naming Convention
 
-
 | Field           | Value                                                                                     |
 | --------------- | ----------------------------------------------------------------------------------------- |
 | Code / Severity | AES101 / HIGH                                                                             |
@@ -470,17 +417,13 @@ Group 1 enforces file naming conventions to ensure clarity and consistency acros
 | Fix             | Rename to the layer pattern, e.g. `capabilities_user_checker.rs`                          |
 | Exceptions      | Common exemptions (§13)                                                                   |
 
-
 #### Sub-checks
-
 
 | #   | Sub-check         | Severity | Violation name      | Fires when                                                                                   |
 | --- | ----------------- | -------- | ------------------- | -------------------------------------------------------------------------------------------- |
 | 1   | Naming convention | HIGH     | `NAMING_CONVENTION` | Stem is not the `prefix_concept_suffix` shape (all-lowercase, ≥3 underscore-separated words) |
 
-
 ### AES102 — Suffix/Prefix Rules
-
 
 | Field           | Value                                                                                |
 | --------------- | ------------------------------------------------------------------------------------ |
@@ -490,9 +433,7 @@ Group 1 enforces file naming conventions to ensure clarity and consistency acros
 | Fix             | Rename with an allowed suffix for the detected layer, or move the file               |
 | Exceptions      | Common exemptions (§13) plus `main.rs`; config `exceptions` entries                  |
 
-
 #### Layer Suffix Policy
-
 
 | Layer          | Policy   | Allowed Suffixes                                                                                              | Forbidden Suffixes                                                                                                   |
 | -------------- | -------- | ------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
@@ -504,9 +445,7 @@ Group 1 enforces file naming conventions to ensure clarity and consistency acros
 | `agent`        | strict   | `orchestrator`                                                                                                | —                                                                                                                    |
 | `surface`      | strict   | `command`, `controller`, `page`, `view`, `component`, `router`, `layout`, `hook`, `store`, `action`, `screen` | —                                                                                                                    |
 
-
 #### Sub-checks
-
 
 | #   | Sub-check              | Severity | Violation name  | Fires when                                                     |
 | --- | ---------------------- | -------- | --------------- | -------------------------------------------------------------- |
@@ -514,9 +453,7 @@ Group 1 enforces file naming conventions to ensure clarity and consistency acros
 | 2   | Strict suffix policy   | HIGH     | `SUFFIX_PREFIX` | Layer policy is `strict` and suffix is not in `allowed_suffix` |
 | 3   | Flexible suffix policy | HIGH     | `SUFFIX_PREFIX` | Layer policy is `flexible` and suffix is in `forbidden_suffix` |
 
-
 ### AES103 — Test File Prefix
-
 
 | Field           | Value                                                                                                                                                 |
 | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -526,9 +463,7 @@ Group 1 enforces file naming conventions to ensure clarity and consistency acros
 | Fix             | Flatten the file into `tests/`/`benches/` and rename it `<type>_<subject>.<ext>`                                                                      |
 | Exceptions      | Common exemptions (§13)                                                                                                                               |
 
-
 #### Legal Prefixes
-
 
 | Directory  | Legal prefixes                                                                                                                                    |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -536,16 +471,13 @@ Group 1 enforces file naming conventions to ensure clarity and consistency acros
 | `benches/` | `bench_`                                                                                                                                          |
 | anywhere   | any — a file outside both directories carries no test-type prefix                                                                                 |
 
-
 #### Sub-checks
-
 
 | #   | Sub-check        | Severity | Violation name     | Fires when                                                                             |
 | --- | ---------------- | -------- | ------------------ | -------------------------------------------------------------------------------------- |
 | 1   | Flat layout      | HIGH     | `TEST_FILE_PREFIX` | File sits below `tests/` or `benches/` in a subdirectory                               |
 | 2   | Legal prefix     | HIGH     | `TEST_FILE_PREFIX` | Stem starts with no legal prefix for its directory                                     |
 | 3   | Barrel exemption | HIGH     | `TEST_FILE_PREFIX` | `mod.rs`, `lib.rs`, `__init__.py`, `index.ts`, `index.js` name no test and are skipped |
-
 
 ---
 
@@ -555,7 +487,6 @@ Group 2 enforces layer dependency boundaries to maintain architectural integrity
 
 ### AES201 — Forbidden Import
 
-
 | Field           | Value                                                                                                |
 | --------------- | ---------------------------------------------------------------------------------------------------- |
 | Code / Severity | AES201 / CRITICAL                                                                                    |
@@ -564,15 +495,13 @@ Group 2 enforces layer dependency boundaries to maintain architectural integrity
 | Fix             | Remove or redirect the import to a layer the scope's Allowed cell permits                            |
 | Config          | `architecture.rules.AES201`                                                                          |
 
-
 #### Import Matrix (13 Scopes)
-
 
 | #   | Scope                                      | Allowed                                                   | Mandatory                      | Forbidden                                                                                                 |
 | --- | ------------------------------------------ | --------------------------------------------------------- | ------------------------------ | --------------------------------------------------------------------------------------------------------- |
 | 1   | `taxonomy(vo)`                             | `taxonomy`                                                | —                              | `agent,surface,contract,utility,capabilities,root`                                                        |
 | 2   | `taxonomy(request,response)`               | `taxonomy`                                                | —                              | `agent,surface,contract,utility,capabilities,root`                                                        |
-| 3   | `taxonomy(entity,error,event)`             | `taxonomy`                                                | `taxonomy(vo|constant)`        | `agent,surface,contract,utility,capabilities,root`                                                        |
+| 3   | `taxonomy(entity,error,event)`             | `taxonomy`                                                | `taxonomy(vo\|constant)`        | `agent,surface,contract,utility,capabilities,root`                                                        |
 | 4   | `taxonomy(constant)`                       | `taxonomy`                                                | —                              | `agent,surface,contract,utility,capabilities,root`                                                        |
 | 5   | `utility`                                  | `taxonomy`                                                | —                              | `agent,surface,contract,capabilities,root,utility`                                                        |
 | 6   | `contract(protocol)`                       | `taxonomy,contract`                                       | `taxonomy`                     | `agent,surface,capabilities,contract(aggregate),root`                                                     |
@@ -580,13 +509,11 @@ Group 2 enforces layer dependency boundaries to maintain architectural integrity
 | 8   | `capabilities`                             | `taxonomy,contract,utility`                               | `taxonomy,contract(protocol)`  | `surface,agent,capabilities,root`                                                                         |
 | 9   | `agent(orchestrator)`                      | `taxonomy,contract(aggregate),contract(protocol),utility` | `taxonomy,contract(aggregate)` | `surface,capabilities,root`                                                                               |
 | 10  | `root`                                     | `taxonomy,contract,capabilities,agent,surface`            | —                              | —                                                                                                         |
-| 11  | `surface(command|controller|page)`         | `taxonomy,contract(aggregate),utility`                    | —                              | `agent,capabilities,contract(protocol),root`                                                              |
-| 12  | `surface(hook|store|action|screen|router)` | `taxonomy,contract(aggregate),utility`                    | —                              | `agent,capabilities,contract(protocol),surface(command|controller|page|entry),root`                       |
-| 13  | `surface(component|view|layout)`           | `taxonomy,contract(aggregate),utility`                    | —                              | `agent,contract,capabilities,surface(command|controller|page|entry|hook|store|action|screen|router),root` |
-
+| 11  | `surface(command\|controller\|page)`         | `taxonomy,contract(aggregate),utility`                    | —                              | `agent,capabilities,contract(protocol),root`                                                              |
+| 12  | `surface(hook\|store\|action\|screen\|router)` | `taxonomy,contract(aggregate),utility`                    | —                              | `agent,capabilities,contract(protocol),surface(command\|controller\|page\|entry),root`                       |
+| 13  | `surface(component\|view\|layout)`           | `taxonomy,contract(aggregate),utility`                    | —                              | `agent,contract,capabilities,surface(command\|controller\|page\|entry\|hook\|store\|action\|screen\|router),root` |
 
 ### AES202 — Mandatory Import
-
 
 | Field           | Value                                                                       |
 | --------------- | --------------------------------------------------------------------------- |
@@ -597,9 +524,7 @@ Group 2 enforces layer dependency boundaries to maintain architectural integrity
 | Config          | `architecture.rules.AES202`                                                 |
 | Exceptions      | Common exemptions (§13); config `exceptions` entries                        |
 
-
 ### AES203 — Unused Import
-
 
 | Field           | Value                                                                                            |
 | --------------- | ------------------------------------------------------------------------------------------------ |
@@ -610,9 +535,7 @@ Group 2 enforces layer dependency boundaries to maintain architectural integrity
 | Config          | `architecture.rules.AES203`                                                                      |
 | Exceptions      | Common exemptions (§13); config `exceptions` entries                                             |
 
-
 ### AES204 — Dummy Import
-
 
 | Field           | Value                                                                                                                                                         |
 | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -623,9 +546,7 @@ Group 2 enforces layer dependency boundaries to maintain architectural integrity
 | Config          | `architecture.rules.AES204`                                                                                                                                   |
 | Exceptions      | Common exemptions (§13); config `exceptions` entries                                                                                                          |
 
-
 ### AES205 — Circular Import
-
 
 | Field           | Value                                                                                                          |
 | --------------- | -------------------------------------------------------------------------------------------------------------- |
@@ -636,7 +557,6 @@ Group 2 enforces layer dependency boundaries to maintain architectural integrity
 | Config          | `architecture.rules.AES205`                                                                                    |
 | Exceptions      | `exceptions` entries for `AES205` in config                                                                    |
 
-
 ---
 
 ## 16. Group 3: File &amp; Content Quality (AES301–AES305)
@@ -644,7 +564,6 @@ Group 2 enforces layer dependency boundaries to maintain architectural integrity
 Group 3 enforces file size limits and content quality standards to maintain code readability.
 
 ### AES301 — File Maximum Limit
-
 
 | Field           | Value                                                                             |
 | --------------- | --------------------------------------------------------------------------------- |
@@ -655,9 +574,7 @@ Group 3 enforces file size limits and content quality standards to maintain code
 | Config          | `architecture.rules.AES301` (`code_analysis.max_lines`)                           |
 | Exceptions      | Common exemptions (§13) plus per-layer `exceptions`                               |
 
-
 ### AES302 — File Minimum Limit
-
 
 | Field           | Value                                                                             |
 | --------------- | --------------------------------------------------------------------------------- |
@@ -668,9 +585,7 @@ Group 3 enforces file size limits and content quality standards to maintain code
 | Config          | `architecture.rules.AES302` (`code_analysis.min_lines`)                           |
 | Exceptions      | Common exemptions (§13) plus per-layer `exceptions`                               |
 
-
 ### AES303 — Mandatory Definition
-
 
 | Field           | Value                                                                                                                          |
 | --------------- | ------------------------------------------------------------------------------------------------------------------------------ |
@@ -681,18 +596,14 @@ Group 3 enforces file size limits and content quality standards to maintain code
 | Config          | `architecture.rules.AES303` (`code_analysis.mandatory_class_definition`)                                                       |
 | Exceptions      | `__init__.py`, `mod.rs`, `lib.rs`, `*_constant.rs`, `*_constant.py`                                                            |
 
-
 #### Sub-checks
-
 
 | #   | Sub-check               | Severity | Violation name         | Fires when                                                          |
 | --- | ----------------------- | -------- | ---------------------- | ------------------------------------------------------------------- |
 | 1   | Missing definition      | HIGH     | `MANDATORY_DEFINITION` | File has no struct/enum/trait/class at all                          |
 | 2   | Empty / dead definition | MEDIUM   | `DEAD_INHERITANCE`     | `struct Foo;`, `impl X for Y {}`, `class Foo: pass`, `class Foo {}` |
 
-
 ### AES304 — Bypass Comment
-
 
 | Field           | Value                                                                   |
 | --------------- | ----------------------------------------------------------------------- |
@@ -703,9 +614,7 @@ Group 3 enforces file size limits and content quality standards to maintain code
 | Config          | `architecture.rules.AES304` (`code_analysis.forbidden_bypass` patterns) |
 | Exceptions      | Test modules are skipped                                                |
 
-
 #### Forbidden Bypass Patterns
-
 
 | Pattern                                                                                                                                            | Violation kind            | Fires when                                 |
 | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- | ------------------------------------------ |
@@ -719,9 +628,7 @@ Group 3 enforces file size limits and content quality standards to maintain code
 | `raise NotImplementedError` / `assert False`                                                                                                       | `UNIMPLEMENTED` / `PANIC` | Python bypass patterns                     |
 | `throw new Error(...)` / `throw new TypeError(...)` / `throw new RangeError(...)` / `throw new ReferenceError(...)` / `throw new SyntaxError(...)` | `PANIC`                   | JS/TS bypass pattern                       |
 
-
 ### AES305 — Duplication Code
-
 
 | Field           | Value                                                                                 |
 | --------------- | ------------------------------------------------------------------------------------- |
@@ -731,7 +638,6 @@ Group 3 enforces file size limits and content quality standards to maintain code
 | Fix             | Extract duplicated logic into shared utilities                                        |
 | Config          | `architecture.rules.AES305` (`code_analysis.min_lines`, `duplication_threshold`)      |
 
-
 ---
 
 ## 17. Group 4: Role Violations (AES401–AES406)
@@ -739,7 +645,6 @@ Group 3 enforces file size limits and content quality standards to maintain code
 Group 4 enforces role-specific constraints to ensure each layer maintains its intended responsibility.
 
 ### AES401 — Taxonomy Role
-
 
 | Field           | Value                                                                                                                     |
 | --------------- | ------------------------------------------------------------------------------------------------------------------------- |
@@ -749,18 +654,14 @@ Group 4 enforces role-specific constraints to ensure each layer maintains its in
 | Fix             | Replace primitives with taxonomy value objects; keep `_constant` files const-only                                         |
 | Exceptions      | Common exemptions (§13)                                                                                                   |
 
-
 #### Sub-checks
-
 
 | #   | Sub-check             | Severity | Violation name  | Fires when                                                                                  |
 | --- | --------------------- | -------- | --------------- | ------------------------------------------------------------------------------------------- |
 | 1   | Constant purity       | HIGH     | `TAXONOMY_ROLE` | `_constant` file contains non-const declarations                                            |
 | 2   | Primitive in taxonomy | HIGH     | `TAXONOMY_ROLE` | `_entity`/`_error`/`_event` file uses `String`, `i32`, `bool`, `int`, `float` etc. directly |
 
-
 ### AES402 — Contract Role
-
 
 | Field           | Value                                                                                        |
 | --------------- | -------------------------------------------------------------------------------------------- |
@@ -769,17 +670,13 @@ Group 4 enforces role-specific constraints to ensure each layer maintains its in
 | Scope           | Contract files (`*_protocol.rs`, `*_aggregate.rs`); test projects are the primary target     |
 | Fix             | Replace primitives with VO/constant types from the taxonomy layer                            |
 
-
 #### Sub-checks
-
 
 | #   | Sub-check     | Severity | Violation name  | Fires when                                          |
 | --- | ------------- | -------- | --------------- | --------------------------------------------------- |
 | 1   | Contract role | HIGH     | `CONTRACT_ROLE` | Primitive type in a contract trait/method signature |
 
-
 ### AES403 — Capabilities Role
-
 
 | Field           | Value                                                                                             |
 | --------------- | ------------------------------------------------------------------------------------------------- |
@@ -788,9 +685,7 @@ Group 4 enforces role-specific constraints to ensure each layer maintains its in
 | Scope           | Capability files (`*_capability*`); runs for Rust, Python, and TypeScript/JavaScript              |
 | Fix             | Ensure capability implements its protocol; split routing across capabilities; reorder impl blocks |
 
-
 #### Sub-checks
-
 
 | #   | Sub-check               | Severity | Violation name    | Fires when                                                                     |
 | --- | ----------------------- | -------- | ----------------- | ------------------------------------------------------------------------------ |
@@ -803,9 +698,7 @@ Group 4 enforces role-specific constraints to ensure each layer maintains its in
 | 7   | CapabilityEmbeddedTest  | LOW      | `CAPABILITY_ROLE` | `#[cfg(test)]` or `mod tests` declared inline                                  |
 | 8   | CapabilityPublicHelper  | MEDIUM   | `CAPABILITY_ROLE` | Block 3 helper with no production caller is `pub`                              |
 
-
 #### Language Coverage
-
 
 | Language                | Coverage             |
 | ----------------------- | -------------------- |
@@ -813,9 +706,7 @@ Group 4 enforces role-specific constraints to ensure each layer maintains its in
 | Python                  | All eight sub-checks |
 | TypeScript / JavaScript | All eight sub-checks |
 
-
 ### AES404 — Utility Role
-
 
 | Field           | Value                                                                                                                                               |
 | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -824,17 +715,13 @@ Group 4 enforces role-specific constraints to ensure each layer maintains its in
 | Scope           | Utility files (`*_utility*`)                                                                                                                        |
 | Fix             | Refactor to stateless standalone functions; remove non-taxonomy imports; move stateful logic into Capabilities                                      |
 
-
 #### Sub-checks
-
 
 | #   | Sub-check    | Severity | Violation name | Fires when                                            |
 | --- | ------------ | -------- | -------------- | ----------------------------------------------------- |
 | 1   | Utility role | MEDIUM   | `UTILITY_ROLE` | Utility contains stateful objects or type definitions |
 
-
 ### AES405 — Agent Role
-
 
 | Field           | Value                                                                                                                        |
 | --------------- | ---------------------------------------------------------------------------------------------------------------------------- |
@@ -843,9 +730,7 @@ Group 4 enforces role-specific constraints to ensure each layer maintains its in
 | Scope           | Agent files (`*_orchestrator*`)                                                                                              |
 | Fix             | Coordinate at minimum 2 injected subsystems; no state mutation outside the constructor; delegate computation to capabilities |
 
-
 #### Sub-checks
-
 
 | #   | Sub-check (dispatch order)       | Severity               | Violation name | Fires when                                                                                               |
 | --- | -------------------------------- | ---------------------- | -------------- | -------------------------------------------------------------------------------------------------------- |
@@ -861,9 +746,7 @@ Group 4 enforces role-specific constraints to ensure each layer maintains its in
 | 10  | `check_agent_free_fn`            | LOW                    | `AGENT_ROLE`   | Module-level free functions                                                                              |
 | 11  | `check_agent_subsystem_count`    | LOW                    | `AGENT_ROLE`   | Fewer than 2 injected protocol subsystems                                                                |
 
-
 ### AES406 — Surface Role
-
 
 | Field           | Value                                                                                                                                                          |
 | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -872,9 +755,7 @@ Group 4 enforces role-specific constraints to ensure each layer maintains its in
 | Scope           | Surface files (`*_command*`, `*_controller*`, `*_page*`, `*_router*`, `*_hook*`, `*_store*`, `*_action*`, `*_screen*`, `*_component*`, `*_view*`, `*_layout*`) |
 | Fix             | Split surface responsibilities; move business logic to Capabilities; route domain calls through contracts                                                      |
 
-
 #### Sub-checks
-
 
 | #   | Sub-check                              | Severity | Violation name | Fires when                                                           |
 | --- | -------------------------------------- | -------- | -------------- | -------------------------------------------------------------------- |
@@ -882,7 +763,6 @@ Group 4 enforces role-specific constraints to ensure each layer maintains its in
 | 2   | Active domain logic in passive surface | HIGH     | `SURFACE_ROLE` | `_component`/`_view`/`_layout` carries business logic                |
 | 3   | Surface logic bypass                   | MEDIUM   | `SURFACE_ROLE` | Surface calls domain logic directly (`lint_path(`, `walk_rs_files(`) |
 | 4   | Role boundary violation                | HIGH     | `SURFACE_ROLE` | Passive surface exceeds MAX\_PUBLIC\_METHODS (50) functions          |
-
 
 ---
 
@@ -892,7 +772,6 @@ Group 5 detects orphaned code that is not wired into the system's composition la
 
 ### AES501 — Taxonomy Orphan
 
-
 | Field           | Value                                                                                              |
 | --------------- | -------------------------------------------------------------------------------------------------- |
 | Code / Severity | AES501 / LOW                                                                                       |
@@ -900,9 +779,7 @@ Group 5 detects orphaned code that is not wired into the system's composition la
 | Scope           | Taxonomy files                                                                                     |
 | Fix             | Wire the taxonomy type into a contract, or remove the dead taxonomy file                           |
 
-
 ### AES502 — Contract Orphan
-
 
 | Field           | Value                                                                                                                                                                       |
 | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -911,9 +788,7 @@ Group 5 detects orphaned code that is not wired into the system's composition la
 | Scope           | Contract files (`*_protocol*`, `*_aggregate*`)                                                                                                                              |
 | Fix             | Implement the protocol/aggregate, or wire it into a container; barrel re-exports do not count                                                                               |
 
-
 ### AES503 — Capabilities Orphan
-
 
 | Field           | Value                                              |
 | --------------- | -------------------------------------------------- |
@@ -922,9 +797,7 @@ Group 5 detects orphaned code that is not wired into the system's composition la
 | Scope           | Capability files                                   |
 | Fix             | Wire the capability into a container               |
 
-
 ### AES504 — Utility Orphan
-
 
 | Field           | Value                                                                                                                             |
 | --------------- | --------------------------------------------------------------------------------------------------------------------------------- |
@@ -933,9 +806,7 @@ Group 5 detects orphaned code that is not wired into the system's composition la
 | Scope           | Utility files                                                                                                                     |
 | Fix             | Import the utility from a capability/agent/surface, or remove it                                                                  |
 
-
 ### AES505 — Agent Orphan
-
 
 | Field           | Value                                                                                |
 | --------------- | ------------------------------------------------------------------------------------ |
@@ -944,9 +815,7 @@ Group 5 detects orphaned code that is not wired into the system's composition la
 | Scope           | Agent orchestrator files                                                             |
 | Fix             | Wire the orchestrator into a container                                               |
 
-
 ### AES506 — Surface Orphan
-
 
 | Field           | Value                                                                                                                                                          |
 | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -955,9 +824,7 @@ Group 5 detects orphaned code that is not wired into the system's composition la
 | Scope           | Surface files (`*_command*`, `*_controller*`, `*_page*`, `*_router*`, `*_hook*`, `*_store*`, `*_action*`, `*_screen*`, `*_component*`, `*_view*`, `*_layout*`) |
 | Fix             | Import the surface from its required consumer                                                                                                                  |
 
-
 #### Category / Severity / Consumer
-
 
 | Category | Suffixes                                      | Severity    | Must be imported by      |
 | -------- | --------------------------------------------- | ----------- | ------------------------ |
@@ -965,7 +832,6 @@ Group 5 detects orphaned code that is not wired into the system's composition la
 | Utility  | `_hook`, `_store`, `_action`, `_screen`       | MEDIUM      | smart surface            |
 | Passive  | `_component`, `_view`, `_layout`              | LOW         | smart or utility surface |
 | `_entry` | —                                             | never fires | —                        |
-
 
 ---
 
@@ -975,7 +841,6 @@ Group 6 enforces document structure, cross-reference integrity, and template con
 
 ### AES601 — AGENTS Document
 
-
 | Field           | Value                                                                                                     |
 | --------------- | --------------------------------------------------------------------------------------------------------- |
 | Code / Severity | AES601 / HIGH                                                                                             |
@@ -983,9 +848,7 @@ Group 6 enforces document structure, cross-reference integrity, and template con
 | Scope           | `AGENTS.md`                                                                                               |
 | Fix             | Restore the template shape; add the missing H2; add the missing crosslink                                 |
 
-
 #### Invariants
-
 
 | Invariant                | Fires when                                                                                                  |
 | ------------------------ | --------------------------------------------------------------------------------------------------------- |
@@ -996,9 +859,7 @@ Group 6 enforces document structure, cross-reference integrity, and template con
 | `Commands` entry table   | `Commands` section table lacks a required column in `AGENTS_COMMAND_COLUMNS`                              |
 | Crosslinks               | `AGENTS.md` Reference section lacks a link to `README`, `CONTRIBUTING`, `ARCHITECTURE`, `ROADMAP`, `PRD` |
 
-
 ### AES602 — README Document
-
 
 | Field           | Value                                                                                                   |
 | --------------- | ------------------------------------------------------------------------------------------------------- |
@@ -1007,9 +868,7 @@ Group 6 enforces document structure, cross-reference integrity, and template con
 | Scope           | `README.md`                                                                                             |
 | Fix             | Restore the template shape; add the missing H2; add the missing `Quick Start` table column             |
 
-
 #### Invariants
-
 
 | Invariant                | Fires when                                                                                 |
 | ------------------------ | ------------------------------------------------------------------------------------------ |
@@ -1017,9 +876,7 @@ Group 6 enforces document structure, cross-reference integrity, and template con
 | Heading structure        | Zero or &gt;1 H1; a required H2 is absent; an H2 is outside required ∪ allowed           |
 | `Quick Start` entry table | `Quick Start` section table lacks a required column in `README_QUICK_START_COLUMNS`       |
 
-
 ### AES603 — ARCHITECTURE Document
-
 
 | Field           | Value                                                                                              |
 | --------------- | ---------------------------------------------------------------------------------------------------- |
@@ -1028,18 +885,14 @@ Group 6 enforces document structure, cross-reference integrity, and template con
 | Scope           | `ARCHITECTURE.md`                                                                                    |
 | Fix             | Restore the template shape; add the missing H2                                                       |
 
-
 #### Invariants
-
 
 | Invariant           | Fires when                                                                                |
 | ------------------- | ------------------------------------------------------------------------------------------ |
 | Line drift          | A non-placeholder `ARCHITECTURE` template line was edited away from its template          |
 | Heading structure   | Zero or &gt;1 H1; a required H2 is absent; an H2 is outside required ∪ allowed           |
 
-
 ### AES604 — CONTRIBUTING Document
-
 
 | Field           | Value                                                                                                       |
 | --------------- | ----------------------------------------------------------------------------------------------- |
@@ -1048,9 +901,7 @@ Group 6 enforces document structure, cross-reference integrity, and template con
 | Scope           | `CONTRIBUTING.md`                                                                                   |
 | Fix             | Restore the template shape; add the missing H2; add the missing entry-table column                 |
 
-
 #### Invariants
-
 
 | Invariant                   | Fires when                                                                                    |
 | --------------------------- | -------------------------------------------------------------------------------------------- |
@@ -1060,9 +911,7 @@ Group 6 enforces document structure, cross-reference integrity, and template con
 | `Commit Convention` table   | `Commit Convention` section table lacks a required column in `CONTRIBUTING_COMMIT_COLUMNS` |
 | Crosslinks                  | `CONTRIBUTING.md` Reference section lacks a link to `PRD` or `ARCHITECTURE`                 |
 
-
 ### AES605 — PRD Document
-
 
 | Field           | Value                                                                                           |
 | --------------- | ----------------------------------------------------------------------------------------------- |
@@ -1071,9 +920,7 @@ Group 6 enforces document structure, cross-reference integrity, and template con
 | Scope           | `PRD.md`                                                                                        |
 | Fix             | Restore the template shape; align PR-IDs with `ROADMAP`; add missing entry-table rows/columns |
 
-
 #### Invariants
-
 
 | Invariant                   | Fires when                                                                                     |
 | --------------------------- | ---------------------------------------------------------------------------------------------- |
@@ -1084,9 +931,7 @@ Group 6 enforces document structure, cross-reference integrity, and template con
 | Heading structure           | Zero or &gt;1 H1; a required H2 is absent; an H2 is outside required ∪ allowed               |
 | `Project Requirements` table | Per-aspect H4 subsections (`User Stories`, `Proposed Solution`, `Main User Flow`) are missing, out of order, or carry fewer rows than the seed minimum |
 
-
 ### AES606 — ROADMAP Document
-
 
 | Field           | Value                                                                                          |
 | --------------- | ------------------------------------------------------------------------------ |
@@ -1095,9 +940,7 @@ Group 6 enforces document structure, cross-reference integrity, and template con
 | Scope           | `ROADMAP.md`                                                                                   |
 | Fix             | Restore the template shape; align PR-IDs with `PRD`; add missing entry-table rows/columns  |
 
-
 #### Invariants
-
 
 | Invariant                   | Fires when                                                                                       |
 | --------------------------- | ----------------------------------------------------------------------------------------------- |
@@ -1109,9 +952,7 @@ Group 6 enforces document structure, cross-reference integrity, and template con
 | Missing / forbidden member docs | Cross-cutting check (stamped with `RULE_CODE_ROADMAP_DOC`): a member folder is missing its required doc pair (`FRD+BACKLOG` / `DATA+BACKLOG` / `DESIGN+BACKLOG`) or carries a forbidden doc for its role |
 | Missing required root doc   | Cross-cutting check: a required root doc (`PRD`, `ROADMAP`, `README`, `AGENTS`, `ARCHITECTURE`, `CONTRIBUTING`) is absent at the audit root |
 
-
 ### AES607 — BACKLOG Document
-
 
 | Field           | Value                                                                                          |
 | --------------- | --------------------------------------------------------------------------------------------- |
@@ -1120,9 +961,7 @@ Group 6 enforces document structure, cross-reference integrity, and template con
 | Scope           | `BACKLOG.md`                                                                                   |
 | Fix             | Restore the template shape; align BACKLOG IDs with the paired spec; add missing crosslinks    |
 
-
 #### Invariants
-
 
 | Invariant                      | Fires when                                                                                  |
 | ------------------------------ | --------------------------------------------------------------------------------------------- |
@@ -1132,9 +971,7 @@ Group 6 enforces document structure, cross-reference integrity, and template con
 | Heading structure              | Zero or &gt;1 H1; a required H2 is absent; an H2 is outside required ∪ allowed                |
 | `Backlog Status` table         | Per-aspect H4 subsections are missing, out of order, or carry fewer rows than the seed minimum |
 
-
 ### AES608 — DATA Document
-
 
 | Field           | Value                                                                                        |
 | --------------- | --------------------------------------------------------------------------------------------- |
@@ -1143,9 +980,7 @@ Group 6 enforces document structure, cross-reference integrity, and template con
 | Scope           | `DATA.md`                                                                                     |
 | Fix             | Rename DT-IDs to the qualified form; reorder sections; remove source-file / status claims; add missing crosslinks |
 
-
 #### Invariants
-
 
 | Invariant                    | Fires when                                                                                |
 | --------------------------- | ------------------------------------------------------------------------------------------- |
@@ -1156,9 +991,7 @@ Group 6 enforces document structure, cross-reference integrity, and template con
 | Heading structure            | Zero or &gt;1 H1; a required H2 is absent; an H2 is outside required ∪ allowed (`DT-` item H2s are permitted) |
 | `Data Requirements` table    | Per-aspect H4 subsections are missing, out of order, or carry fewer rows than the seed minimum |
 
-
 ### AES609 — FRD Document
-
 
 | Field           | Value                                                                                          |
 | --------------- | ----------------------------------------------------------------------------------------------- |
@@ -1167,9 +1000,7 @@ Group 6 enforces document structure, cross-reference integrity, and template con
 | Scope           | `FRD.md`                                                                                         |
 | Fix             | Rename FR-IDs to the qualified form; align FR-requirement count with the contract's `I*Protocol` count; remove source-file / status claims; add missing crosslinks |
 
-
 #### Invariants
-
 
 | Invariant                    | Fires when                                                                                   |
 | --------------------------- | --------------------------------------------------------------------------------------------------- |
@@ -1183,9 +1014,7 @@ Group 6 enforces document structure, cross-reference integrity, and template con
 | Heading structure            | Zero or &gt;1 H1; a required H2 is absent; an H2 is outside required ∪ allowed (`API Contract` legacy H2 allowed) |
 | `Functional Requirements` table | The six `Technical Specification` rows (`Input`, `Output`, `Protocol`, `Method`, `Event`, `Error`) are missing or out of order, or a row's `Detail` cell is empty |
 
-
 ### AES610 — DESIGN Document
-
 
 | Field           | Value                                                                                          |
 | --------------- | --------------------------------------------------------------------------------------------- |
@@ -1194,9 +1023,7 @@ Group 6 enforces document structure, cross-reference integrity, and template con
 | Scope           | `DESIGN.md`                                                                                   |
 | Fix             | Rename DS-IDs to the qualified form; align DS-IDs with `BACKLOG`; add missing crosslinks; remove off-template H3s / tables |
 
-
 #### Invariants
-
 
 | Invariant                    | Fires when                                                                                   |
 | --------------------------- | --------------------------------------------------------------------------------------------- |
@@ -1208,9 +1035,6 @@ Group 6 enforces document structure, cross-reference integrity, and template con
 | Table not in template        | A section whose template prescribes no table still carries one                              |
 | `Design Requirements` table  | Per-aspect H4 subsections are missing, out of order, or carry fewer rows than the seed minimum |
 
-
-
-
 ---
 
 ## 20. Group 7: Folder Structure (AES701–AES706)
@@ -1219,7 +1043,6 @@ Group 7 enforces folder structure invariants to maintain vertical slicing and la
 
 ### AES701 — Shared Folder Purity
 
-
 | Field           | Value                                                                                                                |
 | --------------- | -------------------------------------------------------------------------------------------------------------------- |
 | Code / Severity | AES701 / MEDIUM (report)                                                                                             |
@@ -1227,18 +1050,14 @@ Group 7 enforces folder structure invariants to maintain vertical slicing and la
 | Scope           | `shared/` layer folders under member dirs                                                                            |
 | Fix             | Move misplaced layer files to a feature or surface folder; add DATA.md and BACKLOG.md                                |
 
-
 #### Violation Types
-
 
 | Violation type               | Fires when                                                               |
 | ---------------------------- | ------------------------------------------------------------------------ |
 | `shared_has_forbidden_files` | A shared folder holds a `capabilities_*`, `agent_*`, or `surface_*` file |
 | `shared_missing_doc_pair`    | A shared folder lacks DATA.md or BACKLOG.md                              |
 
-
 ### AES702 — Feature Folder Health
-
 
 | Field           | Value                                                                                                                                                                                                                     |
 | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -1247,9 +1066,7 @@ Group 7 enforces folder structure invariants to maintain vertical slicing and la
 | Scope           | Member subdirectories (`crates/`, `modules/`, `packages/`)                                                                                                                                                                |
 | Fix             | Add the missing orchestrator/capabilities file, remove foreign files, add the doc pair, add a `root_*` composition file, or mirror into `shared/src/<feature>/`                                                           |
 
-
 #### Violation Types
-
 
 | Violation type                     | Fires when                                                                                           |
 | ---------------------------------- | ---------------------------------------------------------------------------------------------------- |
@@ -1261,9 +1078,7 @@ Group 7 enforces folder structure invariants to maintain vertical slicing and la
 | `feature_missing_shared_subfolder` | The feature has no `shared/src/<feature>/` mirror subfolder in its member's layer                    |
 | `doc_pair_without_orchestrator`    | A folder carries a doc pair but holds no orchestrator                                                |
 
-
 ### AES703 — Surface Folder Purity
-
 
 | Field           | Value                                                                                                                 |
 | --------------- | --------------------------------------------------------------------------------------------------------------------- |
@@ -1272,9 +1087,7 @@ Group 7 enforces folder structure invariants to maintain vertical slicing and la
 | Scope           | Surface-dominated folders under member dirs                                                                           |
 | Fix             | Move capability/agent/utility files out; add DESIGN.md and BACKLOG.md                                                 |
 
-
 #### Violation Types
-
 
 | Violation type                | Fires when                                                                          |
 | ----------------------------- | ----------------------------------------------------------------------------------- |
@@ -1282,9 +1095,7 @@ Group 7 enforces folder structure invariants to maintain vertical slicing and la
 | `surface_missing_design_md`   | A surface-dominated folder carries no DESIGN.md                                     |
 | `surface_missing_backlog_md`  | A surface-dominated folder carries no BACKLOG.md                                    |
 
-
 ### AES704 — Test Suite Coverage
-
 
 | Field           | Value                                                                                                        |
 | --------------- | ------------------------------------------------------------------------------------------------------------ |
@@ -1293,9 +1104,7 @@ Group 7 enforces folder structure invariants to maintain vertical slicing and la
 | Scope           | Folders owning `capabilities_*` or `agent_*_orchestrator` source                                             |
 | Fix             | Add missing test files/benches with one of the seven required prefixes plus a bench file                     |
 
-
 #### Violation Types
-
 
 | Violation type                 | Fires when                                                                |
 | ------------------------------ | ------------------------------------------------------------------------- |
@@ -1303,9 +1112,7 @@ Group 7 enforces folder structure invariants to maintain vertical slicing and la
 | `test_suite_missing_bench_dir` | A feature folder owns source and has no `benches/` directory              |
 | `test_suite_missing_category`  | A feature folder owns source and no file carries one required test prefix |
 
-
 #### Test Categories
-
 
 | Prefix         | Directory  | Proves                                                |
 | -------------- | ---------- | ----------------------------------------------------- |
@@ -1318,9 +1125,7 @@ Group 7 enforces folder structure invariants to maintain vertical slicing and la
 | `acceptance_`  | `tests/`   | Business requirement met                              |
 | `bench_`       | `benches/` | Performance regression                                |
 
-
 ### AES705 — Member-Root Placement
-
 
 | Field           | Value                                                                                                                        |
 | --------------- | ---------------------------------------------------------------------------------------------------------------------------- |
@@ -1329,9 +1134,7 @@ Group 7 enforces folder structure invariants to maintain vertical slicing and la
 | Scope           | Member root level only                                                                                                       |
 | Fix             | Move the layer file into a feature folder (capabilities/agent), a surface folder (surface), or `shared/` (utility)           |
 
-
 #### Prefix Placement Table
-
 
 | Prefix          | Belongs in                             |
 | --------------- | -------------------------------------- |
@@ -1340,9 +1143,7 @@ Group 7 enforces folder structure invariants to maintain vertical slicing and la
 | `surface_`      | a surface folder                       |
 | `utility_`      | the shared folder                      |
 
-
 ### AES706 — PR Folder Mapping
-
 
 | Field           | Value                                                                                                                                                                                                               |
 | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -1351,16 +1152,13 @@ Group 7 enforces folder structure invariants to maintain vertical slicing and la
 | Scope           | `PRD.md`, `ROADMAP.md`, and feature module folders under `crates/` / `modules/` / `packages/`                                                                                                                       |
 | Fix             | Create the missing module folder, rename mismatched FR ids to `FR-<Feature>-NNN`, or add the missing FRD.md                                                                                                         |
 
-
 #### Violation Types
-
 
 | Violation type         | Fires when                                                                         |
 | ---------------------- | ---------------------------------------------------------------------------------- |
 | `pr_la_missing_frd`    | A module folder holds no FRD.md at all                                             |
 | `pr_la_fr_id_mismatch` | A module folder's FRD carries an FR id whose prefix does not match the folder name |
 | `pr_la_id_mismatch`    | A `PR-LA-001..N` id does not map to an existing crate folder by order              |
-
 
 ---
 
@@ -1369,7 +1167,6 @@ Group 7 enforces folder structure invariants to maintain vertical slicing and la
 The rule codes emitted by the rules engine are the source of truth. This document is the readable mirror, single-sourced.
 
 ### Source of Truth
-
 
 | Aspect          | Detail                                                                              |
 | --------------- | ----------------------------------------------------------------------------------- |
@@ -1380,19 +1177,12 @@ The rule codes emitted by the rules engine are the source of truth. This documen
 | Parity test     | the parity test in the rules crate (`doc_codes_match_emitted_inventory`)            |
 | Validation      | First-cell AES-rows in this document equal the pinned emitted inventory of 41 codes |
 
-
 ### Config Switches
-
 
 | Switch                                    | Meaning                                       |
 | ----------------------------------------- | --------------------------------------------- |
 | `architecture.rules.<CODE>.enabled`       | Toggle a rule on/off (absent entry = enabled) |
 | `architecture.rules.<CODE>.exceptions`    | Paths/globs the checker skips                 |
 | `architecture.rules.<CODE>.ignored_rules` | Rule codes to ignore for a path               |
-
-
-
-
-
 
 ---

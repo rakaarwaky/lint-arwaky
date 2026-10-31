@@ -15,13 +15,13 @@ use shared_doc_rules::utility_doc_aspect_entry_checks::{
     AspectEntryDefect, detect_aspect_entry_tables,
 };
 use shared_doc_rules::utility_doc_common_checks::{
-    HeadingDefect, detect_doc_heading, detect_doc_line_drift, missing_link_violation_type,
-    required_links,
+    HeadingDefect, detect_doc_heading, missing_link_violation_type, required_links,
 };
 use shared_doc_rules::utility_doc_entry_regexes::pr_entry_re;
 use shared_doc_rules::utility_doc_fr_format_checks::{
     PrIdParityDefect, detect_api_method_existence, detect_pr_id_parity,
 };
+use shared_doc_rules::utility_doc_line_drift::detect_doc_line_drift;
 use shared_doc_rules::utility_markdown_scanner::{doc_h2_contract, sections};
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -68,11 +68,13 @@ impl PrdCapability {
 
         // Template body conformance.
         let drift = detect_doc_line_drift(text, consts::PRD_TEMPLATE_LINES);
-        findings.extend(shared_doc_rules::utility_doc_line_drift::line_drift_findings(
-            drift,
-            consts::PRD_DOC,
-            consts::RULE_CODE_PRD_DOC,
-        ));
+        findings.extend(
+            shared_doc_rules::utility_doc_line_drift::line_drift_findings(
+                drift,
+                consts::PRD_DOC,
+                consts::RULE_CODE_PRD_DOC,
+            ),
+        );
 
         // Spec purity: PRD names no source file and carries no status.
         // (Implemented via shared checks below where a root master exists.)

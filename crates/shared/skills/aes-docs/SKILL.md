@@ -25,16 +25,13 @@ The aggregated efines which document exists, where it lives, and  to improve mak
 | `PRD.md`          | Root workspace                             | *What* &amp; *Why*                          | [references/prd/workflow.md.](references/prd/workflow.md)                   |
 | `ROADMAP.md`      | Root workspace                             | How the priority progrees                   | [references/roadmap/workflow.md](references/roadmap/workflow.md)           |
 | `FRD.md`          | Each Feature Folder                        | *How* functionally                          | [references/frd/workflow.md](references/frd/workflow.md)                   |
-| `BACKLOG.md`      | Each feature **|** surface | shared folder | *What is true now*                          | [references/backlog/workflow.md](references/backlog/workflow.md)           |
+| `BACKLOG.md`      | Each feature, surface, or shared folder | *What is true now*                          | [references/backlog/workflow.md](references/backlog/workflow.md)           |
 | `README.md`       | Root workspace                             | *How to use/run*                            | [references/readme/workflow.md](references/readme/workflow.md)             |
 | `AGENTS.md`       | Root workspace                             | *How to work here safely*                   | [references/agents/workflow.md](references/agents/workflow.md)             |
 | `ARCHITECTURE.md` | Root workspace                             | *Layer boundaries and allowed dependencies* | [references/architecture/workflow.md](references/architecture/workflow.md) |
 | `CONTRIBUTING.md` | Root workspace                             | *How to set up and ship a change*           | [references/contributing/workflow.md](references/contributing/workflow.md) |
 | `DESIGN.md`       | Each surface folder                        | *Visual &amp; interaction contract*         | [references/design/workflow.md](references/design/workflow.md)             |
 | `DATA.md`         | Shared folder                              | *What the shared layer manages*             | [references/data/workflow.md](references/data/workflow.md)                 |
-
-
-
 
 ---
 
@@ -47,17 +44,17 @@ Ask these questions in order. The first "No" dictates your next action.
 2. **Can a tech lead see every feature, shared policy, and workspace truth in one place?**
    - *No* → Add `ROADMAP.md`
 3. **Can an engineer implement this from the spec alone?**
-   - *No* → Add `FRD.md` 
+   - *No* → Add `FRD.md`
 4. **Can a reader tell what is actually true today for one feature, and re-run the evidence?**
-   - *No* → Add `BACKLOG.md` 
+   - *No* → Add `BACKLOG.md`
 5. **Can a developer clone, build, and run in under 10 minutes?**
    - *No* → Add `README.md`
 6. **Can an agent work here safely without being told twice?**
-   - *No* → Add `AGENTS.md` 
+   - *No* → Add `AGENTS.md`
 7. **Can a new engineer tell which layer a file belongs in, and what it may import?**
    - *No* → Add `ARCHITECTURE.md`
 8. **Can a first-time contributor set up the project and open a passing PR?**
-   - *No* → Add `CONTRIBUTING.md` 
+   - *No* → Add `CONTRIBUTING.md`
 
 ---
 
@@ -95,8 +92,6 @@ project-root/
 Same shape for Python `modules/<feature>/` and TypeScript `packages/<feature>/`.
 ```
 
-
 ---
-
 
 ---

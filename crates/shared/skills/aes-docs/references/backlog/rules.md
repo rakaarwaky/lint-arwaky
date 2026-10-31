@@ -23,7 +23,7 @@
 ## Section Contract
 
 | Section | Why it belongs here |
-|---------|---------------------|
+| --------- | --------------------- |
 | Progress Overview | Gives the truth before the table, not after it. |
 | Backlog Status | `<FEATURE-NAME-ID>`, `<DS-NAME-ID>`, or `<DT-NAME-ID>` entries (unbraced, colon-terminated) with State / Done / In Progress / Risk / Updated. |
 | Reference | Connects the backlog to PRD, FRD, Roadmap, Architecture. |

@@ -65,7 +65,7 @@ pub fn source_ext_pattern() -> Option<&'static regex::Regex> {
 /// Heading matcher.
 pub fn heading_re() -> Option<&'static regex::Regex> {
     static PAT: OnceLock<Option<regex::Regex>> = OnceLock::new();
-    PAT.get_or_init(|| regex::Regex::new(r"(?m)^(#{1,6})\s+(.*?)\s*$").ok())
+    PAT.get_or_init(|| regex::Regex::new(consts::HEADING_PATTERN).ok())
         .as_ref()
 }
 

@@ -7,13 +7,14 @@
 // once and is shared by every capability that walks that doc's entries, so
 // the accepted ID shapes cannot drift between them.
 
+use crate::taxonomy_doc_rules_constant as consts;
 use std::sync::OnceLock;
 
 /// `FR-<FEATURE>-NNN:` requirement entry heading (FRD entries carry
 /// `| Aspect | Detail |` tables and `####` aspect subsections).
 pub fn fr_entry_re() -> Option<&'static regex::Regex> {
     static PAT: OnceLock<Option<regex::Regex>> = OnceLock::new();
-    PAT.get_or_init(|| regex::Regex::new(r"^FR-[A-Za-z0-9_]+-\d+:").ok())
+    PAT.get_or_init(|| regex::Regex::new(consts::FR_ENTRY_PATTERN).ok())
         .as_ref()
 }
 
@@ -21,21 +22,21 @@ pub fn fr_entry_re() -> Option<&'static regex::Regex> {
 /// `Roadmap Status` entries).
 pub fn pr_entry_re() -> Option<&'static regex::Regex> {
     static PAT: OnceLock<Option<regex::Regex>> = OnceLock::new();
-    PAT.get_or_init(|| regex::Regex::new(r"^PR-[A-Za-z0-9_]+-\d+:").ok())
+    PAT.get_or_init(|| regex::Regex::new(consts::PR_ENTRY_PATTERN).ok())
         .as_ref()
 }
 
 /// `DT-<DATA>-NNN:` item heading (DATA `Data Requirements` entries).
 pub fn dt_entry_re() -> Option<&'static regex::Regex> {
     static PAT: OnceLock<Option<regex::Regex>> = OnceLock::new();
-    PAT.get_or_init(|| regex::Regex::new(r"^DT-[A-Za-z0-9_]+-\d+:").ok())
+    PAT.get_or_init(|| regex::Regex::new(consts::DT_ENTRY_PATTERN).ok())
         .as_ref()
 }
 
 /// `DS-<DESIGN>-NNN:` item heading (DESIGN `Design Requirements` entries).
 pub fn ds_entry_re() -> Option<&'static regex::Regex> {
     static PAT: OnceLock<Option<regex::Regex>> = OnceLock::new();
-    PAT.get_or_init(|| regex::Regex::new(r"^DS-[A-Za-z0-9_]+-\d+:").ok())
+    PAT.get_or_init(|| regex::Regex::new(consts::DS_ENTRY_PATTERN).ok())
         .as_ref()
 }
 
@@ -45,6 +46,6 @@ pub fn ds_entry_re() -> Option<&'static regex::Regex> {
 /// declares.
 pub fn backlog_entry_re() -> Option<&'static regex::Regex> {
     static PAT: OnceLock<Option<regex::Regex>> = OnceLock::new();
-    PAT.get_or_init(|| regex::Regex::new(r"^(FR|DS|DT|PR)-[A-Za-z0-9_]+-\d+:\s*$").ok())
+    PAT.get_or_init(|| regex::Regex::new(consts::BACKLOG_ENTRY_PATTERN).ok())
         .as_ref()
 }

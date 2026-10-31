@@ -1,6 +1,6 @@
 # AGENTS Template
 
-```markdown
+````markdown
 # AGENTS — <project-name>
 
 ## Agent Overview
@@ -47,4 +47,5 @@
 | ARCHITECTURE | Layer contract for every crate             | [ARCHITECTURE.md](ARCHITECTURE.md) |
 | ROADMAP      | What ships next, in order                  | [ROADMAP.md](ROADMAP.md) |
 | PRD          | What the product does and why              | [PRD.md](PRD.md) |
-```
+
+````

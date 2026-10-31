@@ -9,19 +9,357 @@ use crate::taxonomy_doc_audit_context_vo::{DocAuditContext, MemberRole};
 use crate::taxonomy_doc_rules_constant as consts;
 use crate::taxonomy_doc_rules_request::DocSource;
 use crate::taxonomy_doc_section_vo::Section;
-use crate::utility_capabilities_doc_h2_checks::{
-    first_column_values, row_label_diff,
-};
-use crate::utility_doc_entry_regexes::fr_entry_re;
-use crate::utility_markdown_scanner::{h3_subsections, normalize_heading, sections};
 use std::collections::{BTreeSet, HashSet};
 use std::path::Path;
+use std::sync::OnceLock;
 
 // ─── Defect data ─────────────────────────────────────────────────────────
 
 pub use crate::taxonomy_doc_rules_defect_vo::{
     BacklogQualifierDefect, EntryTableDefect, HeadingDefect, LineDriftDefect, MemberDocDefect,
 };
+
+fn normalize_heading(title: &str) -> String {
+    let lowered = title.to_lowercase();
+    let stripped: String = lowered
+        .chars()
+        .map(|c| {
+            if c.is_alphanumeric() || c.is_whitespace() {
+                c
+            } else {
+                ' '
+            }
+        })
+        .collect();
+    stripped.split_whitespace().collect::<Vec<_>>().join(" ")
+}
+
+fn heading_re() -> Option<&'static regex::Regex> {
+    static PAT: OnceLock<Option<regex::Regex>> = OnceLock::new();
+    PAT.get_or_init(|| regex::Regex::new(consts::HEADING_PATTERN).ok())
+        .as_ref()
+}
+
+fn pr_id_heading_re() -> Option<&'static regex::Regex> {
+    static PAT: OnceLock<Option<regex::Regex>> = OnceLock::new();
+    PAT.get_or_init(|| regex::Regex::new(consts::PR_ID_HEADING_PATTERN).ok())
+        .as_ref()
+}
+
+fn fr_entry_re() -> Option<&'static regex::Regex> {
+    static PAT: OnceLock<Option<regex::Regex>> = OnceLock::new();
+    PAT.get_or_init(|| regex::Regex::new(consts::FR_ENTRY_PATTERN).ok())
+        .as_ref()
+}
+
+fn blank_fenced(text: &str) -> String {
+    let mut out = String::with_capacity(text.len());
+    let mut in_fence = false;
+    for line in text.lines() {
+        let trimmed = line.trim_start();
+        if trimmed.starts_with("```") || trimmed.starts_with("~~~") {
+            in_fence = !in_fence;
+            out.push('\n');
+            continue;
+        }
+        if in_fence {
+            out.push('\n');
+        } else {
+            out.push_str(line);
+            out.push('\n');
+        }
+    }
+    out
+}
+
+fn sections(text: &str) -> Vec<Section> {
+    let Some(re) = heading_re() else {
+        return Vec::new();
+    };
+    let prose = blank_fenced(text);
+    let mut matches: Vec<(usize, usize, String, usize)> = Vec::new();
+    for (line_idx, line) in prose.lines().enumerate() {
+        if let Some(caps) = re.captures(line) {
+            let hashes = caps.get(1).map_or("", |m| m.as_str());
+            let title = caps.get(2).map_or("", |m| m.as_str()).trim().to_string();
+            matches.push((line_idx, hashes.len(), title, line_idx));
+        }
+    }
+
+    let mut result = Vec::new();
+    let lines: Vec<&str> = text.lines().collect();
+    for (i, &(start_line, level, ref title, _)) in matches.iter().enumerate() {
+        let next_start = matches
+            .iter()
+            .skip(i + 1)
+            .find(|(_, l, _, _)| *l <= level)
+            .map_or(lines.len(), |(s, _, _, _)| *s);
+        let body = lines[start_line + 1..next_start].join("\n");
+        result.push(Section {
+            level,
+            title: title.clone(),
+            body,
+            line: start_line,
+        });
+    }
+    result
+}
+
+fn h3_subsections(section: &Section) -> Vec<Section> {
+    let mut out = Vec::new();
+    let lines: Vec<&str> = section.body.lines().collect();
+    let mut i = 0;
+    while i < lines.len() {
+        let line = lines[i];
+        if line.starts_with("### ") && !line.starts_with("#### ") {
+            let title = line.trim_start_matches('#').trim().to_string();
+            let start_line = section.line + i + 1;
+            let mut body_lines = Vec::new();
+            i += 1;
+            while i < lines.len() {
+                let inner = lines[i];
+                if inner.starts_with('#') {
+                    let level = inner.chars().take_while(|&c| c == '#').count();
+                    if level <= 3 {
+                        break;
+                    }
+                }
+                body_lines.push(inner);
+                i += 1;
+            }
+            out.push(Section {
+                level: 3,
+                title,
+                body: body_lines.join("\n"),
+                line: start_line,
+            });
+            continue;
+        }
+        i += 1;
+    }
+    out
+}
+
+fn h4_subsections(section: &Section) -> Vec<Section> {
+    let mut out = Vec::new();
+    let lines: Vec<&str> = section.body.lines().collect();
+    let mut i = 0;
+    while i < lines.len() {
+        let line = lines[i];
+        if line.starts_with("#### ") {
+            let title = line.trim_start_matches('#').trim().to_string();
+            let start_line = section.line + i + 1;
+            let mut body_lines = Vec::new();
+            i += 1;
+            while i < lines.len() {
+                let inner = lines[i];
+                if inner.starts_with('#') {
+                    let level = inner.chars().take_while(|&c| c == '#').count();
+                    if level <= 4 {
+                        break;
+                    }
+                }
+                body_lines.push(inner);
+                i += 1;
+            }
+            out.push(Section {
+                level: 4,
+                title,
+                body: body_lines.join("\n"),
+                line: start_line,
+            });
+            continue;
+        }
+        i += 1;
+    }
+    out
+}
+
+fn is_table_separator(line: &str) -> bool {
+    let t = line.trim();
+    if !t.starts_with('|') {
+        return false;
+    }
+    let inner = t
+        .trim_start_matches(['|', ' '])
+        .trim_end_matches(['|', ' '])
+        .split('|')
+        .map(|cell| cell.trim())
+        .collect::<Vec<_>>();
+    !inner.is_empty()
+        && inner
+            .iter()
+            .all(|cell| !cell.is_empty() && cell.chars().all(|c| c == '-' || c == ':'))
+        && inner.iter().any(|cell| cell.contains('-'))
+}
+
+fn has_any_table(body: &str) -> bool {
+    let lines = body.lines().collect::<Vec<_>>();
+    lines.iter().enumerate().any(|(i, line)| {
+        if !line.trim().starts_with('|') || i == 0 || !is_table_separator(line) {
+            return false;
+        }
+        lines[..i].iter().any(|prev| prev.trim().starts_with('|'))
+    })
+}
+
+fn header_extra_columns(body: &str, columns: &[&str]) -> Option<Vec<String>> {
+    for line in body.lines() {
+        let trimmed = line.trim();
+        if !trimmed.starts_with('|') {
+            continue;
+        }
+        let cells: Vec<String> = trimmed
+            .trim_matches('|')
+            .split('|')
+            .map(|c| c.trim().to_lowercase())
+            .collect();
+        if !columns
+            .iter()
+            .all(|want| cells.iter().any(|cell| cell.contains(&want.to_lowercase())))
+        {
+            continue;
+        }
+        let extras: Vec<String> = cells
+            .iter()
+            .filter(|cell| !columns.iter().any(|c| cell.contains(&c.to_lowercase())))
+            .cloned()
+            .collect();
+        return (!extras.is_empty()).then_some(extras);
+    }
+    None
+}
+
+fn table_repeats_header_row(body: &str) -> bool {
+    let mut header: Option<Vec<String>> = None;
+    let mut separator_seen = false;
+    for line in body.lines() {
+        let trimmed = line.trim();
+        if !trimmed.starts_with('|') {
+            header = None;
+            separator_seen = false;
+            continue;
+        }
+        let cells: Vec<String> = trimmed
+            .trim_matches('|')
+            .split('|')
+            .map(|c| c.trim().to_lowercase())
+            .collect();
+        if is_table_separator(trimmed) {
+            separator_seen = header.is_some();
+            continue;
+        }
+        match &header {
+            None => header = Some(cells),
+            Some(h) if separator_seen && cells == *h => return true,
+            _ => {}
+        }
+    }
+    false
+}
+
+fn detect_section_shape(
+    parsed: &[Section],
+    title: &str,
+    columns: &[&str],
+    h3: Option<&Section>,
+) -> Option<crate::taxonomy_doc_rules_defect_vo::SectionShapeDefect> {
+    let section = match h3 {
+        Some(h3) => h3,
+        None => parsed
+            .iter()
+            .find(|s| s.level == 2 && normalize_heading(&s.title) == normalize_heading(title))?,
+    };
+    let body = &section.body;
+    let marker = if section.level == 2 { "##" } else { "###" };
+    let cols_owned: Vec<String> = columns.iter().map(|&s| s.to_string()).collect();
+
+    if has_any_table(body) {
+        if let Some(extras) = header_extra_columns(body, columns) {
+            return Some(crate::taxonomy_doc_rules_defect_vo::SectionShapeDefect {
+                line: section.line,
+                marker,
+                title: section.title.clone(),
+                columns: cols_owned,
+                kind: crate::taxonomy_doc_rules_defect_vo::SectionShapeDefectKind::ExtraColumns,
+                extra_columns: extras,
+            });
+        }
+        if table_repeats_header_row(body) {
+            return Some(crate::taxonomy_doc_rules_defect_vo::SectionShapeDefect {
+                line: section.line,
+                marker,
+                title: section.title.clone(),
+                columns: cols_owned,
+                kind: crate::taxonomy_doc_rules_defect_vo::SectionShapeDefectKind::HeaderRepeated,
+                extra_columns: Vec::new(),
+            });
+        }
+        return None;
+    }
+    let kind = if has_any_table(body) {
+        crate::taxonomy_doc_rules_defect_vo::SectionShapeDefectKind::MissingColumns
+    } else {
+        crate::taxonomy_doc_rules_defect_vo::SectionShapeDefectKind::NotTable
+    };
+    Some(crate::taxonomy_doc_rules_defect_vo::SectionShapeDefect {
+        line: section.line,
+        marker,
+        title: section.title.clone(),
+        columns: cols_owned,
+        kind,
+        extra_columns: Vec::new(),
+    })
+}
+
+fn first_column_values(body: &str) -> HashSet<String> {
+    let mut values = HashSet::new();
+    let mut header_seen = false;
+    for raw in body.lines() {
+        let trimmed = raw.trim();
+        if !trimmed.starts_with('|') {
+            continue;
+        }
+        let cells: Vec<&str> = trimmed
+            .trim_matches('|')
+            .split('|')
+            .map(str::trim)
+            .collect();
+        if !header_seen {
+            header_seen = true;
+            continue;
+        }
+        if is_table_separator(trimmed) {
+            continue;
+        }
+        if let Some(first) = cells.first() {
+            if !first.is_empty() {
+                values.insert(first.to_string());
+            }
+        }
+    }
+    values
+}
+
+fn row_label_diff(want: &[&str], have: &HashSet<String>) -> (Vec<String>, Vec<String>) {
+    let mut missing = Vec::new();
+    for &label in want {
+        let label_norm = normalize_heading(label);
+        let found = have.iter().any(|v| normalize_heading(v) == label_norm);
+        if !found {
+            missing.push(label.to_string());
+        }
+    }
+    let mut extra = Vec::new();
+    for label in have {
+        let label_norm = normalize_heading(label);
+        let matched = want.iter().any(|w| normalize_heading(w) == label_norm);
+        if !matched {
+            extra.push(label.clone());
+        }
+    }
+    (missing, extra)
+}
 
 /// so the gate follows the template without hardcoding the H4 title.
 pub fn detect_entry_tables(
@@ -42,7 +380,7 @@ pub fn detect_entry_tables(
         if !entry_re.is_match(&h3.title) {
             continue;
         }
-        let h4s = crate::utility_markdown_scanner::h4_subsections(&h3);
+        let h4s = h4_subsections(&h3);
 
         // Identify the H4 (if any) that carries the template table.
         // The H4 is discovered by its table header matching *columns*, so
@@ -52,9 +390,7 @@ pub fn detect_entry_tables(
             None
         } else {
             h4s.iter().find(|h4| {
-                crate::utility_capabilities_doc_h2_checks::header_extra_columns(&h4.body, columns)
-                    .is_none()
-                    && crate::utility_capabilities_doc_h2_checks::has_any_table(&h4.body)
+                header_extra_columns(&h4.body, columns).is_none() && has_any_table(&h4.body)
             })
         };
 
@@ -66,21 +402,12 @@ pub fn detect_entry_tables(
                 body: h4.body.clone(),
                 line: h3.line + h4.line,
             };
-            if let Some(shape) = crate::utility_capabilities_doc_h2_checks::detect_section_shape(
-                parsed,
-                &scoped.title,
-                columns,
-                Some(&scoped),
-            ) {
+            if let Some(shape) = detect_section_shape(parsed, &scoped.title, columns, Some(&scoped))
+            {
                 defects.push(EntryTableDefect::Shape(shape));
                 continue;
             }
-        } else if let Some(shape) = crate::utility_capabilities_doc_h2_checks::detect_section_shape(
-            parsed,
-            &h3.title,
-            columns,
-            Some(&h3),
-        ) {
+        } else if let Some(shape) = detect_section_shape(parsed, &h3.title, columns, Some(&h3)) {
             defects.push(EntryTableDefect::Shape(shape));
             continue;
         }
@@ -273,7 +600,7 @@ pub fn collect_fr_id_set(frd: &str) -> Option<Vec<String>> {
 
 /// `(1-based heading line, id)` for every PR-ID heading in *text*.
 pub fn pr_id_heading_lines(text: &str) -> Vec<(usize, String)> {
-    let re = match crate::utility_protocol_counter::pr_id_heading_re() {
+    let re = match pr_id_heading_re() {
         Some(r) => r,
         None => return Vec::new(),
     };
@@ -378,14 +705,18 @@ pub fn backlog_required_links(
         return required_links(name).to_vec();
     }
     // Resolve the member role for this BACKLOG's parent folder.
-    let rel = context.relative_path(document);
-    let parent_folder = rel.rsplit('/').nth(1).map(|s| s.to_owned());
+    let parent_folder = document
+        .path
+        .parent()
+        .and_then(|p| p.file_name())
+        .and_then(|n| n.to_str());
     let role = context.members().iter().find_map(|m| {
-        m.path
-            .file_name()
-            .and_then(|n| n.to_str())
-            .filter(|folder| Some(folder.to_string()) == parent_folder.clone())
-            .map(|_| m.role.clone())
+        let member_name = m.path.file_name().and_then(|n| n.to_str());
+        if member_name == parent_folder || document.path.parent().is_some_and(|p| p == m.path) {
+            Some(m.role.clone())
+        } else {
+            None
+        }
     });
     match role {
         Some(MemberRole::Surface) => vec![
@@ -504,10 +835,10 @@ pub fn detect_doc_heading(
     allowed: &[&str],
 ) -> Vec<HeadingDefect> {
     let mut defects = Vec::new();
-    let Some(re) = crate::utility_markdown_scanner::heading_re() else {
+    let Some(re) = heading_re() else {
         return defects;
     };
-    let prose = crate::utility_markdown_scanner::blank_fenced(text);
+    let prose = blank_fenced(text);
     let captures: Vec<_> = re.captures_iter(&prose).collect();
     let h1_count: usize = captures
         .iter()
@@ -556,172 +887,4 @@ pub fn detect_doc_heading(
         });
     }
     defects
-}
-
-// ─── Doc line-drift mechanics (AES605) ──────────────────────────────────
-
-/// Doc line-drift check against a doc's `*_TEMPLATE_LINES`. Compares the
-/// document's H2 sections and their fixed (non-placeholder) body lines
-/// against the template. Returns pure defect data; the calling capability
-/// stamps with its own rule code.
-pub fn detect_doc_line_drift(text: &str, template: &[&str]) -> Vec<LineDriftDefect> {
-    let mut defects = Vec::new();
-    let doc_lines: Vec<&str> = text.lines().collect();
-    if template.is_empty() {
-        return defects;
-    }
-    let doc_sections = split_sections(&doc_lines);
-    let template_sections = split_sections(template);
-    for (name, _) in &doc_sections {
-        if !template_sections.iter().any(|(key, _)| key == name) {
-            defects.push(LineDriftDefect::SectionNotInTemplate {
-                line: 0,
-                section: name.clone(),
-            });
-        }
-    }
-    for (name, want_lines) in &template_sections {
-        let Some((_, have_lines)) = doc_sections.iter().find(|(key, _)| key == name) else {
-            defects.push(LineDriftDefect::MissingTemplateSection {
-                line: 0,
-                section: name.clone(),
-            });
-            continue;
-        };
-        let want_placeholders = placeholder_lines(want_lines);
-        let want_strict: Vec<&str> = want_lines
-            .iter()
-            .enumerate()
-            .filter(|(idx, l)| {
-                let t = l.trim();
-                !t.is_empty() && !want_placeholders.contains(idx) && !is_table_row(t)
-            })
-            .map(|(_, l)| *l)
-            .collect();
-        let have_norm: Vec<String> = have_lines
-            .iter()
-            .filter(|l| !is_table_row(l.trim()))
-            .map(|l| normalize_line(l))
-            .collect();
-        let mut cursor = 0usize;
-        for want in want_strict {
-            let start = cursor.min(have_norm.len());
-            let want_norm = normalize_line(want);
-            match have_norm[start..]
-                .iter()
-                .position(|have| *have == want_norm)
-            {
-                Some(offset) => cursor = start + offset + 1,
-                None => {
-                    let offending = have_lines
-                        .get(start)
-                        .copied()
-                        .or_else(|| have_lines.last().copied())
-                        .unwrap_or("");
-                    defects.push(LineDriftDefect::LineMismatch {
-                        line: 0,
-                        section: name.clone(),
-                        expected: want.to_string(),
-                        found: offending.to_string(),
-                    });
-                    cursor = start + 1;
-                }
-            }
-        }
-    }
-    if !doc_lines.iter().any(|l| l.trim_start().starts_with("# ")) {
-        defects.push(LineDriftDefect::H1NoTitle { line: 0 });
-    }
-    for line in doc_lines
-        .iter()
-        .filter(|l| l.trim_start().starts_with("# "))
-    {
-        let title = line.trim_start().trim_start_matches('#').trim();
-        if title.is_empty() {
-            defects.push(LineDriftDefect::H1NoTitle { line: 0 });
-        }
-    }
-    defects
-}
-
-/// Split a document into `H2 heading -> body lines` sections.
-///
-/// Lines inside a fenced code block stay in the current section's body
-/// (the Project Structure tree block must reach the consumer), but a
-/// `## ` marker inside a fence is content, not a heading.
-fn split_sections<'a>(lines: &'a [&'a str]) -> Vec<(String, Vec<&'a str>)> {
-    let mut sections_out: Vec<(String, Vec<&str>)> = Vec::new();
-    let mut in_fence = false;
-    for line in lines {
-        if line.trim_start().starts_with("```") {
-            in_fence = !in_fence;
-            match sections_out.last_mut() {
-                Some((_, body)) => body.push(line),
-                None => sections_out.push((String::new(), vec![line])),
-            }
-            continue;
-        }
-        if !in_fence {
-            if let Some(title) = line.strip_prefix("## ") {
-                sections_out.push((title.trim().to_string(), Vec::new()));
-                continue;
-            }
-        }
-        match sections_out.last_mut() {
-            Some((_, body)) => body.push(line),
-            None => sections_out.push((String::new(), vec![line])),
-        }
-    }
-    sections_out
-}
-
-/// Collapse runs of internal whitespace to a single space and trim, so the
-/// line-drift check matches template lines to document lines regardless of
-/// table-cell padding.
-fn normalize_line(line: &str) -> String {
-    let trimmed = line.trim();
-    trimmed.split_whitespace().collect::<Vec<_>>().join(" ")
-}
-
-/// A markdown table row or its `|---|` separator. Line-drift skips these:
-/// cell content and dash counts vary between template and doc.
-fn is_table_row(line: &str) -> bool {
-    line.starts_with('|')
-}
-
-/// Every line that belongs to a placeholder slot, including slots that wrap
-/// across physical lines. A slot is either a `{...}` brace slot or a `<...>`
-/// angle slot (the templates use both conventions).
-fn placeholder_lines(lines: &[&str]) -> HashSet<usize> {
-    let mut inside = HashSet::new();
-    let mut depth = 0usize;
-    for (idx, line) in lines.iter().enumerate() {
-        let opens = line.matches('{').count();
-        let closes = line.matches('}').count();
-        let has_angle_slot = has_angle_placeholder(line);
-        if has_angle_slot || opens > closes {
-            inside.insert(idx);
-            depth += opens - closes;
-        } else if depth > 0 {
-            inside.insert(idx);
-            depth = depth.saturating_sub(closes);
-            depth = depth.saturating_sub(opens);
-        } else if closes > opens || (opens > 0 && closes > 0) {
-            inside.insert(idx);
-        }
-    }
-    inside
-}
-
-/// A line carries an inline `<placeholder>` angle slot.
-///
-/// Code spans are exempt: a `<` inside a `` `code` `` span is content, not a
-/// slot. Bold labels like `**Description:** <fill this in>` still carry a
-/// slot on the same line, so `**` does not exempt.
-fn has_angle_placeholder(line: &str) -> bool {
-    let in_code = line.contains('`');
-    if in_code {
-        return false;
-    }
-    line.contains('<') && line.contains('>')
 }

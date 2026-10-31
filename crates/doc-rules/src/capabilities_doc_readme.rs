@@ -13,7 +13,8 @@ use shared_doc_rules::taxonomy_doc_rules_violation_vo::DOC_VIOLATION_NAMES;
 use shared_doc_rules::utility_capabilities_doc_h2_checks::{
     SectionShapeDefect, SectionShapeDefectKind, detect_h2_table,
 };
-use shared_doc_rules::utility_doc_common_checks::{detect_doc_heading, detect_doc_line_drift};
+use shared_doc_rules::utility_doc_common_checks::detect_doc_heading;
+use shared_doc_rules::utility_doc_line_drift::detect_doc_line_drift;
 use shared_doc_rules::utility_markdown_scanner::{doc_h2_contract, sections};
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -60,11 +61,13 @@ impl ReadmeCapability {
 
         // Template body conformance.
         let drift = detect_doc_line_drift(text, consts::README_TEMPLATE_LINES);
-        findings.extend(shared_doc_rules::utility_doc_line_drift::line_drift_findings(
-            drift,
-            consts::README_DOC,
-            consts::RULE_CODE_README_DOC,
-        ));
+        findings.extend(
+            shared_doc_rules::utility_doc_line_drift::line_drift_findings(
+                drift,
+                consts::README_DOC,
+                consts::RULE_CODE_README_DOC,
+            ),
+        );
 
         // Heading structure.
         if let Some((required, allowed)) = doc_h2_contract(consts::README_DOC) {

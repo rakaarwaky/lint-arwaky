@@ -14,11 +14,11 @@ use shared_doc_rules::utility_doc_aspect_entry_checks::{
     AspectEntryDefect, detect_aspect_entry_tables,
 };
 use shared_doc_rules::utility_doc_common_checks::{
-    HeadingDefect, detect_doc_heading, detect_doc_line_drift, missing_link_violation_type,
-    required_links,
+    HeadingDefect, detect_doc_heading, missing_link_violation_type, required_links,
 };
 use shared_doc_rules::utility_doc_entry_regexes::dt_entry_re;
 use shared_doc_rules::utility_doc_fr_format_checks::detect_fr_id_format;
+use shared_doc_rules::utility_doc_line_drift::detect_doc_line_drift;
 use shared_doc_rules::utility_markdown_scanner::{doc_h2_contract, sections};
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -65,11 +65,13 @@ impl DataCapability {
 
         // Template body conformance.
         let drift = detect_doc_line_drift(text, consts::DATA_TEMPLATE_LINES);
-        findings.extend(shared_doc_rules::utility_doc_line_drift::line_drift_findings(
-            drift,
-            consts::DATA_DOC,
-            consts::RULE_CODE_DATA_DOC,
-        ));
+        findings.extend(
+            shared_doc_rules::utility_doc_line_drift::line_drift_findings(
+                drift,
+                consts::DATA_DOC,
+                consts::RULE_CODE_DATA_DOC,
+            ),
+        );
 
         // Bare-ID format (DT-<NAME>-NNN without qualified form).
         for defect in detect_fr_id_format(document) {

@@ -24,7 +24,7 @@
 ## Section Contract
 
 | Section | Why it belongs here |
-|---------|---------------------|
+| --------- | --------------------- |
 | Data Overview | Orients the reader before the data items begin. |
 | Data Requirements | `DT-SHARED-NNN` items, each with Type / Description table. |
 | Reference | Separates spec promise from backlog claim. |

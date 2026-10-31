@@ -14,11 +14,12 @@ use shared_doc_rules::utility_doc_aspect_entry_checks::{
     AspectEntryDefect, detect_aspect_entry_tables,
 };
 use shared_doc_rules::utility_doc_common_checks::{
-    BacklogQualifierDefect, HeadingDefect, detect_doc_heading, detect_doc_line_drift,
-    missing_link_violation_type, required_links,
+    BacklogQualifierDefect, HeadingDefect, detect_doc_heading, missing_link_violation_type,
+    required_links,
 };
 use shared_doc_rules::utility_doc_entry_regexes::ds_entry_re;
 use shared_doc_rules::utility_doc_fr_format_checks::collect_any_id_set;
+use shared_doc_rules::utility_doc_line_drift::detect_doc_line_drift;
 use shared_doc_rules::utility_markdown_scanner::{doc_h2_contract, sections};
 use shared_doc_rules::utility_protocol_counter::ds_id_heading_re;
 
@@ -66,18 +67,19 @@ impl DesignCapability {
 
         // Template body conformance.
         let drift = detect_doc_line_drift(text, consts::DESIGN_TEMPLATE_LINES);
-        findings.extend(shared_doc_rules::utility_doc_line_drift::line_drift_findings(
-            drift,
-            consts::DESIGN_DOC,
-            consts::RULE_CODE_DESIGN_DOC,
-        ));
+        findings.extend(
+            shared_doc_rules::utility_doc_line_drift::line_drift_findings(
+                drift,
+                consts::DESIGN_DOC,
+                consts::RULE_CODE_DESIGN_DOC,
+            ),
+        );
 
-        // DS-ID alignment with BACKLOG.
-        if let Some(backlog) = context
-            .documents()
-            .iter()
-            .find(|d| context.document_name(d) == consts::BACKLOG_DOC)
-        {
+        // DS-ID alignment with BACKLOG in the same folder.
+        let doc_parent = document.path.parent();
+        if let Some(backlog) = context.documents().iter().find(|d| {
+            d.path.parent() == doc_parent && context.document_name(d) == consts::BACKLOG_DOC
+        }) {
             let union = shared_doc_rules::utility_doc_common_checks::collect_union_id_set(
                 collect_any_id_set,
                 Some(document),

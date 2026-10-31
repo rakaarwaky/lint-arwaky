@@ -26,7 +26,7 @@ General rules for writing an FRD. These apply across all sections.
 Every section is mandatory; each explains what to fill and what must not appear.
 
 | Section | What it is | What to fill | What must not appear |
-|---------|------------|--------------|----------------------|
+| --------- | ------------ | -------------- | ---------------------- |
 | Feature Overview | One diagram or ≤ 3 sentences locating the feature. | Where the feature sits, what calls it, what it calls. | Source extensions (`.py`, `.rs`, `.ts`, `.tsx`), build status. |
 | Functional Requirements | `FR-<FEATURE-NAME-ID>-NNN` items, each an H3 heading, a `**Description:**` paragraph, and five H4 subsections in canonical order: `#### Business Logic`, `#### Edge Cases`, `#### Technical Specification`, `#### Test`, `#### Metric`. | One behaviour per entry — what it does. | Source extensions, build status. |
 | Public Interface | Agent / Aggregate / Method / Request / Response surface. | `<agent name>`, `<aggregate name>`, `<execute>`, `<request>`, `<response>`. | Internals of those calls. |

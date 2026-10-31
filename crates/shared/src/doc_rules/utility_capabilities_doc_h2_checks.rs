@@ -7,10 +7,27 @@
 // layer can consume it without importing itself (AES201).
 
 use crate::taxonomy_doc_section_vo::Section;
-use crate::utility_markdown_scanner::normalize_heading;
 use std::collections::HashSet;
 
-pub use crate::taxonomy_doc_rules_defect_vo::{H2FixedRowsDefect, SectionShapeDefect, SectionShapeDefectKind};
+pub use crate::taxonomy_doc_rules_defect_vo::{
+    H2FixedRowsDefect, SectionShapeDefect, SectionShapeDefectKind,
+};
+
+/// Normalize a heading for comparison: lowercase, drop punctuation.
+fn normalize_heading(title: &str) -> String {
+    let lowered = title.to_lowercase();
+    let stripped: String = lowered
+        .chars()
+        .map(|c| {
+            if c.is_alphanumeric() || c.is_whitespace() {
+                c
+            } else {
+                ' '
+            }
+        })
+        .collect();
+    stripped.split_whitespace().collect::<Vec<_>>().join(" ")
+}
 
 /// covers *columns*. Returns the defect (if any) anchored to the H2 line.
 pub fn detect_h2_table(

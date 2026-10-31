@@ -27,7 +27,7 @@
 Every section is required unless marked optional. Each exists for one reason.
 
 | Section | Why it belongs here |
-|---------|---------------------|
+| --------- | --------------------- |
 | Progress Overview | Workspace progress summary in one paragraph. |
 | Roadmap Status | `PR-<PROJECT-NAME-ID>-NNN` items with Priority / State / Backlog. |
 | Reference | Connects the roadmap to the problem spec and the layer contract. |

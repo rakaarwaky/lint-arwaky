@@ -1,6 +1,6 @@
 # <Project> Architecture
 
-```markdown
+````markdown
 # <Project> Architecture
 
 ## 1. Purpose
@@ -274,4 +274,4 @@ project-root/
 | No business logic        | Root must not contain business logic.                               |
 | No orchestration         | Root must not contain orchestration policy.                         |
 | No technical/UI behavior | Root must not contain technical parsing or user interface behavior. |
-```
+````

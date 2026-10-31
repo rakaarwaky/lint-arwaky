@@ -15,13 +15,14 @@ use shared_doc_rules::utility_capabilities_doc_h2_checks::{
     SectionShapeDefect, SectionShapeDefectKind,
 };
 use shared_doc_rules::utility_doc_common_checks::{
-    EntryTableDefect, HeadingDefect, detect_doc_heading, detect_doc_line_drift,
-    missing_link_violation_type, required_links,
+    EntryTableDefect, HeadingDefect, detect_doc_heading, missing_link_violation_type,
+    required_links,
 };
 use shared_doc_rules::utility_doc_entry_regexes::fr_entry_re;
 use shared_doc_rules::utility_doc_fr_format_checks::{
     detect_api_method_existence, detect_fr_id_format, detect_fr_protocol_parity,
 };
+use shared_doc_rules::utility_doc_line_drift::detect_doc_line_drift;
 use shared_doc_rules::utility_markdown_scanner::{
     blank_fenced, doc_h2_contract, normalize_heading, sections, source_ext_pattern,
     status_leak_patterns,
@@ -71,11 +72,13 @@ impl FrdCapability {
 
         // Template body conformance.
         let drift = detect_doc_line_drift(text, consts::FRD_TEMPLATE_LINES);
-        findings.extend(shared_doc_rules::utility_doc_line_drift::line_drift_findings(
-            drift,
-            consts::FRD_DOC,
-            consts::RULE_CODE_FRD_DOC,
-        ));
+        findings.extend(
+            shared_doc_rules::utility_doc_line_drift::line_drift_findings(
+                drift,
+                consts::FRD_DOC,
+                consts::RULE_CODE_FRD_DOC,
+            ),
+        );
 
         // FR-ID format (bare FR-NNN without feature prefix).
         for defect in detect_fr_id_format(document) {

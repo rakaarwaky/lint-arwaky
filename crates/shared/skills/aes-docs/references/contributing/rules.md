@@ -25,9 +25,9 @@
 ## Section Contract
 
 | Section | Why it belongs here |
-|---------|---------------------|
+| --------- | --------------------- |
 | Contribution Overview | Sets contributor mindset and "ready to merge" definition. |
 | Contribution Guidelines | The contribution rules every change must respect. |
-| Workflow | `Step | Action | Detail` contribution pipeline. |
-| Commit Convention | `Type | Usage | Example` conventional-commit prefixes. |
+| Workflow | `Step \| Action \| Detail` contribution pipeline. |
+| Commit Convention | `Type \| Usage \| Example` conventional-commit prefixes. |
 | Reference | Connects contribution policy to PRD and Architecture. |

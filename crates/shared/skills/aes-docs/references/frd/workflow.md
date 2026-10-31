@@ -9,6 +9,7 @@ The FRD is a **design specification**, not passive documentation. Every requirem
 The entry point depends on the starting state. In every scenario the FRD states what the feature **must do**, never what the current source code does.
 
 ### Scenario 1 — Update existing FRD
+
 **When:** an `FRD.md` already exists for the feature and needs to be improved.
 **Argument hint:** `--improve --docpath <docpath>`
 `<docpath>` is the path to the existing `FRD.md`. `<instruction>` describes what to change. The delegate reads the current FRD, applies the improvement, and keeps every FR ID stable; new FR IDs are only added when the improvement declares new deliverables. Never derive requirements from source code — apply the instruction against the existing spec.
@@ -16,11 +17,13 @@ The entry point depends on the starting state. In every scenario the FRD states 
 **Special case — `--docpath all`:** improves every existing `FRD.md` in the workspace in parallel. The orchestrator discovers all `FRD.md` files under feature directories, then fans out one delegate subagent per `FRD.md`, each applying the same `<instruction>` to its own FRD while keeping that FRD's IDs stable. The same shared rule applies: no source-code derivation, instruction overrides code.
 
 ### Scenario 2 — Create new FRD, no source code yet
+
 **When:** the feature has no implementation and no `FRD.md`.
 **Argument hint:** `--design --docpath <docpath>`
 `<docpath>` is the target path for the new `FRD.md`. `<instruction>` describes what the feature must do. The delegate enumerates the FR ID set from the instruction and the feature's PRD/ROADMAP/DESIGN context, then writes the FRD purely from the promised behaviour. No source code exists to consult, so the instruction is the sole source of truth.
 
 ### Scenario 3 — Create FRD for a project that already has source code
+
 **When:** source code exists but there is no `FRD.md`, or the spec must be written independently of the build.
 **Argument hint:** `--make --docpath <docpath>`
 `<docpath>` is the target path for the new `FRD.md`. `<instruction>` describes what the feature must do. Existing source code is reference only: it may inform naming of caller-observable identifiers (error codes, event names, output paths), but the FRD never names `.py`/`.rs`/`.ts`/`.tsx` files and never states how the current build works. Where code and instruction conflict, the instruction wins.
@@ -44,6 +47,7 @@ Enumerate which `FR-<FEATURE-NAME-ID>-NNN` entries the feature needs and why, de
 Spawn exactly N subagents, one per FR ID; each delegate researches its own requirement (the feature's docs: DESIGN, BACKLOG, PRD plus architecture context) and writes ONLY its own `### FR-<FEATURE-NAME-ID>-NNN` heading plus its `**Description:**` paragraph and its five H4 subsections — `Business Logic`, `Edge Cases`, `Technical Specification`, `Test`, `Metric` — seeding each per the **Seed rows** contract in the Template section. If the FRD needs 15 FR IDs, spawn 15 subagents — one per ID, never one agent writing many entries.
 
 Each delegate writes prescriptive requirements:
+
 - `**Description:**` — one behaviour the feature shall deliver
 - `#### Business Logic` — validation logic and constraints the feature shall enforce
 - `#### Edge Cases` — boundary conditions and how the feature shall handle them

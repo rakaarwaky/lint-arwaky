@@ -2,7 +2,7 @@
 
 A filled AGENTS against the Ecommerce Application project, matching the Template shape exactly.
 
-```markdown
+````markdown
 # AGENTS — Ecommerce Application
 
 ## Agent Overview
@@ -82,4 +82,4 @@ ecommerce-app/
 | ROADMAP      | What ships next, in order                  | [ROADMAP.md](ROADMAP.md) |
 | PRD          | What the product does and why              | [PRD.md](PRD.md) |
 
-```
+````

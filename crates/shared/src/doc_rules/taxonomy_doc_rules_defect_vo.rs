@@ -1,7 +1,6 @@
 // PURPOSE: Defect value objects for AES601-AES610 doc checking rules.
 // Extracted to taxonomy layer to satisfy AES404 (stateless utility functions).
 
-
 // ─── From utility_capabilities_doc_h2_checks ───────────────────────────────
 /// Why a section's table shape failed.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -35,9 +34,6 @@ pub struct H2FixedRowsDefect {
     pub missing: Vec<String>,
     pub extra: Vec<String>,
 }
-
-/// H2-level: the section titled *title* must carry a table whose header
-
 
 // ─── From utility_doc_aspect_entry_checks ───────────────────────────────────
 /// A defect detected by `detect_aspect_entry_tables` / `detect_aspect_table`.
@@ -132,12 +128,6 @@ impl AspectEntryDefect {
 /// row numbering, bounded/open-ended row counts against *seed_min*, and
 /// non-empty `Detail` cells.
 ///
-/// When *is_prd* is true, PRD aspects are free-form prose/tables per the
-/// references/prd/template.md template: only presence and non-empty body are enforced.
-/// When false (FRD), the strict `| No | Detail |` aspect-table contract is
-/// enforced. A legacy entry carrying a single `| Aspect | Detail |` table is
-
-
 // ─── From utility_doc_common_checks ─────────────────────────────────────────
 /// A defect found by `detect_entry_tables`.
 #[derive(Debug, Clone)]
@@ -283,10 +273,6 @@ impl MemberDocDefect {
 /// offending H3 line. The calling capability builds its own DocFinding with
 /// its own AES code.
 ///
-/// When the H3 entry carries H4 subsections (modular template shape), the
-/// checks scope to the H4 whose body contains a table matching *columns* —
-
-
 // ─── From utility_doc_fr_format_checks ──────────────────────────────────────
 /// A defect found by `detect_fr_id_format`.
 #[derive(Debug, Clone)]

@@ -21,9 +21,9 @@
 ## Section Contract
 
 | Section | Why it belongs here |
-|---------|---------------------|
+| --------- | --------------------- |
 | Agent Overview | Tells the agent what it must know before generating code, docs, or suggestions in this workspace. |
-| Runtime | Language, Environment, Artifacts, Package Manager, Version Probe, Setup, Activation — `Aspect | Detail`. |
+| Runtime | Language, Environment, Artifacts, Package Manager, Version Probe, Setup, Activation — `Aspect \| Detail`. |
 | Project Structure | Fenced `text` tree block (`├──`/`└──` connectors with `# <what lives here>` comments), one node per crate/workspace member, so the next session navigates the tree without crawling it. |
-| Commands | `Category | Command | Scope | CI Gate` — every gate verbatim as CI runs it. Highest-value section. Never skip. |
-| Reference | `Artifact | Purpose | Link` — README, CONTRIBUTING, ARCHITECTURE, ROADMAP, PRD. |
+| Commands | `Category \| Command \| Scope \| CI Gate` — every gate verbatim as CI runs it. Highest-value section. Never skip. |
+| Reference | `Artifact \| Purpose \| Link` — README, CONTRIBUTING, ARCHITECTURE, ROADMAP, PRD. |

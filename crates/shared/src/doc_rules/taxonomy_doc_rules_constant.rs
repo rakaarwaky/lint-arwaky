@@ -184,6 +184,28 @@ pub const KERNEL_DIR: &str = "shared";
 /// sanctioned H3s. PR-10 bookkeeping: re-populate when FRD H3 shapes return.
 pub const FRD_H3_TITLES: &[&str] = &[];
 
+/// `FR-<FEATURE>-NNN:` regex pattern.
+pub const FR_ENTRY_PATTERN: &str = r"^FR-[A-Za-z0-9_]+-\d+:";
+/// `PR-<PROJECT>-NNN:` regex pattern.
+pub const PR_ENTRY_PATTERN: &str = r"^PR-[A-Za-z0-9_]+-\d+:";
+/// `DT-<DATA>-NNN:` regex pattern.
+pub const DT_ENTRY_PATTERN: &str = r"^DT-[A-Za-z0-9_]+-\d+:";
+/// `DS-<DESIGN>-NNN:` regex pattern.
+pub const DS_ENTRY_PATTERN: &str = r"^DS-[A-Za-z0-9_]+-\d+:";
+/// `^(FR|DS|DT|PR)-[A-Za-z0-9_]+-\d+:\s*$` regex pattern.
+pub const BACKLOG_ENTRY_PATTERN: &str = r"^(FR|DS|DT|PR)-[A-Za-z0-9_]+-\d+:\s*$";
+
+/// Heading regex pattern: `(?m)^(#{1,6})\s+(.*?)\s*$`
+pub const HEADING_PATTERN: &str = r"(?m)^(#{1,6})\s+(.*?)\s*$";
+/// Heading regex pattern for PR-ID: `(?m)^#{2,4}\s+(?P<id>PR-[A-Za-z0-9_]+-\d+):`
+pub const PR_ID_HEADING_PATTERN: &str = r"(?m)^#{2,4}\s+(?P<id>PR-[A-Za-z0-9_]+-\d+):";
+/// Heading regex pattern for FR-ID: `(?m)^#{2,4}\s+(?P<id>FR-[A-Za-z0-9_]+-\d+):`
+pub const FR_ID_HEADING_PATTERN: &str = r"(?m)^#{2,4}\s+(?P<id>FR-[A-Za-z0-9_]+-\d+):";
+/// Heading regex pattern for DS-ID: `(?m)^#{2,4}\s+(?P<id>DS-[A-Za-z0-9_]+-\d+):`
+pub const DS_ID_HEADING_PATTERN: &str = r"(?m)^#{2,4}\s+(?P<id>DS-[A-Za-z0-9_]+-\d+):";
+/// Heading regex pattern for DT-ID: `(?m)^#{2,4}\s+(?P<id>DT-[A-Za-z0-9_]+-\d+):`
+pub const DT_ID_HEADING_PATTERN: &str = r"(?m)^#{2,4}\s+(?P<id>DT-[A-Za-z0-9_]+-\d+):";
+
 /// H3 subsections of the retired `## API Contract`; still read by
 /// `utility_markdown_scanner::api_contract_methods` (AES601 method check).
 pub const API_CONTRACT_SUBSECTIONS: &[&str] = &["Protocol API", "Aggregate API"];

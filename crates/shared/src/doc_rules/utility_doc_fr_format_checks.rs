@@ -8,22 +8,388 @@
 use crate::taxonomy_doc_audit_context_vo::DocAuditContext;
 use crate::taxonomy_doc_rules_constant as consts;
 use crate::taxonomy_doc_rules_request::DocSource;
-use crate::utility_markdown_scanner::{
-    api_contract_methods, fr_id_bare_re, h3_subsections, normalize_heading, sections,
-};
-use crate::utility_protocol_counter::{
-    collect_ds_id_set, collect_dt_id_set, collect_pr_id_set, contract_method_names,
-    count_fr_headings, count_protocol_traits, fr_id_heading_re, locate_kernel_srcs,
-    pr_id_heading_re,
-};
+use crate::taxonomy_doc_section_vo::Section;
 use std::collections::{BTreeMap, BTreeSet, HashSet};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
+use std::sync::OnceLock;
 
 // ─── Defect data ─────────────────────────────────────────────────────────
 
 pub use crate::taxonomy_doc_rules_defect_vo::{
     ApiMethodDefect, FrIdDefect, PrIdParityDefect, ProtocolParityDefect,
 };
+
+fn normalize_heading(title: &str) -> String {
+    let lowered = title.to_lowercase();
+    let stripped: String = lowered
+        .chars()
+        .map(|c| {
+            if c.is_alphanumeric() || c.is_whitespace() {
+                c
+            } else {
+                ' '
+            }
+        })
+        .collect();
+    stripped.split_whitespace().collect::<Vec<_>>().join(" ")
+}
+
+fn heading_re() -> Option<&'static regex::Regex> {
+    static PAT: OnceLock<Option<regex::Regex>> = OnceLock::new();
+    PAT.get_or_init(|| regex::Regex::new(consts::HEADING_PATTERN).ok())
+        .as_ref()
+}
+
+fn fr_id_bare_re() -> Option<&'static regex::Regex> {
+    static PAT: OnceLock<Option<regex::Regex>> = OnceLock::new();
+    PAT.get_or_init(|| regex::Regex::new(r"(?m)^(#{2,4})\s+FR-(\d+)\s*:\s*(.*)$").ok())
+        .as_ref()
+}
+
+fn fr_id_heading_re() -> Option<&'static regex::Regex> {
+    static PAT: OnceLock<Option<regex::Regex>> = OnceLock::new();
+    PAT.get_or_init(|| regex::Regex::new(consts::FR_ID_HEADING_PATTERN).ok())
+        .as_ref()
+}
+
+fn pr_id_heading_re() -> Option<&'static regex::Regex> {
+    static PAT: OnceLock<Option<regex::Regex>> = OnceLock::new();
+    PAT.get_or_init(|| regex::Regex::new(consts::PR_ID_HEADING_PATTERN).ok())
+        .as_ref()
+}
+
+fn ds_id_heading_re() -> Option<&'static regex::Regex> {
+    static PAT: OnceLock<Option<regex::Regex>> = OnceLock::new();
+    PAT.get_or_init(|| regex::Regex::new(consts::DS_ID_HEADING_PATTERN).ok())
+        .as_ref()
+}
+
+fn dt_id_heading_re() -> Option<&'static regex::Regex> {
+    static PAT: OnceLock<Option<regex::Regex>> = OnceLock::new();
+    PAT.get_or_init(|| regex::Regex::new(consts::DT_ID_HEADING_PATTERN).ok())
+        .as_ref()
+}
+
+fn blank_fenced(text: &str) -> String {
+    let mut out = String::with_capacity(text.len());
+    let mut in_fence = false;
+    for line in text.lines() {
+        let trimmed = line.trim_start();
+        if trimmed.starts_with("```") || trimmed.starts_with("~~~") {
+            in_fence = !in_fence;
+            out.push('\n');
+            continue;
+        }
+        if in_fence {
+            out.push('\n');
+        } else {
+            out.push_str(line);
+            out.push('\n');
+        }
+    }
+    out
+}
+
+fn sections(text: &str) -> Vec<Section> {
+    let Some(re) = heading_re() else {
+        return Vec::new();
+    };
+    let prose = blank_fenced(text);
+    let mut matches: Vec<(usize, usize, String, usize)> = Vec::new();
+    for (line_idx, line) in prose.lines().enumerate() {
+        if let Some(caps) = re.captures(line) {
+            let hashes = caps.get(1).map_or("", |m| m.as_str());
+            let title = caps.get(2).map_or("", |m| m.as_str()).trim().to_string();
+            matches.push((line_idx, hashes.len(), title, line_idx));
+        }
+    }
+
+    let mut result = Vec::new();
+    let lines: Vec<&str> = text.lines().collect();
+    for (i, &(start_line, level, ref title, _)) in matches.iter().enumerate() {
+        let next_start = matches
+            .iter()
+            .skip(i + 1)
+            .find(|(_, l, _, _)| *l <= level)
+            .map_or(lines.len(), |(s, _, _, _)| *s);
+        let body = lines[start_line + 1..next_start].join("\n");
+        result.push(Section {
+            level,
+            title: title.clone(),
+            body,
+            line: start_line,
+        });
+    }
+    result
+}
+
+fn h3_subsections(section: &Section) -> Vec<Section> {
+    let mut out = Vec::new();
+    let lines: Vec<&str> = section.body.lines().collect();
+    let mut i = 0;
+    while i < lines.len() {
+        let line = lines[i];
+        if line.starts_with("### ") && !line.starts_with("#### ") {
+            let title = line.trim_start_matches('#').trim().to_string();
+            let start_line = section.line + i + 1;
+            let mut body_lines = Vec::new();
+            i += 1;
+            while i < lines.len() {
+                let inner = lines[i];
+                if inner.starts_with('#') {
+                    let level = inner.chars().take_while(|&c| c == '#').count();
+                    if level <= 3 {
+                        break;
+                    }
+                }
+                body_lines.push(inner);
+                i += 1;
+            }
+            out.push(Section {
+                level: 3,
+                title,
+                body: body_lines.join("\n"),
+                line: start_line,
+            });
+            continue;
+        }
+        i += 1;
+    }
+    out
+}
+
+fn heading_text(line: &str, level: usize) -> Option<&str> {
+    let hashes = "#".repeat(level);
+    let prefix = format!("{hashes} ");
+    line.strip_prefix(&prefix).map(str::trim)
+}
+
+fn api_contract_methods(text: &str) -> Vec<(String, String, usize)> {
+    let mut rows = Vec::new();
+    let mut in_api_contract = false;
+    let mut subsection: Option<String> = None;
+    let mut method_column: Option<usize> = None;
+    for (index, raw) in blank_fenced(text).lines().enumerate() {
+        let line = index + 1;
+        let trimmed = raw.trim();
+        if let Some(title) = heading_text(trimmed, 2) {
+            in_api_contract = normalize_heading(title).starts_with("api contract");
+            subsection = None;
+            method_column = None;
+            continue;
+        }
+        if let Some(title) = heading_text(trimmed, 3) {
+            if !in_api_contract {
+                continue;
+            }
+            let norm = normalize_heading(title);
+            let recognized = consts::API_CONTRACT_SUBSECTIONS.iter().any(|want| {
+                let want = normalize_heading(want);
+                norm == want || norm.starts_with(&want)
+            });
+            subsection = recognized.then(|| title.to_string());
+            method_column = None;
+            continue;
+        }
+        let Some(title) = subsection.as_deref() else {
+            continue;
+        };
+        if !trimmed.starts_with('|') {
+            method_column = None;
+            continue;
+        }
+        let cells: Vec<&str> = trimmed
+            .trim_matches('|')
+            .split('|')
+            .map(str::trim)
+            .collect();
+        if method_column.is_none() {
+            method_column = cells
+                .iter()
+                .position(|cell| normalize_heading(cell) == "method");
+            continue;
+        }
+        let Some(column) = method_column else {
+            continue;
+        };
+        let Some(cell) = cells.get(column).copied() else {
+            continue;
+        };
+        if cell.is_empty()
+            || cell
+                .chars()
+                .all(|c| c == '-' || c == ':' || c.is_whitespace())
+        {
+            continue;
+        }
+        for chunk in cell.split('/') {
+            let method = chunk.trim().trim_matches('`').trim();
+            if !method.is_empty() {
+                rows.push((title.to_string(), method.to_string(), line));
+            }
+        }
+    }
+    rows
+}
+
+fn locate_kernel_srcs(root: &Path) -> Vec<PathBuf> {
+    ["crates", "modules", "packages"]
+        .into_iter()
+        .map(|layout| root.join(layout).join(consts::KERNEL_DIR).join("src"))
+        .filter(|path| path.is_dir())
+        .collect()
+}
+
+fn walk_source_files<F>(dir: &Path, visitor: &mut F) -> Option<()>
+where
+    F: FnMut(&Path, &str),
+{
+    if !dir.is_dir() {
+        return None;
+    }
+    let entries = std::fs::read_dir(dir).ok()?;
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if path.is_dir() {
+            walk_source_files(&path, visitor);
+            continue;
+        }
+        let ext = path.extension().and_then(|e| e.to_str());
+        if ext != Some("rs") && ext != Some("py") {
+            continue;
+        }
+        if let Ok(text) = std::fs::read_to_string(&path) {
+            visitor(&path, &text);
+        }
+    }
+    Some(())
+}
+
+fn is_protocol_decl(line: &str) -> bool {
+    let Some((_, rest)) = line.trim().split_once("trait ") else {
+        return false;
+    };
+    let name: String = rest
+        .chars()
+        .take_while(|c| c.is_alphanumeric() || *c == '_')
+        .collect();
+    name.starts_with('I') && name.ends_with("Protocol") && !name.contains("Aggregate")
+}
+
+fn count_rust_protocol_traits(text: &str) -> usize {
+    text.lines()
+        .filter(|line| line.trim().starts_with("pub trait I") && is_protocol_decl(line))
+        .count()
+}
+
+fn count_python_protocol_classes(text: &str) -> usize {
+    text.lines()
+        .filter_map(|line| line.trim().strip_prefix("class "))
+        .filter(|rest| {
+            let name: String = rest
+                .chars()
+                .take_while(|c| c.is_alphanumeric() || *c == '_')
+                .collect();
+            name.starts_with('I') && name.ends_with("Protocol") && !name.contains("Aggregate")
+        })
+        .count()
+}
+
+fn count_protocol_decls_in_text(path: &Path, text: &str) -> usize {
+    let ext = path.extension().and_then(|e| e.to_str());
+    if ext == Some("py") {
+        let is_contract = path
+            .file_name()
+            .and_then(|n| n.to_str())
+            .is_some_and(|n| n.starts_with("contract_"));
+        if !is_contract {
+            return 0;
+        }
+        count_python_protocol_classes(text)
+    } else {
+        count_rust_protocol_traits(text)
+    }
+}
+
+fn count_protocol_traits(module_dir: &Path) -> Option<usize> {
+    let mut count = 0;
+    walk_source_files(module_dir, &mut |path, text| {
+        count += count_protocol_decls_in_text(path, text);
+    })?;
+    Some(count)
+}
+
+fn contract_method_names(module_dir: &Path) -> Option<HashSet<String>> {
+    let mut names = HashSet::new();
+    walk_source_files(module_dir, &mut |path, text| {
+        let is_python = path.extension().and_then(|e| e.to_str()) == Some("py");
+        for line in text.lines() {
+            let trimmed = line.trim();
+            if is_python {
+                let after_async = trimmed.strip_prefix("async ").unwrap_or(trimmed);
+                let Some(rest) = after_async.strip_prefix("def ") else {
+                    continue;
+                };
+                let name: String = rest
+                    .chars()
+                    .take_while(|c| c.is_alphanumeric() || *c == '_')
+                    .collect();
+                if !name.is_empty() {
+                    names.insert(name);
+                }
+            } else {
+                let after_vis = trimmed
+                    .strip_prefix("pub ")
+                    .or_else(|| trimmed.strip_prefix("pub(crate) "))
+                    .unwrap_or(trimmed);
+                let after_async = after_vis.strip_prefix("async ").unwrap_or(after_vis);
+                let Some(rest) = after_async.strip_prefix("fn ") else {
+                    continue;
+                };
+                let name: String = rest
+                    .chars()
+                    .take_while(|c| c.is_alphanumeric() || *c == '_')
+                    .collect();
+                if !name.is_empty() {
+                    names.insert(name);
+                }
+            }
+        }
+    })?;
+    Some(names)
+}
+
+fn count_fr_headings(text: &str) -> Option<usize> {
+    let re = fr_id_heading_re()?;
+    Some(re.find_iter(text).count())
+}
+
+fn collect_pr_id_set(text: &str) -> Option<Vec<String>> {
+    let re = pr_id_heading_re()?;
+    let ids: Vec<String> = re
+        .captures_iter(text)
+        .filter_map(|caps| caps.name("id").map(|m| m.as_str().to_string()))
+        .collect();
+    if ids.is_empty() { None } else { Some(ids) }
+}
+
+fn collect_ds_id_set(text: &str) -> Option<Vec<String>> {
+    let re = ds_id_heading_re()?;
+    let ids: Vec<String> = re
+        .captures_iter(text)
+        .filter_map(|caps| caps.name("id").map(|m| m.as_str().to_string()))
+        .collect();
+    if ids.is_empty() { None } else { Some(ids) }
+}
+
+fn collect_dt_id_set(text: &str) -> Option<Vec<String>> {
+    let re = dt_id_heading_re()?;
+    let ids: Vec<String> = re
+        .captures_iter(text)
+        .filter_map(|caps| caps.name("id").map(|m| m.as_str().to_string()))
+        .collect();
+    if ids.is_empty() { None } else { Some(ids) }
+}
 
 /// code and violation type.
 pub fn detect_fr_id_format(document: &DocSource) -> Vec<FrIdDefect> {

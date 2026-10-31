@@ -20,7 +20,7 @@
 ## Section Contract
 
 | Section | Why it belongs here |
-|---------|---------------------|
+| --------- | --------------------- |
 | Design Overview | Orients the reader before the requirements begin. |
 | Design Requirements | `DS-<DESIGNNAME>-NNN` items the surface must carry. |
 | Reference | Connects the spec back to the spec chain. |
