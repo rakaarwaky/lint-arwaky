@@ -2,8 +2,8 @@ name: Auto-merge gated PRs
 
 # Enables GitHub's native auto-merge (squash) on release PRs only.
 # All other PRs are merged by Mergify's merge queue — see .mergify.yml.
-# The GitHub ruleset on main requires the 6 quality-gate checks
-# (Format, Clippy, Build, Tests, Self-Lint, Codacy). GitHub's native
+# The GitHub ruleset on main requires the 5 quality-gate checks
+# (Format, Clippy, Build, Tests, Self-Lint). GitHub's native
 # auto-merge holds the PR until those checks succeed, then merges.
 
 on:
