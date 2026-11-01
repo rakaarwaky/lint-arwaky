@@ -48,13 +48,13 @@ metadata:
 > **Scope**: Python, Rust, and TypeScript `root_<concept>_<container|entry>` files (plus documented barrel/entry exceptions).
 
 The **layer** decides which suffix, which imports, and which structure apply.
-Rules, templates, section contracts, and Verify blocks live in the language HOW-TUs under [`references/`](references/).
+Rules, templates, section contracts, and Verify blocks live in the language HOW-TOs under [`references/`](references/).
 
 | Language | Focus | Body rule | HOW-TO|
 | -------- | ----- | --------- | ------|
-| Python | Container / entry | Wires only; no business/orchestration logic | [references/HOW-TO-MAKE-PYTHON-ROOT.md](references/HOW-TO-MAKE-PYTHON-ROOT.md)|
-| Rust | Container / entry | Wires only; no business/orchestration logic | [references/HOW-TO-MAKE-RUST-ROOT.md](references/HOW-TO-MAKE-RUST-ROOT.md)|
-| TypeScript | Container / entry | Wires only; no business/orchestration logic | [references/HOW-TO-MAKE-TYPESCRIPT-ROOT.md](references/HOW-TO-MAKE-TYPESCRIPT-ROOT.md)|
+| Python | Container / entry | Wires only; no business/orchestration logic | [references/python-root.md](references/python-root.md)|
+| Rust | Container / entry | Wires only; no business/orchestration logic | [references/rust-root.md](references/rust-root.md)|
+| TypeScript | Container / entry | Wires only; no business/orchestration logic | [references/typescript-root.md](references/typescript-root.md)|
 
 **The layer chain:**
 

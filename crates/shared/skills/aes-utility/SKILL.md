@@ -17,9 +17,7 @@ metadata:
     - aes-lint-arwaky
     - aes-taxonomy
     - aes-capabilities
-    - aes-agent
-    - aes-taxonomy
-  triggers:
+    - aes-agent  triggers:
     - create utility
     - create utility python
     - create utility rust
@@ -63,13 +61,13 @@ A utility and a capability are fundamentally different layers. Confusing them ca
 **Decision rule**: Ask "Does this code perform a narrow, stateless, reusable operation with no business logic?" If yes → utility. Ask "Does this code implement a protocol behaviour with business rules?" If yes → capability. If it does both, split it: business logic stays in the capability; the stateless helper moves to utility.
 
 The **layer** decides which suffix, which imports, and which structure apply.
-Rules, templates, section contracts, and Verify blocks live in the language HOW-TUs under [`references/`](references/).
+Rules, templates, section contracts, and Verify blocks live in the language HOW-TOs under [`references/`](references/).
 
 | Language | Focus | Body rule | HOW-TO|
 | -------- | ----- | --------- | ------|
-| Python | Stateless free functions | No class; no `self` in function params (redundant with class check); taxonomy-only imports | [references/HOW-TO-MAKE-PYTHON-UTILITY.md](references/HOW-TO-MAKE-PYTHON-UTILITY.md)|
-| Rust | Stateless free functions | No struct/impl/trait/type-alias; taxonomy-only imports (not other utilities) | [references/HOW-TO-MAKE-RUST-UTILITY.md](references/HOW-TO-MAKE-RUST-UTILITY.md)|
-| TypeScript | Stateless free functions | No class/interface/enum/type-alias; taxonomy-only imports (not other utilities) | [references/HOW-TO-MAKE-TYPESCRIPT-UTILITY.md](references/HOW-TO-MAKE-TYPESCRIPT-UTILITY.md)|
+| Python | Stateless free functions | No class; no `self` in function params (redundant with class check); taxonomy-only imports | [references/python-utility.md](references/python-utility.md)|
+| Rust | Stateless free functions | No struct/impl/trait/type-alias; taxonomy-only imports (not other utilities) | [references/rust-utility.md](references/rust-utility.md)|
+| TypeScript | Stateless free functions | No class/interface/enum/type-alias; taxonomy-only imports (not other utilities) | [references/typescript-utility.md](references/typescript-utility.md)|
 
 **The layer chain:**
 

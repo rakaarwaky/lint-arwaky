@@ -22,10 +22,7 @@ metadata:
     - aes-agent
     - aes-surface
     - aes-root
-    - aes-testing-suite
-    - aes-utility
-    - aes-root
-  triggers:
+    - aes-testing-suite  triggers:
     - lint arwaky
     - lint arwaky python
     - lint arwaky rust
@@ -61,11 +58,11 @@ metadata:
 
 | Language | HOW-TO | Use when|
 | -------- | ------ | --------|
-| All (shared CLI, MCP, exit codes, AES101 naming) | [`references/HOW-TO-USE-LINT-COMMANDS.md`](references/HOW-TO-USE-LINT-COMMANDS.md) | Invoking scan/fix/ci, aliases, flags, MCP tools, layer matrix|
-| Python | [`references/HOW-TO-USE-LINT-PYTHON.md`](references/HOW-TO-USE-LINT-PYTHON.md) | `modules/`, `py_compile` / Ruff / Mypy verify, `__init__.py` barrel|
-| Rust | [`references/HOW-TO-USE-LINT-RUST.md`](references/HOW-TO-USE-LINT-RUST.md) | `crates/`, `cargo check` / clippy / nextest verify, `mod.rs` barrel|
-| TypeScript | [`references/HOW-TO-USE-LINT-TYPESCRIPT.md`](references/HOW-TO-USE-LINT-TYPESCRIPT.md) | `packages/`, `tsc` / ESLint / vitest verify, `index.ts` barrel|
-| Fix routing (every AES code) | [`references/HOW-TO-USE-LINT-ROUTING.md`](references/HOW-TO-USE-LINT-ROUTING.md) | Mapping a finding to its fix + owning `aes-*` skill|
+| All (shared CLI, MCP, exit codes, AES101 naming) | [`references/lint-commands.md`](references/lint-commands.md) | Invoking scan/fix/ci, aliases, flags, MCP tools, layer matrix|
+| Python | [`references/lint-python.md`](references/lint-python.md) | `modules/`, `py_compile` / Ruff / Mypy verify, `__init__.py` barrel|
+| Rust | [`references/lint-rust.md`](references/lint-rust.md) | `crates/`, `cargo check` / clippy / nextest verify, `mod.rs` barrel|
+| TypeScript | [`references/lint-typescript.md`](references/lint-typescript.md) | `packages/`, `tsc` / ESLint / vitest verify, `index.ts` barrel|
+| Fix routing (every AES code) | [`references/lint-routing.md`](references/lint-routing.md) | Mapping a finding to its fix + owning `aes-*` skill|
 
 Read the HOW-TO for the active language before fixing. Do not restate flags, subcommands, or
 the fix table here — they live in the HOW-TOs.
@@ -96,11 +93,11 @@ the routing HOW-TO. `tests/` / `benches/` are **not** AES layers (see `aes-testi
 Scan failed or findings non-zero?
 ├─ exit 2 → config/parse → lint_arwaky.config.yaml / path → fix config, re-run
 ├─ exit 1, findings present
-│  ├─ CRITICAL 🔴 AES201 / AES205 → structural; route via HOW-TO-USE-LINT-ROUTING.md (aes-contract)
+│  ├─ CRITICAL 🔴 AES201 / AES205 → structural; route via references/lint-routing.md (aes-contract)
 │  ├─ HIGH 🟡 AES101–102, AES202, AES301–303, AES401–403, AES406, AES505–506 → fix / aes-{layer}
 │  ├─ MEDIUM/LOW 🟢 AES203–204, AES305, AES404–405, AES501–504 → fix (AES101/203 auto-fix) or aes-{layer} (manual)
 │  └─ After each AES101 rename → barrel update (language HOW-TO) or orphan reappears
-└─ exit 0 but code unhealthy → language verify failed → HOW-TO-USE-LINT-<LANG>.md pipeline
+└─ exit 0 but code unhealthy → language verify pipeline
 
 ```text
 
@@ -109,12 +106,12 @@ Scan failed or findings non-zero?
 1. **Pre-flight** — codebase must build/parse in its own language (language HOW-TO). Violations
    on broken code are unreliable.
 2. **Scan** — `lint-arwaky-cli scan <target-path> --format json` (shared flags:
-   `HOW-TO-USE-LINT-COMMANDS.md`). Triage CRITICAL → HIGH → MEDIUM/LOW.
+   `references/lint-commands.md`). Triage CRITICAL → HIGH → MEDIUM/LOW.
 3. **Diagnose** — per finding: AES code, layer prefix, auto-fixable?, root cause. Full table:
-   `references/HOW-TO-USE-LINT-ROUTING.md`.
+   `references/lint-routing.md`.
 4. **Fix** — auto: `lint-arwaky-cli fix <path>` (`--dry-run`, optional `--filter`). Manual:
-   route via HOW-TO-USE-LINT-ROUTING.md to the owning `aes-*` skill.
-5. **Verify** — re-scan to 0, then language verify pipeline (HOW-TO-USE-LINT-<LANG>.md).
+   route via references/lint-routing.md to the owning `aes-*` skill.
+5. **Verify** — re-scan to 0, then language verify pipeline.
 6. **Commit** — only when asked: `fix: resolve <N> AES violations (<rules>)`.
 
 ## Verification
@@ -140,7 +137,7 @@ lint-arwaky-cli orphan <path> --format json
 - [ ] Every fix applied from the routing HOW-TO row (or auto-fix set), not a hand-rolled edit.
 - [ ] Barrel/`mod.rs`/`index.ts` updated after every AES101 rename.
 - [ ] Re-scan reports **0** AES violations (exit 0).
-- [ ] Language verify pipeline (HOW-TO-USE-LINT-<LANG>.md) also green.
+- [ ] Language verify pipeline also green.
 
 ## Pre-flight Checklist
 
@@ -158,7 +155,7 @@ lint-arwaky-cli orphan <path> --format json
 | AES101 rename without barrel/`mod.rs`/`index.ts` update | Re-export immediately — otherwise AES501–506 orphan.|
 | Declaring done at "mostly clean" | Done = re-scan **0** + language verify; exit code is the gate.|
 | Parsing stdout instead of exit code for CI | Gate on `0`/`1`/`2`; stdout is not the contract.|
-| Re-guessing fix rows from memory | Consult `HOW-TO-USE-LINT-ROUTING.md` every time.|
+| Re-guessing fix rows from memory | Consult `references/lint-routing.md` every time.|
 | Treating `tests/`/`benches/` as AES layers | They follow `aes-testing-suite` naming, not AES101–102.|
 
 ## Related Skills

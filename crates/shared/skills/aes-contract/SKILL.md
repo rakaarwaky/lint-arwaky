@@ -51,9 +51,9 @@ Rules, templates, section contracts, and Verify blocks live in the language HOW-
 
 | Language   | Declaration                                  | Body rule                          | HOW-TO|
 | ---------- | -------------------------------------------- | ---------------------------------- | ------|
-| Python     | `class I<Name>…(ABC)` + `@abstractmethod`    | `...` / `pass` — never real code   | [references/HOW-TO-MAKE-PYTHON-CONTRACT.md](references/HOW-TO-MAKE-PYTHON-CONTRACT.md)|
-| Rust       | `pub trait I<Name>…: Send + Sync`            | Ends with `;`, no bodies           | [references/HOW-TO-MAKE-RUST-CONTRACT.md](references/HOW-TO-MAKE-RUST-CONTRACT.md)|
-| TypeScript | `export interface I<Name>…`                  | Signature only, no class           | [references/HOW-TO-MAKE-TYPESCRIPT-CONTRACT.md](references/HOW-TO-MAKE-TYPESCRIPT-CONTRACT.md)|
+| Python     | `class I<Name>…(ABC)` + `@abstractmethod`    | `...` / `pass` — never real code   | [references/python-contract.md](references/python-contract.md)|
+| Rust       | `pub trait I<Name>…: Send + Sync`            | Ends with `;`, no bodies           | [references/rust-contract.md](references/rust-contract.md)|
+| TypeScript | `export interface I<Name>…`                  | Signature only, no class           | [references/typescript-contract.md](references/typescript-contract.md)|
 
 **The contract chain:**
 
@@ -134,7 +134,7 @@ Same shape for Python (`_protocol.py`), Rust (`_protocol.rs`), and TypeScript (`
 
 1. **Resolve the contract dir** in the shared domain beside taxonomy.
 2. **Analyze**: Which suffix? Who implements, who consumes? Run `lint-arwaky-cli scan <contract-dir>` — findings are your work list.
-3. **Draft protocol**: One file per feature, one trait/class/interface per capability seam, each rich with named methods. See [references/HOW-TO-MAKE-PYTHON-CONTRACT.md](references/HOW-TO-MAKE-PYTHON-CONTRACT.md) (or Rust/TS HOW-TO).
+3. **Draft protocol**: One file per feature, one trait/class/interface per capability seam, each rich with named methods. See [references/python-contract.md](references/python-contract.md) (or Rust/TS HOW-TO).
 4. **Draft aggregate**: Exactly one `execute()` method returning a taxonomy-defined response enum. Same HOW-TO § Template / § Section Contract.
 5. **Register** in `__init__.py` / `mod.rs` / `index.ts`.
 6. **Verify**: `lint-arwaky-cli scan <contract-dir>` (HOW-TO § Verify), then implement with `aes-capabilities` / `aes-agent`.

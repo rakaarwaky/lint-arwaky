@@ -45,13 +45,13 @@ metadata:
 > **Scope**: Python, Rust, and TypeScript `surface_<domain>_<role>` files — Smart / Utility / Passive tiers.
 
 The **layer** decides which suffix, which imports, and which structure apply.
-Rules, templates, section contracts, and Verify blocks live in the language HOW-TUs under [`references/`](references/).
+Rules, templates, section contracts, and Verify blocks live in the language HOW-TOs under [`references/`](references/).
 
 | Language | Focus | Body rule | HOW-TO|
 | -------- | ----- | --------- | ------|
-| Python | Command / controller / component | Smart / Utility / Passive tiers; no business logic | [references/HOW-TO-MAKE-PYTHON-SURFACE.md](references/HOW-TO-MAKE-PYTHON-SURFACE.md)|
-| Rust | Command / controller / component | Smart / Utility / Passive tiers; no business logic | [references/HOW-TO-MAKE-RUST-SURFACE.md](references/HOW-TO-MAKE-RUST-SURFACE.md)|
-| TypeScript | Command / controller / component | Smart / Utility / Passive tiers; no business logic | [references/HOW-TO-MAKE-TYPESCRIPT-SURFACE.md](references/HOW-TO-MAKE-TYPESCRIPT-SURFACE.md)|
+| Python | Command / controller / component | Smart / Utility / Passive tiers; no business logic | [references/python-surface.md](references/python-surface.md)|
+| Rust | Command / controller / component | Smart / Utility / Passive tiers; no business logic | [references/rust-surface.md](references/rust-surface.md)|
+| TypeScript | Command / controller / component | Smart / Utility / Passive tiers; no business logic | [references/typescript-surface.md](references/typescript-surface.md)|
 
 **The layer chain:**
 

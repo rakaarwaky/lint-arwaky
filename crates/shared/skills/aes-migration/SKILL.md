@@ -40,13 +40,13 @@ metadata:
 > **Audience**: The agent planning or executing a migration to AES.
 > **Scope**: Python, Rust, and TypeScript projects; references contain full migration playbooks.
 
-This skill is a **router** — it points at language-specific migration guides under [`reference/`](reference/) and the layer skills that execute each phase. Rules, templates, and verify blocks live in the referenced HOW-TUs.
+This skill is a **router** — it points at language-specific migration guides under [`reference/`](reference/) and the layer skills that execute each phase. Rules, templates, and verify blocks live in the referenced HOW-TOs.
 
 | Language | Playbook | Source|
 | -------- | -------- | ------|
-| Python   | Phase-based migration workflow | [reference/HOW-TO-MAKE-PYTHON-MIGRATION.md](reference/HOW-TO-MAKE-PYTHON-MIGRATION.md)|
-| Rust     | Phase-based migration workflow | [reference/HOW-TO-MAKE-RUST-MIGRATION.md](reference/HOW-TO-MAKE-RUST-MIGRATION.md)|
-| TypeScript | Phase-based migration workflow | [reference/HOW-TO-MAKE-TYPESCRIPT-MIGRATION.md](reference/HOW-TO-MAKE-TYPESCRIPT-MIGRATION.md)|
+| Python   | Phase-based migration workflow | [reference/python-migration.md](reference/python-migration.md)|
+| Rust     | Phase-based migration workflow | [reference/rust-migration.md](reference/rust-migration.md)|
+| TypeScript | Phase-based migration workflow | [reference/typescript-migration.md](reference/typescript-migration.md)|
 
 **The dependency model:**
 
@@ -112,7 +112,7 @@ Ask these questions in order. The first "No" dictates your next action.
 
 ## Workflow
 
-1. **Load the language playbook**: Python → `reference/HOW-TO-MAKE-PYTHON-MIGRATION.md`, Rust → `reference/HOW-TO-MAKE-RUST-MIGRATION.md`, TypeScript → `reference/HOW-TO-MAKE-TYPESCRIPT-MIGRATION.md`.
+1. **Load the language playbook**: Python → `reference/python-migration.md`, Rust → `reference/rust-migration.md`, TypeScript → `reference/typescript-migration.md`.
 2. **Phase 0 — Audit**: Run `lint-arwaky-cli scan .`; categorize violations by layer; choose strategy.
 3. **Phase 1 — Taxonomy**: Extract VOs, errors, constants; register in shared barrel.
 4. **Phase 2 — Contract**: Create `I<Concept>Protocol` (one file per feature, one trait per capability seam) and `I<Concept>Aggregate` (exactly one `execute()` method); register.
@@ -157,14 +157,14 @@ A pass means naming, layer imports, primitives, and roles are clean. Structural 
 
 A machine pass does not mean the migration is right. Per-seam protocol shape (one file per
 feature, one trait per seam, many methods per trait) and aggregate cardinality (exactly one
-`execute()`) still need a reader (layer HOW-TUs).
+`execute()`) still need a reader (layer HOW-TOs).
 
 ---
 
 ## Pre-flight Checklist
 
 - [ ] `lint-arwaky-cli scan .` baseline captured.
-- [ ] Language playbook loaded (`HOW-TO-MAKE-PYTHON-MIGRATION.md` / `HOW-TO-MAKE-RUST-MIGRATION.md` / `HOW-TO-MAKE-TYPESCRIPT-MIGRATION.md`).
+- [ ] Language playbook loaded (`reference/python-migration.md` / `reference/rust-migration.md` / `reference/typescript-migration.md`).
 - [ ] Each layer skill consulted: `aes-taxonomy`, `aes-contract`, `aes-utility`, `aes-capabilities`, `aes-agent`, `aes-surface`, `aes-root`.
 - [ ] Every touched layer's `Verify` block executed.
 - [ ] Protocol = one file per feature, one trait per seam, each rich; aggregate = exactly one `execute()` method (manual).

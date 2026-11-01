@@ -64,13 +64,13 @@ A capability and a utility are fundamentally different layers. Confusing them ca
 **Decision rule**: Ask "Does this code implement a protocol behaviour with business rules?" If yes → capability. Ask "Does this code perform a narrow, stateless, reusable operation with no business logic?" If yes → utility. If it does both, split it: business logic stays in the capability; the stateless helper moves to utility.
 
 The **layer** decides which suffix, which imports, and which structure apply.
-Rules, templates, section contracts, and Verify blocks live in the language HOW-TUs under [`references/`](references/).
+Rules, templates, section contracts, and Verify blocks live in the language HOW-TOs under [`references/`](references/).
 
 | Language | Focus | Body rule | HOW-TO|
 | -------- | ----- | --------- | ------|
-| Python | Protocol implementation | 3-block; ≥1 protocol; ≤3 types | [references/HOW-TO-MAKE-PYTHON-CAPABILITIES.md](references/HOW-TO-MAKE-PYTHON-CAPABILITIES.md)|
-| Rust | Protocol implementation | 3-block; ≥1 protocol; ≤3 types | [references/HOW-TO-MAKE-RUST-CAPABILITIES.md](references/HOW-TO-MAKE-RUST-CAPABILITIES.md)|
-| TypeScript | Protocol implementation | 3-block; ≥1 protocol; ≤3 types | [references/HOW-TO-MAKE-TYPESCRIPT-CAPABILITIES.md](references/HOW-TO-MAKE-TYPESCRIPT-CAPABILITIES.md)|
+| Python | Protocol implementation | 3-block; ≥1 protocol; ≤3 types | [references/python-capabilities.md](references/python-capabilities.md)|
+| Rust | Protocol implementation | 3-block; ≥1 protocol; ≤3 types | [references/rust-capabilities.md](references/rust-capabilities.md)|
+| TypeScript | Protocol implementation | 3-block; ≥1 protocol; ≤3 types | [references/typescript-capabilities.md](references/typescript-capabilities.md)|
 
 **The layer chain:**
 

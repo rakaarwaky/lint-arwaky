@@ -23,11 +23,9 @@ metadata:
   related_skills:
 
     - aes-capabilities
-    - aes-capabilities
     - aes-agent
     - aes-utility
     - aes-lint-arwaky
-
   triggers:
 
     - create tests
@@ -59,13 +57,13 @@ metadata:
 > **Scope**: Python, Rust, and TypeScript test and bench files — contract, unit, integration, smoke, e2e, acceptance, and bench with flat prefix naming.
 
 The **test types** decide which prefixes, which directories, and which coverage floor apply.
-Rules, templates, section contracts, and Verify blocks live in the language HOW-TUs under [`references/`](references/).
+Rules, templates, section contracts, and Verify blocks live in the language HOW-TOs under [`references/`](references/).
 
 | Language | Focus | Body rule | HOW-TO|
 | -------- | ----- | --------- | ------|
-| Python | Test suite | Flat prefix naming; tests/ + benches/; no inline tests | [references/HOW-TO-MAKE-PYTHON-TESTING.md](references/HOW-TO-MAKE-PYTHON-TESTING.md)|
-| Rust | Test suite | Flat prefix naming; tests/ + benches/; no inline tests | [references/HOW-TO-MAKE-RUST-TESTING.md](references/HOW-TO-MAKE-RUST-TESTING.md)|
-| TypeScript | Test suite | Flat prefix naming; tests/ + benches/; no inline tests | [references/HOW-TO-MAKE-TYPESCRIPT-TESTING.md](references/HOW-TO-MAKE-TYPESCRIPT-TESTING.md)|
+| Python | Test suite | Flat prefix naming; tests/ + benches/; no inline tests | [references/python-testing.md](references/python-testing.md)|
+| Rust | Test suite | Flat prefix naming; tests/ + benches/; no inline tests | [references/rust-testing.md](references/rust-testing.md)|
+| TypeScript | Test suite | Flat prefix naming; tests/ + benches/; no inline tests | [references/typescript-testing.md](references/typescript-testing.md)|
 
 **The test chain:**
 

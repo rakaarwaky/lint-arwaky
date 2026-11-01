@@ -35,9 +35,9 @@ metadata:
 
 | Language   | Focus                          | Template                                                           |
 | ---------- | ------------------------------ | ------------------------------------------------------------------ |
-| Python     | PEP 257 docstrings             | [references/HOW-TO-MAKE-PYTHON-DOC.md](references/HOW-TO-MAKE-PYTHON-DOC.md) |
-| Rust       | `///` + rustdoc sections       | [references/HOW-TO-MAKE-RUST-DOC.md](references/HOW-TO-MAKE-RUST-DOC.md) |
-| TypeScript | JSDoc / TSDoc                  | [references/HOW-TO-MAKE-TYPESCRIPT-DOC.md](references/HOW-TO-MAKE-TYPESCRIPT-DOC.md) |
+| Python     | PEP 257 docstrings             | [references/python-doc.md](references/python-doc.md) |
+| Rust       | `///` + rustdoc sections       | [references/rust-doc.md](references/rust-doc.md) |
+| TypeScript | JSDoc / TSDoc                  | [references/typescript-doc.md](references/typescript-doc.md) |
 
 ## Rules
 
@@ -60,7 +60,7 @@ Six rules. Each one prevents a specific failure mode.
 
 ## Templates
 
-Copy, fill, delete nothing — see [`references/HOW-TO-MAKE-PYTHON-DOC.md`](references/HOW-TO-MAKE-PYTHON-DOC.md), [`references/HOW-TO-MAKE-RUST-DOC.md`](references/HOW-TO-MAKE-RUST-DOC.md), and [`references/HOW-TO-MAKE-TYPESCRIPT-DOC.md`](references/HOW-TO-MAKE-TYPESCRIPT-DOC.md).
+Copy, fill, delete nothing — see [`references/python-doc.md`](references/python-doc.md), [`references/rust-doc.md`](references/rust-doc.md), and [`references/typescript-doc.md`](references/typescript-doc.md).
 
 ## Verification
 
