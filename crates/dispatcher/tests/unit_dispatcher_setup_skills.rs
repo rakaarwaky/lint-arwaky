@@ -478,12 +478,7 @@ fn test_collect_init_python_only_skips_rust_and_ts_skills() {
         !written.keys().any(|k| k.contains("rust-")),
         "rust references must NOT be installed in a python-only project"
     );
-    assert!(
-        !written
-            .keys()
-            .any(|k| k.contains("typescript-")),
-        "typescript references must NOT be installed in a python-only project"
-    );
+    assert!(!written.keys().any(|k| k.contains("typescript-")));
 
     // Derived from the catalog rather than hard-coded: everything
     // language-agnostic, plus the python half of the polyglot skills.
@@ -524,11 +519,7 @@ fn test_collect_init_rust_only_skips_python_and_ts_skills() {
 
     // Verify Python and TypeScript references are NOT installed
     assert!(!written.keys().any(|k| k.contains("python-")));
-    assert!(
-        !written
-            .keys()
-            .any(|k| k.contains("typescript-"))
-    );
+    assert!(!written.keys().any(|k| k.contains("typescript-")));
 
     // Derived from the catalog rather than hard-coded: everything
     // language-agnostic, plus the rust half of the polyglot skills.
