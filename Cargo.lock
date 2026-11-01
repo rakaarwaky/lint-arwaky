@@ -187,7 +187,7 @@ checksum = "1505bd5d3d116872e7271a6d4e16d81d0c8570876c8de68093a09ac269d8aac0"
 
 [[package]]
 name = "auto-fix-lint-arwaky"
-version = "3.13.0"
+version = "3.14.0"
 dependencies = [
  "criterion",
  "filesystem-lint-arwaky",
@@ -555,7 +555,7 @@ checksum = "c8d4a3bb8b1e0c1050499d1815f5ab16d04f0959b233085fb31653fbfc9d98f9"
 
 [[package]]
 name = "cli-commands"
-version = "3.13.0"
+version = "3.14.0"
 dependencies = [
  "clap",
  "criterion",
@@ -684,7 +684,7 @@ dependencies = [
 
 [[package]]
 name = "config-system-lint-arwaky"
-version = "3.13.0"
+version = "3.14.0"
 dependencies = [
  "criterion",
  "dashmap",
@@ -1139,7 +1139,7 @@ dependencies = [
 
 [[package]]
 name = "dispatcher-lint-arwaky"
-version = "3.13.0"
+version = "3.14.0"
 dependencies = [
  "config-system-lint-arwaky",
  "criterion",
@@ -1192,7 +1192,7 @@ dependencies = [
 
 [[package]]
 name = "doc-rules-lint-arwaky"
-version = "3.13.0"
+version = "3.14.0"
 dependencies = [
  "criterion",
  "dispatcher-lint-arwaky",
@@ -1294,7 +1294,7 @@ dependencies = [
 
 [[package]]
 name = "external-lint-lint-arwaky"
-version = "3.13.0"
+version = "3.14.0"
 dependencies = [
  "anyhow",
  "config-system-lint-arwaky",
@@ -1390,7 +1390,7 @@ dependencies = [
 
 [[package]]
 name = "file-watch-lint-arwaky"
-version = "3.13.0"
+version = "3.14.0"
 dependencies = [
  "async-trait",
  "criterion",
@@ -1419,7 +1419,7 @@ dependencies = [
 
 [[package]]
 name = "filesystem-lint-arwaky"
-version = "3.13.0"
+version = "3.14.0"
 dependencies = [
  "anyhow",
  "camino",
@@ -1689,7 +1689,7 @@ dependencies = [
 
 [[package]]
 name = "git-hooks-lint-arwaky"
-version = "3.13.0"
+version = "3.14.0"
 dependencies = [
  "criterion",
  "filesystem-lint-arwaky",
@@ -2874,7 +2874,7 @@ dependencies = [
 
 [[package]]
 name = "import-rules-lint-arwaky"
-version = "3.13.0"
+version = "3.14.0"
 dependencies = [
  "criterion",
  "filesystem-lint-arwaky",
@@ -3205,7 +3205,7 @@ checksum = "0717cef1bc8b636c6e1c1bbdefc09e6322da8a9321966e8928ef80d20f7f770f"
 
 [[package]]
 name = "lint_arwaky-arwaky"
-version = "3.13.0"
+version = "3.14.0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -3308,7 +3308,7 @@ checksum = "0ceec5bc11778974d1bcb055b18002eba7f4b3518b6a0081b3af5f21666da9ad"
 
 [[package]]
 name = "logging-lint-arwaky"
-version = "3.13.0"
+version = "3.14.0"
 dependencies = [
  "criterion",
  "shared-common-lint-arwaky",
@@ -3345,7 +3345,7 @@ dependencies = [
 
 [[package]]
 name = "maintenance-lint-arwaky"
-version = "3.13.0"
+version = "3.14.0"
 dependencies = [
  "criterion",
  "filesystem-lint-arwaky",
@@ -3379,7 +3379,7 @@ dependencies = [
 
 [[package]]
 name = "mcp-server-lint-arwaky"
-version = "3.13.0"
+version = "3.14.0"
 dependencies = [
  "config-system-lint-arwaky",
  "criterion",
@@ -3497,7 +3497,7 @@ dependencies = [
 
 [[package]]
 name = "naming-rules-lint-arwaky"
-version = "3.13.0"
+version = "3.14.0"
 dependencies = [
  "criterion",
  "filesystem-lint-arwaky",
@@ -3770,7 +3770,7 @@ dependencies = [
 
 [[package]]
 name = "orphan-rules-lint-arwaky"
-version = "3.13.0"
+version = "3.14.0"
 dependencies = [
  "criterion",
  "filesystem-lint-arwaky",
@@ -4157,7 +4157,7 @@ dependencies = [
 
 [[package]]
 name = "project-setup-lint-arwaky"
-version = "3.13.0"
+version = "3.14.0"
 dependencies = [
  "criterion",
  "dirs",
@@ -4178,7 +4178,7 @@ checksum = "d55d956fa96f5ec02be2e13af0e20391a5aa83d6a074e3ad368959d0fab299ea"
 
 [[package]]
 name = "quality-rules-lint-arwaky"
-version = "3.13.0"
+version = "3.14.0"
 dependencies = [
  "criterion",
  "filesystem-lint-arwaky",
@@ -4517,7 +4517,7 @@ checksum = "d6f6ff9a378485b298a5286656da665ba74413d36db0979633275d2e708145d4"
 
 [[package]]
 name = "report-formatter-lint-arwaky"
-version = "3.13.0"
+version = "3.14.0"
 dependencies = [
  "criterion",
  "serde_json",
@@ -4621,7 +4621,7 @@ dependencies = [
 
 [[package]]
 name = "role-rules-lint-arwaky"
-version = "3.13.0"
+version = "3.14.0"
 dependencies = [
  "criterion",
  "filesystem-lint-arwaky",
@@ -4985,7 +4985,7 @@ dependencies = [
 
 [[package]]
 name = "shared-auto-fix-lint-arwaky"
-version = "3.13.0"
+version = "3.14.0"
 dependencies = [
  "once_cell",
  "serde",
@@ -4994,7 +4994,7 @@ dependencies = [
 
 [[package]]
 name = "shared-cli-commands-lint-arwaky"
-version = "3.13.0"
+version = "3.14.0"
 dependencies = [
  "clap",
  "serde",
@@ -5004,7 +5004,7 @@ dependencies = [
 
 [[package]]
 name = "shared-common-lint-arwaky"
-version = "3.13.0"
+version = "3.14.0"
 dependencies = [
  "chrono",
  "clap",
@@ -5036,7 +5036,7 @@ dependencies = [
 
 [[package]]
 name = "shared-config-system-lint-arwaky"
-version = "3.13.0"
+version = "3.14.0"
 dependencies = [
  "serde",
  "serde_json",
@@ -5048,7 +5048,7 @@ dependencies = [
 
 [[package]]
 name = "shared-doc-rules-lint-arwaky"
-version = "3.13.0"
+version = "3.14.0"
 dependencies = [
  "comrak",
  "regex",
@@ -5059,7 +5059,7 @@ dependencies = [
 
 [[package]]
 name = "shared-external-lint-lint-arwaky"
-version = "3.13.0"
+version = "3.14.0"
 dependencies = [
  "anyhow",
  "serde",
@@ -5070,7 +5070,7 @@ dependencies = [
 
 [[package]]
 name = "shared-file-watch-lint-arwaky"
-version = "3.13.0"
+version = "3.14.0"
 dependencies = [
  "async-trait",
  "serde",
@@ -5080,7 +5080,7 @@ dependencies = [
 
 [[package]]
 name = "shared-filesystem-lint-arwaky"
-version = "3.13.0"
+version = "3.14.0"
 dependencies = [
  "ignore",
  "serde",
@@ -5095,7 +5095,7 @@ dependencies = [
 
 [[package]]
 name = "shared-git-hooks-lint-arwaky"
-version = "3.13.0"
+version = "3.14.0"
 dependencies = [
  "serde",
  "serde_json",
@@ -5105,7 +5105,7 @@ dependencies = [
 
 [[package]]
 name = "shared-import-rules-lint-arwaky"
-version = "3.13.0"
+version = "3.14.0"
 dependencies = [
  "serde",
  "shared-common-lint-arwaky",
@@ -5116,7 +5116,7 @@ dependencies = [
 
 [[package]]
 name = "shared-logging-lint-arwaky"
-version = "3.13.0"
+version = "3.14.0"
 dependencies = [
  "shared-common-lint-arwaky",
  "tracing",
@@ -5125,7 +5125,7 @@ dependencies = [
 
 [[package]]
 name = "shared-maintenance-lint-arwaky"
-version = "3.13.0"
+version = "3.14.0"
 dependencies = [
  "serde",
  "shared-common-lint-arwaky",
@@ -5133,7 +5133,7 @@ dependencies = [
 
 [[package]]
 name = "shared-naming-rules-lint-arwaky"
-version = "3.13.0"
+version = "3.14.0"
 dependencies = [
  "shared-common-lint-arwaky",
  "shared-config-system-lint-arwaky",
@@ -5142,7 +5142,7 @@ dependencies = [
 
 [[package]]
 name = "shared-orphan-rules-lint-arwaky"
-version = "3.13.0"
+version = "3.14.0"
 dependencies = [
  "serde",
  "shared-common-lint-arwaky",
@@ -5154,7 +5154,7 @@ dependencies = [
 
 [[package]]
 name = "shared-project-setup-lint-arwaky"
-version = "3.13.0"
+version = "3.14.0"
 dependencies = [
  "comrak",
  "dirs",
@@ -5165,7 +5165,7 @@ dependencies = [
 
 [[package]]
 name = "shared-quality-rules-lint-arwaky"
-version = "3.13.0"
+version = "3.14.0"
 dependencies = [
  "serde",
  "shared-cli-commands-lint-arwaky",
@@ -5175,7 +5175,7 @@ dependencies = [
 
 [[package]]
 name = "shared-report-formatter-lint-arwaky"
-version = "3.13.0"
+version = "3.14.0"
 dependencies = [
  "serde",
  "shared-cli-commands-lint-arwaky",
@@ -5184,7 +5184,7 @@ dependencies = [
 
 [[package]]
 name = "shared-role-rules-lint-arwaky"
-version = "3.13.0"
+version = "3.14.0"
 dependencies = [
  "shared-common-lint-arwaky",
  "shared-filesystem-lint-arwaky",
@@ -5192,14 +5192,14 @@ dependencies = [
 
 [[package]]
 name = "shared-structure-rules-lint-arwaky"
-version = "3.13.0"
+version = "3.14.0"
 dependencies = [
  "shared-naming-rules-lint-arwaky",
 ]
 
 [[package]]
 name = "shared-tui-lint-arwaky"
-version = "3.13.0"
+version = "3.14.0"
 dependencies = [
  "arboard",
  "ratatui",
@@ -5336,7 +5336,7 @@ checksum = "7da8b5736845d9f2fcb837ea5d9e2628564b3b043a70948a3f0b778838c5fb4f"
 
 [[package]]
 name = "structure-rules-lint-arwaky"
-version = "3.13.0"
+version = "3.14.0"
 dependencies = [
  "criterion",
  "shared-naming-rules-lint-arwaky",
@@ -6027,7 +6027,7 @@ checksum = "e421abadd41a4225275504ea4d6566923418b7f05506fbc9c0fe86ba7396114b"
 
 [[package]]
 name = "tui-lint-arwaky"
-version = "3.13.0"
+version = "3.14.0"
 dependencies = [
  "anyhow",
  "arboard",

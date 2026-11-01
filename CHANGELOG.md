@@ -1,4 +1,10 @@
 # Changelog
+## 3.14.0 (2026-11-01)
+
+### Features
+
+- feat(aes): AES Architecture remediation T00–T21 — 17 real-change PRs squashed into single commit (squash_final) (#1229)
+
 ## 3.13.0 (2026-11-01)
 
 ### Features
