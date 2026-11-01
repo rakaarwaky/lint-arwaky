@@ -38,7 +38,6 @@ configuration:
   - changed-files:
       - any-glob-to-any-file: "*.yaml"
       - any-glob-to-any-file: "*.yml"
-      - any-glob-to-any-file: .codacy.yaml
       - any-glob-to-any-file: .repowise/**
       - any-glob-to-any-file: lint_arwaky.config.yaml
 

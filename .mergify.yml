@@ -2,9 +2,9 @@
 # Mergify configuration for rakaarwaky/lint-arwaky
 #
 # What this gives you as a solo developer:
-#   • Merge queue  —  all 6 quality-gate checks run on an integration commit
+#   • Merge queue  —  all 5 quality-gate checks run on an integration commit
 #                      so you never land a PR that breaks main by itself but
-#                      fails in combination. The 6 checks are declared
+#                      fails in combination. The 5 checks are declared
 #                      explicitly in defaults.queue_rule.merge_conditions
 #                      because Mergify cannot read GitHub Rulesets.
 #   • Auto-queue   —  any non-draft, conflict-free PR to main is dropped
@@ -47,7 +47,6 @@ defaults:
       - check-success = Build
       - check-success = Tests
       - check-success = Self-Lint
-      - check-success = Codacy Static Code Analysis
 
 merge_queue:
   # Serial mode: PRs tested one at a time against the latest main tip.
@@ -146,7 +145,7 @@ pull_request_rules:
     actions:
       comment:
         message: >
-          Thanks for the PR! CI is running — the merge queue will pick it up automatically once all 6 quality gates pass.
+          Thanks for the PR! CI is running — the merge queue will pick it up automatically once all 5 quality gates pass.
 
   # ── Notify when a PR merges ───────────────────────────────────────────
   - name: merged-notification

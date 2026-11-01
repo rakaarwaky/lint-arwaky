@@ -1,6 +1,6 @@
 # Repowise PR bot configuration.
 # Ignore fixture/test workspaces and non-production folders so code-health
-# scores reflect production code only. Mirrors .codacy.yaml exclusions.
+# scores reflect production code only.
 bot:
   enabled: true
   comment_mode: on_signal
