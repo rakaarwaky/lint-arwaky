@@ -1,4 +1,62 @@
 # Changelog
+## 3.13.0 (2026-11-01)
+
+### Features
+
+- feat(doc-rules): enforce role-scoped member docs and remove misplaced FRDs (#1170)
+- feat(doc-rules): migrate member docs to new closed-H2 layouts (PR-10)
+- feat(doc-rules): migrate root docs to 9-document H2 layout (PR-9)
+- feat(doc-rules): rework AES604 crosslinks to per-doc required links and Roadmap Status state vocab
+- feat(doc-rules): add PR-ID family and BACKLOG qualifier alignment (AES601)
+- feat(doc-rules): regenerate AGENTS_TEMPLATE for the new AGENTS layout
+- feat(doc-rules): rework AES604 crosslinks to per-doc required links and Roadmap Status state vocab
+- feat(doc-rules): generalize AES606 template conformance to entry-walking
+- feat(doc-rules): retire old AES602 FRD shape checks and repoint section order
+- feat(doc-rules): update shared H2 contracts and template profiles to new 9-doc layout
+- feat(structure-rules): AES702 feature_missing_root_container — require a root composition file in every feature folder (#1156)
+- feat(doc-rules): update shared H2 contracts and template profiles to new 9-doc layout
+- feat(doc-rules): align RULES_AES.md spec set with is_spec {PRD, FRD, DATA, ROADMAP}
+- feat(docs): migrate nine HOW-TO-MAKE reference templates to new 9-doc layout
+
+### Bug Fixes
+
+- fix(discovery): walk all subdirs at every level in BFS walker (#1224) (#1225)
+- fix: address review feedback for RULES_AES inventory drift PR (#1178)
+- fix(external-lint): add missing trailing newline to BACKLOG.md (MD047)
+- fix(docs): resolve PR #1164 merge conflicts with main (#1165)
+- fix(external-lint): align BACKLOG and member docs to closed H2 contracts
+- fix(doc-rules): resolve AES601 violations in crates/external-lint
+- fix(doc-rules): address pr-6 spec deviations — stray-ID fires on empty union, FRD-priority codes, strip pipes in qualifier
+- fix(doc-rules): put Reference last in FRD order fixtures
+- fix(doc-rules): address PR-5 review findings — shared REFERENCE_COLUMNS, delegate check_h2_fixed_rows, exact H2 match, hoisted HashSet, expanded conformance test matrix
+- fix(doc-rules): address PR-4 review issues — reorder FRD order test, drop stale H3 rows/comments, trim dead constant
+- fix(shared-doc-rules): correct longest-first sort comment wording
+- fix(shared-doc-rules): correct round-3 comment inaccuracies and catalog the DESIGN overview
+- fix(shared-doc-rules): address round-2 review issues — fireable DATA/DESIGN catalogs, item-title tokens, corrected comments
+- fix(doc-rules): address review feedback on PR-2 shared H2 contracts
+- fix(shared-doc-rules): correct longest-first sort comment wording
+- fix(shared-doc-rules): correct round-3 comment inaccuracies and catalog the DESIGN overview
+- fix(shared-doc-rules): address round-2 review issues — fireable DATA/DESIGN catalogs, item-title tokens, corrected comments
+- fix(doc-rules): address review feedback on PR-2 shared H2 contracts
+- fix(docs): address round-2 review feedback on SKILL.md vocabulary
+- fix(docs): address review feedback on PR-1 reference template migration
+
+### Maintenance
+
+- chore: remove stale linter ignore files (#1221)
+- chore: remove CodeQL, Codacy, and Codeac from CI (#1219)
+- Enable per-member scans to surface all 41 AES codes and update gate floor (#1212)
+- Restructure ARCHITECTURE.md to 8-H2 canonical layout (#1209)
+- docs(arch): redesign ARCHITECTURE.md with numbered sections and compact tables (#1203)
+- docs: delete RULES_AES.md, single-source rules in ARCHITECTURE.md (#1200)
+- chore: remove Orca worktree artifacts (AGENT_PROMPT, mcp configs, violations report) (#1198)
+- docs(rules): reduce RULES_AES.md to thin pointer (#1192)
+- docs(arch): write merged ARCHITECTURE.md rule-inventory sections 13-21 (#1191)
+- docs(arch): extend ARCHITECTURE doc-contract H2 list by 9 rule-section entries (#1190)
+- docs(frd): upgrade HOW-TO-MAKE-FRD reference to PRD gold standard with fan-out workflow (#1175)
+- docs(prd): update HOW-TO-MAKE-PRD reference with fan-out workflow and improve root PRD (#1173)
+- docs(doc-rules): update FRD/BACKLOG for the retired AES602 shape checks
+
 ## 3.12.1 (2026-10-25)
 
 - No significant changes
