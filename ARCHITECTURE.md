@@ -206,6 +206,8 @@ Group 3 enforces file size limits and content quality standards to maintain code
 
 ### AES303 — Mandatory Definition
 
+Skipped for `utility`/`surface` layers; active for taxonomy/contract/capabilities/agent/root.
+
 | Field | Value |
 | ----- | ----- |
 | Severity | HIGH (missing) / MEDIUM (empty) |
