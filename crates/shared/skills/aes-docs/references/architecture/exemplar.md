@@ -194,6 +194,8 @@ Group 3 enforces file size limits and content quality standards to maintain code
 
 ### AES303 — Mandatory Definition
 
+Skipped for `utility`/`surface` layers; active for taxonomy/contract/capabilities/agent/root.
+
 | Field      | Value                                                                                                                                                                                                              |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Fires when | A source file has no struct/enum/trait/class definition (HIGH, `MANDATORY_DEFINITION`), or a definition is empty (MEDIUM, `DEAD_INHERITANCE`): `struct Foo;`, `impl X for Y {}`, `class Foo: pass`, `class Foo {}` |

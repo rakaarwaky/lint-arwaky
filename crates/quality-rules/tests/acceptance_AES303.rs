@@ -37,6 +37,7 @@ fn file_without_struct_or_class_produces_aes303() {
         "src/capabilities/my_logic.rs",
         Some(&def),
         content,
+        "capabilities",
         &mut violations,
     );
 
@@ -55,6 +56,7 @@ fn file_with_struct_no_violation() {
         "src/capabilities/my_struct.rs",
         Some(&def),
         content,
+        "capabilities",
         &mut violations,
     );
 
@@ -71,6 +73,7 @@ fn file_with_enum_no_violation() {
         "src/capabilities/color.rs",
         Some(&def),
         content,
+        "capabilities",
         &mut violations,
     );
 
@@ -87,6 +90,7 @@ fn file_with_trait_no_violation() {
         "src/capabilities/my_trait.rs",
         Some(&def),
         content,
+        "capabilities",
         &mut violations,
     );
 
@@ -103,6 +107,7 @@ fn file_with_python_class_no_violation() {
         "src/capabilities/my_class.py",
         Some(&def),
         content,
+        "capabilities",
         &mut violations,
     );
 
@@ -119,9 +124,86 @@ fn file_with_ts_interface_no_violation() {
         "src/capabilities/my_interface.ts",
         Some(&def),
         content,
+        "capabilities",
         &mut violations,
     );
 
+    assert!(violations.is_empty());
+}
+
+// New: AES303 is skipped for the utility layer (no type required)
+#[test]
+fn utility_layer_without_definition_is_skipped() {
+    let def = def_with_mandatory(true);
+    let content = "let x = 1;\nfn helper() {}\n";
+    let mut violations: Vec<LintResult> = Vec::new();
+
+    class_checker().check_mandatory_class_definition(
+        "src/utility/my_util.rs",
+        Some(&def),
+        content,
+        "utility",
+        &mut violations,
+    );
+
+    // AES303/MANDATORY_DEFINITION suppressed: utility layer does not carry a top-level type.
+    assert!(violations.is_empty());
+}
+
+// New: AES303 is skipped for the utility layer even when a type IS declared (skip wins regardless of content)
+#[test]
+fn utility_layer_with_definition_is_skipped() {
+    let def = def_with_mandatory(true);
+    let content = "pub struct Foo {\n    pub bar: i32,\n}\n";
+    let mut violations: Vec<LintResult> = Vec::new();
+
+    class_checker().check_mandatory_class_definition(
+        "src/utility/my_util.rs",
+        Some(&def),
+        content,
+        "utility",
+        &mut violations,
+    );
+
+    // AES303/MANDATORY_DEFINITION suppressed: utility layer does not carry a top-level type.
+    assert!(violations.is_empty());
+}
+
+// New: AES303 is skipped for the surface layer (no type required)
+#[test]
+fn surface_layer_without_definition_is_skipped() {
+    let def = def_with_mandatory(true);
+    let content = "let x = 1;\nfn helper() {}\n";
+    let mut violations: Vec<LintResult> = Vec::new();
+
+    class_checker().check_mandatory_class_definition(
+        "src/surface/my_controller.rs",
+        Some(&def),
+        content,
+        "surface",
+        &mut violations,
+    );
+
+    // AES303/MANDATORY_DEFINITION suppressed: surface layer is a function dispatcher.
+    assert!(violations.is_empty());
+}
+
+// New: AES303 is skipped for the surface layer even when a type IS declared (skip wins regardless of content)
+#[test]
+fn surface_layer_with_definition_is_skipped() {
+    let def = def_with_mandatory(true);
+    let content = "pub struct Bar {\n    pub id: u64,\n}\n";
+    let mut violations: Vec<LintResult> = Vec::new();
+
+    class_checker().check_mandatory_class_definition(
+        "src/surface/my_controller.rs",
+        Some(&def),
+        content,
+        "surface",
+        &mut violations,
+    );
+
+    // AES303/MANDATORY_DEFINITION suppressed: surface layer is a function dispatcher.
     assert!(violations.is_empty());
 }
 

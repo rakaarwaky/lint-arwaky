@@ -258,7 +258,7 @@ If any rule produces 0 violations, the test project is missing a trigger file.
 | AES205 | Circular dependency                    | ✓   | ✓     | ✓   | ✓          |
 | AES301 | Max line count exceeded                | ✓   | ✓     | ✓   | ✓          |
 | AES302 | Min line count below                   | ✓   | ✓     | ✓   | ✓          |
-| AES303 | Missing definitions / dead inheritance | ✓   | ✓     | ✓   | ✓          |
+| AES303 | Missing definitions / dead inheritance | ✓   | ✓     | ✓   | ✓²         |
 | AES304 | Bypass detection                       | ✓   | ✓     | ✓   | ✓          |
 | AES305 | Duplicate code                         | ✓   | ✓     | ✓   | ✓          |
 | AES401 | Taxonomy purity                        | ✓   | ✓     | ✓   | ✓          |
@@ -297,6 +297,10 @@ Each member folder carries its own copy of the root docs plus a
 `surface_probe` folder with a DESIGN.md, so a per-member scan
 (`scan workspaces-bad/crates`, `scan workspaces-bad/modules`,
 `scan workspaces-bad/packages`) surfaces all 41 codes individually.
+
+² AES303 mandatory-definition is skipped for the `utility` and `surface`
+layers (stateless pure functions and function dispatchers), while remaining
+active for taxonomy, contract, capabilities, agent, and root.
 
 ### 3.3 Negative Tests (must produce 0 violations)
 

@@ -148,6 +148,7 @@ impl CodeAnalysisOrchestrator {
                     &file,
                     Some(def),
                     c,
+                    layer.value.as_str(),
                     &mut v,
                 );
 

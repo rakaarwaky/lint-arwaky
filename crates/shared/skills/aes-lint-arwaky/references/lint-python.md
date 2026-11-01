@@ -96,7 +96,7 @@ lint-arwaky-cli scan modules/ --format sarif \
 - **AES405** → every agent class MUST inherit its aggregate ABC, no direct `capabilities_*`
   import, no `: Any` on aggregate signatures.
 - **AES404** → `utility_*` files: stateless functions only; import `taxonomy` and nothing else.
-- **AES303** → add the missing `class` / `def`.
+- **AES303** → add the missing `class` / `def` (skipped for `utility`/`surface` layers).
 
 ### Role boundaries
 

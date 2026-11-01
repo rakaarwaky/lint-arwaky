@@ -206,12 +206,15 @@ Group 3 enforces file size limits and content quality standards to maintain code
 
 ### AES303 — Mandatory Definition
 
+Skipped for `utility`/`surface` layers; active for taxonomy/contract/capabilities/agent/root.
+
 | Field | Value |
 | ----- | ----- |
 | Severity | HIGH (missing) / MEDIUM (empty) |
 | Fires when | A source file has no struct/enum/trait/class definition, or a definition is empty |
-| Scope | Every scanned source file; barrel/entry files, `*_constant.rs`, `*_constant.py`, `main.rs`, `main.py`, `py.typed` are excepted |
+| Scope | Every scanned source file except `utility` and `surface` layers; barrel/entry files, `*_constant.rs`, `*_constant.py`, `main.rs`, `main.py`, `py.typed` are excepted |
 | Fix | Group functions into a struct or implement an interface; remove empty definitions |
+| Layer note | The mandatory-definition sub-check is exempt for `utility` and `surface` layers (stateless pure functions and function dispatchers); it stays active for taxonomy, contract, capabilities, agent, and root. Dead-inheritance (sub-check 2) is unchanged. |
 
 #### Sub-checks
 
