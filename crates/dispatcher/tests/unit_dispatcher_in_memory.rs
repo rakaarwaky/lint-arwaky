@@ -5,7 +5,7 @@
 // That path is now forbidden (Semgrep rust.lang.security.current-exe), so
 // `collect_scan` with `None` aggregates must return a clear error instead of
 // spawning any process.
-mod common;
+mod mock_common;
 
 use dispatcher_lint_arwaky::surface_check_action::collect_scan;
 use shared_common::taxonomy_path_vo::FilePath;
@@ -52,7 +52,7 @@ fn collect_scan_with_aggregates_runs_in_memory() {
         .map(|p| p.join("workspaces-good/crates/calculator"))
         .expect("CARGO_MANIFEST_DIR must be crates/dispatcher");
     let root_str = root.to_string_lossy().to_string();
-    let agg = common::build_scan_aggregates(&root_str);
+    let agg = mock_common::build_scan_aggregates(&root_str);
     let opts = dispatcher_lint_arwaky::surface_check_action::ScanOptions {
         path: Some(FilePath::new(root_str.clone()).unwrap()),
         multi_project_orchestrator: None,

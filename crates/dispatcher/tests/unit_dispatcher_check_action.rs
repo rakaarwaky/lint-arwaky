@@ -1,9 +1,9 @@
 // Unit tests — collect_scan with nonexistent path returns error.
 #[allow(dead_code, unused_imports)]
-#[path = "../../shared/tests/common/mock_filesystem.rs"]
+#[path = "../../shared/tests/mock_filesystem.rs"]
 mod mock_filesystem;
 
-// Linked from crates/shared/tests/common/mock_filesystem.rs — the canonical
+// Linked from crates/shared/tests/mock_filesystem.rs — the canonical
 // mock lives in the shared crate's tests dir; this #[path] link keeps a single
 // source of truth across the workspace (T1/D2).
 

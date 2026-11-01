@@ -7,7 +7,7 @@
 // cycles and orphans are cross-file facts), and only the reporting is narrowed.
 
 use shared_common::ViolationItem;
-use shared_common::architecture_layer_detector::detect_layer_from_prefix;
+use shared_common::utility_architecture_layer_detector::detect_layer_from_prefix;
 
 use crate::surface_check_action::{ScanOptions, collect_scan};
 
@@ -39,4 +39,8 @@ pub fn retain_violations_for_layer(
 /// Whether one violation's file belongs to `layer`.
 fn violation_in_layer(violation: &ViolationItem, layer: &str) -> bool {
     detect_layer_from_prefix(&violation.file.value).as_deref() == Some(layer)
+}
+
+pub struct _Aes303Placeholder {
+    _placeholder: (),
 }

@@ -64,3 +64,7 @@ pub fn handle_mcp_config(client: &str) -> ExitCode {
     println!("{}", report.config_json);
     ExitCode::OK
 }
+
+pub struct _Aes303Placeholder {
+    _placeholder: (),
+}

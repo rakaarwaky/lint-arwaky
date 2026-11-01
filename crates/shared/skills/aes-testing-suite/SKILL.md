@@ -131,10 +131,8 @@ Two consequences worth knowing before you name a file:
   already follows those conventions (TEST.md §2.0 requires `regression_`), but a
   folder carrying only regression guards still owes all seven test types under
   AES704.
-- **`tests/common/` is the one sanctioned subdirectory.** Rust reaches shared
-  support code through `mod common;`, so a support module cannot sit flat beside
-  the test files without colliding with them. Every other subdirectory is an
-  AES103 violation — the prefix is the virtual folder.
+- **Every file under `tests/` carries a legal prefix at the flat top level.** There
+  are no sanctioned subdirectories — the prefix is the virtual folder.
 
 Split directory tree, config file, and run commands: **read the language HOW-TO** — do not restate them here.
 
@@ -199,7 +197,7 @@ A machine pass does not mean the suite is right. Real-vs-mock wiring, FRD/PRD tr
 - [ ] Language run command exits 0.
 - [ ] Every touched HOW-TO's `Verify` block was executed.
 - [ ] No inline tests in `src/`; everything under `tests/` or `benches/`.
-- [ ] Flat prefix naming; no subdirectories except `tests/common/` (**AES103**).
+- [ ] Flat prefix naming; no subdirectories under `tests/` (**AES103**).
 - [ ] All seven test types present, plus one `bench_` file (**AES704**).
 - [ ] Contract test proves the protocol/trait/interface implementation exists.
 - [ ] Acceptance tests reference FRD/PRD IDs; smoke runs in <5s.
@@ -216,7 +214,7 @@ The runner and the linter cover green/red, flatness, and coverage. These still
 need a reader (HOW-TO § Rules):
 
 - **Inline tests in `src/`**: move to `tests/`; source stays clean.
-- **Subdirectories under `tests/`** other than `common/`: the prefix IS the folder — keep it flat (**AES103**).
+- **Subdirectories under `tests/`**: the prefix IS the folder — keep it flat (**AES103**).
 - **Hand-rolled timing loops**: use `pytest-benchmark` / `criterion` / `vitest/benchmark`.
 - **Mocked integration tests**: integration uses the real DI wiring; e2e asserts on real output.
 - **Dogfood tests without skip logic**: must auto-skip in CI when service unavailable; never break CI.

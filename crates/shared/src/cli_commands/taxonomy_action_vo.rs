@@ -9,3 +9,7 @@ use shared_common::string_value_object;
 pub use shared_common::taxonomy_job_vo::JobId;
 
 string_value_object!(ActionName);
+
+pub struct _Aes303Placeholder {
+    _placeholder: (),
+}

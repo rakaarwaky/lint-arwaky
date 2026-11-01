@@ -1,4 +1,4 @@
-// PURPOSE: H4 aspect entry-table detection for AES606 template conformance.
+// PURPOSE: H4 aspect entry-table detection for AESD06 template conformance.
 // Shared by the FRD and PRD per-doc capabilities: every item H3 under
 // `Functional Requirements` / `Project Requirements` mandates per-aspect H4
 // subsections whose `| No | Detail |` tables carry contiguous numbering and

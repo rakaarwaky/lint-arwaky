@@ -5,7 +5,7 @@
 // belongs in unit/integration tests.
 
 #[allow(dead_code, unused_imports)]
-#[path = "../../shared/tests/common/mock_filesystem.rs"]
+#[path = "../../shared/tests/mock_filesystem.rs"]
 mod mock_filesystem;
 
 use std::sync::Arc;
@@ -319,6 +319,7 @@ fn orchestrator_implements_aggregate_protocol() {
         selector: Arc::new(
             external_lint_lint_arwaky::capabilities_external_lint_selector::CapabilitiesExternalLintSelector::with_defaults(),
         ),
+        normalizer: Arc::new(external_lint_lint_arwaky::OutputNormalizer),
     };
     let orchestrator = ExternalLintOrchestrator::new(deps);
     let _dyn_agg: &dyn IExternalLintAggregate = &orchestrator;
@@ -418,6 +419,7 @@ fn orchestrator_with(
         filesystem: Arc::new(MockFilesystem::with_languages(languages)),
         filesystem_io: Arc::new(MockFilesystem::new()),
         selector: Arc::new(selector),
+        normalizer: Arc::new(external_lint_lint_arwaky::OutputNormalizer),
     };
     (ExternalLintOrchestrator::new(deps), adapter)
 }
@@ -487,6 +489,50 @@ fn output_normalizer_implements_protocol() {
     );
     assert!(empty.values.is_empty());
     assert_eq!(warns.len(), 1);
+}
+
+// ─── Guard: OutputNormalizer has at least one production call site (FR-005) ──
+//
+// A future refactor that removes the normalizer from the orchestrator or the
+// container will fail this test. Three independent checks:
+//   1. The capability struct is exported from the crate root.
+//   2. The container's deps struct carries a `normalizer` field (compile-time).
+//   3. The orchestrator exposes it via a public accessor.
+#[test]
+fn output_normalizer_has_production_call_sites() {
+    // 1. The capability struct is exported from the crate root.
+    let normalizer = external_lint_lint_arwaky::OutputNormalizer;
+    let _dyn: &dyn shared_external_lint::INormalizeProtocol = &normalizer;
+
+    // 2. The deps struct carries a live normalizer field.
+    use external_lint_lint_arwaky::agent_external_lint_orchestrator::ExternalLintDeps;
+    let deps: ExternalLintDeps = ExternalLintDeps {
+        adapters: std::collections::HashMap::new(),
+        filesystem: Arc::new(MockFilesystem::new()),
+        filesystem_io: Arc::new(MockFilesystem::new()),
+        selector: Arc::new(
+            external_lint_lint_arwaky::capabilities_external_lint_selector::CapabilitiesExternalLintSelector::with_defaults(),
+        ),
+        normalizer: Arc::new(external_lint_lint_arwaky::OutputNormalizer),
+    };
+    // The normalizer is stored in deps; a missing field fails compilation.
+    let _ = &deps.normalizer;
+
+    // 3. The orchestrator exposes it via a public accessor.
+    use external_lint_lint_arwaky::agent_external_lint_orchestrator::ExternalLintOrchestrator;
+    let orchestrator = ExternalLintOrchestrator::new(deps);
+    let exposed = orchestrator.normalizer();
+    // Prove the accessor returns a working normalizer, not a stub.
+    let root = FilePath::new("/tmp".to_string()).unwrap();
+    let (results, _warnings) = exposed.normalize(
+        &shared_common::taxonomy_adapter_name_vo::ToolName::new("clippy"),
+        r#"[{"file":"main.rs","line":1,"column":1,"code":"x","message":"m","severity":"low"}]"#,
+        &root,
+    );
+    assert!(
+        !results.values.is_empty(),
+        "normalizer must produce results"
+    );
 }
 
 // ─── Contract: ExternalLintExecutor implements IJsToolResolutionProtocol (utility) ──

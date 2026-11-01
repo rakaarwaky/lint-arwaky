@@ -266,7 +266,7 @@ impl MemberDocDefect {
     }
 }
 
-// ─── Entry tables (AES606) ───────────────────────────────────────────────
+// ─── Entry tables (AESD06) ───────────────────────────────────────────────
 
 /// Walk every H3 under *parent_h2* whose title matches *entry_re* and detect
 /// table-shape defects and row-label mismatches. Findings anchor to the

@@ -150,6 +150,34 @@ impl NamingConventionChecker {
             return None;
         }
 
+        // Harden AES101: unprefixed files (no recognized layer prefix) cannot slip through.
+        // Every production source file must carry a recognized layer prefix.
+        if layer_name.is_none() {
+            return Some(string_filename_violation(
+                file,
+                RULE_CODE_NAMING_CONVENTION,
+                format!(
+                    "The stem '{}' does not match the required pattern 'prefix_concept_suffix'. \
+                     Expected: lowercase alphanumeric words separated by underscores, minimum {} words. \
+                     Issue: '{}' has no recognized layer prefix (taxonomy_, contract_, capabilities_, \
+                     utility_, agent_, surface_, root_).",
+                    stem, min_words, stem
+                ),
+                Severity::HIGH,
+                "NAMING_CONVENTION",
+                format!(
+                    "Stem '{}' does not match the required pattern 'prefix_concept_suffix'. \
+                     Issue: '{}' has no recognized layer prefix.",
+                    stem, stem
+                ),
+                format!(
+                    "Expected: lowercase alphanumeric words separated by underscores, minimum {} words. \
+                     Example valid names: 'capabilities_user_checker', 'capabilities_db_adapter'.",
+                    min_words
+                ),
+            ));
+        }
+
         if !Self::naming_regex(min_words).is_some_and(|re| re.is_match(stem)) {
             let layer_hint = layer_name
                 .as_ref()

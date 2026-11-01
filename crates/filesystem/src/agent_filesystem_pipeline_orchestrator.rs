@@ -247,6 +247,27 @@ impl FilesystemOrchestrator {
             *w = Some(effective_ignored);
         }
     }
+    /// Builds the file index from a root. Warm-index semantics apply: a
+    /// rebuild happens only when the effective ignore set changes.
+    pub fn build_file_index(&self, root: &Path) {
+        self.build_file_index_impl(root, &[]);
+    }
+
+    /// Builds the file index with extra ignored patterns merged into the
+    /// defaults. Rebuilds when the effective ignore set differs from the
+    /// current warm index; no-op when it matches.
+    pub fn build_file_index_with_ignored(&self, root: &Path, ignored: &[String]) {
+        self.build_file_index_impl(root, ignored);
+    }
+
+    /// Builds the file index and records a snapshot of the parser's import cache.
+    pub fn build_file_index_and_snapshot(&self, root: &Path, ignored: &[String]) {
+        self.build_file_index_impl(root, ignored);
+        if let Ok(mut snapshot) = self.imports_snapshot.lock() {
+            *snapshot = self.deps.parser.import_list();
+        }
+    }
+
     /// Builds and caches the dependency graph and its symbol relationships.
     pub fn ensure_graph_built(&self) {
         {

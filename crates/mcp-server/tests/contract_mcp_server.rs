@@ -3,7 +3,7 @@
 // Pins the externally-visible contract an out-of-repo MCP client (Claude
 // Desktop, VS Code, Hermes) depends on: server identity, the exact 6-tool
 // surface, and the tool-argument schema boundary for untrusted JSON input.
-mod common;
+mod mock_common;
 
 use mcp_server_lint_arwaky::surface_mcp_tool_command::LintArwakyMcpServer;
 use mcp_server_lint_arwaky::taxonomy_mcp_server_vo::{
@@ -13,7 +13,7 @@ use rmcp::ServerHandler;
 use std::sync::Arc;
 
 fn server() -> LintArwakyMcpServer {
-    LintArwakyMcpServer::new(Arc::new(common::make_action_surface()))
+    LintArwakyMcpServer::new(Arc::new(mock_common::make_action_surface()))
 }
 
 // ─── Protocol contract: server identity + capabilities ─────────────

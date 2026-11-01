@@ -1,4 +1,4 @@
-// PURPOSE: Shared FR-format mechanics for AES601 family rules used by more
+// PURPOSE: Shared FR-format mechanics for AESD01 family rules used by more
 // than one per-doc capability (FRD, PRD). Pure functions over documents and
 // context; the calling capability stamps findings with its own AES code.
 // Lives in crates/shared/src/doc_rules so the FR-format decision cannot drift

@@ -23,6 +23,7 @@ use shared_common::taxonomy_adapter_name_vo::AdapterName;
 use shared_common::taxonomy_path_vo::FilePath;
 use shared_external_lint::IExternalLintAggregate;
 use shared_external_lint::IExternalLintSelectorProtocol;
+use shared_external_lint::INormalizeProtocol;
 use shared_external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
 use shared_external_lint::taxonomy_external_lint_request::ExternalLintRequest;
 use shared_external_lint::taxonomy_external_lint_response::ExternalLintResponse;
@@ -40,6 +41,11 @@ pub struct ExternalLintDeps {
     pub filesystem: Arc<dyn IFilesystemAggregate>,
     pub filesystem_io: Arc<dyn IFileSystemIOProtocol>,
     pub selector: Arc<dyn IExternalLintSelectorProtocol>,
+    /// FR-005: the live normalizer wired into the production path. Adapters
+    /// that emit a generic JSON shape (one object per finding with
+    /// `file`/`line`/`column`/`code`/`message`/`severity` fields) delegate
+    /// to this instance rather than parsing tool output inline.
+    pub normalizer: Arc<dyn INormalizeProtocol>,
 }
 
 pub struct ExternalLintOrchestrator {
@@ -70,6 +76,12 @@ impl IExternalLintAggregate for ExternalLintOrchestrator {
 impl ExternalLintOrchestrator {
     pub fn new(deps: ExternalLintDeps) -> Self {
         Self { deps }
+    }
+
+    /// FR-005 guard: expose the live normalizer so a test can assert it is
+    /// wired into the production path and not silently removed.
+    pub fn normalizer(&self) -> &Arc<dyn INormalizeProtocol> {
+        &self.deps.normalizer
     }
 
     /// Scan `path` with no caller-supplied context.

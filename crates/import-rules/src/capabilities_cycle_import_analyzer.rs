@@ -2,10 +2,10 @@
 use rayon::iter::IntoParallelRefIterator;
 use rayon::iter::ParallelIterator;
 use shared_cli_commands::LintResult;
-use shared_common::architecture_layer_detector;
 use shared_common::taxonomy_layer_vo::LayerMapVO;
 use shared_common::taxonomy_layer_vo::LayerNameVO;
 use shared_common::taxonomy_name_vo::SymbolName;
+use shared_common::utility_architecture_layer_detector;
 use shared_common::{FilePath, FilePathList, Severity};
 use shared_filesystem::taxonomy_filesystem_vo::ImportEntry;
 
@@ -133,12 +133,12 @@ impl DependencyCycleAnalyzer {
                 }
                 content_map.get(file)?;
 
-                let filename = architecture_layer_detector::extract_filename(file);
+                let filename = utility_architecture_layer_detector::extract_filename(file);
                 let file_layer =
-                    match architecture_layer_detector::detect_layer_from_prefix(filename) {
+                    match utility_architecture_layer_detector::detect_layer_from_prefix(filename) {
                         Some(l) => {
                             let specialized =
-                                architecture_layer_detector::resolve_specialized_layer(
+                                utility_architecture_layer_detector::resolve_specialized_layer(
                                     &l,
                                     file,
                                     &layer_keys,
@@ -202,14 +202,16 @@ impl DependencyCycleAnalyzer {
                     } else {
                         module_value
                     };
-                    let target_layer =
-                        architecture_layer_detector::detect_module_layer(module_path, &layer_keys)
-                            .or_else(|| {
-                                architecture_layer_detector::resolve_module_path_to_layer(
-                                    module_path,
-                                    root_dir,
-                                )
-                            });
+                    let target_layer = utility_architecture_layer_detector::detect_module_layer(
+                        module_path,
+                        &layer_keys,
+                    )
+                    .or_else(|| {
+                        utility_architecture_layer_detector::resolve_module_path_to_layer(
+                            module_path,
+                            root_dir,
+                        )
+                    });
 
                     if let Some(target_layer) = target_layer {
                         let target_layer_str = match target_layer.split('(').next() {

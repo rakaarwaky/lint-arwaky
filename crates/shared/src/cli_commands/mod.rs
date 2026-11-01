@@ -1,7 +1,6 @@
 pub mod taxonomy_action_vo;
 pub mod taxonomy_cli_commands_request;
 pub mod taxonomy_cli_commands_vo;
-pub mod utility_skill_hint_resolver;
 pub use shared_common::MemberDelta;
 pub use shared_common::ReportDelta;
 pub use shared_common::ReportSnapshot;
@@ -17,8 +16,6 @@ pub use taxonomy_cli_commands_vo::DiagnosticSeverity;
 pub use taxonomy_cli_commands_vo::PipelineDiagnostic;
 pub use taxonomy_cli_commands_vo::ScanGroup;
 pub use taxonomy_cli_commands_vo::ScanReport;
-pub use utility_skill_hint_resolver::resolve_skill_hint_for_file;
-pub use utility_skill_hint_resolver::resolve_skill_hint_for_file_typed;
 pub mod utility_output_text_formatter;
 pub mod utility_report_delta;
 pub mod utility_report_renderer;

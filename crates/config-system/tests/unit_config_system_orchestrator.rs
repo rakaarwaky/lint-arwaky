@@ -1,5 +1,5 @@
 // Unit tests for ConfigOrchestrator — config loading, caching, workspace discovery.
-mod common;
+mod mock_common;
 
 use config_system_lint_arwaky::agent_config_orchestrator::{
     ConfigOrchestrator, ConfigOrchestratorDeps,
@@ -16,12 +16,12 @@ use std::sync::Arc;
 use tempfile::TempDir;
 
 fn make_orchestrator() -> ConfigOrchestrator {
-    let io = common::make_io();
+    let io = mock_common::make_io();
     ConfigOrchestrator::new(ConfigOrchestratorDeps {
         workspace_detector: Arc::new(WorkspaceDetector::new(io.clone())),
         config_reader: Arc::new(ConfigYamlReader::new(io.clone())),
         parser: Arc::new(ConfigParserProvider::new(io.clone())),
-        filesystem: common::make_fs(),
+        filesystem: mock_common::make_fs(),
     })
 }
 
