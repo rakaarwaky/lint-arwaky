@@ -50,13 +50,13 @@ metadata:
 > **Scope**: Python, Rust, and TypeScript `agent_<domain>_orchestrator` files — one aggregate, 3-block structure.
 
 The **layer** decides which suffix, which imports, and which structure apply.
-Rules, templates, section contracts, and Verify blocks live in the language HOW-TUs under [`references/`](references/).
+Rules, templates, section contracts, and Verify blocks live in the language HOW-TOs under [`references/`](references/).
 
 | Language | Focus | Body rule | HOW-TO|
 | -------- | ----- | --------- | ------|
-| Python | Orchestrator | One aggregate; 3-block; zero I/O/computation | [references/HOW-TO-MAKE-PYTHON-AGENT.md](references/HOW-TO-MAKE-PYTHON-AGENT.md)|
-| Rust | Orchestrator | One aggregate; 3-block; zero I/O/computation | [references/HOW-TO-MAKE-RUST-AGENT.md](references/HOW-TO-MAKE-RUST-AGENT.md)|
-| TypeScript | Orchestrator | One aggregate; 3-block; zero I/O/computation | [references/HOW-TO-MAKE-TYPESCRIPT-AGENT.md](references/HOW-TO-MAKE-TYPESCRIPT-AGENT.md)|
+| Python | Orchestrator | One aggregate; 3-block; zero I/O/computation | [references/python-agent.md](references/python-agent.md)|
+| Rust | Orchestrator | One aggregate; 3-block; zero I/O/computation | [references/rust-agent.md](references/rust-agent.md)|
+| TypeScript | Orchestrator | One aggregate; 3-block; zero I/O/computation | [references/typescript-agent.md](references/typescript-agent.md)|
 
 **The layer chain:**
 

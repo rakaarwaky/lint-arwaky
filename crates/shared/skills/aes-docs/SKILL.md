@@ -1,8 +1,6 @@
 ---
 name: aes-docs
-description: "Adds PRD/ROADMAP/FRD/README/BACKLOG/DESIGN/AGENTS/DATA docs for Python, Rust, and TypeScript modules. 
-when-to-use: "Use when the task is to create or improve a PRD, ROADMAP, FRD, BACKLOG, README, AGENTS, DESIGN, or DATA document, or to split spec from status."
-argument-hint: "--docpath <path> [--improve | --design | --make]"
+description: "Adds PRD/ROADMAP/FRD/README/BACKLOG/DESIGN/AGENTS/DATA docs for Python, Rust, and TypeScript modules. Use when creating or improving a PRD, ROADMAP, FRD, BACKLOG, README, AGENTS, DESIGN, or DATA document, or to split spec from status."
 metadata:
   tags:
     - docs
@@ -18,11 +16,13 @@ metadata:
 ---
 # aes-docs
 
-The aggregated efines which document exists, where it lives, and  to improve make and design it.
+The table defines which document exists, where it lives, and which workflow drives it.
+When `--improve` is passed, each document is audited against its rules and exemplar;
+when `--make` or `--design` is passed, the template is scaffolded from scratch.
 
 | Document          | Location                                   | Focus                                       | workflow                                                                                           |
 | ----------------- | ------------------------------------------ | ------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| `PRD.md`          | Root workspace                             | *What* &amp; *Why*                          | [references/prd/workflow.md.](references/prd/workflow.md)                   |
+| `PRD.md`          | Root workspace                             | *What* &amp; *Why*                          | [references/prd/workflow.md](references/prd/workflow.md)                   |
 | `ROADMAP.md`      | Root workspace                             | How the priority progrees                   | [references/roadmap/workflow.md](references/roadmap/workflow.md)           |
 | `FRD.md`          | Each Feature Folder                        | *How* functionally                          | [references/frd/workflow.md](references/frd/workflow.md)                   |
 | `BACKLOG.md`      | Each feature, surface, or shared folder | *What is true now*                          | [references/backlog/workflow.md](references/backlog/workflow.md)           |
@@ -91,7 +91,5 @@ project-root/
 │   │   └── BACKLOG.md   
 Same shape for Python `modules/<feature>/` and TypeScript `packages/<feature>/`.
 ```
-
----
 
 ---

@@ -875,4 +875,4 @@ Or if your crate name differs:
 cargo check -p <crate-name>
 ```
 
-Related: [HOW-TO-MAKE-PYTHON-TAXONOMY.md](HOW-TO-MAKE-PYTHON-TAXONOMY.md), [HOW-TO-MAKE-TYPESCRIPT-TAXONOMY.md](HOW-TO-MAKE-TYPESCRIPT-TAXONOMY.md)
+Related: [python-taxonomy.md](python-taxonomy.md), [typescript-taxonomy.md](typescript-taxonomy.md)

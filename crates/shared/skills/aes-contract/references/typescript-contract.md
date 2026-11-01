@@ -195,7 +195,7 @@ runtime shape.
 
 **Boolean in signatures vs. taxonomy.** `bool` is treated as a primitive in
 `taxonomy_*_entity` field declarations (no carve-out; see
-[../../aes-taxonomy/references/HOW-TO-MAKE-RUST-TAXONOMY.md](../../aes-taxonomy/references/HOW-TO-MAKE-RUST-TAXONOMY.md)).
+[../../aes-taxonomy/references/rust-taxonomy.md](../../aes-taxonomy/references/rust-taxonomy.md)).
 In contract signatures (`contract_*_protocol` / `contract_*_aggregate`), `bool`
 is permitted only for semantic toggles or predicates (e.g. `enabled: bool`)
 because the signature describes *when* a capability runs, not the domain value

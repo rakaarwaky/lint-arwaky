@@ -7,8 +7,8 @@
 > client.
 >
 > **Scope**: Invocation forms, shell aliases, global flags, subcommands, report paths, MCP tools,
-> exit codes. Language deltas live in `HOW-TO-USE-LINT-PYTHON.md` / `-RUST.md` / `-TYPESCRIPT.md`;
-> AES-code fix routing lives in `HOW-TO-USE-LINT-ROUTING.md`.
+> exit codes. Language deltas live in `lint-python.md` / `lint-rust.md` / `lint-typescript.md`;
+> AES-code fix routing lives in `lint-routing.md`.
 >
 > **Location**: Repo root (or target root); default reports under
 > `${XDG_DATA_HOME:-~/.local/share}/aes-lint-arwaky/reports/`.

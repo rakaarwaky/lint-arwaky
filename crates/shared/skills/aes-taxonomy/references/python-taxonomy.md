@@ -882,4 +882,4 @@ Example:
 python -c "import modules.shared.src.order.taxonomy_order_vo"
 ```
 
-Related: [HOW-TO-MAKE-RUST-TAXONOMY.md](HOW-TO-MAKE-RUST-TAXONOMY.md), [HOW-TO-MAKE-TYPESCRIPT-TAXONOMY.md](HOW-TO-MAKE-TYPESCRIPT-TAXONOMY.md)
+Related: [rust-taxonomy.md](rust-taxonomy.md), [typescript-taxonomy.md](typescript-taxonomy.md)

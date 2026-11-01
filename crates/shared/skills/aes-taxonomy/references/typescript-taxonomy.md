@@ -767,4 +767,4 @@ Fallback compile gate:
 npx tsc --noEmit
 ```
 
-Related: [HOW-TO-MAKE-PYTHON-TAXONOMY.md](HOW-TO-MAKE-PYTHON-TAXONOMY.md), [HOW-TO-MAKE-RUST-TAXONOMY.md](HOW-TO-MAKE-RUST-TAXONOMY.md)
+Related: [python-taxonomy.md](python-taxonomy.md), [rust-taxonomy.md](rust-taxonomy.md)

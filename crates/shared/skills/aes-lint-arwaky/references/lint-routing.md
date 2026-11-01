@@ -113,4 +113,4 @@ Manual (routing itself is not machine-checked):
 - [ ] Barrel/`mod.rs`/`index.ts` updated after every AES101 rename, and orphan reachability
       confirmed (imported by a `_entry` file and a `contract_*`/higher-layer file).
 - [ ] AES102 / AES201 checked against the matrices, not memory.
-- [ ] Re-scan to 0; then language verify from the matching `HOW-TO-USE-LINT-<LANG>.md`.
+- [ ] Re-scan to 0; then language verify from the matching `lint-<LANG>.md`.

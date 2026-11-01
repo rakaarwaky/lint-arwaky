@@ -13,8 +13,8 @@
 >
 > **Length**: One scan session = pre-flight → scan → triage → fix → re-scan to 0. Shared
 > commands, MCP tools, exit codes, and AES101 naming live in
-> `HOW-TO-USE-LINT-COMMANDS.md`; the full AES fix table lives in
-> `HOW-TO-USE-LINT-ROUTING.md`.
+> `lint-commands.md`; the full AES fix table lives in
+> `lint-routing.md`.
 
 ---
 
@@ -25,8 +25,8 @@ Seven rules. Each one prevents a specific failure mode.
 1. **Pre-flight first.** Violations on a non-building crate are unreliable — `cargo build`
    (or `cargo check`) must pass before you trust a scan.
 2. **Shared command surface is not restated here.** Global flags, aliases (`lac`/`lat`/`lam`),
-   MCP tools, exit codes, and AES101 naming live in `HOW-TO-USE-LINT-COMMANDS.md`;
-   triage order and the fix table live in `HOW-TO-USE-LINT-ROUTING.md`. This file only holds Rust deltas.
+   MCP tools, exit codes, and AES101 naming live in `lint-commands.md`;
+   triage order and the fix table live in `lint-routing.md`. This file only holds Rust deltas.
 3. **Path and `--member` follow the Rust layout.** Examples use `crates/`; `--member` targets a
    workspace **member / package** name. `scan`/`ci`/`orphan`/`quality`/`import`/`naming`/`role`/
    `external` accept paths; `--member` is accepted by `scan` and `orphan`.
@@ -148,7 +148,7 @@ Every Rust lint session is required to carry the rows that apply. Each exists fo
 | Pre-flight build | A scan on a broken crate is noise, not signal.|
 | Scan with path + member + format | Findings must be machine-triageable and crate-scoped.|
 | Triage order | CRITICAL (AES201/205/304) blocks merge; fix before HIGH/MEDIUM cosmetics.|
-| Fix routing by AES code | Wrong fix layer recreates the violation; route via `HOW-TO-USE-LINT-ROUTING.md`.|
+| Fix routing by AES code | Wrong fix layer recreates the violation; route via `lint-routing.md`.|
 | `mod.rs` update after rename | AES101 without re-declaration becomes AES501–506.|
 | Role-boundary check | Capabilities/utility/agent rows above must hold after fixes.|
 | Re-scan to 0 | Done means zero AES findings, not "mostly clean".|
@@ -173,7 +173,7 @@ cargo fmt --all
 CARGO_INCREMENTAL=0 cargo clippy --all-targets -- -D warnings
 ```
 
-Exit codes (shared, `HOW-TO-USE-LINT-COMMANDS.md`): `0` pass · `1` violations · `2` config/parse error.
+Exit codes (shared, `lint-commands.md`): `0` pass · `1` violations · `2` config/parse error.
 
 Checklist:
 

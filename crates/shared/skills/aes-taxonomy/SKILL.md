@@ -54,13 +54,13 @@ metadata:
 > **Scope**: Python, Rust, and TypeScript `taxonomy_<domain>_<suffix>` files in the shared domain.
 
 The **layer** decides which suffix, which imports, and which structure apply.
-Rules, templates, section contracts, and Verify blocks live in the language HOW-TUs under [`references/`](references/).
+Rules, templates, section contracts, and Verify blocks live in the language HOW-TOs under [`references/`](references/).
 
 | Language | Focus | Body rule | HOW-TO|
 | -------- | ----- | --------- | ------|
-| Python | Taxonomy VO / entity / error / event / constant | Strict suffix set; no I/O; no upward imports | [references/HOW-TO-MAKE-PYTHON-TAXONOMY.md](references/HOW-TO-MAKE-PYTHON-TAXONOMY.md)|
-| Rust | Taxonomy VO / entity / error / event / constant | Strict suffix set; no I/O; no upward imports | [references/HOW-TO-MAKE-RUST-TAXONOMY.md](references/HOW-TO-MAKE-RUST-TAXONOMY.md)|
-| TypeScript | Taxonomy VO / entity / error / event / constant | Strict suffix set; no I/O; no upward imports | [references/HOW-TO-MAKE-TYPESCRIPT-TAXONOMY.md](references/HOW-TO-MAKE-TYPESCRIPT-TAXONOMY.md)|
+| Python | Taxonomy VO / entity / error / event / constant | Strict suffix set; no I/O; no upward imports | [references/python-taxonomy.md](references/python-taxonomy.md)|
+| Rust | Taxonomy VO / entity / error / event / constant | Strict suffix set; no I/O; no upward imports | [references/rust-taxonomy.md](references/rust-taxonomy.md)|
+| TypeScript | Taxonomy VO / entity / error / event / constant | Strict suffix set; no I/O; no upward imports | [references/typescript-taxonomy.md](references/typescript-taxonomy.md)|
 
 **The layer chain:**
 
