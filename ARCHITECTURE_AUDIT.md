@@ -46,7 +46,7 @@ because an AI agent reading ARCHITECTURE.md will write code the tool then judges
 | ----- | ----- | ----- |
 | 1 Naming | AES101–103 | doc drift (3 items), 2 files outside the naming pattern |
 | 2 Import boundaries | AES201–205 | 2 code violations (taxonomy → utility macro), otherwise clean, no cycles |
-| 3 Quality | AES301–305 | AES303 documented-active but disabled; AES304 pattern list ≠ doc; tests excluded from 301/302 |
+| 3 Quality | AES301–305 | AES303 documented-active but disabled; AES304 pattern list ≠ doc; tests excluded from 301/302 (A6 is informational only) |
 | 4 Roles | AES401–406 | 1 real AES401 violation; AES402 doc lists 1 of 5 sub-checks; rest clean |
 | 5 Orphans | AES501–506 | **5 dead modules** (AES501 ×1, AES503 ×2, AES504 ×2, AES505 ×1) + 1 dead root container (A9) |
 | 6 Documents | AES601–610 | 601–607 codes carry two conflicting meanings; 606–610 unregistered |
@@ -147,19 +147,20 @@ If it were enabled, **101 production files** would fire (full list in
 AES404 are therefore mutually unsatisfiable for the utility layer, which is presumably why
 the rule ships off. The document never says this.
 
-### A6 — AES304: four `FIXME`/`HACK`/`XXX` occurrences in production source
+### A6 — INFO: the four AES304 hits are two comments that name the patterns themselves
 
-| File | Line | Token |
-| ---- | ---- | ----- |
-| `crates/auto-fix/src/capabilities_bypass_fix.rs` | 114 | `// … type-ignore / FIXME / HACK / XXX …` (comment) |
-| `crates/shared/src/auto_fix/utility_word_boundary.rs` | 9 | `/// … // FIXME: refactor …` (doc comment) |
+| File | Line | Token | What it actually is |
+| ---- | ---- | ----- | ------------------- |
+| `crates/auto-fix/src/capabilities_bypass_fix.rs` | 114 | `FIXME`, `HACK`, `XXX` | a comment describing which markers the fixer strips — one line, three words |
+| `crates/shared/src/auto_fix/utility_word_boundary.rs` | 9 | `FIXME` | a doc comment showing the word-boundary rewrite |
 
 These fire only if `FIXME`/`HACK`/`XXX` are active patterns. They are **not** in the shipped
 `forbidden_bypass` list (see B6) — they exist only in
 `default_forbidden_bypass()` (`crates/quality-rules/src/capabilities_check_bypass_checker.rs:395-420`),
-which is used *only* when the configured pattern list is empty. With the shipped architecture
-the list is non-empty, so these four markers are currently inert. If the AES304 pattern list is
-ever aligned with the documentation (B6), these four lines start reporting CRITICAL.
+which is used *only* when the configured pattern list is empty. With the shipped architecture the
+list is non-empty, so these four words are currently inert: **there is no live violation here.**
+The coupling is with B6 — if the team activates those markers, both comments start reporting
+CRITICAL and must be reworded to not spell the tokens literally.
 
 ### A7 — AES301: two test files exceed the 1000-line ceiling but are never scanned
 
