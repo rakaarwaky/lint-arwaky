@@ -1,7 +1,7 @@
 //! Regression coverage for #565: background actions surface a visible busy
 //! state, and action keypresses during a pending action are explicitly
 //! rejected ("Busy: … — please wait") instead of silently swallowed.
-#[path = "../../shared/tests/common/mock_filesystem.rs"]
+#[path = "../../shared/tests/mock_filesystem.rs"]
 #[allow(dead_code, unused_imports)]
 mod mock_filesystem;
 

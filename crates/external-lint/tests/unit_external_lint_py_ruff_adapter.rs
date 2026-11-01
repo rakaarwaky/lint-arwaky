@@ -2,7 +2,7 @@
 use external_lint_lint_arwaky::capabilities_py_ruff_adapter::RuffAdapter;
 
 #[allow(dead_code, unused_imports)]
-#[path = "../../shared/tests/common/mock_filesystem.rs"]
+#[path = "../../shared/tests/mock_filesystem.rs"]
 mod mock_filesystem;
 
 use mock_filesystem::MockFilesystem;

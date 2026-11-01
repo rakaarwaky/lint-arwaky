@@ -1,5 +1,5 @@
 // E2E tests — full config lifecycle from filesystem to validated output.
-mod common;
+mod mock_common;
 
 use shared_common::FilePath;
 use shared_config_system::ConfigLanguage;
@@ -46,7 +46,7 @@ fn full_config_lifecycle_rust_workspace() {
     - .git
 "#;
     fs::write(root.join("lint_arwaky.config.yaml"), config_yaml).unwrap();
-    let container = common::make_container();
+    let container = mock_common::make_container();
     let orch = container.orchestrator();
     let fp = FilePath::new(root.to_string_lossy().to_string()).unwrap();
     let result = orch
@@ -80,7 +80,7 @@ fn full_config_lifecycle_typescript_fallback() {
     )
     .unwrap();
     let fp = FilePath::new(root.to_string_lossy().to_string()).unwrap();
-    let result = common::make_container()
+    let result = mock_common::make_container()
         .orchestrator()
         .execute(ConfigRequest::load_for_language(
             &fp,
@@ -96,7 +96,7 @@ fn e2e_reader_lists_multi_language_configs() {
     let tmp = TempDir::new().unwrap();
     fs::write(tmp.path().join("lint_arwaky.config.yaml"), "a: 1").unwrap();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    let files = common::make_container()
+    let files = mock_common::make_container()
         .lister()
         .list_config_files(&fp)
         .unwrap();

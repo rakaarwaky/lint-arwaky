@@ -1,5 +1,5 @@
 // FR-003 — Config Fallback Safety
-mod common;
+mod mock_common;
 
 use shared_common::FilePath;
 use shared_config_system::ConfigRequest;
@@ -9,7 +9,7 @@ use tempfile::TempDir;
 fn us3_no_config_file_uses_defaults() {
     let tmp = TempDir::new().unwrap();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    let result = common::make_container()
+    let result = mock_common::make_container()
         .orchestrator()
         .execute(ConfigRequest::load_project_config(&fp))
         .into_config_result();
@@ -26,7 +26,7 @@ fn us3_no_config_file_uses_defaults() {
 #[test]
 fn us3_defaults_are_valid_and_usable() {
     let tmp = TempDir::new().unwrap();
-    let orch = common::make_container().orchestrator();
+    let orch = mock_common::make_container().orchestrator();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
     let config = orch
         .execute(ConfigRequest::load_sync(&fp))

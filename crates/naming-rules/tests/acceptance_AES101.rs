@@ -230,12 +230,12 @@ fn check_file_naming_via_trait_api() {
     assert_eq!(results[0].code.code(), RULE_CODE_NAMING_CONVENTION);
 }
 
-// ── FR-AES101-09: Unknown-prefix files pass AES101 ────────
-// Files with unrecognized prefixes (e.g. `foobar_user_vo.rs`) should pass
-// AES101 — no layer means no naming convention applies.
+// ── FR-AES101-09: Unknown-prefix files fail AES101 ────────
+// Files with unrecognized prefixes (e.g. `foobar_user_vo.rs`) must fail AES101
+// because unprefixed files cannot slip through the hardened checker.
 
 #[test]
-fn unknown_prefix_file_with_valid_snake_case_passes() {
+fn unknown_prefix_file_with_valid_snake_case_fails() {
     let result = checker().check_file_naming_internal(
         "src/foobar_user_vo.rs",
         "foobar_user_vo.rs",
@@ -244,9 +244,10 @@ fn unknown_prefix_file_with_valid_snake_case_passes() {
         3,
     );
     assert!(
-        result.is_none(),
-        "unknown-prefix file with valid snake_case should pass AES101"
+        result.is_some(),
+        "unknown-prefix file with valid snake_case must fail AES101 (no layer prefix)"
     );
+    assert_eq!(result.unwrap().code.code(), RULE_CODE_NAMING_CONVENTION);
 }
 
 #[test]

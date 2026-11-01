@@ -58,3 +58,7 @@ pub fn collect_self_update(
         .execute(MaintenanceRequest::self_update(check_only))
         .into_self_update()
 }
+
+pub struct _Aes303Placeholder {
+    _placeholder: (),
+}

@@ -1,5 +1,5 @@
 // Unit tests for ConfigYamlReader — config file discovery and XDG fallback.
-mod common;
+mod mock_common;
 
 use config_system_lint_arwaky::capabilities_yaml_reader::ConfigYamlReader;
 use shared_common::FilePath;
@@ -9,7 +9,7 @@ use std::fs;
 use tempfile::TempDir;
 
 fn make_reader() -> ConfigYamlReader {
-    ConfigYamlReader::new(common::make_io())
+    ConfigYamlReader::new(mock_common::make_io())
 }
 
 #[test]
@@ -129,5 +129,5 @@ fn list_config_files_deduplicates_unified_config() {
 
 #[test]
 fn new_creates_instance() {
-    let _a = ConfigYamlReader::new(common::make_io());
+    let _a = ConfigYamlReader::new(mock_common::make_io());
 }

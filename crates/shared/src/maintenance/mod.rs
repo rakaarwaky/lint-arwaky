@@ -6,7 +6,6 @@ pub mod taxonomy_maintenance_request;
 pub mod taxonomy_maintenance_response;
 pub mod taxonomy_maintenance_vo;
 pub mod utility_maintenance_helpers;
-pub mod utility_tool_executor;
 
 // ─── Re-exports ────────────────────────────────────────────
 // Barrel re-export pattern: allows consumers to import directly

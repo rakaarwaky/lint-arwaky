@@ -7,7 +7,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::OnceLock;
 
-/// The one FR-ID shape the whole AES601 rule family accepts: an H2–H4
+/// The one FR-ID shape the whole AESD01 rule family accepts: an H2–H4
 /// requirement heading (`### FR-Feature-001: ...`). Every consumer — the
 /// FR-ID format check, the FR-field check, and the parity counter — matches
 /// against this single pattern so the accepted ID set cannot drift between
@@ -33,7 +33,7 @@ pub fn fr_id_heading_re() -> Option<&'static regex::Regex> {
         .as_ref()
 }
 
-/// The one PR-ID shape the AES601 rule family accepts: an H2–H4
+/// The one PR-ID shape the AESD01 rule family accepts: an H2–H4
 /// requirement heading (`### PR-Project-001: ...`) in a PRD's `Project
 /// Requirements` or a ROADMAP's `Roadmap Status`. Same H2–H4 colon
 /// shape as the FR/DS/DT patterns so the accepted ID sets cannot drift

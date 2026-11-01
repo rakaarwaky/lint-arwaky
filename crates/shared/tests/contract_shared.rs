@@ -338,11 +338,6 @@ fn maintenance_contracts_are_send_sync() {
 // One `#[test]` per trait, each with a uniquely named local helper so no
 // helper name repeats inside a single function.
 #[test]
-fn external_language_detect_contract_is_a_trait() {
-    fn assert_language_detect_trait<T: ?Sized>() {}
-}
-
-#[test]
 fn external_selector_contract_is_a_trait() {
     fn assert_selector_trait<T: ?Sized>() {}
     assert_selector_trait::<dyn IExternalLintSelectorProtocol>();
@@ -385,13 +380,7 @@ fn external_lint_aggregate_contract_is_a_trait() {
 }
 
 #[test]
-fn external_adapter_scan_contract_is_a_trait() {
-    fn assert_adapter_scan_trait<T: ?Sized>() {}
-}
-
-#[test]
 fn external_lint_contracts_are_send_sync() {
-    fn assert_detect_sync<T: Send + Sync + ?Sized>() {}
     fn assert_selector_sync<T: Send + Sync + ?Sized>() {}
     fn assert_adapter_sync<T: Send + Sync + ?Sized>() {}
     fn assert_normalize_sync<T: Send + Sync + ?Sized>() {}
@@ -399,7 +388,6 @@ fn external_lint_contracts_are_send_sync() {
     fn assert_js_sync<T: Send + Sync + ?Sized>() {}
     fn assert_cargo_sync<T: Send + Sync + ?Sized>() {}
     fn assert_aggregate_sync<T: Send + Sync + ?Sized>() {}
-    fn assert_adapter_scan_sync<T: Send + Sync + ?Sized>() {}
     assert_selector_sync::<dyn IExternalLintSelectorProtocol>();
     assert_adapter_sync::<dyn ILinterAdapterProtocol>();
     assert_normalize_sync::<dyn INormalizeProtocol>();

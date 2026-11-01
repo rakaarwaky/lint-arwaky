@@ -7,12 +7,13 @@
 // orchestrator with a stub adapter that emits a fixed set of codes, which is
 // what proves the filter is adapter-agnostic.
 #[allow(dead_code, unused_imports)]
-#[path = "../../shared/tests/common/mock_filesystem.rs"]
+#[path = "../../shared/tests/mock_filesystem.rs"]
 mod mock_filesystem;
 
 use std::collections::HashMap;
 use std::sync::Arc;
 
+use external_lint_lint_arwaky::OutputNormalizer;
 use external_lint_lint_arwaky::agent_external_lint_orchestrator::{
     ExternalLintDeps, ExternalLintOrchestrator,
 };
@@ -94,6 +95,7 @@ fn surviving_codes(
         // Every language flag is true, so the default selector picks this
         // adapter regardless of its name; the filter is what is under test.
         selector: Arc::new(CapabilitiesExternalLintSelector::with_defaults()),
+        normalizer: Arc::new(OutputNormalizer),
     });
     let context = ExternalLintContext {
         has_rust: true,

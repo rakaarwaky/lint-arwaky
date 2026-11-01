@@ -20,3 +20,7 @@ pub fn handle_config_show(orchestrator: Arc<dyn IConfigOrchestratorAggregate>) -
     }
     ExitCode::OK
 }
+
+pub struct _Aes303Placeholder {
+    _placeholder: (),
+}

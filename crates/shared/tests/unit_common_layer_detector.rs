@@ -1,7 +1,7 @@
 // Unit tests for architecture_layer_detector — layer detection from module paths.
 use std::fs;
 
-use shared_common::architecture_layer_detector::{
+use shared_common::utility_architecture_layer_detector::{
     detect_module_layer, resolve_module_path_to_layer,
 };
 

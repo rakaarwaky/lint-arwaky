@@ -16,8 +16,8 @@ use shared_filesystem::{
     taxonomy_filesystem_response::FilesystemResponse,
     taxonomy_filesystem_vo::FileMode,
     taxonomy_filesystem_vo::{
-        FileEntry, GraphAnalysisContext, ImportEntry, ImportGraph, ImportType, InboundLinkMap,
-        InheritanceMap, ParseMetadata, ParseWarning,
+        FileEntry, GraphAnalysisContext, ImportEntry, ImportGraph, InboundLinkMap, InheritanceMap,
+        ParseMetadata, ParseWarning,
     },
     utility_path_filter, utility_test_file_discovery, utility_workspace_detection,
 };
@@ -224,6 +224,111 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
 
 // ─── Block 3: Constructors, Std Traits & Helpers ─────────
 impl FilesystemOrchestrator {
+    pub fn new(deps: FilesystemOrchestratorDeps) -> Self {
+        Self {
+            deps,
+            files: RwLock::new(None),
+            file_index: RwLock::new(None),
+            imports: RwLock::new(None),
+            imports_extra: std::sync::Mutex::new(Vec::new()),
+            imports_snapshot: std::sync::Mutex::new(Vec::new()),
+            resolved_imports: OnceLock::new(),
+            warnings: RwLock::new(None),
+            cached_reverse_links: RwLock::new(None),
+            cached_definitions: RwLock::new(None),
+            cached_implementations: RwLock::new(None),
+            index_ignored: Mutex::new(None),
+            rebuild_lock: Mutex::new(()),
+        }
+    }
+
+    /// Resolves an import to a workspace-relative source file.\n
+    /// Supports Rust modules, external crates, relative imports, Python modules\n
+    /// and packages, and TypeScript/JavaScript packages.
+    pub fn resolve_import_target(
+        &self,
+        imp: &ImportEntry,
+        src_rel: &str,
+        top_root: &Path,
+        all_files_set: &HashSet<&str>,
+        stem_index: &HashMap<String, Vec<String>>,
+    ) -> Option<String> {
+        if imp.import_type == shared_filesystem::taxonomy_filesystem_vo::ImportType::Mod
+            && imp.resolved_path.is_none()
+        {
+            let src_dir = Path::new(src_rel)
+                .parent()
+                .map(|p| p.to_string_lossy().to_string())
+                .unwrap_or_default();
+            let mod_name = &imp.raw_path;
+            let candidate_rs = if src_dir.is_empty() {
+                format!("{}.rs", mod_name)
+            } else {
+                format!("{}/{}.rs", src_dir, mod_name)
+            };
+            let candidate_mod = if src_dir.is_empty() {
+                format!("{}/mod.rs", mod_name)
+            } else {
+                format!("{}/{}/mod.rs", src_dir, mod_name)
+            };
+            if all_files_set.contains(candidate_rs.as_str()) {
+                Some(candidate_rs)
+            } else if all_files_set.contains(candidate_mod.as_str()) {
+                Some(candidate_mod)
+            } else {
+                None
+            }
+        } else if imp.resolved_path.is_some() {
+            imp.resolved_path
+                .as_ref()
+                .map(|p| shared_filesystem::utility_container_wiring::path_to_relative(p, top_root))
+        } else {
+            let raw = &imp.raw_path;
+            let src_dir = Path::new(src_rel)
+                .parent()
+                .map(|p| p.to_string_lossy().to_string())
+                .unwrap_or_default();
+            if raw.starts_with("./") || raw.starts_with("../") {
+                let base = Path::new(&src_dir);
+                let rel = raw.strip_prefix("./").unwrap_or(raw);
+                // When the source file is at the scan root (src_dir is empty),
+                // "../x" cannot mean "one level above the root" — treat it as
+                // a direct relative path so that root-level files with
+                // `import "../y"` resolve to "y" instead of "../y".
+                let rel = if src_dir.is_empty() && rel.starts_with("../") {
+                    rel.trim_start_matches("../").to_string()
+                } else {
+                    rel.to_string()
+                };
+                let candidate = base.join(&rel).to_string_lossy().to_string();
+                if all_files_set.contains(candidate.as_str()) {
+                    Some(candidate)
+                } else if !candidate.contains('.') {
+                    let exts = [".ts", ".js", ".tsx", ".jsx", ".rs", ".py"];
+                    exts.iter().find_map(|ext| {
+                        let c = format!("{}{}", candidate, ext);
+                        if all_files_set.contains(c.as_str()) {
+                            Some(c)
+                        } else {
+                            None
+                        }
+                    })
+                } else {
+                    None
+                }
+            } else {
+                shared_filesystem::utility_import_resolution::resolve_by_language(
+                    imp,
+                    &src_dir,
+                    src_rel,
+                    top_root,
+                    all_files_set,
+                    stem_index,
+                )
+            }
+        }
+    }
+
     /// Acquires a read guard on an `RwLock`, recovering from a poisoned lock.
     pub(crate) fn read_guard<'a, T>(
         lock: &'a std::sync::RwLock<T>,
@@ -611,121 +716,4 @@ impl FilesystemOrchestrator {
         }
         map
     }
-    /// Builds the file index from a root. Warm-index semantics apply: a\n    /// rebuild happens only when the effective ignore set changes.
-    pub fn build_file_index(&self, root: &Path) {
-        self.build_file_index_impl(root, &[]);
-    }
-    /// Builds the file index with extra ignored patterns merged into the\n    /// defaults. Rebuilds when the effective ignore set differs from the\n    /// current warm index; no-op when it matches.
-    pub fn build_file_index_with_ignored(&self, root: &Path, ignored: &[String]) {
-        self.build_file_index_impl(root, ignored);
-    }
-    /// Builds the file index and records a snapshot of the parser's import cache.
-    pub fn build_file_index_and_snapshot(&self, root: &Path, ignored: &[String]) {
-        self.build_file_index_impl(root, ignored);
-        if let Ok(mut snapshot) = self.imports_snapshot.lock() {
-            *snapshot = self.deps.parser.import_list();
-        }
-    }
-
-    pub fn new(deps: FilesystemOrchestratorDeps) -> Self {
-        Self {
-            deps,
-            files: RwLock::new(None),
-            file_index: RwLock::new(None),
-            imports: RwLock::new(None),
-            imports_extra: std::sync::Mutex::new(Vec::new()),
-            imports_snapshot: std::sync::Mutex::new(Vec::new()),
-            resolved_imports: OnceLock::new(),
-            warnings: RwLock::new(None),
-            cached_reverse_links: RwLock::new(None),
-            cached_definitions: RwLock::new(None),
-            cached_implementations: RwLock::new(None),
-            index_ignored: Mutex::new(None),
-            rebuild_lock: Mutex::new(()),
-        }
-    }
-    /// Resolves an import to a workspace-relative source file.\n    /// Supports Rust modules, external crates, relative imports, Python modules\n    /// and packages, and TypeScript/JavaScript packages.
-    pub fn resolve_import_target(
-        &self,
-        imp: &ImportEntry,
-        src_rel: &str,
-        top_root: &Path,
-        all_files_set: &HashSet<&str>,
-        stem_index: &HashMap<String, Vec<String>>,
-    ) -> Option<String> {
-        if imp.import_type == ImportType::Mod && imp.resolved_path.is_none() {
-            let src_dir = Path::new(src_rel)
-                .parent()
-                .map(|p| p.to_string_lossy().to_string())
-                .unwrap_or_default();
-            let mod_name = &imp.raw_path;
-            let candidate_rs = if src_dir.is_empty() {
-                format!("{}.rs", mod_name)
-            } else {
-                format!("{}/{}.rs", src_dir, mod_name)
-            };
-            let candidate_mod = if src_dir.is_empty() {
-                format!("{}/mod.rs", mod_name)
-            } else {
-                format!("{}/{}/mod.rs", src_dir, mod_name)
-            };
-            if all_files_set.contains(candidate_rs.as_str()) {
-                Some(candidate_rs)
-            } else if all_files_set.contains(candidate_mod.as_str()) {
-                Some(candidate_mod)
-            } else {
-                None
-            }
-        } else if imp.resolved_path.is_some() {
-            imp.resolved_path
-                .as_ref()
-                .map(|p| shared_filesystem::utility_container_wiring::path_to_relative(p, top_root))
-        } else {
-            let raw = &imp.raw_path;
-            let src_dir = Path::new(src_rel)
-                .parent()
-                .map(|p| p.to_string_lossy().to_string())
-                .unwrap_or_default();
-            if raw.starts_with("./") || raw.starts_with("../") {
-                let base = Path::new(&src_dir);
-                let rel = raw.strip_prefix("./").unwrap_or(raw);
-                // When the source file is at the scan root (src_dir is empty),
-                // "../x" cannot mean "one level above the root" — treat it as
-                // a direct relative path so that root-level files with
-                // `import "../y"` resolve to "y" instead of "../y".
-                let rel = if src_dir.is_empty() && rel.starts_with("../") {
-                    rel.trim_start_matches("../").to_string()
-                } else {
-                    rel.to_string()
-                };
-                let candidate = base.join(&rel).to_string_lossy().to_string();
-                if all_files_set.contains(candidate.as_str()) {
-                    Some(candidate)
-                } else if !candidate.contains('.') {
-                    let exts = [".ts", ".js", ".tsx", ".jsx", ".rs", ".py"];
-                    exts.iter().find_map(|ext| {
-                        let c = format!("{}{}", candidate, ext);
-                        if all_files_set.contains(c.as_str()) {
-                            Some(c)
-                        } else {
-                            None
-                        }
-                    })
-                } else {
-                    None
-                }
-            } else {
-                shared_filesystem::utility_import_resolution::resolve_by_language(
-                    imp,
-                    &src_dir,
-                    src_rel,
-                    top_root,
-                    all_files_set,
-                    stem_index,
-                )
-            }
-        }
-    }
 }
-
-// ─── Pipeline Helpers ───

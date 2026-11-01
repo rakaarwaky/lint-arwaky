@@ -1,10 +1,10 @@
 // PURPOSE: Behavioural guards for the hardcoded AES architecture.
 //
 // The business rules moved out of YAML into
-// `config_architecture_rules::hardcoded_default_architecture`. These tests
+// `utility_config_architecture_rules::hardcoded_default_architecture`. These tests
 // pin the behaviour that matters to the rule engine, so a careless edit to the
 // table fails here instead of silently changing what the linter reports.
-use shared_config_system::config_architecture_rules::hardcoded_default_architecture;
+use shared_config_system::utility_config_architecture_rules::hardcoded_default_architecture;
 use shared_config_system::utility_config_merger::merge_config;
 
 fn merged() -> std::collections::HashMap<
@@ -271,4 +271,13 @@ fn naming_word_count_default_is_three() {
 #[test]
 fn architecture_is_enabled() {
     assert!(hardcoded_default_architecture().enabled.value);
+}
+
+#[test]
+fn mandatory_class_definition_defaults_to_true() {
+    assert!(
+        hardcoded_default_architecture()
+            .mandatory_class_definition
+            .value
+    );
 }

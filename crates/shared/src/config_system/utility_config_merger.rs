@@ -1,5 +1,6 @@
 // PURPOSE: Config merger utility — pure function for merging rules into layer definitions
 use crate::taxonomy_config_system_vo::{ArchitectureConfig, ArchitectureRule};
+use shared_common::taxonomy_common_vo::BooleanVO;
 use shared_common::taxonomy_default_constant::DEFAULT_IGNORED_PATHS;
 use shared_common::taxonomy_layer_vo::LayerDefinition;
 use shared_common::taxonomy_layer_vo::LayerNameVO;
@@ -78,6 +79,11 @@ fn index_rules_by_scope(rules: &[ArchitectureRule]) -> HashMap<String, Vec<&Arch
 
 /// Merge a single rule's values into a layer definition.
 fn merge_rule_into_definition(ldef: &mut LayerDefinition, rule: &ArchitectureRule) {
+    // AES303: propagate mandatory_class_definition from enabled rules into
+    // layer definitions so checkers see the default.
+    if rule.code_analysis.mandatory_class_definition.value {
+        ldef.code_analysis.mandatory_class_definition = BooleanVO::new(true);
+    }
     if !rule.exceptions.values.is_empty() {
         for val in &rule.exceptions.values {
             if !ldef.exceptions.values.contains(val) {

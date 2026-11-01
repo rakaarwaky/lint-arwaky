@@ -1,5 +1,5 @@
 // FR-001 — Project Config Discovery
-mod common;
+mod mock_common;
 
 use shared_common::FilePath;
 use shared_config_system::ConfigRequest;
@@ -16,7 +16,7 @@ fn us1_config_in_project_root_is_found() {
     .unwrap();
     fs::write(tmp.path().join("Cargo.toml"), "[package]\nname=\"x\"\n").unwrap();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    let result = common::make_container()
+    let result = mock_common::make_container()
         .orchestrator()
         .execute(ConfigRequest::load_project_config(&fp))
         .into_config_result();
@@ -40,7 +40,7 @@ fn us1_config_in_parent_directory_is_found() {
     let nested = tmp.path().join("src").join("deep");
     fs::create_dir_all(&nested).unwrap();
     let fp = FilePath::new(nested.to_string_lossy().to_string()).unwrap();
-    let result = common::make_container()
+    let result = mock_common::make_container()
         .orchestrator()
         .execute(ConfigRequest::load_for_language(&fp, ConfigLanguage::Rust))
         .into_config_result();

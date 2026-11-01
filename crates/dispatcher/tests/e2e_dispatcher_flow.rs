@@ -1,5 +1,5 @@
 // E2E tests — dispatcher scan flow.
-mod common;
+mod mock_common;
 
 use shared_common::taxonomy_path_vo::FilePath;
 
@@ -29,7 +29,7 @@ fn e2e_check_action_full_flow() {
                 aggregate: orch.clone(),
             },
         ),
-        scan_aggregates: Some(common::build_scan_aggregates(
+        scan_aggregates: Some(mock_common::build_scan_aggregates(
             root.to_string_lossy().as_ref(),
         )),
     };

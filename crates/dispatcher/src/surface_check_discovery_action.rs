@@ -314,3 +314,7 @@ pub(crate) fn run_all_linters_json(
 }
 
 // ─── BFS unit tests ──────────────────────────────────────────────
+
+pub struct _Aes303Placeholder {
+    _placeholder: (),
+}

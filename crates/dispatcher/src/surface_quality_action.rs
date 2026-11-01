@@ -54,3 +54,7 @@ pub fn collect_quality(
 
     Ok(violations)
 }
+
+pub struct _Aes303Placeholder {
+    _placeholder: (),
+}

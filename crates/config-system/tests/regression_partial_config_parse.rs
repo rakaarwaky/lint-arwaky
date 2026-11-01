@@ -7,7 +7,7 @@
 //   (b) reject the whole parse loudly (Err / non-empty warnings).
 // What must NEVER happen is a silent empty/default config. These tests lock
 // that contract in permanently (see TEST.md §2.0 Regression Test Convention).
-mod common;
+mod mock_common;
 
 use config_system_lint_arwaky::capabilities_parser_provider::ConfigParserProvider;
 use shared_common::FilePath;
@@ -16,7 +16,7 @@ use std::fs;
 use tempfile::TempDir;
 
 fn make_parser() -> ConfigParserProvider {
-    ConfigParserProvider::new(common::make_io())
+    ConfigParserProvider::new(mock_common::make_io())
 }
 
 // QA #640 (TOML surface): 3 valid fields + 1 malformed `score.value` field.

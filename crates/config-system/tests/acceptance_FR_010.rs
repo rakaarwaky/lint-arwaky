@@ -1,6 +1,6 @@
 // FR-010 — Config File Listing
 // Tests listing all config files found at project root for all supported languages.
-mod common;
+mod mock_common;
 
 use config_system_lint_arwaky::capabilities_yaml_reader::ConfigYamlReader;
 use shared_common::FilePath;
@@ -9,7 +9,7 @@ use std::fs;
 use tempfile::TempDir;
 
 fn make_reader() -> ConfigYamlReader {
-    ConfigYamlReader::new(common::make_io())
+    ConfigYamlReader::new(mock_common::make_io())
 }
 
 // FR-010: Multiple languages have config files → all returned
