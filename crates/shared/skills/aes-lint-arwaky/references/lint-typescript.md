@@ -92,7 +92,7 @@ lint-arwaky-cli scan packages/ --format sarif \
   orphan AES501–506).
 - **AES201 forbidden import** → remove the cross-layer `import { … } from "…"`; depend on the
   contract interface injected through DI (`aes-contract`).
-- **AES303** → add the missing `class` / `interface` / `enum`.
+- **AES303** → add the missing `class` / `interface` / `enum` (skipped for `utility`/`surface` layers).
 - **AES304** → remove `@ts-ignore`, `@ts-expect-error`, `@ts-nocheck`, `eslint-disable`
   (`lint-arwaky-cli fix <path> --filter AES304`).
 - **AES403** → every capability class MUST implement its protocol interface.

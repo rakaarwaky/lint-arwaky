@@ -16,11 +16,14 @@ pub trait IBypassCheckerProtocol: Send + Sync {
 }
 
 pub trait IMandatoryClassProtocol: Send + Sync {
+    /// `layer_name` is the resolved AES layer (`utility`, `surface`, `capabilities`, …).
+    /// The mandatory-definition check is skipped for `utility` and `surface` layers.
     fn check_mandatory_class_definition(
         &self,
         file: &str,
         definition: Option<&LayerDefinition>,
         content: &str,
+        layer_name: &str,
         violations: &mut Vec<LintResult>,
     );
 }

@@ -60,7 +60,7 @@ AES401–403, AES406, AES505–506 → 🟢 **MEDIUM/LOW** AES203–204, AES305,
 | AES205 (Circular Import) | Two files/layers import each other | Extract the shared type or trait downward into `taxonomy` or `contract`; both sides import that | `aes-contract`|
 | AES301 (File Maximum Limit) | File exceeds the layer's max lines | Split by responsibility; extract shared logic to `aes-utility` if duplicated | `aes-{layer}`, `aes-utility`|
 | AES302 (File Minimum Limit) | File is below the minimum size | Merge into the parent module or delete the file | `aes-{layer}`|
-| AES303 (Mandatory Definition) | File has no class/struct/enum/trait of its own | Add the definition the filename promises | `aes-{layer}`|
+| AES303 (Mandatory Definition) | File has no class/struct/enum/trait of its own (skipped for `utility`/`surface` layers) | Add the definition the filename promises | `aes-{layer}`|
 | AES304 (Bypass Comment) | `noqa`, `type: ignore`, `#[allow]`, `@ts-ignore`, `eslint-disable` … | Auto-fixable, or fix the root cause and delete the suppression | `fix --filter AES304` or `aes-{layer}`|
 | AES305 (Duplication Code) | Same logic repeated across files | Extract shared logic into a pure utility | `aes-utility`|
 | AES401 (Taxonomy Role) | `_constant` purity; primitives in `_entity`/`_error`/`_event` | Replace primitives with taxonomy VOs | `aes-taxonomy`|

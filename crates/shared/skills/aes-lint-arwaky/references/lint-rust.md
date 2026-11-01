@@ -97,7 +97,7 @@ lint-arwaky-cli scan .
   AES501–506).
 - **AES205 circular import** → extract the shared trait/type downward; both sides import it.
   Route the new interface through `aes-contract`.
-- **AES303** → add the missing `struct` / `enum` / `trait`.
+- **AES303** → add the missing `struct` / `enum` / `trait` (skipped for `utility`/`surface` layers).
 - **AES304** → remove `#[allow(...)]`; replace `unwrap()` / `expect()` / `panic!()` with real
   error handling (`lint-arwaky-cli fix <path> --filter AES304`).
 - **AES403 / AES405** → capability `impl`s target the `_protocol` trait; agent structs hold

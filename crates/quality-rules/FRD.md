@@ -98,8 +98,8 @@ It sits behind the `ICodeAnalysisAggregate` front door and is called by the Surf
 
 #### Business Logic
 
-- The AES303 mandatory-definition check shall fire when a source file contains no definition of a recognized kind (struct, enum, trait, class, interface, or type).
-- The AES303 dead-inheritance check shall fire a `DeadInheritance` violation for a struct or class declared without an impl block, and for empty class or interface variants, per language.
+- The AES303 mandatory-definition check shall fire when a source file contains no definition of a recognized kind (struct, enum, trait, class, interface, or type), **except for files in the `utility` or `surface` layers** which are skipped.
+- The AES303 dead-inheritance check shall fire a `DeadInheritance` violation for a struct or class declared without an impl block, and for empty class or interface variants, per language. Dead-inheritance (sub-check 2) is unchanged and is not layer-scoped.
 - A file that carries a definition and non-empty bodies shall pass without a finding.
 
 #### Edge Cases
@@ -124,6 +124,7 @@ It sits behind the `ICodeAnalysisAggregate` front door and is called by the Surf
 | Context | When Action | Then Observable Result |
 |---------|-------------|------------------------|
 | A file has no struct or class | The quality-rules audit runs AES303 on that file | One mandatory-definition finding is produced |
+| A file in the `utility` or `surface` layer has no struct or class | The quality-rules audit runs AES303 on that file | No mandatory-definition finding is produced |
 | A struct is declared without an impl block | The quality-rules audit runs AES303 on that file | One `DeadInheritance` finding is produced |
 | An empty JS interface is scanned | The quality-rules audit runs AES303 on that file | One mandatory-definition finding is produced |
 
