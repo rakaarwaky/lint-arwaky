@@ -697,10 +697,31 @@ pub(crate) use crate::surface_check_scope_action::{
     structure_violations_in_scope, violation_in_scan_scope,
 };
 
+/// Detect the source language from a file path extension. This is a
+/// surface-layer helper that avoids importing IWorkspaceProtocol (AES201).
+pub(crate) fn detect_language_from_path(
+    path: &str,
+) -> shared_filesystem::taxonomy_filesystem_vo::Language {
+    let ext = std::path::Path::new(path)
+        .extension()
+        .map(|e| e.to_str().unwrap_or(""))
+        .unwrap_or("");
+    match ext {
+        "rs" => shared_filesystem::taxonomy_filesystem_vo::Language::Rust,
+        "py" => shared_filesystem::taxonomy_filesystem_vo::Language::Python,
+        "ts" | "tsx" | "js" | "jsx" => {
+            shared_filesystem::taxonomy_filesystem_vo::Language::TypeScript
+        }
+        _ => shared_filesystem::taxonomy_filesystem_vo::Language::Unknown,
+    }
+}
+
 #[cfg(test)]
 mod bfs_tests {
     use super::*;
-    use crate::surface_check_discovery_action::bfs_enter_subdirs;
+    use crate::surface_check_discovery_action::{
+        bfs_enter_subdirs, build_skip_dirs, discover_lintable_files,
+    };
     use std::collections::HashSet;
 
     /// Build a `FilesystemSeam` from the real `FilesystemContainer` so the BFS
@@ -716,8 +737,18 @@ mod bfs_tests {
         }
     }
 
-    fn skip_dirs() -> HashSet<&'static str> {
-        HashSet::new()
+    /// Exact-path predicate: true if `discovered` contains the canonicalized
+    /// form of `expected` (a path under the temp root).
+    fn has_path(discovered: &[String], expected: &std::path::Path) -> bool {
+        let canon = expected
+            .canonicalize()
+            .unwrap_or_else(|_| expected.to_path_buf());
+        discovered.iter().any(|p| {
+            std::path::Path::new(p)
+                .canonicalize()
+                .map(|c| c == canon)
+                .unwrap_or(false)
+        })
     }
 
     #[test]
@@ -737,15 +768,13 @@ mod bfs_tests {
         let seam = real_seam();
         let mut discovered = Vec::new();
         let ignored: Vec<String> = Vec::new();
-        bfs_enter_subdirs(&seam, root, &skip_dirs(), false, &ignored, &mut discovered);
-        let has_nested = discovered.iter().any(|p| p.contains("submodule"));
+        bfs_enter_subdirs(&seam, root, &HashSet::new(), &ignored, &mut discovered);
         assert!(
-            !has_nested,
+            !discovered.iter().any(|p| p.contains("submodule")),
             "BFS must skip a dir carrying its own .git file: {discovered:?}"
         );
-        let has_normal = discovered.iter().any(|p| p.contains("normal"));
         assert!(
-            has_normal,
+            has_path(&discovered, &normal.join("src").join("lib.rs")),
             "BFS must keep a plain dir without a .git marker: {discovered:?}"
         );
     }
@@ -766,29 +795,185 @@ mod bfs_tests {
         let seam = real_seam();
         let mut discovered = Vec::new();
         let ignored = vec!["internal/lint-arwaky/.worktrees".to_string()];
-        bfs_enter_subdirs(&seam, root, &skip_dirs(), false, &ignored, &mut discovered);
-        let has_worktrees = discovered.iter().any(|p| p.contains(".worktrees"));
+        bfs_enter_subdirs(&seam, root, &HashSet::new(), &ignored, &mut discovered);
         assert!(
-            !has_worktrees,
+            !discovered.iter().any(|p| p.contains(".worktrees")),
             "BFS must prune the multi-segment ignored subtree: {discovered:?}"
         );
+        assert!(
+            has_path(&discovered, &src.join("lib.rs")),
+            "BFS must keep the non-ignored sibling dir: {discovered:?}"
+        );
     }
-}
-/// Detect the source language from a file path extension. This is a
-/// surface-layer helper that avoids importing IWorkspaceProtocol (AES201).
-pub(crate) fn detect_language_from_path(
-    path: &str,
-) -> shared_filesystem::taxonomy_filesystem_vo::Language {
-    let ext = std::path::Path::new(path)
-        .extension()
-        .map(|e| e.to_str().unwrap_or(""))
-        .unwrap_or("");
-    match ext {
-        "rs" => shared_filesystem::taxonomy_filesystem_vo::Language::Rust,
-        "py" => shared_filesystem::taxonomy_filesystem_vo::Language::Python,
-        "ts" | "tsx" | "js" | "jsx" => {
-            shared_filesystem::taxonomy_filesystem_vo::Language::TypeScript
-        }
-        _ => shared_filesystem::taxonomy_filesystem_vo::Language::Unknown,
+
+    /// At a workspace root the BFS must enter a non-member subdirectory (e.g.
+    /// `docs`) so source files nested under it are discovered. The asserted
+    /// file lives at `docs/sub/root_doc.rs` — one level deeper than the
+    /// `discover_source_files` root scan reaches, so its discovery depends on
+    /// `bfs_enter_subdirs` entering `docs` and then `docs/sub`. A `target/`
+    /// subdir confirms `DEFAULT_IGNORED_PATHS` pruning still applies at depth 0.
+    #[test]
+    fn bfs_enters_non_member_subdir_at_workspace_root() {
+        let tmp = tempfile::TempDir::new().unwrap();
+        let root = tmp.path();
+        // Workspace root marker.
+        let members = root.join("crates").join("alpha").join("src");
+        std::fs::create_dir_all(&members).unwrap();
+        std::fs::write(members.join("lib.rs"), "fn lib() {}").unwrap();
+        // Non-member subdir, one level deeper than the root scan reaches.
+        let docs_sub = root.join("docs").join("sub");
+        std::fs::create_dir_all(&docs_sub).unwrap();
+        std::fs::write(docs_sub.join("root_doc.rs"), "fn root_doc() {}").unwrap();
+        // `target/` must be pruned even though it holds a source file.
+        let target = root.join("target");
+        std::fs::create_dir_all(&target).unwrap();
+        std::fs::write(target.join("build.rs"), "fn build() {}").unwrap();
+
+        let seam = real_seam();
+        let mut discovered = Vec::new();
+        let ignored: Vec<String> = Vec::new();
+        bfs_enter_subdirs(
+            &seam,
+            root,
+            &build_skip_dirs(true, root),
+            &ignored,
+            &mut discovered,
+        );
+
+        assert!(
+            has_path(&discovered, &members.join("lib.rs")),
+            "BFS must still enter the member dir at a workspace root: {discovered:?}"
+        );
+        assert!(
+            has_path(&discovered, &docs_sub.join("root_doc.rs")),
+            "BFS must enter a non-member subdir at a workspace root: {discovered:?}"
+        );
+        assert!(
+            !discovered.iter().any(|p| p.contains("target")),
+            "BFS must prune the default-ignored `target/` subdir: {discovered:?}"
+        );
+    }
+
+    /// A root-level `.md` doc inside a non-member subdir of a workspace root is
+    /// not a source file, so `discover_lintable_files` must not surface it —
+    /// the doc-rules audit (a separate collector) is what handles root docs.
+    #[test]
+    fn discover_lintable_files_prunes_md_docs_in_non_member_subdir() {
+        let tmp = tempfile::TempDir::new().unwrap();
+        let root = tmp.path();
+        let member = root.join("crates").join("alpha").join("src");
+        std::fs::create_dir_all(&member).unwrap();
+        std::fs::write(member.join("lib.rs"), "fn lib() {}").unwrap();
+        let docs = root.join("docs");
+        std::fs::create_dir_all(&docs).unwrap();
+        std::fs::write(docs.join("root_doc.md"), "# doc\n").unwrap();
+
+        let seam = real_seam();
+        let ignored: Vec<String> = Vec::new();
+        let discovered = discover_lintable_files(&seam, root, &ignored);
+
+        assert!(
+            has_path(&discovered, &member.join("lib.rs")),
+            "member-dir source files must still be discovered: {discovered:?}"
+        );
+        assert!(
+            !discovered.iter().any(|p| p.ends_with("root_doc.md")),
+            "`discover_lintable_files` must not surface non-source `.md` docs: {discovered:?}"
+        );
+    }
+
+    /// A `check .`-style scan of a repo root must not descend into the
+    /// `workspaces-bad` / `workspaces-good` fixture siblings, while a direct
+    /// fixture scan keeps its own tree.
+    #[test]
+    fn bfs_skips_fixture_dirs_at_non_fixture_root() {
+        let tmp = tempfile::TempDir::new().unwrap();
+        let root = tmp.path();
+        // Workspace root marker.
+        let member = root.join("crates").join("alpha").join("src");
+        std::fs::create_dir_all(&member).unwrap();
+        std::fs::write(member.join("lib.rs"), "fn lib() {}").unwrap();
+        // Fixture sibling dirs holding source files.
+        let bad = root.join("workspaces-bad");
+        std::fs::create_dir_all(&bad).unwrap();
+        std::fs::write(bad.join("bad.rs"), "fn bad() {}").unwrap();
+        let good = root.join("workspaces-good");
+        std::fs::create_dir_all(&good).unwrap();
+        std::fs::write(good.join("good.rs"), "fn good() {}").unwrap();
+
+        let seam = real_seam();
+        let mut discovered = Vec::new();
+        let ignored: Vec<String> = Vec::new();
+        // `scan_target_is_ws_root = true` keeps member dirs; the fixture dirs
+        // are added to the skip set because the target is not a fixture.
+        bfs_enter_subdirs(
+            &seam,
+            root,
+            &build_skip_dirs(true, root),
+            &ignored,
+            &mut discovered,
+        );
+        assert!(
+            has_path(&discovered, &member.join("lib.rs")),
+            "member-dir source files must still be discovered: {discovered:?}"
+        );
+        assert!(
+            !discovered.iter().any(|p| p.contains("workspaces-bad")),
+            "BFS must not descend into workspaces-bad at a non-fixture root: {discovered:?}"
+        );
+        assert!(
+            !discovered.iter().any(|p| p.contains("workspaces-good")),
+            "BFS must not descend into workspaces-good at a non-fixture root: {discovered:?}"
+        );
+    }
+
+    /// A degenerate workspace root (marker dirs, no source files) must yield
+    /// an empty discovery without panicking.
+    #[test]
+    fn bfs_handles_empty_workspace_root() {
+        let tmp = tempfile::TempDir::new().unwrap();
+        let root = tmp.path();
+        std::fs::create_dir_all(root.join("crates")).unwrap();
+        std::fs::create_dir_all(root.join("packages")).unwrap();
+
+        let seam = real_seam();
+        let mut discovered = Vec::new();
+        let ignored: Vec<String> = Vec::new();
+        bfs_enter_subdirs(
+            &seam,
+            root,
+            &build_skip_dirs(true, root),
+            &ignored,
+            &mut discovered,
+        );
+        assert!(
+            discovered.is_empty(),
+            "an empty workspace root must discover no files: {discovered:?}"
+        );
+    }
+
+    /// `discover_lintable_files` surfaces root-level source files directly
+    /// under the scan target — a regression guard for the root scan that runs
+    /// before the BFS.
+    #[test]
+    fn discover_lintable_files_walks_root_source_at_workspace_root() {
+        let tmp = tempfile::TempDir::new().unwrap();
+        let root = tmp.path();
+        // Root-level source file directly under the scan target.
+        let root_src = root.join("root_src.rs");
+        std::fs::write(&root_src, "fn root_src() {}").unwrap();
+        // Member dir so the target is a workspace root.
+        let member = root.join("crates").join("alpha").join("src");
+        std::fs::create_dir_all(&member).unwrap();
+        std::fs::write(member.join("lib.rs"), "fn lib() {}").unwrap();
+
+        let seam = real_seam();
+        let ignored: Vec<String> = Vec::new();
+        let discovered = discover_lintable_files(&seam, root, &ignored);
+
+        assert!(
+            has_path(&discovered, &root_src),
+            "root-level source files must be discovered at a workspace root: {discovered:?}"
+        );
     }
 }

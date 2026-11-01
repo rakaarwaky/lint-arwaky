@@ -40,14 +40,7 @@ pub(crate) fn discover_lintable_files(
         .iter()
         .any(|name| scan_root.join(name).is_dir());
     let skip_dirs = build_skip_dirs(is_ws_root, scan_root);
-    bfs_enter_subdirs(
-        seam,
-        scan_root,
-        &skip_dirs,
-        is_ws_root,
-        ignored,
-        &mut discovered,
-    );
+    bfs_enter_subdirs(seam, scan_root, &skip_dirs, ignored, &mut discovered);
     discovered
 }
 
@@ -72,11 +65,12 @@ pub(crate) fn discover_test_suite_files(
 }
 
 /// Build the set of directory names the BFS skips: always `DEFAULT_IGNORED_PATHS`
-/// plus member dirs when not at a workspace root, plus fixture dirs when they
-/// are not the scan target itself (a `check .` of the repo root must never
-/// lint `workspaces-bad/good`, but a direct fixture scan must lint its files).
+/// plus member dirs when the scan target is not a workspace root, plus fixture
+/// dirs when they are not the scan target itself (a `check .` of the repo root
+/// must never lint `workspaces-bad/good`, but a direct fixture scan must lint
+/// its files).
 pub(crate) fn build_skip_dirs(
-    is_ws_root: bool,
+    scan_target_is_ws_root: bool,
     scan_root: &std::path::Path,
 ) -> std::collections::HashSet<&'static str> {
     let mut skip_dirs: std::collections::HashSet<&str> =
@@ -84,7 +78,7 @@ pub(crate) fn build_skip_dirs(
             .iter()
             .copied()
             .collect();
-    if !is_ws_root {
+    if !scan_target_is_ws_root {
         skip_dirs.insert("crates");
         skip_dirs.insert("packages");
         skip_dirs.insert("modules");
@@ -100,22 +94,18 @@ pub(crate) fn build_skip_dirs(
     skip_dirs
 }
 
-/// Breadth-first walk into subdirectories of `scan_root`, collecting lintable
-/// source files. At a workspace root the depth-0 level is gated to member dirs
-/// only; deeper levels enter every subdir. `discovered` is extended in place.
+/// BFS into every subdirectory of `scan_root`, collecting lintable source
+/// files (`discovered` is extended in place).
 pub(crate) fn bfs_enter_subdirs(
     seam: &FilesystemSeam,
     scan_root: &std::path::Path,
     skip_dirs: &std::collections::HashSet<&str>,
-    is_ws_root: bool,
     ignored: &[String],
     discovered: &mut Vec<String>,
 ) {
-    let member_names: &[&str] = &["crates", "packages", "modules"];
-    let mut queue: Vec<(std::path::PathBuf, usize)> = vec![(scan_root.to_path_buf(), 0)];
     let mut seen: std::collections::HashSet<std::path::PathBuf> = std::collections::HashSet::new();
-    while let Some((dir, depth)) = queue.pop() {
-        let gate_members = is_ws_root && depth == 0;
+    let mut queue: Vec<std::path::PathBuf> = vec![scan_root.to_path_buf()];
+    while let Some(dir) = queue.pop() {
         for entry in seam
             .aggregate
             .execute(FilesystemRequest::scan_directory(dir.as_path()))
@@ -136,17 +126,6 @@ pub(crate) fn bfs_enter_subdirs(
                     reason = "default_skip_dir",
                     dir = name,
                     "skipping default-ignored directory"
-                );
-                continue;
-            }
-            let is_member_dir = member_names.contains(&name);
-            if gate_members && !is_member_dir {
-                tracing::trace!(
-                    target: "lint_arwaky::audit",
-                    event = "walker_skip",
-                    reason = "non_member_at_ws_root",
-                    dir = name,
-                    "skipping non-member directory at workspace root"
                 );
                 continue;
             }
@@ -198,12 +177,7 @@ pub(crate) fn bfs_enter_subdirs(
                 total_files = discovered.len(),
                 "entering subdirectory"
             );
-            let next_depth = if is_ws_root && is_member_dir {
-                1
-            } else {
-                depth + 1
-            };
-            queue.push((entry_path.to_path_buf(), next_depth));
+            queue.push(entry_path.to_path_buf());
         }
     }
 }
