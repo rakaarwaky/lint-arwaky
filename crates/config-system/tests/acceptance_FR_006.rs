@@ -1,6 +1,6 @@
 // FR-006 — Config Validation
 // Tests threshold validation and adapter enablement per FR-006 spec.
-mod common;
+mod mock_common;
 
 use shared_common::AdapterName;
 use shared_common::{Count, Score};

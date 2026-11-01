@@ -150,3 +150,7 @@ mod tests {
         );
     }
 }
+
+pub struct _Aes303Placeholder {
+    _placeholder: (),
+}

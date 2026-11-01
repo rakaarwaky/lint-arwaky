@@ -1,4 +1,4 @@
-// PURPOSE: entry-heading regexes for AES606 template conformance.
+// PURPOSE: entry-heading regexes for AESD06 template conformance.
 //
 // The five item-heading patterns one doc's entry tables are walked with:
 // `FR-` requirement entries (FRD), `PR-` entries (PRD / ROADMAP / root

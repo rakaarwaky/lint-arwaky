@@ -1,5 +1,5 @@
 // FR-004 — Multi-Workspace Analysis
-mod common;
+mod mock_common;
 
 use shared_common::FilePath;
 use shared_config_system::ConfigRequest;
@@ -14,7 +14,7 @@ fn us4_discovers_all_workspace_member_types() {
     fs::create_dir_all(root.join("packages").join("ts-app")).unwrap();
     fs::create_dir_all(root.join("modules").join("py-mod")).unwrap();
     let fp = FilePath::new(root.to_string_lossy().to_string()).unwrap();
-    let workspaces = common::make_container()
+    let workspaces = mock_common::make_container()
         .orchestrator()
         .execute(ConfigRequest::discover_workspaces(&fp))
         .into_workspaces();
@@ -36,7 +36,7 @@ fn us4_each_member_gets_own_config() {
     )
     .unwrap();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    let workspaces = common::make_container()
+    let workspaces = mock_common::make_container()
         .orchestrator()
         .execute(ConfigRequest::discover_workspaces(&fp))
         .into_workspaces();
@@ -49,7 +49,7 @@ fn us4_empty_workspace_returns_empty() {
     let tmp = TempDir::new().unwrap();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
     assert!(
-        common::make_container()
+        mock_common::make_container()
             .orchestrator()
             .execute(ConfigRequest::discover_workspaces(&fp))
             .into_workspaces()

@@ -1,4 +1,4 @@
-// PURPOSE: template conformance types and profiles for AES606
+// PURPOSE: template conformance types and profiles for AESD06
 
 use crate::taxonomy_doc_rules_constant::{
     AGENTS_DOC, AGENTS_REQUIRED_H2S, ARCHITECTURE_DOC, ARCHITECTURE_REQUIRED_H2S, BACKLOG_DOC,

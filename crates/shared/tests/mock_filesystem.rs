@@ -1,5 +1,5 @@
 // PURPOSE: Shared mock filesystem for dispatcher unit tests.
-// Included via: #[path = "../../shared/tests/common/mock_filesystem.rs"]
+// Included via: #[path = "../../shared/tests/mock_filesystem.rs"]
 // mod mock_filesystem;
 //
 // Mirrors crates/orphan-rules/tests/mock_filesystem.rs but uses the crate's

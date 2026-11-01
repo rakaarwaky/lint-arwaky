@@ -1,5 +1,4 @@
 // common — truly shared types used by multiple features
-pub mod architecture_layer_detector;
 pub mod taxonomy_adapter_error;
 pub mod taxonomy_adapter_name_vo;
 pub mod taxonomy_ast_vo;
@@ -20,11 +19,11 @@ pub mod taxonomy_name_vo;
 pub mod taxonomy_path_vo;
 pub mod taxonomy_report_snapshot_vo;
 pub mod taxonomy_severity_vo;
-pub mod taxonomy_skill_hint_vo;
 pub mod taxonomy_threshold_vo;
+pub mod taxonomy_value_object_vo;
 pub mod taxonomy_violation_item_vo;
+pub mod utility_architecture_layer_detector;
 pub mod utility_release_version;
-pub mod utility_value_object_generator;
 
 // ─── Re-exports ────────────────────────────────────────────
 pub use taxonomy_adapter_error::AdapterError;
@@ -96,8 +95,6 @@ pub use taxonomy_report_snapshot_vo::ReportDelta;
 pub use taxonomy_report_snapshot_vo::ReportSnapshot;
 pub use taxonomy_report_snapshot_vo::SnapshotStore;
 pub use taxonomy_severity_vo::Severity;
-pub use taxonomy_skill_hint_vo::SkillHint;
-pub use taxonomy_skill_hint_vo::resolve_skill_hint;
 pub use taxonomy_threshold_vo::Threshold;
 pub use taxonomy_violation_item_vo::ViolationItem;
 pub use taxonomy_violation_item_vo::parse_fix;

@@ -496,14 +496,10 @@ fn main() {
     );
     let git_orchestrator = git_container.aggregate();
 
-    let report_formatter: Arc<dyn shared_report_formatter::IReportFormatterAggregate> = Arc::new(
-        report_formatter::ReportFormatterOrchestrator::new(report_formatter::ReportFormatterDeps {
-            text: Arc::new(report_formatter::TextFormatter::new()),
-            json: Arc::new(report_formatter::JsonFormatter::new()),
-            sarif: Arc::new(report_formatter::SarifFormatter::new()),
-            junit: Arc::new(report_formatter::JunitFormatter::new()),
-        }),
-    );
+    let report_formatter_container =
+        report_formatter::root_report_formatter_container::ReportFormatterContainer::new();
+    let report_formatter: Arc<dyn shared_report_formatter::IReportFormatterAggregate> =
+        report_formatter_container.orchestrator();
 
     // Extract ignored_paths from config for all sub-commands.
     let ignored_paths: Vec<String> = config_orchestrator

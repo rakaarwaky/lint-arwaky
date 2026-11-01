@@ -386,9 +386,9 @@ impl ArchOrphanAnalyzer {
             }
         };
         let filename =
-            shared_common::architecture_layer_detector::extract_filename(file_fp.value());
+            shared_common::utility_architecture_layer_detector::extract_filename(file_fp.value());
         let base_layer =
-            shared_common::architecture_layer_detector::detect_layer_from_prefix(filename);
+            shared_common::utility_architecture_layer_detector::detect_layer_from_prefix(filename);
         if filename.contains("surface") {
             trace!(
                 file = f,
@@ -402,12 +402,13 @@ impl ArchOrphanAnalyzer {
             trace!(file = f, filename = filename, "SKIP no layer prefix");
             return None;
         };
-        let layer_str = shared_common::architecture_layer_detector::resolve_specialized_layer(
-            &base_layer,
-            file_fp.value(),
-            layer_keys,
-        );
-        let definition = shared_common::architecture_layer_detector::get_layer_def(
+        let layer_str =
+            shared_common::utility_architecture_layer_detector::resolve_specialized_layer(
+                &base_layer,
+                file_fp.value(),
+                layer_keys,
+            );
+        let definition = shared_common::utility_architecture_layer_detector::get_layer_def(
             &layer_str,
             &self.config.layers,
         )

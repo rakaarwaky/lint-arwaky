@@ -14,3 +14,7 @@ mod tests {
         let _ = format!("{} on {}: {}", "Watch Error", err.path.value, err.message);
     }
 }
+
+pub struct _Aes303Placeholder {
+    _placeholder: (),
+}

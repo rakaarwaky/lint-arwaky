@@ -1,4 +1,4 @@
-// PURPOSE: H2-level table-shape detection for AES606 template conformance.
+// PURPOSE: H2-level table-shape detection for AESD06 template conformance.
 // Extracted from capabilities_doc_template_conformance_checker.rs to keep
 // that file under the AES301 1000-line file-size limit. Pure functions — no
 // checker state, no `DocFinding` construction, no violation names: the

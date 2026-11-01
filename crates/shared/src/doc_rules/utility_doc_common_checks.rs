@@ -631,9 +631,9 @@ pub fn project_identifier(id: &str) -> Option<String> {
         .map(|(project, _)| project.to_string())
 }
 
-// ─── Cross-capability crosslink mechanics (AES604) ───────────────────────
+// ─── Cross-capability crosslink mechanics (AESD04) ───────────────────────
 
-/// The mandatory reference links per document, one entry per the AES604
+/// The mandatory reference links per document, one entry per the AESD04
 /// target state; empty for README, which carries a placeholder table.
 pub fn required_links(name: &str) -> &'static [&'static str] {
     match name {
@@ -672,7 +672,7 @@ pub fn required_links(name: &str) -> &'static [&'static str] {
         ],
         consts::CONTRIBUTING_DOC => &[consts::PRD_DOC, consts::ARCHITECTURE_DOC],
         // README.md mandates no links; its Reference section is a
-        // placeholder table. ARCHITECTURE.md is out of scope for AES604.
+        // placeholder table. ARCHITECTURE.md is out of scope for AESD04.
         _ => &[],
     }
 }
@@ -735,7 +735,7 @@ pub fn backlog_required_links(
     }
 }
 
-// ─── Cross-capability member-doc mechanics (AES606) ──────────────────────
+// ─── Cross-capability member-doc mechanics (AESD06) ──────────────────────
 
 /// Required doc pair per member role.
 fn required_docs_for_role(role: MemberRole) -> Option<(&'static [&'static str], &'static str)> {
@@ -824,7 +824,7 @@ pub fn detect_member_docs(context: &DocAuditContext) -> Vec<MemberDocDefect> {
     defects
 }
 
-// ─── Cross-capability heading mechanics (AES605) ─────────────────────────
+// ─── Cross-capability heading mechanics (AESD05) ─────────────────────────
 
 /// H1/H2 heading contract check: exactly one H1, every required H2, no H2
 /// outside required+allowed. Returns pure defect data anchored to line 0.

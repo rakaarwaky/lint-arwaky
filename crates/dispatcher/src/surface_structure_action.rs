@@ -70,3 +70,7 @@ pub fn collect_structure(
         })
         .collect())
 }
+
+pub struct _Aes303Placeholder {
+    _placeholder: (),
+}

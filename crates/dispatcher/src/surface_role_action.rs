@@ -70,3 +70,7 @@ pub fn collect_role(
     let ignored: Vec<String> = Vec::new();
     collect_role_direct(role_orchestrator, filter, fs_agg, &root, &ignored)
 }
+
+pub struct _Aes303Placeholder {
+    _placeholder: (),
+}

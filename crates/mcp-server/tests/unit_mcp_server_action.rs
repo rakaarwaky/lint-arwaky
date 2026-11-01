@@ -2,18 +2,18 @@
 //
 // Exercises the real `McpActionSurface` dispatch logic with assertion depth:
 // every assertion pins the exact JSON envelope shape an MCP client sees.
-mod common;
+mod mock_common;
 
 use mcp_server_lint_arwaky::surface_mcp_action_command::McpActionSurface;
 
 fn surface() -> McpActionSurface {
-    common::make_action_surface()
+    mock_common::make_action_surface()
 }
 
 /// Authorization runs before path validation, so reaching the path-validation
 /// branch for a mutating action needs a surface that authorizes mutations.
 fn mutable_surface() -> McpActionSurface {
-    common::make_action_surface_allowing_mutations()
+    mock_common::make_action_surface_allowing_mutations()
 }
 
 // ─── Dispatch: unknown actions fail loudly, never silently ─────────

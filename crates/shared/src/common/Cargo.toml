@@ -46,9 +46,6 @@ path = "../../tests/integration_shared.rs"
 name = "smoke_shared"
 path = "../../tests/smoke_shared.rs"
 [[test]]
-name = "unit_common_taxonomy_skill_hint_vo"
-path = "../../tests/unit_common_taxonomy_skill_hint_vo.rs"
-[[test]]
 name = "unit_common_layer_detector"
 path = "../../tests/unit_common_layer_detector.rs"
 [[test]]

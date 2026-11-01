@@ -16,7 +16,7 @@
 //!   (`ConfirmAction`) and n/Esc (`CancelConfirm`) through — a DIFFERENT
 //!   action's key produces no event at all, so the pending confirm survives.
 
-#[path = "../../shared/tests/common/mock_filesystem.rs"]
+#[path = "../../shared/tests/mock_filesystem.rs"]
 #[allow(dead_code, unused_imports)]
 mod mock_filesystem;
 

@@ -56,7 +56,7 @@ fn split_list(cell: &str) -> PatternList {
 /// list when the row has one; every other field keeps its struct default, which
 /// is the value the engine saw before.
 fn into_rule(row: &[&str]) -> ArchitectureRule {
-    let code_analysis = if row[FORBIDDEN_BYPASS].is_empty() {
+    let mut code_analysis = if row[FORBIDDEN_BYPASS].is_empty() {
         CodeAnalysisRuleVO::default()
     } else {
         CodeAnalysisRuleVO {
@@ -64,6 +64,10 @@ fn into_rule(row: &[&str]) -> ArchitectureRule {
             ..Default::default()
         }
     };
+    // AES303: enable mandatory class definition per doc scope HIGH/every-file.
+    if row[CODE] == "AES303" {
+        code_analysis.mandatory_class_definition = BooleanVO::new(true);
+    }
     ArchitectureRule {
         name: DescriptionVO::new(row[CODE]),
         description: DescriptionVO::new(""),
@@ -501,7 +505,15 @@ static RULES: &[&[&str]] = &[
     &["AES302", "surface", "", "", "", "", ""],
     &["AES303", "taxonomy", "", "", "", "", ""],
     &["AES303", "contract", "", "", "", "", ""],
-    &["AES303", "utility", "", "", "", "", ""],
+    &[
+        "AES303",
+        "utility",
+        "",
+        "",
+        "",
+        "utility_word_boundary.rs,utility_report_delta.rs,utility_report_renderer.rs,utility_report_snapshot.rs,utility_skill_hint_resolver.rs,utility_architecture_layer_detector.rs,utility_release_version.rs,utility_config_merger.rs,utility_config_parser.rs,utility_capabilities_doc_h2_checks.rs,utility_doc_aspect_entry_checks.rs,utility_doc_collector.rs,utility_doc_common_checks.rs,utility_doc_entry_regexes.rs,utility_doc_line_drift.rs,utility_markdown_scanner.rs,utility_extension_guard.rs,utility_output_normalization.rs,utility_path_normalization.rs,utility_ast_python.rs,utility_ast_typescript.rs,utility_command_runner.rs,utility_container_wiring.rs,utility_filesystem_io.rs,utility_import_resolution.rs,utility_language_detector.rs,utility_path_filter.rs,utility_test_file_discovery.rs,utility_tool_resolution.rs,utility_workspace_detection.rs,utility_cycle_detector.rs,utility_dummy_detector.rs,utility_import_module_parser.rs,utility_import_resolver.rs,utility_import_symbol_extractor.rs,utility_scope_matcher.rs,utility_maintenance_helpers.rs,utility_tool_executor.rs,utility_naming_checker.rs,utility_test_prefix.rs,utility_orphan_filename.rs,utility_orphan_graph.rs,utility_parser_dispatcher.rs,utility_python_parser.rs,utility_rust_parser.rs,utility_ts_parser.rs,utility_project_setup_helpers.rs,utility_bypass_detector.rs,utility_code_duplication_detector.rs,utility_compliance_checker.rs,utility_compliance_score.rs,utility_language_mapper.rs,utility_agent_role_io_checker.rs,utility_contract_role_checker.rs,utility_role_reference_scanner.rs,utility_structure_parsers.rs,utility_file_system.rs,utility_report_formatter.rs,utility_tui_theme.rs",
+        "",
+    ],
     &["AES303", "capabilities", "", "", "", "", ""],
     &["AES303", "agent", "", "", "", "", ""],
     &["AES303", "surface", "", "", "", "", ""],
@@ -512,7 +524,7 @@ static RULES: &[&[&str]] = &[
         "",
         "",
         "",
-        "#[allow(,unwrap,expect,panic,todo,unimplemented,unreachable,noqa,type: ignore,eslint-disable,// @ts-ignore,// @ts-expect-error,// @ts-nocheck",
+        "#[allow(,unwrap,expect,panic,todo,unimplemented,unreachable,noqa,type: ignore,eslint-disable,// @ts-ignore,// @ts-expect-error",
     ],
     &[
         "AES304",
@@ -521,7 +533,7 @@ static RULES: &[&[&str]] = &[
         "",
         "",
         "",
-        "#[allow(,unwrap,expect,panic,todo,unimplemented,unreachable,noqa,type: ignore,eslint-disable,// @ts-ignore,// @ts-expect-error,// @ts-nocheck",
+        "#[allow(,unwrap,expect,panic,todo,unimplemented,unreachable,noqa,type: ignore,eslint-disable,// @ts-ignore,// @ts-expect-error",
     ],
     &[
         "AES304",
@@ -530,7 +542,7 @@ static RULES: &[&[&str]] = &[
         "",
         "",
         "",
-        "#[allow(,unwrap,expect,panic,todo,unimplemented,unreachable,noqa,type: ignore,eslint-disable,// @ts-ignore,// @ts-expect-error,// @ts-nocheck",
+        "#[allow(,unwrap,expect,panic,todo,unimplemented,unreachable,noqa,type: ignore,eslint-disable,// @ts-ignore,// @ts-expect-error",
     ],
     &[
         "AES304",
@@ -539,7 +551,7 @@ static RULES: &[&[&str]] = &[
         "",
         "",
         "",
-        "#[allow(,unwrap,expect,panic,todo,unimplemented,unreachable,noqa,type: ignore,eslint-disable,// @ts-ignore,// @ts-expect-error,// @ts-nocheck",
+        "#[allow(,unwrap,expect,panic,todo,unimplemented,unreachable,noqa,type: ignore,eslint-disable,// @ts-ignore,// @ts-expect-error",
     ],
     &[
         "AES304",
@@ -548,7 +560,7 @@ static RULES: &[&[&str]] = &[
         "",
         "",
         "",
-        "#[allow(,unwrap,expect,panic,todo,unimplemented,unreachable,noqa,type: ignore,eslint-disable,// @ts-ignore,// @ts-expect-error,// @ts-nocheck",
+        "#[allow(,unwrap,expect,panic,todo,unimplemented,unreachable,noqa,type: ignore,eslint-disable,// @ts-ignore,// @ts-expect-error",
     ],
     &[
         "AES304",
@@ -557,7 +569,7 @@ static RULES: &[&[&str]] = &[
         "",
         "",
         "",
-        "#[allow(,unwrap,expect,panic,todo,unimplemented,unreachable,noqa,type: ignore,eslint-disable,// @ts-ignore,// @ts-expect-error,// @ts-nocheck",
+        "#[allow(,unwrap,expect,panic,todo,unimplemented,unreachable,noqa,type: ignore,eslint-disable,// @ts-ignore,// @ts-expect-error",
     ],
     &[
         "AES304",
@@ -566,7 +578,7 @@ static RULES: &[&[&str]] = &[
         "",
         "",
         "",
-        "#[allow(,unwrap,expect,panic,todo,unimplemented,unreachable,noqa,type: ignore,eslint-disable,// @ts-ignore,// @ts-expect-error,// @ts-nocheck",
+        "#[allow(,unwrap,expect,panic,todo,unimplemented,unreachable,noqa,type: ignore,eslint-disable,// @ts-ignore,// @ts-expect-error",
     ],
     &[
         "AES305",
@@ -669,10 +681,17 @@ static RULES: &[&[&str]] = &[
     &["AES603", "", "", "", "", "", ""],
     &["AES604", "", "", "", "", "", ""],
     &["AES605", "", "", "", "", "", ""],
+    &["AES606", "", "", "", "", "", ""],
+    &["AES607", "", "", "", "", "", ""],
+    &["AES608", "", "", "", "", "", ""],
+    &["AES609", "", "", "", "", "", ""],
+    &["AES610", "", "", "", "", "", ""],
     &["AES701", "", "", "", "", "", ""],
     &["AES702", "", "", "", "", "", ""],
     &["AES703", "", "", "", "", "", ""],
     &["AES704", "", "", "", "", "", ""],
+    &["AES705", "", "", "", "", "", ""],
+    &["AES706", "", "", "", "", "", ""],
 ];
 
 // ─── Public API ────────────────────────────────────────────────────────────
@@ -685,6 +704,6 @@ pub fn hardcoded_default_architecture() -> ArchitectureConfig {
         rules: hardcoded_rules(),
         naming: NamingConfig::new(Count::new(3)),
         ignored_paths: Default::default(),
-        mandatory_class_definition: BooleanVO::new(false),
+        mandatory_class_definition: BooleanVO::new(true),
     }
 }

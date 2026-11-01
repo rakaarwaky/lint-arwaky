@@ -1,6 +1,6 @@
 //! Shared test helpers for `quality-rules` integration tests.
 //!
-//! Note: `mock_filesystem.rs` lives in `crates/shared/tests/common/` and is
+//! Note: `mock_filesystem.rs` lives in `crates/shared/tests/` and is
 //! linked into consuming crates' tests via `#[path]`; it is not part of this
 //! directory, which holds only the helpers declared below.
 

@@ -49,6 +49,9 @@ architecture:
     AES102:
       enabled: true
       exceptions: []
+    AES103:
+      enabled: true
+      exceptions: []
     # ─── AES200 ───
     AES201:
       enabled: true
@@ -135,6 +138,21 @@ architecture:
     AES605:
       enabled: true
       exceptions: []
+    AES606:
+      enabled: true
+      exceptions: []
+    AES607:
+      enabled: true
+      exceptions: []
+    AES608:
+      enabled: true
+      exceptions: []
+    AES609:
+      enabled: true
+      exceptions: []
+    AES610:
+      enabled: true
+      exceptions: []
     # ─── AES700 ───
     AES701:
       enabled: true
@@ -143,6 +161,15 @@ architecture:
       enabled: true
       exceptions: []
     AES703:
+      enabled: true
+      exceptions: []
+    AES704:
+      enabled: true
+      exceptions: []
+    AES705:
+      enabled: true
+      exceptions: []
+    AES706:
       enabled: true
       exceptions: []
 

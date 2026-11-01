@@ -7,7 +7,7 @@
 // violations AND omits the "Scan complete" milestone — it does not just emit
 // a cosmetic Cancelled message.
 
-mod common;
+mod mock_common;
 
 use std::sync::atomic::AtomicBool;
 
@@ -47,7 +47,7 @@ fn scan_opts() -> dispatcher_lint_arwaky::surface_check_action::ScanOptions {
         filter: None,
         member: None,
         filesystem: seam(),
-        scan_aggregates: Some(common::build_scan_aggregates(&root_str)),
+        scan_aggregates: Some(mock_common::build_scan_aggregates(&root_str)),
     }
 }
 

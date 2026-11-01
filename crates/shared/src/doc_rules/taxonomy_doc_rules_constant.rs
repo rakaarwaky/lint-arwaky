@@ -6,9 +6,13 @@
 // generated so the linter tracks template changes automatically.
 pub use super::doc_generated::*;
 
-/// ─── AES601 — FR format ─────────────────────────────────────────────────────
-/// Violation types for FR-ID and FR-field violations.
-pub const RULE_CODE_FR_FORMAT: &str = "AES601";
+// ─── Legacy category codes (AESD01–AESD07) ────────────────────────────────
+// ARCHITECTURE.md §Group 6 assigns AES601–AES610 to the ten documents, so a
+// per-category check must not reuse those numbers: the AESD space keeps a
+// finding's code naming the document that governs it.
+
+/// ─── AESD01 — FR format ────────────────────────────────────────────────────
+pub const RULE_CODE_FR_FORMAT: &str = "AESD01";
 
 /// FR-ID is bare (`FR-NNN`) without a feature prefix.
 pub const FR_ID_VIOLATION_MISSING_FEATURE_PREFIX: &str = "id_missing_feature_prefix";
@@ -55,14 +59,14 @@ pub const PR_BACKLOG_ID_MISSING: &str = "pr_backlog_id_missing";
 /// valid PR-ID of the root ROADMAP/PRD pair.
 pub const BACKLOG_ID_NOT_PR: &str = "backlog_id_not_pr";
 
-/// ─── AES602 — Section structure ─────────────────────────────────────────────
-pub const RULE_CODE_SECTION_STRUCTURE: &str = "AES602";
+/// ─── AESD02 — Section structure ─────────────────────────────────────────────
+pub const RULE_CODE_SECTION_STRUCTURE: &str = "AESD02";
 
 /// Sections appear in an order that does not match the template.
 pub const SECTION_STRUCTURE_VIOLATION_ORDER: &str = "order_violation";
 
-/// ─── AES603 — Spec purity ───────────────────────────────────────────────────
-pub const RULE_CODE_SPEC_PURITY: &str = "AES603";
+/// ─── AESD03 — Spec purity ───────────────────────────────────────────────────
+pub const RULE_CODE_SPEC_PURITY: &str = "AESD03";
 
 /// A spec names a concrete source file.
 pub const SPEC_PURITY_VIOLATION_SOURCE_FILE_NAMED: &str = "source_file_named";
@@ -70,8 +74,8 @@ pub const SPEC_PURITY_VIOLATION_SOURCE_FILE_NAMED: &str = "source_file_named";
 /// A spec carries implementation state (checkboxes, status fields, progress).
 pub const SPEC_PURITY_VIOLATION_STATUS_LEAK: &str = "status_leak";
 
-/// ─── AES604 — Crosslinks ────────────────────────────────────────────────────
-pub const RULE_CODE_CROSSLINKS: &str = "AES604";
+/// ─── AESD04 — Crosslinks ────────────────────────────────────────────────────
+pub const RULE_CODE_CROSSLINKS: &str = "AESD04";
 
 /// An FRD does not link its BACKLOG.md in the Reference section.
 pub const CROSSLINKS_VIOLATION_NO_BACKLOG_LINK: &str = "no_backlog_link";
@@ -82,8 +86,8 @@ pub const CROSSLINKS_VIOLATION_NO_PRD_LINK: &str = "no_prd_link";
 /// State vocabulary is restated in a sub-doc instead of living only in the master.
 pub const CROSSLINKS_VIOLATION_STATE_VOCAB_RESTATED: &str = "state_vocab_restated";
 
-/// ─── AES605 — Doc heading structure ────────────────────────────────────────
-pub const RULE_CODE_DOC_STRUCTURE: &str = "AES605";
+/// ─── AESD05 — Doc heading structure ────────────────────────────────────────
+pub const RULE_CODE_DOC_STRUCTURE: &str = "AESD05";
 
 /// A document carries other than exactly one level-1 heading.
 pub const DOC_STRUCTURE_VIOLATION_H1_COUNT: &str = "h1_count";
@@ -103,11 +107,11 @@ pub const DOC_STRUCTURE_VIOLATION_LINE_DRIFT: &str = "line_drift";
 pub const DOC_STRUCTURE_VIOLATION_FRONTMATTER_MISSING: &str = "frontmatter_missing";
 
 /// The FRD declares a different number of requirements than the feature's
-/// contract module declares protocol classes. (Merged into AES601.)
+/// contract module declares protocol classes. (Merged into AESD01.)
 pub const FR_PROTOCOL_PARITY_VIOLATION_COUNT_MISMATCH: &str = "protocol_count_mismatch";
 
-/// ─── AES606 — Template conformance + required document ────────────────────
-pub const RULE_CODE_TEMPLATE_CONFORMANCE: &str = "AES606";
+/// ─── AESD06 — Template conformance + required document ────────────────────
+pub const RULE_CODE_TEMPLATE_CONFORMANCE: &str = "AESD06";
 
 /// A section that must carry a table in the template does not.
 pub const TEMPLATE_CONFORMANCE_VIOLATION_SECTION_NOT_TABLE: &str = "section_not_table";
@@ -207,13 +211,13 @@ pub const DS_ID_HEADING_PATTERN: &str = r"(?m)^#{2,4}\s+(?P<id>DS-[A-Za-z0-9_]+-
 pub const DT_ID_HEADING_PATTERN: &str = r"(?m)^#{2,4}\s+(?P<id>DT-[A-Za-z0-9_]+-\d+):";
 
 /// H3 subsections of the retired `## API Contract`; still read by
-/// `utility_markdown_scanner::api_contract_methods` (AES601 method check).
+/// `utility_markdown_scanner::api_contract_methods` (AESD01 method check).
 pub const API_CONTRACT_SUBSECTIONS: &[&str] = &["Protocol API", "Aggregate API"];
 
 /// File extensions a spec must never name, per references/frd/template.md Rule 7.
 pub const SOURCE_EXTENSIONS: &[&str] = &["py", "rs", "ts", "tsx"];
 
-// ─── AES606 — Template body-shape conformance ──────────────────────────────
+// ─── AESD06 — Template body-shape conformance ──────────────────────────────
 // Table shapes are now generated at build time from the reference templates
 // in `crates/shared/skills/aes-docs/references/*/template.md` by
 // `crates/shared/src/doc_rules/build.rs` (via Comrak) and re-exported
@@ -239,7 +243,7 @@ pub const REQUIRED_ROOT_DOCS: &[&str] = &[
 /// workspace root rather than a sub-directory the user is auditing alone.
 pub const WORKSPACE_ROOT_MARKERS: &[&str] = &["Cargo.toml", "pyproject.toml", "package.json"];
 
-/// ─── AES605 — Document heading structure ──────────────────────────────
+/// ─── AESD05 — Document heading structure ──────────────────────────────
 /// Mapping from root-document filename to the H2 contracts derived from
 /// each document's Section Contract table in the corresponding
 /// reference template (`references/<doc>/template.md`). The `required`
@@ -256,20 +260,16 @@ pub const WORKSPACE_ROOT_MARKERS: &[&str] = &["Cargo.toml", "pyproject.toml", "p
 /// (`## DT-<NAME>-NNN: <title>`); any other H2 is `h2_unexpected`. `allowed`
 /// entries are leading-word prefixes, so the `DT-` allowed entry admits ANY H2
 /// whose normalized title starts with `dt` — a deliberately looser gate:
-/// AES605 only polices H2 shape, while AES601's qualified `DT-<NAME>-NNN`
+/// AESD05 only polices H2 shape, while AESD01's qualified `DT-<NAME>-NNN`
 /// regex is the authority on which H2s count as item ids. The
 /// `DESIGN_DOC` entry is transcribed verbatim from the fenced template in
 /// `skills/aes-docs/references/references/design/template.md.md`, and `allowed` is empty
-/// on purpose: copying that template must produce a file AES605 accepts with
+/// on purpose: copying that template must produce a file AESD05 accepts with
 /// no edit. An empty `allowed` makes the set closed, so a DESIGN.md carrying an
 /// H2 the template does not name — including the surface-behaviour headings
 /// ("Kind", "Entry Points", "States") that an earlier revision of this contract
 /// required — fires `h2_unexpected`.
-pub type DocH2Contract = (
-    &'static str,
-    &'static [&'static str],
-    &'static [&'static str],
-);
+pub use crate::taxonomy_doc_h2_contract_vo::DocH2Contract;
 
 pub const DOC_HEADING_CONTRACTS: &[DocH2Contract] = &[
     (AGENTS_DOC, AGENTS_REQUIRED_H2S, &[]),
@@ -293,7 +293,7 @@ pub const DOC_HEADING_CONTRACTS: &[DocH2Contract] = &[
     (DESIGN_DOC, DESIGN_REQUIRED_H2S, &[]),
 ];
 
-// ─── AES606 (expanded) — member docs & template body ─────────────────────
+// ─── AESD06 (expanded) — member docs & template body ─────────────────────
 /// Missing FRD.md / BACKLOG.md / DATA.md / DESIGN.md in a member folder.
 pub const MEMBER_DOC_VIOLATION: &str = "missing_member_doc";
 
@@ -306,27 +306,27 @@ pub const TEMPLATE_BODY_VIOLATION_UNFILLED_PLACEHOLDER: &str = "unfilled_placeho
 /// A non-deletable template section is entirely absent from a document.
 pub const TEMPLATE_BODY_VIOLATION_DELETED_SECTION: &str = "section_deleted";
 
-// ─── AES607 — PR-ID owns exactly one module folder ─────────────────────
+// ─── AESD07 — PR-ID owns exactly one module folder ─────────────────────
 /// Every `PR-<PROJECT>-NNN` declared in the root PRD's `Project Requirements`
 /// must own exactly one top-level module folder under `crates|modules|packages`
 /// whose name matches the PR-ID's project identifier.
-pub const RULE_CODE_PR_FOLDER_OWNERSHIP: &str = "AES607";
+pub const RULE_CODE_PR_FOLDER_OWNERSHIP: &str = "AESD07";
 
 /// A PRD-declared PR-ID whose project identifier owns no matching module folder
 /// under `crates|modules|packages`.
 pub const PR_FOLDER_NOT_OWNED_VIOLATION: &str = "pr_folder_not_owned";
 
-// ─── AES606 — FRD Technical Specification constants (modular template) ────
+// ─── AESD06 — FRD Technical Specification constants (modular template) ────
 // `FR_FIELDS` (generated by build.rs from references/frd/template.md) is the
 // source of truth for the six `Technical Specification` table rows
 // (Input, Output, Protocol, Method, Event, Error). `FRD_ROW_LABELS` is its
-// alias used by `detect_entry_tables` for AES606 row-label enforcement.
+// alias used by `detect_entry_tables` for AESD06 row-label enforcement.
 // The per-aspect H4 seed/bounded contract of the prior template is retired.
 
 /// Canonical order of the six FRD `Technical Specification` table rows.
-/// Alias of `FR_FIELDS`: the entry-table row labels and the AES601 field
-/// list read the same six labels under two names, so the AES601 field
-/// check and the AES606 row check cannot drift.
+/// Alias of `FR_FIELDS`: the entry-table row labels and the AESD01 field
+/// list read the same six labels under two names, so the AESD01 field
+/// check and the AESD06 row check cannot drift.
 pub const FRD_ASPECTS: &[&str] = FR_FIELDS;
 
 /// `FRD_ASPECTS` is read-only; there is no open-ended aspect and no
@@ -388,6 +388,23 @@ pub const RULE_CODE_DATA_DOC: &str = "AES608";
 pub const RULE_CODE_FRD_DOC: &str = "AES609";
 pub const RULE_CODE_DESIGN_DOC: &str = "AES610";
 
+// ─── Rule inventory: all 41 AES codes (AES1xx–AES7xx per ARCHITECTURE.md §Group)
+// Registered once, enforced once, reported once: 41/41/41.
+pub const RULE_CODES: &[&str] = &[
+    // Group 1: Naming
+    "AES101", "AES102", "AES103", // Group 2: Layer & Import Boundary
+    "AES201", "AES202", "AES203", "AES204", "AES205",
+    // Group 3: File & Content Quality
+    "AES301", "AES302", "AES303", "AES304", "AES305", // Group 4: Role Violations
+    "AES401", "AES402", "AES403", "AES404", "AES405", "AES406",
+    // Group 5: Orphan Code
+    "AES501", "AES502", "AES503", "AES504", "AES505", "AES506",
+    // Group 6: Document Invariants
+    "AES601", "AES602", "AES603", "AES604", "AES605", "AES606", "AES607", "AES608", "AES609",
+    "AES610", // Group 7: Folder Structure
+    "AES701", "AES702", "AES703", "AES704", "AES705", "AES706",
+];
+
 // Re-export template conformance types from the template module so that
 // `shared_doc_rules::taxonomy_doc_rules_constant` remains the canonical import.
 pub use crate::taxonomy_doc_rules_template_vo::{TEMPLATE_PROFILES, TemplateProfile};
@@ -419,7 +436,7 @@ mod tests {
         }
     }
 
-    /// The AES606 row-label / column constants must map to a live reference
+    /// The AESD06 row-label / column constants must map to a live reference
     /// template: each set transcribes a table the shipped template actually
     /// contains, so a constant with no template behind it fails here instead
     /// of silently drifting.
@@ -510,7 +527,7 @@ mod tests {
         ships_columns("agents", REFERENCE_COLUMNS);
     }
 
-    /// The AES601 new violation codes added by the PR-ID family and the
+    /// The AESD01 new violation codes added by the PR-ID family and the
     /// BACKLOG qualifier-alignment decisions must map to templates that
     /// ship the corresponding ID / qualifier shapes, so a code with no
     /// template behind it fails here instead of silently drifting.
@@ -540,8 +557,51 @@ mod tests {
         assert_eq!(BACKLOG_ID_NOT_PR, "backlog_id_not_pr");
     }
 
+    /// AES601–AES610 name documents, so no legacy category code may reuse
+    /// them; the AESD space keeps both vocabularies unambiguous, and the
+    /// ten per-doc codes must still cover AES601–AES610 exactly once.
+    #[test]
+    fn legacy_category_codes_do_not_collide_with_document_codes() {
+        let categories = [
+            RULE_CODE_FR_FORMAT,
+            RULE_CODE_SECTION_STRUCTURE,
+            RULE_CODE_SPEC_PURITY,
+            RULE_CODE_CROSSLINKS,
+            RULE_CODE_DOC_STRUCTURE,
+            RULE_CODE_TEMPLATE_CONFORMANCE,
+            RULE_CODE_PR_FOLDER_OWNERSHIP,
+        ];
+        for (index, code) in categories.iter().enumerate() {
+            assert!(
+                code.starts_with("AESD"),
+                "legacy category code {code} must live in the AESD space"
+            );
+            assert_eq!(
+                *code,
+                format!("AESD{:02}", index + 1),
+                "category codes are numbered AESD01–AESD07 in declaration order"
+            );
+        }
+
+        let docs = [
+            RULE_CODE_AGENTS_DOC,
+            RULE_CODE_README_DOC,
+            RULE_CODE_ARCHITECTURE_DOC,
+            RULE_CODE_CONTRIBUTING_DOC,
+            RULE_CODE_PRD_DOC,
+            RULE_CODE_ROADMAP_DOC,
+            RULE_CODE_BACKLOG_DOC,
+            RULE_CODE_DATA_DOC,
+            RULE_CODE_FRD_DOC,
+            RULE_CODE_DESIGN_DOC,
+        ];
+        for (index, code) in docs.iter().enumerate() {
+            assert_eq!(*code, format!("AES{}", 601 + index));
+        }
+    }
+
     /// The FRD row labels are one list under two names (FR_FIELDS serves the
-    /// AES601 field check, FRD_ROW_LABELS the AES606 row check); value
+    /// AESD01 field check, FRD_ROW_LABELS the AESD06 row check); value
     /// equality here documents the alias the type system cannot.
     #[test]
     fn frd_row_labels_are_the_fr_fields() {
@@ -590,6 +650,55 @@ mod tests {
         );
         for (_, min) in PRD_ASPECT_SEED_MIN {
             assert_eq!(*min, 1, "PRD aspects seed at 1");
+        }
+    }
+
+    /// ─── T15 parity: rule inventory 41/41/41 ──────────────────────────────────
+    /// Exactly 41 AES codes are registered in `RULE_CODES` (AES1xx–AES7xx per
+    /// ARCHITECTURE.md), all are enforced, all are reported. No legacy AESD01–AESD07
+    /// code leaks into reports.
+    #[test]
+    fn rule_inventory_41_41_41_exactly_forty_one_doc_codes() {
+        // 41 registered codes
+        assert_eq!(
+            RULE_CODES.len(),
+            41,
+            "RULE_CODES must register exactly 41 AES codes"
+        );
+
+        // Every registered code lives in the AES space (no AESD legacy leakage)
+        for code in RULE_CODES.iter() {
+            assert!(
+                code.starts_with("AES"),
+                "registered code {code} must be an AES code, never AESD legacy"
+            );
+            assert!(
+                !code.starts_with("AESD"),
+                "legacy AESD code {code} must not leak into the rule inventory"
+            );
+        }
+
+        // The AES doc-code range AES601–AES610 maps one-per-document exactly once
+        let docs = &RULE_CODES[25..35];
+        assert_eq!(
+            docs,
+            &[
+                "AES601", "AES602", "AES603", "AES604", "AES605", "AES606", "AES607", "AES608",
+                "AES609", "AES610",
+            ],
+            "AES601–AES610 must cover the ten documents exactly once"
+        );
+    }
+
+    /// No legacy AESD01–AESD07 category code appears anywhere in the constants
+    /// surface exported by this module (guard against AESD leakage into reports).
+    #[test]
+    fn no_aesd_legacy_code_leaks_into_registered_inventory() {
+        for code in RULE_CODES.iter() {
+            assert!(
+                !code.starts_with("AESD"),
+                "legacy AESD code {code} must not leak into RULE_CODES"
+            );
         }
     }
 }

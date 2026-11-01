@@ -1,5 +1,5 @@
 // Integration tests — full DI wiring via ConfigContainer.
-mod common;
+mod mock_common;
 
 use shared_common::FilePath;
 use shared_config_system::ConfigRequest;
@@ -10,26 +10,26 @@ use tempfile::TempDir;
 
 #[test]
 fn container_provides_orchestrator() {
-    let _ = common::make_container().orchestrator();
+    let _ = mock_common::make_container().orchestrator();
 }
 #[test]
 fn container_provides_reader() {
-    let _ = common::make_container().reader();
+    let _ = mock_common::make_container().reader();
 }
 #[test]
 fn container_provides_parser() {
-    let _ = common::make_container().parser();
+    let _ = mock_common::make_container().parser();
 }
 #[test]
 fn container_provides_lister() {
-    let _ = common::make_container().lister();
+    let _ = mock_common::make_container().lister();
 }
 
 #[test]
 fn container_orchestrator_loads_defaults_for_empty_project() {
     let tmp = TempDir::new().unwrap();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    let result = common::make_container()
+    let result = mock_common::make_container()
         .orchestrator()
         .execute(ConfigRequest::load_project_config(&fp))
         .into_config_result();
@@ -46,7 +46,7 @@ fn container_orchestrator_loads_real_config() {
     .unwrap();
     fs::write(tmp.path().join("Cargo.toml"), "[package]\nname=\"x\"\n").unwrap();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    let result = common::make_container()
+    let result = mock_common::make_container()
         .orchestrator()
         .execute(ConfigRequest::load_project_config(&fp))
         .into_config_result();
@@ -58,7 +58,7 @@ fn container_reader_lists_config_files() {
     let tmp = TempDir::new().unwrap();
     fs::write(tmp.path().join("lint_arwaky.config.yaml"), "a: 1").unwrap();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    let files = common::make_container()
+    let files = mock_common::make_container()
         .lister()
         .list_config_files(&fp)
         .unwrap();
@@ -72,7 +72,7 @@ fn container_parser_parses_yaml() {
     let path = tmp.path().join("config.yaml");
     fs::write(&path, "project_name: integration-test\n").unwrap();
     let fp = FilePath::new(path.to_string_lossy().to_string()).unwrap();
-    let config = common::make_container()
+    let config = mock_common::make_container()
         .parser()
         .parse_yaml_config(&fp)
         .unwrap();
@@ -102,7 +102,7 @@ thresholds:
     let path = tmp.path().join("config.yaml");
     fs::write(&path, yaml).unwrap();
     let fp = FilePath::new(path.to_string_lossy().to_string()).unwrap();
-    let config = common::make_container()
+    let config = mock_common::make_container()
         .parser()
         .parse_yaml_config(&fp)
         .unwrap();

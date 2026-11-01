@@ -1,5 +1,5 @@
 // Unit tests for ConfigParserProvider — YAML and TOML config parsing.
-mod common;
+mod mock_common;
 
 use config_system_lint_arwaky::capabilities_parser_provider::ConfigParserProvider;
 use shared_common::FilePath;
@@ -8,7 +8,7 @@ use std::fs;
 use tempfile::TempDir;
 
 fn make_parser() -> ConfigParserProvider {
-    ConfigParserProvider::new(common::make_io())
+    ConfigParserProvider::new(mock_common::make_io())
 }
 
 #[test]
@@ -139,7 +139,7 @@ fn parse_toml_config_invalid_toml() {
 
 #[test]
 fn new_creates_instance() {
-    let _a = ConfigParserProvider::new(common::make_io());
+    let _a = ConfigParserProvider::new(mock_common::make_io());
 }
 
 #[test]

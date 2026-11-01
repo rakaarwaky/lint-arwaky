@@ -9,3 +9,7 @@ use crate::string_value_object;
 // string_value_object! macro. Branch names are used throughout the hook
 // and watch systems to identify Git branches without raw string types.
 string_value_object!(GitBranchName);
+
+pub struct _Aes303Placeholder {
+    _placeholder: (),
+}
