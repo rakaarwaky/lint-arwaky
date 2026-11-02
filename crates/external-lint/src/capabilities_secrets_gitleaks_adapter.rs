@@ -105,9 +105,7 @@ impl ILinterAdapterProtocol for GitleaksAdapter {
             .exec_cmd_adapter(cmd, working_dir, 120.0, self.name())
             .map_err(crate::convert_executor_error)?;
 
-        // Exit code 1 = findings exist (expected), 0 = clean, >1 = error.
-        // The executor maps spawn errors to LinterOperationError; a missing
-        // binary ("os error 2") degrades to warn-and-skip in the orchestrator.
+        // returncode 1 = findings (expected); >1 = error — skip without raising
         if response.returncode > 1 {
             debug!("gitleaks exited with error code: {}", response.returncode);
             return Ok(LintResultList::new(results));
@@ -188,7 +186,7 @@ impl GitleaksAdapter {
 }
 
 /// Map a gitleaks rule ID + tags to an AES severity.
-fn map_gitleaks_severity(rule: &str, tags: &[String]) -> Severity {
+pub fn map_gitleaks_severity(rule: &str, tags: &[String]) -> Severity {
     // Cloud key prefixes → CRITICAL.
     if rule.starts_with("aws-")
         || rule.starts_with("gcp-")
@@ -225,5 +223,6 @@ fn map_gitleaks_severity(rule: &str, tags: &[String]) -> Severity {
             return Severity::CRITICAL;
         }
     }
+    // Default HIGH (not MEDIUM): unknown Gitleaks rules are secret-related; HIGH prevents false negatives
     Severity::HIGH
 }
