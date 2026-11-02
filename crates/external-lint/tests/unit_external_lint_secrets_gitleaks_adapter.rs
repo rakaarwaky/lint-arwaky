@@ -113,6 +113,22 @@ fn gcp_service_account_maps_to_critical() {
 }
 
 #[test]
+fn azure_storage_account_maps_to_critical() {
+    assert_eq!(
+        map_gitleaks_severity("azure-storage-account", &[]),
+        Severity::CRITICAL
+    );
+}
+
+#[test]
+fn cloud_provider_token_maps_to_critical() {
+    assert_eq!(
+        map_gitleaks_severity("cloud-provider-token", &[]),
+        Severity::CRITICAL
+    );
+}
+
+#[test]
 fn secret_suffix_key_maps_to_critical() {
     assert_eq!(map_gitleaks_severity("some-key", &[]), Severity::CRITICAL);
 }
@@ -156,26 +172,21 @@ fn secret_suffix_api_key_maps_to_critical() {
 
 #[test]
 fn private_key_family_maps_to_critical() {
-    assert_eq!(
-        map_gitleaks_severity("private-key", &[]),
-        Severity::CRITICAL
-    );
-    assert_eq!(
-        map_gitleaks_severity("ssh-private-key", &[]),
-        Severity::CRITICAL
-    );
-    assert_eq!(
-        map_gitleaks_severity("pgp-private-key", &[]),
-        Severity::CRITICAL
-    );
-    assert_eq!(
-        map_gitleaks_severity("rsa-private-key", &[]),
-        Severity::CRITICAL
-    );
-    assert_eq!(
-        map_gitleaks_severity("ecdsa-private-key", &[]),
-        Severity::CRITICAL
-    );
+    let cases: &[(&str, Severity)] = &[
+        ("private-key", Severity::CRITICAL),
+        ("ssh-private-key", Severity::CRITICAL),
+        ("pgp-private-key", Severity::CRITICAL),
+        ("rsa-private-key", Severity::CRITICAL),
+        ("ecdsa-private-key", Severity::CRITICAL),
+    ];
+    for (rule, expected) in cases {
+        assert_eq!(
+            map_gitleaks_severity(rule, &[]),
+            *expected,
+            "rule: {}",
+            rule
+        );
+    }
 }
 
 #[test]
@@ -264,6 +275,42 @@ fn scan_malformed_json_returns_empty_results() {
     let adapter = make_adapter_with_executor(executor, false);
     let results = adapter.scan(&gitleaks_target()).unwrap();
     assert_eq!(results.len(), 0);
+}
+
+#[test]
+fn scan_empty_stdout_returns_empty_results() {
+    let executor = Arc::new(CapturingGitleaksExecutor::new(ResponseData {
+        stdout: "".to_string(),
+        returncode: 0,
+        ..ResponseData::default()
+    }));
+    let adapter = make_adapter_with_executor(executor, false);
+    let results = adapter.scan(&gitleaks_target()).unwrap();
+    assert_eq!(results.len(), 0);
+}
+
+#[test]
+fn scan_returncode_one_parses_findings() {
+    let json = r#"{
+        "findings": [
+            {
+                "rule": "aws-access-key-id",
+                "description": "AWS access key id",
+                "start_line": 10,
+                "start_column": 5
+            }
+        ]
+    }"#;
+    let executor = Arc::new(CapturingGitleaksExecutor::new(ResponseData {
+        stdout: json.to_string(),
+        returncode: 1,
+        ..ResponseData::default()
+    }));
+    let adapter = make_adapter_with_executor(executor, false);
+    let target = gitleaks_target();
+    let results = adapter.scan(&target).unwrap();
+    assert_eq!(results.len(), 1);
+    assert_eq!(results.values[0].code.code(), "gitleaks::aws-access-key-id");
 }
 
 // ─── --no-git flag gating ───────────────────────────────
