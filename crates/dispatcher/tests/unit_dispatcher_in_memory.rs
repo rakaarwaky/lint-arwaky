@@ -96,6 +96,7 @@ fn collect_external_missing_path_errors() {
         fs.clone(),
         fs_io,
         fs_tools,
+        false,
     )
     .aggregate();
     let config_container =
