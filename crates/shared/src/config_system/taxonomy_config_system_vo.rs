@@ -218,15 +218,13 @@ string_value_object!(ExpectedValue);
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Thresholds {
     pub score: Score,
-    pub complexity: Count,
     pub max_file_lines: Count,
 }
 
 impl Thresholds {
-    pub fn new(score: Score, complexity: Count, max_file_lines: Count) -> Self {
+    pub fn new(score: Score, max_file_lines: Count) -> Self {
         Self {
             score,
-            complexity,
             max_file_lines,
         }
     }
@@ -236,7 +234,6 @@ impl Default for Thresholds {
     fn default() -> Self {
         Self {
             score: Score::new(80.0),
-            complexity: Count::new(10),
             max_file_lines: Count::new(500),
         }
     }

@@ -740,9 +740,6 @@ pub fn validate_thresholds(
     if !(0.0..=100.0).contains(&t.score.value) {
         errors.push("Score threshold must be between 0 and 100.".to_string());
     }
-    if t.complexity.value <= 0 {
-        errors.push("Complexity threshold must be positive.".to_string());
-    }
     if t.max_file_lines.value <= 0 {
         errors.push("max_file_lines threshold must be positive.".to_string());
     }
