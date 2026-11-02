@@ -21,7 +21,6 @@ project_name = "my-project"
 
 [tool.lint-arwaky.thresholds]
 score = { value = 90.0 }
-complexity = { value = 8 }
 max_file_lines = { value = 300 }
 "#;
     let path = tmp.path().join("Cargo.toml");
