@@ -47,18 +47,6 @@ serviceAccountKey
 # local editor config
 .vscode/
 
-# repowise local cache and generated artifacts (.repowise is a local cache,
-# not a source of truth; only the PR-bot config and health rules are committed)
-.repowise/*
-!.repowise/bot.yaml
-!.repowise/health-rules.json
-# repowise API keys (local)
-.repowise/.env
-# repowise cache can appear in any scanned subdirectory (CLI generates per-dir)
-**/.repowise/*
-!**/.repowise/bot.yaml
-!**/.repowise/health-rules.json
-
 # AI agent working directory — plans, findings, and installed skill packs are all
 # local-only. The shippable skill pack lives in crates/skills/ (see
 # crates/shared/build.rs), not here.

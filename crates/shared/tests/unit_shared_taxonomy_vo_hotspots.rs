@@ -1,4 +1,4 @@
-// Unit tests — shared taxonomy VOs flagged as untested hotspots by repowise.
+// Unit tests — shared taxonomy VOs flagged as untested hotspots.
 //
 // Targets (per plan item 1.4):
 //   taxonomy_lint_result_vo, taxonomy_layer_vo, taxonomy_message_vo,
