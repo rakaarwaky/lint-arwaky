@@ -139,4 +139,3 @@ lint-arwaky-cli scan <layer-path>
 # AES401–AES406 (role/primitive/structure rules for this layer).
 # Language compile is a fallback gate only: `python -c "import <shared_package>.<module>"`
 ```
-
