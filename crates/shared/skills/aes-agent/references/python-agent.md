@@ -4,7 +4,7 @@
 >
 > **Audience**: Agents and engineers scaffolding AES agent orchestrators.
 >
-> **Scope**: Python, Rust, and TypeScript `agent_<domain>_orchestrator` files — one aggregate, 3-block structure, zero I/O.
+> **Scope**: Python `agent_<domain>_orchestrator` files — one aggregate, 3-block structure, zero I/O.
 >
 > **Location**: Feature domain package; depends only on shared contracts/taxonomy/utility.
 >
@@ -56,23 +56,11 @@ I/O: stateless + I/O + domain-agnostic = taxonomy utility. Stateless + I/O + dom
 
 - Rule 1: Never silently discard — no `checker.check() or ""`.
 - Rule 2: Analysis orchestration → return the taxonomy-defined response enum variant; each variant
-  holds VO-wrapped values, not raw primitives.
+holds VO-wrapped values, not raw primitives.
 - Rule 3: Execution orchestration → return `Result[...]` wrapped in a VO variant.
 - Rule 4: Delegate I/O errors to capabilities — agent only wraps into VO.
 
 **VO rules:** `str`/`int`/`float` forbidden for domain fields/contracts. `bool` for semantic toggles only.
-
-### Workflow
-
-1. Confirm orchestration only — computation → capabilities, domain data → taxonomy.
-2. Agent class inherits aggregate ABC? If no → create `contract_<name>_aggregate.py`.
-3. Enforce 3-Block.
-4. ≥1 aggregate ABC, ≤3 classes, DI via protocols, shared VOs.
-5. No forbidden imports, no I/O, no computation.
-6. No silent errors, no raw primitives in contracts, no magic constants.
-7. `python -c "import <module>"`.
-
----
 
 ## Template
 
@@ -109,19 +97,31 @@ class Agent<Name>:
 
 ## Section Contract
 
-| Check | Why it belongs here|
-| ----- | -------------------|
-| Block 1 → 2 → 3 order followed. | Required by AES layer rules and the linter; missing it is a defect.|
-| Block 2: ONLY aggregate ABC method implementations. | Required by AES layer rules and the linter; missing it is a defect.|
-| Block 3: dunders, factories, private helpers. | Required by AES layer rules and the linter; missing it is a defect.|
-| ≥1 class inherits aggregate ABC; ≤3 total classes. | Required by AES layer rules and the linter; missing it is a defect.|
-| No local domain data; DI via protocol interfaces; shared VOs. | Required by AES layer rules and the linter; missing it is a defect.|
-| Zero I/O, zero business logic, zero domain computation. | Required by AES layer rules and the linter; missing it is a defect.|
-| No forbidden imports. | Required by AES layer rules and the linter; missing it is a defect.|
-| Aggregate registered in shared `__init__.py`. | Required by AES layer rules and the linter; missing it is a defect.|
-| `python -c "import <module>"` passes. | Required by AES layer rules and the linter; missing it is a defect.|
+| Check                                                         | Why it belongs here                                                 |
+| ------------------------------------------------------------- | ------------------------------------------------------------------- |
+| Block 1 → 2 → 3 order followed.                               | Required by AES layer rules and the linter; missing it is a defect. |
+| Block 2: ONLY aggregate ABC method implementations.           | Required by AES layer rules and the linter; missing it is a defect. |
+| Block 3: dunders, factories, private helpers.                 | Required by AES layer rules and the linter; missing it is a defect. |
+| ≥1 class inherits aggregate ABC; ≤3 total classes.            | Required by AES layer rules and the linter; missing it is a defect. |
+| No local domain data; DI via protocol interfaces; shared VOs. | Required by AES layer rules and the linter; missing it is a defect. |
+| Zero I/O, zero business logic, zero domain computation.       | Required by AES layer rules and the linter; missing it is a defect. |
+| No forbidden imports.                                         | Required by AES layer rules and the linter; missing it is a defect. |
+| Aggregate registered in shared `__init__.py`.                 | Required by AES layer rules and the linter; missing it is a defect. |
+| `python -c "import <module>"` passes.                         | Required by AES layer rules and the linter; missing it is a defect. |
 
 ---
+
+## Workflow
+
+1. **Triage (diagnostic tree)** — ask in order; the first "No" dictates the next action: orchestration only (no I/O, no computation, no local domain data)? an `_aggregate` contract exists? — no: create it first with `aes-contract`. Block 2 holds only aggregate methods; ≥1 aggregate; ≤3 types? no silently discarded errors; no raw primitives in signatures (wrap in VOs; propagate errors)? `lint-arwaky-cli scan <layer-path>` exits 0?
+2. Confirm orchestration only — computation → capabilities, domain data → taxonomy, pure helpers → utility.
+3. Ensure an `_aggregate` contract exists — if missing, run `aes-contract` first.
+4. Resolve the feature agent dir. Run `lint-arwaky-cli scan <layer-path>` — findings are the work list.
+5. Implement the 3 blocks from § Template / § Section Contract; the class inherits the aggregate ABC via DI.
+6. Check imports, I/O, computation, error handling, and primitives against § Rules.
+7. Register in `__init__.py`, then compose via `aes-root` / consume via `aes-surface`.
+8. **Placement (AES702/AES703)** — the file sits in a feature folder (`modules/<feature_name>/src/agent_<domain>_orchestrator`), not in `shared/` or a surface-dominated folder; `FRD.md` + `BACKLOG.md` at the feature folder root beside the source; a capabilities-only folder without its own agent is a split feature.
+9. Fallback compile gate: `python -c "import <shared_package>.<module>"`.
 
 ## Verify
 
@@ -129,6 +129,5 @@ class Agent<Name>:
 lint-arwaky-cli scan <layer-path>
 # Checks: AES101/AES102 (filename + suffix), AES201–AES205 (layer imports),
 # AES401–AES406 (role/primitive/structure rules for this layer).
-# Manual (not machine-checked): zero I/O/computation; no silent error discard; 3-block order; helper-vs-utility matrix.
-# Fallback compile gate: python -c "import <shared_package>.<module>"
+# Language compile is a fallback gate only: `python -c "import [[ORCA_RICH_MD:677aeee2bafaea1666681bd4dc66ea38:inline-html:%3Cshared_package%3E]].[[ORCA_RICH_MD:677aeee2bafaea1666681bd4dc66ea38:inline-html:%3Cmodule%3E]]"`
 ```
