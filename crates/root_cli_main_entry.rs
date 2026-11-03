@@ -436,6 +436,7 @@ fn main() {
         filesystem.clone(),
         filesystem_io.clone(),
         filesystem_tool_resolution.clone(),
+        false,
     );
     let external_lint = ext_container.aggregate();
 

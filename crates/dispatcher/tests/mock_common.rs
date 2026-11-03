@@ -81,6 +81,7 @@ pub fn build_scan_aggregates(
             filesystem.clone(),
             fs_io.clone(),
             fs_tool_resolution.clone(),
+            false,
         );
     let external = external_container.aggregate();
 

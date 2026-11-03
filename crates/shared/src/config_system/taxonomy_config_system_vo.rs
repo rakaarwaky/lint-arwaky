@@ -276,6 +276,8 @@ pub struct AdapterEntry {
     pub weight: f64,
     #[serde(default = "default_timeout")]
     pub timeout: f64,
+    #[serde(default)]
+    pub options: HashMap<String, String>,
 }
 
 fn default_weight() -> f64 {
@@ -293,6 +295,7 @@ impl AdapterEntry {
             status,
             weight,
             timeout: 60.0,
+            options: HashMap::new(),
         }
     }
 
@@ -307,6 +310,7 @@ impl AdapterEntry {
             status,
             weight,
             timeout,
+            options: HashMap::new(),
         }
     }
 
