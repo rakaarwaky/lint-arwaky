@@ -4,7 +4,7 @@
 >
 > **Audience**: Agents and engineers scaffolding AES agent orchestrators.
 >
-> **Scope**: Python, Rust, and TypeScript `agent_<domain>_orchestrator` files — one aggregate, 3-block structure, zero I/O.
+> **Scope**: Rust `agent_<domain>_orchestrator` files — one aggregate, 3-block structure, zero I/O.
 >
 > **Location**: Feature domain package; depends only on shared contracts/taxonomy/utility.
 >
@@ -64,19 +64,6 @@ e.g. `for file in files { self.checker.check(file) }` = OK. `files.iter().map(|f
 - Rule 4: Delegate I/O errors to capabilities — agent only wraps into VO.
 
 **VO rules:** `String`/`i32`..`u64`/`f32`/`f64`/`char` forbidden for domain fields/contracts. `bool` for toggles; `&str` for borrowed non-domain input only.
-
-### Workflow
-
-1. Confirm orchestration only — computation → capabilities, domain data → taxonomy.
-2. Struct implements aggregate trait? If no → create `contract_<name>_aggregate.rs`.
-3. Enforce 3-Block.
-4. ≥1 aggregate trait, ≤3 types (struct+enum), `Arc<dyn Trait>` for DI, shared VOs.
-5. Generic aggregate methods: object-safe or `where Self: Sized`.
-6. No forbidden imports, no I/O, no computation.
-7. No silent errors, no raw primitives in contracts, no magic constants.
-8. `cargo check -p <crate-name>`.
-
----
 
 ## Template
 
@@ -141,12 +128,31 @@ impl Default for Agent<Name> {
 
 ---
 
+## Workflow
+
+1. **Triage (diagnostic tree)** — ask in order; the first "No" dictates the next action: orchestration only (no I/O, no computation, no local domain data)? an `_aggregate` contract exists? — no: create it first with `aes-contract`. Block 2 holds only aggregate methods; ≥1 aggregate; ≤3 types? no silently discarded errors; no raw primitives in signatures (wrap in VOs; propagate errors)? `lint-arwaky-cli scan <layer-path>` exits 0?
+2. Confirm orchestration only — computation → capabilities, domain data → taxonomy, pure helpers → utility.
+3. Ensure an `_aggregate` contract exists — if missing, run `aes-contract` first.
+4. Resolve the feature agent dir. Run `lint-arwaky-cli scan <layer-path>` — findings are the work list.
+5. Implement the 3 blocks from § Template / § Section Contract; the class implements the aggregate trait via DI.
+6. Check imports, I/O, computation, error handling, and primitives against § Rules.
+7. Register in `mod.rs`, then compose via `aes-root` / consume via `aes-surface`.
+8. **Placement (AES702/AES703)** — the file sits in a feature folder (`crates/<feature_name>/src/agent_<domain>_orchestrator`), not in `shared/` or a surface-dominated folder; `FRD.md` + `BACKLOG.md` at the feature folder root beside the source; a capabilities-only folder without its own agent is a split feature.
+9. Fallback compile gate: `cargo check -p <crate-name>`.
+
+## Review
+
+- Block 1 → 2 → 3 order; Block 2 holds only aggregate methods; helper-vs-utility split respected (free functions extracted to `*`*_utility.rs`) — § Rules § 3-Block Structure, § Helper vs Utility.
+- Orchestration only: zero I/O, zero computation, zero domain data; DI via protocol traits; shared VOs in signatures — § Rules § Allowed / forbidden operations, § Computation, Errors, VOs.
+- No silently discarded errors (`unwrap_or_default()` / `?? ""` on results); errors propagate or wrap into VOs — § Rules Error rules.
+- No agent file in `shared/`; capabilities-only folders carry an agent of their own — § Workflow step 8.
+- `contract_<name>_aggregate.rs` exists; ≥1 aggregate, ≤3 types.
+
 ## Verify
 
 ```bash
 lint-arwaky-cli scan <layer-path>
 # Checks: AES101/AES102 (filename + suffix), AES201–AES205 (layer imports),
 # AES401–AES406 (role/primitive/structure rules for this layer).
-# Manual (not machine-checked): zero I/O/computation; no silent error discard; 3-block order; helper-vs-utility matrix.
-# Fallback compile gate: cargo check -p <crate-name>
+# Language compile is a fallback gate only: `cargo check -p <crate-name>`
 ```
