@@ -43,7 +43,6 @@ struct GitleaksOutput {
 }
 
 #[derive(Debug, Deserialize)]
-#[allow(dead_code)]
 struct GitleaksFinding {
     #[serde(default)]
     rule: String,
@@ -54,19 +53,7 @@ struct GitleaksFinding {
     #[serde(default)]
     start_column: Option<i64>,
     #[serde(default)]
-    end_line: Option<i64>,
-    #[serde(default)]
-    end_column: Option<i64>,
-    #[serde(default)]
     tags: Vec<String>,
-    #[serde(default)]
-    match_: Option<String>,
-    #[serde(default)]
-    secret: Option<String>,
-    #[serde(default)]
-    commit: Option<String>,
-    #[serde(default)]
-    entropy: Option<f64>,
 }
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
