@@ -73,6 +73,17 @@ workspaces-good/
 > `.github/workflows/ci.yml` installs all seven tools and asserts tool-native
 > (non-AES) violation codes appear in the bad-workspace scan output before the
 > job can pass (QA #637).
+>
+> **Gitleaks secret-scanning gate**: the `self-lint` job also installs
+> Gitleaks (pinned to `v8.18.4`) and runs the Gitleaks adapter end-to-end on
+> the fixture dirs `workspaces-bad/fixtures/gitleaks/` and
+> `workspaces-good/fixtures/gitleaks/`. The bad-workspace fixture files
+> carry Gitleaks' own public test vectors and the bad workspace intentionally
+> ships no `.gitleaks.toml` (so Gitleaks' built-in default rule set applies);
+> the good-workspace file is
+> allowlisted in `workspaces-good/.gitleaks.toml` so the scan reports zero
+> findings there. The CI step asserts at least one `RuleID` appears in the
+> bad-workspace JSON report and none in the good-workspace report.
 
 See [README.md](README.md) for CLI reference and
 [ARCHITECTURE.md](ARCHITECTURE.md) for AES background.
