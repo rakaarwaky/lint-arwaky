@@ -63,7 +63,6 @@ fn config_language_file_names_per_language() {
 fn thresholds_default_values() {
     let t = Thresholds::default();
     assert!((t.score.value() - 80.0).abs() < 1e-9);
-    assert_eq!(t.complexity.value(), 10);
     assert_eq!(t.max_file_lines.value(), 500);
 }
 
@@ -97,6 +96,8 @@ fn project_config_defaults_has_adapters() {
     assert_eq!(config.project_name.value, "lint-arwaky");
     assert_eq!(config.adapters.len(), 4);
     assert!(config.adapters.iter().all(|a| a.is_active()));
+    assert_eq!(config.thresholds.score.value(), 80.0);
+    assert_eq!(config.thresholds.max_file_lines.value(), 500);
 }
 
 #[test]

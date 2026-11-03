@@ -94,8 +94,6 @@ fn full_pipeline_read_parse_validate() {
 thresholds:
   score:
     value: 75.0
-  complexity:
-    value: 15
   max_file_lines:
     value: 600
 "#;

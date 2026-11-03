@@ -30,7 +30,6 @@ project_name = "my-project"
 
 [tool.lint-arwaky.thresholds]
 score = { value = "not-a-number" }
-complexity = { value = 8 }
 max_file_lines = { value = 300 }
 "#;
     let path = tmp.path().join("Cargo.toml");
@@ -50,10 +49,6 @@ max_file_lines = { value = 300 }
         Ok(Some(config)) => {
             // Behavior (a, once the BE fix lands): invalid field dropped, but
             // every valid sibling field must be retained.
-            assert_eq!(
-                config.thresholds.complexity.value, 8,
-                "valid sibling field `complexity` must survive one bad field"
-            );
             assert_eq!(
                 config.thresholds.max_file_lines.value, 300,
                 "valid sibling field `max_file_lines` must survive one bad field"
