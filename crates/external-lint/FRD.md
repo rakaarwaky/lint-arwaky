@@ -12,7 +12,7 @@ The external-lint feature sits in the feature layer, invoked by the surface CLI 
 
 #### Business Logic
 
-- Adapters shall be selected in deterministic language-group order: Rust (`clippy`, `rustfmt`, `cargo-audit`), Python (`ruff`, `mypy`, `bandit`), JS/TS (`eslint`, `prettier`, `tsc`), and Markdown (`markdownlint`).
+- Adapters shall be selected in deterministic language-group order: Rust (`clippy`, `rustfmt`, `cargo-audit`), Python (`ruff`, `mypy`, `bandit`), JS/TS (`eslint`, `prettier`, `tsc`), Markdown (`markdownlint`), and Secrets (`gitleaks`).
 - When caller context does not supply language flags, the feature shall query the filesystem aggregate for project language presence without scanning directory trees directly.
 - The adapter list shall be executed sequentially without threading, passing the target path to each selected adapter.
 - Results shall be filtered against configured rules and ignored path patterns before returning to the caller.

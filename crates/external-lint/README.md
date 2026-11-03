@@ -2,18 +2,19 @@
 
 Architecture linter enforcement for Rust, Python, and TypeScript. Built in Rust, structured by the [Agentic Engineering System](ARCHITECTURE.md), and self-auditing: the project lints itself under its own rules.
 
-Most linters catch syntax and style. Lint Arwaky catches architecture drift: forbidden cross-layer imports, dead files, role confusion, unused imports, and bypass culture. It enforces 36 AES rules across 7 groups (naming, import, quality, role, orphan, structure, and doc) in Rust, Python, and TypeScript in a single scan.
+Most linters catch syntax and style. Lint Arwaky catches architecture drift: forbidden cross-layer imports, dead files, role confusion, unused imports, and bypass culture. It enforces 41 AES rules across 7 groups (naming, import, quality, role, orphan, structure, and doc) in Rust, Python, and TypeScript in a single scan.
 
-> **Security scope:** Lint Arwaky does not detect hardcoded secrets or
-> credentials such as API keys, tokens, and passwords. Pair it with a dedicated
-> secret scanner such as [gitleaks](https://github.com/gitleaks/gitleaks) or
-> [TruffleHog](https://github.com/trufflesecurity/trufflehog). Secret detection
-> is deliberately delegated to these specialist tools rather than added as an
-> AES architecture rule.
+> **Security scope:** Secret detection is delegated to specialist tools. Lint Arwaky ships a Gitleaks adapter that scans source files and git history for hardcoded secrets and credentials such as API keys, tokens, and passwords. Gitleaks findings surface as tool-native `gitleaks::<rule-id>` codes alongside `ruff::`, `clippy::`, and `eslint::` codes; they are not AES architecture rules.
 
 ## Project Overview
 
-Lint Arwaky is a single-tool, multi-language architecture linter for monorepos. One scan reports 36 AES rule codes across 7 groups, drives CI exit codes, auto-fixes mechanical violations, and self-audits the project itself. It serves developers, AI agents, and DevOps/CI engineers on Rust/Python/TypeScript monorepos with 10k+ files.
+Lint Arwaky is a single-tool, multi-language architecture linter for monorepos. One scan reports 43 AES rule codes across 8 groups, drives CI exit codes, auto-fixes mechanical violations, and self-audits the project itself. It serves developers, AI agents, and DevOps/CI engineers on Rust/Python/TypeScript monorepos with 10k+ files.
+
+## Supported Adapters
+
+For the full supported adapter list and AES rule taxonomy, see [ARCHITECTURE.md](../../ARCHITECTURE.md).
+
+Enable the gitleaks adapter with `- name: "gitleaks"` in `adapters:` of `lint_arwaky.config.yaml`. For full-history scanning, set `options: { history: "true" }`. Suppress individual findings with `ignored_rules: ["gitleaks::<rule-id>"]`; per-line `# gitleaks:allow` is not supported (deferred).
 
 ## Prerequisites
 
