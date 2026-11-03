@@ -15,6 +15,8 @@ use external_lint_lint_arwaky::capabilities_external_lint_selector::Capabilities
 fn acceptance_selector_has_exactly_ten_default_adapters() {
     let selector = CapabilitiesExternalLintSelector::with_defaults();
     // All languages present → all 10 adapters (3 rust + 3 python + 3 js + 1 markdown)
+    // Gitleaks is registered in the container but excluded from `with_defaults()`:
+    // it is language-agnostic and opt-in via config, not part of the default set.
     let selected = selector.select_adapters(true, true, true, true);
     assert_eq!(selected.len(), 10, "Expected 10 adapters for mixed project");
 }

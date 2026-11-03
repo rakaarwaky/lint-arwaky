@@ -87,6 +87,7 @@ fn build_scan_aggregates(root: &str) -> ScanAggregates {
             filesystem.clone(),
             fs_io.clone(),
             fs_tool_resolution.clone(),
+            false,
         );
     let external = external_container.aggregate();
 

@@ -35,6 +35,7 @@ impl ExternalLintContainer {
         filesystem: Arc<dyn IFilesystemAggregate>,
         io: Arc<dyn IFileSystemIOProtocol>,
         tool_resolution: Arc<dyn IToolResolutionProtocol>,
+        history: bool,
     ) -> Self {
         let executor: Arc<dyn ICommandExecutorProtocol> = Arc::new(
             crate::capabilities_stdio_client::StdioClient::new(Timeout::new(60.0)),
@@ -141,6 +142,17 @@ impl ExternalLintContainer {
                 crate::capabilities_rs_audit_adapter::CargoAuditAdapter::new(
                     executor.clone(),
                     tool_resolution.clone(),
+                ),
+            ),
+        );
+        adapters.insert(
+            "gitleaks".to_string(),
+            Arc::new(
+                crate::capabilities_secrets_gitleaks_adapter::GitleaksAdapter::new(
+                    command_executor.clone(),
+                    io.clone(),
+                    tool_resolution.clone(),
+                    history,
                 ),
             ),
         );
