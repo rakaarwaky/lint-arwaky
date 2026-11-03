@@ -85,8 +85,9 @@ architecture:
       enabled: true
       exceptions: []
       # Template families (role auditors, doc checkers, surface actions) sit at
-      # 52-54% similar overlap. Pin the legacy 75% until they are deduplicated;
-      # identical/similar split defaults stay available to users without config.
+      # 52-68% similar overlap against the 50% default. Pin the legacy 75%
+      # until they are deduplicated; identical/similar split defaults stay
+      # available to users without config.
       duplication_threshold: 75.0
     # ─── AES400 ───
     AES401:
