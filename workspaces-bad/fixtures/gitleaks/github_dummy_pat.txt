@@ -1,0 +1,4 @@
+// Public Gitleaks test vector — GitHub Personal Access Token.
+// https://github.com/gitleaks/gitleaks/blob/master/config/gitleaks.toml
+// All-zero PAT: a syntactically valid token shape with no entropy.
+export GITHUB_TOKEN=ghp_000000000000000000000000000000000000

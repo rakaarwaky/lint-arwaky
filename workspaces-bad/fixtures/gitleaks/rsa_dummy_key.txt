@@ -1,0 +1,6 @@
+// Public Gitleaks test vector — RSA private key header block.
+// https://github.com/gitleaks/gitleaks/blob/master/config/gitleaks.toml
+// Only the header/footer lines matter; the body is dummy filler.
+-----BEGIN RSA PRIVATE KEY-----
+MIIEpAIBAAKCAQEA7v5x...
+-----END RSA PRIVATE KEY-----
