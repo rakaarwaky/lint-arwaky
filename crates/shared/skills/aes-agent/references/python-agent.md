@@ -97,7 +97,6 @@ class Agent<Name>:
 
 ## Section Contract
 
-
 | Check                                                         | Why it belongs here                                                 |
 | ------------------------------------------------------------- | ------------------------------------------------------------------- |
 | Block 1 → 2 → 3 order followed.                               | Required by AES layer rules and the linter; missing it is a defect. |
@@ -109,7 +108,6 @@ class Agent<Name>:
 | No forbidden imports.                                         | Required by AES layer rules and the linter; missing it is a defect. |
 | Aggregate registered in shared `__init__.py`.                 | Required by AES layer rules and the linter; missing it is a defect. |
 | `python -c "import <module>"` passes.                         | Required by AES layer rules and the linter; missing it is a defect. |
-
 
 ---
 
