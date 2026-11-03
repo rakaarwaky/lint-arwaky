@@ -141,9 +141,98 @@ lint-arwaky-cli scan <layer-path>
 
 ---
 
+## Placement (AES702, AES703)
+
+Place every `agent_*_orchestrator` file in the feature folder the linter expects, with its FRD/BACKLOG document pair beside the source.
+
+```
+packages/<feature_name>/src/agent_<domain>_orchestrator.ts # TypeScript
+```
+
+An `agent_*_orchestrator` file belongs in a **feature folder** — a subdirectory of a member
+directory (`crates/`, `modules/`, `packages/`) that is neither `shared/` nor a surface folder.
+A feature folder is defined as a folder holding at least one `agent_*_orchestrator` and one
+`capabilities_*` file. If a folder holds only capabilities without an agent of its own it is
+an **AES702** violation; if the agent sits in a surface-dominated folder it is also
+**AES702** and the file should be moved out of the surface folder.
+
+An orchestrator may sit at the **member root** (e.g. `packages/agent_calculator_orchestrator.ts`)
+when it routes across features rather than serving one. That makes it a routing aggregate
+over the features beneath it — it holds one orchestrator per feature and delegates to them.
+It does **not** satisfy AES702 for those folders: each feature still owes an orchestrator of
+its own, so a capabilities folder under a member-level orchestrator is still a split feature.
+
+`agent_*_orchestrator` files are forbidden in `shared/` — that is an **AES701** violation and
+the file must be moved to a feature folder.
+
+## Feature folder documents
+
+The feature folder holding this agent also carries two documents at its root, beside the
+source:
+
+```text
+<member_dir>/<feature_name>/FRD.md       # what the feature does — requirements
+<member_dir>/<feature_name>/BACKLOG.md   # where its work stands
+```
+
+The folder name matches the feature it serves. A folder named after a generic word
+(`utils`, `common`, `core`) describes no feature and cannot carry a meaningful FRD.
+
+A feature folder carrying an agent but neither document is an **AES702** violation — the
+linter names the missing file and you write it.
+
+---
+
+## Diagnostic Tree
+
+Ask these questions in order. The first "No" dictates your next action.
+
+1. **Is this orchestration only — or does it compute / touch I/O / hold domain data?**
+   - *Computes/I-O/data* → move to capabilities / taxonomy / utility.
+2. **Does an `_aggregate` contract exist?**
+   - *No* → create it first with `aes-contract`.
+3. **Block 2 only aggregate methods? ≥1 aggregate? ≤3 types?**
+   - *No* → restructure to 1→2→3; extract free functions to utility.
+4. **Any silently discarded errors or raw primitives in signatures?**
+   - *Yes* → propagate/`Result`; wrap primitives in VOs.
+5. **Does `lint-arwaky-cli scan <layer-path>` exit 0?**
+   - *No* → fix findings, re-scan.
+
+## Workflow
+
+1. Confirm orchestration only — computation → capabilities, domain data → taxonomy, pure helpers → utility.
+2. Ensure an `_aggregate` contract exists — if missing, run `aes-contract` first.
+3. Resolve the feature agent dir. Run `lint-arwaky-cli scan <layer-path>` — findings are your work list.
+4. Implement the 3 blocks from § Template / § Section Contract; inject the aggregate via DI.
+5. Check imports, I/O, computation, error handling, and primitives against § Rules.
+6. Register in the shared barrel, verify with `lint-arwaky-cli scan`, then compose via `aes-root` / consume via `aes-surface`.
+7. Fallback compile gate: ``npx tsc --noEmit``.
+
+## Pre-flight Checklist
+
+- [ ] `lint-arwaky-cli scan <layer-path>` exits 0.
+- [ ] Every touched section contract was checked.
+- [ ] File registered in `index.ts`.
+- [ ] Language fallback compile clean: ``npx tsc --noEmit``.
+- [ ] Related skills considered for the next layer up/down.
+
+## Common Mistakes (Anti-Patterns)
+
+The linter covers naming, imports, and primitives. These need a reader (§ Rules):
+
+- **Computation or I/O in the agent**: arithmetic/parsing/FS/network belong below the agent layer.
+- **Silently discarded errors**: no silent default-on-error in signatures.
+- **Agent implements protocol instead of aggregate (or both)**: exactly one aggregate, 3-block order.
+
+---
+
 ## Completion
 
 The TypeScript agent file is complete when:
 
 - `lint-arwaky-cli scan <layer-path>` exits 0.
 - Fallback compile gate passes: `npx tsc --noEmit`.
+- `lint-arwaky-cli scan <layer-path>` reports no AES702 or AES703 findings.
+- The feature folder root carries `FRD.md` and `BACKLOG.md` beside the source.
+- No `agent_*_orchestrator` file sits in `shared/`.
+

@@ -24,9 +24,7 @@ Scaffold AES agent orchestrators — orchestration only: call the aggregate, ret
 
 | File | Purpose |
 | --- | --- |
-| [references/python-agent.md](references/python-agent.md) | Python agent HOW-TO — rules, template, section contract, verify |
-| [references/rust-agent.md](references/rust-agent.md) | Rust agent HOW-TO — rules, template, section contract, verify |
-| [references/typescript-agent.md](references/typescript-agent.md) | TypeScript agent HOW-TO — rules, template, section contract, verify |
-| [references/placement.md](references/placement.md) | AES702/AES703 feature-folder placement + FRD/BACKLOG document requirement |
-| [references/diagnostics-and-workflow.md](references/diagnostics-and-workflow.md) | Diagnostic tree, workflow steps, verification, pre-flight checklist, common mistakes |
+| [references/python-agent.md](references/python-agent.md) | Python agent HOW-TO — rules, template, section contract, placement, diagnostics, verify |
+| [references/rust-agent.md](references/rust-agent.md) | Rust agent HOW-TO — rules, template, section contract, placement, diagnostics, verify |
+| [references/typescript-agent.md](references/typescript-agent.md) | TypeScript agent HOW-TO — rules, template, section contract, placement, diagnostics, verify |
 | Related skills | aes-contract, aes-capabilities, aes-surface, aes-root, aes-taxonomy |
