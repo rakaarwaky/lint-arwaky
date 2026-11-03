@@ -47,7 +47,7 @@ impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
         let similar_threshold = aes305
             .and_then(|r| r.code_analysis.similar_threshold)
             .or(dup)
-            .unwrap_or(50.0);
+            .unwrap_or(75.0);
 
         // Borrow path/content as &str instead of cloning into (String, String)
         let borrowed: Vec<(&str, &str)> = entries
