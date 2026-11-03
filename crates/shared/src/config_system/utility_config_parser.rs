@@ -519,6 +519,8 @@ fn warn_unknown_rule_keys(rules: &[serde_json::Value], warnings: &mut Vec<String
         "forbid_any_type",
         "mandatory_imports",
         "duplication_threshold",
+        "identical_threshold",
+        "similar_threshold",
         "max_functions",
         "max_impl",
         "severity",
