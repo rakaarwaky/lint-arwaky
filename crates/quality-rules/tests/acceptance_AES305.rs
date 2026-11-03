@@ -176,6 +176,57 @@ fn violation_message_contains_percentage() {
 
 // ─── Threshold-split tests ──────────────────────────────────────────────────
 
+/// Default `similar_threshold` is 75, matching the `identical` tier:
+/// structural near-duplication in the 50–75% band (e.g. a deliberate
+/// family of sibling adapters sharing a common protocol-method skeleton
+/// plus per-sibling identifier differences) must NOT fire under the
+/// default config — only byte-identical-clone-level duplication does.
+/// This is a regression guard: an earlier default of 50 misclassified
+/// ~55–64% structural overlap as a `similar` violation.
+#[test]
+fn similar_default_threshold_is_75_not_50() {
+    // 30 lines: 20 shared logic lines + 10 unique-per-file tail lines.
+    // similar_pct ≈ 20/30 = 66.67% — above the old 50% default, below the
+    // new 75% default.
+    let shared: Vec<String> = (0..20)
+        .map(|i| format!("fn shared_logic_{i}() {{ let x = {i}; return x; }}"))
+        .collect();
+    let unique_a: Vec<String> = (0..10)
+        .map(|i| format!("fn only_in_a_{i}() {{ let y = {i}; }}"))
+        .collect();
+    let unique_b: Vec<String> = (0..10)
+        .map(|i| format!("fn only_in_b_{i}() {{ let z = {i}; }}"))
+        .collect();
+    let file_a = format!("{}\n{}", shared.join("\n"), unique_a.join("\n"));
+    let file_b = format!("{}\n{}", shared.join("\n"), unique_b.join("\n"));
+
+    let entries = vec![
+        (PathBuf::from("src/def_a.rs"), file_a),
+        (PathBuf::from("src/def_b.rs"), file_b),
+    ];
+
+    // Default config (no explicit thresholds): must NOT fire, since the
+    // ~66.7% structural similarity sits in the 50–75% band that the new
+    // default no longer treats as a violation.
+    let violations = analyzer().handle_duplicates_entries(&entries);
+    assert!(
+        violations.is_empty(),
+        "structural ~66% duplication must not fire under the default 75% similar threshold"
+    );
+
+    // Explicit 50% (the old default) on the same fixture must still fire,
+    // proving the threshold is what gates this finding, not the content.
+    let ana_old = analyzer_with_rulevo(shared_quality_rules::CodeAnalysisRuleVO {
+        similar_threshold: Some(50.0),
+        ..Default::default()
+    });
+    let violations_old = ana_old.handle_duplicates_entries(&entries);
+    assert!(
+        !violations_old.is_empty(),
+        "the same ~66% fixture must still fire at the old 50% similar threshold"
+    );
+}
+
 /// Byte-identical files fall through to "similar" when identical_threshold
 /// equals the pct (strict `>` fails) but similar_threshold is below it.
 #[test]
