@@ -1,5 +1,4 @@
 # ESLint file exclusions — read natively by Codeac's ESLint engine.
-# Mirrors exclude_paths in .codacy.yaml / .codacy/codacy.yaml.
 
 # Fixtures — intentional violations, not product code
 workspaces-bad/**
