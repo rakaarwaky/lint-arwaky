@@ -4,7 +4,7 @@
 >
 > **Audience**: Agents and engineers scaffolding AES agent orchestrators.
 >
-> **Scope**: Python, Rust, and TypeScript `agent_<domain>_orchestrator` files — one aggregate, 3-block structure, zero I/O.
+> **Scope**: Rust `agent_<domain>_orchestrator` files — one aggregate, 3-block structure, zero I/O.
 >
 > **Location**: Feature domain package; depends only on shared contracts/taxonomy/utility.
 >
@@ -150,3 +150,12 @@ lint-arwaky-cli scan <layer-path>
 # Manual (not machine-checked): zero I/O/computation; no silent error discard; 3-block order; helper-vs-utility matrix.
 # Fallback compile gate: cargo check -p <crate-name>
 ```
+
+---
+
+## Completion
+
+The Rust agent file is complete when:
+
+- `lint-arwaky-cli scan <layer-path>` exits 0.
+- Fallback compile gate passes: `cargo check -p <crate-name>`.
