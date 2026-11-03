@@ -251,6 +251,7 @@ Skipped for `utility`/`surface` layers; active for taxonomy/contract/capabilitie
 | ----- | ----- |
 | Severity | MEDIUM |
 | Fires when | A file's share of shared normalized content windows exceeds the duplication threshold |
+| Default thresholds | identical: 75%; similar: 75% (both tiers equal — structural near-duplication in the 50–75% band, e.g. a deliberate family of sibling files sharing a common skeleton, is not a violation) |
 | Scope | Every scanned source file; import-only windows are excluded |
 | Fix | Extract duplicated logic into shared utilities |
 
