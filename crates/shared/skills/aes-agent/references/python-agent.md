@@ -56,7 +56,7 @@ I/O: stateless + I/O + domain-agnostic = taxonomy utility. Stateless + I/O + dom
 
 - Rule 1: Never silently discard — no `checker.check() or ""`.
 - Rule 2: Analysis orchestration → return the taxonomy-defined response enum variant; each variant
-  holds VO-wrapped values, not raw primitives.
+holds VO-wrapped values, not raw primitives.
 - Rule 3: Execution orchestration → return `Result[...]` wrapped in a VO variant.
 - Rule 4: Delegate I/O errors to capabilities — agent only wraps into VO.
 
@@ -97,17 +97,19 @@ class Agent<Name>:
 
 ## Section Contract
 
-| Check | Why it belongs here|
-| ----- | -------------------|
-| Block 1 → 2 → 3 order followed. | Required by AES layer rules and the linter; missing it is a defect.|
-| Block 2: ONLY aggregate ABC method implementations. | Required by AES layer rules and the linter; missing it is a defect.|
-| Block 3: dunders, factories, private helpers. | Required by AES layer rules and the linter; missing it is a defect.|
-| ≥1 class inherits aggregate ABC; ≤3 total classes. | Required by AES layer rules and the linter; missing it is a defect.|
-| No local domain data; DI via protocol interfaces; shared VOs. | Required by AES layer rules and the linter; missing it is a defect.|
-| Zero I/O, zero business logic, zero domain computation. | Required by AES layer rules and the linter; missing it is a defect.|
-| No forbidden imports. | Required by AES layer rules and the linter; missing it is a defect.|
-| Aggregate registered in shared `__init__.py`. | Required by AES layer rules and the linter; missing it is a defect.|
-| `python -c "import <module>"` passes. | Required by AES layer rules and the linter; missing it is a defect.|
+
+| Check                                                         | Why it belongs here                                                 |
+| ------------------------------------------------------------- | ------------------------------------------------------------------- |
+| Block 1 → 2 → 3 order followed.                               | Required by AES layer rules and the linter; missing it is a defect. |
+| Block 2: ONLY aggregate ABC method implementations.           | Required by AES layer rules and the linter; missing it is a defect. |
+| Block 3: dunders, factories, private helpers.                 | Required by AES layer rules and the linter; missing it is a defect. |
+| ≥1 class inherits aggregate ABC; ≤3 total classes.            | Required by AES layer rules and the linter; missing it is a defect. |
+| No local domain data; DI via protocol interfaces; shared VOs. | Required by AES layer rules and the linter; missing it is a defect. |
+| Zero I/O, zero business logic, zero domain computation.       | Required by AES layer rules and the linter; missing it is a defect. |
+| No forbidden imports.                                         | Required by AES layer rules and the linter; missing it is a defect. |
+| Aggregate registered in shared `__init__.py`.                 | Required by AES layer rules and the linter; missing it is a defect. |
+| `python -c "import <module>"` passes.                         | Required by AES layer rules and the linter; missing it is a defect. |
+
 
 ---
 
@@ -123,19 +125,11 @@ class Agent<Name>:
 8. **Placement (AES702/AES703)** — the file sits in a feature folder (`modules/<feature_name>/src/agent_<domain>_orchestrator`), not in `shared/` or a surface-dominated folder; `FRD.md` + `BACKLOG.md` at the feature folder root beside the source; a capabilities-only folder without its own agent is a split feature.
 9. Fallback compile gate: `python -c "import <shared_package>.<module>"`.
 
-## Review
-
-- Block 1 → 2 → 3 order; Block 2 holds only aggregate methods; helper-vs-utility split respected (free functions extracted to `*`*_utility.py`) — § Rules § 3-Block Structure, § Helper vs Utility.
-- Orchestration only: zero I/O, zero computation, zero domain data; DI via protocol ABCs; shared VOs in signatures — § Rules § Allowed / forbidden operations, § Computation, Errors, VOs.
-- No silently discarded errors (`or ""` fallbacks on results); errors propagate or wrap into VOs — § Rules Error rules.
-- No agent file in `shared/`; capabilities-only folders carry an agent of their own — § Workflow step 8.
-- `contract_<name>_aggregate.py` exists; ≥1 aggregate, ≤3 types.
-
 ## Verify
 
 ```bash
 lint-arwaky-cli scan <layer-path>
 # Checks: AES101/AES102 (filename + suffix), AES201–AES205 (layer imports),
 # AES401–AES406 (role/primitive/structure rules for this layer).
-# Language compile is a fallback gate only: `python -c "import <shared_package>.<module>"`
+# Language compile is a fallback gate only: `python -c "import [[ORCA_RICH_MD:677aeee2bafaea1666681bd4dc66ea38:inline-html:%3Cshared_package%3E]].[[ORCA_RICH_MD:677aeee2bafaea1666681bd4dc66ea38:inline-html:%3Cmodule%3E]]"`
 ```
