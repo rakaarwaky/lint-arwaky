@@ -4,7 +4,7 @@
 >
 > **Audience**: Agents and engineers scaffolding AES agent orchestrators.
 >
-> **Scope**: Python, Rust, and TypeScript `agent_<domain>_orchestrator` files — one aggregate, 3-block structure, zero I/O.
+> **Scope**: Python `agent_<domain>_orchestrator` files — one aggregate, 3-block structure, zero I/O.
 >
 > **Location**: Feature domain package; depends only on shared contracts/taxonomy/utility.
 >
@@ -62,18 +62,6 @@ I/O: stateless + I/O + domain-agnostic = taxonomy utility. Stateless + I/O + dom
 
 **VO rules:** `str`/`int`/`float` forbidden for domain fields/contracts. `bool` for semantic toggles only.
 
-### Workflow
-
-1. Confirm orchestration only — computation → capabilities, domain data → taxonomy.
-2. Agent class inherits aggregate ABC? If no → create `contract_<name>_aggregate.py`.
-3. Enforce 3-Block.
-4. ≥1 aggregate ABC, ≤3 classes, DI via protocols, shared VOs.
-5. No forbidden imports, no I/O, no computation.
-6. No silent errors, no raw primitives in contracts, no magic constants.
-7. `python -c "import <module>"`.
-
----
-
 ## Template
 
 ```python
@@ -123,12 +111,31 @@ class Agent<Name>:
 
 ---
 
+## Workflow
+
+1. **Triage (diagnostic tree)** — ask in order; the first "No" dictates the next action: orchestration only (no I/O, no computation, no local domain data)? an `_aggregate` contract exists? — no: create it first with `aes-contract`. Block 2 holds only aggregate methods; ≥1 aggregate; ≤3 types? no silently discarded errors; no raw primitives in signatures (wrap in VOs; propagate errors)? `lint-arwaky-cli scan <layer-path>` exits 0?
+2. Confirm orchestration only — computation → capabilities, domain data → taxonomy, pure helpers → utility.
+3. Ensure an `_aggregate` contract exists — if missing, run `aes-contract` first.
+4. Resolve the feature agent dir. Run `lint-arwaky-cli scan <layer-path>` — findings are the work list.
+5. Implement the 3 blocks from § Template / § Section Contract; the class inherits the aggregate ABC via DI.
+6. Check imports, I/O, computation, error handling, and primitives against § Rules.
+7. Register in `__init__.py`, then compose via `aes-root` / consume via `aes-surface`.
+8. **Placement (AES702/AES703)** — the file sits in a feature folder (`modules/<feature_name>/src/agent_<domain>_orchestrator`), not in `shared/` or a surface-dominated folder; `FRD.md` + `BACKLOG.md` at the feature folder root beside the source; a capabilities-only folder without its own agent is a split feature.
+9. Fallback compile gate: `python -c "import <shared_package>.<module>"`.
+
+## Review
+
+- Block 1 → 2 → 3 order; Block 2 holds only aggregate methods; helper-vs-utility split respected (free functions extracted to `*`*_utility.py`) — § Rules § 3-Block Structure, § Helper vs Utility.
+- Orchestration only: zero I/O, zero computation, zero domain data; DI via protocol ABCs; shared VOs in signatures — § Rules § Allowed / forbidden operations, § Computation, Errors, VOs.
+- No silently discarded errors (`or ""` fallbacks on results); errors propagate or wrap into VOs — § Rules Error rules.
+- No agent file in `shared/`; capabilities-only folders carry an agent of their own — § Workflow step 8.
+- `contract_<name>_aggregate.py` exists; ≥1 aggregate, ≤3 types.
+
 ## Verify
 
 ```bash
 lint-arwaky-cli scan <layer-path>
 # Checks: AES101/AES102 (filename + suffix), AES201–AES205 (layer imports),
 # AES401–AES406 (role/primitive/structure rules for this layer).
-# Manual (not machine-checked): zero I/O/computation; no silent error discard; 3-block order; helper-vs-utility matrix.
-# Fallback compile gate: python -c "import <shared_package>.<module>"
+# Language compile is a fallback gate only: `python -c "import <shared_package>.<module>"`
 ```
