@@ -44,15 +44,12 @@ pub fn is_import_line(trimmed: &str) -> bool {
         return true;
     }
     // TypeScript / JavaScript: `import` / `export ... from`
-    if (head == b'i' || head == b'e')
-        && (trimmed.starts_with("import ")
-            || trimmed.starts_with("import\t")
-            || trimmed.starts_with("export ") && trimmed.starts_with("export"))
-    {
+    if head == b'i' || head == b'e' {
         if trimmed.starts_with("import ") || trimmed.starts_with("import\t") {
             return true;
         }
-        // `export { ... } from ...` is a re-export, still scaffolding
+        // `export { ... } from ...` is a re-export, still scaffolding.
+        // `export const x = 1` has no `from` and is real code → false.
         if trimmed.starts_with("export ") && trimmed.contains(" from ") {
             return true;
         }
