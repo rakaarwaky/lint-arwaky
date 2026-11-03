@@ -83,18 +83,11 @@ architecture:
       exceptions: []
     AES305:
       enabled: true
-      exceptions:
-        - capabilities_capabilities_python_role_auditor.rs
-        - capabilities_capabilities_ts_role_auditor.rs
-        - capabilities_doc_backlog.rs
-        - capabilities_doc_contributing.rs
-        - capabilities_doc_data.rs
-        - capabilities_doc_prd.rs
-        - capabilities_doc_readme.rs
-        - surface_import_action.rs
+      exceptions: []
       # Template families (role auditors, doc checkers, surface actions) sit at
-      # 52-68% similar overlap. Pin the legacy 75% until they are deduplicated;
-      # identical/similar split defaults stay available to users without config.
+      # 52-68% similar overlap against the 50% default. Pin the legacy 75%
+      # until they are deduplicated; identical/similar split defaults stay
+      # available to users without config.
       duplication_threshold: 75.0
     # ─── AES400 ───
     AES401:

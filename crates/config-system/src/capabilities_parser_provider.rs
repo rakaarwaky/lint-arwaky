@@ -164,6 +164,20 @@ fn fold_user_rule_toggles(merged: &mut ArchitectureConfig, user: &ArchitectureCo
                     embedded.exceptions.values.push(val.clone());
                 }
             }
+            // Carry user-set code-analysis thresholds into embedded rules so
+            // lint_arwaky.config.yaml values (e.g. AES305.duplication_threshold)
+            // reach CLI scans. Only fields the user explicitly set are copied;
+            // embedded defaults stand otherwise.
+            let user_ca = &user_rule.code_analysis;
+            if user_ca.duplication_threshold.is_some() {
+                embedded.code_analysis.duplication_threshold = user_ca.duplication_threshold;
+            }
+            if user_ca.identical_threshold.is_some() {
+                embedded.code_analysis.identical_threshold = user_ca.identical_threshold;
+            }
+            if user_ca.similar_threshold.is_some() {
+                embedded.code_analysis.similar_threshold = user_ca.similar_threshold;
+            }
         }
     }
 }
