@@ -58,7 +58,7 @@ workspaces-good/
 > regress below the documented ≥ 100 violation floor per language.
 >
 > **Reconciled rule count (single source of truth — §3.2):** the product
-> enforces **41 AES rules** total (per ARCHITECTURE.md §13 inventory table
+> enforces **41 AES rules** total (per the ARCHITECTURE.md Rule Index table
 > and the §3.2 Per-Rule Detection Matrix). `scan` surfaces **all 41** in a
 > whole-workspace scan. Each member folder (`crates`, `modules`, `packages`)
 > carries its own root-doc set so that a per-member scan also surfaces all
