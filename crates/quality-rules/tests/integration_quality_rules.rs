@@ -125,8 +125,8 @@ fn score_perfect_when_no_violations() {
 fn format_report_returns_content() {
     let container = CodeAnalysisContainer::new();
     let linter = container.code_analysis_linter();
-    let results = shared_cli_commands::LintResultList::new(Vec::new());
-    let root = FilePath::new("/project".to_string()).unwrap();
+    let _results = shared_cli_commands::LintResultList::new(Vec::new());
+    let _root = FilePath::new("/project".to_string()).unwrap();
     // The format_report path is removed; we keep the test but assert that it works via violations.
     // To avoid type mismatch, we create a dummy empty file entry instead of LintResultList.
     let violations = linter

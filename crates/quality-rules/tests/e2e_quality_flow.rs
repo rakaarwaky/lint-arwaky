@@ -1,7 +1,6 @@
 // PURPOSE: E2E tests — full pipeline: temp dir with quality violations → container → analysis → verify all types found
 use quality_rules_lint_arwaky::CodeAnalysisContainer;
 
-use shared_common::FilePath;
 use shared_filesystem::taxonomy_filesystem_vo::FileEntry;
 use shared_quality_rules::CodeAnalysisRequest;
 use std::path::PathBuf;

@@ -225,3 +225,60 @@ fn barrel_reexports_are_same_types() {
     let key = ConfigKeyRe::new("a.b");
     assert_eq!(key.leaf(), "b");
 }
+
+// ── KNOWN whitelist pin: new CodeAnalysisRuleVO fields must not warn ───────
+
+#[test]
+fn unknown_rule_key_warnings_omit_code_analysis_rule_vo_fields() {
+    use shared_config_system::utility_config_parser::parse_config_yaml_with_warnings;
+    use shared_quality_rules::CodeAnalysisRuleVO;
+
+    let yaml = r#"
+architecture:
+  enabled: true
+  rules:
+    - name: AES305
+      enabled: true
+      min_lines: 5
+      duplication_threshold: 75.0
+      identical_threshold: 80.0
+      similar_threshold: 50.0
+"#;
+
+    let (_, warnings) = parse_config_yaml_with_warnings(yaml);
+    let unknown: Vec<String> = warnings
+        .iter()
+        .filter(|w| w.contains("Unknown configuration key"))
+        .cloned()
+        .collect();
+    assert!(
+        unknown.is_empty(),
+        "CodeAnalysisRuleVO fields must be in the KNOWN whitelist, got: {unknown:?}"
+    );
+
+    // Round-trip: the parsed config must carry the new fields.
+    let (config, _) = parse_config_yaml_with_warnings(yaml);
+    let rule = config
+        .rules
+        .iter()
+        .find(|r| r.name.value == "AES305")
+        .expect("AES305 rule present");
+    let expected = CodeAnalysisRuleVO {
+        identical_threshold: Some(80.0),
+        similar_threshold: Some(50.0),
+        duplication_threshold: Some(75.0),
+        ..Default::default()
+    };
+    assert_eq!(
+        rule.code_analysis.identical_threshold,
+        expected.identical_threshold
+    );
+    assert_eq!(
+        rule.code_analysis.similar_threshold,
+        expected.similar_threshold
+    );
+    assert_eq!(
+        rule.code_analysis.duplication_threshold,
+        expected.duplication_threshold
+    );
+}

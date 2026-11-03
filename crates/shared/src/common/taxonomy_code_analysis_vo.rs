@@ -33,6 +33,10 @@ pub struct CodeAnalysisRuleVO {
     pub mandatory_imports: Vec<MandatoryImportRuleVO>,
     #[serde(default)]
     pub duplication_threshold: Option<f64>,
+    #[serde(default)]
+    pub identical_threshold: Option<f64>,
+    #[serde(default)]
+    pub similar_threshold: Option<f64>,
 }
 
 fn default_min_lines() -> Count {
@@ -56,6 +60,8 @@ impl Default for CodeAnalysisRuleVO {
             forbid_any_type: BooleanVO::default(),
             mandatory_imports: Vec::new(),
             duplication_threshold: None,
+            identical_threshold: None,
+            similar_threshold: None,
         }
     }
 }
