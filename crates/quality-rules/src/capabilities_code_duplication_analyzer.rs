@@ -80,8 +80,9 @@ struct DupWindow {
 }
 
 /// Collapse per-window positions into maximal consecutive line ranges.
-/// 1-based, inclusive.
-pub(crate) fn collapse_ranges(positions: &[(usize, usize)]) -> Vec<(usize, usize)> {
+/// 1-based, inclusive. Public so the crate's tests can cover it directly
+/// (capability sources must stay free of inline test modules, AES403).
+pub fn collapse_ranges(positions: &[(usize, usize)]) -> Vec<(usize, usize)> {
     let mut ranges: Vec<(usize, usize)> = Vec::new();
     for &(s, e) in positions {
         if let Some(last) = ranges.last_mut() {
@@ -324,42 +325,5 @@ impl CodeDuplicationAnalyzer {
         }
 
         violations
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::collapse_ranges;
-
-    #[test]
-    fn collapse_ranges_merges_adjacent_windows() {
-        // Windows of size 2 at positions (1,2), (2,3), (3,4) collapse to (1,4).
-        let positions = vec![(1, 2), (2, 3), (3, 4)];
-        assert_eq!(collapse_ranges(&positions), vec![(1, 4)]);
-    }
-
-    #[test]
-    fn collapse_ranges_keeps_disjoint_ranges() {
-        let positions = vec![(1, 2), (5, 6), (10, 11)];
-        assert_eq!(collapse_ranges(&positions), vec![(1, 2), (5, 6), (10, 11)]);
-    }
-
-    #[test]
-    fn collapse_ranges_merges_overlapping_windows() {
-        // (1,5) and (3,8) overlap → (1,8).
-        let positions = vec![(1, 5), (3, 8)];
-        assert_eq!(collapse_ranges(&positions), vec![(1, 8)]);
-    }
-
-    #[test]
-    fn collapse_ranges_handles_empty_input() {
-        assert!(collapse_ranges(&[]).is_empty());
-    }
-
-    #[test]
-    fn collapse_ranges_merges_gaps_of_one() {
-        // (1,2) and (3,4) are adjacent (2+1 == 3) → merge to (1,4).
-        let positions = vec![(1, 2), (3, 4)];
-        assert_eq!(collapse_ranges(&positions), vec![(1, 4)]);
     }
 }

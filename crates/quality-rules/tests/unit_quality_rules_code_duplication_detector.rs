@@ -55,3 +55,41 @@ fn is_import_line_rejects_non_imports_and_empty() {
     // Tab variants of real code stay false.
     assert!(!is_import_line("\tfn logic() {}"));
 }
+
+// ─── collapse_ranges unit tests ──────────────────────────────────────────────
+// Moved from the analyzer source: capability files must stay free of inline
+// test modules (AES403:CAPABILITY_ROLE).
+
+use quality_rules_lint_arwaky::capabilities_code_duplication_analyzer::collapse_ranges;
+
+#[test]
+fn collapse_ranges_merges_adjacent_windows() {
+    // Windows of size 2 at positions (1,2), (2,3), (3,4) collapse to (1,4).
+    let positions = vec![(1, 2), (2, 3), (3, 4)];
+    assert_eq!(collapse_ranges(&positions), vec![(1, 4)]);
+}
+
+#[test]
+fn collapse_ranges_keeps_disjoint_ranges() {
+    let positions = vec![(1, 2), (5, 6), (10, 11)];
+    assert_eq!(collapse_ranges(&positions), vec![(1, 2), (5, 6), (10, 11)]);
+}
+
+#[test]
+fn collapse_ranges_merges_overlapping_windows() {
+    // (1,5) and (3,8) overlap → (1,8).
+    let positions = vec![(1, 5), (3, 8)];
+    assert_eq!(collapse_ranges(&positions), vec![(1, 8)]);
+}
+
+#[test]
+fn collapse_ranges_handles_empty_input() {
+    assert!(collapse_ranges(&[]).is_empty());
+}
+
+#[test]
+fn collapse_ranges_merges_gaps_of_one() {
+    // (1,2) and (3,4) are adjacent (2+1 == 3) → merge to (1,4).
+    let positions = vec![(1, 2), (3, 4)];
+    assert_eq!(collapse_ranges(&positions), vec![(1, 4)]);
+}
