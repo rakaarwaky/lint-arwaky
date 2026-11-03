@@ -1,0 +1,11 @@
+title = "lint-arwaky good-workspace gitleaks config"
+
+# Allowlist the public Gitleaks test vectors shipped with this fixture file.
+# The good workspace must produce zero gitleaks:: findings when scanned with
+# this config. CI is Linux-only, so the regex uses POSIX path separators.
+
+[allowlist]
+title = "Gitleaks public test vectors"
+paths = [
+    '''(^|/)fixtures/gitleaks/gitleaks_dummy_secret\.rs$''',
+]
