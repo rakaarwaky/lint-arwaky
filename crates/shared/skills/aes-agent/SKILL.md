@@ -24,7 +24,7 @@ Scaffold AES agent orchestrators — orchestration only: call the aggregate, ret
 
 | File | Purpose |
 | --- | --- |
-| [references/python-agent.md](references/python-agent.md) | Python agent HOW-TO — rules, template, section contract, placement, diagnostics, verify |
-| [references/rust-agent.md](references/rust-agent.md) | Rust agent HOW-TO — rules, template, section contract, placement, diagnostics, verify |
-| [references/typescript-agent.md](references/typescript-agent.md) | TypeScript agent HOW-TO — rules, template, section contract, placement, diagnostics, verify |
+| [references/python-agent.md](references/python-agent.md) | Python agent HOW-TO — rules, template, section contract, workflow steps, review, verify |
+| [references/rust-agent.md](references/rust-agent.md) | Rust agent HOW-TO — rules, template, section contract, workflow steps, review, verify |
+| [references/typescript-agent.md](references/typescript-agent.md) | TypeScript agent HOW-TO — rules, template, section contract, workflow steps, review, verify |
 | Related skills | aes-contract, aes-capabilities, aes-surface, aes-root, aes-taxonomy |
