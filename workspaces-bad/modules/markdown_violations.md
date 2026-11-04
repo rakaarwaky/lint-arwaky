@@ -4,6 +4,6 @@ adapter reports a tool-native finding on a Markdown-only fixture.
 *  two spaces after the list marker
 *  two spaces again
 
-| Column A | Column B |
+| Column A | Column B|
 |---|---|---|
-| only one cell here |
+| only one cell here|

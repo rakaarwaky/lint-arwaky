@@ -12,7 +12,7 @@ static DEFAULT_CONFIG: OnceLock<ArchitectureConfig> = OnceLock::new();
 ///
 /// The AES business rules — layer scopes, import dependency matrix, suffix
 /// policies, exceptions — are fixed in the tool, not read from config. See
-/// `utility_architecture_constants`. A project's config file may only switch
+/// `utility_config_architecture_rules`. A project's config file may only switch
 /// rules on or off and add exceptions.
 pub fn default_aes_config() -> ArchitectureConfig {
     DEFAULT_CONFIG
@@ -20,7 +20,7 @@ pub fn default_aes_config() -> ArchitectureConfig {
             // Orphan detection is on for every layer unless one opts out, the
             // same post-processing a parsed config receives.
             enable_default_orphan_detection(
-                crate::utility_architecture_constants::hardcoded_default_architecture(),
+                crate::utility_config_architecture_rules::hardcoded_default_architecture(),
             )
         })
         .clone()
@@ -519,6 +519,8 @@ fn warn_unknown_rule_keys(rules: &[serde_json::Value], warnings: &mut Vec<String
         "forbid_any_type",
         "mandatory_imports",
         "duplication_threshold",
+        "identical_threshold",
+        "similar_threshold",
         "max_functions",
         "max_impl",
         "severity",
@@ -739,9 +741,6 @@ pub fn validate_thresholds(
 
     if !(0.0..=100.0).contains(&t.score.value) {
         errors.push("Score threshold must be between 0 and 100.".to_string());
-    }
-    if t.complexity.value <= 0 {
-        errors.push("Complexity threshold must be positive.".to_string());
     }
     if t.max_file_lines.value <= 0 {
         errors.push("max_file_lines threshold must be positive.".to_string());

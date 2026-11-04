@@ -1,6 +1,6 @@
 // Integration tests — OrphanContainer wiring and analyzer lifecycle.
 #[allow(dead_code, unused_imports)]
-#[path = "../../shared/tests/common/mock_filesystem.rs"]
+#[path = "../../shared/tests/mock_filesystem.rs"]
 mod mock_filesystem;
 
 use mock_filesystem::{mock_filesystem, mock_workspace};

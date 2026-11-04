@@ -1,152 +1,393 @@
 # PRD — Lint Arwaky
 
-> Product Requirements. Describes WHAT this project does and WHY. Real condition lives in [ROADMAP.md](ROADMAP.md).
+> Product Requirements. Describes WHAT this project does and WHY. Real condition lives in ROADMAP.md.
 
-## Problem Statement
+## Project Overview
 
-Software projects accumulate quality debt silently — for example, AES607 shipped in PR #335 with an undetected counting bug because no CI gate ran `docs .` (see issue #350), surfacing only in a later audit.
+A multi-language monorepo has no single architectural audit. Engineers run separate linters per language and merge three reports by hand, so a violation in Rust never blocks a Python change and vice versa.
 
-In this context, **quality debt** is specifically scoped to architectural drift across seven structural categories: naming conventions, layer dependency and import purity, code quality thresholds (file lengths, bypasses, dead inheritance), role boundaries, orphan/unreachable components, document invariants, and vertical slice folder structure. It explicitly excludes business-logic correctness, semantic runtime bugs, and dynamic test quality.
+Developers, AI agents, and DevOps engineers on Rust/Python/TypeScript monorepos with 10k+ files and 5–50+ person teams lack one unified tool that audits all three languages together, enforces architectural rules in CI/CD, and remediates drift autonomously for humans and AI agents.
 
-Developers, AI agents, and DevOps engineers on multi-language monorepos (Rust/Python/TypeScript with 10k+ files and teams of 5–50+ engineers) lack a single unified tool that audits all three languages together, enforces architectural rules in CI/CD, and enables autonomous remediation for both human developers and AI coding agents.
+Without one gate, drift across naming, layering, imports, quality, roles, orphans, documents, and folder structure compounds silently until a full audit takes hours and releases carry hidden architectural defects.
 
-## Goals & Success Metrics
+## Goals
 
-| # | Goal | Measurement | Target | Business Outcome | Baseline → Target |
-|---|------|-------------|--------|------------------|-------------------|
-| 1 | Multi-language linting in a single pass | `scan` on mixed-language workspace | violations from all 3 languages | Fewer cross-language review passes per PR | 3 passes/PR → ≤ 1 pass/PR (-66%) |
-| 2 | 34 AES rules enforced across 7 groups | `workspaces-bad` scan | every applicable rule code produces violations per supported language | Prevent silent architecture drift before merge | 12 post-merge defect escapes/qtr → 0 escapes/qtr |
-| 3 | MCP server with 5 tools, full CLI parity | `execute_command` on every CLI command | all commands reachable | AI agents autonomously detect and fix lint issues | Manual developer triage in CI: 45 min/run → < 5 min/run (-89%) |
-| 4 | Self-auditing | `lint-arwaky-cli check .` on this repo | 0 violations | Zero internal architectural regression across releases | 0 violations maintained across all releases (measured per release) |
+- On a 10k-file mixed-language tree, `lint-arwaky-cli scan .` returns p95 under 60 s on a 4-core CI runner, so the audit completes inside a single CI step.
+- Every flagged naming, layering, import, quality, role, orphan, document, and structure violation is machine-detectable and machine-actionable: the tool names the violated rule and the file, and `lint-arwaky-cli fix .` remediates every safe, deterministic correction without a human edit.
+- Cross-language drift surfaces in CI as a failed gate, not a manual merge report: `lint-arwaky-cli ci . --threshold N` exits non-zero the moment any enabled rule group finds a violation, and the report lists every offending file and rule.
 
-## User Personas
+## Non-Goals
 
-- **AI Agent**: Autonomous linting, self-healing via MCP tools.
-- **Developer**: Lint codebases locally; enforce architecture during development.
-- **DevOps / CI Engineer**: Quality gates, trend reports, dependency scans with stable exit codes.
+- Redesigning individual language linters (Clippy, Ruff, ESLint) — their native rules stay owned by each tool.
+- A merchant-side checkout customization tool or any business-domain feature unrelated to architectural audit.
+- Persistent scan history or network services beyond local workspace inspection.
+- Internationalized UI or multi-language natural-language output beyond English diagnostics.
+
+## Target Users
+
+| Persona | Need | Current Pain | Desired Outcome |
+|---------|------|--------------|-----------------|
+| Rule developer | One place to get parsed files, dependency graphs, file contents, tool availability, and language flags | Reaching into the filesystem directly from every rule | Implement rules without writing any filesystem code |
+| CI engineer | `scan .` reporting violations and `ci . --threshold N` gating a release | Merging three per-language reports by hand | Branch on exit code instead of parsing text output |
+| Platform engineer | Every import validated against the layer-dependency matrix | Forbidden cross-layer imports surfacing late | Forbidden edges, missing mandatory imports, unused imports, dummy stubs, and cycles surface as lint failures |
+| Maintainer | Dead, unused, or unreachable code flagged per layer | Dead code compounding across layers until audit takes hours | Each orphan yields a rule-coded finding naming the file and reachability gap |
 
 ## Scope
 
-- **In scope**: CLI binary, MCP server, TUI, 34 AES rules across seven groups, external linter adapters, SARIF/JUnit/JSON reports, git hooks, auto-fix (remove + replace + rename).
-- **Out of scope**: IDE plugins, web dashboard, cloud SaaS, non-Rust implementation, structural/multi-file semantic refactors in auto-fix, Windows runtime support (deferred to post-v3.x pending dedicated runner ROI; cross-compilation target available but runtime unvalidated; estimated cost of Windows CI matrix exceeds current adoption demand where >92% of target developer/CI environments are Linux/macOS).
+### In Scope
 
-## Product Decisions (locked)
+- Filesystem-derived data as the single source: parse source files into structured entries and imports, build a project-wide dependency graph, perform read/write/discovery/copy/remove and permission operations, probe for external tool binaries, and detect workspace root plus language presence.
+- Safe, deterministic auto-fix corrections (unused-import removal, bypass-marker stripping, mechanical symbol renaming) applied only when requested, with a preview mode reporting would-be changes without touching disk.
+- Terminal surface: one surface command module per subcommand (scan, check, fix, ci, report, git, watch, setup, plugin, skill, config, maintenance) parsing arguments, invoking dispatch, and formatting results.
+- Single source of truth for configuration: discovery across a bounded priority chain, workspace-type detection, merging user settings onto embedded defaults, threshold and adapter validation, ignored-path assembly.
+- Dispatcher action entry points for each workspace verb (check, scan, ci, fix, config, git, setup, watch, docs, import, external, maintenance, naming, orphan, plugin, quality, role, structure, layer scan, version, suppression) merging findings from every enabled rule group into one report.
+- Document-invariant audit across AES601–AES607 with machine-readable violation types.
+- External-lint aggregation of Clippy, Rustfmt, cargo-audit, Ruff, Mypy, Bandit, ESLint, Prettier, TSC, and markdownlint-cli normalized into unified violations.
+- Real-time file watching with debouncing, filtering, deduplication, and an initial full-project scan.
+- Pre-commit hook installing/linting only changed files against the base branch and blocking commits on AES violations.
+- Import-rule enforcement across the 7-layer AES architecture (AES201–AES205) governed by YAML configuration.
+- Centralized real-time diagnostic feed behind `-v`/`--verbose` with per-phase timings on stderr, stdout kept clean.
+- Maintenance capability: environment/toolchain health, external-linter adapter availability, cache reclamation, version probing, dependency/security summary, and binary self-update.
+- MCP server exposing listable, domain-filterable command catalog, execute and config tools, skill reader, and docs scaffold, confined to the workspace.
+- AES naming convention enforcement (AES101–AES103) across file names with stem shape, per-layer suffix/prefix policy, and test/bench prefix placement.
+- Orphan detection (AES501–AES506) tracing reachability from container/main/binary entry points across import and DI relationships.
 
-| Topic | Decision |
-|-------|----------|
-| Auto-fix safety | Remove + replace + rename only; no structural or multi-file edits |
-| Surface parity | MCP, CLI, and TUI expose the same commands |
-| MCP tools | 5: `execute_command`, `list_commands`, `read_skill`, `health_check`, `get_config` |
-| Acceptance tests | One acceptance test file per FR, named after the FR ID |
-| Doctor exit code | 0 when diagnostic completes; 2 only on internal failure |
-| Auto-fix outcomes | Reason-coded: `Applied` / `Skipped(reason)` / `Failed(reason)` |
-| Concurrency | `std::thread` / `rayon`; async only in file-watch and mcp-server |
-| Parsing | Full AST via tree-sitter; no regex fallback |
-| Filesystem I/O | Centralized in filesystem crate |
-| Integration resilience | External lint adapters (clippy, ruff, eslint, …): one attempt per scan, skip-and-log on timeout or spawn failure — a retried tool run can report against a different tool state and mask the real result. Git diff resolution: a multi-strategy fallback chain, because every strategy queries the same trusted local repository and a fallback still yields a correct, if broader, file list. Retry/fallback is added only where a fallback still produces a materially useful and safe result. |
-| MCP tool-call duration | Unbounded: no server-side timeout and no cancellation method. The client owns the timeout and must set it above the documented worst-case chain |
+### Out of Scope
 
-## Exit Code Contract
+- Rule evaluation and violation reporting driven by the filesystem source itself; auto-fix or file mutation driven by lint findings.
+- Multi-file renames, structural refactors, adding new imports or types, semantic rewrites such as panic removal, formatting-only passes.
+- Business logic and orchestration living outside the dispatcher and capability layers; IDE plugins, web dashboard, and cloud SaaS surfaces.
+- Secret or credential scanning; semantic analysis beyond AST extraction; network or remote filesystem access.
+- Language detection and tree walking owned outside the filesystem source; concurrent or parallel adapter execution.
+- IDE plugins or editor integrations; hot-reloading configuration during a running watch session; remote or cloud-based watching.
+- Post-commit and pre-push hooks; whole-repository scans in the commit gate; auto-fixing of violations the hook blocks on.
+- Compilation, type checking, or runtime behaviour analysis; dependency installation or package management.
+- Persistent log files, non-stderr output channels, asynchronous or distributed scan execution, persistent scan history, network services.
+- Server-side timeouts or cancellation (client owns the timeout); watch command over MCP; MCP JSON-RPC-level success status.
+- Renaming legacy files that predate the convention; automatic renaming of files (reporting only).
+- Certifying behavioural deadness that only tests can prove; auto-removal or rewriting of flagged files; cross-repository or distributed scanning.
 
-| Code | Name | When |
-|------|------|------|
-| 0 | Ok | Success; clean scan; doctor finished; dry-run completed |
-| 1 | Policy fail | Violations found; CI threshold failed; vulnerabilities found |
-| 2 | Runtime error | Path missing; pipeline crash; invalid args; I/O failure |
-| 3 | Prerequisite missing | Required external tool not installed |
+---
 
-MCP JSON responses MUST include a top-level integer `exit_code` aligned with
-this contract, for every tool action and every outcome. An MCP client decides
-success or failure from that field, never from JSON-RPC-level success: a run
-that found violations is a successful tool call carrying `exit_code: 1`. The
-response envelope is specified in the MCP surface's design document.
+## Project Requirements
 
-**Precedence when multiple conditions apply (highest wins):**
-`Runtime error (2)` > `Prerequisite missing (3)` > `Policy fail (1)` > `Ok (0)`.
+### PR-LA-001: filesystem
 
-*Examples:*
+#### User Stories
 
-- If runtime I/O fails while scanning files that also contain rule violations → Exit Code `2` (Runtime error outranks Policy fail).
-- If an external tool is missing for a subset of files while other scanned files produce violations → Exit Code `3` (Prerequisite missing outranks Policy fail).
-- If all checks pass cleanly with 0 violations and all prerequisites present → Exit Code `0` (Ok).
+| As a | I want | So that | Priority |
+|------|--------|---------|----------|
+| Rule developer adding a new architecture check | one place to get parsed files, dependency graphs, file contents, tool availability, and language flags | I can implement the rule without writing any filesystem code | P0 |
+| Rule developer | parsed source files and extracted imports, identifiers, and declared symbols from a single source | I never reach into the filesystem directly from a rule | P1 |
 
-**`fix` aggregation rule:**
+#### Proposed Solution
 
-- If any fix attempt produces `Failed(reason)` (e.g. I/O failure, write error) → Exit Code `2` (Runtime error). This outranks the policy-fail result below.
-- If all attempted items are `Skipped(reason)` (0 `Applied`, 0 `Failed`) → Exit Code `0` (Ok, skip reasons emitted as warnings).
-- Otherwise, when every attempt is `Applied` or `Skipped` with zero `Failed`:
-  - If re-scanning finds 0 violations remaining → Exit Code `0` (Ok), with skip reasons printed as warnings.
-  - If violations remain that auto-fix cannot resolve (e.g. manual-only rules) → Exit Code `1` (Policy fail), consistent with `scan`.
-- `fix --dry-run` and live `fix` share identical exit-code aggregation semantics. A dry-run never writes files, so it exits `0` unless an attempt itself produced `Failed(reason)`.
+A single source supplies every piece of filesystem-derived data the other capabilities need: it parses source files into structured entries and imports, builds a project-wide dependency graph, performs read, write, discovery, copy, remove, and permission operations, probes for external tool binaries, and detects the workspace root plus which languages are present. Rule and feature code consumes this data and never touches the filesystem directly.
 
-## AES Rule Summary (32 Rules)
+#### Main User Flow
 
-Seven groups: **Naming** (AES101–103, 3), **Import** (AES201–205, 5), **Quality** (AES301–305, 5), **Role** (AES401–406, 6), **Orphan** (AES501–506, 6), **Doc** (AES601–605, 5), and **Structure** (AES701–704, 4). The `scan`/`check` command runs the six code linters plus structure; **Doc** rules are audited over the document chain via the `docs` command. Full rule definitions: [RULES_AES.md](RULES_AES.md).
+1. A rule requests filesystem-derived data through the single source.
+2. The source parses source files, extracts imports, identifiers, and symbols, and builds the import and dependency graph with forward and reverse edges plus symbol maps.
+3. The rule consumes parsed files, tool availability, and language-presence flags without writing any filesystem code.
 
-## Feature Requirements (Prioritized)
+---
 
-> Real condition for each feature lives in [ROADMAP.md](ROADMAP.md). This section is specification only.
+### PR-LA-002: auto-fix
 
-### P0 — Must Have
+#### User Stories
 
-- **FR-PRD-001**: Multi-language scanning (Rust, Python, JS/TS). Acceptance: `scan` on mixed-language workspace returns violations from all three (evidence: the `filesystem` crate's FR-001 acceptance suite, `workspaces-bad/`).
-- **FR-PRD-002**: 34 AES rules enforcement. Acceptance: `workspaces-bad` produces violations for every applicable code-level rule in each supported language; doc rules are audited over the document chain (evidence: `TEST.md` Section 3.2, `doc-rules` contract test suite).
-- **FR-PRD-003**: CLI core commands (`check`, `scan`, `fix`, `ci`). Acceptance: each exits with the correct code from the Exit Code Contract (evidence: `cli-commands` and `dispatcher` acceptance suites).
-- **FR-PRD-004**: MCP server with 5 tools, full execute parity. Acceptance: every CLI command is reachable via `execute_command` (evidence: `mcp-server` acceptance suite).
-- **FR-PRD-005**: Self-auditing capability. Acceptance: `lint-arwaky-cli check .` on this repo reports 0 violations (evidence: `AGENTS.md` Definition of Done gate).
+| As a | I want | So that | Priority |
+|------|--------|---------|----------|
+| Rust maintainer resolving flagged unused imports | the flagged line removed automatically in place or previewed first | I can clean violations without hand-editing every flagged file | P0 |
+| Maintainer | a reason-coded result stating whether a fix applied, was skipped, or failed and why | I know exactly what changed and what needs manual work | P1 |
 
-### P1 — Should Have
+#### Proposed Solution
 
-- **FR-PRD-006**: External linter adapters (Clippy, Ruff, ESLint, etc.). Acceptance: `adapters` lists all installed tools (evidence: `external-lint` adapter selection acceptance suite).
-- **FR-PRD-007**: SARIF 2.1.0, JUnit XML, JSON reports. Acceptance: `--format sarif|junit|json` produces valid output (evidence: `report-formatter` FR-001 acceptance suite).
-- **FR-PRD-008**: Git hooks integration. Acceptance: `install-hook` creates a working pre-commit hook (evidence: `git-hooks` acceptance suite).
-- **FR-PRD-009**: Auto-fix capabilities (remove + replace + rename). Acceptance: `fix` applies mechanical fixes; `--dry-run` previews (evidence: `auto-fix` acceptance suites for AES101/AES201/AES304, and the fix-processor unit suite covering the FR-PRD-003 exit-code aggregation contract).
-- **FR-PRD-010**: Watch mode for continuous linting. Acceptance: `watch` re-lints on file save (evidence: `file-watch` acceptance suite).
-- **FR-PRD-011**: TUI file browser. Acceptance: TUI renders file tree, runs lint actions, exits cleanly (evidence: `tui` acceptance suite).
-- **FR-PRD-012**: Workspace exit-code contract enforced everywhere. Acceptance: all commands return codes 0/1/2/3 per contract (evidence: `cli-commands` acceptance suite, `TEST.md` Section 3.4).
-- **FR-PRD-013**: Acceptance tests standardized: one test file per FR, named after the FR ID (evidence: `crates/*/tests/` acceptance test inventory; note: migration to `acceptance_FR_NNN` naming is ongoing across crates—filesystem and report-formatter already compliant).
+Applies safe, deterministic corrections to source files that violate architectural rules, writing the corrected files back to disk only when requested. It removes unused imports, strips known bypass markers, and mechanically renames flagged symbols — each a local, single-file change that never restructures surrounding code. A preview mode reports the exact changes that would be made without touching any file on disk; every attempt yields a reason-coded result stating whether a fix applied, was skipped, or failed and why.
 
-### P2 — Nice to Have
+#### Main User Flow
 
-- **FR-PRD-014**: Windows support. Acceptance: build + test suite passes on a Windows CI runner (evidence: experimental cross-compile target in `DEPLOY.md`). Until then, Windows builds are experimental and are not a supported runtime target.
-- **FR-PRD-015**: Deeper monorepo performance optimizations. Acceptance: 10k-file scan completes in < 10s on CI hardware (evidence: `crates/filesystem` acceptance suite FR-005).
+1. The maintainer runs auto-fix in preview mode over a flagged violation report.
+2. The system reports every would-be change with a reason-coded outcome (applied, skipped with reason, or failed with reason) while changing zero bytes on disk.
+3. The maintainer applies the fixes, rewriting every fixable violation exactly once.
 
-### Requirement Hierarchy & Traceability
+---
 
-Traceability flows through four standardized layers:
+### PR-LA-003: cli-commands
 
-1. **Product Level (PRD)**: `FR-PRD-NNN` defines high-level product capabilities.
-2. **Roadmap Level (ROADMAP)**: `FR-<CRATE_CODE>` tracks crate-level delivery milestones (`FR-FILE`, `FR-AUTO`, etc.).
-3. **Feature Level (Crate FRD)**: `FR-<FeatureName>-NNN` defines granular functional requirements within each crate (`FR-AutoFix-001`, `FR-Filesystem-001`).
-4. **Verification Level (Acceptance Tests)**: `acceptance_FR_NNN` test suites verify `FR-<FeatureName>-NNN`, scoped by crate directory namespace. Legacy suites under their established names (domain-specific or rule-specific) remain valid evidence; new suites follow the `acceptance_FR_NNN` pattern.
+#### User Stories
 
-## Open Questions / Risks
+| As a | I want | So that | Priority |
+|------|--------|---------|----------|
+| CI engineer gating releases on a mixed-language monorepo | `scan .` reporting violations and `ci . --threshold N` gating a release | my pipeline can branch on the exit code instead of parsing text output | P0 |
+| Operator | every command exiting with the code the workspace exit-code contract assigns to its outcome | I can script reliable release gates | P1 |
 
-| # | Question / Risk | Owner | Consulted | Deadline | Status |
-|---|-----------------|-------|-----------|----------|--------|
-| 1 | Is 10k-file scan < 10s achievable on the CI runner tier? | @raka | DevOps / CI Engineer, Tech Lead | v3.7.0 | closed: verified < 5s for 1k files, < 10s for 10k files with rayon |
-| 2 | Auto-fix: semantic rewrites allowed, or mechanical-only? | @raka | Developer, AI Agent personas | v3.7.0 | locked: mechanical-only (remove/replace/rename) to ensure safety |
-| 3 | Windows: dedicated CI runner or cross-compile only? | @raka | DevOps / CI Engineer, Developer personas | post-v3.x | closed: cross-compile available, runtime CI deferred (>92% Linux/macOS userbase) |
+#### Proposed Solution
 
-## Non-functional Requirements (High-level)
+The terminal surface of the tool: one module per subcommand (scan, check, fix, ci, report, git, watch, setup, plugin, skill, config, maintenance) parses arguments, delegates to the dispatcher, and formats the returned result. Report-oriented subcommands render snapshots and per-member deltas through shared output helpers. Every command exits with the code the workspace exit-code contract assigns to its outcome.
 
-| Category | Commitment | Detail lives in |
-|----------|------------|-----------------|
-| Performance (filesystem indexing) | 1,000 files < 2s; 10,000 files < 10s — the index build alone: discovery, read, parse | `filesystem/FRD.md` |
-| Performance (full pipeline) | 1,000 files < 5s; 10,000 files < 15s — indexing plus every rule group, excluding external adapters | `filesystem/FRD.md`, `README.md` |
-| Performance (regression detection) | The budget above is checked nightly by Criterion against a cached baseline; regressions fail the scheduled job | `.github/workflows/benchmarks.yml` |
-| Worst-case external-lint chain | A single `scan`/`ci`/MCP `execute_command` call can block ~14 minutes: 10 adapters run sequentially, each with its own 60–180s ceiling and no overall budget. MCP clients must set a timeout above this bound | `external-lint/FRD.md`, `mcp-server` design |
-| Security | No network calls for core; symlink safety enforced | `filesystem/FRD.md` |
-| Scalability | 10,000+ file monorepos | `filesystem/FRD.md` |
-| Platform | Linux primary, macOS secondary | `README.md` |
-| Concurrency | std::thread / rayon; async only in file-watch, mcp-server | `dispatcher/FRD.md` |
-| Parsing | Full AST via tree-sitter; no regex fallback | `filesystem/FRD.md` |
-| Diagnostics | `PARSE_WARN` for files that fail to parse | `filesystem/FRD.md` |
+#### Main User Flow
 
-## Feature Map
+1. The operator invokes a subcommand with arguments.
+2. The surface module parses arguments, delegates workspace work through the dispatcher actions, and formats the result.
+3. The command exits with the contract exit code; the caller branches on status without parsing output.
 
-Crate responsibilities are listed in [README.md](README.md#project-structure) and each crate's `FRD.md` under `crates/`.
+---
+
+### PR-LA-004: config-system
+
+#### User Stories
+
+| As a | I want | So that | Priority |
+|------|--------|---------|----------|
+| DevOps engineer owning the single lint_arwaky.config.yaml for a multi-language monorepo team | config discovery, merging, validation, and ignored-path resolution to happen once and be reused by every command | a single config edit changes lint behaviour across the whole tool without touching command code | P0 |
+| Operator | a project with no config file scoring through valid embedded defaults | I can adopt the tool without authoring configuration | P1 |
+
+#### Proposed Solution
+
+The config system is the single source of truth for lint-arwaky configuration: it discovers a project's config file across a bounded priority chain, detects the workspace type and its member directories, merges user settings onto embedded defaults, validates thresholds and adapter enablement, and assembles the ignored-path set that every command honours. Every read returns the same validated, merged configuration regardless of how many times the file is opened in one run.
+
+#### Main User Flow
+
+1. A command starts and the config system discovers the config file across the five-level priority chain.
+2. It merges user settings onto embedded defaults, validates thresholds and adapter enablement, and assembles the ignored-path set.
+3. Every command honours the cached, validated configuration on that run.
+
+---
+
+### PR-LA-005: dispatcher
+
+#### User Stories
+
+| As a | I want | So that | Priority |
+|------|--------|---------|----------|
+| Integrator adding a new Lint Arwaky surface | one shared action entry point per workspace verb | CLI, MCP, and TUI behave identically without duplicating business logic | P0 |
+| Operator | every lint result round-tripping to a violation item with its fields preserved | canceled scans stop before their completion milestone | P1 |
+
+#### Proposed Solution
+
+The dispatcher is the single source of truth for workspace action business logic: the CLI, MCP, and TUI surfaces call it for each workspace verb and format the returned results themselves. It supports single-file, subfolder, and whole-workspace scans, merges findings from every enabled rule group into one report, honours cooperative cancellation, and filters external tool output to workspace members.
+
+#### Main User Flow
+
+1. A surface invokes the dispatcher for a workspace verb.
+2. The dispatcher runs the scan mode (single-file, subfolder, or whole-workspace) with cancellation flags, merges findings across enabled rule groups, and filters external-tool output to workspace members.
+3. Each lint result round-trips to a violation item with fields preserved; a canceled scan stops before its completion milestone.
+
+---
+
+### PR-LA-006: doc-rules
+
+#### User Stories
+
+| As a | I want | So that | Priority |
+|------|--------|---------|----------|
+| Release manager auditing a multi-package workspace before merge | the document chain checked for invariant drift with machine-readable findings | I can block a pull request on concrete violations instead of relying on manual document review | P0 |
+| Reviewer | one finding per seam carrying its expected machine-readable violation type | the audit is concrete and comparable across seams | P1 |
+
+#### Proposed Solution
+
+Audits every recognized Markdown document against the seven document rules (AES601–AES607) and reports findings that carry machine-readable violation types. A whole-workspace audit is the intended default; a sub-directory run audits only what it discovers there, with crosslink and master-document invariants resolving against that audit root rather than the whole workspace.
+
+#### Main User Flow
+
+1. The auditor runs `lint-arwaky-cli docs .` for a whole-workspace audit or targets a sub-directory.
+2. The document audit inspects every recognized Markdown document against AES601–AES607.
+3. The auditor reviews the reported findings, each carrying a machine-readable violation type and the offending document path.
+
+---
+
+### PR-LA-007: external-lint
+
+#### User Stories
+
+| As a | I want | So that | Priority |
+|------|--------|---------|----------|
+| DevOps engineer gating a mixed-language monorepo in CI | external linter findings from Clippy, Ruff, and ESLint surfaced in the same report as native rules | I enforce one quality gate instead of running each tool separately | P0 |
+| Operator | auto-fix through each adapter's native fix command | I can remediate external-lint findings without leaving the tool | P1 |
+
+#### Proposed Solution
+
+Aggregates industry-standard linters and formatters — Clippy, Rustfmt, cargo-audit, Ruff, Mypy, Bandit, ESLint, Prettier, TSC, and markdownlint-cli — across Rust, Python, JS/TS, and Markdown, normalizing their reports into the unified violation format using tool-native rule codes and mapped severities. Auto-fix runs through each tool's native fix command. The tools run sequentially, and language detection is delegated to the filesystem source rather than performed here.
+
+#### Main User Flow
+
+1. The run detects present languages via the filesystem source and selects adapters accordingly.
+2. Each adapter runs sequentially with per-tool timeouts; raw JSON/text output is normalized into unified violations carrying tool-native rule codes and mapped severities.
+3. Results are post-filtered by ignored paths and suppressed rule codes; auto-fix is available through each adapter's native fix command.
+
+---
+
+### PR-LA-008: file-watch
+
+#### User Stories
+
+| As a | I want | So that | Priority |
+|------|--------|---------|----------|
+| Rust maintainer iterating on a mixed-language monorepo | the linter re-running automatically when I save a file | architectural violations surface within seconds without a manual scan command | P0 |
+| Developer | a long-lived watch session producing fresh violation results as files are saved | I keep feedback live without reissuing scan commands | P1 |
+
+#### Proposed Solution
+
+The file-watch capability monitors configured directories for filesystem changes in real time and re-runs linting on the changed files. It debounces rapid bursts of changes, filters events to lintable files, removes duplicate events for the same path, and performs an initial full-project scan at session start.
+
+#### Main User Flow
+
+1. A watch session starts and performs an initial baseline scan of the whole project.
+2. On a file save, the watcher debounces, filters to lintable files, deduplicates, and re-runs lint on the changed files.
+3. Fresh violation results appear in the watch session's reported output within seconds of the save.
+
+---
+
+### PR-LA-009: git-hooks
+
+#### User Stories
+
+| As a | I want | So that | Priority |
+|------|--------|---------|----------|
+| Rust maintainer committing on a feature branch | the pre-commit hook linting only my changed files against the base branch | I learn about AES violations at commit time with the commit blocked and violations listed | P0 |
+| Committer | a clean change producing no violations so the commit proceeds | I am not blocked when my change is conforming | P1 |
+
+#### Proposed Solution
+
+Installs, uninstalls, and runs a pre-commit hook that lints only the files changed against the base branch, blocking the commit when any changed file carries an AES violation. A clean change produces no violations and the commit proceeds; a file the user wrote that violates an AES rule blocks the commit with a named violation. `install-hook` creates a working pre-commit hook that fires on staged files.
+
+#### Main User Flow
+
+1. The maintainer installs the hook (idempotent, backing up any pre-existing custom hook).
+2. On commit, the hook classifies changed files against the base branch, filters to lintable files, and lints them.
+3. A clean change proceeds; a violating file blocks the commit with its named violation listed.
+
+---
+
+### PR-LA-010: import-rules
+
+#### User Stories
+
+| As a | I want | So that | Priority |
+|------|--------|---------|----------|
+| Platform engineer guarding architecture in a Rust, Python, and TypeScript monorepo | every import validated against the layer-dependency matrix | forbidden cross-layer edges, missing mandatory imports, unused imports, dummy stubs, and cycles surface as lint failures | P0 |
+| Reviewer | each violation naming the forbidden layer and the importing file | I can act on a precise architectural boundary breach | P1 |
+
+#### Proposed Solution
+
+The import-rules capability enforces correct structural boundaries and dependency flows across the 7-layer AES architecture by validating every import statement against a config-driven dependency matrix. It detects forbidden cross-layer imports, missing mandatory imports, unused imports, dummy stubs created to satisfy checkers, and circular cross-layer dependencies in Rust, Python, and TypeScript sources. All rule behaviour is governed by YAML configuration.
+
+#### Main User Flow
+
+1. The system parses every import statement across the workspace.
+2. Each import is validated against the config-driven dependency matrix.
+3. The user reviews any reported boundary violations, each naming the forbidden layer and importing file.
+
+---
+
+### PR-LA-011: logging
+
+#### User Stories
+
+| As a | I want | So that | Priority |
+|------|--------|---------|----------|
+| Maintainer debugging a slow `lint-arwaky-cli scan .` on a large tree | raising log verbosity at runtime through the CLI flag without rebuilding or exporting an environment variable | I can pinpoint where the scan stalls | P0 |
+| Operator | per-phase timings and skipped-directory reasons on stderr with stdout kept clean for piping | I can diagnose scan performance without polluting machine-readable output | P1 |
+
+#### Proposed Solution
+
+A single verbose flag (`-v`/`--verbose`) turns on the scan's real-time diagnostic feed on stderr: which directories it walks, which it skips and why, how long each linter phase takes, and the final result. Stdout stays clean for piping.
+
+#### Main User Flow
+
+1. The user runs `lint-arwaky scan -v` to enable verbosity.
+2. The run emits structured phase-timing events (phase name + elapsed milliseconds) and walker-progress events (enter, skip-with-reason, discovered-count) on stderr at the enabled verbosity tier.
+3. With verbosity disabled, zero events are emitted while the underlying scan counts remain identical.
+
+---
+
+### PR-LA-012: maintenance
+
+#### User Stories
+
+| As a | I want | So that | Priority |
+|------|--------|---------|----------|
+| Platform engineer on-call for a multi-repo CI fleet woken by a scan that suddenly started missing violations | a single upkeep check telling me which of the ten linter adapters is down | I can distinguish a bad environment from a bad rule set | P0 |
+| Operator | knowing which toolchain version I am running and whether the installed binary is stale, in one call | I can decide whether to update tooling before re-scanning | P1 |
+
+#### Proposed Solution
+
+Before any lint run, answers "is this environment healthy and current": reports toolchain health across the Rust, Python, and JS toolchains; audits the availability of the ten bundled external-linter adapters; reclaims tool-owned cache artifacts; probes for newer versions of those adapters; and reports a dependency and security summary for the target project. It can atomically replace the installed lint-arwaky binary with a verified release. The outcome is structured data returned to the calling surface, never a lint verdict and never a code-change patch.
+
+#### Main User Flow
+
+1. The operator requests a maintenance health check.
+2. The capability reports toolchain health, per-adapter availability across all ten external-linter adapters and the four language groups, and cache/tool/version statistics.
+3. The operator reviews the health report with per-tool availability, version currency, and cache statistics.
+
+---
+
+### PR-LA-013: mcp-server
+
+#### User Stories
+
+| As a | I want | So that | Priority |
+|------|--------|---------|----------|
+| AI agent authoring code in a fresh session with no prior lint context | listing, filtering, and executing linter commands through MCP tools against a confined workspace | I can detect and remediate architecture violations autonomously without a human running the CLI | P0 |
+| AI agent | read-only authorization refusing mutating actions | I never accidentally mutate the workspace when only reading | P1 |
+
+#### Proposed Solution
+
+The MCP server exposes the linter to MCP clients: a listable, domain-filterable command catalog, execute and config tools wired into the shared dispatcher, a skill reader for prompt material, and a docs scaffold capability. It confines every client-supplied path to the workspace and classifies mutating actions so a read-only authorization mode can refuse them, keeping MCP results identical to the CLI for the same operation.
+
+#### Main User Flow
+
+1. The client lists commands, optionally with a domain filter (empty result for an unknown domain).
+2. The client executes a command wired into dispatcher actions with path validation; every client-supplied path is confined to the workspace.
+3. Mutating actions are classified; under read-only authorization they are refused, and results match the CLI for the same operation.
+
+---
+
+### PR-LA-014: naming-rules
+
+#### User Stories
+
+| As a | I want | So that | Priority |
+|------|--------|---------|----------|
+| Maintainer curating a 10k-file monorepo under the AES 7-layer convention | every file name checked for layer, concern, and role | reviewers reject non-conforming names in CI before merge | P0 |
+| Operator | each violation naming the violated rule the moment any single file name violates the convention | I can enforce the convention in CI | P1 |
+
+#### Proposed Solution
+
+Enforces the AES 7-layer naming convention across file names so every file's name reveals its layer, concern, and role. Validates stem shape, per-layer suffix and prefix policy, and test/bench file placement and prefix discipline, reporting each violation with the observed shape and concrete move-or-rename guidance.
+
+#### Main User Flow
+
+1. The system checks every file name against stem shape, per-layer policy, and test prefix rules.
+2. The user reviews the naming violations report, with each entry showing the non-conforming name and suggested correction.
+
+---
+
+### PR-LA-015: orphan-rules
+
+#### User Stories
+
+| As a | I want | So that | Priority |
+|------|--------|---------|----------|
+| Maintainer of a Rust/Python/TypeScript monorepo where dead code accumulates across layers | orphaned files flagged per layer | I can remove unreachable components before they compound | P0 |
+| Reviewer | each orphan yielding a rule-coded finding naming the file and the reachability gap | I can act on a precise reachability gap | P1 |
+
+#### Proposed Solution
+
+Detects dead, unused, or unreachable code components across the 7-layer AES architecture by tracing reachability from valid entry points (composition roots, binary entries, main files) through import and dependency-injection relationships, then flagging orphaned files in each layer. Each orphan yields a rule-coded finding (AES501–AES506) naming the file and the reason it is unreachable.
+
+#### Main User Flow
+
+1. The run traces reachability from container/main/binary entry points across import and DI relationships using graph data from the filesystem layer.
+2. Per-layer orphan detection fires for taxonomy (AES501), contract (AES502), capabilities (AES503), utility (AES504), agent (AES505), and surface (AES506).
+3. The user reviews the orphan report to identify unreachable components and their missing reference paths.
+
+---
 
 ## Reference
 
-- Architecture: [ARCHITECTURE.md](ARCHITECTURE.md) · Testing: [TEST.md](TEST.md) · Contributing: [CONTRIBUTING.md](CONTRIBUTING.md) · Roadmap: [ROADMAP.md](ROADMAP.md)
+| Artifact | Purpose | Link |
+|----------|---------|------|
+| Roadmap | Timeline, phasing, and dependencies | [ROADMAP.md](ROADMAP.md) |
+| Architecture | System boundaries, tech stack, and infra | [ARCHITECTURE.md](ARCHITECTURE.md) |

@@ -1,6 +1,6 @@
 // FR-008 — Ignored Paths Assembly
 // Tests default ignored paths, config additions, deduplication, and empty string filtering.
-mod common;
+mod mock_common;
 
 use shared_common::FilePath;
 use shared_config_system::{ConfigRequest, IConfigOrchestratorAggregate};
@@ -15,20 +15,20 @@ fn make_orchestrator() -> config_system_lint_arwaky::agent_config_orchestrator::
     use config_system_lint_arwaky::capabilities_workspace_detector::WorkspaceDetector;
     use config_system_lint_arwaky::capabilities_yaml_reader::ConfigYamlReader;
 
-    let io = common::make_io();
+    let io = mock_common::make_io();
     ConfigOrchestrator::new(ConfigOrchestratorDeps {
         workspace_detector: Arc::new(WorkspaceDetector::new(io.clone())),
         config_reader: Arc::new(ConfigYamlReader::new(io.clone())),
         parser: Arc::new(ConfigParserProvider::new(io.clone())),
-        filesystem: common::make_fs(),
+        filesystem: mock_common::make_fs(),
     })
 }
 
 use std::sync::Arc;
 
-// FR-008 Scenario 1: No config ignored paths → 8 universal defaults returned
+// FR-008 Scenario 1: No config ignored paths → universal defaults returned
 #[test]
-fn us8_no_config_returns_8_default_ignored_paths() {
+fn us8_no_config_returns_default_ignored_paths() {
     let tmp = TempDir::new().unwrap();
     fs::write(
         tmp.path().join("lint_arwaky.config.yaml"),
@@ -51,6 +51,8 @@ fn us8_no_config_returns_8_default_ignored_paths() {
     assert!(paths.values.contains(&"__pycache__".to_string()));
     assert!(paths.values.contains(&".mypy_cache".to_string()));
     assert!(paths.values.contains(&".ruff_cache".to_string()));
+    // tests/benches are defaults alongside everything else — AES103 owns them,
+    // but they still sit in the default ignored-path set for the production walk.
     assert!(paths.values.contains(&"tests".to_string()));
     assert!(paths.values.contains(&"benches".to_string()));
     assert_eq!(paths.values.len(), 12);
@@ -72,9 +74,8 @@ fn us8_config_adds_new_path() {
         .into_patterns();
 
     assert!(paths.values.contains(&"tests".to_string()));
-    // Should have 12 defaults + 1 config = 13 (but "tests" is already a default, so deduped to 12)
-    // Config adds "tests" which is already in defaults, so still 12
-    assert!(paths.values.len() >= 12);
+    // 12 defaults; "tests" is already a default so deduped → still 12
+    assert_eq!(paths.values.len(), 12);
 }
 
 // FR-008 Scenario 3: Config adds ".git" (already default) → deduplicated

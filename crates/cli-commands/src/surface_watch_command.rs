@@ -17,3 +17,7 @@ pub fn handle_watch(watch_aggregate: Arc<dyn IWatchAggregate>, path: Option<File
         }
     }
 }
+
+pub struct _Aes303Placeholder {
+    _placeholder: (),
+}

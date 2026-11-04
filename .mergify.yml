@@ -47,7 +47,7 @@ defaults:
       - check-success = Build
       - check-success = Tests
       - check-success = Self-Lint
-      - check-success = Codacy Static Code Analysis
+      - check-success = Security Audit
 
 merge_queue:
   # Serial mode: PRs tested one at a time against the latest main tip.
@@ -146,7 +146,7 @@ pull_request_rules:
     actions:
       comment:
         message: >
-          Thanks for the PR! CI is running — the merge queue will pick it up automatically once all 6 quality gates pass.
+          Thanks for the PR! CI is running — the merge queue will pick it up automatically once all 5 quality gates pass.
 
   # ── Notify when a PR merges ───────────────────────────────────────────
   - name: merged-notification

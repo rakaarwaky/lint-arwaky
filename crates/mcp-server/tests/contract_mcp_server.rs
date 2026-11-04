@@ -1,9 +1,9 @@
 // Contract tests — MCP protocol surface (QA #641).
 //
 // Pins the externally-visible contract an out-of-repo MCP client (Claude
-// Desktop, VS Code, Hermes) depends on: server identity, the exact 5-tool
+// Desktop, VS Code, Hermes) depends on: server identity, the exact 6-tool
 // surface, and the tool-argument schema boundary for untrusted JSON input.
-mod common;
+mod mock_common;
 
 use mcp_server_lint_arwaky::surface_mcp_tool_command::LintArwakyMcpServer;
 use mcp_server_lint_arwaky::taxonomy_mcp_server_vo::{
@@ -13,7 +13,7 @@ use rmcp::ServerHandler;
 use std::sync::Arc;
 
 fn server() -> LintArwakyMcpServer {
-    LintArwakyMcpServer::new(Arc::new(common::make_action_surface()))
+    LintArwakyMcpServer::new(Arc::new(mock_common::make_action_surface()))
 }
 
 // ─── Protocol contract: server identity + capabilities ─────────────
@@ -37,12 +37,12 @@ fn get_info_advertises_tools_capability() {
     );
 }
 
-// ─── Protocol contract: exactly the documented 5 tools ─────────────
+// ─── Protocol contract: exactly the documented 6 tools ─────────────
 
 #[test]
-fn tool_router_registers_exactly_the_documented_five_tools() {
-    // TEST.md §5.3 promises exactly 5 tools: execute_command, list_commands,
-    // read_skill, health_check, get_config.
+fn tool_router_registers_exactly_the_documented_six_tools() {
+    // TEST.md §5.3 promises exactly 6 tools: execute_command, list_commands,
+    // read_skill, health_check, get_config, docs_scaffold.
     let mut names: Vec<String> = server()
         .router()
         .list_all()
@@ -53,13 +53,14 @@ fn tool_router_registers_exactly_the_documented_five_tools() {
     assert_eq!(
         names,
         vec![
+            "docs_scaffold",
             "execute_command",
             "get_config",
             "health_check",
             "list_commands",
             "read_skill"
         ],
-        "MCP tool surface drifted from the documented 5-tool contract"
+        "MCP tool surface drifted from the documented 6-tool contract"
     );
 }
 

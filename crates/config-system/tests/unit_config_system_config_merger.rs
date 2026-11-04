@@ -6,7 +6,6 @@ use shared_common::taxonomy_layer_vo::{LayerDefinition, NamingConfig};
 use shared_common::taxonomy_path_vo::FilePathList;
 use shared_config_system::taxonomy_config_system_vo::{ArchitectureConfig, ArchitectureRule};
 use shared_config_system::utility_config_merger::merge_config;
-use shared_config_system::utility_config_parser::default_aes_config;
 
 fn make_config(
     layers: HashMap<LayerNameVO, LayerDefinition>,

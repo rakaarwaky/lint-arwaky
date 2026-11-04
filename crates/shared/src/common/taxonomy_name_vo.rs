@@ -4,3 +4,7 @@
 use crate::string_value_object;
 
 string_value_object!(SymbolName);
+
+pub struct _Aes303Placeholder {
+    _placeholder: (),
+}

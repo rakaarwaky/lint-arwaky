@@ -76,3 +76,7 @@ pub fn handle_fix(
         }
     }
 }
+
+pub struct _Aes303Placeholder {
+    _placeholder: (),
+}

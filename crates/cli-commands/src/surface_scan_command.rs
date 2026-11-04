@@ -1,18 +1,18 @@
 // PURPOSE: Check/scan commands — CLI formatting + exit-code mapping.
 // Calls dispatcher for business logic, only adds CLI output.
+use dispatcher::surface_check_action::FilesystemSeam;
 use dispatcher::surface_orphan_action::OrphanFactory;
 use shared_common::ExitCode;
-use std::sync::Arc;
-use tracing::error;
-
-use dispatcher::surface_check_action::FilesystemSeam;
-use shared_cli_commands::Format;
 use shared_common::FilePath;
+use shared_common::format_as_str;
 use shared_config_system::IConfigOrchestratorAggregate;
 use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared_quality_rules::ICodeAnalysisAggregate;
 use shared_structure_rules::IStructureAggregate;
+use std::sync::Arc;
+use tracing::error;
 
+use shared_cli_commands::Format;
 use shared_cli_commands::utility_output_text_formatter::output_violations;
 
 /// Parameters for the `scan` command.
@@ -26,6 +26,17 @@ pub struct ScanCommandParams {
     pub member: Option<String>,
     /// In-process aggregate bundle (W10); `None` falls back to subprocess.
     pub scan_aggregates: Option<dispatcher::surface_check_action::ScanAggregates>,
+}
+
+/// Parameters for the `quality` command.
+pub struct QualityCommandParams {
+    pub path: Option<FilePath>,
+    pub format: Format,
+    pub code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
+    pub filesystem: Arc<dyn IFilesystemAggregate>,
+    pub filesystem_seam: FilesystemSeam,
+    pub filter: Option<String>,
+    pub ignored_paths: Vec<String>,
 }
 
 /// Parameters for the `import` command.
@@ -92,14 +103,6 @@ pub struct ExternalCommandParams {
     pub ignored_paths: Vec<String>,
 }
 
-/// The wiring a layer-scoped command needs, so six subcommands share one
-/// parameter list instead of repeating it per layer.
-pub struct LayerScanContext {
-    pub filesystem_seam: FilesystemSeam,
-    pub config_orchestrator: Option<Arc<dyn IConfigOrchestratorAggregate>>,
-    pub scan_aggregates: Option<dispatcher::surface_check_action::ScanAggregates>,
-}
-
 /// Parameters for the `docs` command.
 pub struct DocsCommandParams {
     pub path: Option<FilePath>,
@@ -107,6 +110,8 @@ pub struct DocsCommandParams {
     pub doc_orchestrator: Arc<dyn shared_doc_rules::IDocRunnerAggregate>,
     pub fs_seam: FilesystemSeam,
     pub config_file_reader: Arc<dyn shared_config_system::IConfigFileReaderAggregate>,
+    pub strict: bool,
+    pub rules: Option<String>,
 }
 
 /// Parameters for the `structure` command.
@@ -158,7 +163,12 @@ pub fn handle_scan(params: ScanCommandParams) -> ExitCode {
     let root = resolve_root(&opts.path);
     match dispatcher::surface_check_action::collect_scan(opts) {
         Ok(violations) => {
-            output_violations(&violations, &root, params.format, member_flag);
+            output_violations(
+                &violations,
+                &root,
+                format_as_str(params.format),
+                member_flag,
+            );
             exit_for(violations.len())
         }
         Err(e) => {
@@ -168,35 +178,22 @@ pub fn handle_scan(params: ScanCommandParams) -> ExitCode {
     }
 }
 
-/// `check` — 1:1 alias of `scan` per FR-001.
-pub fn handle_check(params: ScanCommandParams) -> ExitCode {
-    handle_scan(params)
-}
-
 /// `quality` — quality rules scan.
-pub fn handle_quality(
-    path: Option<FilePath>,
-    format: Format,
-    code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
-    filesystem: Arc<dyn IFilesystemAggregate>,
-    filesystem_seam: FilesystemSeam,
-    filter: Option<String>,
-    ignored_paths: Vec<String>,
-) -> ExitCode {
-    let root = resolve_root(&path);
+pub fn handle_quality(params: QualityCommandParams) -> ExitCode {
+    let root = resolve_root(&params.path);
     match dispatcher::surface_quality_action::collect_quality(
-        path.clone(),
-        code_analysis_linter,
-        filter,
-        filesystem.clone(),
-        &ignored_paths,
+        params.path.clone(),
+        params.code_analysis_linter,
+        params.filter,
+        params.filesystem.clone(),
+        &params.ignored_paths,
     ) {
         Ok(violations) => {
             output_violations(
                 &violations,
                 &root,
-                format,
-                is_member(&path, &filesystem_seam),
+                format_as_str(params.format),
+                is_member(&params.path, &params.filesystem_seam),
             );
             exit_for(violations.len())
         }
@@ -221,7 +218,7 @@ pub fn handle_import(params: ImportCommandParams) -> ExitCode {
             output_violations(
                 &violations,
                 &root,
-                params.format,
+                format_as_str(params.format),
                 is_member(&params.path, &params.filesystem_seam),
             );
             exit_for(violations.len())
@@ -247,7 +244,7 @@ pub fn handle_naming(params: NamingCommandParams) -> ExitCode {
             output_violations(
                 &violations,
                 &root,
-                params.format,
+                format_as_str(params.format),
                 is_member(&params.path, &params.filesystem_seam),
             );
             exit_for(violations.len())
@@ -259,54 +256,29 @@ pub fn handle_naming(params: NamingCommandParams) -> ExitCode {
     }
 }
 
-/// A layer-scoped command — run every rule group, report only the violations
-/// whose file belongs to `layer`.
-pub fn handle_layer_scan(
-    context: &LayerScanContext,
-    layer: &'static str,
-    path: String,
-    format: Format,
-    filter: Option<String>,
-    member: Option<String>,
-) -> ExitCode {
-    let path = Some(FilePath::new(path).unwrap_or_default());
-    let member_flag = is_member(&path, &context.filesystem_seam);
-    let root = resolve_root(&path);
-    let opts = dispatcher::surface_check_action::ScanOptions {
-        path,
-        multi_project_orchestrator: context.config_orchestrator.clone(),
-        filter,
-        member,
-        filesystem: Arc::new(context.filesystem_seam.clone()),
-        scan_aggregates: context.scan_aggregates.clone(),
-    };
-    match dispatcher::surface_layer_scan_action::collect_layer_scan(opts, layer) {
-        Ok(violations) => {
-            output_violations(&violations, &root, format, member_flag);
-            exit_for(violations.len())
-        }
-        Err(e) => {
-            error!(error = %e, "operation failed");
-            ExitCode::RUNTIME_ERROR
-        }
-    }
-}
-
-/// `docs` — doc invariant audit (AES601–AES605) over the workspace document
-/// chain. This is a markdown-only check, so it bypasses the filesystem index
-/// and calls the doc orchestrator directly on the target path.
+/// `docs` — doc-invariant audit (AES601–AES607).
 pub fn handle_docs(params: DocsCommandParams) -> ExitCode {
     let root = resolve_root(&params.path);
+    let strict_override = if params.strict {
+        shared_doc_rules::StrictModeOverride::ForceStrict
+    } else {
+        shared_doc_rules::StrictModeOverride::UseConfigFile
+    };
     match dispatcher::surface_docs_action::collect_docs(
         &root,
         params.doc_orchestrator,
         &params.fs_seam,
         params.config_file_reader.as_ref(),
+        strict_override,
     ) {
         Ok(findings) => {
-            let violations =
+            let mut violations =
                 dispatcher::surface_docs_action::docs_findings_to_violations(&findings);
-            output_violations(&violations, &root, params.format, false);
+            if let Some(ref rules_str) = params.rules {
+                let rules_upper = rules_str.to_uppercase();
+                violations.retain(|v| v.code.code().contains(&rules_upper));
+            }
+            output_violations(&violations, &root, format_as_str(params.format), false);
             exit_for(violations.len())
         }
         Err(e) => {
@@ -330,7 +302,7 @@ pub fn handle_role(params: RoleCommandParams) -> ExitCode {
             output_violations(
                 &violations,
                 &root,
-                params.format,
+                format_as_str(params.format),
                 is_member(&params.path, &params.filesystem_seam),
             );
             exit_for(violations.len())
@@ -362,7 +334,7 @@ pub fn handle_orphan(params: OrphanCommandParams) -> ExitCode {
             output_violations(
                 &violations,
                 &root,
-                params.format,
+                format_as_str(params.format),
                 is_member(&params.path, &params.filesystem_seam),
             );
             exit_for(violations.len())
@@ -386,7 +358,7 @@ pub fn handle_external(params: ExternalCommandParams) -> ExitCode {
         &params.ignored_paths,
     ) {
         Ok(violations) => {
-            output_violations(&violations, &root, params.format, false);
+            output_violations(&violations, &root, format_as_str(params.format), false);
             exit_for(violations.len())
         }
         Err(e) => {
@@ -410,7 +382,7 @@ pub fn handle_structure(params: StructureCommandParams) -> ExitCode {
                 let filter_upper = filter_str.to_uppercase();
                 violations.retain(|v| v.code.code().contains(&filter_upper));
             }
-            output_violations(&violations, &root, params.format, false);
+            output_violations(&violations, &root, format_as_str(params.format), false);
             exit_for(violations.len())
         }
         Err(e) => {

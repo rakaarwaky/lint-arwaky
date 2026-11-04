@@ -8,10 +8,30 @@
  */
 
 import { IAdditionAggregate } from "calculator-shared/src/contract_addition_aggregate";
+import {
+  ICheckProtocol as AdditionCheckProtocol,
+  IRunProtocol as AdditionRunProtocol,
+} from "calculator-shared/src/addition/contract_addition_protocol";
 import { ICalculatorAggregate } from "calculator-shared/src/contract_calculator_aggregate";
+import {
+  IMergeProtocol as CalculatorMergeProtocol,
+  IRouteProtocol as CalculatorRouteProtocol,
+} from "calculator-shared/src/calculator/contract_calculator_protocol";
 import { IDivisionAggregate } from "calculator-shared/src/contract_division_aggregate";
+import {
+  ICheckProtocol as DivisionCheckProtocol,
+  IRunProtocol as DivisionRunProtocol,
+} from "calculator-shared/src/division/contract_division_protocol";
 import { IMultiplicationAggregate } from "calculator-shared/src/contract_multiplication_aggregate";
+import {
+  ICheckProtocol as MultiplicationCheckProtocol,
+  IRunProtocol as MultiplicationRunProtocol,
+} from "calculator-shared/src/multiplication/contract_multiplication_protocol";
 import { ISubtractionAggregate } from "calculator-shared/src/contract_subtraction_aggregate";
+import {
+  ICheckProtocol as SubtractionCheckProtocol,
+  IRunProtocol as SubtractionRunProtocol,
+} from "calculator-shared/src/subtraction/contract_subtraction_protocol";
 import {
   AdditionOrchestrator,
   AdditionOrchestratorDeps,

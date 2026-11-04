@@ -197,6 +197,7 @@ fn bench_graph_construction(c: &mut Criterion) {
                     symbols: vec![],
                     is_reexport: false,
                     is_wildcard: false,
+                    line: 0,
                 })
                 .collect();
             let definitions: Vec<DefinitionEntry> = (0..n)

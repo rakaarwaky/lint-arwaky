@@ -1,423 +1,371 @@
-# FRD — project-setup (v3.0.0)
+# FRD — Project Setup
 
----
+## Feature Overview
 
-## Reference
-
-- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature; this file is specification only.
-- PRD: [PRD.md](../../PRD.md)
-- Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
-- Maintenance FRD: `crates/maintenance/FRD.md` (doctor, diagnose)
-
-## System Overview
-
-The project-setup crate provides scaffolding facilities and adapter installation
-for new and existing projects. It detects project languages (Rust, Python,
-JavaScript/TypeScript), generates MCP configuration for different AI clients,
-generates `.env` files, installs linter adapters via pip/npm, and manages XDG
-config directories.
-
-The crate follows the AES 7-layer architecture. Four capability seams provide
-MCP config generation, environment file creation, language detection, and adapter
-installation. Auxiliary technical operations are delegated through the aggregate
-contract and the injected utility protocols.
-
-> **Note**: Environment diagnostics (`doctor`, `diagnose`) are handled by the
-> **maintenance** crate, not project-setup. This crate focuses on scaffolding
-> and installation only.
-
-- **Architecture & Data Flow**
-
-```mermaid
-flowchart TD
-    A["Surface"] -->|input| B["setup aggregate"]
-    B --> C{"action"}
-
-    C -->|"init/mcp-config"| D["mcp config generator"]
-    C -->|"init/env"| E["env file generator"]
-    C -->|"init/detect"| F["language detector"]
-    C -->|"install"| G["adapter installer"]
-
-    D --> H["MCP JSON"]
-    E --> I[".env file"]
-    F --> J["Language list"]
-    G --> K["pip / npm"]
-    K --> L["Success / Error"]
-
-    H --> B
-    I --> B
-    J --> B
-    L --> B
-    B -->|output| A
-
-```
-
----
+Project setup delivers per-client MCP configuration, per-language `.env` files, language detection, and linter-adapter installation through one `execute` seam on the setup aggregate. Surface entry points route `SetupRequest` variants to the matching capability; capabilities write MCP JSON, `.env` content, config files, and invoke pip/npm installs; the aggregate returns one `SetupResponse` per request.
 
 ## Functional Requirements
 
-### FR-ProjectSetup-001: MCP Configuration Generation
-
-- **Description**: Generate MCP server configuration files in formats compatible
-  with different AI clients. Resolve the lint-arwaky-mcp binary path using a
-  prioritized lookup strategy.
-- **Input**: None (binary path resolved automatically via priority lookup).
-- **Output**: `McpConfigVO` containing a JSON-compatible configuration map.
-- **Business Rules**:
+### FR-ProjectSetup-001: Generate MCP Configuration
 
-  - Base config:
-
-    ```json
-    {
-      "lint-arwaky": {
-        "command": "<resolved-binary-path>",
-        "args": [],
-        "alwaysAllow": ["execute_command", "list_commands", "read_skill",
-                        "health_check", "get_config"]
-      }
-    }
-    ```
+**Description:** The feature shall generate a per-client MCP client configuration file for any supported target client (Claude, Cursor, Windsurf, Copilot, Hermes, VSCode, or All), wrapping the server entries under the correct key (`mcp_servers` vs `mcpServers`) per client convention, and returning the rendered config content so the caller can write it to disk. Each target variant produces one config file; `All` generates every target in a single call.
 
-  - Client-specific wrappers:
+#### Business Logic
 
-    | Client     | Format                                  |
-    | ---------- | --------------------------------------- |
-    | claude-code| `{"mcpServers": { ...base }}`          |
-    | cursor     | `{"mcpServers": { ...base }}`          |
-    | windsurf   | `{"mcpServers": { ...base }}`          |
-    | copilot    | `{"mcpServers": { ...base }}`          |
-    | hermes     | base config directly (no wrapper)      |
-    | vscode     | `{"mcp": {"servers": { ...base }}}`   |
-    | all        | JSON object with all client formats    |
-
-  - Binary resolution priority (aligned with cli-commands binary lookup):
-
-    1. `LINT_ARWAKY_MCP_BIN` environment variable (must point to existing file).
-    2. `CARGO_HOME/bin/lint-arwaky-mcp` (`CARGO_HOME` defaults to `~/.cargo`).
-    3. Bare name `lint-arwaky-mcp` (relies on OS PATH resolution at runtime).
-
-- **Edge Cases**:
-
-  - `LINT_ARWAKY_MCP_BIN` points to non-file → falls through to priority 2.
-  - `CARGO_HOME` not set → defaults to `~/.cargo`.
-  - Binary not found in any candidate → uses bare name `lint-arwaky-mcp`.
-  - Unknown client → uses claude-code format as default.
-
-- **Error Handling**:
-
-  - `CARGO_HOME` env read failure → falls back to `~/.cargo`.
-
----
-
-### FR-ProjectSetup-002: Environment File Generation
-
-- **Description**: Generate `.env` configuration file content for the lint-arwaky
-  project environment.
-- **Input**: `DirectoryPath` (home directory for the project).
-- **Output**: `EnvContentVO` with environment variable content including
-  `PHANTOM_ROOT`.
-- **Business Rules**:
-
-  - Content format:
-
-    ```text
-    # Lint Arwaky Environment Configuration
-    # Generated by: lint-arwaky init
-
-    # Phantom root (for JS/TS linters):
-    PHANTOM_ROOT=<home>/
-    ```
+- One request variant per supported target client generates exactly one config file for that client.
+- Generated content parses as valid JSON/TOML for the target and wraps server entries under the client's convention key (`mcp_servers` vs `mcpServers`).
+- `McpConfigAll` generates every target config in one call, wrapping each target under its own key.
+- Unknown targets are rejected rather than silently falling back to a default.
+- Generated server lists omit entries whose command list is empty.
 
-  - Home directory is created if it does not exist (best-effort; non-fatal).
+#### Edge Cases
 
-- **Edge Cases**:
+- `McpConfigAll` produces seven distinct target configs (one per client) in one response.
+- Header/comment lines are preserved where the target format permits comments.
+- An unknown target returns an error instead of writing a wrong-shaped file.
 
-  - Home path is empty → `PHANTOM_ROOT=/`.
-
-- **Error Handling**: Directory creation failure is non-fatal; generation
-  continues and returns the content regardless.
+#### Technical Specification
 
----
-
-### FR-ProjectSetup-003: Language Detection
+| Aspect | Detail |
+|--------|--------|
+| **Input** | Target client identifier; source is `SetupRequest::{GenerateMcpConfig, McpConfigClaude, McpConfigCursor, McpConfigWindsurf, McpConfigCopilot, McpConfigHermes, McpConfigVscode, McpConfigAll}`. |
+| **Output** | `SetupResponse::Mcp` carrying per-target config content ready to write. |
+| **Protocol** | `IMcpConfigGenerationProtocol` |
+| **Method** | `generate_mcp_config`, `mcp_config_claude`, `mcp_config_cursor`, `mcp_config_windsurf`, `mcp_config_copilot`, `mcp_config_hermes`, `mcp_config_vscode`, `mcp_config_all` |
+| **Event** | None. |
+| **Error** | Unknown target returns an error description rather than writing a wrong-shaped file. |
 
-- **Description**: Detect programming languages present in a project directory.
-- **Input**: None (scans current working directory).
-- **Output**: `ProjectLanguagesVO` containing a list of detected
-  `ProjectLanguageVO` items; the primary language is returned as a convenience
-  accessor when exactly one language is found.
-- **Business Rules**:
+#### Test
 
-  - Phase 1 (marker-based): checks for `crates/`, `Cargo.toml` (Rust),
-    `packages/`, `modules/`, `pyproject.toml`, `requirements.txt` (Python),
-    `package.json`, `tsconfig.json` (JavaScript/TypeScript).
-  - Phase 2 (file-extension scan): recursively scans directory tree
-    (depth ≤ 4) for `.rs`, `.py`, `.ts`, `.tsx`, `.mts`, `.cts`, `.js`,
-    `.jsx`, `.mjs`, `.cjs` extensions.
-  - Skips hidden dirs and default ignored paths (`target/`, `node_modules/`,
-    `vendor/`, `dist/`, `build/`, `__pycache__/`).
-  - **No default language** — if no languages detected, returns empty list.
-    The caller decides how to handle (prompt user, skip config generation, or
-    use explicit `--language` flag).
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| A supported target client is requested | The caller invokes `generate_mcp_config` for that target | One config file with servers wrapped under the client's key is returned |
+| `McpConfigAll` is requested | The caller invokes `mcp_config_all` | Seven target configs are returned, one per client, each under its key |
+| An unknown target is requested | The caller invokes a variant for an unsupported client | An error description is returned instead of a config file |
 
-- **Edge Cases**:
-
-  - All three languages found in Phase 1 → skips Phase 2.
-  - Empty directory → returns empty list.
-  - Permission denied on subdirectory → skipped silently.
-  - Symlinks → followed if target is within workspace root, skipped otherwise.
+#### Metric
 
-- **Error Handling**: `read_dir` failure on a directory → skipped, scan
-  continues.
+| Target Metric | Value |
+|---------------|-------|
+| Target configs per `McpConfigAll` call | 7 |
+| Unknown-target acceptance rate | 0 |
 
----
+### FR-ProjectSetup-002: Generate Environment File
 
-### FR-ProjectSetup-004: Adapter Installation
+**Description:** The feature shall generate a project `.env` file containing a documented header and a phantom-root (HOME-style) entry for hermetic runs, producing deterministic output that round-trips through write without clobbering an existing env file silently.
 
-- **Description**: Install linter adapters for Python and JavaScript projects.
-- **Input**: `sudo: bool` (for npm global installs requiring elevated
-  permissions).
-- **Output**: `SuccessStatus` indicating success or failure.
-- **Business Rules**:
+#### Business Logic
 
-  - Python adapters: `ruff`, `mypy`, `bandit` installed via
-    `pip install --user`.
-  - JavaScript adapters: `eslint`, `prettier`, `typescript` installed via
-    `npm install -g`.
-  - Rust adapters (clippy, rustfmt, cargo-audit): **not installed by
-    project-setup** — managed via `rustup`. Print suggestion:
-    "Rust tools are managed via rustup. Run `rustup component add clippy
-    rustfmt` and `cargo install cargo-audit`."
-  - Python installer retries with `--break-system-packages` on failure
-    (PEP 668 compatibility with externally-managed environments).
-  - JavaScript installer supports `sudo` prefix for global installations that
-    need elevated permissions.
-  - Empty package list → returns `Ok(())` immediately without spawning.
+- Generated env content contains a header comment explaining the file.
+- Generated env content contains a phantom-root entry (HOME-style variable) for hermetic runs.
+- Env generation is deterministic: identical project context yields identical bytes on every run.
+- Existing env content is not clobbered silently; overwrite is governed by `WriteConfigFile`.
 
-- **Edge Cases**:
+#### Edge Cases
 
-  - `pip` not installed → returns error with spawn failure message.
-  - `npm` not installed → returns error with spawn failure message.
-  - `pip install --user` fails but `--break-system-packages` succeeds →
-    returns `Ok(())`.
-  - Network failure during install → returns error with process exit status.
-
-- **Error Handling**:
-
-  - Command spawn failure → returns an IO setup error.
-  - Command exits with non-zero status → returns an other setup error.
-
----
-
-### FR-ProjectSetup-005: Config Template Loading
-
-- **Description**: Load the embedded YAML config template for a language and the embedded skill files compiled into the binary.
-- **Input**: Language name.
-- **Output**: The template source text, or an error when the language has no embedded template.
-- **Business Rules**:
-
-  - Templates are compiled in at build time — nothing is downloaded at run time.
-  - The skill file set is fixed at build time; a skill is present or absent by language match.
-  - An unsupported language is reported as an error, not a silent default.
-- **Edge Cases**:
-
-  - Unsupported language → `UnknownLanguage` error.
-  - No skills match the language → empty skill list, no error.
-- **Error Handling**: `SetupError::UnknownLanguage` for unsupported languages; read failures are reported as setup errors.
-
----
-
-### FR-ProjectSetup-006: Config File Writing
-
-- **Description**: Write a configuration file to disk and create the global config directory when it does not exist.
-- **Input**: Filename, file content, or no argument for directory creation.
-- **Output**: A structured result describing the write outcome, or a `SetupError`.
-- **Business Rules**:
-
-  - Writes are atomic — the file is written to a temp path and renamed into place.
-  - The global config directory is created with owner read/write/execute permissions when absent.
-  - The target path is never created by the installer unless it is the config directory itself.
-- **Edge Cases**:
-
-  - Target path already exists with different content → overwritten only on explicit caller intent.
-  - Parent directory does not exist → creation failure is reported as a setup error.
-- **Error Handling**: I/O failures surface as `SetupError` with the underlying OS error.
-
----
-
-### FR-ProjectSetup-007: Pre-flight Check
-
-- **Description**: Verify the package managers required by adapter installation are available before any install attempt.
-- **Input**: None.
-- **Output**: A status report naming each manager and whether it is available.
-- **Business Rules**:
-
-  - Python installation requires `pip` to be reachable via `python3 -m pip`.
-  - JavaScript installation requires `npm` to be on the PATH.
-  - A missing manager is reported as unavailable — the install is not attempted.
-  - The check is read-only: it never installs or modifies anything.
-- **Edge Cases**:
-
-  - Both managers present → the check reports all available.
-  - Both managers absent → the check reports both unavailable; the caller decides next step.
-- **Error Handling**: None — the check is a pure probe.
-
----
-
-### FR-ProjectSetup-008: File Existence Probe
-
-- **Description**: Probe whether a file path exists so callers can short-circuit before writing.
-- **Input**: A file path.
-- **Output**: A boolean existence flag.
-- **Business Rules**:
-
-  - The probe is a single filesystem `stat` — no directory walk.
-  - A broken symlink is reported as absent.
-  - The probe never follows a symlink target outside the workspace root.
-- **Edge Cases**:
-
-  - Path does not exist → false.
-  - Path is a directory → false (the probe is for files).
-- **Error Handling**: None — a `stat` failure is reported as false.
-
----
-
-## API Contract
-
-### Protocol API
-
-| Method | Input | Output | Error | Event | Description |
-|---|---|---|---|---|---|
-| `install_python_packages` | &PatternList | `InstallPackagesResult` | — | — | Install python packages. |
-| `install_npm_packages` | &PatternList, bool | `InstallPackagesResult` | — | — | Install npm packages. |
-| `generate_env` | &DirectoryPath | `EnvContentVO` | — | — | Generate env. |
-| `generate_mcp_config` | — | `McpConfigVO` | — | — | Generate mcp config. |
-| `mcp_config_claude` | — | `McpConfigVO` | — | — | Mcp config claude. |
-| `mcp_config_cursor` | — | `McpConfigVO` | — | — | Mcp config cursor. |
-| `mcp_config_windsurf` | — | `McpConfigVO` | — | — | Mcp config windsurf. |
-| `mcp_config_copilot` | — | `McpConfigVO` | — | — | Mcp config copilot. |
-| `mcp_config_hermes` | — | `McpConfigVO` | — | — | Mcp config hermes. |
-| `mcp_config_vscode` | — | `McpConfigVO` | — | — | Mcp config vscode. |
-| `mcp_config_all` | — | `McpConfigVO` | — | — | Mcp config all. |
-| `which_mcp_binary` | — | `McpBinaryNameVO` | — | — | Which mcp binary. |
-| `install_python_adapters` | — | `SuccessStatus` | — | — | Install python adapters. |
-| `install_javascript_adapters` | bool | `SuccessStatus` | — | — | Install javascript adapters. |
-| `detect_language` | — | `Option<ProjectLanguageVO>` | — | — | Detect language. |
-| `detect_languages` | — | `ProjectLanguagesVO` | — | — | Detect languages. |
-
-### Aggregate API
-
-| Method | Input | Output | Error | Event | Description |
-|---|---|---|---|---|---|
-| `execute` | SetupRequest | `SetupResponse` | — | — | Single composite entry point over the feature. |
-
-## Integration Points
-
-| System | Direction | Purpose | Failure mode |
-| --- | --- | --- | --- |
-| `shared` crate | in | Supply value objects plus the setup-management, installer, and aggregate contracts | A contract is missing at compile time → the build fails before setup runs |
-| `pip` / `python3 -m pip` | in | Install the Python adapter | The interpreter is managed by the OS and refuses the install → the retry adds the system-packages override |
-| `npm` | in | Install the JavaScript adapter | Node.js is absent → the JavaScript adapter install is reported as skipped and the rest of setup continues |
-| `dirs` crate | in | Resolve the per-user configuration directory | The platform has no such convention → setup falls back to the project-local configuration path |
-| Embedded configuration templates | in | Provide the default per-language configuration, compiled into the binary so nothing is downloaded | A language has no embedded template → that language's configuration is skipped and reported |
-
-## Non-functional Requirements
-
-| Metric | Target | Measurement method |
-| --- | --- | --- |
-| Language detection | Scans to depth 4 at most, stopping early once every language is found | Instrument the walk and assert it stops at the first directory containing all markers |
-| Detection memory | Detection uses scalar flags rather than collections | Inspect the detection state for the absence of allocated collections |
-| Template residency | Configuration templates are compiled in, so nothing is downloaded at run time | Assert the binary carries the templates and that a run performs no template fetch |
-| Install latency | Installation cost is dominated by network and subprocess time, not by local work | Time a run with adapters already present and compare against a cold run |
-| MCP config fidelity | Every supported client receives the config shape that client expects | Diff the generated config against each client's documented schema |
-| Binary resolution | The MCP server binary is found at the expected install path | Install to a custom prefix and assert the resolved path matches |
-| Managed-interpreter retry | A system-managed interpreter refusal is retried with the system-packages override | Run the install against a managed interpreter and assert the retry happens and is reported |
-| Portability | Install succeeds on Linux, macOS, and Windows, with npm gated on Node.js presence | Run the installer on each platform and assert the JavaScript step is skipped where Node is absent |
-
-## Test Scenarios
-
-Each scenario is stated below as a table of cases: the input condition and the expected result.
-
-- **SCEN-001 — MCP Config** — e.g. Claude config → `mcpServers` wrapper with `lint-arwaky` entry
-- **SCEN-002 — Env File** — e.g. Normal home path → Correct PHANTOM_ROOT value
-- **SCEN-003 — Language Detection** — e.g. Cargo.toml exists → Rust detected
-- **SCEN-004 — Adapter Installation** — e.g. Python install → pip install --user ruff mypy bandit
-
-- **SCEN-001 — MCP Config**
-
-FRD Ref: FR-ProjectSetup-001
-
-| # | Scenario | Expected |
-| - | - | - |
-| 1 | Claude config | `mcpServers` wrapper with `lint-arwaky` entry |
-| 2 | Cursor config | `mcpServers` wrapper |
-| 3 | Windsurf config | `mcpServers` wrapper |
-| 4 | Copilot config | `mcpServers` wrapper |
-| 5 | Hermes config | Base config without wrapper |
-| 6 | VS Code config | `mcp.servers` wrapper |
-| 7 | `all` client | All client formats in one JSON |
-| 8 | Binary in CARGO_HOME/bin | Resolved path used |
-| 9 | Binary not found anywhere | Bare name `lint-arwaky-mcp` |
-| 10 | LINT_ARWAKY_MCP_BIN set | Env var path used |
-
-- **SCEN-002 — Env File**
-
-FRD Ref: FR-ProjectSetup-002
-
-| # | Scenario | Expected |
-| - | - | - |
-| 1 | Normal home path | Correct PHANTOM_ROOT value |
-| 2 | Empty home path | PHANTOM_ROOT=/ |
-
-- **SCEN-003 — Language Detection**
-
-FRD Ref: FR-ProjectSetup-003
-
-| # | Scenario | Expected |
-| - | - | - |
-| 1 | Cargo.toml exists | Rust detected |
-| 2 | pyproject.toml exists | Python detected |
-| 3 | package.json exists | JavaScript detected |
-| 4 | Empty directory | Empty list (no default) |
-| 5 | Multi-language project | All detected languages |
-| 6 | target/, node_modules/ dirs | Skipped |
-
-- **SCEN-004 — Adapter Installation**
-
-FRD Ref: FR-ProjectSetup-004
-
-| # | Scenario | Expected |
-| - | - | - |
-| 1 | Python install | pip install --user ruff mypy bandit |
-| 2 | Python PEP 668 retry | --break-system-packages on failure |
-| 3 | JS install | npm install -g eslint prettier typescript |
-| 4 | JS install with sudo | sudo npm install -g |
-| 5 | Rust tools | Suggestion message (not installed) |
-| 6 | Empty package list | Ok(()) without spawning |
-
----
-
-## Assumptions & Constraints
-
-- `pip` and `npm` are available on the system when adapter installation is
-  requested.
-- The working directory is the project root when language detection runs.
-- Embedded YAML config templates are valid and complete at compile time.
-- XDG config directory is available on the target platform (Linux, macOS).
-- The `dirs` crate correctly resolves the config directory.
-- Rust tools (clippy, rustfmt, cargo-audit) are managed via `rustup`, not
-  by project-setup.
-- Full toolchain diagnostics (`doctor`, `diagnose`) are handled by the
-  maintenance crate, not project-setup.
-- No async runtime dependency.
-
----
-
-## Glossary
-
-- **AES**: Agentic Engineering System — the 7-layer coding convention
-- **MCP**: Model Context Protocol — JSON-RPC standard for AI agent tool integration
-- **Adapter**: External linter binary (ruff, mypy, clippy, eslint, etc.)
-- **PEP 668**: Python enhancement proposal marking system-managed Python environments; requires `--break-system-packages` for `pip install`
-- **XDG**: X Desktop Group base directory specification (`~/.config`, `~/.local/share`, etc.)
-- **PHANTOM_ROOT**: Environment variable used by JS/TS linters to resolve project root
+- Empty project path still produces a well-formed env body with header and phantom-root entry.
+- Repeated generation of the same project yields byte-identical content.
+
+#### Technical Specification
+
+| Aspect | Detail |
+|--------|--------|
+| **Input** | Project path/context; source is `SetupRequest::GenerateEnv`. |
+| **Output** | `SetupResponse::Env` with `.env`-style file content. |
+| **Protocol** | `IEnvGenerationProtocol` |
+| **Method** | `generate_env` |
+| **Event** | None. |
+| **Error** | Generation itself never fails; write failures fall to `FR-ProjectSetup-006`. |
+
+#### Test
+
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| A project context is provided | The caller invokes `generate_env` | Returned content contains a header comment and a phantom-root entry |
+| The same project is generated twice | The caller invokes `generate_env` twice with identical input | Output bytes are identical on both runs |
+| An empty project path is given | The caller invokes `generate_env` with an empty path | A well-formed env body (header + phantom root) is produced |
+
+#### Metric
+
+| Target Metric | Value |
+|---------------|-------|
+| Byte-identical regeneration rate | 100% |
+| Header-and-root presence | Every generated env |
+
+### FR-ProjectSetup-003: Detect Languages
+
+**Description:** The feature shall detect the project's primary language (`detect_language`, returning `Language` or `None`) and all present language groups (`detect_languages`, returning every language group present), scanning the project layout (manifests, source extensions). Unknown or empty projects return none rather than an error; detection results feed template selection.
+
+#### Business Logic
+
+- `detect_language` returns the primary language or `None` when no language is detected.
+- `detect_languages` returns every language group present in the project.
+- Detection scans project layout (manifests, source extensions) and result feeds template selection.
+- Unknown/empty project returns `None`/empty rather than an error.
+
+#### Edge Cases
+
+- Unreadable project tree yields empty results rather than panicking.
+- Multiple languages present: `detect_languages` returns all groups; `detect_language` returns one deterministic primary.
+
+#### Technical Specification
+
+| Aspect | Detail |
+|--------|--------|
+| **Input** | Project root path; source is `SetupRequest::{DetectLanguage, DetectLanguages}`. |
+| **Output** | `SetupResponse::{Language, Languages}`. |
+| **Protocol** | `ILanguageDetectionProtocol` |
+| **Method** | `detect_language`, `detect_languages` |
+| **Event** | None. |
+| **Error** | No signal yields `None`/empty rather than an error. |
+
+#### Test
+
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| A seeded fixture tree of one language is scanned | The caller invokes `detect_language` | That language is reported |
+| A mixed-language fixture tree is scanned | The caller invokes `detect_languages` | All present language groups are reported |
+| An unknown/empty project is scanned | The caller invokes `detect_language` | `None` or empty result is returned, not an error |
+
+#### Metric
+
+| Target Metric | Value |
+|---------------|-------|
+| Seeded single-language fixtures correctly identified | 100% |
+| Mixed-fixture group coverage | All present groups |
+
+### FR-ProjectSetup-004: Install Adapters
+
+**Description:** The feature shall install linter adapters for detected languages via npm (JavaScript/TypeScript) or pip (Python). Installing an empty package list returns `Ok` without spawning a package manager; failed package-manager exits are reported as failures rather than panics.
+
+#### Business Logic
+
+- `InstallPythonAdapters` runs pip install of the Python adapter set.
+- `InstallJavascriptAdapters` runs npm install of the JavaScript adapter set.
+- Empty package list returns `Ok` without invoking a package manager.
+- Installers are idempotent: already-installed packages reinstall cleanly.
+- Sudo variants prepend privilege escalation; otherwise behave like plain variants.
+
+#### Edge Cases
+
+- Empty list returns `Ok` with no subprocess spawned.
+- Non-zero package-manager exit returns failure status with captured output; caller sees failure, not panic.
+- Already-installed packages reinstall cleanly (idempotent).
+- Sudo variants behave like plain variants otherwise.
+
+#### Technical Specification
+
+| Aspect | Detail |
+|--------|--------|
+| **Input** | Package list plus sudo flag; source is `SetupRequest::{InstallPythonAdapters, InstallJavascriptAdapters}`. |
+| **Output** | `SetupResponse::Installed` with per-run status. |
+| **Protocol** | `IAdapterInstallationProtocol` |
+| **Method** | `install_python_packages`, `install_npm_packages` |
+| **Event** | None. |
+| **Error** | Non-zero package-manager exit returns failure status with captured output. |
+
+#### Test
+
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| Empty package list is given to pip | The caller invokes `install_python_packages` with an empty list | `Ok` is returned and no pip subprocess is spawned |
+| Empty package list is given to npm with sudo | The caller invokes `install_npm_packages` with sudo and an empty list | `Ok` is returned and no npm subprocess is spawned |
+| Package manager exits non-zero | The caller invokes an adapter install with a failing package | Failure status with captured output is returned, not a panic |
+
+#### Metric
+
+| Target Metric | Value |
+|---------------|-------|
+| Empty-list invocations spawning a package manager | 0 |
+| Status truthfulness vs process exit | 100% |
+
+### FR-ProjectSetup-005: Load Config Templates
+
+**Description:** The feature shall load the embedded config template for a requested key, returning byte-stable template content. Unknown keys return a not-found description rather than empty filler; empty keys return not-found; template existence does not depend on project emptiness (write policy decides merge).
+
+#### Business Logic
+
+- `GetConfigTemplate` returns the embedded template for the requested key.
+- Template content is byte-stable across runs.
+- Unknown template key returns a not-found description instead of empty filler.
+- Empty key returns not-found.
+
+#### Edge Cases
+
+- Unknown key yields a not-found-style description instead of empty filler.
+- Empty key returns not-found.
+- Template exists but project is non-empty still returns template (write policy decides merge).
+
+#### Technical Specification
+
+| Aspect | Detail |
+|--------|--------|
+| **Input** | Template key; source is `SetupRequest::{GetConfigTemplate, GetEmbeddedSkills}`. |
+| **Output** | `SetupResponse::{Template, Skills}`. |
+| **Protocol** | `IConfigTemplateProtocol` |
+| **Method** | `get_config_template` |
+| **Event** | None. |
+| **Error** | Unknown key yields a not-found-style description instead of empty filler. |
+
+#### Test
+
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| A known template key is requested | The caller invokes `get_config_template` | Non-empty byte-stable template content is returned |
+| An unknown template key is requested | The caller invokes `get_config_template` with a bogus key | A not-found description is returned, not empty filler |
+| An empty key is requested | The caller invokes `get_config_template` with an empty key | A not-found result is returned |
+
+#### Metric
+
+| Target Metric | Value |
+|---------------|-------|
+| Known-key non-empty byte-stable rate | 100% |
+| Unknown-key not-found rate | 100% |
+
+### FR-ProjectSetup-006: Write Config Files
+
+**Description:** The feature shall write configuration files to disk from generated or templated content, creating parent directories as needed. Writes avoid partial files on normal error paths; existing files are overwritten only when the request implies it. `CreateGlobalConfigDir` ensures the user-level config directory exists.
+
+#### Business Logic
+
+- `WriteConfigFile` writes content to the target path, creating parent dirs as needed.
+- Writes are atomic enough to avoid partial files on normal error paths.
+- Existing files are overwritten only when the request implies it.
+- `CreateGlobalConfigDir` ensures the user-level config directory exists; on an existing dir it is a no-op success.
+
+#### Edge Cases
+
+- Missing parent directories are created on write.
+- Read-only targets fail with an error description rather than leaving a partial file.
+- Same content written twice leaves the file byte-identical.
+- `CreateGlobalConfigDir` on an existing dir is a no-op success.
+
+#### Technical Specification
+
+| Aspect | Detail |
+|--------|--------|
+| **Input** | Target path plus content; source is `SetupRequest::{WriteConfigFile, CreateGlobalConfigDir}`. |
+| **Output** | `SetupResponse::{ConfigWritten, ConfigDir}`. |
+| **Protocol** | `IConfigWritingProtocol` |
+| **Method** | `write_config_file`, `create_global_config_dir` |
+| **Event** | None. |
+| **Error** | Permission or path errors return a failure description; no partial file left behind. |
+
+#### Test
+
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| Content is written to a path whose parent dirs do not exist | The caller invokes `write_config_file` | Parent dirs are created and the file is written |
+| The same content is written twice | The caller invokes `write_config_file` twice with identical content | The file is byte-identical on both runs |
+| A read-only target is written | The caller invokes `write_config_file` on a read-only path | An error description is returned, no partial file left behind |
+
+#### Metric
+
+| Target Metric | Value |
+|---------------|-------|
+| Written files parsing as intended format | 100% |
+| E2e round-trip byte match | Every seeded round trip |
+
+### FR-ProjectSetup-007: Run Pre-flight Check
+
+**Description:** The feature shall run pre-project-setup checks before any generation or installation proceeds. `PreFlightCheck` verifies prerequisites (working directory usable, required tools discovered, no blocking conflicts) and returns a pass/fail report with reasons; generation flows consult it first.
+
+#### Business Logic
+
+- `PreFlightCheck` verifies prerequisites and returns a pass/fail report with reasons.
+- Missing prerequisite reports the failing item without performing generation.
+- Clean environment passes.
+- Generation flows consult the pre-flight report before proceeding.
+- `CheckHttp` probes a URL and reports reachability.
+
+#### Edge Cases
+
+- Partial failures list each failed item rather than stopping at the first.
+- Failing check returns a failure report (not an exception); caller decides whether to proceed.
+
+#### Technical Specification
+
+| Aspect | Detail |
+|--------|--------|
+| **Input** | Project path and optional HTTP target; source is `SetupRequest::{PreFlightCheck, CheckHttp}`. |
+| **Output** | `SetupResponse::{PreFlight, CheckHttp}` with per-item status. |
+| **Protocol** | `IPreFlightProtocol` |
+| **Method** | `pre_flight_check`, `check_http` |
+| **Event** | None. |
+| **Error** | Failing check returns a failure report (not an exception); caller decides whether to proceed. |
+
+#### Test
+
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| A clean environment is checked | The caller invokes `pre_flight_check` | All-green pass report |
+| A missing-tool environment is checked | The caller invokes `pre_flight_check` | Failing report naming the missing item |
+| Partial failures occur | The caller invokes `pre_flight_check` | Each failed item is listed |
+
+#### Metric
+
+| Target Metric | Value |
+|---------------|-------|
+| Passing environment all-green rate | 100% |
+| Seeded missing-tool failing reports | Every seeded environment |
+
+### FR-ProjectSetup-008: Probe File Existence
+
+**Description:** The feature shall probe whether a config file already exists before writing. `FileExists` returns a boolean existence check for the given path; callers use it to avoid clobbering user files. Non-existent path returns `Exists=false` without error; existing file returns `Exists=true`; unreadable parent returns false rather than panicking.
+
+#### Business Logic
+
+- `FileExists` returns `Exists=true` when the path points to an existing file.
+- `FileExists` returns `Exists=false` when the path does not exist.
+- Callers use the result to avoid clobbering user files.
+
+#### Edge Cases
+
+- Non-existent path returns `Exists=false` without error.
+- Existing file returns `Exists=true`.
+- Path inside an unreadable parent returns false rather than panicking.
+- Round trip after create returns true.
+
+#### Technical Specification
+
+| Aspect | Detail |
+|--------|--------|
+| **Input** | File path; source is `SetupRequest::FileExists`. |
+| **Output** | `SetupResponse::Exists`. |
+| **Protocol** | `IFilePathExistenceProtocol` |
+| **Method** | `file_exists` |
+| **Event** | None. |
+| **Error** | Unreadable parents resolve to false, not an error. |
+
+#### Test
+
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| A non-existent path is probed | The caller invokes `file_exists` | `Exists=false` without error |
+| An existing file is probed | The caller invokes `file_exists` | `Exists=true` |
+| A file is created then probed | The caller creates then invokes `file_exists` | `Exists=true` |
+
+#### Metric
+
+| Target Metric | Value |
+|---------------|-------|
+| Existence probe agreement with on-disk state | Every seeded fixture path |
+
+## Public Interface
+
+| Aspect | Detail |
+|--------|--------|
+| Agent | SetupManagementOrchestrator |
+| Aggregate | `ISetupAggregate` |
+| Method | `execute` |
+| Request | `SetupRequest` |
+| Response | `SetupResponse` |
+
+## Reference
+
+| Artifact | Purpose | Link |
+|----------|---------|------|
+| PRD | Business goals, user stories, and scope | [PRD.md](../../PRD.md) |
+| Backlog | Task tracking, epics, and implementation status | [BACKLOG.md](./BACKLOG.md) |
+| Roadmap | Timeline, phasing, and dependencies | [ROADMAP.md](../../ROADMAP.md) |
+| Architecture | System boundaries, tech stack, and infra | [ARCHITECTURE.md](../../ARCHITECTURE.md) |

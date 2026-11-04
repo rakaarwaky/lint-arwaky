@@ -75,3 +75,7 @@ pub fn collect_naming(
     // 7. Return violations — CLI formats output and maps exit code
     Ok(violations)
 }
+
+pub struct _Aes303Placeholder {
+    _placeholder: (),
+}

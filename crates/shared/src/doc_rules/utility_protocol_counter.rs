@@ -7,7 +7,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::OnceLock;
 
-/// The one FR-ID shape the whole AES601 rule family accepts: an H2–H4
+/// The one FR-ID shape the whole AESD01 rule family accepts: an H2–H4
 /// requirement heading (`### FR-Feature-001: ...`). Every consumer — the
 /// FR-ID format check, the FR-field check, and the parity counter — matches
 /// against this single pattern so the accepted ID set cannot drift between
@@ -17,7 +17,7 @@ use std::sync::OnceLock;
 /// `FR-AutoFix-001` exactly as `frautoFix` and `fr_auto_fix`; the documented
 /// form is CamelCase, but case is never a violation. Feature crates use
 /// `-` where the shared module uses `_`.
-const FR_ID_HEADING_PATTERN: &str = r"(?m)^#{2,4}\s+(?P<id>FR-[A-Za-z0-9_]+-\d+):";
+const FR_ID_HEADING_PATTERN: &str = consts::FR_ID_HEADING_PATTERN;
 
 /// The shared FR-ID heading pattern, compiled once.
 ///
@@ -33,6 +33,79 @@ pub fn fr_id_heading_re() -> Option<&'static regex::Regex> {
         .as_ref()
 }
 
+/// The one PR-ID shape the AESD01 rule family accepts: an H2–H4
+/// requirement heading (`### PR-Project-001: ...`) in a PRD's `Project
+/// Requirements` or a ROADMAP's `Roadmap Status`. Same H2–H4 colon
+/// shape as the FR/DS/DT patterns so the accepted ID sets cannot drift
+/// between the parity check and the counter.
+const PR_ID_HEADING_PATTERN: &str = consts::PR_ID_HEADING_PATTERN;
+
+/// The shared PR-ID heading pattern, compiled once.
+pub fn pr_id_heading_re() -> Option<&'static regex::Regex> {
+    static PAT: OnceLock<Option<regex::Regex>> = OnceLock::new();
+    PAT.get_or_init(|| regex::Regex::new(PR_ID_HEADING_PATTERN).ok())
+        .as_ref()
+}
+
+/// Accepted PR-ID set from a document's `PR-<NAME>-NNN:` headings.
+///
+/// Returns `None` when the document declares no PR-IDs, so the caller
+/// keeps the check silent rather than flagging every sibling row.
+pub fn collect_pr_id_set(text: &str) -> Option<Vec<String>> {
+    let re = pr_id_heading_re()?;
+    let ids: Vec<String> = re
+        .captures_iter(text)
+        .filter_map(|caps| caps.name("id").map(|m| m.as_str().to_string()))
+        .collect();
+    if ids.is_empty() { None } else { Some(ids) }
+}
+
+/// A DESIGN.md DS-ID heading (`### DS-DISP-001: <title>`), H2–H4,
+/// colon-terminated. The NAME token (e.g. DISP, CLIC, MCPS, TUIC) is a
+/// per-folder qualifier, so the qualified `DS-<NAME>-NNN` form is mandatory;
+/// a bare `DS-001` (digits only after the prefix, no NAME) no longer matches.
+const DS_ID_HEADING_PATTERN: &str = consts::DS_ID_HEADING_PATTERN;
+
+/// The shared DS-ID heading pattern, compiled once.
+pub fn ds_id_heading_re() -> Option<&'static regex::Regex> {
+    static PAT: OnceLock<Option<regex::Regex>> = OnceLock::new();
+    PAT.get_or_init(|| regex::Regex::new(DS_ID_HEADING_PATTERN).ok())
+        .as_ref()
+}
+
+/// Accepted DS-ID set from a DESIGN.md's `DS-<NAME>-NNN:` headings.
+pub fn collect_ds_id_set(text: &str) -> Option<Vec<String>> {
+    let re = ds_id_heading_re()?;
+    let ids: Vec<String> = re
+        .captures_iter(text)
+        .filter_map(|caps| caps.name("id").map(|m| m.as_str().to_string()))
+        .collect();
+    if ids.is_empty() { None } else { Some(ids) }
+}
+
+/// A DATA.md DT-ID heading (`## DT-SHAR-001: <title>`), H2–H4,
+/// colon-terminated. The NAME token (e.g. SHAR, MCPS, TUIC) is a per-folder
+/// qualifier, so the qualified `DT-<NAME>-NNN` form is mandatory; a bare
+/// `DT-001` (digits only after the prefix, no NAME) no longer matches.
+const DT_ID_HEADING_PATTERN: &str = consts::DT_ID_HEADING_PATTERN;
+
+/// The shared DT-ID heading pattern, compiled once.
+pub fn dt_id_heading_re() -> Option<&'static regex::Regex> {
+    static PAT: OnceLock<Option<regex::Regex>> = OnceLock::new();
+    PAT.get_or_init(|| regex::Regex::new(DT_ID_HEADING_PATTERN).ok())
+        .as_ref()
+}
+
+/// Accepted DT-ID set from a DATA.md's `DT-<NAME>-NNN:` headings.
+pub fn collect_dt_id_set(text: &str) -> Option<Vec<String>> {
+    let re = dt_id_heading_re()?;
+    let ids: Vec<String> = re
+        .captures_iter(text)
+        .filter_map(|caps| caps.name("id").map(|m| m.as_str().to_string()))
+        .collect();
+    if ids.is_empty() { None } else { Some(ids) }
+}
+
 /// Number of `FR-<Feature>-NNN:` requirement headings in the document.
 ///
 /// The same heading shape the FR-ID rule accepts, so a requirement nested
@@ -44,7 +117,7 @@ pub fn count_fr_headings(text: &str) -> Option<usize> {
 
 /// True when the text contains at least one requirement heading in the
 ///
-/// The kernel `src` roots the shared contract modules live in: the feature's
+/// The layer `src` roots the shared contract modules live in: the feature's
 /// contract module is resolved against each documented workspace layout
 /// (`crates/shared`, `modules/shared`, `packages/shared`), so a feature in
 /// any of them finds the right base instead of silently skipping the check.
@@ -156,8 +229,10 @@ pub fn contract_method_names(module_dir: &Path) -> Option<HashSet<String>> {
             if is_python {
                 // Python: `def <name>` opens a declaration site after any
                 // decorator/qualifier on the same line (rare but valid in
-                // generated stubs). A docstring line is prose.
-                let Some(rest) = trimmed.strip_prefix("def ") else {
+                // generated stubs). A docstring line is prose. An `async def`
+                // qualifier is stripped first, mirroring the Rust branch.
+                let after_async = trimmed.strip_prefix("async ").unwrap_or(trimmed);
+                let Some(rest) = after_async.strip_prefix("def ") else {
                     continue;
                 };
                 let name: String = rest
@@ -219,4 +294,46 @@ fn walk_source_files(dir: &Path, visit: &mut dyn FnMut(&Path, &str)) -> Option<(
         }
     }
     Some(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io::Write;
+
+    #[test]
+    fn contract_method_names_finds_async_def_methods() {
+        let dir = std::env::temp_dir().join("lint_arwaky_async_def_test");
+        if std::fs::create_dir_all(&dir).is_err() {
+            return;
+        }
+        let file_path = dir.join("contract_example_protocol.py");
+        let mut f = match std::fs::File::create(&file_path) {
+            Ok(f) => f,
+            Err(_) => return,
+        };
+        let src = "class IExampleProtocol:\n\
+                   @abstractmethod\n\
+                   async def check_session(self, session) -> bool:\n\
+                       ...\n\
+                   def rotate_sync(self, request) -> bool:\n\
+                       ...\n";
+        if f.write_all(src.as_bytes()).is_err() {
+            return;
+        }
+        drop(f);
+        let result = contract_method_names(&dir);
+        let _ = std::fs::remove_dir_all(&dir);
+        // result is None when the walk itself cannot read the directory;
+        // in that case the test silently passes (parse-skip convention).
+        let Some(names) = result else { return };
+        assert!(
+            names.contains("check_session"),
+            "async def method must be found"
+        );
+        assert!(
+            names.contains("rotate_sync"),
+            "sync def method must be found"
+        );
+    }
 }

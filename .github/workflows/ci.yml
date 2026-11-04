@@ -39,7 +39,7 @@ jobs:
       - name: Install mold linker
         run: sudo apt-get update && sudo apt-get install -y mold
       - uses: mozilla-actions/sccache-action@fc920bf0ec8de6ee65d409111f7ec508035751ba # v0.0.11
-      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
       - run: cargo clippy --all-targets -- -D warnings
 
   build:
@@ -53,13 +53,12 @@ jobs:
       - name: Install mold linker
         run: sudo apt-get update && sudo apt-get install -y mold
       - uses: mozilla-actions/sccache-action@fc920bf0ec8de6ee65d409111f7ec508035751ba # v0.0.11
-      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
       - run: cargo build --release
 
   test:
     name: Tests
     runs-on: ubuntu-latest
-    needs: [build]
     permissions:
       contents: read
     steps:
@@ -70,7 +69,7 @@ jobs:
           sudo apt-get update && sudo apt-get install -y mold
           curl -LsSf https://get.nexte.st/latest/linux | tar zxf - -C ~/.cargo/bin
       - uses: mozilla-actions/sccache-action@fc920bf0ec8de6ee65d409111f7ec508035751ba # v0.0.11
-      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
 
       - name: Build release binary (for regression tests)
         run: cargo build --release
@@ -78,7 +77,7 @@ jobs:
       - name: Run tests
         # Note: cargo-nextest cannot execute doctests (known upstream
         # limitation) — doctests are run as a separate step below (QA #644).
-        run: cargo nextest run --workspace --lib --tests -j 2
+        run: cargo nextest run --workspace --lib --tests -j 4
 
       - name: Run doctests
         # QA #638: ~25 doctests across 11 source files are only executed here;
@@ -88,7 +87,6 @@ jobs:
   self-lint:
     name: Self-Lint
     runs-on: ubuntu-latest
-    needs: [build]
     permissions:
       contents: read
     steps:
@@ -97,7 +95,7 @@ jobs:
       - name: Install mold
         run: sudo apt-get update && sudo apt-get install -y mold
       - uses: mozilla-actions/sccache-action@fc920bf0ec8de6ee65d409111f7ec508035751ba # v0.0.11
-      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
       - name: Install external linters (per TEST.md §1 prerequisite, QA #637)
         run: |
           python3 -m pip install ruff mypy bandit
@@ -117,6 +115,20 @@ jobs:
             fi
             echo "$tool -> $(command -v "$tool")"
           done
+
+      - name: Install Gitleaks (pinned; used by the Gitleaks secret-scanning adapter)
+        # The Gitleaks Integration Check step asserts on 8.18.4's default
+        # rule set (github-pat, aws-access-token, private-key). Newer
+        # releases have changed which built-in rules match the public test
+        # vectors shipped in workspaces-bad/fixtures/gitleaks/, so the pin
+        # must stay in sync with that gate.
+        run: |
+          curl -fsSL -o /tmp/gitleaks.tar.gz https://github.com/gitleaks/gitleaks/releases/download/v8.18.4/gitleaks_8.18.4_linux_x64.tar.gz
+          tar xzf /tmp/gitleaks.tar.gz -C /usr/local/bin
+          rm /tmp/gitleaks.tar.gz
+          gv=$(gitleaks version)
+          echo "gitleaks installed: $gv"
+          [ "$gv" = "8.18.4" ] || { echo "::error::expected gitleaks 8.18.4, got $gv"; exit 1; }
 
       - name: Build CLI
         run: cargo build --bin lint-arwaky-cli
@@ -147,20 +159,37 @@ jobs:
 
       - name: AES Codes Check
         # Threshold must match the reconciled scan-visible rule count in
-        # TEST.md §3.1/§3.2 exactly: 35 total AES rules across 7 groups.
-        # All 35 (including the 5 doc-invariant codes AES601–AES605) are now
-        # surfaced by `scan workspaces-bad` via the doc-audit pass, so the
-        # gate enforces all 35 unique codes. When rules are added/removed,
-        # update this threshold and TEST.md §3.2 in lockstep (QA #636).
+        # TEST.md §3.1/§3.2 exactly: 41 total AES rules across 7 groups.
+        # All 41 are surfaced by `scan workspaces-bad` via the doc-audit
+        # pass (AES6xx per-doc codes fire on the root docs: AGENTS,
+        # ARCHITECTURE, CONTRIBUTING, PRD, ROADMAP, DATA, BACKLOG, FRD,
+        # DESIGN, README). The required-doc half of the root-gated rules
+        # is covered by unit tests rather than by this gate. When rules
+        # are added/removed, update this threshold and TEST.md §3.2 in
+        # lockstep (QA #636).
         # `|| true` on the assignment: `scan` exits 1 whenever it reports
         # violations, which is its contract — under `pipefail` that status
         # would abort the step before the threshold check could print its
         # diagnosis. The captured count is unaffected, and a total tool
         # failure still yields 0 codes, which fails the threshold below.
+        #
+        # Subset check: every code that scan emits must have a row in
+        # ARCHITECTURE.md. The `>= 41` floor matches the 41-code inventory.
         run: |
+          # --- emit-count floor ---
           codes=$(./target/debug/lint-arwaky-cli scan workspaces-bad --format json 2>/dev/null | grep -oP '"code": *"[A-Z0-9_:]+"' | grep -oP '(?<="code": ")[A-Z0-9_:]+' | grep '^AES' | sort -u | wc -l) || true
           echo "Unique codes: ${codes:-0}"
-          [ "${codes:-0}" -ge 35 ]
+          [ "${codes:-0}" -ge 41 ]
+
+          # --- scan-emitted ⊆ doc-codes subset check ---
+          doc_codes=$(grep -hE '^\| AES[0-9]{3} \|' ARCHITECTURE.md | awk -F'|' '{gsub(/ /,"",$2); print $2}' | sort -u)
+          scan_codes=$(./target/debug/lint-arwaky-cli scan workspaces-bad --format json 2>/dev/null | grep -oP '(?<="code": ")AES[0-9]{3}' | sort -u)
+          undocumented=$(comm -23 <(echo "$scan_codes") <(echo "$doc_codes"))
+          if [ -n "$undocumented" ]; then
+            echo "::error::scan emitted AES codes not in ARCHITECTURE.md: $undocumented"
+            exit 1
+          fi
+          echo "Scan-emitted codes ⊆ doc codes: OK"
 
       - name: External Tool Integration Check (QA #637)
         # Proves the external-lint adapters actually invoked the real tools
@@ -192,6 +221,53 @@ jobs:
             exit 1
           fi
 
+      - name: Gitleaks Integration Check (QA #637)
+        # The Gitleaks adapter is not language-gated the way the others are:
+        # secret scanning applies to every file type, so the adapter is not
+        # in CapabilitiesExternalLintSelector::with_defaults() and a plain
+        # `scan` does not run it. This step instead drives Gitleaks
+        # end-to-end on its own fixtures, mirroring the adapter's exact
+        # invocation (working dir = scan target, `--no-git`, `--redact`,
+        # `--report-format json`, `.gitleaks.toml` discovered at or above
+        # the target):
+        #   - bad workspace: `workspaces-bad/` intentionally has no
+        #     `.gitleaks.toml`, so Gitleaks' built-in default rule set
+        #     applies when scanning it, and the public test vectors under
+        #     fixtures/gitleaks/ must each be reported — at least one
+        #     `RuleID` must appear in the JSON report.
+        #   - good workspace: `workspaces-good/.gitleaks.toml`
+        #     allowlists fixtures/gitleaks/gitleaks_dummy_secret.rs, so the
+        #     scan must report zero findings.
+        # The GitleaksAdapter maps each finding to a `gitleaks::<rule>` code
+        # (see crates/external-lint/src/capabilities_secrets_gitleaks_adapter.rs).
+        # The gate pins gitleaks 8.18.4; newer releases have changed which
+        # built-in rules match these public test vectors, so the `version`
+        # check in the install step must keep matching.
+        run: |
+          # --- bad workspace: default rules must fire on the fixtures ---
+          cd workspaces-bad
+          gitleaks detect --no-git --redact --report-format json \
+            --source fixtures/gitleaks --report-path /tmp/gitleaks-bad.json --exit-code 0 || true
+          bad_findings=$(grep -o '"RuleID"' /tmp/gitleaks-bad.json | wc -l || true)
+          echo "Gitleaks bad-workspace findings: ${bad_findings:-0}"
+          [ "${bad_findings:-0}" -ge 1 ] || {
+            echo "::error::gitleaks reported 0 findings on the bad workspace — the Gitleaks gate would silently pass"
+            cat /tmp/gitleaks-bad.json
+            exit 1
+          }
+
+          # --- good workspace: allowlist must suppress every finding ---
+          cd ../workspaces-good
+          gitleaks detect --no-git --redact --report-format json --config .gitleaks.toml \
+            --source . --report-path /tmp/gitleaks-good.json --exit-code 0 || true
+          good_findings=$(grep -o '"RuleID"' /tmp/gitleaks-good.json | wc -l || true)
+          echo "Gitleaks good-workspace findings: ${good_findings:-0}"
+          [ "${good_findings:-0}" -eq 0 ] || {
+            echo "::error::gitleaks reported findings on the good workspace — the allowlist in .gitleaks.toml is not effective"
+            cat /tmp/gitleaks-good.json
+            exit 1
+          }
+
   security:
     name: Security Audit
     runs-on: ubuntu-latest
@@ -221,7 +297,6 @@ jobs:
   coverage:
     name: Coverage
     runs-on: ubuntu-latest
-    needs: [build]
     permissions:
       contents: read
     steps:
@@ -259,4 +334,4 @@ jobs:
         # missing and the run dies before compiling anything (QA #643).
         env:
           RUSTC_WRAPPER: ""
-        run: cargo llvm-cov nextest --workspace --lib --tests --summary-only
+        run: cargo llvm-cov nextest --workspace --lib --tests --summary-only -j 4

@@ -11,6 +11,14 @@
 // for behaviour another feature already owns. `FR-ExternalLint-001` is the
 // adapter-selection requirement, whose seam is
 // `IExternalLintSelectorProtocol` below.
+//
+// FR-ExternalLint-003 (`INormalizeProtocol`) is LIVE: the concrete
+// `OutputNormalizer` in `crates/external-lint/src/capabilities_output_normalizer.rs`
+// is wired into `ExternalLintDeps` (orchestrator deps) and exposed through
+// `ExternalLintOrchestrator::normalizer()`. A guard test in
+// `crates/external-lint/tests/contract_external_lint.rs`
+// (`output_normalizer_has_production_call_sites`) asserts at least one
+// production call site exists so a future refactor cannot silently delete it.
 
 use crate::taxonomy_duration_vo::Timeout;
 use shared_common::taxonomy_adapter_error::LinterOperationError;
@@ -67,6 +75,12 @@ pub trait ILinterAdapterProtocol: Send + Sync {
 /// `LintResult` structs, preserving tool-native rule codes (e.g.
 /// `clippy::needless_return`, `ruff::E501`) and applying the per-tool severity
 /// mapping. File paths are canonicalized against `root`.
+///
+/// LIVE: implemented by `OutputNormalizer`
+/// (`crates/external-lint/src/capabilities_output_normalizer.rs`), wired into
+/// `ExternalLintDeps` and exposed via `ExternalLintOrchestrator::normalizer()`.
+/// Guard: `output_normalizer_has_production_call_sites` in
+/// `crates/external-lint/tests/contract_external_lint.rs`.
 pub trait INormalizeProtocol: Send + Sync {
     /// Normalize raw subprocess output into a list of `LintResult`s plus any
     /// warnings raised while parsing.

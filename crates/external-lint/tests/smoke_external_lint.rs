@@ -4,7 +4,7 @@
 // and that basic operations complete without hanging or panicking.
 
 #[allow(dead_code, unused_imports)]
-#[path = "../../shared/tests/common/mock_filesystem.rs"]
+#[path = "../../shared/tests/mock_filesystem.rs"]
 mod mock_filesystem;
 
 use std::sync::Arc;

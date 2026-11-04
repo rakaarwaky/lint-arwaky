@@ -9,7 +9,7 @@
 use shared_cli_commands::{LintResult, LintResultList};
 use shared_common::taxonomy_layer_vo::LayerMapVO;
 use shared_common::taxonomy_layer_vo::LayerNameVO;
-use shared_common::utility_layer_detector;
+use shared_common::utility_architecture_layer_detector;
 use shared_common::{FilePath, FilePathList, Identity, Severity};
 use shared_filesystem::taxonomy_filesystem_vo::{ImportEntry, ImportType, Language};
 use shared_orphan_rules::parse_file_content;
@@ -118,6 +118,7 @@ pub fn build_test_import_entries(file_path: &str, content: &str) -> Vec<ImportEn
             symbols: Vec::new(),
             is_reexport: imp.is_reexport,
             is_wildcard: imp.is_glob,
+            line: imp.line,
         });
     };
     match parse_file_content(file_path, content) {
@@ -170,16 +171,17 @@ impl ArchImportForbiddenChecker {
         violations: &mut Vec<LintResult>,
     ) {
         // 1. Determine the file's layer from its filename prefix
-        let filename = utility_layer_detector::extract_filename(file);
-        let layer_name = match utility_layer_detector::detect_layer_from_prefix(filename) {
-            Some(base) => {
-                utility_layer_detector::resolve_specialized_layer(&base, file, layer_keys)
-            }
-            None => {
-                // No layer prefix — skip (naming rules handles prefix correctness)
-                return;
-            }
-        };
+        let filename = utility_architecture_layer_detector::extract_filename(file);
+        let layer_name =
+            match utility_architecture_layer_detector::detect_layer_from_prefix(filename) {
+                Some(base) => utility_architecture_layer_detector::resolve_specialized_layer(
+                    &base, file, layer_keys,
+                ),
+                None => {
+                    // No layer prefix — skip (naming rules handles prefix correctness)
+                    return;
+                }
+            };
 
         // 2. Get the default forbidden list from layer definitions
         let layer_name_vo = LayerNameVO::new(layer_name.as_str());
@@ -378,7 +380,7 @@ impl ArchImportForbiddenChecker {
                             .map(|n| n.to_string_lossy().to_string())
                             .unwrap_or_default();
                         let resolved_layer =
-                            shared_common::utility_layer_detector::detect_layer_from_prefix(
+                            shared_common::utility_architecture_layer_detector::detect_layer_from_prefix(
                                 &resolved_file,
                             );
                         let layer_matches =
@@ -461,16 +463,20 @@ impl ArchImportForbiddenChecker {
                         "Layer '{}' is importing from forbidden layer '{}'.",
                         source_layer, forbidden
                     );
-                    violations.push(LintResult::new_arch_with_name(
+                    let line = if entry.line > 0 { entry.line } else { idx + 1 };
+                    let violation = LintResult::new_arch_with_name(
                         file,
-                        idx + 1,
+                        line,
                         "AES201",
                         Severity::CRITICAL,
                         message,
                         "FORBIDDEN_IMPORT",
                         why,
                         fix,
-                    ));
+                    );
+                    if !violations.contains(&violation) {
+                        violations.push(violation);
+                    }
                 }
             }
         }

@@ -1,463 +1,394 @@
-# FRD — maintenance (v2.1.0)
+# FRD — maintenance
 
----
-
-## Reference
-
-- PRD: [PRD.md](../../PRD.md)
-- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature; this file is specification only.
-- Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
-
-## System Overview
-
-The maintenance crate provides operational health and upkeep commands for the
-lint-arwaky system: environment diagnostics, toolchain verification, adapter
-health checking, cache cleanup, tool updates, binary self-update from
-GitHub releases, security scanning, dependency reporting, and project
-statistics. It is the ops-focused crate — it handles environment health,
-not code quality analysis.
-
-The crate follows the AES 7-layer architecture. Each of the eight business
-capabilities below corresponds to one `_protocol` trait in `shared/maintenance`
-and one implementation in `capabilities_maintenance_checker`.
-
-- **Architecture & Data Flow**
+## Feature Overview
 
 ```mermaid
 flowchart TD
-    A["Surface"] -->|input| B["maintenance aggregate"]
-    B --> C{"action"}
-
-    C -->|"doctor / diagnose / health"| D["MaintenanceChecker"]
-    C -->|"security / dependencies"| D
-    C -->|"stats / clean / update"| D
-    C -->|"self-update"| D
-
-    D --> F["filesystem IO protocol"]
-    F -->|subprocess| G["Tool Output"]
-    G --> D
-    D --> H["Maintenance Result"]
-
-    H --> B
-    B -->|output| A
+    A["Surface Commands"] -->|MaintenanceRequest| B["MaintenanceCommandsOrchestrator"]
+    B --> C["Doctor / Toolchain"]
+    B --> D["Project Statistics"]
+    B --> E["Cache Cleanup"]
+    B --> F["Tool Update"]
+    B --> G["Security Scan"]
+    B --> H["Dependency Report"]
+    B --> I["Adapter Health"]
+    B --> J["Binary Self-Update"]
+    C & D & E & F & G & H & I & J -->|Outcome| B
+    B -->|MaintenanceResponse| A
 ```
 
----
+The **maintenance** feature provides operational health, diagnostics, and upkeep capabilities for the system, sitting in the infrastructure layer between surface commands and system tools. It is invoked by surface commands through `IMaintenanceAggregate` to diagnose environments, inspect dependencies, verify adapter availability, reclaim disk space, and update tools and binaries. In turn, it coordinates per-capability protocol implementations that interact with the underlying execution environment and filesystem.
 
 ## Functional Requirements
 
-### FR-Maintenance-001: Environment Health Check (doctor + toolchain)
+### FR-Maintenance-001: Environment Health Check
 
-- **Description**: Report toolchain diagnostics — the installation status and
-  version of every external tool — and build an environment health report
-  from them.
-- **Input**: None (operates on current working directory).
-- **Output**: Toolchain diagnostics containing rust tools, python tools, js
-  tools, vcs tools (each a list of tool statuses) plus the binary path, and a
-  doctor result containing language versions, adapter statuses (map of tool
-  name to status), and overall health status.
-- **Business Rules**:
+**Description:**
+The system shall aggregate environment diagnostics, toolchain readiness, and execution health into a unified diagnostic report, and shall support graceful cancellation of in-flight diagnostic runs upon request.
 
-  - Rust tools: `rustc`, `cargo`, `clippy` (via `cargo clippy`), `rustfmt`
-    — all required.
-  - Python tools: `python3`, `ruff`, `mypy` — all optional.
-  - JS tools: `node`, `eslint` — all optional.
-  - VCS tools: `git` (required).
-  - Tool status: `OK` (found), `WARN` (optional, not found), `FAIL`
-    (required, not found).
-  - Version extracted from first line of stdout. Clippy is checked via
-    `cargo clippy --version` and reported as "clippy".
-  - The doctor report reads the same toolchain diagnostics this capability
-    produces and never re-runs the tool checks.
-  - Extracts rust, python, and node version from the first tool in each
-    category.
-  - Builds adapter statuses map from all tool statuses.
-  - Health is true only when all required tools have OK status.
-  - Issues list is currently empty (issues are embedded in tool statuses).
-- **Edge Cases**:
+#### Business Logic
 
-  - No tools installed → health is false, adapter statuses all show FAIL.
-  - Partial toolchain (e.g., Python only) → health is false.
-  - Tool installed but version command produces no output → version set to
-    empty string.
-  - Multiple versions installed → only the first found is reported.
-- **Error Handling**: No error thrown; failed tool checks return a status
-  without crashing, and all information is embedded in the result structures.
+- The system shall aggregate binary availability, toolchain diagnosis, and overall health status into a single response.
+- The toolchain diagnosis shall report the active binary path alongside categorized ok and missing tool lists.
+- Unavailable tools shall be categorized in the missing list without causing the overall diagnostic operation to fail.
+- A cancel request shall terminate an in-flight operation gracefully and return a cancelled outcome.
 
----
+#### Edge Cases
 
-### FR-Maintenance-002: Project Statistics (stats)
+- When external tool binaries are absent from the environment, the system shall record them in the missing list and return a successful diagnostic outcome.
+- When the execution environment is completely empty, the system shall report all probed tools as missing without raising a panic.
+- When an operation is cancelled in flight, the system shall return a cancelled response rather than a partial error.
 
-- **Description**: Count source files and test files in the top-level
-  directory of a project, compute test-to-file ratio.
-- **Input**: Project root path.
-- **Output**: Maintenance stats containing project path, total file count,
-  test file count, test ratio, and per-language file counts (Rust, Python,
-  JS/TS).
-- **Business Rules**:
+#### Technical Specification
 
-  - Reads entries in the top-level project directory (non-recursive).
-  - Counts files by extension: `.rs` (Rust), `.py` (Python),
-    `.ts`, `.js`, `.jsx`, `.tsx` (JS/TS).
-  - Identifies test files by name containing "test" or "spec".
-  - Test ratio = test files / source files (0.0 if no source files).
-  - Source count is the sum of Rust + Python + JS/TS files.
-- **Edge Cases**:
+| Aspect | Detail |
+|--------|--------|
+| **Input** | `MaintenanceRequest::Doctor`, `MaintenanceRequest::DiagnoseToolchain`, or `MaintenanceRequest::Cancel` from surface commands. |
+| **Output** | `MaintenanceResponse::Doctor`, `MaintenanceResponse::Toolchain`, or `MaintenanceResponse::Cancelled`. |
+| **Protocol** | `IDoctorProtocol` |
+| **Method** | `doctor`, `diagnose_toolchain` |
+| **Event** | `EnvironmentHealthDiagnosed` |
+| **Error** | `TOOLCHAIN_PROBE_FAILED`, `DIAGNOSTIC_CANCELLED` |
 
-  - Empty directory (no files) → all counts 0, ratio 0.0.
-  - Non-source files (e.g., `.md`, `.yaml`) → counted in total but not
-    in per-language breakdowns.
-- **Error Handling**: Directory read failure → returns default stats with
-  zero counts.
+#### Test
 
----
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| Seeded environment with healthy toolchain | Surface command requests environment health diagnosis | Returns doctor result reflecting health status with binary path and non-empty tool lists |
+| External tools are absent from PATH | Surface command requests toolchain diagnosis | Returns toolchain diagnostic with missing tools recorded in missing list and no panic |
+| Diagnostic operation is running | Surface command issues cancel request | In-flight execution aborts gracefully and returns cancelled response |
 
-### FR-Maintenance-003: Cache Cleanup (clean)
+#### Metric
 
-- **Description**: Remove known cache directories from the project tree.
-- **Input**: None (operates on current working directory).
-- **Output**: None (side effect: directories deleted).
-- **Business Rules**:
+| Target Metric | Value |
+|---------------|-------|
+| Doctor Diagnostic Accuracy | 100% |
+| Cancellation Response Latency | < 50ms |
 
-  - Targets: `.pytest_cache`, `__pycache__`, `node_modules/.cache`,
-    `target`.
-  - Checks each target in the current directory and removes it if present.
-- **Edge Cases**:
+### FR-Maintenance-002: Project Statistics
 
-  - Cache directory doesn't exist → no-op.
-  - Permission denied on cache directory → removal fails silently.
-- **Error Handling**: Directory removal failures are silently ignored.
+**Description:**
+The system shall compute aggregate project statistics, language breakdowns, and file counts across a specified target directory without hard-coded path constraints.
 
----
+#### Business Logic
 
-### FR-Maintenance-004: Tool Update (update)
+- The system shall count source files by language and compute total counts across the provided target directory.
+- The sum of individual per-language file counts shall strictly equal the reported total count.
+- The system shall operate dynamically over any provided directory path rather than hard-coded locations.
+- Unreadable or inaccessible subtrees shall be skipped gracefully while processing readable paths.
 
-- **Description**: Upgrade Python linter tools to their latest versions.
-- **Input**: None.
-- **Output**: None (side effect: tools upgraded).
-- **Business Rules**:
+#### Edge Cases
 
-  - Python tools: `ruff`, `mypy`, `bandit` — upgraded via
-    `pip install --upgrade`.
-  - Each tool upgraded in a single pip invocation.
-  - JS/TS tools and Rust tools are **not upgraded** by this command.
-- **Edge Cases**:
+- When executed against an empty directory, the system shall return zero counts without reporting an error.
+- When unreadable subtrees or permission errors are encountered, the system shall report partial counts for readable entries rather than failing.
+- When directory structures contain deeply nested subdirectories, the system shall traverse all readable levels without stack overflow or panic.
 
-  - pip not installed → command fails, warning printed.
-  - Tool already at latest version → package manager exits successfully.
-  - Network unavailable → package manager fails, warning printed.
-- **Error Handling**: Failure logged as warning; no crash.
+#### Technical Specification
 
----
+| Aspect | Detail |
+|--------|--------|
+| **Input** | `MaintenanceRequest::Stats` containing target directory path. |
+| **Output** | `MaintenanceResponse::Stats` containing total count and per-language metrics. |
+| **Protocol** | `IProjectStatsProtocol` |
+| **Method** | `stats` |
+| **Event** | `ProjectStatsCalculated` |
+| **Error** | `DIRECTORY_UNREADABLE`, `STATS_CALCULATION_FAILED` |
+
+#### Test
+
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| Seeded multi-language project directory | Surface command requests project statistics | Total count matches the exact sum of per-language file counts |
+| Empty directory path | Surface command requests project statistics | Returns zero counts with successful status and no error |
+| Directory tree containing unreadable subdirectories | Surface command requests project statistics | Processes readable subtrees, skips unreadable subtrees, and returns partial counts |
+
+#### Metric
+
+| Target Metric | Value |
+|---------------|-------|
+| Count Internal Consistency | 100% |
+| Processing Throughput | > 1000 files/s |
+
+### FR-Maintenance-003: Cache Cleanup
+
+**Description:**
+The system shall remove application-owned cache directories and temporary reporting artifacts to reclaim disk space without modifying user configurations or source code.
+
+#### Business Logic
+
+- The system shall remove only managed cache directories, including AST caches and report caches.
+- The system shall never alter or remove source files, workspace configuration, or user settings.
+- Cache cleanup operations shall be idempotent; consecutive clean executions shall succeed safely.
+- Inaccessible or read-only cache entries shall be reported with warnings without aborting the remaining cleanup.
+
+#### Edge Cases
+
+- When targeted cache directories do not exist, the system shall complete cleanly as a successful no-op.
+- When specific cache entries have restrictive permissions, the system shall report a warning and proceed with deleting remaining artifacts.
+- When run consecutively multiple times, each execution shall succeed without error.
+
+#### Technical Specification
+
+| Aspect | Detail |
+|--------|--------|
+| **Input** | `MaintenanceRequest::Clean` with configured or default cache roots. |
+| **Output** | `MaintenanceResponse::Clean` reporting cache cleanup status. |
+| **Protocol** | `ICacheCleanupProtocol` |
+| **Method** | `clean` |
+| **Event** | `CacheCleaned` |
+| **Error** | `CACHE_DIR_INACCESSIBLE`, `CACHE_ENTRY_LOCKED` |
+
+#### Test
+
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| Seeded cache directory with AST and report artifacts | Surface command requests cache cleanup | Owned cache files are deleted while source files remain byte-identical |
+| Cache directory has already been cleared | Surface command requests cache cleanup | Command completes safely as an idempotent no-op |
+| Cache contains read-only entry alongside removable entries | Surface command requests cache cleanup | Removable entries are purged, permission issue is reported, and command completes |
+
+#### Metric
+
+| Target Metric | Value |
+|---------------|-------|
+| Non-Cache File Invariance | 100% |
+| Owned Cache Reclamation Rate | 100% |
+
+### FR-Maintenance-004: Tool Update
+
+**Description:**
+The system shall inspect configured bundled linter tools for available updates, install applicable updates, and report outcome status per tool without mutating unmanaged tools.
+
+#### Business Logic
+
+- The system shall probe configured bundled tools for newer compatible versions.
+- The system shall apply updates only to managed tools that have an available newer version.
+- The system shall never modify tools outside the managed configuration set.
+- Probing or update failures for an individual tool shall be recorded without blocking the update cycle of other tools.
+
+#### Edge Cases
+
+- When all tools are currently up to date, the system shall report unchanged status for each tool without modifying files.
+- When network access fails or times out during probing, the system shall report unavailable status without hanging.
+- When an individual tool update fails, remaining tools shall continue their update check uninterrupted.
+
+#### Technical Specification
+
+| Aspect | Detail |
+|--------|--------|
+| **Input** | `MaintenanceRequest::Update` containing target tool configuration. |
+| **Output** | `MaintenanceResponse::Update` with per-tool status outcomes. |
+| **Protocol** | `IToolUpdateProtocol` |
+| **Method** | `update` |
+| **Event** | `ToolsUpdated` |
+| **Error** | `TOOL_PROBE_FAILED`, `TOOL_DOWNLOAD_FAILED`, `TOOL_INSTALL_FAILED` |
+
+#### Test
+
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| Managed tools have newer versions available | Surface command requests tool update | Tools are updated and per-tool success outcomes are returned |
+| All managed tools are already current | Surface command requests tool update | Returns current status for all tools with no modifications |
+| Network probe for one tool times out | Surface command requests tool update | Probing error is recorded for timed-out tool while others complete |
+
+#### Metric
+
+| Target Metric | Value |
+|---------------|-------|
+| Update Status Determinism | 100% |
+| Probe Timeout Enforcement | < 5000ms |
 
 ### FR-Maintenance-005: Security Scan
 
-- **Description**: Run dependency vulnerability scanning using cargo-audit
-  for Rust projects.
-- **Input**: Project root path.
-- **Output**: Security scan report containing language, tool name, findings
-  list, and tool installed status.
-- **Business Rules**:
+**Description:**
+The system shall scan the project dependency graph and manifest artifacts for known security advisories, vulnerability alerts, and unsafe configurations.
 
-  - Checks if `Cargo.lock` exists at the project root.
-  - If present, runs `cargo audit --json` and parses JSON output for
-    vulnerability advisories.
-  - Extracts findings with severity, advisory ID, package name, and
-    issue description.
-  - If `Cargo.lock` does not exist, returns empty findings with
-    `tool_installed: false`.
-- **Edge Cases**:
+#### Business Logic
 
-  - `Cargo.lock` missing → returns empty findings with tool_installed false.
-  - cargo-audit not installed → returns empty findings with warning.
-  - JSON parse failure → returns empty findings list with warning.
-  - Advisory without CVE ID → test id set to "unknown".
-- **Error Handling**: Parse failures result in empty findings with warning;
-  no crash. Tool not installed → `tool_installed: false`.
+- The system shall inspect declared dependencies against security advisories and emit severity ratings for discovered vulnerabilities.
+- When the dependency set is empty, the system shall emit zero findings and report a clean security state.
+- Manifest and dependency lock files shall be parsed without executing unverified build scripts.
+- Unreadable manifests or lock files shall produce scoped diagnostic errors rather than panics.
 
----
+#### Edge Cases
+
+- When no security advisories exist for dependencies, the system shall return an empty findings list with clean status.
+- When remote advisory feeds are unreachable, the system shall fall back to local advisory databases and record a degraded scan warning.
+- When manifest files are corrupted or unparseable, the system shall return a scoped error in the response without crashing.
+
+#### Technical Specification
+
+| Aspect | Detail |
+|--------|--------|
+| **Input** | `MaintenanceRequest::SecurityScan` with target project path. |
+| **Output** | `MaintenanceResponse::Security` containing list of security findings. |
+| **Protocol** | `ISecurityScanProtocol` |
+| **Method** | `run_security_scan` |
+| **Event** | `SecurityScanCompleted` |
+| **Error** | `MANIFEST_UNREADABLE`, `ADVISORY_FEED_UNAVAILABLE` |
+
+#### Test
+
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| Project fixture containing a known vulnerable dependency | Surface command requests security scan | Returns findings list with at least one security alert and severity |
+| Clean project fixture with zero known vulnerabilities | Surface command requests security scan | Returns zero findings with clean scan status |
+| Unreadable or corrupt dependency lock file | Surface command requests security scan | Returns response with scoped unreadable manifest error and no panic |
+
+#### Metric
+
+| Target Metric | Value |
+|---------------|-------|
+| Known Vulnerability Detection Rate | 100% |
+| False Positive Finding Rate | 0% |
 
 ### FR-Maintenance-006: Dependency Report
 
-- **Description**: Parse Rust project dependency files and list direct and
-  transitive dependencies.
-- **Input**: Project root path.
-- **Output**: Result containing language ("Rust") and dependencies list.
-- **Business Rules**:
+**Description:**
+The system shall generate a structured dependency report from parsed manifest and lock artifacts, enumerating dependencies, versions, and origin sources.
 
-  - Checks if `Cargo.lock` exists at the project root.
-  - Parses `Cargo.lock` line by line, extracting package name and version
-    from `[[package]]` entries.
-  - All entries classified as "transitive" (Cargo.lock does not distinguish
-    direct vs transitive without Cargo.toml cross-reference).
-  - Each dependency includes name, version, and dependency type.
-- **Edge Cases**:
+#### Business Logic
 
-  - No `Cargo.lock` found → returns error.
-  - Empty `Cargo.lock` → returns empty dependency list.
-  - Incomplete package entry at end of file → still captured.
-- **Error Handling**: File read failures propagate as error.
+- The system shall enumerate declared dependencies, versions, and resolution sources from project manifests.
+- Missing dependency manifests shall yield an empty dependency report rather than raising an unhandled failure.
+- When dependency resolution data is partial, the report shall include all successfully parsed entries alongside diagnostic notes.
+- The dependency data source shall remain consistent with the input data used by the security scan capability.
 
----
+#### Edge Cases
+
+- When a project carries no dependencies, the system shall return an empty dependency list.
+- When manifest syntax contains errors in certain dependency blocks, the system shall report all valid entries and append a parse error note.
+- When project manifests are completely missing, the system shall return an empty listing with an informative status.
+
+#### Technical Specification
+
+| Aspect | Detail |
+|--------|--------|
+| **Input** | `MaintenanceRequest::DependencyReport` with project path. |
+| **Output** | `MaintenanceResponse::Dependencies` with dependency listing or scoped error. |
+| **Protocol** | `IDependencyReportProtocol` |
+| **Method** | `run_dependency_report` |
+| **Event** | `DependencyReportGenerated` |
+| **Error** | `MANIFEST_NOT_FOUND`, `DEPENDENCY_PARSE_FAILED` |
+
+#### Test
+
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| Seeded project fixture with manifest and lock file | Surface command requests dependency report | Returns dependency listing matching the fixture's dependency count |
+| Project with no declared dependencies | Surface command requests dependency report | Returns empty dependency listing with successful status |
+| Unreadable or missing manifest file | Surface command requests dependency report | Returns empty listing with scoped error note and no panic |
+
+#### Metric
+
+| Target Metric | Value |
+|---------------|-------|
+| Dependency Enumeration Completeness | 100% |
+| Manifest Parsing Accuracy | 100% |
 
 ### FR-Maintenance-007: Adapter Health Check
 
-- **Description**: Check availability of all 9 linter adapters and return
-  their installation status.
-- **Input**: None.
-- **Output**: Health check result containing a list of adapter statuses
-  (name, language, available flag).
-- **Business Rules**:
+**Description:**
+The system shall verify the installation and operational readiness of all configured linter adapters across all supported language groups and report per-adapter availability.
 
-  - Checks all 9 adapters via version command:
+#### Business Logic
 
-    | Adapter     | Language |
-    | ------------- | ---------- |
-    | clippy      | Rust     |
-    | rustfmt     | Rust     |
-    | cargo-audit | Rust     |
-    | ruff        | Python   |
-    | mypy        | Python   |
-    | bandit      | Python   |
-    | eslint      | JS/TS    |
-    | prettier    | JS/TS    |
-    | tsc         | JS/TS    |
+- The system shall check availability across all configured adapters spanning Rust, Python, JavaScript, and Markdown language groups.
+- The health check shall probe each adapter independently, ensuring missing binaries do not halt execution.
+- Missing or non-executable adapter binaries shall be flagged as unhealthy in the status report without failing the overall command.
+- The returned health report shall explicitly categorize health status for each probed adapter.
 
-  - Each adapter checked via its version command (e.g., `ruff --version`).
-  - Available is `true` if version command succeeds, `false` otherwise.
-- **Edge Cases**:
+#### Edge Cases
 
-  - Adapter not installed → available set to `false`.
-  - Version command produces no output but exits successfully → available
-    set to `true`.
-- **Error Handling**: No error thrown; unavailable adapters reported in the
-  result structure.
+- When an adapter binary is missing from the environment, that adapter shall be marked unhealthy while probing of other adapters continues.
+- When adapter configurations are empty, the system shall return an empty health map without error.
+- When an adapter binary crashes during execution probe, the failure shall be isolated to that adapter's health entry.
 
----
+#### Technical Specification
 
-### FR-Maintenance-008: Self-Update (binary)
+| Aspect | Detail |
+|--------|--------|
+| **Input** | `MaintenanceRequest::HealthCheck` with adapter configurations. |
+| **Output** | `MaintenanceResponse::Health` with per-adapter availability results. |
+| **Protocol** | `IAdapterHealthProtocol` |
+| **Method** | `health_check` |
+| **Event** | `AdapterHealthChecked` |
+| **Error** | `ADAPTER_PROBE_FAILED`, `ADAPTER_BINARY_MISSING` |
 
-- **Description**: Query the latest release from GitHub and install the
-  `lint-arwaky-cli` binary when a newer version is available.
-- **Input**: None (operates on current executable path).
-- **Output**: `SelfUpdateResultVO` — current version, latest tag, upgrade
-  status, human-readable message.
-- **Business Rules**:
-  - Fetches the latest release from `https://api.github.com/repos/rakaarwaky/lint-arwaky/releases/latest`
-    using `curl` via the filesystem IO protocol.
-  - Compares `CARGO_PKG_VERSION` (normalised by stripping the `v` prefix)
-    against the release tag. Only installs when the release tag is strictly
-    greater.
-  - When `check_only` is `true`, reports the result without downloading.
-  - When `check_only` is `false`, downloads the `lint-arwaky-cli` asset and
-    the published `lint-arwaky-cli.sha256` checksum to a temporary file in the
-    same directory as the running binary, verifies the binary's SHA-256 hash
-    against the published value, then moves the verified binary over the
-    existing executable and marks it executable with `chmod +x`.
-- **Edge Cases**:
-  - Network unavailable → graceful error, no crash, `latest_version` empty.
-  - Release tag missing or malformed → graceful error.
-  - Current executable cannot be resolved → error.
-  - Download fails (missing asset, 404) → error logged, no binary replaced.
-  - Published checksum missing or SHA-256 mismatch → error logged, no binary
-    replaced; the downloaded asset is cleaned up.
-  - `chmod` fails → error logged, no binary replaced.
-  - Local version is ahead of the released version → no update triggered.
-- **Error Handling**: All failures return `SelfUpdateResultVO::error()` with
-  a descriptive message; the process exits with `RUNTIME_ERROR`.
+#### Test
 
----
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| Standard environment with installed adapters | Surface command requests adapter health check | Returns health entries covering all configured adapters across all four language groups |
+| Specific adapter binary is missing from PATH | Surface command requests adapter health check | Missing adapter is marked unhealthy while remaining adapters report valid status |
+| Configuration with zero adapters defined | Surface command requests adapter health check | Returns empty health mapping with successful status |
 
----
+#### Metric
 
-## API Contract
+| Target Metric | Value |
+|---------------|-------|
+| Language Group Coverage | 100% |
+| Adapter Probe Isolation | 100% |
 
-### Protocol API
+### FR-Maintenance-008: Self-Update
 
-| Method | Input | Output | Error | Event | Description |
-|---|---|---|---|---|---|
-| `diagnose_toolchain` | — | `ToolchainDiagnostics` | — | — | Diagnose toolchain. |
-| `health_check` | — | `HealthCheckResult` | — | — | Health check. |
-| `run_security_scan` | &FilePath | `SecurityScanReport` | — | — | Run security scan. |
-| `run_dependency_report` | &FilePath | `DependencyReport` | `String` | — | Run dependency report. |
-| `stats` | &FilePath | `MaintenanceStatsVO` | — | — | Stats. |
-| `clean` | — | `` | — | — | Clean. |
-| `update` | — | `` | — | — | Update. |
-| `doctor` | — | `DoctorResultVO` | — | — | Doctor. |
-| `self_update` | bool | `SelfUpdateResultVO` | — | — | Self update. |
+**Description:**
+The system shall download release artifacts from authorized release distribution endpoints, verify artifact integrity and checksums, and atomically replace the active binary.
 
-### Aggregate API
+#### Business Logic
 
-| Method | Input | Output | Error | Event | Description |
-|---|---|---|---|---|---|
-| `execute` | MaintenanceRequest | `MaintenanceResponse` | — | — | Single composite entry point over the feature. |
+- The system shall fetch release metadata and download candidate binaries from the configured distribution source.
+- Checksum and signature verification shall be enforced for all downloads prior to installation.
+- Corrupted, truncated, or unverified download payloads shall be rejected immediately, even if filename patterns match.
+- Binary replacement shall execute atomically so that interrupted updates leave the existing binary unharmed.
+- When the currently running binary is already at the latest release version, the system shall report success with an up-to-date notice.
 
-## Integration Points
+#### Edge Cases
 
-| System | Direction | Purpose | Failure mode |
-| --- | --- | --- | --- |
-| `shared` crate | in | Supply value objects plus the checker, installer, and aggregate contracts | A contract is missing at compile time → the build fails before any command runs |
-| `filesystem` aggregate | in | Read, write, and delete files, list directories, and run external commands | A file operation fails → the command reports the failing path and stops rather than continuing on a partial state |
-| Maintenance checker protocol | out (internal) | Define the shape every individual check implements | A check fails mid-run → the diagnostic reports that specific check as failed and the rest still run |
-| Maintenance commands aggregate | out (internal) | Expose the single composite entry point the surface calls | An unknown subcommand is requested → an invalid-argument error is returned |
-| `cargo audit --json` | in | Audit Rust dependencies for vulnerabilities | The advisory database is unreachable → the audit reports that it could not run, never that no vulnerabilities exist |
-| `pip` | in | Upgrade the Python tooling | The interpreter is managed by the OS and refuses the install → the retry adds the system-packages override |
-| `curl` | in | Query the GitHub releases API and download the release asset | The download fails or the checksum does not match → the running binary is left in place and the failure is reported |
-| `mv` / `chmod` | in | Replace the binary atomically and set its executable bit | The replacement fails → the previous binary is still in place and the failure is reported |
-| `which` | in | Detect whether a tool is on PATH | The tool is not on PATH → it is reported as missing, and the doctor diagnostic says so explicitly |
-| `sha256sum` | in | Verify the integrity of a downloaded binary | The checksum does not match → the download is discarded and the existing binary is untouched |
+- When an update payload fails checksum verification, the update process shall abort and retain the original binary unmodified.
+- When the active binary is already at the latest version, the system shall complete cleanly without initiating a download.
+- When download streams disconnect mid-transfer, all partial files shall be discarded and the active binary left untouched.
 
-## Non-functional Requirements
+#### Technical Specification
 
-| Metric | Target | Measurement method |
-| --- | --- | --- |
-| Doctor latency | Under 2 s for 10 tool checks plus 3 language version checks | Time a full doctor run and record the per-check cost |
-| Stats scan | O(n) in top-level file count | Scale the top-level file count and confirm linear growth |
-| Cache cleanup | A fixed directory list is checked; cost is independent of workspace size | Time cache cleanup against two workspace sizes of very different sizes |
-| Dependency report memory | The full dependency lockfile is resident, suited to projects under 10,000 dependencies | Measure retained size at 10,000 dependencies and assert the report still completes |
-| Tool availability | Availability reflects the exact PATH state at invocation | Remove a tool from PATH and assert doctor reports it missing on the same run |
-| Update integrity | A downloaded binary is verified by checksum before it replaces the running one | Corrupt a download and assert the existing binary is retained and the mismatch is reported |
-| Update atomicity | Replacement is atomic; a failed replacement leaves the previous binary runnable | Interrupt a replacement and assert the previous binary still runs |
-| Concurrency | All subprocess work is synchronous; no async runtime dependency | Inspect the dependency tree for an async runtime and assert it is absent |
+| Aspect | Detail |
+|--------|--------|
+| **Input** | `MaintenanceRequest::SelfUpdate` specifying release source and check-only flag. |
+| **Output** | `MaintenanceResponse::SelfUpdate` with operation outcome. |
+| **Protocol** | `ISelfUpdateProtocol` |
+| **Method** | `self_update` |
+| **Event** | `BinarySelfUpdated` |
+| **Error** | `RELEASE_NOT_FOUND`, `INTEGRITY_CHECK_FAILED`, `ATOMIC_REPLACE_FAILED` |
 
-## Test Scenarios
+#### Test
 
-Each scenario is stated below as a table of cases: the input condition and the expected result.
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| Active binary is older than published release | Surface command requests binary self-update | Downloads release, validates checksum, atomically replaces binary, and reports success |
+| Downloaded payload is corrupted or tampered | Surface command requests binary self-update | Integrity verification fails, binary remains untouched, and error is returned |
+| Active binary already matches latest release | Surface command requests binary self-update | Returns up-to-date status without modifying active binary |
 
-- **SCEN-001 — Doctor** — e.g. All required tools OK → healthy: true, all statuses "OK"
-- **SCEN-002 — Stats** — e.g. Directory with mixed files → Per-language counts + overall totals
-- **SCEN-003 — Clean** — e.g. Project with .pytest_cache, **pycache** → Directories removed
-- **SCEN-004 — Update** — e.g. Python tools upgrade → pip install --upgrade per tool
-- **SCEN-005 — Diagnose** — e.g. cargo + rustc installed → Status "OK"
-- **SCEN-006 — Security** — e.g. Rust project with Cargo.lock → Runs cargo-audit
-- **SCEN-007 — Dependencies** — e.g. Rust project with Cargo.lock → Parses all packages
-- **SCEN-008 — Adapter Health Check** — e.g. All 9 adapters installed → All available: true
-- **SCEN-009 — Self-Update** — e.g. GitHub reachable, same version → already_up_to_date=true, upgraded=false
+#### Metric
 
-- **SCEN-001 — Doctor**
+| Target Metric | Value |
+|---------------|-------|
+| Integrity Verification Enforcement | 100% |
+| Atomic Replacement Failure Rate | 0% |
 
-FRD Ref: FR-Maintenance-001
+## Public Interface
 
-| # | Scenario | Expected |
-| - | - | - |
-| 1 | All required tools OK | healthy: true, all statuses "OK" |
-| 2 | Missing rustc (required) | healthy: false |
-| 3 | Missing ruff (optional) | Status "WARN" in adapter_statuses |
-| 4 | Language runtimes installed | Versions reported (rustc, python3, node) |
-| 5 | Language runtime missing | Version "NOT FOUND" |
+| Aspect | Detail |
+|--------|--------|
+| Agent | `MaintenanceCommandsOrchestrator` |
+| Aggregate | `IMaintenanceAggregate` |
+| Method | `execute` |
+| Request | `MaintenanceRequest` |
+| Response | `MaintenanceResponse` |
 
-- **SCEN-002 — Stats**
+## Reference
 
-FRD Ref: FR-Maintenance-002
-
-| # | Scenario | Expected |
-| - | - | - |
-| 1 | Directory with mixed files | Per-language counts + overall totals |
-| 2 | Python project with test files | Correct test ratio |
-| 3 | Directory with no source files | All zeros, ratio 0.0 |
-| 4 | Empty directory | All zeros, ratio 0.0 |
-
-- **SCEN-003 — Clean**
-
-FRD Ref: FR-Maintenance-003
-
-| # | Scenario | Expected |
-| - | - | - |
-| 1 | Project with .pytest_cache, **pycache** | Directories removed |
-| 2 | Project with target/ | Directory removed |
-| 3 | No cache directories | No-op |
-
-- **SCEN-004 — Update**
-
-FRD Ref: FR-Maintenance-004
-
-| # | Scenario | Expected |
-| - | - | - |
-| 1 | Python tools upgrade | pip install --upgrade per tool |
-| 2 | pip not installed | Warning, no crash |
-
-- **SCEN-005 — Diagnose**
-
-FRD Ref: FR-Maintenance-001
-
-| # | Scenario | Expected |
-| - | - | - |
-| 1 | cargo + rustc installed | Status "OK" |
-| 2 | Missing clippy (required) | Status "FAIL" |
-| 3 | Missing mypy (optional) | Status "WARN" |
-| 4 | Missing eslint (optional) | Status "WARN" |
-
-- **SCEN-006 — Security**
-
-FRD Ref: FR-Maintenance-005
-
-| # | Scenario | Expected |
-| - | - | - |
-| 1 | Rust project with Cargo.lock | Runs cargo-audit |
-| 2 | No Cargo.lock | tool_installed: false, empty findings |
-| 3 | cargo-audit not installed | tool_installed: false, empty findings |
-| 4 | No vulnerabilities | Empty findings, success |
-
-- **SCEN-007 — Dependencies**
-
-FRD Ref: FR-Maintenance-006
-
-| # | Scenario | Expected |
-| - | - | - |
-| 1 | Rust project with Cargo.lock | Parses all packages |
-| 2 | No Cargo.lock | Returns error |
-| 3 | Empty Cargo.lock | Empty dependency list |
-
-- **SCEN-008 — Adapter Health Check**
-
-FRD Ref: FR-Maintenance-007
-
-| # | Scenario | Expected |
-| - | - | - |
-| 1 | All 9 adapters installed | All available: true |
-| 2 | Missing ruff | ruff available: false |
-| 3 | No adapters installed | All available: false |
-
-- **SCEN-009 — Self-Update**
-
-FRD Ref: FR-Maintenance-008
-
-| # | Scenario | Expected |
-| - | - | - |
-| 1 | GitHub reachable, same version | already_up_to_date=true, upgraded=false |
-| 2 | GitHub reachable, newer version | latest_version set, upgraded=true (when not check-only) |
-| 3 | check_only=true | No download performed; status reports current tag |
-| 4 | Network unavailable | latest_version empty, status starts with "Error:" |
-| 5 | Local version ahead of release | already_up_to_date=true (local > released) |
-
----
-
-## Assumptions & Constraints
-
-- The crate assumes `pip`, `cargo`, `npm`, `which`, `curl`, `mv`, and
-  `chmod` are available in the system PATH when invoked.
-- Security scanning requires `cargo-audit` to be installed for Rust projects.
-- Dependency parsing is line-based (not full TOML/lockfile parsing); may
-  miss edge cases in complex manifests.
-- Cache cleanup operates on CWD; the caller must ensure the correct working
-  directory.
-- All subprocess operations use `std::process::Command` (synchronous).
-  No async runtime dependency.
-- The maintenance crate performs its own file walking for ops purposes
-  (stats, clean). This is distinct from source code analysis walking
-  handled by the filesystem crate.
-- Security scanning and dependency reporting currently cover Rust projects only.
-  Python and JS/TS support is planned; see BACKLOG.md for status.
-
----
-
-## Glossary
-
-- **AES**: Agentic Engineering System — the 7-layer coding convention
-- **Toolchain**: The set of programming language tools (compilers, linters, formatters) installed on the system
-- **Dependency Report**: A listing of all project dependencies with name, version, and classification
-- **Cache Directory**: Temporary build/lint output directories that can be safely deleted
-- **Self-Update**: Process of downloading the latest release binary from GitHub and replacing the running executable
-- **Security Finding**: A vulnerability detected by cargo-audit in project dependencies
-
----
+| Artifact | Purpose | Link |
+|----------|---------|------|
+| PRD | Business goals, user stories, and scope | [PRD.md](../../PRD.md) |
+| Backlog | Task tracking, epics, and implementation status | [BACKLOG.md](./BACKLOG.md) |
+| Roadmap | Timeline, phasing, and dependencies | [ROADMAP.md](../../ROADMAP.md) |
+| Architecture | System boundaries, tech stack, and infra | [ARCHITECTURE.md](../../ARCHITECTURE.md) |

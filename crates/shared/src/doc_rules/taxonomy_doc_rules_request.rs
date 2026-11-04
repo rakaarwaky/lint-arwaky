@@ -27,12 +27,14 @@ pub struct DocFinding {
     /// 1-based line in the document the finding anchors to.
     /// Document-level findings that have no concrete line use `0` or `1`.
     pub line: usize,
-    /// Severity of the finding. All AES6xx rules are HIGH per RULES_AES.
+    /// Severity of the finding. All AES6xx rules are HIGH per ARCHITECTURE.md §19.
     pub severity: Severity,
     /// Why the invariant matters. Rendered on its own line in the report, so
     /// it holds the reason and not a restatement of `message`.
+    #[serde(default)]
     pub why: String,
     /// What to do about it. Rendered on its own line under `why`.
+    #[serde(default)]
     pub fix: String,
 }
 
@@ -93,24 +95,38 @@ impl DocFinding {
             message: LintMessage::new(self.message.clone()),
             severity: self.severity.clone(),
             violation_name: self.violation_type.to_string(),
-            why: String::new(),
-            fix: String::new(),
+            why: self.why.clone(),
+            fix: self.fix.clone(),
         }
     }
 }
+
+/// Doc-rules configuration loaded from `lint_arwaky.config.yaml`.
+pub type DocRulesConfigRef = crate::taxonomy_doc_audit_context_vo::DocRulesConfig;
+pub type StrictModeOverrideRef = crate::taxonomy_doc_audit_context_vo::StrictModeOverride;
 
 /// The verb set the document chain supports today.
 pub enum DocRequest {
     /// Audit every document under *root* that the document chain recognizes.
     /// Returns an array of findings across all inspected documents.
-    AuditAll { root: PathBuf },
+    AuditAll {
+        root: PathBuf,
+        config: Option<DocRulesConfigRef>,
+        strict_override: StrictModeOverrideRef,
+    },
 }
 
 impl DocRequest {
     /// Build the audit-all request.
-    pub fn audit_all(root: impl AsRef<Path>) -> Self {
+    pub fn audit_all(
+        root: impl AsRef<Path>,
+        config: Option<DocRulesConfigRef>,
+        strict_override: StrictModeOverrideRef,
+    ) -> Self {
         Self::AuditAll {
             root: root.as_ref().to_path_buf(),
+            config,
+            strict_override,
         }
     }
 }

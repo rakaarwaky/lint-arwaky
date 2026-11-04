@@ -4,7 +4,7 @@
 use shared_cli_commands::{LintResult, LintResultList};
 use shared_common::taxonomy_layer_vo::LayerMapVO;
 use shared_common::taxonomy_layer_vo::LayerNameVO;
-use shared_common::utility_layer_detector;
+use shared_common::utility_architecture_layer_detector;
 use shared_common::{FilePath, FilePathList, Identity, Severity};
 use shared_filesystem::taxonomy_filesystem_vo::ImportEntry;
 
@@ -135,21 +135,24 @@ impl ArchImportMandatoryChecker {
         }
 
         // 1. Determine the file's layer
-        let filename = utility_layer_detector::extract_filename(file);
-        let source_layer = match utility_layer_detector::detect_layer_from_prefix(filename) {
-            Some(base) => {
-                let specialized =
-                    utility_layer_detector::resolve_specialized_layer(&base, file, layer_keys);
-                // Extract clean layer name from stem for message
-                let stem: &str = basename.rsplit('.').next_back().map_or(basename, |s| s);
-                let clean_layer = stem.split('_').next().map_or("unknown", |s| s);
-                (specialized, clean_layer.to_string())
-            }
-            None => {
-                // No layer prefix — skip (naming rules handles prefix correctness)
-                return;
-            }
-        };
+        let filename = utility_architecture_layer_detector::extract_filename(file);
+        let source_layer =
+            match utility_architecture_layer_detector::detect_layer_from_prefix(filename) {
+                Some(base) => {
+                    let specialized =
+                        utility_architecture_layer_detector::resolve_specialized_layer(
+                            &base, file, layer_keys,
+                        );
+                    // Extract clean layer name from stem for message
+                    let stem: &str = basename.rsplit('.').next_back().map_or(basename, |s| s);
+                    let clean_layer = stem.split('_').next().map_or("unknown", |s| s);
+                    (specialized, clean_layer.to_string())
+                }
+                None => {
+                    // No layer prefix — skip (naming rules handles prefix correctness)
+                    return;
+                }
+            };
         let (layer_name, source_layer_clean) = source_layer;
 
         // 2. Get default mandatory list from layer definitions
@@ -281,7 +284,9 @@ impl ArchImportMandatoryChecker {
                     .map(|n| n.to_string_lossy().to_string())
                     .unwrap_or_default();
                 let resolved_layer =
-                    shared_common::utility_layer_detector::detect_layer_from_prefix(&resolved_file);
+                    shared_common::utility_architecture_layer_detector::detect_layer_from_prefix(
+                        &resolved_file,
+                    );
                 let layer_matches = resolved_layer.as_deref() == Some(layer_str);
                 let suffix_matches = suffixes.is_empty()
                     || suffixes.iter().any(|s| {

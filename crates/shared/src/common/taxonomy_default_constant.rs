@@ -3,10 +3,16 @@
 
 /// Default directories to always ignore during filesystem scanning.
 /// These are universal across all languages and project types.
+/// `tests` and `benches` remain here so AES101/AES102 (production source
+/// naming/suffix policy) never fire on test-suite files — AES103 is the rule
+/// that owns `tests/`+`benches/` per ARCHITECTURE.md, and AES301's "every
+/// scanned source file" intent is expressed through the config-merge path.
 /// Config-specified ignored_paths are merged ON TOP of these defaults.
 pub const DEFAULT_IGNORED_PATHS: &[&str] = &[
     ".git",
     "node_modules",
+    "tests",
+    "benches",
     "target",
     "dist",
     "build",
@@ -15,8 +21,6 @@ pub const DEFAULT_IGNORED_PATHS: &[&str] = &[
     "__pycache__",
     ".mypy_cache",
     ".ruff_cache",
-    "tests",
-    "benches",
 ];
 
 /// Default file exceptions for rule checkers (naming, import, quality, orphan).

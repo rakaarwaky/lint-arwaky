@@ -1,5 +1,5 @@
 // Unit tests for ConfigParserProvider — YAML and TOML config parsing.
-mod common;
+mod mock_common;
 
 use config_system_lint_arwaky::capabilities_parser_provider::ConfigParserProvider;
 use shared_common::FilePath;
@@ -8,7 +8,7 @@ use std::fs;
 use tempfile::TempDir;
 
 fn make_parser() -> ConfigParserProvider {
-    ConfigParserProvider::new(common::make_io())
+    ConfigParserProvider::new(mock_common::make_io())
 }
 
 #[test]
@@ -18,8 +18,6 @@ fn parse_yaml_config_happy_path() {
 thresholds:
   score:
     value: 85.0
-  complexity:
-    value: 12
   max_file_lines:
     value: 400
 adapters:
@@ -34,7 +32,6 @@ adapters:
     let config = make_parser().parse_yaml_config(&fp).unwrap();
     assert_eq!(config.project_name.value, "my-project");
     assert_eq!(config.thresholds.score.value, 85.0);
-    assert_eq!(config.thresholds.complexity.value, 12);
     assert_eq!(config.adapters.len(), 1);
 }
 
@@ -78,7 +75,6 @@ project_name = "my-toml-project"
 
 [tool.lint-arwaky.thresholds]
 score = { value = 90.0 }
-complexity = { value = 8 }
 max_file_lines = { value = 300 }
 "#;
     let path = tmp.path().join("pyproject.toml");
@@ -139,7 +135,7 @@ fn parse_toml_config_invalid_toml() {
 
 #[test]
 fn new_creates_instance() {
-    let _a = ConfigParserProvider::new(common::make_io());
+    let _a = ConfigParserProvider::new(mock_common::make_io());
 }
 
 #[test]

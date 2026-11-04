@@ -15,11 +15,11 @@ There are 3 test workspaces with 2 variants each:
 > on-screen feedback. The CLI path is unaffected by #606 and is preferred for demos
 > against larger codebases. Remove this note once #606 closes.
 
-| Category         | Bad Path                     | Good Path                     | Purpose                                     |
-| ---------------- | ---------------------------- | ----------------------------- | ------------------------------------------- |
-| Rust (crates)    | `workspaces-bad/crates/`   | `workspaces-good/crates/`   | AES Rust rules + Clippy/Rustfmt/cargo-audit |
-| Python (modules) | `workspaces-bad/modules/`  | `workspaces-good/modules/`  | AES Python rules + Ruff/MyPy/Bandit         |
-| JS/TS (packages) | `workspaces-bad/packages/` | `workspaces-good/packages/` | AES JS/TS rules + ESLint/Prettier/tsc       |
+| Category         | Bad Path                     | Good Path                     | Purpose                                    |
+| ---------------- | ---------------------------- | ----------------------------- | -------------------------------------------|
+| Rust (crates)    | `workspaces-bad/crates/`   | `workspaces-good/crates/`   | AES Rust rules + Clippy/Rustfmt/cargo-audit|
+| Python (modules) | `workspaces-bad/modules/`  | `workspaces-good/modules/`  | AES Python rules + Ruff/MyPy/Bandit        |
+| JS/TS (packages) | `workspaces-bad/packages/` | `workspaces-good/packages/` | AES JS/TS rules + ESLint/Prettier/tsc      |
 
 ### Workspace Structure
 
@@ -44,25 +44,28 @@ workspaces-good/
 
 ### Expected Violation Counts
 
-| Workspace | Language | Files | Violations | False Positives | Expected AES Codes |
-| --------- | -------- | ----- | ---------- | --------------- | ------------------ |
-| bad       | Rust     | 156   | ≥ 100 (non-regressing floor) | — | 35 unique codes |
-| bad       | Python   | 160   | ≥ 100 (non-regressing floor) | — | 35 unique codes |
-| bad       | JS/TS    | 114   | ≥ 100 (non-regressing floor) | — | 35 unique codes |
-| good      | Rust     | 35    | 0          | 0               | —                  |
-| good      | Python   | 42    | 0          | 0               | —                  |
-| good      | JS/TS    | 33    | 0          | 0               | —                  |
+| Workspace | Language | Files | Violations | False Positives | Expected AES Codes|
+| --------- | -------- | ----- | ---------- | --------------- | ------------------|
+| bad       | Rust     | 156   | ≥ 100 (non-regressing floor) | — | 41 unique codes|
+| bad       | Python   | 160   | ≥ 100 (non-regressing floor) | — | 41 unique codes|
+| bad       | JS/TS    | 114   | ≥ 100 (non-regressing floor) | — | 41 unique codes|
+| good      | Rust     | 35    | 0          | 0               | —                 |
+| good      | Python   | 42    | 0          | 0               | —                 |
+| good      | JS/TS    | 33    | 0          | 0               | —                 |
 
 > **Note**: workspaces-good must produce exactly 0 violations. If any violation
-> appears, it is a false positive that must be fixed. Bad workspaces must not regress
-> below the documented ≥ 100 violation floor per language.
+> appears, it is a false positive that must be fixed. Bad workspaces must not
+> regress below the documented ≥ 100 violation floor per language.
 >
 > **Reconciled rule count (single source of truth — §3.2):** the product
-> enforces **35 AES rules** total (per RULES_AES.md and the §3.2 Per-Rule
-> Detection Matrix). `scan` now surfaces **all 35** — including the five
-> doc-invariant codes AES601–AES605, which the doc-audit pass folds into
-> every scan target. The CI "AES Codes Check" gate enforces all 35 unique
-> codes per scan — no safety margin (QA #636).
+> enforces **41 AES rules** total (per the ARCHITECTURE.md Rule Index table
+> and the §3.2 Per-Rule Detection Matrix). `scan` surfaces **all 41** in a
+> whole-workspace scan. Each member folder (`crates`, `modules`, `packages`)
+> carries its own root-doc set so that a per-member scan also surfaces all
+> 41 codes — the linter's doc-audit walk roots at the scan target, so a
+> per-member scan collects root docs from the member directory itself. The
+> CI "AES Codes Check" gate enforces all 41 unique codes per scan — no
+> safety margin (QA #636).
 >
 > **External tools prerequisite**: Python & JS/TS scans require external tools
 > installed (ruff, mypy, bandit, eslint, prettier, tsc, markdownlint-cli2) for
@@ -70,6 +73,17 @@ workspaces-good/
 > `.github/workflows/ci.yml` installs all seven tools and asserts tool-native
 > (non-AES) violation codes appear in the bad-workspace scan output before the
 > job can pass (QA #637).
+>
+> **Gitleaks secret-scanning gate**: the `self-lint` job also installs
+> Gitleaks (pinned to `v8.18.4`) and runs the Gitleaks adapter end-to-end on
+> the fixture dirs `workspaces-bad/fixtures/gitleaks/` and
+> `workspaces-good/fixtures/gitleaks/`. The bad-workspace fixture files
+> carry Gitleaks' own public test vectors and the bad workspace intentionally
+> ships no `.gitleaks.toml` (so Gitleaks' built-in default rule set applies);
+> the good-workspace file is
+> allowlisted in `workspaces-good/.gitleaks.toml` so the scan reports zero
+> findings there. The CI step asserts at least one `RuleID` appears in the
+> bad-workspace JSON report and none in the good-workspace report.
 
 See [README.md](README.md) for CLI reference and
 [ARCHITECTURE.md](ARCHITECTURE.md) for AES background.
@@ -97,9 +111,7 @@ cd <repo-root>
 cargo run --bin lint-arwaky-cli -- scan .
 ```
 
-> `scan .` runs ALL 7 code linters (naming, import, quality, role, orphan, structure, external) on the lint-arwaky codebase itself. Expected: **0 violations**. Document invariants (AES601–AES605) are audited separately with `docs .`.
-
-
+> `scan .` runs ALL 7 code linters (naming, import, quality, role, orphan, structure, external) on the lint-arwaky codebase itself. Expected: **0 violations**. Document invariants (AES601–AES610) are audited separately with `docs .`.
 
 ### 2.2 Scan Test Projects
 
@@ -169,13 +181,13 @@ cargo run --bin lint-arwaky-cli -- surface workspaces-bad/crates --format json
 
 Pass/fail criteria:
 
-| Check | Expected |
-| --- | --- |
-| Every file a layer command reports carries that layer's prefix (`taxonomy_`, `contract_`, `capabilities_`, `utility_`, `agent_`, `surface_`) | no foreign layer in any output |
-| `taxonomy` on `workspaces-bad/crates` | > 0 violations, all in `taxonomy_*` files |
-| Each of the six layer commands on `workspaces-good/crates` | **0** violations |
-| `root_*` files | reported by `scan` / `check` only — `root` has no subcommand |
-| A folder-level structure finding (AES702) or a doc invariant (AES601–605) | absent from all six layer commands; reported by `structure` / `docs` |
+| Check | Expected|
+| --- | ---|
+| Every file a layer command reports carries that layer's prefix (`taxonomy_`, `contract_`, `capabilities_`, `utility_`, `agent_`, `surface_`) | no foreign layer in any output|
+| `taxonomy` on `workspaces-bad/crates` | > 0 violations, all in `taxonomy_*` files|
+| Each of the six layer commands on `workspaces-good/crates` | **0** violations|
+| `root_*` files | reported by `scan` / `check` only — `root` has no subcommand|
+| A folder-level structure finding (AES702) or a doc invariant (AES601–606) | absent from all six layer commands; reported by `structure` / `docs`|
 
 ```bash
 # Assert no layer command reports a foreign layer on the good workspace.
@@ -220,98 +232,118 @@ cargo llvm-cov nextest --workspace --lib --tests --summary-only
 
 Thresholds match the §1 Expected Violation Counts table (≥ 100 violations floor per language; 0 in good workspaces).
 
-| Criteria                       | PASS   | FAIL       |
-| ------------------------------ | ------ | ---------- |
-| Total violations (Rust scan)   | >= 100 | < 100 or 0 |
-| Total violations (Python scan) | >= 100 | < 100 or 0 |
-| Total violations (JS/TS scan)  | >= 100 | < 100 or 0 |
-| Unique AES codes (Rust)        | >= 35  | < 35       |
-| Unique AES codes (Python)      | >= 35  | < 35       |
-| Unique AES codes (JS/TS)       | >= 35  | < 35       |
-| Self-lint violations           | 0      | > 0        |
-| Doc-consistency gate failures  | 0      | > 0        |
+| Criteria                       | PASS   | FAIL      |
+| ------------------------------ | ------ | ----------|
+| Total violations (Rust scan)   | >= 100 | < 100 or 0|
+| Total violations (Python scan) | >= 100 | < 100 or 0|
+| Total violations (JS/TS scan)  | >= 100 | < 100 or 0|
+| Unique AES codes (crates)      | >= 41  | < 41      |
+| Unique AES codes (modules)     | >= 41  | < 41      |
+| Unique AES codes (packages)    | >= 41  | < 41      |
+| Self-lint violations           | 0      | > 0       |
+| Doc-consistency gate failures  | 0      | > 0       |
 
-> The "Unique AES codes" threshold is the reconciled scan-visible count from
-> §1/§3.2 (all 35 AES rules; AES601–AES605 are now surfaced by the doc-audit
-> pass inside `scan`). The CI "AES Codes Check" step enforces exactly 35
+> The "Unique AES codes" thresholds are the reconciled scan-visible counts
+> from §3.2 (41 AES rules total). Each member folder carries its own
+> root-doc set so that a per-member scan (`scan workspaces-bad/crates`,
+> `scan workspaces-bad/modules`, `scan workspaces-bad/packages`) surfaces
+> all 41 codes. The CI "AES Codes Check" step enforces the 41-code floor
 > with no lower safety margin, so a detection regression in any one of the
-> 35 rules fails CI (QA #636). When rules are added/removed, update §3.2, this table,
-> §1, and the `ci.yml` threshold in lockstep.
+> 41 rules fails CI (QA #636). When rules are added/removed, update §3.2,
+> this table, §1, and the `ci.yml` threshold in lockstep.
 
 ### 3.2 Per-Rule Detection Matrix
 
 Every AES rule MUST produce at least 1 violation in the test workspaces.
 If any rule produces 0 violations, the test project is missing a trigger file.
 
-| Rule   | Description                            | Rust | Python | JS/TS |
-| ------ | -------------------------------------- | ---- | ------ | ----- |
-| AES101 | Naming convention                      | ✓   | ✓     | ✓    |
-| AES102 | Suffix/prefix validation               | ✓   | ✓     | ✓    |
-| AES103 | Test/bench file prefix                 | ✓   | ✓     | ✓    |
-| AES201 | Layer dependency violation             | ✓   | ✓     | ✓    |
-| AES202 | Mandatory import missing               | ✓   | ✓     | ✓    |
-| AES203 | Unused import                          | ✓   | ✓     | ✓    |
-| AES204 | Dummy import / function                | ✓   | ✓     | ✓    |
-| AES205 | Circular dependency                    | ✓   | ✓     | ✓    |
-| AES301 | Max line count exceeded                | ✓   | ✓     | ✓    |
-| AES302 | Min line count below                   | ✓   | ✓     | ✓    |
-| AES303 | Missing definitions / dead inheritance | ✓   | ✓     | ✓    |
-| AES304 | Bypass detection                       | ✓   | ✓     | ✓    |
-| AES305 | Duplicate code                         | ✓   | ✓     | ✓    |
-| AES401 | Taxonomy purity                        | ✓   | ✓     | ✓    |
-| AES402 | Contract primitives                    | ✓   | ✓     | ✓    |
-| AES403 | Capability implementation              | ✓   | ✓     | ✓    |
-| AES404 | Utility purity                         | ✓   | ✓     | ✓    |
-| AES405 | Agent composition, delegation, blocks   | ✓   | ✓     | ✓    |
-| AES406 | Surface passive role                   | ✓   | ✓     | ✓    |
-| AES501 | Taxonomy orphan                        | ✓   | ✓     | ✓    |
-| AES502 | Contract orphan                        | ✓   | ✓     | ✓    |
-| AES503 | Capabilities orphan                    | ✓   | ✓     | ✓    |
-| AES504 | Utility orphan                         | ✓   | ✓     | ✓    |
-| AES505 | Agent orphan                           | ✓   | ✓     | ✓    |
-| AES506 | Surface orphan                         | ✓   | ✓     | ✓    |
-| AES601 | FR Format                              | ✓   |       |      |
-| AES602 | Section Structure                      | ✓   |       |      |
-| AES602 | Section Structure — level-3 template parity (`h3_off_template`) | ✓ |  |  |
-| AES603 | Spec Purity                            | ✓   |       |      |
-| AES604 | Crosslinks                             | ✓   |       |      |
-| AES605 | Doc Heading Structure                  | ✓   |       |      |
-| AES701 | Shared folder purity                   | ✓   | ✓     | ✓    |
-| AES702 | Feature folder health                  | ✓   | ✓     | ✓    |
-| AES703 | Surface folder purity                  | ✓   | ✓     | ✓    |
-| AES704 | Test-suite category coverage           | ✓   | ✓     | ✓    |
+| Rule   | Description                            | Rust | Python | JS/TS| Whole Tree¹|
+| ------ | -------------------------------------- | ---- | ------ | ---- | -----------|
+| AES101 | Naming convention                      | ✓   | ✓     | ✓   | ✓          |
+| AES102 | Suffix/prefix validation               | ✓   | ✓     | ✓   | ✓          |
+| AES103 | Test/bench file prefix                 | ✓   | ✓     | ✓   | ✓          |
+| AES201 | Layer dependency violation             | ✓   | ✓     | ✓   | ✓          |
+| AES202 | Mandatory import missing               | ✓   | ✓     | ✓   | ✓          |
+| AES203 | Unused import                          | ✓   | ✓     | ✓   | ✓          |
+| AES204 | Dummy import / function                | ✓   | ✓     | ✓   | ✓          |
+| AES205 | Circular dependency                    | ✓   | ✓     | ✓   | ✓          |
+| AES301 | Max line count exceeded                | ✓   | ✓     | ✓   | ✓          |
+| AES302 | Min line count below                   | ✓   | ✓     | ✓   | ✓          |
+| AES303 | Missing definitions / dead inheritance | ✓   | ✓     | ✓   | ✓²         |
+| AES304 | Bypass detection                       | ✓   | ✓     | ✓   | ✓          |
+| AES305 | Duplicate code                         | ✓   | ✓     | ✓   | ✓          |
+| AES401 | Taxonomy purity                        | ✓   | ✓     | ✓   | ✓          |
+| AES402 | Contract primitives                    | ✓   | ✓     | ✓   | ✓          |
+| AES403 | Capability implementation              | ✓   | ✓     | ✓   | ✓          |
+| AES404 | Utility purity                         | ✓   | ✓     | ✓   | ✓          |
+| AES405 | Agent composition, delegation, blocks   | ✓   | ✓     | ✓   | ✓          |
+| AES406 | Surface passive role                   | ✓   | ✓     | ✓   | ✓          |
+| AES501 | Taxonomy orphan                        | ✓   | ✓     | ✓   | ✓          |
+| AES502 | Contract orphan                        | ✓   | ✓     | ✓   | ✓          |
+| AES503 | Capabilities orphan                    | ✓   | ✓     | ✓   | ✓          |
+| AES504 | Utility orphan                         | ✓   | ✓     | ✓   | ✓          |
+| AES505 | Agent orphan                           | ✓   | ✓     | ✓   | ✓          |
+| AES506 | Surface orphan                         | ✓   | ✓     | ✓   | ✓          |
+| AES601 | AGENTS doc invariants                  |  |   |  | ✓          |
+| AES602 | README doc invariants                  |  |   |  | ✓          |
+| AES603 | ARCHITECTURE doc invariants            |  |   |  | ✓          |
+| AES604 | CONTRIBUTING doc invariants            |  |   |  | ✓          |
+| AES605 | PRD doc invariants                     |  |   |  | ✓          |
+| AES606 | ROADMAP doc invariants                 |  |   |  | ✓          |
+| AES607 | BACKLOG doc invariants                 |  |   |  | ✓          |
+| AES608 | DATA doc invariants                    |  |   |  | ✓          |
+| AES609 | FRD doc invariants                     |  |   |  | ✓          |
+| AES610 | DESIGN doc invariants                  |  |   |  | ✓          |
+| AES701 | Shared folder purity                   | ✓   | ✓     | ✓   | ✓          |
+| AES702 | Feature folder health                  | ✓   | ✓     | ✓   | ✓          |
+| AES703 | Surface folder purity                  | ✓   | ✓     | ✓   | ✓          |
+| AES704 | Test-suite category coverage           | ✓   | ✓     | ✓   | ✓          |
+| AES705 | Member-root placement                  | ✓   | ✓     | ✓   | ✓          |
+| AES706 | PR folder mapping                      | ✓   | ✓     | ✓   | ✓          |
+
+¹ The AES6xx doc-invariant codes fire on the root spec documents (AGENTS.md,
+README.md, ARCHITECTURE.md, CONTRIBUTING.md, PRD.md, ROADMAP.md, DATA.md,
+BACKLOG.md, FRD.md, DESIGN.md) via the doc-audit pass folded into `scan`.
+Each member folder carries its own copy of the root docs plus a
+`surface_probe` folder with a DESIGN.md, so a per-member scan
+(`scan workspaces-bad/crates`, `scan workspaces-bad/modules`,
+`scan workspaces-bad/packages`) surfaces all 41 codes individually.
+
+² AES303 mandatory-definition is skipped for the `utility` and `surface`
+layers (stateless pure functions and function dispatchers), while remaining
+active for taxonomy, contract, capabilities, agent, and root.
 
 ### 3.3 Negative Tests (must produce 0 violations)
 
-| #  | Scenario                                                | Expected                                        |
-| -- | ------------------------------------------------------- | ----------------------------------------------- |
-| 1  | Barrel file (`mod.rs`, `__init__.py`, `index.ts`) | 0 violations (skipped)                          |
-| 2  | File in`exceptions` list                              | 0 violations (skipped)                          |
-| 3  | Config`architecture.enabled: false`                   | 0 violations (all rules disabled)               |
-| 4  | Rule`AES201.enabled: false`                           | 0 AES201 violations (other rules still run)     |
-| 5  | Clean, well-structured file                             | 0 violations                                    |
-| 6  | `pub use` re-export in barrel file                    | 0 violations (not flagged as unused/dummy)      |
-| 7  | `unwrap_or_default()` usage                           | 0 AES304 violations (safe variant)              |
-| 8  | Import inside`#[cfg(test)]` block                     | 0 violations (conditional skip)                 |
-| 9  | Root layer file (`root_*`)                            | 0 role-rule violations (skipped)                |
-| 10 | File with`parse_ok = false`                           | PARSE_WARN emitted, file skipped for AES checks |
+| #  | Scenario                                                | Expected                                       |
+| -- | ------------------------------------------------------- | -----------------------------------------------|
+| 1  | Barrel file (`mod.rs`, `__init__.py`, `index.ts`) | 0 violations (skipped)                         |
+| 2  | File in`exceptions` list                              | 0 violations (skipped)                         |
+| 3  | Config`architecture.enabled: false`                   | 0 violations (all rules disabled)              |
+| 4  | Rule`AES201.enabled: false`                           | 0 AES201 violations (other rules still run)    |
+| 5  | Clean, well-structured file                             | 0 violations                                   |
+| 6  | `pub use` re-export in barrel file                    | 0 violations (not flagged as unused/dummy)     |
+| 7  | `unwrap_or_default()` usage                           | 0 AES304 violations (safe variant)             |
+| 8  | Import inside`#[cfg(test)]` block                     | 0 violations (conditional skip)                |
+| 9  | Root layer file (`root_*`)                            | 0 role-rule violations (skipped)               |
+| 10 | File with`parse_ok = false`                           | PARSE_WARN emitted, file skipped for AES checks|
 
 ### 3.4 Exit Code Tests
 
-| #  | Scenario                                      | Expected Exit Code               |
-| -- | --------------------------------------------- | -------------------------------- |
-| 1  | `scan` on clean project                     | 0                                |
-| 2  | `scan` on workspaces-bad (violations found) | 1                                |
-| 3  | `scan` on nonexistent path                  | 2                                |
-| 4  | `scan` with invalid arguments               | 2                                |
-| 5  | `security` without cargo-audit installed    | 3 + visible scanner-missing warning |
-| 6  | `security` on pure Python without `pip-audit` | 3 + visible `pip-audit` warning; never silent `findings: []` |
-| 7  | `security` on JS/TS lockfile without npm      | 3 + visible `npm-audit` warning; never a clean result |
-| 8  | `ci --threshold 0` with violations          | 1                                |
-| 9  | `ci --threshold 100` with few violations    | 0                                |
-| 10 | `fix --dry-run` with violations             | 0 (preview only)                 |
-| 11 | `doctor` with all tools installed           | 0                                |
-| 12 | `doctor` with missing tools                 | 0 (missing tools listed in body) |
+| #  | Scenario                                      | Expected Exit Code              |
+| -- | --------------------------------------------- | --------------------------------|
+| 1  | `scan` on clean project                     | 0                               |
+| 2  | `scan` on workspaces-bad (violations found) | 1                               |
+| 3  | `scan` on nonexistent path                  | 2                               |
+| 4  | `scan` with invalid arguments               | 2                               |
+| 5  | `security` without cargo-audit installed    | 3 + visible scanner-missing warning|
+| 6  | `security` on pure Python without `pip-audit` | 3 + visible `pip-audit` warning; never silent `findings: []`|
+| 7  | `security` on JS/TS lockfile without npm      | 3 + visible `npm-audit` warning; never a clean result|
+| 8  | `ci --threshold 0` with violations          | 1                               |
+| 9  | `ci --threshold 100` with few violations    | 0                               |
+| 10 | `fix --dry-run` with violations             | 0 (preview only)                |
+| 11 | `doctor` with all tools installed           | 0                               |
+| 12 | `doctor` with missing tools                 | 0 (missing tools listed in body)|
 
 ### 3.5 Test Suite Quality Thresholds
 
@@ -320,12 +352,12 @@ Meaningful targets for the quality metrics reporting required by the QA cycle
 (QA #650), cross-referenced from the "Current Quality Status" section in
 [DEPLOY.md](DEPLOY.md):
 
-| Criteria                                        | PASS | FAIL            |
-| ----------------------------------------------- | ---- | --------------- |
-| `cargo nextest run --workspace` pass rate       | 100% | any failing test |
-| `cargo test --doc --workspace` pass rate        | 100% | any failing test |
-| `#[ignore]`d tests without a linked issue + expiry date | 0 | >= 1         |
-| Open CRITICAL defects before release             | 0    | >= 1            |
+| Criteria                                        | PASS | FAIL           |
+| ----------------------------------------------- | ---- | ---------------|
+| `cargo nextest run --workspace` pass rate       | 100% | any failing test|
+| `cargo test --doc --workspace` pass rate        | 100% | any failing test|
+| `#[ignore]`d tests without a linked issue + expiry date | 0 | >= 1        |
+| Open CRITICAL defects before release             | 0    | >= 1           |
 
 > **Baseline to preserve**: the workspace currently has **zero `#[ignore]`d
 > tests** — a test may only be quarantined with a linked tracking issue and an
@@ -365,18 +397,19 @@ remediated under one shared "thin high-risk test suite" theme.
 
 Persona-level end-to-end acceptance scenarios verifying business outcomes beyond synthetic rule fixtures:
 
-| Persona | Scenario | Test Data / Workflow | Expected Business Outcome | Sign-off Status | Verification Evidence |
+| Persona | Scenario | Test Data / Workflow | Expected Business Outcome | Sign-off Status | Verification Evidence|
 |---|---|---|---|---|---|
-| **Developer** | Local onboarding: clone repo, initialize config, verify toolchain, and run first clean architecture scan | Non-fixture real monorepo (`lint-arwaky` root) | Working CI gate & clean local scan reached in < 5 minutes | Verified | `8d4342a` (`init` → `doctor` → `check .`: 0 violations) |
-| **DevOps / CI Engineer** | Pipeline gating: integrate `ci --threshold` into CI workflow | Monorepo with mixed severity violations | Pipeline blocks below threshold (exit 1), allows clean passes (exit 0) | Verified | `8d4342a` (`ci . --threshold 0`: exit 0; bad workspaces: exit 1) |
-| **AI Agent** | Autonomous self-healing: detect AES violations and invoke auto-fix via MCP tools | Mixed workspace with known AES203 unused imports & AES304 bypasses | Violations fixed automatically via `execute_command`; `health_check` confirms clean state | Verified | `8d4342a` (MCP `execute_command fix` + `scan`: clean outcome) |
+| **Developer** | Local onboarding: clone repo, initialize config, verify toolchain, and run first clean architecture scan | Non-fixture real monorepo (`lint-arwaky` root) | Working CI gate & clean local scan reached in < 5 minutes | Verified | `8d4342a` (`init` → `doctor` → `check .`: 0 violations)|
+| **DevOps / CI Engineer** | Pipeline gating: integrate `ci --threshold` into CI workflow | Monorepo with mixed severity violations | Pipeline blocks below threshold (exit 1), allows clean passes (exit 0) | Verified | `8d4342a` (`ci . --threshold 0`: exit 0; bad workspaces: exit 1)|
+| **AI Agent** | Autonomous self-healing: detect AES violations and invoke auto-fix via MCP tools | Mixed workspace with known AES203 unused imports & AES304 bypasses | Violations fixed automatically via `execute_command`; `health_check` confirms clean state | Verified | `8d4342a` (MCP `execute_command fix` + `scan`: clean outcome)|
 
 ---
 
 ## 5. Release Eligibility Checklist
 
 The product-engineering release gate lives in this checklist (5.1-5.8); the dependency
-map and risk tracking live in `ROADMAP.md`'s Dependencies and Risk Register sections;
+map and risk tracking live in `ROADMAP.md`'s Risk Register section; per-feature
+dependency detail lives in each feature's BACKLOG.md;
 role sign-offs and the rollback record live in `DEPLOY.md`'s Release Sign-off Checklist
 and Rollback Record. This section cross-references all three rather than restating them.
 
@@ -425,7 +458,7 @@ The base codebase must be clean of internal architecture rule violations.
 
 - [ ] **Criteria**: Bad workspaces meet aggregate thresholds (Section 3.1).
 - [ ] **Criteria**: Good workspaces produce 0 violations (false positive test).
-- [ ] **Criteria**: All 35 unique AES codes detected per language (Section 3.2).
+- [ ] **Criteria**: All 41 unique AES codes detected per language (Section 3.2).
 - [ ] **Criteria**: All negative tests pass (Section 3.3).
 - [ ] **Criteria**: All exit code tests pass (Section 3.4).
 
@@ -449,9 +482,9 @@ The base codebase must be clean of internal architecture rule violations.
   echo '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | lint-arwaky-mcp
   ```
 
-  **Criteria**: Responds in < 2 seconds with complete list of 5 registered
+  **Criteria**: Responds in < 2 seconds with complete list of 6 registered
   MCP tools (`execute_command`, `list_commands`, `read_skill`, `health_check`,
-  `get_config`).
+  `get_config`, `docs_scaffold`).
 
 ### 5.4 Report Format Verification
 
@@ -505,10 +538,10 @@ Caveats a presenter must know before going live:
 Per-release artifact inventory, populated at tag time and retained for rollback
 (cross-referenced from `DEPLOY.md`'s Deploy checklist and Rollback Record):
 
-| Release | Artifact | Platform | Checksum File | Provenance Attestation | Retained Until |
+| Release | Artifact | Platform | Checksum File | Provenance Attestation | Retained Until|
 |---|---|---|---|---|---|
-| v3.8.0 | `lint-arwaky-cli`, `lint-arwaky-mcp` | linux x86_64 | Not published (see `DEPLOY.md` installation notes / #631) | Generated by `release.yml` (`provenance` job) | — (not yet recorded) |
-| v3.7.1 / v3.7.2 | Never tagged — superseded by v3.8.0 (PE-3-01 / #623, closed) | — | — | — | — |
+| v3.8.0 | `lint-arwaky-cli`, `lint-arwaky-mcp` | linux x86_64 | Not published (see `DEPLOY.md` installation notes / #631) | Generated by `release.yml` (`provenance` job) | — (not yet recorded)|
+| v3.7.1 / v3.7.2 | Never tagged — superseded by v3.8.0 (PE-3-01 / #623, closed) | — | — | — | —|
 
 ### 5.7 Role Sign-offs
 
@@ -519,7 +552,7 @@ Engineering, QA, Documentation, Operations domains), not duplicated here. See PE
 ### 5.8 Dependency Map
 
 The crate-to-crate and crate-to-external-client dependency map is tracked in
-`ROADMAP.md`'s Dependencies section, not duplicated here. See PE-2-01 (#620) and
+each feature's `BACKLOG.md` Dependencies section, not duplicated here. See PE-2-01 (#620) and
 PE-2-03 (#622).
 
 ---

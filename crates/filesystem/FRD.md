@@ -1,16 +1,8 @@
 # FRD — filesystem
 
----
+## Feature Overview
 
-## Reference
-
-- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature; this file is specification only.
-- PRD: [PRD.md](../../PRD.md)
-- Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
-
-## System Overview
-
-The filesystem crate produces filesystem data for all feature crates.
+The filesystem crate produces filesystem data that every other feature crate consumes: parsed entries and import data, the dependency graph, file I/O results, tool availability, and workspace metadata with project language flags.
 
 - **Architecture & Data Flow**
 
@@ -24,8 +16,8 @@ flowchart TD
         O --> P2["IGraphProtocol\n(FR-Filesystem-002)"]
         O --> P3["IFileSystemIOProtocol\n(FR-Filesystem-003)"]
         O --> P4["IToolResolutionProtocol\n(FR-Filesystem-004)"]
-        O --> P5["IWorkspaceProtocol\n(FR-Filesystem-005)\nworkspace root + members\n+ project languages (FR-005B)"]
-        O --> C["Cache\n(DashMap)"]
+        O --> P5["IWorkspaceProtocol\n(FR-Filesystem-005)\nworkspace root + members\n+ project languages"]
+        O --> C["Cache"]
 
         P1 --> T1["tree-sitter parsers\n(Rust, Python, TS, JS)"]
         P1 --> T2["import extractor"]
@@ -33,7 +25,7 @@ flowchart TD
         P3 --> T4["process executor"]
         P4 --> T5["PATH / local binary\nresolver"]
         P5 --> T6["manifest detector\n(Cargo.toml, pyproject, package.json)"]
-        P5 --> T7["extension classifier\n(rs/py/js/md → flags)"]
+        P5 --> T7["extension classifier\n(rs, py, js, md → flags)"]
 
         T1 --> R1["ParsedEntry[]\n+ ImportEntry[]"]
         T2 --> R1
@@ -51,8 +43,7 @@ flowchart TD
     R3 --> D
     R4 --> D
     R5 --> D
-    D -->|"81 methods via\n&dyn IFilesystemAggregate"| A
-
+    D -->|"methods via\n&dyn IFilesystemAggregate"| A
 ```
 
 - **Data Production Map**
@@ -65,399 +56,247 @@ flowchart TD
 | FR-Filesystem-004 | Tool availability + resolved paths |
 | FR-Filesystem-005 | Workspace metadata + project language presence flags |
 
----
-
 ## Functional Requirements
 
-### FR-Filesystem-001: AST Parsing & Import Extraction
+### FR-Filesystem-001: Parse Source Files & Extract Imports
 
-**Description**: Parses source files using tree-sitter and extracts import statements, producing structured file entries with parse metadata and import data.
+**Description:** The filesystem crate shall parse source files with language-specific grammars and extract imports, identifiers, and declared symbols for every file in a batch, producing structured entries that downstream rule crates can query.
 
-**What it produces**: File entries enriched with parse metadata + flat list of import entries, with barrel import resolution.
+#### Business Logic
 
-| Output | Description |
-| --- | --- |
-| Parsed entries | File entries with parse_ok flag and language-specific AST data |
-| Import entries | Source file → target module mapping with resolution status |
-| Resolved imports | Import entries with resolved_path populated via barrel/external resolution |
-| Parse warnings | Diagnostic entries for files that failed to parse |
+- Shall parse a batch of file entries and return per-file parsed entries carrying imports, function/class/enum definitions, trait declarations, and identifiers.
+- Shall use the grammar matching each file's language: Rust, Python, and TypeScript grammars are selected by extension or manifest context.
+- Shall resolve grouped barrel-reexport symbols independently per declaration so that a re-export that names multiple symbols yields one edge per symbol.
+- Shall return an empty import list for a file that contains no imports, treating that as a valid result rather than an error.
 
-**Output**: Parsed file entries with metadata, import entry list, and optional parse warnings.
+#### Edge Cases
 
-**Input**: File entries with content from FR-Filesystem-003.
+- A file with no imports shall yield an empty import list, not a failure.
+- A partially broken or unterminated fixture shall still parse to a partial result; whatever was extracted before the break is returned.
+- A barrel re-export that resolves to multiple files shall resolve each symbol independently; one broken member does not discard the others.
 
-**Business Rules**:
+#### Technical Specification
 
-- Uses tree-sitter with language-specific grammars (Rust, Python, TypeScript, JavaScript).
-- Parsing is parallel via rayon.
-- Each file entry is enriched with parse_ok flag and language-specific structured metadata.
-- Import extraction handles: grouped imports, glob imports, pub re-exports, relative paths, barrel files.
-- Barrel import resolution resolves imports through the language's barrel file to original source files.
-- External crate/package import resolution scans Cargo.toml and package.json to find matching workspace members.
-- Skips external dependencies and conditional imports.
+| Aspect | Detail |
+|--------|--------|
+| **Input** | Batch of `FileEntry` records, or a single path; source is the aggregated scan pipeline from the surface command. |
+| **Output** | `ParsedEntries` carrying imports, definitions, and identifiers, returned through `FilesystemResponse::ParsedEntries` and related variants. |
+| **Protocol** | `IParserProtocol` |
+| **Method** | `ParseAll(entries)` → `ParsedEntries`; `ImportsFor(path)`; `UsedIdentifiers(path)`. |
+| **Event** | None; parsing is synchronous. |
+| **Error** | An unreadable file surfaces as a read failure on the response; a parse failure on a partial file still returns whatever was extracted. |
 
-**Edge Cases**:
+#### Test
 
-- Syntax error: tree-sitter produces partial tree, parse_ok = false.
-- Empty file: parse_ok = true, empty metadata.
-- Unresolvable imports: marked as unresolved.
-- Macro-generated code: invisible to parser.
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| A seeded fixture file with imports is parsed | The aggregate is asked to parse the batch | The response carries the expected import list and symbol counts for that file |
+| A file with no imports is in the batch | The aggregate is asked to parse the batch | That file's import list in the response is empty, not an error |
+| A barrel re-export names multiple symbols | The aggregate is asked to parse the batch | Each symbol resolves to its own source file, independently of the others |
+| A partially broken fixture is parsed | The aggregate is asked to parse the batch | Whatever was extracted before the break is returned, with no crash |
 
-**Error Handling**: Non-fatal — parse errors produce warnings, unresolvable imports marked as unresolved.
+#### Metric
 
----
+| Target Metric | Value |
+|---------------|-------|
+| Parse-success rate over the seeded fixture suite | 100% of seeded fixtures yield their expected import and symbol counts |
+| p95 parse latency for a single file | < 50ms |
 
-### FR-Filesystem-002: Dependency Graph Construction
+### FR-Filesystem-002: Build the Project Dependency Graph
 
-**Description**: Builds a dependency graph from parsed file entries, computing forward/reverse edges, symbol definitions, implementations, reachability, cycles, and orphan detection.
+**Description:** The filesystem crate shall build a project-wide import graph from parsed entries so that downstream rule crates can query reachability between files and symbols.
 
-**What it produces**: Structured graph data with forward links, reverse links, definitions, implementations, cycles, and orphan detection.
+#### Business Logic
 
-| Output | Description |
-| --- | --- |
-| Dependency graph | File → files it imports (forward edges) |
-| Reverse links | File → files that import it (reverse edges) |
-| Symbol definitions | Symbol name → defining file(s) |
-| Implementations | Trait/interface → implementing file(s) |
-| Reachability | Whether two files are connected via import chain |
-| Cycles | Strongly connected components via Kosaraju algorithm |
-| Orphan files | Nodes with no incoming edges |
+- Shall build a file index and a resolved import list from a project root, optionally with an ignored-path list.
+- Shall assemble the orphan-graph context using the ignored-path settings so downstream rules can see which edges are reachable.
+- Shall match container-wiring identifiers to their defining files with substring patterns; self-references and unknown identifiers are skipped.
+- Shall dedupe repeated identifiers in one container so that each identifier contributes exactly one wiring edge.
+- Shall leave an existing forward entry untouched when an implementation is missing, so the graph never regresses.
 
-**Output**: Dependency graph with forward/reverse edges, symbol maps, implementation maps, reachability queries, cycle detection, and orphan file list.
+#### Edge Cases
 
-**Input**: Import entries + parsed file entries from FR-Filesystem-001.
+- A file without a container in its name adds no wiring edge.
+- An empty project builds an empty graph without failure.
+- An identifier with no defining file leaves the existing forward entry untouched; the graph does not grow a dangling edge.
 
-**Business Rules**:
+#### Technical Specification
 
-- Nodes = source files, Edges = import relationships.
-- Parallel construction via DashMap.
-- Barrel re-exports resolved to original source.
-- Graph queries: dependents, dependencies, reachability.
-- Cycle detection via Kosaraju SCC algorithm.
-- Orphan detection identifies files with no incoming import edges.
+| Aspect | Detail |
+|--------|--------|
+| **Input** | Project root filepath plus optional ignored-path list; source is the filesystem aggregate request. |
+| **Output** | File index, import-list snapshot, and orphan-graph context, returned through `FilesystemResponse::ImportListSnapshot` and `GraphContext`. |
+| **Protocol** | `IGraphProtocol` |
+| **Method** | `BuildFileIndex(root)`; `BuildFileIndexWithIgnored(root, ignored)`; `BuildOrphanGraphContext(root, ignored)`. |
+| **Event** | None; the graph is built in memory. |
+| **Error** | An unreadable directory skips its entries instead of failing the whole build; a root that does not exist yields an empty graph. |
 
-**Edge Cases**:
+#### Test
 
-- Circular imports: cycles exist but don't cause errors.
-- Broken imports: edge with unresolved status.
-- Files with parse_ok = false: nodes but no edges.
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| A seeded e2e import chain is built | The aggregate is asked to build the graph | The chain reaches the capabilities layer with zero missing edges |
+| Two duplicate identifiers in one container | The aggregate is asked to build the graph | One wiring edge is kept per identifier, not two |
+| A file without a container in its name | The aggregate is asked to build the graph | No wiring edge is added for that file |
+| An empty project root | The aggregate is asked to build the graph | The result is an empty graph, not a failure |
 
-**Error Handling**: Non-fatal — broken imports create unresolved entries.
+#### Metric
 
----
+| Target Metric | Value |
+|---------------|-------|
+| Seeded e2e import-chain reachability | 100% of seeded chains reach their target with zero missing edges |
+| Wiring-edge dedup accuracy | 1 edge per unique identifier, 0 duplicates |
 
-### FR-Filesystem-003: File I/O & Directory Operations
+### FR-Filesystem-003: Read, Write, Discover & Mutate the File Tree
 
-**Description**: Performs file system I/O operations including directory walking, file content reading, path metadata queries, and external command execution with caching.
+**Description:** The filesystem crate shall provide the file I/O primitives — read, write, discover, copy, remove, permissions — that every rule crate builds on.
 
-**What it produces**: File content, directory listings, path metadata, process execution results.
+#### Business Logic
 
-| Output | Description |
-| --- | --- |
-| File paths | Discovered source file paths from directory walk |
-| File content | String content of source files |
-| Path metadata | Exists, is_dir, is_file, canonicalize, symlinks |
-| Directory listings | Directory entries with ignore filtering |
-| Process output | stdout/stderr/success from git and external commands |
-| Scan timing | Duration breakdown of last scan |
-| Cached content | Repeated reads from DashMap-backed cache |
+- Shall discover and collect source files while respecting ignored paths.
+- Shall return content for lint-eligible files and list directory entries.
+- Shall write, copy, remove files, remove directories recursively, and set permissions as named.
+- Shall canonicalize paths and report existence.
+- Shall reject reads of a path outside the project as non-member.
 
-**Output**: File paths, content strings, path metadata, directory listings, process results, timing data, and cached content.
+#### Edge Cases
 
-**Input**: File paths, directory paths, command arguments.
+- A missing file reports existence as false and a read failure, not a panic.
+- Discovery with an empty root returns an empty entry list.
+- Discovery prefers `crates/` over `packages/` for source dirs and falls back to the root when neither exists.
+- A read of a path outside the project is rejected as non-member.
 
-**Business Rules**:
+#### Technical Specification
 
-- Directory walk uses ignore crate (gitignore-aware, sequential).
-- Filters by source file extensions.
-- Respects .gitignore, .ignore, and configurable ignored paths.
-- Process execution returns stdout, stderr, and success flag.
-- Cache provides thread-safe repeated reads.
+| Aspect | Detail |
+|--------|--------|
+| **Input** | File path or directory path plus content where required; source is caller requests through the aggregate. |
+| **Output** | Operation results through `FilesystemResponse` variants `OpOk`, `Content`, `PathExists`, `Has`, `Files`, and `Paths`. |
+| **Protocol** | `IFileSystemIOProtocol` |
+| **Method** | `ReadFile`, `WriteFile`, `DiscoverSourceFiles`, `CollectSourceFiles`, `PathExists`, `Canonicalize`, `SetPermissions`, `CopyFile`, `RemoveFile`, `RemoveDirAll`, `ReadDirEntries`, `IsMemberPath`. |
+| **Event** | None; I/O is synchronous. |
+| **Error** | A missing or unreadable path yields a failed read or an `OpOk=false`-style error result; callers see the error on the response variant for that operation. |
 
-**Edge Cases**:
+#### Test
 
-- Symlinks: follow if target is within workspace root.
-- Permission denied: log warning, skip file, continue.
-- Non-UTF-8 content: skip file, log warning.
-- Empty directories: return empty list.
-- Cache misses: fall through to disk reads.
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| A seeded fixture tree is read | The aggregate is asked to read a file | The response carries the file's content |
+| A missing file is read | The aggregate is asked to read it | The response reports the path does not exist, with no panic |
+| Discovery is asked on an empty root | The aggregate is asked to discover | The response is an empty entry list |
+| Discovery is asked on a tree that has `crates/` and `packages/` | The aggregate is asked to discover | Source dirs are taken from `crates/` first |
+| A path outside the project is read | The aggregate is asked to read it | The response rejects it as non-member |
 
-**Error Handling**: Non-fatal — skip inaccessible files, return partial results.
+#### Metric
 
----
+| Target Metric | Value |
+|---------------|-------|
+| I/O operation accuracy on the seeded fixture tree | 100% of seeded operations return their expected result |
+| Discovery-order stability | `crates/` then `packages/` then root holds on every run |
 
-### FR-Filesystem-004: Tool Resolution
+### FR-Filesystem-004: Resolve External Tool Binaries
 
-**Description**: Resolves external tool availability and command paths by checking system PATH, local binaries, and project configuration files.
+**Description:** The filesystem crate shall locate external tool binaries so that the CLI and adapter layers can invoke them without hard-coding paths.
 
-**What it produces**: Tool availability status and resolved command paths.
+#### Business Logic
 
-| Output | Description |
-| --- | --- |
-| PATH detection | Whether executable exists in system PATH |
-| Local binary | Whether executable exists in node_modules/.bin |
-| JS tool command | Resolved command vector for local JS tools |
-| Working directory | Resolved project root for JS/Cargo tools |
-| Config detection | Whether directory contains config files (.eslintrc, tsconfig, etc) |
-| Cargo manifest | Whether Cargo.toml/Cargo.lock exists in ancestors |
-| Python detection | Whether path contains Python files (recursive) |
-
-**Output**: Tool availability boolean, resolved command vectors, working directory paths, and config detection flags.
-
-**Input**: Tool name, working directory, arguments.
-
-**Business Rules**:
-
-- JS tool resolution: local binary only, no npx/bunx fallback.
-- Working directory resolution: walk up to find project root.
-- Config detection: checks for standard config file names.
-- Cargo manifest detection: walks up to find Cargo.toml/Cargo.lock.
-
-**Edge Cases**:
-
-- Binary not found: returns false for all resolution attempts.
-- Multiple matches in PATH: uses first match (standard resolution order).
-- Symlinked binaries: resolves through symlinks to actual path.
-
-**Error Handling**: Non-fatal — return false/None for unavailable tools.
-
----
-
-### FR-Filesystem-005: Workspace & Project Language Detection
-
-**Description**: Detects workspace root, member status, source directories, project-level language presence flags, and language configuration from file paths and manifest markers.
-
-**What it produces**: Workspace structure metadata plus `ProjectLanguagesVO`.
-
-| Output | Description |
-| --- | --- |
-| Workspace root | Root directory of the workspace |
-| Member status | Whether path is a workspace member |
-| Leaf member | Whether path is a member without sub-members |
-| Source directory | Primary source directory (src/, lib/, etc.) |
-| Language detection | ConfigLanguage from file path or manifest markers |
-| Project languages | `ProjectLanguagesVO` — boolean flags for Rust, Python, JS/TS, and Markdown file presence under the root |
-| Container wiring | Whether identifiers are wired in container manifest |
-| Module resolver | Resolved module path relative to base directory |
-
-**Output**: Workspace root path, member status flags, source directory path, language enum, project language presence flags, wiring boolean, and resolved module path.
-
-**Input**: Start path (string or Path).
-
-**Business Rules**:
-
-- Workspace root detection: walk up looking for workspace directories + manifest.
-- Member detection: a Rust manifest without a workspace table, a Python package marker or manifest, a Node manifest.
-- Leaf member: member without sub-members.
-- Source dir: check packages/, crates/, modules/ in order.
-- Language: check manifest markers.
-- Container wiring: check if identifiers are referenced in Cargo.toml.
-- Orphan module: resolve module path relative to base_dir, confined under root.
-- Project language detection (FR-005B): walk the project root and classify extensions into four presence flags — `.rs` → `has_rust`, `.py` → `has_python`, `.js/.jsx/.ts/.tsx` → `has_js`, `.md/.markdown` → `has_markdown`. Short-circuits when all four are found. Directories in `DEFAULT_IGNORED_PATHS` are skipped. A single-file input classifies only that file's extension.
-
-**Edge Cases**:
-
-- Path outside workspace: returns None for root, false for member checks.
-- Multiple manifests: uses closest ancestor as workspace root.
-- Non-standard layouts: falls back to heuristic detection.
-- Empty project: all language flags false.
-- Unknown extensions: ignored.
-
-**Error Handling**: Non-fatal — returns None/Err for unresolvable cases. Returns partial flags for whatever was found before any I/O error.
-
----
-
-## API Contract
-
-### Protocol API
-
-| Method | Input | Output | Error | Event | Description |
-|---|---|---|---|---|---|
-| `path_exists` | &Path | `bool` | — | — | Path exists. |
-| `is_dir` | &Path | `bool` | — | — | Is dir. |
-| `is_file` | &Path | `bool` | — | — | Is file. |
-| `should_ignore` | &crate::common::taxonomy_path_vo::FilePath, &[String] | `bool` | — | — | Should ignore. |
-| `canonicalize` | &Path | `PathBuf` | `std::io::Error` | — | Canonicalize. |
-| `canonicalize_path_str` | &FilePath | `FilePath` | — | — | Canonicalize path str. |
-| `is_symlink` | &Path | `bool` | — | — | Is symlink. |
-| `metadata` | &Path | `std::fs::Metadata` | `std::io::Error` | — | Metadata. |
-| `symlink_metadata` | &Path | `std::fs::Metadata` | `std::io::Error` | — | Symlink metadata. |
-| `get_file_stem` | &'a str | `&'a str` | — | — | Get file stem. |
-| `is_source_file` | &Path | `bool` | — | — | Is source file. |
-| `is_source_ext` | &FileExtension | `bool` | — | — | Is source ext. |
-| `get_basename` | &'a str | `&'a str` | — | — | Get basename. |
-| `get_parent` | &'a str | `&'a str` | — | — | Get parent. |
-| `is_python_file` | &Path | `bool` | — | — | Is python file. |
-| `scan_directory_with_ignored` | &Path, &PatternList | `Vec<PathBuf>` | — | — | Scan directory with ignored. |
-| `is_ignored_dir` | &Path, &PatternList | `bool` | — | — | Is ignored dir. |
-| `read_dir_entries_as_pathbuf` | &Path | `Vec<PathBuf>` | `std::io::Error` | — | Read dir entries as pathbuf. |
-| `read_to_string` | &Path | `ContentString` | `std::io::Error` | — | Read to string. |
-| `write_string` | &Path, &str | `()` | `std::io::Error` | — | Write string. |
-| `copy_file` | &Path, &Path | `ByteCount` | `std::io::Error` | — | Copy file. |
-| `create_dir_all` | &Path | `()` | `std::io::Error` | — | Create dir all. |
-| `remove_dir_all` | &Path | `()` | `std::io::Error` | — | Remove dir all. |
-| `set_permissions` | &Path, FileMode | `()` | `io::Error` | — | Set permissions. |
-| `remove_file` | &Path | `()` | `io::Error` | — | Remove file. |
-| `run_git_command` | &[&str], &str | `GitCommandResult` | — | — | Run git command. |
-| `parse_output_lines` | &str | `ParsedLines` | — | — | Parse output lines. |
-| `run_external_command_in` | &str, &[&str], &str | `(String, String, bool)` | — | — | Run external command in. |
-| `timing` | — | `&ScanTiming` | — | — | Timing. |
-| `build_graph` | &[ImportEntry], &[FileEntry], &[DefinitionEntry], &[ImplEntry] | `` | — | — | Build graph. |
-| `symbol_definitions` | — | `&HashMap<String, Vec<PathBuf>>` | — | — | Symbol definitions. |
-| `implementations` | — | `&HashMap<String, Vec<PathBuf>>` | — | — | Implementations. |
-| `dependents` | &Path | `Vec<PathBuf>` | — | — | Dependents. |
-| `dependencies` | &Path | `Vec<PathBuf>` | — | — | Dependencies. |
-| `reachable` | &Path, &Path | `bool` | — | — | Reachable. |
-| `reverse_links` | — | `&HashMap<PathBuf, Vec<PathBuf>>` | — | — | Reverse links. |
-| `parse_warnings` | — | `&[ParseWarning]` | — | — | Parse warnings. |
-| `import_list` | — | `Vec<ImportEntry>` | — | — | Import list. |
-| `parse_all` | &mut [FileEntry] | `` | — | — | Parse all. |
-| `imports_for` | &Path | `Vec<ImportEntry>` | — | — | Imports for. |
-| `extract` | &Path, &str, Language | `Vec<ImportEntry>` | — | — | Extract. |
-| `resolve_barrel_imports` | &Path | `` | — | — | Resolve barrel imports. |
-| `is_executable_in_path` | &ToolName | `bool` | — | — | Is executable in path. |
-| `is_binary_available` | &ToolName | `bool` | — | — | Is binary available. |
-| `has_local_bin` | &Path, &ToolName | `bool` | — | — | Has local bin. |
-| `resolve_js_cmd` | `&ToolName, Vec<String>, &FilePath` | `Option<Vec<String>>` | — | — | Resolve js cmd. |
-| `resolve_js_working_dir` | &FilePath | `FilePath` | — | — | Resolve js working dir. |
-| `resolve_cargo_working_dir` | &FilePath | `FilePath` | — | — | Resolve cargo working dir. |
-| `resolve_cargo_lock_working_dir` | &FilePath | `FilePath` | — | — | Resolve cargo lock working dir. |
-| `has_config_file` | &Path | `bool` | — | — | Has config file. |
-| `has_cargo_toml` | &FilePath | `Option<FilePath>` | — | — | Has cargo toml. |
-| `has_cargo_lock` | &FilePath | `Option<FilePath>` | — | — | Has cargo lock. |
-| `is_python_file_recursive` | &FilePath | `bool` | — | — | Is python file recursive. |
-| `default_working_dir` | &FilePath | `FilePath` | — | — | Default working dir. |
-| `workspace_root` | &FilePath | `Option<PathBuf>` | — | — | Workspace root. |
-| `find_workspace_root_from_path` | &Path | `PathBuf` | `std::io::Error` | — | Find workspace root from path. |
-| `is_member_path` | &FilePath | `bool` | — | — | Is member path. |
-| `is_leaf_member_path` | &FilePath | `bool` | — | — | Is leaf member path. |
-| `detect_source_dir` | &Path | `PathBuf` | — | — | Detect source dir. |
-| `detect_language_from_path` | &str | `ConfigLanguage` | — | — | Detect language from path. |
-| `check_wired_in_container` | &Path, &PatternList | `bool` | — | — | Check wired in container. |
-| `resolve_orphan_module_path` | &Path, &Path, &str | `Option<PathBuf>` | — | — | Resolve orphan module path. |
-| `detect_project_languages` | &Path | `ProjectLanguagesVO` | — | — | Detect which language groups are present (FR-005B). |
-
-### Aggregate API
-
-| Method | Input | Output | Error | Event | Description |
-|---|---|---|---|---|---|
-| `execute` | FilesystemRequest | `FilesystemResponse` | — | — | Single composite entry point over the feature. |
-
-## Integration Points
-
-| System | Direction | Purpose | Failure mode |
-|--------|-----------|---------|--------------|
-| tree-sitter | in | Parse Rust / Python / TS source into ASTs | parse warnings; file skipped, not failed |
-| rayon (or std::thread pool) | in | Parallelise per-file parse and graph construction | work cancelled mid-scan; partial graph |
-| caller aggregate (e.g. naming / import / quality rules) | out | Consume `GraphAnalysisContext` produced here | caller sees stale or partial context if a walk was interrupted |
-
-## Non-functional Requirements
-
-| Metric | Target | Measurement method |
-| --- | --- | --- |
-| Pipeline throughput (indexing scope) | 1,000 files in under 2 s; 10,000 files in under 10 s — this crate's own build-index run: discovery, read, parse | Time a full build-index run over workspaces of each size, with the Criterion benches under this crate; the recorded figure is the evidence for the matching row in `PRD.md` |
-| Pipeline throughput (full-pipeline scope) | 1,000 files in under 5 s; 10,000 files in under 15 s — indexing plus every rule group, external adapters excluded | Time a `check` run over workspaces of each size; the indexing budget above is the lower bound inside it |
-| Accessor cost | Cache accessors are O(1) | Call an accessor repeatedly and confirm constant time across cache sizes |
-| Cache bound | The content cache is capped at 20,000 entries | Inspect the cap and assert insertion beyond it does not grow the cache |
-| Memory | Bounded by total workspace size | Measure retained memory against two workspace sizes |
-| Parsing accuracy | Full AST parsing for all supported languages, with no regex fallback | Assert the parse path is the only path, and that identifier extraction from a string literal yields nothing |
-| Parse-failure handling | A parse warning never aborts a scan; the file is treated as best-effort | Feed an unparseable file and assert the scan completes and reports a warning |
-| Concurrency | The pipeline is parallel and the aggregate is `Send + Sync` | Assert the bounds at compile time and share one aggregate across threads in a test |
-| Configuration | Workspace layout and extensions are compiled-in; ignored paths and workspace directories are configurable | Assert a configured ignore path excludes a file from the walk |
-| Dependency injection | No layer imports a concrete implementation; every dependency arrives through a protocol | Assert the agent module has no concrete capability imports |
-
-## Test Scenarios
-
-Each scenario is stated below as a table of cases: the input condition and the expected result.
-
-- **SCEN-001: AST Parsing & Import Extraction** — e.g. Valid Rust file → parse_ok = true, full metadata
-- **SCEN-002: Dependency Graph Construction** — e.g. A imports B → Edge A → B
-- **SCEN-003: File I/O & Directory Operations** — e.g. Workspace with 100 .rs files → All 100 discovered
-- **SCEN-004: Tool Resolution** — e.g. node_modules/.bin/eslint exists → Command resolved
-- **SCEN-005: Workspace & Project Language Detection** — e.g. Start from crates/some-crate/src → Finds workspace root; a root of `.rs` + `.md` sets `has_rust` + `has_markdown` only
-
-- **SCEN-001: AST Parsing & Import Extraction**
-
-| # | Scenario | Expected |
-| --- | --- | --- |
-| 1 | Valid Rust file | parse_ok = true, full metadata |
-| 2 | Rust file with syntax error | parse_ok = false, warning |
-| 3 | Empty file | parse_ok = true, empty metadata |
-| 4 | `use crate::foo::Bar` | Resolved import entry |
-| 5 | `use foo::*` | Wildcard import entry |
-| 6 | `#[cfg(test)] use foo::Bar` | Not extracted |
-| 7 | External dependency | Not extracted |
-| 8 | Barrel re-export through a Rust module barrel | Resolved to original source |
-| 9 | 1,000 files parsed in parallel | Completes in under 1 s |
-
-- **SCEN-002: Dependency Graph Construction**
-
-| # | Scenario | Expected |
-| --- | --- | --- |
-| 1 | A imports B | Edge A → B |
-| 2 | Circular imports | Both edges exist |
-| 3 | `struct Foo` in A | Definition: "Foo" → A |
-| 4 | `impl IBar for Foo` | Implementation: "IBar" → [A] |
-| 5 | Barrel re-export | Resolved to original source |
-| 6 | File with no incoming edges | Identified as orphan |
-| 7 | Circular dependency chain | Cycle detected via SCC |
-
-- **SCEN-003: File I/O & Directory Operations**
-
-| # | Scenario | Expected |
-| --- | --- | --- |
-| 1 | Workspace with 100 .rs files | All 100 discovered |
-| 2 | File in .gitignore | Not discovered |
-| 3 | Symlink pointing outside workspace | Skipped |
-| 4 | Empty directory | Empty list |
-| 5 | Non-UTF-8 file | Skipped with warning |
-| 6 | Read existing file | Returns content |
-| 7 | Write + read back | Content matches |
-| 8 | Scan with ignored patterns | Ignored files excluded |
-
-- **SCEN-004: Tool Resolution**
-
-| # | Scenario | Expected |
-| --- | --- | --- |
-| 1 | node_modules/.bin/eslint exists | Command resolved |
-| 2 | Binary in system PATH | Available = true |
-| 3 | Config file present | Detected = true |
-| 4 | Cargo.toml in ancestor | Found |
-
-- **SCEN-005: Workspace & Project Language Detection**
-
-| # | Scenario | Expected |
-| --- | --- | --- |
-| 1 | Start from crates/some-crate/src | Finds workspace root |
-| 2 | Path with Cargo.toml (no workspace) | is_member = true |
-| 3 | Path with Cargo.toml nearby | language = Rust |
-| 4 | Leaf member detection | No sub-members |
-| 5 | Project root containing `.rs` and `.md` files only | `has_rust` + `has_markdown` true; `has_python` + `has_js` false (FR-005B) |
-| 6 | Project root with source files only under `target/` | All four flags false — `DEFAULT_IGNORED_PATHS` skipped (FR-005B) |
-| 7 | Project root containing a symlink to a directory outside it | Outside files do not set any flag (FR-005B) |
-| 8 | Single file passed as root | Only that file's extension is classified (FR-005B) |
-
----
-
-## Assumptions & Constraints
-
-- One workspace root; paths passed in are relative to it and contain no `..` escapes.
-- tree-sitter grammars for the three supported languages are always available at parse time.
-- A parse warning (see `IParserProtocol::parse_warnings`) never aborts a scan; the file is treated as best-effort.
-- `IGraphProtocol` results are not persisted; they live for the duration of one scan and are discarded after the caller reports.
-
-## Glossary
-
-- **IFilesystemAggregate**: Composed trait: all 5 protocols + cache/orchestration accessors = 81 methods
-- **IParserProtocol**: AST parse results and import extraction queries
-- **IGraphProtocol**: Dependency graph, definitions, implementations, reachability, cycles, orphans
-- **IFileSystemIOProtocol**: Low-level file I/O, path ops, directory ops, process execution
-- **IToolResolutionProtocol**: External tool availability and command resolution
-- **IWorkspaceProtocol**: Workspace structure detection and navigation
-- **Container**: Composition root — creates capabilities, injects via `Arc<dyn Trait>`
-- **OrchestratorDeps**: DI struct — holds `Arc<dyn ProtocolTrait>` for agent injection
-- **FileEntry**: Value object: path + content + language + extension + parse metadata
-- **ImportEntry**: Value object: source file + target module + symbols + resolution status
-- **ParseWarning**: Diagnostic for files that failed to parse
-
----
+- Shall probe the PATH for the named binary and report availability as a boolean.
+- Shall not execute the binary when probing; a broken binary still reports available.
+- Shall treat a missing binary as a non-fatal result, not an error.
+
+#### Edge Cases
+
+- A binary absent from PATH responds unavailable and the caller degrades gracefully (feature skipped, not fatal).
+- An empty binary name resolves to unavailable without panicking.
+- A malformed binary name resolves to unavailable without panicking.
+
+#### Technical Specification
+
+| Aspect | Detail |
+|--------|--------|
+| **Input** | Binary name string; source is adapters and collectors that need an external tool. |
+| **Output** | `FilesystemResponse::BinaryAvailable { available }` carrying the availability boolean. |
+| **Protocol** | `IToolResolutionProtocol` |
+| **Method** | `BinaryAvailable(bin_name)` → availability boolean. |
+| **Event** | None; resolution is a pure lookup. |
+| **Error** | A missing binary is not an error; it is reported as unavailable. |
+
+#### Test
+
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| A binary present in PATH is probed | The aggregate is asked for its availability | The response reports available=true |
+| A binary absent from PATH is probed | The aggregate is asked for its availability | The response reports available=false, with no failure |
+| An empty binary name is probed | The aggregate is asked for its availability | The response reports available=false without panicking |
+
+#### Metric
+
+| Target Metric | Value |
+|---------------|-------|
+| Tool-probe accuracy on the seeded probe list | 100% of present binaries report available=true and absent binaries available=false |
+| Probe panic rate | 0 panics on empty or malformed names |
+
+### FR-Filesystem-005: Detect Workspace Root & Project Languages
+
+**Description:** The filesystem crate shall detect the workspace root and the language groups present in a project so downstream rules can specialize per language.
+
+#### Business Logic
+
+- Shall walk up from a start path to the nearest workspace manifest and return it; inner projects prefer their own root when distinct.
+- Shall scan the tree and emit four language flags: has_rust, has_python, has_js, has_markdown.
+- Shall classify files by extension, handling nested directories; an unknown extension defaults to the Rust grouping.
+- Shall skip files under hidden or ignored directories when flipping language flags.
+
+#### Edge Cases
+
+- An empty project returns all four language flags false.
+- A file under a hidden or ignored directory does not flip its language flag.
+- A workspace root beyond the project start falls back to the start directory.
+- Nested language fixtures detect each group independently.
+
+#### Technical Specification
+
+| Aspect | Detail |
+|--------|--------|
+| **Input** | Start path or project root file path; source is container and cross-crate callers such as the external-lint aggregate. |
+| **Output** | Root path and the project-language flags, returned through `FilesystemResponse::Root` and `ProjectLanguages`. |
+| **Protocol** | `IWorkspaceProtocol` |
+| **Method** | `FindWorkspaceRoot(start)`; `DetectProjectLanguages(root)` → `ProjectLanguages`. |
+| **Event** | None; detection is a one-shot query. |
+| **Error** | No upward workspace found returns the start path rather than an error; unreadable subtrees are skipped. |
+
+#### Test
+
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| A project with a workspace manifest is detected | The aggregate is asked for the root | The response carries the nearest manifest's directory |
+| An empty project is scanned | The aggregate is asked for its languages | The response carries all four language flags false |
+| A nested Rust file is detected | The aggregate is asked for its languages | The has_rust flag is true |
+| A file under a hidden directory is scanned | The aggregate is asked for its languages | The hidden file does not flip its language flag |
+| An unknown extension is classified | The aggregate is asked for its languages | It is grouped as Rust by default |
+
+#### Metric
+
+| Target Metric | Value |
+|---------------|-------|
+| Language-detection accuracy on the seeded fixtures | 100% of seeded fixtures report exactly their own language group |
+| Empty-project flag accuracy | All four flags false, zero walk errors |
+
+## Public Interface
+
+| Aspect | Detail |
+|--------|--------|
+| Agent | `FilesystemOrchestrator` — the agent-layer orchestrator behind filesystem requests. |
+| Aggregate | `IFilesystemAggregate` — the feature's single front door. |
+| Method | `execute(&self, request: FilesystemRequest) -> FilesystemResponse` |
+| Request | `FilesystemRequest` carrying the I/O, parse, graph, tool, and workspace variants. |
+| Response | `FilesystemResponse` carrying the corresponding result variants. |
+
+## Reference
+
+| Artifact | Purpose | Link |
+|----------|---------|------|
+| PRD | Product requirements | [PRD.md](../../PRD.md) |
+| Backlog | Backlog tracking | [BACKLOG.md](BACKLOG.md) |
+| Roadmap | Roadmap status | [ROADMAP.md](../../ROADMAP.md) |
+| Architecture | Layer contract | [ARCHITECTURE.md](../../ARCHITECTURE.md) |

@@ -6,7 +6,7 @@
 // but we verify the end-to-end wiring from detection to selection.
 
 #[allow(dead_code, unused_imports)]
-#[path = "../../shared/tests/common/mock_filesystem.rs"]
+#[path = "../../shared/tests/mock_filesystem.rs"]
 mod mock_filesystem;
 
 use mock_filesystem::MockFilesystem;
@@ -23,6 +23,7 @@ use shared_external_lint::IJsToolResolutionProtocol;
 use shared_external_lint::contract_external_lint_protocol::IExternalLintSelectorProtocol;
 use shared_external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
 
+use external_lint_lint_arwaky::OutputNormalizer;
 use external_lint_lint_arwaky::agent_external_lint_orchestrator::{
     ExternalLintDeps, ExternalLintOrchestrator,
 };
@@ -228,6 +229,7 @@ fn e2e_full_pipeline_rust_python() {
         selector: Arc::new(
             external_lint_lint_arwaky::capabilities_external_lint_selector::CapabilitiesExternalLintSelector::with_defaults(),
         ),
+        normalizer: Arc::new(OutputNormalizer),
     };
     let orchestrator = ExternalLintOrchestrator::new(deps);
     let adapter_names = orchestrator.adapter_names();
@@ -280,6 +282,7 @@ fn e2e_full_pipeline_markdown_only() {
         filesystem: fs_arc.clone(),
         filesystem_io: io_arc.clone(),
         selector: Arc::new(selector),
+        normalizer: Arc::new(OutputNormalizer),
     };
     let orchestrator = ExternalLintOrchestrator::new(deps);
     let adapter_names = orchestrator.adapter_names();

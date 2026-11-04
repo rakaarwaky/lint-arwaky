@@ -219,8 +219,8 @@ impl TaxonomyRoleChecker {
                                     primitive_clean,
                                     i + 1,
                                 ),
-                                "Replace the primitive type with a domain Value Object (VO) or constant \
-                                 from the taxonomy layer.",
+                                "Replace primitives with taxonomy value objects; keep `_constant` \
+                                 files const-only.",
                             ));
                             break;
                         }
@@ -250,8 +250,8 @@ impl TaxonomyRoleChecker {
                             primitive_clean,
                             i + 1,
                         ),
-                        "Replace the primitive type with a domain Value Object (VO) or constant \
-                         from the taxonomy layer.",
+                        "Replace primitives with taxonomy value objects; keep `_constant` \
+                         files const-only.",
                     ));
                     break;
                 }
@@ -277,7 +277,7 @@ impl TaxonomyRoleChecker {
                         format!("Struct '{}' found in constant file.", name),
                         "TAXONOMY_ROLE",
                         format!("Struct '{}' found in constant file.", name),
-                        "Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.",
+                        "Keep `_constant` files const-only: remove the non-const declaration or move it to the appropriate layer.",
                     ));
                 }
                 for name in &rust_meta.enum_definitions {
@@ -289,7 +289,7 @@ impl TaxonomyRoleChecker {
                         format!("Enum '{}' found in constant file.", name),
                         "TAXONOMY_ROLE",
                         format!("Enum '{}' found in constant file.", name),
-                        "Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.",
+                        "Keep `_constant` files const-only: remove the non-const declaration or move it to the appropriate layer.",
                     ));
                 }
                 for name in &rust_meta.trait_definitions {
@@ -301,6 +301,30 @@ impl TaxonomyRoleChecker {
                         format!("Trait '{}' found in constant file.", name),
                         "TAXONOMY_ROLE",
                         format!("Trait '{}' found in constant file.", name),
+                        "Keep `_constant` files const-only: remove the non-const declaration or move it to the appropriate layer.",
+                    ));
+                }
+                for name in &rust_meta.type_definitions {
+                    violations.push(LintResult::new_arch_with_name(
+                        &path_str,
+                        0,
+                        "AES401",
+                        Severity::HIGH,
+                        format!("Type alias '{}' found in constant file.", name),
+                        "TAXONOMY_ROLE",
+                        format!("Type alias '{}' found in constant file.", name),
+                        "Keep `_constant` files const-only: remove the non-const declaration or move it to the appropriate layer.",
+                    ));
+                }
+                for name in &rust_meta.type_definitions {
+                    violations.push(LintResult::new_arch_with_name(
+                        &path_str,
+                        0,
+                        "AES401",
+                        Severity::HIGH,
+                        format!("Type alias '{}' found in constant file.", name),
+                        "TAXONOMY_ROLE",
+                        format!("Type alias '{}' found in constant file.", name),
                         "Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.",
                     ));
                 }
@@ -313,7 +337,7 @@ impl TaxonomyRoleChecker {
                         format!("Function '{}' found in constant file.", fn_item.name),
                         "TAXONOMY_ROLE",
                         format!("Function '{}' found in constant file.", fn_item.name),
-                        "Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.",
+                        "Keep `_constant` files const-only: remove the non-const declaration or move it to the appropriate layer.",
                     ));
                 }
                 if !rust_meta.impl_blocks.is_empty() {
@@ -325,7 +349,7 @@ impl TaxonomyRoleChecker {
                         "Impl block found in constant file.".to_string(),
                         "TAXONOMY_ROLE",
                         "Impl block found in constant file.",
-                        "Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.",
+                        "Keep `_constant` files const-only: remove the non-const declaration or move it to the appropriate layer.",
                     ));
                 }
             }
@@ -339,7 +363,7 @@ impl TaxonomyRoleChecker {
                         format!("Class '{}' found in constant file.", class.name),
                         "TAXONOMY_ROLE",
                         format!("Class '{}' found in constant file.", class.name),
-                        "Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.",
+                        "Keep `_constant` files const-only: remove the non-const declaration or move it to the appropriate layer.",
                     ));
                 }
                 for fn_item in &py_meta.function_definitions {
@@ -351,7 +375,7 @@ impl TaxonomyRoleChecker {
                         format!("Function '{}' found in constant file.", fn_item.name),
                         "TAXONOMY_ROLE",
                         format!("Function '{}' found in constant file.", fn_item.name),
-                        "Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.",
+                        "Keep `_constant` files const-only: remove the non-const declaration or move it to the appropriate layer.",
                     ));
                 }
             }
@@ -365,7 +389,7 @@ impl TaxonomyRoleChecker {
                         format!("Class '{}' found in constant file.", class.name),
                         "TAXONOMY_ROLE",
                         format!("Class '{}' found in constant file.", class.name),
-                        "Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.",
+                        "Keep `_constant` files const-only: remove the non-const declaration or move it to the appropriate layer.",
                     ));
                 }
                 for name in &ts_meta.interface_declarations {
@@ -377,7 +401,7 @@ impl TaxonomyRoleChecker {
                         format!("Interface '{}' found in constant file.", name),
                         "TAXONOMY_ROLE",
                         format!("Interface '{}' found in constant file.", name),
-                        "Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.",
+                        "Keep `_constant` files const-only: remove the non-const declaration or move it to the appropriate layer.",
                     ));
                 }
                 for name in &ts_meta.type_alias_declarations {
@@ -389,7 +413,7 @@ impl TaxonomyRoleChecker {
                         format!("Type alias '{}' found in constant file.", name),
                         "TAXONOMY_ROLE",
                         format!("Type alias '{}' found in constant file.", name),
-                        "Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.",
+                        "Keep `_constant` files const-only: remove the non-const declaration or move it to the appropriate layer.",
                     ));
                 }
                 for fn_item in &ts_meta.function_definitions {
@@ -401,7 +425,7 @@ impl TaxonomyRoleChecker {
                         format!("Function '{}' found in constant file.", fn_item.name),
                         "TAXONOMY_ROLE",
                         format!("Function '{}' found in constant file.", fn_item.name),
-                        "Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.",
+                        "Keep `_constant` files const-only: remove the non-const declaration or move it to the appropriate layer.",
                     ));
                 }
             }
@@ -463,7 +487,7 @@ impl TaxonomyRoleChecker {
                         t,
                         i + 1,
                     ),
-                    "Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.",
+                    "Keep `_constant` files const-only: remove the non-const declaration or move it to the appropriate layer.",
                 ));
             }
         }

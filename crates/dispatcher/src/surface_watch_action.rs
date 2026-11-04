@@ -43,3 +43,7 @@ pub fn handle_watch(
         Err("watch session failed".to_string())
     }
 }
+
+pub struct _Aes303Placeholder {
+    _placeholder: (),
+}

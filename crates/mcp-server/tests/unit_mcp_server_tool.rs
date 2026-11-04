@@ -3,7 +3,7 @@
 // Verifies `LintArwakyMcpServer` handlers map MCP `Parameters<Args>` into the
 // action surface correctly, with assertion depth on every JSON field — no
 // type-existence-only checks.
-mod common;
+mod mock_common;
 
 use mcp_server_lint_arwaky::surface_mcp_tool_command::LintArwakyMcpServer;
 use mcp_server_lint_arwaky::taxonomy_mcp_server_vo::{
@@ -13,7 +13,7 @@ use rmcp::handler::server::wrapper::Parameters;
 use std::sync::Arc;
 
 fn server() -> LintArwakyMcpServer {
-    LintArwakyMcpServer::new(Arc::new(common::make_action_surface()))
+    LintArwakyMcpServer::new(Arc::new(mock_common::make_action_surface()))
 }
 
 fn parse(json: &str) -> serde_json::Value {
@@ -50,8 +50,9 @@ async fn handle_execute_command_wires_path_arg_into_path_validation() {
         action: "fix".to_string(),
         args: Some(serde_json::json!({ "path": "" })),
     };
-    let server =
-        LintArwakyMcpServer::new(Arc::new(common::make_action_surface_allowing_mutations()));
+    let server = LintArwakyMcpServer::new(Arc::new(
+        mock_common::make_action_surface_allowing_mutations(),
+    ));
     let result = parse(&server.handle_execute_command(Parameters(args)).await);
     assert_eq!(result["exit_code"], 2);
     assert_eq!(result["error"], "Invalid path");

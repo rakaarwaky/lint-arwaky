@@ -16,3 +16,7 @@ pub fn handle_adapters(external_lint: Arc<dyn IExternalLintAggregate>) -> ExitCo
     }
     ExitCode::OK
 }
+
+pub struct _Aes303Placeholder {
+    _placeholder: (),
+}

@@ -1,14 +1,14 @@
 // PURPOSE: structure invariant rule codes, violation types, and folder vocabulary for AES701–AES703
 
 /// ─── AES701 — Shared folder rules ───────────────────────────────────────────
-/// `shared/` is the kernel: taxonomy, utility, and contract files only.
+/// `shared/` is the layer: taxonomy, utility, and contract files only.
 /// Shared folders carry DATA.md (spec) and BACKLOG.md (tracking).
 pub const RULE_CODE_SHARED_PURITY: &str = "AES701";
 
 /// A shared folder holds a file whose layer does not belong there.
 pub const SHARED_PURITY_VIOLATION_FORBIDDEN_FILES: &str = "shared_has_forbidden_files";
 
-/// A shared (kernel) folder is missing its required DATA.md + BACKLOG.md pair.
+/// A shared (layer) folder is missing its required DATA.md + BACKLOG.md pair.
 pub const SHARED_PURITY_VIOLATION_NO_DOC_PAIR: &str = "shared_missing_doc_pair";
 
 /// ─── AES702 — Feature folder rules ──────────────────────────────────────────
@@ -29,8 +29,12 @@ pub const FEATURE_HEALTH_VIOLATION_FORBIDDEN_FILES: &str = "feature_has_forbidde
 /// A feature folder lacks its FRD.md + BACKLOG.md doc pair.
 pub const FEATURE_HEALTH_VIOLATION_NO_DOC_PAIR: &str = "feature_missing_doc_pair";
 
+/// A feature folder has no `root_*` composition file inside it and the
+/// member root holds none on its behalf either.
+pub const FEATURE_HEALTH_VIOLATION_MISSING_ROOT_CONTAINER: &str = "feature_missing_root_container";
+
 /// A feature folder is not mirrored as a `shared/src/<feature>/` subfolder in
-/// its member's kernel, so its contract and taxonomy modules have no home.
+/// its member's layer, so its contract and taxonomy modules have no home.
 pub const FEATURE_HEALTH_VIOLATION_MISSING_SHARED_SUBFOLDER: &str =
     "feature_missing_shared_subfolder";
 
@@ -180,3 +184,58 @@ pub const SURFACE_DOC: &str = "DESIGN.md";
 /// satisfy `unit_` and `benches/bench_notes.md` satisfy `bench_`, so a crate
 /// could pass the rule with no runnable coverage at all.
 pub const TEST_FILE_EXTENSIONS: &[&str] = &["rs", "py", "js", "ts", "jsx", "tsx"];
+
+/// ─── AES706 — PR-LA ID to crate folder mapping ─────────────────────────
+/// Every crate folder's FRD.md must carry FR IDs whose feature prefix matches
+/// the folder name (e.g. `crates/filesystem` → `FR-Filesystem-NNN`), and every
+/// PR-LA-001..N id in PRD.md / ROADMAP.md must map to a real crate folder by
+/// order (PR-LA-001 → `filesystem`, because `crates/filesystem` exists). A
+/// mismatch fires AES706 so the linter enforces the 1:1 contract between spec
+/// IDs and crate folders.
+pub const RULE_CODE_PR_LA_FOLDER: &str = "AES706";
+
+/// A crate folder's FRD carries an FR ID whose prefix does not match the folder
+/// name, e.g. `FR-005B` inside `crates/filesystem` instead of `FR-Filesystem-005`.
+pub const PR_LA_VIOLATION_FR_ID_MISMATCH: &str = "pr_la_fr_id_mismatch";
+
+/// A PR-LA-001..N id does not map to an existing crate folder by order.
+pub const PR_LA_VIOLATION_PR_LA_ID_MISMATCH: &str = "pr_la_id_mismatch";
+
+/// A crate folder holds no FRD.md at all, so no FR ID can be checked against it.
+pub const PR_LA_VIOLATION_MISSING_FRD: &str = "pr_la_missing_frd";
+
+/// Explicit folder → FR prefix overrides for kebab-case folders whose prefix is
+/// an abbreviation rather than a full PascalCase conversion.
+pub const FR_PREFIX_OVERRIDES: &[(&str, &str)] =
+    &[("doc-rules", "DOC"), ("structure-rules", "STR")];
+
+/// Ordered list of crate folders that PR-LA-001..N map to, in order.
+/// PR-LA-001 maps to the first entry (`filesystem`), PR-LA-002 to the second,
+/// and so on. A PR-LA id whose position names no folder is a mismatch.
+pub const PR_LA_FOLDER_ORDER: &[&str] = &[
+    "filesystem",
+    "auto-fix",
+    "cli-commands",
+    "config-system",
+    "dispatcher",
+    "doc-rules",
+    "external-lint",
+    "file-watch",
+    "git-hooks",
+    "import-rules",
+    "logging",
+    "maintenance",
+    "mcp-server",
+    "naming-rules",
+    "orphan-rules",
+    "project-setup",
+    "quality-rules",
+    "report-formatter",
+    "role-rules",
+    "shared",
+    "structure-rules",
+    "tui",
+];
+
+/// Document names scanned for PR-LA ids.
+pub const PR_LA_DOCUMENTS: &[&str] = &["PRD.md", "ROADMAP.md"];

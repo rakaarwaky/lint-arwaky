@@ -1,3 +1,4 @@
+pub mod calculator;
 pub mod contract_calculator_aggregate;
 pub mod contract_calculator_protocol;
 pub mod single_orchestrator;

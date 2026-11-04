@@ -11,8 +11,8 @@ pub mod utility_structure_parsers;
 // ─── Re-exports ────────────────────────────────────────────
 pub use contract_structure_aggregate::IStructureAggregate;
 pub use contract_structure_protocol::{
-    IStructureFeatureHealthProtocol, IStructureSharedPurityProtocol,
-    IStructureSurfacePurityProtocol, IStructureTestSuiteProtocol,
+    IStructureFeatureHealthProtocol, IStructureMemberRootProtocol, IStructurePrLaProtocol,
+    IStructureSharedPurityProtocol, IStructureSurfacePurityProtocol, IStructureTestSuiteProtocol,
 };
 pub use taxonomy_structure_rules_constant::*;
 pub use taxonomy_structure_rules_request::{StructureFinding, StructureRequest};

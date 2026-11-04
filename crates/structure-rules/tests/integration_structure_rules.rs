@@ -39,7 +39,7 @@ fn has(findings: &[(String, String)], code: &str, violation_type: &str) -> bool 
 }
 
 /// A complete feature folder: both layers plus its doc pair, and the shared
-/// kernel subfolder that mirrors the feature.
+/// layer subfolder that mirrors the feature.
 fn write_feature(root: &Path, layout: &str, name: &str) {
     let feature = root.join(layout).join(name);
     write(
@@ -50,17 +50,24 @@ fn write_feature(root: &Path, layout: &str, name: &str) {
         &feature.join(format!("src/agent_{name}_orchestrator.rs")),
         "pub struct Orchestrator;\n",
     );
+    write(
+        &feature.join(format!("src/root_{name}_container.rs")),
+        "pub struct Container;\n",
+    );
     write(&feature.join("FRD.md"), "# FRD\n");
     write(&feature.join("BACKLOG.md"), "# BACKLOG\n");
-    // The shared kernel mirror: every feature owes a `<layout>/shared/src/<name>/`
-    // subfolder (AES702 feature_missing_shared_subfolder), so the conforming
-    // feature must create it.
+    // The shared layer mirror every feature owes (AES702)
     write(
         &root
             .join(layout)
             .join("shared")
             .join(format!("src/{name}/contract_{name}_protocol.rs")),
         &format!("pub trait {}Protocol {{}}\n", name.to_ascii_uppercase()),
+    );
+    // The root container every feature owes (AES702)
+    write(
+        &feature.join(format!("src/root_{name}_container.rs")),
+        "pub struct Container;\n",
     );
 }
 
@@ -94,10 +101,11 @@ fn container_orchestrator_answers_a_request_over_a_workspace() {
     let root = tmp.path();
     write_feature(root, "crates", "calc");
     write_complete_test_suite(root, "crates", "calc");
-    // write_feature creates the shared mirror subfolder, so the kernel now owes
+    // write_feature creates the shared mirror subfolder, so the layer now owes
     // its doc pair; a complete workspace supplies it.
     write(&root.join("crates/shared/DATA.md"), "# DATA\n");
     write(&root.join("crates/shared/BACKLOG.md"), "# BACKLOG\n");
+    write(&root.join("crates/shared/FRD.md"), "# Shared — FRD\n");
 
     assert_eq!(
         audit(root),
@@ -113,7 +121,7 @@ fn container_reaches_every_auditor_seam() {
     let tmp = tempfile::tempdir().expect("temp dir must be creatable");
     let root = tmp.path();
 
-    // AES701 — a shared kernel holding a capability file.
+    // AES701 — a shared layer holding a capability file.
     write(
         &root.join("crates/shared/src/capabilities_stray_analyzer.rs"),
         "pub struct Stray;\n",
@@ -197,13 +205,14 @@ fn container_stays_silent_on_a_workspace_whose_every_folder_is_complete() {
     let tmp = tempfile::tempdir().expect("temp dir must be creatable");
     let root = tmp.path();
 
-    // A shared kernel holding only permitted layers, with its doc pair.
+    // A shared layer holding only permitted layers, with its doc pair.
     write(
         &root.join("crates/shared/src/taxonomy_domain_vo.rs"),
         "pub struct Domain;\n",
     );
     write(&root.join("crates/shared/DATA.md"), "# DATA\n");
     write(&root.join("crates/shared/BACKLOG.md"), "# BACKLOG\n");
+    write(&root.join("crates/shared/FRD.md"), "# Shared — FRD\n");
 
     // A feature folder with both layers, its doc pair, and all eight categories.
     write_feature(root, "crates", "calc");
@@ -224,6 +233,10 @@ fn container_stays_silent_on_a_workspace_whose_every_folder_is_complete() {
     );
     write(&root.join("crates/cli/DESIGN.md"), "# DESIGN\n");
     write(&root.join("crates/cli/BACKLOG.md"), "# BACKLOG\n");
+    write(
+        &root.join("crates/cli/FRD.md"),
+        "# CLI — FRD\n\n### FR-Cli-001\n",
+    );
 
     assert_eq!(
         audit(root),

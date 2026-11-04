@@ -10,7 +10,7 @@
 use shared_common::taxonomy_path_vo::FilePath;
 use std::process::Command;
 
-mod common;
+mod mock_common;
 
 fn fs() -> std::sync::Arc<dyn shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate>
 {
@@ -49,7 +49,7 @@ fn scan(path: &str) -> Vec<shared_common::ViolationItem> {
         filter: None,
         member: None,
         filesystem: seam(),
-        scan_aggregates: Some(common::build_scan_aggregates(&root_str)),
+        scan_aggregates: Some(mock_common::build_scan_aggregates(&root_str)),
     };
     dispatcher_lint_arwaky::surface_check_action::collect_scan(opts).unwrap_or_default()
 }

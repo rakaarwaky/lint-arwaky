@@ -151,3 +151,56 @@ fn aes401_non_taxonomy_file_ignored() {
         "non-taxonomy file should not trigger AES401"
     );
 }
+
+// ── Constant file with a Rust type alias → AES401 violation ──
+
+#[test]
+fn aes401_constant_file_with_type_alias_detected() {
+    let mut file = make_file(
+        "src/taxonomy_app_constant.rs",
+        Language::Rust,
+        "pub type AppId = u64;\n",
+    );
+    file.parse_metadata = Some(
+        shared_filesystem::taxonomy_filesystem_vo::ParseMetadata::Rust(
+            shared_filesystem::taxonomy_filesystem_vo::RustMetadata {
+                type_definitions: vec!["AppId".to_string()],
+                ..Default::default()
+            },
+        ),
+    );
+    let results = run_audit(vec![file]);
+    let aes401: Vec<_> = results
+        .iter()
+        .filter(|r| r.code.code() == "AES401")
+        .collect();
+    assert!(
+        !aes401.is_empty(),
+        "taxonomy constant file with a type alias should trigger AES401"
+    );
+}
+
+// ── Clean constant file without type aliases stays clean ──
+
+#[test]
+fn aes401_constant_file_without_type_alias_clean() {
+    let mut file = make_file(
+        "src/taxonomy_app_constant.rs",
+        Language::Rust,
+        "pub const MAX_RETRIES: u32 = 3;\n",
+    );
+    file.parse_metadata = Some(
+        shared_filesystem::taxonomy_filesystem_vo::ParseMetadata::Rust(
+            shared_filesystem::taxonomy_filesystem_vo::RustMetadata::default(),
+        ),
+    );
+    let results = run_audit(vec![file]);
+    let aes401: Vec<_> = results
+        .iter()
+        .filter(|r| r.code.code() == "AES401")
+        .collect();
+    assert!(
+        aes401.is_empty(),
+        "constant file without a type alias should not trigger AES401"
+    );
+}

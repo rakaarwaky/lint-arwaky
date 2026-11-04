@@ -1,340 +1,210 @@
 # FRD — git-hooks
 
----
+## Feature Overview
 
-## Reference
+The git-hooks feature sits in the capability layer and is invoked by the CLI surface for pre-commit enforcement, hook installation, hook removal, and configuration bootstrap. It orchestrates git diff inspection and lint pipeline execution over the changed-file set, writing and removing the pre-commit hook file inside the repository's hook directory.
 
-- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature; this file is specification only.
-- PRD: [PRD.md](../../PRD.md)
-- Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
-- Config System FRD: `crates/config-system/FRD.md` (config resolution)
-- Project Setup FRD: `crates/project-setup/FRD.md` (config initialization)
-
-## System Overview
-
-The git-hooks crate implements a pre-commit hook system that enforces AES
-compliance before code enters the repository. It detects changed files via
-git diff, runs linting only on modified files, and blocks commits that
-violate AES rules.
-
-The crate follows the AES 7-layer architecture: the diff checker (capability)
-implements the diff protocol, the git hook adapter (capability) implements
-both the install and uninstall protocols, the hook manager (capability)
-implements the config protocol, the git hooks orchestrator (agent) composes
-the four protocols, and the git container (root) wires dependencies.
-
-- **Architecture & Data Flow**
-
-```mermaid
-flowchart TD
-    A["Surface"] -->|input| B["git hooks orchestrator"]
-    B --> C{"action"}
-
-    C -->|"check / git-diff"| D["diff checker"]
-    C -->|"install-hook"| E["hook adapter"]
-    C -->|"uninstall-hook"| F["hook adapter"]
-    C -->|"init-config / ignore-rule"| G["hook manager"]
-
-    D --> H["filesystem\n(run git commands)"]
-    H --> I["changed files\n(lintable filter)"]
-    I --> J["lint pipeline\n(via linter aggregates)"]
-    J --> K["Lint Results"]
-
-    E --> L[".git/hooks/pre-commit"]
-    L --> M["Success / Error"]
-
-    F --> M
-    G --> N["Config Update"]
-
-    K --> B
-    M --> B
-    N --> B
-
-    B -->|output| A
+```text
+[CLI surface] --> [git-hooks orchestrator]
+                   |-- diff & lint check  --> [git diff / lint pipeline]
+                   |-- install hook       --> [repo hook directory]
+                   |-- uninstall hook     --> [repo hook directory]
+                   |-- config & identity  --> [config file]
 ```
-
----
 
 ## Functional Requirements
 
-### FR-GitHooks-001: Git Diff Detection
+### FR-GitHooks-001: Detect Changed Files and Run Lint Check
 
-- **Description**: Identify files changed between the current HEAD and the
-  default branch using git diff commands, then run the lint pipeline over
-  the lintable subset.
-- **Input**: `FilePath` (project root directory).
-- **Output**: `GitDiffResultVO` (from `get_diff`) or `LintResultList` (from
-  `run_git_diff_check`).
-- **Business Rules**:
+**Description:** The feature shall detect the changed-file set in the working tree against the repository base branch and run the lint pipeline over that set before a commit is accepted. For every changed file that is lintable, the feature shall evaluate AES rule compliance and return the collected lint findings. A clean changed file shall contribute zero findings, and any file carrying an AES violation shall surface as a blocking result so the commit is refused.
 
-  - Default branch detection: runs
-    `git symbolic-ref refs/remotes/origin/HEAD`, falls back to `"main"`.
-  - Changed file collection tries multiple diff variants in order:
-    1. `origin/<branch>...HEAD`
-    2. `HEAD...origin/<branch>`
-    3. `<branch>...HEAD`
-    4. `master...HEAD`
-  - Falls back to `git diff --name-only HEAD` if all variants return empty.
-  - Final fallback: `git ls-files --modified --others --exclude-standard`.
-  - The fallback chain exists here, and not in the external-lint adapters, by
-    the Integration resilience decision in `PRD.md`: every strategy above
-    queries the same trusted local repository, so a fallback still yields a
-    correct — if broader — file list, whereas a retried external tool run can
-    report against a changed tool state.
-  - Classification via `--diff-filter`: added (A), modified (M), deleted (D),
-    renamed (R with `R<score>\t<old>\t<new>` tab-separated parsing).
-  - Lintable file filter (source code only):
-    `.rs`, `.py`, `.ts`, `.js`, `.jsx`, `.tsx`.
-  - Non-source files (`.md`, `.toml`, `.json`, `.yaml`, `.yml`, `.lock`,
-    images, binaries) are excluded from lintable list.
-- **Edge Cases**:
+#### Business Logic
 
-  - No git repository → diff commands fail silently, returns empty result.
-  - No remote configured → `symbolic-ref` fails, defaults to `"main"`.
-  - No changes between branches → returns empty lists with
-    `total_changed: 0`.
-  - Detached HEAD state → diff variants may all fail; falls back to `HEAD`
-    diff.
-  - Shallow clone → diff may not find base branch; fallback strategies
-    handle this.
-- **Error Handling**:
+- The diff status of any path pair shall be classified as `Unchanged`, `Modified`, `MissingFirst`, `MissingSecond`, `BothMissing`, or `NotAFile`.
+- The changed-file list shall be computed against an explicit base branch, falling back to the repository default branch when no base branch is supplied.
+- Lint findings shall be produced only for files inside the changed set; unchanged files shall not be linted.
+- An empty changed-file set shall yield an empty lint result list without blocking the commit.
+- A changed file that carries at least one AES violation shall yield one or more blocking findings.
 
-  - Git command failure (non-zero exit) → treated as no changes for that
-    variant.
-  - Invalid `FilePath` from git output → skipped silently.
+#### Edge Cases
 
----
+- A diff side that is not a regular file (`NotAFile`) shall be tolerated and shall not fail the check.
+- A missing feature branch shall fall back to the default-branch lookup instead of erroring.
+- A path that is not a git repository shall surface a diff detection error to the caller.
+- An empty diff (no changed files) shall return an empty lint result list.
 
-### FR-GitHooks-002: Pre-Commit Hook Installation
+#### Technical Specification
 
-- **Description**: Install a pre-commit hook script into `.git/hooks/` that
-  runs `lint-arwaky check .` before each commit.
-- **Input**: `FilePath` (path to the `lint-arwaky` executable).
-- **Output**: `SuccessStatus` indicating whether the hook was installed.
-- **Business Rules**:
+| Aspect | Detail |
+|--------|--------|
+| **Input** | `GitHooksRequest::RunCheck { path }` carrying the repository file path, plus an optional base branch name. |
+| **Output** | `GitHooksResponse::RunCheck` carrying `LintResultList`; empty when no lintable file changed. |
+| **Protocol** | `IDiffDetectionProtocol` |
+| **Method** | `get_diff`, `get_changed_files`, `get_default_branch`, `run_git_diff_check` |
+| **Event** | None; results are returned synchronously to the hook process. |
+| **Error** | `GitHookError` surfaced on the response when the path is not a repository or a file is unreadable; a missing base branch degrades to the default branch. |
 
-  - Hook script content:
+#### Test
 
-    ```bash
-    #!/bin/bash
-    # Lint Arwaky Pre-Commit Hook
-    echo "Running Lint Arwaky check..."
-    <executable> check .
-    if [ $? -ne 0 ]; then
-      echo "Linting failed. Please fix issues before committing."
-      exit 1
-    fi
-    echo "Linting passed."
-    exit 0
-    ```
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| A changed file carries an AES violation | The pre-commit check runs over the changed set | The response carries at least one blocking finding for that file and the commit is refused |
+| All changed files are clean | The pre-commit check runs over the changed set | The response carries an empty lint result list and the commit proceeds |
+| The path is not a git repository | The pre-commit check runs | The response carries a `GitHookError` diff detection failure |
+| No files are changed against the base branch | The pre-commit check runs | The response carries an empty lint result list |
 
-  - Creates `.git/hooks/` directory if it does not exist.
-  - Sets hook file permissions to `0o755` on Unix systems.
-  - If executable path is empty, defaults to `"lint-arwaky-cli"`.
-  - If not a git repository (no `.git/` dir) → returns
-    `SuccessStatus(false)` without error.
-- **Edge Cases**:
+#### Metric
 
-  - `.git/hooks/` already exists → directory creation is idempotent.
-  - Hook file already exists → overwritten.
-  - Not a git repository → returns success with `false` (not an error).
-  - Windows → permission setting is skipped (Unix-only feature).
-- **Error Handling**:
+| Target Metric | Value |
+|---------------|-------|
+| Blocking accuracy on seeded violation | 100% of seeded violations surface as at least one blocking finding |
+| Clean-file false positive rate | 0 blocking findings for a seeded clean changed file |
 
-  - Directory creation failure → returns `GitHookError` with message.
-  - File write failure → returns `GitHookError` with message.
-  - Permission set failure → returns `GitHookError` with message.
+### FR-GitHooks-002: Install Pre-Commit Hook
 
----
+**Description:** The feature shall install the pre-commit hook into the repository so that every commit runs the lint check before acceptance. Installation shall create the repository hook directory when it is missing, write the hook file pointing at the supplied executable path, and return the stable manager identity used in the configuration.
 
-### FR-GitHooks-003: Pre-Commit Hook Uninstallation
+#### Business Logic
 
-- **Description**: Remove the pre-commit hook script from `.git/hooks/`.
-- **Input**: None.
-- **Output**: `SuccessStatus` indicating whether the hook was removed.
-- **Business Rules**:
+- The feature shall write the pre-commit hook file into the repository hook directory pointing at the supplied executable path.
+- The hook directory shall be created when it does not exist and reused when it does.
+- The feature shall return a stable manager identity value across repeated invocations.
+- Reinstallation over an existing hook file shall overwrite it cleanly.
 
-  - Removes `.git/hooks/pre-commit` if it exists.
-  - If not a git repository → returns `SuccessStatus(false)` without error.
-  - If hook file does not exist → returns `SuccessStatus(true)`
-    (already clean).
-- **Edge Cases**:
+#### Edge Cases
 
-  - Hook file does not exist → returns success (idempotent).
-  - Not a git repository → returns success with `false`.
-- **Error Handling**: File removal failure → returns `GitHookError` with
-  message.
+- An existing hook directory shall be reused without duplication.
+- A missing hook directory shall be created before the hook file is written.
+- A repository without a `.git` directory shall fail with `GitHookError` rather than writing outside the repository.
 
----
+#### Technical Specification
 
-### FR-GitHooks-004: Project Config Initialization
+| Aspect | Detail |
+|--------|--------|
+| **Input** | `GitHooksRequest::Install { executable_path }` carrying the file path of the lint executable. |
+| **Output** | `GitHooksResponse::Install` carrying `SuccessStatus` on success or `GitHookError` on failure. |
+| **Protocol** | `IHookInstallProtocol` |
+| **Method** | `install_pre_commit`, `get_hook_manager_identity` |
+| **Event** | None; installation is a synchronous filesystem write. |
+| **Error** | `GitHookError` when the repository lacks a `.git` directory or the hook file write is denied. |
 
-- **Description**: Create the default lint-arwaky config file and manage
-  per-path ignore rules within it.
-- **Input**: Path string (for init); `HookIgnoreUpdateVO` (for rule update).
-- **Output**: `DescriptionVO` with status message.
-- **Business Rules**:
+#### Test
 
-  - Target file: `lint_arwaky.config.yaml` in the given path.
-  - Default content includes `ignored_paths: []` structure.
-  - If config file already exists → returns "ALREADY_EXISTS" status
-    (no-op, idempotent).
-  - Ignore rules are path patterns stored in `ignored_paths`.
-  - Adding a rule that already exists → no-op, returns "already present".
-  - Removing a rule that does not exist → no-op, returns "not found".
-  - Config file not found on update → descriptive error suggesting
-    `lint-arwaky-cli init`.
-- **Edge Cases**:
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| A repository has no hook directory yet | The install action runs | The hook directory is created and the pre-commit hook file exists pointing at the supplied executable path |
+| A repository already has a hook file | The install action runs again | The existing hook file is overwritten cleanly and the install reports success |
+| The path is not a git repository | The install action runs | The response carries `GitHookError` and no file is written outside the repository |
 
-  - Config file already present → no-op, descriptive status message.
-  - File write failure → error description returned.
-  - Config parse failure → error description returned.
-- **Error Handling**: Write and parse failures return descriptive error
-  messages.
+#### Metric
 
----
+| Target Metric | Value |
+|---------------|-------|
+| Install-on-missing-repo success rate | 100% of seeded hook-less repositories gain a pre-commit hook file in one call |
+| Reinstall idempotency | 0 residual duplicates after repeated installs on the same repository |
 
-## API Contract
+### FR-GitHooks-003: Uninstall Pre-Commit Hook
 
-### Protocol API
+**Description:** The feature shall uninstall the pre-commit hook and restore the repository to its pre-install state. Uninstallation shall remove the hook file the feature installed and report success; it shall remain idempotent so that repeated or no-op removals still succeed.
 
-| Method | Input | Output | Error | Event | Description |
-|---|---|---|---|---|---|
-| `get_diff` | &FilePath | `GitDiffResultVO` | — | — | Get diff result. |
-| `get_changed_files` | &FilePath, &GitBranchName | `FilePathList` | — | — | Get changed files. |
-| `get_default_branch` | &FilePath | `GitBranchName` | — | — | Get default branch. |
-| `run_git_diff_check` | &FilePath | `LintResultList` | — | — | Run lint on changed files. |
-| `install_pre_commit` | &FilePath | `SuccessStatus` | `GitHookError` | — | Install pre-commit hook. |
-| `uninstall_pre_commit` | — | `SuccessStatus` | `GitHookError` | — | Uninstall pre-commit hook. |
-| `initialize_config` | &str | `DescriptionVO` | — | — | Initialize config. |
-| `update_ignore_rule` | HookIgnoreUpdateVO | `DescriptionVO` | — | — | Update ignore rule. |
+#### Business Logic
 
-### Aggregate API
+- The feature shall remove the pre-commit hook file it installed and return a success status.
+- Uninstalling when no hook exists shall succeed without error.
+- A round trip of install followed by uninstall shall leave the repository hook directory in its original state.
 
-| Method | Input | Output | Error | Event | Description |
-|---|---|---|---|---|---|
-| `execute` | GitHooksRequest | `GitHooksResponse` | — | — | Single composite entry point over the feature. |
+#### Edge Cases
 
-## Integration Points
+- A user-replaced hook that no longer points at the manager shall be left in place by a safety check rather than deleted.
+- A missing `.git` directory shall report `GitHookError` instead of panicking.
+- Repeated uninstall calls shall keep succeeding.
 
-| System | Direction | Purpose | Failure mode |
-| --- | --- | --- | --- |
-| `shared` crate | in | Supply value objects plus the diff, hook, hook-manager, and aggregate contracts | A contract is missing at compile time → the build fails before any hook is installed |
-| `filesystem` aggregate | in | Run git subprocesses, perform hook-directory and script writes, and read configuration | A git subprocess cannot be spawned → that diff strategy fails and the next fallback strategy is tried |
-| Linter aggregates | in | Run AES analysis over the changed files | Analysis finds violations → the hook exits non-zero and the commit is blocked; analysis itself failing is reported distinctly from violations |
-| `git` CLI | in | Report changed paths and the current branch through diff, symbolic-ref, and ls-files | The repository is shallow, detached, or mid-rebase → the primary diff strategy fails and a fallback strategy is used |
-| Hook directory | in | Hold the installed hook script | The directory is not writable → installation reports failure and leaves the repository unchanged |
-| Standard library file operations | in | Set the executable bit and remove the previous script | Permission setting is unsupported on the platform → the hook is installed without the executable bit and reports which platform it is on |
+#### Technical Specification
 
-## Non-functional Requirements
+| Aspect | Detail |
+|--------|--------|
+| **Input** | `GitHooksRequest::Uninstall` carried with the repository path in context. |
+| **Output** | `GitHooksResponse::Uninstall` carrying `SuccessStatus` on success or `GitHookError` on failure. |
+| **Protocol** | `IHookUninstallProtocol` |
+| **Method** | `uninstall_pre_commit` |
+| **Event** | None; uninstallation is a synchronous filesystem delete. |
+| **Error** | `GitHookError` when the repository is unusable or the removal is denied. |
 
-| Metric | Target | Measurement method |
-| --- | --- | --- |
-| Diff detection | Early termination once changes are found; git subprocess spawn dominates the cost | Time the hook on a workspace with and without staged changes and compare |
-| Deduplication | A file changed across several diff strategies is analysed once | Stage a change that two diff strategies both report and assert one analysis run |
-| Scan scope | Only changed files are analysed | Compare the analysed file set against the repository's changed-file list |
-| Repository-state coverage | Diff detection succeeds in a shallow clone, a detached HEAD, and a mid-rebase state | Run the hook in each of the three states and assert the changed set is correct |
-| Memory | The changed-file set is held once and deduplicated | Scale the staged file count and record the retained set size |
-| Cross-platform install | The hook installs on Linux, macOS, and Windows, setting the executable bit only where it exists | Install on each platform and assert the script is registered and, where applicable, executable |
-| Install atomicity | A failed install leaves the previous hook script in place | Interrupt an install and assert the original script is still registered |
-| Block semantics | The hook exits non-zero exactly when violations are found, and zero otherwise | Run the hook against a clean and a violating change set and assert the two exit codes |
+#### Test
 
-## Test Scenarios
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| A hook was installed by this feature | The uninstall action runs | The hook file is removed and the response carries success |
+| No hook exists | The uninstall action runs | The response carries success without modification of any user file |
+| A user-replaced hook no longer points at the manager | The uninstall action runs | The replaced hook file is left in place and the response still carries success |
 
-Each scenario is stated below as a table of cases: the input condition and the expected result.
+#### Metric
 
-- **SCEN-001 — Git Diff Detection** — e.g. Default branch from `origin/HEAD` → Correct branch detected
-- **SCEN-002 — Hook Installation** — e.g. Normal install → Hook script created with correct executable
-- **SCEN-003 — Hook Uninstallation** — e.g. Hook exists → Removed, SuccessStatus(true)
-- **SCEN-004 — Project Config Initialization** — e.g. Config not present → Default config created, success
+| Target Metric | Value |
+|---------------|-------|
+| Install-uninstall round trip fidelity | 100% of seeded repositories restore the original hook directory state exactly |
+| No-op uninstall success rate | 100% of repeated uninstalls report success |
 
-- **SCEN-001 — Git Diff Detection**
+### FR-GitHooks-004: Initialize Project Config and Manage Ignore Rules
 
-FRD Ref: FR-GitHooks-001
+**Description:** The feature shall initialize the git-hooks project configuration and manage its ignore rules. Initialization shall create or read the configuration and describe the outcome; ignore-rule updates shall add or remove a single rule without duplicating it.
 
-| # | Scenario | Expected |
-| - | - | - |
-| 1 | Default branch from `origin/HEAD` | Correct branch detected |
-| 2 | `symbolic-ref` fails | Defaults to "main" |
-| 3 | Changed files via `origin/main...HEAD` | Correct file list |
-| 4 | All branch variants empty | Fallback to `HEAD` diff |
-| 5 | All diff strategies fail | Fallback to `ls-files` |
-| 6 | Lintable filter: .rs, .py, .ts, .js, .jsx, .tsx | Included |
-| 7 | Non-lintable: .md, .toml, .json, .png, .lock | Excluded |
-| 8 | Empty diff | total_changed: 0 |
-| 9 | Detached HEAD | Fallback strategies handle |
-| 10 | Renamed files classified via `--diff-filter=R` | Old/new paths parsed |
-| 11 | Changed files with violations | Lint results returned |
-| 12 | No changed files | Empty result list |
-| 13 | Changed file with parse failure | Skipped by linters, no warning |
-| 14 | All changed files non-lintable | Empty result list |
+#### Business Logic
 
-- **SCEN-002 — Hook Installation**
+- Initialization shall create the configuration on first use or read it when it exists, returning a description of the result.
+- An ignore-rule update shall add or remove a single ignore rule per invocation and shall not duplicate a rule updated twice.
+- The configuration shall identify its manager as the git hook manager.
+- A missing configuration file on a read shall be reported as not found rather than silently created unless initialization is the requested flow.
 
-FRD Ref: FR-GitHooks-002
+#### Edge Cases
 
-| # | Scenario | Expected |
-| - | - | - |
-| 1 | Normal install | Hook script created with correct executable |
-| 2 | `.git/hooks/` missing | Directory created |
-| 3 | Hook file already exists | Overwritten |
-| 4 | Not a git repo | SuccessStatus(false), no error |
-| 5 | Unix permissions | 0o755 set |
-| 6 | Windows | Permission setting skipped |
-| 7 | Empty executable path | Defaults to "lint-arwaky-cli" |
+- A configuration file not found on a read shall return a not-found description.
+- Updating the same ignored rule twice shall not duplicate the entry.
+- Initialization on an existing configuration shall be idempotent.
+- Paths outside the repository shall be rejected early.
 
-- **SCEN-003 — Hook Uninstallation**
+#### Technical Specification
 
-FRD Ref: FR-GitHooks-003
+| Aspect | Detail |
+|--------|--------|
+| **Input** | A path string, plus an optional `HookIgnoreUpdateVO` carrying the rule and the add-or-remove flag, sourced from `GitHooksRequest::GetManagerIdentity` and the config-init flow. |
+| **Output** | `GitHooksResponse::GetManagerIdentity` carrying the manager identity, plus a description text reporting the config operation result. |
+| **Protocol** | `IConfigInitProtocol` |
+| **Method** | `initialize_config`, `update_ignore_rule` |
+| **Event** | None; configuration writes are synchronous. |
+| **Error** | A missing configuration on a read yields a `config_file_not_found` description; malformed update requests are rejected with a failure description. |
 
-| # | Scenario | Expected |
-| - | - | - |
-| 1 | Hook exists | Removed, SuccessStatus(true) |
-| 2 | Hook doesn't exist | SuccessStatus(true), idempotent |
-| 3 | Not a git repo | SuccessStatus(false) |
+#### Test
 
-- **SCEN-004 — Project Config Initialization**
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| No configuration exists | The config-init flow runs | The configuration is created and the description reports initialization |
+| The configuration is missing on a read | A read runs without initialization | The response reports `config_file_not_found` |
+| The same ignore rule is updated twice | Both updates run | The configuration holds exactly one entry for that rule |
+| The manager identity is requested | The identity flow runs | The readback identity matches the git hook manager |
 
-FRD Ref: FR-GitHooks-004
+#### Metric
 
-| # | Scenario | Expected |
-| - | - | - |
-| 1 | Config not present | Default config created, success |
-| 2 | Config already exists | Idempotent, "ALREADY_EXISTS" status |
-| 3 | Add ignore rule | Rule added to config |
-| 4 | Remove ignore rule | Rule removed from config |
-| 5 | Config file not found | Error suggesting `lint-arwaky-cli init` |
-| 6 | Rule already exists (add) | No-op, "already present" |
-| 7 | Write failure | Error description returned |
+| Target Metric | Value |
+|---------------|-------|
+| Config round trip fidelity | 100% of initialize-then-update sequences leave the configuration with exactly the requested ignore rules |
+| Identity readback accuracy | 100% of identity reads return the git hook manager value |
 
----
+## Public Interface
 
-## Assumptions & Constraints
+| Aspect | Detail |
+|--------|--------|
+| Agent | `GitHooksOrchestrator` |
+| Aggregate | `IGitHooksAggregate` |
+| Method | `execute` |
+| Request | `GitHooksRequest` (`RunCheck`, `Install`, `Uninstall`, `GetManagerIdentity`) |
+| Response | `GitHooksResponse` (`RunCheck`, `Install`, `Uninstall`, `GetManagerIdentity`) |
 
-- `git` CLI is installed and available in PATH.
-- The project is a git repository (has `.git/` directory) for hook
-  operations.
-- Git commands execute within a reasonable timeout (subprocess-based,
-  invoked via `IFilesystemAggregate::run_git_command`).
-- The pre-commit hook runs `lint-arwaky-cli check .` which must be in PATH
-  or specified via executable path.
-- Config file format (`lint_arwaky.config.yaml`) is stable and
-  parseable.
-- Lintable files are source code only (.rs, .py, .ts, .js, .jsx, .tsx).
-  Non-source files are excluded from linting.
-- No async runtime dependency.
+## Reference
 
----
-
-## Glossary
-
-- **AES**: Agentic Engineering System — the 7-layer coding convention
-- **Pre-commit hook**: A git hook that runs before a commit is finalized; can block the commit by exiting non-zero
-- **Lintable file**: A source code file that can be analyzed by lint-arwaky (.rs, .py, .ts, .js, .jsx, .tsx)
-- **Default branch**: The main development branch (typically `main` or `master`) used as the diff base
-- **Diff variant**: A git diff command string tried against the repository to find changed files
-- **Hook manager**: Low-level component that handles `.git/hooks/` file operations
-- **Diff checker**: Component that runs git commands to identify changed files
-- **Parse skip**: Files that fail to parse are skipped by the linter aggregates; no separate warning diagnostic is included in output.
-
----
+| Artifact | Purpose | Link |
+|----------|---------|------|
+| PRD | Business goals, user stories, and scope | [PRD.md](../../PRD.md) |
+| Backlog | Task tracking, epics, and implementation status | [BACKLOG.md](./BACKLOG.md) |
+| Roadmap | Timeline, phasing, and dependencies | [ROADMAP.md](../../ROADMAP.md) |
+| Architecture | System boundaries, tech stack, and layer contract | [ARCHITECTURE.md](../../ARCHITECTURE.md) |

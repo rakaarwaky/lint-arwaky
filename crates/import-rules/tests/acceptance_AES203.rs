@@ -28,6 +28,7 @@ fn rust_use(path: &str) -> ImportEntry {
         symbols: Vec::new(),
         is_reexport: false,
         is_wildcard: false,
+        line: 0,
     }
 }
 
@@ -44,6 +45,7 @@ fn python_use(path: &str) -> ImportEntry {
         symbols: Vec::new(),
         is_reexport: false,
         is_wildcard: false,
+        line: 0,
     }
 }
 
@@ -149,6 +151,7 @@ fn aes203_index_ts_skipped() {
         symbols: Vec::new(),
         is_reexport: false,
         is_wildcard: false,
+        line: 0,
     }];
     let results = checker()
         .check_unused_imports(
@@ -240,6 +243,7 @@ fn aes203_python_aliased_import_used_via_alias_not_flagged() {
         symbols: vec!["_gc".to_string()],
         is_reexport: false,
         is_wildcard: false,
+        line: 0,
     }];
     let results = checker()
         .check_unused_imports(
@@ -272,6 +276,7 @@ fn aes203_python_aliased_import_truly_unused_still_flagged() {
         symbols: vec!["_gc".to_string()],
         is_reexport: false,
         is_wildcard: false,
+        line: 0,
     }];
     let results = checker()
         .check_unused_imports("/tmp/test/src/app.py", content, &imports, &[], &no_traits())
@@ -302,6 +307,7 @@ fn aes203_python_plain_import_statement_uses_first_segment_binding() {
         symbols: vec!["os".to_string()],
         is_reexport: false,
         is_wildcard: false,
+        line: 0,
     }];
     let results = checker()
         .check_unused_imports(
@@ -334,6 +340,7 @@ fn aes203_rust_aliased_use_import_used_via_alias_not_flagged() {
         symbols: vec!["Map".to_string()],
         is_reexport: false,
         is_wildcard: false,
+        line: 0,
     }];
     let results = checker()
         .check_unused_imports(
@@ -366,6 +373,7 @@ fn aes203_typescript_aliased_named_import_used_via_alias_not_flagged() {
         symbols: vec!["Bar".to_string()],
         is_reexport: false,
         is_wildcard: false,
+        line: 0,
     }];
     let results = checker()
         .check_unused_imports(
@@ -400,6 +408,7 @@ fn aes203_typescript_namespace_import_used_via_alias_not_flagged() {
         symbols: vec!["utils".to_string()],
         is_reexport: false,
         is_wildcard: true,
+        line: 0,
     }];
     let results = checker()
         .check_unused_imports(

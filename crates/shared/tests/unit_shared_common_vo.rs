@@ -1,5 +1,5 @@
 // Unit tests — shared/common taxonomy VOs and utilities.
-mod common;
+mod mock_common;
 
 use shared_common::taxonomy_adapter_name_vo::AdapterName;
 use shared_common::taxonomy_common_error::ExitCode;
@@ -60,48 +60,48 @@ fn file_path_all_slashes_becomes_root() {
 
 #[test]
 fn file_path_extension() {
-    let path = common::fp("src/main.rs");
+    let path = mock_common::fp("src/main.rs");
     assert_eq!(path.extension(), "rs");
     assert!(path.has_extension("RS"));
 }
 
 #[test]
 fn file_path_extension_ignores_dotfiles() {
-    let path = common::fp("/home/user/.bashrc");
+    let path = mock_common::fp("/home/user/.bashrc");
     assert_eq!(path.extension(), "");
 }
 
 #[test]
 fn file_path_extension_special_files() {
-    let path = common::fp("/build/Dockerfile");
+    let path = mock_common::fp("/build/Dockerfile");
     assert_eq!(path.extension(), "");
 }
 
 #[test]
 fn file_path_basename() {
-    let path = common::fp("a/b/c.rs");
+    let path = mock_common::fp("a/b/c.rs");
     assert_eq!(path.basename(), "c.rs");
 }
 
 #[test]
 fn file_path_barrel_and_entry_point() {
-    let barrel = common::fp("pkg/__init__.py");
+    let barrel = mock_common::fp("pkg/__init__.py");
     assert!(barrel.is_barrel_file());
-    let mod_rs = common::fp("src/mod.rs");
+    let mod_rs = mock_common::fp("src/mod.rs");
     assert!(mod_rs.is_barrel_file());
-    let index = common::fp("src/index.ts");
+    let index = mock_common::fp("src/index.ts");
     assert!(index.is_barrel_file());
     assert!(index.is_entry_point());
-    let lib_rs = common::fp("src/lib.rs");
+    let lib_rs = mock_common::fp("src/lib.rs");
     assert!(lib_rs.is_entry_point());
-    let regular = common::fp("src/helper.py");
+    let regular = mock_common::fp("src/helper.py");
     assert!(!regular.is_barrel_file());
     assert!(!regular.is_entry_point());
 }
 
 #[test]
 fn file_path_deref_and_display() {
-    let path = common::fp("x.rs");
+    let path = mock_common::fp("x.rs");
     assert_eq!(path.to_string(), "x.rs");
     let s: &str = &path;
     assert_eq!(s, "x.rs");
@@ -360,8 +360,8 @@ fn error_message_conversions() {
 // ── Lint VOs ────────────────────────────────────────────────
 #[test]
 fn lint_result_identity_is_unique_per_location() {
-    let a = common::violation("a.rs", 1, "AES101", Severity::LOW);
-    let b = common::violation("a.rs", 2, "AES101", Severity::LOW);
+    let a = mock_common::violation("a.rs", 1, "AES101", Severity::LOW);
+    let b = mock_common::violation("a.rs", 2, "AES101", Severity::LOW);
     assert_ne!(a.identity(), b.identity());
 }
 
@@ -387,8 +387,13 @@ fn lint_result_new_orphan_has_no_scope() {
 
 #[test]
 fn lint_result_list_wrapper() {
-    let mut list = LintResultList::new(vec![common::violation("a.rs", 1, "AES101", Severity::LOW)]);
-    list.append(common::violation("b.rs", 1, "AES101", Severity::LOW));
+    let mut list = LintResultList::new(vec![mock_common::violation(
+        "a.rs",
+        1,
+        "AES101",
+        Severity::LOW,
+    )]);
+    list.append(mock_common::violation("b.rs", 1, "AES101", Severity::LOW));
     assert_eq!(list.len(), 2);
     assert!(!list.is_empty());
     assert!(LintResultList::default().is_empty());
@@ -435,10 +440,10 @@ fn mcp_config_vo_wraps_map() {
 // ── Path-list VOs ───────────────────────────────────────────
 #[test]
 fn file_path_list_and_renamed_file() {
-    let mut list = FilePathList::new(vec![common::fp("old.rs")]);
-    list.push(common::fp("new.rs"));
+    let mut list = FilePathList::new(vec![mock_common::fp("old.rs")]);
+    list.push(mock_common::fp("new.rs"));
     assert_eq!(list.len(), 2);
-    let renamed = RenamedFile::new(common::fp("a.rs"), common::fp("b.rs"));
+    let renamed = RenamedFile::new(mock_common::fp("a.rs"), mock_common::fp("b.rs"));
     assert_eq!(renamed.new_path.basename(), "b.rs");
 }
 

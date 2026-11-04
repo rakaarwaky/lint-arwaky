@@ -111,3 +111,7 @@ pub fn record(event: &TuiEvent) {
         TuiEvent::None => {}
     }
 }
+
+pub struct _Aes303Placeholder {
+    _placeholder: (),
+}

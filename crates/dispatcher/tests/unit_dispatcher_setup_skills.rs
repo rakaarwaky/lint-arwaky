@@ -102,15 +102,15 @@ fn test_embedded_skills_constants_catalog() {
 
         match skill.language() {
             Some("python") => {
-                assert!(skill.relative_path().contains("PYTHON"));
+                assert!(skill.relative_path().contains("python"));
                 py_count += 1;
             }
             Some("rust") => {
-                assert!(skill.relative_path().contains("RUST"));
+                assert!(skill.relative_path().contains("rust"));
                 rs_count += 1;
             }
             Some("typescript") => {
-                assert!(skill.relative_path().contains("TYPESCRIPT"));
+                assert!(skill.relative_path().contains("typescript"));
                 ts_count += 1;
             }
             None => {
@@ -154,7 +154,8 @@ fn test_embedded_skills_constants_catalog() {
 
     // A skill is a folder, and a folder holds exactly one SKILL.md. Any name
     // appearing in the catalog without a SKILL.md is either the pack README or
-    // a reference file that escaped its skill folder.
+    // the category DESCRIPTION.md or a reference file that escaped its skill
+    // folder.
     let catalogued_names: std::collections::BTreeSet<&str> =
         EMBEDDED_SKILLS.iter().map(|s| s.name()).collect();
     let names_without_skill_md: std::collections::BTreeSet<&str> = catalogued_names
@@ -163,8 +164,8 @@ fn test_embedded_skills_constants_catalog() {
         .collect();
     assert_eq!(
         names_without_skill_md,
-        std::collections::BTreeSet::from(["README"]),
-        "only the skills README may be catalogued without a SKILL.md"
+        std::collections::BTreeSet::from(["README", "description"]),
+        "only the skills README and DESCRIPTION may be catalogued without a SKILL.md"
     );
 
     // The three language columns are symmetric — a language with fewer
@@ -446,20 +447,14 @@ fn test_collect_init_python_only_skips_rust_and_ts_skills() {
 
     // Verify the Python half of every polyglot skill IS installed
     assert!(
-        written.keys().any(|k| k.contains("aes-taxonomy/SKILL.md")),
-        "aes-taxonomy is language-agnostic and must be installed"
+        written.keys().any(|k| k.contains("aes-layer/SKILL.md")),
+        "aes-layer is language-agnostic and must be installed"
     );
     assert!(
         written
             .keys()
-            .any(|k| k.contains("aes-lint-arwaky/references/HOW-TO-USE-LINT-PYTHON.md")),
-        "the python reference of aes-lint-arwaky should be installed"
-    );
-    assert!(
-        written
-            .keys()
-            .any(|k| k.contains("aes-taxonomy/references/HOW-TO-MAKE-PYTHON-TAXONOMY.md")),
-        "the python reference of aes-taxonomy should be installed"
+            .any(|k| k.contains("aes-layer/reference/taxonomy/python.md")),
+        "the python reference of aes-layer should be installed"
     );
 
     // Verify common skills ARE installed
@@ -474,15 +469,10 @@ fn test_collect_init_python_only_skips_rust_and_ts_skills() {
 
     // Verify Rust and TypeScript references are NOT installed
     assert!(
-        !written.keys().any(|k| k.contains("HOW-TO-MAKE-RUST-")),
+        !written.keys().any(|k| k.contains("/rust.md")),
         "rust references must NOT be installed in a python-only project"
     );
-    assert!(
-        !written
-            .keys()
-            .any(|k| k.contains("HOW-TO-MAKE-TYPESCRIPT-")),
-        "typescript references must NOT be installed in a python-only project"
-    );
+    assert!(!written.keys().any(|k| k.contains("/typescript.md")));
 
     // Derived from the catalog rather than hard-coded: everything
     // language-agnostic, plus the python half of the polyglot skills.
@@ -513,21 +503,12 @@ fn test_collect_init_rust_only_skips_python_and_ts_skills() {
     assert!(
         written
             .keys()
-            .any(|k| k.contains("aes-lint-arwaky/references/HOW-TO-USE-LINT-RUST.md"))
-    );
-    assert!(
-        written
-            .keys()
-            .any(|k| k.contains("aes-capabilities/references/HOW-TO-MAKE-RUST-CAPABILITIES.md"))
+            .any(|k| k.contains("aes-layer/reference/capabilities/rust.md"))
     );
 
     // Verify Python and TypeScript references are NOT installed
-    assert!(!written.keys().any(|k| k.contains("HOW-TO-MAKE-PYTHON-")));
-    assert!(
-        !written
-            .keys()
-            .any(|k| k.contains("HOW-TO-MAKE-TYPESCRIPT-"))
-    );
+    assert!(!written.keys().any(|k| k.contains("/python.md")));
+    assert!(!written.keys().any(|k| k.contains("/typescript.md")));
 
     // Derived from the catalog rather than hard-coded: everything
     // language-agnostic, plus the rust half of the polyglot skills.

@@ -1,5 +1,5 @@
 // Acceptance tests — dispatcher surface actions produce valid output.
-mod common;
+mod mock_common;
 
 use shared_cli_commands::LintResult;
 use shared_common::ViolationItem;
@@ -31,7 +31,7 @@ fn acceptance_check_action_on_current_project() {
                 aggregate: orch.clone(),
             },
         ),
-        scan_aggregates: Some(common::build_scan_aggregates(
+        scan_aggregates: Some(mock_common::build_scan_aggregates(
             root.to_string_lossy().as_ref(),
         )),
     };

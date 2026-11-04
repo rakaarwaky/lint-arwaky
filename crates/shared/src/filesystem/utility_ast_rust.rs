@@ -73,7 +73,35 @@ pub fn extract_rust_metadata(tree: &tree_sitter::Tree, content: &str) -> RustMet
     // Collect byte ranges of use declarations to exclude them from identifier extraction.
     let mut use_ranges: Vec<std::ops::Range<usize>> = Vec::new();
 
+    // Track whether the next root-level item is gated by `#[cfg(test)]` so that
+    // test-only scaffolding (type aliases, fns, mods) is not counted as production code.
+    let mut in_cfg_test = false;
+
     for node in root.named_children(&mut cursor) {
+        // Detect a `#[cfg(test)]` attribute (also covers `#[cfg(all(test, ...))]`,
+        // `#[cfg(any(test, ...))]`, etc.) that gates the following item.
+        if node.kind() == "attribute_item" {
+            let text = text_of(node, content);
+            if text.starts_with("#[cfg(test)") {
+                in_cfg_test = true;
+                continue;
+            }
+        }
+
+        // Skip items gated by #[cfg(test)]: they are test-only, not production.
+        if in_cfg_test {
+            if node.kind() == "attribute_item" {
+                // Consecutive attribute (e.g. #[cfg(test)] #[another]) — stay gated.
+                continue;
+            }
+            let depth = text_of(node, content).matches('{').count() as i32
+                - text_of(node, content).matches('}').count() as i32;
+            if depth <= 0 {
+                in_cfg_test = false;
+            }
+            continue;
+        }
+
         match node.kind() {
             "use_declaration" => {
                 use_ranges.push(node.byte_range());

@@ -1,4 +1,4 @@
-mod common;
+mod mock_common;
 
 // PURPOSE: Test compliance score utility from shared_quality_rules::utility_compliance_score
 
@@ -108,9 +108,9 @@ fn compute_score_exactly_100_penalty() {
 #[test]
 fn compute_score_three_criticals_penalty_15() {
     let results = vec![
-        common::violation("a.rs", 1, "AES101", Severity::CRITICAL),
-        common::violation("a.rs", 2, "AES101", Severity::CRITICAL),
-        common::violation("a.rs", 3, "AES101", Severity::CRITICAL),
+        mock_common::violation("a.rs", 1, "AES101", Severity::CRITICAL),
+        mock_common::violation("a.rs", 2, "AES101", Severity::CRITICAL),
+        mock_common::violation("a.rs", 3, "AES101", Severity::CRITICAL),
     ];
     let score = compute_score(&results);
     assert!((score - 85.0).abs() < 1e-9);
@@ -118,8 +118,8 @@ fn compute_score_three_criticals_penalty_15() {
 #[test]
 fn compute_score_sums_penalties_from_one_hundred() {
     let results = vec![
-        common::violation("a.rs", 1, "AES101", Severity::HIGH),
-        common::violation("a.rs", 2, "AES101", Severity::HIGH),
+        mock_common::violation("a.rs", 1, "AES101", Severity::HIGH),
+        mock_common::violation("a.rs", 2, "AES101", Severity::HIGH),
     ];
     let score = compute_score(&results);
     assert!((score - 94.0).abs() < 1e-9);

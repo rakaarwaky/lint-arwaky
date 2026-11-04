@@ -1,45 +1,81 @@
 # BACKLOG — Calculator
 
-## Current Condition
+## Progress Overview
 
 Calculator is implemented, tested, and gated. Nothing is blocked.
 
-## Backlog
+## Backlog Status
 
-| ID | Priority | State | Health | Dependencies | Next Action | Updated |
-|---|---:|---|---|---|---|---|
-| BLK-001 | P1 | Planned | On Track | — | Document the aggregate boundary | 2026-10-03 |
+### FR-Calculator-001: Check the request
 
-## Scenario Evidence
+#### State
 
-| Scenario | Kind | Test file | Test name | Last verified |
-|---|---|---|---|---|
-| A valid request resolves | Automated | tests/orchestrator.rs | test_resolves | 08a3f424 |
+| No | Detail |
+|----|--------|
+| 1  | Ready |
 
-## Blockers
+#### Done
 
-None.
+| No | Detail |
+|----|--------|
+| 1  | Implemented and gated |
 
-## Dependencies
+#### In Progress
 
-| Dependency | Why |
-|------------|-----|
-| Shared contract crate | Supplies the protocols this feature implements. |
+| No | Detail |
+|----|--------|
+| 1  | None |
 
-## Release Readiness
+#### Risk
 
-| Area | Status | Notes |
-|---|---|---|
-| Build | Ready | Builds on the pinned toolchain. |
-| Tests | Ready | Full suite passes. |
-| Gates | Ready | `lint-arwaky-cli check .` reports 0 violations. |
+| No | Detail |
+|----|--------|
+| 1  | None |
 
-## Deferred
+#### Updated
 
-Nothing deferred.
+| No | Detail |
+|----|--------|
+| 1  | 2026-09-29 |
 
-## Change Log
+### FR-Calculator-002: Run the request
 
-| Date | Change |
-|------|--------|
-| 2026-10-03 | Backlog opened with the contract sections. |
+#### State
+
+| No | Detail |
+|----|--------|
+| 1  | Ready |
+
+#### Done
+
+| No | Detail |
+|----|--------|
+| 1  | Implemented and gated |
+
+#### In Progress
+
+| No | Detail |
+|----|--------|
+| 1  | None |
+
+#### Risk
+
+| No | Detail |
+|----|--------|
+| 1  | None |
+
+#### Updated
+
+| No | Detail |
+|----|--------|
+| 1  | 2026-09-29 |
+
+## Reference
+
+| Artifact     | Purpose                                    | Link |
+|--------------|--------------------------------------------|------|
+| PRD          | Business goals, user stories, and scope    | [PRD.md](../../PRD.md) |
+| FRD          | Functional requirements specification    | [FRD.md](../../FRD.md) |
+| Backlog      | Task tracking, epics, and implementation status | [BACKLOG.md](../../BACKLOG.md) |
+| Roadmap      | Timeline, phasing, and dependencies        | [ROADMAP.md](../../ROADMAP.md) |
+| Architecture | System boundaries, tech stack, and infra   | [ARCHITECTURE.md](../../ARCHITECTURE.md) |

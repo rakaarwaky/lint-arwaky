@@ -95,17 +95,16 @@ fn a_file_outside_both_directories_is_not_read_at_all() {
 #[test]
 fn a_barrel_in_a_support_dir_is_skipped() {
     // The barrel re-exports the support module beside it; it names no test.
-    assert!(check("crates/calc/tests/common/mod.rs").is_none());
+    assert!(check("crates/calc/tests/mock_common.rs").is_none());
 }
 
 #[test]
 fn a_file_under_the_support_dir_is_treated_as_flat() {
     assert!(
-        nested_under("crates/calc/tests/common/mock_filesystem.rs").is_none(),
-        "`tests/common/` is the one sanctioned subdirectory, so a file inside it \\
-         is as deep as the layout allows"
+        nested_under("crates/calc/tests/mock_filesystem.rs").is_none(),
+        "`mock_filesystem.rs` sits directly under `tests/` and carries a legal support prefix"
     );
-    assert!(check("crates/calc/tests/common/mock_filesystem.rs").is_none());
+    assert!(check("crates/calc/tests/mock_filesystem.rs").is_none());
 }
 
 // ─── Illegal names, violation ──────────────────────────────────────────────

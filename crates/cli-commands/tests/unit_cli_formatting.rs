@@ -1,5 +1,4 @@
 // Unit tests — Formatting utility tests: group_by_member, status_icon, output structure.
-use shared_cli_commands::resolve_skill_hint_for_file;
 use shared_cli_commands::utility_output_text_formatter::{
     group_by_member, hierarchy_key, status_icon,
 };
@@ -90,45 +89,6 @@ fn group_by_member_single_file_path() {
     assert!(!grouped.is_empty());
 }
 
-#[test]
-fn skill_hint_available_for_every_violation_in_a_scan() {
-    let violations = vec![
-        violation("crates/foo/contract_scan_protocol.rs", "AES201", 1),
-        violation("crates/foo/agent_scan_orchestrator.rs", "AES403", 2),
-        violation("crates/foo/utility_path_resolver.rs", "AES304", 3),
-        violation("crates/foo/taxonomy_project_setup_vo.rs", "AES101", 4),
-    ];
-
-    for v in &violations {
-        let hint = resolve_skill_hint_for_file(v.code.code(), &v.file.value);
-        assert!(
-            !hint.guidance().is_empty(),
-            "empty guidance for {}",
-            v.code.code()
-        );
-    }
-}
-
-#[test]
-fn skill_hint_follows_file_layer_not_aes_code() {
-    // AES201 in a utility-layer file routes to aes-utility, not aes-contract.
-    let hint = resolve_skill_hint_for_file("AES201", "crates/foo/utility_path_resolver.rs");
-    assert_eq!(hint.skill, Some("aes-utility"));
-    assert_eq!(
-        hint.guidance(),
-        "[run cli \"lint-arwaky-cli skill read aes-utility\"]"
-    );
-}
-
-#[test]
-fn aes403_in_agent_file_routes_to_agent_skill() {
-    let hint = resolve_skill_hint_for_file("AES403", "crates/foo/agent_scan_orchestrator.rs");
-    assert_eq!(hint.skill, Some("aes-agent"));
-    assert_eq!(
-        hint.guidance(),
-        "[run cli \"lint-arwaky-cli skill read aes-agent\"]"
-    );
-}
 // ─── violation message parser ────────────────────────────────
 //
 // The parser is the backward-compat path: capabilities now populate the

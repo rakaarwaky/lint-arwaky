@@ -2,18 +2,18 @@
 //
 // Exercises the real `McpActionSurface` dispatch logic with assertion depth:
 // every assertion pins the exact JSON envelope shape an MCP client sees.
-mod common;
+mod mock_common;
 
 use mcp_server_lint_arwaky::surface_mcp_action_command::McpActionSurface;
 
 fn surface() -> McpActionSurface {
-    common::make_action_surface()
+    mock_common::make_action_surface()
 }
 
 /// Authorization runs before path validation, so reaching the path-validation
 /// branch for a mutating action needs a surface that authorizes mutations.
 fn mutable_surface() -> McpActionSurface {
-    common::make_action_surface_allowing_mutations()
+    mock_common::make_action_surface_allowing_mutations()
 }
 
 // ─── Dispatch: unknown actions fail loudly, never silently ─────────
@@ -151,4 +151,43 @@ fn execute_command_path_traversal_documents_current_normalization_gap() {
     let normalized = FilePath::new("..\\..\\etc\\passwd".to_string())
         .expect("documented gap: traversal paths are accepted today, not rejected");
     assert_eq!(normalized.value, "../../etc/passwd");
+}
+
+// ─── docs_scaffold ─────────────────────────────────────────────────────────
+
+/// A read-only MCP surface must refuse `docs_scaffold` without `dry_run: true`.
+#[tokio::test]
+async fn execute_docs_scaffold_denied_on_read_only_surface() {
+    let result = surface()
+        .execute_docs_scaffold(".", None, /* dry_run */ false)
+        .await;
+    assert_eq!(result["exit_code"], 2);
+    assert_eq!(
+        result["error"],
+        "Action 'docs_scaffold' is disabled: MCP server is read-only"
+    );
+}
+
+/// `dry_run: true` bypasses the read-only gate because no files are written.
+#[tokio::test]
+async fn execute_docs_scaffold_dry_run_allowed_on_read_only_surface() {
+    let result = surface()
+        .execute_docs_scaffold(".", None, /* dry_run */ true)
+        .await;
+    assert_eq!(
+        result["exit_code"], 0,
+        "dry_run exit_code must be 0: {result}"
+    );
+    assert_eq!(
+        result["status"], "ok",
+        "dry_run status must be ok: {result}"
+    );
+    assert_eq!(
+        result["result"], "preview",
+        "dry_run result must be preview: {result}"
+    );
+    assert_eq!(
+        result["action"], "docs_scaffold",
+        "dry_run action must be docs_scaffold: {result}"
+    );
 }

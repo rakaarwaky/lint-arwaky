@@ -12,7 +12,7 @@ use rmcp::{ServerHandler, tool, tool_handler, tool_router};
 use std::sync::Arc;
 
 use crate::taxonomy_mcp_server_vo::{
-    ExecuteCommandArgs, GetConfigArgs, ListCommandsArgs, ReadSkillArgs,
+    DocsScaffoldArgs, ExecuteCommandArgs, GetConfigArgs, ListCommandsArgs, ReadSkillArgs,
 };
 
 use crate::surface_mcp_action_command::McpActionSurface;
@@ -127,6 +127,24 @@ impl LintArwakyMcpServer {
         let path = args.path.unwrap_or_else(|| ".".to_string());
         self.action.handle_get_config(&path, args.language)
     }
+
+    /// Write missing template files in place from embedded skills.
+    /// `dry_run` previews without touching disk. Strictness only affects the
+    /// audit path, not scaffolding.
+    pub async fn handle_docs_scaffold(
+        &self,
+        Parameters(args): Parameters<DocsScaffoldArgs>,
+    ) -> String {
+        let path = args.path.unwrap_or_else(|| ".".to_string());
+        let result = self
+            .action
+            .execute_docs_scaffold(&path, args.member.as_deref(), args.dry_run.unwrap_or(false))
+            .await;
+        serde_json::to_string(&result).unwrap_or_else(|e| {
+            serde_json::json!({"error": format!("Serialization failed: {e}"), "exit_code": 2})
+                .to_string()
+        })
+    }
 }
 
 #[tool_handler]
@@ -175,6 +193,13 @@ impl LintArwakyMcpServer {
     )]
     pub async fn get_config(&self, args: Parameters<GetConfigArgs>) -> String {
         LintArwakyMcpServer::handle_get_config(self, args)
+    }
+
+    #[tool(
+        description = "Scaffold missing documentation templates in place from embedded skills. Use `dry_run` to preview without writing. `strict` only affects the audit path."
+    )]
+    pub async fn docs_scaffold(&self, args: Parameters<DocsScaffoldArgs>) -> String {
+        LintArwakyMcpServer::handle_docs_scaffold(self, args).await
     }
 }
 

@@ -22,7 +22,7 @@ use std::path::Path;
 ///
 /// A folder with no `tests/` directory at all is still a feature that owes a
 /// suite, so the missing directory is reported rather than treated as an
-/// exemption. Folders that own no source — a pure `shared/` kernel or a
+/// exemption. Folders that own no source — a pure `shared/` layer or a
 /// surface — are out of scope.
 pub struct TestSuiteCoverageAuditor {}
 
@@ -34,7 +34,7 @@ impl IStructureTestSuiteProtocol for TestSuiteCoverageAuditor {
         let ws_root = workspace_root(&root);
         let mut findings = Vec::new();
 
-        for member in utility_structure_parsers::member_dirs(&ws_root) {
+        for member in utility_structure_parsers::scoped_member_dirs(&root, &ws_root) {
             for folder in utility_structure_parsers::feature_dirs(&member) {
                 if folder_name(&folder) == consts::KERNEL_DIR {
                     continue;

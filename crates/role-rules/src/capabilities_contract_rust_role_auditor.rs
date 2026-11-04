@@ -452,9 +452,9 @@ fn brace_delta(line: &str) -> i32 {
 fn field_carries_vo(variant: &str) -> bool {
     // The Rust primitives a field type may hold. Anything else on a response
     // variant is a domain type, so the enum is a real typed response.
-    const RUST_PRIMITIVES: [&str; 14] = [
-        "String", "str", "bool", "char", "usize", "isize", "f32", "f64", "i8", "i16", "i32", "i64",
-        "u8", "u16",
+    const RUST_PRIMITIVES: [&str; 15] = [
+        "String", "str", "&str", "bool", "char", "usize", "isize", "f32", "f64", "i8", "i16",
+        "i32", "i64", "u8", "u16",
     ];
     let Some(open) = variant.find('(') else {
         return false;

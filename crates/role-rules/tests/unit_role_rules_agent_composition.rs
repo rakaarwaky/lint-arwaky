@@ -70,13 +70,15 @@ fn block_messages(content: &str) -> Vec<String> {
 #[test]
 fn rust_metadata_protocol_impl_flagged() {
     let content = "pub struct Agent {}\n";
-    let mut meta = RustMetadata::default();
-    meta.impl_blocks = vec![RustImplItem {
-        trait_name: Some("IScannerProtocol".to_string()),
-        trait_path: None,
-        implementor_type: "Agent".to_string(),
-        has_generics: false,
-    }];
+    let meta = RustMetadata {
+        impl_blocks: vec![RustImplItem {
+            trait_name: Some("IScannerProtocol".to_string()),
+            trait_path: None,
+            implementor_type: "Agent".to_string(),
+            has_generics: false,
+        }],
+        ..Default::default()
+    };
     let messages = protocol_messages(content, Some(ParseMetadata::Rust(meta)), "rs");
     assert!(
         messages
@@ -89,13 +91,15 @@ fn rust_metadata_protocol_impl_flagged() {
 #[test]
 fn rust_metadata_aggregate_impl_not_flagged() {
     let content = "pub struct Agent {}\n";
-    let mut meta = RustMetadata::default();
-    meta.impl_blocks = vec![RustImplItem {
-        trait_name: Some("IThingAggregate".to_string()),
-        trait_path: None,
-        implementor_type: "Agent".to_string(),
-        has_generics: false,
-    }];
+    let meta = RustMetadata {
+        impl_blocks: vec![RustImplItem {
+            trait_name: Some("IThingAggregate".to_string()),
+            trait_path: None,
+            implementor_type: "Agent".to_string(),
+            has_generics: false,
+        }],
+        ..Default::default()
+    };
     let messages = protocol_messages(content, Some(ParseMetadata::Rust(meta)), "rs");
     assert!(
         !messages
@@ -110,13 +114,15 @@ fn rust_metadata_generic_impl_flagged() {
     // The AST parser records `impl<T>` via `has_generics`; the trait name is
     // still recorded, so the check reads it the same way.
     let content = "pub struct Agent {}\n";
-    let mut meta = RustMetadata::default();
-    meta.impl_blocks = vec![RustImplItem {
-        trait_name: Some("IScannerProtocol".to_string()),
-        trait_path: None,
-        implementor_type: "Agent".to_string(),
-        has_generics: true,
-    }];
+    let meta = RustMetadata {
+        impl_blocks: vec![RustImplItem {
+            trait_name: Some("IScannerProtocol".to_string()),
+            trait_path: None,
+            implementor_type: "Agent".to_string(),
+            has_generics: true,
+        }],
+        ..Default::default()
+    };
     let messages = protocol_messages(content, Some(ParseMetadata::Rust(meta)), "rs");
     assert!(
         messages
@@ -130,13 +136,15 @@ fn rust_metadata_generic_impl_flagged() {
 fn rust_metadata_impl_without_trait_not_flagged() {
     // An inherent `impl Agent { … }` has no trait — nothing to flag.
     let content = "pub struct Agent {}\n";
-    let mut meta = RustMetadata::default();
-    meta.impl_blocks = vec![RustImplItem {
-        trait_name: None,
-        trait_path: None,
-        implementor_type: "Agent".to_string(),
-        has_generics: false,
-    }];
+    let meta = RustMetadata {
+        impl_blocks: vec![RustImplItem {
+            trait_name: None,
+            trait_path: None,
+            implementor_type: "Agent".to_string(),
+            has_generics: false,
+        }],
+        ..Default::default()
+    };
     let messages = protocol_messages(content, Some(ParseMetadata::Rust(meta)), "rs");
     assert!(
         !messages
@@ -149,11 +157,13 @@ fn rust_metadata_impl_without_trait_not_flagged() {
 #[test]
 fn ts_metadata_protocol_impl_flagged() {
     let content = "export class Agent {}\n";
-    let mut meta = TypeScriptMetadata::default();
-    meta.class_declarations = vec![TSClassItem {
-        name: "Agent".to_string(),
-        implements: vec!["IScannerProtocol".to_string()],
-    }];
+    let meta = TypeScriptMetadata {
+        class_declarations: vec![TSClassItem {
+            name: "Agent".to_string(),
+            implements: vec!["IScannerProtocol".to_string()],
+        }],
+        ..Default::default()
+    };
     let messages = protocol_messages(content, Some(ParseMetadata::TypeScript(meta)), "ts");
     assert!(
         messages
@@ -166,11 +176,13 @@ fn ts_metadata_protocol_impl_flagged() {
 #[test]
 fn ts_metadata_aggregate_impl_not_flagged() {
     let content = "export class Agent {}\n";
-    let mut meta = TypeScriptMetadata::default();
-    meta.class_declarations = vec![TSClassItem {
-        name: "Agent".to_string(),
-        implements: vec!["IThingAggregate".to_string()],
-    }];
+    let meta = TypeScriptMetadata {
+        class_declarations: vec![TSClassItem {
+            name: "Agent".to_string(),
+            implements: vec!["IThingAggregate".to_string()],
+        }],
+        ..Default::default()
+    };
     let messages = protocol_messages(content, Some(ParseMetadata::TypeScript(meta)), "ts");
     assert!(
         !messages
@@ -184,14 +196,16 @@ fn ts_metadata_aggregate_impl_not_flagged() {
 fn python_metadata_protocol_base_flagged() {
     // Python records base classes, so a protocol base shows up there.
     let content = "class Agent(IScannerProtocol):\n    pass\n";
-    let mut meta = PythonMetadata::default();
-    meta.class_declarations = vec![PythonClassItem {
-        name: "Agent".to_string(),
-        bases: vec!["IScannerProtocol".to_string()],
-        decorators: vec![],
-        body_fn_count: 0,
-        module_fn_names: vec![],
-    }];
+    let meta = PythonMetadata {
+        class_declarations: vec![PythonClassItem {
+            name: "Agent".to_string(),
+            bases: vec!["IScannerProtocol".to_string()],
+            decorators: vec![],
+            body_fn_count: 0,
+            module_fn_names: vec![],
+        }],
+        ..Default::default()
+    };
     let file = FileEntry {
         path: PathBuf::from("src/agent_thing.py"),
         extension: "py".to_string(),
@@ -214,14 +228,16 @@ fn python_metadata_protocol_base_flagged() {
 fn python_metadata_parameterized_protocol_base_flagged() {
     // `class Scanner(IScannerProtocol[T])` — the base carries type parameters.
     let content = "class Scanner(IScannerProtocol[T]):\n    pass\n";
-    let mut meta = PythonMetadata::default();
-    meta.class_declarations = vec![PythonClassItem {
-        name: "Scanner".to_string(),
-        bases: vec!["IScannerProtocol[T]".to_string()],
-        decorators: vec![],
-        body_fn_count: 0,
-        module_fn_names: vec![],
-    }];
+    let meta = PythonMetadata {
+        class_declarations: vec![PythonClassItem {
+            name: "Scanner".to_string(),
+            bases: vec!["IScannerProtocol[T]".to_string()],
+            decorators: vec![],
+            body_fn_count: 0,
+            module_fn_names: vec![],
+        }],
+        ..Default::default()
+    };
     let file = FileEntry {
         path: PathBuf::from("src/agent_thing.py"),
         extension: "py".to_string(),

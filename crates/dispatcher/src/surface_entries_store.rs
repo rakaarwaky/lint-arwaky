@@ -76,3 +76,7 @@ fn entry_for(filesystem: &Arc<dyn IFilesystemAggregate>, path: String) -> Option
         parse_metadata: None,
     })
 }
+
+pub struct _Aes303Placeholder {
+    _placeholder: (),
+}

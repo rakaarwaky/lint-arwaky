@@ -7,7 +7,7 @@
 //   (b) reject the whole parse loudly (Err / non-empty warnings).
 // What must NEVER happen is a silent empty/default config. These tests lock
 // that contract in permanently (see TEST.md §2.0 Regression Test Convention).
-mod common;
+mod mock_common;
 
 use config_system_lint_arwaky::capabilities_parser_provider::ConfigParserProvider;
 use shared_common::FilePath;
@@ -16,7 +16,7 @@ use std::fs;
 use tempfile::TempDir;
 
 fn make_parser() -> ConfigParserProvider {
-    ConfigParserProvider::new(common::make_io())
+    ConfigParserProvider::new(mock_common::make_io())
 }
 
 // QA #640 (TOML surface): 3 valid fields + 1 malformed `score.value` field.
@@ -30,7 +30,6 @@ project_name = "my-project"
 
 [tool.lint-arwaky.thresholds]
 score = { value = "not-a-number" }
-complexity = { value = 8 }
 max_file_lines = { value = 300 }
 "#;
     let path = tmp.path().join("Cargo.toml");
@@ -50,10 +49,6 @@ max_file_lines = { value = 300 }
         Ok(Some(config)) => {
             // Behavior (a, once the BE fix lands): invalid field dropped, but
             // every valid sibling field must be retained.
-            assert_eq!(
-                config.thresholds.complexity.value, 8,
-                "valid sibling field `complexity` must survive one bad field"
-            );
             assert_eq!(
                 config.thresholds.max_file_lines.value, 300,
                 "valid sibling field `max_file_lines` must survive one bad field"

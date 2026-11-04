@@ -1,6 +1,6 @@
 // Acceptance tests — AES503: Capabilities orphan detection.
 #[allow(dead_code, unused_imports)]
-#[path = "../../shared/tests/common/mock_filesystem.rs"]
+#[path = "../../shared/tests/mock_filesystem.rs"]
 mod mock_filesystem;
 
 use filesystem::agent_filesystem_orchestrator::{

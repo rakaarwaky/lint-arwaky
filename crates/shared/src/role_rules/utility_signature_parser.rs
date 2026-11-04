@@ -424,7 +424,6 @@ pub fn signature_uses_forbidden_primitive(sig: &str) -> Vec<&'static str> {
     if regex_lite_match_whole_token(&combined, "String") && !is_string_in_valid_context(&combined) {
         forbidden.push("String");
     }
-
     if combined.contains("Result<String,") || combined.contains("Result<String >") {
         forbidden.push("Result<String, _>");
     }

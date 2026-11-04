@@ -27,7 +27,7 @@ impl IStructureMemberRootProtocol for MemberRootPlacementAuditor {
         let ws_root = workspace_root(&root);
         let mut findings = Vec::new();
 
-        for member in utility_structure_parsers::member_dirs(&ws_root) {
+        for member in utility_structure_parsers::scoped_member_dirs(&root, &ws_root) {
             let member_rel = match member.strip_prefix(&ws_root) {
                 Ok(p) => p.to_string_lossy().replace('\\', "/"),
                 Err(_) => member.to_string_lossy().into_owned(),

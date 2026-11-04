@@ -134,8 +134,9 @@ fn min_words_above_cache_table_is_honored_exactly() {
     let mut config = shared_config_system::ArchitectureConfig::default();
     config.naming.word_count = shared_common::taxonomy_common_vo::Count::new(11);
     let mut results = Vec::<shared_common::ViolationItem>::new();
+    // 10-word stem with a recognized layer prefix (violates min_words=11).
     let files = shared_common::FilePathList::new(vec![
-        shared_common::FilePath::new("a_b_c_d_e_f_g_h_i_j").unwrap(),
+        shared_common::FilePath::new("capabilities_a_b_c_d_e_f_g_h_i.rs".to_string()).unwrap(),
     ]);
     checker.check_file_naming(
         &config,
@@ -174,7 +175,7 @@ fn run_min_words(min_words: u64, files: &[&str]) -> Vec<shared_common::Violation
 
 #[test]
 fn ten_word_stem_violates_when_min_words_is_15() {
-    let violations = run_min_words(15, &["a_b_c_d_e_f_g_h_i_j"]);
+    let violations = run_min_words(15, &["capabilities_a_b_c_d_e_f_g_h_i.rs"]);
     assert!(
         !violations.is_empty(),
         "10-word stem must violate when min_words is 15"
@@ -183,7 +184,7 @@ fn ten_word_stem_violates_when_min_words_is_15() {
 
 #[test]
 fn ten_word_stem_violates_when_min_words_is_100() {
-    let violations = run_min_words(100, &["a_b_c_d_e_f_g_h_i_j"]);
+    let violations = run_min_words(100, &["capabilities_a_b_c_d_e_f_g_h_i.rs"]);
     assert!(
         !violations.is_empty(),
         "10-word stem must violate when min_words is 100"
@@ -193,7 +194,7 @@ fn ten_word_stem_violates_when_min_words_is_100() {
 #[test]
 fn stem_with_enough_words_passes_above_cache_table() {
     // Positive control: a 15-word stem satisfies min_words=11/15 (no violation).
-    let stem = "a_b_c_d_e_f_g_h_i_j_k_l_m_n_o";
+    let stem = "capabilities_a_b_c_d_e_f_g_h_i_j_k_l_m_n_o.rs";
     assert!(
         run_min_words(15, &[stem]).is_empty(),
         "15-word stem must pass when min_words is 15"
@@ -209,9 +210,9 @@ fn stem_with_enough_words_passes_above_cache_table() {
 fn cache_table_slots_still_behave_identically_for_1_to_10() {
     // min_words=10 with a 9-word stem violates; a 10-word stem passes —
     // the last cached slot boundary must remain unchanged.
-    let ten_word = "a_b_c_d_e_f_g_h_i_j";
+    let ten_word = "capabilities_a_b_c_d_e_f_g_h_i.rs";
     assert!(
-        !run_min_words(10, &["a_b_c_d_e_f_g_h_i"]).is_empty(),
+        !run_min_words(10, &["capabilities_a_b_c_d_e_f_g_h.rs"]).is_empty(),
         "9-word stem must violate when min_words is 10"
     );
     assert!(

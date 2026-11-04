@@ -1,308 +1,196 @@
-# FRD — report-formatter (v1.14.0)
+# FRD — Report Formatter
 
----
+## Feature Overview
 
-## Reference
+The **Report Formatter** feature sits in the agent/aggregate layer and is called by the scan surface through the `IReportFormatterAggregate` front door. The surface passes a `ScanReport` plus the requested `Format` variant; the aggregate routes the request to exactly one of four formatters and returns the rendered `DisplayContent`.
 
-- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature; this file is specification only.
-- PRD: [PRD.md](../../PRD.md)
-- Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
-- External Lint FRD: `crates/external-lint/FRD.md` (tool-native codes)
+`[Surface] --> [IReportFormatterAggregate] --> [TextFormatter | JsonFormatter | SarifFormatter | JunitFormatter] --> [DisplayContent] --> [Surface]`
 
-## System Overview
-
-The report-formatter crate provides formatting capabilities for scan report output. It has exactly four capabilities, one per output format (text, JSON, SARIF, JUnit), each implementing a dedicated protocol trait. The agent orchestrator routes requests through the aggregate by matching on `Format` and calling the specific protocol method directly — no delegation seam exists.
-
-All formatters are **self-contained** — they operate solely on `ScanReport` data and do not depend on other rule crates.
-
-- **Architecture & Data Flow**
-
-```mermaid
-flowchart TD
-    A["Surface"] -->|input| B["ReportFormatterOrchestrator\n(IReportFormatterAggregate)"]
-    B --> C{"format type"}
-
-    C -->|"Text"| D["TextFormatter\n(ITextFormatProtocol)"]
-    C -->|"JSON"| E["JsonFormatter\n(IJsonFormatProtocol)"]
-    C -->|"SARIF"| F["SarifFormatter\n(ISarifFormatProtocol)"]
-    C -->|"JUnit"| G["JunitFormatter\n(IJUnitFormatProtocol)"]
-
-    D --> H["DisplayContent"]
-    E --> H
-    F --> H
-    G --> H
-
-    H --> B
-    B -->|output| A
-```
-
-- **ScanReport Content**
-
-`ScanReport` contains two categories of findings:
-
-| Category                  | Source                   | Rule codes        | Example                                                    |
-| --------------------------- | -------------------------- | ------------------- | ------------------------------------------------------------ |
-| **AES violations**        | Internal rule crates     | AES101–AES506    | `AES201 CRITICAL surface → capabilities import forbidden` |
-| **External lint results** | External linter adapters | Tool-native codes | `clippy::needless_return`, `ruff::E501`                    |
-| **PARSE_WARN**            | Report input or diagnostics | `PARSE_WARN` | `File skipped: parse failure — syntax error` |
-
-> **PARSE_WARN dual representation**: PARSE_WARN entries may arrive via
-> `report.results` (as `LintResult` with code starting with `PARSE_`) or
-> via `report.diagnostics` (as `PipelineDiagnostic`). All formatters
-> handle both paths and render them consistently.
->
-> **Dedup invariant**: a single parse failure must be recorded exactly
-> once per `ScanReport`. `ScanReport::new` enforces this at the producer
-> boundary: a parser-sourced `PipelineDiagnostic` whose file matches a
-> `PARSE_`-prefixed `LintResult` in `results` is dropped from
-> `diagnostics`, so no formatter double-counts the same failure. Dedup is
-> per file: parser diagnostics for other files, and non-parser
-> diagnostics, survive.
-
----
+All formatters are self-contained: each operates solely on `ScanReport` data and does not depend on other rule crates. Findings arrive in three shapes — AES violation codes, external-linter rule ids, and `PARSE_WARN` entries — and every formatter renders all three consistently. A parse failure recorded once per `ScanReport` must surface exactly once in every rendered output.
 
 ## Functional Requirements
 
-### FR-ReportFormatter-001: Text Format Output
+### FR-ReportFormatter-001: Render Text Format Output
 
-- **Description**: Produce human-readable text output with severity badges and violation details.
-- **Input**: `ScanReport`.
-- **Output**: `DisplayContent` containing formatted text string.
-- **Business Rules**:
+**Description:** The feature shall render a `ScanReport` as human-readable console text. The text output shall group findings per file, end with a summary line, and be infallible: every `ScanReport`, including an empty one, shall produce a valid text body without raising an error.
 
-  - Output includes:
-    - Per-violation detail: severity badge (`[!!!]` CRITICAL, `[!! ]` HIGH, `[! ]` MEDIUM, `[. ]` LOW, `[ ]` INFO), rule code, file:line, message.
-    - Violation counts grouped by rule code, sorted by count (descending).
-    - Severity breakdown: CRITICAL / HIGH / MEDIUM / LOW / INFO counts.
-    - External lint results section (tool-native codes, grouped by tool).
-    - Parse warnings section (PARSE_WARN entries).
-    - Diagnostics section (PipelineDiagnostic entries).
-    - Total violation count and compliance score (if available).
-  - AES violations and external lint results are displayed in separate sections.
-- **Edge Cases**:
+#### Business Logic
 
-  - Empty results list → produces clean report with 0 violations.
-  - Report with only PARSE_WARN diagnostics → shows warnings, 0 violations.
-  - Report with only external lint results → shows external section, 0 AES violations.
-- **Error Handling**: None — formatting is infallible.
+- The renderer shall group findings by source file and append a summary line carrying total counts.
+- The renderer shall preserve AES violation codes, external-linter rule ids, and `PARSE_WARN` entries in the rendered text.
+- The renderer shall never fail or panic on any `ScanReport` input.
+- An empty `ScanReport` shall render as a valid text body with a zero-finding summary.
 
----
+#### Edge Cases
 
-### FR-ReportFormatter-002: JSON Format Output
+- Empty report: the renderer shall produce a valid text body with zero findings, and the body shall round-trip to disk unchanged.
+- Width/failure fields inside findings: rendering shall not fail on long or invalid-width data.
+- Findings are rendered once each; the renderer shall not duplicate a finding across files.
 
-- **Description**: Produce pretty-printed JSON output for CI/CD integration.
-- **Input**: `ScanReport`.
-- **Output**: `DisplayContent` containing pretty-printed JSON string.
-- **Business Rules**:
+#### Technical Specification
 
-  - Serializes report using shared JSON DTO value objects (`JsonReportDto`).
-  - Separates results into `violations` (AES + PARSE_ codes) and `external_results` (tool-native codes).
-  - Summary includes total violations, per-severity counts, and optional compliance score.
-  - Diagnostics rendered as `JsonDiagnostic` entries with source, severity, and message.
-- **Edge Cases**:
+| Aspect | Detail |
+|--------|--------|
+| **Input** | A `ScanReport` delivered to the aggregate with `Format::Text` selected. |
+| **Output** | A `DisplayContent` carrying the rendered text, returned to the caller for stdout or file destination. |
+| **Protocol** | `ITextFormatProtocol` |
+| **Method** | `format_text` |
+| **Event** | None; rendering is a pure transformation. |
+| **Error** | No error path; the formatter shall not raise an error for any `ScanReport`. |
 
-  - Empty results → valid JSON with empty arrays and zero summary.
-  - Serialization failure → an explicitly marked error document, never a bare `{}`: `{"formatter_error": true, "format": "json", "reason": "<cause>"}`. A consumer reading `.summary.total` finds no summary at all, so a formatting failure can never be read as "0 violations".
-- **Error Handling**: Serialization error caught and reported in the output document; the formatter still returns display content rather than raising.
+#### Test
 
----
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| The report carries findings across multiple files | The aggregate formats it with `Format::Text` | The returned `DisplayContent` groups findings per file and ends with a summary line. |
+| The report is empty | The aggregate formats it with `Format::Text` | The returned `DisplayContent` renders a valid text body with a zero-finding summary. |
 
-### FR-ReportFormatter-003: SARIF 2.1.0 Format Output
+#### Metric
 
-- **Description**: Produce SARIF 2.1.0 JSON format for IDE integration and GitHub Code Scanning.
-- **Input**: `ScanReport`.
-- **Output**: `DisplayContent` containing SARIF 2.1.0 JSON string.
-- **Business Rules**:
+| Target Metric | Value |
+|---------------|-------|
+| Formatting failures on any seeded `ScanReport` | 0 |
+| Findings duplicated in rendered text | 0 |
 
-  - Includes tool metadata: name `lint-arwaky`, version, information URI.
-  - Severity mapping:
+### FR-ReportFormatter-002: Render JSON Format Output
 
-    | lint-arwaky Severity | SARIF Level |
-    | ---------------------- | ------------- |
-    | CRITICAL             | error       |
-    | HIGH                 | error       |
-    | MEDIUM               | warning     |
-    | LOW                  | note        |
-    | INFO                 | note        |
-    | PARSE_WARN           | note        |
+**Description:** The feature shall render a `ScanReport` as canonical JSON. The JSON document shall serialize every finding and the summary counters, and shall parse back to the same logical report; an empty `ScanReport` shall serialize as valid JSON with a zero summary.
 
-  - Each result includes: rule ID, level, message text, physical location (artifact URI + start line clamped to minimum 1).
-  - Rules array includes metadata for all rule codes present in results.
-  - Diagnostics from `report.diagnostics` included as additional SARIF results with rule ID `PARSE_WARN` and level `note`.
-  - Uses shared SARIF value objects (`SarifLog`, `SarifRun`, `SarifResult`, etc.).
-- **Edge Cases**:
+#### Business Logic
 
-  - Empty results → valid SARIF with empty results array.
-  - Line number 0 or negative → clamped to 1.
-  - Serialization failure → an explicitly marked error document, never a bare `{}` and never something shaped like a valid-but-empty SARIF log: `{"formatter_error": true, "format": "sarif", "reason": "<cause>"}`. The payload carries no `$schema`, no `version`, and no `runs`, so a SARIF consumer rejects it as malformed instead of reading it as a clean run with zero results.
-- **Error Handling**: Serialization error caught and reported in the output document; the formatter still returns display content rather than raising.
+- The renderer shall emit JSON that serializes all findings and the summary counters.
+- The emitted JSON shall parse without error when consumed by a JSON parser.
+- Findings sourced from external linters shall retain their tool-native rule ids in the JSON.
+- An empty `ScanReport` shall serialize as valid JSON with a zero summary.
 
----
+#### Edge Cases
 
-### FR-ReportFormatter-004: JUnit XML Format Output
+- Empty report: the JSON shall parse with a zero summary block.
+- A full report shall round-trip to disk and parse back with identical summary counters.
+- Non-UTF-8 corner values in findings shall serialize as escaped JSON strings.
 
-- **Description**: Produce JUnit XML format for CI/CD test report integration.
-- **Input**: `ScanReport`.
-- **Output**: `DisplayContent` containing JUnit XML string.
-- **Business Rules**:
+#### Technical Specification
 
-  - Each violation becomes a test case with classname (rule code) and name (file:line).
-  - Non-INFO violations include `<failure>` element with message and type attributes.
-  - INFO severity violations produce clean `<testcase>` without `<failure>`.
-  - PARSE_WARN diagnostics produce `<testcase>` with `<skipped>` element.
-  - External lint results included as test cases with tool-native classname.
-  - XML is properly escaped: `&`, `<`, `>`, `"`, `'` → named entities.
-  - Root element: `<testsuites>` with tests and failure counts.
-  - Pre-allocated string capacity based on result count.
-- **Edge Cases**:
+| Aspect | Detail |
+|--------|--------|
+| **Input** | A `ScanReport` delivered to the aggregate with `Format::Json` selected. |
+| **Output** | A `DisplayContent` carrying JSON text, consumed by downstream parsers and CI gates. |
+| **Protocol** | `IJsonFormatProtocol` |
+| **Method** | `format_json` |
+| **Event** | None. |
+| **Error** | No error path; malformed JSON would surface as a consumer-side parse failure, never as a formatter error. |
 
-  - Empty results → valid XML with 0 tests, 0 failures.
-  - All violations INFO severity → no failure elements.
-  - Special characters in messages → properly XML-escaped.
-- **Error Handling**: None — XML generation is infallible.
+#### Test
 
----
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| The report carries external-lint findings with tool-native rule ids | The aggregate formats it with `Format::Json` | The JSON parses and the rule ids are preserved byte-for-byte. |
+| The report is empty | The aggregate formats it with `Format::Json` | The JSON parses with a zero summary block. |
 
-## API Contract
+#### Metric
 
-### Protocol API
+| Target Metric | Value |
+|---------------|-------|
+| Formatted outputs that fail to parse as JSON | 0 |
+| Summary counters diverging from the input report | 0 |
 
-| Method | Input | Output | Error | Event | Description |
-|---|---|---|---|---|---|
-| `format_text` | &ScanReport | `DisplayContent` | — | — | FR-001: Text output. |
-| `format_json` | &ScanReport | `DisplayContent` | — | — | FR-002: JSON output. |
-| `format_sarif` | &ScanReport | `DisplayContent` | — | — | FR-003: SARIF output. |
-| `format_junit` | &ScanReport | `DisplayContent` | — | — | FR-004: JUnit output. |
-| `supported_format` | — | `Format` | — | — | The single format each formatter serves. |
+### FR-ReportFormatter-003: Render SARIF 2.1.0 Format Output
 
-### Aggregate API
+**Description:** The feature shall render a `ScanReport` as a SARIF 2.1.0 document for code-scanning uploaders. The document shall map findings to SARIF results with a severity level and rule id, retain tool-native rule ids for external findings, and validate as SARIF 2.1.0 even when the report is empty.
 
-| Method | Input | Output | Error | Event | Description |
-|---|---|---|---|---|---|
-| `format` | &ScanReport, Format | `DisplayContent` | — | — | Single composite entry point over the feature. |
+#### Business Logic
 
-## Integration Points
+- The renderer shall emit a SARIF 2.1.0 document carrying `runs`, a tool driver block, and result entries.
+- Each finding shall map to a SARIF result with a severity level and a rule id.
+- Findings sourced from external linters shall retain their tool-native rule ids.
+- An empty `ScanReport` shall emit a valid SARIF 2.1.0 document with zero results.
 
-| System | Direction | Purpose | Failure mode |
-| --- | --- | --- | --- |
-| `shared` crate | in | Supply the taxonomy value objects, the formatter protocol and aggregate contracts, and the JSON and SARIF value objects | A value object is missing at compile time → the build fails before any format is produced |
-| JSON serialization library | in | Serialize the JSON and SARIF outputs | Serialization fails on a value → the failure is reported and no partial document is emitted |
-| Report formatter protocol | out (internal) | Define the shape each format implementation satisfies | A formatter does not satisfy the protocol → it is not registered and the format is reported as unavailable |
-| Report formatter aggregate | out (internal) | Route a report to the formatter for the requested format | An unknown format variant is impossible at compile time — exhaustive match on `Format` enum |
-| `Format` enum | out (internal) | Name the supported output formats | A format is added to the enum without a registered implementation → the build fails |
+#### Edge Cases
 
-## Non-functional Requirements
+- Empty report: the document shall validate as SARIF 2.1.0 with zero results.
+- A full report shall round-trip to disk and re-validate against the SARIF 2.1.0 schema.
+- A finding with an unknown severity shall map to a default SARIF level rather than failing validation.
 
-| Metric | Target | Measurement method |
-| --- | --- | --- |
-| Output allocation | String capacity is pre-allocated from the result count to avoid reallocation | Profile a large report and confirm the allocation count is bounded by the result count, not the string length |
-| Formatter memory | No allocation beyond the output string; formatters hold no state between calls | Measure retained memory after formatting a large report and assert it returns to baseline |
-| SARIF conformance | Output validates against the OASIS SARIF 2.1.0 schema | Validate a generated SARIF document against the published schema |
-| JUnit conformance | Output is well-formed XML with correct escaping | Parse generated JUnit XML and assert it is well-formed, including for findings containing markup characters |
-| JSON conformance | Output is valid and pretty-printed | Parse generated JSON and assert it round-trips and is indented |
-| Thread safety | Every formatter is `Send + Sync` | Assert the bound at compile time and share one formatter across threads in a test |
-| Extensibility | A new format is added by implementing the protocol and adding an enum variant | Add a format in a test branch and assert selection routes to it without touching the orchestrator |
+#### Technical Specification
 
-## Test Scenarios
+| Aspect | Detail |
+|--------|--------|
+| **Input** | A `ScanReport` delivered to the aggregate with `Format::Sarif` selected. |
+| **Output** | A `DisplayContent` carrying a SARIF 2.1.0 document for upload tooling. |
+| **Protocol** | `ISarifFormatProtocol` |
+| **Method** | `format_sarif` |
+| **Event** | None. |
+| **Error** | No error path; schema violations would surface as consumer-side validation failures. |
 
-Each scenario is stated below as a table of cases: the input condition and the expected result.
+#### Test
 
-- **SCEN-001 — Text Format** — e.g. Report with AES violations → Human-readable output with severity badges
-- **SCEN-002 — JSON Format** — e.g. Normal report → Valid pretty-printed JSON
-- **SCEN-003 — SARIF Format** — e.g. Normal report → Valid SARIF 2.1.0 with tool metadata
-- **SCEN-004 — JUnit Format** — e.g. Normal violations → `<failure>` elements present
-- **SCEN-005 — Orchestrator Routing** — e.g. Orchestrator routes Text → Text formatter invoked directly
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| The report carries findings with mixed severities | The aggregate formats it with `Format::Sarif` | The document validates as SARIF 2.1.0 and each result carries a severity level and rule id. |
+| The report is empty | The aggregate formats it with `Format::Sarif` | The document validates as SARIF 2.1.0 with zero results. |
 
-- **SCEN-001 — Text Format**
+#### Metric
 
-FRD Ref: FR-ReportFormatter-001
+| Target Metric | Value |
+|---------------|-------|
+| Seeded formatted reports that fail SARIF 2.1.0 validation | 0 |
 
-| # | Scenario | Expected |
-| - | - | - |
-| 1 | Report with AES violations | Human-readable output with severity badges |
-| 2 | Report with external lint results | External section with tool-native codes |
-| 3 | Report with PARSE_WARN diagnostics | Warnings section, visually distinct |
-| 4 | Empty report | "0 violations" clean report |
+### FR-ReportFormatter-004: Render JUnit XML Format Output
 
-- **SCEN-002 — JSON Format**
+**Description:** The feature shall render a `ScanReport` as JUnit XML for CI test-report ingestion. The XML shall wrap test cases in a test suite, represent each finding as one failing test case named with the rule id, and parse as valid XML even when the report is empty.
 
-FRD Ref: FR-ReportFormatter-002
+#### Business Logic
 
-| # | Scenario | Expected |
-| - | - | - |
-| 1 | Normal report | Valid pretty-printed JSON |
-| 2 | Empty results | Valid JSON with empty arrays, zero summary |
-| 3 | Report with external results | `external_results` array populated |
-| 4 | Report with PARSE_WARN | `diagnostics` array populated |
-| 5 | Serialization failure forced | Output carries `formatter_error: true` and no summary; a consumer can tell it apart from a clean scan |
+- The renderer shall emit JUnit XML with a test suite wrapping test cases.
+- Each finding shall appear as exactly one failing test case.
+- Each test case name shall carry the rule id of its finding.
+- An empty `ScanReport` shall emit a valid test suite with zero failing test cases.
 
-- **SCEN-003 — SARIF Format**
+#### Edge Cases
 
-FRD Ref: FR-ReportFormatter-003
+- Empty report: the XML shall parse as valid XML with zero failing test cases.
+- A full report shall round-trip to disk and parse with one test case per finding.
+- A formatter invoked through the aggregate routing shall return the same content as a direct call.
 
-| # | Scenario | Expected |
-| - | - | - |
-| 1 | Normal report | Valid SARIF 2.1.0 with tool metadata |
-| 2 | CRITICAL/HIGH severity | SARIF level "error" |
-| 3 | MEDIUM severity | SARIF level "warning" |
-| 4 | LOW/INFO severity | SARIF level "note" |
-| 5 | PARSE_WARN diagnostic | SARIF level "note" |
-| 6 | Line number 0 | Clamped to 1 |
-| 7 | Empty results | Valid SARIF with empty results array |
-| 8 | Serialization failure forced | Output carries `formatter_error: true`, no `runs` array, and fails SARIF schema validation rather than reading as zero results |
+#### Technical Specification
 
-- **SCEN-004 — JUnit Format**
+| Aspect | Detail |
+|--------|--------|
+| **Input** | A `ScanReport` delivered to the aggregate with `Format::JUnit` selected. |
+| **Output** | A `DisplayContent` carrying JUnit XML consumed by CI reporters. |
+| **Protocol** | `IJUnitFormatProtocol` |
+| **Method** | `format_junit` |
+| **Event** | None. |
+| **Error** | No error path; malformed XML would surface on the CI parse side. |
 
-FRD Ref: FR-ReportFormatter-004
+#### Test
 
-| # | Scenario | Expected |
-| - | - | - |
-| 1 | Normal violations | `<failure>` elements present |
-| 2 | INFO severity violations | Clean `<testcase>` without `<failure>` |
-| 3 | PARSE_WARN diagnostics | `<testcase>` with `<skipped>` |
-| 4 | Special characters in message | Properly XML-escaped |
-| 5 | Test/failure counts | Match actual results |
-| 6 | Empty results | Valid XML with 0 tests, 0 failures |
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| The report carries multiple findings | The aggregate formats it with `Format::JUnit` | The XML parses and each finding appears as one failing test case named with its rule id. |
+| The report is empty | The aggregate formats it with `Format::JUnit` | The XML parses as a valid test suite with zero failing test cases. |
 
-- **SCEN-005 — Orchestrator Routing**
+#### Metric
 
-FRD Ref: FR-001 through FR-004 via `IReportFormatterAggregate`
+| Target Metric | Value |
+|---------------|-------|
+| Seeded formatted reports that fail JUnit XML parsing | 0 |
 
-| # | Scenario | Expected |
-| - | - | - |
-| 1 | Orchestrator routes Text | `format_text` called on TextFormatter |
-| 2 | Orchestrator routes JSON | `format_json` called on JsonFormatter |
-| 3 | Orchestrator routes SARIF | `format_sarif` called on SarifFormatter |
-| 4 | Orchestrator routes JUnit | `format_junit` called on JunitFormatter |
+## Public Interface
 
----
+| Aspect | Detail |
+|--------|--------|
+| Agent | `ReportFormatterOrchestrator` routes each `Format` variant to its dedicated formatter. |
+| Aggregate | `IReportFormatterAggregate`, the feature's single front door. |
+| Method | `format(report, format)` returns the rendered `DisplayContent`. |
+| Request | A `ScanReport` plus the requested `Format` variant. |
+| Response | A `DisplayContent` rendered in the requested format. |
 
-## Assumptions & Constraints
+## Reference
 
-- Formatters never raise and never panic: every call returns display content. They are **not** infallible at the contract level — JSON and SARIF serialization can fail, and that failure is a reportable outcome carried in the output document (`formatter_error`), distinguishable from a clean scan by any consumer. Text and JUnit generation has no failure path at all.
-- `ScanReport` is the single input type for all formatters.
-- Format routing is determined at compile time via exhaustive match on `Format` enum inside the agent orchestrator.
-- All formatters are self-contained — no dependency on other rule crates.
-- SARIF output uses the OASIS SARIF 2.1.0 schema.
-- JUnit XML follows the standard JUnit schema compatible with CI/CD parsers.
-- `ScanReport` contains AES violations, external lint results (tool-native codes), and diagnostics (PARSE_WARN). All formatters handle all three categories.
-- No async runtime dependency.
-- Exactly 4 capability FRs → 4 protocol traits → 4 capability structs. No delegation protocol exists.
-
----
-
-## Glossary
-
-- **AES**: Agentic Engineering System — the 7-layer coding convention
-- **SARIF**: Static Analysis Results Interchange Format — OASIS standard for tool output
-- **JUnit XML**: XML format originally from JUnit, widely used for CI/CD test reporting
-- **DisplayContent**: Semantic VO wrapping formatted string output
-- **LintResult**: Individual violation finding with file, line, code, severity, message
-- **ScanReport**: Aggregated results + diagnostics from a full pipeline run
-- **Report Formatter Protocol**: Interface for individual format implementations (text, json, sarif, junit)
-- **Report Formatter Aggregate**: Interface for the orchestrator that routes to the correct formatter
-- **PARSE_WARN**: Non-AES warning for files that failed to parse. May appear as `LintResult` (code `PARSE_*`) in `report.results` or as `PipelineDiagnostic` in `report.diagnostics`.
-- **Tool-native code**: External linter rule identifier (e.g., `clippy::needless_return`, `ruff::E501`)
-- **Utility**: A stateless, reusable technical function (e.g., XML escaping, default formatting) that capabilities depend on but is not itself a business capability
-
----
+| Artifact | Purpose | Link |
+|----------|---------|------|
+| PRD | Business goals, user stories, and scope | [PRD.md](../../PRD.md) |
+| Backlog | Task tracking, epics, and implementation status | [BACKLOG.md](./BACKLOG.md) |
+| Roadmap | Timeline, phasing, and dependencies | [ROADMAP.md](../../ROADMAP.md) |
+| Architecture | System boundaries, tech stack, and infra | [ARCHITECTURE.md](../../ARCHITECTURE.md) |

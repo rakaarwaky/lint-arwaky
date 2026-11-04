@@ -2,10 +2,10 @@
 
 FRD: —
 Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
-State / Health: defined in root [ROADMAP.md](../../ROADMAP.md) — cited here, not restated
+State: defined in root [ROADMAP.md](../../ROADMAP.md) — cited here, not restated
 Last Updated: 2026-10-02
 
-## Current Condition
+## Progress Overview
 
 - Done: `cargo test -p dispatcher --lib --tests` → 0 failures
 - Done: single-file scan reaches the external adapters (`collect_single_file_external`)
@@ -13,41 +13,84 @@ Last Updated: 2026-10-02
 - Blocked: None
 - Next Action: —
 
-## Backlog
+## Backlog Status
 
-| ID | Priority | State | Health | Dependencies | Next Action | Updated |
-|---|---:|---|---|---|---|---|
-| DISP-01 | P0 | Done | On Track | None | — | 2026-09-29  |
-| DISP-02 | P0 | Done | On Track | None | — | 2026-10-02  |
+### DS-DISP-001
 
-## Scenario Evidence
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | DISP |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
-| Scenario | Rule / expected | Kind | Test file | Test name | Last verified |
-|---|---|---|---|---|---|
-| Single-file `.md` target selects the markdown adapter | `has_markdown` true, all other language flags false | Automated | `tests/unit_dispatcher_check_action.rs` | `markdown_file_context_selects_the_markdown_adapter` | `ec7e16a7` |
-| Single-file source target selects only its own language | `has_markdown` false for `.rs`/`.py`/`.ts`/`.tsx` | Automated | `tests/unit_dispatcher_check_action.rs` | `source_file_context_selects_only_its_own_language` | `ec7e16a7` |
-| Extensionless single-file target selects no adapter | All four language flags false | Automated | `tests/unit_dispatcher_check_action.rs` | `extensionless_file_context_selects_no_adapter` | `ec7e16a7` |
+### DS-DISP-002
 
-## Blockers
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | DISP |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
-None.
+### DS-DISP-003
 
-## Dependencies
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | DISP |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
-None.
+### DS-DISP-004
 
-## Release Readiness
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | DISP |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
-Done.
+### DS-DISP-005
 
-## Deferred
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | DISP |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
-—
+### DS-DISP-006
 
-## Change Log
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | DISP |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
 
-| Date | Change |
-|---|---|
-| 2026-09-29 | Created backlog entry for dispatcher surface crate |
-| 2026-10-02 | `collect_single_file_external` routes a one-file scan target through the external adapters; language flags derive from the file extension instead of a project walk |
-| 2026-10-02 | `scan <file.md>` now runs the external adapters: the single-file path derives its language flags from the file extension, so the markdownlint adapter fires on a lone Markdown target |
+### DS-DISP-007
+
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | DISP |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-09-29 |
+
+## Reference
+
+| Artifact | Purpose | Link |
+| ---------- | --------- | ------ |
+| PRD.md | Product requirements | [PRD.md](../../PRD.md) |
+| FRD.md | Feature requirements | [FRD.md](FRD.md) |
+| DESIGN.md | Surface design | [DESIGN.md](DESIGN.md) |
+| ROADMAP.md | Roadmap status | [ROADMAP.md](../../ROADMAP.md) |
+| ARCHITECTURE.md | Layer contract | [ARCHITECTURE.md](../../ARCHITECTURE.md) |

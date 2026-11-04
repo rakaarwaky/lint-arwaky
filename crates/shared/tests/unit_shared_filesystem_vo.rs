@@ -75,10 +75,12 @@ fn import_entry_fields() {
         symbols: vec!["B".to_string()],
         is_reexport: false,
         is_wildcard: false,
+        line: 12,
     };
     assert!(entry.is_resolved);
     assert_eq!(entry.import_type, ImportType::Use);
     assert_eq!(entry.language, Language::Rust);
+    assert_eq!(entry.line, 12);
 }
 
 // ── Graph VOs ───────────────────────────────────────────────

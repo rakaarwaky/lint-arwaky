@@ -38,6 +38,9 @@ pub struct FolderInventory {
     pub has_capabilities: bool,
     /// Does the folder hold at least one `surface_*` file.
     pub has_surfaces: bool,
+    /// Does the folder hold at least one `root_<concept>_container` or
+    /// `root_<concept>_entry` file, the composition wiring a feature owes.
+    pub has_root: bool,
     /// How many `surface_*` files the folder holds, used to spot a surface folder.
     pub surface_count: usize,
     /// How many classified files the folder holds in total.

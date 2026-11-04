@@ -1,0 +1,49 @@
+// Unit tests for architecture_layer_detector — layer detection from module paths.
+use std::fs;
+
+use shared_common::utility_architecture_layer_detector::{
+    detect_module_layer, resolve_module_path_to_layer,
+};
+
+#[test]
+fn test_detect_module_layer_with_prefix() {
+    let layer_names: Vec<String> = vec![
+        "taxonomy".into(),
+        "contract".into(),
+        "utility".into(),
+        "capabilities".into(),
+        "agent".into(),
+        "surface".into(),
+    ];
+
+    // Standard module path with layer prefix in segment
+    assert_eq!(
+        detect_module_layer("shared.src.contract_protocol", &layer_names),
+        Some("contract".to_string())
+    );
+}
+
+#[test]
+fn test_resolve_module_path_to_layer() {
+    let tmp = tempfile::TempDir::new().unwrap();
+    let module_dir = tmp
+        .path()
+        .join("modules")
+        .join("shared")
+        .join("src")
+        .join("common");
+    fs::create_dir_all(&module_dir).unwrap();
+    fs::write(module_dir.join("contract_protocol.py"), "# contract").unwrap();
+    fs::write(module_dir.join("taxonomy_status_vo.py"), "# taxonomy").unwrap();
+
+    let result =
+        resolve_module_path_to_layer("modules.shared.src.common", &tmp.path().to_string_lossy());
+    assert!(
+        result.is_some(),
+        "Should detect layer from common directory (has contract_* and taxonomy_* files)"
+    );
+    assert!(
+        result.as_ref().unwrap() == "contract" || result.as_ref().unwrap() == "taxonomy",
+        "Detected layer should be contract or taxonomy"
+    );
+}

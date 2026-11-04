@@ -1,169 +1,447 @@
-# Doc Rules — FRD
+# FRD — Doc Rules
 
-## Reference
+## Feature Overview
 
-- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature; this file is specification only.
-- PRD: [PRD.md](../../PRD.md)
-- Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
+[lint-arwaky-cli docs .] --> [DocOrchestrator] --> [ten per-doc capabilities]
+[per-doc capability] --> [shared doc-rules layer]
 
-## System Overview
+The **Doc Rules** feature audits every recognized Markdown document against AES601–AES610 and emits one finding per violation. `lint-arwaky-cli docs <root>` discovers the document chain once, hands the same audit context to each capability, merges their findings, and stamps every finding with a machine-readable `violation_type`. The feature owns zero implementation detail — it is a spec layer, not a build layer.
 
-The doc-rules crate enforces the AES document-invariant contract across the workspace. It audits every recognized `.md` document against five rules (AES601–AES605): FR-ID format and field completeness with FR/protocol class parity, section structure shape, spec purity, crosslink integrity, and document heading structure. Findings carry a machine-readable `violation_type` so consumers can route on them without parsing prose.
-
-Each rule is one capability behind one protocol seam, so the five requirements below map one-for-one onto the five capability seams the agent coordinates. The agent walks the document chain once, hands every capability the same audit context, and merges what they report; the filesystem walk itself lives in the shared utility layer, because an agent may not perform I/O. No external tool is involved.
-
-**Path scoping.** The audit request carries one path, and that path is the **audit root**, not a filter. This differs from `scan`/`check`, which index the whole workspace and then narrow the findings to the target: `docs <path>` discovers the document chain starting at `<path>` and audits only what it finds there. Two consequences follow for a sub-directory run. First, root-level documents outside `<path>` are not audited at all. Second, crosslink and master-document invariants (AES604) resolve against `<path>` — a crate directory has no sibling `PRD.md`/`ROADMAP.md`, so the invariants that look for them behave as they would in a workspace that has none. A whole-workspace audit is the intended default; a sub-directory run is a narrower, self-contained audit, not a filtered view of the full one.
+Each functional requirement below implements exactly one capability behind one AES code, so an FR ID maps one-for-one to an AES rule code.
 
 ## Functional Requirements
 
-### FR-DOC-001: FR Format, Protocol-Class Parity, and API-Method Existence (AES601)
+### FR-DOC-001: Audit AGENTS.md (AES601)
 
-- **Description**: Every requirement heading states its feature prefix and all six contract fields, an FRD declares exactly as many requirements as its feature's contract module declares capability seams, and every method its API tables promise is one the contract module declares.
-- **Input**: An `FRD.md` or `DATA.md` inside the audit context, plus the audit root for resolving the feature's shared contract module.
-- **Output**: A list of `DocFinding` values, each carrying `AES601` and one of `id_missing_feature_prefix`, `field_missing`, `protocol_count_mismatch`, or `api_method_not_found`.
-- **Business Rules**:
-  - A requirement ID must read `FR-<FEATURE>-NNN: <imperative name>`; a bare `FR-NNN` reports `id_missing_feature_prefix`.
-  - The same shared FR-ID pattern drives the ID check, the field check, and the parity counter, so an accepted ID set cannot drift between them.
-  - Every requirement states all six fields: Description, Input, Output, Business Rules, Edge Cases, Error Handling.
-  - One protocol class is one capability seam and one seam is one requirement, so the FRD's requirement count must equal the feature's `I*Protocol` count; aggregate traits are not seams and are excluded.
-  - The mismatch message names both counts and both fix directions.
-  - Each row of the `Protocol API` and `Aggregate API` tables promises a method to an integrator; a method no protocol or aggregate trait declares reports `api_method_not_found`.
-  - The method finding names both remedies: delete the promise from the table, or declare the method in the contract module.
-  - Only the first cell of a table row is a promise. A method named in a row's prose or in a body paragraph is not one, so a doc that discusses a name the code never declares stays silent.
-  - The finding anchors to its own table row's line, not to the enclosing heading, so a report points at the row a reader has to fix.
-  - The check applies to `FRD.md` and `DATA.md`; parity and the method check apply to `FRD.md` alone, because only an FRD names a feature's contract module.
-- **Edge Cases**: A feature crate whose name uses `-` is resolved to the `_` spelling of its shared module. A feature with no shared contract module cannot mismatch and cannot owe a method, so both checks stay silent. A method declared on any trait in the module satisfies a row, so a seam's declaration and the aggregate's `execute` are read the same way.
-- **Error Handling**: An unreadable contract module yields no parity or method finding rather than a false violation. The parity finding is anchored to the requirements section, falling back to the first line when the document has none; a method finding is anchored to its own row.
+**Description:** The `docs` command shall audit `AGENTS.md` (AES601) and report a finding whenever any line drifts from the canonical template, or when an H2 heading falls outside the template's required set.
 
-### FR-DOC-002: Section Structure (AES602)
+#### Business Logic
 
-- **Description**: A requirement document reads in template order, and every section the template mandates carries the body shape the template promises.
-- **Input**: An `FRD.md` or `DATA.md` inside the audit context, parsed into its level-1 and level-2 sections once per document.
-- **Output**: A list of `DocFinding` values, each carrying `AES602` and one of `order_violation`, `api_no_subsection`, `api_h3_unexpected`, `api_subsection_no_table`, `api_subsection_duplicated`, `integration_not_table`, `nfr_not_table`, `scenarios_empty`, or `glossary_empty`.
-- **Business Rules**:
-  - Sections must appear in the FRD template order; a reordering reports `order_violation` anchored to the first out-of-order section.
-  - API Contract carries exactly `### Protocol API` then `### Aggregate API`, once each, in that order, and no other level-3 heading.
-  - Each of the two API Contract subsections must own its own column-complete table; describing the seam in prose is not an answer.
-  - Integration Points and Non-functional Requirements must be tables with their required columns.
-  - Test Scenarios and Glossary must each carry at least one bullet item.
-  - The section tree is parsed once per document and read by all six checks, because re-parsing per check was the cost this rule used to pay.
-  - The full shape applies to `FRD.md`; `DATA.md` is held to the order rule only.
-- **Edge Cases**: A document with no API Contract section is silent on the API subsections rather than reported for a section the template left optional. A duplicated subsection is reported once per extra occurrence.
-- **Error Handling**: A document whose parse yields no sections produces no findings; an unparseable document is a parse skip, never a violation.
+- Shall require the Runtime, Project Structure, Commands, and Reference sections verbatim
+- Shall name the AES 7-layer naming convention and pinned Rust edition 2024 toolchain
+- Shall list every CI gate command with scope and CI job
+- Shall link to `README.md`, `CONTRIBUTING.md`, `ARCHITECTURE.md`, `ROADMAP.md`, `PRD.md` in Reference
 
-### FR-DOC-003: Spec Purity (AES603)
+#### Edge Cases
 
-- **Description**: A specification carries no implementation state and names no source file.
-- **Input**: Every promise-bearing document inside the audit context — `FRD.md`, `DATA.md`, `PRD.md`, `ROADMAP.md`.
-- **Output**: A list of `DocFinding` values, each carrying `AES603` and one of `status_leak` or `source_file_named`.
-- **Business Rules**:
-  - The document set is this capability's own decision: a `BACKLOG.md` reports progress, which is its job, so purity applies to the specs alone.
-  - A status leak is a checkbox task item, a `Status:` field, an implementation-state claim, a release-state claim, a status marker, or a progress percentage.
-  - A table row that defines status vocabulary is a definition, not a claim, so it is skipped.
-  - A macro invocation such as `unimplemented!` names a language token rather than making a claim about this feature's progress, so a match followed by `!` is skipped.
-  - A source-file reference names a concrete `.py`, `.rs`, `.ts`, or `.tsx` path, and the finding quotes it.
-- **Edge Cases**: A prose-only document with no sections is still audited for purity — section shape is another rule's question.
-- **Error Handling**: A pattern that fails to compile leaves the check silent rather than reporting every line as a violation.
+- A line diverging from the canonical template fires `line_drift`
+- An H2 not in the template fires `h2_unexpected`
+- An empty Runtime section fires `empty_section`
 
-### FR-DOC-004: Crosslinks and State-Vocabulary Placement (AES604)
+#### Technical Specification
 
-- **Description**: A requirement document links the documents it depends on, and the state vocabulary lives once, in the root master.
-- **Input**: The requirement documents plus the root master text carried by the audit context, and each document's position relative to the audit root.
-- **Output**: A list of `DocFinding` values, each carrying `AES604` and one of `no_backlog_link`, `no_prd_link`, or `state_vocab_restated`.
-- **Business Rules**:
-  - The Reference section of an `FRD.md` or `DATA.md` must link its `BACKLOG.md` and its `PRD.md`, or a reader cannot reach the report that says whether the promise was kept.
-  - The master owns the state vocabulary, so the root document is the one allowed to carry those sections; a feature `BACKLOG.md` restating them reports `state_vocab_restated` and names every section it restated.
-  - The restatement finding is raised only when a master exists to be the single home.
-- **Edge Cases**: A root-level legacy `BACKLOG.md` is accepted as the master during migration, so a workspace can move to `ROADMAP.md` in place.
-- **Error Handling**: A document with no Reference section is silent on crosslinks rather than reported for a section it never claimed to carry.
+| Aspect | Detail |
+|--------|--------|
+| **Input** | `AGENTS.md` document text and its file path |
+| **Output** | `Vec<DocFinding>` for line-drift and heading violations |
+| **Protocol** | `IAgentsDocProtocol` |
+| **Method** | `audit_agents` |
+| **Event** | `AgentsAudited` |
+| **Error** | `LINE_DRIFT`, `H2_UNEXPECTED` |
 
-### FR-DOC-005: Document Heading Structure (AES605)
+#### Test
 
-- **Description**: A recognized document opens with exactly one level-1 heading, carries every required level-2 section, and holds no level-2 heading outside its template.
-- **Input**: Every document inside the audit context that has a registered H2 contract.
-- **Output**: A list of `DocFinding` values, each carrying `AES605` and one of `h1_count`, `h2_missing`, or `h2_unexpected`.
-- **Business Rules**:
-  - Only a document with a registered H2 contract has a heading shape to hold; a document without one is skipped rather than reported.
-  - Exactly one level-1 heading opens the file; zero or more than one reports `h1_count`.
-  - Every required level-2 heading must be present; the finding names each absent section.
-  - The H2 set is closed: a heading outside the required plus allowed union reports `h2_unexpected` and names the heading and its remedy.
-  - Headings inside fenced code blocks are ignored, so a shell comment such as `# Tests (matches CI "Tests" job)` never reads as a heading.
-  - H2 matching is case-insensitive, punctuation-insensitive, leading-word, and drops a leading list index, so `## 11. Root Layer` satisfies `Root Layer`.
-- **Edge Cases**: Level-3 and deeper headings are free-form per project and are never reported.
-- **Error Handling**: Heading counts are document-level findings and anchor to line 0, because a missing heading has no single line to blame.
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| `AGENTS.md` line diverges from the template | The audit checks line drift | A `line_drift` finding fires |
+| `AGENTS.md` carries an off-template H2 | The audit checks heading structure | An `h2_unexpected` finding fires |
 
-## API Contract
+#### Metric
 
-### Protocol API
+| Target Metric | Value |
+|---------------|-------|
+| AGENTS template line-drift violations | 0 |
+| Off-template H2 headings | 0 |
 
-| Method | Input | Output | Error | Event | Description |
-|--------|-------|--------|-------|-------|-------------|
-| `audit_fr_format` | `DocAuditContext` | `Vec<DocFinding>` | — | — | FR-ID format, FR fields, FR/protocol-class parity, and promised-API-method existence (AES601). |
-| `audit_section_structure` | `DocAuditContext` | `Vec<DocFinding>` | — | — | Template section order and mandated section shape (AES602). |
-| `audit_spec_purity` | `DocAuditContext` | `Vec<DocFinding>` | — | — | Status leaks and source-file names in a specification (AES603). |
-| `audit_crosslinks` | `DocAuditContext` | `Vec<DocFinding>` | — | — | Reference crosslinks and state-vocabulary placement (AES604). |
-| `audit_doc_heading` | `DocAuditContext` | `Vec<DocFinding>` | — | — | H1 count and closed H2 set per document template (AES605). |
+### FR-DOC-002: Audit README.md (AES602)
 
-### Aggregate API
+**Description:** The `docs` command shall audit `README.md` (AES602) and report a finding whenever its `Quick Start` table lacks the fixed `Step | Action | Command` columns, or when spec prose names a concrete source file or leaks build status.
 
-| Method | Input | Output | Error | Event | Description |
-|--------|-------|--------|-------|-------|-------------|
-| `execute` | `DocRequest` | `DocResponse` | — | — | Walks the document chain once, fans out to the five protocol seams, and returns the merged, deduplicated, stable-sorted findings. |
+#### Business Logic
 
-## Integration Points
+- Shall require a `Quick Start` table with columns `Step`, `Action`, `Command`
+- Shall describe what the tool does, every command, and how to install
+- Shall reject spec prose that names a source file with a language extension
+- Shall link to `ARCHITECTURE.md`, `TEST.md`, `CONTRIBUTING.md`, `LICENSE` in Reference
 
-| System | Direction | Purpose | Failure mode |
-|--------|-----------|---------|--------------|
-| `dispatcher` | in | Aggregates the doc audit and surfaces it through the `docs` subcommand | A missing dispatcher hook drops the entire doc group silently |
-| `filesystem` | in | Supplies file entries for all `.md` documents under the workspace root | File-walk failures produce no findings rather than crashing the audit |
-| `shared::taxonomy` | in | Supplies violation types, rule codes, heading contracts, and document name constants | A missing constant causes a compile-time failure at the aggregate boundary |
+#### Edge Cases
 
-## Non-functional Requirements
+- Quick Start table missing `Command` fires `table_missing_columns`
+- Prose that names a source file with a language extension fires `source_file_named`
+- Prose stating "released as vX.Y.Z" fires `status_leak`
 
-| Metric | Target | Measurement method |
-|--------|--------|---------------------|
-| Read scope | Doc rules read the documents under audit plus, for the parity check only, the audited feature's shared contract module, read-only | Run a scan and confirm the group opens only `.md` files and the contract source files in `crates/shared/src/<module>/` |
-| Finding precision | Every finding names a file and a line number | Invoke the docs command and confirm each finding resolves to a line |
-| Schema completeness | Every finding carries a 1-based `line` (0 for document-level findings), a HIGH `severity` per RULES_AES, and maps to a shared `ViolationItem` | Call `DocFinding::to_violation_item` and confirm the `line` and `severity` fields survive the JSON round trip |
-| Determinism | Two runs over the same tree report the same findings in the same order | Run the docs command twice and compare the outputs |
+#### Technical Specification
 
-## Test Scenarios
+| Aspect | Detail |
+|--------|--------|
+| **Input** | `README.md` document text and its file path |
+| **Output** | `Vec<DocFinding>` for table-shape and purity violations |
+| **Protocol** | `IReadmeDocProtocol` |
+| **Method** | `audit_readme` |
+| **Event** | `ReadmeAudited` |
+| **Error** | `TABLE_MISSING_COLUMNS`, `STATUS_LEAK` |
 
-- A document misses a mandatory H2 → AES605 fires naming the missing headings.
-- Requirement count drifts from the contract seams → AES601 fires stating both counts and both fix directions.
-- An FRD carries a bare FR-ID without a feature prefix → AES601 fires naming the line and missing prefix.
-- An FRD requirement is missing a required field → AES601 fires naming the field and the line.
-- An FRD API table promises a method no protocol or aggregate trait declares → AES601 fires naming the method, the table, and both remedies.
-- A spec names a concrete source-file path → AES603 fires naming the line and the reference.
-- A spec carries a status leak (checkbox item, an implementation-state claim, or a progress percentage) → AES603 fires naming the pattern.
-- An FRD omits its BACKLOG.md link in Reference → AES604 fires.
-- An FRD omits its PRD.md link in Reference → AES604 fires.
-- An FRD's line-anchored finding maps to a `ViolationItem` with matching `line` and `severity` → `DocFinding::to_violation_item` preserves both fields through the JSON/SARIF round trip.
-- A feature backlog restates a root-state section → AES604 fires.
-- A conforming workspace produces 0 doc findings on `lint-arwaky-cli docs .` → exit code 0.
-- `docs` run against a single crate directory → only that directory's documents are audited, and the crosslink invariants resolve against that directory as the root, not against the workspace root.
-- `docs` run against a directory holding no recognized document → 0 findings and exit code 0, the same as a clean audit; the target being empty is not itself a finding.
-- Each of the five protocol seams has its own capability, injected into the agent → the aggregate reaches all five rules through one `execute` call, and no capability is wired directly into the agent.
-- A document that violates two rules at once → both rule codes appear in one response, proving the agent merges rather than short-circuits on the first capability that reports.
+#### Test
 
-## Assumptions & Constraints
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| Quick Start table lacks `Command` column | The audit checks table shape | A `table_missing_columns` finding fires |
+| README prose names a source file with a language extension | The audit scans `README.md` | A `source_file_named` finding fires |
 
-- Document recognition is limited to the known set (`FRD.md`, `BACKLOG.md`, `PRD.md`, `ROADMAP.md`, `README.md`, `AGENTS.md`, `ARCHITECTURE.md`, `CONTRIBUTING.md`). Unknown documents are ignored.
-- H2 matching is case-insensitive and uses leading-word comparison, so `## API Contract` and `## API contract:` both match.
-- The FR/protocol parity check and the API-method check only apply to features that have a corresponding shared contract module (`crates/shared/src/<feature-module>/`).
-- Aggregate traits are always excluded from the protocol class count regardless of naming.
-- One protocol class is one capability seam is one requirement: the five doc rules declare five seams, so this document declares five requirements and the two counts stay equal.
-- The document walk is shared utility work, not agent work: an agent coordinates in-memory protocols and may not touch the filesystem.
-- Fenced code blocks are stripped before H1 counting so shell comments like `# Tests (matches CI "Tests" job)` do not count as headings.
-- The root master document is `ROADMAP.md`; a legacy root `BACKLOG.md` is accepted during migration.
+#### Metric
 
-## Glossary
+| Target Metric | Value |
+|---------------|-------|
+| Quick Start table missing-column violations | 0 |
+| Status vocabulary leaks in README prose | 0 |
 
-- **Spec document**: A promise-bearing document (FRD, PRD, ROADMAP) that must be stateless and not name source files.
-- **Status document**: A report-bearing document (BACKLOG, ROADMAP) that records real workspace condition with re-runnable evidence.
-- **Feature folder**: A directory under `crates/`, `modules/`, or `packages/` that contains an `agent_*_orchestrator` file plus its doc pair.
-- **Protocol class**: A capability-seam trait declared as `pub trait I*Protocol: Send + Sync`.
-- **Audit context**: The shared per-run state every capability receives — the recognised documents, the audit root, and the root master text.
-- **Aggregate trait**: A composite entry-point trait (e.g., `IScannerAggregate`) that is not a capability seam.
-- **Parse skip**: A file that cannot be read or parsed is silently excluded; it is never counted as a violation.
-- **State vocabulary**: Sections that define `State`, `Health`, or progress markers and belong only in the root master document.
+### FR-DOC-003: Audit ARCHITECTURE.md (AES603)
+
+**Description:** The `docs` command shall audit `ARCHITECTURE.md` (AES603) and report a finding whenever a required H2 section is missing, or when spec prose names a concrete source file.
+
+#### Business Logic
+
+- Shall define the 7-layer AES architecture: Taxonomy, Contract, Utility, Capabilities, Agent, Surface, Root
+- Shall give the import matrix with allowed, mandatory, forbidden dependencies per scope
+- Shall list member types (feature, surface, shared) and their document pairs
+- Shall link to `PRD.md` and `ROADMAP.md` in Reference
+
+#### Edge Cases
+
+- Missing required H2 fires `h2_missing`
+- Prose that names a source file with a language extension fires `source_file_named`
+
+#### Technical Specification
+
+| Aspect | Detail |
+|--------|--------|
+| **Input** | `ARCHITECTURE.md` document text and its file path |
+| **Output** | `Vec<DocFinding>` for heading-structure and purity violations |
+| **Protocol** | `IArchitectureDocProtocol` |
+| **Method** | `audit_architecture` |
+| **Event** | `ArchitectureAudited` |
+| **Error** | `H2_MISSING`, `LINE_DRIFT` |
+
+#### Test
+
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| `ARCHITECTURE.md` lacks a required H2 section | The audit checks heading structure | An `h2_missing` finding fires |
+| `ARCHITECTURE.md` names a concrete source file | The audit scans `ARCHITECTURE.md` | A `source_file_named` finding fires |
+
+#### Metric
+
+| Target Metric | Value |
+|---------------|-------|
+| Missing required H2 sections | 0 |
+| Source-file references in architecture prose | 0 |
+
+### FR-DOC-004: Audit CONTRIBUTING.md (AES604)
+
+**Description:** The `docs` command shall audit `CONTRIBUTING.md` (AES604) and report a finding whenever its `Workflow` table lacks fixed columns, or when an H2 falls outside the template.
+
+#### Business Logic
+
+- Shall define worktree discipline, no-bypass fixes, and test-first changes
+- Shall give a commit convention table with Type, Usage, Example
+- Shall carry Workflow and Commit Convention tables with fixed columns
+- Shall link to `PRD.md` and `ARCHITECTURE.md` in Reference
+
+#### Edge Cases
+
+- Workflow table missing `Detail` fires `table_missing_columns`
+- Off-template H2 fires `h2_unexpected`
+
+#### Technical Specification
+
+| Aspect | Detail |
+|--------|--------|
+| **Input** | `CONTRIBUTING.md` document text and its file path |
+| **Output** | `Vec<DocFinding>` for table-shape and heading violations |
+| **Protocol** | `IContributingDocProtocol` |
+| **Method** | `audit_contributing` |
+| **Event** | `ContributingAudited` |
+| **Error** | `TABLE_MISSING_COLUMNS`, `H2_UNEXPECTED` |
+
+#### Test
+
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| Workflow table lacks `Detail` column | The audit checks table shape | A `table_missing_columns` finding fires |
+| `CONTRIBUTING.md` has an off-template H2 | The audit checks heading structure | An `h2_unexpected` finding fires |
+
+#### Metric
+
+| Target Metric | Value |
+|---------------|-------|
+| Workflow/Commit table missing-column violations | 0 |
+| Off-template H2 headings | 0 |
+
+### FR-DOC-005: Audit PRD.md (AES605)
+
+**Description:** The `docs` command shall audit `PRD.md` (AES605) and report a finding whenever its `Project Requirements` section is missing, when its spec prose names a concrete source file, or when it leaks build status vocabulary.
+
+#### Business Logic
+
+- Shall require a `Project Requirements` section stating business goals, user stories, and scope
+- Shall reject spec prose that names a source file with a language extension
+- Shall reject status vocabulary (shipped, backlog, in progress, done) in requirement statements
+- Shall link to `ROADMAP.md` and `ARCHITECTURE.md` in its Reference section
+
+#### Edge Cases
+
+- `PRD.md` without `Project Requirements` fires `missing_project_requirements`
+- `PRD.md` scope prose that names a source file with a language extension fires `source_file_named`
+- `PRD.md` stating a release version in requirement prose fires `status_leak`
+
+#### Technical Specification
+
+| Aspect | Detail |
+|--------|--------|
+| **Input** | `PRD.md` document text and its file path |
+| **Output** | `Vec<DocFinding>` with `violation_type` per rule breached |
+| **Protocol** | `IPrdDocProtocol` |
+| **Method** | `audit_prd` |
+| **Event** | `PrdAudited` |
+| **Error** | `MISSING_PROJECT_REQUIREMENTS`, `STATUS_LEAK`, `SOURCE_FILE_NAMED` |
+
+#### Test
+
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| `PRD.md` lacks `Project Requirements` | The audit runs `audit_prd` | A `missing_project_requirements` finding fires |
+| `PRD.md` names a source file with a language extension in scope prose | The audit scans `PRD.md` | A `source_file_named` finding fires |
+| `PRD.md` states a release version in a requirement | The audit scans `PRD.md` | A `status_leak` finding fires |
+
+#### Metric
+
+| Target Metric | Value |
+|---------------|-------|
+| `PRD.md` missing `Project Requirements` | 0 |
+| `source_file_named` findings from `PRD.md` | 0 |
+| `status_leak` findings from `PRD.md` | 0 |
+
+### FR-DOC-006: Audit ROADMAP.md (AES606)
+
+**Description:** The `docs` command shall audit `ROADMAP.md` (AES606) and report a finding whenever a `Roadmap Status` entry declares an ID with no matching `PR-<PROJECT>-NNN` in `PRD.md`, or when `PRD.md` declares a PR-ID with no matching roadmap entry.
+
+#### Business Logic
+
+- Shall require every `Roadmap Status` entry to carry Priority, State, Dependencies, Updated
+- Shall enforce PR-ID parity between `PRD.md` `Project Requirements` and `ROADMAP.md` `Roadmap Status`
+- Shall link to `PRD.md` and `ARCHITECTURE.md` in its Reference section
+
+#### Edge Cases
+
+- ROADMAP entry `PR-LA-001` with no `PR-LA-001` in PRD fires `pr_roadmap_id_missing`
+- PRD declares `PR-LA-016` with no roadmap entry fires `roadmap_pr_id_not_pr`
+- Roadmap row missing `State` fires `entry_missing_row`
+
+#### Technical Specification
+
+| Aspect | Detail |
+|--------|--------|
+| **Input** | `ROADMAP.md` and `PRD.md` document texts |
+| **Output** | `Vec<DocFinding>` for parity and row-shape violations |
+| **Protocol** | `IRoadmapDocProtocol` |
+| **Method** | `audit_roadmap` |
+| **Event** | `RoadmapAudited` |
+| **Error** | `PR_ROADMAP_ID_MISSING`, `ROADMAP_PR_ID_NOT_PR` |
+
+#### Test
+
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| PRD declares `PR-LA-001` but ROADMAP has no entry | The audit runs parity check | A `pr_roadmap_id_missing` finding fires |
+| ROADMAP has `PR-LA-099` not in PRD | The audit runs parity check | A `roadmap_pr_id_not_pr` finding fires |
+
+#### Metric
+
+| Target Metric | Value |
+|---------------|-------|
+| PRD-to-ROADMAP PR-ID parity violations | 0 |
+| ROADMAP entries without a PRD declaration | 0 |
+
+### FR-DOC-007: Audit BACKLOG.md (AES607)
+
+**Description:** The `docs` command shall audit `BACKLOG.md` (AES607) and report a finding whenever a `## Backlog` row's ID cell is not a valid `FR-<FEATURE>-NNN` ID, or when a declared FR ID has no matching backlog row.
+
+#### Business Logic
+
+- Shall require one `## Backlog` row per declared FR, DS, DT, or PR ID
+- Shall require each row's ID cell to match its spec document's ID family
+- Shall require State, Done, In Progress, Risk, Updated columns per row
+- Shall link to `FRD.md` in its Reference section
+
+#### Edge Cases
+
+- Row ID `FR-DOC-001` with no feature prefix fires `backlog_id_not_fr`
+- Declared `FR-DOC-009` with no matching backlog row fires `backlog_id_missing`
+
+#### Technical Specification
+
+| Aspect | Detail |
+|--------|--------|
+| **Input** | `BACKLOG.md` and its paired spec document (`FRD.md`, `DATA.md`, `DESIGN.md`) |
+| **Output** | `Vec<DocFinding>` for ID-alignment violations |
+| **Protocol** | `IBacklogDocProtocol` |
+| **Method** | `audit_backlog` |
+| **Event** | `BacklogAudited` |
+| **Error** | `BACKLOG_ID_NOT_FR`, `BACKLOG_ID_MISSING` |
+
+#### Test
+
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| `FRD.md` declares `FR-DOC-009` but `BACKLOG.md` has no row | The audit runs ID alignment | A `backlog_id_missing` finding fires |
+| `BACKLOG.md` row ID reads `FR-DOC-001` | The audit scans `BACKLOG.md` | A `backlog_id_not_fr` finding fires |
+
+#### Metric
+
+| Target Metric | Value |
+|---------------|-------|
+| BACKLOG rows with mismatched ID family | 0 |
+| Declared spec IDs missing a BACKLOG row | 0 |
+
+### FR-DOC-008: Audit DATA.md (AES608)
+
+**Description:** The `docs` command shall audit `DATA.md` (AES608) and report a finding whenever a data ID uses a bare `DT-NNN` without the `SHARED` qualifier, or when spec prose names a concrete source file.
+
+#### Business Logic
+
+- Shall require Data Overview, Data Requirements, and Reference sections
+- Shall declare `DT-SHARED-NNN` items, one per data concept
+- Shall keep data concepts free from technical and behavioural concerns
+- Shall link to `PRD.md`, `BACKLOG.md`, `ROADMAP.md`, `ARCHITECTURE.md` in Reference
+
+#### Edge Cases
+
+- Heading `DT-001` without `SHARED` fires `id_missing_feature_prefix`
+- Prose that names a source file with a language extension fires `source_file_named`
+
+#### Technical Specification
+
+| Aspect | Detail |
+|--------|--------|
+| **Input** | `DATA.md` document text and its file path |
+| **Output** | `Vec<DocFinding>` for ID-format and purity violations |
+| **Protocol** | `IDataDocProtocol` |
+| **Method** | `audit_data` |
+| **Event** | `DataAudited` |
+| **Error** | `ID_MISSING_FEATURE_PREFIX`, `SOURCE_FILE_NAMED` |
+
+#### Test
+
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| DATA heading reads `DT-001` with no `SHARED` qualifier | The audit checks ID format | An `id_missing_feature_prefix` finding fires |
+| DATA prose names a struct or module file | The audit scans `DATA.md` | A `source_file_named` finding fires |
+
+#### Metric
+
+| Target Metric | Value |
+|---------------|-------|
+| DATA IDs missing the `SHARED` qualifier | 0 |
+| Source-file references in data contract prose | 0 |
+
+### FR-DOC-009: Audit FRD.md (AES609)
+
+**Description:** The `docs` command shall audit each `FRD.md` entry (AES609) and report a finding whenever an FR heading lacks the `FR-<FEATURE>-NNN` prefix, when its `Technical Specification` table omits any of the six fixed rows, or when spec prose names a concrete source file.
+
+#### Business Logic
+
+- Shall require every FR heading to match `FR-<FEATURE-NAME-ID>-NNN: <name>`
+- Shall require exactly six `Technical Specification` rows: Input, Output, Protocol, Method, Event, Error
+- Shall reject spec prose that names a source file with a language extension
+- Shall link to `PRD.md` and `BACKLOG.md` in its Reference section
+
+#### Edge Cases
+
+- Heading `FR-DOC-001: Do The Thing` fires `id_missing_feature_prefix`
+- Technical Specification missing the `Event` row fires `entry_missing_row`
+- Prose naming the orchestrator source file fires `source_file_named`
+
+#### Technical Specification
+
+| Aspect | Detail |
+|--------|--------|
+| **Input** | `FRD.md` document text and its file path |
+| **Output** | `Vec<DocFinding>` for format and table-shape violations |
+| **Protocol** | `IFrdDocProtocol` |
+| **Method** | `audit_frd` |
+| **Event** | `FrdAudited` |
+| **Error** | `ID_MISSING_FEATURE_PREFIX`, `SOURCE_FILE_NAMED` |
+
+#### Test
+
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| Heading `FR-DOC-001: Do The Thing` with no feature prefix | The audit scans `FRD.md` | An `id_missing_feature_prefix` finding fires |
+| Technical Specification omits `Event` | The audit checks entry tables | An `entry_missing_row` finding fires |
+
+#### Metric
+
+| Target Metric | Value |
+|---------------|-------|
+| FR-ID headings missing a feature prefix | 0 |
+| Entry-table missing-row violations | 0 |
+
+### FR-DOC-010: Audit DESIGN.md (AES610)
+
+**Description:** The `docs` command shall audit `DESIGN.md` (AES610) and report a finding whenever a `Design Requirements` H3 does not match the `DS-<NAME>-NNN` pattern, or when a table appears under a section the template does not mandate.
+
+#### Business Logic
+
+- Shall require Design Overview, Design Requirements, and Reference sections
+- Shall sanction H3 headings only under Design Requirements, matching `DS-<NAME>-NNN`
+- Shall link to `PRD.md`, `BACKLOG.md`, `ROADMAP.md`, `ARCHITECTURE.md` in Reference
+- Shall permit no H3 under Design Overview or Reference
+
+#### Edge Cases
+
+- H3 `Tokens` under Design Requirements fires `h3_unexpected`
+- A table under Design Requirements fires `table_not_in_template`
+
+#### Technical Specification
+
+| Aspect | Detail |
+|--------|--------|
+| **Input** | `DESIGN.md` document text and its file path |
+| **Output** | `Vec<DocFinding>` for H3-sweep and table-conformance violations |
+| **Protocol** | `IDesignDocProtocol` |
+| **Method** | `audit_design` |
+| **Event** | `DesignAudited` |
+| **Error** | `H3_UNEXPECTED`, `TABLE_NOT_IN_TEMPLATE` |
+
+#### Test
+
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| Design Requirements H3 reads `Tokens` instead of `DS-UI-001` | The audit runs the H3 sweep | An `h3_unexpected` finding fires |
+| A table appears under Design Requirements | The audit checks template conformance | A `table_not_in_template` finding fires |
+
+#### Metric
+
+| Target Metric | Value |
+|---------------|-------|
+| Design Requirements H3s outside the DS pattern | 0 |
+| Tables under sections the template does not mandate | 0 |
+
+## Public Interface
+
+| Aspect     | Detail            |
+|------------|-------------------|
+| Agent      | `DocOrchestrator` |
+| Aggregate  | `IDocRunnerAggregate` |
+| Method     | `execute`         |
+| Request    | `DocRequest::AuditAll` |
+| Response   | `DocResponse::Findings` |
+
+## Reference
+
+| Artifact     | Purpose                                         | Link |
+|--------------|-------------------------------------------------|------|
+| PRD          | Business goals, user stories, and scope         | [PRD.md](../../PRD.md) |
+| Backlog      | Task tracking, epics, and implementation status | [BACKLOG.md](BACKLOG.md) |
+| Roadmap      | Timeline, phasing, and dependencies             | [ROADMAP.md](../../ROADMAP.md) |
+| Architecture | System boundaries, tech stack, and infra        | [ARCHITECTURE.md](../../ARCHITECTURE.md) |

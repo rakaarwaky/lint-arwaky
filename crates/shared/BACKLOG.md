@@ -1,54 +1,94 @@
-# Shared — BACKLOG
+# shared — BACKLOG
 
 FRD: —
-Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
-State / Health: defined in root [ROADMAP.md](../../ROADMAP.md) — cited here, not restated
-Last Updated: 2026-10-05
+Architecture: [ARCHITECTURE.md](../ARCHITECTURE.md)
+State: defined in root [ROADMAP.md](../ROADMAP.md) — cited here, not restated
+Last Updated: 2026-10-28
 
-## Current Condition
+## Progress Overview
 
-- Done: `cargo nextest run --workspace --lib --tests` → 0 failures
+- Done: `cargo test -p shared --lib --tests` → 0 failures
 - In Progress: None
 - Blocked: None
 - Next Action: —
 
-## Backlog
+## Backlog Status
 
-| ID | Priority | State | Health | Dependencies | Next Action | Updated |
-|---|---:|---|---|---|---|---|
-| SHAR-01 | P0 | Done | On Track | None | — | 2026-09-29 |
-| SHAR-02 | P1 | Open | Defect | None | Stabilize the AES205 cycle findings at the kernel's edge set | 2026-10-05 |
+### DT-SHARED-001
 
-SHAR-02: the kernel's shared cycle-detection helper walks its edge set without
-a stable order, so the AES205 (circular import) findings flip-flop by a
-couple of violations between runs on identical files. `report` shows this
-directly: a progress table moves without any code changing.
+| Aspect | Detail |
+| -------------- | -------- |
+| State | Ready |
+| Done | LA |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-10-28 |
 
-## Scenario Evidence
+### DT-SHARED-002
 
-—
+| Aspect | Detail |
+| -------------- | -------- |
+| State | Ready |
+| Done | LA |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-10-28 |
 
-## Blockers
+### DT-SHARED-003
 
-None.
+| Aspect | Detail |
+| -------------- | -------- |
+| State | Ready |
+| Done | LA |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-10-28 |
 
-## Dependencies
+### DT-SHARED-004
 
-None.
+| Aspect | Detail |
+| -------------- | -------- |
+| State | Ready |
+| Done | LA |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-10-28 |
 
-## Release Readiness
+### DT-SHARED-005
 
-Done. SHAR-02 is a scan-side defect, not a ship blocker: the kernel's new
-snapshot types are deterministic; only the AES205 edge walk behind them is not.
+| Aspect | Detail |
+| -------------- | -------- |
+| State | Ready |
+| Done | LA |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-10-28 |
 
-## Deferred
+### DT-SHARED-006
 
-—
+| Aspect | Detail |
+| -------------- | -------- |
+| State | Ready |
+| Done | LA |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-10-28 |
 
-## Change Log
+### DT-SHARED-007
 
-| Date | Change |
-|---|---|
-| 2026-10-05 | Gained `ReportSnapshot`, `SnapshotStore`, `MemberDelta`, and `ReportDelta` for the `report` command's per-member counts and their comparison. Opened SHAR-02 for the AES205 edge-set ordering the report's delta depends on |
-| 2026-10-01 | Evidence command retargeted: `shared-lint-arwaky` was split into 20 packages, so the suite is verified workspace-wide |
-| 2026-09-29 | Created backlog entry for shared kernel folder |
+| Aspect | Detail |
+| -------------- | -------- |
+| State | Ready |
+| Done | LA |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-10-28 |
+
+## Reference
+
+| Artifact | Purpose | Link |
+| ---------- | --------- | ------ |
+| PRD.md | Product requirements | [PRD.md](../PRD.md) |
+| DATA.md | Data contracts | [DATA.md](DATA.md) |
+| ROADMAP.md | Roadmap status | [ROADMAP.md](../ROADMAP.md) |
+| ARCHITECTURE.md | Layer contract | [ARCHITECTURE.md](../ARCHITECTURE.md) |

@@ -1,5 +1,5 @@
 // Unit tests for WorkspaceDetector — language detection and workspace discovery.
-mod common;
+mod mock_common;
 
 use config_system_lint_arwaky::capabilities_workspace_detector::WorkspaceDetector;
 use shared_common::FilePath;
@@ -15,7 +15,7 @@ use std::sync::Arc;
 use tempfile::TempDir;
 
 fn make_detector() -> WorkspaceDetector {
-    WorkspaceDetector::new(common::make_io())
+    WorkspaceDetector::new(mock_common::make_io())
 }
 
 /// Mock filesystem returning empty directory listings — isolates detect tests from environment.
@@ -388,8 +388,8 @@ fn detect_unknown_for_file_not_in_workspace() {
 
 #[test]
 fn new_creates_equivalent_instances() {
-    let a = WorkspaceDetector::new(common::make_io());
-    let b = WorkspaceDetector::new(common::make_io());
+    let a = WorkspaceDetector::new(mock_common::make_io());
+    let b = WorkspaceDetector::new(mock_common::make_io());
     let tmp = TempDir::new().unwrap();
     create_file(tmp.path(), "Cargo.toml");
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();

@@ -1,6 +1,6 @@
 // FR-009 — TOML Config Parsing
 // Tests [tool.lint-arwaky] section parsing per FR-009 spec.
-mod common;
+mod mock_common;
 
 use config_system_lint_arwaky::capabilities_parser_provider::ConfigParserProvider;
 use shared_common::FilePath;
@@ -9,7 +9,7 @@ use std::fs;
 use tempfile::TempDir;
 
 fn make_parser() -> ConfigParserProvider {
-    ConfigParserProvider::new(common::make_io())
+    ConfigParserProvider::new(mock_common::make_io())
 }
 
 // FR-009 Scenario 1: Cargo.toml with [tool.lint-arwaky] → parsed correctly
@@ -21,7 +21,6 @@ project_name = "my-project"
 
 [tool.lint-arwaky.thresholds]
 score = { value = 90.0 }
-complexity = { value = 8 }
 max_file_lines = { value = 300 }
 "#;
     let path = tmp.path().join("Cargo.toml");

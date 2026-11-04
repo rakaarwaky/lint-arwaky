@@ -85,10 +85,10 @@ pub const BENCH_PREFIX: &str = "bench_";
 
 /// Directories inside `tests/` that hold shared support code rather than tests.
 ///
-/// Rust reaches them with `mod common;`, so a support module cannot live flat
-/// beside the test files without colliding with them. The directory is the one
-/// exception to the flat-layout rule; AES704 does not read it for categories.
-pub const TEST_SUPPORT_DIRS: &[&str] = &["common"];
+/// AES103's legal-prefix scope covers `tests/` and `benches/` files only, so
+/// there are no sanctioned support directories; every file under `tests/` must
+/// carry a legal prefix at the flat top level.
+pub const TEST_SUPPORT_DIRS: &[&str] = &[];
 
 /// The seven test types plus the support prefixes, as one list.
 ///

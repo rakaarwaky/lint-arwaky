@@ -1,5 +1,5 @@
 // PURPOSE: ScanRequest VO — request payload for the analysis pipeline
-use crate::taxonomy_format_vo::Format;
+use shared_common::taxonomy_format_vo::Format;
 
 /// Target path for the scan.
 pub struct ScanTarget {

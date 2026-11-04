@@ -117,10 +117,10 @@ fn a_subdirectory_under_tests_says_how_deep_and_how_to_flatten() {
 
 #[test]
 fn a_support_directory_is_accepted_so_shared_helpers_survive() {
-    // Rust reaches shared support code through `mod common;`, so a support
-    // module cannot sit flat beside the test files without colliding.
-    assert!(audit("crates/calc/tests/common/mod.rs").is_none());
-    assert!(audit("crates/calc/tests/common/mock_filesystem.rs").is_none());
+    // Shared helpers sit directly under `tests/` with a legal support prefix,
+    // so AES103 accepts them flat.
+    assert!(audit("crates/calc/tests/mock_common.rs").is_none());
+    assert!(audit("crates/calc/tests/mock_filesystem.rs").is_none());
 }
 
 #[test]

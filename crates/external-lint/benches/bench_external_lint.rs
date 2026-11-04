@@ -8,6 +8,7 @@ fn bench_external_lint(c: &mut Criterion) {
                 c.orchestrator(),
                 c.io(),
                 c.tool_resolution(),
+                false,
             )
         });
     });

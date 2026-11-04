@@ -1,64 +1,65 @@
 # FRD — Single Orchestrator
 
-## Reference
-
-- PRD: [../PRD.md](../PRD.md)
-- Backlog: [BACKLOG.md](BACKLOG.md)
-
-## System Overview
+## Feature Overview
 
 Single Orchestrator is one layer inside the shared contract. The caller supplies a request,
 the orchestrator applies the capability, and the result returns to the caller.
 
 ## Functional Requirements
 
-### FR-SINGLE-001: Check the request
+### FR-SingleOrchestrator-001: Check the request
 
-- **Description**: The feature validates the request and returns the result.
-- **Input**: A request supplied by the caller.
-- **Output**: The resolved value, or an error.
-- **Business Rules**: The caller never sees a partial result.
-- **Edge Cases**: An empty request is rejected before any work runs.
-- **Error Handling**: Returns an error; never panics.
+**Description:** The feature validates the request and returns the result.
 
-## API Contract
+#### Business Logic
 
-### Protocol API
+- The caller never sees a partial result.
+- The request is validated before the capability runs.
+- The orchestrator applies the capability and returns the result.
 
-| Method | Input | Output | Error | Event | Description |
-|--------|-------|--------|-------|-------|-------------|
-| audit | SingleRequest | SingleResponse | — | — | Audits the request the caller supplies. |
+#### Edge Cases
 
-### Aggregate API
+- An empty request is rejected before work runs.
+- A malformed request returns an error.
 
-| Method | Input | Output | Error | Event | Description |
-|--------|-------|--------|-------|-------|-------------|
-| execute | request | response | error | — | The feature's single entry point. |
+#### Technical Specification
 
-## Integration Points
+| Aspect | Detail |
+|--------|--------|
+| **Input** | A request supplied by the caller. |
+| **Output** | The resolved value, or an error. |
+| **Protocol** | single_orchestrator::Protocol |
+| **Method** | audit |
+| **Event** | Finding emitted |
+| **Error** | Returns an error; never panics. |
 
-| System | Direction | Purpose | Failure mode |
-|--------|-----------|---------|--------------|
-| Caller | in | Supplies the request | Invalid request -> returns an error |
-| Shared contract crate | in | Injects the protocols | Compile error at build time |
+#### Test
 
-## Non-functional Requirements
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| single_orchestrator | caller supplies a valid request | result returned without partial output |
 
-| Metric | Target | Measurement method |
-|--------|--------|---------------------|
-| No I/O outside the aggregate boundary | 0 calls | `grep -c "std::fs" src/` |
+#### Metric
 
-## Test Scenarios
+| Target Metric | Value |
+|---------------|-------|
+| Latency | 200ms |
 
-- A valid request resolves to the expected value.
-- An empty request returns an error instead of a partial result.
+## Public Interface
 
-## Assumptions & Constraints
+| Aspect     | Detail            |
+|------------|-------------------|
+| Agent      | single_orchestrator::Agent  |
+| Aggregate  | single_orchestrator::Aggregate |
+| Method     | execute           |
+| Request    | request           |
+| Response   | response          |
 
-- I/O stays outside the aggregate boundary.
-- The pinned toolchain builds the crate without warnings.
+## Reference
 
-## Glossary
-
-- **Aggregate**: The layer that owns the state and the rules.
-- **Protocol**: A trait the shared crate declares and a feature implements.
+| Artifact     | Purpose                                    | Link |
+|--------------|--------------------------------------------|------|
+| PRD          | Business goals, user stories, and scope    | [PRD.md](../../PRD.md) |
+| Backlog      | Task tracking, epics, and implementation status | [BACKLOG.md](BACKLOG.md) |
+| Roadmap      | Timeline, phasing, and dependencies        | [ROADMAP.md](../../ROADMAP.md) |
+| Architecture | System boundaries, tech stack, and infra   | [ARCHITECTURE.md](../../ARCHITECTURE.md) |

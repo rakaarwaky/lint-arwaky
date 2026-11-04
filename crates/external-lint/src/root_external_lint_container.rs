@@ -13,10 +13,12 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
+use crate::OutputNormalizer;
 use crate::agent_external_lint_orchestrator::{ExternalLintDeps, ExternalLintOrchestrator};
 use crate::capabilities_external_lint_selector::CapabilitiesExternalLintSelector;
 use shared_external_lint::ICommandExecutorProtocol;
 use shared_external_lint::IJsToolResolutionProtocol;
+use shared_external_lint::INormalizeProtocol;
 use shared_external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
 use shared_external_lint::taxonomy_duration_vo::Timeout;
 use shared_external_lint::{IExternalLintAggregate, IExternalLintSelectorProtocol};
@@ -33,6 +35,7 @@ impl ExternalLintContainer {
         filesystem: Arc<dyn IFilesystemAggregate>,
         io: Arc<dyn IFileSystemIOProtocol>,
         tool_resolution: Arc<dyn IToolResolutionProtocol>,
+        history: bool,
     ) -> Self {
         let executor: Arc<dyn ICommandExecutorProtocol> = Arc::new(
             crate::capabilities_stdio_client::StdioClient::new(Timeout::new(60.0)),
@@ -142,10 +145,25 @@ impl ExternalLintContainer {
                 ),
             ),
         );
+        adapters.insert(
+            "gitleaks".to_string(),
+            Arc::new(
+                crate::capabilities_secrets_gitleaks_adapter::GitleaksAdapter::new(
+                    command_executor.clone(),
+                    io.clone(),
+                    tool_resolution.clone(),
+                    history,
+                ),
+            ),
+        );
 
         // Create selector via DI (AES201: agent must not import capabilities directly)
         let selector: Arc<dyn IExternalLintSelectorProtocol> =
             Arc::new(CapabilitiesExternalLintSelector::with_defaults());
+
+        // FR-005: wire the shared output normalizer into the orchestrator so
+        // the production path owns a live INormalizeProtocol implementation.
+        let normalizer: Arc<dyn INormalizeProtocol> = Arc::new(OutputNormalizer);
 
         Self {
             aggregate: Arc::new(ExternalLintOrchestrator::new(ExternalLintDeps {
@@ -153,6 +171,7 @@ impl ExternalLintContainer {
                 filesystem,
                 filesystem_io: io,
                 selector,
+                normalizer,
             })),
         }
     }

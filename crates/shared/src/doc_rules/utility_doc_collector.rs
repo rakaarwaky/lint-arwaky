@@ -6,6 +6,7 @@
 // may not perform I/O itself. `sorted` sits beside the collector for the same
 // reason — it is a pure reduction over findings, not a decision about what a
 // finding means.
+use crate::taxonomy_doc_audit_context_vo::{MemberDescriptor, MemberRole};
 use crate::taxonomy_doc_rules_constant as consts;
 use crate::taxonomy_doc_rules_request::{DocFinding, DocSource};
 
@@ -32,7 +33,7 @@ const FEATURE_LAYOUTS: &[&str] = &["crates", "modules", "packages"];
 /// Collect every document the chain recognises under *root*.
 ///
 /// Three passes per layout: the root documents, the feature folder's FRD and
-/// BACKLOG pair, and the kernel's DATA and BACKLOG pair. A layout that is
+/// BACKLOG pair, and the layer's DATA and BACKLOG pair. A layout that is
 /// absent simply contributes nothing, which is what makes a sub-directory audit
 /// self-contained rather than an error.
 pub fn collect_documents(root: &Path) -> Vec<DocSource> {
@@ -47,6 +48,17 @@ pub fn collect_documents(root: &Path) -> Vec<DocSource> {
         collect_feature_docs(&base, &mut out);
         collect_shared_docs(&base, &mut out);
         collect_surface_docs(&base, &mut out);
+    }
+    // A member-dir target (`crates`, `modules`, or `packages`) lays its
+    // surface and feature folders out directly under itself; its own
+    // children are where the DESIGN and FRD pairs live.
+    if matches!(
+        root.file_name().and_then(|n| n.to_str()),
+        Some("crates" | "modules" | "packages")
+    ) {
+        collect_surface_docs(root, &mut out);
+        collect_feature_docs(root, &mut out);
+        collect_shared_docs(root, &mut out);
     }
     out
 }
@@ -123,8 +135,8 @@ fn collect_feature_docs(base: &Path, out: &mut Vec<DocSource>) {
     }
 }
 
-/// Collect the DATA/BACKLOG pair from the kernel folder under *base*. A layout
-/// with no shared kernel carries no DATA document, which is not a finding.
+/// Collect the DATA/BACKLOG pair from the layer folder under *base*. A layout
+/// with no shared layer carries no DATA document, which is not a finding.
 fn collect_shared_docs(base: &Path, out: &mut Vec<DocSource>) {
     let kernel = base.join(consts::KERNEL_DIR);
     if !kernel.is_dir() {
@@ -155,4 +167,227 @@ fn collect_surface_docs(base: &Path, out: &mut Vec<DocSource>) {
             out.push(source);
         }
     }
+}
+
+/// Collect every classified member folder under *root*.
+///
+/// Classification keys on objective crate structure — never on the document
+/// under audit — so a new surface crate that forgets `DESIGN.md` still owes
+/// it.
+pub fn collect_members(root: &Path) -> Vec<MemberDescriptor> {
+    let mut out = Vec::new();
+    let root_role = classify_member(root);
+    if root_role != MemberRole::None {
+        out.push(MemberDescriptor {
+            path: root.to_path_buf(),
+            role: root_role,
+            present_docs: present_docs(root),
+        });
+    }
+    for layout in FEATURE_LAYOUTS {
+        let base = root.join(layout);
+        let Ok(entries) = fs::read_dir(base) else {
+            continue;
+        };
+        for entry in entries.flatten() {
+            let folder = entry.path();
+            if !folder.is_dir() {
+                continue;
+            }
+            let role = classify_member(&folder);
+            if role == MemberRole::None {
+                continue;
+            }
+            let present_docs = present_docs(&folder);
+            out.push(MemberDescriptor {
+                path: folder,
+                role,
+                present_docs,
+            });
+        }
+    }
+    out
+}
+
+/// The top-level module folders owned by at least one PR-ID's project
+/// identifier, across `crates|modules|packages`.
+///
+/// A folder counts as "owned" when its name matches the project identifier
+/// segment of some declared PR-ID (`PR-<PROJECT>-NNN` → `PROJECT`). Only
+/// top-level subfolders under each layout root are considered; `shared` and
+/// `layer` are skipped as layer dirs, not project-owned feature folders.
+/// Returns `None` when no layout root exists at all, leaving the caller
+/// silent rather than flagging every declared PR-ID.
+pub fn collect_pr_owned_module_folders(root: &Path) -> Option<BTreeSet<String>> {
+    let mut owned: BTreeSet<String> = BTreeSet::new();
+    let mut any_layout = false;
+    for layout in FEATURE_LAYOUTS {
+        let base = root.join(layout);
+        let Ok(entries) = fs::read_dir(base) else {
+            continue;
+        };
+        any_layout = true;
+        for entry in entries.flatten() {
+            let folder = entry.path();
+            if !folder.is_dir() {
+                continue;
+            }
+            let name = folder.file_name().and_then(|n| n.to_str()).unwrap_or("");
+            if name == "shared" || name == "kernel" {
+                continue;
+            }
+            owned.insert(name.to_string());
+        }
+    }
+    if !any_layout {
+        return None;
+    }
+    Some(owned)
+}
+
+/// Classify one folder by objective crate structure.
+///
+/// Layer: directory named `shared` or `kernel`.
+/// Feature: contains `*agent_*_orchestrator*.rs` or exposes capability/agent
+///   in Cargo.toml.
+/// Surface: contains `surface_*` files or surface crate dependencies, not
+///   layer/feature.
+/// None: anything else.
+fn classify_member(folder: &Path) -> MemberRole {
+    let name = folder.file_name().and_then(|n| n.to_str()).unwrap_or("");
+    if name == "shared" || name == "kernel" {
+        return MemberRole::Kernel;
+    }
+    if has_orchestrator_file(folder) || exposes_capability_in_cargo_toml(folder) {
+        return MemberRole::Feature;
+    }
+    if has_surface_files(folder) || has_surface_cargo_deps(folder) {
+        return MemberRole::Surface;
+    }
+    MemberRole::None
+}
+
+/// Does the folder's source tree contain an orchestrator file matching
+/// `*agent_*_orchestrator*.rs`?
+fn has_orchestrator_file(folder: &Path) -> bool {
+    let Ok(entries) = fs::read_dir(folder) else {
+        return false;
+    };
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if path.is_file() {
+            if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
+                if name.contains("agent_")
+                    && name.contains("_orchestrator")
+                    && name.ends_with(".rs")
+                {
+                    return true;
+                }
+            }
+        }
+        if path.is_dir() {
+            if let Some(src) = path.file_name().and_then(|n| n.to_str()) {
+                if src == "src" {
+                    if let Ok(inner) = fs::read_dir(&path) {
+                        for entry in inner.flatten() {
+                            let p = entry.path();
+                            if p.is_file() {
+                                if let Some(n) = p.file_name().and_then(|n| n.to_str()) {
+                                    if n.contains("agent_")
+                                        && n.contains("_orchestrator")
+                                        && n.ends_with(".rs")
+                                    {
+                                        return true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    false
+}
+
+/// Does the folder's Cargo.toml expose a capability/agent module?
+pub fn exposes_capability_in_cargo_toml(folder: &Path) -> bool {
+    let cargo_path = folder.join("Cargo.toml");
+    let Some(cargo) = cargo_path.to_str() else {
+        return false;
+    };
+    let Ok(text) = fs::read_to_string(cargo) else {
+        return false;
+    };
+    text.contains("agent_") || text.contains("capability") || text.contains("orchestrator")
+}
+
+/// Does the folder contain `surface_*` files?
+fn has_surface_files(folder: &Path) -> bool {
+    let Ok(entries) = fs::read_dir(folder) else {
+        return false;
+    };
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if path.is_file() {
+            if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
+                if name.starts_with("surface_") {
+                    return true;
+                }
+            }
+        }
+        if path.is_dir() {
+            if let Some(src) = path.file_name().and_then(|n| n.to_str()) {
+                if src == "src" {
+                    if let Ok(inner) = fs::read_dir(&path) {
+                        for entry in inner.flatten() {
+                            if let Some(n) = entry.path().file_name().and_then(|n| n.to_str()) {
+                                if n.starts_with("surface_") {
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    false
+}
+
+/// Does the folder's Cargo.toml depend on surface crates?
+pub fn has_surface_cargo_deps(folder: &Path) -> bool {
+    let cargo_path = folder.join("Cargo.toml");
+    let Some(cargo) = cargo_path.to_str() else {
+        return false;
+    };
+    let Ok(text) = fs::read_to_string(cargo) else {
+        return false;
+    };
+    text.contains("cli-commands")
+        || text.contains("mcp-server")
+        || text.contains("tui")
+        || text.contains("dispatcher")
+}
+
+/// Document names actually present on disk in one folder.
+fn present_docs(folder: &Path) -> BTreeSet<String> {
+    let mut docs = BTreeSet::new();
+    for name in [
+        consts::FRD_DOC,
+        consts::BACKLOG_DOC,
+        consts::DATA_DOC,
+        consts::DESIGN_DOC,
+        consts::PRD_DOC,
+        consts::ROADMAP_DOC,
+        consts::README_DOC,
+        consts::AGENTS_DOC,
+        consts::ARCHITECTURE_DOC,
+        consts::CONTRIBUTING_DOC,
+    ] {
+        if folder.join(name).is_file() {
+            docs.insert(name.to_string());
+        }
+    }
+    docs
 }

@@ -27,6 +27,7 @@ fn rust_use(path: &str) -> ImportEntry {
         symbols: Vec::new(),
         is_reexport: false,
         is_wildcard: false,
+        line: 0,
     }
 }
 

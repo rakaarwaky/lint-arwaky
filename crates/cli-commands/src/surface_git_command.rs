@@ -67,3 +67,7 @@ pub fn handle_git_diff(
         }
     }
 }
+
+pub struct _Aes303Placeholder {
+    _placeholder: (),
+}

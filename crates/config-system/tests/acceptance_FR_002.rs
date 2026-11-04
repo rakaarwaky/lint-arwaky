@@ -1,5 +1,5 @@
 // FR-002 — Multi-Language Support
-mod common;
+mod mock_common;
 
 use shared_common::FilePath;
 use shared_config_system::ConfigRequest;
@@ -17,7 +17,7 @@ fn us2_rust_workspace_loads_rust_config() {
     .unwrap();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
     assert_eq!(
-        common::make_container()
+        mock_common::make_container()
             .orchestrator()
             .execute(ConfigRequest::load_project_config(&fp))
             .into_config_result()
@@ -38,7 +38,7 @@ fn us2_python_workspace_loads_python_config() {
     .unwrap();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
     assert_eq!(
-        common::make_container()
+        mock_common::make_container()
             .orchestrator()
             .execute(ConfigRequest::load_project_config(&fp))
             .into_config_result()
@@ -59,7 +59,7 @@ fn us2_typescript_workspace_loads_typescript_config() {
     .unwrap();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
     assert_eq!(
-        common::make_container()
+        mock_common::make_container()
             .orchestrator()
             .execute(ConfigRequest::load_project_config(&fp))
             .into_config_result()

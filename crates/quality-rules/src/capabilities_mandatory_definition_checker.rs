@@ -26,6 +26,7 @@ impl IMandatoryClassProtocol for MandatoryDefinitionChecker {
         file: &str,
         definition: Option<&LayerDefinition>,
         content: &str,
+        layer_name: &str,
         violations: &mut Vec<LintResult>,
     ) {
         let basename = match Path::new(file).file_name().and_then(|f| f.to_str()) {
@@ -53,6 +54,15 @@ impl IMandatoryClassProtocol for MandatoryDefinitionChecker {
             return;
         }
         if def.exceptions.values.contains(&basename) {
+            return;
+        }
+
+        // AES303 is scoped out of the utility (stateless pure functions) and surface
+        // (function dispatchers) layers — neither legitimately carries a top-level type.
+        // Use the base layer (text before `(`) so specialized keys such as
+        // `surface(controller)` / `utility(...)` are excluded too if ever introduced.
+        let base_layer = layer_name.split('(').next().unwrap_or(layer_name);
+        if base_layer == "utility" || base_layer == "surface" {
             return;
         }
 

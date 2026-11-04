@@ -48,7 +48,7 @@ fn matching<'a>(
 }
 
 /// A complete feature folder with a complete eight-category test suite and the
-/// shared kernel subfolder that mirrors the feature.
+/// shared layer subfolder that mirrors the feature.
 fn write_conforming_feature(root: &Path, layout: &str, name: &str) {
     let feature = root.join(layout).join(name);
     write(
@@ -59,9 +59,13 @@ fn write_conforming_feature(root: &Path, layout: &str, name: &str) {
         &feature.join(format!("src/agent_{name}_orchestrator.rs")),
         "pub struct Orchestrator;\n",
     );
+    write(
+        &feature.join(format!("src/root_{name}_container.rs")),
+        "pub struct Container;\n",
+    );
     write(&feature.join("FRD.md"), "# FRD\n");
     write(&feature.join("BACKLOG.md"), "# BACKLOG\n");
-    // The shared kernel mirror: every feature owes a `<layout>/shared/src/<name>/`
+    // The shared layer mirror: every feature owes a `<layout>/shared/src/<name>/`
     // subfolder (AES702 feature_missing_shared_subfolder), so the conforming
     // feature must create it.
     write(
@@ -89,6 +93,11 @@ fn write_conforming_feature(root: &Path, layout: &str, name: &str) {
         &feature.join(format!("benches/bench_{name}.rs")),
         "fn b() {}\n",
     );
+    // The root container every feature owes (AES702)
+    write(
+        &feature.join(format!("src/root_{name}_container.rs")),
+        "pub struct Container;\n",
+    );
 }
 
 #[test]
@@ -102,6 +111,7 @@ fn e2e_a_conforming_workspace_produces_no_findings_end_to_end() {
     );
     write(&root.join("crates/shared/DATA.md"), "# DATA\n");
     write(&root.join("crates/shared/BACKLOG.md"), "# BACKLOG\n");
+    write(&root.join("crates/shared/FRD.md"), "# Shared — FRD\n");
 
     assert_eq!(
         audit(root),

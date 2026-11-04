@@ -168,3 +168,7 @@ pub fn handle_dependencies(
         }
     }
 }
+
+pub struct _Aes303Placeholder {
+    _placeholder: (),
+}

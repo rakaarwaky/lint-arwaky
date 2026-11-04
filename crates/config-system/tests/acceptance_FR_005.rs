@@ -2,7 +2,7 @@
 // NOTE: These tests verify the security aspects of config loading (symlink
 // rejection, path injection prevention) which are part of FR-001/FR-005
 // boundary. Config merging tests are in unit_config_system_orchestrator.rs.
-mod common;
+mod mock_common;
 
 use shared_common::FilePath;
 use shared_config_system::{ConfigLanguage, IConfigReadProtocol};
@@ -10,7 +10,9 @@ use std::fs;
 use tempfile::TempDir;
 
 fn make_reader() -> config_system_lint_arwaky::capabilities_yaml_reader::ConfigYamlReader {
-    config_system_lint_arwaky::capabilities_yaml_reader::ConfigYamlReader::new(common::make_io())
+    config_system_lint_arwaky::capabilities_yaml_reader::ConfigYamlReader::new(
+        mock_common::make_io(),
+    )
 }
 
 #[test]

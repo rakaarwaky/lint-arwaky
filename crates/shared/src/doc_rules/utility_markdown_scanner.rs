@@ -49,7 +49,7 @@ pub fn status_leak_patterns() -> Option<&'static [(regex::Regex, &'static str)]>
         .map(|v| &**v)
 }
 
-/// Pattern matching a concrete source-file reference, per HOW-TO Rule 9.
+/// Pattern matching a concrete source-file reference, per HOW-TO Rule 7.
 pub fn source_ext_pattern() -> Option<&'static regex::Regex> {
     static PAT: OnceLock<Option<regex::Regex>> = OnceLock::new();
     PAT.get_or_init(|| {
@@ -65,7 +65,7 @@ pub fn source_ext_pattern() -> Option<&'static regex::Regex> {
 /// Heading matcher.
 pub fn heading_re() -> Option<&'static regex::Regex> {
     static PAT: OnceLock<Option<regex::Regex>> = OnceLock::new();
-    PAT.get_or_init(|| regex::Regex::new(r"(?m)^(#{1,6})\s+(.*?)\s*$").ok())
+    PAT.get_or_init(|| regex::Regex::new(consts::HEADING_PATTERN).ok())
         .as_ref()
 }
 
@@ -276,6 +276,49 @@ pub fn h3_subsections(section: &Section) -> Vec<Section> {
         .collect()
 }
 
+/// Level-4 subsections of one level-3 section, with document-absolute lines.
+///
+/// Mirrors `h3_subsections` structurally: scans the body for `####` headings and
+/// returns each as a `Section` whose `line` is the document-absolute 1-based
+/// line of the H4 heading itself.
+pub fn h4_subsections(section: &Section) -> Vec<Section> {
+    let Some(re) = heading_re() else {
+        return Vec::new();
+    };
+    let mut all: Vec<(usize, String, usize, usize)> = Vec::new();
+    for caps in re.captures_iter(&section.body) {
+        let full = match caps.get(0) {
+            Some(f) => f,
+            None => continue,
+        };
+        let Some(marker) = caps.get(1) else { continue };
+        if marker.as_str().len() != 4 {
+            continue;
+        }
+        let line = section.body[..full.start()].lines().count().max(1);
+        let title = caps.get(2).map_or("", |m| m.as_str()).to_string();
+        all.push((full.start(), title, line, full.end()));
+    }
+    all.iter()
+        .enumerate()
+        .map(|(i, (_start, title, line, body_start))| {
+            let body_end = all
+                .get(i + 1)
+                .map_or_else(|| section.body.len(), |(start, _, _, _)| *start);
+            Section {
+                level: 4,
+                title: title.clone(),
+                body: section
+                    .body
+                    .get(*body_start..body_end)
+                    .unwrap_or_default()
+                    .to_string(),
+                line: section.line + line,
+            }
+        })
+        .collect()
+}
+
 /// The methods the FRD promises, one promise at a time.
 ///
 /// Reads the `### Protocol API` and `### Aggregate API` tables under `## API
@@ -453,4 +496,350 @@ pub fn has_bullet(body: &str) -> bool {
         }
     }
     false
+}
+
+/// Strip non-prose from markdown so surviving tokens can be matched against a
+/// placeholder catalog without false positives on code or markup.
+///
+/// Blanks fenced code blocks, inline backtick spans, autolinks (`<https://…>`,
+/// `<mailto:…>`), and known HTML tags (`<br>`, `<details>`, `<sup>`, ``).
+/// The returned string preserves line structure so callers can anchor findings
+/// to exact 1-based lines.
+pub fn strip_non_prose_for_placeholders(text: &str) -> String {
+    let mut out = String::with_capacity(text.len());
+    let mut inside_fence = false;
+    for line in text.lines() {
+        let trimmed = line.trim_start();
+        if trimmed.starts_with("```") || trimmed.starts_with("~~~") {
+            inside_fence = !inside_fence;
+            out.push('\n');
+            continue;
+        }
+        if inside_fence {
+            out.push('\n');
+            continue;
+        }
+        let mut line_out = String::with_capacity(line.len());
+        let mut chars = line.chars().peekable();
+        while let Some(c) = chars.next() {
+            if c == '`' {
+                // Skip an inline backtick span: opening backtick runs to
+                // its matching close, or to end of line if unterminated.
+                while chars.peek() == Some(&'`') {
+                    chars.next();
+                }
+                let mut closed = false;
+                for d in chars.by_ref() {
+                    if d == '`' {
+                        closed = true;
+                        break;
+                    }
+                }
+                if !closed {
+                    // Unterminated span: blank to end of line.
+                    break;
+                }
+                continue;
+            }
+            if c == '<' {
+                // Blank an autolink or HTML tag up to its closing `>`.
+                let mut blanked = true;
+                for d in chars.by_ref() {
+                    if d == '>' {
+                        blanked = false;
+                        break;
+                    }
+                }
+                if blanked {
+                    // Unterminated `<`: drop the rest of the line (no closing `>` found).
+                    break;
+                }
+                continue;
+            }
+            line_out.push(c);
+        }
+        out.push_str(&line_out);
+        out.push('\n');
+    }
+    out
+}
+
+/// Does any token in *text* match an entry in *catalog*?
+///
+/// Each catalog marker is swapped for a private-use sentinel before
+/// non-prose stripping and restored afterwards, so a marker the template
+/// ships is exempt from the `<...>` rule that blanks autolinks, HTML tags,
+/// and code types such as `Vec<DocFinding>`. Fenced blocks and inline
+/// backtick spans are still blanked — a placeholder the document wraps in
+/// backticks stays out of reach — and markers outside the catalog are
+/// stripped as before.
+pub fn matches_placeholder_catalog(text: &str, catalog: &[&str]) -> Vec<(usize, String)> {
+    // Longest first so a marker containing another (e.g. `<DATA-NAME-ID>` in
+    // the ROADMAP shipped cell `<DATA-NAME-ID> / <FEATURE-NAME-ID> /
+    // <DESIGN-NAME-ID>`) is protected intact: the containing marker is
+    // swapped first, so its `<...>` span is not shattered by an inner
+    // sentinel before the outer one is matched.
+    let mut markers: Vec<&str> = catalog.to_vec();
+    markers.sort_by_key(|marker| std::cmp::Reverse(marker.len()));
+    let mut protected = text.to_string();
+    let mut placed: Vec<(String, String)> = Vec::new();
+    for (index, marker) in markers.iter().enumerate() {
+        if !protected.contains(marker) {
+            continue;
+        }
+        let sentinel = format!("\u{E000}{index}\u{E001}");
+        protected = protected.replace(marker, &sentinel);
+        placed.push((sentinel, (*marker).to_string()));
+    }
+    let mut prose = strip_non_prose_for_placeholders(&protected);
+    for (sentinel, marker) in &placed {
+        prose = prose.replace(sentinel.as_str(), marker.as_str());
+    }
+    let mut hits: Vec<(usize, String)> = Vec::new();
+    for (line_no, line) in prose.lines().enumerate() {
+        for marker in catalog {
+            if line.contains(marker) {
+                hits.push((line_no + 1, marker.to_string()));
+            }
+        }
+    }
+    hits
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Fenced code blocks are blanked so their contents never match a catalog marker.
+    #[test]
+    fn strip_skips_fenced_code_blocks() {
+        let text = "intro\n```rust\nlet x: Vec<DocFinding> = vec![];\n```\noutro\n";
+        let stripped = strip_non_prose_for_placeholders(text);
+        assert!(
+            !stripped.contains("Vec<DocFinding>"),
+            "fenced code must be blanked"
+        );
+        assert!(
+            stripped.contains("intro"),
+            "prose outside the fence is preserved"
+        );
+        assert!(
+            stripped.contains("outro"),
+            "prose after the fence is preserved"
+        );
+    }
+
+    /// Inline backtick spans are blanked.
+    #[test]
+    fn strip_skips_inline_backticks() {
+        let text = "see `Vec<DocFinding>` and `Result<bool, Error>` here";
+        let stripped = strip_non_prose_for_placeholders(text);
+        assert!(
+            !stripped.contains("Vec<DocFinding>"),
+            "inline code must be blanked"
+        );
+        assert!(
+            !stripped.contains("Result<bool, Error>"),
+            "inline code must be blanked"
+        );
+        assert!(
+            stripped.contains("see"),
+            "prose before backticks is preserved"
+        );
+        assert!(
+            stripped.contains("here"),
+            "prose after backticks is preserved"
+        );
+    }
+
+    /// Autolinks are blanked.
+    #[test]
+    fn strip_skips_autolinks() {
+        let text = "see <https://example.com> and <mailto:raka@example.org> here";
+        let stripped = strip_non_prose_for_placeholders(text);
+        assert!(
+            !stripped.contains("https://example.com"),
+            "autolink URL must be blanked"
+        );
+        assert!(
+            !stripped.contains("mailto:raka@example.org"),
+            "mailto link must be blanked"
+        );
+        assert!(
+            stripped.contains("see"),
+            "prose before autolink is preserved"
+        );
+        assert!(
+            stripped.contains("here"),
+            "prose after autolink is preserved"
+        );
+    }
+
+    /// Known HTML tags are blanked.
+    #[test]
+    fn strip_skips_html_tags() {
+        let text = "use <br> and <details> plus <sup>x</sup> and <img /> here";
+        let stripped = strip_non_prose_for_placeholders(text);
+        assert!(!stripped.contains("<br>"), "br tag must be blanked");
+        assert!(
+            !stripped.contains("<details>"),
+            "details tag must be blanked"
+        );
+        assert!(!stripped.contains("<sup>"), "sup tag must be blanked");
+        assert!(!stripped.contains("<img"), "img tag must be blanked");
+        assert!(stripped.contains("use"), "prose before tags is preserved");
+        assert!(stripped.contains("here"), "prose after tags is preserved");
+    }
+
+    /// An unterminated `<` drops the rest of the line.
+    #[test]
+    fn strip_drops_unterminated_angle() {
+        let text = "before <unfinished no closing here\nafter on next line";
+        let stripped = strip_non_prose_for_placeholders(text);
+        let mut lines = stripped.lines();
+        assert_eq!(
+            lines.next(),
+            Some("before "),
+            "text before unterminated `<` is kept"
+        );
+        assert_eq!(
+            lines.next(),
+            Some("after on next line"),
+            "rest of the unterminated line is dropped and the next line follows"
+        );
+        assert_eq!(lines.next(), None, "there are exactly two lines of output");
+    }
+
+    /// `matches_placeholder_catalog` catches curly-slot markers verbatim; a
+    /// `{}` span is never blanked by the strip, so no exemption is needed.
+    #[test]
+    fn catalog_matches_curly_slot_markers() {
+        let text = "# AGENTS\n\n{architecture scanner command} runs the audit\n{lint command} enforces style\n";
+        let hits = matches_placeholder_catalog(
+            text,
+            &["{architecture scanner command}", "{lint command}"],
+        );
+        assert_eq!(hits.len(), 2, "two catalog markers must be reported");
+        assert_eq!(
+            hits[0].0, 3,
+            "line 3 anchors the first marker (line 2 is blank)"
+        );
+        assert_eq!(hits[1].0, 4, "line 4 anchors the second marker");
+    }
+
+    /// Code-like angle constructs are blanked and never match.
+    #[test]
+    fn catalog_no_false_positive_on_code_types() {
+        let text = "let x: Vec<DocFinding> = vec![];\n";
+        let hits = matches_placeholder_catalog(text, &["<feature-name>", "<N>"]);
+        assert!(
+            hits.is_empty(),
+            "blanked code must not match any catalog marker"
+        );
+    }
+
+    /// Curly-slot markers survive stripping and can match against the catalog.
+    #[test]
+    fn catalog_matches_curly_marker_preserved() {
+        let text = "the token {architecture scanner command} must fire\n";
+        let hits = matches_placeholder_catalog(text, &["{architecture scanner command}"]);
+        assert_eq!(hits.len(), 1, "a genuine placeholder marker must match");
+        assert_eq!(
+            hits[0].1, "{architecture scanner command}",
+            "the matched marker is reported verbatim"
+        );
+    }
+
+    /// Catalog-shaped angle markers are exempt from the `<...>` strip and
+    /// fire in surviving prose (Issue 5: angle catalogs must be observable).
+    #[test]
+    fn catalog_matches_angle_markers_exempt_from_strip() {
+        let text = "# ROADMAP — <workspace name>\n";
+        let hits = matches_placeholder_catalog(text, &["<workspace name>"]);
+        assert_eq!(hits.len(), 1, "an angle catalog marker must fire");
+        assert_eq!(
+            hits[0].1, "<workspace name>",
+            "the marker is reported verbatim"
+        );
+        assert_eq!(hits[0].0, 1, "the hit anchors to its line");
+    }
+
+    /// Basic H4 extraction: two `####` headings under an H3 body are returned
+    /// with document-absolute lines.
+    #[test]
+    fn h4_subsections_returns_level4_children() {
+        // H3 starts at document line 5; its body has two H4 headings at body lines 1 and 3.
+        let parent = Section {
+            level: 3,
+            title: "FR-X-001: Name".to_string(),
+            body: "#### Description\ntext1\n#### Method\ntext2\n".to_string(),
+            line: 5,
+        };
+        let subs = h4_subsections(&parent);
+        assert_eq!(subs.len(), 2, "two H4 headings must be returned");
+        assert_eq!(subs[0].title, "Description");
+        assert_eq!(subs[1].title, "Method");
+        assert_eq!(subs[0].level, 4);
+        assert_eq!(subs[1].level, 4);
+    }
+
+    /// Line arithmetic: the H3's `line` is 1-based and already counts the H3
+    /// heading line; the body-relative offset adds the 1-based body line of
+    /// the H4 heading itself.
+    #[test]
+    fn h4_subsections_line_offsets_are_document_absolute() {
+        // H3 heading is at document line 10; its body starts at document line 11.
+        // Body "#### Foo\nrest\n" has the H4 at body line 1, so document line is 10 + 1 = 11.
+        let parent = Section {
+            level: 3,
+            title: "Entry".to_string(),
+            body: "#### Foo\nrest\n".to_string(),
+            line: 10,
+        };
+        let subs = h4_subsections(&parent);
+        assert_eq!(subs.len(), 1);
+        assert_eq!(subs[0].line, 11, "document-absolute line");
+        assert_eq!(subs[0].title, "Foo");
+    }
+
+    /// Each H4 subsection's body ends where the next H4 heading begins.
+    #[test]
+    fn h4_subsections_body_ends_at_next_heading() {
+        let parent = Section {
+            level: 3,
+            title: "Entry".to_string(),
+            body: "#### A\nbody-a\n#### B\nbody-b\n".to_string(),
+            line: 1,
+        };
+        let subs = h4_subsections(&parent);
+        // `body` starts at `full.end()`, which includes the newline terminating the H4 heading line, and ends at the start of the next H4 heading (or end of parent body).
+        assert_eq!(subs[0].body, "\nbody-a\n");
+        assert_eq!(subs[1].body, "\nbody-b\n");
+    }
+
+    /// An H3 body with no H4 headings returns an empty vec.
+    #[test]
+    fn h4_subsections_empty_when_no_h4() {
+        let parent = Section {
+            level: 3,
+            title: "Entry".to_string(),
+            body: "prose only, no H4\n".to_string(),
+            line: 1,
+        };
+        assert!(h4_subsections(&parent).is_empty());
+    }
+
+    /// H2 and H3 headings inside an H3 body are not treated as H4.
+    #[test]
+    fn h4_subsections_ignores_lower_and_equal_levels() {
+        let parent = Section {
+            level: 3,
+            title: "Entry".to_string(),
+            body: "## Other\n### Sub\n#### Real\nx\n".to_string(),
+            line: 1,
+        };
+        let subs = h4_subsections(&parent);
+        assert_eq!(subs.len(), 1, "only the H4 heading is returned");
+        assert_eq!(subs[0].title, "Real");
+    }
 }

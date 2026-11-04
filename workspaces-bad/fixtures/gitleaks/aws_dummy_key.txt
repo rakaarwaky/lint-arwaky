@@ -1,0 +1,4 @@
+// Public Gitleaks test vector — AWS access key id.
+// https://github.com/gitleaks/gitleaks/blob/master/config/gitleaks.toml
+// This is the canonical example key shipped with Gitleaks itself.
+aws_access_key_id = "AKIAIOSFODNN7EXAMPLE"

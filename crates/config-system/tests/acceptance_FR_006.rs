@@ -1,6 +1,6 @@
 // FR-006 — Config Validation
 // Tests threshold validation and adapter enablement per FR-006 spec.
-mod common;
+mod mock_common;
 
 use shared_common::AdapterName;
 use shared_common::{Count, Score};
@@ -15,7 +15,7 @@ fn check(config: &ProjectConfig) -> bool {
 #[test]
 fn us6_score_threshold_50_is_valid() {
     let config = ProjectConfig {
-        thresholds: Thresholds::new(Score::new(50.0), Count::new(10), Count::new(500)),
+        thresholds: Thresholds::new(Score::new(50.0), Count::new(500)),
         ..Default::default()
     };
     assert!(check(&config));
@@ -25,7 +25,7 @@ fn us6_score_threshold_50_is_valid() {
 #[test]
 fn us6_score_threshold_0_is_valid() {
     let config = ProjectConfig {
-        thresholds: Thresholds::new(Score::new(0.0), Count::new(1), Count::new(1)),
+        thresholds: Thresholds::new(Score::new(0.0), Count::new(1)),
         ..Default::default()
     };
     assert!(check(&config));
@@ -35,7 +35,7 @@ fn us6_score_threshold_0_is_valid() {
 #[test]
 fn us6_score_threshold_100_is_valid() {
     let config = ProjectConfig {
-        thresholds: Thresholds::new(Score::new(100.0), Count::new(1), Count::new(1)),
+        thresholds: Thresholds::new(Score::new(100.0), Count::new(1)),
         ..Default::default()
     };
     assert!(check(&config));
@@ -45,7 +45,7 @@ fn us6_score_threshold_100_is_valid() {
 #[test]
 fn us6_score_threshold_negative_is_invalid() {
     let config = ProjectConfig {
-        thresholds: Thresholds::new(Score::new(-1.0), Count::new(10), Count::new(500)),
+        thresholds: Thresholds::new(Score::new(-1.0), Count::new(500)),
         ..Default::default()
     };
     let result = validate_thresholds(&config);
@@ -57,7 +57,7 @@ fn us6_score_threshold_negative_is_invalid() {
 #[test]
 fn us6_score_threshold_above_100_is_invalid() {
     let config = ProjectConfig {
-        thresholds: Thresholds::new(Score::new(101.0), Count::new(10), Count::new(500)),
+        thresholds: Thresholds::new(Score::new(101.0), Count::new(500)),
         ..Default::default()
     };
     let result = validate_thresholds(&config);
@@ -77,38 +77,29 @@ fn us6_unknown_adapter_defaults_to_enabled() {
     );
 }
 
-// Additional: Complexity threshold zero → Invalid
-#[test]
-fn us6_complexity_zero_is_invalid() {
-    let config = ProjectConfig {
-        thresholds: Thresholds::new(Score::new(80.0), Count::new(0), Count::new(500)),
-        ..Default::default()
-    };
-    assert!(!check(&config));
-}
-
 // Additional: max_file_lines zero → Invalid
 #[test]
 fn us6_max_file_lines_zero_is_invalid() {
     let config = ProjectConfig {
-        thresholds: Thresholds::new(Score::new(80.0), Count::new(10), Count::new(0)),
+        thresholds: Thresholds::new(Score::new(80.0), Count::new(0)),
         ..Default::default()
     };
-    assert!(!check(&config));
+    let result = validate_thresholds(&config);
+    assert!(!result.is_valid);
+    assert!(result.reason.unwrap().contains("max_file_lines"));
 }
 
 // Additional: Multiple invalid thresholds accumulate errors
 #[test]
 fn us6_multiple_invalid_thresholds_accumulate_errors() {
     let config = ProjectConfig {
-        thresholds: Thresholds::new(Score::new(200.0), Count::new(0), Count::new(-1)),
+        thresholds: Thresholds::new(Score::new(200.0), Count::new(-1)),
         ..Default::default()
     };
     let result = validate_thresholds(&config);
     assert!(!result.is_valid);
     let reason = result.reason.unwrap();
     assert!(reason.contains("Score threshold"));
-    assert!(reason.contains("Complexity"));
     assert!(reason.contains("max_file_lines"));
 }
 

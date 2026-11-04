@@ -1,43 +1,47 @@
 # DESIGN — Cli
 
-## Brand & Style
+## Design Overview
 
-### Colors
+The fixture models a minimal terminal surface with a small token set and no pixel-level tokens.
 
-| Role | Value | Use |
-|------|-------|-----|
-| Base surface | terminal default | The pane background. |
-| Primary accent | cyan | The active selection. |
-| Secondary accent | gray | Inactive rows. |
-| Tertiary accent | yellow | A violation the user must act on. |
+## Design Requirements
 
-### Typography
+### DS-CLI-001: Colors
 
-| Level | Weight | Use |
-|-------|--------|-----|
-| Section | bold | A pane title. |
-| Body | normal | A file row. |
-| Muted | dim | A path hint. |
+| Variant | Use case | Token | Value|
+|---------|----------|-------|------|
+| Base surface | pane background | terminal default | — |
+| Primary accent | active selection | cyan | — |
+| Secondary accent | inactive rows | gray | — |
 
-## Components
+### DS-CLI-002: Typography
 
-### Pane
+| Variant | Use case | Token | Value|
+|---------|----------|-------|------|
+| Section | pane title | bold | — |
+| Body | file row | normal | — |
+| Muted | path hint | dim | — |
 
-| Part | Role |
-|------|------|
-| Title row | Names the pane. |
-| Body | Lists the rows the pane owns. |
-| Status row | Reports counts. |
+### DS-CLI-003: Pane
 
-### Row
+| Variant | Use case | Token | Value|
+|---------|----------|-------|------|
+| Title row | names the pane | — | — |
+| Body | lists rows the pane owns | — | — |
+| Status row | reports counts | — | — |
 
-| Part | Role |
-|------|------|
-| Label | The file name. |
-| Detail | The violation codes. |
+### DS-CLI-004: Row
+
+| Variant | Use case | Token | Value|
+|---------|----------|-------|------|
+| Label | file name | — | — |
+| Detail | violation codes | — | — |
 
 ## Reference
 
-- PRD.md — what the product does and why
-- ARCHITECTURE.md — the layer contract this design follows
-- FRD.md — the requirements the interface serves
+| Artifact     | Purpose                                    | Link |
+|--------------|--------------------------------------------|------|
+| PRD          | Business goals, user stories, and scope    | [PRD.md](../PRD.md) |
+| Backlog      | Task tracking, epics, and implementation status | [BACKLOG.md](../BACKLOG.md) |
+| Roadmap      | Timeline, phasing, and dependencies        | [ROADMAP.md](../ROADMAP.md) |
+| Architecture | System boundaries, tech stack, and infra   | [ARCHITECTURE.md](../ARCHITECTURE.md) |

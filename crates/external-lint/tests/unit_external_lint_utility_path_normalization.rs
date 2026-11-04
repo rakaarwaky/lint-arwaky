@@ -1,4 +1,4 @@
-mod common;
+mod mock_common;
 
 // PURPOSE: Test path normalization utility functions from shared_external_lint::utility_path_normalization
 
@@ -60,10 +60,10 @@ fn resolve_capabilities_path_preserves_complex_path() {
 }
 #[test]
 fn normalize_path_identity() {
-    let path = common::fp("src/x.rs");
+    let path = mock_common::fp("src/x.rs");
     assert_eq!(normalize_path(path.clone()), path);
     assert_eq!(
-        resolve_capabilities_path(path.clone(), Some(common::fp("."))),
+        resolve_capabilities_path(path.clone(), Some(mock_common::fp("."))),
         path
     );
 }

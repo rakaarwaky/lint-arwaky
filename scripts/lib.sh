@@ -108,7 +108,6 @@ copy_docs_to_config() {
     local project_root="${2:-$PROJECT_ROOT}"
     local Docs=(
         "ARCHITECTURE.md"
-        "RULES_AES.md"
     )
     for DOC in "${Docs[@]}"; do
         SRC="$project_root/$DOC"
