@@ -1,8 +1,8 @@
 ---
 name: aes-taxonomy
-description: "AES taxonomy VO and domain type scaffolding for Python Rust TS. Use when creating taxonomy files."
-when-to-use: "create, add, or audit an AES taxonomy file (Python, Rust, TypeScript); add a VO, entity, error, event, constant, request, or response type; wrap primitives in VOs; fix taxonomy structure."
-argument-hint: '<python | rust | typescript> [file path]'
+description: "AES taxonomy VO and domain type scaffolding for Python Rust TS. Create a new taxonomy file or improve/audit an existing one."
+when-to-use: "Create a new AES taxonomy file, or improve/audit an existing one. Pass a folder path (a crate/module/package dir) or a single file path; the language (python/rust/typescript) is auto-detected from the path and routed to the matching reference. Without --dry-run the task runs autonomously without asking for permission; with --dry-run it generates a report only and makes no changes."
+argument-hint: '<path> [create|improve] [--dry-run]'
 metadata:
   tags:
     - python
@@ -31,6 +31,13 @@ Scaffold AES taxonomy files — `taxonomy_<domain>_<suffix>` for VO / entity / e
 
 ## Global Rules
 
+- Argument shape: `<path> [create|improve] [--dry-run]`. `<path>` is a folder (crate/module/package) or a single file; missing mode defaults to improve.
+- Language auto-detection: resolve the path, detect python (.py) / rust (.rs) / typescript (.ts/.tsx/.js/.jsx/.mts/.cts) from files present; on mixed or ambiguous input, list the detected languages and proceed with the dominant one, naming it in the report.
+- Routing: dispatch to `references/<language>-<skill>.md` (the language HOW-TO) based on detected language; the language HOW-TO owns the workflow steps.
+- Mode create: scaffold a new file from the language HOW-TO template section.
+- Mode improve: audit the named file/folder against the language HOW-TO rules, list findings, apply fixes.
+- Safety model: default (no `--dry-run`) = autonomous, no permission prompts, execute directly. `--dry-run` = read-only: produce the findings report and STOP before any write; the report is the deliverable. This bullet is the single source of truth for mode/safety semantics.
+- Report: every run ends with a report block — files touched (dry-run: files that WOULD be touched), language detected, mode, findings/fixes.
 - Naming: file `taxonomy_<domain>_<suffix>` — suffix strictly `_vo`/`_entity`/`_error`/`_event`/`_constant`/`_request`/`_response` (AES101/AES102).
 - Imports: taxonomy + stdlib only — never capabilities, agents, surface, root, or contracts; no I/O (AES201).
 - Primitives: domain fields wrap VOs — no raw `str`/`int`/`float`/`String`/`string`/`number` for domain values (AES401).
@@ -45,7 +52,7 @@ Scaffold AES taxonomy files — `taxonomy_<domain>_<suffix>` for VO / entity / e
 
 | File | Purpose |
 | --- | --- |
-| [references/python-taxonomy.md](references/python-taxonomy.md) | Python taxonomy HOW-TO — rules, template, section contract, workflow steps, review, verify |
-| [references/rust-taxonomy.md](references/rust-taxonomy.md) | Rust taxonomy HOW-TO — rules, template, section contract, workflow steps, review, verify |
-| [references/typescript-taxonomy.md](references/typescript-taxonomy.md) | TypeScript taxonomy HOW-TO — rules, template, section contract, workflow steps, review, verify |
+| [references/python-taxonomy.md](references/python-taxonomy.md) | Python taxonomy HOW-TO — both modes; rules, template, section contract, workflow steps, review, verify |
+| [references/rust-taxonomy.md](references/rust-taxonomy.md) | Rust taxonomy HOW-TO — both modes; rules, template, section contract, workflow steps, review, verify |
+| [references/typescript-taxonomy.md](references/typescript-taxonomy.md) | TypeScript taxonomy HOW-TO — both modes; rules, template, section contract, workflow steps, review, verify |
 | Related skills | aes-contract, aes-utility, aes-capabilities, aes-agent, aes-lint-arwaky |
