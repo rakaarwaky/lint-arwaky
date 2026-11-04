@@ -1,4 +1,21 @@
 # Changelog
+## 3.14.1 (2026-11-04)
+
+### Bug Fixes
+
+- fix(aes305): raise default similar_threshold to 75 to match identical tier (#1249)
+- fix(config-system): honor user-set AES305 thresholds in CLI scans, no exceptions (#1242)
+
+### Maintenance
+
+- docs(skills): add 2-mode create/improve argument system to 7 aes-* layer skills (#1267)
+- docs(skills): restructure 11 aes-* skills to shared standard (#1265)
+- chore: standardize 11 aes-* skills to shared body shape (#1261)
+- perf(ci): drop test/self-lint build serialisation, raise nextest -j to 4, add Security Audit to required-gate comment (#1259)
+- chore: remove Codacy, CodeRabbit, and Repowise references (#1252)
+- docs(external-lint): document Gitleaks adapter in FRD and README, reconcile rule counts in TEST.md (#1239)
+- chore(config): remove dead Thresholds.complexity knob (#1234)
+
 ## 3.14.0 (2026-11-01)
 
 ### Features
