@@ -21,10 +21,7 @@ metadata:
     - smoke
     - benchmark
   related_skills:
-    - aes-capabilities
-    - aes-agent
-    - aes-utility
-    - aes-lint-arwaky
+    - aes-layer
 ---
 
 # aes-testing-suite
@@ -51,4 +48,4 @@ Give every layer one test layout: tests live in `tests/` with a flat type prefix
 | [references/python-testing.md](references/python-testing.md) | Python test HOW-TO — prefixes, run commands, coverage, verify |
 | [references/rust-testing.md](references/rust-testing.md) | Rust test HOW-TO — prefixes, nextest, criterion, verify |
 | [references/typescript-testing.md](references/typescript-testing.md) | TypeScript test HOW-TO — prefixes, vitest, coverage, verify |
-| Related skills | aes-doc-comments, aes-docs, aes-layer, aes-lint-arwaky |
+| Related skills | aes-layer |

@@ -15,14 +15,7 @@ metadata:
     - dependency-injection
     - phase-gate
   related_skills:
-    - aes-lint-arwaky
-    - aes-taxonomy
-    - aes-contract
-    - aes-utility
-    - aes-capabilities
-    - aes-agent
-    - aes-surface
-    - aes-root
+    - aes-layer
 ---
 
 # aes-migration
@@ -45,4 +38,4 @@ Guide the phased migration of a legacy codebase into the AES layered architectur
 | [references/python-migration.md](references/python-migration.md) | Python migration playbook — phases 0–8, import matrix, templates, verify |
 | [references/rust-migration.md](references/rust-migration.md) | Rust migration playbook — phases 0–8, import matrix, templates, verify |
 | [references/typescript-migration.md](references/typescript-migration.md) | TypeScript migration playbook — phases 0–8, import matrix, templates, verify |
-| Related skills | aes-layer, aes-lint-arwaky, aes-docs, aes-migration, aes-testing-suite |
+| Related skills | aes-layer |

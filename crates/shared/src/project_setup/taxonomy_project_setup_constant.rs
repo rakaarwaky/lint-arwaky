@@ -444,42 +444,7 @@ pub const EMBEDDED_SKILLS: &[EmbeddedSkillVO] = &[
         include_str!(concat!(env!("OUT_DIR"), "/skills/aes-layer/reference/utility/typescript.md")),
         Some("typescript"),
     ),
-    EmbeddedSkillVO::new(
-        "aes-lint-arwaky",
-        "aes-lint-arwaky/SKILL.md",
-        include_str!(concat!(env!("OUT_DIR"), "/skills/aes-lint-arwaky/SKILL.md")),
-        None,
-    ),
-    EmbeddedSkillVO::new(
-        "aes-lint-arwaky",
-        "aes-lint-arwaky/references/lint-commands.md",
-        include_str!(concat!(env!("OUT_DIR"), "/skills/aes-lint-arwaky/references/lint-commands.md")),
-        None,
-    ),
-    EmbeddedSkillVO::new(
-        "aes-lint-arwaky",
-        "aes-lint-arwaky/references/lint-python.md",
-        include_str!(concat!(env!("OUT_DIR"), "/skills/aes-lint-arwaky/references/lint-python.md")),
-        None,
-    ),
-    EmbeddedSkillVO::new(
-        "aes-lint-arwaky",
-        "aes-lint-arwaky/references/lint-routing.md",
-        include_str!(concat!(env!("OUT_DIR"), "/skills/aes-lint-arwaky/references/lint-routing.md")),
-        None,
-    ),
-    EmbeddedSkillVO::new(
-        "aes-lint-arwaky",
-        "aes-lint-arwaky/references/lint-rust.md",
-        include_str!(concat!(env!("OUT_DIR"), "/skills/aes-lint-arwaky/references/lint-rust.md")),
-        None,
-    ),
-    EmbeddedSkillVO::new(
-        "aes-lint-arwaky",
-        "aes-lint-arwaky/references/lint-typescript.md",
-        include_str!(concat!(env!("OUT_DIR"), "/skills/aes-lint-arwaky/references/lint-typescript.md")),
-        None,
-    ),
+
     EmbeddedSkillVO::new(
         "aes-migration",
         "aes-migration/SKILL.md",

@@ -451,11 +451,7 @@ fn test_collect_init_python_only_skips_rust_and_ts_skills() {
         "aes-layer is language-agnostic and must be installed"
     );
     assert!(
-        written
-            .keys()
-            .any(|k| k.contains("aes-lint-arwaky/references/lint-python.md")),
-        "the python reference of aes-lint-arwaky should be installed"
-    );
+
     assert!(
         written
             .keys()
@@ -507,9 +503,7 @@ fn test_collect_init_rust_only_skips_python_and_ts_skills() {
 
     // Verify the Rust half of every polyglot skill IS installed
     assert!(
-        written
-            .keys()
-            .any(|k| k.contains("aes-lint-arwaky/references/lint-rust.md"))
+false
     );
     assert!(
         written

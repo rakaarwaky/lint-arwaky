@@ -12,9 +12,7 @@ metadata:
     - readme
     - backlog
     - agents-md
-  related_skills:
-    - aes-doc-comments
-    - aes-lint-arwaky
+
 ---
 
 # aes-docs
@@ -45,4 +43,4 @@ Scaffold and audit the ten AES project documents — PRD, ROADMAP, FRD, BACKLOG,
 | `CONTRIBUTING.md` | Root workspace | *How to set up and ship a change* | [references/contributing/workflow.md](references/contributing/workflow.md) |
 | `DESIGN.md` | Each surface folder | *Visual & interaction contract* | [references/design/workflow.md](references/design/workflow.md) |
 | `DATA.md` | Shared folder | *What the shared layer manages* | [references/data/workflow.md](references/data/workflow.md) |
-| Related skills | aes-doc-comments, aes-lint-arwaky | | |
+| Related skills | | | |
