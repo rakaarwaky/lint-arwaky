@@ -226,7 +226,7 @@ A pass means naming, layer imports, primitives, and roles are clean. Migration s
 
 ## Rust Lint (Verify Pipeline)
 
-> Shared commands, MCP tools, exit codes, and AES101 naming live in `aes-migration/SKILL.md` (Lint Rules — Global).
+> Shared commands, MCP tools, exit codes, and AES101 naming live in `references/lint-rules.md` (Lint Rules — Global).
 > This file only holds Rust deltas: adapters, scan session, Rust-specific fix routing, and role boundaries.
 
 ### Adapters & native tooling

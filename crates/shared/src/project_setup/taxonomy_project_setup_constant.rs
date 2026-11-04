@@ -14,7 +14,7 @@ use crate::taxonomy_project_setup_vo::EmbeddedSkillVO;
 /// renaming a skill file —
 /// `catalog_matches_the_skills_directory` in
 /// `crates/dispatcher/tests/unit_dispatcher_setup_skills.rs` fails otherwise.
-pub const EMBEDDED_SKILLS_COUNT: usize = 75;
+pub const EMBEDDED_SKILLS_COUNT: usize = 76;
 
 pub const EMBEDDED_SKILLS: &[EmbeddedSkillVO] = &[
     EmbeddedSkillVO::new(
@@ -638,6 +638,15 @@ pub const EMBEDDED_SKILLS: &[EmbeddedSkillVO] = &[
         include_str!(concat!(
             env!("OUT_DIR"),
             "/skills/aes-migration/references/typescript-migration.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-migration",
+        "aes-migration/references/lint-rules.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-migration/references/lint-rules.md"
         )),
         None,
     ),
