@@ -9,9 +9,8 @@ folder is the repository source of truth; it is embedded into the binary at
 compile time via `include_str!` in the generated skills constant under the
 shared crate's project-setup module, and `init` writes it into the target
 project's `.agents/skills/` directory. All provisioned skills follow the
-`aes-<layer>` convention: `aes-taxonomy`, `aes-contract`, `aes-capabilities`,
-`aes-agent`, `aes-surface`, `aes-utility`, `aes-root`, `aes-docs`,
-`aes-migration`, `aes-lint-arwaky`, `aes-testing-suite`.
+`aes-<layer>` convention: `aes-layer` (taxonomy, contract, capabilities, agent,
+surface, utility, root), `aes-docs`, `aes-migration`, `aes-testing-suite`.
 
 ## Prerequisites
 
@@ -35,7 +34,7 @@ runs after step 2 anyway.
 
 | Artifact | Purpose | Link |
 | --- | --- | --- |
-| `crates/shared/skills/<name>/SKILL.md` | The skill body: trigger, purpose, and routing. | [SKILL.md](aes-agent/SKILL.md) |
+| `crates/shared/skills/<name>/SKILL.md` | The skill body: trigger, purpose, and routing. | [SKILL.md](aes-layer/SKILL.md) |
 | `crates/shared/skills/<name>/references/` | Per-language HOW-TO playbooks, filtered at provision time. | (language-matched `references/` subdirectory) |
 | `crates/shared/src/project_setup/taxonomy_project_setup_constant.rs` | Maintains the embedded constant — update manually after adding, removing, or renaming a skill file. | (see Quick Start, Step 2) |
 | `DESCRIPTION.md` | One-line pack description provisioned alongside the skills. | [DESCRIPTION.md](DESCRIPTION.md) |

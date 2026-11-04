@@ -213,3 +213,146 @@ python -m compileall -q modules/
 
 A pass means naming, layer imports, primitives, and roles are clean. Migration strategy
 (phase order, skip conditions) is **manual** — see Rules §1–2.
+
+---
+
+## Python Lint (Verify Pipeline)
+
+> Shared commands, MCP tools, exit codes, and AES101 naming live in `references/lint-rules.md` (Lint Rules — Global).
+> This file only holds Python deltas: adapters, scan session, Python-specific fix routing, and role boundaries.
+
+### Adapters & external tooling
+
+`lint-arwaky-cli install` installs external adapters; `lint-arwaky-cli adapters` lists the active ones (Ruff, Mypy, Bandit, …). `get_config` accepts `"language": "python"`.
+
+| Adapter | Standalone command | What it covers |
+| :----- | :----- | :----- |
+| Ruff | `ruff check src/` | lint + style gate |
+| Mypy | `mypy src/` | static type checking |
+| Bandit | `lint-arwaky-cli security modules/` | security issues |
+| CVE check | `lint-arwaky-cli dependencies modules/` | library vulnerabilities |
+
+`lint-arwaky-cli external modules/` runs only the external linters (ruff).
+
+### Scan session
+
+```bash
+# Pre-flight
+python3 -c "import sys; print(sys.version)"
+python3 -c "import ruff; print('ruff ok')" 2>/dev/null || echo "ruff not installed"
+
+# Scan (text / json / by rule / by member)
+lint-arwaky-cli scan workspaces-bad/modules
+lint-arwaky-cli scan workspaces-bad/modules --format json
+lint-arwaky-cli scan workspaces-bad/modules --filter AES201
+lint-arwaky-cli orphan modules/ --member animator
+lint-arwaky-cli ci modules/ --threshold 80
+lint-arwaky-cli scan modules/ --format junit -o reports/
+
+# Reports → XDG data dir
+lint-arwaky-cli scan modules/ --format json \
+  --output-dir ~/.local/share/aes-lint-arwaky/reports
+lint-arwaky-cli scan modules/ --format sarif \
+  > ~/.local/share/aes-lint-arwaky/reports/scan_python.sarif
+```
+
+### Python-specific fix routing
+
+- **AES101 rename** → after `git mv`, update `__init__.py` imports (barrel is the registration point; missing re-export = orphan AES501–506).
+- **AES201 forbidden import** → for `capabilities_*`, allowed: `taxonomy`, `contract`, `utility` (mandatory: `taxonomy` + `contract(*_protocol)`); forbidden: other `capabilities_*`, `agent`, `surface`, `root`. Break the dependency through a contract protocol/aggregate — `aes-contract`.
+- **AES204** → remove the dummy import and its stub (`aes-{layer}`).
+- **AES304** → auto-fixable via `lint-arwaky-cli fix <path> --filter AES304`, or fix the root cause and delete the suppression manually.
+- **AES403** → every capability class MUST inherit its protocol ABC.
+- **AES405** → every agent class MUST inherit its aggregate ABC, no direct `capabilities_*` import, no `: Any` on aggregate signatures.
+- **AES404** → `utility_*` files: stateless functions only; import `taxonomy` and nothing else.
+- **AES303** → add the missing `class` / `def` (skipped for `utility`/`surface` layers).
+
+### Role boundaries
+
+| Layer | Can contain | Cannot contain |
+| :----- | :----- | :----- |
+| capabilities | Pure computation, validation | I/O, network, database |
+| utility | Stateless pure functions | State, classes with fields, non-taxonomy imports |
+| agent | Orchestration flow | Computation, I/O, business |
+
+### Quick fix recipes
+
+```bash
+# AES101/102 rename
+git mv src/capabilities_scanner.py src/capabilities_file_scanner.py
+# then update __init__.py imports
+
+# AES203 unused import
+lint-arwaky-cli fix src/file.py --filter AES203
+
+# AES304 bypass
+grep -rn 'noqa\|type: ignore\|pragma: no cover\|FIXME\|TODO' src/
+# fix root cause, delete suppression
+
+# AES501–506 orphan
+lint-arwaky-cli orphan modules/ --format json
+# truly dead → delete; should be wired → container / import chain
+
+# AES401–406 role
+lint-arwaky-cli role modules/ --filter AES403
+# I/O out of capabilities → utility; business out of surface → capabilities;
+# orchestration out of capabilities → agent
+```
+
+### Common issues
+
+| Issue | Fix strategy |
+| :----- | :----- |
+| Cross-layer imports | Contract protocols via DI (`aes-contract`) |
+| Missing protocol inheritance | Create protocol ABC and inherit (`aes-contract` + `aes-capabilities`) |
+| Mixed layer responsibilities | Move code to the correct layer (`aes-*`) |
+| Magic constants | Extract to taxonomy constants (`aes-taxonomy`) |
+| Surface importing capabilities | Use aggregate contracts instead (`aes-contract`) |
+
+---
+
+## Python Section Contract
+
+| Section | Why it belongs here |
+| :----- | :----- |
+| Pre-flight | A scan on a broken interpreter is noise, not signal. |
+| Scan with path + format | Findings must be machine-triageable (json) or human-scannable (text). |
+| Triage order | CRITICAL (AES201/205/304) blocks merge; fix before HIGH/MEDIUM cosmetics. |
+| Fix routing by AES code | Wrong fix layer recreates the violation; route via lint-routing in `aes-migration/SKILL.md`. |
+| Barrel update after rename | AES101 without `__init__.py` re-export becomes AES501–506. |
+| Role-boundary check | Capabilities/utility/agent rows above must hold after fixes. |
+| Re-scan to 0 | Done means zero AES findings, not "mostly clean". |
+| Language verify | `py_compile` / import / ruff / mypy still pass — AES clean ≠ code healthy. |
+
+---
+
+## Python Verify
+
+```bash
+# 1. Re-scan — must be 0 AES violations
+lint-arwaky-cli scan <target-path>
+
+# 2. Syntax
+python3 -m py_compile src/<module>.py
+
+# 3. Import
+python3 -c "import <module>"
+
+# 4. Ruff (if available)
+ruff check src/
+
+# 5. Mypy (if available)
+mypy src/
+```
+
+Exit codes (shared, `aes-migration/SKILL.md`): `0` pass · `1` violations · `2` config/parse error.
+
+Manual:
+
+- [ ] Layer imports follow AES201; `python3 -c "import <module>"` succeeds.
+- [ ] Capability classes inherit their protocol ABC (AES403).
+- [ ] Utility files are stateless and import `taxonomy` only (AES404).
+- [ ] Agent classes inherit their aggregate ABC; no `Any` on aggregate signatures (AES405).
+- [ ] Surface files follow role-based imports (AES406).
+- [ ] `ruff check src/` and `mypy src/` clean.
+- [ ] `lint-arwaky-cli scan modules/` reports 0 violations.

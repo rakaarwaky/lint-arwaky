@@ -447,20 +447,14 @@ fn test_collect_init_python_only_skips_rust_and_ts_skills() {
 
     // Verify the Python half of every polyglot skill IS installed
     assert!(
-        written.keys().any(|k| k.contains("aes-taxonomy/SKILL.md")),
-        "aes-taxonomy is language-agnostic and must be installed"
+        written.keys().any(|k| k.contains("aes-layer/SKILL.md")),
+        "aes-layer is language-agnostic and must be installed"
     );
     assert!(
         written
             .keys()
-            .any(|k| k.contains("aes-lint-arwaky/references/lint-python.md")),
-        "the python reference of aes-lint-arwaky should be installed"
-    );
-    assert!(
-        written
-            .keys()
-            .any(|k| k.contains("aes-taxonomy/references/python-taxonomy.md")),
-        "the python reference of aes-taxonomy should be installed"
+            .any(|k| k.contains("aes-layer/reference/taxonomy/python.md")),
+        "the python reference of aes-layer should be installed"
     );
 
     // Verify common skills ARE installed
@@ -475,10 +469,10 @@ fn test_collect_init_python_only_skips_rust_and_ts_skills() {
 
     // Verify Rust and TypeScript references are NOT installed
     assert!(
-        !written.keys().any(|k| k.contains("rust-")),
+        !written.keys().any(|k| k.contains("/rust.md")),
         "rust references must NOT be installed in a python-only project"
     );
-    assert!(!written.keys().any(|k| k.contains("typescript-")));
+    assert!(!written.keys().any(|k| k.contains("/typescript.md")));
 
     // Derived from the catalog rather than hard-coded: everything
     // language-agnostic, plus the python half of the polyglot skills.
@@ -509,17 +503,12 @@ fn test_collect_init_rust_only_skips_python_and_ts_skills() {
     assert!(
         written
             .keys()
-            .any(|k| k.contains("aes-lint-arwaky/references/lint-rust.md"))
-    );
-    assert!(
-        written
-            .keys()
-            .any(|k| k.contains("aes-capabilities/references/rust-capabilities.md"))
+            .any(|k| k.contains("aes-layer/reference/capabilities/rust.md"))
     );
 
     // Verify Python and TypeScript references are NOT installed
-    assert!(!written.keys().any(|k| k.contains("python-")));
-    assert!(!written.keys().any(|k| k.contains("typescript-")));
+    assert!(!written.keys().any(|k| k.contains("/python.md")));
+    assert!(!written.keys().any(|k| k.contains("/typescript.md")));
 
     // Derived from the catalog rather than hard-coded: everything
     // language-agnostic, plus the rust half of the polyglot skills.
