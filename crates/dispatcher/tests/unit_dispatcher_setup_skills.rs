@@ -451,8 +451,6 @@ fn test_collect_init_python_only_skips_rust_and_ts_skills() {
         "aes-layer is language-agnostic and must be installed"
     );
     assert!(
-
-    assert!(
         written
             .keys()
             .any(|k| k.contains("aes-layer/reference/taxonomy/python.md")),
@@ -502,9 +500,7 @@ fn test_collect_init_rust_only_skips_python_and_ts_skills() {
     let written = mock_fs.written_files.lock().unwrap();
 
     // Verify the Rust half of every polyglot skill IS installed
-    assert!(
-false
-    );
+    assert!(false);
     assert!(
         written
             .keys()
