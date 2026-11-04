@@ -275,7 +275,7 @@ pub enum ImportType {
 }
 
 /// A single import/dependency relationship.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ImportEntry {
     /// File that contains the import.
     pub source_file: PathBuf,
