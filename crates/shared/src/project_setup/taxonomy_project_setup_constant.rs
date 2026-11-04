@@ -610,28 +610,28 @@ pub const EMBEDDED_SKILLS: &[EmbeddedSkillVO] = &[
     ),
     EmbeddedSkillVO::new(
         "aes-migration",
-        "aes-migration/reference/python-migration.md",
+        "aes-migration/references/python-migration.md",
         include_str!(concat!(
             env!("OUT_DIR"),
-            "/skills/aes-migration/reference/python-migration.md"
+            "/skills/aes-migration/references/python-migration.md"
         )),
         Some("python"),
     ),
     EmbeddedSkillVO::new(
         "aes-migration",
-        "aes-migration/reference/rust-migration.md",
+        "aes-migration/references/rust-migration.md",
         include_str!(concat!(
             env!("OUT_DIR"),
-            "/skills/aes-migration/reference/rust-migration.md"
+            "/skills/aes-migration/references/rust-migration.md"
         )),
         Some("rust"),
     ),
     EmbeddedSkillVO::new(
         "aes-migration",
-        "aes-migration/reference/typescript-migration.md",
+        "aes-migration/references/typescript-migration.md",
         include_str!(concat!(
             env!("OUT_DIR"),
-            "/skills/aes-migration/reference/typescript-migration.md"
+            "/skills/aes-migration/references/typescript-migration.md"
         )),
         Some("typescript"),
     ),
