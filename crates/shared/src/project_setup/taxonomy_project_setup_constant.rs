@@ -18,13 +18,13 @@ pub const EMBEDDED_SKILLS_COUNT: usize = 76;
 
 pub const EMBEDDED_SKILLS: &[EmbeddedSkillVO] = &[
     EmbeddedSkillVO::new(
-        "DESCRIPTION.md",
+        "description",
         "DESCRIPTION.md",
         include_str!(concat!(env!("OUT_DIR"), "/skills/DESCRIPTION.md")),
         None,
     ),
     EmbeddedSkillVO::new(
-        "README.md",
+        "README",
         "README.md",
         include_str!(concat!(env!("OUT_DIR"), "/skills/README.md")),
         None,
