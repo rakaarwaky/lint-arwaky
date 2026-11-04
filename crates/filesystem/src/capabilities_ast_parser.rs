@@ -130,6 +130,21 @@ impl ASTParser {
         let results: Vec<(Vec<ParseWarning>, Vec<ImportEntry>)> = files
             .par_iter_mut()
             .map(|entry| {
+                // Skip re-parsing files that a prior index build already parsed:
+                // their parse_metadata is populated and their tree is cached,
+                // so only extract imports from the cached tree (no tree-sitter
+                // parse). Uncached files (e.g. tests/benches suites) fall
+                // through to a single read + parse below.
+                if entry.parse_metadata.is_some() {
+                    // Reuse the cached tree from the prior index build: extract
+                    // imports without a tree-sitter re-parse. `extract_imports`
+                    // only mutates LRU access order when the tree is actually
+                    // present; on an evicted tree it falls back to a fresh parse
+                    // from content.
+                    let imports = self.extract_imports(&entry.path, &entry.content, entry.language);
+                    return (Vec::new(), imports);
+                }
+
                 if entry.content.is_empty() {
                     entry.parse_ok = true;
                     return (Vec::new(), Vec::new());

@@ -118,6 +118,68 @@ fn parse_unknown_language_sets_parse_ok_false() {
     assert!(!files[0].parse_ok);
 }
 
+// ── Warm-index fast-path tests (index-build dedupe) ────────────────────────
+
+/// Parse the same entry twice; the second call must hit the warm fast path:
+/// no new tree cached, no warnings produced, imports unchanged, metadata
+/// preserved.
+#[test]
+fn parse_all_twice_skips_reparse() {
+    let parser = ASTParser::new();
+    let mut files = vec![make_entry(
+        "/test.rs",
+        "use std::collections::HashMap;\nuse crate::foo::Bar;\n",
+        Language::Rust,
+    )];
+    parser.parse_all(&mut files);
+    assert!(files[0].parse_metadata.is_some());
+    let count_after_first = parser.cached_ast_count();
+    let imports_first = parser.import_list().clone();
+
+    parser.parse_all(&mut files);
+
+    assert_eq!(parser.cached_ast_count(), count_after_first);
+    assert!(parser.parse_warnings().is_empty());
+    // Full-entry equality: every field must match across the two parses.
+    assert_eq!(parser.import_list(), imports_first);
+    assert!(files[0].parse_metadata.is_some());
+}
+
+/// Warm-index fast path preserves imports even when the tree was evicted from
+/// the LRU cache (`cache_capacity == 1` → one entry fits, second parse evicts
+/// the first). `extract_imports` falls back to a fresh parse from content, so
+/// imports are still extracted and metadata survives; `cached_ast_count`
+/// reflects the eviction/re-population cycle.
+#[test]
+fn parse_all_warm_index_fast_path_evicted_tree_still_exports_imports() {
+    let parser = ASTParser::with_cache_capacity(1);
+    let mut files = vec![make_entry(
+        "/test.rs",
+        "use std::collections::HashMap;\nuse crate::foo::Bar;\n",
+        Language::Rust,
+    )];
+    parser.parse_all(&mut files);
+    assert!(files[0].parse_metadata.is_some());
+    assert_eq!(parser.cached_ast_count(), 1);
+    let imports_first = parser.import_list().clone();
+
+    // Parse a second file → evicts `/test.rs` from a capacity-1 cache.
+    let mut second_file = vec![make_entry(
+        "/other.rs",
+        "use std::io::Read;\n",
+        Language::Rust,
+    )];
+    parser.parse_all(&mut second_file);
+    assert_eq!(parser.cached_ast_count(), 1);
+
+    // Re-parse `/test.rs`: tree is evicted, fast path falls back to parsing
+    // from content; imports must still be exported.
+    parser.parse_all(&mut files);
+    assert_eq!(parser.import_list(), imports_first);
+    assert_eq!(parser.cached_ast_count(), 1);
+    assert!(files[0].parse_metadata.is_some());
+}
+
 #[test]
 fn parse_all_collects_imports() {
     let parser = ASTParser::new();
