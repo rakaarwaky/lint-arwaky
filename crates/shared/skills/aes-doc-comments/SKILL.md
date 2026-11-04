@@ -1,33 +1,45 @@
 ---
 name: aes-doc-comments
-description: Adds docstrings, doc comments, and language-native API docs for public items. Use when documenting Python, Rust, or TypeScript public surface.
-when-to-use: "Use when adding or auditing docstrings, doc comments, rustdoc, JSDoc/TSDoc, or type-hint doc blocks on a Python, Rust, or TypeScript public surface."
-argument-hint: "<layer-path>"
+description: "Adds docstrings, doc comments, and language-native API docs for public items. Use when documenting Python, Rust, or TypeScript public surface."
+when-to-use: "add, audit, or fix doc comments / docstrings / rustdoc / JSDoc on public modules, classes, traits, interfaces, functions, or methods; verify doc comments with lint-arwaky-cli docs."
+argument-hint: '<python | rust | typescript> [file path]'
+metadata:
+  tags:
+    - python
+    - rust
+    - typescript
+    - docs
+    - docstring
+    - doc-comments
+    - jsdoc
+    - rustdoc
+    - pep257
+  related_skills:
+    - aes-docs
+    - aes-taxonomy
+    - aes-contract
 ---
 
 # aes-doc-comments
 
-Ensure every public code item carries doc comments in its language's native form, so `cargo doc`, `python -c "import <package>"`, and `tsc` readers know *what* and *why* without opening the body. The **language** decides the comment syntax and section layout.
+Add doc comments in each language's native form — PEP 257 docstrings, `///` rustdoc sections, JSDoc/TSDoc — to every public module, class, trait, interface, function, and method, so `cargo doc`, `python -c "import <package>"`, and `tsc` readers know *what* and *why* without opening the body. The audience is the engineer or agent reading generated API docs; the **language** decides the comment syntax and section layout. Invariants read by more than one step live in Global Rules below.
 
-## Global rules
+## Global Rules
 
-- **Module-level docstring/comment is mandatory**: first statement of every public module; one sentence on the module's job; no changelog.
-- **Doc comments explain *what* and *why*, never *how***: restating the next three lines of code wastes the reader's time.
-- **Never restate the signature in prose**: parameter names match the signature; do not repeat types already in the annotation when the annotation says it better.
-- **Public classes and functions always get doc comments**; private helpers (`_name` in Python, non-`pub` items in Rust) may omit them when the name is enough.
-- **`Args` / `Returns` on every public function** whose parameters or return value are not obvious from the type hints alone.
-- **No status claims**: doc comments never say implemented / shipped / N% done — that lives in `BACKLOG.md` (`status-in-spec`).
-- **Register**: module is reachable through the shared barrel (`__init__.py` / `mod.rs` / `index.ts`).
-- **Verify**: `lint-arwaky-cli docs .` passes; language doc build is fallback only.
-- **Related**: aes-docs (spec/status docs), aes-taxonomy (domain VOs), aes-contract (protocol declarations) — each carries its own HOW-TO.
+- Module-level doc comment is mandatory: first statement of every public module; one sentence on the module's job; no changelog.
+- Doc comments explain *what* and *why*, never *how* — restating the next three lines of code wastes the reader's time.
+- Never restate the signature in prose: parameter names match the signature; types already in the annotation stay in the annotation.
+- Public classes and functions always get doc comments; private helpers (`_name` in Python, non-`pub` items in Rust) may omit them when the name is enough.
+- `Args` / `Returns` on every public function whose parameters or return value are not obvious from the type hints alone.
+- No status claims: doc comments never say implemented / shipped / N% done — that lives in `BACKLOG.md` (status-in-spec).
+- Verify: `lint-arwaky-cli docs .` passes; language doc build clean — `cargo doc --no-deps` and `cargo test --doc` for Rust, `python -c "import <package>"` for Python, `tsc` for TypeScript.
+- One fact, one home: the language HOW-TO carries the syntax and section layout — read it, do not restate here. Cite the gate, not this file, when pointing at a rule. Each bullet states a fact once; references point at the bullet.
 
 ## Routing
 
-| Section | Reference | Purpose |
-| ------- | --------- | ------- |
-| Language HOW-TOs | [references/python-doc.md](references/python-doc.md) | Python PEP 257 docstrings — rules, template, section contract, verify |
-| Language HOW-TOs | [references/rust-doc.md](references/rust-doc.md) | Rust `///` rustdoc sections — rules, template, doctest policy, verify |
-| Language HOW-TOs | [references/typescript-doc.md](references/typescript-doc.md) | TypeScript JSDoc/TSDoc — rules, template, section contract, verify |
-| Workflow | [references/workflow.md](references/workflow.md) | Step-by-step: create module doc, fill sections, verify |
-| Templates | [references/templates.md](references/templates.md) | Copy source for each language's doc comment shape |
-| Verification | [references/verification.md](references/verification.md) | Primary gate + fallback language doc build |
+| File | Purpose |
+| --- | --- |
+| [references/python-doc.md](references/python-doc.md) | Python docstring HOW-TO — PEP 257 rules, template, section contract, verify |
+| [references/rust-doc.md](references/rust-doc.md) | Rust rustdoc HOW-TO — `///` rules, sections, doctest policy, verify |
+| [references/typescript-doc.md](references/typescript-doc.md) | TypeScript JSDoc/TSDoc HOW-TO — rules, template, section contract, verify |
+| Related skills | aes-docs, aes-taxonomy, aes-contract |

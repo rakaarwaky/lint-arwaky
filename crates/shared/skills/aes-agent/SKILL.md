@@ -16,8 +16,9 @@ Scaffold AES agent orchestrators — orchestration only: call the aggregate, ret
 - Imports: shared contracts/taxonomy/utility only — never capabilities, siblings, surface (AES201).
 - Behaviour: no I/O, no arithmetic/parsing/normalisation, no local domain data, no magic constants, no silently discarded errors.
 - DI: injected aggregate only (`Arc<dyn Trait>` in Rust); shared VOs in signatures.
-- Register: shared barrel (`__init__.py` / `mod.rs` / `index.ts`) so the root can compose the agent.
 - Verify: `lint-arwaky-cli scan <layer-path>` → 0. Language compile is fallback only.
+- Placement: agent files live in a feature folder — `crates/<feature>/`, `modules/<feature>/`, `packages/<feature>/`; a feature folder needs ≥1 `agent_*_orchestrator` and ≥1 `capabilities_*` file (AES702).
+- Register: shared barrel (`__init__.py` / `mod.rs` / `index.ts`) so the root can compose the agent.
 - One fact, one home: the language HOW-TO carries the language's suffix, imports, and structure — read it, do not restate here. Cite the linter, not this file, when pointing at a rule. Each bullet states a fact once; references point at the bullet.
 
 ## Routing

@@ -1,34 +1,48 @@
 ---
 name: aes-root
-description: AES composition root and entry wiring for Python Rust TS. Use when creating container entry files.
-when-to-use: "Use when creating or auditing a composition root (container or entry file) in Python, Rust, or TypeScript, or when wiring a feature's dependencies at the package top."
-argument-hint: "<layer-path>"
+description: "AES composition root and entry wiring for Python Rust TS. Use when creating container entry files."
+when-to-use: "create, add, or audit an AES composition root (Python, Rust, TypeScript); wire a feature container; bootstrap an entry point; fix root structure."
+argument-hint: '<python | rust | typescript> [file path]'
+metadata:
+  tags:
+    - python
+    - rust
+    - typescript
+    - aes
+    - root
+    - container
+    - entry
+    - composition
+    - di
+    - wiring
+  related_skills:
+    - aes-lint-arwaky
+    - aes-capabilities
+    - aes-agent
+    - aes-contract
+    - aes-taxonomy
+    - aes-surface
 ---
 
 # aes-root
 
-Scaffold AES composition roots — `root_<concept>_container` wires one feature's capabilities to its contracts; `root_<concept>_entry` bootstraps and starts the process. The **layer** decides which suffix, which imports, and which structure apply.
+Scaffold AES composition roots — `root_<concept>_container` wires one feature's capabilities to its contracts, and `root_<concept>_entry` bootstraps the app and composes every container. The audience is the agent creating or validating a container or entry file; the **layer** decides which suffix, which imports, and which structure apply. Root is the only layer allowed to depend on everything below — nothing below root imports root. Invariants read by more than one step live in Global Rules below.
 
-## Global rules
+## Global Rules
 
-- **Naming (AES101/AES102)**: file `root_<concept>_container` or `root_<concept>_entry`; documented exceptions (`main.rs`, `lib.rs`, `mod.rs`, `__init__.py`, `index.ts`) are listed in the language HOW-TO.
-- **Roles**: container wires one feature's capabilities to contracts; entry bootstraps the app and composes feature containers.
-- **Privilege**: root is the only layer allowed to depend on everything below — nothing below root imports root.
-- **Behaviour**: no business logic, no orchestration policy, no technical parsing, no UI behaviour — those live in capabilities / agent / utility / surface.
-- **DI**: bind to protocol/aggregate types (`Arc<dyn Trait>` in Rust) — concretions never leak above root.
-- **Register**: `mod.rs` / `index.ts` / package barrel as required.
-- **Verify**: `lint-arwaky-cli scan <layer-path>` → 0; language compile is fallback only.
-- **Related**: aes-capabilities (wired), aes-agent (composed), aes-surface (started), aes-contract (bind target) — each carries its own HOW-TO.
+- Naming: file `root_<concept>_container` or `root_<concept>_entry` (AES101/AES102). Documented exceptions: `main.rs`, `lib.rs`, `mod.rs`, `__init__.py`, `index.ts`, and other barrel/entry files listed in the HOW-TOs.
+- Roles: a container wires one feature's capabilities to its contracts; an entry bootstraps the process and composes every feature container.
+- Behaviour: wiring and construction only — no business logic, no orchestration policy, no technical parsing, no UI behaviour; those live in capabilities / agent / utility / surface.
+- DI: bind to contract protocol/aggregate types (`Arc<dyn Trait>` in Rust) — concretions never leak above root.
+- Register: `mod.rs` / `index.ts` / package barrel as required.
+- Verify: `lint-arwaky-cli scan <layer-path>` → 0. Language compile is fallback only.
+- One fact, one home: the language HOW-TO carries the language's wiring syntax and section contract — read it, do not restate here. Cite the linter, not this file, when pointing at a rule. Each bullet states a fact once; references point at the bullet.
 
 ## Routing
 
-| Section | Reference | Purpose |
-| ------- | --------- | ------- |
-| Language HOW-TOs | [references/python-root.md](references/python-root.md) | Python root — rules, template, section contract, workflow, verify |
-| Language HOW-TOs | [references/rust-root.md](references/rust-root.md) | Rust root — rules, template, section contract, workflow, verify |
-| Language HOW-TOs | [references/typescript-root.md](references/typescript-root.md) | TypeScript root — rules, template, section contract, workflow, verify |
-| Diagnostic tree | [references/diagnostic-tree.md](references/diagnostic-tree.md) | First-failing-check routing for a broken root file |
-| Workflow | [references/workflow.md](references/workflow.md) | Step sequence from role-determination to register |
-| Verification | [references/verification.md](references/verification.md) | Primary gate + fallback language compile |
-| Pre-flight | [references/pre-flight.md](references/pre-flight.md) | Checklist before drafting a root file |
-| Anti-patterns | [references/anti-patterns.md](references/anti-patterns.md) | Common wiring and layer-leak mistakes |
+| File | Purpose |
+| --- | --- |
+| [references/python-root.md](references/python-root.md) | Python root HOW-TO — rules, template, section contract, workflow steps, review, verify |
+| [references/rust-root.md](references/rust-root.md) | Rust root HOW-TO — rules, template, section contract, workflow steps, review, verify |
+| [references/typescript-root.md](references/typescript-root.md) | TypeScript root HOW-TO — rules, template, section contract, workflow steps, review, verify |
+| Related skills | aes-contract, aes-capabilities, aes-agent, aes-surface, aes-lint-arwaky |
