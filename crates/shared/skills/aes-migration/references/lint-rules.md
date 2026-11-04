@@ -4,7 +4,7 @@ Shared `lint-arwaky-cli` command surface that applies to every language and ever
 
 **Goal:** Give any migration step a single, checkable home for the CLI invocation, AES101 naming contract, fix-routing table, and triage order, so no step restates these shared facts.
 
-### Invocation
+## Invocation
 
 ```bash
 # Through the agents-arwaky orchestrator (preferred)
@@ -18,7 +18,7 @@ lac fix . --dry-run
 lint-arwaky-cli ci . --threshold 90
 ```
 
-### Shell aliases
+## Shell aliases
 
 | Alias | Target Binary | Description |
 | :---- | :------------ | :---------- |
@@ -26,7 +26,7 @@ lint-arwaky-cli ci . --threshold 90
 | `lat` | `lint-arwaky-tui` | Terminal User Interface dashboard |
 | `lam` | `lint-arwaky-mcp` | MCP Server (STDIO backend for AI clients) |
 
-### Global CLI options
+## Global CLI options
 
 | Option | Long Flag | Description |
 | :----- | :-------- | :---------- |
@@ -37,7 +37,7 @@ lint-arwaky-cli ci . --threshold 90
 | `-h` | `--help` | Print help information for the CLI or a specific subcommand. |
 | `-V` | `--version` | Print CLI binary version. |
 
-### Commands & subcommands
+## Commands & subcommands
 
 | Command | Purpose |
 | :----- | :----- |
@@ -54,7 +54,7 @@ lint-arwaky-cli ci . --threshold 90
 | `config` / `adapters` / `mcp-config` | Print active rules, enabled adapters, MCP client JSON |
 | `doctor` / `version` | Environment diagnostics / binary version |
 
-### MCP server tools (`lint-arwaky-mcp`)
+## MCP server tools (`lint-arwaky-mcp`)
 
 Five JSON-RPC 2.0 tools over STDIO for AI clients (Claude Code, Cursor, Windsurf, Hermes):
 
@@ -66,11 +66,11 @@ Five JSON-RPC 2.0 tools over STDIO for AI clients (Claude Code, Cursor, Windsurf
 | `health_check` | Check MCP server & adapter health | None |
 | `get_config` | Get active architecture config | `path` (optional), `language` (optional: `"rust"`, `"python"`, `"javascript"`) |
 
-### Exit codes
+## Exit codes
 
 `0` pass · `1` violations (blocks merge) · `2` config/parse error · `3` prerequisite missing (a required external tool is not installed). CI and hooks key off exit code; stdout is not the contract.
 
-### Naming contract (AES101) — shared reference
+## Naming contract (AES101) — shared reference
 
 Every source file must follow `<layer>_<concern>_<role>.<ext>` (lowercase, at least three underscore-separated words; verbatim exceptions such as `main.rs`, `lib.rs`, `mod.rs`, `__init__.py`, `index.ts`, `root_cli_main_entry.rs`).
 
@@ -88,7 +88,7 @@ The 7 strictly-ordered layers, **bottom-up** (a layer may only depend on layers 
 
 **Core invariant:** upper layers may only depend downward. Lower layers may never import upper layers. **`test` is not a layer.** Test and benchmark files live in `tests/` and `benches/` and follow their own naming convention — see the `aes-testing-suite` skill.
 
-### AES fix routing (language-agnostic)
+## AES fix routing (language-agnostic)
 
 Every AES code from `lint-arwaky-cli scan` maps to a fix approach and the `aes-*` skill that owns that layer. `{layer}` ∈ `taxonomy`, `utility`, `contract`, `capabilities`, `agent`, `surface`, `root`.
 
