@@ -1,8 +1,8 @@
 ---
 name: aes-contract
-description: "AES contract protocol scaffolding for Python Rust TS. Use when creating contract protocol or aggregate files."
-when-to-use: "create, add, or audit an AES contract file (Python, Rust, TypeScript); split protocol from aggregate; validate contract shape; fix contract structure."
-argument-hint: '<python | rust | typescript> [file path]'
+description: "AES contract protocol scaffolding for Python Rust TS. Create a new contract file or improve/audit an existing one."
+when-to-use: "Create a new AES contract file, or improve/audit an existing one. Pass a folder path (a crate/module/package dir) or a single file path; the language (python/rust/typescript) is auto-detected from the path and routed to the matching reference. Without --dry-run the task runs autonomously without asking for permission; with --dry-run it generates a report only and makes no changes."
+argument-hint: '<path> [create|improve] [--dry-run]'
 metadata:
   tags:
     - python
@@ -29,6 +29,13 @@ Scaffold AES contract files — declarations only: `_protocol` (one file per fea
 
 ## Global Rules
 
+- Argument shape: `<path> [create|improve] [--dry-run]`. `<path>` is a folder (crate/module/package) or a single file; missing mode defaults to improve.
+- Language auto-detection: resolve the path, detect python (.py) / rust (.rs) / typescript (.ts/.tsx/.js/.jsx/.mts/.cts) from files present; on mixed or ambiguous input, list the detected languages and proceed with the dominant one, naming it in the report.
+- Routing: dispatch to `references/<language>-<skill>.md` (the language HOW-TO) based on detected language; the language HOW-TO owns the workflow steps.
+- Mode create: scaffold a new file from the language HOW-TO template section.
+- Mode improve: audit the named file/folder against the language HOW-TO rules, list findings, apply fixes.
+- Safety model: default (no `--dry-run`) = autonomous, no permission prompts, execute directly. `--dry-run` = read-only: produce the findings report and STOP before any write; the report is the deliverable. This bullet is the single source of truth for mode/safety semantics.
+- Report: every run ends with a report block — files touched (dry-run: files that WOULD be touched), language detected, mode, findings/fixes.
 - Naming: file `contract_<concept>_<suffix>` — suffix strictly `_protocol` or `_aggregate` (AES101/AES102).
 - Protocol shape: one file per feature, one trait/class/interface per capability seam, each rich with named methods.
 - Aggregate shape: exactly one `execute()` method; the response is a taxonomy-defined enum of VOs.
@@ -43,7 +50,7 @@ Scaffold AES contract files — declarations only: `_protocol` (one file per fea
 
 | File | Purpose |
 | --- | --- |
-| [references/python-contract.md](references/python-contract.md) | Python contract HOW-TO — rules, template, section contract, workflow steps, review, verify |
-| [references/rust-contract.md](references/rust-contract.md) | Rust contract HOW-TO — rules, template, section contract, workflow steps, review, verify |
-| [references/typescript-contract.md](references/typescript-contract.md) | TypeScript contract HOW-TO — rules, template, section contract, workflow steps, review, verify |
+| [references/python-contract.md](references/python-contract.md) | Python contract HOW-TO — both modes; rules, template, section contract, workflow steps, review, verify |
+| [references/rust-contract.md](references/rust-contract.md) | Rust contract HOW-TO — both modes; rules, template, section contract, workflow steps, review, verify |
+| [references/typescript-contract.md](references/typescript-contract.md) | TypeScript contract HOW-TO — both modes; rules, template, section contract, workflow steps, review, verify |
 | Related skills | aes-taxonomy, aes-capabilities, aes-agent, aes-surface, aes-lint-arwaky |

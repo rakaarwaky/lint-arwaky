@@ -113,8 +113,8 @@ class Agent<Name>:
 
 ## Workflow
 
-1. **Triage (diagnostic tree)** — ask in order; the first "No" dictates the next action: orchestration only (no I/O, no computation, no local domain data)? an `_aggregate` contract exists? — no: create it first with `aes-contract`. Block 2 holds only aggregate methods; ≥1 aggregate; ≤3 types? no silently discarded errors; no raw primitives in signatures (wrap in VOs; propagate errors)? `lint-arwaky-cli scan <layer-path>` exits 0?
-2. Confirm orchestration only — computation → capabilities, domain data → taxonomy, pure helpers → utility.
+1. **Triage (diagnostic tree)** — check in order; the first "No" dictates the next action: orchestration only (no I/O, no computation, no local domain data)? an `_aggregate` contract exists? — no: create it first with `aes-contract`. Block 2 holds only aggregate methods; ≥1 aggregate; ≤3 types? no silently discarded errors; no raw primitives in signatures (wrap in VOs; propagate errors)? `lint-arwaky-cli scan <layer-path>` exits 0?
+2. Verify orchestration only — computation → capabilities, domain data → taxonomy, pure helpers → utility.
 3. Ensure an `_aggregate` contract exists — if missing, run `aes-contract` first.
 4. Resolve the feature agent dir. Run `lint-arwaky-cli scan <layer-path>` — findings are the work list.
 5. Implement the 3 blocks from § Template / § Section Contract; the class inherits the aggregate ABC via DI.
