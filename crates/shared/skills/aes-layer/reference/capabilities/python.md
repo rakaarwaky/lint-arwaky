@@ -1,4 +1,4 @@
-# HOW TO MAKE CAPABILITIES PYTHON
+# AES Capabilities HOW-TO (Python)
 
 > **Purpose**: Implement concrete protocol behaviour: domain rules and external adaptation as protocol implementations.
 >

@@ -35,7 +35,7 @@ Guide the phased migration of a legacy codebase into the AES layered architectur
 - Layer order: migrate bottom-up (taxonomy → contract → utility → capabilities → agent → surface → root); a layer starts only when the one below scans clean.
 - Per-phase gate: `lint-arwaky-cli scan <layer-dir>` → 0 before moving to the next layer; language compile (`python -m compileall` / `cargo check` / `npx tsc --noEmit`) is fallback only.
 - Done: Phase 8 — full scan of the project root exits 0, language compile clean, tests green; commit `migrate: <layer> phase to AES (<rules>)` only when asked.
-- Shape ownership: protocol/aggregate shape is `aes-contract`, structure is `aes-capabilities`, DI is `aes-agent`, wiring is `aes-root` — the migration skill routes; it does not restate layer shape.
+- Shape ownership: protocol/aggregate shape, structure, DI, wiring — all owned by `aes-layer` — the migration skill routes; it does not restate layer shape.
 - One fact, one home: the language playbook carries the phase templates and troubleshooting table — read it, do not restate here. Cite the linter, not this file, when pointing at a rule. Each bullet states a fact once; references point at the bullet.
 
 ## Routing
@@ -45,4 +45,4 @@ Guide the phased migration of a legacy codebase into the AES layered architectur
 | [references/python-migration.md](references/python-migration.md) | Python migration playbook — phases 0–8, import matrix, templates, verify |
 | [references/rust-migration.md](references/rust-migration.md) | Rust migration playbook — phases 0–8, import matrix, templates, verify |
 | [references/typescript-migration.md](references/typescript-migration.md) | TypeScript migration playbook — phases 0–8, import matrix, templates, verify |
-| Related skills | aes-lint-arwaky, aes-taxonomy, aes-contract, aes-utility, aes-capabilities, aes-agent, aes-surface, aes-root |
+| Related skills | aes-layer, aes-lint-arwaky, aes-docs, aes-migration, aes-testing-suite |

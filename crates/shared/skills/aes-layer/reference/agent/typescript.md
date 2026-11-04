@@ -1,4 +1,4 @@
-# HOW TO MAKE AGENT TYPESCRIPT
+# AES Agent HOW-TO (Typescript)
 
 > **Purpose**: Orchestrate only: receive a request, call the aggregate contract, return shared VOs — no I/O, no computation.
 >

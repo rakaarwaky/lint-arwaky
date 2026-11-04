@@ -1,4 +1,4 @@
-# HOW TO MAKE UTILITY TYPESCRIPT
+# AES Utility HOW-TO (Typescript)
 
 > **Purpose**: Hold stateless, domain-agnostic helper functions shared across the system.
 >

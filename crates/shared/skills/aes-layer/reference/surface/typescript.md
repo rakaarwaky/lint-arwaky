@@ -1,4 +1,4 @@
-# HOW TO MAKE SURFACE TYPESCRIPT
+# AES Surface HOW-TO (Typescript)
 
 > **Purpose**: Drive the system from outside: map input events to VOs, call the aggregate, render results — no business logic.
 >

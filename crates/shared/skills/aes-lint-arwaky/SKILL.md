@@ -36,7 +36,7 @@ Scan, diagnose, and fix AES101–AES506 violations, then re-verify to zero — `
 - Layer chain: `taxonomy_` → `utility_` → `contract_` → `capabilities_` → `agent_` → `surface_` → `root_`; a layer imports downward only (AES201 CRITICAL). Naming `<layer>_<concern>_<role>.<ext>` (AES101), legal suffixes per layer per the AES102 matrix in the routing HOW-TO.
 - Scope: `tests/` / `benches/` are not AES layers — they follow `aes-testing-suite` naming, not AES101–102.
 - Primary gate: `lint-arwaky-cli scan` exits `0` with zero findings; exit codes are the contract — `0` pass, `1` violations, `2` config/parse error. stdout is not the contract.
-- Auto-fix set: only AES101 / AES203 / AES304 via `fix` (`--dry-run` first); AES201/205 are structural and manual via `aes-contract`.
+- Auto-fix set: only AES101 / AES203 / AES304 via `fix` (`--dry-run` first); AES201/205 are structural and manual via `aes-layer`.
 - Barrel after rename: every AES101 rename updates `__init__.py` / `mod.rs` / `index.ts` in the same change, or orphans reappear as AES501–506.
 - Triage order: CRITICAL 🔴 AES201/AES205 → HIGH 🟡 AES101–102, AES202, AES301–303, AES401–403, AES406, AES505–506 → MEDIUM/LOW 🟢 AES203–204, AES305, AES404–405, AES501–504; each finding routes through [references/lint-routing.md](references/lint-routing.md).
 - Done: re-scan reports **0** + language verify pipeline green; commit `fix: resolve <N> AES violations (<rules>)` only when asked.
@@ -51,4 +51,4 @@ Scan, diagnose, and fix AES101–AES506 violations, then re-verify to zero — `
 | [references/lint-rust.md](references/lint-rust.md) | Rust verify pipeline — `crates/`, `cargo check` / clippy / nextest, `mod.rs` barrel |
 | [references/lint-typescript.md](references/lint-typescript.md) | TypeScript verify pipeline — `packages/`, `tsc` / ESLint / vitest, `index.ts` barrel |
 | [references/lint-routing.md](references/lint-routing.md) | Fix routing — every AES code mapped to its fix and owning `aes-*` skill |
-| Related skills | aes-taxonomy, aes-utility, aes-contract, aes-capabilities, aes-agent, aes-surface, aes-root, aes-testing-suite |
+| Related skills | aes-docs, aes-layer, aes-migration, aes-testing-suite |

@@ -1,4 +1,4 @@
-# HOW TO MAKE TAXONOMY PYTHON
+# AES Taxonomy HOW-TO (Python)
 
 > **Purpose**: Define the stable language of the domain: value objects, entities, errors, events, and constants.
 >
@@ -882,4 +882,4 @@ Example:
 python -c "import modules.shared.src.order.taxonomy_order_vo"
 ```
 
-Related: [rust-taxonomy.md](rust-taxonomy.md), [typescript-taxonomy.md](typescript-taxonomy.md)
+Related: [rust.md](rust.md), [typescript.md](typescript.md)

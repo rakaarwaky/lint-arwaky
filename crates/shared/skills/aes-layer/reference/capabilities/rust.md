@@ -1,4 +1,4 @@
-# HOW TO MAKE CAPABILITIES RUST
+# AES Capabilities HOW-TO (Rust)
 
 > **Purpose**: Implement concrete protocol behaviour: domain rules and external adaptation as protocol implementations.
 >

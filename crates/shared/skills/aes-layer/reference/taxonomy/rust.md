@@ -1,4 +1,4 @@
-# HOW TO MAKE TAXONOMY RUST
+# AES Taxonomy HOW-TO (Rust)
 
 > **Purpose**: Define the stable language of the domain: value objects, entities, errors, events, and constants.
 >
@@ -875,4 +875,4 @@ Or if your crate name differs:
 cargo check -p <crate-name>
 ```
 
-Related: [python-taxonomy.md](python-taxonomy.md), [typescript-taxonomy.md](typescript-taxonomy.md)
+Related: [python.md](python.md), [typescript.md](typescript.md)

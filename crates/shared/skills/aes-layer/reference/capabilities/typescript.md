@@ -1,4 +1,4 @@
-# HOW TO MAKE CAPABILITIES TYPESCRIPT
+# AES Capabilities HOW-TO (Typescript)
 
 > **Purpose**: Implement concrete protocol behaviour: domain rules and external adaptation as protocol implementations.
 >

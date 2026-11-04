@@ -1,4 +1,4 @@
-# HOW TO MAKE UTILITY RUST
+# AES Utility HOW-TO (Rust)
 
 > **Purpose**: Hold stateless, domain-agnostic helper functions shared across the system.
 >

@@ -1,4 +1,4 @@
-# HOW TO MAKE CONTRACT TYPESCRIPT
+# AES Contract HOW-TO (Typescript)
 
 > **Purpose**: State a TypeScript contract's public promises (protocol or aggregate) so  
 > outer layers can depend on the seam without importing a concretion.
@@ -195,7 +195,7 @@ runtime shape.
 
 **Boolean in signatures vs. taxonomy.** `bool` is treated as a primitive in
 `taxonomy_*_entity` field declarations (no carve-out; see
-[../../aes-taxonomy/references/rust-taxonomy.md](../../aes-taxonomy/references/rust-taxonomy.md)).
+[../taxonomy/rust.md](../taxonomy/rust.md)).
 In contract signatures (`contract_*_protocol` / `contract_*_aggregate`), `bool`
 is permitted only for semantic toggles or predicates (e.g. `enabled: bool`)
 because the signature describes *when* a capability runs, not the domain value

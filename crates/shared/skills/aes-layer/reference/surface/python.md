@@ -1,4 +1,4 @@
-# HOW TO MAKE SURFACE PYTHON
+# AES Surface HOW-TO (Python)
 
 > **Purpose**: Drive the system from outside: map input events to VOs, call the aggregate, render results — no business logic.
 >

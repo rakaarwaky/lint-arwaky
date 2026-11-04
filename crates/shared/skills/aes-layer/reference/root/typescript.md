@@ -1,4 +1,4 @@
-# HOW TO MAKE ROOT TYPESCRIPT
+# AES Root HOW-TO (Typescript)
 
 > **Purpose**: Compose the system: containers wire capabilities to contracts; entries bootstrap and start the process.
 >

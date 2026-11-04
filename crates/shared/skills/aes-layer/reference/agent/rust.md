@@ -1,4 +1,4 @@
-# HOW TO MAKE AGENT RUST
+# AES Agent HOW-TO (Rust)
 
 > **Purpose**: Orchestrate only: receive a request, call the aggregate contract, return shared VOs — no I/O, no computation.
 >

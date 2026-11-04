@@ -1,4 +1,4 @@
-# HOW TO MAKE ROOT RUST
+# AES Root HOW-TO (Rust)
 
 > **Purpose**: Compose the system: containers wire capabilities to contracts; entries bootstrap and start the process.
 >

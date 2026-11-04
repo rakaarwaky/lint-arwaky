@@ -1,4 +1,4 @@
-# HOW TO MAKE TAXONOMY TYPESCRIPT
+# AES Taxonomy HOW-TO (Typescript)
 
 > **Purpose**: Define the stable language of the domain: value objects, entities, errors, events, and constants.
 >
@@ -767,4 +767,4 @@ Fallback compile gate:
 npx tsc --noEmit
 ```
 
-Related: [python-taxonomy.md](python-taxonomy.md), [rust-taxonomy.md](rust-taxonomy.md)
+Related: [python.md](python.md), [rust.md](rust.md)
