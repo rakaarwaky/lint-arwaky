@@ -297,7 +297,6 @@ jobs:
   coverage:
     name: Coverage
     runs-on: ubuntu-latest
-    needs: [build]
     permissions:
       contents: read
     steps:
@@ -335,4 +334,4 @@ jobs:
         # missing and the run dies before compiling anything (QA #643).
         env:
           RUSTC_WRAPPER: ""
-        run: cargo llvm-cov nextest --workspace --lib --tests --summary-only
+        run: cargo llvm-cov nextest --workspace --lib --tests --summary-only -j 4
