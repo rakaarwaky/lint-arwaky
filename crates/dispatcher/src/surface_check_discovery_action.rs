@@ -480,6 +480,7 @@ mod discovery_tests {
             symbols: vec![],
             is_reexport: false,
             is_wildcard: false,
+            line: 0,
         }
     }
 
