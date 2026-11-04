@@ -210,12 +210,45 @@ pub(crate) fn build_index_ignored(ignored: &[String], scan_root: &std::path::Pat
 
 /// Build parsed `FileEntry`s for the discovered file paths, running the
 /// tree-sitter parse so `parse_metadata` is populated for the auditors.
+///
+/// Content and metadata reuse: entries are looked up in the file-index cache
+/// the `build_file_index_with_ignored` step filled (`FileListSnapshot`), so
+/// file bytes are never re-read from disk and only files not yet in the
+/// cache (the `tests/`/`benches/` suites) fall back to a single
+/// `read_lintable_file`. `parse_metadata` may be stale from a warm index; the
+/// `parse_all` call below refreshes import extraction from the cached tree
+/// without a full re-parse, so any metadata drift is corrected in place —
+/// cached entries with populated `parse_metadata` are not re-parsed.
 pub(crate) fn build_entries(
     seam: &FilesystemSeam,
     discovered: &[String],
 ) -> Vec<shared_filesystem::taxonomy_filesystem_vo::FileEntry> {
-    let mut entries: Vec<shared_filesystem::taxonomy_filesystem_vo::FileEntry> = Vec::new();
+    // Reuse the cached entries (`Vec<FileEntry>` with content) left by the
+    // index build (`FileListSnapshot`). The seam API is owned-only, so the full
+    // snapshot is materialized via `into_file_list()`; then clone only entries
+    // whose path is in `discovered`. Uncached files fall back to a single
+    // `read_lintable_file`.
+    let snapshot: Vec<shared_filesystem::taxonomy_filesystem_vo::FileEntry> = seam
+        .aggregate
+        .execute(FilesystemRequest::file_list_snapshot())
+        .into_file_list();
+    let discovered_set: std::collections::HashSet<&std::path::Path> =
+        discovered.iter().map(std::path::Path::new).collect();
+    let cached: std::collections::HashMap<
+        &std::path::Path,
+        &shared_filesystem::taxonomy_filesystem_vo::FileEntry,
+    > = snapshot
+        .iter()
+        .filter(|e| discovered_set.contains(e.path.as_path()))
+        .map(|e| (e.path.as_path(), e))
+        .collect();
+    let mut entries: Vec<shared_filesystem::taxonomy_filesystem_vo::FileEntry> =
+        Vec::with_capacity(discovered.len());
     for file_path in discovered {
+        if let Some(entry) = cached.get(std::path::Path::new(file_path)) {
+            entries.push((*entry).clone());
+            continue;
+        }
         let content = seam
             .aggregate
             .execute(FilesystemRequest::read_lintable_file(file_path))
@@ -226,19 +259,20 @@ pub(crate) fn build_entries(
             .and_then(|e| e.to_str())
             .unwrap_or("")
             .to_string();
-        let language = detect_language_from_path(file_path);
+        let parse_ok = !content.is_empty();
         entries.push(shared_filesystem::taxonomy_filesystem_vo::FileEntry {
             path: std::path::PathBuf::from(file_path),
             extension,
-            language,
+            language: detect_language_from_path(file_path),
             size: content.len() as u64,
-            content: content.clone(),
-            parse_ok: !content.is_empty(),
+            content,
+            parse_ok,
             parse_metadata: None,
         });
     }
     // Fills `parse_metadata` (needed for AES203 unused-import detection) and
-    // rewrites the parser's import cache with this target's scoped imports.
+    // rewrites the parser's import cache with this target's scoped imports —
+    // a single pass over the entries, not one re-parse per caller.
     seam.parser
         .execute(FilesystemRequest::parse_all(entries.clone()))
         .into_parsed_entries()
@@ -252,36 +286,52 @@ pub(crate) fn build_import_map(
     entries: &[shared_filesystem::taxonomy_filesystem_vo::FileEntry],
 ) -> std::collections::HashMap<String, Vec<shared_filesystem::taxonomy_filesystem_vo::ImportEntry>>
 {
+    // Snapshot the out-of-scope imports ONCE: the `ImportListSnapshot` is the
+    // workspace-wide import cache taken at the last index build, so entries it
+    // carries that belong to files outside this target's scope stay in the
+    // map for cross-member visibility.
     let ws_snapshot = seam
         .aggregate
         .execute(FilesystemRequest::ImportListSnapshot)
         .into_imports();
     let scoped_keys: std::collections::HashSet<&std::path::Path> =
         entries.iter().map(|e| e.path.as_path()).collect();
-    let out_of_scope: Vec<_> = ws_snapshot
-        .into_iter()
-        .filter(|e| !scoped_keys.contains(e.source_file.as_path()))
-        .collect();
-
+    // Reads the parser's scoped import cache ONCE (one read guard on the
+    // `imports` RwLock) and groups it in-memory per source path, instead of
+    // re-acquiring the read lock via `imports_for` for every entry.
+    let scoped_imports: Vec<shared_filesystem::taxonomy_filesystem_vo::ImportEntry> = seam
+        .parser
+        .execute(FilesystemRequest::import_list_snapshot())
+        .into_imports();
     let mut import_map: std::collections::HashMap<
         String,
         Vec<shared_filesystem::taxonomy_filesystem_vo::ImportEntry>,
     > = std::collections::HashMap::new();
-    for entry in entries {
-        for imp in seam
-            .parser
-            .execute(FilesystemRequest::imports_for(&entry.path))
-            .into_imports()
-        {
-            import_map
-                .entry(entry.path.to_string_lossy().to_string())
-                .or_default()
-                .push(imp);
-        }
+    let push_unique =
+        |map: &mut std::collections::HashMap<
+            String,
+            Vec<shared_filesystem::taxonomy_filesystem_vo::ImportEntry>,
+        >,
+         key: String,
+         imp: shared_filesystem::taxonomy_filesystem_vo::ImportEntry| {
+            let entry = map.entry(key).or_default();
+            if !entry.iter().any(|existing| existing == &imp) {
+                entry.push(imp);
+            }
+        };
+    for imp in scoped_imports
+        .into_iter()
+        .filter(|imp| scoped_keys.contains(imp.source_file.as_path()))
+    {
+        let key = imp.source_file.to_string_lossy().to_string();
+        push_unique(&mut import_map, key, imp);
     }
-    for entry in out_of_scope {
-        let key = entry.source_file.to_string_lossy().to_string();
-        import_map.entry(key).or_default().push(entry);
+    for imp in ws_snapshot
+        .into_iter()
+        .filter(|imp| !scoped_keys.contains(imp.source_file.as_path()))
+    {
+        let key = imp.source_file.to_string_lossy().to_string();
+        push_unique(&mut import_map, key, imp);
     }
     import_map
 }
@@ -311,6 +361,381 @@ pub(crate) fn run_all_linters_json(
     agg: &ScanAggregates,
 ) -> Result<Vec<ViolationItem>, String> {
     run_all_linters_in_memory(path, agg)
+}
+
+// ─── build_entries / build_import_map unit tests ────────────────────────
+#[cfg(test)]
+mod discovery_tests {
+    use super::*;
+    use shared_common::taxonomy_language_vo::Language;
+    use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+    use shared_filesystem::taxonomy_filesystem_vo::{
+        FileEntry, ImportEntry, ImportType, ParseMetadata, RustMetadata,
+    };
+    use std::path::PathBuf;
+    use std::sync::Arc;
+
+    use std::collections::HashMap;
+
+    // Minimal in-memory aggregate returning controllable snapshot payloads.
+    struct SnapshotAggregate {
+        file_list: Vec<FileEntry>,
+        import_list: Vec<ImportEntry>,
+        /// Controllable content returned by `ReadLintableFile`, keyed by path.
+        read_content: HashMap<String, String>,
+    }
+
+    impl IFilesystemAggregate for SnapshotAggregate {
+        fn execute(
+            &self,
+            request: shared_filesystem::FilesystemRequest,
+        ) -> shared_filesystem::FilesystemResponse {
+            match request {
+                shared_filesystem::FilesystemRequest::FileListSnapshot => {
+                    shared_filesystem::FilesystemResponse::Files {
+                        entries: self.file_list.clone(),
+                    }
+                }
+                shared_filesystem::FilesystemRequest::ImportListSnapshot => {
+                    shared_filesystem::FilesystemResponse::Imports {
+                        entries: self.import_list.clone(),
+                    }
+                }
+                shared_filesystem::FilesystemRequest::ReadLintableFile { path } => {
+                    shared_filesystem::FilesystemResponse::ContentOpt {
+                        value: self.read_content.get(&path).cloned(),
+                    }
+                }
+                shared_filesystem::FilesystemRequest::ParseAll { mut entries } => {
+                    // Re-parse entries that lack cached metadata (production
+                    // behavior: `parse_all` skips entries whose
+                    // `parse_metadata.is_some()`). Non-empty content parses OK
+                    // with populated metadata; empty content stays failed.
+                    for entry in &mut entries {
+                        if entry.parse_metadata.is_some() {
+                            continue;
+                        }
+                        entry.parse_ok = !entry.content.is_empty();
+                        entry.parse_metadata = if entry.content.is_empty() {
+                            None
+                        } else {
+                            Some(ParseMetadata::Rust(RustMetadata::default()))
+                        };
+                    }
+                    shared_filesystem::FilesystemResponse::ParsedEntries { entries }
+                }
+                _ => shared_filesystem::FilesystemResponse::Paths { paths: Vec::new() },
+            }
+        }
+    }
+
+    fn seam_with(file_list: Vec<FileEntry>, import_list: Vec<ImportEntry>) -> FilesystemSeam {
+        seam_with_content(file_list, import_list, HashMap::new())
+    }
+
+    fn seam_with_content(
+        file_list: Vec<FileEntry>,
+        import_list: Vec<ImportEntry>,
+        read_content: HashMap<String, String>,
+    ) -> FilesystemSeam {
+        let snap = SnapshotAggregate {
+            file_list,
+            import_list,
+            read_content,
+        };
+        let aggregate: Arc<dyn IFilesystemAggregate> = Arc::new(snap);
+        FilesystemSeam {
+            workspace: aggregate.clone(),
+            parser: aggregate.clone(),
+            aggregate,
+        }
+    }
+
+    fn rust_entry(
+        path: &str,
+        content: &str,
+        parse_ok: bool,
+        metadata: Option<ParseMetadata>,
+    ) -> FileEntry {
+        FileEntry {
+            path: PathBuf::from(path),
+            extension: "rs".to_string(),
+            language: Language::Rust,
+            size: content.len() as u64,
+            content: content.to_string(),
+            parse_ok,
+            parse_metadata: metadata,
+        }
+    }
+
+    fn import_entry(source: &str) -> ImportEntry {
+        ImportEntry {
+            source_file: PathBuf::from(source),
+            raw_path: "foo".to_string(),
+            resolved_path: None,
+            import_type: ImportType::Use,
+            language: Language::Rust,
+            is_dynamic: false,
+            is_resolved: false,
+            symbols: vec![],
+            is_reexport: false,
+            is_wildcard: false,
+            line: 0,
+        }
+    }
+
+    #[test]
+    fn build_entries_cache_hit_reuses_entry_verbatim() {
+        let cached = rust_entry(
+            "/a.rs",
+            "fn main() {}",
+            true,
+            Some(ParseMetadata::Rust(RustMetadata::default())),
+        );
+        let snap = SnapshotAggregate {
+            file_list: vec![cached.clone()],
+            import_list: Vec::new(),
+            read_content: HashMap::new(),
+        };
+        let seam = seam_with(snap.file_list.clone(), snap.import_list.clone());
+        let discovered = vec!["/a.rs".to_string()];
+
+        let entries = build_entries(&seam, &discovered);
+
+        assert_eq!(entries.len(), 1);
+        assert_eq!(entries[0].path, PathBuf::from("/a.rs"));
+        assert_eq!(entries[0].content, "fn main() {}");
+        assert!(entries[0].parse_ok);
+        assert!(matches!(
+            entries[0].parse_metadata,
+            Some(ParseMetadata::Rust(_))
+        ));
+    }
+
+    #[test]
+    fn build_entries_cache_miss_falls_back_to_disk_read() {
+        let snap = SnapshotAggregate {
+            file_list: Vec::new(),
+            import_list: Vec::new(),
+            read_content: HashMap::new(),
+        };
+        let seam = seam_with(snap.file_list.clone(), snap.import_list.clone());
+        let discovered = vec!["/b.rs".to_string()];
+
+        let entries = build_entries(&seam, &discovered);
+
+        assert_eq!(entries.len(), 1);
+        assert_eq!(entries[0].path, PathBuf::from("/b.rs"));
+        assert_eq!(entries[0].content, "");
+        assert!(!entries[0].parse_ok);
+        assert!(entries[0].parse_metadata.is_none());
+        assert_eq!(entries[0].size, 0);
+
+        // Non-empty disk read produces parsed content.
+        let seam = seam_with_content(
+            Vec::new(),
+            Vec::new(),
+            HashMap::from([("/b.rs".to_string(), "fn main() {}".to_string())]),
+        );
+        let entries = build_entries(&seam, &discovered);
+        assert_eq!(entries.len(), 1);
+        assert_eq!(entries[0].content, "fn main() {}");
+        assert!(entries[0].parse_ok);
+        assert_eq!(entries[0].size, "fn main() {}".len() as u64);
+    }
+
+    #[test]
+    fn build_entries_mixed_cache() {
+        let cached = rust_entry(
+            "/a.rs",
+            "fn a() {}",
+            true,
+            Some(ParseMetadata::Rust(RustMetadata::default())),
+        );
+        let snap = SnapshotAggregate {
+            file_list: vec![cached.clone()],
+            import_list: Vec::new(),
+            read_content: HashMap::new(),
+        };
+        let seam = seam_with(snap.file_list.clone(), snap.import_list.clone());
+        let discovered = vec!["/a.rs".to_string(), "/b.rs".to_string()];
+
+        let entries = build_entries(&seam, &discovered);
+
+        assert_eq!(entries.len(), 2);
+        assert_eq!(entries[0].path, PathBuf::from("/a.rs"));
+        assert!(entries[0].parse_ok);
+        assert!(matches!(
+            entries[0].parse_metadata,
+            Some(ParseMetadata::Rust(_))
+        ));
+        assert_eq!(entries[1].path, PathBuf::from("/b.rs"));
+        assert!(!entries[1].parse_ok);
+        assert!(entries[1].parse_metadata.is_none());
+    }
+
+    #[test]
+    fn build_entries_empty_discovered() {
+        let snap = SnapshotAggregate {
+            file_list: Vec::new(),
+            import_list: Vec::new(),
+            read_content: HashMap::new(),
+        };
+        let seam = seam_with(snap.file_list.clone(), snap.import_list.clone());
+
+        let entries = build_entries(&seam, &[]);
+
+        assert!(entries.is_empty());
+    }
+
+    #[test]
+    fn build_entries_cached_failed_parse_reparsed_by_parse_all() {
+        // Entry has parse_metadata=None → parse_all re-parses it: non-empty
+        // content flips parse_ok=true and populates metadata.
+        let failed = rust_entry("/c.rs", "fn broken( { }", false, None);
+        let snap = SnapshotAggregate {
+            file_list: vec![failed.clone()],
+            import_list: Vec::new(),
+            read_content: HashMap::new(),
+        };
+        let seam = seam_with(snap.file_list.clone(), snap.import_list.clone());
+        let discovered = vec!["/c.rs".to_string()];
+
+        let entries = build_entries(&seam, &discovered);
+
+        assert_eq!(entries.len(), 1);
+        assert_eq!(entries[0].content, "fn broken( { }");
+        assert!(entries[0].parse_ok, "re-parse flips parse_ok to true");
+        assert!(
+            entries[0].parse_metadata.is_some(),
+            "re-parse populates parse_metadata"
+        );
+    }
+
+    #[test]
+    fn build_entries_cached_metadata_populated_cloned_verbatim() {
+        // Entry already has parse_metadata populated → parse_all skips it;
+        // build_entries clones it verbatim.
+        let cached = rust_entry(
+            "/d.rs",
+            "fn main() {}",
+            true,
+            Some(ParseMetadata::Rust(RustMetadata::default())),
+        );
+        let snap = SnapshotAggregate {
+            file_list: vec![cached.clone()],
+            import_list: Vec::new(),
+            read_content: HashMap::new(),
+        };
+        let seam = seam_with(snap.file_list.clone(), snap.import_list.clone());
+        let discovered = vec!["/d.rs".to_string()];
+
+        let entries = build_entries(&seam, &discovered);
+
+        assert_eq!(entries.len(), 1);
+        assert_eq!(entries[0].path, cached.path);
+        assert_eq!(entries[0].content, cached.content);
+        assert_eq!(entries[0].parse_ok, cached.parse_ok);
+        assert_eq!(entries[0].size, cached.size);
+        assert!(entries[0].parse_metadata.is_some());
+        assert!(matches!(
+            entries[0].parse_metadata,
+            Some(ParseMetadata::Rust(_))
+        ));
+    }
+
+    #[test]
+    fn build_import_map_scoped_and_out_of_scope_present_once() {
+        let scoped_imp = import_entry("/a.rs");
+        let out_imp = import_entry("/other.rs");
+        let snap = SnapshotAggregate {
+            file_list: Vec::new(),
+            import_list: vec![scoped_imp.clone(), out_imp.clone()],
+            read_content: HashMap::new(),
+        };
+        let seam = seam_with(snap.file_list.clone(), snap.import_list.clone());
+        let entries = vec![rust_entry("/a.rs", "use foo;", true, None)];
+
+        let map = build_import_map(&seam, &entries);
+
+        assert_eq!(map.len(), 2);
+        let scoped = map.get("/a.rs").expect("scoped file present");
+        assert_eq!(scoped.len(), 1);
+        assert_eq!(scoped[0].source_file, PathBuf::from("/a.rs"));
+        let out = map
+            .get("/other.rs")
+            .expect("out-of-scope file present once");
+        assert_eq!(out.len(), 1);
+        assert_eq!(out[0].source_file, PathBuf::from("/other.rs"));
+    }
+
+    #[test]
+    fn build_import_map_empty_snapshot_yields_empty_map() {
+        let snap = SnapshotAggregate {
+            file_list: Vec::new(),
+            import_list: Vec::new(),
+            read_content: HashMap::new(),
+        };
+        let seam = seam_with(snap.file_list.clone(), snap.import_list.clone());
+        let entries = vec![rust_entry("/a.rs", "use foo;", true, None)];
+
+        let map = build_import_map(&seam, &entries);
+
+        assert!(map.is_empty());
+    }
+
+    #[test]
+    fn build_import_map_empty_ws_snapshot_includes_scoped_imports() {
+        // `entries` carries `/a.rs` (scoped_keys = {"/a.rs"}), `import_list`
+        // (ws_snapshot) has one `/a.rs` import. The ws_snapshot import is
+        // filtered out by `!scoped_keys.contains`, and the scoped import is
+        // kept: map contains exactly `{"a.rs": [that import]}` and nothing
+        // else — pins that scoped imports are included when ws_snapshot
+        // contributes nothing for that file.
+        let snap = SnapshotAggregate {
+            file_list: Vec::new(),
+            import_list: vec![import_entry("/a.rs")],
+            read_content: HashMap::new(),
+        };
+        let seam = seam_with(snap.file_list.clone(), snap.import_list.clone());
+        let entries = vec![rust_entry(
+            "/a.rs",
+            "use foo;",
+            true,
+            Some(ParseMetadata::Rust(RustMetadata::default())),
+        )];
+
+        let map = build_import_map(&seam, &entries);
+
+        assert_eq!(map.len(), 1);
+        let scoped = map.get("/a.rs").expect("scoped file present");
+        assert_eq!(scoped.len(), 1);
+        assert_eq!(scoped[0].source_file, PathBuf::from("/a.rs"));
+    }
+
+    #[test]
+    fn build_import_map_no_doubling_when_scoped_duplicated_in_snapshot() {
+        // Two identical scoped ImportEntries (same source_file) in ws_snapshot
+        // (the out-of-scope snapshot). `/a.rs` is not in `entries` so
+        // `scoped_keys` is empty and both ws_snapshot duplicates pass the
+        // `!scoped_keys.contains` filter and reach the map — the production
+        // de-dup path must collapse them to one, else len == 2.
+        let dup_imp = import_entry("/a.rs");
+        let snap = SnapshotAggregate {
+            file_list: Vec::new(),
+            import_list: vec![dup_imp.clone(), dup_imp.clone()],
+            read_content: HashMap::new(),
+        };
+        let seam = seam_with(snap.file_list.clone(), snap.import_list.clone());
+        let entries: Vec<shared_filesystem::taxonomy_filesystem_vo::FileEntry> = Vec::new();
+
+        let map = build_import_map(&seam, &entries);
+
+        assert_eq!(map.len(), 1);
+        let scoped = map.get("/a.rs").expect("scoped file present");
+        assert_eq!(scoped.len(), 1);
+        assert_eq!(scoped[0].source_file, PathBuf::from("/a.rs"));
+    }
 }
 
 // ─── BFS unit tests ──────────────────────────────────────────────

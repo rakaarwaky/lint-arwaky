@@ -392,11 +392,12 @@ impl IFileSystemIOProtocol for MockFilesystem {
 impl IFilesystemAggregate for MockFilesystem {
     fn execute(&self, request: FilesystemRequest) -> FilesystemResponse {
         match request {
-            FilesystemRequest::FileList | FilesystemRequest::FileListSnapshot => {
-                FilesystemResponse::Files {
-                    entries: Vec::new(),
-                }
-            }
+            FilesystemRequest::FileList => FilesystemResponse::Files {
+                entries: Vec::new(),
+            },
+            FilesystemRequest::FileListSnapshot => FilesystemResponse::Files {
+                entries: Vec::new(),
+            },
             // The mock owns no filesystem, so a test-directory walk finds
             // nothing. The dispatch test that needs real test files passes its
             // own aggregate instead of this one.
@@ -445,9 +446,12 @@ impl IFilesystemAggregate for MockFilesystem {
                 ),
             },
             FilesystemRequest::FindWorkspaceRoot { .. } => FilesystemResponse::Root { path: None },
-            FilesystemRequest::ResolvedImportList
-            | FilesystemRequest::ExtendImportCache { .. }
-            | FilesystemRequest::ImportListSnapshot => FilesystemResponse::Imports {
+            FilesystemRequest::ResolvedImportList | FilesystemRequest::ExtendImportCache { .. } => {
+                FilesystemResponse::Imports {
+                    entries: Vec::new(),
+                }
+            }
+            FilesystemRequest::ImportListSnapshot => FilesystemResponse::Imports {
                 entries: Vec::new(),
             },
             FilesystemRequest::DetectProjectLanguages { .. } => {
