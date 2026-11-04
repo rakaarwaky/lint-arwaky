@@ -500,7 +500,6 @@ fn test_collect_init_rust_only_skips_python_and_ts_skills() {
     let written = mock_fs.written_files.lock().unwrap();
 
     // Verify the Rust half of every polyglot skill IS installed
-    assert!(false);
     assert!(
         written
             .keys()
