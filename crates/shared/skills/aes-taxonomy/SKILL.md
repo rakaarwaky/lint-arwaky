@@ -1,182 +1,35 @@
 ---
 name: aes-taxonomy
 description: AES taxonomy VO and domain type scaffolding for Python Rust TS. Use when creating taxonomy files.
-metadata:
-  tags:
-    - python
-    - rust
-    - typescript
-    - aes
-    - taxonomy
-    - shared
-    - vo
-    - entity
-    - error
-    - event
-    - constant
-    - primitive-to-vo
-  related_skills:
-    - aes-lint-arwaky
-    - aes-capabilities
-    - aes-agent
-    - aes-contract
-    - aes-utility
-  triggers:
-    - create taxonomy
-    - create taxonomy python
-    - create taxonomy rust
-    - create taxonomy typescript
-    - add taxonomy
-    - move dataclass to taxonomy
-    - move dataclass to taxonomy typescript
-    - create vo
-    - create vo python
-    - create vo rust
-    - create vo typescript
-    - create error taxonomy
-    - create error taxonomy python
-    - create error taxonomy rust
-    - create error taxonomy typescript
-    - create constant taxonomy
-    - create constant taxonomy python
-    - create constant taxonomy rust
-    - create constant taxonomy typescript
-    - check taxonomy
-    - audit taxonomy
-    - audit taxonomy python
-    - check taxonomy typescript
+when-to-use: "Use when creating or auditing a taxonomy VO, entity, error, event, constant, request, or response file in Python, Rust, or TypeScript, or when wrapping a raw primitive in a value object."
+argument-hint: "<layer-path>"
 ---
 
 # aes-taxonomy
 
-> **Purpose**: Scaffold AES taxonomy files (VO / entity / error / event / constant / request / response) — the stable language of the domain.
-> **Audience**: The agent creating or validating a taxonomy file.
-> **Scope**: Python, Rust, and TypeScript `taxonomy_<domain>_<suffix>` files in the shared domain.
+Scaffold AES taxonomy files (VO / entity / error / event / constant / request / response) — the stable language of the domain. The **layer** decides which suffix, which imports, and which structure apply.
 
-The **layer** decides which suffix, which imports, and which structure apply.
-Rules, templates, section contracts, and Verify blocks live in the language HOW-TOs under [`references/`](references/).
+## Global rules
 
-| Language | Focus | Body rule | HOW-TO|
-| -------- | ----- | --------- | ------|
-| Python | Taxonomy VO / entity / error / event / constant | Strict suffix set; no I/O; no upward imports | [references/python-taxonomy.md](references/python-taxonomy.md)|
-| Rust | Taxonomy VO / entity / error / event / constant | Strict suffix set; no I/O; no upward imports | [references/rust-taxonomy.md](references/rust-taxonomy.md)|
-| TypeScript | Taxonomy VO / entity / error / event / constant | Strict suffix set; no I/O; no upward imports | [references/typescript-taxonomy.md](references/typescript-taxonomy.md)|
+- **Placement (AES701)**: `taxonomy_*` files belong in the workspace's `shared/` folder beside `utility_*` and `contract_*` files — `crates/shared/src/` (Rust), `modules/shared/src/` (Python), `packages/shared/src/` (TypeScript). Placing a taxonomy file in a feature folder leaves the domain types unreachable from every member; a `capabilities_*`, `agent_*`, or `surface_*` file found inside `shared/` is an AES701 violation and must move out.
+- **Naming (AES101/AES102)**: file `taxonomy_<domain>_<suffix>` — suffix strictly `_vo`/`_entity`/`_error`/`_event`/`_constant`/`_request`/`_response`.
+- **Imports (AES201)**: taxonomy + stdlib only — never capabilities, agents, surface, root, or contracts; no I/O.
+- **Primitives (AES401)**: domain fields wrap VOs — no raw `str`/`int`/`float`/`String`/`string`/`number` for domain values.
+- **Error contract**: every `_error` file exposes `error_id` + `error_code` + `message`. Ids come from per-feature blocks — common `000X`, feature 1 `1XXX`, feature 2 `2XXX`, …; a feature is a folder with an `agent_*_orchestrator` file. Ids never change across releases.
+- **Construction**: VOs validate on construction and are immutable; constants are pure literals.
+- **Register**: shared barrel (`__init__.py` / `mod.rs` / `index.ts`).
+- **Verify**: `lint-arwaky-cli scan <layer-path>` → 0; language compile is fallback only.
+- **Related**: aes-contract (signatures use these VOs), aes-utility (stateless helpers), aes-capabilities (consume VOs), aes-agent (implement aggregates) — each carries its own HOW-TO.
 
-**The layer chain:**
+## Routing
 
-`taxonomy_*_vo|entity|error|event|constant|request|response` (bottom layer) → contract → capabilities → agent → surface → root
-
-Each file answers one layer's job. A method or import in the wrong layer is the defect this skill exists to prevent.
-
----
-
-## Invariants
-
-Machine-checked rules are enforced by `lint-arwaky-cli scan <layer-path>` (see each HOW-TO § Verify).
-Convention-level rules are enforced by reading; the linter covers what it can, and the
-HOW-TO states explicitly which of the three is the case. Cite the HOW-TO, not this file, when pointing at a rule.
-
-| Layer | Rule|
-| ----- | ----|
-| Naming | File `taxonomy_<domain>_<suffix>` — suffix strictly `_vo`/`_entity`/`_error`/`_event`/`_constant`/`_request`/`_response` (AES101/AES102).|
-| Imports | Taxonomy + stdlib only — never capabilities, agents, surface, root, contracts; no I/O (AES201).|
-| Primitives | Domain fields wrap VOs — no raw `str`/`int`/`float`/`String`/`string`/`number` for domain values (AES401).|
-| Error contract | Every `_error` file exposes `error_id` + `error_code` + `message`. Ids come from per-feature blocks: common `000X`, feature 1 `1XXX`, feature 2 `2XXX`, …; a feature is a folder with an `agent_*_orchestrator` file. Ids never change across releases.|
-| Construction | VOs validate on construction; immutable; constants are pure literals.|
-| Register | Shared barrel: `__init__.py` / `mod.rs` / `index.ts`.|
-| Verify | `lint-arwaky-cli scan <layer-path>` → 0. Language compile is fallback only.|
-
-Split details, templates, and Section Contract tables: **read the language HOW-TO** — do not restate them here.
-
----
-
-## Placement (AES701)
-
-A `taxonomy_*` file belongs in the workspace's **`shared/` folder**, beside `utility_*` and `contract_*` files:
-
-```text
-crates/shared/src/     # Rust
-modules/shared/src/     # Python
-packages/shared/src/    # TypeScript
-```
-
-The `shared` folder is locked. Placing `taxonomy_*` in a feature folder leaves the domain
-types unreachable from every member, and the barrel that should register them does not
-exist there. A `capabilities_*`, `agent_*`, or `surface_*` file found inside `shared/`
-is an **AES701** violation and must be moved out.
-
----
-
-## Diagnostic Tree
-
-Ask these questions in order. The first "No" dictates your next action.
-
-1. **Is this a domain value, identity, failure, fact, literal, or an aggregate boundary?**
-   - *Value* → `_vo`; *identity* → `_entity`; *failure* → `_error`; *fact* → `_event`; *literal* → `_constant`; *inbound aggregate call* → `_request`; *outbound aggregate call* → `_response`.
-2. **Does the file import anything above taxonomy or touch I/O?**
-   - *Yes* → strip the import / move I/O to capabilities or utility.
-3. **Are domain fields raw primitives?**
-   - *Yes* → wrap each in a VO (AES401).
-4. **Is the file registered in the shared barrel?**
-   - *No* → register; else the module is dead code.
-5. **Does `lint-arwaky-cli scan <layer-path>` exit 0?**
-   - *No* → fix findings, re-scan.
-
----
-
-## Workflow
-
-1. Resolve the shared taxonomy dir beside contracts.
-2. Determine type (VO / Entity / Error / Event / Constant / Request / Response). Run `lint-arwaky-cli scan <layer-path>` — findings are your work list.
-3. Draft the file from the language HOW-TO § Template / § Section Contract.
-4. Register in `__init__.py` / `mod.rs` / `index.ts`.
-5. Verify with `lint-arwaky-cli scan <layer-path>` (HOW-TO § Verify), then wire through `aes-contract` / `aes-capabilities` as needed.
-
----
-
-## Verification
-
-### Machine Checks
-
-```bash
-lint-arwaky-cli scan <layer-path>   # AES101/102, AES201–205, AES401–406 → must be 0
-# Fallback only: language compile (python -c import / cargo check / npx tsc --noEmit)
-
-```text
-
-A pass means naming, imports, primitives, and roles are clean. Structural judgement
-(tier choice, block order, helper-vs-utility, "orchestration only") is **manual** — see HOW-TO § Rules.
-
-### Human Checks
-
-A machine pass does not mean the file is right. Layer purpose, structural order, and
-"only what this layer may do" still need a reader (HOW-TO § Rules).
-
----
-
-## Pre-flight Checklist
-
-- [ ] `lint-arwaky-cli scan <layer-path>` exits 0.
-- [ ] Every touched HOW-TO's `Verify` block was executed.
-- [ ] File registered in `__init__.py` / `mod.rs` / `index.ts`.
-- [ ] Language fallback compile clean if the HOW-TO lists it.
-- [ ] Related skills considered for the next layer up/down.
-
----
-
-## Common Mistakes (Anti-Patterns)
-
-The linter covers naming, imports, and primitives. These need a reader (HOW-TO § Rules):
-
-- **Primitives in domain fields**: wrap in a VO (AES401).
-- **I/O or upward imports in taxonomy**: forbidden — move to capabilities/utility.
-- **Computed "constants"**: pure literals only; computed values go to Utility.
-- **Restating HOW-TO rules in SKILL.md**: delegate — this file only routes.
-
----
-
-## Related Skills
-
-- `aes-contract`
-- `aes-utility`
-- `aes-capabilities`
+| Section | Reference | Purpose |
+| ------- | --------- | ------- |
+| Language HOW-TOs | [references/python-taxonomy.md](references/python-taxonomy.md) | Python taxonomy — rules, template, section contract, workflow, verify |
+| Language HOW-TOs | [references/rust-taxonomy.md](references/rust-taxonomy.md) | Rust taxonomy — rules, template, section contract, workflow, verify |
+| Language HOW-TOs | [references/typescript-taxonomy.md](references/typescript-taxonomy.md) | TypeScript taxonomy — rules, template, section contract, workflow, verify |
+| Diagnostic tree | [references/diagnostic-tree.md](references/diagnostic-tree.md) | Suffix selection and first-failing-check routing |
+| Workflow | [references/workflow.md](references/workflow.md) | Step sequence from resolve to register |
+| Verification | [references/verification.md](references/verification.md) | Primary gate + fallback language compile |
+| Pre-flight | [references/pre-flight.md](references/pre-flight.md) | Checklist before drafting a taxonomy file |
+| Anti-patterns | [references/anti-patterns.md](references/anti-patterns.md) | Common primitive, import, and I/O mistakes |

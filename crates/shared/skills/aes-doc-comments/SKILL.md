@@ -1,87 +1,33 @@
 ---
 name: aes-doc-comments
 description: Adds docstrings, doc comments, and language-native API docs for public items. Use when documenting Python, Rust, or TypeScript public surface.
-metadata:
-  tags:
-    - python
-    - rust
-    - typescript
-    - docs
-    - docstring
-    - doc-comments
-    - jsdoc
-    - rustdoc
-    - pep257
-  related_skills:
-    - aes-docs
-    - aes-taxonomy
-    - aes-contract
-  triggers:
-    - add docstring
-    - add doc comments
-    - document public api
-    - add rustdoc
-    - add jsdoc
-    - add type hints
-    - pep257
+when-to-use: "Use when adding or auditing docstrings, doc comments, rustdoc, JSDoc/TSDoc, or type-hint doc blocks on a Python, Rust, or TypeScript public surface."
+argument-hint: "<layer-path>"
 ---
+
 # aes-doc-comments
 
-> **Purpose**: Ensure every public code item carries doc comments in its language's native form, so `cargo doc`, `python -c "import <package>"`, and `tsc` readers know *what* and *why* without opening the body.
-> **Audience**: Engineers and agents reading generated API docs.
-> **Scope**: Python, Rust, and TypeScript modules; module/class/struct/enum/trait/function/method doc comments on the public surface.
+Ensure every public code item carries doc comments in its language's native form, so `cargo doc`, `python -c "import <package>"`, and `tsc` readers know *what* and *why* without opening the body. The **language** decides the comment syntax and section layout.
 
-**Code surface (doc comments)** — Rules / Template / Section Contract / Verify:
+## Global rules
 
-| Language   | Focus                          | Template                                                           |
-| ---------- | ------------------------------ | ------------------------------------------------------------------ |
-| Python     | PEP 257 docstrings             | [references/python-doc.md](references/python-doc.md) |
-| Rust       | `///` + rustdoc sections       | [references/rust-doc.md](references/rust-doc.md) |
-| TypeScript | JSDoc / TSDoc                  | [references/typescript-doc.md](references/typescript-doc.md) |
+- **Module-level docstring/comment is mandatory**: first statement of every public module; one sentence on the module's job; no changelog.
+- **Doc comments explain *what* and *why*, never *how***: restating the next three lines of code wastes the reader's time.
+- **Never restate the signature in prose**: parameter names match the signature; do not repeat types already in the annotation when the annotation says it better.
+- **Public classes and functions always get doc comments**; private helpers (`_name` in Python, non-`pub` items in Rust) may omit them when the name is enough.
+- **`Args` / `Returns` on every public function** whose parameters or return value are not obvious from the type hints alone.
+- **No status claims**: doc comments never say implemented / shipped / N% done — that lives in `BACKLOG.md` (`status-in-spec`).
+- **Register**: module is reachable through the shared barrel (`__init__.py` / `mod.rs` / `index.ts`).
+- **Verify**: `lint-arwaky-cli docs .` passes; language doc build is fallback only.
+- **Related**: aes-docs (spec/status docs), aes-taxonomy (domain VOs), aes-contract (protocol declarations) — each carries its own HOW-TO.
 
-## Rules
+## Routing
 
-Six rules. Each one prevents a specific failure mode.
-
-1. **Module-level docstring/comment is mandatory.** First statement of every public module. One sentence on the module's job; no changelog.
-2. **Doc comments explain *what* and *why*, never *how*.** Restating the next three lines of code wastes the reader's time.
-3. **Never restate the signature in prose.** Parameter names match the signature; do not repeat types already in the annotation when the annotation says it better.
-4. **Public classes and functions always get doc comments.** Private helpers (`_name` in Python, non-`pub` items in Rust) may omit them when the name is enough.
-5. **`Args` / `Returns` on every public function** whose parameters or return value are not obvious from the type hints alone.
-6. **No status claims.** Doc comments never say implemented / shipped / N% done — that lives in `BACKLOG.md` (`status-in-spec`).
-
-## Workflow
-
-1. **Create file** — module doc comment at top of source file.
-2. **Write Purpose** — one-line module job.
-3. **Write Audience** — who reads this.
-4. **Write Scope** — what the module covers.
-5. **Verify** → `lint-arwaky-cli docs` passes; doc present; `cargo doc --no-deps` and `cargo test --doc` clean for Rust; `python -c "import <package>"` clean for Python; `tsc` clean for TypeScript.
-
-## Templates
-
-Copy, fill, delete nothing — see [`references/python-doc.md`](references/python-doc.md), [`references/rust-doc.md`](references/rust-doc.md), and [`references/typescript-doc.md`](references/typescript-doc.md).
-
-## Verification
-
-### Machine Checks
-
-```bash
-lint-arwaky-cli docs .                 # invariant audit of every document (strict; every finding gates)
-cargo doc --no-deps                    # Rust rustdoc builds; no public /// missing
-cargo test --doc                       # Rust doctests compile
-```
-
-### Human Checks
-
-- No "how" narration in doc comments; the body shows how.
-- Summary line first, before any `#` section (Rust) or body text (Python).
-- No status words (`implemented`, `shipped`, `N% done`).
-
----
-
-## Related Skills
-
-- `aes-docs`
-- `aes-taxonomy`
-- `aes-contract`
+| Section | Reference | Purpose |
+| ------- | --------- | ------- |
+| Language HOW-TOs | [references/python-doc.md](references/python-doc.md) | Python PEP 257 docstrings — rules, template, section contract, verify |
+| Language HOW-TOs | [references/rust-doc.md](references/rust-doc.md) | Rust `///` rustdoc sections — rules, template, doctest policy, verify |
+| Language HOW-TOs | [references/typescript-doc.md](references/typescript-doc.md) | TypeScript JSDoc/TSDoc — rules, template, section contract, verify |
+| Workflow | [references/workflow.md](references/workflow.md) | Step-by-step: create module doc, fill sections, verify |
+| Templates | [references/templates.md](references/templates.md) | Copy source for each language's doc comment shape |
+| Verification | [references/verification.md](references/verification.md) | Primary gate + fallback language doc build |
