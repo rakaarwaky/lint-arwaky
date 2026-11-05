@@ -641,8 +641,11 @@ mod tests {
         assert_eq!(codes, ["MD001", "MD002", "MD003"]);
 
         let seen = rec.seen.lock().unwrap_or_else(|e| e.into_inner());
-        let seen_strs: Vec<String> = seen.iter().map(|p| p.value.clone()).collect();
-        assert_eq!(seen_strs, vec!["z.md", "y.md", "x.md"]);
+        let mut seen_strs: Vec<String> = seen.iter().map(|p| p.value.clone()).collect();
+        // Worker threads drain their chunks in parallel, so execution order is
+        // nondeterministic. Only assert every target was visited exactly once.
+        seen_strs.sort();
+        assert_eq!(seen_strs, vec!["x.md", "y.md", "z.md"]);
     }
 
     /// collect_markdown_files prunes node_modules/dist/packages/vendor
