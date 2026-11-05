@@ -782,6 +782,17 @@ __all__ = [
 
 ---
 
+## Review
+
+- Import rules respected: no capabilities/agents/surface/root/contract imports, no I/O/network/fs/env/randomness/time modules — § Rules § Import rules.
+- File name follows `taxonomy_<domain>_<suffix>.py` pattern with a valid suffix from the suffix table — § Rules § File-name pattern, § File-name suffix table.
+- VO primitive rules (AES401) satisfied: VOs wrap primitives, no raw `int`/`float`/`str` leakage outside VO fields — § Rules § VO primitive rules.
+- File length within AES302 limit — § Rules § File length.
+- VO shape correct: `Value Object`, `Entity`, `Error`, `Event`, `Request`, `Response` sections use their canonical templates — § Template.
+- Constants live in `taxonomy_<domain>_constant.py`, never in other files — § Template § Constants.
+- Registration: exported in package `__init__.py` with `__all__` + `_layer_symbols` — § Template § Registration.
+- Orphan reachability: no unreachable VO/constant; Phase 2 orphan check passes — § Workflow.
+
 ## Section Contract
 
 | Check | Enforcement | Why it belongs here|
