@@ -1,4 +1,4 @@
-# HOW TO MAKE TESTING RUST
+# AES Test HOW-TO (Rust)
 
 > **Purpose**: Give one crate a complete test suite — tests in `tests/`, benchmarks in `benches/`, never inline in `src/`; the file-name prefix is the virtual folder.
 >

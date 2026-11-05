@@ -1,4 +1,4 @@
-# HOW TO MAKE TESTING TYPESCRIPT
+# AES Test HOW-TO (TypeScript)
 
 > **Purpose**: Give one package a complete test suite — tests in `tests/`, benchmarks in `benches/`, never inline in the source file; the file-name prefix is the virtual folder.
 >
@@ -113,7 +113,7 @@ Prefixes: `contract_`, `unit_`, `integration_`, `dogfood_`, `smoke_`, `e2e_`, `a
 Repo root:
 ├── tests/                              # ROOT: Cross-package tests
 │   ├── test_shared_utils.ts            # Tests shared utilities
-│   ├── test_manifest.ts                # Tests shared manifest
+│   ├── test_manifest.ts                # Tests shared manifest reader
 │   └── test_<cross_package_feature>.ts # Other cross-package tests
 │
 └── packages/<name>/                    # PACKAGE: Feature-specific tests
