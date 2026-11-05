@@ -93,6 +93,21 @@ fn format_text_report(report: &ScanReport) -> DisplayContent {
         out.push('\n');
     }
 
+    // ── Violations grouped by member (file), descending by count then name ──
+    if !aes_violations.is_empty() {
+        let mut member_counts: BTreeMap<String, usize> = BTreeMap::new();
+        for r in &aes_violations {
+            *member_counts.entry(r.file.value().to_string()).or_insert(0) += 1;
+        }
+        let mut member_sorted: Vec<_> = member_counts.into_iter().collect();
+        member_sorted.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
+        out.push_str("Violations by member:\n");
+        for (member, count) in &member_sorted {
+            out.push_str(&format!("  {member}: {count}\n"));
+        }
+        out.push('\n');
+    }
+
     // ── Severity breakdown ──
     if !aes_violations.is_empty() {
         let sev = count_by_severity(&aes_violations);
