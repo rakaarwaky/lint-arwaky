@@ -1,13 +1,13 @@
 ---
 name: aes-layer
-description: "AES layer scaffolding for agent, capabilities, contract, root, surface, taxonomy, utility across Python, Rust, TypeScript. Create a new layer file or improve/audit an existing one."
+description: "AES layer scaffolding for agent, capabilities, contract, root, surface, taxonomy, utility across Python, Rust, TypeScript, plus test-suite HOW-TOs under reference/test/. Create a new layer file or improve/audit an existing one."
 when-to-use: "Create a new AES layer file or improve/audit an existing one. Pass a folder path (a crate/module/package dir) or a single file path; the layer (agent/capabilities/contract/root/surface/taxonomy/utility) and language (python/rust/typescript) are auto-detected from the path and routed to reference/<layer>/<language>.md. Without --dry-run the task runs autonomously without asking for permission; with --dry-run it generates a report only and makes no changes."
 argument-hint: '<path> [create|improve] [--dry-run]'
 ---
 
 # aes-layer
 
-Scaffold AES layer files — agent orchestrators, capabilities, contracts, composition roots, surface commands/UI, taxonomy VOs, and stateless utilities — across Python, Rust, and TypeScript. Each layer owns one domain: agent implements exactly one aggregate; capabilities implement one protocol; contract defines protocol ABCs; root wires containers and entries; surface maps input events to VOs; taxonomy holds shared VOs/constants; utility holds pure helpers. The layer chain reads contract → capabilities → agent, consumed by surface/root. One layer file implements one protocol/aggregate pair where applicable. Invariants read by more than one layer live in Global Rules below.
+Scaffold AES layer files — agent orchestrators, capabilities, contracts, composition roots, surface commands/UI, taxonomy VOs, and stateless utilities — across Python, Rust, and TypeScript. Each layer owns one domain: agent implements exactly one aggregate; capabilities implement one protocol; contract defines protocol ABCs; root wires containers and entries; surface maps input events to VOs; taxonomy holds shared VOs/constants; utility holds pure helpers. The layer chain reads contract → capabilities → agent, consumed by surface/root. One layer file implements one protocol/aggregate pair where applicable. Invariants read by more than one layer live in Global Rules below. The layer also provisions test-suite HOW-TOs under `reference/test/` (python/rust/typescript), moved here from the former `aes-testing-suite` skill.
 
 ## Global rules
 
@@ -46,3 +46,6 @@ Scaffold AES layer files — agent orchestrators, capabilities, contracts, compo
 | [reference/utility/python.md](reference/utility/python.md) | Python utility HOW-TO — both modes; rules, template, section contract, workflow steps, review, verify |
 | [reference/utility/rust.md](reference/utility/rust.md) | Rust utility HOW-TO — both modes; rules, template, section contract, workflow steps, review, verify |
 | [reference/utility/typescript.md](reference/utility/typescript.md) | TypeScript utility HOW-TO — both modes; rules, template, section contract, workflow steps, review, verify |
+| [reference/test/python.md](reference/test/python.md) | Python test-suite HOW-TO — prefixes, run commands, coverage, verify |
+| [reference/test/rust.md](reference/test/rust.md) | Rust test-suite HOW-TO — prefixes, nextest, criterion, verify |
+| [reference/test/typescript.md](reference/test/typescript.md) | TypeScript test-suite HOW-TO — prefixes, vitest, coverage, verify |

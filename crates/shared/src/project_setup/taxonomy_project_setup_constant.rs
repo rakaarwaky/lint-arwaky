@@ -14,7 +14,7 @@ use crate::taxonomy_project_setup_vo::EmbeddedSkillVO;
 /// renaming a skill file —
 /// `catalog_matches_the_skills_directory` in
 /// `crates/dispatcher/tests/unit_dispatcher_setup_skills.rs` fails otherwise.
-pub const EMBEDDED_SKILLS_COUNT: usize = 76;
+pub const EMBEDDED_SKILLS_COUNT: usize = 85;
 
 pub const EMBEDDED_SKILLS: &[EmbeddedSkillVO] = &[
     EmbeddedSkillVO::new(
@@ -609,6 +609,33 @@ pub const EMBEDDED_SKILLS: &[EmbeddedSkillVO] = &[
         Some("typescript"),
     ),
     EmbeddedSkillVO::new(
+        "aes-layer",
+        "aes-layer/reference/test/python.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-layer/reference/test/python.md"
+        )),
+        Some("python"),
+    ),
+    EmbeddedSkillVO::new(
+        "aes-layer",
+        "aes-layer/reference/test/rust.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-layer/reference/test/rust.md"
+        )),
+        Some("rust"),
+    ),
+    EmbeddedSkillVO::new(
+        "aes-layer",
+        "aes-layer/reference/test/typescript.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-layer/reference/test/typescript.md"
+        )),
+        Some("typescript"),
+    ),
+    EmbeddedSkillVO::new(
         "aes-migration",
         "aes-migration/SKILL.md",
         include_str!(concat!(env!("OUT_DIR"), "/skills/aes-migration/SKILL.md")),
@@ -651,38 +678,89 @@ pub const EMBEDDED_SKILLS: &[EmbeddedSkillVO] = &[
         None,
     ),
     EmbeddedSkillVO::new(
-        "aes-testing-suite",
-        "aes-testing-suite/SKILL.md",
+        "aes-fix",
+        "aes-fix/SKILL.md",
+        include_str!(concat!(env!("OUT_DIR"), "/skills/aes-fix/SKILL.md")),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-fix",
+        "aes-fix/references/AES101.md",
         include_str!(concat!(
             env!("OUT_DIR"),
-            "/skills/aes-testing-suite/SKILL.md"
+            "/skills/aes-fix/references/AES101.md"
         )),
         None,
     ),
     EmbeddedSkillVO::new(
-        "aes-testing-suite",
-        "aes-testing-suite/references/python-testing.md",
+        "aes-fix",
+        "aes-fix/references/AES102.md",
         include_str!(concat!(
             env!("OUT_DIR"),
-            "/skills/aes-testing-suite/references/python-testing.md"
+            "/skills/aes-fix/references/AES102.md"
         )),
         None,
     ),
     EmbeddedSkillVO::new(
-        "aes-testing-suite",
-        "aes-testing-suite/references/rust-testing.md",
+        "aes-fix",
+        "aes-fix/references/AES103.md",
         include_str!(concat!(
             env!("OUT_DIR"),
-            "/skills/aes-testing-suite/references/rust-testing.md"
+            "/skills/aes-fix/references/AES103.md"
         )),
         None,
     ),
     EmbeddedSkillVO::new(
-        "aes-testing-suite",
-        "aes-testing-suite/references/typescript-testing.md",
+        "aes-fix",
+        "aes-fix/references/AES2xx.md",
         include_str!(concat!(
             env!("OUT_DIR"),
-            "/skills/aes-testing-suite/references/typescript-testing.md"
+            "/skills/aes-fix/references/AES2xx.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-fix",
+        "aes-fix/references/AES3xx.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-fix/references/AES3xx.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-fix",
+        "aes-fix/references/AES4xx.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-fix/references/AES4xx.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-fix",
+        "aes-fix/references/AES5xx.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-fix/references/AES5xx.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-fix",
+        "aes-fix/references/AES6xx.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-fix/references/AES6xx.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-fix",
+        "aes-fix/references/AES7xx.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-fix/references/AES7xx.md"
         )),
         None,
     ),
