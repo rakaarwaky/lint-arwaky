@@ -15,15 +15,17 @@ use shared_config_system::ArchitectureConfig;
 use shared_quality_rules::contract_quality_protocol::ICodeMetricAnalyzerProtocol;
 use shared_quality_rules::taxonomy_quality_rules_vo::AesCodeAnalysisViolation;
 use shared_quality_rules::utility_code_duplication_detector::{is_import_line, normalize_line};
-use std::collections::hash_map::DefaultHasher;
 use std::collections::{HashMap, HashSet};
-use std::hash::{Hash, Hasher};
 use std::path::PathBuf;
 use std::sync::Arc;
+
+// ─── Block 1: Struct Definition ────────────────────────────
 
 pub struct CodeDuplicationAnalyzer {
     config: Arc<ArchitectureConfig>,
 }
+
+// ─── Block 2: Protocol Trait Implementation ────────────────
 
 impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
     fn handle_duplicates_entries(
@@ -61,6 +63,8 @@ impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
         )
     }
 }
+
+// ─── Block 3: Constructors, Helpers, Private Methods ───────
 
 impl CodeDuplicationAnalyzer {
     pub fn from_config(config: Arc<ArchitectureConfig>) -> Self {
@@ -293,6 +297,8 @@ impl CodeDuplicationAnalyzer {
     }
 }
 
+// ─── Block 3: Constructors, Helpers, Private Methods ───────
+
 /// Per-file window position record: 1-based start/end lines plus the u64 hashes.
 #[derive(Clone, Copy)]
 struct WindowPos {
@@ -304,15 +310,16 @@ struct WindowPos {
 
 /// Hash a window of lines to a u64 key using whole-string SipHash per line
 /// (no per-character hashing, no String join allocation).
+/// Uses UFCS to avoid unused-import lint on the Hash/Hasher traits.
 fn hash_window<'a, I>(lines: I) -> u64
 where
     I: Iterator<Item = &'a str>,
 {
-    let mut hasher = DefaultHasher::new();
+    let mut hasher = std::collections::hash_map::DefaultHasher::new();
     for line in lines {
-        line.hash(&mut hasher);
+        std::hash::Hash::hash(line, &mut hasher);
     }
-    hasher.finish()
+    std::hash::Hasher::finish(&hasher)
 }
 
 /// Collapse per-window positions into maximal consecutive line ranges.
