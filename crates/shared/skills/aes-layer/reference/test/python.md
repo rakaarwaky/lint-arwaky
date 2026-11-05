@@ -1,4 +1,4 @@
-# HOW TO MAKE TESTING PYTHON
+# AES Test HOW-TO (Python)
 
 > **Purpose**: Give one module a complete test suite — tests in `tests/`, benchmarks in `benches/`, never inline in the source file; the file-name prefix is the virtual folder.
 >

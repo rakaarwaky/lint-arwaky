@@ -10,7 +10,7 @@ compile time via `include_str!` in the generated skills constant under the
 shared crate's project-setup module, and `init` writes it into the target
 project's `.agents/skills/` directory. All provisioned skills follow the
 `aes-<layer>` convention: `aes-layer` (taxonomy, contract, capabilities, agent,
-surface, utility, root), `aes-docs`, `aes-migration`, `aes-testing-suite`.
+surface, utility, root, plus test-suite HOW-TOs under `reference/test/`), `aes-docs`, `aes-migration`, `aes-fix`.
 
 ## Prerequisites
 
