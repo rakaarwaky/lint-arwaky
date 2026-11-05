@@ -68,6 +68,10 @@ pub fn collect_external_direct(
     // Load adapter entries from config (pre-computed, no orchestrator I/O)
     let config_entries = load_config_entries(root_path, &*filesystem, config_file_reader);
 
+    // Pre-filter the Markdown target list for the markdownlint adapter:
+    // explicit paths per member dir keep the CLI from walking vendored and
+    // ignored trees (the dominant cost of a whole-workspace scan). Per-target
+    // contexts are built after the member dirs are known.
     let context = ExternalLintContext {
         has_rust,
         has_python,
@@ -76,6 +80,7 @@ pub fn collect_external_direct(
         ignored_paths: ignored_paths.to_vec(),
         ignored_rules: load_ignored_rules(root_path, &*filesystem, config_file_reader),
         config_entries,
+        ..ExternalLintContext::default()
     };
 
     // The external adapters shell out to project-wide tools that recursively
@@ -100,20 +105,19 @@ pub fn collect_external_direct(
             .collect()
     };
 
-    let mut violations: Vec<ViolationItem> = Vec::new();
-    for target in &targets {
-        let scan_results = external_lint
-            .execute(
-                shared_external_lint::ExternalLintRequest::scan_all_with_context(target, &context),
+    // ─── external lint collection ───────────────────────────
+
+    let pairs: Vec<(FilePath, ExternalLintContext)> = targets
+        .iter()
+        .map(|t| {
+            (
+                t.clone(),
+                target_markdown_context(&context, t, ignored_paths),
             )
-            .into_violations();
-        violations.extend(
-            scan_results
-                .values
-                .iter()
-                .map(ViolationItem::from_lint_result),
-        );
-    }
+        })
+        .collect();
+
+    let mut violations: Vec<ViolationItem> = run_external_batches(pairs, &external_lint);
 
     // External tools (bandit, ruff, ...) scan the whole target tree, including
     // files outside the workspace member dirs (crates/ packages/ modules/).
@@ -322,5 +326,355 @@ pub fn single_file_external_context(
         ignored_paths: ignored.to_vec(),
         ignored_rules,
         config_entries,
+        ..ExternalLintContext::default()
+    }
+}
+
+/// Per-target context variant: fills the markdownlint pre-filtered file list
+/// and the resolved markdownlint timeout on top of a base context.
+///
+/// The Markdown file list is computed here (surface layer, pre-scan) from the
+/// target directory and the project's ignored paths, so the adapter hands
+/// markdownlint explicit paths instead of a whole-tree glob — the walk of
+/// vendored and generated trees is the dominant cost of a large scan. When
+/// no Markdown files survive the filter the list is empty and the adapter
+/// skips the spawn entirely.
+pub fn target_markdown_context(
+    base: &ExternalLintContext,
+    target: &FilePath,
+    config_ignored_paths: &[String],
+) -> ExternalLintContext {
+    let merged_ignored: Vec<String> = shared_common::DEFAULT_IGNORED_PATHS
+        .iter()
+        .map(|s| s.to_string())
+        .chain(config_ignored_paths.iter().cloned())
+        .collect();
+
+    // A single-file target is its own Markdown list (no walk); a directory
+    // target gets the pre-filtered `*.md`/`*.markdown` set under it.
+    let target_path = std::path::Path::new(target.value());
+    let markdown_files = if target_path.is_file() {
+        Some(vec![target.value().to_string()])
+    } else {
+        let mut files: Vec<String> = Vec::new();
+        collect_markdown_files(target_path, target_path, &merged_ignored, &mut files);
+        Some(files)
+    };
+
+    let mut ctx = base.clone();
+    ctx.markdown_files = markdown_files;
+    ctx.markdown_timeout =
+        shared_external_lint::taxonomy_external_lint_vo::markdown_scan_timeout(&ctx);
+    ctx
+}
+
+/// Recursively collect `*.md`/`*.markdown` files under `dir`, pruning any
+/// entry whose path (relative to `root`) matches an ignored pattern. Directory
+/// entries that match are pruned by their segment, so whole vendored trees
+/// (`node_modules`, `dist`, ...) are never entered.
+fn collect_markdown_files(
+    dir: &std::path::Path,
+    root: &std::path::Path,
+    ignored: &[String],
+    out: &mut Vec<String>,
+) {
+    // Intentional: `discover_files` walks with `ignore::WalkBuilder` and
+    // `git_ignore(true)`, so gitignored `*.md`/`*.markdown` files are already
+    // excluded from the markdownlint pre-filter list before `ignored_paths`
+    // pruning is applied below. Matches the established `build_file_index`
+    // pattern (discover_files + ignored_paths post-filter).
+    // Reuse the shared discover_files walker instead of a hand-rolled std::fs
+    // recursion; it yields every file under `dir`, and we prune by extension
+    // and by the project's ignored paths below.
+    for path_str in shared_filesystem::utility_workspace_detection::discover_files(dir) {
+        let path = std::path::Path::new(&path_str);
+        let rel = path
+            .strip_prefix(root)
+            .unwrap_or(path)
+            .to_string_lossy()
+            .replace(std::path::MAIN_SEPARATOR, "/");
+        if shared_filesystem::utility_filesystem_io::is_path_ignored(&rel, ignored) {
+            continue;
+        }
+        let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
+        if matches!(ext, "md" | "markdown") {
+            out.push(path.to_string_lossy().to_string());
+        }
+    }
+}
+
+/// Bounded parallelism cap for the member-dir batch pool. Each batch thread
+/// may itself fan out one thread per selected adapter inside the orchestrator,
+/// so capping the batch pool keeps total OS-thread growth at O(cap × adapters)
+/// instead of O(member_dirs × adapters).
+const MAX_BATCH_THREADS: usize = 4;
+
+/// Run a set of (target, context) external-lint batches on a bounded worker
+/// pool (at most `MAX_BATCH_THREADS` threads) and concatenate their
+/// violations in target order. A single batch runs inline; multiple batches
+/// run on a bounded pool so independent member-dir scans (e.g. `packages` and
+/// `modules`) overlap instead of serializing without spawning unbounded
+/// threads.
+///
+/// The orchestrator is `Send + Sync` and read-only per call, so cloning the
+/// `Arc` per thread is cheap and safe.
+pub fn run_external_batches(
+    pairs: Vec<(FilePath, ExternalLintContext)>,
+    external_lint: &Arc<dyn IExternalLintAggregate>,
+) -> Vec<ViolationItem> {
+    let mut violations: Vec<ViolationItem> = Vec::new();
+    if pairs.len() <= 1 {
+        // Single target (non-workspace-root): no parallelism to gain.
+        for (target, context) in &pairs {
+            let scan_results = external_lint
+                .execute(
+                    shared_external_lint::ExternalLintRequest::scan_all_with_context(
+                        target, context,
+                    ),
+                )
+                .into_violations();
+            violations.extend(
+                scan_results
+                    .values
+                    .iter()
+                    .map(ViolationItem::from_lint_result),
+            );
+        }
+        return violations;
+    }
+
+    // Split pairs into at most MAX_BATCH_THREADS chunks; each worker drains
+    // its chunk sequentially, so peak thread count stays bounded.
+    let chunk_count = std::cmp::min(MAX_BATCH_THREADS, pairs.len());
+    let chunk_size = pairs.len().div_ceil(chunk_count);
+
+    let (tx, rx) =
+        std::sync::mpsc::channel::<std::result::Result<(usize, Vec<ViolationItem>), String>>();
+    let mut handles: Vec<std::thread::JoinHandle<()>> = Vec::new();
+    for chunk_idx in 0..chunk_count {
+        let start = chunk_idx * chunk_size;
+        let end = std::cmp::min(start + chunk_size, pairs.len());
+        if start >= end {
+            break;
+        }
+        let chunk: Vec<(FilePath, ExternalLintContext)> = pairs[start..end].to_vec();
+        let external_lint = external_lint.clone();
+        let tx = tx.clone();
+        handles.push(std::thread::spawn(move || {
+            let mut batch: Vec<ViolationItem> = Vec::new();
+            for (target, context) in chunk {
+                let scan_results = external_lint
+                    .execute(
+                        shared_external_lint::ExternalLintRequest::scan_all_with_context(
+                            &target, &context,
+                        ),
+                    )
+                    .into_violations();
+                batch.extend(
+                    scan_results
+                        .values
+                        .iter()
+                        .map(ViolationItem::from_lint_result),
+                );
+            }
+            let _ = tx.send(Ok((chunk_idx, batch)));
+        }));
+    }
+    drop(tx);
+
+    // Collect per-chunk results index-keyed, then extend in chunk-index order.
+    // mpsc yields in send (arrival) order, which varies run-to-run; indexing by
+    // chunk position keeps the concatenated report stable across runs.
+    let mut chunks: Vec<Option<Vec<ViolationItem>>> = vec![None; handles.len()];
+    for handle in handles {
+        match handle.join() {
+            Ok(()) => {}
+            Err(payload) => {
+                tracing::error!(
+                    panic_payload = ?payload,
+                    "external-lint batch thread panicked; its violations are discarded"
+                );
+            }
+        }
+    }
+    for chunk_result in rx {
+        match chunk_result {
+            Ok((idx, batch)) => {
+                if let Some(slot) = chunks.get_mut(idx) {
+                    *slot = Some(batch);
+                } else {
+                    tracing::error!(chunk_idx = %idx, "external-lint batch delivery failed: chunk index out of range");
+                }
+            }
+            Err(msg) => tracing::error!(err = %msg, "external-lint batch delivery failed"),
+        }
+    }
+    for slot in chunks.into_iter().flatten() {
+        violations.extend(slot);
+    }
+    violations
+}
+
+/// Surface-layer entry point for the `check` action's external adapter run:
+/// builds the per-member target list (workspace-root scopes to
+/// `crates`/`packages`/`modules`; a plain path stays single-target), wraps
+/// each target with the markdownlint pre-filtered context, and runs the
+/// batches in parallel. Returns the concatenated violations, pre-filter
+/// still applied by the caller.
+pub fn run_member_external_batches(
+    target_fp: &FilePath,
+    base_context: &ExternalLintContext,
+    ignored: &[String],
+    external_lint: &Arc<dyn IExternalLintAggregate>,
+    member_dirs: &[std::path::PathBuf],
+    workspace_root: bool,
+) -> Vec<ViolationItem> {
+    let targets: Vec<FilePath> = if workspace_root {
+        member_dirs
+            .iter()
+            .filter_map(|m| FilePath::new(m.to_string_lossy().to_string()).ok())
+            .collect()
+    } else {
+        vec![target_fp.clone()]
+    };
+    let pairs: Vec<(FilePath, ExternalLintContext)> = targets
+        .iter()
+        .map(|t| (t.clone(), target_markdown_context(base_context, t, ignored)))
+        .collect();
+    run_external_batches(pairs, external_lint)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use shared_common::taxonomy_adapter_name_vo::AdapterNameList;
+    use shared_common::taxonomy_common_vo::{ColumnNumber, LineNumber};
+    use shared_common::taxonomy_error_vo::ErrorCode;
+    use shared_common::taxonomy_lint_vo::{LintResult, LintResultList};
+    use shared_common::taxonomy_message_vo::LintMessage;
+    use shared_external_lint::ExternalLintResponse;
+    use std::sync::{Arc, Mutex};
+
+    /// A recording mock `IExternalLintAggregate` that appends each executed
+    /// `(path, context)` pair to `seen` and returns canned violations tagged
+    /// with the target path.
+    struct RecordingAggregate {
+        seen: Mutex<Vec<FilePath>>,
+        results: Mutex<Vec<(FilePath, Vec<LintResult>)>>,
+    }
+
+    impl RecordingAggregate {
+        fn new() -> Self {
+            Self {
+                seen: Mutex::new(Vec::new()),
+                results: Mutex::new(Vec::new()),
+            }
+        }
+
+        fn set_results(&self, path: &str, values: Vec<LintResult>) {
+            self.results
+                .lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .push((FilePath::new(path.to_string()).unwrap(), values));
+        }
+    }
+
+    impl IExternalLintAggregate for RecordingAggregate {
+        fn execute(&self, request: ExternalLintRequest) -> ExternalLintResponse {
+            let ExternalLintRequest::ScanAllWithContext { path, .. } = request else {
+                return ExternalLintResponse::AdapterNames {
+                    names: AdapterNameList::default(),
+                };
+            };
+            self.seen
+                .lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .push(path.clone());
+            let results = self
+                .results
+                .lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .iter()
+                .find(|(p, _)| *p == path)
+                .map(|(_, v)| v.clone())
+                .unwrap_or_default();
+            ExternalLintResponse::Scan {
+                violations: LintResultList::new(results),
+            }
+        }
+    }
+
+    fn lint_result(code: &str) -> LintResult {
+        LintResult {
+            file: FilePath::new("/tmp/a.md").unwrap_or_default(),
+            line: LineNumber::new(1),
+            column: ColumnNumber::new(0),
+            code: ErrorCode::raw(code),
+            message: LintMessage::new("x"),
+            ..Default::default()
+        }
+    }
+
+    /// run_external_batches concatenates results in target order regardless of
+    /// completion order (T4).
+    #[test]
+    fn run_external_batches_preserves_target_order() {
+        let rec = Arc::new(RecordingAggregate::new());
+        rec.set_results("z.md", vec![lint_result("MD001")]);
+        rec.set_results("y.md", vec![lint_result("MD002")]);
+        rec.set_results("x.md", vec![lint_result("MD003")]);
+
+        let ctx = ExternalLintContext::default();
+
+        // Targets in order z, y, x; results stored out of order to simulate
+        // worker completion race. Expect concatenation z, y, x per original
+        // target order.
+        let pairs = vec![
+            (FilePath::new("z.md").unwrap(), ctx.clone()),
+            (FilePath::new("y.md").unwrap(), ctx.clone()),
+            (FilePath::new("x.md").unwrap(), ctx.clone()),
+        ];
+
+        let agg: Arc<dyn IExternalLintAggregate> = rec.clone();
+        let violations = run_external_batches(pairs, &agg);
+        let codes: Vec<&str> = violations.iter().map(|v| v.code.code()).collect();
+        assert_eq!(codes, ["MD001", "MD002", "MD003"]);
+
+        let seen = rec.seen.lock().unwrap_or_else(|e| e.into_inner());
+        let seen_strs: Vec<String> = seen.iter().map(|p| p.value.clone()).collect();
+        assert_eq!(seen_strs, vec!["z.md", "y.md", "x.md"]);
+    }
+
+    /// collect_markdown_files prunes node_modules/dist/packages/vendor
+    /// while keeping valid .md and .markdown files (T5).
+    #[test]
+    fn collect_markdown_files_prunes_ignored_dirs() {
+        let root = tempfile::tempdir().unwrap().keep().to_path_buf();
+        std::fs::create_dir_all(root.join("node_modules/x")).unwrap();
+        std::fs::write(root.join("node_modules/x/ign.md"), "x").unwrap();
+        std::fs::create_dir_all(root.join("dist")).unwrap();
+        std::fs::write(root.join("dist/y.md"), "x").unwrap();
+        std::fs::create_dir_all(root.join("packages/vendor")).unwrap();
+        std::fs::write(root.join("packages/vendor/z.md"), "x").unwrap();
+        std::fs::write(root.join("a.md"), "x").unwrap();
+        std::fs::write(root.join("b.markdown"), "x").unwrap();
+
+        let ignored = vec![
+            "node_modules".to_string(),
+            "dist".to_string(),
+            "packages/vendor".to_string(),
+        ];
+        let mut out: Vec<String> = Vec::new();
+        collect_markdown_files(&root, &root, &ignored, &mut out);
+        out.sort();
+
+        assert_eq!(
+            out,
+            vec![
+                format!("{}", root.join("a.md").display()),
+                format!("{}", root.join("b.markdown").display()),
+            ],
+            "only non-pruned markdown files survive"
+        );
     }
 }
