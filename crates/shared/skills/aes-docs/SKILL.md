@@ -3,15 +3,6 @@ name: aes-docs
 description: "Adds PRD/ROADMAP/FRD/README/BACKLOG/DESIGN/AGENTS/DATA docs for Python, Rust, and TypeScript modules. Use when creating or improving a PRD, ROADMAP, FRD, BACKLOG, README, AGENTS, DESIGN, or DATA document, or to split spec from status."
 when-to-use: "create, improve, or audit a project document (PRD, ROADMAP, FRD, BACKLOG, README, AGENTS, ARCHITECTURE, CONTRIBUTING, DESIGN, DATA); split spec from status; verify docs with lint-arwaky-cli docs."
 argument-hint: '<improve | make | design> [document type] [path]'
-metadata:
-  tags:
-    - docs
-    - prd
-    - roadmap
-    - frd
-    - readme
-    - backlog
-    - agents-md
 
 ---
 
@@ -31,16 +22,17 @@ Scaffold and audit the ten AES project documents — PRD, ROADMAP, FRD, BACKLOG,
 
 ## Routing
 
-| Document | Location | Focus | Workflow |
+`workflow.md` is the entry point for each doc type; the other files in the set load on demand.
+
+| Document | Location | Focus | Files |
 | --- | --- | --- | --- |
-| `PRD.md` | Root workspace | *What* & *Why* | [references/prd/workflow.md](references/prd/workflow.md) |
-| `ROADMAP.md` | Root workspace | How the priority progresses | [references/roadmap/workflow.md](references/roadmap/workflow.md) |
-| `FRD.md` | Each feature folder | *How* functionally | [references/frd/workflow.md](references/frd/workflow.md) |
-| `BACKLOG.md` | Each feature, surface, or shared folder | *What is true now* | [references/backlog/workflow.md](references/backlog/workflow.md) |
-| `README.md` | Root workspace | *How to use/run* | [references/readme/workflow.md](references/readme/workflow.md) |
-| `AGENTS.md` | Root workspace | *How to work here safely* | [references/agents/workflow.md](references/agents/workflow.md) |
-| `ARCHITECTURE.md` | Root workspace | *Layer boundaries and allowed dependencies* | [references/architecture/workflow.md](references/architecture/workflow.md) |
-| `CONTRIBUTING.md` | Root workspace | *How to set up and ship a change* | [references/contributing/workflow.md](references/contributing/workflow.md) |
-| `DESIGN.md` | Each surface folder | *Visual & interaction contract* | [references/design/workflow.md](references/design/workflow.md) |
-| `DATA.md` | Shared folder | *What the shared layer manages* | [references/data/workflow.md](references/data/workflow.md) |
-| Related skills | | | |
+| `PRD.md` | Root workspace | *What* & *Why* | [rules](references/prd/rules.md) · [exemplar](references/prd/exemplar.md) · [template](references/prd/template.md) · [workflow](references/prd/workflow.md) |
+| `ROADMAP.md` | Root workspace | How the priority progresses | [rules](references/roadmap/rules.md) · [exemplar](references/roadmap/exemplar.md) · [template](references/roadmap/template.md) · [workflow](references/roadmap/workflow.md) |
+| `FRD.md` | Each feature folder | *How* functionally | [rules](references/frd/rules.md) · [exemplar](references/frd/exemplar.md) · [template](references/frd/template.md) · [workflow](references/frd/workflow.md) |
+| `BACKLOG.md` | Each feature, surface, or shared folder | *What is true now* | [rules](references/backlog/rules.md) · [feature-exemplar](references/backlog/feature-exemplar.md) · [surface-exemplar](references/backlog/surface-exemplar.md) · [shared-exemplar](references/backlog/shared-exemplar.md) · [template](references/backlog/template.md) · [workflow](references/backlog/workflow.md) |
+| `README.md` | Root workspace | *How to use/run* | [rules](references/readme/rules.md) · [exemplar](references/readme/exemplar.md) · [template](references/readme/template.md) · [workflow](references/readme/workflow.md) |
+| `AGENTS.md` | Root workspace | *How to work here safely* | [rules](references/agents/rules.md) · [exemplar](references/agents/exemplar.md) · [template](references/agents/template.md) · [workflow](references/agents/workflow.md) |
+| `ARCHITECTURE.md` | Root workspace | *Layer boundaries and allowed dependencies* | [rules](references/architecture/rules.md) · [exemplar](references/architecture/exemplar.md) · [template](references/architecture/template.md) · [workflow](references/architecture/workflow.md) |
+| `CONTRIBUTING.md` | Root workspace | *How to set up and ship a change* | [rules](references/contributing/rules.md) · [exemplar](references/contributing/exemplar.md) · [template](references/contributing/template.md) · [workflow](references/contributing/workflow.md) |
+| `DESIGN.md` | Each surface folder | *Visual & interaction contract* | [rules](references/design/rules.md) · [exemplar](references/design/exemplar.md) · [template](references/design/template.md) · [workflow](references/design/workflow.md) |
+| `DATA.md` | Shared folder | *What the shared layer manages* | [rules](references/data/rules.md) · [exemplar](references/data/exemplar.md) · [template](references/data/template.md) · [workflow](references/data/workflow.md) |
