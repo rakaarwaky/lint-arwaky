@@ -35,13 +35,24 @@ adapters:
   - name: "architecture"
     weight: 3.0
 
-ignored_rules: []
+ignored_rules:
+  - "markdownlint::MD013"
+  - "markdownlint::MD060"
+  - "markdownlint::MD033"
+  - "markdownlint::MD024"
+  # MD041 (first line should be a top-level heading) fires on
+  # generated and non-prose Markdown. Noise: silence it.
+  - "markdownlint::MD041"
 
 # Pre-scan path filter: directories the adapters' file walks prune.
-# The built-in defaults (node_modules, dist, tests, target, ...)
-# always apply; these add project-level vendored/generated
+# `node_modules`, `dist`, and the like are already in the
+# built-in defaults; these add project-level vendored/generated
 # Markdown trees that `packages/` monorepos commonly carry.
-ignored_paths: []
+ignored_paths:
+  - "packages/vendor"
+  - "packages/node_modules"
+  - "packages/dist"
+  - "packages/docs/generated"
 
 # ─── Architecture rules ─────────────────────────────────────────────────
 architecture:

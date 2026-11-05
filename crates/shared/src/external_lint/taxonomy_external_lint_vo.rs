@@ -80,3 +80,94 @@ pub fn markdown_fully_suppressed(context: &ExternalLintContext) -> bool {
         up == "MD" || up.starts_with(prefix)
     })
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use shared_config_system::taxonomy_config_system_vo::{AdapterEntry, AdapterStatus};
+
+    fn entry(name: &str, timeout: f64) -> AdapterEntry {
+        let mut e = AdapterEntry::new(
+            shared_common::taxonomy_adapter_name_vo::AdapterName::new(name).unwrap(),
+            AdapterStatus::Enabled,
+            1.0,
+        );
+        e.timeout = timeout;
+        e
+    }
+
+    #[test]
+    fn adapter_timeout_uses_config_entry_when_present() {
+        let ctx = ExternalLintContext {
+            config_entries: vec![entry("markdownlint", 15.0)],
+            ..Default::default()
+        };
+        assert_eq!(ctx.adapter_timeout("markdownlint", 30.0), 15.0);
+    }
+
+    #[test]
+    fn adapter_timeout_returns_default_when_absent() {
+        let ctx = ExternalLintContext {
+            config_entries: Vec::new(),
+            ..Default::default()
+        };
+        assert_eq!(ctx.adapter_timeout("markdownlint", 30.0), 30.0);
+    }
+
+    #[test]
+    fn markdown_scan_timeout_uses_config_entry_when_present() {
+        let ctx = ExternalLintContext {
+            config_entries: vec![entry("markdownlint", 15.0)],
+            ..Default::default()
+        };
+        assert_eq!(markdown_scan_timeout(&ctx), 15.0);
+    }
+
+    #[test]
+    fn markdown_scan_timeout_uses_default_when_absent() {
+        let ctx = ExternalLintContext {
+            config_entries: Vec::new(),
+            ..Default::default()
+        };
+        assert_eq!(
+            markdown_scan_timeout(&ctx),
+            crate::taxonomy_external_lint_constant::MARKDOWNLINT_DEFAULT_SCAN_TIMEOUT_SECS
+        );
+    }
+
+    #[test]
+    fn markdown_fully_suppressed_empty_rules_is_false() {
+        let ctx = ExternalLintContext {
+            ignored_rules: Vec::new(),
+            ..Default::default()
+        };
+        assert!(!markdown_fully_suppressed(&ctx));
+    }
+
+    #[test]
+    fn markdown_fully_suppressed_bare_md_is_true() {
+        let ctx = ExternalLintContext {
+            ignored_rules: vec!["MD".to_string()],
+            ..Default::default()
+        };
+        assert!(markdown_fully_suppressed(&ctx));
+    }
+
+    #[test]
+    fn markdown_fully_suppressed_markdownlint_prefix_is_true() {
+        let ctx = ExternalLintContext {
+            ignored_rules: vec!["markdownlint::".to_string()],
+            ..Default::default()
+        };
+        assert!(markdown_fully_suppressed(&ctx));
+    }
+
+    #[test]
+    fn markdown_fully_suppressed_specific_rule_is_false() {
+        let ctx = ExternalLintContext {
+            ignored_rules: vec!["markdownlint::MD013".to_string()],
+            ..Default::default()
+        };
+        assert!(!markdown_fully_suppressed(&ctx));
+    }
+}
