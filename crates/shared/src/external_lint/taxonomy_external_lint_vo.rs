@@ -77,7 +77,7 @@ pub fn markdown_fully_suppressed(context: &ExternalLintContext) -> bool {
     let prefix = crate::taxonomy_external_lint_constant::MARKDOWNLINT_FULL_SUPPRESSION_PREFIX;
     context.ignored_rules.iter().any(|p| {
         let up = p.to_uppercase();
-        up == "MD" || up.starts_with(prefix)
+        up == "MD" || up == prefix
     })
 }
 
