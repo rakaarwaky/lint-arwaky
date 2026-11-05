@@ -41,9 +41,14 @@ pub fn compare(now: &ReportSnapshot, previous: Option<&ReportSnapshot>) -> Repor
     // Heaviest member first, so the work in front of the reader is at the top.
     members.sort_by(|a, b| b.now.cmp(&a.now).then_with(|| a.member.cmp(&b.member)));
 
+    // AES rule codes, heaviest first.
+    let mut codes: Vec<(String, usize)> = now.codes.iter().map(|(c, n)| (c.clone(), *n)).collect();
+    codes.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
+
     ReportDelta {
         total_now: now.members.values().sum(),
         total_before: previous.map(|p| p.members.values().sum()),
+        codes,
         since: previous.map(|p| p.taken_at),
         members,
     }

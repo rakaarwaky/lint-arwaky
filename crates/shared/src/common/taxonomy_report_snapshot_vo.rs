@@ -14,6 +14,8 @@ pub struct ReportSnapshot {
     pub taken_at: i64,
     /// Violation count per member, keyed by the report's member path.
     pub members: BTreeMap<String, usize>,
+    /// Violation count per AES rule code, keyed by the AES code (e.g. `AES201`).
+    pub codes: BTreeMap<String, usize>,
 }
 
 /// Every target's last snapshot, in one file.
@@ -49,6 +51,8 @@ pub struct ReportDelta {
     pub members: Vec<MemberDelta>,
     pub total_now: usize,
     pub total_before: Option<usize>,
+    /// Code counts from this scan (none in baseline — codes table is current-run only).
+    pub codes: Vec<(String, usize)>,
     /// When the baseline was taken, for the "since" line.
     pub since: Option<i64>,
 }

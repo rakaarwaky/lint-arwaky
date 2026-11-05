@@ -40,6 +40,21 @@ pub fn count_by_member(violations: &[shared_common::ViolationItem]) -> BTreeMap<
     counts
 }
 
+/// Count violations per AES rule code.
+///
+/// Only codes starting with `"AES"` count — PARSE_ and external results are
+/// excluded so the table is an AES-code summary, not every rule in the scan.
+pub fn count_by_code(violations: &[shared_common::ViolationItem]) -> BTreeMap<String, usize> {
+    let mut counts: BTreeMap<String, usize> = BTreeMap::new();
+    for v in violations {
+        let code = v.code.code();
+        if code.starts_with("AES") {
+            *counts.entry(code.to_string()).or_default() += 1;
+        }
+    }
+    counts
+}
+
 /// The report's member key for a file: its member dir, or the file itself when
 /// it sits directly under a member dir with no folder of its own.
 ///
@@ -125,6 +140,7 @@ pub fn handle_report(params: ReportCommandParams) -> ExitCode {
     let snapshot = ReportSnapshot {
         taken_at: now_seconds(),
         members: count_by_member(&violations),
+        codes: count_by_code(&violations),
     };
     let store = read_store();
     let previous = store.entries.get(&target_key(&target));
