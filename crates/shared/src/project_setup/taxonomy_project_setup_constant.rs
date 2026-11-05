@@ -14,7 +14,7 @@ use crate::taxonomy_project_setup_vo::EmbeddedSkillVO;
 /// renaming a skill file —
 /// `catalog_matches_the_skills_directory` in
 /// `crates/dispatcher/tests/unit_dispatcher_setup_skills.rs` fails otherwise.
-pub const EMBEDDED_SKILLS_COUNT: usize = 85;
+pub const EMBEDDED_SKILLS_COUNT: usize = 117;
 
 pub const EMBEDDED_SKILLS: &[EmbeddedSkillVO] = &[
     EmbeddedSkillVO::new(
@@ -712,55 +712,343 @@ pub const EMBEDDED_SKILLS: &[EmbeddedSkillVO] = &[
     ),
     EmbeddedSkillVO::new(
         "aes-fix",
-        "aes-fix/references/AES2xx.md",
+        "aes-fix/references/AES201.md",
         include_str!(concat!(
             env!("OUT_DIR"),
-            "/skills/aes-fix/references/AES2xx.md"
+            "/skills/aes-fix/references/AES201.md"
         )),
         None,
     ),
     EmbeddedSkillVO::new(
         "aes-fix",
-        "aes-fix/references/AES3xx.md",
+        "aes-fix/references/AES202.md",
         include_str!(concat!(
             env!("OUT_DIR"),
-            "/skills/aes-fix/references/AES3xx.md"
+            "/skills/aes-fix/references/AES202.md"
         )),
         None,
     ),
     EmbeddedSkillVO::new(
         "aes-fix",
-        "aes-fix/references/AES4xx.md",
+        "aes-fix/references/AES203.md",
         include_str!(concat!(
             env!("OUT_DIR"),
-            "/skills/aes-fix/references/AES4xx.md"
+            "/skills/aes-fix/references/AES203.md"
         )),
         None,
     ),
     EmbeddedSkillVO::new(
         "aes-fix",
-        "aes-fix/references/AES5xx.md",
+        "aes-fix/references/AES204.md",
         include_str!(concat!(
             env!("OUT_DIR"),
-            "/skills/aes-fix/references/AES5xx.md"
+            "/skills/aes-fix/references/AES204.md"
         )),
         None,
     ),
     EmbeddedSkillVO::new(
         "aes-fix",
-        "aes-fix/references/AES6xx.md",
+        "aes-fix/references/AES205.md",
         include_str!(concat!(
             env!("OUT_DIR"),
-            "/skills/aes-fix/references/AES6xx.md"
+            "/skills/aes-fix/references/AES205.md"
         )),
         None,
     ),
     EmbeddedSkillVO::new(
         "aes-fix",
-        "aes-fix/references/AES7xx.md",
+        "aes-fix/references/AES301.md",
         include_str!(concat!(
             env!("OUT_DIR"),
-            "/skills/aes-fix/references/AES7xx.md"
+            "/skills/aes-fix/references/AES301.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-fix",
+        "aes-fix/references/AES302.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-fix/references/AES302.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-fix",
+        "aes-fix/references/AES303.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-fix/references/AES303.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-fix",
+        "aes-fix/references/AES304.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-fix/references/AES304.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-fix",
+        "aes-fix/references/AES305.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-fix/references/AES305.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-fix",
+        "aes-fix/references/AES401.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-fix/references/AES401.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-fix",
+        "aes-fix/references/AES402.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-fix/references/AES402.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-fix",
+        "aes-fix/references/AES403.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-fix/references/AES403.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-fix",
+        "aes-fix/references/AES404.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-fix/references/AES404.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-fix",
+        "aes-fix/references/AES405.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-fix/references/AES405.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-fix",
+        "aes-fix/references/AES406.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-fix/references/AES406.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-fix",
+        "aes-fix/references/AES501.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-fix/references/AES501.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-fix",
+        "aes-fix/references/AES502.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-fix/references/AES502.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-fix",
+        "aes-fix/references/AES503.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-fix/references/AES503.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-fix",
+        "aes-fix/references/AES504.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-fix/references/AES504.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-fix",
+        "aes-fix/references/AES505.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-fix/references/AES505.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-fix",
+        "aes-fix/references/AES506.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-fix/references/AES506.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-fix",
+        "aes-fix/references/AES601.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-fix/references/AES601.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-fix",
+        "aes-fix/references/AES602.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-fix/references/AES602.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-fix",
+        "aes-fix/references/AES603.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-fix/references/AES603.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-fix",
+        "aes-fix/references/AES604.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-fix/references/AES604.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-fix",
+        "aes-fix/references/AES605.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-fix/references/AES605.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-fix",
+        "aes-fix/references/AES606.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-fix/references/AES606.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-fix",
+        "aes-fix/references/AES607.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-fix/references/AES607.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-fix",
+        "aes-fix/references/AES608.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-fix/references/AES608.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-fix",
+        "aes-fix/references/AES609.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-fix/references/AES609.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-fix",
+        "aes-fix/references/AES610.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-fix/references/AES610.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-fix",
+        "aes-fix/references/AES701.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-fix/references/AES701.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-fix",
+        "aes-fix/references/AES702.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-fix/references/AES702.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-fix",
+        "aes-fix/references/AES703.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-fix/references/AES703.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-fix",
+        "aes-fix/references/AES704.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-fix/references/AES704.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-fix",
+        "aes-fix/references/AES705.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-fix/references/AES705.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-fix",
+        "aes-fix/references/AES706.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-fix/references/AES706.md"
         )),
         None,
     ),
