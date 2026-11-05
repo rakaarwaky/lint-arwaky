@@ -313,6 +313,7 @@ fn orchestrator_implements_aggregate_protocol() {
     use std::collections::HashMap;
 
     let deps = ExternalLintDeps {
+        markdown_adapter: None,
         adapters: HashMap::new(),
         filesystem: Arc::new(MockFilesystem::new()),
         filesystem_io: Arc::new(MockFilesystem::new()),
@@ -415,6 +416,7 @@ fn orchestrator_with(
         Vec::new(),
     );
     let deps = ExternalLintDeps {
+        markdown_adapter: None,
         adapters,
         filesystem: Arc::new(MockFilesystem::with_languages(languages)),
         filesystem_io: Arc::new(MockFilesystem::new()),
@@ -507,6 +509,7 @@ fn output_normalizer_has_production_call_sites() {
     // 2. The deps struct carries a live normalizer field.
     use external_lint_lint_arwaky::agent_external_lint_orchestrator::ExternalLintDeps;
     let deps: ExternalLintDeps = ExternalLintDeps {
+        markdown_adapter: None,
         adapters: std::collections::HashMap::new(),
         filesystem: Arc::new(MockFilesystem::new()),
         filesystem_io: Arc::new(MockFilesystem::new()),

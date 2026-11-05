@@ -569,42 +569,19 @@ pub(crate) fn run_all_linters_in_process(
                 agg.config_file_reader.as_ref(),
             ),
             config_entries,
+            ..shared_external_lint::taxonomy_external_lint_vo::ExternalLintContext::default()
         };
         let ext_start = Instant::now();
+        let agg_external = agg.external.clone();
         let mut external: Vec<ViolationItem> = run_isolated("external", &mut panics, || {
-            // The external adapters shell out to project-wide tools that
-            // recursively walk every directory they are handed. When the scan
-            // target is a workspace root, handing them the whole root makes
-            // bandit/ruff/mypy walk sibling agent repos and vendored trees
-            // that are later dropped by the scope filter below — pure wasted
-            // time (the bandit bottleneck). Instead, hand each adapter the
-            // member dirs directly; the adapters resolve their own working
-            // dirs (Cargo.toml parent, etc.) so per-member invocations stay
-            // correct. Non-workspace-root targets keep the single-target scan.
-            let targets: Vec<FilePath> = if member_scope.is_some() {
-                member_dirs
-                    .iter()
-                    .filter_map(|m| FilePath::new(m.to_string_lossy().to_string()).ok())
-                    .collect()
-            } else {
-                vec![ext_target_fp]
-            };
-            let mut out: Vec<ViolationItem> = Vec::new();
-            for target in &targets {
-                out.extend(
-                    agg.external
-                        .execute(
-                            shared_external_lint::ExternalLintRequest::scan_all_with_context(
-                                target, &context,
-                            ),
-                        )
-                        .into_violations()
-                        .values
-                        .iter()
-                        .map(ViolationItem::from_lint_result),
-                );
-            }
-            out
+            crate::surface_external_action::run_member_external_batches(
+                &ext_target_fp,
+                &context,
+                &ignored,
+                &agg_external,
+                &member_dirs,
+                member_scope.is_some(),
+            )
         });
         tracing::info!(
             target: "lint_arwaky::audit",

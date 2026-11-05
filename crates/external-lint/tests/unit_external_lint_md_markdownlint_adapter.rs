@@ -214,6 +214,27 @@ fn adapter_name_is_markdownlint() {
     assert_eq!(adapter.name().value(), "markdownlint");
 }
 
+/// Empty pre-filtered Markdown file list skips the spawn entirely (T3).
+#[test]
+fn empty_markdown_files_skips_spawn() {
+    let ctx = shared_external_lint::taxonomy_external_lint_vo::ExternalLintContext {
+        markdown_files: Some(vec![]),
+        ..Default::default()
+    };
+    let (adapter, executor, _) = make_adapter(vec![], &["markdownlint-cli"]);
+    let adapter = adapter.with_context(std::sync::Arc::new(ctx));
+    let results = adapter.scan(&readme()).unwrap_or_default();
+    assert!(
+        results.values.is_empty(),
+        "empty markdown list yields no violations"
+    );
+    let calls = executor.calls.lock().unwrap_or_else(|e| e.into_inner());
+    assert!(
+        calls.is_empty(),
+        "no CLI invocation for an empty markdown list: {calls:?}"
+    );
+}
+
 // ─── JSON format (markdownlint-cli) ───
 
 #[test]

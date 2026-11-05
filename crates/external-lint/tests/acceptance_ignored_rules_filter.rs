@@ -89,6 +89,7 @@ fn surviving_codes(
     );
     let fs = Arc::new(MockFilesystem::new());
     let orchestrator = ExternalLintOrchestrator::new(ExternalLintDeps {
+        markdown_adapter: None,
         adapters,
         filesystem: fs.clone(),
         filesystem_io: fs,
@@ -105,6 +106,7 @@ fn surviving_codes(
         ignored_rules: ignored,
         config_entries: Vec::new(),
         ignored_paths: Vec::new(),
+        ..ExternalLintContext::default()
     };
     orchestrator
         .execute(ExternalLintRequest::scan_all_with_context(
