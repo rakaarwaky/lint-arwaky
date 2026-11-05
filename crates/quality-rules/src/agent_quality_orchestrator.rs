@@ -25,6 +25,7 @@ use shared_quality_rules::contract_quality_protocol::ILineCheckerProtocol;
 use shared_quality_rules::contract_quality_protocol::IMandatoryClassProtocol;
 use shared_quality_rules::taxonomy_quality_rules_request::CodeAnalysisRequest;
 use shared_quality_rules::taxonomy_quality_rules_response::CodeAnalysisResponse;
+use shared_quality_rules::taxonomy_quality_rules_vo::AesCodeAnalysisViolation;
 
 use shared_common::taxonomy_severity_vo::Severity;
 use shared_common::utility_architecture_layer_detector::{
@@ -109,6 +110,7 @@ impl CodeAnalysisOrchestrator {
                 self.deps
                     .bypass_checker
                     .check_bypass_comments(&file, c, &mut v);
+
                 self.deps
                     .dead_inheritance_checker
                     .check_dead_inheritance(&file, c, &mut v);
@@ -144,6 +146,7 @@ impl CodeAnalysisOrchestrator {
                 self.deps
                     .line_checker
                     .check_line_counts(&file, Some(def), c, &mut v);
+
                 self.deps.class_checker.check_mandatory_class_definition(
                     &file,
                     Some(def),
@@ -169,11 +172,11 @@ impl CodeAnalysisOrchestrator {
         if !entries.is_empty() {
             // Hoist AES305 rule lookup outside per-violation loop (was O(violations) per scan)
             let aes305_rule = self.config.rules.iter().find(|r| r.name.value == "AES305");
-            for (file_path, aes_violation) in self
+            let dup_violations: Vec<(String, AesCodeAnalysisViolation)> = self
                 .deps
                 .duplication_checker
-                .handle_duplicates_entries(&entries)
-            {
+                .handle_duplicates_entries(&entries);
+            for (file_path, aes_violation) in dup_violations {
                 // Check AES305 exceptions (match against file stem or full filename)
                 let file_name = std::path::Path::new(&file_path)
                     .file_name()

@@ -1,35 +1,36 @@
-use shared_quality_rules::contract_quality_protocol::ICodeMetricAnalyzerProtocol;
-use shared_quality_rules::taxonomy_quality_rules_vo::AesCodeAnalysisViolation;
-
-use shared_common::LintMessage;
-use shared_config_system::ArchitectureConfig;
-use std::sync::Arc;
-
 // PURPOSE: CodeDuplicationAnalyzer — AES305: detect files with excessive duplication across the codebase
 // ALGORITHM (file-level similarity, not per-block):
 //   1. Accept pre-fetched (path, content) entries from caller
-//   2. For each file, tokenize content into lines
-//   3. Slide a window of `min_lines` over lines; two keys: raw (identical) and normalized (similar)
-//   4. Two global maps keyed on raw / normalized window text; store file indices
+//   2. For each file, tokenize content into lines; precompute trimmed (raw) and normalized lines
+//   3. Slide a window of `min_lines` over lines; hash each window to a u64 key (raw and normalized)
+//   4. Two global maps keyed on u64 hash; store file indices
 //   5. For each file, compute identical_pct (raw shared) and similar_pct (normalized shared)
 //   6. identical_pct > identical_threshold → "identical" violation; else similar_pct > similar_threshold → "similar"
 //   7. One violation per file with per-block line ranges (top 5, +N more)
+//   8. `others` (matching files) resolved at output time only for flagged files,
+//      avoiding per-window HashSet cloning and String key allocations.
 
+use shared_common::LintMessage;
+use shared_config_system::ArchitectureConfig;
+use shared_quality_rules::contract_quality_protocol::ICodeMetricAnalyzerProtocol;
+use shared_quality_rules::taxonomy_quality_rules_vo::AesCodeAnalysisViolation;
+use shared_quality_rules::utility_code_duplication_detector::{is_import_line, normalize_line};
 use std::collections::{HashMap, HashSet};
+use std::path::PathBuf;
+use std::sync::Arc;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Struct Definition ────────────────────────────
 
 pub struct CodeDuplicationAnalyzer {
-    /// P1.6 fix: carry injected config instead of calling default_aes_config()
     config: Arc<ArchitectureConfig>,
 }
 
-// ─── Block 2: Protocol Trait Implementation ───────────────
+// ─── Block 2: Protocol Trait Implementation ────────────────
 
 impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
     fn handle_duplicates_entries(
         &self,
-        entries: &[(std::path::PathBuf, String)],
+        entries: &[(PathBuf, String)],
     ) -> Vec<(String, AesCodeAnalysisViolation)> {
         let config = self.config.as_ref();
         let aes305 = config.rules.iter().find(|r| r.name.value == "AES305");
@@ -63,72 +64,16 @@ impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
+// ─── Block 3: Constructors, Helpers, Private Methods ───────
 
 impl CodeDuplicationAnalyzer {
     pub fn from_config(config: Arc<ArchitectureConfig>) -> Self {
         Self { config }
     }
-}
 
-/// Per-file window position record: 1-based start/end lines plus the set of
-/// other files that share this window.
-struct DupWindow {
-    start_line: usize,
-    end_line: usize,
-    others: HashSet<usize>,
-}
-
-/// Collapse per-window positions into maximal consecutive line ranges.
-/// 1-based, inclusive. Public so the crate's tests can cover it directly
-/// (capability sources must stay free of inline test modules, AES403).
-pub fn collapse_ranges(positions: &[(usize, usize)]) -> Vec<(usize, usize)> {
-    let mut ranges: Vec<(usize, usize)> = Vec::new();
-    for &(s, e) in positions {
-        if let Some(last) = ranges.last_mut() {
-            if s <= last.1 + 1 {
-                last.1 = e.max(last.1);
-                continue;
-            }
-        }
-        ranges.push((s, e));
-    }
-    ranges
-}
-
-fn is_import_only(w: &[&str]) -> bool {
-    w.iter().all(|l| {
-        let t = l.trim();
-        !t.is_empty() && shared_quality_rules::utility_code_duplication_detector::is_import_line(t)
-    })
-}
-
-/// Keys in `map` that appear in 2+ files. String keys make this collision-free.
-fn shared_keys(map: &HashMap<String, HashSet<usize>>) -> HashSet<String> {
-    map.iter()
-        .filter(|(_, file_indices)| file_indices.len() > 1)
-        .map(|(id, _)| id.clone())
-        .collect()
-}
-
-/// Other files (excluding `fi`) that share `key` with the current file.
-fn others_for(map: &HashMap<String, HashSet<usize>>, key: &str, fi: usize) -> HashSet<usize> {
-    map.get(key)
-        .map(|set| {
-            set.iter()
-                .copied()
-                .filter(|&o| o != fi)
-                .collect::<HashSet<_>>()
-        })
-        .unwrap_or_default()
-}
-
-impl CodeDuplicationAnalyzer {
     /// File-level similarity analysis using pre-read entries.
-    /// Instead of one violation per sliding-window match, calculates what % of a file's
-    /// normalized windows also appear in other files. Only files exceeding the threshold
-    /// are flagged — one violation per file.
-    /// Returns (file_path, violation) tuples so the caller can attach the file path.
+    /// Optimized: u64 window hashes replace String keys; `others` resolved at
+    /// output time only for flagged files (no per-window HashSet cloning).
     pub fn check_file_similarity_entries(
         &self,
         entries: &[(&str, &str)],
@@ -136,98 +81,109 @@ impl CodeDuplicationAnalyzer {
         identical_threshold_pct: f64,
         similar_threshold_pct: f64,
     ) -> Vec<(String, AesCodeAnalysisViolation)> {
-        if entries.is_empty() {
+        if entries.is_empty() || min_dup_lines == 0 {
             return Vec::new();
         }
 
-        // Per-file preprocessed lines, reused across every pass below.
-        let file_lines: Vec<Vec<&str>> = entries
-            .iter()
-            .map(|(_, content)| content.lines().collect())
-            .collect();
+        let n = entries.len();
 
-        // Two global maps: raw-key (identical, trimmed-per-line) and normalized-key
-        // (similar, alphanumeric/whitespace-only). Windows that consist entirely of
-        // import/`use`/`from` lines are scaffolding, not logic, so they are excluded
-        // from both maps and the per-file shared count (AES305 counts logic duplication).
-        let mut raw_global: HashMap<String, HashSet<usize>> = HashMap::with_capacity(entries.len());
-        let mut norm_global: HashMap<String, HashSet<usize>> =
-            HashMap::with_capacity(entries.len());
+        // Per-file preprocessed lines: raw (trimmed) and normalized.
+        let mut file_raw: Vec<Vec<&str>> = Vec::with_capacity(n);
+        let mut file_norm: Vec<Vec<String>> = Vec::with_capacity(n);
+        for (_, content) in entries {
+            let lines: Vec<&str> = content.lines().collect();
+            let raw: Vec<&str> = lines.iter().map(|l| l.trim()).collect();
+            let norm: Vec<String> = lines.iter().map(|l| normalize_line(l)).collect();
+            file_raw.push(raw);
+            file_norm.push(norm);
+        }
 
-        // Per-file window records for range reporting (identical and similar separately).
-        let mut raw_windows: Vec<Vec<DupWindow>> = (0..entries.len()).map(|_| Vec::new()).collect();
-        let mut norm_windows: Vec<Vec<DupWindow>> =
-            (0..entries.len()).map(|_| Vec::new()).collect();
+        // Global maps: u64 window hash -> set of file indices sharing that window.
+        let mut raw_global: HashMap<u64, HashSet<usize>> = HashMap::with_capacity(n);
+        let mut norm_global: HashMap<u64, HashSet<usize>> = HashMap::with_capacity(n);
 
-        // Per-file window keys, computed once and reused in the second pass
-        // (Issue 19) so the raw/normalized join happens a single time.
-        let mut file_keys: Vec<Vec<(String, String)>> = vec![Vec::new(); entries.len()];
+        // Per-file window records: (start, end, raw_hash, norm_hash) per position.
+        let mut file_windows: Vec<Vec<(usize, usize, u64, u64)>> = vec![Vec::new(); n];
 
-        for (fi, lines) in file_lines.iter().enumerate() {
-            if lines.len() < min_dup_lines {
+        for fi in 0..n {
+            let raw = &file_raw[fi];
+            let norm = &file_norm[fi];
+            let len = raw.len();
+            if len < min_dup_lines {
                 continue;
             }
-            for w in lines.windows(min_dup_lines) {
+            let mut wh: Vec<(usize, usize, u64, u64)> = Vec::new();
+            for start in 0..=(len - min_dup_lines) {
+                let end = start + min_dup_lines;
+                let w = &raw[start..end];
                 if is_import_only(w) {
                     continue;
                 }
-                // Compute both keys once; the owned strings below move into
-                // the global maps (Issue 20), and a second pair is kept for the
-                // per-file key buffer.
-                let raw_key: String = w.iter().map(|l| l.trim()).collect::<Vec<_>>().join("\n");
-                let norm_key =
-                    shared_quality_rules::utility_code_duplication_detector::normalize_window(w);
-                let raw_key_clone = raw_key.clone();
-                let norm_key_clone = norm_key.clone();
-                raw_global.entry(raw_key).or_default().insert(fi);
-                norm_global.entry(norm_key).or_default().insert(fi);
-                file_keys[fi].push((raw_key_clone, norm_key_clone));
+                let raw_hash = hash_window(w.iter().copied());
+                let norm_hash = hash_window(norm[start..end].iter().map(|s| s.as_str()));
+                raw_global.entry(raw_hash).or_default().insert(fi);
+                norm_global.entry(norm_hash).or_default().insert(fi);
+                wh.push((start, end, raw_hash, norm_hash));
             }
+            file_windows[fi] = wh;
         }
 
-        let shared_norm_ids: HashSet<String> = shared_keys(&norm_global);
-        let shared_raw_ids: HashSet<String> = shared_keys(&raw_global);
+        // Keys (hashes) shared by 2+ files.
+        let shared_raw: HashSet<u64> = raw_global
+            .iter()
+            .filter(|(_, set)| set.len() > 1)
+            .map(|(k, _)| *k)
+            .collect();
+        let shared_norm: HashSet<u64> = norm_global
+            .iter()
+            .filter(|(_, set)| set.len() > 1)
+            .map(|(k, _)| *k)
+            .collect();
 
-        // Per-file counts and shared-window records (for range reporting).
-        let mut norm_shared_counts: Vec<usize> = vec![0; entries.len()];
-        let mut norm_total_counts: Vec<usize> = vec![0; entries.len()];
-        let mut raw_shared_counts: Vec<usize> = vec![0; entries.len()];
+        // Per-file shared-window counts and positions. `others` is intentionally
+        // NOT cloned here — it is resolved at output time only for flagged files.
+        let mut raw_shared_counts = vec![0usize; n];
+        let mut norm_shared_counts = vec![0usize; n];
+        let mut raw_total = vec![0usize; n];
+        let mut norm_total = vec![0usize; n];
+        let mut raw_positions: Vec<Vec<WindowPos>> = vec![Vec::new(); n];
+        let mut norm_positions: Vec<Vec<WindowPos>> = vec![Vec::new(); n];
 
-        // Reuse the per-file keys built in the first pass instead of
-        // recomputing the joins (Issue 19).
-        for (fi, keys) in file_keys.iter().enumerate() {
-            for (_win_i, (raw_key, norm_key)) in keys.iter().enumerate() {
-                norm_total_counts[fi] += 1;
-                let start_line = _win_i + 1;
-                let end_line = _win_i + min_dup_lines;
-
-                if shared_norm_ids.contains(&norm_key[..]) {
+        for fi in 0..n {
+            for (start, end, raw_hash, norm_hash) in &file_windows[fi] {
+                raw_total[fi] += 1;
+                norm_total[fi] += 1;
+                let start_line = start + 1;
+                let end_line = *end;
+                if shared_norm.contains(norm_hash) {
                     norm_shared_counts[fi] += 1;
-                    norm_windows[fi].push(DupWindow {
+                    norm_positions[fi].push(WindowPos {
                         start_line,
                         end_line,
-                        others: others_for(&norm_global, norm_key.as_str(), fi),
+                        raw_hash: *raw_hash,
+                        norm_hash: *norm_hash,
                     });
                 }
-                if shared_raw_ids.contains(raw_key.as_str()) {
+                if shared_raw.contains(raw_hash) {
                     raw_shared_counts[fi] += 1;
-                    raw_windows[fi].push(DupWindow {
+                    raw_positions[fi].push(WindowPos {
                         start_line,
                         end_line,
-                        others: others_for(&raw_global, raw_key.as_str(), fi),
+                        raw_hash: *raw_hash,
+                        norm_hash: *norm_hash,
                     });
                 }
             }
         }
 
-        // Generate violations (pre-allocate with capacity hint)
+        // Generate violations (pre-allocate with capacity hint).
         const TOP_K: usize = 5;
-        let mut violations = Vec::with_capacity(entries.len());
+        let mut violations = Vec::with_capacity(n);
         for (fi, (file_path, _)) in entries.iter().enumerate() {
-            if file_lines[fi].len() < min_dup_lines {
+            if file_raw[fi].len() < min_dup_lines {
                 continue;
             }
-            let total = norm_total_counts[fi];
+            let total = norm_total[fi];
             if total == 0 {
                 continue;
             }
@@ -235,13 +191,13 @@ impl CodeDuplicationAnalyzer {
             let similar_pct = norm_shared_counts[fi] as f64 / total as f64 * 100.0;
 
             // Highest-severity applicable classification wins.
-            let (fired, pct, threshold, windows, shared_count) =
+            let (fired, pct, threshold, positions, shared_count) =
                 if identical_pct > identical_threshold_pct {
                     (
                         "identical",
                         identical_pct,
                         identical_threshold_pct,
-                        &raw_windows[fi],
+                        &raw_positions[fi],
                         raw_shared_counts[fi],
                     )
                 } else if similar_pct > similar_threshold_pct {
@@ -249,7 +205,7 @@ impl CodeDuplicationAnalyzer {
                         "similar",
                         similar_pct,
                         similar_threshold_pct,
-                        &norm_windows[fi],
+                        &norm_positions[fi],
                         norm_shared_counts[fi],
                     )
                 } else {
@@ -261,37 +217,50 @@ impl CodeDuplicationAnalyzer {
                  (threshold: {threshold:.0}%). {shared_count} of {total} windows are non-unique.",
             );
 
-            // Per-block detail: top K collapsed ranges, each listing the other files
-            // (with their matching line ranges) that share this block.
-            let ranges = collapse_ranges(
-                &windows
-                    .iter()
-                    .map(|b| (b.start_line, b.end_line))
-                    .collect::<Vec<_>>(),
-            );
+            let range_positions: Vec<(usize, usize)> = positions
+                .iter()
+                .map(|p| (p.start_line, p.end_line))
+                .collect();
+            let ranges = collapse_ranges(&range_positions);
+            let global_map = if fired == "identical" {
+                &raw_global
+            } else {
+                &norm_global
+            };
+            let src_positions = if fired == "identical" {
+                &raw_positions
+            } else {
+                &norm_positions
+            };
             let mut range_details: Vec<String> = Vec::new();
             for (rs, re) in ranges.iter().take(TOP_K) {
-                // Other files whose windows fall inside this collapsed range.
+                // Resolve other files at output time, deduped by window hash.
+                let mut seen_hashes = HashSet::new();
                 let mut others: HashSet<usize> = HashSet::new();
-                for w in windows
+                for p in positions
                     .iter()
-                    .filter(|w| w.start_line >= *rs && w.end_line <= *re)
+                    .filter(|p| p.start_line >= *rs && p.end_line <= *re)
                 {
-                    others.extend(w.others.iter().copied());
+                    let h = if fired == "identical" {
+                        p.raw_hash
+                    } else {
+                        p.norm_hash
+                    };
+                    if seen_hashes.insert(h) {
+                        if let Some(file_set) = global_map.get(&h) {
+                            for &ofi in file_set {
+                                if ofi != fi {
+                                    others.insert(ofi);
+                                }
+                            }
+                        }
+                    }
                 }
                 let mut detail: Vec<String> = Vec::new();
-                for &ofi in others.iter() {
+                for &ofi in &others {
                     // Line range into `ofi`: the intersection of all stored windows
-                    // that overlap the current collapsed range; omit `ofi` when no
-                    // stored window overlaps instead of fabricating a default range.
-                    let src_windows = if fired == "identical" {
-                        &raw_windows
-                    } else {
-                        &norm_windows
-                    };
-                    let Some(ofi_windows) = src_windows.get(ofi) else {
-                        continue;
-                    };
+                    // that overlap the current collapsed range.
+                    let ofi_windows = &src_positions[ofi];
                     let overlapping: Vec<_> = ofi_windows
                         .iter()
                         .filter(|w| w.start_line <= *re && w.end_line >= *rs)
@@ -326,4 +295,53 @@ impl CodeDuplicationAnalyzer {
 
         violations
     }
+}
+
+// ─── Block 3: Constructors, Helpers, Private Methods ───────
+
+/// Per-file window position record: 1-based start/end lines plus the u64 hashes.
+#[derive(Clone, Copy)]
+struct WindowPos {
+    start_line: usize,
+    end_line: usize,
+    raw_hash: u64,
+    norm_hash: u64,
+}
+
+/// Hash a window of lines to a u64 key using whole-string SipHash per line
+/// (no per-character hashing, no String join allocation).
+/// Uses UFCS to avoid unused-import lint on the Hash/Hasher traits.
+fn hash_window<'a, I>(lines: I) -> u64
+where
+    I: Iterator<Item = &'a str>,
+{
+    let mut hasher = std::collections::hash_map::DefaultHasher::new();
+    for line in lines {
+        std::hash::Hash::hash(line, &mut hasher);
+    }
+    std::hash::Hasher::finish(&hasher)
+}
+
+/// Collapse per-window positions into maximal consecutive line ranges.
+/// 1-based, inclusive. Public so the crate's tests can cover it directly
+/// (capability sources must stay free of inline test modules, AES403).
+pub fn collapse_ranges(positions: &[(usize, usize)]) -> Vec<(usize, usize)> {
+    let mut ranges: Vec<(usize, usize)> = Vec::new();
+    for &(s, e) in positions {
+        if let Some(last) = ranges.last_mut() {
+            if s <= last.1 + 1 {
+                last.1 = e.max(last.1);
+                continue;
+            }
+        }
+        ranges.push((s, e));
+    }
+    ranges
+}
+
+fn is_import_only(w: &[&str]) -> bool {
+    w.iter().all(|l| {
+        let t = l.trim();
+        !t.is_empty() && is_import_line(t)
+    })
 }
