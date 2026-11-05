@@ -1,6 +1,6 @@
 ---
 name: aes-migration
-description: "AES architecture migration workflow for Python Rust TS. Use when migrating legacy codebases to AES layered architecture."
+description: "AES architecture migration workflow for Python, Rust, and TypeScript codebases."
 when-to-use: "migrate, refactor, or convert a legacy Python, Rust, or TypeScript codebase into the AES 7-layer architecture; audit AES compliance; plan the phased taxonomy-first migration."
 argument-hint: '<python | rust | typescript> <project-root>'
 metadata:
@@ -22,7 +22,7 @@ metadata:
 
 Guide the phased migration of a legacy codebase into the AES layered architecture: Phase 0 audit the baseline, then Phase 1–7 build each layer bottom-up — taxonomy → contract → utility → capabilities → agent → surface → root — and Phase 8 verify to zero. The audience is the agent planning or executing a migration; the **language** decides which playbook loads, and the **violation count** after the baseline audit decides the strategy (< 10: full, 10–50: phased, > 50: taxonomy-first). Each layer's shape is owned by its layer skill; the playbook carries import matrices, phase templates, and troubleshooting. Invariants read by more than one step live in Global Rules below.
 
-## Global Rules
+## Global rules
 
 - Baseline first: `lint-arwaky-cli scan .` before touching anything; the recorded violation count picks the strategy.
 - Layer order: migrate bottom-up (taxonomy → contract → utility → capabilities → agent → surface → root); a layer starts only when the one below scans clean.
