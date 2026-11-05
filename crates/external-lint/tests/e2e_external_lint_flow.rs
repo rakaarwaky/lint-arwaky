@@ -223,6 +223,7 @@ fn e2e_full_pipeline_rust_python() {
 
     // Step 3: Verify adapter_names matches
     let deps = ExternalLintDeps {
+        markdown_adapter: None,
         adapters,
         filesystem: Arc::new(MockFilesystem::with_files(files)),
         filesystem_io: io_arc.clone(),
@@ -278,6 +279,7 @@ fn e2e_full_pipeline_markdown_only() {
     }
 
     let deps = ExternalLintDeps {
+        markdown_adapter: None,
         adapters,
         filesystem: fs_arc.clone(),
         filesystem_io: io_arc.clone(),

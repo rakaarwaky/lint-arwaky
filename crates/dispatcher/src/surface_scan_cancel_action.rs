@@ -297,6 +297,7 @@ fn run_all_linters_in_process_cancel(
                 agg.config_file_reader.as_ref(),
             ),
             config_entries,
+            ..shared_external_lint::taxonomy_external_lint_vo::ExternalLintContext::default()
         };
         let mut external: Vec<ViolationItem> = agg
             .external

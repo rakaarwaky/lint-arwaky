@@ -26,17 +26,21 @@ adapters:
   # Markdown
   - name: "markdownlint"
     weight: 1.0
+    timeout: 30.0
   # Internal
   - name: "architecture"
     weight: 3.0
-
 ignored_rules:
   - "markdownlint::MD013"
   - "markdownlint::MD060"
   - "markdownlint::MD033"
   - "markdownlint::MD024"
-  
-ignored_paths: []
+  - "markdownlint::MD041"
+ignored_paths:
+  - "packages/vendor"
+  - "packages/node_modules"
+  - "packages/dist"
+  - "packages/docs/generated"
 
 # ─── Architecture rules ─────────────────────────────────────────────────
 architecture:
@@ -84,11 +88,6 @@ architecture:
     AES305:
       enabled: true
       exceptions: []
-      # Template families (role auditors, doc checkers, surface actions) sit at
-      # 52-68% similar overlap against the 50% default. Pin the legacy 75%
-      # until they are deduplicated; identical/similar split defaults stay
-      # available to users without config.
-      duplication_threshold: 75.0
     # ─── AES400 ───
     AES401:
       enabled: true

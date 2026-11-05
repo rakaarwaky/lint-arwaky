@@ -26,12 +26,21 @@ adapters:
   # Markdown
   - name: "markdownlint"
     weight: 1.0
+    # Keep one adapter from blocking the whole scan: markdownlint
+    # walks whole trees, so its per-invocation ceiling is lower
+    # than the 60 s the other adapters keep. Projects can raise
+    # or lower this per adapter.
+    timeout: 30.0
   # Internal
   - name: "architecture"
     weight: 3.0
 
 ignored_rules: []
 
+# Pre-scan path filter: directories the adapters' file walks prune.
+# The built-in defaults (node_modules, dist, tests, target, ...)
+# always apply; these add project-level vendored/generated
+# Markdown trees that `packages/` monorepos commonly carry.
 ignored_paths: []
 
 # ─── Architecture rules ─────────────────────────────────────────────────

@@ -28,7 +28,11 @@ use shared_external_lint::ICommandExecutorProtocol;
 use shared_external_lint::IJsToolResolutionProtocol;
 use shared_external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
 use shared_external_lint::taxonomy_external_lint_constant::{
-    MARKDOWNLINT_CLI_VARIANTS, MARKDOWNLINT_EXTENSIONS, MARKDOWNLINT_FIX_FLAG,
+    MARKDOWNLINT_CLI_VARIANTS, MARKDOWNLINT_DEFAULT_SCAN_TIMEOUT_SECS, MARKDOWNLINT_EXTENSIONS,
+    MARKDOWNLINT_FIX_FLAG,
+};
+use shared_external_lint::taxonomy_external_lint_vo::{
+    markdown_fully_suppressed, markdown_scan_timeout,
 };
 use shared_external_lint::utility_path_normalization::{
     resolve_or_fallback, resolve_or_fallback_with_context,
@@ -41,11 +45,16 @@ use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
+#[derive(Clone)]
 pub struct MarkdownLintAdapter {
     lint_executor: Arc<dyn ICommandExecutorProtocol>,
     js_resolution: Arc<dyn IJsToolResolutionProtocol>,
     io: Arc<dyn IFileSystemIOProtocol>,
     tool_resolution: Arc<dyn IToolResolutionProtocol>,
+    /// Pre-computed scan context from the surface layer (pre-filtered target
+    /// file list, resolved timeout, `ignored_rules`). The orchestrator wraps
+    /// the adapter with a per-scan clone via `with_context`.
+    context: Option<Arc<shared_external_lint::taxonomy_external_lint_vo::ExternalLintContext>>,
 }
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
@@ -61,17 +70,54 @@ impl ILinterAdapterProtocol for MarkdownLintAdapter {
             return Ok(LintResultList::default());
         }
 
+        let context = self.context.as_deref();
+        // When the project's `ignored_rules` fully silence markdownlint (a
+        // bare `MD` substring rule or a `markdownlint::` prefix entry), skip
+        // the subprocess entirely — it cannot produce a finding that survives
+        // the post-scan filter. 100 % time win for projects that opt out.
+        if let Some(ctx) = context {
+            if markdown_fully_suppressed(ctx) {
+                return Ok(LintResultList::default());
+            }
+        }
+
         let wd = self.tool_resolution.resolve_js_working_dir(path);
         let abs_path = self.io.canonicalize_path_str(path);
 
-        // Directory targets: hand the tool a Markdown-only glob. Passing the
-        // bare directory makes markdownlint walk *every* file under it and
+        // Directory targets: hand the tool a Markdown-only target. The bare
+        // directory glob makes markdownlint walk *every* file under it and
         // report bogus rule violations against `.rs`/`.toml` sources (MD041
         // "first line should be a top-level heading" on a Rust file), which
         // pollutes the report with findings that are not markdownlint's to
-        // make. Mirrors the prettier adapter's JS/TS glob narrowing.
+        // make. Mirrors the prettier adapter's JS/TS glob narrowing. When the
+        // surface layer pre-filtered the Markdown files (`markdown_files`),
+        // hand those explicit paths to the CLI instead of the glob, so
+        // ignored and vendored trees are never walked.
         let is_dir = self.io.is_dir(Path::new(&abs_path.value));
-        for (binary, args) in tool_invocations(&abs_path.value, is_dir) {
+        let (targets, exec_dir) = match markdown_files_from_context(context) {
+            Some(files) if !files.is_empty() => {
+                // Explicit file list from the surface pre-filter: the CLI
+                // receives one path per file and never walks ignored or
+                // vendored trees. Both variants report paths relative to the
+                // CWD, so the CWD is the scan root and
+                // `canonicalize_against` resolves them back onto the absolute
+                // paths the rest of the report uses.
+                (files, abs_path.clone())
+            }
+            Some(_empty) => {
+                // No surviving Markdown files: nothing to lint, skip spawn.
+                return Ok(LintResultList::default());
+            }
+            None => (
+                vec![markdown_target(&abs_path.value, is_dir)],
+                exec_working_dir(&abs_path, is_dir),
+            ),
+        };
+        for binary in MARKDOWNLINT_CLI_VARIANTS {
+            let mut args: Vec<String> = targets.clone();
+            if binary == "markdownlint-cli" {
+                args.push("--json".to_string());
+            }
             // JS tool resolution prefers local `node_modules/.bin/`. For
             // tools that are typically installed globally (like
             // markdownlint-cli2), fall back to a direct PATH lookup when the
@@ -102,8 +148,8 @@ impl ILinterAdapterProtocol for MarkdownLintAdapter {
             // absolute path the rest of the report uses.
             let Ok(response) = self.lint_executor.exec_cmd_scan(
                 cmd,
-                exec_working_dir(&abs_path, is_dir),
-                60.0,
+                exec_dir.clone(),
+                self.scan_timeout(context),
                 Some(self.name()),
                 path,
             ) else {
@@ -150,7 +196,7 @@ impl ILinterAdapterProtocol for MarkdownLintAdapter {
             let response = self.lint_executor.exec_cmd_adapter(
                 cmd,
                 exec_working_dir(&abs_path, is_dir),
-                60.0,
+                MARKDOWNLINT_DEFAULT_SCAN_TIMEOUT_SECS,
                 self.name(),
             )?;
             return Ok(ComplianceStatus::new(response.returncode == 0));
@@ -175,8 +221,45 @@ impl MarkdownLintAdapter {
             js_resolution,
             io,
             tool_resolution,
+            context: None,
         }
     }
+
+    /// Per-scan variant: the orchestrator wraps the registered adapter with the
+    /// context the surface layer pre-computed (pre-filtered Markdown file list,
+    /// resolved timeout, `ignored_rules`) so `scan` stays I/O-free and the
+    /// `ILinterAdapterProtocol::scan` signature is unchanged.
+    pub fn with_context(
+        mut self,
+        context: Arc<shared_external_lint::taxonomy_external_lint_vo::ExternalLintContext>,
+    ) -> Self {
+        self.context = Some(context);
+        self
+    }
+
+    /// Scan timeout for this invocation: the context-resolved value (config
+    /// `AdapterEntry.timeout`, else the 30 s markdownlint default) when the
+    /// surface layer attached a context, else the built-in default for direct
+    /// callers (unchanged behaviour).
+    fn scan_timeout(
+        &self,
+        context: Option<&shared_external_lint::taxonomy_external_lint_vo::ExternalLintContext>,
+    ) -> f64 {
+        match context {
+            Some(ctx) => markdown_scan_timeout(ctx),
+            None => MARKDOWNLINT_DEFAULT_SCAN_TIMEOUT_SECS,
+        }
+    }
+}
+
+/// Pre-filtered explicit Markdown file list from the scan context.
+///
+/// `None` (no context, or the surface layer left the list unset) keeps the
+/// directory-glob fallback in the adapter.
+fn markdown_files_from_context(
+    context: Option<&shared_external_lint::taxonomy_external_lint_vo::ExternalLintContext>,
+) -> Option<Vec<String>> {
+    context.and_then(|c| c.markdown_files.clone())
 }
 
 /// Markdown extensions markdownlint lints by default.
@@ -209,20 +292,6 @@ fn exec_working_dir(abs_path: &FilePath, is_dir: bool) -> FilePath {
         .parent()
         .and_then(|p| FilePath::new(p.to_string_lossy().to_string()).ok())
         .unwrap_or_else(|| abs_path.clone())
-}
-
-/// The scan invocation per CLI variant, in probe order: `markdownlint-cli`
-/// asks for JSON, `markdownlint-cli2` only writes text. Directory targets get
-/// the Markdown-only glob (see `markdown_target`).
-fn tool_invocations(abs_path: &str, is_dir: bool) -> Vec<(&'static str, Vec<String>)> {
-    let target = markdown_target(abs_path, is_dir);
-    vec![
-        (
-            MARKDOWNLINT_CLI_VARIANTS[0],
-            vec!["--json".to_string(), target.clone()],
-        ),
-        (MARKDOWNLINT_CLI_VARIANTS[1], vec![target]),
-    ]
 }
 
 /// Parse whichever format the installed CLI produced. JSON is tried first; the
