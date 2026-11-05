@@ -105,6 +105,16 @@ pub fn <function_name>(<param_name>: &<Type>) -> <ReturnType> {
 
 ---
 
+## Review
+
+- Only free functions — no struct, no impl, no traits, no type aliases — § Rules structure rules.
+- No `&self`, no instance state — § Rules state rules.
+- Pure/deterministic, or I/O strictly limited to domain-agnostic ops (serialization/hashing) — § Rules computation rules.
+- No business rules or layer-name knowledge — § Rules role rules.
+- Used by ≥2 modules — § Rules consumer rule.
+- No `use` from Capabilities, Agent, Surface, or Contract — § Rules import rules.
+- No magic constants — moved to `taxonomy_*_constant.rs` — § Rules constant rule.
+
 ## Verify
 
 ```bash

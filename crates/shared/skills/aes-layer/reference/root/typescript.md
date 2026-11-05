@@ -96,6 +96,14 @@ no business logic.
 
 ---
 
+## Review
+
+- Role suffix correct: `_container` (composition container) or `_entry` (app entry) — § Rules role rules.
+- Container: construct + bind only, wiring is the whole job — § Rules container rules.
+- Entry: compose containers + start, bootstrap only — § Rules entry rules.
+- Layer-legal imports — expose contracts, never concrete capability types — § Rules import/signature rules.
+- Registered in `index.ts` — dead code otherwise — § Rules registration rule.
+
 ## Section Contract
 
 | Section | Why it belongs here|

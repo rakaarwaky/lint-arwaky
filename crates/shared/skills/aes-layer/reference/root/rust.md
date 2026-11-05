@@ -103,6 +103,14 @@ a container; no business logic.
 
 ---
 
+## Review
+
+- Role suffix correct: `_container` (composition container) or `_entry` (app entry) — § Rules role rules.
+- Container: `new` + accessors only, wiring is the whole job — § Rules container rules.
+- Entry: compose containers + `main`, bootstrap only — § Rules entry rules.
+- Layer-legal imports — `Arc<dyn Trait>` in signatures, no concrete capability exposure — § Rules import/signature rules.
+- Registered in `mod.rs` — dead code otherwise — § Rules registration rule.
+
 ## Section Contract
 
 | Section | Why it belongs here|

@@ -96,6 +96,16 @@ export function <functionName>(<paramName>: string): string {
 
 ---
 
+## Review
+
+- Only exported functions — no class, no interface, no enum, no type alias — § Rules structure rules.
+- No `this`, no instance state — § Rules state rules.
+- Pure/deterministic, or I/O justified (domain-agnostic + reusable) — § Rules computation rules.
+- No business rules or layer-name knowledge — § Rules role rules.
+- Used by ≥2 modules — § Rules consumer rule.
+- No import from Capabilities, Agent, Surface, Contract — § Rules import rules.
+- No magic constants — moved to `taxonomy_*_constant.ts` — § Rules constant rule.
+
 ## Verify
 
 ```bash

@@ -164,6 +164,16 @@ Every contract file is required to carry the rows that apply. Each exists for on
 
 ---
 
+## Review
+
+- Suffix is strictly `_protocol` or `_aggregate`; type names `I<Name>Protocol`, `I<Name>Aggregate`; file `contract_<concept>_<suffix>.ts` — § Rules rule 1.
+- Signature-only interface — no class implementation — § Rules rule 2.
+- One file per feature; one interface per capability seam; each interface rich — one method per operation, one concrete VO return each — § Rules rule 3.
+- A capability implements exactly one interface, all of it — no partial implementations — § Rules rule 4.
+- Aggregate = exactly one method (`execute()`); protocol interfaces signature-only — § Rules rule 5.
+- Shared VOs in signatures — no numeric primitives or bare `str` for domain values; `boolean` permitted for toggles only — § Rules rule 6.
+- Register in shared `index.ts` — § Rules rule 7.
+
 ## Verify
 
 ```bash

@@ -52,6 +52,16 @@ export class Surface<Name> {
 
 ---
 
+## Review
+
+- Correct surface tier suffix: `_smart` / `_utility` / `_passive` — § Rules tier rules.
+- Smart: only taxonomy + `contract_*_aggregate` imports; delegates via injected interface — § Rules import rules.
+- Utility: only taxonomy + passive surface imports — § Rules import rules.
+- Passive: only taxonomy imports — § Rules import rules.
+- Zero business logic and computation — § Rules behavior rules.
+- No silent error discarding — errors propagate or wrap into VOs — § Rules error rules.
+- All state fields use shared VOs — § Rules VO rules.
+
 ## Section Contract
 
 | Check | Why it belongs here|

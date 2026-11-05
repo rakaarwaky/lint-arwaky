@@ -76,6 +76,14 @@ A utility file **performs a pure operation** — no state, no business rules, ju
 
 ---
 
+## Review
+
+- Capability vs Utility boundary respected: file implements one protocol (has state + business rules), stateless pure ops live in `utility_*` — § Rules § Capability vs Utility Boundary.
+- Imports: Taxonomy, Contract (`_protocol` only), Utility — nothing from `agent_*`, other `capabilities_*`, `surface_*`, local domain models, magic constants — § Rules Import rules.
+- Total struct + enum ≤ 3; ≥1 struct implements a protocol trait; Block 1 → 2 → 3 order — § Rules § Structure rules (Rust), § 3-Block Structure.
+- Block 2 holds only protocol trait implementations — no agent/surface logic inside — § Rules § 3-Block Structure.
+- Helper-vs-Utility matrix applied — stateless free function, no `&self`, ≥2 consumers → utility — § Rules § Helper vs Utility Decision Matrix.
+
 ## Template
 
 ```rust
