@@ -3,17 +3,15 @@
 use shared_common::ReportDelta;
 use shared_common::ReportSnapshot;
 
-/// Print the report: counts per member, and what changed since the last run.
-///
-/// Every member is listed. A truncated tail hides exactly the members that
-/// cleared themselves — the ones a reader wants to confirm are fixed — and it
-/// makes the visible rows disagree with `Total`, so the table stops adding up.
+/// Print the report: counts per member, counts per AES rule code,
+/// and what changed since the last run.
 pub fn render_report(target: &str, delta: &ReportDelta, current: &ReportSnapshot) {
     println!("Lint Arwaky — Progress Report");
     println!("Target: {target}");
     println!("Taken:  {}", format_time(current.taken_at));
     println!();
 
+    // ── Table 1: by member ──
     let member_width = delta
         .members
         .iter()
@@ -22,6 +20,7 @@ pub fn render_report(target: &str, delta: &ReportDelta, current: &ReportSnapshot
         .unwrap_or(6)
         .min(40);
 
+    println!("Violations by member:");
     println!(
         "{:<member_width$}  {:>9}  {:>7}",
         "Member", "Violations", "Delta"
@@ -43,6 +42,30 @@ pub fn render_report(target: &str, delta: &ReportDelta, current: &ReportSnapshot
         "Total",
         delta.total_now,
         change_text(delta.total_change())
+    );
+    println!();
+
+    // ── Table 2: by AES rule code ──
+    println!("Violations by AES code:");
+    let code_width = delta
+        .codes
+        .iter()
+        .map(|(c, _)| c.len())
+        .max()
+        .unwrap_or(7)
+        .min(12);
+    println!("{:<code_width$}  {:>9}", "AES Code", "Violations");
+    println!("{}", "─".repeat(code_width + 12));
+
+    for (code, count) in &delta.codes {
+        println!("{:<code_width$}  {:>9}", code, count);
+    }
+
+    println!("{}", "─".repeat(code_width + 12));
+    println!(
+        "{:<code_width$}  {:>9}",
+        "Total",
+        current.codes.values().sum::<usize>()
     );
     println!();
 

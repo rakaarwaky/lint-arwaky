@@ -17,6 +17,7 @@ fn snapshot(members: &[(&str, usize)]) -> ReportSnapshot {
             .iter()
             .map(|(m, c)| (m.to_string(), *c))
             .collect::<BTreeMap<_, _>>(),
+        codes: BTreeMap::new(),
     }
 }
 
@@ -159,6 +160,7 @@ fn a_snapshot_survives_a_write_and_read_round_trip() {
     let written = ReportSnapshot {
         taken_at: 1_700_000_000,
         members: BTreeMap::from([("crates/shared".to_string(), 12usize)]),
+        codes: BTreeMap::new(),
     };
     shared_cli_commands::utility_report_snapshot::write_store_at(&path, "crates", written.clone())
         .expect("write_store");
@@ -180,6 +182,7 @@ fn writing_a_second_target_keeps_the_first() {
     let snap = |n: usize| ReportSnapshot {
         taken_at: 1_700_000_000,
         members: BTreeMap::from([("crates/shared".to_string(), n)]),
+        codes: BTreeMap::new(),
     };
 
     shared_cli_commands::utility_report_snapshot::write_store_at(&path, "crates", snap(12))
@@ -233,6 +236,7 @@ fn every_member_reaches_the_report_and_accounts_for_the_total() {
     let snapshot = ReportSnapshot {
         taken_at: 0,
         members: members.clone(),
+        codes: BTreeMap::new(),
     };
     let delta = shared_cli_commands::utility_report_delta::compare(&snapshot, None);
 

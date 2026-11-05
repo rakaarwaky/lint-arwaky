@@ -26,6 +26,9 @@ Global rules:
 - One fact, one home: each `references/AESxxx.md` carries the how-to-fix for its rule code; do not restate the same fix in two files.
 - Cite the checker name (e.g. `NamingConventionChecker` for AES101), not just the rule code, when pointing at implementation.
 - Every reference ends with a Verify step naming the exact command.
+- Turn progress gates — `lint-arwaky-cli report` records a per-target scan snapshot, so run it once at the start of the turn and once at the end to verify the work actually moved the violation count:
+  - Start of turn: `lint-arwaky-cli report .` — records the baseline snapshot for the target.
+  - End of turn: `lint-arwaky-cli report .` — shows the Delta column against the start-of-turn baseline. The delta must be 0 or negative (no new violations); a positive delta means the fix run added problems, and the turn is not done.
 
 ## Routing
 
