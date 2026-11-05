@@ -93,6 +93,72 @@ fn violations_grouped_by_code_descending() {
 }
 
 #[test]
+fn by_member_table_sorted_desc_by_count_then_name() {
+    let results = vec![
+        aes_violation("AES101", Severity::LOW),
+        aes_violation("AES201", Severity::HIGH),
+        aes_violation("AES201", Severity::MEDIUM),
+        LintResult {
+            file: FilePath::new("src/lib.rs").unwrap(),
+            line: LineNumber::new(5),
+            code: ErrorCode::raw("AES301"),
+            message: LintMessage::new("violation AES301".to_string()),
+            source: Some(AdapterName::raw("architecture")),
+            severity: Severity::LOW,
+            ..Default::default()
+        },
+        LintResult {
+            file: FilePath::new("src/lib.rs").unwrap(),
+            line: LineNumber::new(6),
+            code: ErrorCode::raw("AES301"),
+            message: LintMessage::new("violation AES301".to_string()),
+            source: Some(AdapterName::raw("architecture")),
+            severity: Severity::LOW,
+            ..Default::default()
+        },
+    ];
+    let report = ScanReport {
+        results,
+        diagnostics: vec![],
+        score: None,
+    };
+    let text = TextFormatter::new()
+        .format_text(&report)
+        .value()
+        .to_string();
+    let by_member = text.find("Violations by member:").expect("section present");
+    let section = &text[by_member..];
+    let surface = section
+        .find("src/surface.rs: 3")
+        .expect("src/surface.rs first with 3");
+    let lib = section
+        .find("src/lib.rs: 2")
+        .expect("src/lib.rs second with 2");
+    assert!(
+        surface < lib,
+        "src/surface.rs sorts before src/lib.rs (3 > 2)"
+    );
+}
+
+#[test]
+fn by_member_table_absent_when_no_aes_violations() {
+    let report = ScanReport {
+        results: vec![external_result(
+            "clippy",
+            "clippy::needless_return",
+            Severity::MEDIUM,
+        )],
+        diagnostics: vec![],
+        score: None,
+    };
+    let text = TextFormatter::new()
+        .format_text(&report)
+        .value()
+        .to_string();
+    assert!(!text.contains("Violations by member:"));
+}
+
+#[test]
 fn external_results_grouped_by_tool() {
     let report = ScanReport {
         results: vec![
