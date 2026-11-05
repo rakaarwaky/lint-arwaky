@@ -1,4 +1,4 @@
-# AES608 — Document Structure: DATA.md Conformance
+# Step 33: Document Structure: DATA.md Conformance
 
 ## What the rule checks
 

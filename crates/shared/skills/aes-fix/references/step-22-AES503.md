@@ -1,4 +1,4 @@
-# AES503 — Orphan: Capabilities Orphan
+# Step 22: Orphan: Capabilities Orphan
 
 ## What the rule checks
 

@@ -1,4 +1,4 @@
-# AES610 — Document Structure: DESIGN.md Conformance
+# Step 35: Document Structure: DESIGN.md Conformance
 
 ## What the rule checks
 

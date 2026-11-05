@@ -1,4 +1,4 @@
-# AES603 — Document Structure: ARCHITECTURE.md Conformance
+# Step 28: Document Structure: ARCHITECTURE.md Conformance
 
 ## What the rule checks
 

@@ -1,4 +1,4 @@
-# AES701 — Project Structure: Shared/Layer Folder Purity
+# Step 36: Project Structure: Shared/Layer Folder Purity
 
 ## What the rule checks
 

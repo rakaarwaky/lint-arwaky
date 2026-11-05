@@ -1,4 +1,4 @@
-# AES605 — Document Structure: PRD.md Conformance
+# Step 30: Document Structure: PRD.md Conformance
 
 ## What the rule checks
 

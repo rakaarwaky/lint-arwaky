@@ -1,4 +1,4 @@
-# AES406 — Role/Layer: Surface Event Mapping
+# Step 19: Role/Layer: Surface Event Mapping
 
 ## What the rule checks
 

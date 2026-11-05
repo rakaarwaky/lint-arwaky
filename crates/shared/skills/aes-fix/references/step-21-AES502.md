@@ -1,4 +1,4 @@
-# AES502 — Orphan: Contract Orphan
+# Step 21: Orphan: Contract Orphan
 
 ## What the rule checks
 

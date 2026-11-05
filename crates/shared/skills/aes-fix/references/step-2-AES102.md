@@ -1,4 +1,4 @@
-# AES102 — Suffix/Prefix Policy
+# Step 2: Suffix/Prefix Policy
 
 ## What the rule checks
 

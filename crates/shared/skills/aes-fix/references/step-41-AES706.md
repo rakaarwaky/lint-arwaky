@@ -1,4 +1,4 @@
-# AES706 — Project Structure: PR-LA Folder Mapping
+# Step 41: Project Structure: PR-LA Folder Mapping
 
 ## What the rule checks
 

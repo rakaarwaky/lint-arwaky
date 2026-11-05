@@ -1,4 +1,4 @@
-# AES705 — Project Structure: Member-Root Placement
+# Step 40: Project Structure: Member-Root Placement
 
 ## What the rule checks
 

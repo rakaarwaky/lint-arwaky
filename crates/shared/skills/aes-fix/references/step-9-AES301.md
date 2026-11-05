@@ -1,4 +1,4 @@
-# AES301 — Quality: File Too Large
+# Step 9: Quality: File Too Large
 
 ## What the rule checks
 

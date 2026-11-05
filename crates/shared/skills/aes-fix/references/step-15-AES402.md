@@ -1,4 +1,4 @@
-# AES402 — Role/Layer: Contract ABC-Only
+# Step 15: Role/Layer: Contract ABC-Only
 
 ## What the rule checks
 

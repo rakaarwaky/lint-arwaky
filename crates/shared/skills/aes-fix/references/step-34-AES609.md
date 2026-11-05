@@ -1,4 +1,4 @@
-# AES609 — Document Structure: FRD.md Conformance
+# Step 34: Document Structure: FRD.md Conformance
 
 ## What the rule checks
 

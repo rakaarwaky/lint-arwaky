@@ -1,4 +1,4 @@
-# AES305 — Quality: Code Duplication
+# Step 13: Quality: Code Duplication
 
 ## What the rule checks
 

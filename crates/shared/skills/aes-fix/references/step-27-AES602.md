@@ -1,4 +1,4 @@
-# AES602 — Document Structure: README.md Conformance
+# Step 27: Document Structure: README.md Conformance
 
 ## What the rule checks
 

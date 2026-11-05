@@ -1,4 +1,4 @@
-# AES303 — Quality: Mandatory Definition Missing
+# Step 11: Quality: Mandatory Definition Missing
 
 ## What the rule checks
 

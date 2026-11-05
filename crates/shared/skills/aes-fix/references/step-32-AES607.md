@@ -1,4 +1,4 @@
-# AES607 — Document Structure: BACKLOG.md Conformance
+# Step 32: Document Structure: BACKLOG.md Conformance
 
 ## What the rule checks
 

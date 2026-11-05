@@ -1,4 +1,4 @@
-# AES506 — Orphan: Surface Orphan
+# Step 25: Orphan: Surface Orphan
 
 ## What the rule checks
 

@@ -1,4 +1,4 @@
-# AES202 — Import Graph: Mandatory Layer Import
+# Step 5: Import Graph: Mandatory Layer Import
 
 ## What the rule checks
 

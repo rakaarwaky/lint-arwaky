@@ -10,6 +10,8 @@ Shared `lint-arwaky-cli` command surface that applies to every language and ever
 lint-arwaky-cli scan .
 lac fix . --dry-run
 lint-arwaky-cli ci . --threshold 90
+lint-arwaky-cli check . --format json
+lint-arwaky-cli ci . --threshold 80
 ```
 
 ## Shell aliases
@@ -24,10 +26,10 @@ lint-arwaky-cli ci . --threshold 90
 
 | Option | Long Flag | Description |
 | :----- | :-------- | :---------- |
-| `-v` | `--verbose` | Enable debug logging and detailed diagnostic traces. |
+| `-v` | `--verbose` | Increase log verbosity (count: `-v` info, `-vv` debug). |
 | `-q` | `--quiet` | Minimize console output (suppress non-error messages). |
 | `-o` | `--output-dir <DIR>` | Directory to save generated reports (overrides active configuration). |
-| | `--filter <CODE>` | Filter scan results by specific AES rule code (e.g. `AES101`, `AES301`, `AES401`). |
+| | `--filter <CODE>` | Filter scan results by specific AES rule code (e.g. `AES101`, `AES301`). |
 | `-h` | `--help` | Print help information for the CLI or a specific subcommand. |
 | `-V` | `--version` | Print CLI binary version. |
 
@@ -35,33 +37,29 @@ lint-arwaky-cli ci . --threshold 90
 
 | Command | Purpose |
 | :----- | :----- |
-| `scan` / `check [PATH]` | Run all linters; `--format` text / json / sarif / junit, `--member <NAME>`, `--filter <CODE>`, `-o <DIR>` |
-| `fix [PATH]` | Apply safe automatic fixes; `--dry-run`, `--filter <CODE>` |
+| `scan` / `check [PATH]` | Run all 6 linters (quality, role, import, naming, orphan, external). `--format text/json/sarif/junit` (default text), `--rules|--filter <CODE>`, `--member <NAME>`, `--group <GROUP>`. |
+| `report [PATH]` | Progress report: counts per member and what changed since the last run. |
 | `ci [PATH]` | Quality gate; `--threshold <SCORE>` (default 80, exit 1 below it). No `--format` flag. |
-| `quality`/`import`/`naming`/`role`/`orphan`/`external` | Run one linter family in isolation (same flags as `scan`; `orphan` accepts `--member`) |
-| `taxonomy`/`contract`/`capabilities`/`utility`/`agents`/`surface` | Run every linter family, report only one AES layer |
-| `security [PATH]` | Code security issues (Bandit / `cargo audit` / ESLint security) |
-| `dependencies [PATH]` | Third-party CVE scan of the lockfile/manifest |
-| `watch [PATH]` | Re-lint on file save |
-| `install-hook` / `uninstall-hook` | Manage the Git pre-commit integration |
-| `init` / `install` | Write `lint_arwaky.config.yaml` / install external adapter binaries |
-| `config` / `adapters` / `mcp-config` | Print active rules, enabled adapters, MCP client JSON |
-| `doctor` / `version` | Environment diagnostics / binary version |
+| `config` | Show effective architecture config. |
+| `fix [PATH]` | Apply safe automatic fixes (AES301-305 only); `--dry-run`. |
+| `git [PATH]` | Scan files changed since git base; `--base <BRANCH>` (default `develop`), `--filter <CODE>`. |
+| `doctor` | Environment diagnostics. |
+| `security [PATH]` | Security vulnerability scan. |
+| `dependencies [PATH]` | Dependency report. |
+| `adapters` | List external lint adapters. |
+| `init` | Create config files + docs in project. |
+| `install` | Install adapter dependencies; `--sudo`. |
+| `mcp-config <CLIENT>` | Print MCP client configuration snippet. |
+| `watch [PATH]` | Watch files and auto-lint on change. |
+| `install-hook` | Install git pre-commit hook. |
+| `uninstall-hook` | Uninstall git pre-commit hook. |
+| `version` | Print version. |
+| `update` (alias `la`) | Self-update: install latest release binary from GitHub; `--check-only`. |
+| `skill read <NAME>` | Print the SKILL.md (and optionally references) for the named skill; `--with-references`. |
+| `skill list` | List all embedded skills. |
 
-## MCP server tools (`lint-arwaky-mcp`)
+`--group` values for `scan`/`check`: `all` (default), `quality`, `role`, `import`, `naming`, `orphan`, `external`, `doc`, `structure`.
 
-Five JSON-RPC 2.0 tools over STDIO for AI clients (Claude Code, Cursor, Windsurf, Hermes):
+## Output formats
 
-| Tool Name | Description | Arguments |
-| :----- | :----- | :----- |
-| `execute_command` | Execute any CLI command action | `action` (required: `"scan"`, `"check"`, `"fix"`, `"security"`, `"doctor"`, …), `args` (optional JSON object) |
-| `list_commands` | List available CLI commands catalog | `domain` (optional filter) |
-| `read_skill` | Read `SKILL.md` documentation by section | `section` (optional: header name to extract) |
-| `health_check` | Check MCP server & adapter health | None |
-| `get_config` | Get active architecture config | `path` (optional), `language` (optional: `"rust"`, `"python"`, `"javascript"`) |
-
-## Exit codes
-
-`0` pass · `1` violations (blocks merge) · `2` config/parse error · `3` prerequisite missing (a required external tool is not installed). CI and hooks key off exit code; stdout is not the contract.
-
-
+`text` | `json` | `sarif` | `junit` — applies to `scan`/`check`/group scans via `--format`.

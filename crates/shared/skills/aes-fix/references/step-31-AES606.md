@@ -1,4 +1,4 @@
-# AES606 — Document Structure: ROADMAP.md Conformance
+# Step 31: Document Structure: ROADMAP.md Conformance
 
 ## What the rule checks
 

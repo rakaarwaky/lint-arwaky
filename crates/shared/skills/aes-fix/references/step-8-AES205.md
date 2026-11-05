@@ -1,4 +1,4 @@
-# AES205 — Import Graph: Circular Dependency
+# Step 8: Import Graph: Circular Dependency
 
 ## What the rule checks
 

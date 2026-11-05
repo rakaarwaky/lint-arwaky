@@ -1,4 +1,4 @@
-# AES103 — Test/Bench File-Prefix Discipline
+# Step 3: Test/Bench File-Prefix Discipline
 
 ## What the rule checks
 

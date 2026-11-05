@@ -1,4 +1,4 @@
-# AES203 — Import Graph: Unused Import
+# Step 6: Import Graph: Unused Import
 
 ## What the rule checks
 

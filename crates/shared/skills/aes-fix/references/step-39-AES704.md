@@ -1,4 +1,4 @@
-# AES704 — Project Structure: Test-Suite Coverage
+# Step 39: Project Structure: Test-Suite Coverage
 
 ## What the rule checks
 

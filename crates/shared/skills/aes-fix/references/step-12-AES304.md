@@ -1,4 +1,4 @@
-# AES304 — Quality: Bypass Annotation
+# Step 12: Quality: Bypass Annotation
 
 ## What the rule checks
 

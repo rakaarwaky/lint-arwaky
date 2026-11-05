@@ -1,4 +1,4 @@
-# AES204 — Import Graph: Dummy/Stub Import
+# Step 7: Import Graph: Dummy/Stub Import
 
 ## What the rule checks
 

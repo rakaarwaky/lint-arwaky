@@ -1,4 +1,4 @@
-# AES505 — Orphan: Agent Orphan
+# Step 24: Orphan: Agent Orphan
 
 ## What the rule checks
 

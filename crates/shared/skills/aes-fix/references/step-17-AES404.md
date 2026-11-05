@@ -1,4 +1,4 @@
-# AES404 — Role/Layer: Utility Purity
+# Step 17: Role/Layer: Utility Purity
 
 ## What the rule checks
 

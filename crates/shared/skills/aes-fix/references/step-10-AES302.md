@@ -1,4 +1,4 @@
-# AES302 — Quality: File Too Short
+# Step 10: Quality: File Too Short
 
 ## What the rule checks
 

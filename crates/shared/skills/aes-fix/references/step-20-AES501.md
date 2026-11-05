@@ -1,4 +1,4 @@
-# AES501 — Orphan: Taxonomy Orphan
+# Step 20: Orphan: Taxonomy Orphan
 
 ## What the rule checks
 

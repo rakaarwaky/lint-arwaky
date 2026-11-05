@@ -1,4 +1,4 @@
-# AES504 — Orphan: Utility Orphan
+# Step 23: Orphan: Utility Orphan
 
 ## What the rule checks
 

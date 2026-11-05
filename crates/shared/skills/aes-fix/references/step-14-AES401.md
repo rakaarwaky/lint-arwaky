@@ -1,4 +1,4 @@
-# AES401 — Role/Layer: Taxonomy Primitive Purity
+# Step 14: Role/Layer: Taxonomy Primitive Purity
 
 ## What the rule checks
 

@@ -1,4 +1,4 @@
-# AES403 — Role/Layer: Capabilities Protocol Implementation
+# Step 16: Role/Layer: Capabilities Protocol Implementation
 
 ## What the rule checks
 

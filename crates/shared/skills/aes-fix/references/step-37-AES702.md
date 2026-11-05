@@ -1,4 +1,4 @@
-# AES702 — Project Structure: Feature Folder Health
+# Step 37: Project Structure: Feature Folder Health
 
 ## What the rule checks
 

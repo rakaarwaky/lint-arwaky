@@ -1,4 +1,4 @@
-# AES101 — Naming Convention (Stem Shape)
+# Step 1: Naming Convention (Stem Shape)
 
 ## What the rule checks
 

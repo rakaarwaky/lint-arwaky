@@ -1,4 +1,4 @@
-# AES601 — Document Structure: AGENTS.md Conformance
+# Step 26: Document Structure: AGENTS.md Conformance
 
 ## What the rule checks
 

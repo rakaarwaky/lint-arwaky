@@ -1,4 +1,4 @@
-# AES703 — Project Structure: Surface Folder Purity
+# Step 38: Project Structure: Surface Folder Purity
 
 ## What the rule checks
 

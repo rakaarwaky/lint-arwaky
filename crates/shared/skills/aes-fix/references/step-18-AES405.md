@@ -1,4 +1,4 @@
-# AES405 — Role/Layer: Agent Orchestration Only
+# Step 18: Role/Layer: Agent Orchestration Only
 
 ## What the rule checks
 

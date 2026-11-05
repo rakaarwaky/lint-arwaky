@@ -1,4 +1,4 @@
-# AES604 — Document Structure: CONTRIBUTING.md Conformance
+# Step 29: Document Structure: CONTRIBUTING.md Conformance
 
 ## What the rule checks
 
