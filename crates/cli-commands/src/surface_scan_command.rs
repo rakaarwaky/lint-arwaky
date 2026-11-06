@@ -4,8 +4,8 @@ use dispatcher::surface_check_action::FilesystemSeam;
 use dispatcher::surface_orphan_action::OrphanFactory;
 use shared_common::ExitCode;
 use shared_common::FilePath;
-use shared_common::format_as_str;
 use shared_common::ViolationItem;
+use shared_common::format_as_str;
 use shared_config_system::IConfigOrchestratorAggregate;
 use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared_quality_rules::ICodeAnalysisAggregate;
@@ -163,10 +163,7 @@ fn exit_for(violations: usize) -> ExitCode {
 /// with `<LAYER>_` (e.g. `taxonomy_`, `contract_`, `agent_`, `surface_`,
 /// `utility_`, `capabilities_`, `logical_`). All linters still run; only the
 /// reported violations are narrowed. `None` / empty layer keeps everything.
-fn filter_by_layer<'a>(
-    violations: &'a mut [ViolationItem],
-    layer: &Option<String>,
-) {
+fn filter_by_layer(violations: &mut Vec<ViolationItem>, layer: &Option<String>) {
     if let Some(layer) = layer {
         let prefix = format!("{layer}_");
         violations.retain(|v| {
@@ -191,7 +188,7 @@ pub fn handle_scan(params: ScanCommandParams) -> ExitCode {
     };
     let root = resolve_root(&opts.path);
     match dispatcher::surface_check_action::collect_scan(opts) {
-        Ok(violations) => {
+        Ok(mut violations) => {
             filter_by_layer(&mut violations, &params.layer);
             output_violations(
                 &violations,
@@ -218,7 +215,7 @@ pub fn handle_quality(params: QualityCommandParams) -> ExitCode {
         params.filesystem.clone(),
         &params.ignored_paths,
     ) {
-        Ok(violations) => {
+        Ok(mut violations) => {
             filter_by_layer(&mut violations, &params.layer);
             output_violations(
                 &violations,
@@ -245,7 +242,7 @@ pub fn handle_import(params: ImportCommandParams) -> ExitCode {
         params.filesystem.clone(),
         &params.ignored_paths,
     ) {
-        Ok(violations) => {
+        Ok(mut violations) => {
             filter_by_layer(&mut violations, &params.layer);
             output_violations(
                 &violations,
@@ -272,7 +269,7 @@ pub fn handle_naming(params: NamingCommandParams) -> ExitCode {
         params.filesystem.clone(),
         &params.ignored_paths,
     ) {
-        Ok(violations) => {
+        Ok(mut violations) => {
             filter_by_layer(&mut violations, &params.layer);
             output_violations(
                 &violations,
@@ -332,7 +329,7 @@ pub fn handle_role(params: RoleCommandParams) -> ExitCode {
         &root,
         &params.ignored_paths,
     ) {
-        Ok(violations) => {
+        Ok(mut violations) => {
             filter_by_layer(&mut violations, &params.layer);
             output_violations(
                 &violations,
@@ -365,7 +362,7 @@ pub fn handle_orphan(params: OrphanCommandParams) -> ExitCode {
         ),
         params.filter,
     ) {
-        Ok(violations) => {
+        Ok(mut violations) => {
             filter_by_layer(&mut violations, &params.layer);
             output_violations(
                 &violations,
@@ -393,7 +390,7 @@ pub fn handle_external(params: ExternalCommandParams) -> ExitCode {
         params.filter,
         &params.ignored_paths,
     ) {
-        Ok(violations) => {
+        Ok(mut violations) => {
             filter_by_layer(&mut violations, &params.layer);
             output_violations(&violations, &root, format_as_str(params.format), false);
             exit_for(violations.len())

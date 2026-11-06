@@ -41,7 +41,13 @@ pub fn detect_layer_from_prefix(filename: &str) -> Option<String> {
 /// Validate a layer name against the accepted set of AES layer identifiers.
 /// Returns `true` if the layer is recognised, `false` otherwise.
 pub const VALID_LAYERS: &[&str] = &[
-    "taxonomy", "contract", "agent", "surface", "utility", "capabilities", "logical",
+    "taxonomy",
+    "contract",
+    "agent",
+    "surface",
+    "utility",
+    "capabilities",
+    "logical",
 ];
 
 /// Post-filter a violation list by AES layer.

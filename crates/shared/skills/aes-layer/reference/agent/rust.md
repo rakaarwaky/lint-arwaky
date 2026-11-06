@@ -113,7 +113,6 @@ impl Default for Agent<Name> {
 
 ## Section Contract
 
-
 | Check                                                         | Why it belongs here                                                 |
 | ------------------------------------------------------------- | ------------------------------------------------------------------- |
 | Block 1 → 2 → 3 order followed.                               | Required by AES layer rules and the linter; missing it is a defect. |
@@ -126,7 +125,6 @@ impl Default for Agent<Name> {
 | Generic aggregate methods object-safe or `where Self: Sized`. | Required by AES layer rules and the linter; missing it is a defect. |
 | Aggregate registered in shared crate `mod.rs`.                | Required by AES layer rules and the linter; missing it is a defect. |
 | `cargo check -p <crate-name>` passes.                         | Required by AES layer rules and the linter; missing it is a defect. |
-
 
 ---
 

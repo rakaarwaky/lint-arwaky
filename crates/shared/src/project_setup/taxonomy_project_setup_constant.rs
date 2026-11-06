@@ -471,8 +471,8 @@ pub const EMBEDDED_SKILLS: &[EmbeddedSkillVO] = embedded_skills![
     ],
     [
         "aes-migration",
-        "aes-migration/references/lint-rules.md",
-        "/skills/aes-migration/references/lint-rules.md",
+        "aes-migration/references/lint-command.md",
+        "/skills/aes-migration/references/lint-command.md",
         None
     ],
     [

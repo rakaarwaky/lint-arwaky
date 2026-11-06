@@ -16,16 +16,13 @@ lint-arwaky-cli ci . --threshold 80
 
 ## Shell aliases
 
-
 | Alias | Target Binary     | Description                               |
 | :----- | :----------------- | :----------------------------------------- |
 | `lac` | `lint-arwaky-cli` | Primary CLI gatekeeper &amp; scanner      |
 | `lat` | `lint-arwaky-tui` | Terminal User Interface dashboard         |
 | `lam` | `lint-arwaky-mcp` | MCP Server (STDIO backend for AI clients) |
 
-
 ## Global CLI options
-
 
 | Option | Long Flag            | Description                                                              |
 | :------ | :-------------------- | :------------------------------------------------------------------------ |
@@ -36,9 +33,7 @@ lint-arwaky-cli ci . --threshold 80
 | `-h`   | `--help`             | Print help information for the CLI or a specific subcommand.             |
 | `-V`   | `--version`          | Print CLI binary version.                                                |
 
-
 ## Commands &amp; subcommands
-
 
 | Command                 | Purpose                                                                                                                                                                                               |
 | :----------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -62,7 +57,6 @@ lint-arwaky-cli ci . --threshold 80
 | `update` (alias `la`)   | Self-update: install latest release binary from GitHub; `--check-only`.                                                                                                                               |
 | `skill read <NAME>`     | Print the SKILL.md (and optionally references) for the named skill; `--with-references`.                                                                                                              |
 | `skill list`            | List all embedded skills.                                                                                                                                                                             |
-
 
 `--group` values for `scan`/`check`: `all` (default), `quality`, `role`, `import`, `naming`, `orphan`, `external`, `doc`, `structure`.
 

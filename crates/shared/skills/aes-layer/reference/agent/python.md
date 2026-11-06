@@ -130,6 +130,7 @@ class Agent<Name>:
 - No silently discarded errors (`or ""` on results); errors propagate or wrap into VOs — § Rules § Computation, Errors, VOs (Rule 1).
 - No agent file in `shared/`; capabilities-only folders carry an agent of their own — § Workflow step 8.
 - `contract_<name>_aggregate.py` exists; ≥1 aggregate, ≤3 types.
+
 ## Verify
 
 ```bash

@@ -100,9 +100,9 @@ pub use taxonomy_violation_item_vo::ViolationItem;
 pub use taxonomy_violation_item_vo::parse_fix;
 pub use taxonomy_violation_item_vo::parse_violation_name;
 pub use taxonomy_violation_item_vo::parse_why;
+pub use utility_architecture_layer_detector::VALID_LAYERS;
 pub use utility_architecture_layer_detector::detect_layer_from_prefix;
 pub use utility_architecture_layer_detector::filter_violations_by_layer;
-pub use utility_architecture_layer_detector::VALID_LAYERS;
 
 // The release version lives in `utility_release_version` so a `utility_` file
 // carries no type definition (AES404). Re-exported here because every crate
