@@ -14,7 +14,7 @@ use crate::taxonomy_project_setup_vo::EmbeddedSkillVO;
 /// renaming a skill file —
 /// `catalog_matches_the_skills_directory` in
 /// `crates/dispatcher/tests/unit_dispatcher_setup_skills.rs` fails otherwise.
-pub const EMBEDDED_SKILLS_COUNT: usize = 119;
+pub const EMBEDDED_SKILLS_COUNT: usize = 118;
 
 /// Builds `EMBEDDED_SKILLS` from one invocation per skill file. Each entry is one
 /// token tree `[name, path, out_path]` or `[name, path, out_path, lang]`; rustfmt does
@@ -489,254 +489,248 @@ pub const EMBEDDED_SKILLS: &[EmbeddedSkillVO] = embedded_skills![
     ],
     [
         "aes-fix",
-        "aes-fix/references/step-3-AES101.md",
-        "/skills/aes-fix/references/step-3-AES101.md",
+        "aes-fix/references/step-1-AES101.md",
+        "/skills/aes-fix/references/step-1-AES101.md",
         None
     ],
     [
         "aes-fix",
-        "aes-fix/references/step-4-AES102.md",
-        "/skills/aes-fix/references/step-4-AES102.md",
+        "aes-fix/references/step-2-AES102.md",
+        "/skills/aes-fix/references/step-2-AES102.md",
         None
     ],
     [
         "aes-fix",
-        "aes-fix/references/step-5-AES103.md",
-        "/skills/aes-fix/references/step-5-AES103.md",
+        "aes-fix/references/step-3-AES103.md",
+        "/skills/aes-fix/references/step-3-AES103.md",
         None
     ],
     [
         "aes-fix",
-        "aes-fix/references/step-6-AES201.md",
-        "/skills/aes-fix/references/step-6-AES201.md",
+        "aes-fix/references/step-4-AES201.md",
+        "/skills/aes-fix/references/step-4-AES201.md",
         None
     ],
     [
         "aes-fix",
-        "aes-fix/references/step-7-AES202.md",
-        "/skills/aes-fix/references/step-7-AES202.md",
+        "aes-fix/references/step-5-AES202.md",
+        "/skills/aes-fix/references/step-5-AES202.md",
         None
     ],
     [
         "aes-fix",
-        "aes-fix/references/step-8-AES203.md",
-        "/skills/aes-fix/references/step-8-AES203.md",
+        "aes-fix/references/step-6-AES203.md",
+        "/skills/aes-fix/references/step-6-AES203.md",
         None
     ],
     [
         "aes-fix",
-        "aes-fix/references/step-9-AES204.md",
-        "/skills/aes-fix/references/step-9-AES204.md",
+        "aes-fix/references/step-7-AES204.md",
+        "/skills/aes-fix/references/step-7-AES204.md",
         None
     ],
     [
         "aes-fix",
-        "aes-fix/references/step-10-AES205.md",
-        "/skills/aes-fix/references/step-10-AES205.md",
+        "aes-fix/references/step-8-AES205.md",
+        "/skills/aes-fix/references/step-8-AES205.md",
         None
     ],
     [
         "aes-fix",
-        "aes-fix/references/step-11-AES301.md",
-        "/skills/aes-fix/references/step-11-AES301.md",
+        "aes-fix/references/step-9-AES301.md",
+        "/skills/aes-fix/references/step-9-AES301.md",
         None
     ],
     [
         "aes-fix",
-        "aes-fix/references/step-12-AES302.md",
-        "/skills/aes-fix/references/step-12-AES302.md",
+        "aes-fix/references/step-10-AES302.md",
+        "/skills/aes-fix/references/step-10-AES302.md",
         None
     ],
     [
         "aes-fix",
-        "aes-fix/references/step-13-AES303.md",
-        "/skills/aes-fix/references/step-13-AES303.md",
+        "aes-fix/references/step-11-AES303.md",
+        "/skills/aes-fix/references/step-11-AES303.md",
         None
     ],
     [
         "aes-fix",
-        "aes-fix/references/step-14-AES304.md",
-        "/skills/aes-fix/references/step-14-AES304.md",
+        "aes-fix/references/step-12-AES304.md",
+        "/skills/aes-fix/references/step-12-AES304.md",
         None
     ],
     [
         "aes-fix",
-        "aes-fix/references/step-15-AES305.md",
-        "/skills/aes-fix/references/step-15-AES305.md",
+        "aes-fix/references/step-13-AES305.md",
+        "/skills/aes-fix/references/step-13-AES305.md",
         None
     ],
     [
         "aes-fix",
-        "aes-fix/references/step-16-AES401.md",
-        "/skills/aes-fix/references/step-16-AES401.md",
+        "aes-fix/references/step-14-AES401.md",
+        "/skills/aes-fix/references/step-14-AES401.md",
         None
     ],
     [
         "aes-fix",
-        "aes-fix/references/step-17-AES402.md",
-        "/skills/aes-fix/references/step-17-AES402.md",
+        "aes-fix/references/step-15-AES402.md",
+        "/skills/aes-fix/references/step-15-AES402.md",
         None
     ],
     [
         "aes-fix",
-        "aes-fix/references/step-18-AES403.md",
-        "/skills/aes-fix/references/step-18-AES403.md",
+        "aes-fix/references/step-16-AES403.md",
+        "/skills/aes-fix/references/step-16-AES403.md",
         None
     ],
     [
         "aes-fix",
-        "aes-fix/references/step-19-AES404.md",
-        "/skills/aes-fix/references/step-19-AES404.md",
+        "aes-fix/references/step-17-AES404.md",
+        "/skills/aes-fix/references/step-17-AES404.md",
         None
     ],
     [
         "aes-fix",
-        "aes-fix/references/step-20-AES405.md",
-        "/skills/aes-fix/references/step-20-AES405.md",
+        "aes-fix/references/step-18-AES405.md",
+        "/skills/aes-fix/references/step-18-AES405.md",
         None
     ],
     [
         "aes-fix",
-        "aes-fix/references/step-21-AES406.md",
-        "/skills/aes-fix/references/step-21-AES406.md",
+        "aes-fix/references/step-19-AES406.md",
+        "/skills/aes-fix/references/step-19-AES406.md",
         None
     ],
     [
         "aes-fix",
-        "aes-fix/references/step-22-AES501.md",
-        "/skills/aes-fix/references/step-22-AES501.md",
+        "aes-fix/references/step-20-AES501.md",
+        "/skills/aes-fix/references/step-20-AES501.md",
         None
     ],
     [
         "aes-fix",
-        "aes-fix/references/step-23-AES502.md",
-        "/skills/aes-fix/references/step-23-AES502.md",
+        "aes-fix/references/step-21-AES502.md",
+        "/skills/aes-fix/references/step-21-AES502.md",
         None
     ],
     [
         "aes-fix",
-        "aes-fix/references/step-24-AES503.md",
-        "/skills/aes-fix/references/step-24-AES503.md",
+        "aes-fix/references/step-22-AES503.md",
+        "/skills/aes-fix/references/step-22-AES503.md",
         None
     ],
     [
         "aes-fix",
-        "aes-fix/references/step-25-AES504.md",
-        "/skills/aes-fix/references/step-25-AES504.md",
+        "aes-fix/references/step-23-AES504.md",
+        "/skills/aes-fix/references/step-23-AES504.md",
         None
     ],
     [
         "aes-fix",
-        "aes-fix/references/step-26-AES505.md",
-        "/skills/aes-fix/references/step-26-AES505.md",
+        "aes-fix/references/step-24-AES505.md",
+        "/skills/aes-fix/references/step-24-AES505.md",
         None
     ],
     [
         "aes-fix",
-        "aes-fix/references/step-27-AES506.md",
-        "/skills/aes-fix/references/step-27-AES506.md",
+        "aes-fix/references/step-25-AES506.md",
+        "/skills/aes-fix/references/step-25-AES506.md",
         None
     ],
     [
         "aes-fix",
-        "aes-fix/references/step-28-AES601.md",
-        "/skills/aes-fix/references/step-28-AES601.md",
+        "aes-fix/references/step-26-AES601.md",
+        "/skills/aes-fix/references/step-26-AES601.md",
         None
     ],
     [
         "aes-fix",
-        "aes-fix/references/step-29-AES602.md",
-        "/skills/aes-fix/references/step-29-AES602.md",
+        "aes-fix/references/step-27-AES602.md",
+        "/skills/aes-fix/references/step-27-AES602.md",
         None
     ],
     [
         "aes-fix",
-        "aes-fix/references/step-30-AES603.md",
-        "/skills/aes-fix/references/step-30-AES603.md",
+        "aes-fix/references/step-28-AES603.md",
+        "/skills/aes-fix/references/step-28-AES603.md",
         None
     ],
     [
         "aes-fix",
-        "aes-fix/references/step-31-AES604.md",
-        "/skills/aes-fix/references/step-31-AES604.md",
+        "aes-fix/references/step-29-AES604.md",
+        "/skills/aes-fix/references/step-29-AES604.md",
         None
     ],
     [
         "aes-fix",
-        "aes-fix/references/step-32-AES605.md",
-        "/skills/aes-fix/references/step-32-AES605.md",
+        "aes-fix/references/step-30-AES605.md",
+        "/skills/aes-fix/references/step-30-AES605.md",
         None
     ],
     [
         "aes-fix",
-        "aes-fix/references/step-33-AES606.md",
-        "/skills/aes-fix/references/step-33-AES606.md",
+        "aes-fix/references/step-31-AES606.md",
+        "/skills/aes-fix/references/step-31-AES606.md",
         None
     ],
     [
         "aes-fix",
-        "aes-fix/references/step-34-AES607.md",
-        "/skills/aes-fix/references/step-34-AES607.md",
+        "aes-fix/references/step-32-AES607.md",
+        "/skills/aes-fix/references/step-32-AES607.md",
         None
     ],
     [
         "aes-fix",
-        "aes-fix/references/step-35-AES608.md",
-        "/skills/aes-fix/references/step-35-AES608.md",
+        "aes-fix/references/step-33-AES608.md",
+        "/skills/aes-fix/references/step-33-AES608.md",
         None
     ],
     [
         "aes-fix",
-        "aes-fix/references/step-36-AES609.md",
-        "/skills/aes-fix/references/step-36-AES609.md",
+        "aes-fix/references/step-34-AES609.md",
+        "/skills/aes-fix/references/step-34-AES609.md",
         None
     ],
     [
         "aes-fix",
-        "aes-fix/references/step-37-AES610.md",
-        "/skills/aes-fix/references/step-37-AES610.md",
+        "aes-fix/references/step-35-AES610.md",
+        "/skills/aes-fix/references/step-35-AES610.md",
         None
     ],
     [
         "aes-fix",
-        "aes-fix/references/step-38-AES701.md",
-        "/skills/aes-fix/references/step-38-AES701.md",
+        "aes-fix/references/step-36-AES701.md",
+        "/skills/aes-fix/references/step-36-AES701.md",
         None
     ],
     [
         "aes-fix",
-        "aes-fix/references/step-39-AES702.md",
-        "/skills/aes-fix/references/step-39-AES702.md",
+        "aes-fix/references/step-37-AES702.md",
+        "/skills/aes-fix/references/step-37-AES702.md",
         None
     ],
     [
         "aes-fix",
-        "aes-fix/references/step-40-AES703.md",
-        "/skills/aes-fix/references/step-40-AES703.md",
+        "aes-fix/references/step-38-AES703.md",
+        "/skills/aes-fix/references/step-38-AES703.md",
         None
     ],
     [
         "aes-fix",
-        "aes-fix/references/step-41-AES704.md",
-        "/skills/aes-fix/references/step-41-AES704.md",
+        "aes-fix/references/step-39-AES704.md",
+        "/skills/aes-fix/references/step-39-AES704.md",
         None
     ],
     [
         "aes-fix",
-        "aes-fix/references/step-42-AES705.md",
-        "/skills/aes-fix/references/step-42-AES705.md",
+        "aes-fix/references/step-40-AES705.md",
+        "/skills/aes-fix/references/step-40-AES705.md",
         None
     ],
     [
         "aes-fix",
-        "aes-fix/references/step-43-AES706.md",
-        "/skills/aes-fix/references/step-43-AES706.md",
-        None
-    ],
-    [
-        "aes-fix",
-        "aes-fix/references/step-2-orchestration.md",
-        "/skills/aes-fix/references/step-2-orchestration.md",
+        "aes-fix/references/step-41-AES706.md",
+        "/skills/aes-fix/references/step-41-AES706.md",
         None
     ],
 ];
