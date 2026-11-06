@@ -23,6 +23,7 @@ pub struct ScanCommandParams {
     pub filesystem_seam: FilesystemSeam,
     pub config_orchestrator: Option<Arc<dyn IConfigOrchestratorAggregate>>,
     pub filter: Option<String>,
+    pub layer: Option<String>,
     pub member: Option<String>,
     /// In-process aggregate bundle (W10); `None` falls back to subprocess.
     pub scan_aggregates: Option<dispatcher::surface_check_action::ScanAggregates>,

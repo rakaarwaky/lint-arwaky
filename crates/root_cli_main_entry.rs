@@ -50,8 +50,11 @@ enum Command {
         #[arg(long, default_value = "text")]
         format: String,
         /// Filter output by AES rule code (e.g. AES101, AES301).
-        #[arg(long, alias = "filter")]
+        #[arg(long)]
         rules: Option<String>,
+        /// Filter output violations by AES layer (taxonomy, contract, agent, surface, utility, capabilities, logical).
+        #[arg(long, value_name = "LAYER")]
+        layer: Option<String>,
         /// Scan only a specific workspace member by name.
         #[arg(long)]
         member: Option<String>,
@@ -65,8 +68,11 @@ enum Command {
         #[arg(long, default_value = "text")]
         format: String,
         /// Filter output by AES rule code (e.g. AES101, AES301).
-        #[arg(long, alias = "filter")]
+        #[arg(long)]
         rules: Option<String>,
+        /// Filter output violations by AES layer (taxonomy, contract, agent, surface, utility, capabilities, logical).
+        #[arg(long, value_name = "LAYER")]
+        layer: Option<String>,
         /// Scan only a specific workspace member by name.
         #[arg(long)]
         member: Option<String>,
@@ -181,6 +187,7 @@ struct GroupScanValues {
     path: String,
     format: String,
     rules: Option<String>,
+    layer: Option<String>,
     member: Option<String>,
 }
 
