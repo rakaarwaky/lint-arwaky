@@ -59,7 +59,7 @@ e.g. `for file in files { self.checker.check(file) }` = OK. `files.iter().map(|f
 
 - Rule 1: Never silently discard — no `checker.check().unwrap_or_default()`.
 - Rule 2: Analysis orchestration → return the taxonomy-defined response enum variant; each variant
-  holds VO-wrapped values, not raw primitives.
+holds VO-wrapped values, not raw primitives.
 - Rule 3: Execution orchestration → return `Result<ExecutionReport, AgentExecutionError>` wrapped in a VO variant.
 - Rule 4: Delegate I/O errors to capabilities — agent only wraps into VO.
 
@@ -113,18 +113,20 @@ impl Default for Agent<Name> {
 
 ## Section Contract
 
-| Check | Why it belongs here|
-| ----- | -------------------|
-| Block 1 → 2 → 3 order followed. | Required by AES layer rules and the linter; missing it is a defect.|
-| Block 2: ONLY aggregate trait implementation. | Required by AES layer rules and the linter; missing it is a defect.|
-| Block 3: constructors, std traits, private helpers. | Required by AES layer rules and the linter; missing it is a defect.|
-| ≥1 struct implements aggregate trait; ≤3 total types. | Required by AES layer rules and the linter; missing it is a defect.|
-| No local domain data; `Arc<dyn Trait>` for DI; shared VOs. | Required by AES layer rules and the linter; missing it is a defect.|
-| Zero I/O, zero business logic, zero domain computation. | Required by AES layer rules and the linter; missing it is a defect.|
-| No forbidden imports. | Required by AES layer rules and the linter; missing it is a defect.|
-| Generic aggregate methods object-safe or `where Self: Sized`. | Required by AES layer rules and the linter; missing it is a defect.|
-| Aggregate registered in shared crate `mod.rs`. | Required by AES layer rules and the linter; missing it is a defect.|
-| `cargo check -p <crate-name>` passes. | Required by AES layer rules and the linter; missing it is a defect.|
+
+| Check                                                         | Why it belongs here                                                 |
+| ------------------------------------------------------------- | ------------------------------------------------------------------- |
+| Block 1 → 2 → 3 order followed.                               | Required by AES layer rules and the linter; missing it is a defect. |
+| Block 2: ONLY aggregate trait implementation.                 | Required by AES layer rules and the linter; missing it is a defect. |
+| Block 3: constructors, std traits, private helpers.           | Required by AES layer rules and the linter; missing it is a defect. |
+| ≥1 struct implements aggregate trait; ≤3 total types.         | Required by AES layer rules and the linter; missing it is a defect. |
+| No local domain data; `Arc<dyn Trait>` for DI; shared VOs.    | Required by AES layer rules and the linter; missing it is a defect. |
+| Zero I/O, zero business logic, zero domain computation.       | Required by AES layer rules and the linter; missing it is a defect. |
+| No forbidden imports.                                         | Required by AES layer rules and the linter; missing it is a defect. |
+| Generic aggregate methods object-safe or `where Self: Sized`. | Required by AES layer rules and the linter; missing it is a defect. |
+| Aggregate registered in shared crate `mod.rs`.                | Required by AES layer rules and the linter; missing it is a defect. |
+| `cargo check -p <crate-name>` passes.                         | Required by AES layer rules and the linter; missing it is a defect. |
+
 
 ---
 
@@ -142,17 +144,17 @@ impl Default for Agent<Name> {
 
 ## Review
 
-- Block 1 → 2 → 3 order; Block 2 holds only aggregate methods; helper-vs-utility split respected (free functions extracted to `*`*_utility.rs`) — § Rules § 3-Block Structure, § Helper vs Utility.
+- Block 1 → 2 → 3 order; Block 2 holds only aggregate methods; helper-vs-utility split respected (free functions extracted to `*`\*\_utility.rs\`) — § Rules § 3-Block Structure, § Helper vs Utility.
 - Orchestration only: zero I/O, zero computation, zero domain data; DI via protocol traits; shared VOs in signatures — § Rules § Allowed / forbidden operations, § Computation, Errors, VOs.
 - No silently discarded errors (`unwrap_or_default()` / `?? ""` on results); errors propagate or wrap into VOs — § Rules Error rules.
 - No agent file in `shared/`; capabilities-only folders carry an agent of their own — § Workflow step 8.
-- `contract_<name>_aggregate.rs` exists; ≥1 aggregate, ≤3 types.
+- `contract_[[ORCA_RICH_MD:ca918982a043cebff6991a8ccb4a0783:inline-html:%3Cname%3E]]_aggregate.rs` exists; ≥1 aggregate, ≤3 types.
 
 ## Verify
 
 ```bash
-lint-arwaky-cli scan <layer-path>
+lint-arwaky-cli scan --layer agent
 # Checks: AES101/AES102 (filename + suffix), AES201–AES205 (layer imports),
 # AES401–AES406 (role/primitive/structure rules for this layer).
-# Language compile is a fallback gate only: `cargo check -p <crate-name>`
+# Language compile is a fallback gate only: `cargo check -p [[ORCA_RICH_MD:ca918982a043cebff6991a8ccb4a0783:inline-html:%3Ccrate-name%3E]]`
 ```

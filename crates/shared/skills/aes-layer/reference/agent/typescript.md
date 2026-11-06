@@ -140,7 +140,7 @@ export class Agent<Name> {
 ## Verify
 
 ```bash
-lint-arwaky-cli scan <layer-path>
+lint-arwaky-cli scan --layer agent
 # Checks: AES101/AES102 (filename + suffix), AES201–AES205 (layer imports),
 # AES401–AES406 (role/primitive/structure rules for this layer).
 # Language compile is a fallback gate only: `npx tsc --noEmit`

@@ -183,7 +183,7 @@ Every contract file is required to carry the rows that apply. Each exists for on
 ## Verify
 
 ```bash
-lint-arwaky-cli scan <contract-dir>
+lint-arwaky-cli scan --layer contract
 # Checks: AES101/AES102 (filename contract_<concept>_{protocol,aggregate}),
 # AES201–AES205 (layer imports: no impl-layer imports; protocol ≠ aggregate import),
 # AES402 (no primitives in signatures), role rules (contract ↔ capabilities/agent/surface).

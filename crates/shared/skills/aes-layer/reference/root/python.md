@@ -136,7 +136,7 @@ a container factory; no business logic.
 ## Verify
 
 ```bash
-lint-arwaky-cli scan <layer-path>
+lint-arwaky-cli scan --layer root
 # Checks: AES101/AES102 (filename + suffix), AES201–AES205 (layer imports),
 # AES401–AES406 (role/primitive/structure rules for this layer).
 # Manual (not machine-checked): correct role suffix; no business/orchestration/parsing/UI logic; nothing below root imports root.

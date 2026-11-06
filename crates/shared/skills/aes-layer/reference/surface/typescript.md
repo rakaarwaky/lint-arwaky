@@ -81,7 +81,8 @@ export class Surface<Name> {
 ## Verify
 
 ```bash
-lint-arwaky-cli scan <layer-path>
+lint-arwaky-cli scan --layer surface
+
 # Checks: AES101/AES102 (filename + suffix), AES201–AES205 (layer imports),
 # AES401–AES406 (role/primitive/structure rules for this layer).
 # Machine-checked: suffix allow-list (AES102); function count over tier limit

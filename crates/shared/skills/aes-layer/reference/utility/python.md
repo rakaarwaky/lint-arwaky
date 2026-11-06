@@ -121,7 +121,7 @@ def <second_function_name>(<param_name>: str) -> str:
 ## Verify
 
 ```bash
-lint-arwaky-cli scan <layer-path>
+lint-arwaky-cli scan --layer utility
 # Checks: AES101/AES102 (filename + suffix), AES201–AES205 (layer imports),
 # AES401–AES406 (role/primitive/structure rules for this layer).
 # Machine-checked: class declarations (metadata path), naming, imports, primitives.
