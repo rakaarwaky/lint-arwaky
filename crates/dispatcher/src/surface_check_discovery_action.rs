@@ -336,7 +336,7 @@ pub(crate) fn build_import_map(
     import_map
 }
 
-/// Run all 6 linters in-memory through their aggregate entry points and
+/// Run all 8 linter groups in-memory through their aggregate entry points and
 /// collect ViolationItems. No subprocess — the linters execute in-process
 /// via `run_all_linters_in_process`.
 pub(crate) fn run_all_linters_in_memory(
@@ -352,7 +352,7 @@ pub(crate) fn run_all_linters_in_memory(
 }
 
 /// In-memory scan for callers that do not hold a full `ScanAggregates`
-/// bundle. Runs all 6 linters through their aggregate entry points — no
+/// bundle. Runs all 8 linter groups through their aggregate entry points — no
 /// subprocess self-invocation (current_exe is forbidden by the architecture
 /// rules).
 pub(crate) fn run_all_linters_json(
