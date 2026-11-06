@@ -6,14 +6,14 @@ This step owns the full run: baseline, per-member subagent fan-out, delta verifi
 
 1. Run `lint-arwaky-cli report .` once now and record the violation counts for each rule code.
 2. Identify which rule code your scan reported a violation for (e.g. `AES101`).
-3. Read the step file matching that rule code from the Routing table in `SKILL.md` 
+3. Read the step file matching that rule code from the Routing table in `SKILL.md`
 
 ## 2. Group violations by member
 
 From the baseline `lint-arwaky-cli report .` output:
 
 1. List every violating file.
-2. Group the files by owning member. A member is the top-level directory or crate that owns 
+2. Group the files by owning member. A member is the top-level directory or crate that owns
 3. Keep only members that own at least one violation; members with a clean report are skipped.
 
 ## 3. Spawn one subagent per member
@@ -40,12 +40,6 @@ Run `lint-arwaky-cli report .` again. Compare against the baseline:
 Do not ship with a positive delta outstanding.
 
 ## Commands
-
-
-| Command                    | Use                                                                   |
-| -------------------------- | --------------------------------------------------------------------- |
-| `lint-arwaky-cli report .` | Record the baseline (section 1) and the delta against it (section 4). |
-
 
 ## Completion
 

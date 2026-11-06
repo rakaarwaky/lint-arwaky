@@ -18,7 +18,6 @@ argument-hint: '<target-path> [rule-code]'
 
 ## Routing
 
-
 | Rule code | Reference | What it checks |
 | --------- | --------- | -------------- |
 | setup | [`step-0-setup.md`](references/step-0-setup.md) | Baseline, group by member, spawn subagents, verify delta, open PR, merge to main |
