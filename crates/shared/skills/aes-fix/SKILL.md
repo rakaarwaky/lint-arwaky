@@ -13,16 +13,15 @@ argument-hint: '<target-path> [rule-code]'
 - **Cite the checker name**, not just the rule code, when pointing at implementation (e.g. `NamingConventionChecker` for AES101).
 - **Every reference ends with a Verify step** naming the exact command.
 - **Turn progress gates.** Run `lint-arwaky-cli report` once at the start of the turn (baseline) and once at the end (delta). A positive delta means the run added problems; the turn is not done.
-- **Orchestration and ship** follow `step-2-orchestration.md`: group violations by owning member, spawn one subagent per member with its own violations and rule reference links, verify the delta, then open a PR and merge to main.
+- **Orchestration and ship** are part of `step-0-setup.md`: group violations by owning member, spawn one subagent per member with its own violations and rule reference links, verify the delta, then open a PR and merge to main.
 - **Completion.** The end-of-turn report shows zero or negative delta for every touched rule and the PR is merged to main.
 
 ## Routing
 
-Start every run at [`references/step-0-setup.md`](references/step-0-setup.md). End every run at [`references/step-2-orchestration.md`](references/step-2-orchestration.md). In between, read only the step matching each reported rule code; do not walk every step in sequence.
 
 | Rule code | Reference | What it checks |
 | --------- | --------- | -------------- |
-| setup | [`step-0-setup.md`](references/step-0-setup.md) | Baseline report and step routing |
+| setup | [`step-0-setup.md`](references/step-0-setup.md) | Baseline, group by member, spawn subagents, verify delta, open PR, merge to main |
 | AES101 | [`step-3-AES101.md`](references/step-3-AES101.md) | Naming: Variable |
 | AES102 | [`step-4-AES102.md`](references/step-4-AES102.md) | Naming: Function / Method |
 | AES103 | [`step-5-AES103.md`](references/step-5-AES103.md) | Naming: Class / Struct |
@@ -64,4 +63,3 @@ Start every run at [`references/step-0-setup.md`](references/step-0-setup.md). E
 | AES704 | [`step-41-AES704.md`](references/step-41-AES704.md) | Project Structure: Tests |
 | AES705 | [`step-42-AES705.md`](references/step-42-AES705.md) | Project Structure: Docs |
 | AES706 | [`step-43-AES706.md`](references/step-43-AES706.md) | Project Structure: PR-LA Folder Mapping |
-| orchestration | [`step-2-orchestration.md`](references/step-2-orchestration.md) | Group by member, spawn subagents, verify delta, open PR, merge to main |
