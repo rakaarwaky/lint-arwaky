@@ -38,6 +38,39 @@ pub fn detect_layer_from_prefix(filename: &str) -> Option<String> {
     None
 }
 
+/// Validate a layer name against the accepted set of AES layer identifiers.
+/// Returns `true` if the layer is recognised, `false` otherwise.
+pub const VALID_LAYERS: &[&str] = &[
+    "taxonomy",
+    "contract",
+    "agent",
+    "surface",
+    "utility",
+    "capabilities",
+    "logical",
+];
+
+/// Post-filter a violation list by AES layer.
+///
+/// Retains violations whose file path resolves to the given layer using
+/// `detect_layer_from_prefix`. When no layer is set the list is returned
+/// unchanged. All linters still run; this only narrows the output.
+pub fn filter_violations_by_layer(
+    mut violations: Vec<crate::ViolationItem>,
+    layer: &Option<String>,
+) -> Vec<crate::ViolationItem> {
+    if let Some(layer_name) = layer {
+        let target = layer_name.to_lowercase();
+        violations.retain(|v| {
+            detect_layer_from_prefix(v.file.value())
+                .as_deref()
+                .map(|l| l.eq_ignore_ascii_case(&target))
+                .unwrap_or(false)
+        });
+    }
+    violations
+}
+
 /// Resolve specialised sub-layer from file suffix.
 ///
 /// E.g., "capabilities_command" with base_layer="capabilities":

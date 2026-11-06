@@ -318,7 +318,7 @@ lint-arwaky-cli role modules/ --filter AES403
 | Pre-flight | A scan on a broken interpreter is noise, not signal. |
 | Scan with path + format | Findings must be machine-triageable (json) or human-scannable (text). |
 | Triage order | CRITICAL (AES201/205/304) blocks merge; fix before HIGH/MEDIUM cosmetics. |
-| Fix routing by AES code | Wrong fix layer recreates the violation; route via lint-routing in `aes-migration/SKILL.md`. |
+| Fix routing by AES code | Wrong fix layer recreates the violation; route via lint-routing in `lint-rules.md` (`## AES fix routing`). |
 | Barrel update after rename | AES101 without `__init__.py` re-export becomes AES501–506. |
 | Role-boundary check | Capabilities/utility/agent rows above must hold after fixes. |
 | Re-scan to 0 | Done means zero AES findings, not "mostly clean". |
@@ -345,7 +345,7 @@ ruff check src/
 mypy src/
 ```
 
-Exit codes (shared, `aes-migration/SKILL.md`): `0` pass · `1` violations · `2` config/parse error.
+Exit codes (shared, `lint-rules.md` (`## Exit codes`)): `0` pass · `1` violations · `2` config/parse error.
 
 Manual:
 

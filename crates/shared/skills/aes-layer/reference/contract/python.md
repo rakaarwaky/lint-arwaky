@@ -57,6 +57,16 @@ Seven rules. Each one prevents a specific failure mode.
 
 ---
 
+## Review
+
+- Suffix is strictly `_protocol` or `_aggregate`; class names `I<Name>Protocol` / `I<Name>Aggregate`, file `contract_<concept>_<suffix>.py` — § Rules rule 1.
+- `class` only — methods end with `:` and a body ellipsis or implementation; never default implementations — § Rules rule 2.
+- One file per feature; one class per capability seam; each class rich — every method its capability owns, one concrete return type each — § Rules rule 3.
+- A capability implements exactly one class, all of it — no partial implementations, no unimplemented stubs — § Rules rule 4.
+- Aggregate = exactly one method (`execute`), never `execute(op, …)` dispatch bag — § Rules rule 5.
+- Shared VOs in signatures — no numeric primitives (`int`, `float`, `list`, `dict`) or bare `str` for domain values; `bool` permitted for toggles only — § Rules rule 6.
+- Register in shared `__init__.py` with `__all__` + `_layer_symbols` — § Rules rule 7.
+
 ## Workflow
 
 1. **Determine suffix** — `_protocol` (inward, rich classes) or `_aggregate` (outward, one  
@@ -190,7 +200,7 @@ Every contract file is required to carry the rows that apply. Each exists for on
 ## Verify
 
 ```bash
-lint-arwaky-cli scan <contract-dir>
+lint-arwaky-cli scan --layer contract
 # Checks: AES101/AES102 (filename contract_<concept>_{protocol,aggregate}),
 # AES201–AES205 (layer imports: no impl-layer imports; protocol ≠ aggregate import),
 # AES402 (no primitives in signatures), role rules (contract ↔ capabilities/agent/surface).

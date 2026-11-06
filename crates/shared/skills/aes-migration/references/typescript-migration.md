@@ -302,7 +302,7 @@ lint-arwaky-cli role packages/ --filter AES403
 | Pre-flight typecheck | A scan on a non-compiling package is noise, not signal. |
 | Scan with path + member + format | Findings must be machine-triageable and package-scoped. |
 | Triage order | CRITICAL (AES201/205/304) blocks merge; fix before HIGH/MEDIUM cosmetics. |
-| Fix routing by AES code | Wrong fix layer recreates the violation; route via lint-routing in `aes-migration/SKILL.md`. |
+| Fix routing by AES code | Wrong fix layer recreates the violation; route via lint-routing in `lint-rules.md` (`## AES fix routing`). |
 | Barrel update after rename | AES101 without `index.ts` re-export becomes AES501–506. |
 | Role-boundary check | Capabilities/utility/agent rows above must hold after fixes. |
 | Re-scan to 0 | Done means zero AES findings, not "mostly clean". |
@@ -326,7 +326,7 @@ npx eslint src/ --ext .ts,.tsx,.js,.jsx
 npx vitest run  # or npm test
 ```
 
-Exit codes (shared, `aes-migration/SKILL.md`): `0` pass · `1` violations · `2` config/parse error.
+Exit codes (shared, `lint-rules.md` (`## Exit codes`)): `0` pass · `1` violations · `2` config/parse error.
 
 Manual:
 
