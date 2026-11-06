@@ -56,7 +56,7 @@ pub fn filter_violations_by_layer(
     if let Some(layer_name) = layer {
         let target = layer_name.to_lowercase();
         violations.retain(|v| {
-            detect_layer_from_prefix(v.file.as_str())
+            detect_layer_from_prefix(v.file.value())
                 .as_deref()
                 .map(|l| l.eq_ignore_ascii_case(&target))
                 .unwrap_or(false)

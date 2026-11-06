@@ -32,7 +32,7 @@ lint-arwaky-cli ci . --threshold 80
 | `-v`   | `--verbose`          | Increase log verbosity (count: `-v` info, `-vv` debug).                  |
 | `-q`   | `--quiet`            | Minimize console output (suppress non-error messages).                   |
 | `-o`   | `--output-dir <DIR>` | Directory to save generated reports (overrides active configuration).    |
-|        | `--filter <CODE>`    | Filter scan results by specific AES rule code (e.g. `AES101`, `AES301`). |
+|        | `--layer <LAYER>`    | Filter scan output by AES layer: taxonomy, contract, agent, surface, utility, capabilities, logical. Keeps violations whose file basename starts with `<LAYER>_`. |
 | `-h`   | `--help`             | Print help information for the CLI or a specific subcommand.             |
 | `-V`   | `--version`          | Print CLI binary version.                                                |
 
@@ -42,12 +42,12 @@ lint-arwaky-cli ci . --threshold 80
 
 | Command                 | Purpose                                                                                                                                                                                               |
 | :----------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `scan` / `check [PATH]` | Run all linters: naming, import, quality, role, orphan, external, , doc, structure. `--format text/json/sarif/junit` (default text), `--rules|--filter <CODE>`, `--member <NAME>`, `--group <GROUP>`. |
+| `scan` / `check [PATH]` | Run all linters: naming, import, quality, role, orphan, external, , doc, structure. `--format text/json/sarif/junit` (default text), `--rules <CODE>`, `--layer <LAYER>`, `--member <NAME>`, `--group <GROUP>`. |
 | `report [PATH]`         | Progress report: counts per member and what changed since the last run.                                                                                                                               |
 | `ci [PATH]`             | Quality gate; `--threshold <SCORE>` (default 80, exit 1 below it). No `--format` flag.                                                                                                                |
 | `config`                | Show effective architecture config.                                                                                                                                                                   |
 | `fix [PATH]`            | Apply safe automatic fixes (AES301-305 only); `--dry-run`.                                                                                                                                            |
-| `git [PATH]`            | Scan files changed since git base; `--base <BRANCH>` (default `develop`), `--filter <CODE>`.                                                                                                          |
+| `git [PATH]`            | Scan files changed since git base; `--base <BRANCH>` (default `develop`), `--layer <LAYER>`.                                                                                                               |
 | `doctor`                | Environment diagnostics.                                                                                                                                                                              |
 | `security [PATH]`       | Security vulnerability scan.                                                                                                                                                                          |
 | `dependencies [PATH]`   | Dependency report.                                                                                                                                                                                    |

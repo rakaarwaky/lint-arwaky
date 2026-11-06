@@ -5,6 +5,7 @@ use dispatcher::surface_orphan_action::OrphanFactory;
 use shared_common::ExitCode;
 use shared_common::FilePath;
 use shared_common::format_as_str;
+use shared_common::ViolationItem;
 use shared_config_system::IConfigOrchestratorAggregate;
 use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared_quality_rules::ICodeAnalysisAggregate;
@@ -37,6 +38,7 @@ pub struct QualityCommandParams {
     pub filesystem: Arc<dyn IFilesystemAggregate>,
     pub filesystem_seam: FilesystemSeam,
     pub filter: Option<String>,
+    pub layer: Option<String>,
     pub ignored_paths: Vec<String>,
 }
 
@@ -49,6 +51,7 @@ pub struct ImportCommandParams {
     pub filesystem: Arc<dyn IFilesystemAggregate>,
     pub filesystem_seam: FilesystemSeam,
     pub filter: Option<String>,
+    pub layer: Option<String>,
     pub ignored_paths: Vec<String>,
 }
 
@@ -61,6 +64,7 @@ pub struct NamingCommandParams {
     pub filesystem: Arc<dyn IFilesystemAggregate>,
     pub filesystem_seam: FilesystemSeam,
     pub filter: Option<String>,
+    pub layer: Option<String>,
     pub ignored_paths: Vec<String>,
 }
 
@@ -73,6 +77,7 @@ pub struct RoleCommandParams {
     pub filesystem: Arc<dyn IFilesystemAggregate>,
     pub filesystem_seam: FilesystemSeam,
     pub filter: Option<String>,
+    pub layer: Option<String>,
     pub ignored_paths: Vec<String>,
 }
 
@@ -87,6 +92,7 @@ pub struct OrphanCommandParams {
     pub filesystem: Arc<dyn IFilesystemAggregate>,
     pub filesystem_seam: FilesystemSeam,
     pub filter: Option<String>,
+    pub layer: Option<String>,
     pub fs_factory: Arc<dyn Fn() -> FilesystemSeam + Send + Sync>,
     pub orphan_factory: Arc<OrphanFactory>,
 }
@@ -101,6 +107,7 @@ pub struct ExternalCommandParams {
     pub filesystem_seam: FilesystemSeam,
     pub config_file_reader: Arc<dyn shared_config_system::IConfigFileReaderAggregate>,
     pub filter: Option<String>,
+    pub layer: Option<String>,
     pub ignored_paths: Vec<String>,
 }
 
@@ -113,6 +120,7 @@ pub struct DocsCommandParams {
     pub config_file_reader: Arc<dyn shared_config_system::IConfigFileReaderAggregate>,
     pub strict: bool,
     pub rules: Option<String>,
+    pub layer: Option<String>,
 }
 
 /// Parameters for the `structure` command.
@@ -125,6 +133,7 @@ pub struct StructureCommandParams {
     pub filesystem_seam: FilesystemSeam,
     pub config_file_reader: Arc<dyn shared_config_system::IConfigFileReaderAggregate>,
     pub filter: Option<String>,
+    pub layer: Option<String>,
     pub ignored_paths: Vec<String>,
 }
 
@@ -150,6 +159,25 @@ fn exit_for(violations: usize) -> ExitCode {
     }
 }
 
+/// `--layer` output filter: keep only violations whose file basename starts
+/// with `<LAYER>_` (e.g. `taxonomy_`, `contract_`, `agent_`, `surface_`,
+/// `utility_`, `capabilities_`, `logical_`). All linters still run; only the
+/// reported violations are narrowed. `None` / empty layer keeps everything.
+fn filter_by_layer<'a>(
+    violations: &'a mut [ViolationItem],
+    layer: &Option<String>,
+) {
+    if let Some(layer) = layer {
+        let prefix = format!("{layer}_");
+        violations.retain(|v| {
+            std::path::Path::new(v.file.value())
+                .file_name()
+                .map(|n| n.to_string_lossy().as_ref().starts_with(&prefix))
+                .unwrap_or(false)
+        });
+    }
+}
+
 /// `scan` — run all 6 linters via subprocesses (dispatcher self-invocation).
 pub fn handle_scan(params: ScanCommandParams) -> ExitCode {
     let member_flag = is_member(&params.path, &params.filesystem_seam);
@@ -164,6 +192,7 @@ pub fn handle_scan(params: ScanCommandParams) -> ExitCode {
     let root = resolve_root(&opts.path);
     match dispatcher::surface_check_action::collect_scan(opts) {
         Ok(violations) => {
+            filter_by_layer(&mut violations, &params.layer);
             output_violations(
                 &violations,
                 &root,
@@ -190,6 +219,7 @@ pub fn handle_quality(params: QualityCommandParams) -> ExitCode {
         &params.ignored_paths,
     ) {
         Ok(violations) => {
+            filter_by_layer(&mut violations, &params.layer);
             output_violations(
                 &violations,
                 &root,
@@ -216,6 +246,7 @@ pub fn handle_import(params: ImportCommandParams) -> ExitCode {
         &params.ignored_paths,
     ) {
         Ok(violations) => {
+            filter_by_layer(&mut violations, &params.layer);
             output_violations(
                 &violations,
                 &root,
@@ -242,6 +273,7 @@ pub fn handle_naming(params: NamingCommandParams) -> ExitCode {
         &params.ignored_paths,
     ) {
         Ok(violations) => {
+            filter_by_layer(&mut violations, &params.layer);
             output_violations(
                 &violations,
                 &root,
@@ -279,6 +311,7 @@ pub fn handle_docs(params: DocsCommandParams) -> ExitCode {
                 let rules_upper = rules_str.to_uppercase();
                 violations.retain(|v| v.code.code().contains(&rules_upper));
             }
+            filter_by_layer(&mut violations, &params.layer);
             output_violations(&violations, &root, format_as_str(params.format), false);
             exit_for(violations.len())
         }
@@ -300,6 +333,7 @@ pub fn handle_role(params: RoleCommandParams) -> ExitCode {
         &params.ignored_paths,
     ) {
         Ok(violations) => {
+            filter_by_layer(&mut violations, &params.layer);
             output_violations(
                 &violations,
                 &root,
@@ -332,6 +366,7 @@ pub fn handle_orphan(params: OrphanCommandParams) -> ExitCode {
         params.filter,
     ) {
         Ok(violations) => {
+            filter_by_layer(&mut violations, &params.layer);
             output_violations(
                 &violations,
                 &root,
@@ -359,6 +394,7 @@ pub fn handle_external(params: ExternalCommandParams) -> ExitCode {
         &params.ignored_paths,
     ) {
         Ok(violations) => {
+            filter_by_layer(&mut violations, &params.layer);
             output_violations(&violations, &root, format_as_str(params.format), false);
             exit_for(violations.len())
         }
@@ -383,6 +419,7 @@ pub fn handle_structure(params: StructureCommandParams) -> ExitCode {
                 let filter_upper = filter_str.to_uppercase();
                 violations.retain(|v| v.code.code().contains(&filter_upper));
             }
+            filter_by_layer(&mut violations, &params.layer);
             output_violations(&violations, &root, format_as_str(params.format), false);
             exit_for(violations.len())
         }
