@@ -171,6 +171,18 @@ Repo root:
 
 ---
 
+## Review
+
+- No inline tests in `src/` — all suites live under `tests/`/`benches/` — § Rules placement rules.
+- Flat prefix naming (`<type>_<subject>.py`), no subdirectories under `tests/` — the prefix IS the virtual folder — § Rules naming rules.
+- ALL 8 test types present per module: contract, unit, integration, dogfood, smoke, e2e, acceptance, bench — no type is optional — § Rules coverage rules.
+- Contract test proves the protocol/aggregate ABC exists before behaviour tests — § Rules ordering rule.
+- Unit tests cover happy path, edge cases, and error paths — § Rules baseline rule.
+- Integration test builds real DI wiring; e2e asserts on real output — no mocks — § Rules realism rule.
+- Coverage meets 70/60/50 floor for capabilities/agent/utility — § Rules coverage rule.
+- Benchmarks use `pytest-benchmark`, not manual timing loops — § Rules bench rule.
+- Acceptance tests reference FRD/PRD IDs; smoke runs in <5s — § Rules traceability rule.
+
 ## Dogfood / Integration Pipeline Tests
 
 **Dogfood tests are REQUIRED — not optional.** They validate against LIVE services.

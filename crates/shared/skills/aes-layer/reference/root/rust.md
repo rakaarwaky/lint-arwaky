@@ -103,6 +103,14 @@ a container; no business logic.
 
 ---
 
+## Review
+
+- Role suffix correct: `_container` (composition container) or `_entry` (app entry) — § Rules role rules.
+- Container: `new` + accessors only, wiring is the whole job — § Rules container rules.
+- Entry: compose containers + `main`, bootstrap only — § Rules entry rules.
+- Layer-legal imports — `Arc<dyn Trait>` in signatures, no concrete capability exposure — § Rules import/signature rules.
+- Registered in `mod.rs` — dead code otherwise — § Rules registration rule.
+
 ## Section Contract
 
 | Section | Why it belongs here|
@@ -130,7 +138,7 @@ a container; no business logic.
 ## Verify
 
 ```bash
-lint-arwaky-cli scan <layer-path>
+lint-arwaky-cli scan --layer root
 # Checks: AES101/AES102 (filename + suffix), AES201–AES205 (layer imports),
 # AES401–AES406 (role/primitive/structure rules for this layer).
 # Manual (not machine-checked): correct role suffix; no business/orchestration/parsing/UI logic; nothing below root imports root.

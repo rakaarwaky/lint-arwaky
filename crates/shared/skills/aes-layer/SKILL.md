@@ -3,6 +3,7 @@ name: aes-layer
 description: "AES layer scaffolding for agent, capabilities, contract, root, surface, taxonomy, utility across Python, Rust, TypeScript, plus test-suite HOW-TOs under reference/test/. Create a new layer file or improve/audit an existing one."
 when-to-use: "Create a new AES layer file or improve/audit an existing one. Pass a folder path (a crate/module/package dir) or a single file path; the layer (agent/capabilities/contract/root/surface/taxonomy/utility) and language (python/rust/typescript) are auto-detected from the path and routed to reference/<layer>/<language>.md. Without --dry-run the task runs autonomously without asking for permission; with --dry-run it generates a report only and makes no changes."
 argument-hint: '<path> [create|improve] [--dry-run]'
+user-invocable: true
 ---
 
 # aes-layer
@@ -19,6 +20,7 @@ Scaffold AES layer files — agent orchestrators, capabilities, contracts, compo
 - Safety model: default (no `--dry-run`) = autonomous, no permission prompts, execute directly. `--dry-run` = read-only: produce the findings report and STOP before any write; the report is the deliverable. This bullet is the single source of truth for mode/safety semantics.
 - Report: every run ends with a report block — files touched (dry-run: files that WOULD be touched), language detected, mode, findings/fixes.
 - Verify: `lint-arwaky-cli scan <layer-path>` → 0 violations. Language compile is fallback only.
+- On-disk verify: a parallel agent or `git reset` can revert files without notice — after applying any edit, re-read the touched region (or grep the new content) before declaring the run done.
 - One fact, one home: the language HOW-TO carries its layer's suffix, imports, and structure — read it, do not restate here. Cite the linter, not this file, when pointing at a rule. Each bullet states a fact once; references point at the bullet.
 
 ## Routing

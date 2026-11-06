@@ -50,8 +50,11 @@ enum Command {
         #[arg(long, default_value = "text")]
         format: String,
         /// Filter output by AES rule code (e.g. AES101, AES301).
-        #[arg(long, alias = "filter")]
+        #[arg(long)]
         rules: Option<String>,
+        /// Filter output violations by AES layer (taxonomy, contract, agent, surface, utility, capabilities, logical).
+        #[arg(long, value_name = "LAYER")]
+        layer: Option<String>,
         /// Scan only a specific workspace member by name.
         #[arg(long)]
         member: Option<String>,
@@ -65,8 +68,11 @@ enum Command {
         #[arg(long, default_value = "text")]
         format: String,
         /// Filter output by AES rule code (e.g. AES101, AES301).
-        #[arg(long, alias = "filter")]
+        #[arg(long)]
         rules: Option<String>,
+        /// Filter output violations by AES layer (taxonomy, contract, agent, surface, utility, capabilities, logical).
+        #[arg(long, value_name = "LAYER")]
+        layer: Option<String>,
         /// Scan only a specific workspace member by name.
         #[arg(long)]
         member: Option<String>,
@@ -181,6 +187,7 @@ struct GroupScanValues {
     path: String,
     format: String,
     rules: Option<String>,
+    layer: Option<String>,
     member: Option<String>,
 }
 
@@ -213,6 +220,7 @@ fn dispatch_group_scan(values: &GroupScanValues, deps: &GroupScanDeps) -> shared
     let path = &values.path;
     let format = &values.format;
     let rules = &values.rules;
+    let layer = &values.layer;
     let member = &values.member;
     let GroupScanDeps {
         filesystem,
@@ -240,6 +248,7 @@ fn dispatch_group_scan(values: &GroupScanValues, deps: &GroupScanDeps) -> shared
                 filesystem: filesystem.clone(),
                 filesystem_seam: fs_seam.clone(),
                 filter: rules.clone(),
+                layer: layer.clone(),
                 ignored_paths: ignored_paths.to_vec(),
             },
         ),
@@ -252,6 +261,7 @@ fn dispatch_group_scan(values: &GroupScanValues, deps: &GroupScanDeps) -> shared
                 filesystem: filesystem.clone(),
                 filesystem_seam: fs_seam.clone(),
                 filter: rules.clone(),
+                layer: layer.clone(),
                 ignored_paths: ignored_paths.to_vec(),
             },
         ),
@@ -264,6 +274,7 @@ fn dispatch_group_scan(values: &GroupScanValues, deps: &GroupScanDeps) -> shared
                 filesystem: filesystem.clone(),
                 filesystem_seam: fs_seam.clone(),
                 filter: rules.clone(),
+                layer: layer.clone(),
                 ignored_paths: ignored_paths.to_vec(),
             },
         ),
@@ -276,6 +287,7 @@ fn dispatch_group_scan(values: &GroupScanValues, deps: &GroupScanDeps) -> shared
                 filesystem: filesystem.clone(),
                 filesystem_seam: fs_seam.clone(),
                 filter: rules.clone(),
+                layer: layer.clone(),
                 ignored_paths: ignored_paths.to_vec(),
             },
         ),
@@ -291,6 +303,7 @@ fn dispatch_group_scan(values: &GroupScanValues, deps: &GroupScanDeps) -> shared
                     filesystem: filesystem.clone(),
                     filesystem_seam: fs_seam.clone(),
                     filter: rules.clone(),
+                    layer: layer.clone(),
                     fs_factory: Arc::new(|| {
                         let c = filesystem::root_filesystem_container::FilesystemContainer::new();
                         let orchestrator = c.orchestrator();
@@ -319,6 +332,7 @@ fn dispatch_group_scan(values: &GroupScanValues, deps: &GroupScanDeps) -> shared
                 filesystem_seam: fs_seam.clone(),
                 config_file_reader: config_file_reader.clone(),
                 filter: rules.clone(),
+                layer: layer.clone(),
                 ignored_paths: ignored_paths.to_vec(),
             },
         ),
@@ -331,6 +345,7 @@ fn dispatch_group_scan(values: &GroupScanValues, deps: &GroupScanDeps) -> shared
                 config_file_reader: config_file_reader.clone(),
                 strict: false,
                 rules: rules.clone(),
+                layer: layer.clone(),
             },
         ),
         ScanGroup::Structure => cli_commands::surface_scan_command::handle_structure(
@@ -343,6 +358,7 @@ fn dispatch_group_scan(values: &GroupScanValues, deps: &GroupScanDeps) -> shared
                 filesystem_seam: fs_seam.clone(),
                 config_file_reader: config_file_reader.clone(),
                 filter: rules.clone(),
+                layer: layer.clone(),
                 ignored_paths: ignored_paths.to_vec(),
             },
         ),
@@ -354,6 +370,7 @@ fn dispatch_group_scan(values: &GroupScanValues, deps: &GroupScanDeps) -> shared
                 filesystem_seam: fs_seam.clone(),
                 config_orchestrator: Some(config_orchestrator.clone()),
                 filter: rules.clone(),
+                layer: layer.clone(),
                 member: member.clone(),
                 scan_aggregates: Some(scan_aggregates.clone()),
             },
@@ -531,6 +548,7 @@ fn main() {
             path,
             format,
             rules,
+            layer,
             member,
             group,
         }
@@ -538,6 +556,7 @@ fn main() {
             path,
             format,
             rules,
+            layer,
             member,
             group,
         } => {
@@ -546,6 +565,7 @@ fn main() {
                 path,
                 format,
                 rules,
+                layer,
                 member,
             };
             let deps = GroupScanDeps {

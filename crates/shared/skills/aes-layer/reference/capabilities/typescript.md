@@ -110,6 +110,14 @@ export interface I<Name>Protocol {
 
 ---
 
+## Review
+
+- Capability vs Utility boundary respected: file implements one protocol (has state + business rules), stateless pure ops live in `utility_*` — § Rules § Capability vs Utility Boundary.
+- Imports: Taxonomy, Contract (`_protocol` only), Utility — nothing from `agent_*`, other `capabilities_*`, `surface_*`, local domain models, magic constants — § Rules Import rules.
+- ≤3 total types; ≥1 class implements a protocol interface; Block 1 → 2 → 3 order — § Rules § Structure rules (TypeScript), § 3-Block Structure.
+- Block 2 holds only protocol interface method implementations — § Rules § 3-Block Structure.
+- Helper-vs-Utility matrix applied — stateless, domain-agnostic, ≥2 consumers → utility — § Rules § Helper vs Utility Decision Matrix.
+
 ## Section Contract
 
 The `Enforced` column says which rule reports a violation, so you know what the
@@ -145,7 +153,7 @@ the code it introduces.
 ## Verify
 
 ```bash
-lint-arwaky-cli scan <layer-path>
+lint-arwaky-cli scan --layer capabilities
 # Checks: AES101/AES102 (filename + suffix), AES201–AES205 (layer imports),
 # AES401–AES406 (role/primitive/structure rules for this layer).
 # AES403 machine-enforced: type budget ≤3; protocol implementor present;
