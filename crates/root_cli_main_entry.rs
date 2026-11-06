@@ -42,7 +42,7 @@ fn verbosity_from_flag(count: u8) -> LogVerbosity {
 
 #[derive(Subcommand)]
 enum Command {
-    /// Run all 6 linters (quality, role, import, naming, orphan, external).
+    /// Run all 8 linter groups (quality, role, import, naming, orphan, external, doc, structure).
     /// Use `--group` to restrict to a single linter group.
     Scan {
         #[arg(value_name = "PATH", default_value = ".")]
@@ -61,7 +61,7 @@ enum Command {
         #[arg(long, value_enum)]
         group: Option<ScanGroup>,
     },
-    /// Run all 6 linters (alias of scan)
+    /// Run all 8 linter groups (alias of scan)
     Check {
         #[arg(value_name = "PATH", default_value = ".")]
         path: String,

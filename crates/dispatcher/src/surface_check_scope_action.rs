@@ -236,7 +236,7 @@ pub(crate) fn resolve_violation_path(
     canonicalize_via(&seam.aggregate, &resolved).unwrap_or(resolved)
 }
 
-/// Run all 6 linters on a single-file target, returning in-scope violations.
+/// Run all 8 linter groups on a single-file target, returning in-scope violations.
 pub(crate) fn run_single_file_scan(
     seam: &FilesystemSeam,
     scan_root: &std::path::Path,
