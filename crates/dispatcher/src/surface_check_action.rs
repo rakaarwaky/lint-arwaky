@@ -74,7 +74,7 @@ pub struct ScanOptions {
 
 pub type CheckOptions = ScanOptions;
 
-/// Run all 6 linters via subprocesses, collect JSON, return unified violation list.
+/// Run all 8 linter groups via subprocesses, collect JSON, return unified violation list.
 /// Err(String) carries a user-facing error message (path not found, bad member, ...).
 pub fn collect_scan(opts: ScanOptions) -> Result<Vec<ViolationItem>, String> {
     collect_scan_with_progress(opts, |_phase, _done, _total| {})
@@ -230,7 +230,7 @@ pub fn is_member_path(path: &FilePath, ws: &dyn IFilesystemAggregate) -> bool {
         .into_is_member()
 }
 
-/// Run all 6 linters in-memory for a given path; return violations.
+/// Run all 8 linter groups in-memory for a given path; return violations.
 pub fn collect_scan_json(
     path: &str,
     seam: &FilesystemSeam,
@@ -255,7 +255,7 @@ pub fn collect_default_check(
     collect_scan_json(project_root, seam, agg)
 }
 
-/// Run all 6 linters in-process through their aggregate entry points (W10).
+/// Run all 8 linter groups in-process through their aggregate entry points (W10).
 ///
 /// E902 fix: when the scan target is a member directory (e.g.
 /// `workspaces-good/modules`) the discovered workspace root is the parent
