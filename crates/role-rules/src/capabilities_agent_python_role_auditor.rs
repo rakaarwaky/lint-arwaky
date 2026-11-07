@@ -18,6 +18,12 @@ use shared_role_rules::utility_agent_role_io_checker;
 
 pub struct AgentPythonRoleAuditor {}
 
+impl AgentPythonRoleAuditor {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+
 // ─── Block 2: Module Contract ────────────────
 
 impl IAgentRoleProtocol for AgentPythonRoleAuditor {

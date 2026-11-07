@@ -11,6 +11,13 @@ use shared_report_formatter::taxonomy_report_formatter_vo::{
 /// JsonFormatter — produces structured pretty-printed JSON output from ScanReport.
 pub struct JsonFormatter;
 
+impl JsonFormatter {
+    /// Create a new JSON formatter.
+    pub fn new() -> Self {
+        Self
+    }
+}
+
 // ─── Block 2: Module Contract ────────────────
 
 impl IJsonFormatProtocol for JsonFormatter {
@@ -24,13 +31,6 @@ impl IJsonFormatProtocol for JsonFormatter {
 }
 
 // ─── Block 3: Module Helpers ────────────
-
-impl JsonFormatter {
-    /// Create a new JSON formatter.
-    pub fn new() -> Self {
-        Self
-    }
-}
 
 impl Default for JsonFormatter {
     fn default() -> Self {

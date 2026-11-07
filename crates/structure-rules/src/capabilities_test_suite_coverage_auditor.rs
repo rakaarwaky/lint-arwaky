@@ -26,6 +26,18 @@ use std::path::Path;
 /// surface — are out of scope.
 pub struct TestSuiteCoverageAuditor {}
 
+impl Default for TestSuiteCoverageAuditor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl TestSuiteCoverageAuditor {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+
 // ─── Block 2: Module Contract ────────────────
 
 impl IStructureTestSuiteProtocol for TestSuiteCoverageAuditor {
@@ -58,18 +70,6 @@ impl IStructureTestSuiteProtocol for TestSuiteCoverageAuditor {
 
 // ─── Block 3: Module Helpers ────────────
 
-impl Default for TestSuiteCoverageAuditor {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl TestSuiteCoverageAuditor {
-    pub fn new() -> Self {
-        Self {}
-    }
-}
-
 /// Resolve the workspace root by walking up from *root* until we find
 /// a directory that contains at least one of the member directories.
 fn workspace_root(root: &Path) -> std::path::PathBuf {
@@ -91,8 +91,8 @@ fn relative_to(folder: &Path, ws_root: &Path) -> String {
     }
 }
 
-/// The stem of every file sitting directly in *dir*, sorted for stable output.
-/// The stems of every collectable file sitting directly in *dir*, sorted.
+/// The stems of every collectable file sitting directly in *dir*, sorted for
+/// stable output.
 fn test_stems_in(dir: &Path) -> Vec<String> {
     let Ok(entries) = std::fs::read_dir(dir) else {
         return Vec::new();

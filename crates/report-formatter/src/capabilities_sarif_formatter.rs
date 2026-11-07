@@ -15,6 +15,13 @@ use shared_report_formatter::taxonomy_report_formatter_vo::{SarifMessage, SarifR
 /// SarifFormatter — produces SARIF 2.1.0 JSON output from ScanReport.
 pub struct SarifFormatter;
 
+impl SarifFormatter {
+    /// Create a new SARIF formatter.
+    pub fn new() -> Self {
+        Self
+    }
+}
+
 // ─── Block 2: Module Contracts ──────────────
 
 impl ISarifFormatProtocol for SarifFormatter {
@@ -29,11 +36,6 @@ impl ISarifFormatProtocol for SarifFormatter {
 
 // ─── Block 3: Module Helpers ──────
 impl SarifFormatter {
-    /// Create a new SARIF formatter.
-    pub fn new() -> Self {
-        Self
-    }
-
     /// Direct call for &[LintResult] for backward compatibility.
     pub fn format_sarif_slice(&self, results: &[LintResult]) -> DisplayContent {
         let dummy_report = ScanReport {

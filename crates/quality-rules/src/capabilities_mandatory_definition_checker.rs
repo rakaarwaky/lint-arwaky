@@ -18,6 +18,12 @@ use std::path::Path;
 
 pub struct MandatoryDefinitionChecker {}
 
+impl MandatoryDefinitionChecker {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+
 // ─── Block 2: Module Contract ───────────────
 
 impl IMandatoryClassProtocol for MandatoryDefinitionChecker {
@@ -103,11 +109,5 @@ impl IMandatoryClassProtocol for MandatoryDefinitionChecker {
 impl Default for MandatoryDefinitionChecker {
     fn default() -> Self {
         Self::new()
-    }
-}
-
-impl MandatoryDefinitionChecker {
-    pub fn new() -> Self {
-        Self {}
     }
 }

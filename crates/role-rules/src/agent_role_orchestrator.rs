@@ -55,6 +55,22 @@ pub struct RoleOrchestrator {
     ignored_paths: Vec<String>,
 }
 
+impl RoleOrchestrator {
+    pub fn new(deps: RoleCheckerDeps, config: &ArchitectureConfig) -> Self {
+        let ignored_paths: Vec<String> = config
+            .ignored_paths
+            .values
+            .iter()
+            .map(|fp| fp.value.replace('/', std::path::MAIN_SEPARATOR_STR))
+            .collect();
+        Self {
+            deps,
+            config: config.clone(),
+            ignored_paths,
+        }
+    }
+}
+
 // ─── Block 2: Module Contract ──────────────
 impl IRoleRunnerAggregate for RoleOrchestrator {
     fn execute(&self, request: RoleRequest) -> RoleResponse {
@@ -80,20 +96,6 @@ impl RoleOrchestrator {
 
     pub fn name(&self) -> &str {
         "role-rules"
-    }
-
-    pub fn new(deps: RoleCheckerDeps, config: &ArchitectureConfig) -> Self {
-        let ignored_paths: Vec<String> = config
-            .ignored_paths
-            .values
-            .iter()
-            .map(|fp| fp.value.replace('/', std::path::MAIN_SEPARATOR_STR))
-            .collect();
-        Self {
-            deps,
-            config: config.clone(),
-            ignored_paths,
-        }
     }
 
     /// Run all role checks on pre-parsed FileEntry slices.

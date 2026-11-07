@@ -7,6 +7,13 @@ use shared_report_formatter::contract_report_formatter_protocol::IJUnitFormatPro
 /// JunitFormatter — produces JUnit XML output from ScanReport.
 pub struct JunitFormatter;
 
+impl JunitFormatter {
+    /// Create a new JUnit formatter.
+    pub fn new() -> Self {
+        Self
+    }
+}
+
 // ─── Block 2: Module Contracts ──────────────
 
 impl IJUnitFormatProtocol for JunitFormatter {
@@ -21,11 +28,6 @@ impl IJUnitFormatProtocol for JunitFormatter {
 
 // ─── Block 3: Module Helpers ──────
 impl JunitFormatter {
-    /// Create a new JUnit formatter.
-    pub fn new() -> Self {
-        Self
-    }
-
     /// Direct call for &[LintResult] for backward compatibility.
     pub fn format_junit_slice(&self, results: &[LintResult]) -> DisplayContent {
         let dummy_report = ScanReport {
