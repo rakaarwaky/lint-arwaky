@@ -13,7 +13,7 @@ impl JunitFormatter {
     }
 }
 
-// ─── Block 2: Module Contracts ──────────────
+// ─── Block 2: Module Contract ──────────────
 impl IJUnitFormatProtocol for JunitFormatter {
     fn format_junit(&self, report: &ScanReport) -> DisplayContent {
         format_junit_report(report)

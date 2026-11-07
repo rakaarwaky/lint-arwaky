@@ -37,7 +37,7 @@ impl BlockMarkerFix {
         Self { io }
     }
 
-    fn fix_impl(&self, file_path: &str, line: LineNumber, _dry_run: bool) -> FixOutcome {
+    fn fix_impl(&self, file_path: &str, line: LineNumber, dry_run: bool) -> FixOutcome {
         let fpath = match FilePath::new(file_path.to_string()) {
             Ok(p) => p,
             Err(_) => return FixOutcome::failed(FailReason::FileNotFound),
@@ -99,6 +99,12 @@ impl BlockMarkerFix {
             "#" => format!("# {}", new_line.trim_start()),
             _ => format!("// {}", new_line.trim_start()),
         };
+        if lines[idx] == new_line {
+            return FixOutcome::skipped(SkipReason::AlreadyValid);
+        }
+        if dry_run {
+            return FixOutcome::applied(1);
+        }
         lines[idx] = new_line.as_str();
         let new_content = lines.join("\n");
         if self.io.write_string(path, &new_content).is_err() {

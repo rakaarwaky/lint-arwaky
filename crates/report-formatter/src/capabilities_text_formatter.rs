@@ -19,7 +19,7 @@ impl TextFormatter {
     }
 }
 
-// ─── Block 2: Module Contracts ──────────────
+// ─── Block 2: Module Contract ──────────────
 impl ITextFormatProtocol for TextFormatter {
     fn format_text(&self, report: &ScanReport) -> DisplayContent {
         format_text_report(report)

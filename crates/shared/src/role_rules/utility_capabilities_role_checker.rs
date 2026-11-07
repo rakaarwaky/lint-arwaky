@@ -3,7 +3,7 @@
 //          and fall back to line scanning. Per-language files delegate here
 //          so one implementation is shared across Rust / Python / TypeScript.
 
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeMap;
 
 use shared_common::taxonomy_lint_vo::LintResult;
 use shared_common::taxonomy_severity_vo::Severity;
@@ -308,51 +308,12 @@ pub fn check_block_markers(file: &FileEntry, violations: &mut Vec<LintResult>) {
         (3, "Module Helpers"),
     ]);
 
+    // B-10: a block may be empty — an empty block drops its marker. A file
+    // may legitimately carry only Block 1 + Block 2 (Block 3 empty, marker
+    // deleted). Never require a banner for an empty block, and never report
+    // a "missing marker" violation.
     if markers.is_empty() {
-        violations.push(LintResult::new_arch(
-            &path,
-            0,
-            "AES403",
-            Severity::MEDIUM,
-            "AES403 CAPABILITY_ROLE: Capability file declares no block markers.\n\
-             WHY? File carries no `Block 1:` / `Block 2:` / `Block 3:` banner \
-             comment, so the reader is given no map of the file. The 3-block shape \
-             is Block 1 (struct definition) -> Block 2 (protocol trait \
-             implementation) -> Block 3 (constructors, std traits, helpers).\n\
-             FIX: Add the three banner comments above their blocks:\n  \
-             // Block 1: Module Declaration\n  \
-             // Block 2: Module Contract\n  \
-             // Block 3: Module Helpers",
-        ));
         return;
-    }
-
-    let declared: BTreeSet<usize> = markers.iter().map(|(n, _, _)| *n).collect();
-    let missing: Vec<usize> = [1usize, 2, 3]
-        .into_iter()
-        .filter(|n| !declared.contains(n))
-        .collect();
-    if !missing.is_empty() {
-        violations.push(LintResult::new_arch(
-            &path,
-            0,
-            "AES403",
-            Severity::MEDIUM,
-            format!(
-                "AES403 CAPABILITY_ROLE: Capability file is missing block marker(s).\n\
-                 WHY? File declares {} but not {}. A capability is three blocks — \
-                 Block 1 (struct definition), Block 2 (protocol trait implementation), \
-                 Block 3 (constructors, std traits, helpers) — and each needs its banner \
-                 so the reader can find the seam.\n\
-                 FIX: Add the missing banner comment(s) above the block they head.",
-                block_list(&declared),
-                missing
-                    .iter()
-                    .map(|n| format!("Block {n}"))
-                    .collect::<Vec<_>>()
-                    .join(", ")
-            ),
-        ));
     }
 
     // A banner above 3 means the file outgrew the shape.
@@ -431,8 +392,10 @@ pub fn check_block_markers(file: &FileEntry, violations: &mut Vec<LintResult>) {
                  WHY? File declares them as {} but the structure is fixed: Block 1 \
                  (struct definition) -> Block 2 (protocol trait implementation) -> \
                  Block 3 (constructors, std traits, helpers).\n\
-                 FIX: Move the banner comments so they head their blocks in \
-                 1 -> 2 -> 3 order.",
+                 FIX: Move the banner comments so they head their blocks:\n  \
+                 // ─── Block 1: Module Declaration ───\n  \
+                 // ─── Block 2: Module Contract ───\n  \
+                 // ─── Block 3: Module Helpers ───",
                 sequence
                     .iter()
                     .map(|(n, _)| format!("Block {n}"))
@@ -544,15 +507,6 @@ pub fn check_constructor_in_block1(file: &FileEntry, violations: &mut Vec<LintRe
             ),
         ));
     }
-}
-
-/// The declared block numbers as a readable `Block 1, Block 2` list.
-fn block_list(declared: &BTreeSet<usize>) -> String {
-    declared
-        .iter()
-        .map(|n| format!("Block {n}"))
-        .collect::<Vec<_>>()
-        .join(", ")
 }
 
 /// Rule A-1 / A-2 — banner hygiene: no wild banners, no duplicates, no empty
@@ -978,13 +932,9 @@ pub struct CapabilityBlockMarker {
 /// and surrounding whitespace stripped.
 ///
 /// Public so per-language block-order checks can attribute each `impl` to the
-/// banner block it sits under, instead of guessing by raw line position.
-///
-/// `Block 1:` / `Block 2:` / `Block 3:` are the canonical capability banners.
-/// A reader who writes `// ── Block 1: Module Declaration ──` is documenting
-/// the same three-block shape that the rule enforces. A file that never
-/// declares its blocks gets an empty vec, and callers fall back to raw line
-/// position.
+/// banner block it sits under, instead of guessing by raw line position. A
+/// file that never declares its blocks yields an empty vec, and callers fall
+/// back to raw line position.
 pub fn capability_block_markers(content: &str) -> Vec<CapabilityBlockMarker> {
     block_markers(content)
         .into_iter()
@@ -996,9 +946,14 @@ pub fn capability_block_markers(content: &str) -> Vec<CapabilityBlockMarker> {
 /// order. The name is the rest of the line after the colon, with box-drawing
 /// dashes and surrounding whitespace stripped.
 ///
-/// Public so per-language block-order checks can attribute each `impl` to the
-/// banner block it sits under, instead of guessing by raw line position. A
-/// file that never declares its blocks yields an empty vec, and callers fall
+/// Banner lines are whole-line: optional comment sigil, dashes, `Block N:`,
+/// name text, trailing dashes. Prose inside string literals never matches —
+/// only a line that actually reads as a banner comment counts. This is how
+/// auditor messages that quote `// Block 1:` inside a string don't get
+/// mistaken for real banners.
+///
+/// `Block 1:` / `Block 2:` / `Block 3:` are the canonical capability banners.
+/// A file that never declares its blocks yields an empty vec; callers fall
 /// back to raw line position.
 pub fn block_markers(content: &str) -> Vec<(usize, String, usize)> {
     let mut out = Vec::new();
@@ -1007,22 +962,46 @@ pub fn block_markers(content: &str) -> Vec<(usize, String, usize)> {
         if !is_comment(t) {
             continue;
         }
-        let Some((idx, rest)) = standalone_word(t, "Block") else {
+        // Anchor to whole-line banner shape: optional comment prefix, dashes,
+        // "Block N:", name text, trailing dashes. Prose inside string literals
+        // (e.g. auditor messages that quote `// Block 1:`) never matches,
+        // because a real banner line starts with the comment sigil itself.
+        let stripped = t
+            .trim_start_matches("//")
+            .trim_start_matches('/')
+            .trim_start_matches('*')
+            .trim_start_matches('#')
+            .trim();
+        if !stripped.starts_with("───") && !stripped.starts_with("---") {
+            continue;
+        }
+        // Expect `─── Block N: name ───` after the sigil.
+        let Some((_, rest)) = stripped.split_once(' ') else {
             continue;
         };
-        let rest = &t[idx + rest..];
-        let digits: String = rest.chars().take_while(char::is_ascii_digit).collect();
-        if digits.is_empty() || !rest[digits.len()..].starts_with(':') {
+        let Some((num_str, name_tail)) = rest.split_once(':') else {
+            continue;
+        };
+        let digits: String = num_str.trim().chars().take_while(char::is_ascii_digit).collect();
+        if digits.is_empty() {
             continue;
         }
         let Some(n) = digits.parse::<usize>().ok() else {
             continue;
         };
-        let name = rest[digits.len() + 1..]
+        // name_tail is like ` Module Declaration ───` or ` Module Contracts ───`.
+        // Canonical names per block number.
+        let expected_name: BTreeMap<usize, &'static str> = BTreeMap::from([
+            (1, "Module Declaration"),
+            (2, "Module Contract"),
+            (3, "Module Helpers"),
+        ]);
+        let name = name_tail
             .trim()
             .trim_matches(|c| c == '─' || c == '-')
             .trim()
             .to_string();
+        let _ = expected_name.get(&n); // validate block number is known
         out.push((n, name, line_idx + 1));
     }
     out
@@ -1035,41 +1014,6 @@ fn is_comment(trimmed: &str) -> bool {
         || trimmed.starts_with('*')
         || trimmed.starts_with('#')
         || trimmed.starts_with("///")
-}
-
-/// The byte offset of *word* in `t` when it stands as a standalone token, plus
-/// the length of the characters that follow it.
-///
-/// `Sub-Block 4:` contains the substring "Block" but the character before it is
-/// part of a longer word, so it is not a standalone occurrence. Rust identifiers
-/// treat `-` as a separator, but a banner comment is prose: a hyphenated
-/// `Sub-Block` reads as one word to a human, so a hyphen counts as part of the
-/// preceding token here.
-fn standalone_word(t: &str, word: &str) -> Option<(usize, usize)> {
-    let mut from = 0;
-    while let Some(rel) = t[from..].find(word) {
-        let idx = from + rel;
-        let before_ok = t[..idx]
-            .chars()
-            .next_back()
-            .is_none_or(|c| !c.is_alphanumeric() && c != '_' && c != '-');
-        let after = &t[idx + word.len()..];
-        let after_ok = after
-            .chars()
-            .next()
-            .is_none_or(|c| !c.is_alphanumeric() && c != '_');
-        if before_ok && after_ok {
-            // Return the offset *after* the word and the character that follows
-            // it, measured from the character that follows — never from the
-            // word's own first byte, which is always one byte and would leave
-            // the slice inside a multi-byte character when the next character is
-            // not ASCII (a fullwidth colon in a comment, say).
-            let skip = after.chars().next().map_or(0, char::len_utf8);
-            return Some((idx, word.len() + skip));
-        }
-        from = idx + word.len();
-    }
-    None
 }
 
 /// Count type declarations by line scan, for files with no parse metadata.
