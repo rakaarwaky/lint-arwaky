@@ -17,6 +17,12 @@ use shared_quality_rules::utility_bypass_detector::skip_cfg_test_block;
 
 pub struct DeadInheritanceChecker {}
 
+impl DeadInheritanceChecker {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+
 // ─── Block 2: Module Contract ───────────────
 
 impl IDeadInheritanceProtocol for DeadInheritanceChecker {
@@ -132,17 +138,7 @@ impl IDeadInheritanceProtocol for DeadInheritanceChecker {
 
 // ─── Block 3: Module Helpers ──────
 
-impl Default for DeadInheritanceChecker {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl DeadInheritanceChecker {
-    pub fn new() -> Self {
-        Self {}
-    }
-
     /// Strip Rust visibility modifiers from the beginning of a line.
     /// Handles `pub`, `pub(crate)`, `pub(crate)`, `pub(super)`, etc.
     fn strip_visibility(line: &str) -> &str {

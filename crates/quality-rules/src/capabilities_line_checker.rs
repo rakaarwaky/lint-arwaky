@@ -18,6 +18,12 @@ use std::path::Path;
 
 pub struct ArchLineChecker {}
 
+impl ArchLineChecker {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+
 // ─── Block 2: Module Contract ───────────────
 
 impl ILineCheckerProtocol for ArchLineChecker {
@@ -100,11 +106,5 @@ impl ILineCheckerProtocol for ArchLineChecker {
 impl Default for ArchLineChecker {
     fn default() -> Self {
         Self::new()
-    }
-}
-
-impl ArchLineChecker {
-    pub fn new() -> Self {
-        Self {}
     }
 }
