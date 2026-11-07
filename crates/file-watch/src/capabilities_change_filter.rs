@@ -15,7 +15,6 @@ pub struct ChangeFilter {
     lintable_exts: &'static [&'static str],
 }
 
-
 impl Default for ChangeFilter {
     fn default() -> Self {
         Self::new()
@@ -63,4 +62,3 @@ impl ChangeFilter {
             .collect()
     }
 }
-

@@ -36,7 +36,6 @@ pub struct BanditAdapter {
     bin_path: Option<FilePath>,
 }
 
-
 impl BanditAdapter {
     pub fn new(
         lint_executor: Arc<dyn ICommandExecutorProtocol>,
@@ -174,4 +173,3 @@ impl ILinterAdapterProtocol for BanditAdapter {
 }
 
 // ─── Block 3: Module Helpers ──────
-

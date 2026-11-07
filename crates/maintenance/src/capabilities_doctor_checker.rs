@@ -14,7 +14,6 @@ pub struct DoctorChecker {
     _io: Arc<dyn IFileSystemIOProtocol>,
 }
 
-
 impl DoctorChecker {
     pub fn new(io: Arc<dyn IFileSystemIOProtocol>) -> Self {
         Self { _io: io }

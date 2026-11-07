@@ -28,7 +28,6 @@ pub struct DependencyGraph {
     implementations: OnceLock<HashMap<String, Vec<PathBuf>>>,
 }
 
-
 impl Default for DependencyGraph {
     fn default() -> Self {
         Self::new()

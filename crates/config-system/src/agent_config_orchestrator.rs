@@ -45,7 +45,6 @@ pub struct ConfigOrchestrator {
     config_cache: DashMap<CacheKey, CachedConfig>,
 }
 
-
 impl ConfigOrchestrator {
     pub fn read_config(
         &self,

@@ -22,7 +22,6 @@ pub struct NotifyWatchProvider {
     ignore_patterns: Mutex<Vec<String>>,
 }
 
-
 impl Default for NotifyWatchProvider {
     fn default() -> Self {
         Self::new()
@@ -129,4 +128,3 @@ impl IWatchLifecycleProtocol for NotifyWatchProvider {
 }
 
 // ─── Block 3: Module Helpers ──────
-

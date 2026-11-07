@@ -957,16 +957,26 @@ pub fn check_constructor_in_block1(file: &FileEntry, violations: &mut Vec<LintRe
     let block2_line = markers.iter().find(|(n, _, _)| *n == 2).map(|(_, _, l)| *l);
     let block3_line = markers.iter().find(|(n, _, _)| *n == 3).map(|(_, _, l)| *l);
 
-    let Some(block1_line) = block1_line else { return };
-    let Some(block2_line) = block2_line else { return };
-    let Some(block3_line) = block3_line else { return };
+    let Some(block1_line) = block1_line else {
+        return;
+    };
+    let Some(block2_line) = block2_line else {
+        return;
+    };
+    let Some(block3_line) = block3_line else {
+        return;
+    };
 
-    let ctor_in_block1 = content.lines().skip(block1_line).take(block2_line - block1_line).any(|l| {
-        let t = l.trim();
-        t.starts_with("pub fn new")
-            || t.starts_with("pub fn from_")
-            || t.starts_with("impl Default")
-    });
+    let ctor_in_block1 = content
+        .lines()
+        .skip(block1_line)
+        .take(block2_line - block1_line)
+        .any(|l| {
+            let t = l.trim();
+            t.starts_with("pub fn new")
+                || t.starts_with("pub fn from_")
+                || t.starts_with("impl Default")
+        });
 
     let ctor_in_block3: Vec<(usize, String)> = content
         .lines()

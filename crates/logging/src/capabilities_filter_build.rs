@@ -10,7 +10,6 @@ use tracing_subscriber::EnvFilter;
 
 pub struct FilterBuilder {}
 
-
 impl FilterBuilder {
     pub fn new() -> Self {
         Self {}
@@ -28,4 +27,3 @@ impl IFilterBuildProtocol for FilterBuilder {
 }
 
 // ─── Block 3: Module Helpers ───────────
-

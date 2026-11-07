@@ -16,7 +16,6 @@ pub struct ConfigInit {
     io: Arc<dyn IFileSystemIOProtocol>,
 }
 
-
 impl ConfigInit {
     pub fn new(io: Arc<dyn IFileSystemIOProtocol>) -> Self {
         Self { io }
@@ -105,4 +104,3 @@ impl IConfigInitProtocol for ConfigInit {
 }
 
 // ─── Block 3: Module Helpers ──────
-

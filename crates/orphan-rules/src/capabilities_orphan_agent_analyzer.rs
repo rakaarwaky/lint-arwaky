@@ -10,7 +10,6 @@ use std::collections::HashMap;
 
 pub struct AgentOrphanAnalyzer;
 
-
 impl Default for AgentOrphanAnalyzer {
     fn default() -> Self {
         Self::new()

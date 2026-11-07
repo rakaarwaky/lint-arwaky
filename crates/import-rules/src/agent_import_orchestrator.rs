@@ -50,7 +50,6 @@ pub struct ImportOrchestrator {
     ignored_paths: Vec<String>,
 }
 
-
 impl ImportOrchestrator {
     pub fn run_audit(&self, target: &FilePath) -> Result<Vec<LintResult>, ScanError> {
         if !self.config.enabled.value {
@@ -416,4 +415,3 @@ impl IImportRunnerAggregate for ImportOrchestrator {
 }
 
 // ─── Block 3: Module Helpers ──────
-

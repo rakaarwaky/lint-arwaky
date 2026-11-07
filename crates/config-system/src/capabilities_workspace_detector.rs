@@ -13,7 +13,6 @@ pub struct WorkspaceDetector {
     filesystem: Arc<dyn IFileSystemIOProtocol>,
 }
 
-
 impl WorkspaceDetector {
     /// Create a new WorkspaceDetector with filesystem IO dependency.
     pub fn new(filesystem: Arc<dyn IFileSystemIOProtocol>) -> Self {

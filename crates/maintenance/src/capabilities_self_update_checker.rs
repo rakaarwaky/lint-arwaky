@@ -12,7 +12,6 @@ pub struct SelfUpdateChecker {
     io: Arc<dyn IFileSystemIOProtocol>,
 }
 
-
 impl SelfUpdateChecker {
     pub fn new(io: Arc<dyn IFileSystemIOProtocol>) -> Self {
         Self { io }

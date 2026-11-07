@@ -45,9 +45,6 @@ impl Default for RequirementFolderParity {
 /// `surface_*` file or Cargo.toml depending on cli/mcp/tui/dispatcher →
 /// Surface, everything else → None. Reading Cargo.toml here is layer-legal:
 /// structure-rules reads its own crate manifests directly
-
-// ─── Block 2: Module Contract ─────────────────────────────────────────────
-
 impl IStructurePrLaProtocol for RequirementFolderParity {
     /// AES706 — Part A: feature folders' FR ids vs folder name.
     /// Part B: PR-<segment> ids in PRD/ROADMAP vs crate folders by order.
@@ -170,20 +167,21 @@ fn audit_pr_la_documents(root: &Path, ws_root: &Path) -> Vec<StructureFinding> {
 }
 
 /// Finding: a feature crate folder has no FRD.md at all.
-fn missing_frd_finding(
-    frd: &Path,
-    ws_root: &Path,
-    folder_name: &str,
-) -> StructureFinding {
+fn missing_frd_finding(frd: &Path, ws_root: &Path, folder_name: &str) -> StructureFinding {
     StructureFinding::new(
         consts::RULE_CODE_PR_LA_FOLDER,
         consts::PR_LA_VIOLATION_MISSING_FRD,
         relative_to(frd, ws_root),
-        format!("'{folder_name}' holds no FRD.md, so its FR ids cannot be verified against its prefix"),
+        format!(
+            "'{folder_name}' holds no FRD.md, so its FR ids cannot be verified against its prefix"
+        ),
     )
     .with_reason(
         "Every feature crate folder must carry an FRD.md whose FR ids match its folder name.",
-        format!("Create '{}/FRD.md' with ids of the form 'FR-{}-NNN'.", folder_name, folder_name),
+        format!(
+            "Create '{}/FRD.md' with ids of the form 'FR-{}-NNN'.",
+            folder_name, folder_name
+        ),
     )
 }
 
@@ -387,9 +385,12 @@ fn has_orchestrator_file(folder: &Path, lang: &str) -> bool {
 }
 
 /// Does *folder*'s Cargo.toml mention `agent_`, `capability`, or `orchestrator`?
-fn exposes_capability_in_cargo_toml(folder: &Path) -> bool {
-    let cargo = folder.join("Cargo.toml");
-    let Ok(text) = std::fs::read_to_string(&cargo) else {
+pub fn exposes_capability_in_cargo_toml(folder: &Path) -> bool {
+    let cargo_path = folder.join("Cargo.toml");
+    let Some(cargo) = cargo_path.to_str() else {
+        return false;
+    };
+    let Ok(text) = std::fs::read_to_string(cargo) else {
         return false;
     };
     text.contains("agent_") || text.contains("capability") || text.contains("orchestrator")
@@ -406,12 +407,18 @@ fn has_surface_files(folder: &Path, lang: &str) -> bool {
 }
 
 /// Does *folder*'s Cargo.toml depend on cli/mcp/tui/dispatcher?
-fn has_surface_cargo_deps(folder: &Path) -> bool {
-    let cargo = folder.join("Cargo.toml");
-    let Ok(text) = std::fs::read_to_string(&cargo) else {
+pub fn has_surface_cargo_deps(folder: &Path) -> bool {
+    let cargo_path = folder.join("Cargo.toml");
+    let Some(cargo) = cargo_path.to_str() else {
         return false;
     };
-    text.contains("cli-") || text.contains("mcp") || text.contains("tui") || text.contains("dispatcher")
+    let Ok(text) = std::fs::read_to_string(cargo) else {
+        return false;
+    };
+    text.contains("cli-commands")
+        || text.contains("mcp-server")
+        || text.contains("tui")
+        || text.contains("dispatcher")
 }
 
 /// Extract every `PR-<segment>-NNN` id from document contents as
@@ -443,7 +450,10 @@ fn extract_pr_la_ids(contents: &str) -> Vec<(usize, String, String)> {
 
             // After the segment dash, expect digits.
             let after_dash = &rest[segment_end + 1..];
-            let digits: String = after_dash.chars().take_while(|c| c.is_ascii_digit()).collect();
+            let digits: String = after_dash
+                .chars()
+                .take_while(|c| c.is_ascii_digit())
+                .collect();
             if digits.is_empty() {
                 search_from = start + 3 + segment.len() + 1;
                 continue;
@@ -475,8 +485,7 @@ fn title_names_folder(title: &str, folder: &str) -> bool {
     let folder_tokens = slug_tokens(folder);
     folder_tokens.iter().all(|folder_token| {
         title_tokens.iter().any(|title_token| {
-            title_token == folder_token
-                || stems_match(title_token, folder_token)
+            title_token == folder_token || stems_match(title_token, folder_token)
         })
     })
 }
@@ -529,7 +538,10 @@ fn slug_tokens(text: &str) -> Vec<String> {
         .chars()
         .map(|c| if c.is_ascii_alphanumeric() { c } else { ' ' })
         .collect();
-    cleaned.split_whitespace().map(|t| t.to_ascii_lowercase()).collect()
+    cleaned
+        .split_whitespace()
+        .map(|t| t.to_ascii_lowercase())
+        .collect()
 }
 
 /// True when two tokens share a common stem: one is a prefix of the other

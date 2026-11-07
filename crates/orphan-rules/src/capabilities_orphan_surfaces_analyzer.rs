@@ -11,7 +11,6 @@ use shared_quality_rules::taxonomy_quality_rules_vo::{
 
 pub struct SurfacesOrphanAnalyzer;
 
-
 impl Default for SurfacesOrphanAnalyzer {
     fn default() -> Self {
         Self::new()

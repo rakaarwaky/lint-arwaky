@@ -44,7 +44,6 @@ pub struct RustLinterAdapter {
     _bin_path: Option<FilePath>,
 }
 
-
 impl RustLinterAdapter {
     pub fn new(
         executor: Arc<dyn ICommandExecutorProtocol>,

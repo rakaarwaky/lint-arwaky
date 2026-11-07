@@ -38,7 +38,6 @@ pub struct MyPyAdapter {
     bin_path: Option<FilePath>,
 }
 
-
 impl MyPyAdapter {
     pub fn new(
         lint_executor: Arc<dyn ICommandExecutorProtocol>,
@@ -209,4 +208,3 @@ fn mypy_re_without_col() -> Option<&'static Regex> {
     RE.get_or_init(|| Regex::new(r"^([^:]+):(\d+):\s+(\w+):\s+(.+?)\s+\[([\w-]+)\]$").ok())
         .as_ref()
 }
-

@@ -57,7 +57,6 @@ struct Vulnerability {
     severity: Option<String>,
 }
 
-
 impl CargoAuditAdapter {
     pub fn new(
         executor: Arc<dyn ICommandExecutorProtocol>,
@@ -156,4 +155,3 @@ impl ILinterAdapterProtocol for CargoAuditAdapter {
 }
 
 // ─── Block 3: Module Helpers ──────
-

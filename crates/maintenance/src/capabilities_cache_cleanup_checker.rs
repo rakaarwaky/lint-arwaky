@@ -9,7 +9,6 @@ pub struct CacheCleanupChecker {
     project_path: FilePath,
 }
 
-
 impl CacheCleanupChecker {
     pub fn new(io: Arc<dyn IFileSystemIOProtocol>) -> Self {
         Self {

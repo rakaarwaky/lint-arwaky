@@ -10,7 +10,6 @@ pub struct AdapterHealthChecker {
     _io: Arc<dyn IFileSystemIOProtocol>,
 }
 
-
 impl AdapterHealthChecker {
     pub fn new(io: Arc<dyn IFileSystemIOProtocol>) -> Self {
         Self { _io: io }

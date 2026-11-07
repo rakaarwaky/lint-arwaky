@@ -462,17 +462,27 @@ pub fn check_constructor_in_block1(file: &FileEntry, violations: &mut Vec<LintRe
     let block2_line = markers.iter().find(|(n, _, _)| *n == 2).map(|(_, _, l)| *l);
     let block3_line = markers.iter().find(|(n, _, _)| *n == 3).map(|(_, _, l)| *l);
 
-    let Some(block1_line) = block1_line else { return };
-    let Some(block2_line) = block2_line else { return };
-    let Some(block3_line) = block3_line else { return };
+    let Some(block1_line) = block1_line else {
+        return;
+    };
+    let Some(block2_line) = block2_line else {
+        return;
+    };
+    let Some(block3_line) = block3_line else {
+        return;
+    };
 
     // Find constructors in Block 1 (between Block 1 and Block 2 markers)
-    let ctor_in_block1 = content.lines().skip(block1_line).take(block2_line - block1_line).any(|l| {
-        let t = l.trim();
-        t.starts_with("pub fn new")
-            || t.starts_with("pub fn from_")
-            || t.starts_with("impl Default")
-    });
+    let ctor_in_block1 = content
+        .lines()
+        .skip(block1_line)
+        .take(block2_line - block1_line)
+        .any(|l| {
+            let t = l.trim();
+            t.starts_with("pub fn new")
+                || t.starts_with("pub fn from_")
+                || t.starts_with("impl Default")
+        });
 
     // Find constructors in Block 3 (after Block 3 marker)
     let ctor_in_block3: Vec<(usize, String)> = content
@@ -679,7 +689,9 @@ pub fn check_block3_pub_facade(file: &FileEntry, violations: &mut Vec<LintResult
     let markers = block_markers(content);
 
     let block3_line = markers.iter().find(|(n, _, _)| *n == 3).map(|(_, _, l)| *l);
-    let Some(block3_line) = block3_line else { return };
+    let Some(block3_line) = block3_line else {
+        return;
+    };
 
     let block3_idx = block3_line - 1;
     let mut pending_seam_doc = false;
@@ -761,15 +773,24 @@ pub fn check_block2_inline_details(file: &FileEntry, violations: &mut Vec<LintRe
         .find(|(n, _, _)| *n == 3)
         .map(|(_, _, l)| *l);
 
-    let Some(block2_line) = block2_line else { return };
-    let Some(block3_line) = block3_line else { return };
+    let Some(block2_line) = block2_line else {
+        return;
+    };
+    let Some(block3_line) = block3_line else {
+        return;
+    };
 
     // Scan lines between Block 2 and Block 3 for `impl I<Name>Protocol`
     let mut in_trait_impl = false;
     let mut brace_depth = 0isize;
     let mut method_name = String::new();
 
-    for (i, line) in content.lines().enumerate().skip(block2_line - 1).take(block3_line - block2_line) {
+    for (i, line) in content
+        .lines()
+        .enumerate()
+        .skip(block2_line - 1)
+        .take(block3_line - block2_line)
+    {
         let t = line.trim();
         let abs_line = block2_line + i;
 
@@ -796,7 +817,8 @@ pub fn check_block2_inline_details(file: &FileEntry, violations: &mut Vec<LintRe
         // Inside a method body (brace_depth >= 2), detect multi-branch constructs
         if brace_depth >= 2 {
             let has_match = t.contains("match ");
-            let has_if_chain = t.starts_with("else if") || t.starts_with("if ") && t.contains("else");
+            let has_if_chain =
+                t.starts_with("else if") || t.starts_with("if ") && t.contains("else");
 
             if has_match || has_if_chain {
                 violations.push(LintResult::new_arch(
@@ -841,8 +863,11 @@ pub fn check_di_default(file: &FileEntry, violations: &mut Vec<LintResult>) {
             // Check if previous line has #[derive(Default)]
             let line_no = i + 1;
             let has_derive_default = i > 0
-                && content.lines().nth(i - 1).map(|l| l.trim() == "#[derive(Default)]")
-                .unwrap_or(false);
+                && content
+                    .lines()
+                    .nth(i - 1)
+                    .map(|l| l.trim() == "#[derive(Default)]")
+                    .unwrap_or(false);
             if has_derive_default {
                 // Extract struct name
                 if let Some(name) = t.split_whitespace().nth(2) {
@@ -903,7 +928,9 @@ pub fn check_impl_default_on_di(file: &FileEntry, violations: &mut Vec<LintResul
     let markers = block_markers(content);
 
     let block3_line = markers.iter().find(|(n, _, _)| *n == 3).map(|(_, _, l)| *l);
-    let Some(block3_line) = block3_line else { return };
+    let Some(block3_line) = block3_line else {
+        return;
+    };
 
     let block3_idx = block3_line - 1;
     for line in content.lines().skip(block3_idx + 1) {

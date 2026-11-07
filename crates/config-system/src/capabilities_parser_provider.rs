@@ -17,7 +17,6 @@ pub struct ConfigParserProvider {
     io: Arc<dyn IFileSystemIOProtocol>,
 }
 
-
 impl ConfigParserProvider {
     /// Create a new config parser with filesystem IO dependency.
     pub fn new(io: Arc<dyn IFileSystemIOProtocol>) -> Self {
@@ -190,4 +189,3 @@ fn fold_user_rule_toggles(merged: &mut ArchitectureConfig, user: &ArchitectureCo
 }
 
 // ─── Block 3: Module Helpers ──────
-

@@ -41,7 +41,8 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
         if utility_import_resolver::is_barrel_file(&path.basename()) {
             return Ok(Vec::new());
         }
-        let unused = self.unused_alias_names(path.value(), content, import_entries, used_identifiers);
+        let unused =
+            self.unused_alias_names(path.value(), content, import_entries, used_identifiers);
         Ok(unused.into_iter().map(LintMessage::new).collect())
     }
 

@@ -64,7 +64,6 @@ fn validated_path(path: &str) -> Result<FilePath, LintExecutionResult> {
         .map_err(|_| LintExecutionResult::failure(format!("Invalid path: {path}")))
 }
 
-
 impl SurfaceLintExecutor {
     pub fn new(
         code_analysis: Arc<dyn ICodeAnalysisAggregate>,

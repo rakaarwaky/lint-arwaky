@@ -11,7 +11,6 @@ pub struct ProjectStatsChecker {
     io: Arc<dyn IFileSystemIOProtocol>,
 }
 
-
 impl ProjectStatsChecker {
     pub fn new(io: Arc<dyn IFileSystemIOProtocol>) -> Self {
         Self { io }

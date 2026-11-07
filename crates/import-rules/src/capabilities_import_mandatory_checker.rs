@@ -104,7 +104,9 @@ impl IImportMandatoryProtocol for ArchImportMandatoryChecker {
             })
             .collect();
 
-        Ok(LintResultList::new(dedup_by_file_line_code(file_violations)))
+        Ok(LintResultList::new(dedup_by_file_line_code(
+            file_violations,
+        )))
     }
 }
 

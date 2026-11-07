@@ -96,11 +96,7 @@ impl ICapabilitiesRoleProtocol for CapabilitiesRustRoleAuditor {
         utility_capabilities_role_checker::check_constructor_in_block1(file, violations);
     }
 
-    fn check_capability_banner_hygiene(
-        &self,
-        file: &FileEntry,
-        violations: &mut Vec<LintResult>,
-    ) {
+    fn check_capability_banner_hygiene(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
         utility_capabilities_role_checker::check_banner_hygiene(file, violations);
     }
 
@@ -112,11 +108,7 @@ impl ICapabilitiesRoleProtocol for CapabilitiesRustRoleAuditor {
         utility_capabilities_role_checker::check_block3_pub_facade(file, violations);
     }
 
-    fn check_capability_di_default(
-        &self,
-        file: &FileEntry,
-        violations: &mut Vec<LintResult>,
-    ) {
+    fn check_capability_di_default(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
         utility_capabilities_role_checker::check_di_default(file, violations);
         utility_capabilities_role_checker::check_impl_default_on_di(file, violations);
     }
@@ -200,7 +192,12 @@ impl CapabilitiesRustRoleAuditor {
                 protocol_line = Some((i, t.trim_end_matches('{').trim().to_string()));
             }
 
-            if inherent_line.is_none() && t.starts_with("impl ") && !t.contains("Protocol for") {
+            if inherent_line.is_none()
+                && t.starts_with("impl ")
+                && !t.contains("Protocol for")
+                && !t.starts_with("impl Default for")
+            {
+                // `impl Default for T` is a constructor (R2), not a Block 3 inherent impl.
                 inherent_line = Some((i, t.trim_end_matches('{').trim().to_string()));
             }
         }

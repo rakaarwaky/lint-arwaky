@@ -28,7 +28,6 @@ pub struct NamingOrchestrator {
     deps: NamingOrchestratorDeps,
 }
 
-
 impl NamingOrchestrator {
     pub fn new(deps: NamingOrchestratorDeps) -> Self {
         Self { deps }

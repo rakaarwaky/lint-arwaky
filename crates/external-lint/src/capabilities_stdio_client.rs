@@ -18,7 +18,6 @@ pub struct StdioClient {
     timeout: Timeout,
 }
 
-
 impl StdioClient {
     pub fn new(timeout: Timeout) -> Self {
         Self { timeout }
@@ -210,4 +209,3 @@ fn bounded_child_wait(child: &mut std::process::Child, deadline_secs: f64) -> bo
         }
     }
 }
-

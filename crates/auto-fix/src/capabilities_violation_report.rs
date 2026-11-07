@@ -38,7 +38,6 @@ pub struct ViolationReport {
     io: Arc<dyn IFileSystemIOProtocol>,
 }
 
-
 impl ViolationReport {
     pub fn new(
         linter: Arc<dyn ICodeAnalysisAggregate>,
@@ -445,4 +444,3 @@ impl IViolationReportProtocol for ViolationReport {
 }
 
 // ─── Block 3: Module Helpers ──────
-

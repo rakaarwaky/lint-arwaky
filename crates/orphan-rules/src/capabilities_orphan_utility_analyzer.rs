@@ -12,7 +12,6 @@ use std::collections::HashMap;
 
 pub struct UtilityOrphanAnalyzer;
 
-
 impl Default for UtilityOrphanAnalyzer {
     fn default() -> Self {
         Self::new()
@@ -178,8 +177,9 @@ impl IUtilityOrphanProtocol for UtilityOrphanAnalyzer {
 
 impl UtilityOrphanAnalyzer {
     pub fn is_module_imported(_file_path: &str, content: &str, module_name: &str) -> bool {
-        content
-            .lines()
-            .any(|line| line.contains(&format!("use {module_name}")) || line.contains(&format!("from {module_name}")))
+        content.lines().any(|line| {
+            line.contains(&format!("use {module_name}"))
+                || line.contains(&format!("from {module_name}"))
+        })
     }
 }

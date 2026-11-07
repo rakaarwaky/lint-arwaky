@@ -11,7 +11,6 @@ pub struct CapabilitiesExternalLintSelector {
     markdown_adapters: Vec<AdapterName>,
 }
 
-
 impl CapabilitiesExternalLintSelector {
     pub fn new(
         rust_adapters: Vec<AdapterName>,
@@ -74,4 +73,3 @@ impl IExternalLintSelectorProtocol for CapabilitiesExternalLintSelector {
 }
 
 // ─── Block 3: Module Helpers ────────────
-

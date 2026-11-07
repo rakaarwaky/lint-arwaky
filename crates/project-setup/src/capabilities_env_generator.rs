@@ -17,7 +17,6 @@ pub struct SetupEnvGenerator {
     io: Arc<dyn IFileSystemIOProtocol>,
 }
 
-
 impl SetupEnvGenerator {
     pub fn new(io: Arc<dyn IFileSystemIOProtocol>) -> Self {
         Self { io }
@@ -41,4 +40,3 @@ impl IEnvGenerationProtocol for SetupEnvGenerator {
 }
 
 // ─── Block 3: Module Helpers ────────────────────────────────
-

@@ -68,11 +68,7 @@ impl IAgentRoleProtocol for AgentRustRoleAuditor {
         utility_agent_role_checker::check_block_markers(file, violations);
     }
 
-    fn check_agent_constructor_block1(
-        &self,
-        file: &FileEntry,
-        violations: &mut Vec<LintResult>,
-    ) {
+    fn check_agent_constructor_block1(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
         utility_agent_role_checker::check_constructor_in_block1(file, violations);
     }
 

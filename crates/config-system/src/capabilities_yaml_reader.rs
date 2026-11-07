@@ -15,7 +15,6 @@ pub struct ConfigYamlReader {
     io: Arc<dyn IFileSystemIOProtocol>,
 }
 
-
 impl ConfigYamlReader {
     /// Create a new YAML config reader with filesystem IO dependency.
     pub fn new(io: Arc<dyn IFileSystemIOProtocol>) -> Self {
@@ -187,4 +186,3 @@ impl IConfigReadProtocol for ConfigYamlReader {
 }
 
 // ─── Block 3: Module Helpers ──────
-

@@ -27,7 +27,6 @@ pub struct WatchOrchestrator {
     linter: Arc<dyn ICodeAnalysisAggregate>,
 }
 
-
 impl WatchOrchestrator {
     pub fn new(
         lifecycle: Arc<dyn IWatchLifecycleProtocol>,
@@ -136,4 +135,3 @@ impl IWatchAggregate for WatchOrchestrator {
 }
 
 // ─── Block 3: Module Helpers ──────
-

@@ -59,7 +59,6 @@ pub struct FilesystemOrchestrator {
     pub(crate) rebuild_lock: Mutex<()>,
 }
 
-
 impl FilesystemOrchestrator {
     pub fn new(deps: FilesystemOrchestratorDeps) -> Self {
         Self {

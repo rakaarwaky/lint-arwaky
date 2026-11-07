@@ -154,12 +154,7 @@ fn nested_result(
 /// The prefix finding. Distinguishes "no legal prefix at all" from "a prefix
 /// from the wrong directory", because the fix differs: the first needs a
 /// rename, the second needs a move.
-fn prefix_result(
-    file: &str,
-    filename: &str,
-    stem: &str,
-    slot: TestSuiteSlot,
-) -> ViolationItem {
+fn prefix_result(file: &str, filename: &str, stem: &str, slot: TestSuiteSlot) -> ViolationItem {
     let directory = slot.directory_label();
     let legal = prefix_list(prefixes_for(slot));
 

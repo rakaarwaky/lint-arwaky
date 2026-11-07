@@ -50,7 +50,6 @@ pub struct FixOrchestrator {
     deps: FixOrchestratorDeps,
 }
 
-
 impl FixOrchestrator {
     pub fn new(deps: FixOrchestratorDeps) -> Self {
         Self { deps }
@@ -102,4 +101,3 @@ impl IFixAggregate for FixOrchestrator {
 }
 
 // ─── Block 3: Module Helpers ──────
-

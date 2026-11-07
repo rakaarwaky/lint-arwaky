@@ -40,7 +40,6 @@ pub struct TSCAdapter {
     tool_resolution: Arc<dyn IToolResolutionProtocol>,
 }
 
-
 impl TSCAdapter {
     pub fn new(
         lint_executor: Arc<dyn ICommandExecutorProtocol>,
@@ -167,4 +166,3 @@ fn tsc_pattern2() -> Option<&'static Regex> {
     RE.get_or_init(|| Regex::new(r"^([^:]+):(\d+):(\d+)\s+-\s+error\s+(TS\d+):\s+(.*)$").ok())
         .as_ref()
 }
-

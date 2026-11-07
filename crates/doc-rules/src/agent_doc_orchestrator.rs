@@ -35,7 +35,6 @@ pub struct DocOrchestrator {
     roadmap: Arc<dyn IRoadmapDocProtocol>,
 }
 
-
 impl DocOrchestrator {
     pub fn new(
         agents: Arc<dyn IAgentsDocProtocol>,
@@ -102,4 +101,3 @@ impl IDocRunnerAggregate for DocOrchestrator {
 }
 
 // ─── Block 3: Module Helpers ──────────────────────────
-

@@ -18,7 +18,6 @@ pub struct LoggingOrchestrator {
     walker: Arc<dyn IWalkerReportProtocol>,
 }
 
-
 impl LoggingOrchestrator {
     pub fn new(
         subscriber: Arc<dyn ISubscriberInstallProtocol>,

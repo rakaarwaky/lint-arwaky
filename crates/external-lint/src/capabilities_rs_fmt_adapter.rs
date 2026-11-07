@@ -38,7 +38,6 @@ pub struct RustFmtAdapter {
     _bin_path: Option<FilePath>,
 }
 
-
 impl RustFmtAdapter {
     pub fn new(
         executor: Arc<dyn ICommandExecutorProtocol>,
@@ -147,4 +146,3 @@ impl ILinterAdapterProtocol for RustFmtAdapter {
 }
 
 // ─── Block 3: Module Helpers ──────
-

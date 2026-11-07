@@ -57,7 +57,6 @@ pub struct MarkdownLintAdapter {
     context: Option<Arc<shared_external_lint::taxonomy_external_lint_vo::ExternalLintContext>>,
 }
 
-
 impl MarkdownLintAdapter {
     pub fn new(
         lint_executor: Arc<dyn ICommandExecutorProtocol>,

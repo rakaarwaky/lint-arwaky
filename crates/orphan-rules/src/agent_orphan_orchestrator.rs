@@ -54,7 +54,6 @@ pub struct ArchOrphanAnalyzer {
     config: ArchitectureConfig,
 }
 
-
 impl ArchOrphanAnalyzer {
     pub fn new(deps: ArchOrphanDeps, config: ArchitectureConfig) -> Self {
         Self { deps, config }

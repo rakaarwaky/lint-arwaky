@@ -41,7 +41,6 @@ pub struct ESLintAdapter {
     tool_resolution: Arc<dyn IToolResolutionProtocol>,
 }
 
-
 impl ESLintAdapter {
     pub fn new(
         lint_executor: Arc<dyn ICommandExecutorProtocol>,
@@ -160,4 +159,3 @@ impl ILinterAdapterProtocol for ESLintAdapter {
 }
 
 // ─── Block 3: Module Helpers ──────
-

@@ -149,11 +149,7 @@ pub trait ICapabilitiesRoleProtocol: Send + Sync {
 
     /// Banner hygiene: no wild banners, no duplicates, no empty Block 3.
     /// Severity MEDIUM (A-1, A-2, B-10).
-    fn check_capability_banner_hygiene(
-        &self,
-        file: &FileEntry,
-        violations: &mut Vec<LintResult>,
-    );
+    fn check_capability_banner_hygiene(&self, file: &FileEntry, violations: &mut Vec<LintResult>);
 
     /// `pub fn` under Block 3 without B-6a seam doc is a facade mistake.
     /// Severity MEDIUM (B-3, B-6, B-9).
@@ -173,11 +169,7 @@ pub trait ICapabilitiesRoleProtocol: Send + Sync {
 
     /// `#[derive(Default)]` / `impl Default` on a DI struct (holds injected deps).
     /// Severity MEDIUM (B-5).
-    fn check_capability_di_default(
-        &self,
-        file: &FileEntry,
-        violations: &mut Vec<LintResult>,
-    );
+    fn check_capability_di_default(&self, file: &FileEntry, violations: &mut Vec<LintResult>);
 
     /// Constants belong in `taxonomy_<domain>_constant.rs`, not inline. MEDIUM.
     fn check_capability_constant_placement(
@@ -262,11 +254,7 @@ pub trait IAgentRoleProtocol: Send + Sync {
 
     /// Constructor / `Default` must live in Block 1 with the struct, never in Block 3.
     /// Severity MEDIUM (B-1).
-    fn check_agent_constructor_block1(
-        &self,
-        file: &FileEntry,
-        violations: &mut Vec<LintResult>,
-    );
+    fn check_agent_constructor_block1(&self, file: &FileEntry, violations: &mut Vec<LintResult>);
 
     /// No forbidden I/O operations in the agent file. MEDIUM.
     fn check_agent_io_forbidden(&self, file: &FileEntry, violations: &mut Vec<LintResult>);

@@ -39,7 +39,6 @@ pub struct PrettierAdapter {
     tool_resolution: Arc<dyn IToolResolutionProtocol>,
 }
 
-
 impl PrettierAdapter {
     pub fn new(
         lint_executor: Arc<dyn ICommandExecutorProtocol>,
@@ -158,4 +157,3 @@ impl ILinterAdapterProtocol for PrettierAdapter {
 }
 
 // ─── Block 3: Module Helpers ──────
-

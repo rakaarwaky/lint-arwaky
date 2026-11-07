@@ -56,7 +56,6 @@ struct GitleaksFinding {
     tags: Vec<String>,
 }
 
-
 impl GitleaksAdapter {
     pub fn new(
         executor: Arc<dyn ICommandExecutorProtocol>,

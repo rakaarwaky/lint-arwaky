@@ -11,7 +11,6 @@ pub struct SecurityScanChecker {
     io: Arc<dyn IFileSystemIOProtocol>,
 }
 
-
 impl SecurityScanChecker {
     pub fn new(io: Arc<dyn IFileSystemIOProtocol>) -> Self {
         Self { io }

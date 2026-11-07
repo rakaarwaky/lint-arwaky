@@ -18,7 +18,6 @@ pub struct UnusedImportFix {
     io: Arc<dyn IFileSystemIOProtocol>,
 }
 
-
 impl UnusedImportFix {
     pub fn new(io: Arc<dyn IFileSystemIOProtocol>) -> Self {
         Self { io }
@@ -127,4 +126,3 @@ impl IUnusedImportFixProtocol for UnusedImportFix {
 }
 
 // ─── Block 3: Module Helpers ──────
-

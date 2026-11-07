@@ -15,7 +15,6 @@ pub struct CapabilitiesOrphanAnalyzer {
     workspace: Arc<dyn IWorkspaceProtocol>,
 }
 
-
 impl CapabilitiesOrphanAnalyzer {
     pub fn new(workspace: Arc<dyn IWorkspaceProtocol>) -> Self {
         Self { workspace }
@@ -126,4 +125,3 @@ impl ICapabilitiesOrphanProtocol for CapabilitiesOrphanAnalyzer {
 }
 
 // ─── Block 3: Module Helpers ────────────
-

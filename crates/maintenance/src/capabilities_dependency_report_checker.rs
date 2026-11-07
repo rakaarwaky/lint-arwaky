@@ -10,7 +10,6 @@ pub struct DependencyReportChecker {
     io: Arc<dyn IFileSystemIOProtocol>,
 }
 
-
 impl DependencyReportChecker {
     pub fn new(io: Arc<dyn IFileSystemIOProtocol>) -> Self {
         Self { io }

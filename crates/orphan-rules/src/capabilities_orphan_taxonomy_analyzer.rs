@@ -13,7 +13,6 @@ use std::collections::HashMap;
 
 pub struct TaxonomyOrphanAnalyzer;
 
-
 impl Default for TaxonomyOrphanAnalyzer {
     fn default() -> Self {
         Self::new()

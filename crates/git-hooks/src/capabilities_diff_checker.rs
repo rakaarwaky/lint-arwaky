@@ -65,7 +65,6 @@ pub struct DiffChecker {
     code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
 }
 
-
 impl DiffChecker {
     pub fn new(
         io: Arc<dyn IFileSystemIOProtocol>,
@@ -428,4 +427,3 @@ impl IDiffDetectionProtocol for DiffChecker {
 }
 
 // ─── Block 3: Module Helpers ──────
-

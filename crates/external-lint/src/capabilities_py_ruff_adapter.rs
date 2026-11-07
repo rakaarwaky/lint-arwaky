@@ -38,7 +38,6 @@ pub struct RuffAdapter {
     bin_path: Option<FilePath>,
 }
 
-
 impl RuffAdapter {
     pub fn new(
         lint_executor: Arc<dyn ICommandExecutorProtocol>,
@@ -217,4 +216,3 @@ impl ILinterAdapterProtocol for RuffAdapter {
 }
 
 // ─── Block 3: Module Helpers ──────
-

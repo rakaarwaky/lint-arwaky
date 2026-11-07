@@ -58,7 +58,6 @@ pub struct ExternalLintOrchestrator {
     deps: ExternalLintDeps,
 }
 
-
 impl ExternalLintOrchestrator {
     pub fn new(deps: ExternalLintDeps) -> Self {
         Self { deps }

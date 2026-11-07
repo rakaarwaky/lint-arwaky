@@ -17,7 +17,6 @@ pub struct SetupLanguageDetector {
     io: Arc<dyn IFileSystemIOProtocol>,
 }
 
-
 impl SetupLanguageDetector {
     pub fn new(io: Arc<dyn IFileSystemIOProtocol>) -> Self {
         Self { io }
@@ -141,4 +140,3 @@ impl ILanguageDetectionProtocol for SetupLanguageDetector {
 }
 
 // ─── Block 3: Module Helpers ──────
-

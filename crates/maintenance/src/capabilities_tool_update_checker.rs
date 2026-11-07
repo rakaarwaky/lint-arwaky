@@ -8,7 +8,6 @@ pub struct ToolUpdateChecker {
     io: Arc<dyn IFileSystemIOProtocol>,
 }
 
-
 impl ToolUpdateChecker {
     pub fn new(io: Arc<dyn IFileSystemIOProtocol>) -> Self {
         Self { io }

@@ -20,7 +20,6 @@ pub struct CapabilitiesFileSystemIO {
     timing: Arc<ScanTiming>,
 }
 
-
 impl CapabilitiesFileSystemIO {
     pub fn new(timing: Arc<ScanTiming>) -> Self {
         Self { timing }

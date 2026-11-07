@@ -18,7 +18,6 @@ pub struct HookUninstaller {
     io: Arc<dyn IFileSystemIOProtocol>,
 }
 
-
 impl HookUninstaller {
     pub fn new(root_dir: String, io: Arc<dyn IFileSystemIOProtocol>) -> Self {
         Self { root_dir, io }
@@ -51,4 +50,3 @@ impl IHookUninstallProtocol for HookUninstaller {
 }
 
 // ─── Block 3: Module Helpers ──────
-

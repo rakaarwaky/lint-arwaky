@@ -19,7 +19,6 @@ pub struct SymbolRename {
     io: Arc<dyn IFileSystemIOProtocol>,
 }
 
-
 impl SymbolRename {
     pub fn new(io: Arc<dyn IFileSystemIOProtocol>) -> Self {
         Self { io }
@@ -100,4 +99,3 @@ impl ISymbolRenameProtocol for SymbolRename {
 }
 
 // ─── Block 3: Module Helpers ──────
-
