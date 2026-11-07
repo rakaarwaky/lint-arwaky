@@ -13,13 +13,13 @@ pub struct FilterBuilder {}
 
 
 impl Default for FilterBuilder {
-    fn default() -> Self {{
+    fn default() -> Self {
         Self::new()
     }
 }
 
 impl FilterBuilder {
-    pub fn new() -> Self {{
+    pub fn new() -> Self {
         Self {}
     }
 }

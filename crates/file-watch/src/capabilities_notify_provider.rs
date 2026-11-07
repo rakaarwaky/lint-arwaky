@@ -24,13 +24,13 @@ pub struct NotifyWatchProvider {
 
 
 impl Default for NotifyWatchProvider {
-    fn default() -> Self {{
+    fn default() -> Self {
         Self::new()
     }
 }
 
 impl NotifyWatchProvider {
-    pub fn new() -> Self {{
+    pub fn new() -> Self {
         Self {}
     }
 }
@@ -124,10 +124,4 @@ impl IWatchLifecycleProtocol for NotifyWatchProvider {
 }
 
 // ─── Block 3: Module Helpers ──────
-
-impl Default for NotifyWatchProvider {
-    fn default() -> Self {
-        Self::new()
-    }
-}
 

@@ -15,7 +15,7 @@ pub struct TaxonomyOrphanAnalyzer;
 
 
 impl Default for TaxonomyOrphanAnalyzer {
-    fn default() -> Self {{
+    fn default() -> Self {
         Self::new()
     }
 }

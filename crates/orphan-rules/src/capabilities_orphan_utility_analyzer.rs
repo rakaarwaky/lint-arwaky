@@ -15,7 +15,7 @@ pub struct UtilityOrphanAnalyzer;
 
 
 impl Default for UtilityOrphanAnalyzer {
-    fn default() -> Self {{
+    fn default() -> Self {
         Self::new()
     }
 }

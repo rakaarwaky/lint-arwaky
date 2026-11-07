@@ -12,7 +12,7 @@ pub struct AgentOrphanAnalyzer;
 
 
 impl Default for AgentOrphanAnalyzer {
-    fn default() -> Self {{
+    fn default() -> Self {
         Self::new()
     }
 }

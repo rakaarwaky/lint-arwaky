@@ -17,13 +17,13 @@ pub struct ChangeFilter {
 
 
 impl Default for ChangeFilter {
-    fn default() -> Self {{
+    fn default() -> Self {
         Self::new()
     }
 }
 
 impl ChangeFilter {
-    pub fn new() -> Self {{
+    pub fn new() -> Self {
         Self {}
     }
 }

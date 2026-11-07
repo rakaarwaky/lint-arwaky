@@ -13,7 +13,7 @@ pub struct SurfacesOrphanAnalyzer;
 
 
 impl Default for SurfacesOrphanAnalyzer {
-    fn default() -> Self {{
+    fn default() -> Self {
         Self::new()
     }
 }

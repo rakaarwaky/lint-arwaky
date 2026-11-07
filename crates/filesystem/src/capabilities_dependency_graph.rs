@@ -30,13 +30,13 @@ pub struct DependencyGraph {
 
 
 impl Default for DependencyGraph {
-    fn default() -> Self {{
+    fn default() -> Self {
         Self::new()
     }
 }
 
 impl DependencyGraph {
-    pub fn new() -> Self {{
+    pub fn new() -> Self {
         Self {}
     }
 }
