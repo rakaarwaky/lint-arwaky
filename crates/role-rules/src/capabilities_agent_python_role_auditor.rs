@@ -110,10 +110,6 @@ impl Default for AgentPythonRoleAuditor {
 }
 
 impl AgentPythonRoleAuditor {
-    pub fn new() -> Self {
-        Self {}
-    }
-
     /// Block 2 (aggregate methods) must precede Block 3 (factory/dunder).
     fn block_order(&self, content: &str, path: &str, violations: &mut Vec<LintResult>) {
         // For Python classes: methods that are `@classmethod` / `@staticmethod`
