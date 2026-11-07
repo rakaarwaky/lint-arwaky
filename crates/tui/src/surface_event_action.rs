@@ -27,6 +27,12 @@ pub struct SurfaceActionHandler {
     io: Arc<dyn IFilesystemAggregate>,
 }
 
+impl SurfaceActionHandler {
+    pub fn new(lint_port: Arc<SurfaceLintExecutor>, io: Arc<dyn IFilesystemAggregate>) -> Self {
+        Self { lint_port, io }
+    }
+}
+
 // A small, independently testable worker primitive shared by all background
 // actions. It returns immediately after spawning and never blocks the caller.
 pub fn spawn_background_task<T, F>(work: F, tx: std::sync::mpsc::SyncSender<T>)
@@ -211,10 +217,6 @@ impl SurfaceActionHandler {
 // ─── Block 3: Module Helpers ──────
 
 impl SurfaceActionHandler {
-    pub fn new(lint_port: Arc<SurfaceLintExecutor>, io: Arc<dyn IFilesystemAggregate>) -> Self {
-        Self { lint_port, io }
-    }
-
     /// Main event dispatch — maps every TuiEvent variant to a concrete action.
     /// Categories: navigation, focus cycling, search, path dialog, lint actions, mouse.
     pub fn handle(&self, state: &mut AppState, event: TuiEvent) {

@@ -23,147 +23,49 @@ use std::path::{Path, PathBuf};
 /// that every PR-LA-001..N id maps to a real crate folder by order.
 pub struct PrLaFolderAuditor {}
 
+impl PrLaFolderAuditor {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+
+impl Default for PrLaFolderAuditor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+/// Architectural role of a crate folder, classified by objective structure so
+/// AES706 Part A only requires FRD.md from feature folders.
+///
+/// Mirrors doc-rules' `classify_member` exactly so the two classifiers cannot
+/// silently diverge: `shared`/`layer` → Layer, `agent_*_orchestrator` file
+/// or Cargo.toml carrying `agent_`/`capability`/`orchestrator` → Feature,
+/// `surface_*` file or Cargo.toml depending on cli/mcp/tui/dispatcher →
+/// Surface, everything else → None. Reading Cargo.toml here is layer-legal:
+/// structure-rules reads its own crate manifests directly and does not
+/// depend on the doc-rules foundation (peer, forbidden per ARCHITECTURE §8).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum MemberRole {
+    Feature,
+    Kernel,
+    Surface,
+    None,
+}
+
 // ─── Block 2: Module Contract ────────────────────────────────
 
 impl IStructurePrLaProtocol for PrLaFolderAuditor {
+    /// AES706 — Part A: feature folders' FR ids vs folder name.
+    /// Part B: PR-LA ids in PRD/ROADMAP vs crate folders by order.
     fn audit_pr_la_folder(&self, request: StructureRequest) -> StructureResponse {
         let StructureRequest::AuditAll { root } = request;
         let ws_root = workspace_root(&root);
-        let mut findings = Vec::new();
 
-        // Part A: every *feature* crate folder's FR ids must match its folder
-        // name. Surface and layer folders owe DESIGN.md/DATA.md, not FRD.md,
-        // so FRD.md presence is only checked on feature folders.
-        for member in utility_structure_parsers::scoped_member_dirs(&root, &ws_root) {
-            let lang = member_lang(&member);
-            for folder in crate_folders(&member) {
-                if member_role(&folder, lang) != MemberRole::Feature {
-                    continue;
-                }
-                let folder_name = match folder.file_name().and_then(|n| n.to_str()) {
-                    Some(n) => n.to_string(),
-                    None => continue,
-                };
-                let frd = folder.join(consts::FRD_DOC);
-                if !frd.is_file() {
-                    findings.push(StructureFinding::new(
-                        consts::RULE_CODE_PR_LA_FOLDER,
-                        consts::PR_LA_VIOLATION_MISSING_FRD,
-                        relative_to(&folder, &ws_root),
-                        format!("crate folder '{folder_name}' has no FRD.md"),
-                    )
-                    .with_reason(
-                        "Every crate folder carries an FRD so its FR ids can be checked against the folder name.",
-                        format!(
-                            "Add '{}/FRD.md' declaring FR-{prefix}-NNN ids.",
-                            folder.display(),
-                            prefix = fr_prefix(&folder_name)
-                        ),
-                    ));
-                    continue;
-                }
-                let contents = match std::fs::read_to_string(&frd) {
-                    Ok(c) => c,
-                    Err(_) => continue,
-                };
-                for fr_id in extract_fr_ids(&contents) {
-                    let prefix = fr_prefix(&folder_name);
-                    // Ids match when the feature prefix equals the folder's
-                    // PascalCase prefix. The leading `FR-` token is
-                    // case-insensitive: an id may read `FR-ADDITION-001` while
-                    // the folder is `addition`.
-                    if !fr_id
-                        .to_ascii_uppercase()
-                        .starts_with(&format!("FR-{}", prefix.to_ascii_uppercase()))
-                    {
-                        findings.push(StructureFinding::new(
-                            consts::RULE_CODE_PR_LA_FOLDER,
-                            consts::PR_LA_VIOLATION_FR_ID_MISMATCH,
-                            relative_to(&frd, &ws_root),
-                            format!(
-                                "folder '{folder_name}' carries FR id '{fr_id}' but its prefix must be 'FR-{prefix}'"
-                            ),
-                        )
-                        .with_reason(
-                            "A crate folder's FR ids all share the folder's feature prefix so a reader can match an FR id to the crate that owns it.".to_string(),
-                            format!(
-                                "Rename '{fr_id}' to 'FR-{prefix}-NNN' or move the FRD into the folder that owns its prefix.",
-                            ),
-                        ));
-                    }
-                }
-            }
-        }
-
-        // Part B: every PR-LA-001..N id in PRD.md / ROADMAP.md maps to a real
-        // crate folder by order (PR-LA-001 → first folder), the folder exists
-        // under a member dir, and the heading's title names that folder.
-        let order = consts::PR_LA_FOLDER_ORDER;
-        let members = utility_structure_parsers::scoped_member_dirs(&root, &ws_root);
-        for doc_name in consts::PR_LA_DOCUMENTS {
-            let doc = ws_root.join(doc_name);
-            if !doc.is_file() {
-                continue;
-            }
-            let contents = match std::fs::read_to_string(&doc) {
-                Ok(c) => c,
-                Err(_) => continue,
-            };
-            for (position, pr_la_id, title) in extract_pr_la_ids(&contents) {
-                let expected_folder = order.get(position).copied().unwrap_or("");
-                if expected_folder.is_empty() {
-                    findings.push(StructureFinding::new(
-                        consts::RULE_CODE_PR_LA_FOLDER,
-                        consts::PR_LA_VIOLATION_PR_LA_ID_MISMATCH,
-                        relative_to(&doc, &ws_root),
-                        format!("'{pr_la_id}' has no crate folder at position {position}"),
-                    )
-                    .with_reason(
-                        "PR-LA ids map 1:1 to crate folders by order, so a position with no folder cannot be satisfied.",
-                        format!(
-                            "Add a crate folder for position {position}, or remove the dangling '{pr_la_id}' from '{doc_name}'."
-                        ),
-                    ));
-                    continue;
-                }
-                let folder_exists = members
-                    .iter()
-                    .any(|member| member.join(expected_folder).is_dir());
-                if !folder_exists {
-                    findings.push(StructureFinding::new(
-                        consts::RULE_CODE_PR_LA_FOLDER,
-                        consts::PR_LA_VIOLATION_PR_LA_ID_MISMATCH,
-                        relative_to(&doc, &ws_root),
-                        format!(
-                            "'{pr_la_id}' maps to '{expected_folder}' but no crates|modules|packages/{expected_folder} folder exists"
-                        ),
-                    )
-                    .with_reason(
-                        "A PR-LA id must point at a real crate folder, by order.",
-                        format!(
-                            "Create '{expected_folder}' under crates/, modules/, or packages/ for '{pr_la_id}', or renumber the PR-LA ids so '{pr_la_id}' lands on an existing folder."
-                        ),
-                    ));
-                    continue;
-                }
-                if !title.is_empty() && !title_names_folder(&title, expected_folder) {
-                    findings.push(StructureFinding::new(
-                        consts::RULE_CODE_PR_LA_FOLDER,
-                        consts::PR_LA_VIOLATION_PR_LA_ID_MISMATCH,
-                        relative_to(&doc, &ws_root),
-                        format!(
-                            "'{pr_la_id}' titled '{title}' does not name its folder '{expected_folder}'"
-                        ),
-                    )
-                    .with_reason(
-                        "Each PR-LA heading names the crate folder it maps to, by order, so a reader can match the spec row to crates|modules|packages/<folder>.",
-                        format!(
-                            "Title '{pr_la_id}' with '{expected_folder}' after the colon, e.g. '### {pr_la_id}: {expected_folder}'."
-                        ),
-                    ));
-                }
-            }
-        }
+        let findings: Vec<StructureFinding> = audit_feature_folders(&root, &ws_root)
+            .into_iter()
+            .chain(audit_pr_la_documents(&root, &ws_root))
+            .collect();
 
         StructureResponse::Findings {
             findings: sorted(findings),
@@ -173,16 +75,210 @@ impl IStructurePrLaProtocol for PrLaFolderAuditor {
 
 // ─── Block 3: Module Helpers ────────────────────────────
 
-impl Default for PrLaFolderAuditor {
-    fn default() -> Self {
-        Self::new()
+/// Part A: every *feature* crate folder's FR ids must match its folder name.
+/// Surface and layer folders owe DESIGN.md/DATA.md, not FRD.md, so FRD.md
+/// presence is only checked on feature folders.
+fn audit_feature_folders(root: &Path, ws_root: &Path) -> Vec<StructureFinding> {
+    let mut findings = Vec::new();
+    for member in utility_structure_parsers::scoped_member_dirs(root, ws_root) {
+        let lang = member_lang(&member);
+        for folder in crate_folders(&member) {
+            if member_role(&folder, lang) != MemberRole::Feature {
+                continue;
+            }
+            findings.extend(audit_feature_folder(&folder, ws_root));
+        }
     }
+    findings
 }
 
-impl PrLaFolderAuditor {
-    pub fn new() -> Self {
-        Self {}
+/// Part A for one feature folder: FRD.md must exist, and every FR id it
+/// declares must carry the folder's feature prefix.
+fn audit_feature_folder(folder: &Path, ws_root: &Path) -> Vec<StructureFinding> {
+    let folder_name = match folder.file_name().and_then(|n| n.to_str()) {
+        Some(n) => n.to_string(),
+        None => return Vec::new(),
+    };
+    let frd = folder.join(consts::FRD_DOC);
+    if !frd.is_file() {
+        return vec![missing_frd_finding(folder, ws_root, &folder_name)];
     }
+    let Ok(contents) = std::fs::read_to_string(&frd) else {
+        return Vec::new();
+    };
+    let prefix = fr_prefix(&folder_name);
+    extract_fr_ids(&contents)
+        .iter()
+        .filter(|fr_id| !fr_id_matches_folder(fr_id, &prefix))
+        .map(|fr_id| fr_mismatch_finding(&frd, ws_root, &folder_name, fr_id, &prefix))
+        .collect()
+}
+
+/// Ids match when the feature prefix equals the folder's PascalCase prefix.
+/// The leading `FR-` token is case-insensitive: an id may read
+/// `FR-ADDITION-001` while the folder is `addition`.
+fn fr_id_matches_folder(fr_id: &str, prefix: &str) -> bool {
+    fr_id
+        .to_ascii_uppercase()
+        .starts_with(&format!("FR-{}", prefix.to_ascii_uppercase()))
+}
+
+/// Part B: every PR-LA-001..N id in PRD.md / ROADMAP.md maps to a real crate
+/// folder by order (PR-LA-001 → first folder), the folder exists under a
+/// member dir, and the heading's title names that folder.
+fn audit_pr_la_documents(root: &Path, ws_root: &Path) -> Vec<StructureFinding> {
+    let order = consts::PR_LA_FOLDER_ORDER;
+    let members = utility_structure_parsers::scoped_member_dirs(root, ws_root);
+    let mut findings = Vec::new();
+    for doc_name in consts::PR_LA_DOCUMENTS {
+        let doc = ws_root.join(doc_name);
+        if !doc.is_file() {
+            continue;
+        }
+        let Ok(contents) = std::fs::read_to_string(&doc) else {
+            continue;
+        };
+        for (position, pr_la_id, title) in extract_pr_la_ids(&contents) {
+            let expected_folder = order.get(position).copied().unwrap_or("");
+            if expected_folder.is_empty() {
+                findings.push(dangling_pr_la_finding(
+                    &doc,
+                    ws_root,
+                    &pr_la_id,
+                    position,
+                    doc_name,
+                ));
+                continue;
+            }
+            if !members
+                .iter()
+                .any(|member| member.join(expected_folder).is_dir())
+            {
+                findings.push(missing_folder_finding(
+                    &doc,
+                    ws_root,
+                    &pr_la_id,
+                    expected_folder,
+                ));
+                continue;
+            }
+            if !title.is_empty() && !title_names_folder(&title, expected_folder) {
+                findings.push(title_mismatch_finding(
+                    &doc,
+                    ws_root,
+                    &pr_la_id,
+                    &title,
+                    expected_folder,
+                ));
+            }
+        }
+    }
+    findings
+}
+
+/// Finding: a feature crate folder has no FRD.md at all.
+fn missing_frd_finding(folder: &Path, ws_root: &Path, folder_name: &str) -> StructureFinding {
+    StructureFinding::new(
+        consts::RULE_CODE_PR_LA_FOLDER,
+        consts::PR_LA_VIOLATION_MISSING_FRD,
+        relative_to(folder, ws_root),
+        format!("crate folder '{folder_name}' has no FRD.md"),
+    )
+    .with_reason(
+        "Every crate folder carries an FRD so its FR ids can be checked against the folder name.",
+        format!(
+            "Add '{}/FRD.md' declaring FR-{prefix}-NNN ids.",
+            folder.display(),
+            prefix = fr_prefix(folder_name)
+        ),
+    )
+}
+
+/// Finding: an FR id inside FRD.md does not carry the folder's prefix.
+fn fr_mismatch_finding(
+    frd: &Path,
+    ws_root: &Path,
+    folder_name: &str,
+    fr_id: &str,
+    prefix: &str,
+) -> StructureFinding {
+    StructureFinding::new(
+        consts::RULE_CODE_PR_LA_FOLDER,
+        consts::PR_LA_VIOLATION_FR_ID_MISMATCH,
+        relative_to(frd, ws_root),
+        format!("folder '{folder_name}' carries FR id '{fr_id}' but its prefix must be 'FR-{prefix}'"),
+    )
+    .with_reason(
+        "A crate folder's FR ids all share the folder's feature prefix so a reader can match an FR id to the crate that owns it.".to_string(),
+        format!("Rename '{fr_id}' to 'FR-{prefix}-NNN' or move the FRD into the folder that owns its prefix.",),
+    )
+}
+
+/// Finding: a PR-LA id has no crate folder at its position.
+fn dangling_pr_la_finding(
+    doc: &Path,
+    ws_root: &Path,
+    pr_la_id: &str,
+    position: usize,
+    doc_name: &str,
+) -> StructureFinding {
+    StructureFinding::new(
+        consts::RULE_CODE_PR_LA_FOLDER,
+        consts::PR_LA_VIOLATION_PR_LA_ID_MISMATCH,
+        relative_to(doc, ws_root),
+        format!("'{pr_la_id}' has no crate folder at position {position}"),
+    )
+    .with_reason(
+        "PR-LA ids map 1:1 to crate folders by order, so a position with no folder cannot be satisfied.",
+        format!(
+            "Add a crate folder for position {position}, or remove the dangling '{pr_la_id}' from '{doc_name}'."
+        ),
+    )
+}
+
+/// Finding: the PR-LA id's mapped folder does not exist under any member dir.
+fn missing_folder_finding(
+    doc: &Path,
+    ws_root: &Path,
+    pr_la_id: &str,
+    expected_folder: &str,
+) -> StructureFinding {
+    StructureFinding::new(
+        consts::RULE_CODE_PR_LA_FOLDER,
+        consts::PR_LA_VIOLATION_PR_LA_ID_MISMATCH,
+        relative_to(doc, ws_root),
+        format!(
+            "'{pr_la_id}' maps to '{expected_folder}' but no crates|modules|packages/{expected_folder} folder exists"
+        ),
+    )
+    .with_reason(
+        "A PR-LA id must point at a real crate folder, by order.",
+        format!(
+            "Create '{expected_folder}' under crates/, modules/, or packages/ for '{pr_la_id}', or renumber the PR-LA ids so '{pr_la_id}' lands on an existing folder."
+        ),
+    )
+}
+
+/// Finding: the PR-LA heading's title does not name its mapped folder.
+fn title_mismatch_finding(
+    doc: &Path,
+    ws_root: &Path,
+    pr_la_id: &str,
+    title: &str,
+    expected_folder: &str,
+) -> StructureFinding {
+    StructureFinding::new(
+        consts::RULE_CODE_PR_LA_FOLDER,
+        consts::PR_LA_VIOLATION_PR_LA_ID_MISMATCH,
+        relative_to(doc, ws_root),
+        format!("'{pr_la_id}' titled '{title}' does not name its folder '{expected_folder}'"),
+    )
+    .with_reason(
+        "Each PR-LA heading names the crate folder it maps to, by order, so a reader can match the spec row to crates|modules|packages/<folder>.",
+        format!(
+            "Title '{pr_la_id}' with '{expected_folder}' after the colon, e.g. '### {pr_la_id}: {expected_folder}'."
+        ),
+    )
 }
 
 /// Resolve the workspace root by walking up from *root* until we find
@@ -203,24 +299,6 @@ fn crate_folders(member: &Path) -> Vec<PathBuf> {
         .collect();
     dirs.sort();
     dirs
-}
-
-/// Architectural role of a crate folder, classified by objective structure so
-/// AES706 Part A only requires FRD.md from feature folders.
-///
-/// Mirrors doc-rules' `classify_member` exactly so the two classifiers cannot
-/// silently diverge: `shared`/`layer` → Layer, `agent_*_orchestrator` file
-/// or Cargo.toml carrying `agent_`/`capability`/`orchestrator` → Feature,
-/// `surface_*` file or Cargo.toml depending on cli/mcp/tui/dispatcher →
-/// Surface, everything else → None. Reading Cargo.toml here is layer-legal:
-/// structure-rules reads its own crate manifests directly and does not
-/// depend on the doc-rules foundation (peer, forbidden per ARCHITECTURE §8).
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum MemberRole {
-    Feature,
-    Kernel,
-    Surface,
-    None,
 }
 
 /// Classify *folder* by its crate structure, mirroring the doc-rules
