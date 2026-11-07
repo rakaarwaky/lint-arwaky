@@ -179,18 +179,9 @@ impl CapabilitiesRustRoleAuditor {
         // a raw line before the protocol impl is a violation. Track banner
         // positions so the comparison is by block, not by raw line number.
         let markers = utility_capabilities_role_checker::capability_block_markers(content);
-        let banner1_idx: Option<usize> = markers
-            .iter()
-            .find(|m| m.number == 1)
-            .map(|m| m.line - 1);
-        let banner2_idx: Option<usize> = markers
-            .iter()
-            .find(|m| m.number == 2)
-            .map(|m| m.line - 1);
-        let banner3_idx: Option<usize> = markers
-            .iter()
-            .find(|m| m.number == 3)
-            .map(|m| m.line - 1);
+        let banner1_idx: Option<usize> = markers.iter().find(|m| m.number == 1).map(|m| m.line - 1);
+        let banner2_idx: Option<usize> = markers.iter().find(|m| m.number == 2).map(|m| m.line - 1);
+        let banner3_idx: Option<usize> = markers.iter().find(|m| m.number == 3).map(|m| m.line - 1);
 
         for (i, l) in lines.iter().enumerate() {
             let t = l.trim();
@@ -228,10 +219,7 @@ impl CapabilitiesRustRoleAuditor {
                     (Some(b1), Some(b2)) if b1 < i && i < b2
                 );
                 if !is_constructor_region {
-                    inherent_offenders.push((
-                        i,
-                        t.trim_end_matches('{').trim().to_string(),
-                    ));
+                    inherent_offenders.push((i, t.trim_end_matches('{').trim().to_string()));
                 }
             }
         }
@@ -240,12 +228,21 @@ impl CapabilitiesRustRoleAuditor {
         // banner-carrying files the violation is an inherent impl before the
         // Block 3 banner (i.e. tucked into Block 1 or 2 instead of Block 3).
         // For banner-less files it is a raw-line ordering violation.
-        if let (Some((inh_idx, inh_src)), Some((proto_idx, proto_src))) =
-            (inherent_line, protocol_line)
-        {
+        let proto_src = protocol_line
+            .as_ref()
+            .map(|(_, s)| s.as_str())
+            .unwrap_or("<protocol impl>");
+        let proto_idx = protocol_line.as_ref().map(|(i, _)| *i);
+
+        // Report every bare inherent impl that sits outside its legal region:
+        // - banner-carrying: an inherent impl above the Block 3 banner is tucked
+        //   into Block 1 or Block 2 instead of Block 3 (Rule 1).
+        // - banner-less: an inherent impl before the protocol impl is a raw-order
+        //   violation (fallback Rule 2).
+        for (inh_idx, inh_src) in inherent_offenders {
             let is_misplaced = match banner3_idx {
                 Some(b3) => inh_idx < b3,
-                None => inh_idx < proto_idx,
+                None => proto_idx.map_or(false, |p| inh_idx < p),
             };
             if is_misplaced {
                 violations.push(LintResult::new_arch_with_name(
@@ -262,12 +259,41 @@ impl CapabilitiesRustRoleAuditor {
                     format!(
                         "`{inh_src}` is declared at line {} but `{proto_src}` follows at line {}.",
                         inh_idx + 1,
-                        proto_idx + 1
+                        proto_idx.map(|p| p + 1).unwrap_or(inh_idx + 1)
                     ),
                     "Reorder the file so the blocks read:\n  \
                      Block 1: Module Declaration -> Block 2: Module Contract -> Block 3: Module Helpers.\n  \
                      Move the bare inherent impl below the `// ─── Block 3: Module Helpers ───` banner; \
                      in a file with no banners, move the protocol impl above the inherent impl instead.",
+                ));
+            }
+        }
+
+        // Protocol placement: the protocol impl must live strictly inside region
+        // Block 2 (between the B2 and B3 banners). A protocol impl elsewhere is
+        // itself a block-membership defect.
+        if let (Some((proto_idx, proto_src)), Some(b2), Some(b3)) =
+            (protocol_line, banner2_idx, banner3_idx)
+        {
+            if !(b2 < proto_idx && proto_idx < b3) {
+                violations.push(LintResult::new_arch_with_name(
+                    path,
+                    proto_idx + 1,
+                    "AES403",
+                    Severity::HIGH,
+                    format!(
+                        "Protocol impl must live in region Block 2: `{proto_src}` is outside the `// ─── Block 2: Module Contract ───` .. `// ─── Block 3: Module Helpers ───` span.",
+                        proto_src = proto_src,
+                    ),
+                    "CAPABILITY_ROLE",
+                    format!(
+                        "`{proto_src}` is declared at line {}, outside region Block 2 (lines {}–{}).",
+                        proto_idx + 1,
+                        b2 + 1,
+                        b3 + 1
+                    ),
+                    "Move the protocol trait implementation into region Block 2, between \
+                     the `// ─── Block 2: Module Contract ───` and `// ─── Block 3: Module Helpers ───` banners.",
                 ));
             }
         }
