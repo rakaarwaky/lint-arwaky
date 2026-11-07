@@ -310,9 +310,24 @@ pub fn check_block_markers(file: &FileEntry, violations: &mut Vec<LintResult>) {
 
     // B-10: a block may be empty — an empty block drops its marker. A file
     // may legitimately carry only Block 1 + Block 2 (Block 3 empty, marker
-    // deleted). Never require a banner for an empty block, and never report
-    // a "missing marker" violation.
+    // deleted). Never report a "missing marker" violation for an empty block.
+    // But a file with *no* banner at all still needs a map — report it.
     if markers.is_empty() {
+        violations.push(LintResult::new_arch(
+            &path,
+            0,
+            "AES403",
+            Severity::MEDIUM,
+            "AES403 CAPABILITY_ROLE: Capability file declares no block markers.\n\
+             WHY? File carries no `Block 1:` / `Block 2:` / `Block 3:` banner \
+             comment, so the reader is given no map of the file. The 3-block shape \
+             is Block 1 (struct definition) -> Block 2 (protocol trait \
+             implementation) -> Block 3 (constructors, std traits, helpers).\n\
+             FIX: Add the three banner comments above their blocks:\n  \
+             // ─── Block 1: Module Declaration ───\n  \
+             // ─── Block 2: Module Contract ───\n  \
+             // ─── Block 3: Module Helpers ───",
+        ));
         return;
     }
 

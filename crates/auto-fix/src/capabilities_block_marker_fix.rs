@@ -100,7 +100,7 @@ impl BlockMarkerFix {
             _ => format!("// {}", new_line.trim_start()),
         };
         if lines[idx] == new_line {
-            return FixOutcome::skipped(SkipReason::AlreadyValid);
+            return FixOutcome::applied(0);
         }
         if dry_run {
             return FixOutcome::applied(1);
