@@ -942,6 +942,90 @@ pub fn check_block_markers(file: &FileEntry, violations: &mut Vec<LintResult>) {
     ));
 }
 
+/// Rule B-1 — constructor / `Default` must live in Block 1, never in Block 3.
+/// MEDIUM.
+///
+/// A constructor (`pub fn new`, `pub fn from_*`, `impl Default`) declares how
+/// the type is born — it belongs with the struct declaration in Block 1, not
+/// with the mechanics in Block 3.
+pub fn check_constructor_in_block1(file: &FileEntry, violations: &mut Vec<LintResult>) {
+    let path = file.path.to_string_lossy().to_string();
+    let content = &file.content;
+    let markers = block_markers(content);
+
+    let block1_line = markers.iter().find(|(n, _, _)| *n == 1).map(|(_, _, l)| *l);
+    let block2_line = markers.iter().find(|(n, _, _)| *n == 2).map(|(_, _, l)| *l);
+    let block3_line = markers.iter().find(|(n, _, _)| *n == 3).map(|(_, _, l)| *l);
+
+    let Some(block1_line) = block1_line else { return };
+    let Some(block2_line) = block2_line else { return };
+    let Some(block3_line) = block3_line else { return };
+
+    let ctor_in_block1 = content.lines().skip(block1_line).take(block2_line - block1_line).any(|l| {
+        let t = l.trim();
+        t.starts_with("pub fn new")
+            || t.starts_with("pub fn from_")
+            || t.starts_with("impl Default")
+    });
+
+    let ctor_in_block3: Vec<(usize, String)> = content
+        .lines()
+        .skip(block3_line)
+        .enumerate()
+        .filter_map(|(i, l)| {
+            let t = l.trim();
+            let line_no = block3_line + i + 1;
+            if t.starts_with("pub fn new")
+                || t.starts_with("pub fn from_")
+                || t.starts_with("impl Default")
+            {
+                Some((line_no, t.to_string()))
+            } else {
+                None
+            }
+        })
+        .collect();
+
+    if ctor_in_block1 {
+        for (line_no, ctor_text) in ctor_in_block3 {
+            violations.push(LintResult::new_arch(
+                &path,
+                line_no,
+                "AES405",
+                Severity::MEDIUM,
+                format!(
+                    "AES405 AGENT_ROLE: Constructor duplicate in Block 3.\n\
+                     WHY? `{ctor_text}` appears under Block 3 but the constructor \
+                     already lives in Block 1. Block 3 holds helpers/mechanics, \
+                     not constructors.\n\
+                     FIX: Remove the Block 3 constructor block.",
+                ),
+            ));
+        }
+        return;
+    }
+
+    if ctor_in_block3.is_empty() {
+        return;
+    }
+
+    for (line_no, ctor_text) in ctor_in_block3 {
+        violations.push(LintResult::new_arch(
+            &path,
+            line_no,
+            "AES405",
+            Severity::MEDIUM,
+            format!(
+                "AES405 AGENT_ROLE: Constructor outside Block 1.\n\
+                 WHY? `{ctor_text}` is under Block 3 (helpers). Constructors \
+                 belong in Block 1 with the struct declaration.\n\
+                 FIX: Move `impl X {{ pub fn new(...) }}` (and `impl Default` \
+                 if present) to Block 1, directly after `pub struct X`.",
+            ),
+        ));
+    }
+}
+
 /// The `N` and name text of every `Block N:` banner comment, in declaration
 /// order. The name is the rest of the line after the colon, with box-drawing
 /// dashes and surrounding whitespace stripped.

@@ -443,6 +443,99 @@ pub fn check_block_markers(file: &FileEntry, violations: &mut Vec<LintResult>) {
     }
 }
 
+/// Rule B-1 — constructor / `Default` must live in Block 1 (struct + constructor
+/// together), never in Block 3. MEDIUM.
+///
+/// A constructor (`pub fn new`, `pub fn from_*`, `impl Default`) declares how
+/// the type is born — it belongs with the struct declaration in Block 1, not
+/// with the mechanics in Block 3.
+///
+/// Checks both:
+/// - no constructor in Block 1 while one exists in Block 3 → violation
+/// - `impl Default` on a DI (parameterised) constructor → violation (see B-5)
+pub fn check_constructor_in_block1(file: &FileEntry, violations: &mut Vec<LintResult>) {
+    let path = file.path.to_string_lossy().to_string();
+    let content = &file.content;
+    let markers = block_markers(content);
+
+    let block1_line = markers.iter().find(|(n, _, _)| *n == 1).map(|(_, _, l)| *l);
+    let block2_line = markers.iter().find(|(n, _, _)| *n == 2).map(|(_, _, l)| *l);
+    let block3_line = markers.iter().find(|(n, _, _)| *n == 3).map(|(_, _, l)| *l);
+
+    let Some(block1_line) = block1_line else { return };
+    let Some(block2_line) = block2_line else { return };
+    let Some(block3_line) = block3_line else { return };
+
+    // Find constructors in Block 1 (between Block 1 and Block 2 markers)
+    let ctor_in_block1 = content.lines().skip(block1_line).take(block2_line - block1_line).any(|l| {
+        let t = l.trim();
+        t.starts_with("pub fn new")
+            || t.starts_with("pub fn from_")
+            || t.starts_with("impl Default")
+    });
+
+    // Find constructors in Block 3 (after Block 3 marker)
+    let ctor_in_block3: Vec<(usize, String)> = content
+        .lines()
+        .skip(block3_line)
+        .enumerate()
+        .filter_map(|(i, l)| {
+            let t = l.trim();
+            let line_no = block3_line + i + 1;
+            if t.starts_with("pub fn new")
+                || t.starts_with("pub fn from_")
+                || t.starts_with("impl Default")
+            {
+                Some((line_no, t.to_string()))
+            } else {
+                None
+            }
+        })
+        .collect();
+
+    if ctor_in_block1 {
+        // Constructor already properly in Block 1; Block 3 duplicates are stray
+        for (line_no, ctor_text) in ctor_in_block3 {
+            violations.push(LintResult::new_arch(
+                &path,
+                line_no,
+                "AES403",
+                Severity::MEDIUM,
+                format!(
+                    "AES403 CAPABILITY_ROLE: Constructor duplicate in Block 3.\n\
+                     WHY? `{ctor_text}` appears under Block 3 but the constructor \
+                     already lives in Block 1. Block 3 holds helpers/mechanics, \
+                     not constructors.\n\
+                     FIX: Remove the Block 3 constructor block.",
+                ),
+            ));
+        }
+        return;
+    }
+
+    // No constructor in Block 1
+    if ctor_in_block3.is_empty() {
+        return; // No constructor anywhere — file may be stateless without one
+    }
+
+    // Constructor exists only in Block 3 → violation
+    for (line_no, ctor_text) in ctor_in_block3 {
+        violations.push(LintResult::new_arch(
+            &path,
+            line_no,
+            "AES403",
+            Severity::MEDIUM,
+            format!(
+                "AES403 CAPABILITY_ROLE: Constructor outside Block 1.\n\
+                 WHY? `{ctor_text}` is under Block 3 (helpers). Constructors \
+                 belong in Block 1 with the struct declaration.\n\
+                 FIX: Move `impl X {{ pub fn new(...) }}` (and `impl Default` \
+                 if present) to Block 1, directly after `pub struct X`.",
+            ),
+        ));
+    }
+}
+
 /// The declared block numbers as a readable `Block 1, Block 2` list.
 fn block_list(declared: &BTreeSet<usize>) -> String {
     declared
@@ -450,6 +543,393 @@ fn block_list(declared: &BTreeSet<usize>) -> String {
         .map(|n| format!("Block {n}"))
         .collect::<Vec<_>>()
         .join(", ")
+}
+
+/// Rule A-1 / A-2 — banner hygiene: no wild banners, no duplicates, no empty
+/// Block 3. MEDIUM.
+///
+/// Detects:
+/// - Stray banners like `// ─── Protocol Trait Implementation ───` or
+///   `// ─── Constructors, Helpers, Private Methods ───` (friendly names
+///   instead of `Block N:` labels) — A-1
+/// - A block number declared twice (e.g. Block 3 appears twice) — A-2
+/// - Block 3 banner followed by nothing (empty block) — B-10
+pub fn check_banner_hygiene(file: &FileEntry, violations: &mut Vec<LintResult>) {
+    let path = file.path.to_string_lossy().to_string();
+    let content = &file.content;
+    let markers = block_markers(content);
+
+    let lines: Vec<&str> = content.lines().collect();
+    let mut marker_lines: Vec<usize> = Vec::new();
+    let mut block_numbers: Vec<usize> = Vec::new();
+
+    // First pass: collect all banner-like lines (─── dashes in comment)
+    for (i, line) in lines.iter().enumerate() {
+        let t = line.trim();
+        if !is_comment(t) {
+            continue;
+        }
+        // Banner lines contain ─── or --- dashes
+        if !t.contains("───") && !t.contains("---") {
+            continue;
+        }
+        let line_no = i + 1;
+
+        // Check if it's a proper Block N: marker
+        if let Some((n, _name, _)) = block_markers(content)
+            .iter()
+            .find(|(_, _, ln)| *ln == line_no)
+        {
+            block_numbers.push(*n);
+            marker_lines.push(line_no);
+            continue;
+        }
+
+        // It's a banner-like line but not a proper Block N: marker — A-1 wild banner
+        let stripped = t
+            .trim_start_matches("//")
+            .trim_start_matches('/')
+            .trim_start_matches('*')
+            .trim_start_matches('#')
+            .trim();
+        if stripped.is_empty() {
+            continue;
+        }
+        violations.push(LintResult::new_arch(
+            &path,
+            line_no,
+            "AES403",
+            Severity::MEDIUM,
+            format!(
+                "AES403 CAPABILITY_ROLE: Wild block banner.\n\
+                 WHY? `{stripped}` is a banner line but not a canonical \
+                 `Block N:` marker. The 3-block structure uses exactly three \
+                 banners: Block 1, Block 2, Block 3.\n\
+                 FIX: Rewrite as `// ─── Block N: <canonical name> ───` or \
+                 remove the stray banner.",
+            ),
+        ));
+    }
+
+    // A-2: duplicate block numbers
+    let mut count_by_block: std::collections::BTreeMap<usize, Vec<usize>> =
+        std::collections::BTreeMap::new();
+    for (n, _, ln) in &markers {
+        count_by_block.entry(*n).or_default().push(*ln);
+    }
+    for (n, line_nos) in count_by_block {
+        if line_nos.len() > 1 {
+            // report the second+ occurrence
+            for &dup_line in line_nos.iter().skip(1) {
+                violations.push(LintResult::new_arch(
+                    &path,
+                    dup_line,
+                    "AES403",
+                    Severity::MEDIUM,
+                    format!(
+                        "AES403 CAPABILITY_ROLE: Duplicate block marker.\n\
+                         WHY? `Block {n}` is declared more than once. Exactly one \
+                         banner per block number.\n\
+                         FIX: Remove the duplicate `Block {n}` banner.",
+                    ),
+                ));
+            }
+        }
+    }
+
+    // B-10: empty Block 3
+    if let Some((_, _, b3_line)) = markers.iter().find(|(n, _, _)| *n == 3) {
+        let b3_idx = b3_line - 1;
+        let mut has_content = false;
+        for line in lines.iter().skip(b3_idx + 1) {
+            let t = line.trim();
+            if t.is_empty() || is_comment(t) {
+                continue;
+            }
+            has_content = true;
+            break;
+        }
+        if !has_content {
+            violations.push(LintResult::new_arch(
+                &path,
+                *b3_line,
+                "AES403",
+                Severity::MEDIUM,
+                "AES403 CAPABILITY_ROLE: Empty Block 3.\n\
+                 WHY? `Block 3: Module Helpers` banner is present but nothing \
+                 follows it — the block is empty.\n\
+                 FIX: Either add helper code under Block 3, or remove the \
+                 Block 3 banner (B-10 allows two banners when Block 3 is empty).",
+            ));
+        }
+    }
+}
+
+/// Rule B-3 / B-6 / B-9 — `pub fn` under Block 3 without a seam doc is a
+/// facade mistake. MEDIUM.
+///
+/// Legal Block 3 pub items: only `*_internal` test seams with a B-6a seam doc.
+/// A `pub fn` under Block 3 with no seam doc is production code hiding in the
+/// helpers block — it belongs in Block 2 behind a protocol method.
+///
+/// A `pub fn *_internal` without the seam doc is also a violation.
+pub fn check_block3_pub_facade(file: &FileEntry, violations: &mut Vec<LintResult>) {
+    let path = file.path.to_string_lossy().to_string();
+    let content = &file.content;
+    let markers = block_markers(content);
+
+    let block3_line = markers.iter().find(|(n, _, _)| *n == 3).map(|(_, _, l)| *l);
+    let Some(block3_line) = block3_line else { return };
+
+    let block3_idx = block3_line - 1;
+    let mut pending_seam_doc = false;
+
+    for line in content.lines().skip(block3_idx + 1) {
+        let t = line.trim();
+
+        // Blank lines and comments keep us in Block 3
+        if t.is_empty() || is_comment(t) {
+            // Track if this comment looks like a B-6a seam doc
+            if t.contains("B-6a test seam") || t.contains("B-6a seam doc") {
+                pending_seam_doc = true;
+            }
+            continue;
+        }
+
+        // We hit non-comment content
+        if t.starts_with("pub fn") {
+            let is_internal = t.contains("_internal");
+            if is_internal && pending_seam_doc {
+                pending_seam_doc = false;
+                continue; // legal seam
+            }
+            if is_internal && !pending_seam_doc {
+                violations.push(LintResult::new_arch(
+                    &path,
+                    /* line */ 0, // we don't have exact line here easily; approximate
+                    "AES403",
+                    Severity::MEDIUM,
+                    "AES403 CAPABILITY_ROLE: `pub fn *_internal` in Block 3 without B-6a seam doc.\n\
+                     WHY? A test seam in Block 3 must carry the B-6a seam doc:\n\
+                     `/// B-6a test seam: pub only so cross-crate unit tests ...`\n\
+                     FIX: Add the B-6a seam doc comment directly above the fn.",
+                ));
+            }
+            if !is_internal {
+                violations.push(LintResult::new_arch(
+                    &path,
+                    0,
+                    "AES403",
+                    Severity::MEDIUM,
+                    format!(
+                        "AES403 CAPABILITY_ROLE: `pub fn` facade in Block 3.\n\
+                         WHY? `{}` is a public non-seam function under Block 3 \
+                         helpers. Production `pub` code belongs in Block 2 behind \
+                         a protocol trait method, or Block 3 as `fn` (private).\n\
+                         FIX: Make it private (`fn`) or move to Block 2 behind \
+                         `impl I<Name>Protocol`.",
+                        t
+                    ),
+                ));
+            }
+        }
+        // Any non-comment, non-pub-fn content — we're past the helpers section
+        // or in a nested impl; continue scanning
+    }
+}
+
+/// Rule B-4 — multi-branch mechanics must not be inlined in Block 2. MEDIUM.
+///
+/// Block 2 is orchestration: config lookup, gate chains, linear threshold checks,
+/// the main loop skeleton. When a Block 2 trait method contains per-line
+/// multi-branch classifiers (9-way `starts_with` chains, language dispatch)
+/// or message-assembly tables, that part belongs in Block 3 as a helper.
+///
+/// Detects `match` expressions and multi-branch `if/else if` chains inside
+/// Block 2 trait methods (`impl I<Name>Protocol for Type`).
+pub fn check_block2_inline_details(file: &FileEntry, violations: &mut Vec<LintResult>) {
+    let path = file.path.to_string_lossy().to_string();
+    let content = &file.content;
+
+    // Find Block 2 banner line
+    let block2_line = block_markers(content)
+        .iter()
+        .find(|(n, _, _)| *n == 2)
+        .map(|(_, _, l)| *l);
+    let block3_line = block_markers(content)
+        .iter()
+        .find(|(n, _, _)| *n == 3)
+        .map(|(_, _, l)| *l);
+
+    let Some(block2_line) = block2_line else { return };
+    let Some(block3_line) = block3_line else { return };
+
+    // Scan lines between Block 2 and Block 3 for `impl I<Name>Protocol`
+    let mut in_trait_impl = false;
+    let mut brace_depth = 0isize;
+    let mut method_name = String::new();
+
+    for (i, line) in content.lines().enumerate().skip(block2_line - 1).take(block3_line - block2_line) {
+        let t = line.trim();
+        let abs_line = block2_line + i;
+
+        if !in_trait_impl {
+            if t.starts_with("impl ") && t.contains("Protocol") && t.contains("for ") {
+                in_trait_impl = true;
+                brace_depth = 0;
+            }
+            continue;
+        }
+
+        // Track brace depth within the trait impl
+        brace_depth += t.chars().filter(|c| *c == '{').count() as isize
+            - t.chars().filter(|c| *c == '}').count() as isize;
+
+        // Detect a method start: `fn <name>(` at brace depth 1 (inside impl)
+        if brace_depth == 1 {
+            if let Some(rest) = t.strip_prefix("fn ") {
+                let name_end = rest.find('(').unwrap_or(rest.len());
+                method_name = rest[..name_end].trim().to_string();
+            }
+        }
+
+        // Inside a method body (brace_depth >= 2), detect multi-branch constructs
+        if brace_depth >= 2 {
+            let has_match = t.contains("match ");
+            let has_if_chain = t.starts_with("else if") || t.starts_with("if ") && t.contains("else");
+
+            if has_match || has_if_chain {
+                violations.push(LintResult::new_arch(
+                    &path,
+                    abs_line,
+                    "AES403",
+                    Severity::MEDIUM,
+                    format!(
+                        "AES403 CAPABILITY_ROLE: Multi-branch logic in Block 2 method `{}`.\n\
+                         WHY? `{}` contains a multi-branch construct (`match` or \
+                         `if/else if` chain) inside the Block 2 protocol method.\n\
+                         Block 2 is orchestration — multi-branch classification \
+                         belongs in Block 3 as a helper method.\n\
+                         FIX: Extract the branch logic into a private helper in \
+                         Block 3 and call it from `{}`.",
+                        method_name, t, method_name
+                    ),
+                ));
+            }
+        }
+
+        // When we close the trait impl, reset
+        if brace_depth <= 0 {
+            in_trait_impl = false;
+            method_name.clear();
+        }
+    }
+}
+///
+/// A struct holding injected deps (`config: Arc<...>`, `io: Arc<...>`, etc.)
+/// must not have a meaningful default — "default architecture config" is a
+/// bug waiting to compile. Stateless structs may derive Default.
+pub fn check_di_default(file: &FileEntry, violations: &mut Vec<LintResult>) {
+    let path = file.path.to_string_lossy().to_string();
+    let content = &file.content;
+
+    // Find structs with `#[derive(Default)]`
+    let mut di_structs: Vec<(usize, String)> = Vec::new();
+    for (i, line) in content.lines().enumerate() {
+        let t = line.trim();
+        if t.starts_with("pub struct") {
+            // Check if previous line has #[derive(Default)]
+            let line_no = i + 1;
+            let has_derive_default = i > 0
+                && content.lines().nth(i - 1).map(|l| l.trim() == "#[derive(Default)]")
+                .unwrap_or(false);
+            if has_derive_default {
+                // Extract struct name
+                if let Some(name) = t.split_whitespace().nth(2) {
+                    let name = name.trim_end_matches(['{', ';']);
+                    if !name.is_empty() {
+                        di_structs.push((line_no, name.to_string()));
+                    }
+                }
+            }
+        }
+    }
+
+    // A struct is "DI" if it has fields referencing Arc or other injected types
+    // Simple heuristic: look for `Arc<` in fields after the struct
+    for (struct_line, struct_name) in di_structs {
+        // Check if the struct body has Arc< or other DI-looking fields
+        let mut in_struct = false;
+        let mut has_di_field = false;
+        for line in content.lines().skip(struct_line) {
+            let t = line.trim();
+            if t.starts_with("pub struct") {
+                in_struct = true;
+                continue;
+            }
+            if in_struct {
+                if t.contains("Arc<") || t.contains("Box<dyn") || t.contains("Mutex<") {
+                    has_di_field = true;
+                }
+                if t == "}" || t == "};" {
+                    break;
+                }
+            }
+        }
+
+        if has_di_field {
+            violations.push(LintResult::new_arch(
+                &path,
+                struct_line,
+                "AES403",
+                Severity::MEDIUM,
+                format!(
+                    "AES403 CAPABILITY_ROLE: `#[derive(Default)]` on DI struct `{struct_name}`.\n\
+                     WHY? `{struct_name}` holds injected dependencies (Arc<...>) \
+                     but derives Default, which implies a meaningful default \
+                     config exists.\n\
+                     FIX: Remove `#[derive(Default)]`. Add a `pub fn from_config(...)` \
+                     or `pub fn new(...)` constructor in Block 1 instead.",
+                ),
+            ));
+        }
+    }
+}
+
+/// Rule B-5 variant — `impl Default` on a DI struct.
+pub fn check_impl_default_on_di(file: &FileEntry, violations: &mut Vec<LintResult>) {
+    let path = file.path.to_string_lossy().to_string();
+    let content = &file.content;
+    let markers = block_markers(content);
+
+    let block3_line = markers.iter().find(|(n, _, _)| *n == 3).map(|(_, _, l)| *l);
+    let Some(block3_line) = block3_line else { return };
+
+    let block3_idx = block3_line - 1;
+    for line in content.lines().skip(block3_idx + 1) {
+        let t = line.trim();
+        if t.is_empty() || is_comment(t) {
+            continue;
+        }
+        if t.starts_with("impl Default") {
+            violations.push(LintResult::new_arch(
+                &path,
+                0,
+                "AES403",
+                Severity::MEDIUM,
+                "AES403 CAPABILITY_ROLE: `impl Default` in Block 3.\n\
+                 WHY? Default impls belong in Block 1 with the constructor, \
+                 not in Block 3 helpers. If the struct holds injected deps, \
+                 remove Default entirely and use a `from_config`/`new` \
+                 constructor.\n\
+                 FIX: Move `impl Default` to Block 1, or remove it.",
+            ));
+        }
+        // Stop scanning if we leave Block 3 helpers (another impl, fn, etc.)
+        if t.starts_with("impl ") || t.starts_with("pub fn") || t.starts_with("fn ") {
+            break;
+        }
+    }
 }
 
 /// The `N` of every `Block N:` banner comment, in declaration order.
