@@ -20,6 +20,13 @@ impl CacheCleanupChecker {
 // ─── Block 2: Module Contract ─────────────────────
 impl ICacheCleanupProtocol for CacheCleanupChecker {
     fn clean(&self) {
+        self._remove_cache_dirs();
+    }
+}
+
+// ─── Block 3: Module Helpers ──────────────────────
+impl CacheCleanupChecker {
+    fn _remove_cache_dirs(&self) {
         let base = &self.project_path.value;
         for dir in &[
             ".pytest_cache",
@@ -35,5 +42,3 @@ impl ICacheCleanupProtocol for CacheCleanupChecker {
         }
     }
 }
-
-// ─── Block 3: Module Helpers ──────────────────────

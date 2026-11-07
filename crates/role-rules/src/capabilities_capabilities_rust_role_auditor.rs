@@ -168,7 +168,7 @@ impl CapabilitiesRustRoleAuditor {
     fn _block_order(&self, content: &str, path: &str, violations: &mut Vec<LintResult>) {
         let lines: Vec<&str> = content.lines().collect();
         let mut protocol_line: Option<(usize, String)> = None;
-        let mut inherent_line: Option<(usize, String)> = None;
+        let mut inherent_offenders: Vec<(usize, String)> = Vec::new();
         let mut in_cfg_test = false;
 
         // Per R2, constructor impls (`impl <Struct> { pub fn new }`,
@@ -179,6 +179,10 @@ impl CapabilitiesRustRoleAuditor {
         // a raw line before the protocol impl is a violation. Track banner
         // positions so the comparison is by block, not by raw line number.
         let markers = utility_capabilities_role_checker::capability_block_markers(content);
+        let banner1_idx: Option<usize> = markers
+            .iter()
+            .find(|m| m.number == 1)
+            .map(|m| m.line - 1);
         let banner2_idx: Option<usize> = markers
             .iter()
             .find(|m| m.number == 2)
@@ -218,16 +222,16 @@ impl CapabilitiesRustRoleAuditor {
                     continue;
                 }
                 // A constructor impl (`impl <Struct> { pub fn new }`) sitting
-                // between the Block 1 and Block 2 banners is R2-conformant;
-                // only a banner-less file triggers the raw-line comparison.
-                let between_banners = matches!(
-                    (banner2_idx, banner3_idx),
-                    (Some(b2), _) if b2 > i
+                // strictly between the Block 1 and Block 2 banners is R2-conformant.
+                let is_constructor_region = matches!(
+                    (banner1_idx, banner2_idx),
+                    (Some(b1), Some(b2)) if b1 < i && i < b2
                 );
-                if !between_banners {
-                    if inherent_line.is_none() {
-                        inherent_line = Some((i, t.trim_end_matches('{').trim().to_string()));
-                    }
+                if !is_constructor_region {
+                    inherent_offenders.push((
+                        i,
+                        t.trim_end_matches('{').trim().to_string(),
+                    ));
                 }
             }
         }
