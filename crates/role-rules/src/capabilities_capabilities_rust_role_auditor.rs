@@ -18,6 +18,18 @@ use shared_role_rules::utility_capabilities_role_checker;
 
 pub struct CapabilitiesRustRoleAuditor {}
 
+impl CapabilitiesRustRoleAuditor {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+
+impl Default for CapabilitiesRustRoleAuditor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 // === Block 2: Module Contract ===
 
 impl ICapabilitiesRoleProtocol for CapabilitiesRustRoleAuditor {
@@ -115,17 +127,7 @@ impl ICapabilitiesRoleProtocol for CapabilitiesRustRoleAuditor {
 
 // === Block 3: Module HelpersHelpers ===
 
-impl Default for CapabilitiesRustRoleAuditor {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl CapabilitiesRustRoleAuditor {
-    pub fn new() -> Self {
-        Self {}
-    }
-
     // ===============================================================
     // Block order — protocol impl must precede inherent impl
     // ===============================================================

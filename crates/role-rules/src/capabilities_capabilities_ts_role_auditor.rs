@@ -18,6 +18,18 @@ use shared_role_rules::utility_capabilities_role_checker;
 
 pub struct CapabilitiesTypeScriptRoleAuditor {}
 
+impl CapabilitiesTypeScriptRoleAuditor {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+
+impl Default for CapabilitiesTypeScriptRoleAuditor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 // === Block 2: Module Contract ===
 
 impl ICapabilitiesRoleProtocol for CapabilitiesTypeScriptRoleAuditor {
@@ -115,17 +127,7 @@ impl ICapabilitiesRoleProtocol for CapabilitiesTypeScriptRoleAuditor {
 
 // === Block 3: Module HelpersHelpers ===
 
-impl Default for CapabilitiesTypeScriptRoleAuditor {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl CapabilitiesTypeScriptRoleAuditor {
-    pub fn new() -> Self {
-        Self {}
-    }
-
     // ===============================================================
     // Block order — protocol impl must precede inherent impl
     // ===============================================================

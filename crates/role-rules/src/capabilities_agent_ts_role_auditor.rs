@@ -17,6 +17,18 @@ use shared_role_rules::utility_agent_role_io_checker;
 
 pub struct AgentTsRoleAuditor {}
 
+impl AgentTsRoleAuditor {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+
+impl Default for AgentTsRoleAuditor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 // ─── Block 2: Module Contract ────────────────
 
 impl IAgentRoleProtocol for AgentTsRoleAuditor {
@@ -121,17 +133,7 @@ impl IAgentRoleProtocol for AgentTsRoleAuditor {
 
 // ─── Block 3: Module Helpers ────────────
 
-impl Default for AgentTsRoleAuditor {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl AgentTsRoleAuditor {
-    pub fn new() -> Self {
-        Self {}
-    }
-
     /// Block 2 (protocol-delegating methods) must precede Block 3
     /// (constructor/`toString`/`toJSON`). The violation is detected when a
     /// `constructor` appears before the first method that calls a protocol.

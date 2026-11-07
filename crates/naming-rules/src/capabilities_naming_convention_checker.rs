@@ -27,7 +27,17 @@ use std::sync::OnceLock;
 /// word count. No internal state.
 pub struct NamingConventionChecker {}
 
-// ─── Protocol Trait Implementation ────────────────────────────────────────
+impl Default for NamingConventionChecker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl NamingConventionChecker {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
 
 // ─── Block 2: Module Contract ────────────────
 
@@ -67,21 +77,9 @@ impl INamingConventionProtocol for NamingConventionChecker {
     }
 }
 
-// ─── Constructors, Helpers, Private Methods ────────────────────────────────
-
 // ─── Block 3: Module Helpers ────────────
 
-impl Default for NamingConventionChecker {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl NamingConventionChecker {
-    pub fn new() -> Self {
-        Self {}
-    }
-
     fn min_words_from_config(config: &ArchitectureConfig) -> usize {
         let value = config.naming.word_count.value;
         if value <= 0 {
@@ -129,6 +127,10 @@ impl NamingConventionChecker {
     }
 
     /// Check file naming conventions (AES101: pattern validation — lowercase, underscore, min N words).
+    ///
+    /// B-6a test seam: `pub` only so cross-crate unit tests can drive the
+    /// per-file rule without building a `FilePathList`; production traffic
+    /// enters through [`INamingConventionProtocol::check_file_naming`].
     pub fn check_file_naming_internal(
         &self,
         file: &str,

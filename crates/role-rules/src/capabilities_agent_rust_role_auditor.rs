@@ -19,6 +19,18 @@ use shared_role_rules::utility_agent_role_io_checker;
 
 pub struct AgentRustRoleAuditor {}
 
+impl AgentRustRoleAuditor {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+
+impl Default for AgentRustRoleAuditor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 // === Block 2: Module Contract ===
 
 impl IAgentRoleProtocol for AgentRustRoleAuditor {
@@ -127,17 +139,7 @@ impl IAgentRoleProtocol for AgentRustRoleAuditor {
 
 // === Block 3: Module HelpersHelpers ===
 
-impl Default for AgentRustRoleAuditor {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl AgentRustRoleAuditor {
-    pub fn new() -> Self {
-        Self {}
-    }
-
     /// Block 2 (aggregate impl) must precede Block 3 (inherent impl). HIGH.
     ///
     /// The file reads types and injected deps, then aggregate methods, then
