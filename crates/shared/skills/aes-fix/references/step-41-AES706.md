@@ -2,7 +2,7 @@
 
 ## What the rule checks
 
-AES706 (rule code `AES706`, checker `capabilities_pr_la_folder_auditor` in the `structure-rules` crate) verifies every crate folder's FR ids match its folder name.
+AES706 (rule code `AES706`, checker `capabilities_requirement_folder_parity` in the `structure-rules` crate) verifies every crate folder's FR ids match its folder name.
 
 ## Common violation causes
 

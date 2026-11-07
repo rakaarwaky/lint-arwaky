@@ -5341,6 +5341,7 @@ name = "structure-rules-lint-arwaky"
 version = "3.15.0"
 dependencies = [
  "criterion",
+ "shared-doc-rules-lint-arwaky",
  "shared-naming-rules-lint-arwaky",
  "shared-structure-rules-lint-arwaky",
  "tempfile",

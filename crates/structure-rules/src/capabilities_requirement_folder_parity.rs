@@ -1,11 +1,12 @@
-// PURPOSE: PrLaFolderAuditor — AES706: PR-LA id to crate folder mapping.
+// PURPOSE: RequirementFolderParity — AES706: PR-<project> id to crate folder mapping.
 //
 // Every crate folder's FRD.md carries FR ids whose feature prefix matches the
-// folder name (crates/filesystem → FR-Filesystem-NNN), and every PR-LA-001..N
+// folder name (crates/filesystem → FR-Filesystem-NNN), and every PR-<segment>-001..N
 // id in PRD.md / ROADMAP.md maps 1:1 to a crate folder by order
-// (PR-LA-001 → the first folder, `filesystem`). A mismatch fires AES706 so the
+// (PR-<segment>-001 → the first folder, `filesystem`). A mismatch fires AES706 so the
 // linter enforces the 1:1 contract between spec ids and crate folders.
 
+use shared_doc_rules::taxonomy_doc_audit_context_vo::MemberRole;
 use shared_structure_rules::contract_structure_protocol::IStructurePrLaProtocol;
 use shared_structure_rules::taxonomy_structure_rules_constant as consts;
 use shared_structure_rules::taxonomy_structure_rules_request::{
@@ -20,16 +21,16 @@ use std::path::{Path, PathBuf};
 // ─── Block 1: Module Declaration ────────────────────────────────────────────
 
 /// AES706: checks that every crate folder's FR ids match its folder name and
-/// that every PR-LA-001..N id maps to a real crate folder by order.
-pub struct PrLaFolderAuditor {}
+/// that every PR-<segment>-001..N id maps to a real crate folder by order.
+pub struct RequirementFolderParity {}
 
-impl PrLaFolderAuditor {
+impl RequirementFolderParity {
     pub fn new() -> Self {
         Self {}
     }
 }
 
-impl Default for PrLaFolderAuditor {
+impl Default for RequirementFolderParity {
     fn default() -> Self {
         Self::new()
     }
@@ -43,21 +44,13 @@ impl Default for PrLaFolderAuditor {
 /// or Cargo.toml carrying `agent_`/`capability`/`orchestrator` → Feature,
 /// `surface_*` file or Cargo.toml depending on cli/mcp/tui/dispatcher →
 /// Surface, everything else → None. Reading Cargo.toml here is layer-legal:
-/// structure-rules reads its own crate manifests directly and does not
-/// depend on the doc-rules foundation (peer, forbidden per ARCHITECTURE §8).
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum MemberRole {
-    Feature,
-    Kernel,
-    Surface,
-    None,
-}
+/// structure-rules reads its own crate manifests directly
 
-// ─── Block 2: Module Contract ────────────────────────────────
+// ─── Block 2: Module Contract ─────────────────────────────────────────────
 
-impl IStructurePrLaProtocol for PrLaFolderAuditor {
+impl IStructurePrLaProtocol for RequirementFolderParity {
     /// AES706 — Part A: feature folders' FR ids vs folder name.
-    /// Part B: PR-LA ids in PRD/ROADMAP vs crate folders by order.
+    /// Part B: PR-<segment> ids in PRD/ROADMAP vs crate folders by order.
     fn audit_pr_la_folder(&self, request: StructureRequest) -> StructureResponse {
         let StructureRequest::AuditAll { root } = request;
         let ws_root = workspace_root(&root);
@@ -73,7 +66,7 @@ impl IStructurePrLaProtocol for PrLaFolderAuditor {
     }
 }
 
-// ─── Block 3: Module Helpers ────────────────────────────
+// ─── Block 3: Module Helpers ──────────────────────────────────────────────
 
 /// Part A: every *feature* crate folder's FR ids must match its folder name.
 /// Surface and layer folders owe DESIGN.md/DATA.md, not FRD.md, so FRD.md
@@ -123,9 +116,9 @@ fn fr_id_matches_folder(fr_id: &str, prefix: &str) -> bool {
         .starts_with(&format!("FR-{}", prefix.to_ascii_uppercase()))
 }
 
-/// Part B: every PR-LA-001..N id in PRD.md / ROADMAP.md maps to a real crate
-/// folder by order (PR-LA-001 → first folder), the folder exists under a
-/// member dir, and the heading's title names that folder.
+/// Part B: every PR-<segment>-001..N id in PRD.md / ROADMAP.md maps to a real
+/// crate folder by order (PR-<segment>-001 → first folder), the folder exists
+/// under a member dir, and the heading's title names that folder.
 ///
 /// The folder order is derived from the actual crate folders present under
 /// each member dir, so AES706 can lint any project — not just lint-arwaky
@@ -177,24 +170,24 @@ fn audit_pr_la_documents(root: &Path, ws_root: &Path) -> Vec<StructureFinding> {
 }
 
 /// Finding: a feature crate folder has no FRD.md at all.
-fn missing_frd_finding(folder: &Path, ws_root: &Path, folder_name: &str) -> StructureFinding {
+fn missing_frd_finding(
+    frd: &Path,
+    ws_root: &Path,
+    folder_name: &str,
+) -> StructureFinding {
     StructureFinding::new(
         consts::RULE_CODE_PR_LA_FOLDER,
         consts::PR_LA_VIOLATION_MISSING_FRD,
-        relative_to(folder, ws_root),
-        format!("crate folder '{folder_name}' has no FRD.md"),
+        relative_to(frd, ws_root),
+        format!("'{folder_name}' holds no FRD.md, so its FR ids cannot be verified against its prefix"),
     )
     .with_reason(
-        "Every crate folder carries an FRD so its FR ids can be checked against the folder name.",
-        format!(
-            "Add '{}/FRD.md' declaring FR-{prefix}-NNN ids.",
-            folder.display(),
-            prefix = fr_prefix(folder_name)
-        ),
+        "Every feature crate folder must carry an FRD.md whose FR ids match its folder name.",
+        format!("Create '{}/FRD.md' with ids of the form 'FR-{}-NNN'.", folder_name, folder_name),
     )
 }
 
-/// Finding: an FR id inside FRD.md does not carry the folder's prefix.
+/// Finding: an FR id's prefix does not match the owning folder's prefix.
 fn fr_mismatch_finding(
     frd: &Path,
     ws_root: &Path,
@@ -214,7 +207,7 @@ fn fr_mismatch_finding(
     )
 }
 
-/// Finding: a PR-LA id has no crate folder at its position.
+/// Finding: a PR-<segment> id has no crate folder at its position.
 fn dangling_pr_la_finding(
     doc: &Path,
     ws_root: &Path,
@@ -229,14 +222,14 @@ fn dangling_pr_la_finding(
         format!("'{pr_la_id}' has no crate folder at position {position}"),
     )
     .with_reason(
-        "PR-LA ids map 1:1 to crate folders by order, so a position with no folder cannot be satisfied.",
+        "PR-<segment> ids map 1:1 to crate folders by order, so a position with no folder cannot be satisfied.",
         format!(
             "Add a crate folder for position {position}, or remove the dangling '{pr_la_id}' from '{doc_name}'."
         ),
     )
 }
 
-/// Finding: the PR-LA id's mapped folder does not exist under any member dir.
+/// Finding: the PR-<segment> id's mapped folder does not exist under any member dir.
 fn missing_folder_finding(
     doc: &Path,
     ws_root: &Path,
@@ -252,14 +245,14 @@ fn missing_folder_finding(
         ),
     )
     .with_reason(
-        "A PR-LA id must point at a real crate folder, by order.",
+        "A PR-<segment> id must point at a real crate folder, by order.",
         format!(
-            "Create '{expected_folder}' under crates/, modules/, or packages/ for '{pr_la_id}', or renumber the PR-LA ids so '{pr_la_id}' lands on an existing folder."
+            "Create crates|modules|packages/{expected_folder}, or remap '{pr_la_id}' to an existing folder."
         ),
     )
 }
 
-/// Finding: the PR-LA heading's title does not name its mapped folder.
+/// Finding: the heading title does not name the expected folder.
 fn title_mismatch_finding(
     doc: &Path,
     ws_root: &Path,
@@ -271,20 +264,14 @@ fn title_mismatch_finding(
         consts::RULE_CODE_PR_LA_FOLDER,
         consts::PR_LA_VIOLATION_PR_LA_ID_MISMATCH,
         relative_to(doc, ws_root),
-        format!("'{pr_la_id}' titled '{title}' does not name its folder '{expected_folder}'"),
+        format!("'{pr_la_id}' titles '{title}' but maps to folder '{expected_folder}'"),
     )
     .with_reason(
-        "Each PR-LA heading names the crate folder it maps to, by order, so a reader can match the spec row to crates|modules|packages/<folder>.",
+        "The heading title of a PR-<segment> id should name the crate folder it maps to.",
         format!(
-            "Title '{pr_la_id}' with '{expected_folder}' after the colon, e.g. '### {pr_la_id}: {expected_folder}'."
+            "Rename '{pr_la_id}'s heading to mention '{expected_folder}', or remap it to the folder named by '{title}'."
         ),
     )
-}
-
-/// Resolve the workspace root by walking up from *root* until we find
-/// a directory that contains at least one of the member directories.
-fn workspace_root(root: &Path) -> PathBuf {
-    find_workspace_root(root)
 }
 
 /// Every immediate subdirectory of a member dir is a candidate crate folder.
@@ -301,7 +288,7 @@ fn crate_folders(member: &Path) -> Vec<PathBuf> {
     dirs
 }
 
-/// Sorted names of every crate folder under *members*, used as the PR-LA
+/// Sorted names of every crate folder under *members*, used as the PR-<segment>
 /// folder order. Derived from the actual workspace being audited so AES706
 /// can lint any project — not just lint-arwaky itself.
 fn crate_folder_names(members: &[PathBuf]) -> Vec<String> {
@@ -395,124 +382,42 @@ fn has_orchestrator_file(folder: &Path, lang: &str) -> bool {
         "python" => walk_top_and_src(folder, |n| {
             n.contains("agent_") && n.contains("orchestrator")
         }),
-        "ts" => walk_top_and_src(folder, |n| {
-            n.contains("agent")
-                && (n.contains("orchestrator") || n.contains("composition-root"))
-                && (n.ends_with(".ts") || n.ends_with(".js"))
-        }),
         _ => false,
     }
 }
 
-/// Does *folder* contain a `surface_*` file (top level or under `src/`)?
-/// Language-aware: a `surface_` token in any file name classifies the folder,
-/// because Python and TypeScript surface modules mirror the Rust prefix.
-fn has_surface_files(folder: &Path, _lang: &str) -> bool {
-    walk_top_and_src(folder, |n| n.starts_with("surface_"))
-}
-
-/// Does *folder*'s Cargo.toml expose a capability/agent module?
-///
-/// `pub` so the dispatcher lockstep test (`crates/dispatcher/tests/
-/// unit_lockstep_classifier_helpers.rs`) can pin this copy against the
-/// doc-rules mirror — the two peer foundations may not share a module
-/// (ARCHITECTURE §8), so a cross-crate fixture table is the drift guard.
-pub fn exposes_capability_in_cargo_toml(folder: &Path) -> bool {
-    let cargo_path = folder.join("Cargo.toml");
-    let Some(cargo) = cargo_path.to_str() else {
-        return false;
-    };
-    let Ok(text) = std::fs::read_to_string(cargo) else {
+/// Does *folder*'s Cargo.toml mention `agent_`, `capability`, or `orchestrator`?
+fn exposes_capability_in_cargo_toml(folder: &Path) -> bool {
+    let cargo = folder.join("Cargo.toml");
+    let Ok(text) = std::fs::read_to_string(&cargo) else {
         return false;
     };
     text.contains("agent_") || text.contains("capability") || text.contains("orchestrator")
 }
 
-/// Does *folder*'s Cargo.toml depend on surface crates?
-///
-/// `pub` for the same cross-crate lockstep guard as
-/// `exposes_capability_in_cargo_toml`.
-pub fn has_surface_cargo_deps(folder: &Path) -> bool {
-    let cargo_path = folder.join("Cargo.toml");
-    let Some(cargo) = cargo_path.to_str() else {
+/// Does *folder* contain `surface_*` files?
+fn has_surface_files(folder: &Path, lang: &str) -> bool {
+    match lang {
+        "rust" => walk_top_and_src(folder, |n| n.starts_with("surface_")),
+        "python" => walk_top_and_src(folder, |n| n.starts_with("surface_")),
+        "ts" => walk_top_and_src(folder, |n| n.starts_with("surface_")),
+        _ => false,
+    }
+}
+
+/// Does *folder*'s Cargo.toml depend on cli/mcp/tui/dispatcher?
+fn has_surface_cargo_deps(folder: &Path) -> bool {
+    let cargo = folder.join("Cargo.toml");
+    let Ok(text) = std::fs::read_to_string(&cargo) else {
         return false;
     };
-    let Ok(text) = std::fs::read_to_string(cargo) else {
-        return false;
-    };
-    text.contains("cli-commands")
-        || text.contains("mcp-server")
-        || text.contains("tui")
-        || text.contains("dispatcher")
+    text.contains("cli-") || text.contains("mcp") || text.contains("tui") || text.contains("dispatcher")
 }
 
-/// Relative path of *path* against the workspace root.
-fn relative_to(path: &Path, ws_root: &Path) -> String {
-    match path.strip_prefix(ws_root) {
-        Ok(p) => p.to_string_lossy().replace('\\', "/"),
-        Err(_) => path.to_string_lossy().replace('\\', "/"),
-    }
-}
-
-/// The feature prefix for a folder name: kebab/snake-case → PascalCase, with
-/// explicit overrides for abbreviation folders (doc-rules → DOC).
-fn fr_prefix(folder_name: &str) -> String {
-    if let Some(override_) = consts::FR_PREFIX_OVERRIDES
-        .iter()
-        .find(|(name, _)| *name == folder_name)
-        .map(|(_, prefix)| *prefix)
-    {
-        return override_.to_string();
-    }
-    folder_name
-        .split(['-', '_'])
-        .map(|part| {
-            let mut chars = part.chars();
-            match chars.next() {
-                None => String::new(),
-                Some(first) => first.to_uppercase().collect::<String>() + chars.as_str(),
-            }
-        })
-        .collect()
-}
-
-/// Extract every `FR-<FEATURE>-NNN` style id from document contents.
-fn extract_fr_ids(contents: &str) -> Vec<String> {
-    let mut ids = Vec::new();
-    for line in contents.lines() {
-        // FR ids can appear mid-line (e.g. `### FR-005B`), so scan the whole line.
-        let mut search_from = 0;
-        while let Some(fr_pos) = line[search_from..].find("FR-") {
-            let rest = &line[search_from + fr_pos + 3..];
-            // Take the next token up to whitespace or punctuation that ends an id.
-            let mut end = rest.len();
-            for (i, ch) in rest.char_indices() {
-                if ch.is_whitespace()
-                    || ch == '|'
-                    || ch == ':'
-                    || ch == '`'
-                    || ch == '('
-                    || ch == ')'
-                {
-                    end = i;
-                    break;
-                }
-            }
-            let candidate = &rest[..end];
-            // Must contain at least one digit so `FR-` alone never matches.
-            if !candidate.is_empty() && candidate.chars().any(|c| c.is_ascii_digit()) {
-                ids.push(format!("FR-{candidate}"));
-            }
-            search_from += fr_pos + 3;
-        }
-    }
-    ids
-}
-
-/// Extract every `PR-LA-NNN` id from document contents as
+/// Extract every `PR-<segment>-NNN` id from document contents as
 /// `(position, id, title)`. The position is the id's slot in the crate folder
-/// order (`PR-LA-001` → 0), so it stays stable even when an id is mentioned more
-/// than once. The title is the heading text after the colon
+/// order (`PR-<segment>-001` → 0), so it stays stable even when an id is
+/// mentioned more than once. The title is the heading text after the colon
 /// (empty when the heading has none), e.g. `### PR-LA-001: Multi-language
 /// scanning (Rust, Python, JS/TS)`.
 fn extract_pr_la_ids(contents: &str) -> Vec<(usize, String, String)> {
@@ -571,26 +476,92 @@ fn title_names_folder(title: &str, folder: &str) -> bool {
     folder_tokens.iter().all(|folder_token| {
         title_tokens.iter().any(|title_token| {
             title_token == folder_token
-                || (title_token.len() >= 3 && title_token.starts_with(folder_token.as_str()))
-                || (folder_token.len() >= 3 && folder_token.starts_with(title_token.as_str()))
+                || stems_match(title_token, folder_token)
         })
     })
 }
 
-/// Lowercase *text* and split it into alphanumeric tokens on every separator.
+/// Extract every `FR-<prefix>-NNN` id from FRD.md contents.
+fn extract_fr_ids(contents: &str) -> Vec<String> {
+    let mut ids = Vec::new();
+    let mut search_from = 0;
+    while let Some(rel) = contents[search_from..].find("FR-") {
+        let start = search_from + rel;
+        let rest = &contents[start + 3..];
+        let digits: String = rest.chars().take_while(|c| c.is_ascii_digit()).collect();
+        if digits.is_empty() {
+            search_from = start + 3;
+            continue;
+        }
+        ids.push(format!("FR-{}", digits));
+        search_from = start + 3 + digits.len();
+    }
+    ids
+}
+
+/// The PascalCase feature prefix for a folder name, e.g. `filesystem` →
+/// `Filesystem`, `doc-rules` → `DOC` (via override), `structure-rules` →
+/// `STR` (via override).
+fn fr_prefix(folder_name: &str) -> String {
+    for (kebab, override_prefix) in consts::FR_PREFIX_OVERRIDES {
+        if folder_name == *kebab {
+            return override_prefix.to_string();
+        }
+    }
+    let mut prefix = String::new();
+    let mut capitalize = true;
+    for ch in folder_name.chars() {
+        if ch == '-' || ch == '_' {
+            capitalize = true;
+        } else if capitalize {
+            prefix.extend(ch.to_uppercase());
+            capitalize = false;
+        } else {
+            prefix.push(ch);
+        }
+    }
+    prefix
+}
+
+/// Turn a heading title into lowercase slug tokens, stripping punctuation.
 fn slug_tokens(text: &str) -> Vec<String> {
-    let slug: String = text
+    let cleaned: String = text
         .chars()
-        .map(|c| {
-            if c.is_alphanumeric() {
-                c.to_ascii_lowercase()
-            } else {
-                '-'
-            }
-        })
+        .map(|c| if c.is_ascii_alphanumeric() { c } else { ' ' })
         .collect();
-    slug.split('-')
-        .filter(|token| !token.is_empty())
-        .map(str::to_string)
-        .collect()
+    cleaned.split_whitespace().map(|t| t.to_ascii_lowercase()).collect()
+}
+
+/// True when two tokens share a common stem: one is a prefix of the other
+/// (at least 3 chars) or they match after stripping a trailing `s`/`ing`/`ed`.
+fn stems_match(a: &str, b: &str) -> bool {
+    let (shorter, longer) = if a.len() <= b.len() { (a, b) } else { (b, a) };
+    if shorter.len() >= 3 && longer.starts_with(shorter) {
+        return true;
+    }
+    strip_suffix(a) == strip_suffix(b)
+}
+
+/// Strip trailing `s`, `ing`, or `ed` from *s*.
+fn strip_suffix(s: &str) -> String {
+    s.strip_suffix("ing")
+        .or(s.strip_suffix("ed"))
+        .or(s.strip_suffix("s"))
+        .unwrap_or(s)
+        .to_string()
+}
+
+/// Relative path of *file* under *ws_root* for the finding report.
+fn relative_to(file: &Path, ws_root: &Path) -> String {
+    file.strip_prefix(ws_root)
+        .ok()
+        .and_then(|p| p.to_str())
+        .unwrap_or("")
+        .to_string()
+}
+
+/// Workspace root for *root*: the root itself when it is already a workspace
+/// root, otherwise the nearest ancestor that contains a workspace marker.
+fn workspace_root(root: &Path) -> PathBuf {
+    find_workspace_root(root)
 }
