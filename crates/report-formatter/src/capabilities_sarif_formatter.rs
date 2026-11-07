@@ -23,7 +23,6 @@ impl SarifFormatter {
 }
 
 // ─── Block 2: Module Contracts ──────────────
-
 impl ISarifFormatProtocol for SarifFormatter {
     fn format_sarif(&self, report: &ScanReport) -> DisplayContent {
         format_sarif_report(report)

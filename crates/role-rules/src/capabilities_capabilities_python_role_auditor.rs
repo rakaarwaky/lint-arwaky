@@ -14,7 +14,7 @@ use shared_role_rules::contract_role_protocol::ICapabilitiesRoleProtocol;
 
 use shared_role_rules::utility_capabilities_role_checker;
 
-// === Block 1: Module DeclarationType Definition ===
+// ─── Block 1: Module Declaration ───
 
 pub struct CapabilitiesPythonRoleAuditor {}
 
@@ -30,8 +30,7 @@ impl Default for CapabilitiesPythonRoleAuditor {
     }
 }
 
-// === Block 2: Module Contract ===
-
+// ─── Block 2: Module Contract ───
 impl ICapabilitiesRoleProtocol for CapabilitiesPythonRoleAuditor {
     fn check_capability_routing(
         &self,
@@ -125,7 +124,7 @@ impl ICapabilitiesRoleProtocol for CapabilitiesPythonRoleAuditor {
     }
 }
 
-// === Block 3: Module HelpersHelpers ===
+// ─── Block 3: Module Helpers ───
 
 impl CapabilitiesPythonRoleAuditor {
     // ===============================================================

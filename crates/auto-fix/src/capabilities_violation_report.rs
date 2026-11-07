@@ -9,7 +9,8 @@
 // (UnusedImportFix, BypassFix, SymbolRename).
 
 use shared_auto_fix::contract_fix_protocol::{
-    IBypassFixProtocol, ISymbolRenameProtocol, IUnusedImportFixProtocol, IViolationReportProtocol,
+    IBlockMarkerFixProtocol, IBypassFixProtocol, ISymbolRenameProtocol, IUnusedImportFixProtocol,
+    IViolationReportProtocol,
 };
 use shared_auto_fix::{FIXABLE_CODES, FixOutcome, FixResult, RUST_KEYWORDS, SkipReason};
 use shared_common::taxonomy_common_error::ErrorMessage;
@@ -31,6 +32,7 @@ pub struct ViolationReport {
     unused_import_fix: Arc<dyn IUnusedImportFixProtocol>,
     bypass_fix: Arc<dyn IBypassFixProtocol>,
     symbol_rename: Arc<dyn ISymbolRenameProtocol>,
+    block_marker_fix: Arc<dyn IBlockMarkerFixProtocol>,
     /// Filesystem IO seam — builds the linter's file list from the requested
     /// path so fix scope is confined to it (#934).
     io: Arc<dyn IFileSystemIOProtocol>,
@@ -64,10 +66,16 @@ impl IViolationReportProtocol for ViolationReport {
             .iter()
             .filter(|r| r.code == ErrorCode::raw("AES203"))
             .collect();
+        let block_marker_violations: Vec<_> = results
+            .iter()
+            .filter(|r| r.code == ErrorCode::raw("AES403") || r.code == ErrorCode::raw("AES405"))
+            .collect();
 
         let mut fixed_count = 0usize;
-        let mut total_fixable =
-            naming_violations.len() + bypass_violations.len() + unused_import_violations.len();
+        let mut total_fixable = naming_violations.len()
+            + bypass_violations.len()
+            + unused_import_violations.len()
+            + block_marker_violations.len();
         let mut manual_skipped: Vec<LintMessage> = Vec::new();
         let mut failed_outcomes: Vec<LintMessage> = Vec::new();
         let mut events: Vec<shared_auto_fix::FixApplied> = Vec::new();
@@ -202,6 +210,29 @@ impl IViolationReportProtocol for ViolationReport {
             }
         }
 
+        for violation in &block_marker_violations {
+            let line = violation.line.clone();
+            let outcome =
+                self.block_marker_fix
+                    .fix_block_marker_dry(violation.file.value(), line, dry_run);
+            match &outcome {
+                FixOutcome::Applied { changes } => {
+                    fixed_count += *changes;
+                    events.push(self.emit_fix_event_impl(&violation.file, "AES403", *changes));
+                }
+                FixOutcome::Skipped(_) => {
+                    total_fixable -= 1;
+                }
+                FixOutcome::Failed(reason) => {
+                    total_fixable -= 1;
+                    failed_outcomes.push(LintMessage::new(format!(
+                        "  {} | {} | failed: {} | {}:{}",
+                        violation.code, violation.message, reason, violation.file, violation.line
+                    )));
+                }
+            }
+        }
+
         let mut manual_steps = self.report_non_fixable(results);
         manual_steps.extend(manual_skipped);
         manual_steps.extend(failed_outcomes.iter().cloned());
@@ -293,6 +324,7 @@ impl ViolationReport {
         unused_import_fix: Arc<dyn IUnusedImportFixProtocol>,
         bypass_fix: Arc<dyn IBypassFixProtocol>,
         symbol_rename: Arc<dyn ISymbolRenameProtocol>,
+        block_marker_fix: Arc<dyn IBlockMarkerFixProtocol>,
         io: Arc<dyn IFileSystemIOProtocol>,
     ) -> Self {
         Self {
@@ -300,6 +332,7 @@ impl ViolationReport {
             unused_import_fix,
             bypass_fix,
             symbol_rename,
+            block_marker_fix,
             io,
         }
     }

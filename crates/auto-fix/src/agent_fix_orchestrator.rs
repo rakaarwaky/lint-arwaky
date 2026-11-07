@@ -26,8 +26,8 @@ use shared_auto_fix::contract_fix_aggregate::IFixAggregate;
 use shared_auto_fix::taxonomy_auto_fix_request::FixRequest;
 use shared_auto_fix::taxonomy_auto_fix_response::FixResponse;
 use shared_auto_fix::{
-    FixOutcome, IBypassFixProtocol, ISymbolRenameProtocol, IUnusedImportFixProtocol,
-    IViolationReportProtocol,
+    FixOutcome, IBlockMarkerFixProtocol, IBypassFixProtocol, ISymbolRenameProtocol,
+    IUnusedImportFixProtocol, IViolationReportProtocol,
 };
 use shared_common::taxonomy_name_vo::SymbolName;
 use std::sync::Arc;
@@ -40,6 +40,7 @@ pub struct FixOrchestratorDeps {
     pub bypass_fix: Arc<dyn IBypassFixProtocol>,
     pub unused_import_fix: Arc<dyn IUnusedImportFixProtocol>,
     pub symbol_rename: Arc<dyn ISymbolRenameProtocol>,
+    pub block_marker_fix: Arc<dyn IBlockMarkerFixProtocol>,
 }
 
 /// FixOrchestrator — pure delegation to the auto-fix capability protocols.
@@ -92,5 +93,12 @@ impl FixOrchestrator {
         self.deps
             .symbol_rename
             .rename_symbol(file_path, old_name, new_name)
+    }
+
+    /// Convenience: rewrite a block-marker banner line to canonical form (FR-005).
+    pub fn fix_block_marker(&self, file_path: &str, line: u32) -> FixOutcome {
+        self.deps
+            .block_marker_fix
+            .fix_block_marker(file_path, shared_common::LineNumber::new(line as i64))
     }
 }

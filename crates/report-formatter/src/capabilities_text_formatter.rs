@@ -12,7 +12,6 @@ use std::collections::BTreeMap;
 // ─── Block 1: Module Declaration ───────────────────────────
 /// TextFormatter — produces self-contained human-readable text output from ScanReport.
 pub struct TextFormatter;
-
 impl TextFormatter {
     /// Create a new text formatter.
     pub fn new() -> Self {
@@ -21,7 +20,6 @@ impl TextFormatter {
 }
 
 // ─── Block 2: Module Contracts ──────────────
-
 impl ITextFormatProtocol for TextFormatter {
     fn format_text(&self, report: &ScanReport) -> DisplayContent {
         format_text_report(report)

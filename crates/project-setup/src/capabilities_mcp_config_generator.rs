@@ -141,7 +141,7 @@ impl IMcpConfigGenerationProtocol for SetupMcpConfigGenerator {
     }
 }
 
-// ─── Block 3: Module HelpersConstructors ────────────────────────────────
+// ─── Block 3: Module Helpers ────────────────────────────────
 
 impl SetupMcpConfigGenerator {
     pub fn new() -> Self {

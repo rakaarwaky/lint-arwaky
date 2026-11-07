@@ -12,7 +12,7 @@ use std::path::Path;
 
 pub struct CapabilitiesToolResolution;
 
-// ─── Block 2: Module ContractPublic Contract (domain protocol ONLY) ──────
+// ─── Block 2: Module Contract ───
 
 impl IToolResolutionProtocol for CapabilitiesToolResolution {
     fn is_executable_in_path(&self, executable: &ToolName) -> bool {

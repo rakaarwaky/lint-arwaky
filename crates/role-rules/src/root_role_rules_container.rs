@@ -30,7 +30,7 @@ pub struct RoleContainer {
     config: ArchitectureConfig,
 }
 
-// ─── Block 2: Module ContractConstructors, Helpers, Private Methods ──────
+// ─── Block 2: Module Contract ───
 
 impl RoleContainer {
     pub fn new_with_config(config: ArchitectureConfig) -> Self {

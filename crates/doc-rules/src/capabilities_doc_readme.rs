@@ -21,7 +21,19 @@ use shared_doc_rules::utility_markdown_scanner::{doc_h2_contract, sections};
 
 pub struct ReadmeCapability;
 
-// ─── Block 2: Module Contract ─────────────────────
+impl Default for ReadmeCapability {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl ReadmeCapability {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
+// ─── Block 2: Module Contract ─
 
 impl IReadmeDocProtocol for ReadmeCapability {
     fn audit_readme(&self, context: &DocAuditContext) -> Vec<DocFinding> {
@@ -37,20 +49,6 @@ impl IReadmeDocProtocol for ReadmeCapability {
             }
         }
         findings
-    }
-}
-
-// ─── Block 3: Module HelpersInherent Implementation and Helpers ─────────
-
-impl Default for ReadmeCapability {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl ReadmeCapability {
-    pub fn new() -> Self {
-        Self
     }
 }
 

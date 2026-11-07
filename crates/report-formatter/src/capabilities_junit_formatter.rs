@@ -6,7 +6,6 @@ use shared_report_formatter::contract_report_formatter_protocol::IJUnitFormatPro
 // ─── Block 1: Module Declaration ───────────────────────────
 /// JunitFormatter — produces JUnit XML output from ScanReport.
 pub struct JunitFormatter;
-
 impl JunitFormatter {
     /// Create a new JUnit formatter.
     pub fn new() -> Self {
@@ -15,7 +14,6 @@ impl JunitFormatter {
 }
 
 // ─── Block 2: Module Contracts ──────────────
-
 impl IJUnitFormatProtocol for JunitFormatter {
     fn format_junit(&self, report: &ScanReport) -> DisplayContent {
         format_junit_report(report)

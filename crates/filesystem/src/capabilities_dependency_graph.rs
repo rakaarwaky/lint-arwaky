@@ -28,7 +28,7 @@ pub struct DependencyGraph {
     implementations: OnceLock<HashMap<String, Vec<PathBuf>>>,
 }
 
-// ─── Block 2: Module ContractPublic Contract (domain protocol ONLY) ──────
+// ─── Block 2: Module Contract ───
 
 impl IGraphProtocol for DependencyGraph {
     fn build_graph(

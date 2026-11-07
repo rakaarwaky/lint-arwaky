@@ -1,9 +1,3 @@
-// PURPOSE: HookInstaller — FR-002 protocol implementation (capabilities layer)
-//
-// Handles .git/hooks/ directory creation, hook script writing, and permission
-// setting. This is the lowest-level install component that interacts directly
-// with the filesystem.
-
 use shared_common::taxonomy_job_vo::SuccessStatus;
 use shared_common::taxonomy_layer_vo::Identity;
 use shared_common::taxonomy_message_vo::LintMessage;
@@ -20,6 +14,12 @@ use std::sync::Arc;
 pub struct HookInstaller {
     root_dir: FilePath,
     io: Arc<dyn IFileSystemIOProtocol>,
+}
+
+impl HookInstaller {
+    pub fn new(root_dir: FilePath, io: Arc<dyn IFileSystemIOProtocol>) -> Self {
+        Self { root_dir, io }
+    }
 }
 
 // ─── Block 2: Module Contract ───────────────
@@ -112,12 +112,7 @@ exit 0
 
 // ─── Block 3: Module Helpers ──────
 
-impl HookInstaller {
-    pub fn new(root_dir: FilePath, io: Arc<dyn IFileSystemIOProtocol>) -> Self {
-        Self { root_dir, io }
-    }
-
-    /// Wrap `s` in single quotes so it is inert when embedded in a bash
+/// Wrap `s` in single quotes so it is inert when embedded in a bash
     /// script. Embedded single quotes are escaped with the standard
     /// `'\''`-close-then-open sequence: `'a'b'` → `'a'\''b'` → the literal
     /// `a'b`. No other character can break out of a single-quoted string,

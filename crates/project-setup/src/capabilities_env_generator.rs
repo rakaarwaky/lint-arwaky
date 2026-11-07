@@ -34,7 +34,7 @@ impl IEnvGenerationProtocol for SetupEnvGenerator {
     }
 }
 
-// ─── Block 3: Module HelpersConstructors ────────────────────────────────
+// ─── Block 3: Module Helpers ────────────────────────────────
 
 impl SetupEnvGenerator {
     pub fn new(io: Arc<dyn IFileSystemIOProtocol>) -> Self {

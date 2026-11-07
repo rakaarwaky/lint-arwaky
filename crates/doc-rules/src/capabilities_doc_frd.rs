@@ -32,7 +32,19 @@ use shared_doc_rules::utility_markdown_scanner::{
 
 pub struct FrdCapability;
 
-// ─── Block 2: Module Contract ─────────────────────
+impl Default for FrdCapability {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl FrdCapability {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
+// ─── Block 2: Module Contract ─
 
 impl IFrdDocProtocol for FrdCapability {
     fn audit_frd(&self, context: &DocAuditContext) -> Vec<DocFinding> {
@@ -48,20 +60,6 @@ impl IFrdDocProtocol for FrdCapability {
             }
         }
         findings
-    }
-}
-
-// ─── Block 3: Module HelpersInherent Implementation and Helpers ─────────
-
-impl Default for FrdCapability {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl FrdCapability {
-    pub fn new() -> Self {
-        Self
     }
 }
 
