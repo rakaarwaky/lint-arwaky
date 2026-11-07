@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 
 use syn::visit::Visit;
 
-// ─── Block 1: Identifier Visitor (for Rust AST walking) ────────────────
+// ─── Block 1: Module DeclarationIdentifier Visitor (for Rust AST walking) ────────────────
 
 /// Walks a Rust AST and collects all identifier references.
 /// Used by `shared_orphan_rules::utility_rust_parser::parse_rust` to populate `used_identifiers`.
@@ -72,7 +72,7 @@ pub fn extract_idents_from_stream(stream: proc_macro2::TokenStream, out: &mut Ve
     }
 }
 
-// ─── Block 2: Import Edge ──────────────────────────────────────────────
+// ─── Block 2: Module ContractImport Edge ──────────────────────────────────────────────
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct AstImportVO {
@@ -120,7 +120,7 @@ impl AstImportVO {
     }
 }
 
-// ─── Block 3: Trait Implementation ────────────────────────────────────
+// ─── Block 3: Module HelpersTrait Implementation ────────────────────────────────────
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct AstTraitImplVO {

@@ -10,7 +10,7 @@ use shared_logging::contract_logging_protocol::{
 use shared_logging::taxonomy_logging_request::{LoggingRequest, LoggingRequestKind};
 use shared_logging::taxonomy_logging_response::{LoggingResponse, LoggingResponseKind};
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct LoggingOrchestrator {
     subscriber: Arc<dyn ISubscriberInstallProtocol>,
@@ -18,7 +18,7 @@ pub struct LoggingOrchestrator {
     walker: Arc<dyn IWalkerReportProtocol>,
 }
 
-// ─── Block 2: Aggregate Trait Implementation ──────────────
+// ─── Block 2: Module Contract ──────────────
 
 impl ILoggingAggregate for LoggingOrchestrator {
     fn execute(&self, request: LoggingRequest) -> LoggingResponse {
@@ -70,7 +70,7 @@ impl ILoggingAggregate for LoggingOrchestrator {
     }
 }
 
-// ─── Block 3: Constructors, Std Traits, Helpers ───────────
+// ─── Block 3: Module Helpers ───────────
 
 impl LoggingOrchestrator {
     pub fn new(

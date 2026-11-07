@@ -11,10 +11,10 @@ use shared_filesystem::taxonomy_filesystem_vo::FileEntry;
 use shared_role_rules::contract_role_protocol::IClassificationProtocol;
 use std::path::Path;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 pub struct RoleClassifier {}
 
-// ─── Block 2: Protocol Trait Implementation ───────────────
+// ─── Block 2: Module Contract ───────────────
 impl IClassificationProtocol for RoleClassifier {
     fn classify_layer(&self, file: &FileEntry) -> Option<LayerNameVO> {
         let filename = file
@@ -47,7 +47,7 @@ impl IClassificationProtocol for RoleClassifier {
     }
 }
 
-// ─── Block 3: Constructors, Std Traits, Helpers ───────────
+// ─── Block 3: Module Helpers ───────────
 impl Default for RoleClassifier {
     fn default() -> Self {
         Self::new()

@@ -30,7 +30,7 @@ from shared.src.taxonomy_result_vo import ResultVO
 __all__ = ["CalculatorOrchestrator", "CalculatorOrchestratorDeps"]
 
 
-# ─── Block 1: Struct Definition ───────────────────────────
+# ─── Block 1: Module Declaration ───────────────────────────
 
 class CalculatorOrchestratorDeps:
     def __init__(
@@ -56,7 +56,7 @@ class CalculatorOrchestratorDeps:
         self.history = history
 
 
-# ─── Block 2: Aggregate Implementation ────────────────────
+# ─── Block 2: Module Contract ────────────────────
 
 class CalculatorOrchestrator(ICalculatorAggregate):
     def __init__(self, deps: CalculatorOrchestratorDeps):
@@ -74,7 +74,7 @@ class CalculatorOrchestrator(ICalculatorAggregate):
         return CalculatorResponse.history(self._merged_history())
 
 
-# ─── Block 3: Helpers, Private Methods ────────────────────
+# ─── Block 3: Module Helpers ────────────────────
 
     def _delegate(self, expr: ExpressionVO | None) -> ResultVO | None:
         if expr is None:

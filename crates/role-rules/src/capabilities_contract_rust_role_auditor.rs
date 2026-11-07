@@ -20,11 +20,11 @@ use shared_role_rules::utility_signature_parser::{
 
 use shared_role_rules::utility_contract_role_checker as utility;
 
-// === Block 1: Type Definition ===
+// === Block 1: Module DeclarationType Definition ===
 
 pub struct ContractRustRoleAuditor {}
 
-// === Block 2: Protocol Implementation ===
+// === Block 2: Module Contract ===
 
 impl IContractRoleProtocol for ContractRustRoleAuditor {
     fn check_contract_routing(
@@ -92,7 +92,7 @@ impl IContractRoleProtocol for ContractRustRoleAuditor {
     }
 }
 
-// === Block 3: Helpers ===
+// === Block 3: Module HelpersHelpers ===
 
 impl Default for ContractRustRoleAuditor {
     fn default() -> Self {

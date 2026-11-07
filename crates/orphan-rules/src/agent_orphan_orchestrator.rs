@@ -35,7 +35,7 @@ use std::sync::Arc;
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 use tracing::{debug, instrument, trace};
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 /// Dependencies for ArchOrphanAnalyzer to avoid too_many_arguments.
 pub struct ArchOrphanDeps {
@@ -54,7 +54,7 @@ pub struct ArchOrphanAnalyzer {
     config: ArchitectureConfig,
 }
 
-// ─── Block 2: Aggregate Trait Implementation ──────────────
+// ─── Block 2: Module Contract ──────────────
 impl IOrphanAggregate for ArchOrphanAnalyzer {
     fn execute(&self, request: OrphanRequest) -> OrphanResponse {
         match request {
@@ -88,7 +88,7 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
+// ─── Block 3: Module Helpers ──────
 
 // FR-001/002/003: graph context, entry points, and reachability are
 // orchestration steps, not capability seams. The orphan-rules agent owns

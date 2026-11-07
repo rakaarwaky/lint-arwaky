@@ -13,7 +13,7 @@ import {
 import { AdditionAnalyzer } from "calculator-addition/src/capabilities_addition_analyzer";
 import { AdditionLog } from "calculator-addition/src/capabilities_addition_log";
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 export class AdditionContainer {
   private _orchestrator: IAdditionAggregate;

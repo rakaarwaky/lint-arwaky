@@ -22,9 +22,9 @@
 ### 3-Block Structure
 
 ```text
-// Block 1: Struct Definition
-// Block 2: Aggregate Trait Implementation
-// Block 3: Constructors, Std Traits, Helpers
+// Block 1: Module Declaration
+// Block 2: Module Contract
+// Block 3: Module Helpers
 ```
 
 Method placement:
@@ -73,14 +73,14 @@ use std::sync::Arc;
 use shared::<domain>::taxonomy_<name>_vo::<VO>;
 use shared::<domain>::contract_<name>_aggregate::I<Name>Aggregate;
 
-// ─── Block 1: Struct Definition ──────────────────────────
+// ─── Block 1: Module Declaration ──────────────────────────
 // Injected deps are protocol traits (what the agent dispatches to), not the aggregate.
 pub struct Agent<Name> {
     // One field per capability seam, typed against the seam's protocol trait.
     dep: Arc<dyn I<Seam>Protocol>,
 }
 
-// ─── Block 2: Aggregate Trait Implementation ─────────────
+// ─── Block 2: Module Contract ─────────────
 // Exactly one method — the single entry point. Dispatch to the owning protocol trait.
 impl I<Name>Aggregate for Agent<Name> {
     fn execute(&self, request: <RequestVO>) -> <ResponseVO> {
@@ -93,7 +93,7 @@ impl I<Name>Aggregate for Agent<Name> {
     }
 }
 
-// ─── Block 3: Constructors, Std Traits & Helpers ─────────
+// ─── Block 3: Module Helpers ─────────
 impl Agent<Name> {
     pub fn new(aggregate: Arc<dyn I<Name>Aggregate>) -> Self {
         Self { aggregate }
@@ -116,8 +116,8 @@ impl Default for Agent<Name> {
 | Check                                                         | Why it belongs here                                                 |
 | ------------------------------------------------------------- | ------------------------------------------------------------------- |
 | Block 1 → 2 → 3 order followed.                               | Required by AES layer rules and the linter; missing it is a defect. |
-| Block 2: ONLY aggregate trait implementation.                 | Required by AES layer rules and the linter; missing it is a defect. |
-| Block 3: constructors, std traits, private helpers.           | Required by AES layer rules and the linter; missing it is a defect. |
+| Block 2: Module Contract — aggregate trait implementation only.                 | Required by AES layer rules and the linter; missing it is a defect. |
+| Block 3: Module Helpers — constructors, std traits, private helpers.           | Required by AES layer rules and the linter; missing it is a defect. |
 | ≥1 struct implements aggregate trait; ≤3 total types.         | Required by AES layer rules and the linter; missing it is a defect. |
 | No local domain data; `Arc<dyn Trait>` for DI; shared VOs.    | Required by AES layer rules and the linter; missing it is a defect. |
 | Zero I/O, zero business logic, zero domain computation.       | Required by AES layer rules and the linter; missing it is a defect. |

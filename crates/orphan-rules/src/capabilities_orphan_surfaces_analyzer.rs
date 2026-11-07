@@ -7,11 +7,11 @@ use shared_quality_rules::taxonomy_quality_rules_vo::{
     InboundLinkMap, OrphanIndicatorResult, ReachabilityResult,
 };
 
-// ─── Block 1: Struct Definition ────────────────────────────
+// ─── Block 1: Module Declaration ────────────────────────────
 
 pub struct SurfacesOrphanAnalyzer;
 
-// ─── Block 2: Protocol Trait Implementation ────────────────
+// ─── Block 2: Module Contract ────────────────
 
 impl ISurfacesOrphanProtocol for SurfacesOrphanAnalyzer {
     fn is_surface_orphan(
@@ -57,7 +57,7 @@ impl ISurfacesOrphanProtocol for SurfacesOrphanAnalyzer {
     }
 }
 
-// ─── Block 3: Constructors, Std Traits, Helpers ────────────
+// ─── Block 3: Module Helpers ────────────
 
 impl Default for SurfacesOrphanAnalyzer {
     fn default() -> Self {

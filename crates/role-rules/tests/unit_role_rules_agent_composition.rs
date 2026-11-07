@@ -366,9 +366,9 @@ fn fallback_std_and_aggregate_impls_not_flagged() {
 fn block_four_flagged() {
     let messages = block_messages(
         "\
-// ─── Block 1: Types ───
-// ─── Block 2: Aggregate ───
-// ─── Block 3: Helpers ───
+// ─── Block 1: Module DeclarationTypes ───
+// ─── Block 2: Module Contract ───
+// ─── Block 3: Module HelpersHelpers ───
 // ─── Block 4: Extra ───
 ",
     );
@@ -384,9 +384,9 @@ fn block_four_flagged() {
 fn block_three_not_flagged() {
     let messages = block_messages(
         "\
-// ─── Block 1: Types ───
-// ─── Block 2: Aggregate ───
-// ─── Block 3: Helpers ───
+// ─── Block 1: Module DeclarationTypes ───
+// ─── Block 2: Module Contract ───
+// ─── Block 3: Module HelpersHelpers ───
 ",
     );
     assert!(
@@ -415,9 +415,9 @@ fn block_sub_block_word_not_flagged() {
     // heading — the word must start the token, not merely appear inside one.
     let messages = block_messages(
         "\
-// ─── Block 1: Types ───
-// ─── Block 2: Aggregate ───
-// ─── Block 3: Helpers ───
+// ─── Block 1: Module DeclarationTypes ───
+// ─── Block 2: Module Contract ───
+// ─── Block 3: Module HelpersHelpers ───
 // Sub-Block 4: prose about a sub-section
 ",
     );
@@ -435,7 +435,7 @@ fn ts_block_four_flagged() {
     let mut v = Vec::new();
     auditor.check_agent_block_markers(
         &ts_file(
-            "// ─── Block 1: Types ───\n// ─── Block 2: Aggregate ───\n// ─── Block 4: Extra ───\n",
+            "// ─── Block 1: Module DeclarationTypes ───\n// ─── Block 2: Module Contract ───\n// ─── Block 4: Extra ───\n",
             None,
         ),
         &mut v,

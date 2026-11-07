@@ -14,13 +14,13 @@ use shared_filesystem::utility_filesystem_io;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct CapabilitiesFileSystemIO {
     timing: Arc<ScanTiming>,
 }
 
-// ─── Block 2: Public Contract (domain protocol ONLY) ──────
+// ─── Block 2: Module ContractPublic Contract (domain protocol ONLY) ──────
 
 impl IFileSystemIOProtocol for CapabilitiesFileSystemIO {
     // ── Path Operations (15) ─────────────────────────────────
@@ -158,7 +158,7 @@ impl IFileSystemIOProtocol for CapabilitiesFileSystemIO {
     }
 }
 
-// ─── Block 3: Constructors, Std Traits & Helpers ─────────
+// ─── Block 3: Module Helpers ─────────
 
 impl CapabilitiesFileSystemIO {
     pub fn new(timing: Arc<ScanTiming>) -> Self {

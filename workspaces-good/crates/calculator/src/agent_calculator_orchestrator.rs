@@ -7,7 +7,7 @@ use calculator_shared::taxonomy_operation_vo::OperationVO;
 use calculator_shared::taxonomy_result_vo::ResultVO;
 use std::sync::Mutex;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct CalculatorOrchestratorDeps {
     pub addition: Box<dyn ICalculatorProtocol>,
@@ -21,7 +21,7 @@ pub struct CalculatorOrchestrator {
     history: Mutex<Vec<ResultVO>>,
 }
 
-// ─── Block 2: Aggregate Implementation ────────────────────
+// ─── Block 2: Module Contract ────────────────────
 
 impl ICalculatorAggregate for CalculatorOrchestrator {
     fn execute(&self, request: CalculatorRequest) -> CalculatorResponse {
@@ -34,7 +34,7 @@ impl ICalculatorAggregate for CalculatorOrchestrator {
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
+// ─── Block 3: Module Helpers ──────
 
 impl CalculatorOrchestrator {
     pub fn new(deps: CalculatorOrchestratorDeps) -> Self {

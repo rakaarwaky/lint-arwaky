@@ -14,11 +14,11 @@ use shared_quality_rules::utility_mandatory_checker::rust_declares_type;
 //   5. If none found → AES303 MANDATORY_DEFINITION
 use std::path::Path;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct MandatoryDefinitionChecker {}
 
-// ─── Block 2: Protocol Trait Implementation ───────────────
+// ─── Block 2: Module Contract ───────────────
 
 impl IMandatoryClassProtocol for MandatoryDefinitionChecker {
     fn check_mandatory_class_definition(
@@ -98,7 +98,7 @@ impl IMandatoryClassProtocol for MandatoryDefinitionChecker {
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
+// ─── Block 3: Module Helpers ──────
 
 impl Default for MandatoryDefinitionChecker {
     fn default() -> Self {

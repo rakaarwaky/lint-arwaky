@@ -14,11 +14,11 @@ use shared_common::taxonomy_severity_vo::Severity;
 //   6. If max_lines > 0 and count > max_lines → AES301 FILE_TOO_LARGE
 use std::path::Path;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct ArchLineChecker {}
 
-// ─── Block 2: Protocol Trait Implementation ───────────────
+// ─── Block 2: Module Contract ───────────────
 
 impl ILineCheckerProtocol for ArchLineChecker {
     fn check_line_counts(
@@ -95,7 +95,7 @@ impl ILineCheckerProtocol for ArchLineChecker {
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
+// ─── Block 3: Module Helpers ──────
 
 impl Default for ArchLineChecker {
     fn default() -> Self {

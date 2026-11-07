@@ -12,14 +12,14 @@ use shared_structure_rules::taxonomy_structure_rules_request::{
 };
 use shared_structure_rules::taxonomy_structure_rules_response::StructureResponse;
 
-// ─── Block 1: Struct Definition ────────────────────────────
+// ─── Block 1: Module Declaration ────────────────────────────
 
 /// AES705: checks that `crates/`, `modules/`, and `packages/` hold folders and
 /// wiring, and that no `agent_*`, `capabilities_*`, `surface_*`, or `utility_*`
 /// file sits loose at a member root.
 pub struct MemberRootPlacementAuditor {}
 
-// ─── Block 2: Protocol Trait Implementation ────────────────
+// ─── Block 2: Module Contract ────────────────
 
 impl IStructureMemberRootProtocol for MemberRootPlacementAuditor {
     fn audit_member_root(&self, request: StructureRequest) -> StructureResponse {
@@ -58,7 +58,7 @@ impl IStructureMemberRootProtocol for MemberRootPlacementAuditor {
     }
 }
 
-// ─── Block 3: Constructors, Std Traits, Helpers ────────────
+// ─── Block 3: Module Helpers ────────────
 
 /// The layer files sitting directly in a member dir.
 ///

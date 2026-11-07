@@ -12,7 +12,7 @@ from addition.src.capabilities_addition_analyzer import AdditionAnalyzer
 from addition.src.capabilities_addition_log import AdditionLog
 from shared.src.contract_addition_aggregate import IAdditionAggregate
 
-# ─── Block 1: Struct Definition ───────────────────────────
+# ─── Block 1: Module Declaration ───────────────────────────
 
 class AdditionContainer:
     def __init__(self):

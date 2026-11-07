@@ -22,10 +22,10 @@ use shared_role_rules::taxonomy_role_rules_constant::{
 };
 use shared_role_rules::taxonomy_role_rules_vo::{SurfaceTier, classify_surface_tier};
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 pub struct SurfaceRoleChecker {}
 
-// ─── Block 2: Protocol Trait Implementation ───────────────
+// ─── Block 2: Module Contract ───────────────
 impl ISurfaceRoleProtocol for SurfaceRoleChecker {
     fn check_smart_surface(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
         // FRD: smart surfaces are subject to no checks. The fn-count check
@@ -82,7 +82,7 @@ impl ISurfaceRoleProtocol for SurfaceRoleChecker {
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
+// ─── Block 3: Module Helpers ──────
 impl Default for SurfaceRoleChecker {
     fn default() -> Self {
         Self::new()

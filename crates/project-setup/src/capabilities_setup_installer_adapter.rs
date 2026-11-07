@@ -14,11 +14,11 @@ use shared_project_setup::contract_setup_protocol::IAdapterInstallationProtocol;
 use shared_project_setup::contract_setup_protocol::InstallPackagesResult;
 use shared_project_setup::taxonomy_project_setup_vo::SetupError;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct SetupInstallerAdapter;
 
-// ─── Block 2: Protocol Trait Implementation ───────────────
+// ─── Block 2: Module Contract ───────────────
 
 impl IAdapterInstallationProtocol for SetupInstallerAdapter {
     fn install_python_packages(&self, packages: &PatternList) -> InstallPackagesResult {
@@ -95,7 +95,7 @@ impl IAdapterInstallationProtocol for SetupInstallerAdapter {
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
+// ─── Block 3: Module Helpers ──────
 
 impl SetupInstallerAdapter {
     pub fn new() -> Self {

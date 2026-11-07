@@ -8,11 +8,11 @@ use shared_filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
 use shared_filesystem::utility_tool_resolution;
 use std::path::Path;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct CapabilitiesToolResolution;
 
-// ─── Block 2: Public Contract (domain protocol ONLY) ──────
+// ─── Block 2: Module ContractPublic Contract (domain protocol ONLY) ──────
 
 impl IToolResolutionProtocol for CapabilitiesToolResolution {
     fn is_executable_in_path(&self, executable: &ToolName) -> bool {
@@ -77,7 +77,7 @@ impl IToolResolutionProtocol for CapabilitiesToolResolution {
     }
 }
 
-// ─── Block 3: Constructors, Std Traits & Helpers ─────────
+// ─── Block 3: Module Helpers ─────────
 
 impl CapabilitiesToolResolution {
     pub fn new() -> Self {

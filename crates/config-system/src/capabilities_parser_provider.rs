@@ -11,13 +11,13 @@ use shared_config_system::utility_config_parser::default_config_for_language;
 use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use std::sync::Arc;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct ConfigParserProvider {
     io: Arc<dyn IFileSystemIOProtocol>,
 }
 
-// ─── Block 2: Protocol Trait Implementation ───────────────
+// ─── Block 2: Module Contract ───────────────
 
 impl IConfigMergeProtocol for ConfigParserProvider {
     /// FR-003: deserialize a YAML config file into a ProjectConfig.
@@ -182,7 +182,7 @@ fn fold_user_rule_toggles(merged: &mut ArchitectureConfig, user: &ArchitectureCo
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
+// ─── Block 3: Module Helpers ──────
 
 impl ConfigParserProvider {
     /// Create a new config parser with filesystem IO dependency.

@@ -13,7 +13,7 @@ import {
 import { MultiplicationAnalyzer } from "calculator-multiplication/src/capabilities_multiplication_analyzer";
 import { MultiplicationLog } from "calculator-multiplication/src/capabilities_multiplication_log";
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 export class MultiplicationContainer {
   private _orchestrator: IMultiplicationAggregate;

@@ -21,7 +21,7 @@ use shared_git_hooks::taxonomy_git_hooks_response::GitHooksResponse;
 
 use std::sync::Arc;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct GitHooksOrchestrator {
     diff_detection: Arc<dyn IDiffDetectionProtocol>,
@@ -30,7 +30,7 @@ pub struct GitHooksOrchestrator {
     config_init: Arc<dyn IConfigInitProtocol>,
 }
 
-// ─── Block 2: Aggregate Trait Implementations ─────────────
+// ─── Block 2: Module Contracts ─────────────
 
 impl IGitHooksAggregate for GitHooksOrchestrator {
     fn execute(&self, request: GitHooksRequest) -> GitHooksResponse {
@@ -51,7 +51,7 @@ impl IGitHooksAggregate for GitHooksOrchestrator {
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
+// ─── Block 3: Module Helpers ──────
 
 impl GitHooksOrchestrator {
     pub fn diff_protocol(&self) -> &dyn IDiffDetectionProtocol {

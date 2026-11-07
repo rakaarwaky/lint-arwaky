@@ -10,13 +10,13 @@ use tracing::info;
 
 use std::sync::Arc;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct ChangeLintHandler {
     linter: Arc<dyn ICodeAnalysisAggregate>,
 }
 
-// ─── Block 2: Protocol Trait Implementation ───────────────
+// ─── Block 2: Module Contract ───────────────
 
 impl IChangeLintProtocol for ChangeLintHandler {
     fn lint_changed(&self, event: &WatchEvent) -> Result<(), WatchServiceError> {
@@ -40,7 +40,7 @@ impl IChangeLintProtocol for ChangeLintHandler {
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
+// ─── Block 3: Module Helpers ──────
 
 impl ChangeLintHandler {
     pub fn new(linter: Arc<dyn ICodeAnalysisAggregate>) -> Self {

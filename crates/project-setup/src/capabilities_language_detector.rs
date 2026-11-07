@@ -10,14 +10,14 @@ use shared_project_setup::taxonomy_project_setup_vo::{ProjectLanguageVO, Project
 
 use std::sync::Arc;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 /// Business logic for language detection.
 pub struct SetupLanguageDetector {
     io: Arc<dyn IFileSystemIOProtocol>,
 }
 
-// ─── Block 2: Protocol Trait Implementation ───────────────
+// ─── Block 2: Module Contract ───────────────
 
 impl ILanguageDetectionProtocol for SetupLanguageDetector {
     /// Detect the primary language. Returns None when no languages are detected
@@ -79,7 +79,7 @@ impl ILanguageDetectionProtocol for SetupLanguageDetector {
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
+// ─── Block 3: Module Helpers ──────
 
 impl SetupLanguageDetector {
     pub fn new(io: Arc<dyn IFileSystemIOProtocol>) -> Self {

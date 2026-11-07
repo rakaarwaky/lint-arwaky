@@ -5,11 +5,11 @@ import {
   createResult,
 } from "calculator-shared/src/taxonomy_result_vo";
 
-// ─── Block 1: Struct Definition ────────────────────────────
+// ─── Block 1: Module Declaration ────────────────────────────
 
 /** Adds the two operands of an expression. */
 export class AdditionAnalyzer implements ICalculatorProtocol {
-  // ─── Block 2: Protocol Trait Implementation ────────────────
+  // ─── Block 2: Module Contract ────────────────
 
   /** Evaluate one addition expression. */
   evaluate(expr: ExpressionVO): ResultVO {
@@ -19,7 +19,7 @@ export class AdditionAnalyzer implements ICalculatorProtocol {
     return createResult(expr.left, "+", expr.right, value);
   }
 
-  // ─── Block 3: Constructors, Std Traits, Helpers ────────────
+  // ─── Block 3: Module Helpers ────────────
 
   toString(): string {
     return "AdditionAnalyzer()";

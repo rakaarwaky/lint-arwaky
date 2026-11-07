@@ -22,9 +22,9 @@
 ### 3-Block Structure
 
 ```text
-# Block 1: Class Definition & Constructor
-# Block 2: Aggregate Method Implementation
-# Block 3: Dunder Methods, Factories, Helpers
+# Block 1: Module Declaration
+# Block 2: Module Contract
+# Block 3: Module Helpers
 ```
 
 Method placement:
@@ -69,13 +69,13 @@ from shared.<domain>.taxonomy_<name>_vo import <VO>
 from shared.<domain>.contract_<name>_aggregate import I<Name>Aggregate
 from shared.<domain>.contract_<name>_protocol import I<Seam>Protocol
 
-# ─── Block 1: Class Definition & Constructor ──────────────
+# ─── Block 1: Module Declaration ──────────────
 class Agent<Name>:
     # Injected deps are protocol ABCs (what the agent dispatches to), not the aggregate.
     def __init__(self, dep: I<Seam>Protocol) -> None:
         self._dep = dep
 
-    # ─── Block 2: Aggregate Method Implementation ─────────
+    # ─── Block 2: Module Contract ─────────
     # Exactly one method — the single entry point. Dispatch to the owning protocol.
     def execute(self, request: <RequestVO>) -> <ResponseVO>:
         # Orchestration only: match the request variant, delegate to the protocol.
@@ -84,7 +84,7 @@ class Agent<Name>:
             return <ResponseVO>.<Result1>(self._dep.<operation_1>(..))
         return <ResponseVO>.<Result2>(self._dep.<operation_2>(..))
 
-    # ─── Block 3: Dunder Methods, Factories & Helpers ─────
+    # ─── Block 3: Module Helpers ─────
     def __repr__(self) -> str:
         return "Agent<Name>()"
 
@@ -100,8 +100,8 @@ class Agent<Name>:
 | Check                                                         | Why it belongs here                                                 |
 | ------------------------------------------------------------- | ------------------------------------------------------------------- |
 | Block 1 → 2 → 3 order followed.                               | Required by AES layer rules and the linter; missing it is a defect. |
-| Block 2: ONLY aggregate ABC method implementations.           | Required by AES layer rules and the linter; missing it is a defect. |
-| Block 3: dunders, factories, private helpers.                 | Required by AES layer rules and the linter; missing it is a defect. |
+| Block 2: Module Contract — aggregate ABC method implementations only.           | Required by AES layer rules and the linter; missing it is a defect. |
+| Block 3: Module Helpers — dunders, factories, private helpers.                 | Required by AES layer rules and the linter; missing it is a defect. |
 | ≥1 class inherits aggregate ABC; ≤3 total classes.            | Required by AES layer rules and the linter; missing it is a defect. |
 | No local domain data; DI via protocol interfaces; shared VOs. | Required by AES layer rules and the linter; missing it is a defect. |
 | Zero I/O, zero business logic, zero domain computation.       | Required by AES layer rules and the linter; missing it is a defect. |

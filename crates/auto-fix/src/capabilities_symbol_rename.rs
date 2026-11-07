@@ -13,13 +13,13 @@ use shared_common::taxonomy_path_vo::FilePath;
 use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use std::sync::Arc;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct SymbolRename {
     io: Arc<dyn IFileSystemIOProtocol>,
 }
 
-// ─── Block 2: Protocol Trait Implementation ──────────────
+// ─── Block 2: Module Contract ──────────────
 
 impl ISymbolRenameProtocol for SymbolRename {
     fn rename_symbol(
@@ -41,7 +41,7 @@ impl ISymbolRenameProtocol for SymbolRename {
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
+// ─── Block 3: Module Helpers ──────
 
 impl SymbolRename {
     pub fn new(io: Arc<dyn IFileSystemIOProtocol>) -> Self {

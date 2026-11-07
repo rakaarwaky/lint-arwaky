@@ -9,13 +9,13 @@ use std::sync::Arc;
 
 use tracing::warn;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct ConfigYamlReader {
     io: Arc<dyn IFileSystemIOProtocol>,
 }
 
-// ─── Block 2: Protocol Trait Implementation ───────────────
+// ─── Block 2: Module Contract ───────────────
 
 impl IConfigReadProtocol for ConfigYamlReader {
     fn read_config(
@@ -126,7 +126,7 @@ impl IConfigReadProtocol for ConfigYamlReader {
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
+// ─── Block 3: Module Helpers ──────
 
 impl ConfigYamlReader {
     /// Create a new YAML config reader with filesystem IO dependency.

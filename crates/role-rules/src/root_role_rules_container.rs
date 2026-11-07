@@ -23,14 +23,14 @@ use shared_config_system::taxonomy_config_system_vo::ArchitectureConfig;
 use shared_role_rules::IRoleRunnerAggregate;
 use std::sync::Arc;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct RoleContainer {
     deps: RoleCheckerDeps,
     config: ArchitectureConfig,
 }
 
-// ─── Block 2: Constructors, Helpers, Private Methods ──────
+// ─── Block 2: Module ContractConstructors, Helpers, Private Methods ──────
 
 impl RoleContainer {
     pub fn new_with_config(config: ArchitectureConfig) -> Self {

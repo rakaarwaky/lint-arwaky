@@ -29,7 +29,7 @@ use shared_quality_rules::LinterOperationError;
 use std::sync::Arc;
 use std::sync::OnceLock;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct MyPyAdapter {
     pub tool_resolution: Arc<dyn IToolResolutionProtocol>,
@@ -38,7 +38,7 @@ pub struct MyPyAdapter {
     bin_path: Option<FilePath>,
 }
 
-// ─── Block 2: Protocol Trait Implementation ───────────────
+// ─── Block 2: Module Contract ───────────────
 
 impl ILinterAdapterProtocol for MyPyAdapter {
     fn name(&self) -> AdapterName {
@@ -159,7 +159,7 @@ impl ILinterAdapterProtocol for MyPyAdapter {
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
+// ─── Block 3: Module Helpers ──────
 
 fn mypy_re_with_col() -> Option<&'static Regex> {
     static RE: OnceLock<Option<Regex>> = OnceLock::new();

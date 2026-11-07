@@ -35,7 +35,7 @@ use tracing::debug;
 
 use shared_external_lint::ICommandExecutorProtocol;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 /// Adapter for Rust Clippy static analysis.
 pub struct RustLinterAdapter {
@@ -44,7 +44,7 @@ pub struct RustLinterAdapter {
     _bin_path: Option<FilePath>,
 }
 
-// ─── Block 2: Protocol Trait Implementation ───────────────
+// ─── Block 2: Module Contract ───────────────
 
 impl ILinterAdapterProtocol for RustLinterAdapter {
     fn name(&self) -> AdapterName {
@@ -187,7 +187,7 @@ impl ILinterAdapterProtocol for RustLinterAdapter {
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
+// ─── Block 3: Module Helpers ──────
 
 impl RustLinterAdapter {
     pub fn new(

@@ -17,7 +17,7 @@ use std::sync::Arc;
 
 use shared_tui::utility_file_system;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 /// SurfaceActionHandler — pure state machine for TUI interaction.
 /// Owns the surface lint executor, bridging UI events to backend operations.
@@ -39,7 +39,7 @@ where
     });
 }
 
-// ─── Block 2: Background Task Methods ─────────────────────
+// ─── Block 2: Module ContractBackground Task Methods ─────────────────────
 
 impl SurfaceActionHandler {
     pub fn start_scan(
@@ -208,7 +208,7 @@ impl SurfaceActionHandler {
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
+// ─── Block 3: Module Helpers ──────
 
 impl SurfaceActionHandler {
     pub fn new(lint_port: Arc<SurfaceLintExecutor>, io: Arc<dyn IFilesystemAggregate>) -> Self {

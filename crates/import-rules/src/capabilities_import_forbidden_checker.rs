@@ -22,11 +22,11 @@ use shared_import_rules::taxonomy_import_rules_error::ImportError;
 use shared_import_rules::utility_import_resolver;
 use std::collections::{HashMap, HashSet};
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct ArchImportForbiddenChecker;
 
-// ─── Block 2: Protocol Trait Implementation ───────────────
+// ─── Block 2: Module Contract ───────────────
 
 impl IImportForbiddenProtocol for ArchImportForbiddenChecker {
     fn rule_name(&self) -> Identity {
@@ -84,7 +84,7 @@ impl IImportForbiddenProtocol for ArchImportForbiddenChecker {
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
+// ─── Block 3: Module Helpers ──────
 
 impl Default for ArchImportForbiddenChecker {
     fn default() -> Self {

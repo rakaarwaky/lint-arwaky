@@ -18,7 +18,7 @@ use shared_naming_rules::utility_naming_checker::{
 
 use std::collections::HashMap;
 
-// ─── Block 1: Struct Definition ────────────────────────────
+// ─── Block 1: Module Declaration ────────────────────────────
 
 /// Stateless AES102 suffix/prefix policy checker.
 ///
@@ -29,7 +29,7 @@ pub struct SuffixPolicyChecker {}
 
 // ─── Protocol Trait Implementation ────────────────────────────────────────
 
-// ─── Block 2: Protocol Trait Implementation ────────────────
+// ─── Block 2: Module Contract ────────────────
 
 impl ISuffixPolicyProtocol for SuffixPolicyChecker {
     /// FR-NamingRules-002 — AES102: check each file's layer suffix and role
@@ -80,7 +80,7 @@ impl ISuffixPolicyProtocol for SuffixPolicyChecker {
 
 // ─── Constructors, Helpers, Private Methods ────────────────────────────────
 
-// ─── Block 3: Constructors, Std Traits, Helpers ────────────
+// ─── Block 3: Module Helpers ────────────
 
 impl Default for SuffixPolicyChecker {
     fn default() -> Self {

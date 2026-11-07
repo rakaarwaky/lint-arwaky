@@ -2,13 +2,13 @@ import { IOperationLogProtocol } from "calculator-shared/src/contract_operation_
 import { OperationVO } from "calculator-shared/src/taxonomy_operation_vo";
 import { ResultVO } from "calculator-shared/src/taxonomy_result_vo";
 
-// ─── Block 1: Struct Definition ────────────────────────────
+// ─── Block 1: Module Declaration ────────────────────────────
 
 /** Records the results the multiplication feature produced, and only those. */
 export class MultiplicationLog implements IOperationLogProtocol {
   private _entries: ResultVO[] = [];
 
-  // ─── Block 2: Protocol Trait Implementation ────────────────
+  // ─── Block 2: Module Contract ────────────────
 
   record(result: ResultVO): void {
     if (!this._isMultiplicationResult(result)) return;
@@ -20,7 +20,7 @@ export class MultiplicationLog implements IOperationLogProtocol {
     return [...this._entries];
   }
 
-  // ─── Block 3: Constructors, Std Traits, Helpers ────────────
+  // ─── Block 3: Module Helpers ────────────
 
   private _isMultiplicationResult(result: ResultVO): boolean {
     return result.expression.indexOf(OperationVO.Multiply) !== -1;

@@ -12,11 +12,11 @@ use shared_import_rules::utility_import_resolver;
 use shared_import_rules::utility_import_symbol_extractor;
 use std::collections::HashMap;
 
-// ─── Block 1: Struct Definition ────────────────────────────
+// ─── Block 1: Module Declaration ────────────────────────────
 
 pub struct UnusedImportRuleChecker;
 
-// ─── Block 2: Protocol Trait Implementation ────────────────
+// ─── Block 2: Module Contract ────────────────
 
 impl IUnusedImportProtocol for UnusedImportRuleChecker {
     fn find_unused_imports(
@@ -116,7 +116,7 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
     }
 }
 
-// ─── Block 3: Constructors, Std Traits, Helpers ────────────
+// ─── Block 3: Module Helpers ────────────
 
 impl Default for UnusedImportRuleChecker {
     fn default() -> Self {

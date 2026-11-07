@@ -3,13 +3,13 @@ use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared_maintenance::contract_maintenance_protocol::ICacheCleanupProtocol;
 use std::sync::Arc;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 pub struct CacheCleanupChecker {
     io: Arc<dyn IFileSystemIOProtocol>,
     project_path: FilePath,
 }
 
-// ─── Block 2: Protocol Implementation ─────────────────────
+// ─── Block 2: Module Contract ─────────────────────
 impl ICacheCleanupProtocol for CacheCleanupChecker {
     fn clean(&self) {
         let base = &self.project_path.value;
@@ -28,7 +28,7 @@ impl ICacheCleanupProtocol for CacheCleanupChecker {
     }
 }
 
-// ─── Block 3: Constructors & Helpers ──────────────────────
+// ─── Block 3: Module Helpers ──────────────────────
 impl CacheCleanupChecker {
     pub fn new(io: Arc<dyn IFileSystemIOProtocol>) -> Self {
         Self {

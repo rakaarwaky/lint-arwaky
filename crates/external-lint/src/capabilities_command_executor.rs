@@ -11,13 +11,13 @@ use shared_common::taxonomy_path_vo::FilePath;
 use shared_external_lint::contract_external_lint_protocol::ICommandExecutorProtocol;
 use shared_external_lint::taxonomy_duration_vo::Timeout;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct ExternalLintExecutor {
     executor: Arc<dyn ICommandExecutorProtocol>,
 }
 
-// ─── Block 2: FR-006 command execution with error mapping ─
+// ─── Block 2: Module ContractFR-006 command execution with error mapping ─
 
 impl ICommandExecutorProtocol for ExternalLintExecutor {
     fn execute_command(
@@ -67,7 +67,7 @@ impl ICommandExecutorProtocol for ExternalLintExecutor {
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
+// ─── Block 3: Module Helpers ──────
 
 impl ExternalLintExecutor {
     pub fn new(executor: Arc<dyn ICommandExecutorProtocol>) -> Self {

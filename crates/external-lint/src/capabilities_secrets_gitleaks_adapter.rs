@@ -26,7 +26,7 @@ use shared_quality_rules::LinterOperationError;
 use std::sync::Arc;
 use tracing::debug;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct GitleaksAdapter {
     executor: Arc<dyn ICommandExecutorProtocol>,
@@ -56,7 +56,7 @@ struct GitleaksFinding {
     tags: Vec<String>,
 }
 
-// ─── Block 2: Protocol Trait Implementation ───────────────
+// ─── Block 2: Module Contract ───────────────
 
 impl ILinterAdapterProtocol for GitleaksAdapter {
     fn name(&self) -> AdapterName {
@@ -138,7 +138,7 @@ impl ILinterAdapterProtocol for GitleaksAdapter {
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
+// ─── Block 3: Module Helpers ──────
 
 impl GitleaksAdapter {
     pub fn new(

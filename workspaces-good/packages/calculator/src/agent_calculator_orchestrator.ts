@@ -25,7 +25,7 @@ import { ExpressionVO } from "calculator-shared/src/taxonomy_expression_vo";
 import { OperationVO } from "calculator-shared/src/taxonomy_operation_vo";
 import { ResultVO } from "calculator-shared/src/taxonomy_result_vo";
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 /** The shape every operation feature aggregate presents to the member. */
 interface IFeatureAggregate {
@@ -56,7 +56,7 @@ export class CalculatorOrchestrator implements ICalculatorAggregate {
     };
   }
 
-  // ─── Block 2: Aggregate Implementation ──────────────────
+  // ─── Block 2: Module Contract ──────────────────
 
   execute(request: CalculatorRequest): CalculatorResponse {
     if (request.verb === "delegate") {
@@ -65,7 +65,7 @@ export class CalculatorOrchestrator implements ICalculatorAggregate {
     return { kind: "history", results: this._mergedHistory() };
   }
 
-  // ─── Block 3: Helpers, Private Methods ──────────────────
+  // ─── Block 3: Module Helpers ──────────────────
 
   /** Route the expression to the feature that owns its operation. */
   private _delegate(expr: ExpressionVO | null): ResultVO | null {

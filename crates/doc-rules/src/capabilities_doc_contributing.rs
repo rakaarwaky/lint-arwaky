@@ -20,11 +20,11 @@ use shared_doc_rules::utility_doc_common_checks::{
 use shared_doc_rules::utility_doc_line_drift::detect_doc_line_drift;
 use shared_doc_rules::utility_markdown_scanner::{doc_h2_contract, sections};
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct ContributingCapability;
 
-// ─── Block 2: Protocol Implementation ─────────────────────
+// ─── Block 2: Module Contract ─────────────────────
 
 impl IContributingDocProtocol for ContributingCapability {
     fn audit_contributing(&self, context: &DocAuditContext) -> Vec<DocFinding> {
@@ -43,7 +43,7 @@ impl IContributingDocProtocol for ContributingCapability {
     }
 }
 
-// ─── Block 3: Inherent Implementation and Helpers ─────────
+// ─── Block 3: Module HelpersInherent Implementation and Helpers ─────────
 
 impl Default for ContributingCapability {
     fn default() -> Self {

@@ -26,7 +26,7 @@ use std::sync::Arc;
 
 use tracing::warn;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct ConfigOrchestratorDeps {
     pub workspace_detector: Arc<dyn IWorkspaceMembersProtocol>,
@@ -45,7 +45,7 @@ pub struct ConfigOrchestrator {
     config_cache: DashMap<CacheKey, CachedConfig>,
 }
 
-// ─── Block 2: Aggregate Trait Implementation ──────────────
+// ─── Block 2: Module Contract ──────────────
 
 impl IConfigOrchestratorAggregate for ConfigOrchestrator {
     fn execute(&self, request: ConfigRequest) -> ConfigResponse {
@@ -86,7 +86,7 @@ impl IConfigOrchestratorAggregate for ConfigOrchestrator {
     }
 }
 
-// ─── Block 3: Constructors, Std Traits, Helpers ─────
+// ─── Block 3: Module Helpers ─────
 
 // FR-ConfigSystem-001/002 are satisfied by the capabilities themselves
 // (`ConfigYamlReader` implements `IConfigReadProtocol`, `WorkspaceDetector`

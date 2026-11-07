@@ -12,7 +12,7 @@ from division.src.capabilities_division_analyzer import DivisionAnalyzer
 from division.src.capabilities_division_log import DivisionLog
 from shared.src.contract_division_aggregate import IDivisionAggregate
 
-# ─── Block 1: Struct Definition ───────────────────────────
+# ─── Block 1: Module Declaration ───────────────────────────
 
 class DivisionContainer:
     def __init__(self):

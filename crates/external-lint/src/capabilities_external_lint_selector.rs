@@ -2,7 +2,7 @@ use shared_common::AdapterNameList;
 use shared_common::taxonomy_adapter_name_vo::AdapterName;
 use shared_external_lint::contract_external_lint_protocol::IExternalLintSelectorProtocol;
 
-// ─── Block 1: Struct Definition ────────────────────────────
+// ─── Block 1: Module Declaration ────────────────────────────
 
 pub struct CapabilitiesExternalLintSelector {
     rust_adapters: Vec<AdapterName>,
@@ -11,7 +11,7 @@ pub struct CapabilitiesExternalLintSelector {
     markdown_adapters: Vec<AdapterName>,
 }
 
-// ─── Block 2: Protocol Trait Implementation ────────────────
+// ─── Block 2: Module Contract ────────────────
 
 impl IExternalLintSelectorProtocol for CapabilitiesExternalLintSelector {
     fn select_adapters(
@@ -36,7 +36,7 @@ impl IExternalLintSelectorProtocol for CapabilitiesExternalLintSelector {
     }
 }
 
-// ─── Block 3: Constructors, Std Traits, Helpers ────────────
+// ─── Block 3: Module Helpers ────────────
 
 impl CapabilitiesExternalLintSelector {
     pub fn new(

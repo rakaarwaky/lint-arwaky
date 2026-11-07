@@ -12,7 +12,7 @@ from multiplication.src.capabilities_multiplication_analyzer import Multiplicati
 from multiplication.src.capabilities_multiplication_log import MultiplicationLog
 from shared.src.contract_multiplication_aggregate import IMultiplicationAggregate
 
-# ─── Block 1: Struct Definition ───────────────────────────
+# ─── Block 1: Module Declaration ───────────────────────────
 
 class MultiplicationContainer:
     def __init__(self):

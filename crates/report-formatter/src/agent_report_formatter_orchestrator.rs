@@ -11,7 +11,7 @@ use shared_report_formatter::contract_report_formatter_protocol::ISarifFormatPro
 use shared_report_formatter::contract_report_formatter_protocol::ITextFormatProtocol;
 use std::sync::Arc;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct ReportFormatterDeps {
     pub text: Arc<dyn ITextFormatProtocol>,
@@ -24,7 +24,7 @@ pub struct ReportFormatterOrchestrator {
     deps: ReportFormatterDeps,
 }
 
-// ─── Block 2: Aggregate Trait Implementation ──────────────
+// ─── Block 2: Module Contract ──────────────
 impl IReportFormatterAggregate for ReportFormatterOrchestrator {
     fn format(&self, report: &ScanReport, format: Format) -> DisplayContent {
         match format {
@@ -36,7 +36,7 @@ impl IReportFormatterAggregate for ReportFormatterOrchestrator {
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
+// ─── Block 3: Module Helpers ──────
 impl ReportFormatterOrchestrator {
     pub fn new(deps: ReportFormatterDeps) -> Self {
         Self { deps }

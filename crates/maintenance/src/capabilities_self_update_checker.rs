@@ -7,12 +7,12 @@ use shared_maintenance::utility_maintenance_helpers;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 pub struct SelfUpdateChecker {
     io: Arc<dyn IFileSystemIOProtocol>,
 }
 
-// ─── Block 2: Protocol Implementation ─────────────────────
+// ─── Block 2: Module Contract ─────────────────────
 impl ISelfUpdateProtocol for SelfUpdateChecker {
     fn self_update(&self, check_only: bool) -> SelfUpdateResultVO {
         let current =
@@ -57,7 +57,7 @@ impl ISelfUpdateProtocol for SelfUpdateChecker {
     }
 }
 
-// ─── Block 3: Constructors & Helpers ──────────────────────
+// ─── Block 3: Module Helpers ──────────────────────
 impl SelfUpdateChecker {
     pub fn new(io: Arc<dyn IFileSystemIOProtocol>) -> Self {
         Self { io }

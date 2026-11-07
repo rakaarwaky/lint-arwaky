@@ -18,14 +18,14 @@ use shared_import_rules::utility_import_module_parser;
 
 use std::collections::HashMap;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 #[derive(Default)]
 pub struct DependencyCycleAnalyzer {}
 
 type ScannedFileEdges = (Vec<DependencyEdge>, Option<(String, String)>);
 
-// ─── Block 2: Protocol Trait Implementation ───────────────
+// ─── Block 2: Module Contract ───────────────
 
 impl ICycleImportProtocol for DependencyCycleAnalyzer {
     fn scan(
@@ -79,7 +79,7 @@ impl ICycleImportProtocol for DependencyCycleAnalyzer {
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
+// ─── Block 3: Module Helpers ──────
 
 impl DependencyCycleAnalyzer {
     pub fn new() -> Self {

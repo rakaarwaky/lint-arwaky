@@ -13,7 +13,7 @@ import {
 import { DivisionAnalyzer } from "calculator-division/src/capabilities_division_analyzer";
 import { DivisionLog } from "calculator-division/src/capabilities_division_log";
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 export class DivisionContainer {
   private _orchestrator: IDivisionAggregate;

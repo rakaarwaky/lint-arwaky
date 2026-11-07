@@ -14,7 +14,7 @@ import { IOperationLogProtocol } from "calculator-shared/src/contract_operation_
 import { ExpressionVO } from "calculator-shared/src/taxonomy_expression_vo";
 import { ResultVO } from "calculator-shared/src/taxonomy_result_vo";
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 export interface MultiplicationOrchestratorDeps {
   analyzer: ICalculatorProtocol;
@@ -31,7 +31,7 @@ export class MultiplicationOrchestrator implements IMultiplicationAggregate {
     this._log = deps.log;
   }
 
-  // ─── Block 2: Aggregate Implementation ──────────────────
+  // ─── Block 2: Module Contract ──────────────────
 
   /** Evaluate one multiplication expression and record the result. */
   evaluate(expr: ExpressionVO): ResultVO | null {
@@ -43,7 +43,7 @@ export class MultiplicationOrchestrator implements IMultiplicationAggregate {
     return result;
   }
 
-  // ─── Block 3: Helpers, Private Methods ──────────────────
+  // ─── Block 3: Module Helpers ──────────────────
 
   /** Every result this feature has produced so far. */
   history(): ResultVO[] {
