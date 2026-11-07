@@ -28,7 +28,7 @@ use shared_filesystem::taxonomy_filesystem_vo::Language;
 use shared_role_rules::utility_agent_role_checker::resolve_feature_protocol_count;
 use shared_role_rules::utility_role_reference_scanner::build_external_reference_map;
 
-// ─── Block 1: Module Declarations ──────────────────────────
+// ─── Block 1: Module Declaration ───
 
 pub struct RoleCheckerDeps {
     pub classifier: Arc<dyn IClassificationProtocol>,

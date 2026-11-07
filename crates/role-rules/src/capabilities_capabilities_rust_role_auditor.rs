@@ -14,11 +14,11 @@ use shared_role_rules::contract_role_protocol::ICapabilitiesRoleProtocol;
 
 use shared_role_rules::utility_capabilities_role_checker;
 
-// === Block 1: Module DeclarationType Definition ===
+// ─── Block 1: Module Declaration ───
 
 pub struct CapabilitiesRustRoleAuditor {}
 
-// === Block 2: Module Contract ===
+// ─── Block 2: Module Contract ───
 
 impl ICapabilitiesRoleProtocol for CapabilitiesRustRoleAuditor {
     fn check_capability_routing(
@@ -113,7 +113,7 @@ impl ICapabilitiesRoleProtocol for CapabilitiesRustRoleAuditor {
     }
 }
 
-// === Block 3: Module HelpersHelpers ===
+// ─── Block 3: Module Helpers ───
 
 impl Default for CapabilitiesRustRoleAuditor {
     fn default() -> Self {

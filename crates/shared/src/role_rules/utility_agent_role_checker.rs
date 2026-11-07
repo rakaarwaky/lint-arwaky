@@ -6,8 +6,10 @@
 // language-specific (block order, I/O, constant placement, stateless, free
 // functions, abstract methods) stay in the per-language auditors.
 
+use std::collections::BTreeMap;
 use std::path::Path;
 
+use shared_common::LineNumber;
 use shared_common::taxonomy_lint_vo::LintResult;
 use shared_common::taxonomy_severity_vo::Severity;
 use shared_filesystem::taxonomy_filesystem_vo::{FileEntry, Language, ParseMetadata};
@@ -876,15 +878,53 @@ pub fn check_agent_protocol_forbidden(file: &FileEntry, violations: &mut Vec<Lin
 /// a convention the reader can spot by shape, not a requirement the linter
 /// enforces from nothing.
 pub fn check_block_markers(file: &FileEntry, violations: &mut Vec<LintResult>) {
-    let markers = block_marker_numbers(&file.content);
-    let Some(max) = markers.iter().max().copied() else {
+    let path = file.path.to_string_lossy().to_string();
+    let markers = block_markers(&file.content);
+
+    if markers.is_empty() {
+        return;
+    }
+
+    let expected_name: BTreeMap<usize, &'static str> = BTreeMap::from([
+        (1, "Module Declaration"),
+        (2, "Module Contract"),
+        (3, "Module Helpers"),
+    ]);
+
+    // Name check: each banner's name text must match the canonical name for
+    // its block number.
+    for (n, name, line) in &markers {
+        let Some(expected) = expected_name.get(n) else {
+            continue;
+        };
+        if *name != *expected {
+            violations.push(LintResult::new_arch(
+                &path,
+                *line,
+                "AES405",
+                Severity::MEDIUM,
+                format!(
+                    "AES405 AGENT_ROLE: Agent block marker name mismatch.\n\
+                     WHY? Block {n} is named \"{name}\" but the canonical name is \"\
+                     {expected}\". Expected `// ─── Block {n}: {expected} ───`, \
+                     found `// ─── Block {n}: {name} ───`.\n\
+                     FIX: Rewrite the banner to the canonical name text for that block.",
+                ),
+            ));
+        }
+    }
+
+    let max = markers.iter().map(|(n, _, _)| *n).max();
+    let Some(max) = max else {
         return;
     };
     if max <= 3 {
         return;
     }
-    let path = file.path.to_string_lossy().to_string();
-    let found: Vec<String> = markers.iter().map(|n| format!("Block {n}")).collect();
+    let found: Vec<String> = markers
+        .iter()
+        .map(|(n, _, _)| format!("Block {n}"))
+        .collect();
     violations.push(LintResult::new_arch(
         &path,
         0,
@@ -903,18 +943,12 @@ pub fn check_block_markers(file: &FileEntry, violations: &mut Vec<LintResult>) {
     ));
 }
 
-/// The `N` of every `Block N:` banner comment, in declaration order.
-///
-/// A banner is `Block <digits>:` standing as its own word inside a comment. Both
-/// halves matter. The colon separates a marker from prose — the HOW-TO and rule
-/// messages describe the structure as `Block 1 (type + injected deps) -> Block
-/// 2`, and requiring the colon keeps those sentences from reading as markers.
-/// The word boundary keeps a longer word that merely contains "Block" — such as
-/// `Sub-Block 4:` — from reading as a banner either. A file carrying no banner
-/// is left to the other structural checks.
-fn block_marker_numbers(content: &str) -> Vec<usize> {
+/// The `N` and name text of every `Block N:` banner comment, in declaration
+/// order. The name is the rest of the line after the colon, with box-drawing
+/// dashes and surrounding whitespace stripped.
+fn block_markers(content: &str) -> Vec<(usize, String, usize)> {
     let mut out = Vec::new();
-    for line in content.lines() {
+    for (line_idx, line) in content.lines().enumerate() {
         let t = line.trim();
         if !is_comment(t) {
             continue;
@@ -927,9 +961,15 @@ fn block_marker_numbers(content: &str) -> Vec<usize> {
         if digits.is_empty() || !rest[digits.len()..].starts_with(':') {
             continue;
         }
-        if let Ok(n) = digits.parse::<usize>() {
-            out.push(n);
-        }
+        let Some(n) = digits.parse::<usize>().ok() else {
+            continue;
+        };
+        let name = rest[digits.len() + 1..]
+            .trim()
+            .trim_matches(|c| c == '─' || c == '-')
+            .trim()
+            .to_string();
+        out.push((n, name, line_idx + 1));
     }
     out
 }

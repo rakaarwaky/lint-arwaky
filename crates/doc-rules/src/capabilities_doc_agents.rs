@@ -24,7 +24,19 @@ use shared_doc_rules::utility_markdown_scanner::{doc_h2_contract, sections};
 
 pub struct AgentsCapability;
 
-// ─── Block 2: Module Contract ─────────────────────
+impl Default for AgentsCapability {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl AgentsCapability {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
+// ─── Block 2: Module Contract ─
 
 impl IAgentsDocProtocol for AgentsCapability {
     fn audit_agents(&self, context: &DocAuditContext) -> Vec<DocFinding> {
@@ -43,19 +55,7 @@ impl IAgentsDocProtocol for AgentsCapability {
     }
 }
 
-// ─── Block 3: Module HelpersInherent Implementation and Helpers ─────────
-
-impl Default for AgentsCapability {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl AgentsCapability {
-    pub fn new() -> Self {
-        Self
-    }
-}
+// ─── Block 3: Module Helpers ─
 
 impl AgentsCapability {
     fn audit_one(document: &DocSource, context: &DocAuditContext, findings: &mut Vec<DocFinding>) {

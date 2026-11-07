@@ -3,8 +3,9 @@
 //          and fall back to line scanning. Per-language files delegate here
 //          so one implementation is shared across Rust / Python / TypeScript.
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 
+use shared_common::LineNumber;
 use shared_common::taxonomy_lint_vo::LintResult;
 use shared_common::taxonomy_severity_vo::Severity;
 use shared_filesystem::taxonomy_filesystem_vo::{FileEntry, ParseMetadata, PythonClassItem};
@@ -300,7 +301,13 @@ pub fn check_single_protocol(file: &FileEntry, violations: &mut Vec<LintResult>)
 /// same thing to both rules.
 pub fn check_block_markers(file: &FileEntry, violations: &mut Vec<LintResult>) {
     let path = file.path.to_string_lossy().to_string();
-    let markers = block_marker_numbers(&file.content);
+    let markers = block_markers(&file.content);
+
+    let expected_name: BTreeMap<usize, &'static str> = BTreeMap::from([
+        (1, "Module Declaration"),
+        (2, "Module Contract"),
+        (3, "Module Helpers"),
+    ]);
 
     if markers.is_empty() {
         violations.push(LintResult::new_arch(
@@ -321,7 +328,7 @@ pub fn check_block_markers(file: &FileEntry, violations: &mut Vec<LintResult>) {
         return;
     }
 
-    let declared: BTreeSet<usize> = markers.iter().copied().collect();
+    let declared: BTreeSet<usize> = markers.iter().map(|(n, _, _)| *n).collect();
     let missing: Vec<usize> = [1usize, 2, 3]
         .into_iter()
         .filter(|n| !declared.contains(n))
@@ -349,9 +356,12 @@ pub fn check_block_markers(file: &FileEntry, violations: &mut Vec<LintResult>) {
         ));
     }
 
-    // A banner above 3 means the file outgrew the shape, and a sequence that is
-    // not 1 -> 2 -> 3 means the map lies about the order.
-    let above_three: Vec<usize> = markers.iter().copied().filter(|n| *n > 3).collect();
+    // A banner above 3 means the file outgrew the shape.
+    let above_three: Vec<usize> = markers
+        .iter()
+        .map(|(n, _, _)| *n)
+        .filter(|n| *n > 3)
+        .collect();
     if !above_three.is_empty() {
         violations.push(LintResult::new_arch(
             &path,
@@ -375,20 +385,46 @@ pub fn check_block_markers(file: &FileEntry, violations: &mut Vec<LintResult>) {
         ));
     }
 
-    // Order is checked over the distinct numbers in the order they first appear,
-    // so a banner repeated in a doc comment cannot reorder the sequence.
-    let mut sequence: Vec<usize> = Vec::new();
-    for n in &markers {
-        if !sequence.contains(n) {
-            sequence.push(*n);
+    // Name check: each banner's name text must match the canonical name for
+    // its block number. Independent of missing/above-three/order checks.
+    for (n, name, line) in &markers {
+        let Some(expected) = expected_name.get(n) else {
+            continue;
+        };
+        if *name != *expected {
+            violations.push(LintResult::new_arch(
+                &path,
+                *line,
+                "AES403",
+                Severity::MEDIUM,
+                format!(
+                    "AES403 CAPABILITY_ROLE: Capability block marker name mismatch.\n\
+                     WHY? Block {n} is named \"{name}\" but the canonical name is \"\
+                     {expected}\". Expected `// ─── Block {n}: {expected} ───`, \
+                     found `// ─── Block {n}: {name} ───`.\n\
+                     FIX: Rewrite the banner to the canonical name text for that block.",
+                ),
+            ));
         }
     }
-    let mut expected = sequence.clone();
-    expected.sort_unstable();
-    if sequence != expected {
+
+    // Order is checked over the distinct numbers in the order they first appear,
+    // so a banner repeated in a doc comment cannot reorder the sequence.
+    let mut sequence: Vec<(usize, usize)> = Vec::new(); // (block number, line number)
+    for (n, _, line) in &markers {
+        if !sequence.iter().any(|(s, _)| s == n) {
+            sequence.push((*n, *line));
+        }
+    }
+    let mut expected_seq = sequence.clone();
+    expected_seq.sort_by_key(|(n, _)| *n);
+    if sequence.iter().map(|(n, _)| *n).collect::<Vec<_>>()
+        != expected_seq.iter().map(|(n, _)| *n).collect::<Vec<_>>()
+    {
+        let (_, first_line) = sequence.first().copied().unwrap_or((0, 0));
         violations.push(LintResult::new_arch(
             &path,
-            0,
+            first_line,
             "AES403",
             Severity::MEDIUM,
             format!(
@@ -400,7 +436,7 @@ pub fn check_block_markers(file: &FileEntry, violations: &mut Vec<LintResult>) {
                  1 -> 2 -> 3 order.",
                 sequence
                     .iter()
-                    .map(|n| format!("Block {n}"))
+                    .map(|(n, _)| format!("Block {n}"))
                     .collect::<Vec<_>>()
                     .join(" -> ")
             ),
@@ -419,15 +455,12 @@ fn block_list(declared: &BTreeSet<usize>) -> String {
 
 /// The `N` of every `Block N:` banner comment, in declaration order.
 ///
-/// A banner is `Block <digits>:` standing as its own word inside a comment. Both
-/// halves matter. The colon separates a marker from prose — the HOW-TO and rule
-/// messages describe the structure as `Block 1 (type + injected deps) -> Block
-/// 2`, and requiring the colon keeps those sentences from reading as markers.
-/// The word boundary keeps a longer word that merely contains "Block" — such as
-/// `Sub-Block 4:` — from reading as a banner either.
-fn block_marker_numbers(content: &str) -> Vec<usize> {
+/// The `N` and name text of every `Block N:` banner comment, in declaration
+/// order. The name is the rest of the line after the colon, with box-drawing
+/// dashes and surrounding whitespace stripped.
+fn block_markers(content: &str) -> Vec<(usize, String, usize)> {
     let mut out = Vec::new();
-    for line in content.lines() {
+    for (line_idx, line) in content.lines().enumerate() {
         let t = line.trim();
         if !is_comment(t) {
             continue;
@@ -440,9 +473,15 @@ fn block_marker_numbers(content: &str) -> Vec<usize> {
         if digits.is_empty() || !rest[digits.len()..].starts_with(':') {
             continue;
         }
-        if let Ok(n) = digits.parse::<usize>() {
-            out.push(n);
-        }
+        let Some(n) = digits.parse::<usize>().ok() else {
+            continue;
+        };
+        let name = rest[digits.len() + 1..]
+            .trim()
+            .trim_matches(|c| c == '─' || c == '-')
+            .trim()
+            .to_string();
+        out.push((n, name, line_idx + 1));
     }
     out
 }

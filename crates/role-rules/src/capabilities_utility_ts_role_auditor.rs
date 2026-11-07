@@ -16,11 +16,11 @@ use shared_role_rules::contract_role_protocol::IUtilityRoleProtocol;
 
 use shared_role_rules::utility_utility_role_checker as utility;
 
-// === Block 1: Module DeclarationType Definition ===
+// ─── Block 1: Module Declaration ───
 
 pub struct UtilityTypeScriptRoleAuditor {}
 
-// === Block 2: Module Contract ===
+// ─── Block 2: Module Contract ───
 
 impl IUtilityRoleProtocol for UtilityTypeScriptRoleAuditor {
     fn check_utility_convention(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
@@ -32,7 +32,7 @@ impl IUtilityRoleProtocol for UtilityTypeScriptRoleAuditor {
     }
 }
 
-// === Block 3: Module Helpers ===
+// ─── Block 3: Module Helpers ───
 
 impl Default for UtilityTypeScriptRoleAuditor {
     fn default() -> Self {

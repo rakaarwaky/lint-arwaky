@@ -15,7 +15,7 @@ use shared_report_formatter::taxonomy_report_formatter_vo::{SarifMessage, SarifR
 /// SarifFormatter — produces SARIF 2.1.0 JSON output from ScanReport.
 pub struct SarifFormatter;
 
-// ─── Block 2: Module Contracts ──────────────
+// ─── Block 2: Module Contract ───
 
 impl ISarifFormatProtocol for SarifFormatter {
     fn format_sarif(&self, report: &ScanReport) -> DisplayContent {

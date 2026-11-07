@@ -14,7 +14,7 @@ use std::path::{Path, PathBuf};
 
 pub struct CapabilitiesWorkspace;
 
-// ─── Block 2: Module ContractPublic Contract (domain protocol ONLY) ──────
+// ─── Block 2: Module Contract ───
 
 impl IWorkspaceProtocol for CapabilitiesWorkspace {
     fn workspace_root(&self, start: &FilePath) -> Option<PathBuf> {

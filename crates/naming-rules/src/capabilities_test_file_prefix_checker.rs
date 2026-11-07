@@ -27,6 +27,18 @@ use shared_naming_rules::utility_test_prefix::{
 /// internal state.
 pub struct TestFilePrefixChecker {}
 
+impl Default for TestFilePrefixChecker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl TestFilePrefixChecker {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+
 // ─── Block 2: Module Contract ────────────────
 
 impl ITestFilePrefixProtocol for TestFilePrefixChecker {
@@ -63,17 +75,7 @@ impl ITestFilePrefixProtocol for TestFilePrefixChecker {
 
 // ─── Block 3: Module Helpers ────────────
 
-impl Default for TestFilePrefixChecker {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl TestFilePrefixChecker {
-    pub fn new() -> Self {
-        Self {}
-    }
-
     /// AES103 — a file in `tests/` or `benches/` sits flat and starts with a
     /// legal test-type prefix.
     ///

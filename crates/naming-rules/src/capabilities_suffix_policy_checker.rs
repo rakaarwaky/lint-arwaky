@@ -27,7 +27,17 @@ use std::collections::HashMap;
 /// internal state.
 pub struct SuffixPolicyChecker {}
 
-// ─── Protocol Trait Implementation ────────────────────────────────────────
+impl Default for SuffixPolicyChecker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl SuffixPolicyChecker {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
 
 // ─── Block 2: Module Contract ────────────────
 
@@ -78,21 +88,9 @@ impl ISuffixPolicyProtocol for SuffixPolicyChecker {
     }
 }
 
-// ─── Constructors, Helpers, Private Methods ────────────────────────────────
-
 // ─── Block 3: Module Helpers ────────────
 
-impl Default for SuffixPolicyChecker {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl SuffixPolicyChecker {
-    pub fn new() -> Self {
-        Self {}
-    }
-
     /// Build a mapping from suffix → base layer name for cross-layer validation.
     pub fn build_suffix_to_layer_map(layer_map: &LayerMapVO) -> HashMap<String, String> {
         let mut suffix_to_layer = HashMap::new();

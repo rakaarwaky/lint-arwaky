@@ -15,11 +15,11 @@ use shared_role_rules::taxonomy_role_rules_constant::AGENT_FORBIDDEN_IO_RUST;
 use shared_role_rules::utility_agent_role_checker;
 use shared_role_rules::utility_agent_role_io_checker;
 
-// === Block 1: Module DeclarationType Definition ===
+// ─── Block 1: Module Declaration ───
 
 pub struct AgentRustRoleAuditor {}
 
-// === Block 2: Module Contract ===
+// ─── Block 2: Module Contract ───
 
 impl IAgentRoleProtocol for AgentRustRoleAuditor {
     fn check_agent_routing(&self, file: &FileEntry, layer: &str, violations: &mut Vec<LintResult>) {
@@ -125,7 +125,7 @@ impl IAgentRoleProtocol for AgentRustRoleAuditor {
     }
 }
 
-// === Block 3: Module HelpersHelpers ===
+// ─── Block 3: Module Helpers ───
 
 impl Default for AgentRustRoleAuditor {
     fn default() -> Self {

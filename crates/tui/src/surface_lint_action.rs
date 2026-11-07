@@ -64,7 +64,7 @@ fn validated_path(path: &str) -> Result<FilePath, LintExecutionResult> {
         .map_err(|_| LintExecutionResult::failure(format!("Invalid path: {path}")))
 }
 
-// ─── Block 2: Module ContractLint Action Methods ─────────────────────────
+// ─── Block 2: Module Contract ──────────────────────────
 
 impl SurfaceLintExecutor {
     pub fn check(&self, path: &str, _flags: &ActionFlags) -> LintExecutionResult {
@@ -547,7 +547,7 @@ impl SurfaceLintExecutor {
     }
 }
 
-// ─── Block 3: Module Helpers ──────
+// ─── Block 3: Module Helpers ───────
 
 impl SurfaceLintExecutor {
     pub fn new(

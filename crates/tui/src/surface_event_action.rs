@@ -39,7 +39,7 @@ where
     });
 }
 
-// ─── Block 2: Module ContractBackground Task Methods ─────────────────────
+// ─── Block 2: Module Contract ──────────────────────
 
 impl SurfaceActionHandler {
     pub fn start_scan(
@@ -208,7 +208,7 @@ impl SurfaceActionHandler {
     }
 }
 
-// ─── Block 3: Module Helpers ──────
+// ─── Block 3: Module Helpers ───────
 
 impl SurfaceActionHandler {
     pub fn new(lint_port: Arc<SurfaceLintExecutor>, io: Arc<dyn IFilesystemAggregate>) -> Self {

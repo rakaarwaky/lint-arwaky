@@ -5,13 +5,15 @@
 
 use crate::agent_fix_orchestrator::FixOrchestrator;
 use crate::agent_fix_orchestrator::FixOrchestratorDeps;
+use crate::capabilities_block_marker_fix::BlockMarkerFix;
 use crate::capabilities_bypass_fix::BypassFix;
 use crate::capabilities_symbol_rename::SymbolRename;
 use crate::capabilities_unused_import_fix::UnusedImportFix;
 use crate::capabilities_violation_report::ViolationReport;
 use shared_auto_fix::IFixAggregate;
 use shared_auto_fix::{
-    IBypassFixProtocol, ISymbolRenameProtocol, IUnusedImportFixProtocol, IViolationReportProtocol,
+    IBlockMarkerFixProtocol, IBypassFixProtocol, ISymbolRenameProtocol, IUnusedImportFixProtocol,
+    IViolationReportProtocol,
 };
 use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared_quality_rules::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
@@ -35,11 +37,14 @@ impl AutoFixContainer {
         let unused_import_fix: Arc<dyn IUnusedImportFixProtocol> =
             Arc::new(UnusedImportFix::new(io.clone()));
         let symbol_rename: Arc<dyn ISymbolRenameProtocol> = Arc::new(SymbolRename::new(io.clone()));
+        let block_marker_fix: Arc<dyn IBlockMarkerFixProtocol> =
+            Arc::new(BlockMarkerFix::new(io.clone()));
         let violation_report: Arc<dyn IViolationReportProtocol> = Arc::new(ViolationReport::new(
             self.code_analysis_linter.clone(),
             unused_import_fix.clone(),
             bypass_fix.clone(),
             symbol_rename.clone(),
+            block_marker_fix.clone(),
             io.clone(),
         ));
         Arc::new(FixOrchestrator::new(FixOrchestratorDeps {
@@ -47,6 +52,7 @@ impl AutoFixContainer {
             bypass_fix,
             unused_import_fix,
             symbol_rename,
+            block_marker_fix,
         }))
     }
 

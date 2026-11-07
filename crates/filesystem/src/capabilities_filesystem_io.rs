@@ -20,7 +20,7 @@ pub struct CapabilitiesFileSystemIO {
     timing: Arc<ScanTiming>,
 }
 
-// ─── Block 2: Module ContractPublic Contract (domain protocol ONLY) ──────
+// ─── Block 2: Module Contract ───
 
 impl IFileSystemIOProtocol for CapabilitiesFileSystemIO {
     // ── Path Operations (15) ─────────────────────────────────

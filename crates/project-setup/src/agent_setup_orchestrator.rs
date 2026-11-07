@@ -122,7 +122,7 @@ impl ISetupAggregate for SetupManagementOrchestrator {
     }
 }
 
-// ─── Block 3: Module HelpersConstructors ────────────────────────────────
+// ─── Block 3: Module Helpers ────────────────────────────────
 
 impl SetupManagementOrchestrator {
     pub fn new(protocols: SetupProtocols) -> Self {

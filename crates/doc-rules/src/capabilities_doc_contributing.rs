@@ -24,7 +24,19 @@ use shared_doc_rules::utility_markdown_scanner::{doc_h2_contract, sections};
 
 pub struct ContributingCapability;
 
-// ─── Block 2: Module Contract ─────────────────────
+impl Default for ContributingCapability {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl ContributingCapability {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
+// ─── Block 2: Module Contract ─
 
 impl IContributingDocProtocol for ContributingCapability {
     fn audit_contributing(&self, context: &DocAuditContext) -> Vec<DocFinding> {
@@ -40,20 +52,6 @@ impl IContributingDocProtocol for ContributingCapability {
             }
         }
         findings
-    }
-}
-
-// ─── Block 3: Module HelpersInherent Implementation and Helpers ─────────
-
-impl Default for ContributingCapability {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl ContributingCapability {
-    pub fn new() -> Self {
-        Self
     }
 }
 
