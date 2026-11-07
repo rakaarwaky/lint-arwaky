@@ -24,7 +24,12 @@ impl Default for ChangeFilter {
 
 impl ChangeFilter {
     pub fn new() -> Self {
-        Self {}
+        Self {
+            lintable_exts: &[
+                ".rs", ".py", ".js", ".ts", ".tsx", ".jsx", ".mjs", ".cjs", ".json", ".css", ".md",
+                ".toml", ".yaml", ".yml",
+            ],
+        }
     }
 }
 // ─── Block 2: Module Contract ───────────────
@@ -41,4 +46,21 @@ impl IChangeFilterProtocol for ChangeFilter {
 }
 
 // ─── Block 3: Module Helpers ──────
+
+impl ChangeFilter {
+    pub fn dedup_events(&self, events: Vec<WatchEvent>) -> Vec<WatchEvent> {
+        let mut deduped: HashMap<String, WatchEvent> = HashMap::new();
+        for event in events {
+            deduped.insert(event.path.clone(), event);
+        }
+        deduped.into_values().collect()
+    }
+
+    fn filter_lintable(&self, events: Vec<WatchEvent>) -> Vec<WatchEvent> {
+        events
+            .into_iter()
+            .filter(|e| self.is_lintable(&e.path))
+            .collect()
+    }
+}
 

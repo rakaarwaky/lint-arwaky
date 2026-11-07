@@ -24,6 +24,12 @@ impl ArchLineChecker {
     }
 }
 
+impl Default for ArchLineChecker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 // ─── Block 2: Module Contract ───────────────
 
 impl ILineCheckerProtocol for ArchLineChecker {
@@ -98,13 +104,5 @@ impl ILineCheckerProtocol for ArchLineChecker {
                 ),
             ));
         }
-    }
-}
-
-// ─── Block 3: Module Helpers ──────
-
-impl Default for ArchLineChecker {
-    fn default() -> Self {
-        Self::new()
     }
 }

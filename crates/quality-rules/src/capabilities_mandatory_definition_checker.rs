@@ -24,6 +24,12 @@ impl MandatoryDefinitionChecker {
     }
 }
 
+impl Default for MandatoryDefinitionChecker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 // ─── Block 2: Module Contract ───────────────
 
 impl IMandatoryClassProtocol for MandatoryDefinitionChecker {
@@ -72,24 +78,7 @@ impl IMandatoryClassProtocol for MandatoryDefinitionChecker {
             return;
         }
 
-        let mut has_class = false;
-        for line in content.lines() {
-            let trimmed = line.trim();
-            if trimmed.starts_with("class ")
-                || trimmed.starts_with("export class ")
-                || trimmed.starts_with("export default class ")
-                || trimmed.starts_with("interface ")
-                || trimmed.starts_with("export interface ")
-                || trimmed.starts_with("type ")
-                || trimmed.starts_with("export type ")
-                || rust_declares_type(trimmed)
-            {
-                has_class = true;
-                break;
-            }
-        }
-
-        if !has_class {
+        if !Self::content_declares_type(content) {
             violations.push(LintResult::new_arch_with_name(
                 file,
                 0,
@@ -106,8 +95,23 @@ impl IMandatoryClassProtocol for MandatoryDefinitionChecker {
 
 // ─── Block 3: Module Helpers ──────
 
-impl Default for MandatoryDefinitionChecker {
-    fn default() -> Self {
-        Self::new()
+impl MandatoryDefinitionChecker {
+    /// True if any line of `content` declares a class/struct/trait/enum/interface/type.
+    fn content_declares_type(content: &str) -> bool {
+        for line in content.lines() {
+            let trimmed = line.trim();
+            if trimmed.starts_with("class ")
+                || trimmed.starts_with("export class ")
+                || trimmed.starts_with("export default class ")
+                || trimmed.starts_with("interface ")
+                || trimmed.starts_with("export interface ")
+                || trimmed.starts_with("type ")
+                || trimmed.starts_with("export type ")
+                || rust_declares_type(trimmed)
+            {
+                return true;
+            }
+        }
+        false
     }
 }

@@ -8,15 +8,8 @@ use tracing_subscriber::EnvFilter;
 
 // ─── Block 1: Module Declaration ───────────────────────────
 
-#[derive(Default)]
 pub struct FilterBuilder {}
 
-
-impl Default for FilterBuilder {
-    fn default() -> Self {
-        Self::new()
-    }
-}
 
 impl FilterBuilder {
     pub fn new() -> Self {

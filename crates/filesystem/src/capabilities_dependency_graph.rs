@@ -37,7 +37,13 @@ impl Default for DependencyGraph {
 
 impl DependencyGraph {
     pub fn new() -> Self {
-        Self {}
+        Self {
+            graph: OnceLock::new(),
+            node_map: OnceLock::new(),
+            reverse_links: OnceLock::new(),
+            definitions: OnceLock::new(),
+            implementations: OnceLock::new(),
+        }
     }
 }
 // ─── Block 2: Module Contract ───

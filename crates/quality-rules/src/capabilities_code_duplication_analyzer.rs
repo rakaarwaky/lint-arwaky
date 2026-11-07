@@ -25,6 +25,13 @@ pub struct CodeDuplicationAnalyzer {
     config: Arc<ArchitectureConfig>,
 }
 
+impl CodeDuplicationAnalyzer {
+    /// Build a CodeDuplicationAnalyzer from the shared ArchitectureConfig.
+    pub fn from_config(config: Arc<ArchitectureConfig>) -> Self {
+        Self { config }
+    }
+}
+
 // ─── Block 2: Module Contract ────────────────
 
 impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
@@ -67,14 +74,10 @@ impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
 // ─── Block 3: Module Helpers ───────
 
 impl CodeDuplicationAnalyzer {
-    pub fn from_config(config: Arc<ArchitectureConfig>) -> Self {
-        Self { config }
-    }
-
     /// File-level similarity analysis using pre-read entries.
     /// Optimized: u64 window hashes replace String keys; `others` resolved at
     /// output time only for flagged files (no per-window HashSet cloning).
-    pub fn check_file_similarity_entries(
+    fn check_file_similarity_entries(
         &self,
         entries: &[(&str, &str)],
         min_dup_lines: usize,
@@ -297,8 +300,6 @@ impl CodeDuplicationAnalyzer {
     }
 }
 
-// ─── Block 3: Module Helpers ───────
-
 /// Per-file window position record: 1-based start/end lines plus the u64 hashes.
 #[derive(Clone, Copy)]
 struct WindowPos {
@@ -323,8 +324,12 @@ where
 }
 
 /// Collapse per-window positions into maximal consecutive line ranges.
-/// 1-based, inclusive. Public so the crate's tests can cover it directly
-/// (capability sources must stay free of inline test modules, AES403).
+/// 1-based, inclusive.
+///
+/// B-6a test seam: `pub` only so cross-crate tests can cover it directly
+/// (capability sources must stay free of inline test modules, AES403);
+/// production traffic enters through
+/// [`ICodeMetricAnalyzerProtocol::handle_duplicates_entries`].
 pub fn collapse_ranges(positions: &[(usize, usize)]) -> Vec<(usize, usize)> {
     let mut ranges: Vec<(usize, usize)> = Vec::new();
     for &(s, e) in positions {

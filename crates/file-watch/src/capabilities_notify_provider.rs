@@ -31,7 +31,12 @@ impl Default for NotifyWatchProvider {
 
 impl NotifyWatchProvider {
     pub fn new() -> Self {
-        Self {}
+        let (tx, _) = broadcast::channel(256);
+        Self {
+            watcher: Mutex::new(None),
+            tx,
+            ignore_patterns: Mutex::new(Vec::new()),
+        }
     }
 }
 // ─── Block 2: Module Contract ───────────────
