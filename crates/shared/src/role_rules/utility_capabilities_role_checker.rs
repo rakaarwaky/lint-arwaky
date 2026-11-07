@@ -959,12 +959,48 @@ pub fn check_impl_default_on_di(file: &FileEntry, violations: &mut Vec<LintResul
     }
 }
 
-/// The `N` of every `Block N:` banner comment, in declaration order.
+/// One `Block N:` banner comment, with the parsed block number, the name text
+/// after the colon, and the 1-indexed source line.
+#[derive(Debug, Clone)]
+pub struct CapabilityBlockMarker {
+    /// Parsed block number (`N` in `Block N:`).
+    pub number: usize,
+    /// Name text after the colon, dashes and surrounding whitespace stripped.
+    pub name: String,
+    /// 1-indexed source line of the banner.
+    pub line: usize,
+}
+
+/// The `N` and name text of every `Block N:` banner comment, in declaration
+/// order, as [`CapabilityBlockMarker`] values.
 ///
+/// The name is the rest of the line after the colon, with box-drawing dashes
+/// and surrounding whitespace stripped.
+///
+/// Public so per-language block-order checks can attribute each `impl` to the
+/// banner block it sits under, instead of guessing by raw line position.
+///
+/// `Block 1:` / `Block 2:` / `Block 3:` are the canonical capability banners.
+/// A reader who writes `// ── Block 1: Module Declaration ──` is documenting
+/// the same three-block shape that the rule enforces. A file that never
+/// declares its blocks gets an empty vec, and callers fall back to raw line
+/// position.
+pub fn capability_block_markers(content: &str) -> Vec<CapabilityBlockMarker> {
+    block_markers(content)
+        .into_iter()
+        .map(|(n, name, line)| CapabilityBlockMarker { number: n, name, line })
+        .collect()
+}
+
 /// The `N` and name text of every `Block N:` banner comment, in declaration
 /// order. The name is the rest of the line after the colon, with box-drawing
 /// dashes and surrounding whitespace stripped.
-fn block_markers(content: &str) -> Vec<(usize, String, usize)> {
+///
+/// Public so per-language block-order checks can attribute each `impl` to the
+/// banner block it sits under, instead of guessing by raw line position. A
+/// file that never declares its blocks yields an empty vec, and callers fall
+/// back to raw line position.
+pub fn block_markers(content: &str) -> Vec<(usize, String, usize)> {
     let mut out = Vec::new();
     for (line_idx, line) in content.lines().enumerate() {
         let t = line.trim();

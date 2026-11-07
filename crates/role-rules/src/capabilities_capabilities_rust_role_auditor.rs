@@ -169,6 +169,23 @@ impl CapabilitiesRustRoleAuditor {
         let mut inherent_line: Option<(usize, String)> = None;
         let mut in_cfg_test = false;
 
+        // Per R2, constructor impls (`impl <Struct> { pub fn new }`,
+        // `impl Default for <Struct>`) belong in Block 1, between the
+        // `// Block 1:` and `// Block 2:` banners. Only a bare inherent impl
+        // that sits at or below the `// Block 3:` banner is a Block 3
+        // misplacement. When the file has no banners, a bare inherent impl on
+        // a raw line before the protocol impl is a violation. Track banner
+        // positions so the comparison is by block, not by raw line number.
+        let markers = utility_capabilities_role_checker::capability_block_markers(content);
+        let banner2_idx: Option<usize> = markers
+            .iter()
+            .find(|m| m.number == 2)
+            .map(|m| m.line - 1);
+        let banner3_idx: Option<usize> = markers
+            .iter()
+            .find(|m| m.number == 3)
+            .map(|m| m.line - 1);
+
         for (i, l) in lines.iter().enumerate() {
             let t = l.trim();
 
@@ -192,40 +209,60 @@ impl CapabilitiesRustRoleAuditor {
                 protocol_line = Some((i, t.trim_end_matches('{').trim().to_string()));
             }
 
-            if inherent_line.is_none()
-                && t.starts_with("impl ")
-                && !t.contains("Protocol for")
-                && !t.starts_with("impl Default for")
-            {
-                // `impl Default for T` is a constructor (R2), not a Block 3 inherent impl.
-                inherent_line = Some((i, t.trim_end_matches('{').trim().to_string()));
+            if t.starts_with("impl ") && !t.contains("Protocol for") {
+                // `impl Default for T` is a constructor (R2), never a Block 3
+                // inherent impl. Skip it entirely.
+                if t.starts_with("impl Default for") {
+                    continue;
+                }
+                // A constructor impl (`impl <Struct> { pub fn new }`) sitting
+                // between the Block 1 and Block 2 banners is R2-conformant;
+                // only a banner-less file triggers the raw-line comparison.
+                let between_banners = matches!(
+                    (banner2_idx, banner3_idx),
+                    (Some(b2), _) if b2 > i
+                );
+                if !between_banners {
+                    if inherent_line.is_none() {
+                        inherent_line = Some((i, t.trim_end_matches('{').trim().to_string()));
+                    }
+                }
             }
         }
 
+        // Only report when the inherent impl is actually misplaced. For
+        // banner-carrying files the violation is an inherent impl before the
+        // Block 3 banner (i.e. tucked into Block 1 or 2 instead of Block 3).
+        // For banner-less files it is a raw-line ordering violation.
         if let (Some((inh_idx, inh_src)), Some((proto_idx, proto_src))) =
             (inherent_line, protocol_line)
-            && inh_idx < proto_idx
         {
-            violations.push(LintResult::new_arch_with_name(
-                path,
-                inh_idx + 1,
-                "AES403",
-                Severity::HIGH,
-                format!(
-                    "Block 2 (protocol impl) must precede Block 3 (inherent impl): `{inh_src}` is declared before `{proto_src}`.",
-                    inh_src = inh_src,
-                    proto_src = proto_src,
-                ),
-                "CAPABILITY_ROLE",
-                format!(
-                    "`{inh_src}` is declared at line {} but `{proto_src}` follows at line {}.",
+            let is_misplaced = match banner3_idx {
+                Some(b3) => inh_idx < b3,
+                None => inh_idx < proto_idx,
+            };
+            if is_misplaced {
+                violations.push(LintResult::new_arch_with_name(
+                    path,
                     inh_idx + 1,
-                    proto_idx + 1
-                ),
-                "Reorder the file so the blocks read:\n  \
-                 Block 1 (type + constructor) -> Block 2 (protocol methods only) -> Block 3 (factories, std traits, helpers).\n  \
-                 Move the protocol trait implementation above the inherent impl block.",
-            ));
+                    "AES403",
+                    Severity::HIGH,
+                    format!(
+                        "Block 2 (protocol impl) must precede Block 3 (inherent impl): `{inh_src}` is declared before `{proto_src}`.",
+                        inh_src = inh_src,
+                        proto_src = proto_src,
+                    ),
+                    "CAPABILITY_ROLE",
+                    format!(
+                        "`{inh_src}` is declared at line {} but `{proto_src}` follows at line {}.",
+                        inh_idx + 1,
+                        proto_idx + 1
+                    ),
+                    "Reorder the file so the blocks read:\n  \
+                     Block 1 (type + constructor) -> Block 2 (protocol methods only) -> Block 3 (factories, std traits, helpers).\n  \
+                     Move the protocol trait implementation above the inherent impl block.",
+                ));
+            }
         }
     }
 
