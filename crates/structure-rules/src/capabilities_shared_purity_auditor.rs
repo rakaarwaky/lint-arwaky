@@ -11,13 +11,13 @@ use shared_structure_rules::taxonomy_structure_rules_request::{
 };
 use shared_structure_rules::taxonomy_structure_rules_response::StructureResponse;
 
-// ─── Block 1: Struct Definition ────────────────────────────
+// ─── Block 1: Module Declaration ────────────────────────────
 
 /// AES701: checks that shared folders contain only taxonomy, utility, and contract
 /// files, and that layer folders carry no doc pair.
 pub struct SharedPurityAuditor {}
 
-// ─── Block 2: Protocol Trait Implementation ────────────────
+// ─── Block 2: Module Contract ────────────────
 
 impl IStructureSharedPurityProtocol for SharedPurityAuditor {
     fn audit_shared(&self, request: StructureRequest) -> StructureResponse {
@@ -47,7 +47,7 @@ impl IStructureSharedPurityProtocol for SharedPurityAuditor {
 
 // ─── Private helpers ───────────────────────────────────────────────────────────
 
-// ─── Block 3: Constructors, Std Traits, Helpers ────────────
+// ─── Block 3: Module Helpers ────────────
 
 /// Resolve the workspace root by walking up from *root* until we find
 /// a directory that contains at least one of the member directories.

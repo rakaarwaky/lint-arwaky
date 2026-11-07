@@ -23,11 +23,11 @@ use shared_doc_rules::utility_doc_line_drift::detect_doc_line_drift;
 use shared_doc_rules::utility_markdown_scanner::{doc_h2_contract, sections};
 use shared_doc_rules::utility_protocol_counter::ds_id_heading_re;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct DesignCapability;
 
-// ─── Block 2: Protocol Implementation ─────────────────────
+// ─── Block 2: Module Contract ─────────────────────
 
 impl IDesignDocProtocol for DesignCapability {
     fn audit_design(&self, context: &DocAuditContext) -> Vec<DocFinding> {
@@ -46,7 +46,7 @@ impl IDesignDocProtocol for DesignCapability {
     }
 }
 
-// ─── Block 3: Inherent Implementation and Helpers ─────────
+// ─── Block 3: Module HelpersInherent Implementation and Helpers ─────────
 
 impl Default for DesignCapability {
     fn default() -> Self {

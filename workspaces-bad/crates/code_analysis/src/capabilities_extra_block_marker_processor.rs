@@ -5,11 +5,11 @@
 // beyond Block 3.
 use crate::contract::some_protocol::SomeProtocol;
 
-// ─── Block 1: Struct Definition ────────────────────────────
+// ─── Block 1: Module Declaration ────────────────────────────
 
 pub struct ExtraBlockMarkerProcessor;
 
-// ─── Block 2: Protocol Trait Implementation ────────────────
+// ─── Block 2: Module Contract ────────────────
 
 impl SomeProtocol for ExtraBlockMarkerProcessor {
     fn execute(&self, input: String) -> bool {
@@ -17,7 +17,7 @@ impl SomeProtocol for ExtraBlockMarkerProcessor {
     }
 }
 
-// ─── Block 3: Constructors, Std Traits, Helpers ────────────
+// ─── Block 3: Module Helpers ────────────
 
 impl ExtraBlockMarkerProcessor {
     pub fn new() -> Self {

@@ -43,9 +43,9 @@ A utility file **performs a pure operation** — no state, no business rules, ju
 ### 3-Block Structure
 
 ```text
-// Block 1: Class Definition & Constructor
-// Block 2: Protocol Method Implementation
-// Block 3: Utility Methods, Factories, Helpers
+// Block 1: Module Declaration
+// Block 2: Module Contract
+// Block 3: Module Helpers
 ```
 
 Method placement: protocol interface methods → Block 2. `toString`/static factory/private → Block 3. Module-level function without class dep → extract to `*utility_.ts`.
@@ -75,19 +75,19 @@ Extract to utility only if ALL: no `this`, pure, no side effects, domain-agnosti
 import { <VO> } from '../shared/<domain>/taxonomy_<name>_vo';
 import { I<Name>Protocol } from '../shared/<domain>/contract_<name>_protocol';
 
-// ─── Block 1: Class Definition & Constructor ──────────────
+// ─── Block 1: Module Declaration ──────────────
 export class Capabilities<Name> implements I<Name>Protocol {
     constructor(/* DI params */) {
         // DI fields use protocol interfaces
         // Value fields use shared VOs
     }
 
-    // ─── Block 2: Protocol Method Implementation ──────────────
+    // ─── Block 2: Module Contract ──────────────
     methodName(param: <VO>): void {
         // domain behavior
     }
 
-    // ─── Block 3: Utility Methods, Factories & Helpers ────
+    // ─── Block 3: Module Helpers ────
     toString(): string {
         return 'Capabilities<Name>()';
     }
@@ -134,7 +134,7 @@ or by `tsc`, not by `scan`.
 | ≤3 total classes / interfaces / type aliases.                     | **AES403** `CapabilityTooManyTypes` (HIGH)                      |
 | Imports from `_protocol` module only.                             | **AES201**–**AES205** (import rules)                            |
 | No agent / surface / root imports.                                | **AES201** `FORBIDDEN_IMPORT`                                   |
-| Block 2: ONLY protocol interface method implementations.          | Manual — no rule reads Block 2's contents                      |
+| Block 2: Module Contract — protocol interface method implementations only. | Manual — no rule reads Block 2's contents                      |
 | DI via protocol interfaces; shared VOs for fields and signatures. | Manual                                                          |
 | Constants → `taxonomy_<domain>_constant.ts`.                      | **AES403** `CapabilityLocalConstant` (MEDIUM)                   |
 | Block 3 public helpers with no production caller flagged as defect. | **AES403** `CapabilityPublicHelper` (MEDIUM)                    |

@@ -24,7 +24,7 @@ use shared_quality_rules::contract_code_analysis_aggregate::ICodeAnalysisAggrega
 use std::path::Path;
 use std::sync::Arc;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct ViolationReport {
     linter: Arc<dyn ICodeAnalysisAggregate>,
@@ -36,7 +36,7 @@ pub struct ViolationReport {
     io: Arc<dyn IFileSystemIOProtocol>,
 }
 
-// ─── Block 2: Protocol Trait Implementation ──────────────
+// ─── Block 2: Module Contract ──────────────
 
 impl IViolationReportProtocol for ViolationReport {
     fn report_violations(&self, path: &FilePath, dry_run: bool) -> FixResult {
@@ -285,7 +285,7 @@ impl IViolationReportProtocol for ViolationReport {
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
+// ─── Block 3: Module Helpers ──────
 
 impl ViolationReport {
     pub fn new(

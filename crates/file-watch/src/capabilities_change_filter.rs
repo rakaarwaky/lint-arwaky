@@ -9,13 +9,13 @@ use std::collections::HashMap;
 use shared_file_watch::contract_watch_protocol::IChangeFilterProtocol;
 use shared_file_watch::taxonomy_file_watch_vo::WatchEvent;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct ChangeFilter {
     lintable_exts: &'static [&'static str],
 }
 
-// ─── Block 2: Protocol Trait Implementation ───────────────
+// ─── Block 2: Module Contract ───────────────
 
 impl IChangeFilterProtocol for ChangeFilter {
     fn is_lintable(&self, path: &str) -> bool {
@@ -28,7 +28,7 @@ impl IChangeFilterProtocol for ChangeFilter {
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
+// ─── Block 3: Module Helpers ──────
 
 impl Default for ChangeFilter {
     fn default() -> Self {

@@ -314,9 +314,9 @@ pub fn check_block_markers(file: &FileEntry, violations: &mut Vec<LintResult>) {
              is Block 1 (struct definition) -> Block 2 (protocol trait \
              implementation) -> Block 3 (constructors, std traits, helpers).\n\
              FIX: Add the three banner comments above their blocks:\n  \
-             // Block 1: Struct Definition\n  \
-             // Block 2: Protocol Trait Implementation\n  \
-             // Block 3: Constructors, Std Traits, Helpers",
+             // Block 1: Module Declaration\n  \
+             // Block 2: Module Contract\n  \
+             // Block 3: Module Helpers",
         ));
         return;
     }

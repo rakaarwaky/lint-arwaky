@@ -19,12 +19,12 @@ use shared_external_lint::utility_path_normalization::{
     resolve_or_fallback, resolve_or_fallback_with_context,
 };
 
-// ─── Block 1: Struct Definition ────────────────────────────
+// ─── Block 1: Module Declaration ────────────────────────────
 
 /// Shared normalizer for the tool-native severity mapping.
 pub struct OutputNormalizer;
 
-// ─── Block 2: Protocol Trait Implementation ────────────────
+// ─── Block 2: Module Contract ────────────────
 
 impl INormalizeProtocol for OutputNormalizer {
     fn normalize(
@@ -159,7 +159,7 @@ impl INormalizeProtocol for OutputNormalizer {
     }
 }
 
-// ─── Block 3: Constructors, Std Traits, Helpers ────────────
+// ─── Block 3: Module Helpers ────────────
 
 /// Carry a tool-native severity token into the `Severity` enum as an ordered
 /// rank, so the per-tool mapping can compare it without string literals.

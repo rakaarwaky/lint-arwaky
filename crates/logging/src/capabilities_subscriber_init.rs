@@ -9,7 +9,7 @@ use shared_logging::contract_logging_protocol::ISubscriberInstallProtocol;
 use shared_logging::taxonomy_logging_vo::LogVerbosity;
 use tracing_subscriber::EnvFilter;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 /// Guards the global subscriber install: the first call installs, subsequent
 /// calls are no-ops. `tracing_subscriber::fmt().init()` panics if a global
@@ -25,7 +25,7 @@ static INIT_ONCE: Once = Once::new();
 #[derive(Default)]
 pub struct SubscriberInit {}
 
-// ─── Block 2: Protocol Trait Implementation ───────────────
+// ─── Block 2: Module Contract ───────────────
 
 impl ISubscriberInstallProtocol for SubscriberInit {
     fn install(&self, verbosity: LogVerbosity, with_ansi: bool) {
@@ -49,7 +49,7 @@ impl ISubscriberInstallProtocol for SubscriberInit {
     }
 }
 
-// ─── Block 3: Constructors, Std Traits, Helpers ───────────
+// ─── Block 3: Module Helpers ───────────
 
 impl SubscriberInit {
     /// Build the `EnvFilter` for the given verbosity (without installing).

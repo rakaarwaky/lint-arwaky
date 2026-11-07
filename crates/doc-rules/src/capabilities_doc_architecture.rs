@@ -14,11 +14,11 @@ use shared_doc_rules::utility_doc_common_checks::detect_doc_heading;
 use shared_doc_rules::utility_doc_line_drift::detect_doc_line_drift;
 use shared_doc_rules::utility_markdown_scanner::{doc_h2_contract, sections};
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct ArchitectureCapability;
 
-// ─── Block 2: Protocol Implementation ─────────────────────
+// ─── Block 2: Module Contract ─────────────────────
 
 impl IArchitectureDocProtocol for ArchitectureCapability {
     fn audit_architecture(&self, context: &DocAuditContext) -> Vec<DocFinding> {
@@ -37,7 +37,7 @@ impl IArchitectureDocProtocol for ArchitectureCapability {
     }
 }
 
-// ─── Block 3: Inherent Implementation and Helpers ─────────
+// ─── Block 3: Module HelpersInherent Implementation and Helpers ─────────
 
 impl Default for ArchitectureCapability {
     fn default() -> Self {

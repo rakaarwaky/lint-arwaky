@@ -10,11 +10,11 @@ use shared_import_rules::utility_import_resolver;
 
 // PURPOSE: DummyImportChecker — AES204: detect dummy imports, dummy functions, dummy trait impls
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct DummyImportChecker;
 
-// ─── Block 2: Protocol Trait Implementation ────────────────
+// ─── Block 2: Module Contract ────────────────
 
 impl IDummyImportCheckerProtocol for DummyImportChecker {
     fn rule_name(&self) -> Identity {
@@ -119,7 +119,7 @@ impl IDummyImportCheckerProtocol for DummyImportChecker {
     }
 }
 
-// ─── Block 3: Constructors, Std Traits, Helpers ────────────
+// ─── Block 3: Module Helpers ────────────
 
 impl Default for DummyImportChecker {
     fn default() -> Self {

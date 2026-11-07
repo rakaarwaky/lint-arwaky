@@ -6,12 +6,12 @@ use shared_maintenance::taxonomy_maintenance_vo::MaintenanceStatsVO;
 use std::path::Path;
 use std::sync::Arc;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 pub struct ProjectStatsChecker {
     io: Arc<dyn IFileSystemIOProtocol>,
 }
 
-// ─── Block 2: Protocol Implementation ─────────────────────
+// ─── Block 2: Module Contract ─────────────────────
 impl IProjectStatsProtocol for ProjectStatsChecker {
     fn stats(&self, project_path: &FilePath) -> MaintenanceStatsVO {
         let root = &project_path.value;
@@ -69,7 +69,7 @@ impl IProjectStatsProtocol for ProjectStatsChecker {
     }
 }
 
-// ─── Block 3: Constructors & Helpers ──────────────────────
+// ─── Block 3: Module Helpers ──────────────────────
 impl ProjectStatsChecker {
     pub fn new(io: Arc<dyn IFileSystemIOProtocol>) -> Self {
         Self { io }

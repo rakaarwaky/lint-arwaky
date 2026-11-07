@@ -42,16 +42,16 @@ fn run_audit(files: Vec<FileEntry>) -> Vec<shared_common::LintResult> {
 ///
 /// Prepended to a fixture so the block-marker sub-check stays silent and the
 /// test asserts only the defect it is named for.
-const BANNERS: &str = "// ─── Block 1: Struct Definition ───\n\
-     // ─── Block 2: Protocol Trait Implementation ───\n\
-     // ─── Block 3: Constructors, Std Traits, Helpers ───\n";
+const BANNERS: &str = "// ─── Block 1: Module Declaration ───\n\
+     // ─── Block 2: Module Contract ───\n\
+     // ─── Block 3: Module Helpers ───\n";
 
 /// The same three banners in Python's comment syntax. The block-marker parser
 /// is language-agnostic and keys off the comment sigil, so a Python fixture
 /// needs `#` banners for its markers to be read at all.
-const PY_BANNERS: &str = "# ─── Block 1: Class Definition ───\n\
-     # ─── Block 2: Protocol Method Implementation ───\n\
-     # ─── Block 3: Dunder Methods, Factories, Helpers ───\n";
+const PY_BANNERS: &str = "# ─── Block 1: Module Declaration ───\n\
+     # ─── Block 2: Module Contract ───\n\
+     # ─── Block 3: Module Helpers ───\n";
 
 /// Run the audit and keep only the AES403 findings, which is what every test
 /// in this file asserts on.
@@ -736,11 +736,11 @@ fn aes403_multi_protocol_aggregate_and_protocol_accepted() {
 // ── Block markers: no banner at all ──
 
 /// A capability with all three banners, used as the clean baseline.
-const THREE_BANNERS: &str = "// ─── Block 1: Struct Definition ───\n\
+const THREE_BANNERS: &str = "// ─── Block 1: Module Declaration ───\n\
      pub struct BannerProbe {}\n\
-     // ─── Block 2: Protocol Trait Implementation ───\n\
+     // ─── Block 2: Module Contract ───\n\
      impl IBannerProtocol for BannerProbe { fn run(&self) -> usize { 1 } }\n\
-     // ─── Block 3: Constructors, Std Traits, Helpers ───\n\
+     // ─── Block 3: Module Helpers ───\n\
      impl BannerProbe { fn helper(&self) -> usize { 2 } }\n";
 
 fn marker_findings(results: &[shared_common::LintResult]) -> Vec<String> {
@@ -794,10 +794,10 @@ fn aes403_missing_middle_banner_detected() {
     let file = make_file(
         "src/capabilities_banner_probe.rs",
         Language::Rust,
-        "// ─── Block 1: Struct Definition ───\n\
+        "// ─── Block 1: Module Declaration ───\n\
          pub struct BannerProbe {}\n\
          impl IBannerProtocol for BannerProbe { fn run(&self) -> usize { 1 } }\n\
-         // ─── Block 3: Constructors, Std Traits, Helpers ───\n\
+         // ─── Block 3: Module Helpers ───\n\
          impl BannerProbe { fn helper(&self) -> usize { 2 } }\n",
     );
     let findings = marker_findings(&run_audit(vec![file]));
@@ -819,11 +819,11 @@ fn aes403_out_of_order_banners_detected() {
     let file = make_file(
         "src/capabilities_banner_probe.rs",
         Language::Rust,
-        "// ─── Block 1: Struct Definition ───\n\
+        "// ─── Block 1: Module Declaration ───\n\
          pub struct BannerProbe {}\n\
-         // ─── Block 3: Constructors, Std Traits, Helpers ───\n\
+         // ─── Block 3: Module Helpers ───\n\
          impl BannerProbe { fn new() -> Self { Self } }\n\
-         // ─── Block 2: Protocol Trait Implementation ───\n\
+         // ─── Block 2: Module Contract ───\n\
          impl IBannerProtocol for BannerProbe { fn run(&self) -> usize { 1 } }\n",
     );
     let findings = marker_findings(&run_audit(vec![file]));
@@ -909,12 +909,12 @@ fn aes403_python_bash_comments_recognised() {
     let file = make_file(
         "src/capabilities_banner_probe.py",
         Language::Python,
-        "# ─── Block 1: Class Definition ───\n\
+        "# ─── Block 1: Module Declaration ───\n\
          class BannerProbe:\n\
              def run(self):\n\
                  return 1\n\
-         # ─── Block 2: Protocol Method Implementation ───\n\
-         # ─── Block 3: Dunder Methods, Factories, Helpers ───\n",
+         # ─── Block 2: Module Contract ───\n\
+         # ─── Block 3: Module Helpers ───\n",
     );
     let findings = marker_findings(&run_audit(vec![file]));
     assert!(
@@ -928,14 +928,14 @@ fn aes403_typescript_slash_comments_recognised() {
     let file = make_file(
         "src/capabilities_banner_probe.ts",
         Language::TypeScript,
-        "// ─── Block 1: Class Definition ───\n\
+        "// ─── Block 1: Module Declaration ───\n\
          export class BannerProbe {\n\
            run(): number {\n\
              return 1;\n\
            }\n\
          }\n\
-         // ─── Block 2: Protocol Method Implementation ───\n\
-         // ─── Block 3: Utility Methods, Factories, Helpers ───\n",
+         // ─── Block 2: Module Contract ───\n\
+         // ─── Block 3: Module HelpersUtility Methods, Factories, Helpers ───\n",
     );
     let findings = marker_findings(&run_audit(vec![file]));
     assert!(

@@ -33,7 +33,7 @@ use shared_role_rules::IRoleRunnerAggregate;
 
 use std::sync::Arc;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct SurfaceLintExecutor {
     code_analysis: Arc<dyn ICodeAnalysisAggregate>,
@@ -64,7 +64,7 @@ fn validated_path(path: &str) -> Result<FilePath, LintExecutionResult> {
         .map_err(|_| LintExecutionResult::failure(format!("Invalid path: {path}")))
 }
 
-// ─── Block 2: Lint Action Methods ─────────────────────────
+// ─── Block 2: Module ContractLint Action Methods ─────────────────────────
 
 impl SurfaceLintExecutor {
     pub fn check(&self, path: &str, _flags: &ActionFlags) -> LintExecutionResult {
@@ -547,7 +547,7 @@ impl SurfaceLintExecutor {
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
+// ─── Block 3: Module Helpers ──────
 
 impl SurfaceLintExecutor {
     pub fn new(

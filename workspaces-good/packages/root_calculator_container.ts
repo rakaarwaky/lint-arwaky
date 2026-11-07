@@ -61,7 +61,7 @@ import {
   CalculatorOrchestratorDeps,
 } from "./agent_calculator_orchestrator";
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 export class CalculatorContainer {
   private _orchestrator: ICalculatorAggregate;

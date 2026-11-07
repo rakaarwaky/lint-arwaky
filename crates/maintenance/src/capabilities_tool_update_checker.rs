@@ -3,12 +3,12 @@ use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared_maintenance::contract_maintenance_protocol::IToolUpdateProtocol;
 use std::sync::Arc;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 pub struct ToolUpdateChecker {
     io: Arc<dyn IFileSystemIOProtocol>,
 }
 
-// ─── Block 2: Protocol Implementation ─────────────────────
+// ─── Block 2: Module Contract ─────────────────────
 impl IToolUpdateProtocol for ToolUpdateChecker {
     fn update(&self) {
         let _ = self.io.run_external_command_in(
@@ -19,7 +19,7 @@ impl IToolUpdateProtocol for ToolUpdateChecker {
     }
 }
 
-// ─── Block 3: Constructors & Helpers ──────────────────────
+// ─── Block 3: Module Helpers ──────────────────────
 impl ToolUpdateChecker {
     pub fn new(io: Arc<dyn IFileSystemIOProtocol>) -> Self {
         Self { io }

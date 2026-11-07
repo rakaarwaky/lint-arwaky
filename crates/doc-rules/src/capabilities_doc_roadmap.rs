@@ -17,11 +17,11 @@ use shared_doc_rules::utility_doc_fr_format_checks::{PrIdParityDefect, detect_pr
 use shared_doc_rules::utility_doc_line_drift::detect_doc_line_drift;
 use shared_doc_rules::utility_markdown_scanner::doc_h2_contract;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct RoadmapCapability;
 
-// ─── Block 2: Protocol Implementation ─────────────────────
+// ─── Block 2: Module Contract ─────────────────────
 
 impl IRoadmapDocProtocol for RoadmapCapability {
     fn audit_roadmap(&self, context: &DocAuditContext) -> Vec<DocFinding> {
@@ -40,7 +40,7 @@ impl IRoadmapDocProtocol for RoadmapCapability {
     }
 }
 
-// ─── Block 3: Inherent Implementation and Helpers ─────────
+// ─── Block 3: Module HelpersInherent Implementation and Helpers ─────────
 
 impl Default for RoadmapCapability {
     fn default() -> Self {

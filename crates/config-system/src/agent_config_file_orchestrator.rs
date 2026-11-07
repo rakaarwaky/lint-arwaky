@@ -17,7 +17,7 @@ use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use std::path::Path;
 use std::sync::Arc;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 /// Walk-up reader over the nearest `lint_arwaky.config.yaml`.
 ///
@@ -32,7 +32,7 @@ pub struct ConfigFileReader {
     fs_aggregate: Option<Arc<dyn IFilesystemAggregate>>,
 }
 
-// ─── Block 2: Aggregate Trait Implementation ──────────────
+// ─── Block 2: Module Contract ──────────────
 
 impl IConfigFileReaderAggregate for ConfigFileReader {
     fn read_config_files(&self, root_path: &Path, fs: &dyn IConfigFileReadFs) -> ConfigFileRead {
@@ -94,7 +94,7 @@ impl IConfigFileReaderAggregate for ConfigFileReader {
     }
 }
 
-// ─── Block 3: Constructors, Std Traits & Helpers ─────
+// ─── Block 3: Module Helpers ─────
 
 impl ConfigFileReader {
     pub fn new(

@@ -10,11 +10,11 @@ use shared_filesystem::taxonomy_filesystem_vo::ProjectLanguagesVO;
 use shared_filesystem::utility_workspace_detection;
 use std::path::{Path, PathBuf};
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct CapabilitiesWorkspace;
 
-// ─── Block 2: Public Contract (domain protocol ONLY) ──────
+// ─── Block 2: Module ContractPublic Contract (domain protocol ONLY) ──────
 
 impl IWorkspaceProtocol for CapabilitiesWorkspace {
     fn workspace_root(&self, start: &FilePath) -> Option<PathBuf> {
@@ -72,7 +72,7 @@ impl IWorkspaceProtocol for CapabilitiesWorkspace {
     }
 }
 
-// ─── Block 3: Constructors, Std Traits & Helpers ─────────
+// ─── Block 3: Module Helpers ─────────
 
 impl CapabilitiesWorkspace {
     pub fn new() -> Self {

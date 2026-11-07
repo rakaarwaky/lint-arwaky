@@ -10,14 +10,14 @@ use shared_project_setup::contract_setup_protocol::IEnvGenerationProtocol;
 
 use std::sync::Arc;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 /// Business logic for environment file generation.
 pub struct SetupEnvGenerator {
     io: Arc<dyn IFileSystemIOProtocol>,
 }
 
-// ─── Block 2: Protocol Trait Implementation ───────────────
+// ─── Block 2: Module Contract ───────────────
 
 impl IEnvGenerationProtocol for SetupEnvGenerator {
     /// Generate .env content for the lint-arwaky environment.
@@ -34,7 +34,7 @@ impl IEnvGenerationProtocol for SetupEnvGenerator {
     }
 }
 
-// ─── Block 3: Constructors ────────────────────────────────
+// ─── Block 3: Module HelpersConstructors ────────────────────────────────
 
 impl SetupEnvGenerator {
     pub fn new(io: Arc<dyn IFileSystemIOProtocol>) -> Self {

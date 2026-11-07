@@ -13,7 +13,7 @@ import { IOperationLogProtocol } from "calculator-shared/src/contract_operation_
 import { ExpressionVO } from "calculator-shared/src/taxonomy_expression_vo";
 import { ResultVO } from "calculator-shared/src/taxonomy_result_vo";
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 export interface AdditionOrchestratorDeps {
   analyzer: ICalculatorProtocol;
@@ -30,7 +30,7 @@ export class AdditionOrchestrator implements IAdditionAggregate {
     this._log = deps.log;
   }
 
-  // ─── Block 2: Aggregate Implementation ──────────────────
+  // ─── Block 2: Module Contract ──────────────────
 
   /** Evaluate one addition expression and record the result. */
   evaluate(expr: ExpressionVO): ResultVO | null {
@@ -42,7 +42,7 @@ export class AdditionOrchestrator implements IAdditionAggregate {
     return result;
   }
 
-  // ─── Block 3: Helpers, Private Methods ──────────────────
+  // ─── Block 3: Module Helpers ──────────────────
 
   /** Every result this feature has produced so far. */
   history(): ResultVO[] {

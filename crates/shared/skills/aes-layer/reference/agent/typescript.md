@@ -22,9 +22,9 @@
 ### 3-Block Structure
 
 ```text
-// Block 1: Class Definition & Constructor
-// Block 2: Aggregate Method Implementation
-// Block 3: Utility Methods, Factories, Helpers
+// Block 1: Module Declaration
+// Block 2: Module Contract
+// Block 3: Module Helpers
 ```
 
 Method placement:
@@ -72,12 +72,12 @@ import { <VO> } from '../shared/<domain>/taxonomy_<name>_vo';
 import { I<Name>Aggregate } from '../shared/<domain>/contract_<name>_aggregate';
 import { I<Seam>Protocol } from '../shared/<domain>/contract_<name>_protocol';
 
-// ─── Block 1: Class Definition & Constructor ──────────────
+// ─── Block 1: Module Declaration ──────────────
 export class Agent<Name> {
     // Injected deps are protocol interfaces (what the agent dispatches to), not the aggregate.
     constructor(private readonly dep: I<Seam>Protocol) {}
 
-    // ─── Block 2: Aggregate Method Implementation ─────────
+    // ─── Block 2: Module Contract ─────────
     // Exactly one method — the single entry point. Dispatch to the owning protocol.
     async execute(request: <RequestVO>): Promise<<ResponseVO>> {
         // Orchestration only: match the request variant, delegate to the protocol.
@@ -88,7 +88,7 @@ export class Agent<Name> {
         return new <ResponseVO>.<Result2>(await this.dep.<operation_2>(..));
     }
 
-    // ─── Block 3: Utility Methods, Factories & Helpers ────
+    // ─── Block 3: Module Helpers ────
     toString(): string {
         return 'Agent<Name>()';
     }
@@ -106,8 +106,8 @@ export class Agent<Name> {
 | Check | Why it belongs here|
 | ----- | -------------------|
 | Block 1 → 2 → 3 order followed. | Required by AES layer rules and the linter; missing it is a defect.|
-| Block 2: ONLY aggregate interface method implementations. | Required by AES layer rules and the linter; missing it is a defect.|
-| Block 3: utility methods, factories, private helpers. | Required by AES layer rules and the linter; missing it is a defect.|
+| Block 2: Module Contract — aggregate interface method implementations only. | Required by AES layer rules and the linter; missing it is a defect.|
+| Block 3: Module Helpers — utility methods, factories, private helpers. | Required by AES layer rules and the linter; missing it is a defect.|
 | ≥1 class implements aggregate interface; ≤3 total types. | Required by AES layer rules and the linter; missing it is a defect.|
 | No local domain data; DI via protocol interfaces; shared VOs. | Required by AES layer rules and the linter; missing it is a defect.|
 | Zero I/O, zero business logic, zero domain computation. | Required by AES layer rules and the linter; missing it is a defect.|

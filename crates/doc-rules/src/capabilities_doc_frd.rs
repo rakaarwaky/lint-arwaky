@@ -28,11 +28,11 @@ use shared_doc_rules::utility_markdown_scanner::{
     status_leak_patterns,
 };
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct FrdCapability;
 
-// ─── Block 2: Protocol Implementation ─────────────────────
+// ─── Block 2: Module Contract ─────────────────────
 
 impl IFrdDocProtocol for FrdCapability {
     fn audit_frd(&self, context: &DocAuditContext) -> Vec<DocFinding> {
@@ -51,7 +51,7 @@ impl IFrdDocProtocol for FrdCapability {
     }
 }
 
-// ─── Block 3: Inherent Implementation and Helpers ─────────
+// ─── Block 3: Module HelpersInherent Implementation and Helpers ─────────
 
 impl Default for FrdCapability {
     fn default() -> Self {

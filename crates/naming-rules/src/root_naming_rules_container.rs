@@ -8,7 +8,7 @@ use shared_naming_rules::ISuffixPolicyProtocol;
 use shared_naming_rules::ITestFilePrefixProtocol;
 use std::sync::Arc;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct NamingContainer {
     naming_convention: Arc<dyn INamingConventionProtocol>,
@@ -17,7 +17,7 @@ pub struct NamingContainer {
     orchestrator: Arc<dyn INamingRunnerAggregate>,
 }
 
-// ─── Block 2: Aggregate Trait Implementation ──────────────
+// ─── Block 2: Module Contract ──────────────
 
 impl NamingContainer {
     pub fn new(config: Arc<ArchitectureConfig>, layer_map: Arc<LayerMapVO>) -> Self {

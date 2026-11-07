@@ -15,7 +15,7 @@ use shared_structure_rules::utility_structure_parsers::{find_workspace_root, sor
 
 use std::path::Path;
 
-// ─── Block 1: Struct Definition ────────────────────────────
+// ─── Block 1: Module Declaration ────────────────────────────
 
 /// AES704: checks that every feature folder holding source carries at least one
 /// file per test type in `tests/` and at least one benchmark in `benches/`.
@@ -26,7 +26,7 @@ use std::path::Path;
 /// surface — are out of scope.
 pub struct TestSuiteCoverageAuditor {}
 
-// ─── Block 2: Protocol Trait Implementation ────────────────
+// ─── Block 2: Module Contract ────────────────
 
 impl IStructureTestSuiteProtocol for TestSuiteCoverageAuditor {
     fn audit_test_suite(&self, request: StructureRequest) -> StructureResponse {
@@ -56,7 +56,7 @@ impl IStructureTestSuiteProtocol for TestSuiteCoverageAuditor {
     }
 }
 
-// ─── Block 3: Constructors, Std Traits, Helpers ────────────
+// ─── Block 3: Module Helpers ────────────
 
 impl Default for TestSuiteCoverageAuditor {
     fn default() -> Self {

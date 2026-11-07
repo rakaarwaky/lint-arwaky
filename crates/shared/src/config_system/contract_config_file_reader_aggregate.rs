@@ -7,7 +7,7 @@
 // `surface_external_action` with direct file reads; it now lives in the
 // config-system crate (`config_system::ConfigFileReader`) behind this
 // aggregate contract.
-// ─── Block 1: Struct Definitions ──────────────────────────
+// ─── Block 1: Module Declarations ──────────────────────────
 use crate::taxonomy_config_system_vo::AdapterEntry;
 
 /// Result of locating the nearest config files above a target path.

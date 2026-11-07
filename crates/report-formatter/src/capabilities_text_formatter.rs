@@ -9,11 +9,11 @@ use shared_common::taxonomy_message_vo::DisplayContent;
 use shared_report_formatter::contract_report_formatter_protocol::ITextFormatProtocol;
 use std::collections::BTreeMap;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 /// TextFormatter — produces self-contained human-readable text output from ScanReport.
 pub struct TextFormatter;
 
-// ─── Block 2: Protocol Trait Implementations ──────────────
+// ─── Block 2: Module Contracts ──────────────
 
 impl ITextFormatProtocol for TextFormatter {
     fn format_text(&self, report: &ScanReport) -> DisplayContent {
@@ -25,7 +25,7 @@ impl ITextFormatProtocol for TextFormatter {
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
+// ─── Block 3: Module Helpers ──────
 impl TextFormatter {
     /// Create a new text formatter.
     pub fn new() -> Self {

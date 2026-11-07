@@ -12,7 +12,7 @@ from subtraction.src.agent_subtraction_orchestrator import (
 from subtraction.src.capabilities_subtraction_analyzer import SubtractionAnalyzer
 from subtraction.src.capabilities_subtraction_log import SubtractionLog
 
-# ─── Block 1: Struct Definition ───────────────────────────
+# ─── Block 1: Module Declaration ───────────────────────────
 
 class SubtractionContainer:
     def __init__(self):

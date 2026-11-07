@@ -7,12 +7,12 @@ use shared_logging::contract_logging_protocol::IWalkerReportProtocol;
 use shared_logging::taxonomy_logging_vo::{Count, DurationMs, SkipReason};
 use tracing::info;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 #[derive(Default)]
 pub struct WalkerReporter {}
 
-// ─── Block 2: Protocol Trait Implementation ───────────────
+// ─── Block 2: Module Contract ───────────────
 
 impl IWalkerReportProtocol for WalkerReporter {
     fn walker_enter(&self, dir: &str) {
@@ -29,7 +29,7 @@ impl IWalkerReportProtocol for WalkerReporter {
     }
 }
 
-// ─── Block 3: Constructors, Std Traits, Helpers ───────────
+// ─── Block 3: Module Helpers ───────────
 
 impl WalkerReporter {
     pub fn new() -> Self {

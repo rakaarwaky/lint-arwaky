@@ -38,7 +38,7 @@ use shared_config_system::ArchitectureConfig;
 use shared_quality_rules::utility_violation_formatter::format_code_analysis_violation;
 use std::sync::Arc;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct CodeAnalysisDeps {
     pub bypass_checker: Arc<dyn IBypassCheckerProtocol>,
@@ -54,7 +54,7 @@ pub struct CodeAnalysisOrchestrator {
     config: ArchitectureConfig,
 }
 
-// ─── Block 2: Aggregate Trait Implementation ──────────────
+// ─── Block 2: Module Contract ──────────────
 impl ICodeAnalysisAggregate for CodeAnalysisOrchestrator {
     fn execute(&self, request: CodeAnalysisRequest) -> CodeAnalysisResponse {
         match request {
@@ -68,7 +68,7 @@ impl ICodeAnalysisAggregate for CodeAnalysisOrchestrator {
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
+// ─── Block 3: Module Helpers ──────
 
 impl CodeAnalysisOrchestrator {
     pub fn new(deps: CodeAnalysisDeps, config: ArchitectureConfig, layer_map: LayerMapVO) -> Self {

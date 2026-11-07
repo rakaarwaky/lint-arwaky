@@ -43,7 +43,7 @@ use shared_quality_rules::LinterOperationError;
 use std::path::Path;
 use std::sync::Arc;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 #[derive(Clone)]
 pub struct MarkdownLintAdapter {
@@ -57,7 +57,7 @@ pub struct MarkdownLintAdapter {
     context: Option<Arc<shared_external_lint::taxonomy_external_lint_vo::ExternalLintContext>>,
 }
 
-// ─── Block 2: Protocol Trait Implementation ───────────────
+// ─── Block 2: Module Contract ───────────────
 
 impl ILinterAdapterProtocol for MarkdownLintAdapter {
     fn name(&self) -> AdapterName {
@@ -207,7 +207,7 @@ impl ILinterAdapterProtocol for MarkdownLintAdapter {
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
+// ─── Block 3: Module Helpers ──────
 
 impl MarkdownLintAdapter {
     pub fn new(

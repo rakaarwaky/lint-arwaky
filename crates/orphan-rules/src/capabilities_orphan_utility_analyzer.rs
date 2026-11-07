@@ -9,11 +9,11 @@ use shared_quality_rules::taxonomy_quality_rules_vo::{
 };
 use std::collections::HashMap;
 
-// ─── Block 1: Struct Definition ────────────────────────────
+// ─── Block 1: Module Declaration ────────────────────────────
 
 pub struct UtilityOrphanAnalyzer;
 
-// ─── Block 2: Protocol Trait Implementation ────────────────
+// ─── Block 2: Module Contract ────────────────
 
 impl IUtilityOrphanProtocol for UtilityOrphanAnalyzer {
     fn is_utility_orphan(
@@ -163,7 +163,7 @@ impl IUtilityOrphanProtocol for UtilityOrphanAnalyzer {
     }
 }
 
-// ─── Block 3: Constructors, Std Traits, Helpers ────────────
+// ─── Block 3: Module Helpers ────────────
 
 impl Default for UtilityOrphanAnalyzer {
     fn default() -> Self {

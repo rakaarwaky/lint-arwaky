@@ -34,7 +34,7 @@ use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared_filesystem::taxonomy_filesystem_vo::ProjectLanguagesVO;
 use tracing::warn;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct ExternalLintDeps {
     pub adapters: HashMap<String, Arc<dyn ILinterAdapterProtocol>>,
@@ -58,7 +58,7 @@ pub struct ExternalLintOrchestrator {
     deps: ExternalLintDeps,
 }
 
-// ─── Block 2: Aggregate Trait Implementation ──────────────
+// ─── Block 2: Module Contract ──────────────
 
 impl IExternalLintAggregate for ExternalLintOrchestrator {
     fn execute(&self, request: ExternalLintRequest) -> ExternalLintResponse {
@@ -78,7 +78,7 @@ impl IExternalLintAggregate for ExternalLintOrchestrator {
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
+// ─── Block 3: Module Helpers ──────
 impl ExternalLintOrchestrator {
     pub fn new(deps: ExternalLintDeps) -> Self {
         Self { deps }

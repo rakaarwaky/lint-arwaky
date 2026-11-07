@@ -29,7 +29,7 @@ use shared_import_rules::taxonomy_import_rules_response::ImportResponse;
 use shared_common::taxonomy_layer_vo::LayerMapVO;
 use tracing::warn;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct ImportOrchestratorDeps {
     pub mandatory: Arc<dyn IImportMandatoryProtocol>,
@@ -50,7 +50,7 @@ pub struct ImportOrchestrator {
     ignored_paths: Vec<String>,
 }
 
-// ─── Block 2: Aggregate Trait Implementation ──────────────
+// ─── Block 2: Module Contract ──────────────
 
 impl IImportRunnerAggregate for ImportOrchestrator {
     fn execute(&self, request: ImportRequest) -> ImportResponse {
@@ -74,7 +74,7 @@ impl IImportRunnerAggregate for ImportOrchestrator {
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
+// ─── Block 3: Module Helpers ──────
 
 impl ImportOrchestrator {
     pub fn run_audit(&self, target: &FilePath) -> Result<Vec<LintResult>, ScanError> {

@@ -32,7 +32,7 @@ use shared_quality_rules::LinterOperationError;
 use std::path::Path;
 use std::sync::Arc;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct ESLintAdapter {
     lint_executor: Arc<dyn ICommandExecutorProtocol>,
@@ -41,7 +41,7 @@ pub struct ESLintAdapter {
     tool_resolution: Arc<dyn IToolResolutionProtocol>,
 }
 
-// ─── Block 2: Protocol Trait Implementation ───────────────
+// ─── Block 2: Module Contract ───────────────
 
 impl ILinterAdapterProtocol for ESLintAdapter {
     fn name(&self) -> AdapterName {
@@ -143,7 +143,7 @@ impl ILinterAdapterProtocol for ESLintAdapter {
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
+// ─── Block 3: Module Helpers ──────
 
 impl ESLintAdapter {
     pub fn new(

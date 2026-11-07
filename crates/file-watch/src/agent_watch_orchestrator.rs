@@ -18,7 +18,7 @@ use shared_file_watch::taxonomy_file_watch_vo::WatchConfig;
 use shared_quality_rules::CodeAnalysisRequest;
 use shared_quality_rules::ICodeAnalysisAggregate;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct WatchOrchestrator {
     lifecycle: Arc<dyn IWatchLifecycleProtocol>,
@@ -27,7 +27,7 @@ pub struct WatchOrchestrator {
     linter: Arc<dyn ICodeAnalysisAggregate>,
 }
 
-// ─── Block 2: Aggregate Trait Implementation ──────────────
+// ─── Block 2: Module Contract ──────────────
 
 impl IWatchAggregate for WatchOrchestrator {
     fn execute(&self, request: WatchRequest) -> WatchResponse {
@@ -42,7 +42,7 @@ impl IWatchAggregate for WatchOrchestrator {
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
+// ─── Block 3: Module Helpers ──────
 
 impl WatchOrchestrator {
     pub fn new(

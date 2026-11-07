@@ -16,7 +16,7 @@ use shared_naming_rules::utility_test_prefix::{
     has_legal_prefix, matched_prefix, nested_under, prefix_list, prefixes_for, slot_of,
 };
 
-// ─── Block 1: Struct Definition ────────────────────────────
+// ─── Block 1: Module Declaration ────────────────────────────
 
 /// Stateless AES103 test-file prefix checker.
 ///
@@ -27,7 +27,7 @@ use shared_naming_rules::utility_test_prefix::{
 /// internal state.
 pub struct TestFilePrefixChecker {}
 
-// ─── Block 2: Protocol Trait Implementation ────────────────
+// ─── Block 2: Module Contract ────────────────
 
 impl ITestFilePrefixProtocol for TestFilePrefixChecker {
     /// FR-NamingRules-003 — AES103: check every file inside `tests/` and
@@ -61,7 +61,7 @@ impl ITestFilePrefixProtocol for TestFilePrefixChecker {
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ────────────
+// ─── Block 3: Module Helpers ────────────
 
 impl Default for TestFilePrefixChecker {
     fn default() -> Self {

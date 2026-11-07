@@ -6,11 +6,11 @@ use shared_orphan_rules::utility_orphan_filename::content_contains_whole_word;
 use shared_quality_rules::taxonomy_quality_rules_vo::{OrphanIndicatorResult, ReachabilityResult};
 use std::collections::HashMap;
 
-// ─── Block 1: Struct Definition ────────────────────────────
+// ─── Block 1: Module Declaration ────────────────────────────
 
 pub struct AgentOrphanAnalyzer;
 
-// ─── Block 2: Protocol Trait Implementation ────────────────
+// ─── Block 2: Module Contract ────────────────
 
 impl IAgentOrphanProtocol for AgentOrphanAnalyzer {
     fn is_agent_orphan(
@@ -103,7 +103,7 @@ impl IAgentOrphanProtocol for AgentOrphanAnalyzer {
     }
 }
 
-// ─── Block 3: Constructors, Std Traits, Helpers ────────────
+// ─── Block 3: Module Helpers ────────────
 
 impl Default for AgentOrphanAnalyzer {
     fn default() -> Self {

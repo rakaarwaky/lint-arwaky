@@ -8,7 +8,7 @@ use shared_project_setup::{
 
 use std::sync::Arc;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct SetupContainer {
     aggregate: Arc<dyn ISetupAggregate>,
@@ -18,7 +18,7 @@ pub struct SetupContainer {
     adapter_installation: Arc<dyn IAdapterInstallationProtocol>,
 }
 
-// ─── Block 2: Container Construction ──────────────────────
+// ─── Block 2: Module ContractContainer Construction ──────────────────────
 
 impl SetupContainer {
     pub fn new(io: Arc<dyn IFileSystemIOProtocol>) -> Self {

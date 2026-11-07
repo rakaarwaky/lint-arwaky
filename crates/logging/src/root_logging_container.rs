@@ -11,13 +11,13 @@ use shared_logging::LogVerbosity;
 use shared_logging::contract_logging_aggregate::ILoggingAggregate;
 use shared_logging::taxonomy_logging_request::{LoggingRequest, LoggingRequestKind};
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct LoggingContainer {
     orchestrator: LoggingOrchestrator,
 }
 
-// ─── Block 2: Wiring ──────────────────────────────────────
+// ─── Block 2: Module Contract ──────────────────────────────────────
 
 impl LoggingContainer {
     pub fn new() -> Self {

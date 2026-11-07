@@ -17,7 +17,7 @@ use shared_filesystem::contract_filesystem_protocol::IParserProtocol;
 use shared_filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
 use shared_filesystem::contract_filesystem_protocol::IWorkspaceProtocol;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct FilesystemContainer {
     io: Arc<dyn IFileSystemIOProtocol>,
@@ -27,7 +27,7 @@ pub struct FilesystemContainer {
     graph: Arc<dyn IGraphProtocol>,
 }
 
-// ─── Block 2: Wiring & Factory ────────────────────────────
+// ─── Block 2: Module Contract ────────────────────────────
 
 impl FilesystemContainer {
     /// Create container with default capabilities.

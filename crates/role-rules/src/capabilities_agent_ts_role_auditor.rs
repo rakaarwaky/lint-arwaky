@@ -13,11 +13,11 @@ use shared_role_rules::taxonomy_role_rules_constant::AGENT_FORBIDDEN_IO_TYPESCRI
 use shared_role_rules::utility_agent_role_checker;
 use shared_role_rules::utility_agent_role_io_checker;
 
-// ─── Block 1: Struct Definition ────────────────────────────
+// ─── Block 1: Module Declaration ────────────────────────────
 
 pub struct AgentTsRoleAuditor {}
 
-// ─── Block 2: Protocol Trait Implementation ────────────────
+// ─── Block 2: Module Contract ────────────────
 
 impl IAgentRoleProtocol for AgentTsRoleAuditor {
     fn check_agent_routing(&self, file: &FileEntry, layer: &str, violations: &mut Vec<LintResult>) {
@@ -119,7 +119,7 @@ impl IAgentRoleProtocol for AgentTsRoleAuditor {
     }
 }
 
-// ─── Block 3: Constructors, Std Traits, Helpers ────────────
+// ─── Block 3: Module Helpers ────────────
 
 impl Default for AgentTsRoleAuditor {
     fn default() -> Self {

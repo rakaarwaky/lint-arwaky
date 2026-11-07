@@ -43,9 +43,9 @@ A utility file **performs a pure operation** — no state, no business rules, ju
 ### 3-Block Structure
 
 ```text
-# Block 1: Class Definition & Constructor
-# Block 2: Protocol Method Implementation
-# Block 3: Dunder Methods, Factories, Helpers
+# Block 1: Module Declaration
+# Block 2: Module Contract
+# Block 3: Module Helpers
 ```
 
 Method placement: `@abstractmethod` → Block 2. Dunder/factory/private → Block 3. Stateless free function → extract to `*utility_.py`.
@@ -76,19 +76,19 @@ I/O: stateless + I/O + domain-agnostic = utility OK.
 from shared.<domain>.taxonomy_<name>_vo import <VO>
 from shared.<domain>.contract_<name>_protocol import I<Name>Protocol
 
-# ─── Block 1: Class Definition & Constructor ──────────────
+# ─── Block 1: Module Declaration ──────────────
 class Capabilities<Name>(I<Name>Protocol):
     def __init__(self, /* DI params */) -> None:
         # DI fields use protocol interfaces
         # Value fields use shared VOs
         ...
 
-    # ─── Block 2: Protocol Method Implementation ──────────────
+    # ─── Block 2: Module Contract ──────────────
     def method_name(self, param: <VO>) -> None:
         # domain behavior
         ...
 
-    # ─── Block 3: Dunder Methods, Factories & Helpers ─────────
+    # ─── Block 3: Module Helpers ─────────
     def __repr__(self) -> str:
         return "Capabilities<Name>()"
 
@@ -134,7 +134,7 @@ or by the interpreter, not by `scan`.
 | ≤3 total classes.                                                 | **AES403** `CapabilityTooManyTypes` (HIGH)                      |
 | Imports from `_protocol` module only.                             | **AES201**–**AES205** (import rules)                            |
 | No agent / surface / root imports.                                | **AES201** `FORBIDDEN_IMPORT`                                   |
-| Block 2: ONLY protocol ABC method implementations.                | Manual — no rule reads Block 2's contents                      |
+| Block 2: Module Contract — protocol ABC method implementations only.                | Manual — no rule reads Block 2's contents                      |
 | DI via protocol interfaces; shared VOs for fields and signatures. | Manual                                                          |
 | Constants → `taxonomy_<domain>_constant.py`.                     | **AES403** `CapabilityLocalConstant` (MEDIUM)                   |
 | Block 3 public helpers with no production caller are private (`def _name`). | **AES403** `CapabilityPublicHelper` (MEDIUM)     |

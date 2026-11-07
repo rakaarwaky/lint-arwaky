@@ -18,7 +18,7 @@ use shared_doc_rules::taxonomy_doc_rules_response::DocResponse;
 use shared_doc_rules::utility_doc_collector;
 use std::sync::Arc;
 
-// ─── Block 1: Struct Definition ──────────────────────────────────────────
+// ─── Block 1: Module Declaration ──────────────────────────────────────────
 
 /// Holds one injected capability per AES document type, keyed by the doc each
 /// answers. The agent is the only place that knows all ten exist.
@@ -35,7 +35,7 @@ pub struct DocOrchestrator {
     roadmap: Arc<dyn IRoadmapDocProtocol>,
 }
 
-// ─── Block 2: Protocol Trait Implementation ──────────────────────────────
+// ─── Block 2: Module Contract ──────────────────────────────
 
 impl IDocRunnerAggregate for DocOrchestrator {
     /// Audit the document chain under the request's root and merge what each
@@ -73,7 +73,7 @@ impl IDocRunnerAggregate for DocOrchestrator {
     }
 }
 
-// ─── Block 3: Constructors, Std Traits, Helpers ──────────────────────────
+// ─── Block 3: Module Helpers ──────────────────────────
 
 impl DocOrchestrator {
     pub fn new(

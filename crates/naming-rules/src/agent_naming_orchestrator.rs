@@ -14,7 +14,7 @@ use shared_naming_rules::taxonomy_naming_rules_request::NamingRequest;
 use shared_naming_rules::taxonomy_naming_rules_response::NamingResponse;
 use std::sync::Arc;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct NamingOrchestratorDeps {
     pub naming_convention: Arc<dyn INamingConventionProtocol>,
@@ -28,7 +28,7 @@ pub struct NamingOrchestrator {
     deps: NamingOrchestratorDeps,
 }
 
-// ─── Block 2: Aggregate Trait Implementation ──────────────
+// ─── Block 2: Module Contract ──────────────
 
 impl INamingRunnerAggregate for NamingOrchestrator {
     fn execute(&self, request: NamingRequest) -> NamingResponse {
@@ -52,7 +52,7 @@ impl INamingRunnerAggregate for NamingOrchestrator {
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
+// ─── Block 3: Module Helpers ──────
 impl NamingOrchestrator {
     pub fn new(deps: NamingOrchestratorDeps) -> Self {
         Self { deps }

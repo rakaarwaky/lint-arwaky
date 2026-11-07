@@ -20,12 +20,12 @@ use shared_quality_rules::{Language, ViolationKind, WORD_PATTERN_TOKENS};
 use shared_common::{PatternList, Severity};
 use shared_quality_rules::utility_language_mapper::code_analysis_language_from_file;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 pub struct BypassChecker {
     rule: CodeAnalysisRuleVO,
 }
 
-// ─── Block 2: Protocol Trait Implementation ───────────────
+// ─── Block 2: Module Contract ───────────────
 impl IBypassCheckerProtocol for BypassChecker {
     fn check_cargo_toml(&self, content: &str, violations: &mut Vec<LintResult>) {
         let mut in_clippy_section = false;
@@ -350,7 +350,7 @@ impl IBypassCheckerProtocol for BypassChecker {
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
+// ─── Block 3: Module Helpers ──────
 impl Default for BypassChecker {
     fn default() -> Self {
         Self::new()

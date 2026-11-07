@@ -43,9 +43,9 @@ A utility file **performs a pure operation** — no state, no business rules, ju
 ### 3-Block Structure
 
 ```text
-// Block 1: Struct Definition
-// Block 2: Protocol Trait Implementation
-// Block 3: Constructors, Std Traits, Helpers
+// Block 1: Module Declaration
+// Block 2: Module Contract
+// Block 3: Module Helpers
 ```
 
 ### Helper vs Utility Decision Matrix
@@ -94,14 +94,14 @@ use shared::<name-feature>::contract_<name-store>_protocol::I<NameStore>Protocol
 use shared::<name-feature>::contract_<name-collaborator>_protocol::I<NameCollaborator>Protocol;
 use shared::<name-feature>::contract_<name-capability>_protocol::I<NameCapability>Protocol;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 pub struct Capabilities<NameCapability> {
     collaborator: Arc<dyn I<NameCollaborator>Protocol>,
     store: Arc<dyn I<NameStore>Protocol>,
     policy: <NamePolicy>VO,
 }
 
-// ─── Block 2: Protocol Trait Implementation ───────────────
+// ─── Block 2: Module Contract ───────────────
 impl I<NameCapability>Protocol for Capabilities<NameCapability> {
     fn execute(&self, input: &<DomainVO>) -> Vec<<ResultVO>> {
         let mut results = Vec::new();
@@ -110,7 +110,7 @@ impl I<NameCapability>Protocol for Capabilities<NameCapability> {
     }
 }
 
-// ─── Block 3: Constructors, Std Traits & Helpers ─────────
+// ─── Block 3: Module Helpers ─────────
 impl Capabilities<NameCapability> {
     pub fn new(
         collaborator: Arc<dyn I<NameCollaborator>Protocol>,
