@@ -108,15 +108,3 @@ impl IAdapterInstallationProtocol for SetupInstallerAdapter {
 }
 
 // ─── Block 3: Module Helpers ──────
-
-impl SetupInstallerAdapter {
-    pub fn new() -> Self {
-        Self
-    }
-}
-
-impl Default for SetupInstallerAdapter {
-    fn default() -> Self {
-        Self::new()
-    }
-}

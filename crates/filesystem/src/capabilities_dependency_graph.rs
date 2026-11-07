@@ -116,12 +116,6 @@ impl IGraphProtocol for DependencyGraph {
 
 // ─── Block 3: Module Helpers ─────────
 
-impl Default for DependencyGraph {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl DependencyGraph {
     /// Build graph from imports, file list, definitions, and implementations.
     /// Uses OnceLock — safe to call once; subsequent calls are no-ops.

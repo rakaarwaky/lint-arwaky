@@ -85,15 +85,3 @@ impl IWorkspaceProtocol for CapabilitiesWorkspace {
 }
 
 // ─── Block 3: Module Helpers ─────────
-
-impl CapabilitiesWorkspace {
-    pub fn new() -> Self {
-        Self
-    }
-}
-
-impl Default for CapabilitiesWorkspace {
-    fn default() -> Self {
-        Self::new()
-    }
-}
