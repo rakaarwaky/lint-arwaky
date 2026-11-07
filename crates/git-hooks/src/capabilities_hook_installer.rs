@@ -112,7 +112,8 @@ exit 0
 
 // ─── Block 3: Module Helpers ──────
 
-/// Wrap `s` in single quotes so it is inert when embedded in a bash
+impl HookInstaller {
+    /// Wrap `s` in single quotes so it is inert when embedded in a bash
     /// script. Embedded single quotes are escaped with the standard
     /// `'\''`-close-then-open sequence: `'a'b'` → `'a'\''b'` → the literal
     /// `a'b`. No other character can break out of a single-quoted string,

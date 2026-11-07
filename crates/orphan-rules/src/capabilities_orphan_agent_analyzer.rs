@@ -118,8 +118,12 @@ impl IAgentOrphanProtocol for AgentOrphanAnalyzer {
 // ─── Block 3: Module Helpers ────────────
 
 impl AgentOrphanAnalyzer {
-    pub fn new() -> Self {
-        Self
-    }
-
     fn extract_aggregate_traits(&self, file_path: &str, content: &str) -> Vec<String> {
+        match shared_orphan_rules::parse_file_content(file_path, content) {
+            FileParseResultVO::Rust(result) => result.aggregate_trait_names(),
+            FileParseResultVO::Python(result) => result.aggregate_names(),
+            FileParseResultVO::TypeScript(result) => result.aggregate_names(),
+            FileParseResultVO::Unsupported => Vec::new(),
+        }
+    }
+}

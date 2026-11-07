@@ -32,21 +32,6 @@ impl BypassChecker {
             rule: CodeAnalysisRuleVO::default(),
         }
     }
-
-    /// Build a BypassChecker from an ArchitectureConfig-derived CodeAnalysisRuleVO.
-    pub fn from_rule(rule: CodeAnalysisRuleVO) -> Self {
-        Self { rule }
-    }
-
-    /// Build a BypassChecker from a PatternList (forbidden_bypass patterns).
-    pub fn from_patterns(patterns: &PatternList) -> Self {
-        Self {
-            rule: CodeAnalysisRuleVO {
-                forbidden_bypass: patterns.clone(),
-                ..CodeAnalysisRuleVO::default()
-            },
-        }
-    }
 }
 
 // ─── Block 2: Module Contract ───────────────
@@ -121,8 +106,42 @@ impl IBypassCheckerProtocol for BypassChecker {
 
         let language = code_analysis_language_from_file(file);
 
-        // Early bailout scan — full-line mechanism lives in Block 3.
-        if !Self::content_has_bypass_token(content, language, &lowered_patterns) {
+        // Early bailout scan.
+        //
+        // This intentionally checks the full lowered line for non-word bypass patterns
+        // so comment-based bypass patterns (JS, TS) are not missed.
+        let has_bypass_token = content.lines().any(|line| {
+            let trimmed = line.trim();
+            if trimmed.is_empty() {
+                return false;
+            }
+
+            let full_lower = trimmed.to_ascii_lowercase();
+            if lowered_patterns
+                .iter()
+                .any(|p| full_lower.contains(p.as_str()))
+            {
+                return true;
+            }
+
+            let code_portion = Self::code_portion_for_language(trimmed, language);
+            if starts_with_allow_attr(code_portion) {
+                return true;
+            }
+
+            let code_lower = code_portion.to_ascii_lowercase();
+            match language {
+                Language::Python => {
+                    code_lower.contains("raise notimplementederror")
+                        || code_lower.contains("raise notimplemented")
+                        || code_lower.contains("assert false")
+                }
+                Language::JavaScript | Language::TypeScript => code_lower.contains("throw new"),
+                _ => false,
+            }
+        });
+
+        if !has_bypass_token {
             return;
         }
 
@@ -181,24 +200,96 @@ impl IBypassCheckerProtocol for BypassChecker {
                 continue;
             }
 
+            let full_lower = t.to_ascii_lowercase();
+            let code_lower = code_trim.to_ascii_lowercase();
             let mut matched = false;
 
             for lower_p in lowered_patterns.iter() {
                 let token = lower_p.as_str();
 
                 if Self::is_word_pattern_token(token) {
-                    if let Some(violation) =
-                        Self::word_token_violation(file, line_number, token, code_trim)
+                    // Word tokens like unwrap/panic/todo must not be reported from comment text.
+                    if code_trim.is_empty() {
+                        continue;
+                    }
+
+                    let pattern_pos = match code_lower.find(token) {
+                        Some(pos) => pos,
+                        None => continue,
+                    };
+
+                    if matches_word_token(code_lower.as_str(), token, false)
+                        && !(token == "unwrap"
+                            && Self::has_safe_unwrap_variant(code_lower.as_str()))
+                        && !is_inside_string_or_char(code_trim, pattern_pos)
                     {
-                        violations.push(violation);
+                        let reason = format!("Found forbidden bypass token: '{}'", token);
+                        let msg = match Self::classify_token(token) {
+                            ViolationKind::UnwrapExpect => {
+                                "Forbidden unwrap or expect call detected.".to_string()
+                            }
+                            ViolationKind::Panic => "Forbidden panic call detected.".to_string(),
+                            ViolationKind::Todo => {
+                                "Forbidden unfinished-implementation marker detected.".to_string()
+                            }
+                            ViolationKind::Unimplemented => {
+                                "Forbidden unimplemented-body marker detected.".to_string()
+                            }
+                            ViolationKind::BypassComment => {
+                                "Forbidden bypass comment or annotation detected.".to_string()
+                            }
+                        };
+
+                        let why = reason;
+                        let fix = match Self::classify_token(token) {
+                            ViolationKind::UnwrapExpect => "Replace the unwrap/expect call with structured error handling.".to_string(),
+                            ViolationKind::Panic => "Return a Result or handle the failure case gracefully without panicking.".to_string(),
+                            ViolationKind::Todo => "Implement the function body with real logic.".to_string(),
+                            ViolationKind::Unimplemented => "Either implement the missing logic or return a Result::Err.".to_string(),
+                            ViolationKind::BypassComment => "Remove the bypass comment and resolve the issue properly.".to_string(),
+                        };
+
+                        violations.push(LintResult::new_arch_with_name(
+                            file,
+                            line_number,
+                            "AES304",
+                            Severity::CRITICAL,
+                            msg,
+                            match Self::classify_token(token) {
+                                ViolationKind::UnwrapExpect => "UNWRAP_EXPECT",
+                                ViolationKind::Panic => "PANIC",
+                                ViolationKind::Todo => "TODO",
+                                ViolationKind::Unimplemented => "UNIMPLEMENTED",
+                                ViolationKind::BypassComment => "BYPASS_COMMENT",
+                            },
+                            why,
+                            fix,
+                        ));
+
                         matched = true;
                         break;
                     }
                 } else if !token.is_empty() {
-                    if let Some(violation) =
-                        Self::nonword_token_violation(file, line_number, token, t)
-                    {
-                        violations.push(violation);
+                    // Non-word patterns are bypass-comment patterns (lint-stoppers, TODO markers).
+                    //
+                    // These must be detected even when they appear inside comments.
+                    let pattern_pos = match full_lower.find(token) {
+                        Some(pos) => pos,
+                        None => continue,
+                    };
+
+                    if !is_inside_string_or_char(t, pattern_pos) {
+                        violations.push(LintResult::new_arch_with_name(
+                            file,
+                            line_number,
+                            "AES304",
+                            Severity::CRITICAL,
+                            "Forbidden bypass comment or annotation detected".to_string(),
+                            "BYPASS_COMMENT",
+                            format!("Found forbidden bypass pattern: '{}'", token),
+                            "Remove the bypass comment and resolve the issue properly.",
+                        ));
+
                         matched = true;
                         break;
                     }
@@ -209,10 +300,57 @@ impl IBypassCheckerProtocol for BypassChecker {
             //
             // These are code-path violations, so they must not be checked inside comments.
             if !matched && !code_trim.is_empty() {
-                if let Some(violation) =
-                    Self::phrase_violation(file, line_number, code_trim, language)
-                {
-                    violations.push(violation);
+                match language {
+                    Language::Python => {
+                        if code_lower.contains("raise notimplementederror")
+                            || code_lower.contains("raise notimplemented")
+                        {
+                            violations.push(LintResult::new_arch_with_name(
+                                file,
+                                line_number,
+                                "AES304",
+                                Severity::CRITICAL,
+                                "Forbidden unimplemented!() call detected".to_string(),
+                                "UNIMPLEMENTED",
+                                "Found forbidden Python pattern: 'raise NotImplementedError'",
+                                "Either implement the missing logic or return a Result::Err.",
+                            ));
+                        } else if code_lower.contains("assert false") {
+                            violations.push(LintResult::new_arch_with_name(
+                                file,
+                                line_number,
+                                "AES304",
+                                Severity::CRITICAL,"Forbidden panic call detected".to_string(),
+                                "PANIC",
+                                "Found forbidden Python pattern: 'assert False'",
+                                "Return a Result or handle the failure case gracefully without panicking.",
+                            ));
+                        }
+                    }
+                    Language::JavaScript | Language::TypeScript => {
+                        let throw_patterns = [
+                            ("throw new error", "throw new Error(...)"),
+                            ("throw new typeerror", "throw new TypeError(...)"),
+                            ("throw new rangeerror", "throw new RangeError(...)"),
+                            ("throw new referenceerror", "throw new ReferenceError(...)"),
+                            ("throw new syntaxerror", "throw new SyntaxError(...)"),
+                        ];
+
+                        if let Some((_, display)) =
+                            throw_patterns.iter().find(|(p, _)| code_lower.contains(p))
+                        {
+                            violations.push(LintResult::new_arch_with_name(
+                                file,
+                                line_number,
+                                "AES304",
+                                Severity::CRITICAL,"Forbidden panic call detected".to_string(),
+                                "PANIC",
+                                format!("Found forbidden JS/TS pattern: '{}'", display),
+                                "Return a Result or handle the failure case gracefully without panicking.",
+                            ));
+                        }
+                    }
+                    _ => {} // Rust handled above via config patterns.
                 }
             }
 
@@ -224,164 +362,300 @@ impl IBypassCheckerProtocol for BypassChecker {
 // ─── Block 3: Module Helpers ──────
 
 impl BypassChecker {
-    /// Early bailout scan: true when any line carries a bypass token.
-    ///
-    /// This intentionally checks the full lowered line for non-word bypass patterns
-    /// so comment-based bypass patterns (JS, TS) are not missed.
-    fn content_has_bypass_token(
-        content: &str,
-        language: Language,
-        lowered_patterns: &[String],
-    ) -> bool {
-        content.lines().any(|line| {
-            let trimmed = line.trim();
-            if trimmed.is_empty() {
-                return false;
-            }
-
-            let full_lower = trimmed.to_ascii_lowercase();
-            if lowered_patterns
-                .iter()
-                .any(|p| full_lower.contains(p.as_str()))
-            {
-                return true;
-            }
-
-            let code_portion = Self::code_portion_for_language(trimmed, language);
-            if starts_with_allow_attr(code_portion) {
-                return true;
-            }
-
-            let code_lower = code_portion.to_ascii_lowercase();
-            match language {
-                Language::Python => {
-                    code_lower.contains("raise notimplementederror")
-                        || code_lower.contains("raise notimplemented")
-                        || code_lower.contains("assert false")
-                }
-                Language::JavaScript | Language::TypeScript => code_lower.contains("throw new"),
-                _ => false,
-            }
-        })
+    /// Build a BypassChecker from an ArchitectureConfig-derived CodeAnalysisRuleVO.
+    pub fn from_rule(rule: CodeAnalysisRuleVO) -> Self {
+        Self { rule }
     }
 
-    /// Word-token branch: call-site style match for unwrap/panic/todo/… tokens.
-    ///
-    /// Word tokens like unwrap/panic/todo must not be reported from comment text.
-    fn word_token_violation(
-        file: &str,
-        line_number: usize,
-        token: &str,
-        code_trim: &str,
-    ) -> Option<LintResult> {
-        if code_trim.is_empty() {
-            return None;
+    /// Build a BypassChecker from a PatternList (forbidden_bypass patterns).
+    pub fn from_patterns(patterns: &PatternList) -> Self {
+        Self {
+            rule: CodeAnalysisRuleVO {
+                forbidden_bypass: patterns.clone(),
+                ..CodeAnalysisRuleVO::default()
+            },
         }
-
-        let code_lower = code_trim.to_ascii_lowercase();
-        let pattern_pos = match code_lower.find(token) {
-            Some(pos) => pos,
-            None => return None,
-        };
-
-        if matches_word_token(code_lower.as_str(), token, false)
-            && !(token == "unwrap" && Self::has_safe_unwrap_variant(code_lower.as_str()))
-            && !is_inside_string_or_char(code_trim, pattern_pos)
-        {
-            let reason = format!("Found forbidden bypass token: '{}'", token);
-            let msg = match Self::classify_token(token) {
-                ViolationKind::UnwrapExpect => {
-                    "Forbidden unwrap or expect call detected.".to_string()
-                }
-                ViolationKind::Panic => "Forbidden panic call detected.".to_string(),
-                ViolationKind::Todo => {
-                    "Forbidden unfinished-implementation marker detected.".to_string()
-                }
-                ViolationKind::Unimplemented => {
-                    "Forbidden unimplemented-body marker detected.".to_string()
-                }
-                ViolationKind::BypassComment => {
-                    "Forbidden bypass comment or annotation detected.".to_string()
-                }
-            };
-
-            let why = reason;
-            let fix = match Self::classify_token(token) {
-                ViolationKind::UnwrapExpect => "Replace the unwrap/expect call with structured error handling.".to_string(),
-                ViolationKind::Panic => "Return a Result or handle the failure case gracefully without panicking.".to_string(),
-                ViolationKind::Todo => "Implement the function body with real logic.".to_string(),
-                ViolationKind::Unimplemented => "Either implement the missing logic or return a Result::Err.".to_string(),
-                ViolationKind::BypassComment => "Remove the bypass comment and resolve the issue properly.".to_string(),
-            };
-
-            return Some(LintResult::new_arch_with_name(
-                file,
-                line_number,
-                "AES304",
-                Severity::CRITICAL,
-                msg,
-                match Self::classify_token(token) {
-                    ViolationKind::UnwrapExpect => "UNWRAP_EXPECT",
-                    ViolationKind::Panic => "PANIC",
-                    ViolationKind::Todo => "TODO",
-                    ViolationKind::Unimplemented => "UNIMPLEMENTED",
-                    ViolationKind::BypassComment => "BYPASS_COMMENT",
-                },
-                why,
-                fix,
-            ));
-        }
-
-        None
     }
 
-    /// Non-word pattern branch: bypass-comment patterns (lint-stoppers, TODO markers).
-    ///
-    /// These must be detected even when they appear inside comments.
-    fn nonword_token_violation(
-        file: &str,
-        line_number: usize,
-        token: &str,
-        line: &str,
-    ) -> Option<LintResult> {
-        let full_lower = line.to_ascii_lowercase();
-        let pattern_pos = match full_lower.find(token) {
-            Some(pos) => pos,
-            None => return None,
-        };
-
-        if !is_inside_string_or_char(line, pattern_pos) {
-            return Some(LintResult::new_arch_with_name(
-                file,
-                line_number,
-                "AES304",
-                Severity::CRITICAL,
-                "Forbidden bypass comment or annotation detected".to_string(),
-                "BYPASS_COMMENT",
-                format!("Found forbidden bypass pattern: '{}'", token),
-                "Remove the bypass comment and resolve the issue properly.",
-            ));
+    /// Map a forbidden token to its ViolationKind variant.
+    fn classify_token(token: &str) -> ViolationKind {
+        match token {
+            "unwrap" | "expect" => ViolationKind::UnwrapExpect,
+            "panic" => ViolationKind::Panic,
+            "todo" => ViolationKind::Todo,
+            "unimplemented" | "unreachable" => ViolationKind::Unimplemented,
+            _ => ViolationKind::BypassComment,
         }
-
-        None
     }
 
-    /// Language-scoped phrase patterns (code-path violations, never inside comments).
-    fn phrase_violation(
-        file: &str,
-        line_number: usize,
-        code_trim: &str,
-        language: Language,
-    ) -> Option<LintResult> {
-        let code_lower = code_trim.to_ascii_lowercase();
+    /// Tokens that require call-site style matching rather than plain contains.
+    ///
+    /// Uses the shared taxonomy constant instead of duplicating the token list.
+    fn is_word_pattern_token(token: &str) -> bool {
+        WORD_PATTERN_TOKENS.contains(&token)
+    }
+
+    /// Default fallback bypass patterns when config provides none.
+    fn default_forbidden_bypass() -> PatternList {
+        PatternList {
+            values: vec![
+                "unwrap".into(),
+                "expect".into(),
+                "panic".into(),
+                "todo".into(),
+                "unimplemented".into(),
+                "unreachable".into(),
+                "type: ignore".into(),
+                "noqa".into(),
+                "@ts-ignore".into(),
+                "@ts-expect-error".into(),
+                "eslint-disable".into(),
+                "lint-disable".into(),
+                "FIXME".into(),
+                "HACK".into(),
+                "XXX".into(),
+            ],
+        }
+    }
+
+    /// Returns true if the line has ONLY safe `.unwrap_or*()` variants and no unsafe `.unwrap()`.
+    ///
+    /// Matches only known safe variants: unwrap_or, unwrap_or_else, unwrap_or_default.
+    fn has_safe_unwrap_variant(line: &str) -> bool {
+        let bytes = line.as_bytes();
+        let len = bytes.len();
+        let mut i = 0;
+
+        while i < len {
+            if bytes[i..].starts_with(b".unwrap") {
+                i += 7; // skip past ".unwrap"
+
+                if i < len {
+                    match bytes[i] {
+                        b'(' | b'!' => {
+                            // Unsafe .unwrap() or .unwrap! style call.
+                            return false;
+                        }
+                        b'_' => {
+                            i += 1;
+                            let rest = &bytes[i..];
+
+                            // Known safe variants only.
+                            if rest.starts_with(b"or(")
+                                || rest.starts_with(b"or_else(")
+                                || rest.starts_with(b"or_default(")
+                            {
+                                continue;
+                            }
+
+                            // Unknown variant — treat as unsafe.
+                            return false;
+                        }
+                        _ => {
+                            i += 1;
+                            continue;
+                        }
+                    }
+                }
+            }
+
+            i += 1;
+        }
+
+        true
+    }
+
+    /// Detect cfg(test) blocks including positive `cfg(all(test, ...))` variants.
+    ///
+    /// This intentionally avoids false positives such as `#[cfg(all(not(test), ...))]`.
+    fn is_cfg_test_block(line: &str) -> bool {
+        if !line.starts_with("#[cfg(") {
+            return false;
+        }
+
+        let compact: String = line.chars().filter(|c| !c.is_whitespace()).collect();
+
+        compact.starts_with("#[cfg(test)]")
+            || compact.starts_with("#[cfg(all(test)]")
+            || compact.starts_with("#[cfg(all(test,")
+    }
+
+    /// Returns the code portion of a line for language-sensitive early-scan checks.
+    fn code_portion_for_language(line: &str, language: Language) -> &str {
         match language {
-            Language::Python => {
-                if code_lower.contains("raise notimplementederror")
-                    || code_lower.contains("raise notimplemented")
+            Language::Python => Self::strip_hash_comment(line),
+            _ => strip_trailing_comment(line),
+        }
+    }
+
+    /// Returns code outside comments, tracking C-like block comments across lines.
+    fn code_without_comments<'a>(
+        line: &'a str,
+        language: Language,
+        in_block_comment: &mut bool,
+    ) -> Cow<'a, str> {
+        match language {
+            Language::Python => Cow::Borrowed(Self::strip_hash_comment(line)),
+            _ => {
+                // Fast path: no comment markers and not currently inside a block comment.
+                if !*in_block_comment
+                    && !line.contains("//")
+                    && !line.contains("/*")
+                    && !line.contains("*/")
                 {
-                    Some(LintResult::new_arch_with_name(
-                        file,
-                        line_number,
-                        "AES304",
-                        Severity::CRITICAL,
-                        "Forbidden unimplemented!() call detected".to_string
+                    return Cow::Borrowed(line);
+                }
+
+                Cow::Owned(Self::strip_c_like_comments_with_state(
+                    line,
+                    in_block_comment,
+                ))
+            }
+        }
+    }
+
+    /// Strip C-like `//` and `/* ... */` comments while preserving code after block comments.
+    fn strip_c_like_comments_with_state(line: &str, in_block_comment: &mut bool) -> String {
+        let bytes = line.as_bytes();
+        let len = bytes.len();
+
+        let mut result = String::new();
+        let mut segment_start = 0;
+        let mut i = 0;
+
+        let mut in_string = false;
+        let mut string_quote: u8 = b'"';
+        let mut in_char = false;
+
+        while i < len {
+            if *in_block_comment {
+                if i + 1 < len && bytes[i] == b'*' && bytes[i + 1] == b'/' {
+                    *in_block_comment = false;
+                    i += 2;
+                    segment_start = i;
+                } else {
+                    i += 1;
+                }
+                continue;
+            }
+
+            let b = bytes[i];
+
+            if in_string {
+                if b == b'\\' {
+                    i += 2;
+                    continue;
+                }
+
+                if b == string_quote {
+                    in_string = false;
+                }
+
+                i += 1;
+                continue;
+            }
+
+            if in_char {
+                if b == b'\\' {
+                    i += 2;
+                    continue;
+                }
+
+                if b == b'\'' {
+                    in_char = false;
+                }
+
+                i += 1;
+                continue;
+            }
+
+            if b == b'"' {
+                in_string = true;
+                string_quote = b'"';
+                i += 1;
+                continue;
+            }
+
+            if b == b'\'' {
+                in_char = true;
+                i += 1;
+                continue;
+            }
+
+            if b == b'/' && i + 1 < len {
+                // Line comment: preserve code before the comment and stop.
+                if bytes[i + 1] == b'/' {
+                    result.push_str(&line[segment_start..i]);
+                    return result;
+                }
+
+                // Block comment start: preserve code before the comment.
+                if bytes[i + 1] == b'*' {
+                    result.push_str(&line[segment_start..i]);
+                    *in_block_comment = true;
+                    i += 2;
+                    segment_start = i;
+                    continue;
+                }
+            }
+
+            i += 1;
+        }
+
+        if !*in_block_comment && segment_start < len {
+            result.push_str(&line[segment_start..len]);
+        }
+
+        result
+    }
+
+    /// Strip trailing `# ...` comments outside simple string literals.
+    /// Single implementation shared by Python and TOML handling.
+    fn strip_hash_comment(line: &str) -> &str {
+        let bytes = line.as_bytes();
+        let len = bytes.len();
+        let mut i = 0;
+        let mut in_string = false;
+        let mut quote: u8 = b'"';
+
+        while i < len {
+            let b = bytes[i];
+
+            if in_string {
+                if b == quote && (i == 0 || bytes[i - 1] != b'\\') {
+                    in_string = false;
+                }
+            } else if b == b'"' || b == b'\'' {
+                in_string = true;
+                quote = b;
+            } else if b == b'#' {
+                return &line[..i];
+            }
+
+            i += 1;
+        }
+
+        line
+    }
+
+    /// Detect Cargo lint values that effectively silence lints.
+    ///
+    /// Handles:
+    /// - `warnings = "allow"`
+    /// - `warnings = 'allow'`
+    /// - `warnings = { level = "allow" }`
+    /// - `warnings = { level = 'allow', priority = -1 }`
+    ///
+    /// This avoids false positives such as `{ level = "warn", note = "allow" }`.
+    fn cargo_value_is_allow(value: &str) -> bool {
+        let value = value.trim();
+
+        if value == "\"allow\"" || value == "'allow'" {
+            return true;
+        }
+
+        let normalized: String = value.chars().filter(|c| !c.is_whitespace()).collect();
+
+        normalized.contains("level=\"allow\"") || normalized.contains("level='allow'")
+    }
+}

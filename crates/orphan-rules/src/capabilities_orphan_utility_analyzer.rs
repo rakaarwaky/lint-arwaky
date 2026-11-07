@@ -3,7 +3,6 @@ use shared_common::taxonomy_severity_vo::Severity;
 use shared_common::utility_architecture_layer_detector;
 use shared_orphan_rules::contract_orphan_protocol::IUtilityOrphanProtocol;
 use shared_orphan_rules::taxonomy_orphan_rules_constant::CONSUMER_LAYERS;
-use shared_orphan_rules::taxonomy_orphan_rules_vo::FileParseResultVO;
 use shared_quality_rules::taxonomy_quality_rules_vo::{
     InboundLinkMap, OrphanIndicatorResult, ReachabilityResult,
 };
@@ -178,8 +177,9 @@ impl IUtilityOrphanProtocol for UtilityOrphanAnalyzer {
 // ─── Block 3: Module Helpers ────────────
 
 impl UtilityOrphanAnalyzer {
-    pub fn new() -> Self {
-        Self
+    pub fn is_module_imported(_file_path: &str, content: &str, module_name: &str) -> bool {
+        content
+            .lines()
+            .any(|line| line.contains(&format!("use {module_name}")) || line.contains(&format!("from {module_name}")))
     }
-
-    pub fn is_module_imported(file_path: &str, content: &str, module_name: &str) -> bool {
+}

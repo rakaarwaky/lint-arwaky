@@ -72,8 +72,11 @@ impl ISurfacesOrphanProtocol for SurfacesOrphanAnalyzer {
 // ─── Block 3: Module Helpers ────────────
 
 impl SurfacesOrphanAnalyzer {
-    pub fn new() -> Self {
-        Self
-    }
-
     fn surface_category(suffix: &str) -> &'static str {
+        match suffix {
+            "rs" | "py" | "ts" | "js" => "smart",
+            "md" | "txt" => "passive",
+            _ => "utility",
+        }
+    }
+}
