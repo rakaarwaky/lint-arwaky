@@ -1,7 +1,7 @@
-// PURPOSE: DummyImportChecker — AES204: detect dummy imports, dummy functions, dummy trait impls shared_cli_commands::LintResult;
+// PURPOSE: DummyImportChecker — AES204: detect dummy imports, dummy functions, dummy trait impls
 
+use shared_common::{ContentString, FilePath, Identity, Language, LineNumber, LintResult, Severity};
 use shared_common::taxonomy_layer_vo::LayerMapVO;
-use shared_common::{ContentString, FilePath, Identity, Language, LineNumber, Severity};
 use shared_filesystem::taxonomy_filesystem_vo::ImportEntry;
 use shared_import_rules::contract_import_protocol::IDummyImportCheckerProtocol;
 use shared_import_rules::taxonomy_import_rules_error::ImportError;
