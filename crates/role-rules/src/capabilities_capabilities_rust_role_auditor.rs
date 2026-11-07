@@ -3,9 +3,11 @@
 // Handles the 3-block capability shape as `impl Trait for Type` (Block 2) followed by a bare `impl Type` (Block 3).
 //
 // The orchestrator (agent_role_orchestrator.rs) selects this auditor by
-// `file.language` and calls the trait entry point; all six AES403 sub-checks
-// then run here. Type budget and implementor checks live in
-// utility_capabilities_role_checker.rs so the three auditors share one copy.
+// `file.language` and calls the trait entry point; the composite entry point
+// runs eight AES403 sub-checks — four local helpers (`_block_order`,
+// `_constant_placement`, `_test_placement`, `_helper_visibility`) and four
+// shared checks that live in utility_capabilities_role_checker.rs so the
+// three auditors share one copy.
 
 use shared_common::taxonomy_lint_vo::LintResult;
 use shared_common::taxonomy_severity_vo::Severity;
@@ -259,8 +261,9 @@ impl CapabilitiesRustRoleAuditor {
                         proto_idx + 1
                     ),
                     "Reorder the file so the blocks read:\n  \
-                     Block 1 (type + constructor) -> Block 2 (protocol methods only) -> Block 3 (factories, std traits, helpers).\n  \
-                     Move the protocol trait implementation above the inherent impl block.",
+                     Block 1: Module Declaration -> Block 2: Module Contract -> Block 3: Module Helpers.\n  \
+                     Move the bare inherent impl below the `// ─── Block 3: Module Helpers ───` banner; \
+                     in a file with no banners, move the protocol impl above the inherent impl instead.",
                 ));
             }
         }
