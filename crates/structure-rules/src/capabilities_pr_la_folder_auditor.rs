@@ -518,26 +518,45 @@ fn extract_fr_ids(contents: &str) -> Vec<String> {
 fn extract_pr_la_ids(contents: &str) -> Vec<(usize, String, String)> {
     let mut ids = Vec::new();
     for line in contents.lines() {
-        // PR-LA ids appear inside markdown headings (`### PR-LA-001: …`), so
-        // scan the whole line rather than requiring a line prefix.
+        // PR-<segment>-NNN ids appear inside markdown headings
+        // (`### PR-LA-001: …`), so scan the whole line rather than
+        // requiring a line prefix. The segment (e.g. `LA`, `GAMING`) is
+        // not hardcoded — any `PR-<segment>-<number>` shape is accepted.
         let mut search_from = 0;
-        while let Some(rel) = line[search_from..].find("PR-LA-") {
+        while let Some(rel) = line[search_from..].find("PR-") {
             let start = search_from + rel;
-            let rest = &line[start + 6..];
-            let digits: String = rest.chars().take_while(|c| c.is_ascii_digit()).collect();
-            if digits.is_empty() {
-                search_from = start + 6;
+            let rest = &line[start + 3..]; // after "PR-"
+
+            // Project segment: non-empty run of characters up to the dash
+            // that precedes the number, e.g. "LA" in "PR-LA-001".
+            let segment_end = rest.find('-').unwrap_or(rest.len());
+            let segment = &rest[..segment_end];
+            if segment.is_empty() || segment_end == rest.len() {
+                search_from = start + 3;
                 continue;
             }
+
+            // After the segment dash, expect digits.
+            let after_dash = &rest[segment_end + 1..];
+            let digits: String = after_dash.chars().take_while(|c| c.is_ascii_digit()).collect();
+            if digits.is_empty() {
+                search_from = start + 3 + segment.len() + 1;
+                continue;
+            }
+
             let position = digits
                 .parse::<usize>()
                 .map(|n| n.saturating_sub(1))
                 .unwrap_or(usize::MAX);
-            let after = &rest[digits.len()..];
+            let after = &after_dash[digits.len()..];
             let title_raw = after.trim_start_matches([':', '|', ' ', '\t']);
             let title = title_raw.split('|').next().unwrap_or("").trim();
-            ids.push((position, format!("PR-LA-{digits}"), title.to_string()));
-            search_from = start + 6 + digits.len();
+            ids.push((
+                position,
+                format!("PR-{segment}-{digits}"),
+                title.to_string(),
+            ));
+            search_from = start + 3 + segment.len() + 1 + digits.len();
         }
     }
     ids

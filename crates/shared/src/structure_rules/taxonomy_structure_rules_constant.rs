@@ -209,5 +209,5 @@ pub const PR_LA_VIOLATION_MISSING_FRD: &str = "pr_la_missing_frd";
 pub const FR_PREFIX_OVERRIDES: &[(&str, &str)] =
     &[("doc-rules", "DOC"), ("structure-rules", "STR")];
 
-/// Document names scanned for PR-LA ids.
+/// Document names scanned for PR-<project>-NNN ids.
 pub const PR_LA_DOCUMENTS: &[&str] = &["PRD.md", "ROADMAP.md"];

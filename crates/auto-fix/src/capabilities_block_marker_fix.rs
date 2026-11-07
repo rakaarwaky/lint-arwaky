@@ -37,7 +37,7 @@ impl BlockMarkerFix {
         Self { io }
     }
 
-    fn fix_impl(&self, file_path: &str, line: LineNumber, dry_run: bool) -> FixOutcome {
+    fn fix_impl(&self, file_path: &str, line: LineNumber, _dry_run: bool) -> FixOutcome {
         let fpath = match FilePath::new(file_path.to_string()) {
             Ok(p) => p,
             Err(_) => return FixOutcome::failed(FailReason::FileNotFound),
@@ -82,7 +82,7 @@ impl BlockMarkerFix {
         let Some(name) = after.split(':').nth(1) else {
             return FixOutcome::skipped(SkipReason::NoBypassPattern);
         };
-        let name = name
+        let _name = name
             .trim()
             .strip_prefix("Module ")
             .unwrap_or("")
