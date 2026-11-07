@@ -9,11 +9,11 @@
 import { IMergeProtocol } from "calculator-shared/src/calculator/contract_calculator_protocol";
 import { ResultVO } from "../../shared/src/taxonomy_result_vo";
 
-// ─── Block 1: Struct Definition ─────────────────────────────
+// ─── Block 1: Module Declaration ─────────────────────────────
 
 /** Merge the operation results into the history the caller reads. */
 export class CalculatorHistoryCapability implements IMergeProtocol {
-  // ─── Block 2: Protocol Trait Implementation ────────────────
+  // ─── Block 2: Module Contract ────────────────
 
   /** Record one evaluated result into the merged history. */
   public record(result: ResultVO): void {
@@ -29,7 +29,7 @@ export class CalculatorHistoryCapability implements IMergeProtocol {
     return entries.reverse();
   }
 
-  // ─── Block 3: Constructors, Std Traits, Helpers ───────────
+  // ─── Block 3: Module Helpers ───────────
 
   private readonly entries: ResultVO[] = [];
 

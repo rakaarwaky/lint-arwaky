@@ -29,7 +29,7 @@ use std::{
 
 // ─── Macros ────────────────────────────────────────────────────────────────
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 pub struct FilesystemOrchestratorDeps {
     pub io: Arc<dyn IFileSystemIOProtocol>,
     pub workspace: Arc<dyn IWorkspaceProtocol>,
@@ -59,7 +59,7 @@ pub struct FilesystemOrchestrator {
     pub(crate) rebuild_lock: Mutex<()>,
 }
 
-// ─── Block 2: Aggregate Trait Implementation ──────────────
+// ─── Block 2: Module Contract ──────────────
 impl IFilesystemAggregate for FilesystemOrchestrator {
     fn execute(&self, request: FilesystemRequest) -> FilesystemResponse {
         match request {
@@ -222,7 +222,7 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
     }
 }
 
-// ─── Block 3: Constructors, Std Traits & Helpers ─────────
+// ─── Block 3: Module Helpers ─────────
 impl FilesystemOrchestrator {
     pub fn new(deps: FilesystemOrchestratorDeps) -> Self {
         Self {

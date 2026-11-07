@@ -5,12 +5,12 @@ use std::sync::Arc;
 
 use shared_maintenance::utility_maintenance_helpers;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 pub struct AdapterHealthChecker {
     _io: Arc<dyn IFileSystemIOProtocol>,
 }
 
-// ─── Block 2: Protocol Implementation ─────────────────────
+// ─── Block 2: Module Contract ─────────────────────
 impl IAdapterHealthProtocol for AdapterHealthChecker {
     fn health_check(&self) -> HealthCheckResult {
         let adapters = vec![
@@ -109,7 +109,7 @@ impl IAdapterHealthProtocol for AdapterHealthChecker {
     }
 }
 
-// ─── Block 3: Constructors & Helpers ──────────────────────
+// ─── Block 3: Module Helpers ──────────────────────
 impl AdapterHealthChecker {
     pub fn new(io: Arc<dyn IFileSystemIOProtocol>) -> Self {
         Self { _io: io }

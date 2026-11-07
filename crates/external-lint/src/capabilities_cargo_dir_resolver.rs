@@ -7,13 +7,13 @@ use shared_common::taxonomy_path_vo::FilePath;
 use shared_external_lint::ICargoDirProtocol;
 use shared_filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct ExternalLintExecutor {
     tool_resolution: Arc<dyn IToolResolutionProtocol>,
 }
 
-// ─── Block 2: FR-008 cargo working directory resolution ──
+// ─── Block 2: Module ContractFR-008 cargo working directory resolution ──
 
 impl ICargoDirProtocol for ExternalLintExecutor {
     fn resolve_cargo_working_dir(&self, path: &FilePath) -> FilePath {
@@ -21,7 +21,7 @@ impl ICargoDirProtocol for ExternalLintExecutor {
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
+// ─── Block 3: Module Helpers ──────
 
 impl ExternalLintExecutor {
     pub fn new(tool_resolution: Arc<dyn IToolResolutionProtocol>) -> Self {

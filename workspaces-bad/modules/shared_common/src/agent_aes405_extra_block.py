@@ -17,19 +17,19 @@ class IScannerAggregate(Protocol):
         ...
 
 
-# ─── Block 1: Struct Definitions ───────────────────
+# ─── Block 1: Module Declaration ───────────────────
 class ExtraBlockAgent:
     def __init__(self, scanner: IScannerProtocol):
         self._scanner = scanner
 
 
-# ─── Block 2: Aggregate Trait Implementation ───────
+# ─── Block 2: Module Contract ───────
 class ExtraBlockAgent(IScannerAggregate):
     def execute(self, files: list[str]) -> int:
         return len(self._scanner.scan(files))
 
 
-# ─── Block 3: Constructors, Std Traits, Helpers ────
+# ─── Block 3: Module Helpers ────
 class ExtraBlockAgent:
     def collect(self, files: list[str]) -> list[str]:
         return files

@@ -29,7 +29,7 @@ use tracing::debug;
 
 use shared_external_lint::ICommandExecutorProtocol;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 /// Adapter that wraps `cargo fmt --check` as an ILinterAdapterProtocol.
 pub struct RustFmtAdapter {
@@ -38,7 +38,7 @@ pub struct RustFmtAdapter {
     _bin_path: Option<FilePath>,
 }
 
-// ─── Block 2: Protocol Trait Implementation ───────────────
+// ─── Block 2: Module Contract ───────────────
 
 impl ILinterAdapterProtocol for RustFmtAdapter {
     fn name(&self) -> AdapterName {
@@ -132,7 +132,7 @@ impl ILinterAdapterProtocol for RustFmtAdapter {
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
+// ─── Block 3: Module Helpers ──────
 
 impl RustFmtAdapter {
     pub fn new(

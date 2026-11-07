@@ -58,14 +58,14 @@ fn analysis_failure(file: &str, msg: impl Into<String>) -> LintResult {
     }
 }
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct DiffChecker {
     io: Arc<dyn IFileSystemIOProtocol>,
     code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
 }
 
-// ─── Block 2: Protocol Trait Implementation ───────────────
+// ─── Block 2: Module Contract ───────────────
 
 impl IDiffDetectionProtocol for DiffChecker {
     fn get_diff(&self, path: &FilePath) -> GitDiffResultVO {
@@ -214,7 +214,7 @@ impl IDiffDetectionProtocol for DiffChecker {
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
+// ─── Block 3: Module Helpers ──────
 
 impl DiffChecker {
     pub fn new(

@@ -79,7 +79,7 @@ from subtraction.src.capabilities_subtraction_analyzer import (
 )
 from subtraction.src.capabilities_subtraction_log import SubtractionLog
 
-# ─── Block 1: Struct Definition ───────────────────────────
+# ─── Block 1: Module Declaration ───────────────────────────
 
 class CalculatorContainer:
     def __init__(self):

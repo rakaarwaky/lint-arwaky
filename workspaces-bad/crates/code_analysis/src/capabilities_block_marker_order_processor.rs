@@ -5,11 +5,11 @@
 // sequence as out of order.
 use crate::contract::some_protocol::SomeProtocol;
 
-// ─── Block 1: Struct Definition ────────────────────────────
+// ─── Block 1: Module Declaration ────────────────────────────
 
 pub struct BlockMarkerOrderProcessor;
 
-// ─── Block 3: Constructors, Std Traits, Helpers ────────────
+// ─── Block 3: Module Helpers ────────────
 
 impl BlockMarkerOrderProcessor {
     pub fn new() -> Self {
@@ -17,7 +17,7 @@ impl BlockMarkerOrderProcessor {
     }
 }
 
-// ─── Block 2: Protocol Trait Implementation ────────────────
+// ─── Block 2: Module Contract ────────────────
 
 impl SomeProtocol for BlockMarkerOrderProcessor {
     fn execute(&self, input: String) -> bool {

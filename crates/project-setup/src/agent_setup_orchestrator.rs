@@ -22,7 +22,7 @@ use shared_project_setup::{
 
 use std::sync::Arc;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 /// Collaborators for SetupManagementOrchestrator, grouped to keep the
 /// constructor below the clippy argument-count threshold.
@@ -37,7 +37,7 @@ pub struct SetupManagementOrchestrator {
     protocols: SetupProtocols,
 }
 
-// ─── Block 2: Aggregate Trait Implementation ──────────────
+// ─── Block 2: Module Contract ──────────────
 
 impl ISetupAggregate for SetupManagementOrchestrator {
     fn execute(&self, request: SetupRequest) -> SetupResponse {
@@ -122,7 +122,7 @@ impl ISetupAggregate for SetupManagementOrchestrator {
     }
 }
 
-// ─── Block 3: Constructors ────────────────────────────────
+// ─── Block 3: Module HelpersConstructors ────────────────────────────────
 
 impl SetupManagementOrchestrator {
     pub fn new(protocols: SetupProtocols) -> Self {

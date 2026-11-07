@@ -15,14 +15,14 @@ use shared_git_hooks::contract_git_hooks_protocol::IHookInstallProtocol;
 use shared_git_hooks::taxonomy_git_hooks_error::GitHookError;
 use std::sync::Arc;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct HookInstaller {
     root_dir: FilePath,
     io: Arc<dyn IFileSystemIOProtocol>,
 }
 
-// ─── Block 2: Protocol Trait Implementation ───────────────
+// ─── Block 2: Module Contract ───────────────
 
 impl IHookInstallProtocol for HookInstaller {
     fn install_pre_commit(
@@ -110,7 +110,7 @@ exit 0
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
+// ─── Block 3: Module Helpers ──────
 
 impl HookInstaller {
     pub fn new(root_dir: FilePath, io: Arc<dyn IFileSystemIOProtocol>) -> Self {

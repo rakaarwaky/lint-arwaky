@@ -12,13 +12,13 @@ use shared_common::taxonomy_path_vo::FilePath;
 use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use std::sync::Arc;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct UnusedImportFix {
     io: Arc<dyn IFileSystemIOProtocol>,
 }
 
-// ─── Block 2: Protocol Trait Implementation ──────────────
+// ─── Block 2: Module Contract ──────────────
 
 impl IUnusedImportFixProtocol for UnusedImportFix {
     fn fix_unused_import(&self, file_path: &str, line: LineNumber) -> FixOutcome {
@@ -34,7 +34,7 @@ impl IUnusedImportFixProtocol for UnusedImportFix {
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
+// ─── Block 3: Module Helpers ──────
 
 impl UnusedImportFix {
     pub fn new(io: Arc<dyn IFileSystemIOProtocol>) -> Self {

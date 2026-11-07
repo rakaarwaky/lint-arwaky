@@ -6,12 +6,12 @@ use shared_maintenance::taxonomy_maintenance_vo::{SecurityFinding, SecurityScanR
 use std::path::Path;
 use std::sync::Arc;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 pub struct SecurityScanChecker {
     io: Arc<dyn IFileSystemIOProtocol>,
 }
 
-// ─── Block 2: Protocol Implementation ─────────────────────
+// ─── Block 2: Module Contract ─────────────────────
 impl ISecurityScanProtocol for SecurityScanChecker {
     fn run_security_scan(&self, project_path: &FilePath) -> SecurityScanReport {
         let root = &project_path.value;
@@ -40,7 +40,7 @@ impl ISecurityScanProtocol for SecurityScanChecker {
     }
 }
 
-// ─── Block 3: Constructors & Helpers ──────────────────────
+// ─── Block 3: Module Helpers ──────────────────────
 impl SecurityScanChecker {
     pub fn new(io: Arc<dyn IFileSystemIOProtocol>) -> Self {
         Self { io }

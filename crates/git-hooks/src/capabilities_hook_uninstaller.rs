@@ -11,14 +11,14 @@ use shared_git_hooks::contract_git_hooks_protocol::IHookUninstallProtocol;
 use shared_git_hooks::taxonomy_git_hooks_error::GitHookError;
 use std::sync::Arc;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct HookUninstaller {
     root_dir: String,
     io: Arc<dyn IFileSystemIOProtocol>,
 }
 
-// ─── Block 2: Protocol Trait Implementation ───────────────
+// ─── Block 2: Module Contract ───────────────
 
 impl IHookUninstallProtocol for HookUninstaller {
     fn uninstall_pre_commit(&self) -> Result<SuccessStatus, GitHookError> {
@@ -35,7 +35,7 @@ impl IHookUninstallProtocol for HookUninstaller {
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
+// ─── Block 3: Module Helpers ──────
 
 impl HookUninstaller {
     pub fn new(root_dir: String, io: Arc<dyn IFileSystemIOProtocol>) -> Self {

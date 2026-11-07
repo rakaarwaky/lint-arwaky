@@ -115,11 +115,11 @@ from modules.shared.src.contract_<domain>_protocol import I<Domain>Protocol
 from modules.shared.src.taxonomy_<domain>_vo import <VO>
 
 class <Capability>(I<Seam1>Protocol):
-    """Block 1: Struct with DI deps typed against a contract protocol."""
+    """Block 1: Module DeclarationStruct with DI deps typed against a contract protocol."""
     def __init__(self, dep: I<SeamDependency>Protocol) -> None:
         self._dep = dep
 
-    """Block 2: Protocol implementation — every declared method, no stubs."""
+    """Block 2: Module ContractProtocol implementation — every declared method, no stubs."""
     def <operation_1>(self, arg: <VO>) -> <ResultVO>:
         # Business logic here
         ...
@@ -127,7 +127,7 @@ class <Capability>(I<Seam1>Protocol):
     def <operation_2>(self, arg: <VO>) -> <ResultVO>:
         ...
 
-    """Block 3: Factory."""
+    """Block 3: Module HelpersFactory."""
     @classmethod
     def create(cls, dep: I<SeamDependency>Protocol) -> I<Seam1>Protocol:
         return cls(dep)
@@ -141,11 +141,11 @@ from modules.shared.src.contract_<domain>_aggregate import I<Domain>Aggregate
 from modules.shared.src.contract_<domain>_protocol import I<Domain>Protocol
 
 class <Domain>Orchestrator(I<Domain>Aggregate):
-    """Block 1: Struct with protocol deps."""
+    """Block 1: Module DeclarationStruct with protocol deps."""
     def __init__(self, protocol: I<Domain>Protocol) -> None:
         self._protocol = protocol
 
-    """Block 2: Aggregate implementation — one method, dispatch to protocols."""
+    """Block 2: Module ContractAggregate implementation — one method, dispatch to protocols."""
     def execute(self, request: RequestVO) -> ResponseVO:
         # Match the request, delegate to the owning protocol trait. Never compute here.
         if isinstance(request, RequestVO.<Variant1>):

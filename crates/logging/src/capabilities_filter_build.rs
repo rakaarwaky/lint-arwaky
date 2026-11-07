@@ -6,12 +6,12 @@ use shared_logging::contract_logging_protocol::IFilterBuildProtocol;
 use shared_logging::taxonomy_logging_vo::LogVerbosity;
 use tracing_subscriber::EnvFilter;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 #[derive(Default)]
 pub struct FilterBuilder {}
 
-// ─── Block 2: Protocol Trait Implementation ───────────────
+// ─── Block 2: Module Contract ───────────────
 
 impl IFilterBuildProtocol for FilterBuilder {
     fn build_filter(&self, verbosity: LogVerbosity) -> EnvFilter {
@@ -22,7 +22,7 @@ impl IFilterBuildProtocol for FilterBuilder {
     }
 }
 
-// ─── Block 3: Constructors, Std Traits, Helpers ───────────
+// ─── Block 3: Module Helpers ───────────
 
 impl FilterBuilder {
     pub fn new() -> Self {

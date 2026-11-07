@@ -32,7 +32,7 @@ use shared_auto_fix::{
 use shared_common::taxonomy_name_vo::SymbolName;
 use std::sync::Arc;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 /// FixOrchestratorDeps — one capability seam per FR-AutoFix requirement.
 pub struct FixOrchestratorDeps {
@@ -49,7 +49,7 @@ pub struct FixOrchestrator {
     deps: FixOrchestratorDeps,
 }
 
-// ─── Block 2: Aggregate Trait Implementation ──────────────
+// ─── Block 2: Module Contract ──────────────
 
 impl IFixAggregate for FixOrchestrator {
     fn execute(&self, request: FixRequest) -> FixResponse {
@@ -61,7 +61,7 @@ impl IFixAggregate for FixOrchestrator {
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
+// ─── Block 3: Module Helpers ──────
 
 impl FixOrchestrator {
     pub fn new(deps: FixOrchestratorDeps) -> Self {

@@ -25,14 +25,14 @@ fn checker() -> Box<dyn ICapabilitiesRoleProtocol> {
 fn banners(lang: Language) -> &'static str {
     match lang {
         Language::Python => {
-            "# ─── Block 1: Class Definition ───\n\
-             # ─── Block 2: Protocol Method Implementation ───\n\
-             # ─── Block 3: Dunder Methods, Factories, Helpers ───\n"
+            "# ─── Block 1: Module Declaration ───\n\
+             # ─── Block 2: Module Contract ───\n\
+             # ─── Block 3: Module Helpers ───\n"
         }
         _ => {
-            "// ─── Block 1: Struct Definition ───\n\
-             // ─── Block 2: Protocol Trait Implementation ───\n\
-             // ─── Block 3: Constructors, Std Traits, Helpers ───\n"
+            "// ─── Block 1: Module Declaration ───\n\
+             // ─── Block 2: Module Contract ───\n\
+             // ─── Block 3: Module Helpers ───\n"
         }
     }
 }

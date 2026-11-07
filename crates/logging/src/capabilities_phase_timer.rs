@@ -5,12 +5,12 @@ use shared_logging::contract_logging_protocol::IPhaseTimerProtocol;
 use shared_logging::taxonomy_logging_vo::{OptionalCount, PhaseTimerVO};
 use tracing::info;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 #[derive(Default)]
 pub struct PhaseTimerCapability {}
 
-// ─── Block 2: Protocol Trait Implementation ───────────────
+// ─── Block 2: Module Contract ───────────────
 
 impl IPhaseTimerProtocol for PhaseTimerCapability {
     fn phase_started(&self, phase: &'static str) -> PhaseTimerVO {
@@ -33,7 +33,7 @@ impl IPhaseTimerProtocol for PhaseTimerCapability {
     }
 }
 
-// ─── Block 3: Constructors, Std Traits, Helpers ───────────
+// ─── Block 3: Module Helpers ───────────
 
 impl PhaseTimerCapability {
     pub fn new() -> Self {

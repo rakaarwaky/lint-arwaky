@@ -12,13 +12,13 @@ use shared_external_lint::contract_external_lint_protocol::ICommandExecutorProto
 use shared_external_lint::taxonomy_duration_vo::Timeout;
 use shared_external_lint::utility_output_normalization::strip_ansi_escapes;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct StdioClient {
     timeout: Timeout,
 }
 
-// ─── Block 2: Protocol Trait Implementation ───────────────
+// ─── Block 2: Module Contract ───────────────
 
 impl ICommandExecutorProtocol for StdioClient {
     fn execute_command(
@@ -182,7 +182,7 @@ impl ICommandExecutorProtocol for StdioClient {
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
+// ─── Block 3: Module Helpers ──────
 
 /// Poll `child.try_wait()` until it exits or the deadline passes. An
 /// unbounded `wait()` after `kill()` blocks while any grandchild holds a

@@ -30,7 +30,7 @@ use std::path::Path;
 use std::sync::Arc;
 use tracing::debug;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct CargoAuditAdapter {
     executor: Arc<dyn ICommandExecutorProtocol>,
@@ -57,7 +57,7 @@ struct Vulnerability {
     severity: Option<String>,
 }
 
-// ─── Block 2: Protocol Trait Implementation ───────────────
+// ─── Block 2: Module Contract ───────────────
 
 impl ILinterAdapterProtocol for CargoAuditAdapter {
     fn name(&self) -> AdapterName {
@@ -143,7 +143,7 @@ impl ILinterAdapterProtocol for CargoAuditAdapter {
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
+// ─── Block 3: Module Helpers ──────
 
 impl CargoAuditAdapter {
     pub fn new(

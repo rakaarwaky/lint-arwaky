@@ -14,7 +14,7 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 /// Coordinates the filesystem aggregate and the primary orchestrator to
 /// run the index/graph pipeline.
@@ -79,7 +79,7 @@ impl FilesystemPipelineOrchestrator {
     }
 }
 
-// ─── Block 2: Pipeline Methods on FilesystemOrchestrator ──────
+// ─── Block 2: Module ContractPipeline Methods on FilesystemOrchestrator ──────
 impl FilesystemOrchestrator {
     /// Builds a lexicographically-sorted index of file stems → file paths.
     pub fn build_stem_index(file_paths: &[String]) -> HashMap<String, Vec<String>> {

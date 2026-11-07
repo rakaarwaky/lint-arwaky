@@ -13,7 +13,7 @@ use shared_external_lint::IJsToolResolutionProtocol;
 use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared_filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct ExternalLintExecutor {
     io: Arc<dyn IFileSystemIOProtocol>,
@@ -21,7 +21,7 @@ pub struct ExternalLintExecutor {
     executor: Arc<dyn ICommandExecutorProtocol>,
 }
 
-// ─── Block 2: FR-007 JS tool resolution ──────────────────
+// ─── Block 2: Module ContractFR-007 JS tool resolution ──────────────────
 
 impl IJsToolResolutionProtocol for ExternalLintExecutor {
     fn resolve_js_cmd(
@@ -63,7 +63,7 @@ impl IJsToolResolutionProtocol for ExternalLintExecutor {
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
+// ─── Block 3: Module Helpers ──────
 
 impl ExternalLintExecutor {
     pub fn new(

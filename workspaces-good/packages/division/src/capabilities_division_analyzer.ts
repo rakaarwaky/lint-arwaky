@@ -5,11 +5,11 @@ import {
   createResult,
 } from "calculator-shared/src/taxonomy_result_vo";
 
-// ─── Block 1: Struct Definition ────────────────────────────
+// ─── Block 1: Module Declaration ────────────────────────────
 
 /** Divides the left operand of an expression by the right one. */
 export class DivisionAnalyzer implements ICalculatorProtocol {
-  // ─── Block 2: Protocol Trait Implementation ────────────────
+  // ─── Block 2: Module Contract ────────────────
 
   /** Evaluate one division expression, or null on a zero divisor. */
   evaluate(expr: ExpressionVO): ResultVO | null {
@@ -18,7 +18,7 @@ export class DivisionAnalyzer implements ICalculatorProtocol {
     return createResult(expr.left, "/", expr.right, value);
   }
 
-  // ─── Block 3: Constructors, Std Traits, Helpers ────────────
+  // ─── Block 3: Module Helpers ────────────
 
   toString(): string {
     return "DivisionAnalyzer()";

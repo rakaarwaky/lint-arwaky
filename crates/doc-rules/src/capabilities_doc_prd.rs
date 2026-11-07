@@ -24,11 +24,11 @@ use shared_doc_rules::utility_doc_fr_format_checks::{
 use shared_doc_rules::utility_doc_line_drift::detect_doc_line_drift;
 use shared_doc_rules::utility_markdown_scanner::{doc_h2_contract, sections};
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct PrdCapability;
 
-// ─── Block 2: Protocol Implementation ─────────────────────
+// ─── Block 2: Module Contract ─────────────────────
 
 impl IPrdDocProtocol for PrdCapability {
     fn audit_prd(&self, context: &DocAuditContext) -> Vec<DocFinding> {
@@ -47,7 +47,7 @@ impl IPrdDocProtocol for PrdCapability {
     }
 }
 
-// ─── Block 3: Inherent Implementation and Helpers ─────────
+// ─── Block 3: Module HelpersInherent Implementation and Helpers ─────────
 
 impl Default for PrdCapability {
     fn default() -> Self {

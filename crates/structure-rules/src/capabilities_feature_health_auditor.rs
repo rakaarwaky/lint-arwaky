@@ -11,13 +11,13 @@ use shared_structure_rules::taxonomy_structure_rules_request::{
 };
 use shared_structure_rules::taxonomy_structure_rules_response::StructureResponse;
 
-// ─── Block 1: Struct Definition ────────────────────────────
+// ─── Block 1: Module Declaration ────────────────────────────
 
 /// AES702: checks that feature folders hold capabilities + orchestrator pairs,
 /// carry no foreign-layer files, and document themselves with FRD.md + BACKLOG.md.
 pub struct FeatureHealthAuditor {}
 
-// ─── Block 2: Protocol Trait Implementation ────────────────
+// ─── Block 2: Module Contract ────────────────
 
 impl IStructureFeatureHealthProtocol for FeatureHealthAuditor {
     fn audit_feature(&self, request: StructureRequest) -> StructureResponse {
@@ -65,7 +65,7 @@ impl IStructureFeatureHealthProtocol for FeatureHealthAuditor {
 
 // ─── Private helpers ───────────────────────────────────────────────────────────
 
-// ─── Block 3: Constructors, Std Traits, Helpers ────────────
+// ─── Block 3: Module Helpers ────────────
 
 /// Resolve the workspace root by walking up from *root* until we find
 /// a directory that contains at least one of the member directories.

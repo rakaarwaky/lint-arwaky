@@ -9,13 +9,13 @@ use shared_quality_rules::taxonomy_quality_rules_vo::{OrphanIndicatorResult, Rea
 use std::collections::HashMap;
 use std::sync::Arc;
 
-// ─── Block 1: Struct Definition ────────────────────────────
+// ─── Block 1: Module Declaration ────────────────────────────
 
 pub struct CapabilitiesOrphanAnalyzer {
     workspace: Arc<dyn IWorkspaceProtocol>,
 }
 
-// ─── Block 2: Protocol Trait Implementation ────────────────
+// ─── Block 2: Module Contract ────────────────
 
 impl ICapabilitiesOrphanProtocol for CapabilitiesOrphanAnalyzer {
     /// Determines whether a capabilities file is unreachable, unwired, or both.
@@ -86,7 +86,7 @@ impl ICapabilitiesOrphanProtocol for CapabilitiesOrphanAnalyzer {
     }
 }
 
-// ─── Block 3: Constructors, Std Traits, Helpers ────────────
+// ─── Block 3: Module Helpers ────────────
 
 impl CapabilitiesOrphanAnalyzer {
     pub fn new(workspace: Arc<dyn IWorkspaceProtocol>) -> Self {

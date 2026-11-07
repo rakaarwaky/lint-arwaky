@@ -17,13 +17,13 @@ use shared_structure_rules::utility_structure_parsers::{find_workspace_root, sor
 
 use std::path::{Path, PathBuf};
 
-// ─── Block 1: Struct Definition ────────────────────────────────────────────
+// ─── Block 1: Module Declaration ────────────────────────────────────────────
 
 /// AES706: checks that every crate folder's FR ids match its folder name and
 /// that every PR-LA-001..N id maps to a real crate folder by order.
 pub struct PrLaFolderAuditor {}
 
-// ─── Block 2: Protocol Trait Implementation ────────────────────────────────
+// ─── Block 2: Module Contract ────────────────────────────────
 
 impl IStructurePrLaProtocol for PrLaFolderAuditor {
     fn audit_pr_la_folder(&self, request: StructureRequest) -> StructureResponse {
@@ -171,7 +171,7 @@ impl IStructurePrLaProtocol for PrLaFolderAuditor {
     }
 }
 
-// ─── Block 3: Constructors, Std Traits, Helpers ────────────────────────────
+// ─── Block 3: Module Helpers ────────────────────────────
 
 impl Default for PrLaFolderAuditor {
     fn default() -> Self {

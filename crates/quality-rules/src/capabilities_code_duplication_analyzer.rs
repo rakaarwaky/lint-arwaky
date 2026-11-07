@@ -19,13 +19,13 @@ use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 use std::sync::Arc;
 
-// ─── Block 1: Struct Definition ────────────────────────────
+// ─── Block 1: Module Declaration ────────────────────────────
 
 pub struct CodeDuplicationAnalyzer {
     config: Arc<ArchitectureConfig>,
 }
 
-// ─── Block 2: Protocol Trait Implementation ────────────────
+// ─── Block 2: Module Contract ────────────────
 
 impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
     fn handle_duplicates_entries(
@@ -64,7 +64,7 @@ impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ───────
+// ─── Block 3: Module Helpers ───────
 
 impl CodeDuplicationAnalyzer {
     pub fn from_config(config: Arc<ArchitectureConfig>) -> Self {
@@ -297,7 +297,7 @@ impl CodeDuplicationAnalyzer {
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ───────
+// ─── Block 3: Module Helpers ───────
 
 /// Per-file window position record: 1-based start/end lines plus the u64 hashes.
 #[derive(Clone, Copy)]

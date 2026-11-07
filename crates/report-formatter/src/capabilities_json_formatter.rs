@@ -6,12 +6,12 @@ use shared_report_formatter::taxonomy_report_formatter_vo::{
     JsonDiagnostic, JsonReportDto, JsonSummary, JsonViolation,
 };
 
-// ─── Block 1: Struct Definition ────────────────────────────
+// ─── Block 1: Module Declaration ────────────────────────────
 
 /// JsonFormatter — produces structured pretty-printed JSON output from ScanReport.
 pub struct JsonFormatter;
 
-// ─── Block 2: Protocol Trait Implementation ────────────────
+// ─── Block 2: Module Contract ────────────────
 
 impl IJsonFormatProtocol for JsonFormatter {
     fn format_json(&self, report: &ScanReport) -> DisplayContent {
@@ -23,7 +23,7 @@ impl IJsonFormatProtocol for JsonFormatter {
     }
 }
 
-// ─── Block 3: Constructors, Std Traits, Helpers ────────────
+// ─── Block 3: Module Helpers ────────────
 
 impl JsonFormatter {
     /// Create a new JSON formatter.

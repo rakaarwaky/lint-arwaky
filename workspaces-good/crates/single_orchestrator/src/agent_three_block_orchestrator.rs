@@ -18,19 +18,19 @@ use calculator_shared::single_orchestrator::contract_single_protocol::{
     ISingleCheckerProtocol, ISingleRunnerAggregate,
 };
 
-// ─── Block 1: Struct Definitions ───────────────────
+// ─── Block 1: Module Declaration ───────────────────
 pub struct ThreeBlockOrchestrator {
     checker: Arc<dyn ISingleCheckerProtocol>,
 }
 
-// ─── Block 2: Aggregate Trait Implementation ───────
+// ─── Block 2: Module Contract ───────
 impl ISingleRunnerAggregate for ThreeBlockOrchestrator {
     fn execute(&self, request: SingleRequest) -> SingleResponse {
         self.checker.audit(request)
     }
 }
 
-// ─── Block 3: Constructors, Std Traits, Helpers ────
+// ─── Block 3: Module Helpers ────
 impl Default for ThreeBlockOrchestrator {
     fn default() -> Self {
         Self::new()

@@ -7,13 +7,13 @@ use tracing::warn;
 
 // PURPOSE: WorkspaceDetector — FR-002 Multi-Workspace: detect type, probe workspace, enumerate members
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct WorkspaceDetector {
     filesystem: Arc<dyn IFileSystemIOProtocol>,
 }
 
-// ─── Block 2: Protocol Trait Implementation ───────────────
+// ─── Block 2: Module Contract ───────────────
 
 impl IWorkspaceMembersProtocol for WorkspaceDetector {
     fn detect(&self, path: &FilePath) -> WorkspaceType {
@@ -102,7 +102,7 @@ impl IWorkspaceMembersProtocol for WorkspaceDetector {
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
+// ─── Block 3: Module Helpers ──────
 
 impl WorkspaceDetector {
     /// Create a new WorkspaceDetector with filesystem IO dependency.

@@ -7,19 +7,19 @@
 use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
 use std::sync::Arc;
 
-// ─── Block 1: Struct Definitions ───────────────────
+// ─── Block 1: Module Declaration ───────────────────
 pub struct ExtraBlockAgent {
     scanner: Arc<dyn IFileScanProtocol>,
 }
 
-// ─── Block 2: Aggregate Trait Implementation ───────
+// ─── Block 2: Module Contract ───────
 impl IExtraBlockAggregate for ExtraBlockAgent {
     fn execute(&self, files: &[FileEntry]) -> usize {
         self.scanner.scan(files).len()
     }
 }
 
-// ─── Block 3: Constructors, Std Traits, Helpers ────
+// ─── Block 3: Module Helpers ────
 impl ExtraBlockAgent {
     pub fn new(scanner: Arc<dyn IFileScanProtocol>) -> Self {
         Self { scanner }

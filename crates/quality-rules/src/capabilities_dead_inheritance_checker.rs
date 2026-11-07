@@ -13,11 +13,11 @@ use shared_quality_rules::utility_bypass_detector::skip_cfg_test_block;
 //   3. For each `class Foo: pass` (Python empty class) → flag
 //   4. For each `class Foo {}` / `interface Foo {}` (JS/TS empty) → flag
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct DeadInheritanceChecker {}
 
-// ─── Block 2: Protocol Trait Implementation ───────────────
+// ─── Block 2: Module Contract ───────────────
 
 impl IDeadInheritanceProtocol for DeadInheritanceChecker {
     fn check_dead_inheritance(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
@@ -130,7 +130,7 @@ impl IDeadInheritanceProtocol for DeadInheritanceChecker {
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
+// ─── Block 3: Module Helpers ──────
 
 impl Default for DeadInheritanceChecker {
     fn default() -> Self {

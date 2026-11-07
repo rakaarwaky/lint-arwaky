@@ -17,7 +17,7 @@ from shared.src.taxonomy_result_vo import ResultVO
 __all__ = ["DivisionOrchestrator", "DivisionOrchestratorDeps"]
 
 
-# ─── Block 1: Struct Definition ───────────────────────────
+# ─── Block 1: Module Declaration ───────────────────────────
 
 class DivisionOrchestratorDeps:
     def __init__(
@@ -29,7 +29,7 @@ class DivisionOrchestratorDeps:
         self.log = log
 
 
-# ─── Block 2: Aggregate Implementation ────────────────────
+# ─── Block 2: Module Contract ────────────────────
 
 class DivisionOrchestrator(IDivisionAggregate):
     def __init__(self, deps: DivisionOrchestratorDeps):
@@ -46,7 +46,7 @@ class DivisionOrchestrator(IDivisionAggregate):
         return result
 
 
-# ─── Block 3: Helpers, Private Methods ────────────────────
+# ─── Block 3: Module Helpers ────────────────────
 
     def history(self) -> list[ResultVO]:
         """Every result this feature has produced so far."""

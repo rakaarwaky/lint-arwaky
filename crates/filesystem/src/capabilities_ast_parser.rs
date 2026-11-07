@@ -17,7 +17,7 @@ use std::collections::VecDeque;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex, OnceLock, RwLock};
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct ASTParser {
     asts: DashMap<PathBuf, Arc<tree_sitter::Tree>>,
@@ -27,7 +27,7 @@ pub struct ASTParser {
     imports: RwLock<Vec<ImportEntry>>,
 }
 
-// ─── Block 2: Public Contract (domain protocol ONLY) ──────
+// ─── Block 2: Module ContractPublic Contract (domain protocol ONLY) ──────
 
 impl IParserProtocol for ASTParser {
     fn parse_warnings(&self) -> &[ParseWarning] {
@@ -102,7 +102,7 @@ impl IParserProtocol for ASTParser {
     }
 }
 
-// ─── Block 3: Constructors, Std Traits & Helpers ─────────
+// ─── Block 3: Module Helpers ─────────
 
 impl ASTParser {
     pub fn new() -> Self {

@@ -14,7 +14,7 @@ use shared_file_watch::taxonomy_file_watch_vo::WatchEvent;
 use shared_file_watch::taxonomy_file_watch_vo::WatchEventKind;
 use tokio::sync::broadcast;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct NotifyWatchProvider {
     watcher: Mutex<Option<notify_debouncer_mini::Debouncer<RecommendedWatcher>>>,
@@ -22,7 +22,7 @@ pub struct NotifyWatchProvider {
     ignore_patterns: Mutex<Vec<String>>,
 }
 
-// ─── Block 2: Protocol Trait Implementation ───────────────
+// ─── Block 2: Module Contract ───────────────
 // NOTE: #[async_trait] required — shared contract still uses it.
 // Remove when protocol traits switch to native async fn in traits.
 
@@ -111,7 +111,7 @@ impl IWatchLifecycleProtocol for NotifyWatchProvider {
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
+// ─── Block 3: Module Helpers ──────
 
 impl Default for NotifyWatchProvider {
     fn default() -> Self {

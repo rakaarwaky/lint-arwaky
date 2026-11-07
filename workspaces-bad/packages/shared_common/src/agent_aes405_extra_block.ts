@@ -14,7 +14,7 @@ export interface IExtraBlockAggregate {
   execute(files: FileEntry[]): number;
 }
 
-// ─── Block 1: Struct Definitions ───────────────────
+// ─── Block 1: Module Declaration ───────────────────
 export class ExtraBlockAgent implements IExtraBlockAggregate {
   constructor(private scanner: IFileScanProtocol) {}
 
@@ -23,7 +23,7 @@ export class ExtraBlockAgent implements IExtraBlockAggregate {
   }
 }
 
-// ─── Block 2: Aggregate Trait Implementation ───────
+// ─── Block 2: Module Contract ───────
 // AES405: no second aggregate block — one aggregate impl belongs in Block 2.
 export class ExtraBlockAgent {
   collect(files: FileEntry[]): FileEntry[] {
@@ -31,7 +31,7 @@ export class ExtraBlockAgent {
   }
 }
 
-// ─── Block 3: Constructors, Std Traits, Helpers ────
+// ─── Block 3: Module Helpers ────
 export class ExtraBlockAgent {
   normalise(files: FileEntry[]): FileEntry[] {
     return files;

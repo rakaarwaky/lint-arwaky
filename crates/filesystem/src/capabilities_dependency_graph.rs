@@ -13,7 +13,7 @@ use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 use std::sync::OnceLock;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 static EMPTY_PATH_MAP: std::sync::LazyLock<HashMap<PathBuf, Vec<PathBuf>>> =
     std::sync::LazyLock::new(HashMap::new);
@@ -28,7 +28,7 @@ pub struct DependencyGraph {
     implementations: OnceLock<HashMap<String, Vec<PathBuf>>>,
 }
 
-// ─── Block 2: Public Contract (domain protocol ONLY) ──────
+// ─── Block 2: Module ContractPublic Contract (domain protocol ONLY) ──────
 
 impl IGraphProtocol for DependencyGraph {
     fn build_graph(
@@ -102,7 +102,7 @@ impl IGraphProtocol for DependencyGraph {
     }
 }
 
-// ─── Block 3: Constructors, Std Traits & Helpers ─────────
+// ─── Block 3: Module Helpers ─────────
 
 impl DependencyGraph {
     pub fn new() -> Self {

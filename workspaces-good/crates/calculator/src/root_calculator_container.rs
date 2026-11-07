@@ -6,13 +6,13 @@ use crate::capabilities_multiplication_analyzer::MultiplicationAnalyzer;
 use crate::capabilities_subtraction_analyzer::SubtractionAnalyzer;
 use calculator_shared::calculator::contract_calculator_aggregate::ICalculatorAggregate;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct CalculatorContainer {
     orchestrator: CalculatorOrchestrator,
 }
 
-// ─── Block 2: Wiring & Factory ────────────────────────────
+// ─── Block 2: Module Contract ────────────────────────────
 
 impl CalculatorContainer {
     pub fn new() -> Self {

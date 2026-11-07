@@ -10,13 +10,13 @@ use shared_project_setup::taxonomy_project_setup_vo::McpBinaryNameVO;
 
 use std::collections::HashMap;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 /// Business logic for MCP config generation. Delegates auxiliary file operations
 /// to the utility layer (`shared_project_setup::utility_project_setup_helpers`).
 pub struct SetupMcpConfigGenerator;
 
-// ─── Block 2: Protocol Trait Implementation ───────────────
+// ─── Block 2: Module Contract ───────────────
 
 impl IMcpConfigGenerationProtocol for SetupMcpConfigGenerator {
     /// Generate the base mcp.json entry for lint-arwaky.
@@ -141,7 +141,7 @@ impl IMcpConfigGenerationProtocol for SetupMcpConfigGenerator {
     }
 }
 
-// ─── Block 3: Constructors ────────────────────────────────
+// ─── Block 3: Module HelpersConstructors ────────────────────────────────
 
 impl SetupMcpConfigGenerator {
     pub fn new() -> Self {

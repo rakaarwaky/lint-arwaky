@@ -12,14 +12,14 @@ use shared_file_watch::contract_watch_protocol::{
 };
 use shared_quality_rules::ICodeAnalysisAggregate;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct FileWatchContainer {
     lifecycle: Arc<dyn IWatchLifecycleProtocol>,
     filter: Arc<dyn IChangeFilterProtocol>,
 }
 
-// ─── Block 2: Wiring & Factory ────────────────────────────
+// ─── Block 2: Module Contract ────────────────────────────
 
 impl FileWatchContainer {
     pub fn new() -> Self {

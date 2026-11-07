@@ -4,7 +4,7 @@ use shared_common::taxonomy_name_vo::SymbolName;
 use shared_filesystem::taxonomy_filesystem_vo::ImportEntry;
 use std::collections::{HashMap, HashSet};
 
-// ─── Block 2: Usage Detection (AST-based) ─────────────────
+// ─── Block 2: Module ContractUsage Detection (AST-based) ─────────────────
 
 pub fn extract_used_symbols(
     _file_path: &str,

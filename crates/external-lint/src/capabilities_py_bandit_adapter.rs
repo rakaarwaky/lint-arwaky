@@ -27,7 +27,7 @@ use shared_filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
 use shared_quality_rules::LinterOperationError;
 use std::sync::Arc;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct BanditAdapter {
     pub tool_resolution: Arc<dyn IToolResolutionProtocol>,
@@ -36,7 +36,7 @@ pub struct BanditAdapter {
     bin_path: Option<FilePath>,
 }
 
-// ─── Block 2: Protocol Trait Implementation ───────────────
+// ─── Block 2: Module Contract ───────────────
 
 impl ILinterAdapterProtocol for BanditAdapter {
     fn name(&self) -> AdapterName {
@@ -139,7 +139,7 @@ impl ILinterAdapterProtocol for BanditAdapter {
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
+// ─── Block 3: Module Helpers ──────
 
 impl BanditAdapter {
     pub fn new(

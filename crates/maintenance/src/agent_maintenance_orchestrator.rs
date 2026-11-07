@@ -16,7 +16,7 @@ use shared_maintenance::taxonomy_maintenance_vo::{
 };
 use std::sync::Arc;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 /// One injected seam per maintenance FR; each of the eight capability checkers
 /// supplies its own protocol implementation.
@@ -42,7 +42,7 @@ pub struct MaintenanceCommandsOrchestrator {
     dependency_report: Arc<dyn IDependencyReportProtocol>,
 }
 
-// ─── Block 2: Aggregate Trait Implementation ──────────────
+// ─── Block 2: Module Contract ──────────────
 impl IMaintenanceAggregate for MaintenanceCommandsOrchestrator {
     fn execute(&self, request: MaintenanceRequest) -> MaintenanceResponse {
         match request {
@@ -85,7 +85,7 @@ impl IMaintenanceAggregate for MaintenanceCommandsOrchestrator {
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
+// ─── Block 3: Module Helpers ──────
 
 impl MaintenanceCommandsOrchestrator {
     pub fn new(deps: MaintenanceDeps) -> Self {

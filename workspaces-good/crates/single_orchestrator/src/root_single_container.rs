@@ -3,13 +3,13 @@ use crate::capabilities_single_checker::SingleChecker;
 use calculator_shared::single_orchestrator::contract_single_protocol::ISingleRunnerAggregate;
 use std::sync::Arc;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct SingleContainer {
     orchestrator: SingleGoalOrchestrator,
 }
 
-// ─── Block 2: Wiring & Factory ────────────────────────────
+// ─── Block 2: Module Contract ────────────────────────────
 
 impl SingleContainer {
     pub fn new() -> Self {

@@ -410,19 +410,19 @@ fn aes405_block_marker_beyond_three_detected() {
         "src/agent_dispatcher.rs",
         Language::Rust,
         "\
-// ─── Block 1: Struct Definitions ───
+// ─── Block 1: Module Declarations ───
 pub struct Dispatcher {
     scanner: Arc<dyn IScannerProtocol>,
 }
 
-// ─── Block 2: Aggregate Trait Implementation ───
+// ─── Block 2: Module Contract ───
 impl IDispatcherAggregate for Dispatcher {
     fn execute(&self) {
         self.scanner.scan();
     }
 }
 
-// ─── Block 3: Constructors, Std Traits, Helpers ───
+// ─── Block 3: Module Helpers ───
 impl Dispatcher {
     pub fn new(scanner: Arc<dyn IScannerProtocol>) -> Self {
         Self { scanner }
@@ -454,19 +454,19 @@ fn aes405_exactly_three_blocks_allowed() {
         "src/agent_dispatcher.rs",
         Language::Rust,
         "\
-// ─── Block 1: Struct Definitions ───
+// ─── Block 1: Module Declarations ───
 pub struct Dispatcher {
     scanner: Arc<dyn IScannerProtocol>,
 }
 
-// ─── Block 2: Aggregate Trait Implementation ───
+// ─── Block 2: Module Contract ───
 impl IDispatcherAggregate for Dispatcher {
     fn execute(&self) {
         self.scanner.scan();
     }
 }
 
-// ─── Block 3: Constructors, Std Traits, Helpers ───
+// ─── Block 3: Module Helpers ───
 impl Dispatcher {
     pub fn new(scanner: Arc<dyn IScannerProtocol>) -> Self {
         Self { scanner }

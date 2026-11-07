@@ -5,12 +5,12 @@ use shared_maintenance::taxonomy_maintenance_vo::{DependencyInfo, DependencyRepo
 use std::path::Path;
 use std::sync::Arc;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 pub struct DependencyReportChecker {
     io: Arc<dyn IFileSystemIOProtocol>,
 }
 
-// ─── Block 2: Protocol Implementation ─────────────────────
+// ─── Block 2: Module Contract ─────────────────────
 impl IDependencyReportProtocol for DependencyReportChecker {
     fn run_dependency_report(&self, project_path: &FilePath) -> Result<DependencyReport, String> {
         let root = &project_path.value;
@@ -64,7 +64,7 @@ impl IDependencyReportProtocol for DependencyReportChecker {
     }
 }
 
-// ─── Block 3: Constructors & Helpers ──────────────────────
+// ─── Block 3: Module Helpers ──────────────────────
 impl DependencyReportChecker {
     pub fn new(io: Arc<dyn IFileSystemIOProtocol>) -> Self {
         Self { io }

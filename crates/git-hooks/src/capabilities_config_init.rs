@@ -10,13 +10,13 @@ use shared_git_hooks::contract_git_hooks_protocol::IConfigInitProtocol;
 use shared_git_hooks::taxonomy_git_hooks_vo::HookIgnoreUpdateVO;
 use std::sync::Arc;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct ConfigInit {
     io: Arc<dyn IFileSystemIOProtocol>,
 }
 
-// ─── Block 2: Protocol Trait Implementation ───────────────
+// ─── Block 2: Module Contract ───────────────
 
 impl IConfigInitProtocol for ConfigInit {
     fn initialize_config(&self, path: &str) -> DescriptionVO {
@@ -98,7 +98,7 @@ impl IConfigInitProtocol for ConfigInit {
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
+// ─── Block 3: Module Helpers ──────
 
 impl ConfigInit {
     pub fn new(io: Arc<dyn IFileSystemIOProtocol>) -> Self {

@@ -32,7 +32,7 @@ use std::path::Path;
 use std::sync::Arc;
 use std::sync::OnceLock;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct TSCAdapter {
     lint_executor: Arc<dyn ICommandExecutorProtocol>,
@@ -40,7 +40,7 @@ pub struct TSCAdapter {
     tool_resolution: Arc<dyn IToolResolutionProtocol>,
 }
 
-// ─── Block 2: Protocol Trait Implementation ───────────────
+// ─── Block 2: Module Contract ───────────────
 
 impl ILinterAdapterProtocol for TSCAdapter {
     fn name(&self) -> AdapterName {
@@ -140,7 +140,7 @@ impl ILinterAdapterProtocol for TSCAdapter {
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
+// ─── Block 3: Module Helpers ──────
 
 fn tsc_pattern1() -> Option<&'static Regex> {
     static RE: OnceLock<Option<Regex>> = OnceLock::new();

@@ -18,11 +18,11 @@ use std::sync::LazyLock;
 
 static EMPTY_HASHSET: LazyLock<HashSet<String>> = LazyLock::new(HashSet::new);
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct ArchImportMandatoryChecker;
 
-// ─── Block 2: Protocol Trait Implementation ───────────────
+// ─── Block 2: Module Contract ───────────────
 
 impl IImportMandatoryProtocol for ArchImportMandatoryChecker {
     fn rule_name(&self) -> Identity {
@@ -104,7 +104,7 @@ impl IImportMandatoryProtocol for ArchImportMandatoryChecker {
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
+// ─── Block 3: Module Helpers ──────
 
 impl Default for ArchImportMandatoryChecker {
     fn default() -> Self {

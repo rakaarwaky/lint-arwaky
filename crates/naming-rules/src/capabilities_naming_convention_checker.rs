@@ -18,7 +18,7 @@ use shared_naming_rules::utility_naming_checker::{
 
 use std::sync::OnceLock;
 
-// ─── Block 1: Struct Definition ────────────────────────────
+// ─── Block 1: Module Declaration ────────────────────────────
 
 /// Stateless AES101 naming-convention checker (stem pattern validation).
 ///
@@ -29,7 +29,7 @@ pub struct NamingConventionChecker {}
 
 // ─── Protocol Trait Implementation ────────────────────────────────────────
 
-// ─── Block 2: Protocol Trait Implementation ────────────────
+// ─── Block 2: Module Contract ────────────────
 
 impl INamingConventionProtocol for NamingConventionChecker {
     /// FR-NamingRules-001 — AES101: check each file's stem against the
@@ -69,7 +69,7 @@ impl INamingConventionProtocol for NamingConventionChecker {
 
 // ─── Constructors, Helpers, Private Methods ────────────────────────────────
 
-// ─── Block 3: Constructors, Std Traits, Helpers ────────────
+// ─── Block 3: Module Helpers ────────────
 
 impl Default for NamingConventionChecker {
     fn default() -> Self {

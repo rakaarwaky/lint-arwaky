@@ -28,7 +28,7 @@ use shared_filesystem::taxonomy_filesystem_vo::Language;
 use shared_role_rules::utility_agent_role_checker::resolve_feature_protocol_count;
 use shared_role_rules::utility_role_reference_scanner::build_external_reference_map;
 
-// ─── Block 1: Struct Definitions ──────────────────────────
+// ─── Block 1: Module Declarations ──────────────────────────
 
 pub struct RoleCheckerDeps {
     pub classifier: Arc<dyn IClassificationProtocol>,
@@ -55,7 +55,7 @@ pub struct RoleOrchestrator {
     ignored_paths: Vec<String>,
 }
 
-// ─── Block 2: Aggregate Trait Implementation ──────────────
+// ─── Block 2: Module Contract ──────────────
 impl IRoleRunnerAggregate for RoleOrchestrator {
     fn execute(&self, request: RoleRequest) -> RoleResponse {
         match request {
@@ -70,7 +70,7 @@ impl IRoleRunnerAggregate for RoleOrchestrator {
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
+// ─── Block 3: Module Helpers ──────
 impl RoleOrchestrator {
     pub fn run_audit_with_entries(&self, files: &[FileEntry]) -> Vec<LintResult> {
         let mut results = Vec::new();

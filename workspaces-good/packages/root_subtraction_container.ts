@@ -13,7 +13,7 @@ import {
 import { SubtractionAnalyzer } from "calculator-subtraction/src/capabilities_subtraction_analyzer";
 import { SubtractionLog } from "calculator-subtraction/src/capabilities_subtraction_log";
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 export class SubtractionContainer {
   private _orchestrator: ISubtractionAggregate;

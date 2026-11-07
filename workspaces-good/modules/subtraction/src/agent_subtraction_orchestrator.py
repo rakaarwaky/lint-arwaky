@@ -16,7 +16,7 @@ from shared.src.taxonomy_result_vo import ResultVO
 __all__ = ["SubtractionOrchestrator", "SubtractionOrchestratorDeps"]
 
 
-# ─── Block 1: Struct Definition ───────────────────────────
+# ─── Block 1: Module Declaration ───────────────────────────
 
 class SubtractionOrchestratorDeps:
     def __init__(
@@ -28,7 +28,7 @@ class SubtractionOrchestratorDeps:
         self.log = log
 
 
-# ─── Block 2: Aggregate Implementation ────────────────────
+# ─── Block 2: Module Contract ────────────────────
 
 class SubtractionOrchestrator(ISubtractionAggregate):
     def __init__(self, deps: SubtractionOrchestratorDeps):
@@ -45,7 +45,7 @@ class SubtractionOrchestrator(ISubtractionAggregate):
         return result
 
 
-# ─── Block 3: Helpers, Private Methods ────────────────────
+# ─── Block 3: Module Helpers ────────────────────
 
     def history(self) -> list[ResultVO]:
         """Every result this feature has produced so far."""

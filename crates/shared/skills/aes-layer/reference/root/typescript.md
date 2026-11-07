@@ -52,7 +52,7 @@ import { <Capability> } from "./capabilities_<concept>_<role>";
 import type { <Concept>Aggregate } from "../shared/src/contract_<concept>_aggregate";
 import type { <Concept>Protocol } from "../shared/src/contract_<concept>_protocol";
 
-// ─── Block 1: Class Definition ────────────────────────────
+// ─── Block 1: Module DeclarationClass Definition ────────────────────────────
 
 export class <Concept>Container {
   private readonly orchestrator: <Concept>Orchestrator;
@@ -62,7 +62,7 @@ export class <Concept>Container {
     this.orchestrator = new <Concept>Orchestrator(runners);
   }
 
-  // ─── Block 2: Wiring & Factory ──────────────────────────
+  // ─── Block 2: Module ContractWiring & Factory ──────────────────────────
 
   get aggregate(): <Concept>Aggregate {
     return this.orchestrator;

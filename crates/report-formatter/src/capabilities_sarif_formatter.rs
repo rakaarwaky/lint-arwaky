@@ -11,11 +11,11 @@ use shared_report_formatter::taxonomy_report_formatter_vo::{SarifDriver, SarifRu
 use shared_report_formatter::taxonomy_report_formatter_vo::{SarifLog, SarifRun, SarifTool};
 use shared_report_formatter::taxonomy_report_formatter_vo::{SarifMessage, SarifResult};
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 /// SarifFormatter — produces SARIF 2.1.0 JSON output from ScanReport.
 pub struct SarifFormatter;
 
-// ─── Block 2: Protocol Trait Implementations ──────────────
+// ─── Block 2: Module Contracts ──────────────
 
 impl ISarifFormatProtocol for SarifFormatter {
     fn format_sarif(&self, report: &ScanReport) -> DisplayContent {
@@ -27,7 +27,7 @@ impl ISarifFormatProtocol for SarifFormatter {
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
+// ─── Block 3: Module Helpers ──────
 impl SarifFormatter {
     /// Create a new SARIF formatter.
     pub fn new() -> Self {

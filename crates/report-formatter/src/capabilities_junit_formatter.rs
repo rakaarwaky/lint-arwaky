@@ -3,11 +3,11 @@ use shared_cli_commands::{Format, LintResult, ScanReport};
 use shared_common::taxonomy_message_vo::DisplayContent;
 use shared_report_formatter::contract_report_formatter_protocol::IJUnitFormatProtocol;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 /// JunitFormatter — produces JUnit XML output from ScanReport.
 pub struct JunitFormatter;
 
-// ─── Block 2: Protocol Trait Implementations ──────────────
+// ─── Block 2: Module Contracts ──────────────
 
 impl IJUnitFormatProtocol for JunitFormatter {
     fn format_junit(&self, report: &ScanReport) -> DisplayContent {
@@ -19,7 +19,7 @@ impl IJUnitFormatProtocol for JunitFormatter {
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
+// ─── Block 3: Module Helpers ──────
 impl JunitFormatter {
     /// Create a new JUnit formatter.
     pub fn new() -> Self {
