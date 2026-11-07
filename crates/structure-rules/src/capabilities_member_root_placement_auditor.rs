@@ -59,7 +59,13 @@ fn audit_member_roots(root: &Path, ws_root: &Path) -> Vec<StructureFinding> {
             let Some((prefix, destination)) = forbidden_prefix(&file) else {
                 continue;
             };
-            findings.push(misplaced_file_finding(&member, ws_root, &file, prefix, destination));
+            findings.push(misplaced_file_finding(
+                &member,
+                ws_root,
+                &file,
+                prefix,
+                destination,
+            ));
         }
     }
     findings

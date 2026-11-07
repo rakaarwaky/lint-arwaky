@@ -209,33 +209,5 @@ pub const PR_LA_VIOLATION_MISSING_FRD: &str = "pr_la_missing_frd";
 pub const FR_PREFIX_OVERRIDES: &[(&str, &str)] =
     &[("doc-rules", "DOC"), ("structure-rules", "STR")];
 
-/// Ordered list of crate folders that PR-LA-001..N map to, in order.
-/// PR-LA-001 maps to the first entry (`filesystem`), PR-LA-002 to the second,
-/// and so on. A PR-LA id whose position names no folder is a mismatch.
-pub const PR_LA_FOLDER_ORDER: &[&str] = &[
-    "filesystem",
-    "auto-fix",
-    "cli-commands",
-    "config-system",
-    "dispatcher",
-    "doc-rules",
-    "external-lint",
-    "file-watch",
-    "git-hooks",
-    "import-rules",
-    "logging",
-    "maintenance",
-    "mcp-server",
-    "naming-rules",
-    "orphan-rules",
-    "project-setup",
-    "quality-rules",
-    "report-formatter",
-    "role-rules",
-    "shared",
-    "structure-rules",
-    "tui",
-];
-
 /// Document names scanned for PR-LA ids.
 pub const PR_LA_DOCUMENTS: &[&str] = &["PRD.md", "ROADMAP.md"];

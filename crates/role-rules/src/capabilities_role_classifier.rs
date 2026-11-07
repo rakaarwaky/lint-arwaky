@@ -14,6 +14,18 @@ use std::path::Path;
 // ─── Block 1: Module Declaration ───────────────────────────
 pub struct RoleClassifier {}
 
+impl RoleClassifier {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+
+impl Default for RoleClassifier {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 // ─── Block 2: Module Contract ───────────────
 impl IClassificationProtocol for RoleClassifier {
     fn classify_layer(&self, file: &FileEntry) -> Option<LayerNameVO> {
@@ -44,18 +56,5 @@ impl IClassificationProtocol for RoleClassifier {
             // `root` is pure DI wiring; unrecognised prefixes are skipped.
             _ => None,
         }
-    }
-}
-
-// ─── Block 3: Module Helpers ───────────
-impl Default for RoleClassifier {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl RoleClassifier {
-    pub fn new() -> Self {
-        Self {}
     }
 }

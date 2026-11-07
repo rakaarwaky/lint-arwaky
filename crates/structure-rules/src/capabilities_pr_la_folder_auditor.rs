@@ -126,9 +126,13 @@ fn fr_id_matches_folder(fr_id: &str, prefix: &str) -> bool {
 /// Part B: every PR-LA-001..N id in PRD.md / ROADMAP.md maps to a real crate
 /// folder by order (PR-LA-001 → first folder), the folder exists under a
 /// member dir, and the heading's title names that folder.
+///
+/// The folder order is derived from the actual crate folders present under
+/// each member dir, so AES706 can lint any project — not just lint-arwaky
+/// itself. Sorted alphabetically for a stable order independent of scan order.
 fn audit_pr_la_documents(root: &Path, ws_root: &Path) -> Vec<StructureFinding> {
-    let order = consts::PR_LA_FOLDER_ORDER;
     let members = utility_structure_parsers::scoped_member_dirs(root, ws_root);
+    let order = crate_folder_names(&members);
     let mut findings = Vec::new();
     for doc_name in consts::PR_LA_DOCUMENTS {
         let doc = ws_root.join(doc_name);
@@ -139,14 +143,10 @@ fn audit_pr_la_documents(root: &Path, ws_root: &Path) -> Vec<StructureFinding> {
             continue;
         };
         for (position, pr_la_id, title) in extract_pr_la_ids(&contents) {
-            let expected_folder = order.get(position).copied().unwrap_or("");
+            let expected_folder = order.get(position).map(|s| s.as_str()).unwrap_or("");
             if expected_folder.is_empty() {
                 findings.push(dangling_pr_la_finding(
-                    &doc,
-                    ws_root,
-                    &pr_la_id,
-                    position,
-                    doc_name,
+                    &doc, ws_root, &pr_la_id, position, doc_name,
                 ));
                 continue;
             }
@@ -299,6 +299,25 @@ fn crate_folders(member: &Path) -> Vec<PathBuf> {
         .collect();
     dirs.sort();
     dirs
+}
+
+/// Sorted names of every crate folder under *members*, used as the PR-LA
+/// folder order. Derived from the actual workspace being audited so AES706
+/// can lint any project — not just lint-arwaky itself.
+fn crate_folder_names(members: &[PathBuf]) -> Vec<String> {
+    let mut names: Vec<String> = members
+        .iter()
+        .flat_map(|member| {
+            crate_folders(member).into_iter().filter_map(|folder| {
+                folder
+                    .file_name()
+                    .and_then(|n| n.to_str())
+                    .map(|s| s.to_string())
+            })
+        })
+        .collect();
+    names.sort();
+    names
 }
 
 /// Classify *folder* by its crate structure, mirroring the doc-rules
@@ -491,9 +510,9 @@ fn extract_fr_ids(contents: &str) -> Vec<String> {
 }
 
 /// Extract every `PR-LA-NNN` id from document contents as
-/// `(position, id, title)`. The position is the id's slot in
-/// `PR_LA_FOLDER_ORDER` (`PR-LA-001` → 0), so it stays stable even when an id
-/// is mentioned more than once. The title is the heading text after the colon
+/// `(position, id, title)`. The position is the id's slot in the crate folder
+/// order (`PR-LA-001` → 0), so it stays stable even when an id is mentioned more
+/// than once. The title is the heading text after the colon
 /// (empty when the heading has none), e.g. `### PR-LA-001: Multi-language
 /// scanning (Rust, Python, JS/TS)`.
 fn extract_pr_la_ids(contents: &str) -> Vec<(usize, String, String)> {
