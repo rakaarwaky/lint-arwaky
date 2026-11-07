@@ -11,6 +11,18 @@ use tracing_subscriber::EnvFilter;
 #[derive(Default)]
 pub struct FilterBuilder {}
 
+
+impl Default for FilterBuilder {
+    fn default() -> Self {{
+        Self::new()
+    }
+}
+
+impl FilterBuilder {
+    pub fn new() -> Self {{
+        Self {}
+    }
+}
 // ─── Block 2: Module Contract ───────────────
 
 impl IFilterBuildProtocol for FilterBuilder {
@@ -24,8 +36,3 @@ impl IFilterBuildProtocol for FilterBuilder {
 
 // ─── Block 3: Module Helpers ───────────
 
-impl FilterBuilder {
-    pub fn new() -> Self {
-        Self {}
-    }
-}

@@ -14,6 +14,18 @@ use std::path::{Path, PathBuf};
 
 pub struct CapabilitiesWorkspace;
 
+impl Default for CapabilitiesWorkspace {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl CapabilitiesWorkspace {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
 // ─── Block 2: Module Contract ───
 
 impl IWorkspaceProtocol for CapabilitiesWorkspace {

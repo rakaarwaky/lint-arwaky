@@ -11,36 +11,7 @@ pub struct SecurityScanChecker {
     io: Arc<dyn IFileSystemIOProtocol>,
 }
 
-// ─── Block 2: Module Contract ─────────────────────
-impl ISecurityScanProtocol for SecurityScanChecker {
-    fn run_security_scan(&self, project_path: &FilePath) -> SecurityScanReport {
-        let root = &project_path.value;
-        let path = Path::new(root);
-        if self.io.path_exists(&path.join("Cargo.lock")) {
-            return self.scan_rust(root);
-        }
-        if self.io.path_exists(&path.join("requirements.txt"))
-            || self.io.path_exists(&path.join("poetry.lock"))
-            || self.io.path_exists(&path.join("Pipfile.lock"))
-            || self.io.path_exists(&path.join("uv.lock"))
-        {
-            return self.scan_python(root);
-        }
-        if self.io.path_exists(&path.join("package-lock.json"))
-            || self.io.path_exists(&path.join("npm-shrinkwrap.json"))
-        {
-            return self.scan_javascript(root);
-        }
-        SecurityScanReport {
-            language: "Unknown".to_string(),
-            tool_name: "none".to_string(),
-            findings: Vec::new(),
-            tool_installed: false,
-        }
-    }
-}
 
-// ─── Block 3: Module Helpers ──────────────────────
 impl SecurityScanChecker {
     pub fn new(io: Arc<dyn IFileSystemIOProtocol>) -> Self {
         Self { io }
@@ -187,3 +158,33 @@ impl SecurityScanChecker {
         }
     }
 }
+// ─── Block 2: Module Contract ─────────────────────
+impl ISecurityScanProtocol for SecurityScanChecker {
+    fn run_security_scan(&self, project_path: &FilePath) -> SecurityScanReport {
+        let root = &project_path.value;
+        let path = Path::new(root);
+        if self.io.path_exists(&path.join("Cargo.lock")) {
+            return self.scan_rust(root);
+        }
+        if self.io.path_exists(&path.join("requirements.txt"))
+            || self.io.path_exists(&path.join("poetry.lock"))
+            || self.io.path_exists(&path.join("Pipfile.lock"))
+            || self.io.path_exists(&path.join("uv.lock"))
+        {
+            return self.scan_python(root);
+        }
+        if self.io.path_exists(&path.join("package-lock.json"))
+            || self.io.path_exists(&path.join("npm-shrinkwrap.json"))
+        {
+            return self.scan_javascript(root);
+        }
+        SecurityScanReport {
+            language: "Unknown".to_string(),
+            tool_name: "none".to_string(),
+            findings: Vec::new(),
+            tool_installed: false,
+        }
+    }
+}
+
+// ─── Block 3: Module Helpers ──────────────────────

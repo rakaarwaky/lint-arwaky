@@ -38,6 +38,43 @@ pub struct MyPyAdapter {
     bin_path: Option<FilePath>,
 }
 
+
+impl MyPyAdapter {
+    pub fn new(
+        lint_executor: Arc<dyn ICommandExecutorProtocol>,
+        bin_path: Option<FilePath>,
+        io: Arc<dyn IFileSystemIOProtocol>,
+        tool_resolution: Arc<dyn IToolResolutionProtocol>,
+    ) -> Self {
+        Self {
+            lint_executor,
+            bin_path,
+            io,
+            tool_resolution,
+        }
+    }
+
+    fn resolve_executable(&self) -> String {
+        match self.bin_path.as_ref() {
+            Some(p) => p.value().to_string(),
+            None => "mypy".to_string(),
+        }
+    }
+
+    pub fn map_severity(msg_type: &str, msg: &str) -> Severity {
+        let m = msg.to_lowercase();
+        if msg_type == "note" {
+            return Severity::LOW;
+        }
+        if m.contains("syntax") || m.contains("parse") {
+            return Severity::CRITICAL;
+        }
+        if msg_type == "warning" {
+            return Severity::MEDIUM;
+        }
+        Severity::HIGH
+    }
+}
 // ─── Block 2: Module Contract ───────────────
 
 impl ILinterAdapterProtocol for MyPyAdapter {
@@ -173,39 +210,3 @@ fn mypy_re_without_col() -> Option<&'static Regex> {
         .as_ref()
 }
 
-impl MyPyAdapter {
-    pub fn new(
-        lint_executor: Arc<dyn ICommandExecutorProtocol>,
-        bin_path: Option<FilePath>,
-        io: Arc<dyn IFileSystemIOProtocol>,
-        tool_resolution: Arc<dyn IToolResolutionProtocol>,
-    ) -> Self {
-        Self {
-            lint_executor,
-            bin_path,
-            io,
-            tool_resolution,
-        }
-    }
-
-    fn resolve_executable(&self) -> String {
-        match self.bin_path.as_ref() {
-            Some(p) => p.value().to_string(),
-            None => "mypy".to_string(),
-        }
-    }
-
-    pub fn map_severity(msg_type: &str, msg: &str) -> Severity {
-        let m = msg.to_lowercase();
-        if msg_type == "note" {
-            return Severity::LOW;
-        }
-        if m.contains("syntax") || m.contains("parse") {
-            return Severity::CRITICAL;
-        }
-        if msg_type == "warning" {
-            return Severity::MEDIUM;
-        }
-        Severity::HIGH
-    }
-}

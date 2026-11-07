@@ -58,27 +58,7 @@ pub struct ExternalLintOrchestrator {
     deps: ExternalLintDeps,
 }
 
-// ─── Block 2: Module Contract ──────────────
 
-impl IExternalLintAggregate for ExternalLintOrchestrator {
-    fn execute(&self, request: ExternalLintRequest) -> ExternalLintResponse {
-        match request {
-            ExternalLintRequest::ScanAll { path } => {
-                let violations = self.scan_all(&path);
-                ExternalLintResponse::Scan { violations }
-            }
-            ExternalLintRequest::ScanAllWithContext { path, context } => {
-                let violations = self.scan_all_with_context(&path, &context);
-                ExternalLintResponse::Scan { violations }
-            }
-            ExternalLintRequest::AdapterNames => ExternalLintResponse::AdapterNames {
-                names: self.adapter_names(),
-            },
-        }
-    }
-}
-
-// ─── Block 3: Module Helpers ──────
 impl ExternalLintOrchestrator {
     pub fn new(deps: ExternalLintDeps) -> Self {
         Self { deps }
@@ -277,7 +257,27 @@ impl ExternalLintOrchestrator {
         }
     }
 }
+// ─── Block 2: Module Contract ──────────────
 
+impl IExternalLintAggregate for ExternalLintOrchestrator {
+    fn execute(&self, request: ExternalLintRequest) -> ExternalLintResponse {
+        match request {
+            ExternalLintRequest::ScanAll { path } => {
+                let violations = self.scan_all(&path);
+                ExternalLintResponse::Scan { violations }
+            }
+            ExternalLintRequest::ScanAllWithContext { path, context } => {
+                let violations = self.scan_all_with_context(&path, &context);
+                ExternalLintResponse::Scan { violations }
+            }
+            ExternalLintRequest::AdapterNames => ExternalLintResponse::AdapterNames {
+                names: self.adapter_names(),
+            },
+        }
+    }
+}
+
+// ─── Block 3: Module Helpers ──────
 // ─── Adapter thread helper (Block 3) ───────────────────────
 
 /// Result of running one adapter in its worker thread. Private helper type:

@@ -16,11 +16,25 @@ use shared_import_rules::utility_import_resolver;
 use std::collections::{HashMap, HashSet};
 use std::sync::LazyLock;
 
-static EMPTY_HASHSET: LazyLock<HashSet<String>> = LazyLock::new(HashSet::new);
-
 // ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct ArchImportMandatoryChecker;
+
+impl Default for ArchImportMandatoryChecker {
+    fn default() -> Self {
+        Self
+    }
+}
+
+impl ArchImportMandatoryChecker {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
+/// Shared empty set, borrowed when a layer defines no exception list so the
+/// lookup site never allocates per file.
+static EMPTY_HASHSET: LazyLock<HashSet<String>> = LazyLock::new(HashSet::new);
 
 // ─── Block 2: Module Contract ───────────────
 
@@ -59,7 +73,7 @@ impl IImportMandatoryProtocol for ArchImportMandatoryChecker {
             })
             .collect();
 
-        let mut file_violations: Vec<LintResult> = files
+        let file_violations: Vec<LintResult> = files
             .values
             .iter()
             .flat_map(|f| {
@@ -90,33 +104,13 @@ impl IImportMandatoryProtocol for ArchImportMandatoryChecker {
             })
             .collect();
 
-        // Deduplicate violations by (file, line, code) — HashSet for non-consecutive dedup
-        let mut seen: HashSet<(String, i64, String)> = HashSet::new();
-        file_violations.retain(|v| {
-            seen.insert((
-                v.file.value().to_string(),
-                v.line.value(),
-                v.code.code().to_string(),
-            ))
-        });
-
-        Ok(LintResultList::new(file_violations))
+        Ok(LintResultList::new(dedup_by_file_line_code(file_violations)))
     }
 }
 
 // ─── Block 3: Module Helpers ──────
 
-impl Default for ArchImportMandatoryChecker {
-    fn default() -> Self {
-        Self
-    }
-}
-
 impl ArchImportMandatoryChecker {
-    pub fn new() -> Self {
-        Self
-    }
-
     /// Unified mandatory import check: layer definitions + config overrides.
     fn check_file_mandatory(
         &self,
@@ -238,7 +232,7 @@ impl ArchImportMandatoryChecker {
 
             let is_present = entries.iter().any(|entry| {
                 utility_import_resolver::entry_matches_scope(entry, &req_layer, &req_suffixes)
-            }) || self._check_barrel_mandatory(
+            }) || Self::_check_barrel_mandatory(
                 entries,
                 &req_layer,
                 &req_suffixes,
@@ -270,7 +264,6 @@ impl ArchImportMandatoryChecker {
     }
 
     fn _check_barrel_mandatory(
-        &self,
         entries: &[ImportEntry],
         _layer: &LayerNameVO,
         suffixes: &[Identity],
@@ -306,4 +299,18 @@ impl ArchImportMandatoryChecker {
         }
         false
     }
+}
+
+/// Deduplicate violations by (file, line, code) — HashSet for non-consecutive dedup.
+fn dedup_by_file_line_code(violations: Vec<LintResult>) -> Vec<LintResult> {
+    let mut seen: HashSet<(String, i64, String)> = HashSet::new();
+    let mut unique = violations;
+    unique.retain(|v| {
+        seen.insert((
+            v.file.value().to_string(),
+            v.line.value(),
+            v.code.code().to_string(),
+        ))
+    });
+    unique
 }

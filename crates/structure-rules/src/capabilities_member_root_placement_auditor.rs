@@ -82,7 +82,7 @@ fn misplaced_file_finding(
     StructureFinding::new(
         consts::RULE_CODE_MEMBER_ROOT_PLACEMENT,
         consts::MEMBER_ROOT_VIOLATION_MISPLACED_FILE,
-        file.rel(&ws_root),
+        file.rel(ws_root),
         format!(
             "member dir '{}' holds '{}' (prefix '{prefix}') at its root",
             relative_to(member, ws_root),

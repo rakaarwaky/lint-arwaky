@@ -38,6 +38,66 @@ pub struct RuffAdapter {
     bin_path: Option<FilePath>,
 }
 
+
+impl RuffAdapter {
+    pub fn new(
+        lint_executor: Arc<dyn ICommandExecutorProtocol>,
+        bin_path: Option<FilePath>,
+        io: Arc<dyn IFileSystemIOProtocol>,
+        tool_resolution: Arc<dyn IToolResolutionProtocol>,
+    ) -> Self {
+        Self {
+            lint_executor,
+            bin_path,
+            io,
+            tool_resolution,
+        }
+    }
+
+    fn resolve_executable(&self) -> String {
+        match self.bin_path.as_ref() {
+            Some(p) => p.value().to_string(),
+            None => "ruff".to_string(),
+        }
+    }
+
+    pub fn map_severity(&self, _severity: &str, code: &str) -> Severity {
+        // FR-004: Ruff severity mapping is code-based, not tool-severity-based.
+        // Codes may carry the `ruff::` prefix; match on the bare code.
+        let bare = code.rsplit("::").next().unwrap_or(code);
+        if bare == "E999" || bare.starts_with('S') {
+            Severity::CRITICAL // syntax error (E999) or security rules (S1xx)
+        } else if bare == "F401" {
+            Severity::MEDIUM // unused import
+        } else if (bare.starts_with('F')
+            && bare.len() >= 3
+            && bare[1..]
+                .parse::<u32>()
+                .is_ok_and(|n| (800..900).contains(&n)))
+            || (bare.starts_with('B')
+                && bare.len() >= 3
+                && bare[1..]
+                    .parse::<u32>()
+                    .is_ok_and(|n| (1..100).contains(&n)))
+        {
+            Severity::HIGH // F8xx: undefined name, B0xx: bugbear
+        } else if (bare.starts_with('E')
+            && bare.len() >= 3
+            && bare[1..]
+                .parse::<u32>()
+                .is_ok_and(|n| (100..200).contains(&n) || (500..600).contains(&n)))
+            || (bare.starts_with('W')
+                && bare.len() >= 3
+                && bare[1..]
+                    .parse::<u32>()
+                    .is_ok_and(|n| (200..300).contains(&n)))
+        {
+            Severity::LOW // E1xx: indentation, E5xx: line length, W2xx: whitespace
+        } else {
+            Severity::MEDIUM // default
+        }
+    }
+}
 // ─── Block 2: Module Contract ───────────────
 
 impl ILinterAdapterProtocol for RuffAdapter {
@@ -158,62 +218,3 @@ impl ILinterAdapterProtocol for RuffAdapter {
 
 // ─── Block 3: Module Helpers ──────
 
-impl RuffAdapter {
-    pub fn new(
-        lint_executor: Arc<dyn ICommandExecutorProtocol>,
-        bin_path: Option<FilePath>,
-        io: Arc<dyn IFileSystemIOProtocol>,
-        tool_resolution: Arc<dyn IToolResolutionProtocol>,
-    ) -> Self {
-        Self {
-            lint_executor,
-            bin_path,
-            io,
-            tool_resolution,
-        }
-    }
-
-    fn resolve_executable(&self) -> String {
-        match self.bin_path.as_ref() {
-            Some(p) => p.value().to_string(),
-            None => "ruff".to_string(),
-        }
-    }
-
-    pub fn map_severity(&self, _severity: &str, code: &str) -> Severity {
-        // FR-004: Ruff severity mapping is code-based, not tool-severity-based.
-        // Codes may carry the `ruff::` prefix; match on the bare code.
-        let bare = code.rsplit("::").next().unwrap_or(code);
-        if bare == "E999" || bare.starts_with('S') {
-            Severity::CRITICAL // syntax error (E999) or security rules (S1xx)
-        } else if bare == "F401" {
-            Severity::MEDIUM // unused import
-        } else if (bare.starts_with('F')
-            && bare.len() >= 3
-            && bare[1..]
-                .parse::<u32>()
-                .is_ok_and(|n| (800..900).contains(&n)))
-            || (bare.starts_with('B')
-                && bare.len() >= 3
-                && bare[1..]
-                    .parse::<u32>()
-                    .is_ok_and(|n| (1..100).contains(&n)))
-        {
-            Severity::HIGH // F8xx: undefined name, B0xx: bugbear
-        } else if (bare.starts_with('E')
-            && bare.len() >= 3
-            && bare[1..]
-                .parse::<u32>()
-                .is_ok_and(|n| (100..200).contains(&n) || (500..600).contains(&n)))
-            || (bare.starts_with('W')
-                && bare.len() >= 3
-                && bare[1..]
-                    .parse::<u32>()
-                    .is_ok_and(|n| (200..300).contains(&n)))
-        {
-            Severity::LOW // E1xx: indentation, E5xx: line length, W2xx: whitespace
-        } else {
-            Severity::MEDIUM // default
-        }
-    }
-}

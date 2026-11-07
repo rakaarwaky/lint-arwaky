@@ -5,7 +5,6 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use shared_common::LineNumber;
 use shared_common::taxonomy_lint_vo::LintResult;
 use shared_common::taxonomy_severity_vo::Severity;
 use shared_filesystem::taxonomy_filesystem_vo::{FileEntry, ParseMetadata, PythonClassItem};

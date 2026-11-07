@@ -18,6 +18,12 @@ pub struct StdioClient {
     timeout: Timeout,
 }
 
+
+impl StdioClient {
+    pub fn new(timeout: Timeout) -> Self {
+        Self { timeout }
+    }
+}
 // ─── Block 2: Module Contract ───────────────
 
 impl ICommandExecutorProtocol for StdioClient {
@@ -205,8 +211,3 @@ fn bounded_child_wait(child: &mut std::process::Child, deadline_secs: f64) -> bo
     }
 }
 
-impl StdioClient {
-    pub fn new(timeout: Timeout) -> Self {
-        Self { timeout }
-    }
-}

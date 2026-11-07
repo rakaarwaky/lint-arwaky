@@ -16,6 +16,12 @@ pub struct ChangeLintHandler {
     linter: Arc<dyn ICodeAnalysisAggregate>,
 }
 
+
+impl ChangeLintHandler {
+    pub fn new(linter: Arc<dyn ICodeAnalysisAggregate>) -> Self {
+        Self { linter }
+    }
+}
 // ─── Block 2: Module Contract ───────────────
 
 impl IChangeLintProtocol for ChangeLintHandler {
@@ -42,8 +48,3 @@ impl IChangeLintProtocol for ChangeLintHandler {
 
 // ─── Block 3: Module Helpers ──────
 
-impl ChangeLintHandler {
-    pub fn new(linter: Arc<dyn ICodeAnalysisAggregate>) -> Self {
-        Self { linter }
-    }
-}

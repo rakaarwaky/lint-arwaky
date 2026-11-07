@@ -59,170 +59,7 @@ pub struct FilesystemOrchestrator {
     pub(crate) rebuild_lock: Mutex<()>,
 }
 
-// ─── Block 2: Module Contract ──────────────
-impl IFilesystemAggregate for FilesystemOrchestrator {
-    fn execute(&self, request: FilesystemRequest) -> FilesystemResponse {
-        match request {
-            FilesystemRequest::FileList | FilesystemRequest::FileListSnapshot => {
-                FilesystemResponse::Files {
-                    entries: self.file_list_snapshot(),
-                }
-            }
-            FilesystemRequest::ReadCached { path } => FilesystemResponse::Content {
-                value: self.read_cached(&path),
-            },
-            FilesystemRequest::GetFileContent { path } => FilesystemResponse::ContentOpt {
-                value: self.get_file_content(&path),
-            },
-            FilesystemRequest::HasFile { path } => FilesystemResponse::Has {
-                exists: self.has_file(&path),
-            },
-            FilesystemRequest::CollectFileEntries { patterns } => FilesystemResponse::Entries {
-                pairs: self.collect_file_entries(&patterns),
-            },
-            FilesystemRequest::DiscoverSourceFiles { root, ignored } => FilesystemResponse::Paths {
-                paths: self.discover_source_files(&root, &ignored),
-            },
-            FilesystemRequest::DiscoverFilesInDirectories {
-                root,
-                directories,
-                ignored,
-            } => FilesystemResponse::Paths {
-                paths: self.discover_files_in_directories(&root, &directories, &ignored),
-            },
-            FilesystemRequest::ReadFile { path } => FilesystemResponse::ContentOpt {
-                value: self.read_file(&path),
-            },
-            FilesystemRequest::ScanDirectory { root } => FilesystemResponse::Paths {
-                paths: self.scan_directory(&root),
-            },
-            FilesystemRequest::DiscoverFiles { root } => FilesystemResponse::Paths {
-                paths: self.discover_files(&root),
-            },
-            FilesystemRequest::CollectSourceFiles { dir, ignored } => {
-                FilesystemResponse::SourcePaths {
-                    paths: self.collect_source_files(&dir, &ignored),
-                }
-            }
-            FilesystemRequest::ReadLintableFile { path } => FilesystemResponse::ContentOpt {
-                value: self.read_lintable_file(&path),
-            },
-            FilesystemRequest::UsedIdentifiers { path } => FilesystemResponse::Identifiers {
-                ids: self.used_identifiers_for(&path),
-            },
-            FilesystemRequest::UsedIdentifiersAll => FilesystemResponse::Identifiers {
-                ids: self.used_identifiers_all(),
-            },
-            FilesystemRequest::ImplementedTraitsMap => FilesystemResponse::TraitsMap {
-                map: self.implemented_traits_map(),
-            },
-            FilesystemRequest::BuildFileIndex { root } => {
-                self.build_file_index(&root);
-                FilesystemResponse::Paths { paths: Vec::new() }
-            }
-            FilesystemRequest::BuildFileIndexWithIgnored { root, ignored } => {
-                self.build_file_index_with_ignored(&root, &ignored);
-                FilesystemResponse::Paths { paths: Vec::new() }
-            }
-            FilesystemRequest::BuildOrphanGraphContext { root, ignored } => {
-                FilesystemResponse::GraphContext {
-                    context: self.build_orphan_graph_context(&root, &ignored),
-                }
-            }
-            FilesystemRequest::FindWorkspaceRoot { start } => FilesystemResponse::Root {
-                path: self.find_workspace_root(&start),
-            },
-            FilesystemRequest::ResolvedImportList => FilesystemResponse::Imports {
-                entries: self.resolved_import_list(),
-            },
-            FilesystemRequest::ExtendImportCache { entries } => {
-                self.extend_import_cache(entries);
-                FilesystemResponse::Imports {
-                    entries: Vec::new(),
-                }
-            }
-            FilesystemRequest::ImportListSnapshot => FilesystemResponse::Imports {
-                entries: self.import_list_snapshot(),
-            },
-            FilesystemRequest::DetectProjectLanguages { root } => {
-                // Through the workspace seam, not straight to the shared utility:
-                // every sibling arm in this match goes through an injected
-                // capability, and a substituted implementation must stay in
-                // control of what the agent observes.
-                FilesystemResponse::ProjectLanguages {
-                    languages: self.deps.workspace.detect_project_languages(&root),
-                }
-            }
-            FilesystemRequest::ReadFileResult { path } => FilesystemResponse::ContentOpt {
-                // A missing or unreadable file is `None`, not "". Returning an
-                // empty string here made every caller that probes for a file
-                // (config discovery walking up the tree) believe it found an
-                // empty file and stop looking.
-                value: self.deps.io.read_to_string(&path).ok().map(|c| c.value),
-            },
-            FilesystemRequest::WriteFile { path, content } => FilesystemResponse::OpOk {
-                ok: self.deps.io.write_string(&path, &content).is_ok(),
-            },
-            FilesystemRequest::CreateDirAll { path } => FilesystemResponse::OpOk {
-                ok: self.deps.io.create_dir_all(&path).is_ok(),
-            },
-            FilesystemRequest::CopyFile { src, dst } => FilesystemResponse::OpOk {
-                ok: self.deps.io.copy_file(&src, &dst).is_ok(),
-            },
-            FilesystemRequest::RemoveDirAll { path } => FilesystemResponse::OpOk {
-                ok: self.deps.io.remove_dir_all(&path).is_ok(),
-            },
-            FilesystemRequest::RemoveFile { path } => FilesystemResponse::OpOk {
-                ok: self.deps.io.remove_file(&path).is_ok(),
-            },
-            FilesystemRequest::SetPermissions { path, mode } => FilesystemResponse::OpOk {
-                ok: self
-                    .deps
-                    .io
-                    .set_permissions(&path, FileMode::new(mode))
-                    .is_ok(),
-            },
-            FilesystemRequest::Canonicalize { path } => FilesystemResponse::Paths {
-                paths: match self.deps.io.canonicalize(&path) {
-                    Ok(p) => vec![p.to_string_lossy().to_string()],
-                    Err(_) => Vec::new(),
-                },
-            },
-            FilesystemRequest::PathExists { path } => FilesystemResponse::PathExists {
-                exists: self.deps.io.path_exists(&path),
-            },
-            FilesystemRequest::BinaryAvailable { bin_name } => {
-                FilesystemResponse::BinaryAvailable {
-                    available: self
-                        .deps
-                        .tool_resolution
-                        .is_binary_available(&shared_common::ToolName::new(bin_name.clone())),
-                }
-            }
-            FilesystemRequest::IsMemberPath { path } => FilesystemResponse::IsMember {
-                is_member: self.deps.workspace.is_member_path(&path),
-            },
-            FilesystemRequest::ParseAll { mut entries } => {
-                self.deps.parser.parse_all(&mut entries);
-                FilesystemResponse::ParsedEntries { entries }
-            }
-            FilesystemRequest::ImportsFor { path } => FilesystemResponse::Imports {
-                entries: self.deps.parser.imports_for(&path),
-            },
-            FilesystemRequest::ReadDirEntries { dir } => FilesystemResponse::Paths {
-                paths: match self.deps.io.read_dir_entries_as_pathbuf(&dir) {
-                    Ok(v) => v
-                        .into_iter()
-                        .map(|p| p.to_string_lossy().to_string())
-                        .collect(),
-                    Err(_) => Vec::new(),
-                },
-            },
-        }
-    }
-}
 
-// ─── Block 3: Module Helpers ─────────
 impl FilesystemOrchestrator {
     pub fn new(deps: FilesystemOrchestratorDeps) -> Self {
         Self {
@@ -717,3 +554,167 @@ impl FilesystemOrchestrator {
         map
     }
 }
+// ─── Block 2: Module Contract ──────────────
+impl IFilesystemAggregate for FilesystemOrchestrator {
+    fn execute(&self, request: FilesystemRequest) -> FilesystemResponse {
+        match request {
+            FilesystemRequest::FileList | FilesystemRequest::FileListSnapshot => {
+                FilesystemResponse::Files {
+                    entries: self.file_list_snapshot(),
+                }
+            }
+            FilesystemRequest::ReadCached { path } => FilesystemResponse::Content {
+                value: self.read_cached(&path),
+            },
+            FilesystemRequest::GetFileContent { path } => FilesystemResponse::ContentOpt {
+                value: self.get_file_content(&path),
+            },
+            FilesystemRequest::HasFile { path } => FilesystemResponse::Has {
+                exists: self.has_file(&path),
+            },
+            FilesystemRequest::CollectFileEntries { patterns } => FilesystemResponse::Entries {
+                pairs: self.collect_file_entries(&patterns),
+            },
+            FilesystemRequest::DiscoverSourceFiles { root, ignored } => FilesystemResponse::Paths {
+                paths: self.discover_source_files(&root, &ignored),
+            },
+            FilesystemRequest::DiscoverFilesInDirectories {
+                root,
+                directories,
+                ignored,
+            } => FilesystemResponse::Paths {
+                paths: self.discover_files_in_directories(&root, &directories, &ignored),
+            },
+            FilesystemRequest::ReadFile { path } => FilesystemResponse::ContentOpt {
+                value: self.read_file(&path),
+            },
+            FilesystemRequest::ScanDirectory { root } => FilesystemResponse::Paths {
+                paths: self.scan_directory(&root),
+            },
+            FilesystemRequest::DiscoverFiles { root } => FilesystemResponse::Paths {
+                paths: self.discover_files(&root),
+            },
+            FilesystemRequest::CollectSourceFiles { dir, ignored } => {
+                FilesystemResponse::SourcePaths {
+                    paths: self.collect_source_files(&dir, &ignored),
+                }
+            }
+            FilesystemRequest::ReadLintableFile { path } => FilesystemResponse::ContentOpt {
+                value: self.read_lintable_file(&path),
+            },
+            FilesystemRequest::UsedIdentifiers { path } => FilesystemResponse::Identifiers {
+                ids: self.used_identifiers_for(&path),
+            },
+            FilesystemRequest::UsedIdentifiersAll => FilesystemResponse::Identifiers {
+                ids: self.used_identifiers_all(),
+            },
+            FilesystemRequest::ImplementedTraitsMap => FilesystemResponse::TraitsMap {
+                map: self.implemented_traits_map(),
+            },
+            FilesystemRequest::BuildFileIndex { root } => {
+                self.build_file_index(&root);
+                FilesystemResponse::Paths { paths: Vec::new() }
+            }
+            FilesystemRequest::BuildFileIndexWithIgnored { root, ignored } => {
+                self.build_file_index_with_ignored(&root, &ignored);
+                FilesystemResponse::Paths { paths: Vec::new() }
+            }
+            FilesystemRequest::BuildOrphanGraphContext { root, ignored } => {
+                FilesystemResponse::GraphContext {
+                    context: self.build_orphan_graph_context(&root, &ignored),
+                }
+            }
+            FilesystemRequest::FindWorkspaceRoot { start } => FilesystemResponse::Root {
+                path: self.find_workspace_root(&start),
+            },
+            FilesystemRequest::ResolvedImportList => FilesystemResponse::Imports {
+                entries: self.resolved_import_list(),
+            },
+            FilesystemRequest::ExtendImportCache { entries } => {
+                self.extend_import_cache(entries);
+                FilesystemResponse::Imports {
+                    entries: Vec::new(),
+                }
+            }
+            FilesystemRequest::ImportListSnapshot => FilesystemResponse::Imports {
+                entries: self.import_list_snapshot(),
+            },
+            FilesystemRequest::DetectProjectLanguages { root } => {
+                // Through the workspace seam, not straight to the shared utility:
+                // every sibling arm in this match goes through an injected
+                // capability, and a substituted implementation must stay in
+                // control of what the agent observes.
+                FilesystemResponse::ProjectLanguages {
+                    languages: self.deps.workspace.detect_project_languages(&root),
+                }
+            }
+            FilesystemRequest::ReadFileResult { path } => FilesystemResponse::ContentOpt {
+                // A missing or unreadable file is `None`, not "". Returning an
+                // empty string here made every caller that probes for a file
+                // (config discovery walking up the tree) believe it found an
+                // empty file and stop looking.
+                value: self.deps.io.read_to_string(&path).ok().map(|c| c.value),
+            },
+            FilesystemRequest::WriteFile { path, content } => FilesystemResponse::OpOk {
+                ok: self.deps.io.write_string(&path, &content).is_ok(),
+            },
+            FilesystemRequest::CreateDirAll { path } => FilesystemResponse::OpOk {
+                ok: self.deps.io.create_dir_all(&path).is_ok(),
+            },
+            FilesystemRequest::CopyFile { src, dst } => FilesystemResponse::OpOk {
+                ok: self.deps.io.copy_file(&src, &dst).is_ok(),
+            },
+            FilesystemRequest::RemoveDirAll { path } => FilesystemResponse::OpOk {
+                ok: self.deps.io.remove_dir_all(&path).is_ok(),
+            },
+            FilesystemRequest::RemoveFile { path } => FilesystemResponse::OpOk {
+                ok: self.deps.io.remove_file(&path).is_ok(),
+            },
+            FilesystemRequest::SetPermissions { path, mode } => FilesystemResponse::OpOk {
+                ok: self
+                    .deps
+                    .io
+                    .set_permissions(&path, FileMode::new(mode))
+                    .is_ok(),
+            },
+            FilesystemRequest::Canonicalize { path } => FilesystemResponse::Paths {
+                paths: match self.deps.io.canonicalize(&path) {
+                    Ok(p) => vec![p.to_string_lossy().to_string()],
+                    Err(_) => Vec::new(),
+                },
+            },
+            FilesystemRequest::PathExists { path } => FilesystemResponse::PathExists {
+                exists: self.deps.io.path_exists(&path),
+            },
+            FilesystemRequest::BinaryAvailable { bin_name } => {
+                FilesystemResponse::BinaryAvailable {
+                    available: self
+                        .deps
+                        .tool_resolution
+                        .is_binary_available(&shared_common::ToolName::new(bin_name.clone())),
+                }
+            }
+            FilesystemRequest::IsMemberPath { path } => FilesystemResponse::IsMember {
+                is_member: self.deps.workspace.is_member_path(&path),
+            },
+            FilesystemRequest::ParseAll { mut entries } => {
+                self.deps.parser.parse_all(&mut entries);
+                FilesystemResponse::ParsedEntries { entries }
+            }
+            FilesystemRequest::ImportsFor { path } => FilesystemResponse::Imports {
+                entries: self.deps.parser.imports_for(&path),
+            },
+            FilesystemRequest::ReadDirEntries { dir } => FilesystemResponse::Paths {
+                paths: match self.deps.io.read_dir_entries_as_pathbuf(&dir) {
+                    Ok(v) => v
+                        .into_iter()
+                        .map(|p| p.to_string_lossy().to_string())
+                        .collect(),
+                    Err(_) => Vec::new(),
+                },
+            },
+        }
+    }
+}
+
+// ─── Block 3: Module Helpers ─────────

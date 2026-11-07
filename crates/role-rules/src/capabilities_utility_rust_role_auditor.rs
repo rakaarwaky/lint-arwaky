@@ -20,6 +20,18 @@ use shared_role_rules::utility_utility_role_checker as utility;
 
 pub struct UtilityRustRoleAuditor {}
 
+impl UtilityRustRoleAuditor {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+
+impl Default for UtilityRustRoleAuditor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 // ─── Block 2: Module Contract ───
 
 impl IUtilityRoleProtocol for UtilityRustRoleAuditor {
@@ -34,17 +46,7 @@ impl IUtilityRoleProtocol for UtilityRustRoleAuditor {
 
 // ─── Block 3: Module Helpers ───
 
-impl Default for UtilityRustRoleAuditor {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl UtilityRustRoleAuditor {
-    pub fn new() -> Self {
-        Self {}
-    }
-
     /// The metadata path reads the type inventory that tree-sitter already
     /// collected and reports every forbidden item in one finding.
     fn _check_with_metadata(

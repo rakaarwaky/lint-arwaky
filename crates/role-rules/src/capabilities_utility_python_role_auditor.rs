@@ -18,6 +18,18 @@ use shared_role_rules::utility_utility_role_checker as utility;
 
 pub struct UtilityPythonRoleAuditor {}
 
+impl UtilityPythonRoleAuditor {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+
+impl Default for UtilityPythonRoleAuditor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 // ─── Block 2: Module Contract ───
 
 impl IUtilityRoleProtocol for UtilityPythonRoleAuditor {
@@ -32,17 +44,7 @@ impl IUtilityRoleProtocol for UtilityPythonRoleAuditor {
 
 // ─── Block 3: Module Helpers ───
 
-impl Default for UtilityPythonRoleAuditor {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl UtilityPythonRoleAuditor {
-    pub fn new() -> Self {
-        Self {}
-    }
-
     /// The metadata path reads class names that tree-sitter already collected.
     fn _check_with_metadata(
         &self,

@@ -36,6 +36,40 @@ pub struct BanditAdapter {
     bin_path: Option<FilePath>,
 }
 
+
+impl BanditAdapter {
+    pub fn new(
+        lint_executor: Arc<dyn ICommandExecutorProtocol>,
+        bin_path: Option<FilePath>,
+        io: Arc<dyn IFileSystemIOProtocol>,
+        tool_resolution: Arc<dyn IToolResolutionProtocol>,
+    ) -> Self {
+        Self {
+            lint_executor,
+            bin_path,
+            io,
+            tool_resolution,
+        }
+    }
+
+    fn resolve_executable(&self) -> String {
+        match self.bin_path.as_ref() {
+            Some(p) => p.value().to_string(),
+            None => "bandit".to_string(),
+        }
+    }
+
+    pub fn map_severity(&self, severity: &str, confidence: &str) -> Severity {
+        // FR-004: Bandit severity — HIGH confidence + HIGH severity → CRITICAL.
+        match (severity, confidence) {
+            ("HIGH", "HIGH") => Severity::CRITICAL,
+            ("HIGH", _) => Severity::HIGH,
+            ("MEDIUM", _) => Severity::MEDIUM,
+            ("LOW", _) => Severity::LOW,
+            _ => Severity::MEDIUM,
+        }
+    }
+}
 // ─── Block 2: Module Contract ───────────────
 
 impl ILinterAdapterProtocol for BanditAdapter {
@@ -141,36 +175,3 @@ impl ILinterAdapterProtocol for BanditAdapter {
 
 // ─── Block 3: Module Helpers ──────
 
-impl BanditAdapter {
-    pub fn new(
-        lint_executor: Arc<dyn ICommandExecutorProtocol>,
-        bin_path: Option<FilePath>,
-        io: Arc<dyn IFileSystemIOProtocol>,
-        tool_resolution: Arc<dyn IToolResolutionProtocol>,
-    ) -> Self {
-        Self {
-            lint_executor,
-            bin_path,
-            io,
-            tool_resolution,
-        }
-    }
-
-    fn resolve_executable(&self) -> String {
-        match self.bin_path.as_ref() {
-            Some(p) => p.value().to_string(),
-            None => "bandit".to_string(),
-        }
-    }
-
-    pub fn map_severity(&self, severity: &str, confidence: &str) -> Severity {
-        // FR-004: Bandit severity — HIGH confidence + HIGH severity → CRITICAL.
-        match (severity, confidence) {
-            ("HIGH", "HIGH") => Severity::CRITICAL,
-            ("HIGH", _) => Severity::HIGH,
-            ("MEDIUM", _) => Severity::MEDIUM,
-            ("LOW", _) => Severity::LOW,
-            _ => Severity::MEDIUM,
-        }
-    }
-}

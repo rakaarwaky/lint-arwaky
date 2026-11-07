@@ -15,6 +15,66 @@ pub struct ConfigYamlReader {
     io: Arc<dyn IFileSystemIOProtocol>,
 }
 
+
+impl ConfigYamlReader {
+    /// Create a new YAML config reader with filesystem IO dependency.
+    pub fn new(io: Arc<dyn IFileSystemIOProtocol>) -> Self {
+        Self { io }
+    }
+
+    /// Read config from XDG-compliant directories in priority order.
+    /// Returns `None` to fall back to compiled-in defaults.
+    fn read_any(&self, language: ConfigLanguage) -> Result<Option<ConfigSource>, ConfigError> {
+        let mut candidates: Vec<std::path::PathBuf> = Vec::new();
+
+        if let Some(user_config) = dirs::config_dir() {
+            for filename in language.config_file_names() {
+                candidates.push(user_config.join("lint-arwaky").join(filename));
+            }
+        }
+
+        // Harden XDG_CONFIG_DIRS: limit to 8 entries, require absolute paths
+        if let Ok(system_dirs) = std::env::var("XDG_CONFIG_DIRS") {
+            if !system_dirs.is_empty() {
+                for dir in system_dirs.split(':').filter(|s| !s.is_empty()).take(8) {
+                    let path = std::path::PathBuf::from(dir);
+                    if !path.is_absolute() {
+                        continue;
+                    }
+                    for filename in language.config_file_names() {
+                        candidates.push(path.join("lint-arwaky").join(filename));
+                    }
+                }
+            }
+        } else {
+            // Default system XDG path
+            for filename in language.config_file_names() {
+                candidates.push(
+                    std::path::PathBuf::from("/etc/xdg")
+                        .join("lint-arwaky")
+                        .join(filename),
+                );
+            }
+        }
+
+        for path in &candidates {
+            match self.io.read_to_string(path) {
+                Ok(content) => {
+                    return Ok(Some(ConfigSource::new(
+                        language.as_str(),
+                        path.to_string_lossy().to_string(),
+                        content.value,
+                    )));
+                }
+                Err(e) if e.kind() == std::io::ErrorKind::NotFound => continue,
+                Err(e) => {
+                    warn!(path = %path.display(), error = %e, "failed to read config");
+                }
+            }
+        }
+        Ok(None)
+    }
+}
 // ─── Block 2: Module Contract ───────────────
 
 impl IConfigReadProtocol for ConfigYamlReader {
@@ -128,62 +188,3 @@ impl IConfigReadProtocol for ConfigYamlReader {
 
 // ─── Block 3: Module Helpers ──────
 
-impl ConfigYamlReader {
-    /// Create a new YAML config reader with filesystem IO dependency.
-    pub fn new(io: Arc<dyn IFileSystemIOProtocol>) -> Self {
-        Self { io }
-    }
-
-    /// Read config from XDG-compliant directories in priority order.
-    /// Returns `None` to fall back to compiled-in defaults.
-    fn read_any(&self, language: ConfigLanguage) -> Result<Option<ConfigSource>, ConfigError> {
-        let mut candidates: Vec<std::path::PathBuf> = Vec::new();
-
-        if let Some(user_config) = dirs::config_dir() {
-            for filename in language.config_file_names() {
-                candidates.push(user_config.join("lint-arwaky").join(filename));
-            }
-        }
-
-        // Harden XDG_CONFIG_DIRS: limit to 8 entries, require absolute paths
-        if let Ok(system_dirs) = std::env::var("XDG_CONFIG_DIRS") {
-            if !system_dirs.is_empty() {
-                for dir in system_dirs.split(':').filter(|s| !s.is_empty()).take(8) {
-                    let path = std::path::PathBuf::from(dir);
-                    if !path.is_absolute() {
-                        continue;
-                    }
-                    for filename in language.config_file_names() {
-                        candidates.push(path.join("lint-arwaky").join(filename));
-                    }
-                }
-            }
-        } else {
-            // Default system XDG path
-            for filename in language.config_file_names() {
-                candidates.push(
-                    std::path::PathBuf::from("/etc/xdg")
-                        .join("lint-arwaky")
-                        .join(filename),
-                );
-            }
-        }
-
-        for path in &candidates {
-            match self.io.read_to_string(path) {
-                Ok(content) => {
-                    return Ok(Some(ConfigSource::new(
-                        language.as_str(),
-                        path.to_string_lossy().to_string(),
-                        content.value,
-                    )));
-                }
-                Err(e) if e.kind() == std::io::ErrorKind::NotFound => continue,
-                Err(e) => {
-                    warn!(path = %path.display(), error = %e, "failed to read config");
-                }
-            }
-        }
-        Ok(None)
-    }
-}

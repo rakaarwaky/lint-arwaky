@@ -26,6 +26,18 @@ use std::collections::{HashMap, HashSet};
 
 pub struct ArchImportForbiddenChecker;
 
+impl Default for ArchImportForbiddenChecker {
+    fn default() -> Self {
+        Self
+    }
+}
+
+impl ArchImportForbiddenChecker {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
 // ─── Block 2: Module Contract ───────────────
 
 impl IImportForbiddenProtocol for ArchImportForbiddenChecker {
@@ -86,13 +98,11 @@ impl IImportForbiddenProtocol for ArchImportForbiddenChecker {
 
 // ─── Block 3: Module Helpers ──────
 
-impl Default for ArchImportForbiddenChecker {
-    fn default() -> Self {
-        Self
-    }
-}
-
 /// Build ImportEntry list from file content — test helper.
+///
+/// B-6a test seam: `pub` only so cross-crate tests can build import entries
+/// without a filesystem pass; production traffic enters through
+/// [`IImportForbiddenProtocol::check_forbidden_imports`].
 pub fn build_test_import_entries(file_path: &str, content: &str) -> Vec<ImportEntry> {
     let language = if file_path.ends_with(".rs") {
         Language::Rust
@@ -131,11 +141,11 @@ pub fn build_test_import_entries(file_path: &str, content: &str) -> Vec<ImportEn
 }
 
 impl ArchImportForbiddenChecker {
-    pub fn new() -> Self {
-        Self
-    }
-
     /// Check a single file's content for forbidden imports — test helper.
+    ///
+    /// B-6a test seam: `pub` only so cross-crate tests can drive the rule for
+    /// a single file without assembling a workspace; production traffic
+    /// enters through [`IImportForbiddenProtocol::check_forbidden_imports`].
     pub fn check_single_file(
         &self,
         file_path: &str,

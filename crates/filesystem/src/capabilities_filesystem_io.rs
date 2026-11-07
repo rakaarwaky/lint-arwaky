@@ -20,6 +20,12 @@ pub struct CapabilitiesFileSystemIO {
     timing: Arc<ScanTiming>,
 }
 
+
+impl CapabilitiesFileSystemIO {
+    pub fn new(timing: Arc<ScanTiming>) -> Self {
+        Self { timing }
+    }
+}
 // ─── Block 2: Module Contract ───
 
 impl IFileSystemIOProtocol for CapabilitiesFileSystemIO {
@@ -159,12 +165,6 @@ impl IFileSystemIOProtocol for CapabilitiesFileSystemIO {
 }
 
 // ─── Block 3: Module Helpers ─────────
-
-impl CapabilitiesFileSystemIO {
-    pub fn new(timing: Arc<ScanTiming>) -> Self {
-        Self { timing }
-    }
-}
 
 impl CapabilitiesFileSystemIO {
     pub fn with_default_timing() -> Self {

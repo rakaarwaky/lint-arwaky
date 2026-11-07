@@ -15,6 +15,18 @@ pub struct ChangeFilter {
     lintable_exts: &'static [&'static str],
 }
 
+
+impl Default for ChangeFilter {
+    fn default() -> Self {{
+        Self::new()
+    }
+}
+
+impl ChangeFilter {
+    pub fn new() -> Self {{
+        Self {}
+    }
+}
 // ─── Block 2: Module Contract ───────────────
 
 impl IChangeFilterProtocol for ChangeFilter {
@@ -30,38 +42,3 @@ impl IChangeFilterProtocol for ChangeFilter {
 
 // ─── Block 3: Module Helpers ──────
 
-impl Default for ChangeFilter {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl ChangeFilter {
-    pub fn new() -> Self {
-        Self {
-            lintable_exts: &[
-                ".rs", ".py", ".js", ".ts", ".tsx", ".jsx", ".mjs", ".cjs", ".json", ".css", ".md",
-                ".toml", ".yaml", ".yml",
-            ],
-        }
-    }
-
-    fn is_lintable(&self, path: &str) -> bool {
-        self.lintable_exts.iter().any(|ext| path.ends_with(ext))
-    }
-
-    pub fn dedup_events(&self, events: Vec<WatchEvent>) -> Vec<WatchEvent> {
-        let mut deduped: HashMap<String, WatchEvent> = HashMap::new();
-        for event in events {
-            deduped.insert(event.path.clone(), event);
-        }
-        deduped.into_values().collect()
-    }
-
-    fn filter_lintable(&self, events: Vec<WatchEvent>) -> Vec<WatchEvent> {
-        events
-            .into_iter()
-            .filter(|e| self.is_lintable(&e.path))
-            .collect()
-    }
-}

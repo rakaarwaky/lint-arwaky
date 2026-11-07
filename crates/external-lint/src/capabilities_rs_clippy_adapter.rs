@@ -44,6 +44,20 @@ pub struct RustLinterAdapter {
     _bin_path: Option<FilePath>,
 }
 
+
+impl RustLinterAdapter {
+    pub fn new(
+        executor: Arc<dyn ICommandExecutorProtocol>,
+        bin_path: Option<FilePath>,
+        tool_resolution: Arc<dyn IToolResolutionProtocol>,
+    ) -> Self {
+        Self {
+            executor,
+            _bin_path: bin_path,
+            tool_resolution,
+        }
+    }
+}
 // ─── Block 2: Module Contract ───────────────
 
 impl ILinterAdapterProtocol for RustLinterAdapter {
@@ -188,20 +202,6 @@ impl ILinterAdapterProtocol for RustLinterAdapter {
 }
 
 // ─── Block 3: Module Helpers ──────
-
-impl RustLinterAdapter {
-    pub fn new(
-        executor: Arc<dyn ICommandExecutorProtocol>,
-        bin_path: Option<FilePath>,
-        tool_resolution: Arc<dyn IToolResolutionProtocol>,
-    ) -> Self {
-        Self {
-            executor,
-            _bin_path: bin_path,
-            tool_resolution,
-        }
-    }
-}
 
 /// Map Clippy lint group to lint-arwaky severity per FR-004.
 pub fn map_clippy_severity(code: &str, level: &str) -> Severity {

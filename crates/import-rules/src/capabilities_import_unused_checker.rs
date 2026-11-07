@@ -16,6 +16,18 @@ use std::collections::HashMap;
 
 pub struct UnusedImportRuleChecker;
 
+impl Default for UnusedImportRuleChecker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl UnusedImportRuleChecker {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
 // ─── Block 2: Module Contract ────────────────
 
 impl IUnusedImportProtocol for UnusedImportRuleChecker {
@@ -29,26 +41,7 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
         if utility_import_resolver::is_barrel_file(&path.basename()) {
             return Ok(Vec::new());
         }
-        let imported_aliases =
-            utility_import_symbol_extractor::extract_imported_aliases_from_entries(import_entries);
-        let exported_symbols =
-            utility_import_symbol_extractor::extract_exported_symbols_from_entries(import_entries);
-        let used_symbols = utility_import_symbol_extractor::extract_used_symbols(
-            path.value(),
-            content,
-            &imported_aliases,
-            used_identifiers,
-        );
-        let mut unused: Vec<String> = Vec::new();
-        for alias in imported_aliases.keys() {
-            let alias_str = alias.value();
-            if shared_import_rules::utility_import_resolver::is_future_import(content, alias_str) {
-                continue;
-            }
-            if !used_symbols.contains(alias) && !exported_symbols.contains(alias) {
-                unused.push(alias_str.to_string());
-            }
-        }
+        let unused = self.unused_alias_names(path.value(), content, import_entries, used_identifiers);
         Ok(unused.into_iter().map(LintMessage::new).collect())
     }
 
@@ -67,6 +60,62 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
         if utility_import_resolver::is_barrel_file(basename) {
             return Ok(Vec::new());
         }
+        Ok(self.check_unused_imports_internal(
+            file,
+            content,
+            import_entries,
+            used_identifiers,
+            implemented_traits,
+        ))
+    }
+}
+
+// ─── Block 3: Module Helpers ────────────
+
+impl UnusedImportRuleChecker {
+    /// Names the imported aliases that are neither used in the file nor
+    /// re-exported by it.
+    fn unused_alias_names(
+        &self,
+        path: &str,
+        content: &str,
+        import_entries: &[ImportEntry],
+        used_identifiers: &[SymbolName],
+    ) -> Vec<String> {
+        let imported_aliases =
+            utility_import_symbol_extractor::extract_imported_aliases_from_entries(import_entries);
+        let exported_symbols =
+            utility_import_symbol_extractor::extract_exported_symbols_from_entries(import_entries);
+        let used_symbols = utility_import_symbol_extractor::extract_used_symbols(
+            path,
+            content,
+            &imported_aliases,
+            used_identifiers,
+        );
+        let mut unused: Vec<String> = Vec::new();
+        for alias in imported_aliases.keys() {
+            let alias_str = alias.value();
+            if shared_import_rules::utility_import_resolver::is_future_import(content, alias_str) {
+                continue;
+            }
+            if !used_symbols.contains(alias) && !exported_symbols.contains(alias) {
+                unused.push(alias_str.to_string());
+            }
+        }
+        unused
+    }
+
+    /// The per-file AES203 pipeline: an alias is reported only when it is
+    /// unused, not re-exported, not needed for method dispatch, and not a
+    /// known trait pattern.
+    fn check_unused_imports_internal(
+        &self,
+        file: &str,
+        content: &str,
+        import_entries: &[ImportEntry],
+        used_identifiers: &[SymbolName],
+        implemented_traits: &HashMap<String, Vec<String>>,
+    ) -> Vec<LintResult> {
         let imported_aliases =
             utility_import_symbol_extractor::extract_imported_aliases_from_entries(import_entries);
         let exported_symbols =
@@ -86,13 +135,13 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
             if used_symbols.contains(alias) || exported_symbols.contains(alias) {
                 continue;
             }
-            // ─── Cross-file trait usage detection ───────────────
-            // If the trait is implemented for any type used in this file,
-            // the import is needed for method dispatch (not truly unused).
+            // Cross-file trait usage detection: if the trait is implemented for
+            // any type used in this file, the import is needed for method
+            // dispatch (not truly unused).
             if is_trait_used_for_method_dispatch(alias_str, implemented_traits, used_identifiers) {
                 continue;
             }
-            // ─── Fallback: well-known trait patterns ────────────
+            // Fallback: well-known trait patterns.
             if let Some(raw_path) = imported_aliases.get(alias) {
                 let rp = raw_path.value();
                 if is_known_trait_pattern(rp, alias_str) {
@@ -112,20 +161,7 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
                 "Remove the unused import.",
             ));
         }
-        Ok(violations)
-    }
-}
-
-// ─── Block 3: Module Helpers ────────────
-
-impl Default for UnusedImportRuleChecker {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-impl UnusedImportRuleChecker {
-    pub fn new() -> Self {
-        Self
+        violations
     }
 }
 
@@ -141,6 +177,10 @@ impl UnusedImportRuleChecker {
 /// 2. Does any type that implements this trait appear in the file's used identifiers?
 ///
 /// If both conditions are true, the import is needed for method dispatch.
+///
+/// B-6a test seam: `pub` (with `#[doc(hidden)]`) only so cross-crate unit
+/// tests can drive the dispatch check; production traffic stays inside this
+/// module.
 #[doc(hidden)]
 pub fn is_trait_used_for_method_dispatch(
     trait_alias: &str,
@@ -166,9 +206,13 @@ pub fn is_trait_used_for_method_dispatch(
 
 /// Covers std library traits, async_trait, common naming patterns,
 /// and AES contract protocol naming conventions.
+///
+/// B-6a test seam: `pub` (with `#[doc(hidden)]`) only so cross-crate unit
+/// tests can drive the pattern check; production traffic stays inside this
+/// module.
 #[doc(hidden)]
 pub fn is_known_trait_pattern(raw_path: &str, alias_str: &str) -> bool {
-    // ─── AES naming convention: suffix-based only (not substring) ───
+    // AES naming convention: suffix-based only (not substring).
     if raw_path.ends_with("::protocol")
         || raw_path.ends_with("::aggregate")
         || alias_str.ends_with("Protocol")
@@ -176,7 +220,7 @@ pub fn is_known_trait_pattern(raw_path: &str, alias_str: &str) -> bool {
     {
         return true;
     }
-    // ─── Well-known Rust trait paths ───
+    // Well-known Rust trait paths.
     if raw_path.contains("prelude")
         || raw_path.contains("async_trait")
         || raw_path.contains("visit::Visit")
@@ -195,7 +239,7 @@ pub fn is_known_trait_pattern(raw_path: &str, alias_str: &str) -> bool {
     {
         return true;
     }
-    // ─── Common trait suffix patterns ───
+    // Common trait suffix patterns.
     if alias_str.ends_with("Ext")
         || alias_str.ends_with("Iterator")
         || alias_str.ends_with("Stream")

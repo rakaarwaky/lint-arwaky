@@ -23,6 +23,12 @@ use std::collections::HashMap;
 #[derive(Default)]
 pub struct DependencyCycleAnalyzer {}
 
+impl DependencyCycleAnalyzer {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+
 type ScannedFileEdges = (Vec<DependencyEdge>, Option<(String, String)>);
 
 // ─── Block 2: Module Contract ───────────────
@@ -39,7 +45,7 @@ impl ICycleImportProtocol for DependencyCycleAnalyzer {
     ) -> Vec<LintResult> {
         let file_strs: Vec<String> = files.iter().map(|f| f.to_string()).collect();
         let root_str = root_dir.to_string();
-        self._scan(
+        Self::_scan(
             config,
             layer_map,
             &file_strs,
@@ -59,7 +65,7 @@ impl ICycleImportProtocol for DependencyCycleAnalyzer {
         imports_map: &HashMap<String, Vec<ImportEntry>>,
     ) -> Result<Vec<LintResult>, ImportError> {
         let file_strs: Vec<String> = files.values.iter().map(|f| f.to_string()).collect();
-        let cycle_violations = self._scan(
+        let cycle_violations = Self::_scan(
             config,
             layer_map,
             &file_strs,
@@ -82,12 +88,7 @@ impl ICycleImportProtocol for DependencyCycleAnalyzer {
 // ─── Block 3: Module Helpers ──────
 
 impl DependencyCycleAnalyzer {
-    pub fn new() -> Self {
-        Self {}
-    }
-
     fn _scan(
-        &self,
         config: &ArchitectureConfig,
         layer_map: &LayerMapVO,
         files: &[String],

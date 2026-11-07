@@ -18,6 +18,21 @@ pub struct HookUninstaller {
     io: Arc<dyn IFileSystemIOProtocol>,
 }
 
+
+impl HookUninstaller {
+    pub fn new(root_dir: String, io: Arc<dyn IFileSystemIOProtocol>) -> Self {
+        Self { root_dir, io }
+    }
+
+    fn git_dir(&self) -> std::path::PathBuf {
+        std::path::PathBuf::from(&self.root_dir).join(".git")
+    }
+
+    fn is_git_repo(&self) -> bool {
+        let git = self.git_dir();
+        self.io.is_dir(&git)
+    }
+}
 // ─── Block 2: Module Contract ───────────────
 
 impl IHookUninstallProtocol for HookUninstaller {
@@ -37,17 +52,3 @@ impl IHookUninstallProtocol for HookUninstaller {
 
 // ─── Block 3: Module Helpers ──────
 
-impl HookUninstaller {
-    pub fn new(root_dir: String, io: Arc<dyn IFileSystemIOProtocol>) -> Self {
-        Self { root_dir, io }
-    }
-
-    fn git_dir(&self) -> std::path::PathBuf {
-        std::path::PathBuf::from(&self.root_dir).join(".git")
-    }
-
-    fn is_git_repo(&self) -> bool {
-        let git = self.git_dir();
-        self.io.is_dir(&git)
-    }
-}

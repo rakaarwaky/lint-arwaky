@@ -26,15 +26,15 @@ use std::path::Path;
 /// surface — are out of scope.
 pub struct TestSuiteCoverageAuditor {}
 
-impl Default for TestSuiteCoverageAuditor {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl TestSuiteCoverageAuditor {
     pub fn new() -> Self {
         Self {}
+    }
+}
+
+impl Default for TestSuiteCoverageAuditor {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

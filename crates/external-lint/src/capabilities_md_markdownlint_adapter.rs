@@ -57,6 +57,49 @@ pub struct MarkdownLintAdapter {
     context: Option<Arc<shared_external_lint::taxonomy_external_lint_vo::ExternalLintContext>>,
 }
 
+
+impl MarkdownLintAdapter {
+    pub fn new(
+        lint_executor: Arc<dyn ICommandExecutorProtocol>,
+        js_resolution: Arc<dyn IJsToolResolutionProtocol>,
+        io: Arc<dyn IFileSystemIOProtocol>,
+        tool_resolution: Arc<dyn IToolResolutionProtocol>,
+    ) -> Self {
+        Self {
+            lint_executor,
+            js_resolution,
+            io,
+            tool_resolution,
+            context: None,
+        }
+    }
+
+    /// Per-scan variant: the orchestrator wraps the registered adapter with the
+    /// context the surface layer pre-computed (pre-filtered Markdown file list,
+    /// resolved timeout, `ignored_rules`) so `scan` stays I/O-free and the
+    /// `ILinterAdapterProtocol::scan` signature is unchanged.
+    pub fn with_context(
+        mut self,
+        context: Arc<shared_external_lint::taxonomy_external_lint_vo::ExternalLintContext>,
+    ) -> Self {
+        self.context = Some(context);
+        self
+    }
+
+    /// Scan timeout for this invocation: the context-resolved value (config
+    /// `AdapterEntry.timeout`, else the 30 s markdownlint default) when the
+    /// surface layer attached a context, else the built-in default for direct
+    /// callers (unchanged behaviour).
+    fn scan_timeout(
+        &self,
+        context: Option<&shared_external_lint::taxonomy_external_lint_vo::ExternalLintContext>,
+    ) -> f64 {
+        match context {
+            Some(ctx) => markdown_scan_timeout(ctx),
+            None => MARKDOWNLINT_DEFAULT_SCAN_TIMEOUT_SECS,
+        }
+    }
+}
 // ─── Block 2: Module Contract ───────────────
 
 impl ILinterAdapterProtocol for MarkdownLintAdapter {
@@ -208,49 +251,6 @@ impl ILinterAdapterProtocol for MarkdownLintAdapter {
 }
 
 // ─── Block 3: Module Helpers ──────
-
-impl MarkdownLintAdapter {
-    pub fn new(
-        lint_executor: Arc<dyn ICommandExecutorProtocol>,
-        js_resolution: Arc<dyn IJsToolResolutionProtocol>,
-        io: Arc<dyn IFileSystemIOProtocol>,
-        tool_resolution: Arc<dyn IToolResolutionProtocol>,
-    ) -> Self {
-        Self {
-            lint_executor,
-            js_resolution,
-            io,
-            tool_resolution,
-            context: None,
-        }
-    }
-
-    /// Per-scan variant: the orchestrator wraps the registered adapter with the
-    /// context the surface layer pre-computed (pre-filtered Markdown file list,
-    /// resolved timeout, `ignored_rules`) so `scan` stays I/O-free and the
-    /// `ILinterAdapterProtocol::scan` signature is unchanged.
-    pub fn with_context(
-        mut self,
-        context: Arc<shared_external_lint::taxonomy_external_lint_vo::ExternalLintContext>,
-    ) -> Self {
-        self.context = Some(context);
-        self
-    }
-
-    /// Scan timeout for this invocation: the context-resolved value (config
-    /// `AdapterEntry.timeout`, else the 30 s markdownlint default) when the
-    /// surface layer attached a context, else the built-in default for direct
-    /// callers (unchanged behaviour).
-    fn scan_timeout(
-        &self,
-        context: Option<&shared_external_lint::taxonomy_external_lint_vo::ExternalLintContext>,
-    ) -> f64 {
-        match context {
-            Some(ctx) => markdown_scan_timeout(ctx),
-            None => MARKDOWNLINT_DEFAULT_SCAN_TIMEOUT_SECS,
-        }
-    }
-}
 
 /// Pre-filtered explicit Markdown file list from the scan context.
 ///

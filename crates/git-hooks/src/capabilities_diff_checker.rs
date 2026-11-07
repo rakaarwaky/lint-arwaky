@@ -65,156 +65,6 @@ pub struct DiffChecker {
     code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
 }
 
-// ─── Block 2: Module Contract ───────────────
-
-impl IDiffDetectionProtocol for DiffChecker {
-    fn get_diff(&self, path: &FilePath) -> GitDiffResultVO {
-        let default_branch = self.get_default_branch_sync(path);
-
-        // Classify files by change type using --diff-filter
-        let added = self.collect_by_filter(path, &default_branch, "A");
-        let modified = self.collect_by_filter(path, &default_branch, "M");
-        let deleted = self.collect_by_filter(path, &default_branch, "D");
-        let renamed = self.collect_by_filter_renamed(path, &default_branch);
-
-        // Merge all into a deduplicated set for the full list
-        let mut all_set: HashSet<FilePath> = HashSet::new();
-        all_set.extend(added.values.iter().cloned());
-        all_set.extend(modified.values.iter().cloned());
-        all_set.extend(deleted.values.iter().cloned());
-        // Renamed files appear as old_path -> new_path; add the new name
-        for renamed_file in &renamed.values {
-            all_set.insert(renamed_file.new_path.clone());
-        }
-
-        // If classification returned nothing, fall back to unclassified collection
-        if all_set.is_empty() {
-            let all_changed = self.collect_changed_files_sync(path, &default_branch);
-            all_set.extend(all_changed.values);
-        }
-
-        let all_vec: Vec<FilePath> = all_set.into_iter().collect();
-        let lintable_vec: Vec<FilePath> = all_vec
-            .iter()
-            .filter(|f| is_lintable_file(f))
-            .cloned()
-            .collect();
-
-        GitDiffResultVO {
-            added,
-            modified,
-            deleted,
-            renamed,
-            lintable_files: FilePathList::new(lintable_vec),
-            all_files: FilePathList::new(all_vec.clone()),
-            total_changed: Count::new(all_vec.len() as i64),
-        }
-    }
-
-    fn get_changed_files(&self, path: &FilePath, base: &GitBranchName) -> FilePathList {
-        let branch_str = if base.value().is_empty() || base.value() == "." {
-            self.get_default_branch_sync(path)
-        } else {
-            base.value().to_string()
-        };
-        self.collect_changed_files_sync(path, &branch_str)
-    }
-
-    fn get_default_branch(&self, path: &FilePath) -> GitBranchName {
-        GitBranchName::new(self.get_default_branch_sync(path))
-    }
-
-    fn run_git_diff_check(&self, path: &FilePath) -> LintResultList {
-        let default_branch = self.get_default_branch_sync(path);
-        let changed_files = self.collect_changed_files_sync(path, &default_branch);
-        let renamed_files = self.collect_by_filter_renamed(path, &default_branch);
-
-        // Build a set of all file paths that need processing
-        let mut all_paths: HashSet<FilePath> = HashSet::new();
-        all_paths.extend(changed_files.values.iter().cloned());
-        for renamed_file in &renamed_files.values {
-            all_paths.insert(renamed_file.old_path.clone());
-            all_paths.insert(renamed_file.new_path.clone());
-        }
-
-        // Filter to lintable source files only
-        let lintable: Vec<FilePath> = all_paths
-            .iter()
-            .filter(|f| is_lintable_file(f))
-            .cloned()
-            .collect();
-        if lintable.is_empty() {
-            return LintResultList::new(Vec::new());
-        }
-
-        // Build FileEntry list for the linter aggregate, tracking read failures.
-        let mut entries: Vec<FileEntry> = Vec::with_capacity(lintable.len());
-        let mut failures: Vec<LintResult> = Vec::new();
-        for fp in &lintable {
-            let joined = Path::new(&path.value).join(&fp.value);
-            match self.io.read_to_string(&joined) {
-                Ok(content) => entries.push(FileEntry {
-                    path: joined,
-                    extension: fp.extension(),
-                    language: Language::from_extension(&fp.extension())
-                        .unwrap_or(Language::Unknown),
-                    size: content.value.len() as u64,
-                    content: content.value,
-                    parse_ok: true,
-                    parse_metadata: None,
-                }),
-                // Deleted or renamed-away files still appear in git diff; they
-                // cannot be analysed and are skipped silently (FRD: invalid
-                // FilePath from git output → skipped silently). A symlink whose
-                // target is missing is NOT a deletion: the entry is on disk and
-                // the read failure is an analysis failure. Any other read
-                // failure is likewise reported distinctly.
-                Err(e)
-                    if e.kind() == std::io::ErrorKind::NotFound && !self.io.is_symlink(&joined) =>
-                {
-                    // For files not found on disk, try to read from git base
-                    if let Some(content) = self.read_from_git_base(path, fp, &default_branch) {
-                        entries.push(FileEntry {
-                            path: joined,
-                            extension: fp.extension(),
-                            language: Language::from_extension(&fp.extension())
-                                .unwrap_or(Language::Unknown),
-                            size: content.len() as u64,
-                            content,
-                            parse_ok: true,
-                            parse_metadata: None,
-                        });
-                    }
-                }
-                Err(e) => failures.push(analysis_failure(
-                    &fp.value,
-                    format!("failed to read changed file for analysis: {e}"),
-                )),
-            }
-        }
-
-        if !entries.is_empty() {
-            // Delegate to the linter aggregate: AES analysis over changed files.
-            // A panicking aggregate must not crash the hook: the failure is
-            // reported distinctly from violations (FRD Integration Points).
-            let violations = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-                self.code_analysis_linter
-                    .execute(CodeAnalysisRequest::run_analysis(&entries))
-                    .into_violations()
-            }))
-            .unwrap_or_else(|_| {
-                vec![analysis_failure(
-                    &path.value,
-                    "AES analysis panicked over changed files",
-                )]
-            });
-            failures.extend(violations);
-        }
-        LintResultList::new(failures)
-    }
-}
-
-// ─── Block 3: Module Helpers ──────
 
 impl DiffChecker {
     pub fn new(
@@ -428,3 +278,154 @@ impl DiffChecker {
         None
     }
 }
+// ─── Block 2: Module Contract ───────────────
+
+impl IDiffDetectionProtocol for DiffChecker {
+    fn get_diff(&self, path: &FilePath) -> GitDiffResultVO {
+        let default_branch = self.get_default_branch_sync(path);
+
+        // Classify files by change type using --diff-filter
+        let added = self.collect_by_filter(path, &default_branch, "A");
+        let modified = self.collect_by_filter(path, &default_branch, "M");
+        let deleted = self.collect_by_filter(path, &default_branch, "D");
+        let renamed = self.collect_by_filter_renamed(path, &default_branch);
+
+        // Merge all into a deduplicated set for the full list
+        let mut all_set: HashSet<FilePath> = HashSet::new();
+        all_set.extend(added.values.iter().cloned());
+        all_set.extend(modified.values.iter().cloned());
+        all_set.extend(deleted.values.iter().cloned());
+        // Renamed files appear as old_path -> new_path; add the new name
+        for renamed_file in &renamed.values {
+            all_set.insert(renamed_file.new_path.clone());
+        }
+
+        // If classification returned nothing, fall back to unclassified collection
+        if all_set.is_empty() {
+            let all_changed = self.collect_changed_files_sync(path, &default_branch);
+            all_set.extend(all_changed.values);
+        }
+
+        let all_vec: Vec<FilePath> = all_set.into_iter().collect();
+        let lintable_vec: Vec<FilePath> = all_vec
+            .iter()
+            .filter(|f| is_lintable_file(f))
+            .cloned()
+            .collect();
+
+        GitDiffResultVO {
+            added,
+            modified,
+            deleted,
+            renamed,
+            lintable_files: FilePathList::new(lintable_vec),
+            all_files: FilePathList::new(all_vec.clone()),
+            total_changed: Count::new(all_vec.len() as i64),
+        }
+    }
+
+    fn get_changed_files(&self, path: &FilePath, base: &GitBranchName) -> FilePathList {
+        let branch_str = if base.value().is_empty() || base.value() == "." {
+            self.get_default_branch_sync(path)
+        } else {
+            base.value().to_string()
+        };
+        self.collect_changed_files_sync(path, &branch_str)
+    }
+
+    fn get_default_branch(&self, path: &FilePath) -> GitBranchName {
+        GitBranchName::new(self.get_default_branch_sync(path))
+    }
+
+    fn run_git_diff_check(&self, path: &FilePath) -> LintResultList {
+        let default_branch = self.get_default_branch_sync(path);
+        let changed_files = self.collect_changed_files_sync(path, &default_branch);
+        let renamed_files = self.collect_by_filter_renamed(path, &default_branch);
+
+        // Build a set of all file paths that need processing
+        let mut all_paths: HashSet<FilePath> = HashSet::new();
+        all_paths.extend(changed_files.values.iter().cloned());
+        for renamed_file in &renamed_files.values {
+            all_paths.insert(renamed_file.old_path.clone());
+            all_paths.insert(renamed_file.new_path.clone());
+        }
+
+        // Filter to lintable source files only
+        let lintable: Vec<FilePath> = all_paths
+            .iter()
+            .filter(|f| is_lintable_file(f))
+            .cloned()
+            .collect();
+        if lintable.is_empty() {
+            return LintResultList::new(Vec::new());
+        }
+
+        // Build FileEntry list for the linter aggregate, tracking read failures.
+        let mut entries: Vec<FileEntry> = Vec::with_capacity(lintable.len());
+        let mut failures: Vec<LintResult> = Vec::new();
+        for fp in &lintable {
+            let joined = Path::new(&path.value).join(&fp.value);
+            match self.io.read_to_string(&joined) {
+                Ok(content) => entries.push(FileEntry {
+                    path: joined,
+                    extension: fp.extension(),
+                    language: Language::from_extension(&fp.extension())
+                        .unwrap_or(Language::Unknown),
+                    size: content.value.len() as u64,
+                    content: content.value,
+                    parse_ok: true,
+                    parse_metadata: None,
+                }),
+                // Deleted or renamed-away files still appear in git diff; they
+                // cannot be analysed and are skipped silently (FRD: invalid
+                // FilePath from git output → skipped silently). A symlink whose
+                // target is missing is NOT a deletion: the entry is on disk and
+                // the read failure is an analysis failure. Any other read
+                // failure is likewise reported distinctly.
+                Err(e)
+                    if e.kind() == std::io::ErrorKind::NotFound && !self.io.is_symlink(&joined) =>
+                {
+                    // For files not found on disk, try to read from git base
+                    if let Some(content) = self.read_from_git_base(path, fp, &default_branch) {
+                        entries.push(FileEntry {
+                            path: joined,
+                            extension: fp.extension(),
+                            language: Language::from_extension(&fp.extension())
+                                .unwrap_or(Language::Unknown),
+                            size: content.len() as u64,
+                            content,
+                            parse_ok: true,
+                            parse_metadata: None,
+                        });
+                    }
+                }
+                Err(e) => failures.push(analysis_failure(
+                    &fp.value,
+                    format!("failed to read changed file for analysis: {e}"),
+                )),
+            }
+        }
+
+        if !entries.is_empty() {
+            // Delegate to the linter aggregate: AES analysis over changed files.
+            // A panicking aggregate must not crash the hook: the failure is
+            // reported distinctly from violations (FRD Integration Points).
+            let violations = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                self.code_analysis_linter
+                    .execute(CodeAnalysisRequest::run_analysis(&entries))
+                    .into_violations()
+            }))
+            .unwrap_or_else(|_| {
+                vec![analysis_failure(
+                    &path.value,
+                    "AES analysis panicked over changed files",
+                )]
+            });
+            failures.extend(violations);
+        }
+        LintResultList::new(failures)
+    }
+}
+
+// ─── Block 3: Module Helpers ──────
+

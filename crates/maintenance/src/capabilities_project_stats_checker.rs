@@ -11,6 +11,12 @@ pub struct ProjectStatsChecker {
     io: Arc<dyn IFileSystemIOProtocol>,
 }
 
+
+impl ProjectStatsChecker {
+    pub fn new(io: Arc<dyn IFileSystemIOProtocol>) -> Self {
+        Self { io }
+    }
+}
 // ─── Block 2: Module Contract ─────────────────────
 impl IProjectStatsProtocol for ProjectStatsChecker {
     fn stats(&self, project_path: &FilePath) -> MaintenanceStatsVO {
@@ -70,8 +76,3 @@ impl IProjectStatsProtocol for ProjectStatsChecker {
 }
 
 // ─── Block 3: Module Helpers ──────────────────────
-impl ProjectStatsChecker {
-    pub fn new(io: Arc<dyn IFileSystemIOProtocol>) -> Self {
-        Self { io }
-    }
-}

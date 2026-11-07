@@ -18,23 +18,6 @@ pub struct UnusedImportFix {
     io: Arc<dyn IFileSystemIOProtocol>,
 }
 
-// ─── Block 2: Module Contract ──────────────
-
-impl IUnusedImportFixProtocol for UnusedImportFix {
-    fn fix_unused_import(&self, file_path: &str, line: LineNumber) -> FixOutcome {
-        self.fix_impl(file_path, line, false)
-    }
-    fn fix_unused_import_dry(
-        &self,
-        file_path: &str,
-        line: LineNumber,
-        dry_run: bool,
-    ) -> FixOutcome {
-        self.fix_impl(file_path, line, dry_run)
-    }
-}
-
-// ─── Block 3: Module Helpers ──────
 
 impl UnusedImportFix {
     pub fn new(io: Arc<dyn IFileSystemIOProtocol>) -> Self {
@@ -127,3 +110,21 @@ impl UnusedImportFix {
         }
     }
 }
+// ─── Block 2: Module Contract ──────────────
+
+impl IUnusedImportFixProtocol for UnusedImportFix {
+    fn fix_unused_import(&self, file_path: &str, line: LineNumber) -> FixOutcome {
+        self.fix_impl(file_path, line, false)
+    }
+    fn fix_unused_import_dry(
+        &self,
+        file_path: &str,
+        line: LineNumber,
+        dry_run: bool,
+    ) -> FixOutcome {
+        self.fix_impl(file_path, line, dry_run)
+    }
+}
+
+// ─── Block 3: Module Helpers ──────
+

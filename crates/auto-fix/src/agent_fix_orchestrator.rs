@@ -50,19 +50,6 @@ pub struct FixOrchestrator {
     deps: FixOrchestratorDeps,
 }
 
-// ─── Block 2: Module Contract ──────────────
-
-impl IFixAggregate for FixOrchestrator {
-    fn execute(&self, request: FixRequest) -> FixResponse {
-        match request {
-            FixRequest::Execute { path, dry_run } => FixResponse::Execute {
-                result: self.deps.violation_report.report_violations(&path, dry_run),
-            },
-        }
-    }
-}
-
-// ─── Block 3: Module Helpers ──────
 
 impl FixOrchestrator {
     pub fn new(deps: FixOrchestratorDeps) -> Self {
@@ -102,3 +89,17 @@ impl FixOrchestrator {
             .fix_block_marker(file_path, shared_common::LineNumber::new(line as i64))
     }
 }
+// ─── Block 2: Module Contract ──────────────
+
+impl IFixAggregate for FixOrchestrator {
+    fn execute(&self, request: FixRequest) -> FixResponse {
+        match request {
+            FixRequest::Execute { path, dry_run } => FixResponse::Execute {
+                result: self.deps.violation_report.report_violations(&path, dry_run),
+            },
+        }
+    }
+}
+
+// ─── Block 3: Module Helpers ──────
+

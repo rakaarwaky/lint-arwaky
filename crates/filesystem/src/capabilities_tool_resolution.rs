@@ -12,6 +12,18 @@ use std::path::Path;
 
 pub struct CapabilitiesToolResolution;
 
+impl Default for CapabilitiesToolResolution {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl CapabilitiesToolResolution {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
 // ─── Block 2: Module Contract ───
 
 impl IToolResolutionProtocol for CapabilitiesToolResolution {
@@ -74,19 +86,5 @@ impl IToolResolutionProtocol for CapabilitiesToolResolution {
         let resolved =
             utility_tool_resolution::default_working_dir(std::path::Path::new(&path.value));
         FilePath::new(resolved.to_string_lossy().to_string()).unwrap_or_default()
-    }
-}
-
-// ─── Block 3: Module Helpers ─────────
-
-impl CapabilitiesToolResolution {
-    pub fn new() -> Self {
-        Self
-    }
-}
-
-impl Default for CapabilitiesToolResolution {
-    fn default() -> Self {
-        Self::new()
     }
 }

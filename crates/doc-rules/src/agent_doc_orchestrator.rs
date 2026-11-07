@@ -35,6 +35,34 @@ pub struct DocOrchestrator {
     roadmap: Arc<dyn IRoadmapDocProtocol>,
 }
 
+
+impl DocOrchestrator {
+    pub fn new(
+        agents: Arc<dyn IAgentsDocProtocol>,
+        architecture: Arc<dyn IArchitectureDocProtocol>,
+        backlog: Arc<dyn IBacklogDocProtocol>,
+        contributing: Arc<dyn IContributingDocProtocol>,
+        data: Arc<dyn IDataDocProtocol>,
+        design: Arc<dyn IDesignDocProtocol>,
+        frd: Arc<dyn IFrdDocProtocol>,
+        prd: Arc<dyn IPrdDocProtocol>,
+        readme: Arc<dyn IReadmeDocProtocol>,
+        roadmap: Arc<dyn IRoadmapDocProtocol>,
+    ) -> Self {
+        Self {
+            agents,
+            architecture,
+            backlog,
+            contributing,
+            data,
+            design,
+            frd,
+            prd,
+            readme,
+            roadmap,
+        }
+    }
+}
 // ─── Block 2: Module Contract ──────────────────────────────
 
 impl IDocRunnerAggregate for DocOrchestrator {
@@ -75,30 +103,3 @@ impl IDocRunnerAggregate for DocOrchestrator {
 
 // ─── Block 3: Module Helpers ──────────────────────────
 
-impl DocOrchestrator {
-    pub fn new(
-        agents: Arc<dyn IAgentsDocProtocol>,
-        architecture: Arc<dyn IArchitectureDocProtocol>,
-        backlog: Arc<dyn IBacklogDocProtocol>,
-        contributing: Arc<dyn IContributingDocProtocol>,
-        data: Arc<dyn IDataDocProtocol>,
-        design: Arc<dyn IDesignDocProtocol>,
-        frd: Arc<dyn IFrdDocProtocol>,
-        prd: Arc<dyn IPrdDocProtocol>,
-        readme: Arc<dyn IReadmeDocProtocol>,
-        roadmap: Arc<dyn IRoadmapDocProtocol>,
-    ) -> Self {
-        Self {
-            agents,
-            architecture,
-            backlog,
-            contributing,
-            data,
-            design,
-            frd,
-            prd,
-            readme,
-            roadmap,
-        }
-    }
-}

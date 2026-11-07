@@ -18,6 +18,18 @@ use shared_project_setup::taxonomy_project_setup_vo::SetupError;
 
 pub struct SetupInstallerAdapter;
 
+impl Default for SetupInstallerAdapter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl SetupInstallerAdapter {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
 // ─── Block 2: Module Contract ───────────────
 
 impl IAdapterInstallationProtocol for SetupInstallerAdapter {

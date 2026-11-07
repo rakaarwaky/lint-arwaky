@@ -56,6 +56,38 @@ struct GitleaksFinding {
     tags: Vec<String>,
 }
 
+
+impl GitleaksAdapter {
+    pub fn new(
+        executor: Arc<dyn ICommandExecutorProtocol>,
+        io: Arc<dyn IFileSystemIOProtocol>,
+        tool_resolution: Arc<dyn IToolResolutionProtocol>,
+        history: bool,
+    ) -> Self {
+        Self {
+            executor,
+            io,
+            tool_resolution,
+            history,
+        }
+    }
+
+    /// Walk up from `working_dir` looking for `.gitleaks.toml`. Returns None
+    /// when no config file is found — gitleaks then uses its built-in rules.
+    fn find_gitleaks_config(&self, working_dir: &FilePath) -> Option<FilePath> {
+        let mut current = std::path::Path::new(working_dir.value());
+        loop {
+            let candidate = current.join(".gitleaks.toml");
+            if self.io.path_exists(&candidate) {
+                return FilePath::new(candidate.to_string_lossy().to_string()).ok();
+            }
+            match current.parent() {
+                Some(parent) if parent != current => current = parent,
+                _ => return None,
+            }
+        }
+    }
+}
 // ─── Block 2: Module Contract ───────────────
 
 impl ILinterAdapterProtocol for GitleaksAdapter {
@@ -139,38 +171,6 @@ impl ILinterAdapterProtocol for GitleaksAdapter {
 }
 
 // ─── Block 3: Module Helpers ──────
-
-impl GitleaksAdapter {
-    pub fn new(
-        executor: Arc<dyn ICommandExecutorProtocol>,
-        io: Arc<dyn IFileSystemIOProtocol>,
-        tool_resolution: Arc<dyn IToolResolutionProtocol>,
-        history: bool,
-    ) -> Self {
-        Self {
-            executor,
-            io,
-            tool_resolution,
-            history,
-        }
-    }
-
-    /// Walk up from `working_dir` looking for `.gitleaks.toml`. Returns None
-    /// when no config file is found — gitleaks then uses its built-in rules.
-    fn find_gitleaks_config(&self, working_dir: &FilePath) -> Option<FilePath> {
-        let mut current = std::path::Path::new(working_dir.value());
-        loop {
-            let candidate = current.join(".gitleaks.toml");
-            if self.io.path_exists(&candidate) {
-                return FilePath::new(candidate.to_string_lossy().to_string()).ok();
-            }
-            match current.parent() {
-                Some(parent) if parent != current => current = parent,
-                _ => return None,
-            }
-        }
-    }
-}
 
 /// Map a gitleaks rule ID + tags to an AES severity.
 pub fn map_gitleaks_severity(rule: &str, tags: &[String]) -> Severity {

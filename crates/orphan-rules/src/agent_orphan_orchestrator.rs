@@ -54,48 +54,7 @@ pub struct ArchOrphanAnalyzer {
     config: ArchitectureConfig,
 }
 
-// ─── Block 2: Module Contract ──────────────
-impl IOrphanAggregate for ArchOrphanAnalyzer {
-    fn execute(&self, request: OrphanRequest) -> OrphanResponse {
-        match request {
-            OrphanRequest::BuildGraphContext { root_dir, .. } => OrphanResponse::GraphContext {
-                context: self.build_orphan_graph_context(&root_dir),
-            },
-            OrphanRequest::IdentifyEntryPoints { files } => OrphanResponse::EntryPoints {
-                files: self.identify_orphan_entry_points(&files),
-            },
-            OrphanRequest::Check { files, root_dir } => OrphanResponse::Violations {
-                violations: self.check_orphans(&files, &root_dir),
-            },
-            OrphanRequest::CheckWithContext {
-                files,
-                root_dir,
-                context,
-            } => OrphanResponse::Violations {
-                violations: self.check_orphans_with_context(&files, &root_dir, &context),
-            },
-            OrphanRequest::CheckWithEntries { files, context } => OrphanResponse::Violations {
-                violations: self.check_orphans_with_entries(&files, &context),
-            },
-            OrphanRequest::Scan { root_dir, ignored } => {
-                let (context, violations) = self.scan_orphans(&root_dir, &ignored.values);
-                OrphanResponse::ScanOutcome {
-                    context,
-                    violations,
-                }
-            }
-        }
-    }
-}
 
-// ─── Block 3: Module Helpers ──────
-
-// FR-001/002/003: graph context, entry points, and reachability are
-// orchestration steps, not capability seams. The orphan-rules agent owns
-// them directly: they receive a context built by the filesystem aggregate
-// and delegate the pure work to shared utilities. They are intentionally not
-// published as contract protocols — an agent must not implement a contract
-// protocol (AES405), and no other feature consumes these steps.
 impl ArchOrphanAnalyzer {
     pub fn new(deps: ArchOrphanDeps, config: ArchitectureConfig) -> Self {
         Self { deps, config }
@@ -630,3 +589,45 @@ impl ArchOrphanAnalyzer {
             .collect()
     }
 }
+// ─── Block 2: Module Contract ──────────────
+impl IOrphanAggregate for ArchOrphanAnalyzer {
+    fn execute(&self, request: OrphanRequest) -> OrphanResponse {
+        match request {
+            OrphanRequest::BuildGraphContext { root_dir, .. } => OrphanResponse::GraphContext {
+                context: self.build_orphan_graph_context(&root_dir),
+            },
+            OrphanRequest::IdentifyEntryPoints { files } => OrphanResponse::EntryPoints {
+                files: self.identify_orphan_entry_points(&files),
+            },
+            OrphanRequest::Check { files, root_dir } => OrphanResponse::Violations {
+                violations: self.check_orphans(&files, &root_dir),
+            },
+            OrphanRequest::CheckWithContext {
+                files,
+                root_dir,
+                context,
+            } => OrphanResponse::Violations {
+                violations: self.check_orphans_with_context(&files, &root_dir, &context),
+            },
+            OrphanRequest::CheckWithEntries { files, context } => OrphanResponse::Violations {
+                violations: self.check_orphans_with_entries(&files, &context),
+            },
+            OrphanRequest::Scan { root_dir, ignored } => {
+                let (context, violations) = self.scan_orphans(&root_dir, &ignored.values);
+                OrphanResponse::ScanOutcome {
+                    context,
+                    violations,
+                }
+            }
+        }
+    }
+}
+
+// ─── Block 3: Module Helpers ──────
+
+// FR-001/002/003: graph context, entry points, and reachability are
+// orchestration steps, not capability seams. The orphan-rules agent owns
+// them directly: they receive a context built by the filesystem aggregate
+// and delegate the pure work to shared utilities. They are intentionally not
+// published as contract protocols — an agent must not implement a contract
+// protocol (AES405), and no other feature consumes these steps.

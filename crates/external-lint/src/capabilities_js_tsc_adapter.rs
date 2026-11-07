@@ -40,6 +40,20 @@ pub struct TSCAdapter {
     tool_resolution: Arc<dyn IToolResolutionProtocol>,
 }
 
+
+impl TSCAdapter {
+    pub fn new(
+        lint_executor: Arc<dyn ICommandExecutorProtocol>,
+        io: Arc<dyn IFileSystemIOProtocol>,
+        tool_resolution: Arc<dyn IToolResolutionProtocol>,
+    ) -> Self {
+        Self {
+            lint_executor,
+            io,
+            tool_resolution,
+        }
+    }
+}
 // ─── Block 2: Module Contract ───────────────
 
 impl ILinterAdapterProtocol for TSCAdapter {
@@ -154,16 +168,3 @@ fn tsc_pattern2() -> Option<&'static Regex> {
         .as_ref()
 }
 
-impl TSCAdapter {
-    pub fn new(
-        lint_executor: Arc<dyn ICommandExecutorProtocol>,
-        io: Arc<dyn IFileSystemIOProtocol>,
-        tool_resolution: Arc<dyn IToolResolutionProtocol>,
-    ) -> Self {
-        Self {
-            lint_executor,
-            io,
-            tool_resolution,
-        }
-    }
-}

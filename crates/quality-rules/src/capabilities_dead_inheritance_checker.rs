@@ -23,6 +23,12 @@ impl DeadInheritanceChecker {
     }
 }
 
+impl Default for DeadInheritanceChecker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 // ─── Block 2: Module Contract ───────────────
 
 impl IDeadInheritanceProtocol for DeadInheritanceChecker {

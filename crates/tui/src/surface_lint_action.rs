@@ -64,6 +64,155 @@ fn validated_path(path: &str) -> Result<FilePath, LintExecutionResult> {
         .map_err(|_| LintExecutionResult::failure(format!("Invalid path: {path}")))
 }
 
+
+impl SurfaceLintExecutor {
+    pub fn new(
+        code_analysis: Arc<dyn ICodeAnalysisAggregate>,
+        filesystem: Arc<dyn IFilesystemAggregate>,
+        fs_seam: Arc<dispatcher::surface_check_action::FilesystemSeam>,
+        fs_factory: Arc<dyn Fn() -> dispatcher::surface_check_action::FilesystemSeam + Send + Sync>,
+        orphan_factory: Arc<OrphanFactory>,
+    ) -> Self {
+        Self {
+            code_analysis,
+            filesystem,
+            fs_seam,
+            fs_factory,
+            orphan_factory,
+            fix_orchestrator: None,
+            setup_aggregate: None,
+            maintenance: None,
+            hook_port: None,
+            config_orchestrator: None,
+            config_file_reader: None,
+            external_lint: None,
+            orphan_aggregate: None,
+            import_orchestrator: None,
+            naming_orchestrator: None,
+            role_orchestrator: None,
+            structure_orchestrator: None,
+            doc_orchestrator: None,
+        }
+    }
+
+    pub fn with_fix(mut self, fix_orchestrator: Arc<dyn IFixAggregate>) -> Self {
+        self.fix_orchestrator = Some(fix_orchestrator);
+        self
+    }
+
+    pub fn with_setup(mut self, setup_aggregate: Arc<dyn ISetupAggregate>) -> Self {
+        self.setup_aggregate = Some(setup_aggregate);
+        self
+    }
+
+    pub fn with_maintenance(mut self, maintenance: Arc<dyn IMaintenanceAggregate>) -> Self {
+        self.maintenance = Some(maintenance);
+        self
+    }
+
+    pub fn with_hook_port(mut self, hook_port: Arc<dyn IGitHooksAggregate>) -> Self {
+        self.hook_port = Some(hook_port);
+        self
+    }
+
+    pub fn with_config(
+        mut self,
+        config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
+        config_file_reader: Arc<dyn IConfigFileReaderAggregate>,
+    ) -> Self {
+        self.config_orchestrator = Some(config_orchestrator);
+        self.config_file_reader = Some(config_file_reader);
+        self
+    }
+
+    pub fn with_external_lint(mut self, external_lint: Arc<dyn IExternalLintAggregate>) -> Self {
+        self.external_lint = Some(external_lint);
+        self
+    }
+
+    pub fn with_orphan(mut self, orphan_aggregate: Arc<dyn IOrphanAggregate>) -> Self {
+        self.orphan_aggregate = Some(orphan_aggregate);
+        self
+    }
+
+    pub fn with_import_orchestrator(
+        mut self,
+        import_orchestrator: Arc<dyn IImportRunnerAggregate>,
+    ) -> Self {
+        self.import_orchestrator = Some(import_orchestrator);
+        self
+    }
+
+    pub fn with_naming_orchestrator(
+        mut self,
+        naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
+    ) -> Self {
+        self.naming_orchestrator = Some(naming_orchestrator);
+        self
+    }
+
+    pub fn with_role_orchestrator(
+        mut self,
+        role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
+    ) -> Self {
+        self.role_orchestrator = Some(role_orchestrator);
+        self
+    }
+
+    pub fn with_structure_orchestrator(
+        mut self,
+        structure_orchestrator: Arc<dyn shared_structure_rules::IStructureAggregate>,
+    ) -> Self {
+        self.structure_orchestrator = Some(structure_orchestrator);
+        self
+    }
+
+    pub fn with_doc_orchestrator(
+        mut self,
+        doc_orchestrator: Arc<dyn shared_doc_rules::IDocRunnerAggregate>,
+    ) -> Self {
+        self.doc_orchestrator = Some(doc_orchestrator);
+        self
+    }
+
+    fn build_scan_aggregates(&self) -> Option<dispatcher::surface_check_action::ScanAggregates> {
+        Some(dispatcher::surface_check_action::ScanAggregates {
+            quality: self.code_analysis.clone(),
+            role: self.role_orchestrator.clone()?,
+            import: self.import_orchestrator.clone()?,
+            naming: self.naming_orchestrator.clone()?,
+            external: self.external_lint.clone()?,
+            orphan: self.orphan_aggregate.clone()?,
+            config: self.config_orchestrator.clone()?,
+            structure: self.structure_orchestrator.clone()?,
+            doc: self.doc_orchestrator.clone()?,
+            config_file_reader: self.config_file_reader.clone()?,
+            fs_seam: self.fs_seam.clone(),
+        })
+    }
+
+    fn build_ci_deps(&self) -> Option<CiScanDeps> {
+        Some(CiScanDeps {
+            code_analysis_linter: self.code_analysis.clone(),
+            import_orchestrator: self.import_orchestrator.clone()?,
+            naming_orchestrator: self.naming_orchestrator.clone()?,
+            config_orchestrator: self.config_orchestrator.clone()?,
+            orphan_orchestrator: self.orphan_aggregate.clone()?,
+            filesystem: self.filesystem.clone(),
+        })
+    }
+
+    fn build_orphan_deps(&self) -> Option<OrphanScanDeps> {
+        Some(OrphanScanDeps::new(
+            self.orphan_aggregate.clone()?,
+            self.config_orchestrator.clone()?,
+            self.filesystem.clone(),
+            self.filesystem.clone(),
+            self.fs_factory.clone(),
+            self.orphan_factory.clone(),
+        ))
+    }
+}
 // ─── Block 2: Module Contract ──────────────────────────
 
 impl SurfaceLintExecutor {
@@ -548,155 +697,6 @@ impl SurfaceLintExecutor {
 }
 
 // ─── Block 3: Module Helpers ───────
-
-impl SurfaceLintExecutor {
-    pub fn new(
-        code_analysis: Arc<dyn ICodeAnalysisAggregate>,
-        filesystem: Arc<dyn IFilesystemAggregate>,
-        fs_seam: Arc<dispatcher::surface_check_action::FilesystemSeam>,
-        fs_factory: Arc<dyn Fn() -> dispatcher::surface_check_action::FilesystemSeam + Send + Sync>,
-        orphan_factory: Arc<OrphanFactory>,
-    ) -> Self {
-        Self {
-            code_analysis,
-            filesystem,
-            fs_seam,
-            fs_factory,
-            orphan_factory,
-            fix_orchestrator: None,
-            setup_aggregate: None,
-            maintenance: None,
-            hook_port: None,
-            config_orchestrator: None,
-            config_file_reader: None,
-            external_lint: None,
-            orphan_aggregate: None,
-            import_orchestrator: None,
-            naming_orchestrator: None,
-            role_orchestrator: None,
-            structure_orchestrator: None,
-            doc_orchestrator: None,
-        }
-    }
-
-    pub fn with_fix(mut self, fix_orchestrator: Arc<dyn IFixAggregate>) -> Self {
-        self.fix_orchestrator = Some(fix_orchestrator);
-        self
-    }
-
-    pub fn with_setup(mut self, setup_aggregate: Arc<dyn ISetupAggregate>) -> Self {
-        self.setup_aggregate = Some(setup_aggregate);
-        self
-    }
-
-    pub fn with_maintenance(mut self, maintenance: Arc<dyn IMaintenanceAggregate>) -> Self {
-        self.maintenance = Some(maintenance);
-        self
-    }
-
-    pub fn with_hook_port(mut self, hook_port: Arc<dyn IGitHooksAggregate>) -> Self {
-        self.hook_port = Some(hook_port);
-        self
-    }
-
-    pub fn with_config(
-        mut self,
-        config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
-        config_file_reader: Arc<dyn IConfigFileReaderAggregate>,
-    ) -> Self {
-        self.config_orchestrator = Some(config_orchestrator);
-        self.config_file_reader = Some(config_file_reader);
-        self
-    }
-
-    pub fn with_external_lint(mut self, external_lint: Arc<dyn IExternalLintAggregate>) -> Self {
-        self.external_lint = Some(external_lint);
-        self
-    }
-
-    pub fn with_orphan(mut self, orphan_aggregate: Arc<dyn IOrphanAggregate>) -> Self {
-        self.orphan_aggregate = Some(orphan_aggregate);
-        self
-    }
-
-    pub fn with_import_orchestrator(
-        mut self,
-        import_orchestrator: Arc<dyn IImportRunnerAggregate>,
-    ) -> Self {
-        self.import_orchestrator = Some(import_orchestrator);
-        self
-    }
-
-    pub fn with_naming_orchestrator(
-        mut self,
-        naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
-    ) -> Self {
-        self.naming_orchestrator = Some(naming_orchestrator);
-        self
-    }
-
-    pub fn with_role_orchestrator(
-        mut self,
-        role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
-    ) -> Self {
-        self.role_orchestrator = Some(role_orchestrator);
-        self
-    }
-
-    pub fn with_structure_orchestrator(
-        mut self,
-        structure_orchestrator: Arc<dyn shared_structure_rules::IStructureAggregate>,
-    ) -> Self {
-        self.structure_orchestrator = Some(structure_orchestrator);
-        self
-    }
-
-    pub fn with_doc_orchestrator(
-        mut self,
-        doc_orchestrator: Arc<dyn shared_doc_rules::IDocRunnerAggregate>,
-    ) -> Self {
-        self.doc_orchestrator = Some(doc_orchestrator);
-        self
-    }
-
-    fn build_scan_aggregates(&self) -> Option<dispatcher::surface_check_action::ScanAggregates> {
-        Some(dispatcher::surface_check_action::ScanAggregates {
-            quality: self.code_analysis.clone(),
-            role: self.role_orchestrator.clone()?,
-            import: self.import_orchestrator.clone()?,
-            naming: self.naming_orchestrator.clone()?,
-            external: self.external_lint.clone()?,
-            orphan: self.orphan_aggregate.clone()?,
-            config: self.config_orchestrator.clone()?,
-            structure: self.structure_orchestrator.clone()?,
-            doc: self.doc_orchestrator.clone()?,
-            config_file_reader: self.config_file_reader.clone()?,
-            fs_seam: self.fs_seam.clone(),
-        })
-    }
-
-    fn build_ci_deps(&self) -> Option<CiScanDeps> {
-        Some(CiScanDeps {
-            code_analysis_linter: self.code_analysis.clone(),
-            import_orchestrator: self.import_orchestrator.clone()?,
-            naming_orchestrator: self.naming_orchestrator.clone()?,
-            config_orchestrator: self.config_orchestrator.clone()?,
-            orphan_orchestrator: self.orphan_aggregate.clone()?,
-            filesystem: self.filesystem.clone(),
-        })
-    }
-
-    fn build_orphan_deps(&self) -> Option<OrphanScanDeps> {
-        Some(OrphanScanDeps::new(
-            self.orphan_aggregate.clone()?,
-            self.config_orchestrator.clone()?,
-            self.filesystem.clone(),
-            self.filesystem.clone(),
-            self.fs_factory.clone(),
-            self.orphan_factory.clone(),
-        ))
-    }
-}
 
 fn format_violations(path: &str, violations: &[shared_common::ViolationItem]) -> String {
     if violations.is_empty() {
