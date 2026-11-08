@@ -77,8 +77,8 @@ Without one gate, drift across naming, layering, imports, quality, roles, orphan
 
 | As a | I want | So that | Priority |
 |------|--------|---------|----------|
-| Rust maintainer resolving flagged unused imports | the flagged line removed automatically in place or previewed first | I can clean violations without hand-editing every flagged file | P0 |
-| Maintainer | a reason-coded result stating whether a fix applied, was skipped, or failed and why | I know exactly what changed and what needs manual work | P1 |
+| Rust maintainer resolving flagged unused imports | the flagged line removed automatically in place or previewed first | I can clean violations without hand-editing every flagged file | P2 |
+| Maintainer | a reason-coded result stating whether a fix applied, was skipped, or failed and why | I know exactly what changed and what needs manual work | P2 |
 
 #### Proposed Solution
 
@@ -98,8 +98,8 @@ Applies safe, deterministic corrections to source files that violate architectur
 
 | As a | I want | So that | Priority |
 |------|--------|---------|----------|
-| CI engineer gating releases on a mixed-language monorepo | `scan .` reporting violations and `ci . --threshold N` gating a release | my pipeline can branch on the exit code instead of parsing text output | P0 |
-| Operator | every command exiting with the code the workspace exit-code contract assigns to its outcome | I can script reliable release gates | P1 |
+| CI engineer gating releases on a mixed-language monorepo | `scan .` reporting violations and `ci . --threshold N` gating a release | my pipeline can branch on the exit code instead of parsing text output | P2 |
+| Operator | every command exiting with the code the workspace exit-code contract assigns to its outcome | I can script reliable release gates | P2 |
 
 #### Proposed Solution
 
@@ -120,7 +120,7 @@ The terminal surface of the tool: one module per subcommand (scan, check, fix, c
 | As a | I want | So that | Priority |
 |------|--------|---------|----------|
 | DevOps engineer owning the single lint_arwaky.config.yaml for a multi-language monorepo team | config discovery, merging, validation, and ignored-path resolution to happen once and be reused by every command | a single config edit changes lint behaviour across the whole tool without touching command code | P0 |
-| Operator | a project with no config file scoring through valid embedded defaults | I can adopt the tool without authoring configuration | P1 |
+| Operator | a project with no config file scoring through valid embedded defaults | I can adopt the tool without authoring configuration | P0 |
 
 #### Proposed Solution
 
@@ -140,8 +140,8 @@ The config system is the single source of truth for lint-arwaky configuration: i
 
 | As a | I want | So that | Priority |
 |------|--------|---------|----------|
-| Integrator adding a new Lint Arwaky surface | one shared action entry point per workspace verb | CLI, MCP, and TUI behave identically without duplicating business logic | P0 |
-| Operator | every lint result round-tripping to a violation item with its fields preserved | canceled scans stop before their completion milestone | P1 |
+| Integrator adding a new Lint Arwaky surface | one shared action entry point per workspace verb | CLI, MCP, and TUI behave identically without duplicating business logic | P2 |
+| Operator | every lint result round-tripping to a violation item with its fields preserved | canceled scans stop before their completion milestone | P2 |
 
 #### Proposed Solution
 
@@ -161,7 +161,7 @@ The dispatcher is the single source of truth for workspace action business logic
 
 | As a | I want | So that | Priority |
 |------|--------|---------|----------|
-| Release manager auditing a multi-package workspace before merge | the document chain checked for invariant drift with machine-readable findings | I can block a pull request on concrete violations instead of relying on manual document review | P0 |
+| Release manager auditing a multi-package workspace before merge | the document chain checked for invariant drift with machine-readable findings | I can block a pull request on concrete violations instead of relying on manual document review | P1 |
 | Reviewer | one finding per seam carrying its expected machine-readable violation type | the audit is concrete and comparable across seams | P1 |
 
 #### Proposed Solution
@@ -182,8 +182,8 @@ Audits every recognized Markdown document against the seven document rules (AES6
 
 | As a | I want | So that | Priority |
 |------|--------|---------|----------|
-| DevOps engineer gating a mixed-language monorepo in CI | external linter findings from Clippy, Ruff, and ESLint surfaced in the same report as native rules | I enforce one quality gate instead of running each tool separately | P0 |
-| Operator | auto-fix through each adapter's native fix command | I can remediate external-lint findings without leaving the tool | P1 |
+| DevOps engineer gating a mixed-language monorepo in CI | external linter findings from Clippy, Ruff, and ESLint surfaced in the same report as native rules | I enforce one quality gate instead of running each tool separately | P2 |
+| Operator | auto-fix through each adapter's native fix command | I can remediate external-lint findings without leaving the tool | P2 |
 
 #### Proposed Solution
 
@@ -211,8 +211,8 @@ Audits every recognized Markdown document against the seven document rules (AES6
 
 | As a | I want | So that | Priority |
 |------|--------|---------|----------|
-| Rust maintainer iterating on a mixed-language monorepo | the linter re-running automatically when I save a file | architectural violations surface within seconds without a manual scan command | P0 |
-| Developer | a long-lived watch session producing fresh violation results as files are saved | I keep feedback live without reissuing scan commands | P1 |
+| Rust maintainer iterating on a mixed-language monorepo | the linter re-running automatically when I save a file | architectural violations surface within seconds without a manual scan command | P3 |
+| Developer | a long-lived watch session producing fresh violation results as files are saved | I keep feedback live without reissuing scan commands | P3 |
 
 #### Proposed Solution
 
@@ -233,7 +233,7 @@ The file-watch capability monitors configured directories for filesystem changes
 | As a | I want | So that | Priority |
 |------|--------|---------|----------|
 | Rule developer adding a new architecture check | one place to get parsed files, dependency graphs, file contents, tool availability, and language flags | I can implement the rule without writing any filesystem code | P0 |
-| Rule developer | parsed source files and extracted imports, identifiers, and declared symbols from a single source | I never reach into the filesystem directly from a rule | P1 |
+| Rule developer | parsed source files and extracted imports, identifiers, and declared symbols from a single source | I never reach into the filesystem directly from a rule | P0 |
 
 #### Proposed Solution
 
@@ -253,8 +253,8 @@ A single source supplies every piece of filesystem-derived data the other capabi
 
 | As a | I want | So that | Priority |
 |------|--------|---------|----------|
-| Rust maintainer committing on a feature branch | the pre-commit hook linting only my changed files against the base branch | I learn about AES violations at commit time with the commit blocked and violations listed | P0 |
-| Committer | a clean change producing no violations so the commit proceeds | I am not blocked when my change is conforming | P1 |
+| Rust maintainer committing on a feature branch | the pre-commit hook linting only my changed files against the base branch | I learn about AES violations at commit time with the commit blocked and violations listed | P3 |
+| Committer | a clean change producing no violations so the commit proceeds | I am not blocked when my change is conforming | P3 |
 
 #### Proposed Solution
 
@@ -274,7 +274,7 @@ Installs, uninstalls, and runs a pre-commit hook that lints only the files chang
 
 | As a | I want | So that | Priority |
 |------|--------|---------|----------|
-| Platform engineer guarding architecture in a Rust, Python, and TypeScript monorepo | every import validated against the layer-dependency matrix | forbidden cross-layer edges, missing mandatory imports, unused imports, dummy stubs, and cycles surface as lint failures | P0 |
+| Platform engineer guarding architecture in a Rust, Python, and TypeScript monorepo | every import validated against the layer-dependency matrix | forbidden cross-layer edges, missing mandatory imports, unused imports, dummy stubs, and cycles surface as lint failures | P1 |
 | Reviewer | each violation naming the forbidden layer and the importing file | I can act on a precise architectural boundary breach | P1 |
 
 #### Proposed Solution
@@ -295,8 +295,8 @@ The import-rules capability enforces correct structural boundaries and dependenc
 
 | As a | I want | So that | Priority |
 |------|--------|---------|----------|
-| Maintainer debugging a slow `lint-arwaky-cli scan .` on a large tree | raising log verbosity at runtime through the CLI flag without rebuilding or exporting an environment variable | I can pinpoint where the scan stalls | P0 |
-| Operator | per-phase timings and skipped-directory reasons on stderr with stdout kept clean for piping | I can diagnose scan performance without polluting machine-readable output | P1 |
+| Maintainer debugging a slow `lint-arwaky-cli scan .` on a large tree | raising log verbosity at runtime through the CLI flag without rebuilding or exporting an environment variable | I can pinpoint where the scan stalls | P2 |
+| Operator | per-phase timings and skipped-directory reasons on stderr with stdout kept clean for piping | I can diagnose scan performance without polluting machine-readable output | P2 |
 
 #### Proposed Solution
 
@@ -316,8 +316,8 @@ A single verbose flag (`-v`/`--verbose`) turns on the scan's real-time diagnosti
 
 | As a | I want | So that | Priority |
 |------|--------|---------|----------|
-| Platform engineer on-call for a multi-repo CI fleet woken by a scan that suddenly started missing violations | a single upkeep check telling me which of the ten linter adapters is down | I can distinguish a bad environment from a bad rule set | P0 |
-| Operator | knowing which toolchain version I am running and whether the installed binary is stale, in one call | I can decide whether to update tooling before re-scanning | P1 |
+| Platform engineer on-call for a multi-repo CI fleet woken by a scan that suddenly started missing violations | a single upkeep check telling me which of the ten linter adapters is down | I can distinguish a bad environment from a bad rule set | P3 |
+| Operator | knowing which toolchain version I am running and whether the installed binary is stale, in one call | I can decide whether to update tooling before re-scanning | P3 |
 
 #### Proposed Solution
 
@@ -337,8 +337,8 @@ Before any lint run, answers "is this environment healthy and current": reports 
 
 | As a | I want | So that | Priority |
 |------|--------|---------|----------|
-| AI agent authoring code in a fresh session with no prior lint context | listing, filtering, and executing linter commands through MCP tools against a confined workspace | I can detect and remediate architecture violations autonomously without a human running the CLI | P0 |
-| AI agent | read-only authorization refusing mutating actions | I never accidentally mutate the workspace when only reading | P1 |
+| AI agent authoring code in a fresh session with no prior lint context | listing, filtering, and executing linter commands through MCP tools against a confined workspace | I can detect and remediate architecture violations autonomously without a human running the CLI | P3 |
+| AI agent | read-only authorization refusing mutating actions | I never accidentally mutate the workspace when only reading | P3 |
 
 #### Proposed Solution
 
@@ -358,7 +358,7 @@ The MCP server exposes the linter to MCP clients: a listable, domain-filterable 
 
 | As a | I want | So that | Priority |
 |------|--------|---------|----------|
-| Maintainer curating a 10k-file monorepo under the AES 7-layer convention | every file name checked for layer, concern, and role | reviewers reject non-conforming names in CI before merge | P0 |
+| Maintainer curating a 10k-file monorepo under the AES 7-layer convention | every file name checked for layer, concern, and role | reviewers reject non-conforming names in CI before merge | P1 |
 | Operator | each violation naming the violated rule the moment any single file name violates the convention | I can enforce the convention in CI | P1 |
 
 #### Proposed Solution
@@ -378,7 +378,7 @@ Enforces the AES 7-layer naming convention across file names so every file's nam
 
 | As a | I want | So that | Priority |
 |------|--------|---------|----------|
-| Maintainer of a Rust/Python/TypeScript monorepo where dead code accumulates across layers | orphaned files flagged per layer | I can remove unreachable components before they compound | P0 |
+| Maintainer of a Rust/Python/TypeScript monorepo where dead code accumulates across layers | orphaned files flagged per layer | I can remove unreachable components before they compound | P1 |
 | Reviewer | each orphan yielding a rule-coded finding naming the file and the reachability gap | I can act on a precise reachability gap | P1 |
 
 #### Proposed Solution
@@ -399,7 +399,7 @@ Detects dead, unused, or unreachable code components across the 7-layer AES arch
 
 | As a | I want | So that | Priority |
 |------|--------|---------|----------|
-| Operator | scaffolding commands for new crates and members | project setup runs once per repo | P0 |
+| Operator | scaffolding commands for new crates and members | project setup runs once per repo | P2 |
 
 #### Proposed Solution
 
@@ -419,7 +419,7 @@ The project-setup capability scaffolds a new lint-arwaky crate or member folder 
 
 | As a | I want | So that | Priority |
 |------|--------|---------|----------|
-| Reviewer | quality violations with named rule codes | quality gates can block CI on concrete defects | P0 |
+| Reviewer | quality violations with named rule codes | quality gates can block CI on concrete defects | P2 |
 
 #### Proposed Solution
 
@@ -439,7 +439,7 @@ The quality-rules capability enforces code quality standards (complexity, duplic
 
 | As a | I want | So that | Priority |
 |------|--------|---------|----------|
-| CI engineer | violation reports in a stable machine-readable format | pipelines can parse and act on lint results | P0 |
+| CI engineer | violation reports in a stable machine-readable format | pipelines can parse and act on lint results | P2 |
 
 #### Proposed Solution
 
@@ -459,7 +459,7 @@ The report-formatter capability renders violation findings into human-readable a
 
 | As a | I want | So that | Priority |
 |------|--------|---------|----------|
-| Maintainer | every file checked for its AES layer and role | reviewers reject files in the wrong layer | P0 |
+| Maintainer | every file checked for its AES layer and role | reviewers reject files in the wrong layer | P2 |
 
 #### Proposed Solution
 
@@ -479,7 +479,7 @@ The role-rules capability validates that each file's name and contents match its
 
 | As a | I want | So that | Priority |
 |------|--------|---------|----------|
-| Rule developer | shared contracts, VOs, and parsers in one place | every rule consumes the same data model | P0 |
+| Rule developer | shared contracts, VOs, and parsers in one place | every rule consumes the same data model | P2 |
 
 #### Proposed Solution
 
@@ -499,7 +499,7 @@ The shared capability hosts the contracts, value objects, doc-rules codegen, and
 
 | As a | I want | So that | Priority |
 |------|--------|---------|----------|
-| Platform engineer | folder structure validated against AES701–AES704 | structural drift is caught in CI | P0 |
+| Platform engineer | folder structure validated against AES701–AES704 | structural drift is caught in CI | P2 |
 
 #### Proposed Solution
 
@@ -519,7 +519,7 @@ The structure-rules capability enforces AES7-layer folder purity (AES701), featu
 
 | As a | I want | So that | Priority |
 |------|--------|---------|----------|
-| Developer | a terminal UI for browsing violations | violations can be reviewed without leaving the terminal | P0 |
+| Developer | a terminal UI for browsing violations | violations can be reviewed without leaving the terminal | P2 |
 
 #### Proposed Solution
 
