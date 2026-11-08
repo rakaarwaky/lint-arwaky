@@ -77,27 +77,6 @@ Without one gate, drift across naming, layering, imports, quality, roles, orphan
 
 | As a | I want | So that | Priority |
 |------|--------|---------|----------|
-| Rule developer adding a new architecture check | one place to get parsed files, dependency graphs, file contents, tool availability, and language flags | I can implement the rule without writing any filesystem code | P0 |
-| Rule developer | parsed source files and extracted imports, identifiers, and declared symbols from a single source | I never reach into the filesystem directly from a rule | P1 |
-
-#### Proposed Solution
-
-A single source supplies every piece of filesystem-derived data the other capabilities need: it parses source files into structured entries and imports, builds a project-wide dependency graph, performs read, write, discovery, copy, remove, and permission operations, probes for external tool binaries, and detects the workspace root plus which languages are present. Rule and feature code consumes this data and never touches the filesystem directly.
-
-#### Main User Flow
-
-1. A rule requests filesystem-derived data through the single source.
-2. The source parses source files, extracts imports, identifiers, and symbols, and builds the import and dependency graph with forward and reverse edges plus symbol maps.
-3. The rule consumes parsed files, tool availability, and language-presence flags without writing any filesystem code.
-
----
-
-### PR-LA-002: cli-commands
-
-#### User Stories
-
-| As a | I want | So that | Priority |
-|------|--------|---------|----------|
 | Rust maintainer resolving flagged unused imports | the flagged line removed automatically in place or previewed first | I can clean violations without hand-editing every flagged file | P0 |
 | Maintainer | a reason-coded result stating whether a fix applied, was skipped, or failed and why | I know exactly what changed and what needs manual work | P1 |
 
@@ -113,7 +92,7 @@ Applies safe, deterministic corrections to source files that violate architectur
 
 ---
 
-### PR-LA-003: config-system
+### PR-LA-002: cli-commands
 
 #### User Stories
 
@@ -134,7 +113,7 @@ The terminal surface of the tool: one module per subcommand (scan, check, fix, c
 
 ---
 
-### PR-LA-004: dispatcher
+### PR-LA-003: config-system
 
 #### User Stories
 
@@ -155,7 +134,7 @@ The config system is the single source of truth for lint-arwaky configuration: i
 
 ---
 
-### PR-LA-005: doc-rules
+### PR-LA-004: dispatcher
 
 #### User Stories
 
@@ -176,7 +155,7 @@ The dispatcher is the single source of truth for workspace action business logic
 
 ---
 
-### PR-LA-006: external-lint
+### PR-LA-005: doc-rules
 
 #### User Stories
 
@@ -197,7 +176,7 @@ Audits every recognized Markdown document against the seven document rules (AES6
 
 ---
 
-### PR-LA-007: file-watch
+### PR-LA-006: external-lint
 
 #### User Stories
 
@@ -216,9 +195,17 @@ Aggregates industry-standard linters and formatters — Clippy, Rustfmt, cargo-a
 2. Each adapter runs sequentially with per-tool timeouts; raw JSON/text output is normalized into unified violations carrying tool-native rule codes and mapped severities.
 3. Results are post-filtered by ignored paths and suppressed rule codes; auto-fix is available through each adapter's native fix command.
 
+Audits every recognized Markdown document against the seven document rules (AES601–AES607) and reports findings that carry machine-readable violation types. A whole-workspace audit is the intended default; a sub-directory run audits only what it discovers there, with crosslink and master-document invariants resolving against that audit root rather than the whole workspace.
+
+#### Main User Flow
+
+1. The auditor runs `lint-arwaky-cli docs .` for a whole-workspace audit or targets a sub-directory.
+2. The document audit inspects every recognized Markdown document against AES601–AES607.
+3. The auditor reviews the reported findings, each carrying a machine-readable violation type and the offending document path.
+
 ---
 
-### PR-LA-008: filesystem
+### PR-LA-007: file-watch
 
 #### User Stories
 
@@ -236,6 +223,27 @@ The file-watch capability monitors configured directories for filesystem changes
 1. A watch session starts and performs an initial baseline scan of the whole project.
 2. On a file save, the watcher debounces, filters to lintable files, deduplicates, and re-runs lint on the changed files.
 3. Fresh violation results appear in the watch session's reported output within seconds of the save.
+
+---
+
+### PR-LA-008: filesystem
+
+#### User Stories
+
+| As a | I want | So that | Priority |
+|------|--------|---------|----------|
+| Rule developer adding a new architecture check | one place to get parsed files, dependency graphs, file contents, tool availability, and language flags | I can implement the rule without writing any filesystem code | P0 |
+| Rule developer | parsed source files and extracted imports, identifiers, and declared symbols from a single source | I never reach into the filesystem directly from a rule | P1 |
+
+#### Proposed Solution
+
+A single source supplies every piece of filesystem-derived data the other capabilities need: it parses source files into structured entries and imports, builds a project-wide dependency graph, performs read, write, discovery, copy, remove, and permission operations, probes for external tool binaries, and detects the workspace root plus which languages are present. Rule and feature code consumes this data and never touches the filesystem directly.
+
+#### Main User Flow
+
+1. A rule requests filesystem-derived data through the single source.
+2. The source parses source files, extracts imports, identifiers, and symbols, and builds the import and dependency graph with forward and reverse edges plus symbol maps.
+3. The rule consumes parsed files, tool availability, and language-presence flags without writing any filesystem code.
 
 ---
 
