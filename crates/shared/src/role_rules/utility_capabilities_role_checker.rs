@@ -669,18 +669,15 @@ pub fn check_banner_hygiene(file: &FileEntry, violations: &mut Vec<LintResult>) 
         let first_line = markers.first().map(|(_, _, ln)| *ln).unwrap_or(1);
         let mut fix_lines: Vec<String> = Vec::new();
         if !has_b1 {
-            fix_lines
-                .push("// ─── Block 1: Module Declaration ───".to_string());
+            fix_lines.push("// ─── Block 1: Module Declaration ───".to_string());
             fix_lines.push("(add before type + constructor block)".to_string());
         }
         if !has_b2 {
-            fix_lines
-                .push("// ─── Block 2: Module Contract ───".to_string());
+            fix_lines.push("// ─── Block 2: Module Contract ───".to_string());
             fix_lines.push("(add before the protocol impl block)".to_string());
         }
         if !has_b3 {
-            fix_lines
-                .push("// ─── Block 3: Module Helpers ───".to_string());
+            fix_lines.push("// ─── Block 3: Module Helpers ───".to_string());
             fix_lines.push("(add before the helper impl block)".to_string());
         }
         let fix_block = fix_lines.join("\n");

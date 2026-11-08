@@ -4,10 +4,10 @@
 //
 // The orchestrator (agent_role_orchestrator.rs) selects this auditor by
 // `file.language` and calls the trait entry point; the composite entry point
-// runs eight AES403 sub-checks — four local helpers (`_block_order`,
-// `_constant_placement`, `_test_placement`, `_helper_visibility`) and four
-// shared checks that live in utility_capabilities_role_checker.rs so the
-// three auditors share one copy.
+// runs nine AES403 sub-checks — four local helpers (`_block_order`,
+// `_constant_placement`, `_test_placement`, `_helper_visibility`) and five
+// shared checks in utility_capabilities_role_checker.rs (type budget,
+// implementor, single protocol, block markers, banner hygiene).
 
 use shared_common::taxonomy_lint_vo::LintResult;
 use shared_common::taxonomy_severity_vo::Severity;
@@ -199,20 +199,19 @@ impl CapabilitiesRustRoleAuditor {
                 continue;
             }
 
-            if protocol_line.is_none() && t.starts_with("impl ") && t.contains("Protocol for") {
+            if protocol_line.is_none()
+                && (t.starts_with("impl ") || t.starts_with("impl<"))
+                && t.contains("Protocol for")
+            {
                 // The block-order check uses the looser "Protocol for" substring
                 // so it does not miss protocol implementations that use a generic
-                // prefix or re-exported trait names. The implementor check uses
-                // `_is_protocol_trait` instead, which is strict about the suffix.
+                // prefix or re-exported trait names.
                 protocol_line = Some((i, t.trim_end_matches('{').trim().to_string()));
             }
 
-            if t.starts_with("impl ") && !t.contains("Protocol for") {
-                // `impl Default for T` is a constructor (R2), never a Block 3
-                // inherent impl. Skip it entirely.
-                if t.starts_with("impl Default for") {
-                    continue;
-                }
+            if (t.starts_with("impl ") || t.starts_with("impl<")) && !t.contains(" for ") {
+                // `impl Default for T` contains ` for ` and is skipped above;
+                // bare inherent impls like `impl Type {` have no ` for `.
                 // A constructor impl (`impl <Struct> { pub fn new }`) sitting
                 // strictly between the Block 1 and Block 2 banners is R2-conformant.
                 // When there is a B1 but no B2, anything after B1 is still the
@@ -265,10 +264,14 @@ impl CapabilitiesRustRoleAuditor {
                         inh_idx + 1,
                         proto_idx.map(|p| p + 1).unwrap_or(inh_idx + 1)
                     ),
-                    "Reorder the file so the blocks read:\n  \
-                     Block 1: Module Declaration -> Block 2: Module Contract -> Block 3: Module Helpers.\n  \
-                     Move the bare inherent impl below the `// ─── Block 3: Module Helpers ───` banner; \
-                     in a file with no banners, move the protocol impl above the inherent impl instead.",
+                    match banner3_idx {
+                        Some(_) => "Reorder the file so the blocks read:\n  \
+                                     Block 1: Module Declaration -> Block 2: Module Contract -> Block 3: Module Helpers.\n  \
+                                     Move the bare inherent impl below the `// ─── Block 3: Module Helpers ───` banner.",
+                        None => "Reorder the file so the blocks read:\n  \
+                                     Block 1: Module Declaration -> Block 2: Module Contract -> Block 3: Module Helpers.\n  \
+                                     Move the protocol impl above the inherent impl instead.",
+                    },
                 ));
             }
         }
@@ -327,6 +330,7 @@ impl CapabilitiesRustRoleAuditor {
                     .split_whitespace()
                     .nth(1)
                     .unwrap_or("<unnamed>")
+                    .trim_end_matches(':')
                     .to_string();
                 violations.push(LintResult::new_arch_with_name(
                     path,
@@ -367,10 +371,23 @@ impl CapabilitiesRustRoleAuditor {
                 continue;
             }
             if is_cfg_attr {
-                // `#[cfg(test)]` on its own line is one finding for the block
-                // that follows; a `mod tests` on the next line is the same block.
-                let next = lines.get(i + 1).map(|n| n.trim()).unwrap_or("");
-                if next.starts_with("mod tests") || next.starts_with("pub mod tests") {
+                // `#[cfg(test)]` on its own line flags the test block that
+                // follows; skip intervening `#[allow(…)]`/`#[cfg(…)]` attrs and
+                // the `mod tests` on the next line so we report once per block.
+                let mut next = i + 1;
+                while let Some(n) = lines.get(next) {
+                    let nt = n.trim();
+                    if nt.starts_with("#[cfg(test)]")
+                        || nt.starts_with("#[allow(")
+                        || nt.starts_with("#[cfg(")
+                    {
+                        next += 1;
+                        continue;
+                    }
+                    break;
+                }
+                let after = lines.get(next).map(|n| n.trim()).unwrap_or("");
+                if after.starts_with("mod tests") || after.starts_with("pub mod tests") {
                     continue;
                 }
             }
@@ -401,37 +418,45 @@ impl CapabilitiesRustRoleAuditor {
         violations: &mut Vec<LintResult>,
     ) {
         let lines: Vec<&str> = content.lines().collect();
-        let mut in_cfg_test = false;
+        let mut in_cfg_test_depth: i32 = 0;
         let mut in_inherent_block = false;
         let mut block_depth: i32 = 0;
+        let mut in_brace_region: bool = false; // true once we've seen depth > 0 inside the impl
 
         for (i, l) in lines.iter().enumerate() {
             let t = l.trim();
 
-            // Skip #[cfg(test)] blocks entirely.
+            // Skip #[cfg(test)] blocks entirely, tracking depth so the
+            // closing brace of the whole block (not just the first fn) ends
+            // the skip.
             if t.starts_with("#[cfg(test)]") {
-                in_cfg_test = true;
+                in_cfg_test_depth = 1;
                 continue;
             }
-            if in_cfg_test && t.starts_with("}") {
-                in_cfg_test = false;
-                continue;
-            }
-            if in_cfg_test {
+            if in_cfg_test_depth > 0 {
+                in_cfg_test_depth += i32::from(t.contains('{')) - i32::from(t.contains('}'));
+                if in_cfg_test_depth == 0 {
+                    continue;
+                }
                 continue;
             }
 
             // Track whether we're inside an inherent impl block.
-            if t.starts_with("impl ") && !t.starts_with("impl I") && !t.contains("Protocol for") {
+            if t.starts_with("impl ") && !t.contains(" for ") {
                 in_inherent_block = true;
                 block_depth = 0;
+                in_brace_region = false;
             }
             if in_inherent_block {
                 block_depth += i32::from(t.contains('{')) - i32::from(t.contains('}'));
-                if block_depth < 0 {
-                    // Closing brace of the impl block; depth went negative so reset.
+                if block_depth > 0 {
+                    in_brace_region = true;
+                }
+                if in_brace_region && block_depth <= 0 {
+                    // Closing brace of the impl block; depth returned to 0.
                     in_inherent_block = false;
                     block_depth = 0;
+                    in_brace_region = false;
                     continue;
                 }
             }
@@ -450,6 +475,9 @@ impl CapabilitiesRustRoleAuditor {
                     .nth(2)
                     .unwrap_or("")
                     .split('(')
+                    .next()
+                    .unwrap_or("")
+                    .split('<')
                     .next()
                     .unwrap_or("");
 
