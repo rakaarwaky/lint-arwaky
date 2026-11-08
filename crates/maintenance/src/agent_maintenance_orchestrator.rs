@@ -42,51 +42,6 @@ pub struct MaintenanceCommandsOrchestrator {
     dependency_report: Arc<dyn IDependencyReportProtocol>,
 }
 
-// ─── Block 2: Module Contract ──────────────
-impl IMaintenanceAggregate for MaintenanceCommandsOrchestrator {
-    fn execute(&self, request: MaintenanceRequest) -> MaintenanceResponse {
-        match request {
-            MaintenanceRequest::Stats { project_path } => MaintenanceResponse::Stats {
-                stats: self.stats(&project_path),
-            },
-            MaintenanceRequest::Clean => {
-                self.clean();
-                MaintenanceResponse::Clean
-            }
-            MaintenanceRequest::Update => {
-                self.update();
-                MaintenanceResponse::Update
-            }
-            MaintenanceRequest::SelfUpdate { check_only } => MaintenanceResponse::SelfUpdate {
-                result: self.self_update(check_only),
-            },
-            MaintenanceRequest::Doctor => MaintenanceResponse::Doctor {
-                result: self.doctor(),
-            },
-            MaintenanceRequest::Cancel { job_id } => {
-                self.cancel(job_id);
-                MaintenanceResponse::Cancelled
-            }
-            MaintenanceRequest::DiagnoseToolchain => MaintenanceResponse::Toolchain {
-                diagnostics: self.diagnose_toolchain(),
-            },
-            MaintenanceRequest::HealthCheck => MaintenanceResponse::Health {
-                health: self.health_check(),
-            },
-            MaintenanceRequest::SecurityScan { project_path } => MaintenanceResponse::Security {
-                report: self.run_security_scan(&project_path),
-            },
-            MaintenanceRequest::DependencyReport { project_path } => {
-                MaintenanceResponse::Dependencies {
-                    report: self.run_dependency_report(&project_path),
-                }
-            }
-        }
-    }
-}
-
-// ─── Block 3: Module Helpers ──────
-
 impl MaintenanceCommandsOrchestrator {
     pub fn new(deps: MaintenanceDeps) -> Self {
         Self {
@@ -144,3 +99,47 @@ impl MaintenanceCommandsOrchestrator {
         self.dependency_report.run_dependency_report(project_path)
     }
 }
+// ─── Block 2: Module Contract ──────────────
+impl IMaintenanceAggregate for MaintenanceCommandsOrchestrator {
+    fn execute(&self, request: MaintenanceRequest) -> MaintenanceResponse {
+        match request {
+            MaintenanceRequest::Stats { project_path } => MaintenanceResponse::Stats {
+                stats: self.stats(&project_path),
+            },
+            MaintenanceRequest::Clean => {
+                self.clean();
+                MaintenanceResponse::Clean
+            }
+            MaintenanceRequest::Update => {
+                self.update();
+                MaintenanceResponse::Update
+            }
+            MaintenanceRequest::SelfUpdate { check_only } => MaintenanceResponse::SelfUpdate {
+                result: self.self_update(check_only),
+            },
+            MaintenanceRequest::Doctor => MaintenanceResponse::Doctor {
+                result: self.doctor(),
+            },
+            MaintenanceRequest::Cancel { job_id } => {
+                self.cancel(job_id);
+                MaintenanceResponse::Cancelled
+            }
+            MaintenanceRequest::DiagnoseToolchain => MaintenanceResponse::Toolchain {
+                diagnostics: self.diagnose_toolchain(),
+            },
+            MaintenanceRequest::HealthCheck => MaintenanceResponse::Health {
+                health: self.health_check(),
+            },
+            MaintenanceRequest::SecurityScan { project_path } => MaintenanceResponse::Security {
+                report: self.run_security_scan(&project_path),
+            },
+            MaintenanceRequest::DependencyReport { project_path } => {
+                MaintenanceResponse::Dependencies {
+                    report: self.run_dependency_report(&project_path),
+                }
+            }
+        }
+    }
+}
+
+// ─── Block 3: Module Helpers ──────

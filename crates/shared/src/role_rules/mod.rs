@@ -2,6 +2,7 @@
 pub mod contract_role_protocol;
 pub mod contract_role_runner_aggregate;
 pub mod taxonomy_role_rules_constant;
+pub mod taxonomy_role_rules_entity;
 pub mod taxonomy_role_rules_request;
 pub mod taxonomy_role_rules_response;
 pub mod taxonomy_role_rules_vo;
@@ -43,6 +44,7 @@ pub use taxonomy_role_rules_constant::MAX_PUBLIC_METHODS;
 pub use taxonomy_role_rules_request::RoleRequest;
 pub use taxonomy_role_rules_response::RoleResponse;
 pub use taxonomy_role_rules_vo::AesRoleViolation;
+pub use taxonomy_role_rules_vo::CapabilityBlockMarker;
 pub use taxonomy_role_rules_vo::LayerNames;
 pub use taxonomy_role_rules_vo::all_core_layers;
 pub use taxonomy_role_rules_vo::core_layer_names;

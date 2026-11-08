@@ -79,7 +79,7 @@ impl FilesystemPipelineOrchestrator {
     }
 }
 
-// ─── Block 2: Module ContractPipeline Methods on FilesystemOrchestrator ──────
+// ─── Block 2: Module Contract ───────
 impl FilesystemOrchestrator {
     /// Builds a lexicographically-sorted index of file stems → file paths.
     pub fn build_stem_index(file_paths: &[String]) -> HashMap<String, Vec<String>> {

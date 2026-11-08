@@ -27,7 +27,29 @@ pub struct ASTParser {
     imports: RwLock<Vec<ImportEntry>>,
 }
 
-// ─── Block 2: Module ContractPublic Contract (domain protocol ONLY) ──────
+impl ASTParser {
+    pub fn new() -> Self {
+        Self::with_cache_capacity(1024)
+    }
+
+    pub fn with_cache_capacity(cache_capacity: usize) -> Self {
+        Self {
+            asts: DashMap::new(),
+            access_order: Mutex::new(VecDeque::new()),
+            cache_capacity,
+            warnings: OnceLock::new(),
+            imports: RwLock::new(Vec::new()),
+        }
+    }
+}
+
+impl Default for ASTParser {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+// ─── Block 2: Module Contract ───────
 
 impl IParserProtocol for ASTParser {
     fn parse_warnings(&self) -> &[ParseWarning] {
@@ -102,23 +124,7 @@ impl IParserProtocol for ASTParser {
     }
 }
 
-// ─── Block 3: Module Helpers ─────────
-
-impl ASTParser {
-    pub fn new() -> Self {
-        Self::with_cache_capacity(1024)
-    }
-
-    pub fn with_cache_capacity(cache_capacity: usize) -> Self {
-        Self {
-            asts: DashMap::new(),
-            access_order: Mutex::new(VecDeque::new()),
-            cache_capacity,
-            warnings: OnceLock::new(),
-            imports: RwLock::new(Vec::new()),
-        }
-    }
-}
+// ─── Block 3: Module Helpers ──────────
 
 impl ASTParser {
     /// Parse all files in parallel using rayon.
@@ -273,12 +279,6 @@ impl ASTParser {
     /// Number of retained syntax trees (primarily useful for cache telemetry/tests).
     pub fn cached_ast_count(&self) -> usize {
         self.asts.len()
-    }
-}
-
-impl Default for ASTParser {
-    fn default() -> Self {
-        Self::new()
     }
 }
 

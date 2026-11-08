@@ -39,6 +39,21 @@ pub struct PrettierAdapter {
     tool_resolution: Arc<dyn IToolResolutionProtocol>,
 }
 
+impl PrettierAdapter {
+    pub fn new(
+        lint_executor: Arc<dyn ICommandExecutorProtocol>,
+        js_resolution: Arc<dyn IJsToolResolutionProtocol>,
+        io: Arc<dyn IFileSystemIOProtocol>,
+        tool_resolution: Arc<dyn IToolResolutionProtocol>,
+    ) -> Self {
+        Self {
+            lint_executor,
+            js_resolution,
+            io,
+            tool_resolution,
+        }
+    }
+}
 // ─── Block 2: Module Contract ───────────────
 
 impl ILinterAdapterProtocol for PrettierAdapter {
@@ -142,19 +157,3 @@ impl ILinterAdapterProtocol for PrettierAdapter {
 }
 
 // ─── Block 3: Module Helpers ──────
-
-impl PrettierAdapter {
-    pub fn new(
-        lint_executor: Arc<dyn ICommandExecutorProtocol>,
-        js_resolution: Arc<dyn IJsToolResolutionProtocol>,
-        io: Arc<dyn IFileSystemIOProtocol>,
-        tool_resolution: Arc<dyn IToolResolutionProtocol>,
-    ) -> Self {
-        Self {
-            lint_executor,
-            js_resolution,
-            io,
-            tool_resolution,
-        }
-    }
-}

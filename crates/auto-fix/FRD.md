@@ -213,6 +213,51 @@ Every fix attempt shall return a **reason-coded outcome** (`Applied` / `Skipped(
 | Fixable violations accounted for in the result | 100% |
 | Missing-path batches exiting non-zero | 100% |
 
+### FR-AutoFix-005: Block Marker Fix
+
+**Description:** The auto-fix feature shall rewrite a block-marker banner line at a flagged location, in place or as a dry-run preview. A block marker is the dash-anchored banner (`───` or `---`) that separates capability blocks; fixing it restores the canonical marker form expected by the AES403 block-marker rule.
+
+#### Business Logic
+
+- A recognized block-marker line shall be rewritten to the canonical dash-anchored form
+- A line that does not carry a block marker shall skip with `NotABlockMarker`
+- A marker that already carries its canonical form shall skip with `AlreadyCanonical`
+- Dry-run shall report the would-be rewrite without writing the file on disk
+
+#### Edge Cases
+
+- A missing file shall fail with `FileNotFound` or `ReadError`
+- Dry-run shall never modify the file on disk
+- A block marker with unknown padding or shape shall still be normalized to canonical form
+
+#### Technical Specification
+
+| Aspect | Detail |
+|--------|--------|
+| **Input** | `file_path` and flagged line number carried by the violation. Source: the fix pipeline driven by the CLI `fix` command. |
+| **Output** | `FixOutcome` — `Applied { changes }` on a successful rewrite; `Skipped(reason)` when the line is not a block marker or already canonical; `Failed(reason)` on I/O trouble. Destination: the fix orchestrator. |
+| **Protocol** | `IBlockMarkerFixProtocol` |
+| **Method** | `fix_block_marker` |
+| **Event** | `FixApplied`, `FixSkipped`, `FixFailed` |
+| **Error** | `FileNotFound`, `ReadError`, `NotABlockMarker`, `AlreadyCanonical` |
+
+#### Test
+
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| A file carries a non-canonical block-marker line | The block marker fix is invoked in place | `FixOutcome::Applied` is returned and the line is rewritten to the canonical dash-anchored form |
+| The flagged line carries no block marker | The block marker fix is invoked | `FixOutcome::Skipped(NotABlockMarker)` is returned and the file is untouched |
+| Dry-run is selected for a file with a block marker | The fix pipeline runs with dry-run | The preview lists the would-be rewrite and the file on disk stays byte-identical |
+| The file does not exist | The block marker fix is invoked | `FixOutcome::Failed(FileNotFound)` is returned |
+
+#### Metric
+
+| Target Metric | Value |
+|---------------|-------|
+| Block markers normalized per batch | 100% |
+| Non-marker lines incorrectly rewritten | 0 |
+| Files modified by dry-run | 0 |
+
 ## Public Interface
 
 | Aspect | Detail |

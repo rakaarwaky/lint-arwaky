@@ -57,6 +57,17 @@ struct Vulnerability {
     severity: Option<String>,
 }
 
+impl CargoAuditAdapter {
+    pub fn new(
+        executor: Arc<dyn ICommandExecutorProtocol>,
+        tool_resolution: Arc<dyn IToolResolutionProtocol>,
+    ) -> Self {
+        Self {
+            executor,
+            tool_resolution,
+        }
+    }
+}
 // ─── Block 2: Module Contract ───────────────
 
 impl ILinterAdapterProtocol for CargoAuditAdapter {
@@ -144,15 +155,3 @@ impl ILinterAdapterProtocol for CargoAuditAdapter {
 }
 
 // ─── Block 3: Module Helpers ──────
-
-impl CargoAuditAdapter {
-    pub fn new(
-        executor: Arc<dyn ICommandExecutorProtocol>,
-        tool_resolution: Arc<dyn IToolResolutionProtocol>,
-    ) -> Self {
-        Self {
-            executor,
-            tool_resolution,
-        }
-    }
-}

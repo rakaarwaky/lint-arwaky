@@ -935,7 +935,7 @@ fn aes403_typescript_slash_comments_recognised() {
            }\n\
          }\n\
          // ─── Block 2: Module Contract ───\n\
-         // ─── Block 3: Module HelpersUtility Methods, Factories, Helpers ───\n",
+         // ─── Block 3: Module Helpers ───\n",
     );
     let findings = marker_findings(&run_audit(vec![file]));
     assert!(

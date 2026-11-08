@@ -14,8 +14,16 @@ use shared_structure_rules::taxonomy_structure_rules_response::StructureResponse
 // ─── Block 1: Module Declaration ────────────────────────────
 
 /// AES701: checks that shared folders contain only taxonomy, utility, and contract
-/// files, and that layer folders carry no doc pair.
+/// files, and document themselves with DATA.md + BACKLOG.md.
+#[derive(Default)]
 pub struct SharedPurityAuditor {}
+
+impl SharedPurityAuditor {
+    /// Stateless auditor: every audit call is self-contained.
+    pub fn new() -> Self {
+        Self {}
+    }
+}
 
 // ─── Block 2: Module Contract ────────────────
 
@@ -31,10 +39,7 @@ impl IStructureSharedPurityProtocol for SharedPurityAuditor {
                 continue;
             }
             let inventory = utility_structure_parsers::inventory(&shared);
-            let folder_rel = match shared.strip_prefix(&ws_root) {
-                Ok(p) => p.to_string_lossy().replace('\\', "/"),
-                Err(_) => shared.to_string_lossy().replace('\\', "/"),
-            };
+            let folder_rel = relative_posix(&shared, &ws_root);
             check_shared_purity(&folder_rel, &ws_root, &inventory, &mut findings);
             check_shared_has_docs(&shared, &folder_rel, &mut findings);
         }
@@ -45,14 +50,21 @@ impl IStructureSharedPurityProtocol for SharedPurityAuditor {
     }
 }
 
-// ─── Private helpers ───────────────────────────────────────────────────────────
-
 // ─── Block 3: Module Helpers ────────────
 
 /// Resolve the workspace root by walking up from *root* until we find
 /// a directory that contains at least one of the member directories.
 fn workspace_root(root: &std::path::Path) -> std::path::PathBuf {
     find_workspace_root(root)
+}
+
+/// Render *path* relative to *ws_root* with POSIX separators, falling back to
+/// the full path (still POSIX-separated) when it is not beneath the root.
+fn relative_posix(path: &std::path::Path, ws_root: &std::path::Path) -> String {
+    match path.strip_prefix(ws_root) {
+        Ok(p) => p.to_string_lossy().replace('\\', "/"),
+        Err(_) => path.to_string_lossy().replace('\\', "/"),
+    }
 }
 
 /// AES701 — a shared folder holds taxonomy, utility, and contract files. A

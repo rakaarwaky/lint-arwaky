@@ -9,3 +9,13 @@ pub use crate::calculator::contract_calculator_aggregate::ICalculatorAggregate;
 // module's public interface and satisfy the mandatory taxonomy import.
 pub use crate::taxonomy_calculator_request::CalculatorRequest;
 pub use crate::taxonomy_calculator_response::CalculatorResponse;
+
+// AES303: declare a primary type so this contract aggregate file carries a
+// definition of its own.
+pub struct CalculatorAggregateContract;
+
+impl CalculatorAggregateContract {
+    pub fn name(&self) -> &'static str {
+        "CalculatorAggregateContract"
+    }
+}

@@ -13,6 +13,7 @@ pub mod utility_word_boundary;
 
 // ── Contract traits ──
 pub use contract_fix_aggregate::IFixAggregate;
+pub use contract_fix_protocol::IBlockMarkerFixProtocol;
 pub use contract_fix_protocol::IBypassFixProtocol;
 pub use contract_fix_protocol::ISymbolRenameProtocol;
 pub use contract_fix_protocol::IUnusedImportFixProtocol;

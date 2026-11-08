@@ -28,7 +28,24 @@ pub struct DependencyGraph {
     implementations: OnceLock<HashMap<String, Vec<PathBuf>>>,
 }
 
-// ─── Block 2: Module ContractPublic Contract (domain protocol ONLY) ──────
+impl Default for DependencyGraph {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl DependencyGraph {
+    pub fn new() -> Self {
+        Self {
+            graph: OnceLock::new(),
+            node_map: OnceLock::new(),
+            reverse_links: OnceLock::new(),
+            definitions: OnceLock::new(),
+            implementations: OnceLock::new(),
+        }
+    }
+}
+// ─── Block 2: Module Contract ───
 
 impl IGraphProtocol for DependencyGraph {
     fn build_graph(
@@ -103,24 +120,6 @@ impl IGraphProtocol for DependencyGraph {
 }
 
 // ─── Block 3: Module Helpers ─────────
-
-impl DependencyGraph {
-    pub fn new() -> Self {
-        Self {
-            graph: OnceLock::new(),
-            node_map: OnceLock::new(),
-            reverse_links: OnceLock::new(),
-            definitions: OnceLock::new(),
-            implementations: OnceLock::new(),
-        }
-    }
-}
-
-impl Default for DependencyGraph {
-    fn default() -> Self {
-        Self::new()
-    }
-}
 
 impl DependencyGraph {
     /// Build graph from imports, file list, definitions, and implementations.

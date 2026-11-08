@@ -37,6 +37,12 @@ pub struct SetupManagementOrchestrator {
     protocols: SetupProtocols,
 }
 
+impl SetupManagementOrchestrator {
+    pub fn new(protocols: SetupProtocols) -> Self {
+        Self { protocols }
+    }
+}
+
 // ─── Block 2: Module Contract ──────────────
 
 impl ISetupAggregate for SetupManagementOrchestrator {
@@ -119,13 +125,5 @@ impl ISetupAggregate for SetupManagementOrchestrator {
                 exists: shared_project_setup::utility_project_setup_helpers::file_exists(path),
             },
         }
-    }
-}
-
-// ─── Block 3: Module HelpersConstructors ────────────────────────────────
-
-impl SetupManagementOrchestrator {
-    pub fn new(protocols: SetupProtocols) -> Self {
-        Self { protocols }
     }
 }

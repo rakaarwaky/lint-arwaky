@@ -10,6 +10,11 @@ pub struct AdapterHealthChecker {
     _io: Arc<dyn IFileSystemIOProtocol>,
 }
 
+impl AdapterHealthChecker {
+    pub fn new(io: Arc<dyn IFileSystemIOProtocol>) -> Self {
+        Self { _io: io }
+    }
+}
 // ─── Block 2: Module Contract ─────────────────────
 impl IAdapterHealthProtocol for AdapterHealthChecker {
     fn health_check(&self) -> HealthCheckResult {
@@ -110,8 +115,3 @@ impl IAdapterHealthProtocol for AdapterHealthChecker {
 }
 
 // ─── Block 3: Module Helpers ──────────────────────
-impl AdapterHealthChecker {
-    pub fn new(io: Arc<dyn IFileSystemIOProtocol>) -> Self {
-        Self { _io: io }
-    }
-}

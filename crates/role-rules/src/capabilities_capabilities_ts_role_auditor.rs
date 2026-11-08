@@ -3,9 +3,11 @@
 // Handles the 3-block capability shape as a class constructor (Block 1), public methods (Block 2), then private and static helpers (Block 3).
 //
 // The orchestrator (agent_role_orchestrator.rs) selects this auditor by
-// `file.language` and calls the trait entry point; all six AES403 sub-checks
-// then run here. Type budget and implementor checks live in
-// utility_capabilities_role_checker.rs so the three auditors share one copy.
+// `file.language` and calls the trait entry point; all nine AES403 sub-checks
+// then run here — four local helpers (`_block_order`, `_constant_placement`,
+// `_test_placement`, `_helper_visibility`) and five shared checks in
+// utility_capabilities_role_checker.rs (type budget, implementor, single
+// protocol, block markers, banner hygiene).
 
 use shared_common::taxonomy_lint_vo::LintResult;
 use shared_common::taxonomy_severity_vo::Severity;
@@ -14,12 +16,22 @@ use shared_role_rules::contract_role_protocol::ICapabilitiesRoleProtocol;
 
 use shared_role_rules::utility_capabilities_role_checker;
 
-// === Block 1: Module DeclarationType Definition ===
+// ─── Block 1: Module Declaration ───
 
 pub struct CapabilitiesTypeScriptRoleAuditor {}
+impl CapabilitiesTypeScriptRoleAuditor {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
 
-// === Block 2: Module Contract ===
+impl Default for CapabilitiesTypeScriptRoleAuditor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
+// ─── Block 2: Module Contract ───
 impl ICapabilitiesRoleProtocol for CapabilitiesTypeScriptRoleAuditor {
     fn check_capability_routing(
         &self,
@@ -49,6 +61,7 @@ impl ICapabilitiesRoleProtocol for CapabilitiesTypeScriptRoleAuditor {
         utility_capabilities_role_checker::check_single_protocol(file, violations);
         self.check_capability_block_order(file, violations);
         utility_capabilities_role_checker::check_block_markers(file, violations);
+        self.check_capability_banner_hygiene(file, violations);
         self.check_capability_constant_placement(file, violations);
         self.check_capability_test_placement(file, violations);
         self.check_capability_helper_visibility(file, references, violations);
@@ -76,6 +89,39 @@ impl ICapabilitiesRoleProtocol for CapabilitiesTypeScriptRoleAuditor {
 
     fn check_capability_block_markers(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
         utility_capabilities_role_checker::check_block_markers(file, violations);
+    }
+
+    fn check_capability_constructor_block1(
+        &self,
+        file: &FileEntry,
+        violations: &mut Vec<LintResult>,
+    ) {
+        utility_capabilities_role_checker::check_constructor_in_block1(file, violations);
+    }
+
+    fn check_capability_banner_hygiene(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
+        utility_capabilities_role_checker::check_banner_hygiene(file, violations);
+    }
+
+    fn check_capability_block3_pub_facade(
+        &self,
+        file: &FileEntry,
+        violations: &mut Vec<LintResult>,
+    ) {
+        utility_capabilities_role_checker::check_block3_pub_facade(file, violations);
+    }
+
+    fn check_capability_di_default(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
+        utility_capabilities_role_checker::check_di_default(file, violations);
+        utility_capabilities_role_checker::check_impl_default_on_di(file, violations);
+    }
+
+    fn check_capability_block2_inline_details(
+        &self,
+        file: &FileEntry,
+        violations: &mut Vec<LintResult>,
+    ) {
+        utility_capabilities_role_checker::check_block2_inline_details(file, violations);
     }
 
     fn check_capability_constant_placement(
@@ -113,19 +159,9 @@ impl ICapabilitiesRoleProtocol for CapabilitiesTypeScriptRoleAuditor {
     }
 }
 
-// === Block 3: Module HelpersHelpers ===
-
-impl Default for CapabilitiesTypeScriptRoleAuditor {
-    fn default() -> Self {
-        Self::new()
-    }
-}
+// ─── Block 3: Module Helpers ───
 
 impl CapabilitiesTypeScriptRoleAuditor {
-    pub fn new() -> Self {
-        Self {}
-    }
-
     // ===============================================================
     // Block order — protocol impl must precede inherent impl
     // ===============================================================
@@ -212,9 +248,7 @@ impl CapabilitiesTypeScriptRoleAuditor {
         }
     }
 
-    // ────────────────────────────────────────────────────────
     // Constant placement — local constants belong in taxonomy_*_constant.rs
-    // ────────────────────────────────────────────────────────
 
     // ===============================================================
     // Constant placement — policy constants live in `taxonomy_*_constant.*`
@@ -259,9 +293,7 @@ impl CapabilitiesTypeScriptRoleAuditor {
         }
     }
 
-    // ────────────────────────────────────────────────────────
     // Test placement — inline tests belong in tests/
-    // ────────────────────────────────────────────────────────
 
     // ===============================================================
     // Test placement — inline tests belong in `tests/`
@@ -303,9 +335,9 @@ impl CapabilitiesTypeScriptRoleAuditor {
         }
     }
 
-    // ────────────────────────────────────────────────────────
     // Helper visibility — Block 3 helpers must not be fully `pub`
-    // ────────────────────────────────────────────────────────
+
+    // ===============================================================
     //
     // We only look at methods that appear inside an inherent impl block
     // (i.e. `impl SomeStruct { ... }`), not inside a protocol impl block.

@@ -15,6 +15,18 @@ use shared_role_rules::contract_role_protocol::ITaxonomyRoleProtocol;
 // ─── Block 1: Module Declaration ───────────────────────────
 pub struct TaxonomyRoleChecker {}
 
+impl TaxonomyRoleChecker {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+
+impl Default for TaxonomyRoleChecker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 // ─── Block 2: Module Contract ───────────────
 impl ITaxonomyRoleProtocol for TaxonomyRoleChecker {
     fn check_entity(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
@@ -63,17 +75,8 @@ impl ITaxonomyRoleProtocol for TaxonomyRoleChecker {
 }
 
 // ─── Block 3: Module Helpers ──────
-impl Default for TaxonomyRoleChecker {
-    fn default() -> Self {
-        Self::new()
-    }
-}
 
 impl TaxonomyRoleChecker {
-    pub fn new() -> Self {
-        Self {}
-    }
-
     const RUST_PRIMITIVES: &'static [&'static str] = &[
         "String",
         "i8",

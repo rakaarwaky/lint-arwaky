@@ -50,32 +50,6 @@ pub struct ImportOrchestrator {
     ignored_paths: Vec<String>,
 }
 
-// ─── Block 2: Module Contract ──────────────
-
-impl IImportRunnerAggregate for ImportOrchestrator {
-    fn execute(&self, request: ImportRequest) -> ImportResponse {
-        match request {
-            ImportRequest::RunAudit { target } => {
-                let result = self.run_audit(&target);
-                ImportResponse::Audit { result }
-            }
-            ImportRequest::RunAuditWithEntries { files } => {
-                let violations = self.run_audit_with_entries(&files);
-                ImportResponse::AuditEntries { violations }
-            }
-            ImportRequest::RunAuditWithEntriesAndImports { files, imports_map } => {
-                let violations = self.run_audit_with_entries_and_imports(&files, &imports_map);
-                ImportResponse::AuditEntries { violations }
-            }
-            ImportRequest::Name => ImportResponse::Name {
-                name: self.name().to_string(),
-            },
-        }
-    }
-}
-
-// ─── Block 3: Module Helpers ──────
-
 impl ImportOrchestrator {
     pub fn run_audit(&self, target: &FilePath) -> Result<Vec<LintResult>, ScanError> {
         if !self.config.enabled.value {
@@ -416,3 +390,28 @@ impl ImportOrchestrator {
         FilePathList::new(files)
     }
 }
+// ─── Block 2: Module Contract ──────────────
+
+impl IImportRunnerAggregate for ImportOrchestrator {
+    fn execute(&self, request: ImportRequest) -> ImportResponse {
+        match request {
+            ImportRequest::RunAudit { target } => {
+                let result = self.run_audit(&target);
+                ImportResponse::Audit { result }
+            }
+            ImportRequest::RunAuditWithEntries { files } => {
+                let violations = self.run_audit_with_entries(&files);
+                ImportResponse::AuditEntries { violations }
+            }
+            ImportRequest::RunAuditWithEntriesAndImports { files, imports_map } => {
+                let violations = self.run_audit_with_entries_and_imports(&files, &imports_map);
+                ImportResponse::AuditEntries { violations }
+            }
+            ImportRequest::Name => ImportResponse::Name {
+                name: self.name().to_string(),
+            },
+        }
+    }
+}
+
+// ─── Block 3: Module Helpers ──────

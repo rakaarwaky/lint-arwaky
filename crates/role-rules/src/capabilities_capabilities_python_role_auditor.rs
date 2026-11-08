@@ -3,9 +3,11 @@
 // Handles the 3-block capability shape as a class inheriting a protocol ABC (Block 2) followed by `def _helper` methods (Block 3).
 //
 // The orchestrator (agent_role_orchestrator.rs) selects this auditor by
-// `file.language` and calls the trait entry point; all six AES403 sub-checks
-// then run here. Type budget and implementor checks live in
-// utility_capabilities_role_checker.rs so the three auditors share one copy.
+// `file.language` and calls the trait entry point; all nine AES403 sub-checks
+// then run here — four local helpers (`_block_order`, `_constant_placement`,
+// `_test_placement`, `_helper_visibility`) and five shared checks in
+// utility_capabilities_role_checker.rs (type budget, implementor, single
+// protocol, block markers, banner hygiene).
 
 use shared_common::taxonomy_lint_vo::LintResult;
 use shared_common::taxonomy_severity_vo::Severity;
@@ -14,12 +16,23 @@ use shared_role_rules::contract_role_protocol::ICapabilitiesRoleProtocol;
 
 use shared_role_rules::utility_capabilities_role_checker;
 
-// === Block 1: Module DeclarationType Definition ===
+// ─── Block 1: Module Declaration ───
 
 pub struct CapabilitiesPythonRoleAuditor {}
 
-// === Block 2: Module Contract ===
+impl CapabilitiesPythonRoleAuditor {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
 
+impl Default for CapabilitiesPythonRoleAuditor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+// ─── Block 2: Module Contract ───
 impl ICapabilitiesRoleProtocol for CapabilitiesPythonRoleAuditor {
     fn check_capability_routing(
         &self,
@@ -49,6 +62,7 @@ impl ICapabilitiesRoleProtocol for CapabilitiesPythonRoleAuditor {
         utility_capabilities_role_checker::check_single_protocol(file, violations);
         self.check_capability_block_order(file, violations);
         utility_capabilities_role_checker::check_block_markers(file, violations);
+        self.check_capability_banner_hygiene(file, violations);
         self.check_capability_constant_placement(file, violations);
         self.check_capability_test_placement(file, violations);
         self.check_capability_helper_visibility(file, references, violations);
@@ -76,6 +90,39 @@ impl ICapabilitiesRoleProtocol for CapabilitiesPythonRoleAuditor {
 
     fn check_capability_block_markers(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
         utility_capabilities_role_checker::check_block_markers(file, violations);
+    }
+
+    fn check_capability_constructor_block1(
+        &self,
+        file: &FileEntry,
+        violations: &mut Vec<LintResult>,
+    ) {
+        utility_capabilities_role_checker::check_constructor_in_block1(file, violations);
+    }
+
+    fn check_capability_banner_hygiene(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
+        utility_capabilities_role_checker::check_banner_hygiene(file, violations);
+    }
+
+    fn check_capability_block3_pub_facade(
+        &self,
+        file: &FileEntry,
+        violations: &mut Vec<LintResult>,
+    ) {
+        utility_capabilities_role_checker::check_block3_pub_facade(file, violations);
+    }
+
+    fn check_capability_di_default(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
+        utility_capabilities_role_checker::check_di_default(file, violations);
+        utility_capabilities_role_checker::check_impl_default_on_di(file, violations);
+    }
+
+    fn check_capability_block2_inline_details(
+        &self,
+        file: &FileEntry,
+        violations: &mut Vec<LintResult>,
+    ) {
+        utility_capabilities_role_checker::check_block2_inline_details(file, violations);
     }
 
     fn check_capability_constant_placement(
@@ -113,19 +160,9 @@ impl ICapabilitiesRoleProtocol for CapabilitiesPythonRoleAuditor {
     }
 }
 
-// === Block 3: Module HelpersHelpers ===
-
-impl Default for CapabilitiesPythonRoleAuditor {
-    fn default() -> Self {
-        Self::new()
-    }
-}
+// ─── Block 3: Module Helpers ───
 
 impl CapabilitiesPythonRoleAuditor {
-    pub fn new() -> Self {
-        Self {}
-    }
-
     // ===============================================================
     // Block order — protocol impl must precede inherent impl
     // ===============================================================

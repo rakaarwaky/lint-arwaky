@@ -28,7 +28,19 @@ use shared_doc_rules::utility_markdown_scanner::{doc_h2_contract, sections};
 
 pub struct PrdCapability;
 
-// ─── Block 2: Module Contract ─────────────────────
+impl Default for PrdCapability {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl PrdCapability {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
+// ─── Block 2: Module Contract ─
 
 impl IPrdDocProtocol for PrdCapability {
     fn audit_prd(&self, context: &DocAuditContext) -> Vec<DocFinding> {
@@ -47,19 +59,7 @@ impl IPrdDocProtocol for PrdCapability {
     }
 }
 
-// ─── Block 3: Module HelpersInherent Implementation and Helpers ─────────
-
-impl Default for PrdCapability {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl PrdCapability {
-    pub fn new() -> Self {
-        Self
-    }
-}
+// ─── Block 3: Module Helpers ───
 
 impl PrdCapability {
     fn audit_one(document: &DocSource, context: &DocAuditContext, findings: &mut Vec<DocFinding>) {

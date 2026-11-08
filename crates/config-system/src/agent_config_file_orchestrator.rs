@@ -32,6 +32,19 @@ pub struct ConfigFileReader {
     fs_aggregate: Option<Arc<dyn IFilesystemAggregate>>,
 }
 
+impl ConfigFileReader {
+    pub fn new(
+        fs_io: Arc<dyn IFileSystemIOProtocol>,
+        reader: Arc<dyn IConfigReadProtocol>,
+        fs_aggregate: Option<Arc<dyn IFilesystemAggregate>>,
+    ) -> Self {
+        Self {
+            fs_io,
+            reader,
+            fs_aggregate,
+        }
+    }
+}
 // ─── Block 2: Module Contract ──────────────
 
 impl IConfigFileReaderAggregate for ConfigFileReader {
@@ -95,17 +108,3 @@ impl IConfigFileReaderAggregate for ConfigFileReader {
 }
 
 // ─── Block 3: Module Helpers ─────
-
-impl ConfigFileReader {
-    pub fn new(
-        fs_io: Arc<dyn IFileSystemIOProtocol>,
-        reader: Arc<dyn IConfigReadProtocol>,
-        fs_aggregate: Option<Arc<dyn IFilesystemAggregate>>,
-    ) -> Self {
-        Self {
-            fs_io,
-            reader,
-            fs_aggregate,
-        }
-    }
-}

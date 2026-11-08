@@ -13,6 +13,12 @@ pub struct WorkspaceDetector {
     filesystem: Arc<dyn IFileSystemIOProtocol>,
 }
 
+impl WorkspaceDetector {
+    /// Create a new WorkspaceDetector with filesystem IO dependency.
+    pub fn new(filesystem: Arc<dyn IFileSystemIOProtocol>) -> Self {
+        Self { filesystem }
+    }
+}
 // ─── Block 2: Module Contract ───────────────
 
 impl IWorkspaceMembersProtocol for WorkspaceDetector {
@@ -103,13 +109,6 @@ impl IWorkspaceMembersProtocol for WorkspaceDetector {
 }
 
 // ─── Block 3: Module Helpers ──────
-
-impl WorkspaceDetector {
-    /// Create a new WorkspaceDetector with filesystem IO dependency.
-    pub fn new(filesystem: Arc<dyn IFileSystemIOProtocol>) -> Self {
-        Self { filesystem }
-    }
-}
 
 /// TR-1: Single-pass directory scan — use one `read_dir` syscall per directory
 /// instead of N `exists()` calls. Returns true if any of the target filenames

@@ -14,11 +14,23 @@ use shared_role_rules::contract_role_protocol::IUtilityRoleProtocol;
 
 use shared_role_rules::utility_utility_role_checker as utility;
 
-// === Block 1: Module DeclarationType Definition ===
+// ─── Block 1: Module Declaration ───
 
 pub struct UtilityPythonRoleAuditor {}
 
-// === Block 2: Module Contract ===
+impl UtilityPythonRoleAuditor {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+
+impl Default for UtilityPythonRoleAuditor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+// ─── Block 2: Module Contract ───
 
 impl IUtilityRoleProtocol for UtilityPythonRoleAuditor {
     fn check_utility_convention(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
@@ -30,19 +42,9 @@ impl IUtilityRoleProtocol for UtilityPythonRoleAuditor {
     }
 }
 
-// === Block 3: Module Helpers ===
-
-impl Default for UtilityPythonRoleAuditor {
-    fn default() -> Self {
-        Self::new()
-    }
-}
+// ─── Block 3: Module Helpers ───
 
 impl UtilityPythonRoleAuditor {
-    pub fn new() -> Self {
-        Self {}
-    }
-
     /// The metadata path reads class names that tree-sitter already collected.
     fn _check_with_metadata(
         &self,

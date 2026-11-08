@@ -21,7 +21,7 @@ use shared_doc_rules::utility_doc_collector::{
 };
 use std::fs;
 use std::path::Path;
-use structure_rules::capabilities_pr_la_folder_auditor::{
+use structure_rules::capabilities_requirement_folder_parity::{
     exposes_capability_in_cargo_toml as structure_exposes,
     has_surface_cargo_deps as structure_surface_deps,
 };

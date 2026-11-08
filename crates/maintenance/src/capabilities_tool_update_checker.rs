@@ -8,6 +8,11 @@ pub struct ToolUpdateChecker {
     io: Arc<dyn IFileSystemIOProtocol>,
 }
 
+impl ToolUpdateChecker {
+    pub fn new(io: Arc<dyn IFileSystemIOProtocol>) -> Self {
+        Self { io }
+    }
+}
 // ─── Block 2: Module Contract ─────────────────────
 impl IToolUpdateProtocol for ToolUpdateChecker {
     fn update(&self) {
@@ -20,8 +25,3 @@ impl IToolUpdateProtocol for ToolUpdateChecker {
 }
 
 // ─── Block 3: Module Helpers ──────────────────────
-impl ToolUpdateChecker {
-    pub fn new(io: Arc<dyn IFileSystemIOProtocol>) -> Self {
-        Self { io }
-    }
-}

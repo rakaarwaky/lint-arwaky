@@ -25,6 +25,18 @@ use shared_role_rules::taxonomy_role_rules_vo::{SurfaceTier, classify_surface_ti
 // ─── Block 1: Module Declaration ───────────────────────────
 pub struct SurfaceRoleChecker {}
 
+impl SurfaceRoleChecker {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+
+impl Default for SurfaceRoleChecker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 // ─── Block 2: Module Contract ───────────────
 impl ISurfaceRoleProtocol for SurfaceRoleChecker {
     fn check_smart_surface(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
@@ -83,17 +95,8 @@ impl ISurfaceRoleProtocol for SurfaceRoleChecker {
 }
 
 // ─── Block 3: Module Helpers ──────
-impl Default for SurfaceRoleChecker {
-    fn default() -> Self {
-        Self::new()
-    }
-}
 
 impl SurfaceRoleChecker {
-    pub fn new() -> Self {
-        Self {}
-    }
-
     // ── Passive surface checks using ParseMetadata ──
 
     fn _check_passive_with_metadata(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
@@ -196,7 +199,7 @@ impl SurfaceRoleChecker {
     }
 }
 
-// ─── Counting helpers ─────────────────────────────────────
+// Counting helpers
 
 /// The file stem, or an empty string when the path has no filename.
 fn stem_of(file: &FileEntry) -> &str {

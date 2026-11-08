@@ -3,9 +3,11 @@
 // Handles the 3-block capability shape as `impl Trait for Type` (Block 2) followed by a bare `impl Type` (Block 3).
 //
 // The orchestrator (agent_role_orchestrator.rs) selects this auditor by
-// `file.language` and calls the trait entry point; all six AES403 sub-checks
-// then run here. Type budget and implementor checks live in
-// utility_capabilities_role_checker.rs so the three auditors share one copy.
+// `file.language` and calls the trait entry point; the composite entry point
+// runs nine AES403 sub-checks — four local helpers (`_block_order`,
+// `_constant_placement`, `_test_placement`, `_helper_visibility`) and five
+// shared checks in utility_capabilities_role_checker.rs (type budget,
+// implementor, single protocol, block markers, banner hygiene).
 
 use shared_common::taxonomy_lint_vo::LintResult;
 use shared_common::taxonomy_severity_vo::Severity;
@@ -14,12 +16,22 @@ use shared_role_rules::contract_role_protocol::ICapabilitiesRoleProtocol;
 
 use shared_role_rules::utility_capabilities_role_checker;
 
-// === Block 1: Module DeclarationType Definition ===
+// ─── Block 1: Module Declaration ───
 
 pub struct CapabilitiesRustRoleAuditor {}
+impl CapabilitiesRustRoleAuditor {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
 
-// === Block 2: Module Contract ===
+impl Default for CapabilitiesRustRoleAuditor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
+// ─── Block 2: Module Contract ───
 impl ICapabilitiesRoleProtocol for CapabilitiesRustRoleAuditor {
     fn check_capability_routing(
         &self,
@@ -49,6 +61,7 @@ impl ICapabilitiesRoleProtocol for CapabilitiesRustRoleAuditor {
         utility_capabilities_role_checker::check_single_protocol(file, violations);
         self.check_capability_block_order(file, violations);
         utility_capabilities_role_checker::check_block_markers(file, violations);
+        self.check_capability_banner_hygiene(file, violations);
         self.check_capability_constant_placement(file, violations);
         self.check_capability_test_placement(file, violations);
         self.check_capability_helper_visibility(file, references, violations);
@@ -76,6 +89,39 @@ impl ICapabilitiesRoleProtocol for CapabilitiesRustRoleAuditor {
 
     fn check_capability_block_markers(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
         utility_capabilities_role_checker::check_block_markers(file, violations);
+    }
+
+    fn check_capability_constructor_block1(
+        &self,
+        file: &FileEntry,
+        violations: &mut Vec<LintResult>,
+    ) {
+        utility_capabilities_role_checker::check_constructor_in_block1(file, violations);
+    }
+
+    fn check_capability_banner_hygiene(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
+        utility_capabilities_role_checker::check_banner_hygiene(file, violations);
+    }
+
+    fn check_capability_block3_pub_facade(
+        &self,
+        file: &FileEntry,
+        violations: &mut Vec<LintResult>,
+    ) {
+        utility_capabilities_role_checker::check_block3_pub_facade(file, violations);
+    }
+
+    fn check_capability_di_default(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
+        utility_capabilities_role_checker::check_di_default(file, violations);
+        utility_capabilities_role_checker::check_impl_default_on_di(file, violations);
+    }
+
+    fn check_capability_block2_inline_details(
+        &self,
+        file: &FileEntry,
+        violations: &mut Vec<LintResult>,
+    ) {
+        utility_capabilities_role_checker::check_block2_inline_details(file, violations);
     }
 
     fn check_capability_constant_placement(
@@ -113,19 +159,9 @@ impl ICapabilitiesRoleProtocol for CapabilitiesRustRoleAuditor {
     }
 }
 
-// === Block 3: Module HelpersHelpers ===
-
-impl Default for CapabilitiesRustRoleAuditor {
-    fn default() -> Self {
-        Self::new()
-    }
-}
+// ─── Block 3: Module Helpers ───
 
 impl CapabilitiesRustRoleAuditor {
-    pub fn new() -> Self {
-        Self {}
-    }
-
     // ===============================================================
     // Block order — protocol impl must precede inherent impl
     // ===============================================================
@@ -133,8 +169,20 @@ impl CapabilitiesRustRoleAuditor {
     fn _block_order(&self, content: &str, path: &str, violations: &mut Vec<LintResult>) {
         let lines: Vec<&str> = content.lines().collect();
         let mut protocol_line: Option<(usize, String)> = None;
-        let mut inherent_line: Option<(usize, String)> = None;
+        let mut inherent_offenders: Vec<(usize, String)> = Vec::new();
         let mut in_cfg_test = false;
+
+        // Per R2, constructor impls (`impl <Struct> { pub fn new }`,
+        // `impl Default for <Struct>`) belong in Block 1, between the
+        // `// Block 1:` and `// Block 2:` banners. Only a bare inherent impl
+        // that sits at or below the `// Block 3:` banner is a Block 3
+        // misplacement. When the file has no banners, a bare inherent impl on
+        // a raw line before the protocol impl is a violation. Track banner
+        // positions so the comparison is by block, not by raw line number.
+        let markers = shared_role_rules::taxonomy_role_rules_vo::capability_block_markers(content);
+        let banner1_idx: Option<usize> = markers.iter().find(|m| m.number == 1).map(|m| m.line - 1);
+        let banner2_idx: Option<usize> = markers.iter().find(|m| m.number == 2).map(|m| m.line - 1);
+        let banner3_idx: Option<usize> = markers.iter().find(|m| m.number == 3).map(|m| m.line - 1);
 
         for (i, l) in lines.iter().enumerate() {
             let t = l.trim();
@@ -151,43 +199,111 @@ impl CapabilitiesRustRoleAuditor {
                 continue;
             }
 
-            if protocol_line.is_none() && t.starts_with("impl ") && t.contains("Protocol for") {
+            if protocol_line.is_none()
+                && (t.starts_with("impl ") || t.starts_with("impl<"))
+                && t.contains("Protocol for")
+            {
                 // The block-order check uses the looser "Protocol for" substring
                 // so it does not miss protocol implementations that use a generic
-                // prefix or re-exported trait names. The implementor check uses
-                // `_is_protocol_trait` instead, which is strict about the suffix.
+                // prefix or re-exported trait names.
                 protocol_line = Some((i, t.trim_end_matches('{').trim().to_string()));
             }
 
-            if inherent_line.is_none() && t.starts_with("impl ") && !t.contains("Protocol for") {
-                inherent_line = Some((i, t.trim_end_matches('{').trim().to_string()));
+            if (t.starts_with("impl ") || t.starts_with("impl<")) && !t.contains(" for ") {
+                // `impl Default for T` contains ` for ` and is skipped above;
+                // bare inherent impls like `impl Type {` have no ` for `.
+                // A constructor impl (`impl <Struct> { pub fn new }`) sitting
+                // strictly between the Block 1 and Block 2 banners is R2-conformant.
+                // When there is a B1 but no B2, anything after B1 is still the
+                // constructor region (nothing else can legally occupy it yet).
+                let is_constructor_region = match (banner1_idx, banner2_idx) {
+                    (Some(b1), Some(b2)) => b1 < i && i < b2,
+                    (Some(b1), None) => b1 < i,
+                    (None, _) => false,
+                };
+                if !is_constructor_region {
+                    inherent_offenders.push((i, t.trim_end_matches('{').trim().to_string()));
+                }
             }
         }
 
-        if let (Some((inh_idx, inh_src)), Some((proto_idx, proto_src))) =
-            (inherent_line, protocol_line)
-            && inh_idx < proto_idx
-        {
-            violations.push(LintResult::new_arch_with_name(
-                path,
-                inh_idx + 1,
-                "AES403",
-                Severity::HIGH,
-                format!(
-                    "Block 2 (protocol impl) must precede Block 3 (inherent impl): `{inh_src}` is declared before `{proto_src}`.",
-                    inh_src = inh_src,
-                    proto_src = proto_src,
-                ),
-                "CAPABILITY_ROLE",
-                format!(
-                    "`{inh_src}` is declared at line {} but `{proto_src}` follows at line {}.",
+        // Only report when the inherent impl is actually misplaced. For
+        // banner-carrying files the violation is an inherent impl before the
+        // Block 3 banner (i.e. tucked into Block 1 or 2 instead of Block 3).
+        // For banner-less files it is a raw-line ordering violation.
+        let proto_src = protocol_line
+            .as_ref()
+            .map(|(_, s)| s.as_str())
+            .unwrap_or("<protocol impl>");
+        let proto_idx = protocol_line.as_ref().map(|(i, _)| *i);
+
+        // Report every bare inherent impl that sits outside its legal region:
+        // - banner-carrying: an inherent impl above the Block 3 banner is tucked
+        //   into Block 1 or Block 2 instead of Block 3 (Rule 1).
+        // - banner-less: an inherent impl before the protocol impl is a raw-order
+        //   violation (fallback Rule 2).
+        for (inh_idx, inh_src) in inherent_offenders {
+            let is_misplaced = match banner3_idx {
+                Some(b3) => inh_idx < b3,
+                None => proto_idx.is_some_and(|p| inh_idx < p),
+            };
+            if is_misplaced {
+                violations.push(LintResult::new_arch_with_name(
+                    path,
                     inh_idx + 1,
-                    proto_idx + 1
-                ),
-                "Reorder the file so the blocks read:\n  \
-                 Block 1 (type + constructor) -> Block 2 (protocol methods only) -> Block 3 (factories, std traits, helpers).\n  \
-                 Move the protocol trait implementation above the inherent impl block.",
-            ));
+                    "AES403",
+                    Severity::HIGH,
+                    format!(
+                        "Block 2 (protocol impl) must precede Block 3 (inherent impl): `{inh_src}` is declared before `{proto_src}`.",
+                        inh_src = inh_src,
+                        proto_src = proto_src,
+                    ),
+                    "CAPABILITY_ROLE",
+                    format!(
+                        "`{inh_src}` is declared at line {} but `{proto_src}` follows at line {}.",
+                        inh_idx + 1,
+                        proto_idx.map(|p| p + 1).unwrap_or(inh_idx + 1)
+                    ),
+                    match banner3_idx {
+                        Some(_) => "Reorder the file so the blocks read:\n  \
+                                     Block 1: Module Declaration -> Block 2: Module Contract -> Block 3: Module Helpers.\n  \
+                                     Move the bare inherent impl below the `// ─── Block 3: Module Helpers ───` banner.",
+                        None => "Reorder the file so the blocks read:\n  \
+                                     Block 1: Module Declaration -> Block 2: Module Contract -> Block 3: Module Helpers.\n  \
+                                     Move the protocol impl above the inherent impl instead.",
+                    },
+                ));
+            }
+        }
+
+        // Protocol placement: the protocol impl must live strictly inside region
+        // Block 2 (between the B2 and B3 banners). A protocol impl elsewhere is
+        // itself a block-membership defect. When banners 2 and 3 are adjacent
+        // there is no Block 2 region to check, so skip the placement check.
+        if let (Some((proto_idx, proto_src)), Some(b2), Some(b3)) =
+            (protocol_line, banner2_idx, banner3_idx)
+        {
+            if b3 > b2 + 1 && !(b2 < proto_idx && proto_idx < b3) {
+                violations.push(LintResult::new_arch_with_name(
+                    path,
+                    proto_idx + 1,
+                    "AES403",
+                    Severity::HIGH,
+                    format!(
+                        "Protocol impl must live in region Block 2: `{proto_src}` is outside the `// ─── Block 2: Module Contract ───` .. `// ─── Block 3: Module Helpers ───` span.",
+                        proto_src = proto_src,
+                    ),
+                    "CAPABILITY_ROLE",
+                    format!(
+                        "`{proto_src}` is declared at line {}, outside region Block 2 (lines {}–{}).",
+                        proto_idx + 1,
+                        b2 + 1,
+                        b3 + 1
+                    ),
+                    "Move the protocol trait implementation into region Block 2, between \
+                     the `// ─── Block 2: Module Contract ───` and `// ─── Block 3: Module Helpers ───` banners.",
+                ));
+            }
         }
     }
 
@@ -201,20 +317,24 @@ impl CapabilitiesRustRoleAuditor {
         // cannot be shared, so it is not a placement defect.
         for (i, l) in content.lines().enumerate() {
             let t = l.trim();
-            // `const NAME: Type = <literal>;` belongs in taxonomy_<domain>_constant.rs.
-            // `static` is excluded: lazily-initialised caches (LazyLock/OnceLock)
-            // are implementation detail, not a shareable policy constant.
+            // `const NAME: Type = <literal>;` (incl. `pub`/`pub(crate)`) belongs
+            // in taxonomy_<domain>_constant.rs. `static` is excluded: lazily-
+            // initialised caches (LazyLock/OnceLock) are implementation detail,
+            // not a shareable policy constant.
             let indent = l.len() - l.trim_start().len();
             if indent == 0
-                && t.starts_with("const ")
+                && (t.starts_with("pub const ")
+                    || t.starts_with("pub(crate) const ")
+                    || t.starts_with("const "))
                 && !t.starts_with("const fn ")
                 && t.contains(':')
                 && t.contains('=')
             {
                 let name = t
                     .split_whitespace()
-                    .nth(1)
+                    .find(|w| *w != "pub" && *w != "pub(crate)" && *w != "const")
                     .unwrap_or("<unnamed>")
+                    .trim_end_matches(':')
                     .to_string();
                 violations.push(LintResult::new_arch_with_name(
                     path,
@@ -247,18 +367,35 @@ impl CapabilitiesRustRoleAuditor {
             // Only a real declaration counts. A `mod tests` mention inside a
             // comment, a string, or a `starts_with(...)` guard is not one.
             let is_cfg_attr = t == "#[cfg(test)]";
-            let is_test_mod = (t.starts_with("mod tests")
+            let is_test_mod_inline = (t.starts_with("mod tests")
                 || t.starts_with("pub mod tests")
                 || t.starts_with("#[cfg(test)] mod tests"))
                 && t.ends_with('{');
-            if !is_cfg_attr && !is_test_mod {
+            let is_test_mod_external = (t.starts_with("mod tests")
+                || t.starts_with("pub mod tests")
+                || t.starts_with("#[cfg(test)] mod tests"))
+                && t.ends_with(';');
+            if !is_cfg_attr && !is_test_mod_inline && !is_test_mod_external {
                 continue;
             }
             if is_cfg_attr {
-                // `#[cfg(test)]` on its own line is one finding for the block
-                // that follows; a `mod tests` on the next line is the same block.
-                let next = lines.get(i + 1).map(|n| n.trim()).unwrap_or("");
-                if next.starts_with("mod tests") || next.starts_with("pub mod tests") {
+                // `#[cfg(test)]` on its own line flags the test block that
+                // follows; skip intervening allow/cfg attributes and the
+                // `mod tests` on the next line so we report once per block.
+                let mut next = i + 1;
+                while let Some(n) = lines.get(next) {
+                    let nt = n.trim();
+                    if nt.starts_with("#[cfg(test)]")
+                        || nt.starts_with("#[allow(")
+                        || nt.starts_with("#[cfg(")
+                    {
+                        next += 1;
+                        continue;
+                    }
+                    break;
+                }
+                let after = lines.get(next).map(|n| n.trim()).unwrap_or("");
+                if after.starts_with("mod tests") || after.starts_with("pub mod tests") {
                     continue;
                 }
             }
@@ -289,37 +426,42 @@ impl CapabilitiesRustRoleAuditor {
         violations: &mut Vec<LintResult>,
     ) {
         let lines: Vec<&str> = content.lines().collect();
-        let mut in_cfg_test = false;
+        let mut in_cfg_test_depth: i32 = 0;
         let mut in_inherent_block = false;
         let mut block_depth: i32 = 0;
+        let mut in_brace_region: bool = false; // true once we've seen depth > 0 inside the impl
 
         for (i, l) in lines.iter().enumerate() {
             let t = l.trim();
 
-            // Skip #[cfg(test)] blocks entirely.
+            // Skip #[cfg(test)] blocks entirely, tracking depth so the
+            // closing brace of the whole block (not just the first fn) ends
+            // the skip.
             if t.starts_with("#[cfg(test)]") {
-                in_cfg_test = true;
+                in_cfg_test_depth = i32::from(t.contains('{')) - i32::from(t.contains('}'));
                 continue;
             }
-            if in_cfg_test && t.starts_with("}") {
-                in_cfg_test = false;
-                continue;
-            }
-            if in_cfg_test {
+            if in_cfg_test_depth > 0 {
+                in_cfg_test_depth += i32::from(t.contains('{')) - i32::from(t.contains('}'));
                 continue;
             }
 
             // Track whether we're inside an inherent impl block.
-            if t.starts_with("impl ") && !t.starts_with("impl I") && !t.contains("Protocol for") {
+            if t.starts_with("impl ") && !t.contains(" for ") {
                 in_inherent_block = true;
                 block_depth = 0;
+                in_brace_region = false;
             }
             if in_inherent_block {
                 block_depth += i32::from(t.contains('{')) - i32::from(t.contains('}'));
-                if block_depth < 0 {
-                    // Closing brace of the impl block; depth went negative so reset.
+                if block_depth > 0 {
+                    in_brace_region = true;
+                }
+                if in_brace_region && block_depth <= 0 {
+                    // Closing brace of the impl block; depth returned to 0.
                     in_inherent_block = false;
                     block_depth = 0;
+                    in_brace_region = false;
                     continue;
                 }
             }
@@ -338,6 +480,9 @@ impl CapabilitiesRustRoleAuditor {
                     .nth(2)
                     .unwrap_or("")
                     .split('(')
+                    .next()
+                    .unwrap_or("")
+                    .split('<')
                     .next()
                     .unwrap_or("");
 

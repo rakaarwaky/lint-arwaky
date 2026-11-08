@@ -20,11 +20,23 @@ use shared_role_rules::utility_signature_parser::{
 
 use shared_role_rules::utility_contract_role_checker as utility;
 
-// === Block 1: Module DeclarationType Definition ===
+// ─── Block 1: Module Declaration ───
 
 pub struct ContractRustRoleAuditor {}
 
-// === Block 2: Module Contract ===
+impl ContractRustRoleAuditor {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+
+impl Default for ContractRustRoleAuditor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+// ─── Block 2: Module Contract ───
 
 impl IContractRoleProtocol for ContractRustRoleAuditor {
     fn check_contract_routing(
@@ -92,19 +104,9 @@ impl IContractRoleProtocol for ContractRustRoleAuditor {
     }
 }
 
-// === Block 3: Module HelpersHelpers ===
-
-impl Default for ContractRustRoleAuditor {
-    fn default() -> Self {
-        Self::new()
-    }
-}
+// ─── Block 3: Module Helpers ───
 
 impl ContractRustRoleAuditor {
-    pub fn new() -> Self {
-        Self {}
-    }
-
     // ===============================================================
     // Contract primitive — no primitive types in a trait signature
     // ===============================================================

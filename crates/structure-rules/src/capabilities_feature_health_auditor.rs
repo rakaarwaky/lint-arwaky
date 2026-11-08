@@ -15,7 +15,15 @@ use shared_structure_rules::taxonomy_structure_rules_response::StructureResponse
 
 /// AES702: checks that feature folders hold capabilities + orchestrator pairs,
 /// carry no foreign-layer files, and document themselves with FRD.md + BACKLOG.md.
+#[derive(Default)]
 pub struct FeatureHealthAuditor {}
+
+impl FeatureHealthAuditor {
+    /// Stateless auditor: every audit call is self-contained.
+    pub fn new() -> Self {
+        Self {}
+    }
+}
 
 // ─── Block 2: Module Contract ────────────────
 
@@ -31,29 +39,20 @@ impl IStructureFeatureHealthProtocol for FeatureHealthAuditor {
                     continue;
                 }
                 let inventory = utility_structure_parsers::inventory(&folder);
-                let folder_rel = match folder.strip_prefix(&ws_root) {
-                    Ok(p) => p.to_string_lossy().replace('\\', "/"),
-                    Err(_) => folder.to_string_lossy().replace('\\', "/"),
-                };
-                if inventory.has_capabilities || inventory.has_orchestrator {
-                    check_feature_folder(
-                        &folder,
-                        &folder_rel,
-                        &member,
-                        &ws_root,
-                        &inventory,
-                        &mut findings,
-                    );
-                    check_feature_shared_mirror(&folder, &folder_rel, &member, &mut findings);
-                    // Reverse check: a folder that is a real feature (holds
-                    // agent_* or capabilities_* files) and carries a doc pair
-                    // must hold an orchestrator. Surface-only or non-agent
-                    // member folders (TS packages, CLI/API surfaces) that
-                    // merely carry FRD.md + BACKLOG.md without any AES-named
-                    // source are not feature folders and are skipped, matching
-                    // the forward-direction gate above.
-                    check_reverse_doc_orchestrator(&folder, &folder_rel, &mut findings);
+                if !inventory.has_capabilities && !inventory.has_orchestrator {
+                    continue;
                 }
+                let folder_rel = relative_posix(&folder, &ws_root);
+                check_feature_folder(
+                    &folder,
+                    &folder_rel,
+                    &member,
+                    &ws_root,
+                    &inventory,
+                    &mut findings,
+                );
+                check_feature_shared_mirror(&folder, &folder_rel, &member, &mut findings);
+                check_reverse_doc_orchestrator(&folder, &folder_rel, &mut findings);
             }
         }
 
@@ -62,8 +61,6 @@ impl IStructureFeatureHealthProtocol for FeatureHealthAuditor {
         }
     }
 }
-
-// ─── Private helpers ───────────────────────────────────────────────────────────
 
 // ─── Block 3: Module Helpers ────────────
 
@@ -80,6 +77,15 @@ fn folder_name(folder: &std::path::Path) -> String {
         .and_then(|n| n.to_str())
         .unwrap_or_default()
         .to_string()
+}
+
+/// Render *path* relative to *ws_root* with POSIX separators, falling back to
+/// the full path (still POSIX-separated) when it is not beneath the root.
+fn relative_posix(path: &std::path::Path, ws_root: &std::path::Path) -> String {
+    match path.strip_prefix(ws_root) {
+        Ok(p) => p.to_string_lossy().replace('\\', "/"),
+        Err(_) => path.to_string_lossy().replace('\\', "/"),
+    }
 }
 
 /// AES702 — a feature folder carries capabilities and agents, has no foreign
@@ -165,15 +171,14 @@ fn check_feature_folder(
         ));
     }
 
-    // Docs: forward and reverse direction.
+    // Docs: forward direction; the reverse doc check runs from the contract.
     check_feature_docs(folder, rel, findings);
 }
 
-/// AES702 doc pair check, both directions.
-///
-/// Forward: a folder with source files must carry FRD.md + BACKLOG.md.
-/// Reverse: a folder that carries FRD.md + BACKLOG.md must also carry at
-/// least one *_orchestrator file.
+/// AES702 forward doc check: a feature folder must carry FRD.md + BACKLOG.md
+/// beside its source. The reverse direction — a folder carrying the doc pair
+/// must also hold an `*_orchestrator` — lives in
+/// [`check_reverse_doc_orchestrator`].
 fn check_feature_docs(folder: &std::path::Path, rel: &str, findings: &mut Vec<StructureFinding>) {
     let missing = missing_docs(folder, consts::FEATURE_DOC_PAIR);
     if !missing.is_empty() {

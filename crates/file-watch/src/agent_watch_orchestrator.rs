@@ -27,23 +27,6 @@ pub struct WatchOrchestrator {
     linter: Arc<dyn ICodeAnalysisAggregate>,
 }
 
-// ─── Block 2: Module Contract ──────────────
-
-impl IWatchAggregate for WatchOrchestrator {
-    fn execute(&self, request: WatchRequest) -> WatchResponse {
-        match request {
-            WatchRequest::Run { config, running } => WatchResponse::Run {
-                exit_code: self.run_watch_loop(&config, running),
-            },
-            WatchRequest::IsLintable { path } => WatchResponse::IsLintable {
-                lintable: self.filter.is_lintable(path.value()),
-            },
-        }
-    }
-}
-
-// ─── Block 3: Module Helpers ──────
-
 impl WatchOrchestrator {
     pub fn new(
         lifecycle: Arc<dyn IWatchLifecycleProtocol>,
@@ -136,3 +119,19 @@ impl WatchOrchestrator {
         ExitCode::OK
     }
 }
+// ─── Block 2: Module Contract ──────────────
+
+impl IWatchAggregate for WatchOrchestrator {
+    fn execute(&self, request: WatchRequest) -> WatchResponse {
+        match request {
+            WatchRequest::Run { config, running } => WatchResponse::Run {
+                exit_code: self.run_watch_loop(&config, running),
+            },
+            WatchRequest::IsLintable { path } => WatchResponse::IsLintable {
+                lintable: self.filter.is_lintable(path.value()),
+            },
+        }
+    }
+}
+
+// ─── Block 3: Module Helpers ──────

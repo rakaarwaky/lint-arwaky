@@ -24,6 +24,12 @@ pub struct ReportFormatterOrchestrator {
     deps: ReportFormatterDeps,
 }
 
+impl ReportFormatterOrchestrator {
+    pub fn new(deps: ReportFormatterDeps) -> Self {
+        Self { deps }
+    }
+}
+
 // ─── Block 2: Module Contract ──────────────
 impl IReportFormatterAggregate for ReportFormatterOrchestrator {
     fn format(&self, report: &ScanReport, format: Format) -> DisplayContent {
@@ -33,12 +39,5 @@ impl IReportFormatterAggregate for ReportFormatterOrchestrator {
             Format::Sarif => self.deps.sarif.format_sarif(report),
             Format::Junit => self.deps.junit.format_junit(report),
         }
-    }
-}
-
-// ─── Block 3: Module Helpers ──────
-impl ReportFormatterOrchestrator {
-    pub fn new(deps: ReportFormatterDeps) -> Self {
-        Self { deps }
     }
 }

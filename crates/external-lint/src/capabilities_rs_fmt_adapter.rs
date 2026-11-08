@@ -38,6 +38,19 @@ pub struct RustFmtAdapter {
     _bin_path: Option<FilePath>,
 }
 
+impl RustFmtAdapter {
+    pub fn new(
+        executor: Arc<dyn ICommandExecutorProtocol>,
+        bin_path: Option<FilePath>,
+        tool_resolution: Arc<dyn IToolResolutionProtocol>,
+    ) -> Self {
+        Self {
+            executor,
+            _bin_path: bin_path,
+            tool_resolution,
+        }
+    }
+}
 // ─── Block 2: Module Contract ───────────────
 
 impl ILinterAdapterProtocol for RustFmtAdapter {
@@ -133,17 +146,3 @@ impl ILinterAdapterProtocol for RustFmtAdapter {
 }
 
 // ─── Block 3: Module Helpers ──────
-
-impl RustFmtAdapter {
-    pub fn new(
-        executor: Arc<dyn ICommandExecutorProtocol>,
-        bin_path: Option<FilePath>,
-        tool_resolution: Arc<dyn IToolResolutionProtocol>,
-    ) -> Self {
-        Self {
-            executor,
-            _bin_path: bin_path,
-            tool_resolution,
-        }
-    }
-}

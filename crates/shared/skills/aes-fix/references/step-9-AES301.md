@@ -14,7 +14,8 @@ AES301 (rule code `AES301`, checker `capabilities_line_checker` in the `quality-
 1. Identify the violated rule code (AES301) from the scan report.
 2. Split the file into smaller, focused modules by responsibility.
 3. Move shared helpers to a `*_utility` file if duplicated across modules.
-4. Re-run `lint-arwaky-cli scan .` and confirm AES301 no longer fires on that file.
+4. **Consolidate-to-taxonomy:** when an AES301 split creates two utility files that import each other (utility→utility self-import, AES201), consolidate all shared helpers into a single `taxonomy` layer module instead. Taxonomy is importable by `utility` per the AES201 layer matrix.
+5. Re-run `lint-arwaky-cli scan .` and confirm AES301 no longer fires on that file.
 
 ## Verify
 

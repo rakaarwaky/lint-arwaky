@@ -16,11 +16,23 @@ use shared_role_rules::contract_role_protocol::IUtilityRoleProtocol;
 
 use shared_role_rules::utility_utility_role_checker as utility;
 
-// === Block 1: Module DeclarationType Definition ===
+// ─── Block 1: Module Declaration ───
 
 pub struct UtilityRustRoleAuditor {}
 
-// === Block 2: Module Contract ===
+impl UtilityRustRoleAuditor {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+
+impl Default for UtilityRustRoleAuditor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+// ─── Block 2: Module Contract ───
 
 impl IUtilityRoleProtocol for UtilityRustRoleAuditor {
     fn check_utility_convention(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
@@ -32,19 +44,9 @@ impl IUtilityRoleProtocol for UtilityRustRoleAuditor {
     }
 }
 
-// === Block 3: Module Helpers ===
-
-impl Default for UtilityRustRoleAuditor {
-    fn default() -> Self {
-        Self::new()
-    }
-}
+// ─── Block 3: Module Helpers ───
 
 impl UtilityRustRoleAuditor {
-    pub fn new() -> Self {
-        Self {}
-    }
-
     /// The metadata path reads the type inventory that tree-sitter already
     /// collected and reports every forbidden item in one finding.
     fn _check_with_metadata(

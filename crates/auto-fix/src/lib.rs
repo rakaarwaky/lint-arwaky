@@ -1,6 +1,7 @@
 pub use shared_auto_fix::IFixAggregate;
 pub use shared_auto_fix::{
-    IBypassFixProtocol, ISymbolRenameProtocol, IUnusedImportFixProtocol, IViolationReportProtocol,
+    IBlockMarkerFixProtocol, IBypassFixProtocol, ISymbolRenameProtocol, IUnusedImportFixProtocol,
+    IViolationReportProtocol,
 };
 
 pub mod agent_fix_orchestrator;
@@ -17,5 +18,8 @@ pub use capabilities_unused_import_fix::UnusedImportFix;
 
 pub mod capabilities_violation_report;
 pub use capabilities_violation_report::ViolationReport;
+
+pub mod capabilities_block_marker_fix;
+pub use capabilities_block_marker_fix::BlockMarkerFix;
 
 pub mod root_auto_fix_container;

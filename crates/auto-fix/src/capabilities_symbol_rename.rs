@@ -19,30 +19,6 @@ pub struct SymbolRename {
     io: Arc<dyn IFileSystemIOProtocol>,
 }
 
-// ─── Block 2: Module Contract ──────────────
-
-impl ISymbolRenameProtocol for SymbolRename {
-    fn rename_symbol(
-        &self,
-        file_path: &str,
-        old_name: &SymbolName,
-        new_name: &SymbolName,
-    ) -> FixOutcome {
-        self.rename_impl(file_path, old_name.value(), new_name.value(), false)
-    }
-    fn rename_symbol_dry(
-        &self,
-        file_path: &str,
-        old_name: &str,
-        new_name: &str,
-        dry_run: bool,
-    ) -> FixOutcome {
-        self.rename_impl(file_path, old_name, new_name, dry_run)
-    }
-}
-
-// ─── Block 3: Module Helpers ──────
-
 impl SymbolRename {
     pub fn new(io: Arc<dyn IFileSystemIOProtocol>) -> Self {
         Self { io }
@@ -100,3 +76,26 @@ impl SymbolRename {
         FixOutcome::skipped(SkipReason::AlreadyValid)
     }
 }
+// ─── Block 2: Module Contract ──────────────
+
+impl ISymbolRenameProtocol for SymbolRename {
+    fn rename_symbol(
+        &self,
+        file_path: &str,
+        old_name: &SymbolName,
+        new_name: &SymbolName,
+    ) -> FixOutcome {
+        self.rename_impl(file_path, old_name.value(), new_name.value(), false)
+    }
+    fn rename_symbol_dry(
+        &self,
+        file_path: &str,
+        old_name: &str,
+        new_name: &str,
+        dry_run: bool,
+    ) -> FixOutcome {
+        self.rename_impl(file_path, old_name, new_name, dry_run)
+    }
+}
+
+// ─── Block 3: Module Helpers ──────

@@ -13,6 +13,19 @@ use std::collections::HashMap;
 // ─── Block 1: Module Declaration ────────────────────────────
 
 pub struct ContractOrphanAnalyzer;
+
+impl Default for ContractOrphanAnalyzer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl ContractOrphanAnalyzer {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
 // ─── Block 2: Module Contract ────────────────
 
 impl IContractOrphanProtocol for ContractOrphanAnalyzer {
@@ -365,17 +378,5 @@ impl ContractOrphanAnalyzer {
                 })
                 .unwrap_or(false)
         })
-    }
-}
-
-impl ContractOrphanAnalyzer {
-    pub fn new() -> Self {
-        Self
-    }
-}
-
-impl Default for ContractOrphanAnalyzer {
-    fn default() -> Self {
-        Self::new()
     }
 }

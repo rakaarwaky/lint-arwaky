@@ -15,12 +15,23 @@ use shared_role_rules::taxonomy_role_rules_constant::AGENT_FORBIDDEN_IO_RUST;
 use shared_role_rules::utility_agent_role_checker;
 use shared_role_rules::utility_agent_role_io_checker;
 
-// === Block 1: Module DeclarationType Definition ===
+// ─── Block 1: Module Declaration ───
 
 pub struct AgentRustRoleAuditor {}
 
-// === Block 2: Module Contract ===
+impl AgentRustRoleAuditor {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
 
+impl Default for AgentRustRoleAuditor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+// ─── Block 2: Module Contract ───
 impl IAgentRoleProtocol for AgentRustRoleAuditor {
     fn check_agent_routing(&self, file: &FileEntry, layer: &str, violations: &mut Vec<LintResult>) {
         if !utility_agent_role_checker::is_agent_layer(layer) {
@@ -55,6 +66,10 @@ impl IAgentRoleProtocol for AgentRustRoleAuditor {
 
     fn check_agent_block_markers(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
         utility_agent_role_checker::check_block_markers(file, violations);
+    }
+
+    fn check_agent_constructor_block1(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
+        utility_agent_role_checker::check_constructor_in_block1(file, violations);
     }
 
     fn check_agent_io_forbidden(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
@@ -125,19 +140,9 @@ impl IAgentRoleProtocol for AgentRustRoleAuditor {
     }
 }
 
-// === Block 3: Module HelpersHelpers ===
-
-impl Default for AgentRustRoleAuditor {
-    fn default() -> Self {
-        Self::new()
-    }
-}
+// ─── Block 3: Module Helpers ───
 
 impl AgentRustRoleAuditor {
-    pub fn new() -> Self {
-        Self {}
-    }
-
     /// Block 2 (aggregate impl) must precede Block 3 (inherent impl). HIGH.
     ///
     /// The file reads types and injected deps, then aggregate methods, then
@@ -148,6 +153,17 @@ impl AgentRustRoleAuditor {
         let mut aggregate_line: Option<(usize, String)> = None;
         let mut inherent_line: Option<(usize, String)> = None;
         let mut in_cfg_test = false;
+
+        // Per R2, constructor impls (`impl <Struct> { pub fn new }`,
+        // `impl Default for <Struct>`) belong in Block 1, between the
+        // `// Block 1:` and `// Block 2:` banners. Only a bare inherent impl
+        // that sits at or below the `// Block 3:` banner is Block 3
+        // (correct). An inherent impl *above* the Block 3 banner is
+        // misplaced. Track banner positions so comparison is by block.
+        let markers = shared_role_rules::taxonomy_role_rules_vo::capability_block_markers(content);
+        let banner1_idx: Option<usize> = markers.iter().find(|m| m.number == 1).map(|m| m.line - 1);
+        let banner2_idx: Option<usize> = markers.iter().find(|m| m.number == 2).map(|m| m.line - 1);
+        let banner3_idx: Option<usize> = markers.iter().find(|m| m.number == 3).map(|m| m.line - 1);
 
         for (i, line) in content.lines().enumerate() {
             let t = line.trim();
@@ -162,6 +178,20 @@ impl AgentRustRoleAuditor {
                 continue;
             }
             if !t.starts_with("impl ") || utility_agent_role_checker::is_comment(t) {
+                continue;
+            }
+            // `impl Default for T` is a constructor (R2), never a Block 3
+            // inherent impl. Skip it entirely.
+            if t.starts_with("impl Default for") {
+                continue;
+            }
+            // A constructor impl (`impl <Struct> { pub fn new }`) sitting
+            // between Block 1 and Block 2 banners is R2-conformant; skip it.
+            let between_banner1_and_2 = matches!(
+                (banner1_idx, banner2_idx),
+                (Some(b1), Some(b2)) if b1 < i && i < b2
+            );
+            if between_banner1_and_2 {
                 continue;
             }
             // `impl Trait for Type` is the aggregate impl; `impl Type` (no
@@ -182,22 +212,30 @@ impl AgentRustRoleAuditor {
 
         if let (Some((agg_idx, agg_src)), Some((inh_idx, inh_src))) =
             (aggregate_line, inherent_line)
-            && inh_idx < agg_idx
         {
-            violations.push(LintResult::new_arch_with_name(
-                path,
-                inh_idx + 1,
-                "AES405",
-                Severity::HIGH,"Block 3 (inherent impl) precedes Block 2 (aggregate impl)".to_string(),
-                "AGENT_ROLE",
-                format!(
-                    "`{inh_src}` is declared at line {} but `{agg_src}` follows at line {}.",
+            // For banner-carrying files, an inherent impl above Block 3 is
+            // misplaced; for banner-less files, any inherent impl before the
+            // aggregate is misplaced.
+            let is_misplaced = match banner3_idx {
+                Some(b3) => inh_idx < b3,
+                None => inh_idx < agg_idx,
+            };
+            if is_misplaced && inh_idx < agg_idx {
+                violations.push(LintResult::new_arch_with_name(
+                    path,
                     inh_idx + 1,
-                    agg_idx + 1
-                ),
-                "Reorder the file so it reads:\n  \
-                 Block 1 (type + injected deps) -> Block 2 (aggregate impl) -> Block 3 (constructor, std traits, helpers).",
-            ));
+                    "AES405",
+                    Severity::HIGH,"Block 3 (inherent impl) precedes Block 2 (aggregate impl)".to_string(),
+                    "AGENT_ROLE",
+                    format!(
+                        "`{inh_src}` is declared at line {} but `{agg_src}` follows at line {}.",
+                        inh_idx + 1,
+                        agg_idx + 1
+                    ),
+                    "Reorder the file so it reads:\n  \
+                     Block 1 (type + injected deps) -> Block 2 (aggregate impl) -> Block 3 (constructor, std traits, helpers).",
+                ));
+            }
         }
     }
 
