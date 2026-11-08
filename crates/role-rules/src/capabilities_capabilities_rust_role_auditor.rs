@@ -61,6 +61,7 @@ impl ICapabilitiesRoleProtocol for CapabilitiesRustRoleAuditor {
         utility_capabilities_role_checker::check_single_protocol(file, violations);
         self.check_capability_block_order(file, violations);
         utility_capabilities_role_checker::check_block_markers(file, violations);
+        self.check_capability_banner_hygiene(file, violations);
         self.check_capability_constant_placement(file, violations);
         self.check_capability_test_placement(file, violations);
         self.check_capability_helper_visibility(file, references, violations);
