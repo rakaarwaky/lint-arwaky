@@ -787,6 +787,16 @@ fn aes403_no_banner_detected() {
         "the finding should name the missing-map defect, got: {}",
         findings[0]
     );
+    assert!(
+        findings[0].contains("Block 1: Module Declaration"),
+        "the finding should name Block 1, got: {}",
+        findings[0]
+    );
+    assert!(
+        findings[0].contains("Module Helpers"),
+        "the finding should name Module Helpers, got: {}",
+        findings[0]
+    );
 }
 
 #[test]
