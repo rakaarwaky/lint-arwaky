@@ -439,11 +439,11 @@ fn embedded_template_content(doc_name: &str) -> Option<String> {
         _ => return None,
     };
     let candidates = [
-        std::path::PathBuf::from("crates/shared/doc-templates/aes-docs/references").join(key),
+        std::path::PathBuf::from("crates/shared/template").join(key),
         std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("../shared/doc-templates/aes-docs/references")
+            .join("../shared/template")
             .join(key),
-        std::path::PathBuf::from("doc-templates/aes-docs/references").join(key),
+        std::path::PathBuf::from("template").join(key),
     ];
     for path in &candidates {
         if let Ok(content) = std::fs::read_to_string(path) {
