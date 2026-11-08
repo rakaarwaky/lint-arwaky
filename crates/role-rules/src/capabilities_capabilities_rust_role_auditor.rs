@@ -316,19 +316,22 @@ impl CapabilitiesRustRoleAuditor {
         // cannot be shared, so it is not a placement defect.
         for (i, l) in content.lines().enumerate() {
             let t = l.trim();
-            // `const NAME: Type = <literal>;` belongs in taxonomy_<domain>_constant.rs.
-            // `static` is excluded: lazily-initialised caches (LazyLock/OnceLock)
-            // are implementation detail, not a shareable policy constant.
+            // `const NAME: Type = <literal>;` (incl. `pub`/`pub(crate)`) belongs
+            // in taxonomy_<domain>_constant.rs. `static` is excluded: lazily-
+            // initialised caches (LazyLock/OnceLock) are implementation detail,
+            // not a shareable policy constant.
             let indent = l.len() - l.trim_start().len();
             if indent == 0
-                && t.starts_with("const ")
+                && (t.starts_with("pub const ")
+                    || t.starts_with("pub(crate) const ")
+                    || t.starts_with("const "))
                 && !t.starts_with("const fn ")
                 && t.contains(':')
                 && t.contains('=')
             {
                 let name = t
                     .split_whitespace()
-                    .nth(1)
+                    .find(|w| *w != "pub" && *w != "pub(crate)" && *w != "const")
                     .unwrap_or("<unnamed>")
                     .trim_end_matches(':')
                     .to_string();
@@ -363,11 +366,15 @@ impl CapabilitiesRustRoleAuditor {
             // Only a real declaration counts. A `mod tests` mention inside a
             // comment, a string, or a `starts_with(...)` guard is not one.
             let is_cfg_attr = t == "#[cfg(test)]";
-            let is_test_mod = (t.starts_with("mod tests")
+            let is_test_mod_inline = (t.starts_with("mod tests")
                 || t.starts_with("pub mod tests")
                 || t.starts_with("#[cfg(test)] mod tests"))
                 && t.ends_with('{');
-            if !is_cfg_attr && !is_test_mod {
+            let is_test_mod_external = (t.starts_with("mod tests")
+                || t.starts_with("pub mod tests")
+                || t.starts_with("#[cfg(test)] mod tests"))
+                && t.ends_with(';');
+            if !is_cfg_attr && !is_test_mod_inline && !is_test_mod_external {
                 continue;
             }
             if is_cfg_attr {
@@ -430,14 +437,11 @@ impl CapabilitiesRustRoleAuditor {
             // closing brace of the whole block (not just the first fn) ends
             // the skip.
             if t.starts_with("#[cfg(test)]") {
-                in_cfg_test_depth = 1;
+                in_cfg_test_depth = i32::from(t.contains('{')) - i32::from(t.contains('}'));
                 continue;
             }
             if in_cfg_test_depth > 0 {
                 in_cfg_test_depth += i32::from(t.contains('{')) - i32::from(t.contains('}'));
-                if in_cfg_test_depth == 0 {
-                    continue;
-                }
                 continue;
             }
 

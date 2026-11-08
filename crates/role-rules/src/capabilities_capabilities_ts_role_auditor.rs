@@ -3,9 +3,11 @@
 // Handles the 3-block capability shape as a class constructor (Block 1), public methods (Block 2), then private and static helpers (Block 3).
 //
 // The orchestrator (agent_role_orchestrator.rs) selects this auditor by
-// `file.language` and calls the trait entry point; all six AES403 sub-checks
-// then run here. Type budget and implementor checks live in
-// utility_capabilities_role_checker.rs so the three auditors share one copy.
+// `file.language` and calls the trait entry point; all nine AES403 sub-checks
+// then run here — four local helpers (`_block_order`, `_constant_placement`,
+// `_test_placement`, `_helper_visibility`) and five shared checks in
+// utility_capabilities_role_checker.rs (type budget, implementor, single
+// protocol, block markers, banner hygiene).
 
 use shared_common::taxonomy_lint_vo::LintResult;
 use shared_common::taxonomy_severity_vo::Severity;
@@ -59,6 +61,7 @@ impl ICapabilitiesRoleProtocol for CapabilitiesTypeScriptRoleAuditor {
         utility_capabilities_role_checker::check_single_protocol(file, violations);
         self.check_capability_block_order(file, violations);
         utility_capabilities_role_checker::check_block_markers(file, violations);
+        self.check_capability_banner_hygiene(file, violations);
         self.check_capability_constant_placement(file, violations);
         self.check_capability_test_placement(file, violations);
         self.check_capability_helper_visibility(file, references, violations);
