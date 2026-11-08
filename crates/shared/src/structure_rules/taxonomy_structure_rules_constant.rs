@@ -201,6 +201,10 @@ pub const PR_LA_VIOLATION_FR_ID_MISMATCH: &str = "pr_la_fr_id_mismatch";
 /// A PR-LA-001..N id does not map to an existing crate folder by order.
 pub const PR_LA_VIOLATION_PR_LA_ID_MISMATCH: &str = "pr_la_id_mismatch";
 
+/// A crate folder exists at a position in the crate order that has no
+/// corresponding PR-<segment>-NNN id in PRD.md / ROADMAP.md.
+pub const PR_LA_VIOLATION_FOLDER_WITHOUT_PR_LA_ID: &str = "pr_la_folder_without_pr_la_id";
+
 /// A crate folder holds no FRD.md at all, so no FR ID can be checked against it.
 pub const PR_LA_VIOLATION_MISSING_FRD: &str = "pr_la_missing_frd";
 

@@ -218,7 +218,7 @@ Aggregates industry-standard linters and formatters — Clippy, Rustfmt, cargo-a
 
 ---
 
-### PR-LA-008: file-watch
+### PR-LA-008: filesystem
 
 #### User Stories
 
@@ -384,6 +384,186 @@ Detects dead, unused, or unreachable code components across the 7-layer AES arch
 3. The user reviews the orphan report to identify unreachable components and their missing reference paths.
 
 ---
+
+### PR-LA-016: project-setup
+
+| Aspect       | Detail                              |
+|--------------|-------------------------------------|
+| Priority     | P2                                    |
+| State        | Done                                  |
+| Backlog      | [BACKLOG.md](crates/project-setup/BACKLOG.md) |
+
+#### User Stories
+
+| As a | I want | So that | Priority |
+|------|--------|---------|----------|
+| Operator | scaffolding commands for new crates and members | project setup runs once per repo | P0 |
+
+#### Proposed Solution
+
+The project-setup capability scaffolds a new lint-arwaky crate or member folder from a template: Cargo.toml, FRD.md, BACKLOG.md, and the minimal source files. It registers the crate in the workspace Cargo.toml and verifies the AES7-layer layout.
+
+#### Main User Flow
+
+1. The operator runs `lint-arwaky-cli setup <crate>` to create a new crate folder.
+2. The setup command writes the template files and updates workspace manifests.
+3. The operator reviews the scaffolded crate and fills in feature specifics.
+
+---
+
+### PR-LA-017: quality-rules
+
+| Aspect       | Detail                              |
+|--------------|-------------------------------------|
+| Priority     | P2                                    |
+| State        | Done                                  |
+| Backlog      | [BACKLOG.md](crates/quality-rules/BACKLOG.md) |
+
+#### User Stories
+
+| As a | I want | So that | Priority |
+|------|--------|---------|----------|
+| Reviewer | quality violations with named rule codes | quality gates can block CI on concrete defects | P0 |
+
+#### Proposed Solution
+
+The quality-rules capability enforces code quality standards (complexity, duplication, dead code) across all supported languages. It maps tool-native quality rule codes to AES5xx violation codes and reports each finding with the file and line.
+
+#### Main User Flow
+
+1. The run parses source files and computes quality metrics.
+2. Each metric is compared against the configured threshold.
+3. Violations are reported with rule code, file, and line.
+
+---
+
+### PR-LA-018: report-formatter
+
+| Aspect       | Detail                              |
+|--------------|-------------------------------------|
+| Priority     | P2                                    |
+| State        | Done                                  |
+| Backlog      | [BACKLOG.md](crates/report-formatter/BACKLOG.md) |
+
+#### User Stories
+
+| As a | I want | So that | Priority |
+|------|--------|---------|----------|
+| CI engineer | violation reports in a stable machine-readable format | pipelines can parse and act on lint results | P0 |
+
+#### Proposed Solution
+
+The report-formatter capability renders violation findings into human-readable and machine-readable formats (text, JSON, SARIF, JUnit). It groups findings by rule code and file, and applies suppression and threshold filtering.
+
+#### Main User Flow
+
+1. The dispatcher hands the merged findings to the report formatter.
+2. The formatter renders findings grouped by rule code and file.
+3. The report is written to stdout or to a report file.
+
+---
+
+### PR-LA-019: role-rules
+
+| Aspect       | Detail                              |
+|--------------|-------------------------------------|
+| Priority     | P2                                    |
+| State        | Done                                  |
+| Backlog      | [BACKLOG.md](crates/role-rules/BACKLOG.md) |
+
+#### User Stories
+
+| As a | I want | So that | Priority |
+|------|--------|---------|----------|
+| Maintainer | every file checked for its AES layer and role | reviewers reject files in the wrong layer | P0 |
+
+#### Proposed Solution
+
+The role-rules capability validates that each file's name and contents match its assigned AES layer (agent, capabilities, contract, root, surface, taxonomy, utility). It reports files placed in the wrong layer or missing layer suffixes.
+
+#### Main User Flow
+
+1. The run classifies each file by its folder path and name suffix.
+2. Each file is validated against its expected layer contract.
+3. Violations are reported with the expected and observed layer.
+
+---
+
+### PR-LA-020: shared
+
+| Aspect       | Detail                              |
+|--------------|-------------------------------------|
+| Priority     | P2                                    |
+| State        | Done                                  |
+| Backlog      | [BACKLOG.md](crates/shared/BACKLOG.md) |
+
+#### User Stories
+
+| As a | I want | So that | Priority |
+|------|--------|---------|----------|
+| Rule developer | shared contracts, VOs, and parsers in one place | every rule consumes the same data model | P0 |
+
+#### Proposed Solution
+
+The shared capability hosts the contracts, value objects, doc-rules codegen, and skill templates used by every other crate. It is a pure dependency: no surface logic, no business rules, just shared data types and helpers.
+
+#### Main User Flow
+
+1. A rule imports a shared contract VO.
+2. The VO carries parsed file data, dependency edges, and language flags.
+3. All rules read the same shape of data, preventing drift.
+
+---
+
+### PR-LA-021: structure-rules
+
+| Aspect       | Detail                              |
+|--------------|-------------------------------------|
+| Priority     | P2                                    |
+| State        | Done                                  |
+| Backlog      | [BACKLOG.md](crates/structure-rules/BACKLOG.md) |
+
+#### User Stories
+
+| As a | I want | So that | Priority |
+|------|--------|---------|----------|
+| Platform engineer | folder structure validated against AES701–AES704 | structural drift is caught in CI | P0 |
+
+#### Proposed Solution
+
+The structure-rules capability enforces AES7-layer folder purity (AES701), feature health (AES702), surface purity (AES703), and test-suite coverage (AES704), plus PR-LA id to folder parity (AES706).
+
+#### Main User Flow
+
+1. The run walks every crate folder and checks its role and contents.
+2. Each structure rule fires for its layer-specific contract.
+3. Violations are reported with the rule code and file.
+
+---
+
+### PR-LA-022: tui
+
+| Aspect       | Detail                              |
+|--------------|-------------------------------------|
+| Priority     | P2                                    |
+| State        | Done                                  |
+| Backlog      | [BACKLOG.md](crates/tui/BACKLOG.md) |
+
+#### User Stories
+
+| As a | I want | So that | Priority |
+|------|--------|---------|----------|
+| Developer | a terminal UI for browsing violations | violations can be reviewed without leaving the terminal | P0 |
+
+#### Proposed Solution
+
+The tui capability provides a terminal user interface for lint-arwaky: browsing violation reports, navigating files, and triggering fix actions from within the terminal.
+
+#### Main User Flow
+
+1. The operator opens the TUI over a scan report.
+2. The TUI lists violations grouped by rule code and file.
+3. The operator selects a violation to view details or apply a fix.
 
 ## Reference
 

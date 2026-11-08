@@ -117,15 +117,20 @@ fn audit_pr_la_documents(root: &Path, ws_root: &Path) -> Vec<StructureFinding> {
     let members = utility_structure_parsers::scoped_member_dirs(root, ws_root);
     let order = crate_folder_names(&members);
     let mut findings = Vec::new();
+    let mut covered_positions = std::collections::BTreeSet::<usize>::new();
+    let mut any_spec_doc = false;
+
     for doc_name in consts::PR_LA_DOCUMENTS {
         let doc = ws_root.join(doc_name);
         if !doc.is_file() {
             continue;
         }
+        any_spec_doc = true;
         let Ok(contents) = std::fs::read_to_string(&doc) else {
             continue;
         };
         for (position, pr_la_id, title) in extract_pr_la_ids(&contents) {
+            covered_positions.insert(position);
             let expected_folder = order.get(position).map(|s| s.as_str()).unwrap_or("");
             if expected_folder.is_empty() {
                 findings.push(dangling_pr_la_finding(
@@ -156,6 +161,20 @@ fn audit_pr_la_documents(root: &Path, ws_root: &Path) -> Vec<StructureFinding> {
             }
         }
     }
+
+    // Reverse check: every crate folder position must have a PR-<segment> id
+    // mapping in PRD.md / ROADMAP.md. Reports folders with no spec id at all.
+    // Only runs when at least one spec document exists, so a project with no
+    // PRD.md/ROADMAP.md is not penalized for having folders without ids.
+    if any_spec_doc {
+        for (position, folder) in order.iter().enumerate() {
+            if covered_positions.contains(&position) {
+                continue;
+            }
+            findings.push(folder_without_pr_la_finding(position, folder));
+        }
+    }
+
     findings
 }
 
@@ -174,6 +193,26 @@ fn missing_frd_finding(frd: &Path, ws_root: &Path, folder_name: &str) -> Structu
         format!(
             "Create '{}/FRD.md' with ids of the form 'FR-{}-NNN'.",
             folder_name, folder_name
+        ),
+    )
+}
+
+/// Finding: a crate folder exists at a position in the crate order that has no
+/// corresponding PR-<segment>-NNN id in PRD.md / ROADMAP.md.
+fn folder_without_pr_la_finding(position: usize, folder: &str) -> StructureFinding {
+    StructureFinding::new(
+        consts::RULE_CODE_PR_LA_FOLDER,
+        consts::PR_LA_VIOLATION_FOLDER_WITHOUT_PR_LA_ID,
+        format!("crates/{folder}"),
+        format!(
+            "'{folder}' sits at crate position {position} but no PR-<segment> id maps to it"
+        ),
+    )
+    .with_reason(
+        "PR-<segment> ids map 1:1 to crate folders by order, so every crate folder position needs a PR-<segment> id.",
+        format!(
+            "Add 'PR-<segment>-{pos}' to PRD.md and ROADMAP.md that names '{folder}', where pos = {position} + 1.",
+            pos = position + 1,
         ),
     )
 }
@@ -537,13 +576,11 @@ fn slug_tokens(text: &str) -> Vec<String> {
         .collect()
 }
 
-/// True when two tokens share a common stem: one is a prefix of the other
-/// (at least 3 chars) or they match after stripping a trailing `s`/`ing`/`ed`.
+/// True when two tokens share a common stem: they match after stripping a
+/// trailing `s`/`ing`/`ed`, e.g. "watching" vs "watch". A bare prefix match is
+/// intentionally *not* used, because "file" is a prefix of "filesystem" but
+/// the two are different folders and must not be conflated.
 fn stems_match(a: &str, b: &str) -> bool {
-    let (shorter, longer) = if a.len() <= b.len() { (a, b) } else { (b, a) };
-    if shorter.len() >= 3 && longer.starts_with(shorter) {
-        return true;
-    }
     strip_suffix(a) == strip_suffix(b)
 }
 
