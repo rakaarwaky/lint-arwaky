@@ -3,18 +3,18 @@
 //
 // Three tasks run here, keyed off the invoking manifest:
 //
-//   1. Config YAML + skill markdown staged into `OUT_DIR` for
-//      `shared-project-setup-lint-arwaky` (`include_str!` of `skills/**`).
+//   1. Config YAML staged into `OUT_DIR` for
+//      `shared-project-setup-lint-arwaky`.
 //   2. Release version emitted into `OUT_DIR/release_version.rs` for
 //      `shared-common-lint-arwaky`.
 //   3. Comrak codegen of the doc-linter shape constants into
 //      `OUT_DIR/doc_generated.rs` for `shared-doc-rules-lint-arwaky`.
 //
-// All three asset groups must resolve for the workspace build *and* for the
+// All asset groups must resolve for the workspace build *and* for the
 // isolated build of a published `.crate` tarball (crates.io extracts the
 // package to an isolated directory, so any path above the crate root is
 // missing there). `resolve_assets` walks up from the manifest dir to the
-// ancestor that carries both `config/` and `skills/`; the three manifest
+// ancestor that carries `config/`; the three manifest
 // layouts (`crates/shared/src/{project_setup,common,doc_rules}`) all land
 // on `crates/shared/` in a workspace build.
 use std::fs;
@@ -43,14 +43,13 @@ fn main() {
     let out_path = Path::new(&out_dir);
     let assets = resolve_assets(manifest_path);
     stage_config(&assets, out_path);
-    stage_skills(&assets, out_path);
     stage_release_version(manifest_path, out_path);
     if is_doc_rules(manifest_path) {
         stage_doc_rules(manifest_path, out_path);
     }
 }
 
-/// Locate the directory that carries both `config/` and `skills/`.
+/// Locate the directory that carries `config/`.
 ///
 /// The three manifest layouts this script is invoked from all sit under
 /// `crates/shared/src/<pkg>`; in a workspace build the assets live one level
@@ -60,7 +59,7 @@ fn main() {
 fn resolve_assets(manifest_dir: &Path) -> PathBuf {
     let mut current = manifest_dir.to_path_buf();
     loop {
-        if current.join("config").is_dir() && current.join("skills").is_dir() {
+        if current.join("config").is_dir() {
             return current;
         }
         match current.parent() {
@@ -69,7 +68,7 @@ fn resolve_assets(manifest_dir: &Path) -> PathBuf {
         }
     }
     eprintln!(
-        "Assets not found: no ancestor of {} carries config/ and skills/",
+        "Assets not found: no ancestor of {} carries config/",
         manifest_dir.display()
     );
     std::process::exit(1);
@@ -102,67 +101,6 @@ fn stage_config(manifest_dir: &Path, out_dir: &Path) {
     }
 
     println!("cargo:rerun-if-changed={}", src.display());
-}
-
-/// Recursively copy skills source into `OUT_DIR/skills/` so the
-/// `include_str!` sites in `taxonomy_project_setup_constant.rs` resolve at compile
-/// time.
-///
-/// The source of truth is `<manifest>/skills/` in both workspace builds and
-/// published crate builds. `[package] include` keeps the directory in the
-/// crates.io tarball.
-fn stage_skills(manifest_dir: &Path, out_dir: &Path) {
-    let skills_src = manifest_dir.join("skills");
-    if !skills_src.is_dir() {
-        eprintln!(
-            "Skills directory not found at {}. Check that skills/ is in the crate root.",
-            skills_src.display()
-        );
-        std::process::exit(1);
-    }
-
-    let skills_dst = out_dir.join("skills");
-    if let Err(e) = fs::create_dir_all(&skills_dst) {
-        eprintln!("Failed to create {}: {e}", skills_dst.display());
-        std::process::exit(1);
-    }
-    copy_dir_recursive(&skills_src, &skills_dst);
-
-    println!("cargo:rerun-if-changed={}", skills_src.display());
-}
-
-fn copy_dir_recursive(src: &Path, dst: &Path) {
-    let entries = match fs::read_dir(src) {
-        Ok(e) => e,
-        Err(e) => {
-            eprintln!("Failed to read skills dir {}: {e}", src.display());
-            std::process::exit(1);
-        }
-    };
-
-    for entry in entries {
-        let entry = match entry {
-            Ok(e) => e,
-            Err(e) => {
-                eprintln!("Failed to read entry in {}: {e}", src.display());
-                std::process::exit(1);
-            }
-        };
-        let path = entry.path();
-        let target = dst.join(entry.file_name());
-
-        if path.is_dir() {
-            let sub = dst.join(entry.file_name());
-            if let Err(e) = fs::create_dir_all(&sub) {
-                eprintln!("Failed to create {}: {e}", sub.display());
-                std::process::exit(1);
-            }
-            copy_dir_recursive(&path, &sub);
-        } else if let Err(e) = fs::copy(&path, &target) {
-            eprintln!("Failed to copy skill file {}: {e}", path.display());
-            std::process::exit(1);
-        }
-    }
 }
 
 /// Emit the workspace `VERSION` file contents into `OUT_DIR/release_version.rs`
@@ -233,13 +171,13 @@ fn find_version_file(start: &Path) -> Option<PathBuf> {
 /// build script re-runs and the linter's shape constants track the
 /// template automatically.
 fn stage_doc_rules(manifest_dir: &Path, out_dir: &Path) {
-    // The templates live under `crates/shared/skills/aes-docs/references/`.
+    // The templates live under `crates/shared/doc-templates/aes-docs/references/`.
     // From the doc_rules manifest dir that is two levels up.
     let shared_dir = manifest_dir
         .parent()
         .and_then(|p| p.parent())
         .unwrap_or(manifest_dir);
-    let skills_dir = shared_dir.join("skills/aes-docs/references");
+    let skills_dir = shared_dir.join("doc-templates/aes-docs/references");
 
     println!("cargo:rerun-if-changed={}", skills_dir.display());
     for doc in DOCS {
@@ -249,7 +187,7 @@ fn stage_doc_rules(manifest_dir: &Path, out_dir: &Path) {
 
     let mut out = String::from(
         "// AUTO-GENERATED by crates/shared/build.rs (stage_doc_rules).\n\
-         // Source: crates/shared/skills/aes-docs/references/*/template.md\n\
+         // Source: crates/shared/doc-templates/aes-docs/references/*/template.md\n\
          // Do not edit this file; edit the reference templates instead.\n\n",
     );
 

@@ -83,7 +83,6 @@ pub fn render_report(target: &str, delta: &ReportDelta, current: &ReportSnapshot
     }
     println!();
     println!("  lint-arwaky-cli scan <path> — see each violation with its reason and remedy");
-    println!("  lint-arwaky-cli skill list — pick the skill that matches the file you are fixing");
 }
 
 /// A change as a reader reads it: worse, better, or unchanged.

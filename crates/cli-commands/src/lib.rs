@@ -8,5 +8,4 @@ pub mod surface_plugin_command;
 pub mod surface_report_command;
 pub mod surface_scan_command;
 pub mod surface_setup_command;
-pub mod surface_skill_command;
 pub mod surface_watch_command;

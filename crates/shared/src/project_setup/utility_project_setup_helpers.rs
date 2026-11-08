@@ -5,8 +5,7 @@
 // env generation, language detection, adapter installation).
 
 use crate::taxonomy_project_setup_vo::{
-    CreateConfigDirResult, EmbeddedSkillVO, PackageManagerStatus, PreFlightResult, SetupError,
-    WriteConfigResult,
+    CreateConfigDirResult, PackageManagerStatus, PreFlightResult, SetupError, WriteConfigResult,
 };
 use shared_common::taxonomy_message_vo::DescriptionVO;
 
@@ -20,11 +19,6 @@ pub fn get_config_template(language: &str) -> Result<&'static str, SetupError> {
             "rust, python, javascript, typescript, all",
         )),
     }
-}
-
-/// Retrieve all embedded skill files compiled into the binary.
-pub fn get_embedded_skills() -> &'static [EmbeddedSkillVO] {
-    crate::EMBEDDED_SKILLS
 }
 
 /// Write a configuration file to disk and return a description.

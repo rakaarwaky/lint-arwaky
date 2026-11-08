@@ -7,7 +7,7 @@ mod mock_common;
 
 use mcp_server_lint_arwaky::surface_mcp_tool_command::LintArwakyMcpServer;
 use mcp_server_lint_arwaky::taxonomy_mcp_server_vo::{
-    ExecuteCommandArgs, GetConfigArgs, ListCommandsArgs, ReadSkillArgs,
+    ExecuteCommandArgs, GetConfigArgs, ListCommandsArgs,
 };
 use rmcp::ServerHandler;
 use std::sync::Arc;
@@ -37,12 +37,12 @@ fn get_info_advertises_tools_capability() {
     );
 }
 
-// ─── Protocol contract: exactly the documented 6 tools ─────────────
+// ─── Protocol contract: exactly the documented 5 tools ─────────────
 
 #[test]
-fn tool_router_registers_exactly_the_documented_six_tools() {
-    // TEST.md §5.3 promises exactly 6 tools: execute_command, list_commands,
-    // read_skill, health_check, get_config, docs_scaffold.
+fn tool_router_registers_exactly_the_documented_five_tools() {
+    // TEST.md promises exactly 5 tools: execute_command, list_commands,
+    // health_check, get_config, docs_scaffold.
     let mut names: Vec<String> = server()
         .router()
         .list_all()
@@ -57,10 +57,9 @@ fn tool_router_registers_exactly_the_documented_six_tools() {
             "execute_command",
             "get_config",
             "health_check",
-            "list_commands",
-            "read_skill"
+            "list_commands"
         ],
-        "MCP tool surface drifted from the documented 6-tool contract"
+        "MCP tool surface drifted from the documented 5-tool contract"
     );
 }
 
@@ -104,10 +103,6 @@ fn optional_arg_structs_default_every_field() {
     let list: ListCommandsArgs = serde_json::from_value(serde_json::json!({}))
         .expect("empty list_commands args must deserialize");
     assert!(list.domain.is_none());
-
-    let read: ReadSkillArgs = serde_json::from_value(serde_json::json!({}))
-        .expect("empty read_skill args must deserialize");
-    assert!(read.section.is_none());
 
     let get: GetConfigArgs = serde_json::from_value(serde_json::json!({}))
         .expect("empty get_config args must deserialize");

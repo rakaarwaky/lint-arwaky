@@ -703,12 +703,6 @@ impl McpActionSurface {
             .await
     }
 
-    /// Read skill documentation by section (delegates to the docs-scaffold action module).
-    pub fn handle_read_skill(&self, section: Option<String>) -> serde_json::Value {
-        crate::surface_mcp_docs_scaffold_command::McpDocsScaffoldSurface
-            .handle_read_skill(self, section)
-    }
-
     // ─── Non-dispatcher MCP business logic ────────────────────
 
     /// Health check: adapter availability from maintenance aggregate.
@@ -926,5 +920,3 @@ fn normalize_response(mut response: serde_json::Value) -> serde_json::Value {
 fn error_response(message: &str) -> serde_json::Value {
     serde_json::json!({"status": "error", "error": message, "exit_code": 2})
 }
-
-pub use crate::surface_mcp_docs_scaffold_command::extract_skill_section;

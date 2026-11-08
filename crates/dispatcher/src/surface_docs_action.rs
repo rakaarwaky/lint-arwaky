@@ -21,7 +21,6 @@ use shared_doc_rules::IDocRunnerAggregate;
 use shared_doc_rules::StrictModeOverride;
 use shared_doc_rules::taxonomy_doc_rules_request::DocRequest;
 use shared_doc_rules::taxonomy_doc_rules_response::DocResponse;
-use shared_project_setup::EMBEDDED_SKILLS;
 
 /// Result of one scaffold file write attempt (or preview).
 /// `path` is the target location relative to the audit root; `created`
@@ -210,8 +209,8 @@ pub fn load_doc_rules_config_from_yaml(
 
 /// Scaffold missing template files in place (or preview with `dry_run`).
 ///
-/// Reads the embedded reference templates (`references/<doc>/template.md`)
-/// from `EMBEDDED_SKILLS` and
+/// Reads the reference templates (`references/<doc>/template.md`)
+/// from disk and
 /// writes any missing documents — root-level master docs plus per-member
 /// docs — so the tree passes FR-DOC-008/009 immediately after the call.
 ///
@@ -422,15 +421,10 @@ pub fn collect_scaffold(
     Ok(items)
 }
 
-/// Look up the embedded template body for *doc_name* from the compiled-in
-/// `EMBEDDED_SKILLS` catalog. `doc_name` is the bare filename, e.g. `FRD.md`;
-/// the lookup key is `frd/template.md`. Returns `None` when no matching
-/// template is embedded.
+/// Look up the template body for *doc_name* from the reference templates on disk.
+/// `doc_name` is the bare filename, e.g. `FRD.md`; the lookup key is `frd/template.md`.
+/// Returns `None` when no matching template is found.
 fn embedded_template_content(doc_name: &str) -> Option<String> {
-    // Exact match on known template filenames (not a glob ends_with) so two
-    // skill files ending with the same suffix in different subdirectories
-    // cannot silently collide. Compares against the last two path segments of
-    // the embedded skill's relative_path.
     let key = match doc_name {
         "PRD.md" => "prd/template.md",
         "ROADMAP.md" => "roadmap/template.md",
@@ -444,10 +438,19 @@ fn embedded_template_content(doc_name: &str) -> Option<String> {
         "DESIGN.md" => "design/template.md",
         _ => return None,
     };
-    EMBEDDED_SKILLS
-        .iter()
-        .find(|s| s.relative_path.ends_with(key))
-        .map(|s| s.content.to_string())
+    let candidates = [
+        std::path::PathBuf::from("crates/shared/doc-templates/aes-docs/references").join(key),
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../shared/doc-templates/aes-docs/references")
+            .join(key),
+        std::path::PathBuf::from("doc-templates/aes-docs/references").join(key),
+    ];
+    for path in &candidates {
+        if let Ok(content) = std::fs::read_to_string(path) {
+            return Some(content);
+        }
+    }
+    None
 }
 
 /// One line of output per scaffold file, tagged with its outcome class:

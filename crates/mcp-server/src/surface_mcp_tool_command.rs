@@ -12,7 +12,7 @@ use rmcp::{ServerHandler, tool, tool_handler, tool_router};
 use std::sync::Arc;
 
 use crate::taxonomy_mcp_server_vo::{
-    DocsScaffoldArgs, ExecuteCommandArgs, GetConfigArgs, ListCommandsArgs, ReadSkillArgs,
+    DocsScaffoldArgs, ExecuteCommandArgs, GetConfigArgs, ListCommandsArgs,
 };
 
 use crate::surface_mcp_action_command::McpActionSurface;
@@ -118,17 +118,12 @@ impl LintArwakyMcpServer {
         serde_json::to_string(&result).unwrap_or_default()
     }
 
-    pub fn handle_read_skill(&self, Parameters(args): Parameters<ReadSkillArgs>) -> String {
-        let result = self.action.handle_read_skill(args.section);
-        serde_json::to_string(&result).unwrap_or_default()
-    }
-
     pub fn handle_get_config(&self, Parameters(args): Parameters<GetConfigArgs>) -> String {
         let path = args.path.unwrap_or_else(|| ".".to_string());
         self.action.handle_get_config(&path, args.language)
     }
 
-    /// Write missing template files in place from embedded skills.
+    /// Write missing template files in place.
     /// `dry_run` previews without touching disk. Strictness only affects the
     /// audit path, not scaffolding.
     pub async fn handle_docs_scaffold(
@@ -174,13 +169,6 @@ impl LintArwakyMcpServer {
     )]
     pub async fn list_commands(&self, args: Parameters<ListCommandsArgs>) -> String {
         LintArwakyMcpServer::handle_list_commands(self, args)
-    }
-
-    #[tool(
-        description = "Read skill documentation by section. Searches skill candidate locations."
-    )]
-    pub async fn read_skill(&self, args: Parameters<ReadSkillArgs>) -> String {
-        LintArwakyMcpServer::handle_read_skill(self, args)
     }
 
     #[tool(description = "Check system health: adapters and system state.")]

@@ -108,10 +108,6 @@ impl ISetupAggregate for SetupManagementOrchestrator {
             SetupRequest::PreFlightCheck => SetupResponse::PreFlight {
                 result: shared_project_setup::utility_project_setup_helpers::pre_flight_check(),
             },
-            SetupRequest::GetEmbeddedSkills => SetupResponse::Skills {
-                skills: shared_project_setup::utility_project_setup_helpers::get_embedded_skills()
-                    .to_vec(),
-            },
             SetupRequest::WriteConfigFile { filename, content } => SetupResponse::ConfigWritten {
                 result: shared_project_setup::utility_project_setup_helpers::write_config_file(
                     &filename, &content,
