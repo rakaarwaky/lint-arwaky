@@ -278,15 +278,12 @@ fn render_violation(file: &str, v: &ViolationItem) {
     println!();
 }
 
-/// Bottom `Hint` section: four lines, no more.
+/// Bottom `Hint` section.
 ///
-/// A long hint repeating every code per layer answered a question nobody was
-/// asking — a reader opens the skill list to browse, not to be handed the
-/// whole index. So the hint names where the skills are and how to narrow the
-/// scan, which is the two things a reader cannot work out from the report.
+/// Names how to narrow the scan, which is what a reader cannot work out
+/// from the report.
 fn render_suggestions(_grouped: &BTreeMap<String, Vec<&ViolationItem>>) {
     println!("Hint");
-    println!("  lint-arwaky-cli skill list — pick the skill that matches the file you are fixing");
     println!(
         "  lint-arwaky-cli scan crates|modules|packages — filter the report down to one member dir"
     );

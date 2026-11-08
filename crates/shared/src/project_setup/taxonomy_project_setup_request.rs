@@ -38,8 +38,6 @@ pub enum SetupRequest {
     },
     /// Check that required package managers are available.
     PreFlightCheck,
-    /// Return the embedded skill list.
-    GetEmbeddedSkills,
     /// Write a config file to disk.
     WriteConfigFile {
         filename: String,
@@ -100,9 +98,6 @@ impl SetupRequest {
     }
     pub fn pre_flight_check() -> Self {
         Self::PreFlightCheck
-    }
-    pub fn get_embedded_skills() -> Self {
-        Self::GetEmbeddedSkills
     }
     pub fn write_config_file(filename: &str, content: &str) -> Self {
         Self::WriteConfigFile {

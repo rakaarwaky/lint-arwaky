@@ -19,12 +19,6 @@ pub struct ListCommandsArgs {
 }
 
 #[derive(Debug, Deserialize, JsonSchema)]
-pub struct ReadSkillArgs {
-    /// Section to read from skill documentation
-    pub section: Option<String>,
-}
-
-#[derive(Debug, Deserialize, JsonSchema)]
 pub struct GetConfigArgs {
     /// Optional project path to inspect config for
     pub path: Option<String>,

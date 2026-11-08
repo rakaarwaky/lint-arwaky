@@ -1,7 +1,6 @@
 // project-setup — contract and taxonomy types
 pub mod contract_setup_aggregate;
 pub mod contract_setup_protocol;
-pub mod taxonomy_project_setup_constant;
 pub mod taxonomy_project_setup_request;
 pub mod taxonomy_project_setup_response;
 pub mod taxonomy_project_setup_vo;
@@ -25,10 +24,7 @@ pub use taxonomy_project_setup_response::SetupResponse;
 
 // ── Taxonomy types ──
 pub use contract_setup_aggregate::SetupMgmtProtocol;
-pub use taxonomy_project_setup_constant::EMBEDDED_SKILLS;
-pub use taxonomy_project_setup_constant::EMBEDDED_SKILLS_COUNT;
 pub use taxonomy_project_setup_vo::CreateConfigDirResult;
-pub use taxonomy_project_setup_vo::EmbeddedSkillVO;
 pub use taxonomy_project_setup_vo::McpBinaryNameVO;
 pub use taxonomy_project_setup_vo::PackageManagerStatus;
 pub use taxonomy_project_setup_vo::PreFlightResult;

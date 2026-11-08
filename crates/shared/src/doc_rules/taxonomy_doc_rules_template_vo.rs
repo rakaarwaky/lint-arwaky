@@ -23,7 +23,7 @@ pub struct TemplateProfile {
 /// Hard-coded per-template placeholder catalogs (Decision Q3).
 ///
 /// Each entry mirrors the fenced template in
-/// `crates/shared/crates/shared/skills/aes-docs/references/<doc_name>/template.md`. The
+/// `crates/shared/template/<doc_name>/template.md`. The
 /// catalog lists the placeholder tokens the template ships unfilled, so a
 /// draft copied verbatim from the template is caught by FR-DOC-009 rather
 /// than passing silently. Every entry must appear unwrapped in that fenced
@@ -246,10 +246,10 @@ pub const TEMPLATE_PROFILES: &[TemplateProfile] = &[
 mod tests {
     use super::*;
 
-    /// Load a reference template from skills/aes-docs/references/<file>.
+    /// Load a reference template from crates/shared/template/<file>.
     fn load_reference_template(file: &str) -> String {
         let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("../../skills/aes-docs/references")
+            .join("../../template")
             .join(file);
         match std::fs::read_to_string(&path) {
             Ok(text) => text,

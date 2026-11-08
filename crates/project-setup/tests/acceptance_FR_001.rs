@@ -184,7 +184,6 @@ fn fr001_always_allow_matches_frd() {
     let expected = vec![
         "execute_command",
         "list_commands",
-        "read_skill",
         "health_check",
         "get_config",
     ];

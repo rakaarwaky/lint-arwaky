@@ -174,7 +174,7 @@ pub const KERNEL_DIR: &str = "shared";
 
 // Required H2 sets by document, table column headers, and fixed row labels
 // are now generated at build time from the reference templates in
-// `crates/shared/skills/aes-docs/references/*/template.md` by
+// `crates/shared/template/*/template.md` by
 // `crates/shared/src/doc_rules/build.rs` (via Comrak) and re-exported
 // through `pub use super::doc_generated::*;` at the top of this module.
 // When a template changes, the next `cargo build` regenerates these
@@ -219,7 +219,7 @@ pub const SOURCE_EXTENSIONS: &[&str] = &["py", "rs", "ts", "tsx"];
 
 // ─── AESD06 — Template body-shape conformance ──────────────────────────────
 // Table shapes are now generated at build time from the reference templates
-// in `crates/shared/skills/aes-docs/references/*/template.md` by
+// in `crates/shared/template/*/template.md` by
 // `crates/shared/src/doc_rules/build.rs` (via Comrak) and re-exported
 // through `pub use super::doc_generated::*;` at the top of this module.
 //
@@ -263,7 +263,7 @@ pub const WORKSPACE_ROOT_MARKERS: &[&str] = &["Cargo.toml", "pyproject.toml", "p
 /// AESD05 only polices H2 shape, while AESD01's qualified `DT-<NAME>-NNN`
 /// regex is the authority on which H2s count as item ids. The
 /// `DESIGN_DOC` entry is transcribed verbatim from the fenced template in
-/// `skills/aes-docs/references/references/design/template.md.md`, and `allowed` is empty
+/// `crates/shared/template/design/template.md`, and `allowed` is empty
 /// on purpose: copying that template must produce a file AESD05 accepts with
 /// no edit. An empty `allowed` makes the set closed, so a DESIGN.md carrying an
 /// H2 the template does not name — including the surface-behaviour headings
@@ -413,10 +413,10 @@ pub use crate::taxonomy_doc_rules_template_vo::{TEMPLATE_PROFILES, TemplateProfi
 mod tests {
     use super::*;
 
-    /// Load a reference template from skills/aes-docs/references/<doc>/template.md.
+    /// Load a reference template from crates/shared/template/<doc>/template.md.
     fn load_reference_template(doc: &str) -> String {
         let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("../../skills/aes-docs/references")
+            .join("../../template")
             .join(doc)
             .join("template.md");
         match std::fs::read_to_string(&path) {

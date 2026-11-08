@@ -12,4 +12,3 @@ pub mod taxonomy_mcp_server_vo;
 pub use taxonomy_mcp_server_vo::ExecuteCommandArgs;
 pub use taxonomy_mcp_server_vo::GetConfigArgs;
 pub use taxonomy_mcp_server_vo::ListCommandsArgs;
-pub use taxonomy_mcp_server_vo::ReadSkillArgs;

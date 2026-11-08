@@ -38,13 +38,3 @@ fn contract_fix_command_handle_fix_exists() {
         ) -> shared_common::ExitCode,
     >();
 }
-
-#[test]
-fn contract_skill_command_handle_skill_list_exists() {
-    let _ = std::any::type_name::<fn() -> shared_common::ExitCode>();
-}
-
-#[test]
-fn contract_skill_command_handle_skill_read_exists() {
-    let _ = std::any::type_name::<fn(&str, bool) -> shared_common::ExitCode>();
-}
