@@ -13,6 +13,41 @@ use shared_common::taxonomy_layer_vo::LayerNameVO;
 use shared_common::taxonomy_message_vo::LintMessage;
 use shared_common::taxonomy_name_vo::SymbolName;
 
+// ─── Block marker value object (AES403) ──────────────────────────────────
+
+/// One `Block N:` banner comment, with the parsed block number, the name text
+/// after the colon, and the 1-indexed source line.
+#[derive(Debug, Clone)]
+pub struct CapabilityBlockMarker {
+    /// Parsed block number (`N` in `Block N:`).
+    pub number: usize,
+    /// Name text after the colon, dashes and surrounding whitespace stripped.
+    pub name: String,
+    /// 1-indexed source line of the banner.
+    pub line: usize,
+}
+
+/// The `N` and name text of every `Block N:` banner comment, in declaration
+/// order, as [`CapabilityBlockMarker`] values.
+///
+/// The name is the rest of the line after the colon, with box-drawing dashes
+/// and surrounding whitespace stripped.
+///
+/// Public so per-language block-order checks can attribute each `impl` to the
+/// banner block it sits under, instead of guessing by raw line position. A
+/// file that never declares its blocks yields an empty vec, and callers fall
+/// back to raw line position.
+pub fn capability_block_markers(content: &str) -> Vec<CapabilityBlockMarker> {
+    crate::utility_capabilities_role_helpers::block_markers(content)
+        .into_iter()
+        .map(|(n, name, line)| CapabilityBlockMarker {
+            number: n,
+            name,
+            line,
+        })
+        .collect()
+}
+
 // ─── Layer name helpers ──────────────────────────────────────────────
 
 /// Value object holding the set of core layer names.

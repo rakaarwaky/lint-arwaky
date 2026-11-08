@@ -179,7 +179,7 @@ impl CapabilitiesRustRoleAuditor {
         // misplacement. When the file has no banners, a bare inherent impl on
         // a raw line before the protocol impl is a violation. Track banner
         // positions so the comparison is by block, not by raw line number.
-        let markers = utility_capabilities_role_checker::capability_block_markers(content);
+        let markers = shared_role_rules::taxonomy_role_rules_vo::capability_block_markers(content);
         let banner1_idx: Option<usize> = markers.iter().find(|m| m.number == 1).map(|m| m.line - 1);
         let banner2_idx: Option<usize> = markers.iter().find(|m| m.number == 2).map(|m| m.line - 1);
         let banner3_idx: Option<usize> = markers.iter().find(|m| m.number == 3).map(|m| m.line - 1);
@@ -379,8 +379,8 @@ impl CapabilitiesRustRoleAuditor {
             }
             if is_cfg_attr {
                 // `#[cfg(test)]` on its own line flags the test block that
-                // follows; skip intervening `#[allow(…)]`/`#[cfg(…)]` attrs and
-                // the `mod tests` on the next line so we report once per block.
+                // follows; skip intervening allow/cfg attributes and the
+                // `mod tests` on the next line so we report once per block.
                 let mut next = i + 1;
                 while let Some(n) = lines.get(next) {
                     let nt = n.trim();
