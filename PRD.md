@@ -395,12 +395,6 @@ Detects dead, unused, or unreachable code components across the 7-layer AES arch
 
 ### PR-LA-016: project-setup
 
-| Aspect       | Detail                              |
-|--------------|-------------------------------------|
-| Priority     | P2                                    |
-| State        | Done                                  |
-| Backlog      | [BACKLOG.md](crates/project-setup/BACKLOG.md) |
-
 #### User Stories
 
 | As a | I want | So that | Priority |
@@ -420,12 +414,6 @@ The project-setup capability scaffolds a new lint-arwaky crate or member folder 
 ---
 
 ### PR-LA-017: quality-rules
-
-| Aspect       | Detail                              |
-|--------------|-------------------------------------|
-| Priority     | P2                                    |
-| State        | Done                                  |
-| Backlog      | [BACKLOG.md](crates/quality-rules/BACKLOG.md) |
 
 #### User Stories
 
@@ -447,12 +435,6 @@ The quality-rules capability enforces code quality standards (complexity, duplic
 
 ### PR-LA-018: report-formatter
 
-| Aspect       | Detail                              |
-|--------------|-------------------------------------|
-| Priority     | P2                                    |
-| State        | Done                                  |
-| Backlog      | [BACKLOG.md](crates/report-formatter/BACKLOG.md) |
-
 #### User Stories
 
 | As a | I want | So that | Priority |
@@ -472,12 +454,6 @@ The report-formatter capability renders violation findings into human-readable a
 ---
 
 ### PR-LA-019: role-rules
-
-| Aspect       | Detail                              |
-|--------------|-------------------------------------|
-| Priority     | P2                                    |
-| State        | Done                                  |
-| Backlog      | [BACKLOG.md](crates/role-rules/BACKLOG.md) |
 
 #### User Stories
 
@@ -499,12 +475,6 @@ The role-rules capability validates that each file's name and contents match its
 
 ### PR-LA-020: shared
 
-| Aspect       | Detail                              |
-|--------------|-------------------------------------|
-| Priority     | P2                                    |
-| State        | Done                                  |
-| Backlog      | [BACKLOG.md](crates/shared/BACKLOG.md) |
-
 #### User Stories
 
 | As a | I want | So that | Priority |
@@ -525,12 +495,6 @@ The shared capability hosts the contracts, value objects, doc-rules codegen, and
 
 ### PR-LA-021: structure-rules
 
-| Aspect       | Detail                              |
-|--------------|-------------------------------------|
-| Priority     | P2                                    |
-| State        | Done                                  |
-| Backlog      | [BACKLOG.md](crates/structure-rules/BACKLOG.md) |
-
 #### User Stories
 
 | As a | I want | So that | Priority |
@@ -550,12 +514,6 @@ The structure-rules capability enforces AES7-layer folder purity (AES701), featu
 ---
 
 ### PR-LA-022: tui
-
-| Aspect       | Detail                              |
-|--------------|-------------------------------------|
-| Priority     | P2                                    |
-| State        | Done                                  |
-| Backlog      | [BACKLOG.md](crates/tui/BACKLOG.md) |
 
 #### User Stories
 
