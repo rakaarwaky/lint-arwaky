@@ -43,7 +43,7 @@ impl Default for JunitFormatter {
     }
 }
 
-// ─── Free Functions (stateless renderers) ─────────────────
+// Free Functions (stateless renderers)
 
 /// FR-004: render a ScanReport as JUnit XML.
 fn format_junit_report(report: &ScanReport) -> DisplayContent {

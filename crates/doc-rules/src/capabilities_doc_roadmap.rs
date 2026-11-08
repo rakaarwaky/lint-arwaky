@@ -52,6 +52,8 @@ impl IRoadmapDocProtocol for RoadmapCapability {
     }
 }
 
+// ─── Block 3: Module Helpers ───
+
 impl RoadmapCapability {
     fn audit_one(document: &DocSource, context: &DocAuditContext, findings: &mut Vec<DocFinding>) {
         let text = &document.text;

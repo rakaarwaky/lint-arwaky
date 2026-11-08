@@ -248,9 +248,7 @@ impl CapabilitiesTypeScriptRoleAuditor {
         }
     }
 
-    // ────────────────────────────────────────────────────────
     // Constant placement — local constants belong in taxonomy_*_constant.rs
-    // ────────────────────────────────────────────────────────
 
     // ===============================================================
     // Constant placement — policy constants live in `taxonomy_*_constant.*`
@@ -295,9 +293,7 @@ impl CapabilitiesTypeScriptRoleAuditor {
         }
     }
 
-    // ────────────────────────────────────────────────────────
     // Test placement — inline tests belong in tests/
-    // ────────────────────────────────────────────────────────
 
     // ===============================================================
     // Test placement — inline tests belong in `tests/`
@@ -339,9 +335,9 @@ impl CapabilitiesTypeScriptRoleAuditor {
         }
     }
 
-    // ────────────────────────────────────────────────────────
     // Helper visibility — Block 3 helpers must not be fully `pub`
-    // ────────────────────────────────────────────────────────
+
+    // ===============================================================
     //
     // We only look at methods that appear inside an inherent impl block
     // (i.e. `impl SomeStruct { ... }`), not inside a protocol impl block.

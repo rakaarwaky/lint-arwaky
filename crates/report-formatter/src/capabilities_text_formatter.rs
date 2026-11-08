@@ -38,7 +38,7 @@ impl Default for TextFormatter {
     }
 }
 
-// ─── Free Functions (stateless renderers) ─────────────────
+// Free Functions (stateless renderers)
 
 /// FR-001: render the scan report as human-readable text.
 fn format_text_report(report: &ScanReport) -> DisplayContent {
@@ -201,7 +201,7 @@ fn format_text_report(report: &ScanReport) -> DisplayContent {
     DisplayContent::new(out)
 }
 
-// ─── Helper Functions ─────────────────────────────────────
+// Helper Functions
 
 fn severity_badge(sev: &shared_common::Severity) -> &'static str {
     match sev {

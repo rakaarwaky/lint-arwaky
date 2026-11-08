@@ -199,7 +199,7 @@ impl SurfaceRoleChecker {
     }
 }
 
-// ─── Counting helpers ─────────────────────────────────────
+// Counting helpers
 
 /// The file stem, or an empty string when the path has no filename.
 fn stem_of(file: &FileEntry) -> &str {

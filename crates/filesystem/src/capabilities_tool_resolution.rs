@@ -88,3 +88,5 @@ impl IToolResolutionProtocol for CapabilitiesToolResolution {
         FilePath::new(resolved.to_string_lossy().to_string()).unwrap_or_default()
     }
 }
+
+// ─── Block 3: Module Helpers ───

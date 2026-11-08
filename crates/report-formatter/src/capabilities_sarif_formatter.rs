@@ -52,7 +52,7 @@ impl Default for SarifFormatter {
     }
 }
 
-// ─── Free Functions (stateless renderers) ─────────────────
+// Free Functions (stateless renderers)
 
 /// FR-003: render a full ScanReport as a SARIF 2.1.0 document.
 fn format_sarif_report(report: &ScanReport) -> DisplayContent {

@@ -58,3 +58,5 @@ impl IClassificationProtocol for RoleClassifier {
         }
     }
 }
+
+// ─── Block 3: Module Helpers ───

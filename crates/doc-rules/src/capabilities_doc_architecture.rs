@@ -49,6 +49,8 @@ impl IArchitectureDocProtocol for ArchitectureCapability {
     }
 }
 
+// ─── Block 3: Module Helpers ───
+
 impl ArchitectureCapability {
     fn audit_one(document: &DocSource, _context: &DocAuditContext, findings: &mut Vec<DocFinding>) {
         let text = &document.text;

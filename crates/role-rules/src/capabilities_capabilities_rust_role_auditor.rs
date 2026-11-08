@@ -245,7 +245,7 @@ impl CapabilitiesRustRoleAuditor {
         for (inh_idx, inh_src) in inherent_offenders {
             let is_misplaced = match banner3_idx {
                 Some(b3) => inh_idx < b3,
-                None => proto_idx.map_or(false, |p| inh_idx < p),
+                None => proto_idx.is_some_and(|p| inh_idx < p),
             };
             if is_misplaced {
                 violations.push(LintResult::new_arch_with_name(

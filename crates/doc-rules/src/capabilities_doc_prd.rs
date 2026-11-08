@@ -59,6 +59,8 @@ impl IPrdDocProtocol for PrdCapability {
     }
 }
 
+// ─── Block 3: Module Helpers ───
+
 impl PrdCapability {
     fn audit_one(document: &DocSource, context: &DocAuditContext, findings: &mut Vec<DocFinding>) {
         let text = &document.text;

@@ -52,6 +52,8 @@ impl IReadmeDocProtocol for ReadmeCapability {
     }
 }
 
+// ─── Block 3: Module Helpers ───
+
 impl ReadmeCapability {
     fn audit_one(document: &DocSource, _context: &DocAuditContext, findings: &mut Vec<DocFinding>) {
         let text = &document.text;

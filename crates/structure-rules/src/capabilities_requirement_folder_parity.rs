@@ -36,15 +36,8 @@ impl Default for RequirementFolderParity {
     }
 }
 
-/// Architectural role of a crate folder, classified by objective structure so
-/// AES706 Part A only requires FRD.md from feature folders.
-///
-/// Mirrors doc-rules' `classify_member` exactly so the two classifiers cannot
-/// silently diverge: `shared`/`layer` → Layer, `agent_*_orchestrator` file
-/// or Cargo.toml carrying `agent_`/`capability`/`orchestrator` → Feature,
-/// `surface_*` file or Cargo.toml depending on cli/mcp/tui/dispatcher →
-/// Surface, everything else → None. Reading Cargo.toml here is layer-legal:
-/// structure-rules reads its own crate manifests directly
+// ─── Block 2: Module Contract ───
+
 impl IStructurePrLaProtocol for RequirementFolderParity {
     /// AES706 — Part A: feature folders' FR ids vs folder name.
     /// Part B: PR-<segment> ids in PRD/ROADMAP vs crate folders by order.

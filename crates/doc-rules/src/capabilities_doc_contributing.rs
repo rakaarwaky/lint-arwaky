@@ -55,6 +55,8 @@ impl IContributingDocProtocol for ContributingCapability {
     }
 }
 
+// ─── Block 3: Module Helpers ───
+
 impl ContributingCapability {
     fn audit_one(document: &DocSource, context: &DocAuditContext, findings: &mut Vec<DocFinding>) {
         let text = &document.text;

@@ -177,3 +177,5 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
         OrphanIndicatorResult::new(true, reason, Severity::LOW)
     }
 }
+
+// ─── Block 3: Module Helpers ───

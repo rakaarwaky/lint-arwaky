@@ -38,7 +38,7 @@ impl Default for JsonFormatter {
     }
 }
 
-// ─── Free Functions (stateless renderers) ─────────────────
+// Free Functions (stateless renderers)
 
 /// FR-002: render the scan report as pretty-printed JSON.
 fn render_json(report: &ScanReport) -> DisplayContent {

@@ -28,7 +28,7 @@ impl CapabilitiesFileSystemIO {
 // ─── Block 2: Module Contract ───
 
 impl IFileSystemIOProtocol for CapabilitiesFileSystemIO {
-    // ── Path Operations (15) ─────────────────────────────────
+    // Path Operations
 
     fn path_exists(&self, path: &Path) -> bool {
         utility_filesystem_io::path_exists(path)
@@ -91,7 +91,7 @@ impl IFileSystemIOProtocol for CapabilitiesFileSystemIO {
         utility_filesystem_io::is_python_file(path)
     }
 
-    // ── Directory Operations (3) ─────────────────────────────
+    // Directory Operations
 
     fn scan_directory_with_ignored(&self, dir: &Path, ignored: &PatternList) -> Vec<PathBuf> {
         utility_filesystem_io::scan_directory_with_ignored(dir, ignored.values())
@@ -106,7 +106,7 @@ impl IFileSystemIOProtocol for CapabilitiesFileSystemIO {
         utility_filesystem_io::read_dir_entries_as_pathbuf(dir)
     }
 
-    // ── File Read/Write (7) ──────────────────────────────────
+    // File Read/Write
 
     fn read_to_string(&self, path: &Path) -> Result<ContentString, std::io::Error> {
         utility_filesystem_io::read_to_string(path).map(|s| ContentString { value: s })
@@ -136,7 +136,7 @@ impl IFileSystemIOProtocol for CapabilitiesFileSystemIO {
         utility_filesystem_io::remove_file(path)
     }
 
-    // ── Process Execution (3) ────────────────────────────────
+    // Process Execution
 
     fn run_git_command(&self, args: &[&str], dir: &str) -> GitCommandResult {
         let (stdout, stderr, success) = utility_filesystem_io::run_git_command(args, dir);
@@ -156,7 +156,7 @@ impl IFileSystemIOProtocol for CapabilitiesFileSystemIO {
         utility_filesystem_io::run_external_command_in(name.value(), args, current_dir)
     }
 
-    // ── Scan Timing ──────────────────────────────────────────
+    // Scan Timing
 
     fn timing(&self) -> &ScanTiming {
         &self.timing

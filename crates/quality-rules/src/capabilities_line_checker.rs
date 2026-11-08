@@ -106,3 +106,5 @@ impl ILineCheckerProtocol for ArchLineChecker {
         }
     }
 }
+
+// ─── Block 3: Module Helpers ───

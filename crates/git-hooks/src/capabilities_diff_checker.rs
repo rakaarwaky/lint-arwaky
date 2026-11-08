@@ -21,7 +21,7 @@ use shared_file_watch::GitDiffResultVO;
 use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared_filesystem::taxonomy_filesystem_vo::FileEntry;
 use shared_git_hooks::contract_git_hooks_protocol::IDiffDetectionProtocol;
-use shared_git_hooks::taxonomy_git_hooks_constant::LINTABLE_EXTENSIONS;
+use shared_git_hooks::taxonomy_git_hooks_constant::{ANALYSIS_FAILURE_CODE, LINTABLE_EXTENSIONS};
 use shared_quality_rules::Language;
 use shared_quality_rules::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared_quality_rules::taxonomy_quality_rules_request::CodeAnalysisRequest;
@@ -33,10 +33,6 @@ pub fn is_lintable_file(fp: &FilePath) -> bool {
     let ext = fp.extension();
     LINTABLE_EXTENSIONS.contains(&ext.as_str())
 }
-
-/// Code carried by analysis-failure results, so "analysis could not run" is
-/// reported distinctly from AES rule violations in `run_git_diff_check` output.
-pub const ANALYSIS_FAILURE_CODE: &str = "GIT_HOOK_ANALYSIS_FAILURE";
 
 /// One analysis-failure result (read error or aggregate panic). Non-empty
 /// output blocks the commit like a violation, but the code and CRITICAL

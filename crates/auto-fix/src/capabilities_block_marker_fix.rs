@@ -1,8 +1,8 @@
 // PURPOSE: BlockMarkerFix — FR-AutoFix-005 capability.
 //
 // Implements IBlockMarkerFixProtocol to rewrite a block-marker banner line
-// to canonical form `// ─── Block N: Module <Name> ───` (Rust/TS) or
-// `# ─── Block N: Module <Name> ───` (Python). Only name/mismatch banners
+// to canonical form `// Block N: Module <Name>` (Rust/TS) or
+// `# Block N: Module <Name>` (Python). Only name/mismatch banners
 // are rewritten — marker count/order violations require manual review.
 
 use shared_auto_fix::contract_fix_protocol::IBlockMarkerFixProtocol;
@@ -19,6 +19,8 @@ use std::sync::Arc;
 pub struct BlockMarkerFix {
     io: Arc<dyn IFileSystemIOProtocol>,
 }
+
+// ─── Block 2: Module Contract ───
 
 impl IBlockMarkerFixProtocol for BlockMarkerFix {
     fn fix_block_marker(&self, file_path: &str, line: LineNumber) -> FixOutcome {
@@ -65,9 +67,7 @@ impl BlockMarkerFix {
         } else {
             trimmed.strip_prefix("//").unwrap_or(trimmed).trim_start()
         };
-        after = after
-            .trim_start_matches(|c| c == '─' || c == '-')
-            .trim_start();
+        after = after.trim_start_matches(['─', '-']).trim_start();
         let mut words = after.split_whitespace();
         let Some(_) = words.next() else {
             return FixOutcome::skipped(SkipReason::NoBypassPattern);
@@ -86,7 +86,7 @@ impl BlockMarkerFix {
             .trim()
             .strip_prefix("Module ")
             .unwrap_or("")
-            .trim_end_matches(|c| c == '─' || c == '-')
+            .trim_end_matches(['─', '-'])
             .trim();
         let expected = if let Some(code) = NAMES.get((n as usize) - 1) {
             code.to_string()

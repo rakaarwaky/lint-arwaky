@@ -39,6 +39,8 @@ impl DesignCapability {
     }
 }
 
+// ─── Block 2: Module Contract ───
+
 impl IDesignDocProtocol for DesignCapability {
     fn audit_design(&self, context: &DocAuditContext) -> Vec<DocFinding> {
         let mut findings = Vec::new();
@@ -55,6 +57,8 @@ impl IDesignDocProtocol for DesignCapability {
         findings
     }
 }
+
+// ─── Block 3: Module Helpers ───
 
 impl DesignCapability {
     fn audit_one(document: &DocSource, context: &DocAuditContext, findings: &mut Vec<DocFinding>) {
