@@ -1,4 +1,10 @@
 # Changelog
+## 3.16.1 (2026-11-09)
+
+### Bug Fixes
+
+- fix: render AES403 block marker WHY message in canonical banner format
+
 ## 3.16.0 (2026-11-08)
 
 ### Features
