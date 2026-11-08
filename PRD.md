@@ -71,7 +71,7 @@ Without one gate, drift across naming, layering, imports, quality, roles, orphan
 
 ## Project Requirements
 
-### PR-LA-001: filesystem
+### PR-LA-001: auto-fix
 
 #### User Stories
 
@@ -92,7 +92,7 @@ A single source supplies every piece of filesystem-derived data the other capabi
 
 ---
 
-### PR-LA-002: auto-fix
+### PR-LA-002: cli-commands
 
 #### User Stories
 
@@ -113,7 +113,7 @@ Applies safe, deterministic corrections to source files that violate architectur
 
 ---
 
-### PR-LA-003: cli-commands
+### PR-LA-003: config-system
 
 #### User Stories
 
@@ -134,7 +134,7 @@ The terminal surface of the tool: one module per subcommand (scan, check, fix, c
 
 ---
 
-### PR-LA-004: config-system
+### PR-LA-004: dispatcher
 
 #### User Stories
 
@@ -155,7 +155,7 @@ The config system is the single source of truth for lint-arwaky configuration: i
 
 ---
 
-### PR-LA-005: dispatcher
+### PR-LA-005: doc-rules
 
 #### User Stories
 
@@ -176,7 +176,7 @@ The dispatcher is the single source of truth for workspace action business logic
 
 ---
 
-### PR-LA-006: doc-rules
+### PR-LA-006: external-lint
 
 #### User Stories
 
@@ -197,7 +197,7 @@ Audits every recognized Markdown document against the seven document rules (AES6
 
 ---
 
-### PR-LA-007: external-lint
+### PR-LA-007: file-watch
 
 #### User Stories
 

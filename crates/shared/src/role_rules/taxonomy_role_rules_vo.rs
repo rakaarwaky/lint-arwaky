@@ -38,7 +38,7 @@ pub struct CapabilityBlockMarker {
 /// file that never declares its blocks yields an empty vec, and callers fall
 /// back to raw line position.
 pub fn capability_block_markers(content: &str) -> Vec<CapabilityBlockMarker> {
-    crate::utility_capabilities_role_helpers::block_markers(content)
+    crate::taxonomy_role_rules_entity::block_markers(content)
         .into_iter()
         .map(|(n, name, line)| CapabilityBlockMarker {
             number: n,

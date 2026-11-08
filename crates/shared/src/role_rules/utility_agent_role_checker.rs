@@ -8,12 +8,12 @@
 
 use std::path::Path;
 
-pub use crate::utility_agent_role_helpers::check_agent_protocol_forbidden;
-pub use crate::utility_agent_role_helpers::check_block_markers;
-pub use crate::utility_agent_role_helpers::check_constructor_in_block1;
-pub use crate::utility_agent_role_helpers::is_aggregate_name;
-pub use crate::utility_agent_role_helpers::is_comment;
-use crate::utility_agent_role_helpers::{
+pub use crate::taxonomy_role_rules_entity::check_agent_protocol_forbidden;
+pub use crate::taxonomy_role_rules_entity::check_block_markers;
+pub use crate::taxonomy_role_rules_entity::check_constructor_in_block1;
+pub use crate::taxonomy_role_rules_entity::is_aggregate_name;
+pub use crate::taxonomy_role_rules_entity::is_comment;
+use crate::taxonomy_role_rules_entity::{
     annotation_of, declared_names, dynamic_any, field_types, is_injected_field, is_protocol_name,
     owning_crate_name, params_of, protocol_names, push_distinct, read_wrapped_params, rust_any,
     scan_implementor, scan_type_declarations, workspace_root,
@@ -444,5 +444,5 @@ pub fn resolve_feature_protocol_count(file_path: &Path) -> usize {
     count
 }
 
-// Shared helpers (moved to utility_agent_role_helpers.rs to stay under the
-// AES301 line cap; re-exported via `pub use` above).
+// Shared helpers (moved to taxonomy_role_rules_entity.rs; re-exported via
+// `pub use` above).

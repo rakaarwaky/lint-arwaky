@@ -2,14 +2,13 @@
 pub mod contract_role_protocol;
 pub mod contract_role_runner_aggregate;
 pub mod taxonomy_role_rules_constant;
+pub mod taxonomy_role_rules_entity;
 pub mod taxonomy_role_rules_request;
 pub mod taxonomy_role_rules_response;
 pub mod taxonomy_role_rules_vo;
 pub mod utility_agent_role_checker;
-pub mod utility_agent_role_helpers;
 pub mod utility_agent_role_io_checker;
 pub mod utility_capabilities_role_checker;
-pub mod utility_capabilities_role_helpers;
 pub mod utility_contract_role_checker;
 pub mod utility_role_reference_scanner;
 pub mod utility_signature_parser;

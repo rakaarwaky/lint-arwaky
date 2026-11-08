@@ -5,7 +5,7 @@
 
 use std::collections::BTreeMap;
 
-use crate::utility_capabilities_role_helpers::{
+use crate::taxonomy_role_rules_entity::{
     block_markers, is_comment, is_protocol_base, is_protocol_decorator, is_protocol_trait,
     scan_protocol_impl, scan_protocol_names, scan_type_declarations,
 };

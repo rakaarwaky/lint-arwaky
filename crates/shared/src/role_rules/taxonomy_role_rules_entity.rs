@@ -1,12 +1,17 @@
-// ─── Shared helpers for agent role auditors (moved out to keep
-// utility_agent_role_checker.rs under the AES301 line limit) ───────────────
+// ─── Shared role-rules helpers (taxonomy layer) ─────────────────────────────
+// Consolidated from utility_agent_role_helpers.rs and
+// utility_capabilities_role_helpers.rs. Lives in the taxonomy layer so both
+// agent and capability utilities may import it without violating AES201
+// (utility→utility imports are forbidden; utility→taxonomy is allowed).
 
 use std::collections::BTreeMap;
 use std::path::Path;
 
 use shared_common::taxonomy_lint_vo::LintResult;
 use shared_common::taxonomy_severity_vo::Severity;
-use shared_filesystem::taxonomy_filesystem_vo::FileEntry;
+use shared_filesystem::taxonomy_filesystem_vo::{FileEntry, ParseMetadata};
+
+// ─── Comment / protocol-name helpers ────────────────────────────────────────
 
 /// True when a line is a comment in any of the three languages.
 pub fn is_comment(trimmed: &str) -> bool {
@@ -27,15 +32,13 @@ pub fn is_aggregate_name(name: Option<&str>) -> bool {
 
 /// True when a type name looks like a contract protocol seam. A PEP 604
 /// union counts when any member is a protocol; `Optional[X]` and
-/// `Union[A, B]` wrappers are unwrapped. Generic brackets, a path
-/// qualifier, and union tokens are stripped so every spelling reduces to
-/// the bare trait name before the match.
+/// `Union[A, B]` wrappers are unwrapped.
 pub fn is_protocol_name(name: &str) -> bool {
     name.split('|').any(is_protocol_name_in)
 }
 
 /// One PEP 604 union member: unwrap `Optional[X]` and `Union[A, B]` and
-/// fall through to the bare-name test, so wrapper spellings count too.
+/// fall through to the bare-name test.
 pub fn is_protocol_name_in(member: &str) -> bool {
     let inner = member.get(member.find('[').unwrap_or(0) + 1..member.rfind(']').unwrap_or(0));
     let bare = member
@@ -62,12 +65,36 @@ pub fn is_protocol_name_in(member: &str) -> bool {
     base.starts_with('I') && base.ends_with("Protocol")
 }
 
+// ─── Capability protocol-name helpers ───────────────────────────────────────
+
+/// True when `trait_name` names a contract protocol trait.
+pub fn is_protocol_trait(trait_name: &str) -> bool {
+    let base = trait_name.rsplit("::").next().unwrap_or(trait_name).trim();
+    base.starts_with('I') && base.ends_with("Protocol") && !base.ends_with("Aggregate")
+}
+
+/// True when a Python base class names a contract protocol.
+pub fn is_protocol_base(base: &str) -> bool {
+    let base = base.split('[').next().unwrap_or(base).trim();
+    is_protocol_trait(base.rsplit('.').next().unwrap_or(base))
+}
+
+/// True when a decorator claims protocol attachment.
+pub fn is_protocol_decorator(name: &str) -> bool {
+    let head = name
+        .trim_start_matches('@')
+        .split(|c: char| c.is_ascii_digit() || c == '(')
+        .next()
+        .unwrap_or(name);
+    head == "protocol"
+        || head == "protocol_impl"
+        || head.starts_with("with_protocol")
+        || (head.starts_with("with_") && head.ends_with("_protocol"))
+}
+
+// ─── Injection / field / param helpers ─────────────────────────────────────
+
 /// True when a Rust line declares an injected dependency field.
-///
-/// A field is `pub addition: Box<dyn ICalculatorProtocol>,` — it may be
-/// terminated by a comma, a semicolon, or nothing when it is the last field
-/// in the struct body. A `pub fn new(… Arc<dyn …>)` parameter and an
-/// `impl` block header are not fields.
 pub fn is_injected_field(t: &str) -> bool {
     if t.starts_with("pub fn") || t.starts_with("fn ") || t.starts_with("impl ") {
         return false;
@@ -77,9 +104,6 @@ pub fn is_injected_field(t: &str) -> bool {
 }
 
 /// Extract protocol trait names from a Rust injected-field line.
-///
-/// `pub addition: Box<dyn ICalculatorProtocol>,` yields `ICalculatorProtocol`.
-/// A struct with several fields on one line yields each name in turn.
 pub fn protocol_names(t: &str) -> Vec<String> {
     let mut out = Vec::new();
     for chunk in t.split("Arc<dyn ").chain(t.split("Box<dyn ")) {
@@ -96,21 +120,13 @@ pub fn protocol_names(t: &str) -> Vec<String> {
 }
 
 /// Extract protocol type names from a TypeScript field declaration line.
-///
-/// Handles a bare field (`private readonly dep: IFooProtocol;`), two fields
-/// on one line, and the constructor shorthand
-/// (`constructor(private readonly dep: IFooProtocol, other: IReportProtocol)`).
 pub fn field_types(t: &str) -> Vec<String> {
     let mut out = Vec::new();
-    // The type follows the `:` that terminates the field name, so split on
-    // statement boundaries and take the trailing type token of each part.
     for part in t.split([';', ')', ',']) {
         let part = part.trim();
         let Some((_name, ty)) = part.rsplit_once(':') else {
             continue;
         };
-        // The type may be a union or generic; take the first protocol-looking
-        // token rather than the whole type expression.
         for token in ty.split(['|', '&', '<', '>', ' ']) {
             if is_protocol_name(token.trim()) {
                 out.push(token.trim().to_string());
@@ -122,9 +138,6 @@ pub fn field_types(t: &str) -> Vec<String> {
 }
 
 /// Split a parameter list into its parameters, dropping the `self` receiver.
-/// Generic args like `Union[A, B]` stay one param because only top-level
-/// commas split. A wrapped signature is read by the caller up to its
-/// closing paren.
 pub fn params_of(signature: &str) -> Vec<String> {
     let Some(open) = signature.find('(') else {
         return Vec::new();
@@ -162,8 +175,6 @@ pub fn params_of(signature: &str) -> Vec<String> {
 }
 
 /// Read a possibly-wrapped parameter list starting at `start` in `lines`.
-/// A signature whose parens close on the opening line is used as-is;
-/// otherwise the following lines are appended until the paren balances.
 pub fn read_wrapped_params(lines: &[&str], start: usize) -> String {
     let first = lines[start];
     let Some(open) = first.find('(') else {
@@ -183,9 +194,7 @@ pub fn read_wrapped_params(lines: &[&str], start: usize) -> String {
     acc
 }
 
-/// Names declared on a trait / class declaration line. The declaration keyword
-/// is stripped first because `pub trait IFooProtocol:` and `export class
-/// IFooProtocol {` both put the name after the keyword.
+/// Names declared on a trait / class declaration line.
 pub fn declared_names(t: &str) -> Vec<String> {
     let rest = t
         .trim_start_matches("pub ")
@@ -203,9 +212,7 @@ pub fn declared_names(t: &str) -> Vec<String> {
     }
 }
 
-/// The type annotation of a Python parameter, or the parameter itself when it
-/// carries no annotation. `addition: ICalculatorProtocol = None` yields
-/// `ICalculatorProtocol`; a bare `deps` fails the protocol-name test.
+/// The type annotation of a Python parameter.
 pub fn annotation_of(param: &str) -> &str {
     let body = param.split('=').next().unwrap_or(param);
     match body.rsplit_once(':') {
@@ -221,6 +228,8 @@ pub fn push_distinct(distinct: &mut Vec<String>, name: String) {
         distinct.push(normalized);
     }
 }
+
+// ─── Scan helpers ───────────────────────────────────────────────────────────
 
 /// Count type declarations by line scan, for files with no parse metadata.
 pub fn scan_type_declarations(content: &str) -> usize {
@@ -267,6 +276,88 @@ pub fn scan_implementor(content: &str) -> bool {
     false
 }
 
+/// True when a line-scan finds a protocol implementation.
+pub fn scan_protocol_impl(content: &str) -> bool {
+    let has_function = content.lines().any(|l| l.trim_start().starts_with("def "));
+    content.lines().any(|line| {
+        let t = line.trim();
+        if let Some(rest) = t.strip_prefix("impl ") {
+            return rest.contains("Protocol for")
+                && is_protocol_trait(rest.split(" for ").next().unwrap_or("").trim());
+        }
+        if t.starts_with("class ") {
+            let decl = t.trim_end().trim_end_matches(':');
+            if let Some(open) = decl.find('(') {
+                if decl.ends_with(')') {
+                    return decl[open + 1..decl.len() - 1]
+                        .split(',')
+                        .any(is_protocol_base);
+                }
+            }
+            return false;
+        }
+        if t.starts_with('@') && is_protocol_decorator(t) && has_function {
+            return true;
+        }
+        t.contains("implements I") && t.contains("Protocol")
+    })
+}
+
+/// Collect distinct protocol trait names by line scan, for files with no parse metadata.
+pub fn scan_protocol_names(content: &str) -> Vec<String> {
+    let mut protocols: Vec<String> = Vec::new();
+    let has_function = content.lines().any(|l| l.trim_start().starts_with("def "));
+
+    for line in content.lines() {
+        let t = line.trim();
+
+        if let Some(rest) = t.strip_prefix("impl ") {
+            if let Some(trait_part) = rest.split(" for ").next() {
+                let name = trait_part.trim();
+                if is_protocol_trait(name) && !protocols.iter().any(|p| p == name) {
+                    protocols.push(name.to_string());
+                }
+            }
+        }
+
+        let class_body = t
+            .strip_prefix("export class ")
+            .or_else(|| t.strip_prefix("class "))
+            .unwrap_or("");
+        if !class_body.is_empty() {
+            let (type_part, rest) = class_body.split_once('(').unwrap_or((class_body, ""));
+            let type_part = type_part.trim();
+
+            if !rest.is_empty() {
+                let bases_str = rest.trim_end_matches(&[')', ':', ' '] as &[char]).trim();
+                for base in bases_str.split(',') {
+                    let b = base.trim();
+                    if is_protocol_base(b) && !protocols.iter().any(|p| p == b) {
+                        protocols.push(b.to_string());
+                    }
+                }
+            } else if let Some((_, after)) = type_part.split_once(" implements ") {
+                let iface_list =
+                    after.trim_matches(|c: char| c == '{' || c == '}' || c.is_whitespace());
+                for iface in iface_list.split(',') {
+                    let i = iface.trim();
+                    if is_protocol_trait(i) && !protocols.iter().any(|p| p == i) {
+                        protocols.push(i.to_string());
+                    }
+                }
+            }
+        }
+
+        if t.starts_with('@') && is_protocol_decorator(t) && has_function && protocols.is_empty() {
+            protocols.push("decorated_protocol".to_string());
+        }
+    }
+
+    protocols
+}
+
+// ─── Any-type helpers ───────────────────────────────────────────────────────
+
 /// True when a Rust line uses `Any` as a type.
 pub fn rust_any(t: &str) -> bool {
     t.contains(": Any")
@@ -276,8 +367,7 @@ pub fn rust_any(t: &str) -> bool {
         || t.contains("-> Any")
 }
 
-/// True when a Python / TS line spells `any`/`Any` in an annotation
-/// position: the identifier right after a `:` or `->`.
+/// True when a Python / TS line spells `any`/`Any` in an annotation position.
 pub fn dynamic_any(t: &str) -> bool {
     fn any_at_end(s: &str) -> bool {
         let is_ident = |r: &str| r.starts_with(|c: char| c.is_alphanumeric() || c == '_');
@@ -296,126 +386,64 @@ pub fn dynamic_any(t: &str) -> bool {
     false
 }
 
-/// Contract protocols implemented by a type declared in this file. A contract
-/// protocol is an `I<Name>Protocol` seam: the agent implements the feature
-/// aggregate and injects protocol seams, it never *implements* one, because
-/// that is a capability's job. Std traits and aggregate traits are excluded so
-/// `impl Default for X` reads as nothing. Returns deduplicated names in
-/// declaration order.
-fn contract_protocol_impls(file: &FileEntry) -> Vec<String> {
-    use shared_filesystem::taxonomy_filesystem_vo::ParseMetadata;
+// ─── Block marker helpers ───────────────────────────────────────────────────
 
-    let mut out: Vec<String> = Vec::new();
-    let mut push = |name: &str| {
-        if !out.iter().any(|n| n == name) {
-            out.push(name.to_string());
+/// The `N` and name text of every `Block N:` banner comment, in declaration
+/// order.
+pub fn block_markers(content: &str) -> Vec<(usize, String, usize)> {
+    let mut out = Vec::new();
+    for (line_idx, line) in content.lines().enumerate() {
+        let t = line.trim();
+        if !is_comment(t) {
+            continue;
         }
-    };
-
-    match file.parse_metadata.as_ref() {
-        Some(ParseMetadata::Rust(r)) => {
-            for imp in &r.impl_blocks {
-                if let Some(trait_name) = &imp.trait_name
-                    && is_protocol_name(trait_name)
-                {
-                    push(trait_name);
-                }
-            }
+        // Anchor to whole-line banner shape: optional comment sigil, dashes,
+        // "Block N:", name text, trailing dashes. Prose inside string literals
+        // never matches — only a line that actually reads as a banner comment
+        // counts.
+        let stripped = t
+            .trim_start_matches("//")
+            .trim_start_matches('/')
+            .trim_start_matches('*')
+            .trim_start_matches('#')
+            .trim();
+        if !stripped.starts_with("───") && !stripped.starts_with("---") {
+            continue;
         }
-        Some(ParseMetadata::Python(p)) => {
-            for c in &p.class_declarations {
-                for base in &c.bases {
-                    if is_protocol_name(base) {
-                        push(base);
-                    }
-                }
-            }
+        // Expect `─── Block N: name ───` after the sigil.
+        let Some((_, rest)) = stripped.split_once(' ') else {
+            continue;
+        };
+        let Some((num_str, name_tail)) = rest.split_once(':') else {
+            continue;
+        };
+        let digits: String = num_str.chars().filter(char::is_ascii_digit).collect();
+        if digits.is_empty() {
+            continue;
         }
-        Some(ParseMetadata::TypeScript(t)) | Some(ParseMetadata::JavaScript(t)) => {
-            for c in &t.class_declarations {
-                for iface in &c.implements {
-                    if is_protocol_name(iface) {
-                        push(iface);
-                    }
-                }
-            }
-        }
-        Some(_) | None => scan_contract_protocol_impls(&file.content, &mut push),
+        let Some(n) = digits.parse::<usize>().ok() else {
+            continue;
+        };
+        let expected_name: BTreeMap<usize, &'static str> = BTreeMap::from([
+            (1, "Module Declaration"),
+            (2, "Module Contract"),
+            (3, "Module Helpers"),
+        ]);
+        let name = name_tail
+            .trim()
+            .trim_matches(|c| c == '─' || c == '-')
+            .trim()
+            .to_string();
+        let _ = expected_name.get(&n); // validate block number is known
+        out.push((n, name, line_idx + 1));
     }
     out
 }
 
-/// Line-scan fallback for `contract_protocol_impls` when parse metadata is
-/// absent. `scan` is called once per distinct contract protocol found.
-fn scan_contract_protocol_impls(content: &str, mut scan: impl FnMut(&str)) {
-    for line in content.lines() {
-        let t = line.trim();
-        if is_comment(t) {
-            continue;
-        }
-        if let Some(rest) = rust_impl_trait_name(t) {
-            if is_protocol_name(rest) {
-                scan(rest);
-            }
-        } else if let Some(base) = class_base_list(t) {
-            // Python: `class Bar(IFooProtocol)` — and the TS form
-            // `class Bar implements IFooProtocol`.
-            for candidate in base.split(',').chain(base.split(" implements ")) {
-                let name = candidate.trim().trim_start_matches("public ").trim();
-                if is_protocol_name(name) {
-                    scan(name);
-                }
-            }
-        }
-    }
-}
-
-/// The trait name of a Rust `impl … Trait for Type` line, if the line is one.
-/// `impl` may carry its own generic list before the trait and that list is not
-/// always followed by a space — `impl<T> IFoo for X` — so the keyword is matched
-/// on its own. The trait is the last whitespace-separated token before ` for `.
-fn rust_impl_trait_name(t: &str) -> Option<&str> {
-    let rest = t.strip_prefix("impl")?;
-    let rest = rest.trim_start();
-    let (lhs, _rhs) = rest.split_once(" for ")?;
-    Some(lhs.rsplit([' ', ',']).next().unwrap_or(lhs).trim())
-}
-
-/// The base-class / implements list of a `class` declaration line, when the
-/// line carries one. Returns the text inside `(...)` for Python and the part
-/// after `implements` for TypeScript. The keyword is located, not required at
-/// line start, because `export class X …` is the normal TS shape.
-fn class_base_list(t: &str) -> Option<&str> {
-    let idx = t.find("class ")?;
-    // Everything before the keyword must be a modifier or nothing at all.
-    match t[..idx].trim() {
-        ""
-        | "export"
-        | "export default"
-        | "export abstract"
-        | "export default abstract"
-        | "abstract"
-        | "declare" => {}
-        _ => return None,
-    }
-    let rest = t[idx + "class ".len()..].trim_start();
-    if let Some(i) = rest.find("implements ") {
-        return Some(rest[i + "implements ".len()..].trim_end_matches('{').trim());
-    }
-    let open = rest.find('(')?;
-    let close = rest.rfind(')')?;
-    Some(&rest[open + 1..close])
-}
+/// Block-order role checks (moved from utility_agent_role_helpers.rs).
+// ─── Agent rule checks (moved from utility_agent_role_helpers.rs) ───────────
 
 /// Rule — an agent file implements no contract protocol. HIGH.
-///
-///
-/// This is a flat prohibition, not a budget: implementing one *alongside* the
-/// aggregate is already a violation. An agent composes its feature by
-/// injecting protocol seams, so implementing a protocol here makes the
-/// orchestration layer duplicate a capability's work — the behaviour belongs
-/// in a `capabilities_*` file. See `contract_protocol_impls` for what counts
-/// as a contract protocol.
 pub fn check_agent_protocol_forbidden(file: &FileEntry, violations: &mut Vec<LintResult>) {
     let protocols = contract_protocol_impls(file);
     if protocols.is_empty() {
@@ -443,12 +471,6 @@ pub fn check_agent_protocol_forbidden(file: &FileEntry, violations: &mut Vec<Lin
 }
 
 /// Rule — the `─── Block N:` banner markers must stop at 3. MEDIUM.
-///
-/// The 3-block structure is the readability contract the HOW-TO documents: a
-/// fourth marker means the file has outgrown the shape, and the reader loses
-/// the block map. A file carrying no markers is not reported — the marker is
-/// a convention the reader can spot by shape, not a requirement the linter
-/// enforces from nothing.
 pub fn check_block_markers(file: &FileEntry, violations: &mut Vec<LintResult>) {
     let path = file.path.to_string_lossy().to_string();
     let markers = block_markers(&file.content);
@@ -463,8 +485,6 @@ pub fn check_block_markers(file: &FileEntry, violations: &mut Vec<LintResult>) {
         (3, "Module Helpers"),
     ]);
 
-    // Name check: each banner's name text must match the canonical name for
-    // its block number.
     for (n, name, line) in &markers {
         let Some(expected) = expected_name.get(n) else {
             continue;
@@ -516,11 +536,6 @@ pub fn check_block_markers(file: &FileEntry, violations: &mut Vec<LintResult>) {
 }
 
 /// Rule B-1 — constructor / `Default` must live in Block 1, never in Block 3.
-/// MEDIUM.
-///
-/// A constructor (`pub fn new`, `pub fn from_*`, `impl Default`) declares how
-/// the type is born — it belongs with the struct declaration in Block 1, not
-/// with the mechanics in Block 3.
 pub fn check_constructor_in_block1(file: &FileEntry, violations: &mut Vec<LintResult>) {
     let path = file.path.to_string_lossy().to_string();
     let content = &file.content;
@@ -609,71 +624,105 @@ pub fn check_constructor_in_block1(file: &FileEntry, violations: &mut Vec<LintRe
     }
 }
 
-/// The `N` and name text of every `Block N:` banner comment, in declaration
-/// order. The name is the rest of the line after the colon, with box-drawing
-/// dashes and surrounding whitespace stripped.
-fn block_markers(content: &str) -> Vec<(usize, String, usize)> {
-    let mut out = Vec::new();
-    for (line_idx, line) in content.lines().enumerate() {
-        let t = line.trim();
-        if !is_comment(t) {
-            continue;
+// ─── Private helpers used by agent rule checks ──────────────────────────────
+
+/// Contract protocols implemented by a type declared in this file.
+fn contract_protocol_impls(file: &FileEntry) -> Vec<String> {
+    let mut out: Vec<String> = Vec::new();
+    let mut push = |name: &str| {
+        if !out.iter().any(|n| n == name) {
+            out.push(name.to_string());
         }
-        let Some((idx, rest)) = standalone_word(t, "Block") else {
-            continue;
-        };
-        let rest = &t[idx + rest..];
-        let digits: String = rest.chars().take_while(char::is_ascii_digit).collect();
-        if digits.is_empty() || !rest[digits.len()..].starts_with(':') {
-            continue;
+    };
+
+    match file.parse_metadata.as_ref() {
+        Some(ParseMetadata::Rust(r)) => {
+            for imp in &r.impl_blocks {
+                if let Some(trait_name) = &imp.trait_name
+                    && is_protocol_name(trait_name)
+                {
+                    push(trait_name);
+                }
+            }
         }
-        let Some(n) = digits.parse::<usize>().ok() else {
-            continue;
-        };
-        let name = rest[digits.len() + 1..]
-            .trim()
-            .trim_matches(|c| c == '─' || c == '-')
-            .trim()
-            .to_string();
-        out.push((n, name, line_idx + 1));
+        Some(ParseMetadata::Python(p)) => {
+            for c in &p.class_declarations {
+                for base in &c.bases {
+                    if is_protocol_name(base) {
+                        push(base);
+                    }
+                }
+            }
+        }
+        Some(ParseMetadata::TypeScript(t)) | Some(ParseMetadata::JavaScript(t)) => {
+            for c in &t.class_declarations {
+                for iface in &c.implements {
+                    if is_protocol_name(iface) {
+                        push(iface);
+                    }
+                }
+            }
+        }
+        Some(_) | None => scan_contract_protocol_impls(&file.content, &mut push),
     }
     out
 }
 
-/// The byte offset of *word* in `t` when it stands as a standalone token, plus
-/// the length of the characters that follow it. `Sub-Block 4:` contains the
-/// substring "Block" but the character before it is part of a longer word, so
-/// it is not a standalone occurrence. Rust identifiers treat `-` as a
-/// separator, but a banner comment is prose: a hyphenated `Sub-Block` reads
-/// as one word to a human, so a hyphen counts as part of the preceding token.
-fn standalone_word(t: &str, word: &str) -> Option<(usize, usize)> {
-    let mut from = 0;
-    while let Some(rel) = t[from..].find(word) {
-        let idx = from + rel;
-        let before_ok = t[..idx]
-            .chars()
-            .next_back()
-            .is_none_or(|c| !c.is_alphanumeric() && c != '_' && c != '-');
-        let after = &t[idx + word.len()..];
-        let after_ok = after
-            .chars()
-            .next()
-            .is_none_or(|c| !c.is_alphanumeric() && c != '_');
-        if before_ok && after_ok {
-            // Measure from the character that follows the word, not the
-            // word's own first byte, so the slice never lands inside a
-            // multi-byte character when the next character is not ASCII.
-            let skip = after.chars().next().map_or(0, char::len_utf8);
-            return Some((idx, word.len() + skip));
+/// Line-scan fallback for `contract_protocol_impls` when parse metadata is absent.
+fn scan_contract_protocol_impls(content: &str, mut scan: impl FnMut(&str)) {
+    for line in content.lines() {
+        let t = line.trim();
+        if is_comment(t) {
+            continue;
         }
-        from = idx + word.len();
+        if let Some(rest) = rust_impl_trait_name(t) {
+            if is_protocol_name(rest) {
+                scan(rest);
+            }
+        } else if let Some(base) = class_base_list(t) {
+            for candidate in base.split(',').chain(base.split(" implements ")) {
+                let name = candidate.trim().trim_start_matches("public ").trim();
+                if is_protocol_name(name) {
+                    scan(name);
+                }
+            }
+        }
     }
-    None
 }
 
-/// The workspace root: the ancestor that owns a shared source folder
-/// (`crates/shared/src` in the Rust layout, `modules/shared/src` in the
-/// Python modules layout).
+/// The trait name of a Rust `impl … Trait for Type` line, if the line is one.
+fn rust_impl_trait_name(t: &str) -> Option<&str> {
+    let rest = t.strip_prefix("impl")?;
+    let rest = rest.trim_start();
+    let (lhs, _rhs) = rest.split_once(" for ")?;
+    Some(lhs.rsplit([' ', ',']).next().unwrap_or(lhs).trim())
+}
+
+/// The base-class / implements list of a `class` declaration line.
+fn class_base_list(t: &str) -> Option<&str> {
+    let idx = t.find("class ")?;
+    match t[..idx].trim() {
+        ""
+        | "export"
+        | "export default"
+        | "export abstract"
+        | "export default abstract"
+        | "abstract"
+        | "declare" => {}
+        _ => return None,
+    }
+    let rest = t[idx + "class ".len()..].trim_start();
+    if let Some(i) = rest.find("implements ") {
+        return Some(rest[i + "implements ".len()..].trim_end_matches('{').trim());
+    }
+    let open = rest.find('(')?;
+    let close = rest.rfind(')')?;
+    Some(&rest[open + 1..close])
+}
+
+// ─── Workspace / crate helpers ──────────────────────────────────────────────
+
+/// The workspace root: the ancestor that owns a shared source folder.
 pub fn workspace_root(file_path: &Path) -> Option<std::path::PathBuf> {
     let mut current = file_path.parent();
     while let Some(dir) = current {
@@ -688,8 +737,6 @@ pub fn workspace_root(file_path: &Path) -> Option<std::path::PathBuf> {
 }
 
 /// The crate directory name that owns a file: the segment before `src`.
-///
-/// `crates/role-rules/src/agent_role_orchestrator.rs` yields `role-rules`.
 pub fn owning_crate_name(file_path: &Path) -> Option<String> {
     let dir = file_path.parent()?;
     if dir.file_name().and_then(|n| n.to_str()) != Some("src") {

@@ -6,7 +6,7 @@ RELEASED as v3.8.0. It supersedes 3.7.1 and 3.7.2, which were declared in `Cargo
 
 ## Roadmap Status
 
-### PR-LA-001: filesystem
+### PR-LA-001: auto-fix
 
 | Aspect       | Detail                            |
 |--------------|----------------------------------|
@@ -14,7 +14,7 @@ RELEASED as v3.8.0. It supersedes 3.7.1 and 3.7.2, which were declared in `Cargo
 | State        | Done                              |
 | Backlog      | [BACKLOG.md](crates/filesystem/BACKLOG.md) |
 
-### PR-LA-002: auto-fix
+### PR-LA-002: cli-commands
 
 | Aspect       | Detail                              |
 |--------------|-------------------------------------|
@@ -22,7 +22,7 @@ RELEASED as v3.8.0. It supersedes 3.7.1 and 3.7.2, which were declared in `Cargo
 | State        | Done                                  |
 | Backlog      | [BACKLOG.md](crates/auto-fix/BACKLOG.md) |
 
-### PR-LA-003: cli-commands
+### PR-LA-003: config-system
 
 | Aspect       | Detail                              |
 |--------------|-------------------------------------|
@@ -30,7 +30,7 @@ RELEASED as v3.8.0. It supersedes 3.7.1 and 3.7.2, which were declared in `Cargo
 | State        | Done                                  |
 | Backlog      | [BACKLOG.md](crates/cli-commands/BACKLOG.md) |
 
-### PR-LA-004: config-system
+### PR-LA-004: dispatcher
 
 | Aspect       | Detail                              |
 |--------------|-------------------------------------|
@@ -38,7 +38,7 @@ RELEASED as v3.8.0. It supersedes 3.7.1 and 3.7.2, which were declared in `Cargo
 | State        | Done                                  |
 | Backlog      | [BACKLOG.md](crates/config-system/BACKLOG.md) |
 
-### PR-LA-005: dispatcher
+### PR-LA-005: doc-rules
 
 | Aspect       | Detail                              |
 |--------------|-------------------------------------|
@@ -54,7 +54,7 @@ RELEASED as v3.8.0. It supersedes 3.7.1 and 3.7.2, which were declared in `Cargo
 | State        | Done                                  |
 | Backlog      | [BACKLOG.md](crates/maintenance/BACKLOG.md) |
 
-### PR-LA-006: doc-rules
+### PR-LA-006: external-lint
 
 | Aspect       | Detail                              |
 |--------------|-------------------------------------|
@@ -62,7 +62,7 @@ RELEASED as v3.8.0. It supersedes 3.7.1 and 3.7.2, which were declared in `Cargo
 | State        | Done                                  |
 | Backlog      | [BACKLOG.md](crates/doc-rules/BACKLOG.md) |
 
-### PR-LA-007: external-lint
+### PR-LA-007: file-watch
 
 | Aspect       | Detail                              |
 |--------------|-------------------------------------|
