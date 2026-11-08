@@ -638,7 +638,7 @@ pub fn check_banner_hygiene(file: &FileEntry, violations: &mut Vec<LintResult>) 
             "AES403",
             Severity::MEDIUM,
             format!(
-                "AES403 CAPABILITY_ROLE: Incomplete block banners.\n\
+                "AES403 CAPABILITY_ROLE: missing block marker(s) — incomplete block banners.\n\
                  WHY? File declares block banner(s) but is missing {missing_list}. \
                  The 3-block shape requires all three banners so the reader has a complete map.\n\
                  FIX: Add the missing banner(s):\n{fix_block}",

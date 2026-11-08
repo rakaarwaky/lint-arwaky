@@ -278,11 +278,12 @@ impl CapabilitiesRustRoleAuditor {
 
         // Protocol placement: the protocol impl must live strictly inside region
         // Block 2 (between the B2 and B3 banners). A protocol impl elsewhere is
-        // itself a block-membership defect.
+        // itself a block-membership defect. When banners 2 and 3 are adjacent
+        // there is no Block 2 region to check, so skip the placement check.
         if let (Some((proto_idx, proto_src)), Some(b2), Some(b3)) =
             (protocol_line, banner2_idx, banner3_idx)
         {
-            if !(b2 < proto_idx && proto_idx < b3) {
+            if b3 > b2 + 1 && !(b2 < proto_idx && proto_idx < b3) {
                 violations.push(LintResult::new_arch_with_name(
                     path,
                     proto_idx + 1,

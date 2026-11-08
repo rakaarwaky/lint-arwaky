@@ -337,7 +337,12 @@ pub fn scan_protocol_names(content: &str) -> Vec<String> {
                     }
                 }
             } else if let Some((_, after)) = type_part.split_once(" implements ") {
-                let iface_list = after.trim().trim_matches('{').trim_matches('}');
+                // The interface list can carry a trailing class-body opener on
+                // the same line, e.g. `export class X implements A, B {` or
+                // `... implements A, B {}`. Strip trailing braces so the last
+                // interface name parses cleanly.
+                let after = after.trim().trim_end_matches(['{', '}']);
+                let iface_list = after.trim();
                 for iface in iface_list.split(',') {
                     let i = iface.trim();
                     if is_protocol_trait(i) && !protocols.iter().any(|p| p == i) {
