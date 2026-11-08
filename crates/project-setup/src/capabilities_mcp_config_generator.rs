@@ -39,7 +39,7 @@ impl IMcpConfigGenerationProtocol for SetupMcpConfigGenerator {
         let server_entry = serde_json::json!({
             "command": bin.value(),
             "args": [],
-            "alwaysAllow": ["execute_command", "list_commands", "read_skill",
+            "alwaysAllow": ["execute_command", "list_commands",
                             "health_check", "get_config"]
         });
         config.insert("lint-arwaky".to_string(), server_entry);

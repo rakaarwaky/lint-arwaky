@@ -4,7 +4,6 @@
 // methods of a single requirement, each with one concrete return type, so a
 // capability implements its trait outright and never carries stubs.
 
-use crate::taxonomy_project_setup_vo::EmbeddedSkillVO;
 use crate::taxonomy_project_setup_vo::SetupError;
 pub use crate::taxonomy_project_setup_vo::{
     CreateConfigDirResult, McpBinaryNameVO, PackageManagerStatus, PreFlightResult,
@@ -67,8 +66,6 @@ pub trait IConfigTemplateProtocol: Send + Sync {
     /// Get an embedded config template for the given language (FR-005).
     /// Returns `Err(SetupError::UnknownLanguage)` for unsupported languages.
     fn get_config_template(&self, language: &str) -> Result<&'static str, SetupError>;
-    /// Retrieve all embedded skill files compiled into the binary.
-    fn get_embedded_skills(&self) -> &'static [EmbeddedSkillVO];
 }
 
 // ── FR-ProjectSetup-006: Config File Writing and Config Directory ──

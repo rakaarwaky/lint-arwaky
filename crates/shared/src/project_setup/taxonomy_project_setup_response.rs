@@ -1,6 +1,5 @@
 // PURPOSE: SetupResponse — response payload for the setup aggregate
 
-use crate::taxonomy_project_setup_vo::EmbeddedSkillVO;
 use crate::taxonomy_project_setup_vo::{
     CreateConfigDirResult, PreFlightResult, ProjectLanguageVO, ProjectLanguagesVO, SetupError,
     WriteConfigResult,
@@ -16,7 +15,6 @@ pub enum SetupResponse {
     Languages { detected: ProjectLanguagesVO },
     Template { content: Result<String, SetupError> },
     PreFlight { result: PreFlightResult },
-    Skills { skills: Vec<EmbeddedSkillVO> },
     ConfigWritten { result: WriteConfigResult },
     ConfigDir { result: CreateConfigDirResult },
     Exists { exists: bool },
@@ -62,13 +60,6 @@ impl SetupResponse {
         match self {
             Self::Template { content } => content,
             _ => Err(SetupError::other("no template available")),
-        }
-    }
-
-    pub fn into_skills(self) -> Vec<EmbeddedSkillVO> {
-        match self {
-            Self::Skills { skills } => skills,
-            _ => Vec::new(),
         }
     }
 

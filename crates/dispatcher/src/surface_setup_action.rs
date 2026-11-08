@@ -3,8 +3,8 @@
 // No direct std::process::Command calls.
 use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared_filesystem::taxonomy_filesystem_request::FilesystemRequest;
+use shared_project_setup::ISetupAggregate;
 use shared_project_setup::SetupRequest;
-use shared_project_setup::{ISetupAggregate, ProjectLanguagesVO};
 use std::sync::Arc;
 
 /// One setup step outcome — message + success flag for CLI rendering.
@@ -117,8 +117,7 @@ pub fn collect_init(
         }
 
         // Copy .agents/ from XDG config to current project.
-        // skills are embedded binary constants (installed separately below);
-        // prompts are intentionally not distributed to target projects.
+        // Prompts are intentionally not distributed to target projects.
         let xdg_agents = xdg_base.join(".agents");
         if xdg_agents.exists() && xdg_agents.is_dir() {
             let target_agents = std::path::Path::new(".agents");
@@ -151,88 +150,7 @@ pub fn collect_init(
         });
     }
 
-    // Install embedded skills from binary constants (filtered by detected languages)
-    let embedded_skills = setup_orchestrator
-        .execute(SetupRequest::get_embedded_skills())
-        .into_skills();
-    let mut installed_count = 0;
-    let mut install_failed = false;
-    let skills_root = std::path::Path::new(".agents").join("skills");
-
-    for skill in embedded_skills {
-        if is_skill_relevant_for_languages(skill.language, &languages) {
-            let target_file = skills_root.join(skill.relative_path);
-            if let Some(parent) = target_file.parent() {
-                let dir_ok = filesystem
-                    .execute(FilesystemRequest::create_dir_all(parent))
-                    .into_op_ok();
-                if !dir_ok {
-                    items.push(SetupInitItem {
-                        message: format!("  .agents/skills/ — directory error for {}", skill.name),
-                        ok: false,
-                    });
-                    install_failed = true;
-                    continue;
-                }
-            }
-            let write_ok = filesystem
-                .execute(FilesystemRequest::write_file(&target_file, skill.content))
-                .into_op_ok();
-            if write_ok {
-                installed_count += 1;
-            } else {
-                items.push(SetupInitItem {
-                    message: format!("  .agents/skills/ — write error for {}", skill.name),
-                    ok: false,
-                });
-                install_failed = true;
-            }
-        }
-    }
-
-    let detected_names: Vec<&str> = languages.iter().map(|l| l.value()).collect();
-    let lang_summary = if detected_names.is_empty() {
-        "all / default".to_string()
-    } else {
-        detected_names.join(", ")
-    };
-
-    if !install_failed {
-        items.push(SetupInitItem {
-            message: format!(
-                "  .agents/skills/ — installed {installed_count} skill file(s) for detected language(s) [{lang_summary}]"
-            ),
-            ok: true,
-        });
-    }
-
     items
-}
-
-/// Determine whether a skill is relevant given the detected project languages.
-/// If skill_language is None (language-agnostic), always returns true.
-/// If no languages are detected in the project, returns true as default.
-/// Otherwise, checks if the skill language matches any detected language.
-pub fn is_skill_relevant_for_languages(
-    skill_language: Option<&str>,
-    detected_languages: &ProjectLanguagesVO,
-) -> bool {
-    let Some(lang) = skill_language else {
-        return true;
-    };
-
-    if detected_languages.is_empty() {
-        return true;
-    }
-
-    match lang {
-        "python" => detected_languages.iter().any(|l| l.value() == "python"),
-        "rust" => detected_languages.iter().any(|l| l.value() == "rust"),
-        "typescript" | "javascript" => detected_languages
-            .iter()
-            .any(|l| l.value() == "javascript" || l.value() == "typescript"),
-        _ => false,
-    }
 }
 
 fn copy_dir_all(
@@ -255,7 +173,8 @@ fn copy_dir_all(
     let mut count = 0;
     for entry in entries {
         let file_name = entry.file_name().unwrap_or_default();
-        if file_name == "skills" || file_name == "prompts" {
+        // Prompts are intentionally not distributed to target projects.
+        if file_name == "prompts" {
             continue;
         }
         let dst_path = dst.join(file_name);
