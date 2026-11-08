@@ -160,19 +160,11 @@ impl AgentRustRoleAuditor {
         // that sits at or below the `// Block 3:` banner is Block 3
         // (correct). An inherent impl *above* the Block 3 banner is
         // misplaced. Track banner positions so comparison is by block.
-        let markers = shared_role_rules::utility_capabilities_role_checker::capability_block_markers(content);
-        let banner1_idx: Option<usize> = markers
-            .iter()
-            .find(|m| m.number == 1)
-            .map(|m| m.line - 1);
-        let banner2_idx: Option<usize> = markers
-            .iter()
-            .find(|m| m.number == 2)
-            .map(|m| m.line - 1);
-        let banner3_idx: Option<usize> = markers
-            .iter()
-            .find(|m| m.number == 3)
-            .map(|m| m.line - 1);
+        let markers =
+            shared_role_rules::utility_capabilities_role_checker::capability_block_markers(content);
+        let banner1_idx: Option<usize> = markers.iter().find(|m| m.number == 1).map(|m| m.line - 1);
+        let banner2_idx: Option<usize> = markers.iter().find(|m| m.number == 2).map(|m| m.line - 1);
+        let banner3_idx: Option<usize> = markers.iter().find(|m| m.number == 3).map(|m| m.line - 1);
 
         for (i, line) in content.lines().enumerate() {
             let t = line.trim();

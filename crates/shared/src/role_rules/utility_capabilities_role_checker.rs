@@ -646,10 +646,8 @@ pub fn check_banner_hygiene(file: &FileEntry, violations: &mut Vec<LintResult>) 
     // A-3: a capability file that declares a Block 1 banner but is missing
     // Block 2 or Block 3 is incomplete — the reader's map is partial.
     // Detect when block_markers found B1 but not B2 or B3.
-    let declared_blocks: std::collections::BTreeSet<usize> = markers
-        .iter()
-        .map(|(n, _, _)| *n)
-        .collect();
+    let declared_blocks: std::collections::BTreeSet<usize> =
+        markers.iter().map(|(n, _, _)| *n).collect();
     let has_b1 = declared_blocks.contains(&1);
     let has_b2 = declared_blocks.contains(&2);
     let has_b3 = declared_blocks.contains(&3);
@@ -665,16 +663,12 @@ pub fn check_banner_hygiene(file: &FileEntry, violations: &mut Vec<LintResult>) 
         let first_line = markers.first().map(|(_, _, ln)| *ln).unwrap_or(1);
         let mut fix_lines: Vec<String> = Vec::new();
         if !has_b2 {
-            fix_lines
-                .push("// ─── Block 2: Module Contract ───".to_string());
-            fix_lines
-                .push("(add before the protocol impl block)".to_string());
+            fix_lines.push("// ─── Block 2: Module Contract ───".to_string());
+            fix_lines.push("(add before the protocol impl block)".to_string());
         }
         if !has_b3 {
-            fix_lines
-                .push("// ─── Block 3: Module Helpers ───".to_string());
-            fix_lines
-                .push("(add before the helper impl block)".to_string());
+            fix_lines.push("// ─── Block 3: Module Helpers ───".to_string());
+            fix_lines.push("(add before the helper impl block)".to_string());
         }
         let fix_block = fix_lines.join("\n");
         violations.push(LintResult::new_arch(
