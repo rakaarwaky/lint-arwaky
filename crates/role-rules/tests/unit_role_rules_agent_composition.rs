@@ -366,9 +366,9 @@ fn fallback_std_and_aggregate_impls_not_flagged() {
 fn block_four_flagged() {
     let messages = block_messages(
         "\
-// ─── Block 1: Module DeclarationTypes ───
+// ─── Block 1: Module Declaration ───
 // ─── Block 2: Module Contract ───
-// ─── Block 3: Module HelpersHelpers ───
+// ─── Block 3: Module Helpers ───
 // ─── Block 4: Extra ───
 ",
     );
@@ -384,9 +384,9 @@ fn block_four_flagged() {
 fn block_three_not_flagged() {
     let messages = block_messages(
         "\
-// ─── Block 1: Module DeclarationTypes ───
+// ─── Block 1: Module Declaration ───
 // ─── Block 2: Module Contract ───
-// ─── Block 3: Module HelpersHelpers ───
+// ─── Block 3: Module Helpers ───
 ",
     );
     assert!(
@@ -394,6 +394,44 @@ fn block_three_not_flagged() {
             .iter()
             .any(|m| m.contains("block markers beyond Block 3")),
         "three blocks is the ceiling: {messages:?}"
+    );
+}
+
+#[test]
+fn block_name_canonical_passes() {
+    let messages = block_messages(
+        "\
+// ─── Block 1: Module Declaration ───
+// ─── Block 2: Module Contract ───
+// ─── Block 3: Module Helpers ───
+",
+    );
+    assert!(
+        messages.is_empty(),
+        "canonical names must pass: {messages:?}"
+    );
+}
+
+#[test]
+fn block_name_mismatch_flagged() {
+    let messages = block_messages(
+        "\
+// ─── Block 1: Module DeclarationTypes ───
+// ─── Block 2: Module Contracts ───
+// ─── Block 3: Module Helpers ───
+",
+    );
+    assert!(
+        messages
+            .iter()
+            .any(|m| m.contains("Block 1 is named \"Module DeclarationTypes\"")),
+        "Block 1 name mismatch must flag AES405: {messages:?}"
+    );
+    assert!(
+        messages
+            .iter()
+            .any(|m| m.contains("Block 2 is named \"Module Contracts\"")),
+        "Block 2 name mismatch must flag AES405: {messages:?}"
     );
 }
 
@@ -415,9 +453,9 @@ fn block_sub_block_word_not_flagged() {
     // heading — the word must start the token, not merely appear inside one.
     let messages = block_messages(
         "\
-// ─── Block 1: Module DeclarationTypes ───
+// ─── Block 1: Module Declaration ───
 // ─── Block 2: Module Contract ───
-// ─── Block 3: Module HelpersHelpers ───
+// ─── Block 3: Module Helpers ───
 // Sub-Block 4: prose about a sub-section
 ",
     );
@@ -435,7 +473,7 @@ fn ts_block_four_flagged() {
     let mut v = Vec::new();
     auditor.check_agent_block_markers(
         &ts_file(
-            "// ─── Block 1: Module DeclarationTypes ───\n// ─── Block 2: Module Contract ───\n// ─── Block 4: Extra ───\n",
+            "// ─── Block 1: Module Declaration ───\n// ─── Block 2: Module Contract ───\n// ─── Block 4: Extra ───\n",
             None,
         ),
         &mut v,

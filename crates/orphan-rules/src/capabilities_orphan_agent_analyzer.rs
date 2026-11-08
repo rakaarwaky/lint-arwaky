@@ -10,6 +10,17 @@ use std::collections::HashMap;
 
 pub struct AgentOrphanAnalyzer;
 
+impl Default for AgentOrphanAnalyzer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl AgentOrphanAnalyzer {
+    pub fn new() -> Self {
+        Self
+    }
+}
 // ─── Block 2: Module Contract ────────────────
 
 impl IAgentOrphanProtocol for AgentOrphanAnalyzer {
@@ -105,26 +116,13 @@ impl IAgentOrphanProtocol for AgentOrphanAnalyzer {
 
 // ─── Block 3: Module Helpers ────────────
 
-impl Default for AgentOrphanAnalyzer {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl AgentOrphanAnalyzer {
-    pub fn new() -> Self {
-        Self
-    }
-
     fn extract_aggregate_traits(&self, file_path: &str, content: &str) -> Vec<String> {
-        let mut traits = match shared_orphan_rules::parse_file_content(file_path, content) {
+        match shared_orphan_rules::parse_file_content(file_path, content) {
             FileParseResultVO::Rust(result) => result.aggregate_trait_names(),
             FileParseResultVO::Python(result) => result.aggregate_names(),
             FileParseResultVO::TypeScript(result) => result.aggregate_names(),
             FileParseResultVO::Unsupported => Vec::new(),
-        };
-        traits.sort();
-        traits.dedup();
-        traits
+        }
     }
 }

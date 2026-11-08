@@ -14,8 +14,16 @@ use shared_structure_rules::taxonomy_structure_rules_response::StructureResponse
 // ─── Block 1: Module Declaration ────────────────────────────
 
 /// AES703: checks that surface-dominated folders carry only surface files plus
-/// permitted support files, and document themselves with DESIGN.md.
+/// permitted support files, and document themselves with DESIGN.md + BACKLOG.md.
+#[derive(Default)]
 pub struct SurfacePurityAuditor {}
+
+impl SurfacePurityAuditor {
+    /// Stateless auditor: every audit call is self-contained.
+    pub fn new() -> Self {
+        Self {}
+    }
+}
 
 // ─── Block 2: Module Contract ────────────────
 
@@ -47,23 +55,6 @@ impl IStructureSurfacePurityProtocol for SurfacePurityAuditor {
     }
 }
 
-/// Check a single folder candidate for AES703 violations.
-fn check_member_folder(
-    folder: &std::path::Path,
-    ws_root: &std::path::Path,
-    findings: &mut Vec<StructureFinding>,
-) {
-    let inventory = utility_structure_parsers::inventory(folder);
-    if !inventory.is_surface_dominated() {
-        return;
-    }
-    let folder_rel = match folder.strip_prefix(ws_root) {
-        Ok(p) => p.to_string_lossy().replace('\\', "/"),
-        Err(_) => folder.to_string_lossy().replace('\\', "/"),
-    };
-    check_surface_folder(folder, &folder_rel, ws_root, &inventory, findings);
-}
-
 // ─── Block 3: Module Helpers ────────────
 
 /// Resolve the workspace root by walking up from *root* until we find
@@ -81,6 +72,29 @@ fn folder_name(folder: &std::path::Path) -> String {
         .to_string()
 }
 
+/// Render *path* relative to *ws_root* with POSIX separators, falling back to
+/// the full path (still POSIX-separated) when it is not beneath the root.
+fn relative_posix(path: &std::path::Path, ws_root: &std::path::Path) -> String {
+    match path.strip_prefix(ws_root) {
+        Ok(p) => p.to_string_lossy().replace('\\', "/"),
+        Err(_) => path.to_string_lossy().replace('\\', "/"),
+    }
+}
+
+/// Check a single folder candidate for AES703 violations.
+fn check_member_folder(
+    folder: &std::path::Path,
+    ws_root: &std::path::Path,
+    findings: &mut Vec<StructureFinding>,
+) {
+    let inventory = utility_structure_parsers::inventory(folder);
+    if !inventory.is_surface_dominated() {
+        return;
+    }
+    let folder_rel = relative_posix(folder, ws_root);
+    check_surface_folder(folder, &folder_rel, ws_root, &inventory, findings);
+}
+
 /// AES703 — a surface-dominated folder carries surfaces plus permitted support
 /// files. Capabilities and agent files are misplaced. DESIGN.md is required.
 fn check_surface_folder(
@@ -92,22 +106,14 @@ fn check_surface_folder(
 ) {
     // Purity: no capabilities, agent, or utility files.
     for file in &inventory.files {
-        let misplaced_kind = if file.stem.starts_with(consts::CAPABILITIES_PREFIX)
+        let (kind, destination) = if file.stem.starts_with(consts::CAPABILITIES_PREFIX)
             || file.stem.starts_with(consts::AGENT_PREFIX)
         {
-            Some("a capability/agent file")
+            ("a capability/agent file", "move it to a feature folder")
         } else if file.stem.starts_with(consts::UTILITY_PREFIX) {
-            Some("a utility file")
+            ("a utility file", "move it to the shared folder")
         } else {
-            None
-        };
-        let Some(kind) = misplaced_kind else {
             continue;
-        };
-        let destination = if kind == "a utility file" {
-            "move it to the shared folder"
-        } else {
-            "move it to a feature folder"
         };
         findings.push(StructureFinding::new(
             consts::RULE_CODE_SURFACE_PURITY,

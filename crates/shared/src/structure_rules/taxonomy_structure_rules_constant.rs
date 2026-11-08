@@ -201,6 +201,10 @@ pub const PR_LA_VIOLATION_FR_ID_MISMATCH: &str = "pr_la_fr_id_mismatch";
 /// A PR-LA-001..N id does not map to an existing crate folder by order.
 pub const PR_LA_VIOLATION_PR_LA_ID_MISMATCH: &str = "pr_la_id_mismatch";
 
+/// A crate folder exists at a position in the crate order that has no
+/// corresponding PR-<segment>-NNN id in PRD.md / ROADMAP.md.
+pub const PR_LA_VIOLATION_FOLDER_WITHOUT_PR_LA_ID: &str = "pr_la_folder_without_pr_la_id";
+
 /// A crate folder holds no FRD.md at all, so no FR ID can be checked against it.
 pub const PR_LA_VIOLATION_MISSING_FRD: &str = "pr_la_missing_frd";
 
@@ -209,33 +213,5 @@ pub const PR_LA_VIOLATION_MISSING_FRD: &str = "pr_la_missing_frd";
 pub const FR_PREFIX_OVERRIDES: &[(&str, &str)] =
     &[("doc-rules", "DOC"), ("structure-rules", "STR")];
 
-/// Ordered list of crate folders that PR-LA-001..N map to, in order.
-/// PR-LA-001 maps to the first entry (`filesystem`), PR-LA-002 to the second,
-/// and so on. A PR-LA id whose position names no folder is a mismatch.
-pub const PR_LA_FOLDER_ORDER: &[&str] = &[
-    "filesystem",
-    "auto-fix",
-    "cli-commands",
-    "config-system",
-    "dispatcher",
-    "doc-rules",
-    "external-lint",
-    "file-watch",
-    "git-hooks",
-    "import-rules",
-    "logging",
-    "maintenance",
-    "mcp-server",
-    "naming-rules",
-    "orphan-rules",
-    "project-setup",
-    "quality-rules",
-    "report-formatter",
-    "role-rules",
-    "shared",
-    "structure-rules",
-    "tui",
-];
-
-/// Document names scanned for PR-LA ids.
+/// Document names scanned for PR-<project>-NNN ids.
 pub const PR_LA_DOCUMENTS: &[&str] = &["PRD.md", "ROADMAP.md"];

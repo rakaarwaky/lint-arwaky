@@ -21,8 +21,17 @@ use shared_common::{PatternList, Severity};
 use shared_quality_rules::utility_language_mapper::code_analysis_language_from_file;
 
 // ─── Block 1: Module Declaration ───────────────────────────
+#[derive(Default)]
 pub struct BypassChecker {
     rule: CodeAnalysisRuleVO,
+}
+
+impl BypassChecker {
+    pub fn new() -> Self {
+        Self {
+            rule: CodeAnalysisRuleVO::default(),
+        }
+    }
 }
 
 // ─── Block 2: Module Contract ───────────────
@@ -351,19 +360,8 @@ impl IBypassCheckerProtocol for BypassChecker {
 }
 
 // ─── Block 3: Module Helpers ──────
-impl Default for BypassChecker {
-    fn default() -> Self {
-        Self::new()
-    }
-}
 
 impl BypassChecker {
-    pub fn new() -> Self {
-        Self {
-            rule: CodeAnalysisRuleVO::default(),
-        }
-    }
-
     /// Build a BypassChecker from an ArchitectureConfig-derived CodeAnalysisRuleVO.
     pub fn from_rule(rule: CodeAnalysisRuleVO) -> Self {
         Self { rule }

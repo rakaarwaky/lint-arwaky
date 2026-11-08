@@ -28,31 +28,6 @@ pub struct NamingOrchestrator {
     deps: NamingOrchestratorDeps,
 }
 
-// ─── Block 2: Module Contract ──────────────
-
-impl INamingRunnerAggregate for NamingOrchestrator {
-    fn execute(&self, request: NamingRequest) -> NamingResponse {
-        match request {
-            NamingRequest::RunAuditWithEntries { files } => NamingResponse::Audit {
-                violations: self.run_audit_with_entries(&files),
-            },
-            NamingRequest::RunAuditWithTestEntries {
-                source_files,
-                test_files,
-            } => NamingResponse::Audit {
-                violations: self.run_audit_over(
-                    &FilePathList::new(Self::paths_of(&source_files)),
-                    &FilePathList::new(Self::paths_of(&test_files)),
-                ),
-            },
-            NamingRequest::Name => NamingResponse::Name {
-                name: self.name().to_string(),
-            },
-        }
-    }
-}
-
-// ─── Block 3: Module Helpers ──────
 impl NamingOrchestrator {
     pub fn new(deps: NamingOrchestratorDeps) -> Self {
         Self { deps }
@@ -153,3 +128,28 @@ impl NamingOrchestrator {
         results
     }
 }
+// ─── Block 2: Module Contract ──────────────
+
+impl INamingRunnerAggregate for NamingOrchestrator {
+    fn execute(&self, request: NamingRequest) -> NamingResponse {
+        match request {
+            NamingRequest::RunAuditWithEntries { files } => NamingResponse::Audit {
+                violations: self.run_audit_with_entries(&files),
+            },
+            NamingRequest::RunAuditWithTestEntries {
+                source_files,
+                test_files,
+            } => NamingResponse::Audit {
+                violations: self.run_audit_over(
+                    &FilePathList::new(Self::paths_of(&source_files)),
+                    &FilePathList::new(Self::paths_of(&test_files)),
+                ),
+            },
+            NamingRequest::Name => NamingResponse::Name {
+                name: self.name().to_string(),
+            },
+        }
+    }
+}
+
+// ─── Block 3: Module Helpers ──────

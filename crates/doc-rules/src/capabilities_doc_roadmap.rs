@@ -21,7 +21,19 @@ use shared_doc_rules::utility_markdown_scanner::doc_h2_contract;
 
 pub struct RoadmapCapability;
 
-// ─── Block 2: Module Contract ─────────────────────
+impl Default for RoadmapCapability {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl RoadmapCapability {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
+// ─── Block 2: Module Contract ─
 
 impl IRoadmapDocProtocol for RoadmapCapability {
     fn audit_roadmap(&self, context: &DocAuditContext) -> Vec<DocFinding> {
@@ -40,19 +52,7 @@ impl IRoadmapDocProtocol for RoadmapCapability {
     }
 }
 
-// ─── Block 3: Module HelpersInherent Implementation and Helpers ─────────
-
-impl Default for RoadmapCapability {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl RoadmapCapability {
-    pub fn new() -> Self {
-        Self
-    }
-}
+// ─── Block 3: Module Helpers ───
 
 impl RoadmapCapability {
     fn audit_one(document: &DocSource, context: &DocAuditContext, findings: &mut Vec<DocFinding>) {

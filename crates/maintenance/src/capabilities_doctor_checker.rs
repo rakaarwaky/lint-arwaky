@@ -14,6 +14,11 @@ pub struct DoctorChecker {
     _io: Arc<dyn IFileSystemIOProtocol>,
 }
 
+impl DoctorChecker {
+    pub fn new(io: Arc<dyn IFileSystemIOProtocol>) -> Self {
+        Self { _io: io }
+    }
+}
 // ─── Block 2: Module Contract ─────────────────────
 impl IDoctorProtocol for DoctorChecker {
     /// Environment health summary: language runtime versions, adapter
@@ -67,8 +72,3 @@ impl IDoctorProtocol for DoctorChecker {
 }
 
 // ─── Block 3: Module Helpers ──────────────────────
-impl DoctorChecker {
-    pub fn new(io: Arc<dyn IFileSystemIOProtocol>) -> Self {
-        Self { _io: io }
-    }
-}

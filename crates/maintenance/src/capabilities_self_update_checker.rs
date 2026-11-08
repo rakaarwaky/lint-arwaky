@@ -12,52 +12,6 @@ pub struct SelfUpdateChecker {
     io: Arc<dyn IFileSystemIOProtocol>,
 }
 
-// ─── Block 2: Module Contract ─────────────────────
-impl ISelfUpdateProtocol for SelfUpdateChecker {
-    fn self_update(&self, check_only: bool) -> SelfUpdateResultVO {
-        let current =
-            utility_maintenance_helpers::normalize_version(shared_common::RELEASE_VERSION);
-        let tag = match self.fetch_latest_tag() {
-            Ok(t) => t,
-            Err(e) => {
-                tracing::warn!(error = %e, "self-update: cannot reach GitHub releases API");
-                return SelfUpdateResultVO::error(&current, &e);
-            }
-        };
-        let latest = utility_maintenance_helpers::normalize_version(&tag);
-        if !utility_maintenance_helpers::is_newer_version(&latest, &current) {
-            return SelfUpdateResultVO::success(&current, &tag, true);
-        }
-        if check_only {
-            let status = format!("Update available: {current} → {tag}");
-            return SelfUpdateResultVO {
-                current_version: current,
-                latest_version: tag,
-                already_up_to_date: false,
-                upgraded: false,
-                status,
-            };
-        }
-        match self.install_release_binary(&tag) {
-            Ok(path) => {
-                let status = format!("Installed {tag} to {path}");
-                SelfUpdateResultVO {
-                    current_version: current,
-                    latest_version: tag,
-                    already_up_to_date: false,
-                    upgraded: true,
-                    status,
-                }
-            }
-            Err(e) => {
-                tracing::warn!(error = %e, "self-update: install failed");
-                SelfUpdateResultVO::error(&current, &e)
-            }
-        }
-    }
-}
-
-// ─── Block 3: Module Helpers ──────────────────────
 impl SelfUpdateChecker {
     pub fn new(io: Arc<dyn IFileSystemIOProtocol>) -> Self {
         Self { io }
@@ -290,3 +244,49 @@ impl SelfUpdateChecker {
         }
     }
 }
+// ─── Block 2: Module Contract ─────────────────────
+impl ISelfUpdateProtocol for SelfUpdateChecker {
+    fn self_update(&self, check_only: bool) -> SelfUpdateResultVO {
+        let current =
+            utility_maintenance_helpers::normalize_version(shared_common::RELEASE_VERSION);
+        let tag = match self.fetch_latest_tag() {
+            Ok(t) => t,
+            Err(e) => {
+                tracing::warn!(error = %e, "self-update: cannot reach GitHub releases API");
+                return SelfUpdateResultVO::error(&current, &e);
+            }
+        };
+        let latest = utility_maintenance_helpers::normalize_version(&tag);
+        if !utility_maintenance_helpers::is_newer_version(&latest, &current) {
+            return SelfUpdateResultVO::success(&current, &tag, true);
+        }
+        if check_only {
+            let status = format!("Update available: {current} → {tag}");
+            return SelfUpdateResultVO {
+                current_version: current,
+                latest_version: tag,
+                already_up_to_date: false,
+                upgraded: false,
+                status,
+            };
+        }
+        match self.install_release_binary(&tag) {
+            Ok(path) => {
+                let status = format!("Installed {tag} to {path}");
+                SelfUpdateResultVO {
+                    current_version: current,
+                    latest_version: tag,
+                    already_up_to_date: false,
+                    upgraded: true,
+                    status,
+                }
+            }
+            Err(e) => {
+                tracing::warn!(error = %e, "self-update: install failed");
+                SelfUpdateResultVO::error(&current, &e)
+            }
+        }
+    }
+}
+
+// ─── Block 3: Module Helpers ──────────────────────

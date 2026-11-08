@@ -7,8 +7,19 @@ use tracing::info;
 
 // ─── Block 1: Module Declaration ───────────────────────────
 
-#[derive(Default)]
 pub struct PhaseTimerCapability {}
+
+impl Default for PhaseTimerCapability {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl PhaseTimerCapability {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
 
 // ─── Block 2: Module Contract ───────────────
 
@@ -34,9 +45,3 @@ impl IPhaseTimerProtocol for PhaseTimerCapability {
 }
 
 // ─── Block 3: Module Helpers ───────────
-
-impl PhaseTimerCapability {
-    pub fn new() -> Self {
-        Self {}
-    }
-}

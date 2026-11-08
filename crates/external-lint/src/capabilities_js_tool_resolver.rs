@@ -21,7 +21,21 @@ pub struct ExternalLintExecutor {
     executor: Arc<dyn ICommandExecutorProtocol>,
 }
 
-// ─── Block 2: Module ContractFR-007 JS tool resolution ──────────────────
+impl ExternalLintExecutor {
+    pub fn new(
+        executor: Arc<dyn ICommandExecutorProtocol>,
+        io: Arc<dyn IFileSystemIOProtocol>,
+        tool_resolution: Arc<dyn IToolResolutionProtocol>,
+    ) -> Self {
+        Self {
+            executor,
+            io,
+            tool_resolution,
+        }
+    }
+}
+
+// ─── Block 2: Module Contract ───────────────────
 
 impl IJsToolResolutionProtocol for ExternalLintExecutor {
     fn resolve_js_cmd(
@@ -63,18 +77,4 @@ impl IJsToolResolutionProtocol for ExternalLintExecutor {
     }
 }
 
-// ─── Block 3: Module Helpers ──────
-
-impl ExternalLintExecutor {
-    pub fn new(
-        executor: Arc<dyn ICommandExecutorProtocol>,
-        io: Arc<dyn IFileSystemIOProtocol>,
-        tool_resolution: Arc<dyn IToolResolutionProtocol>,
-    ) -> Self {
-        Self {
-            executor,
-            io,
-            tool_resolution,
-        }
-    }
-}
+// ─── Block 3: Module Helpers ───────

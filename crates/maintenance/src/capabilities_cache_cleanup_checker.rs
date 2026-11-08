@@ -9,9 +9,24 @@ pub struct CacheCleanupChecker {
     project_path: FilePath,
 }
 
+impl CacheCleanupChecker {
+    pub fn new(io: Arc<dyn IFileSystemIOProtocol>) -> Self {
+        Self {
+            io,
+            project_path: FilePath::new(".").unwrap_or_default(),
+        }
+    }
+}
 // ─── Block 2: Module Contract ─────────────────────
 impl ICacheCleanupProtocol for CacheCleanupChecker {
     fn clean(&self) {
+        self._remove_cache_dirs();
+    }
+}
+
+// ─── Block 3: Module Helpers ──────────────────────
+impl CacheCleanupChecker {
+    fn _remove_cache_dirs(&self) {
         let base = &self.project_path.value;
         for dir in &[
             ".pytest_cache",
@@ -24,16 +39,6 @@ impl ICacheCleanupProtocol for CacheCleanupChecker {
                 continue;
             }
             let _ = self.io.remove_dir_all(std::path::Path::new(&path.value));
-        }
-    }
-}
-
-// ─── Block 3: Module Helpers ──────────────────────
-impl CacheCleanupChecker {
-    pub fn new(io: Arc<dyn IFileSystemIOProtocol>) -> Self {
-        Self {
-            io,
-            project_path: FilePath::new(".").unwrap_or_default(),
         }
     }
 }

@@ -27,7 +27,19 @@ use shared_doc_rules::utility_protocol_counter::ds_id_heading_re;
 
 pub struct DesignCapability;
 
-// ─── Block 2: Module Contract ─────────────────────
+impl Default for DesignCapability {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl DesignCapability {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
+// ─── Block 2: Module Contract ───
 
 impl IDesignDocProtocol for DesignCapability {
     fn audit_design(&self, context: &DocAuditContext) -> Vec<DocFinding> {
@@ -46,19 +58,7 @@ impl IDesignDocProtocol for DesignCapability {
     }
 }
 
-// ─── Block 3: Module HelpersInherent Implementation and Helpers ─────────
-
-impl Default for DesignCapability {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl DesignCapability {
-    pub fn new() -> Self {
-        Self
-    }
-}
+// ─── Block 3: Module Helpers ───
 
 impl DesignCapability {
     fn audit_one(document: &DocSource, context: &DocAuditContext, findings: &mut Vec<DocFinding>) {

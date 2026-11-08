@@ -1,4 +1,31 @@
 # Changelog
+## 3.15.1 (2026-11-08)
+
+### Features
+
+- feat(report): add violations-by-AES-code table to report command
+- feat(report-formatter): add violations-by-member table to text report (#1275)
+
+### Bug Fixes
+
+- fix(AES609): align auto-fix FR count with protocol traits; clippy + fmt clean
+- fix(AES301): split utility_capabilities_role_checker.rs under line cap
+- fix(AES403): complete 3-block banner enforcement across all capability files
+- fix(AES403): allow empty Block 3 per B-10
+- fix(AES403): harden capability role auditor checks
+- fix: update scan help text and lint-command.md to 8 linter groups (#1290)
+- fix(quality-rules): satisfy AES403/AES203 self-lint on duplication analyzer
+- fix(dispatcher): add missing line field to ImportEntry test helper
+
+### Maintenance
+
+- docs(aes-fix): add latest fix information to skill references
+- docs(role-rules): align AES403 auditor comments with 8-check design
+- refactor: unify block marker names to Module Declaration/Contract/Helpers (#1292)
+- chore: bump version to 3.15.0 (#1288)
+- perf(quality-rules): optimize AES305 duplication analyzer
+- refactor: dedupe entry + import-map index build in scan path
+
 ## 3.15.0 (2026-11-06)
 
 ### Features

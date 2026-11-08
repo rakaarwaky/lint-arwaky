@@ -1,18 +1,30 @@
-use shared_cli_commands::LintResult;
-use shared_common::taxonomy_layer_vo::LayerMapVO;
-use shared_common::{ContentString, FilePath, Identity, Language, LineNumber, Severity};
-use shared_filesystem::taxonomy_filesystem_vo::ImportEntry;
+// PURPOSE: DummyImportChecker — AES204: detect dummy imports, dummy functions, dummy trait impls
 
+use shared_common::taxonomy_layer_vo::LayerMapVO;
+use shared_common::{
+    ContentString, FilePath, Identity, Language, LineNumber, LintResult, Severity,
+};
+use shared_filesystem::taxonomy_filesystem_vo::ImportEntry;
 use shared_import_rules::contract_import_protocol::IDummyImportCheckerProtocol;
 use shared_import_rules::taxonomy_import_rules_error::ImportError;
 use shared_import_rules::utility_dummy_detector;
 use shared_import_rules::utility_import_resolver;
 
-// PURPOSE: DummyImportChecker — AES204: detect dummy imports, dummy functions, dummy trait impls
-
 // ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct DummyImportChecker;
+
+impl Default for DummyImportChecker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl DummyImportChecker {
+    pub fn new() -> Self {
+        Self
+    }
+}
 
 // ─── Block 2: Module Contract ────────────────
 
@@ -121,17 +133,7 @@ impl IDummyImportCheckerProtocol for DummyImportChecker {
 
 // ─── Block 3: Module Helpers ────────────
 
-impl Default for DummyImportChecker {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl DummyImportChecker {
-    pub fn new() -> Self {
-        Self
-    }
-
     fn _check_dummy_imports(
         file: &str,
         ctx: &DummyFileContext,
@@ -305,12 +307,8 @@ impl DummyImportChecker {
     }
 }
 
-/// Check if any line matches `from __future__ import ...symbol...`.
-fn is_future_import(lines: &[&str], symbol: &str) -> bool {
-    let content = lines.join("\n");
-    utility_import_resolver::is_future_import(&content, symbol)
-}
-
+/// Per-file parse context shared by the AES204 checks: the file's lines and
+/// language, the dummy-function ranges, and the dummy trait-impl names.
 struct DummyFileContext {
     lines: Vec<String>,
     lang: Language,
@@ -348,4 +346,10 @@ impl DummyFileContext {
     fn str_refs(&self) -> Vec<&str> {
         self.lines.iter().map(|s| s.as_str()).collect()
     }
+}
+
+/// Check if any line matches `from __future__ import ...symbol...`.
+fn is_future_import(lines: &[&str], symbol: &str) -> bool {
+    let content = lines.join("\n");
+    utility_import_resolver::is_future_import(&content, symbol)
 }

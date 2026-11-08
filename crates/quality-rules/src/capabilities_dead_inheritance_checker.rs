@@ -17,6 +17,18 @@ use shared_quality_rules::utility_bypass_detector::skip_cfg_test_block;
 
 pub struct DeadInheritanceChecker {}
 
+impl DeadInheritanceChecker {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+
+impl Default for DeadInheritanceChecker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 // ─── Block 2: Module Contract ───────────────
 
 impl IDeadInheritanceProtocol for DeadInheritanceChecker {
@@ -41,20 +53,7 @@ impl IDeadInheritanceProtocol for DeadInheritanceChecker {
                     continue;
                 }
                 // Skip if followed by impl block (intentional placeholder)
-                let mut next_idx = i + 1;
-                while next_idx < lines.len() {
-                    let next_t = lines[next_idx].trim();
-                    if next_t.is_empty() || next_t.starts_with('#') || next_t.starts_with("//") {
-                        next_idx += 1;
-                    } else {
-                        break;
-                    }
-                }
-                let next_is_impl = match lines.get(next_idx) {
-                    Some(l) => l.trim().starts_with("impl "),
-                    None => false,
-                };
-                if !next_is_impl {
+                if !Self::followed_by_impl(&lines, i + 1) {
                     violations.push(LintResult::new_arch_with_name(
                         file,
                         i + 1,
@@ -85,7 +84,8 @@ impl IDeadInheritanceProtocol for DeadInheritanceChecker {
                         file,
                         i + 1,
                         "AES303",
-                        Severity::MEDIUM,"Empty Python class".to_string(),
+                        Severity::MEDIUM,
+                        "Empty Python class".to_string(),
                         "DEAD_INHERITANCE",
                         format!(
                             "Empty Python class on line {} (': pass')",
@@ -100,7 +100,8 @@ impl IDeadInheritanceProtocol for DeadInheritanceChecker {
                             file,
                             i + 1,
                             "AES303",
-                            Severity::MEDIUM,"Empty Python class".to_string(),
+                            Severity::MEDIUM,
+                            "Empty Python class".to_string(),
                             "DEAD_INHERITANCE",
                             format!(
                                 "Empty Python class on line {} (body is '{}')",
@@ -132,19 +133,27 @@ impl IDeadInheritanceProtocol for DeadInheritanceChecker {
 
 // ─── Block 3: Module Helpers ──────
 
-impl Default for DeadInheritanceChecker {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl DeadInheritanceChecker {
-    pub fn new() -> Self {
-        Self {}
+    /// True if the first code line at or after `from` starts an `impl` block.
+    /// Blank lines, attributes and comments are skipped when scanning forward.
+    fn followed_by_impl(lines: &[&str], from: usize) -> bool {
+        let mut next_idx = from;
+        while next_idx < lines.len() {
+            let next_t = lines[next_idx].trim();
+            if next_t.is_empty() || next_t.starts_with('#') || next_t.starts_with("//") {
+                next_idx += 1;
+            } else {
+                break;
+            }
+        }
+        match lines.get(next_idx) {
+            Some(l) => l.trim().starts_with("impl "),
+            None => false,
+        }
     }
 
     /// Strip Rust visibility modifiers from the beginning of a line.
-    /// Handles `pub`, `pub(crate)`, `pub(crate)`, `pub(super)`, etc.
+    /// Handles `pub`, `pub(crate)`, `pub(super)`, etc.
     fn strip_visibility(line: &str) -> &str {
         let trimmed = line.trim();
         if trimmed.starts_with("pub ") || trimmed.starts_with("pub(") {

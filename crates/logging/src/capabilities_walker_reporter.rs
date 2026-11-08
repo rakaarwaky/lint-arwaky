@@ -9,8 +9,19 @@ use tracing::info;
 
 // ─── Block 1: Module Declaration ───────────────────────────
 
-#[derive(Default)]
 pub struct WalkerReporter {}
+
+impl Default for WalkerReporter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl WalkerReporter {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
 
 // ─── Block 2: Module Contract ───────────────
 
@@ -30,9 +41,3 @@ impl IWalkerReportProtocol for WalkerReporter {
 }
 
 // ─── Block 3: Module Helpers ───────────
-
-impl WalkerReporter {
-    pub fn new() -> Self {
-        Self {}
-    }
-}

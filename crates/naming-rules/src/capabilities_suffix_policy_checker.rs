@@ -27,7 +27,17 @@ use std::collections::HashMap;
 /// internal state.
 pub struct SuffixPolicyChecker {}
 
-// ─── Protocol Trait Implementation ────────────────────────────────────────
+impl Default for SuffixPolicyChecker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl SuffixPolicyChecker {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
 
 // ─── Block 2: Module Contract ────────────────
 
@@ -78,22 +88,14 @@ impl ISuffixPolicyProtocol for SuffixPolicyChecker {
     }
 }
 
-// ─── Constructors, Helpers, Private Methods ────────────────────────────────
-
 // ─── Block 3: Module Helpers ────────────
 
-impl Default for SuffixPolicyChecker {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl SuffixPolicyChecker {
-    pub fn new() -> Self {
-        Self {}
-    }
-
     /// Build a mapping from suffix → base layer name for cross-layer validation.
+    ///
+    /// B-6a test seam: `pub` only so cross-crate unit tests can inspect the
+    /// suffix→layer table; production traffic enters through
+    /// [`ISuffixPolicyProtocol::check_domain_suffixes`].
     pub fn build_suffix_to_layer_map(layer_map: &LayerMapVO) -> HashMap<String, String> {
         let mut suffix_to_layer = HashMap::new();
         for (layer_name, def) in &layer_map.values {
@@ -114,6 +116,10 @@ impl SuffixPolicyChecker {
     }
 
     /// Check domain suffix rules per layer (AES102: suffix/prefix rules + cross-layer validation).
+    ///
+    /// B-6a test seam: `pub` only so cross-crate unit tests can drive the
+    /// per-file rule; production traffic enters through
+    /// [`ISuffixPolicyProtocol::check_domain_suffixes`].
     pub fn check_domain_suffixes_internal(
         &self,
         file: &str,

@@ -18,7 +18,19 @@ use shared_doc_rules::utility_markdown_scanner::{doc_h2_contract, sections};
 
 pub struct ArchitectureCapability;
 
-// ─── Block 2: Module Contract ─────────────────────
+impl Default for ArchitectureCapability {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl ArchitectureCapability {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
+// ─── Block 2: Module Contract ─
 
 impl IArchitectureDocProtocol for ArchitectureCapability {
     fn audit_architecture(&self, context: &DocAuditContext) -> Vec<DocFinding> {
@@ -37,19 +49,7 @@ impl IArchitectureDocProtocol for ArchitectureCapability {
     }
 }
 
-// ─── Block 3: Module HelpersInherent Implementation and Helpers ─────────
-
-impl Default for ArchitectureCapability {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl ArchitectureCapability {
-    pub fn new() -> Self {
-        Self
-    }
-}
+// ─── Block 3: Module Helpers ───
 
 impl ArchitectureCapability {
     fn audit_one(document: &DocSource, _context: &DocAuditContext, findings: &mut Vec<DocFinding>) {

@@ -54,6 +54,16 @@ Last Updated: 2026-09-29
 | Risk | None |
 | Updated | 2026-09-29 |
 
+### FR-AutoFix-005
+
+| Aspect | Detail |
+| -------------- | --------------------------------------------- |
+| State | Ready |
+| Done | AutoFix |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-11-08 |
+
 ## Reference
 
 | Artifact | Purpose | Link |

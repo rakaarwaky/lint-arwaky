@@ -139,6 +139,38 @@ pub trait ICapabilitiesRoleProtocol: Send + Sync {
     /// declares a block above 3.
     fn check_capability_block_markers(&self, file: &FileEntry, violations: &mut Vec<LintResult>);
 
+    /// Constructor / `Default` must live in Block 1 with the struct, never in Block 3.
+    /// Severity MEDIUM (B-1).
+    fn check_capability_constructor_block1(
+        &self,
+        file: &FileEntry,
+        violations: &mut Vec<LintResult>,
+    );
+
+    /// Banner hygiene: no wild banners, no duplicates, no empty Block 3.
+    /// Severity MEDIUM (A-1, A-2, B-10).
+    fn check_capability_banner_hygiene(&self, file: &FileEntry, violations: &mut Vec<LintResult>);
+
+    /// `pub fn` under Block 3 without B-6a seam doc is a facade mistake.
+    /// Severity MEDIUM (B-3, B-6, B-9).
+    fn check_capability_block3_pub_facade(
+        &self,
+        file: &FileEntry,
+        violations: &mut Vec<LintResult>,
+    );
+
+    /// Multi-branch mechanics must not be inlined in Block 2.
+    /// Severity MEDIUM (B-4).
+    fn check_capability_block2_inline_details(
+        &self,
+        file: &FileEntry,
+        violations: &mut Vec<LintResult>,
+    );
+
+    /// `#[derive(Default)]` / `impl Default` on a DI struct (holds injected deps).
+    /// Severity MEDIUM (B-5).
+    fn check_capability_di_default(&self, file: &FileEntry, violations: &mut Vec<LintResult>);
+
     /// Constants belong in `taxonomy_<domain>_constant.rs`, not inline. MEDIUM.
     fn check_capability_constant_placement(
         &self,
@@ -219,6 +251,10 @@ pub trait IAgentRoleProtocol: Send + Sync {
     /// `─── Block N:` banner comments; a file that carries none is not
     /// reported, since the marker is a convention rather than a requirement.
     fn check_agent_block_markers(&self, file: &FileEntry, violations: &mut Vec<LintResult>);
+
+    /// Constructor / `Default` must live in Block 1 with the struct, never in Block 3.
+    /// Severity MEDIUM (B-1).
+    fn check_agent_constructor_block1(&self, file: &FileEntry, violations: &mut Vec<LintResult>);
 
     /// No forbidden I/O operations in the agent file. MEDIUM.
     fn check_agent_io_forbidden(&self, file: &FileEntry, violations: &mut Vec<LintResult>);

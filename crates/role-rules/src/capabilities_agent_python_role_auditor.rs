@@ -18,6 +18,12 @@ use shared_role_rules::utility_agent_role_io_checker;
 
 pub struct AgentPythonRoleAuditor {}
 
+impl AgentPythonRoleAuditor {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+
 // ─── Block 2: Module Contract ────────────────
 
 impl IAgentRoleProtocol for AgentPythonRoleAuditor {
@@ -54,6 +60,10 @@ impl IAgentRoleProtocol for AgentPythonRoleAuditor {
 
     fn check_agent_block_markers(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
         utility_agent_role_checker::check_block_markers(file, violations);
+    }
+
+    fn check_agent_constructor_block1(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
+        utility_agent_role_checker::check_constructor_in_block1(file, violations);
     }
 
     fn check_agent_io_forbidden(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
@@ -104,10 +114,6 @@ impl Default for AgentPythonRoleAuditor {
 }
 
 impl AgentPythonRoleAuditor {
-    pub fn new() -> Self {
-        Self {}
-    }
-
     /// Block 2 (aggregate methods) must precede Block 3 (factory/dunder).
     fn block_order(&self, content: &str, path: &str, violations: &mut Vec<LintResult>) {
         // For Python classes: methods that are `@classmethod` / `@staticmethod`
