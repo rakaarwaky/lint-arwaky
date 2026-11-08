@@ -295,8 +295,7 @@ pub fn check_block_markers(file: &FileEntry, violations: &mut Vec<LintResult>) {
             "AES403 CAPABILITY_ROLE: Capability file declares no block markers.\n\
              WHY? File carries no `Block 1:` / `Block 2:` / `Block 3:` banner \
              comment, so the reader is given no map of the file. The 3-block shape \
-             is Block 1 (struct definition) -> Block 2 (protocol trait \
-             implementation) -> Block 3 (constructors, std traits, helpers).\n\
+             is // ─── Block 1: Module Declaration ── -> // ─── Block 2: Module Contract ─── -> // ─── Block 3: Module Helpers ─── .\n\
              FIX: Add the three banner comments above their blocks:\n  \
              // ─── Block 1: Module Declaration ───\n  \
              // ─── Block 2: Module Contract ───\n  \
@@ -319,9 +318,7 @@ pub fn check_block_markers(file: &FileEntry, violations: &mut Vec<LintResult>) {
             Severity::MEDIUM,
             format!(
                 "AES403 CAPABILITY_ROLE: Capability file carries block markers beyond Block 3.\n\
-                 WHY? File declares {}. The 3-block structure is Block 1 (struct \
-                 definition) -> Block 2 (protocol trait implementation) -> Block 3 \
-                 (constructors, std traits, helpers); a Block 4 means the file has \
+                 WHY? File declares {}. The 3-block structure is // ─── Block 1: Module Declaration ── -> // ─── Block 2: Module Contract ─── -> // ─── Block 3: Module Helpers ─── . A Block 4 means the file has \
                  outgrown it.\n\
                  FIX: Fold the extra blocks back into Block 3, or move the \
                  behaviour they hold into a capability or utility file.",
@@ -378,9 +375,7 @@ pub fn check_block_markers(file: &FileEntry, violations: &mut Vec<LintResult>) {
             Severity::MEDIUM,
             format!(
                 "AES403 CAPABILITY_ROLE: Capability block markers are out of order.\n\
-                 WHY? File declares them as {} but the structure is fixed: Block 1 \
-                 (struct definition) -> Block 2 (protocol trait implementation) -> \
-                 Block 3 (constructors, std traits, helpers).\n\
+                 WHY? File declares them as {} but the structure is fixed: // ─── Block 1: Module Declaration ── -> // ─── Block 2: Module Contract ─── -> // ─── Block 3: Module Helpers ─── .\n\
                  FIX: Move the banner comments so they head their blocks:\n  \
                  // ─── Block 1: Module Declaration ───\n  \
                  // ─── Block 2: Module Contract ───\n  \
