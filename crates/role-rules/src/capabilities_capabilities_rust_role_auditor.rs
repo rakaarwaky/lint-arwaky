@@ -214,10 +214,13 @@ impl CapabilitiesRustRoleAuditor {
                 }
                 // A constructor impl (`impl <Struct> { pub fn new }`) sitting
                 // strictly between the Block 1 and Block 2 banners is R2-conformant.
-                let is_constructor_region = matches!(
-                    (banner1_idx, banner2_idx),
-                    (Some(b1), Some(b2)) if b1 < i && i < b2
-                );
+                // When there is a B1 but no B2, anything after B1 is still the
+                // constructor region (nothing else can legally occupy it yet).
+                let is_constructor_region = match (banner1_idx, banner2_idx) {
+                    (Some(b1), Some(b2)) => b1 < i && i < b2,
+                    (Some(b1), None) => b1 < i,
+                    (None, _) => false,
+                };
                 if !is_constructor_region {
                     inherent_offenders.push((i, t.trim_end_matches('{').trim().to_string()));
                 }

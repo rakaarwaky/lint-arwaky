@@ -642,6 +642,54 @@ pub fn check_banner_hygiene(file: &FileEntry, violations: &mut Vec<LintResult>) 
             ));
         }
     }
+
+    // A-3: a capability file that declares a Block 1 banner but is missing
+    // Block 2 or Block 3 is incomplete — the reader's map is partial.
+    // Detect when block_markers found B1 but not B2 or B3.
+    let declared_blocks: std::collections::BTreeSet<usize> = markers
+        .iter()
+        .map(|(n, _, _)| *n)
+        .collect();
+    let has_b1 = declared_blocks.contains(&1);
+    let has_b2 = declared_blocks.contains(&2);
+    let has_b3 = declared_blocks.contains(&3);
+    if has_b1 && (!has_b2 || !has_b3) {
+        let mut missing: Vec<String> = Vec::new();
+        if !has_b2 {
+            missing.push("Block 2: Module Contract".to_string());
+        }
+        if !has_b3 {
+            missing.push("Block 3: Module Helpers".to_string());
+        }
+        let missing_list = missing.join(", ");
+        let first_line = markers.first().map(|(_, _, ln)| *ln).unwrap_or(1);
+        let mut fix_lines: Vec<String> = Vec::new();
+        if !has_b2 {
+            fix_lines
+                .push("// ─── Block 2: Module Contract ───".to_string());
+            fix_lines
+                .push("(add before the protocol impl block)".to_string());
+        }
+        if !has_b3 {
+            fix_lines
+                .push("// ─── Block 3: Module Helpers ───".to_string());
+            fix_lines
+                .push("(add before the helper impl block)".to_string());
+        }
+        let fix_block = fix_lines.join("\n");
+        violations.push(LintResult::new_arch(
+            &path,
+            first_line,
+            "AES403",
+            Severity::MEDIUM,
+            format!(
+                "AES403 CAPABILITY_ROLE: Incomplete block banners.\n\
+                 WHY? File declares `Block 1: Module Declaration` but is missing {missing_list}. \
+                 The 3-block shape requires all three banners so the reader has a complete map.\n\
+                 FIX: Add the missing banner(s):\n{fix_block}",
+            ),
+        ));
+    }
 }
 
 /// Rule B-3 / B-6 / B-9 — `pub fn` under Block 3 without a seam doc is a
@@ -953,7 +1001,11 @@ pub struct CapabilityBlockMarker {
 pub fn capability_block_markers(content: &str) -> Vec<CapabilityBlockMarker> {
     block_markers(content)
         .into_iter()
-        .map(|(n, name, line)| CapabilityBlockMarker { number: n, name, line })
+        .map(|(n, name, line)| CapabilityBlockMarker {
+            number: n,
+            name,
+            line,
+        })
         .collect()
 }
 
@@ -997,7 +1049,7 @@ pub fn block_markers(content: &str) -> Vec<(usize, String, usize)> {
         let Some((num_str, name_tail)) = rest.split_once(':') else {
             continue;
         };
-        let digits: String = num_str.trim().chars().take_while(char::is_ascii_digit).collect();
+        let digits: String = num_str.chars().filter(char::is_ascii_digit).collect();
         if digits.is_empty() {
             continue;
         }
