@@ -22,6 +22,22 @@ pub struct NotifyWatchProvider {
     ignore_patterns: Mutex<Vec<String>>,
 }
 
+impl Default for NotifyWatchProvider {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl NotifyWatchProvider {
+    pub fn new() -> Self {
+        let (tx, _) = broadcast::channel(256);
+        Self {
+            watcher: Mutex::new(None),
+            tx,
+            ignore_patterns: Mutex::new(Vec::new()),
+        }
+    }
+}
 // ─── Block 2: Module Contract ───────────────
 // NOTE: #[async_trait] required — shared contract still uses it.
 // Remove when protocol traits switch to native async fn in traits.
@@ -112,20 +128,3 @@ impl IWatchLifecycleProtocol for NotifyWatchProvider {
 }
 
 // ─── Block 3: Module Helpers ──────
-
-impl Default for NotifyWatchProvider {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl NotifyWatchProvider {
-    pub fn new() -> Self {
-        let (tx, _) = broadcast::channel(256);
-        Self {
-            watcher: Mutex::new(None),
-            tx,
-            ignore_patterns: Mutex::new(Vec::new()),
-        }
-    }
-}

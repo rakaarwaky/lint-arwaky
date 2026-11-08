@@ -10,6 +10,11 @@ pub struct DependencyReportChecker {
     io: Arc<dyn IFileSystemIOProtocol>,
 }
 
+impl DependencyReportChecker {
+    pub fn new(io: Arc<dyn IFileSystemIOProtocol>) -> Self {
+        Self { io }
+    }
+}
 // ─── Block 2: Module Contract ─────────────────────
 impl IDependencyReportProtocol for DependencyReportChecker {
     fn run_dependency_report(&self, project_path: &FilePath) -> Result<DependencyReport, String> {
@@ -65,8 +70,3 @@ impl IDependencyReportProtocol for DependencyReportChecker {
 }
 
 // ─── Block 3: Module Helpers ──────────────────────
-impl DependencyReportChecker {
-    pub fn new(io: Arc<dyn IFileSystemIOProtocol>) -> Self {
-        Self { io }
-    }
-}

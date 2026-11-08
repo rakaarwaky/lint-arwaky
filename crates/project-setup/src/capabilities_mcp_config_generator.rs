@@ -16,6 +16,18 @@ use std::collections::HashMap;
 /// to the utility layer (`shared_project_setup::utility_project_setup_helpers`).
 pub struct SetupMcpConfigGenerator;
 
+impl Default for SetupMcpConfigGenerator {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl SetupMcpConfigGenerator {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
 // ─── Block 2: Module Contract ───────────────
 
 impl IMcpConfigGenerationProtocol for SetupMcpConfigGenerator {
@@ -141,16 +153,4 @@ impl IMcpConfigGenerationProtocol for SetupMcpConfigGenerator {
     }
 }
 
-// ─── Block 3: Module HelpersConstructors ────────────────────────────────
-
-impl SetupMcpConfigGenerator {
-    pub fn new() -> Self {
-        Self
-    }
-}
-
-impl Default for SetupMcpConfigGenerator {
-    fn default() -> Self {
-        Self::new()
-    }
-}
+// ─── Block 3: Module Helpers ────────────────────────────────

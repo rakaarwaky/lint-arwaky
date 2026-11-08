@@ -12,7 +12,19 @@ use std::path::Path;
 
 pub struct CapabilitiesToolResolution;
 
-// ─── Block 2: Module ContractPublic Contract (domain protocol ONLY) ──────
+impl Default for CapabilitiesToolResolution {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl CapabilitiesToolResolution {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
+// ─── Block 2: Module Contract ───
 
 impl IToolResolutionProtocol for CapabilitiesToolResolution {
     fn is_executable_in_path(&self, executable: &ToolName) -> bool {
@@ -77,16 +89,4 @@ impl IToolResolutionProtocol for CapabilitiesToolResolution {
     }
 }
 
-// ─── Block 3: Module Helpers ─────────
-
-impl CapabilitiesToolResolution {
-    pub fn new() -> Self {
-        Self
-    }
-}
-
-impl Default for CapabilitiesToolResolution {
-    fn default() -> Self {
-        Self::new()
-    }
-}
+// ─── Block 3: Module Helpers ───

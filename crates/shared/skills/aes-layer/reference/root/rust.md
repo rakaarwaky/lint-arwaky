@@ -55,13 +55,13 @@ use shared::<concept>::contract_<concept>_aggregate::I<Concept>Aggregate;
 use shared::<concept>::contract_<concept>_protocol::I<Concept>Protocol;
 use std::sync::Arc;
 
-// ─── Block 1: Module DeclarationStruct Definition ───────────────────────────
+// ─── Block 1: Module Declaration ───────────────────────────
 
 pub struct <Concept>Container {
     orchestrator: Arc<dyn I<Concept>Aggregate>,
 }
 
-// ─── Block 2: Module ContractWiring & Factory ────────────────────────────
+// ─── Block 2: Module Contract ────────────────────────────
 
 impl <Concept>Container {
     pub fn new(/* shared deps */) -> Self {

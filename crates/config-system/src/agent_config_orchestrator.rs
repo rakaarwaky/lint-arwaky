@@ -45,56 +45,6 @@ pub struct ConfigOrchestrator {
     config_cache: DashMap<CacheKey, CachedConfig>,
 }
 
-// ─── Block 2: Module Contract ──────────────
-
-impl IConfigOrchestratorAggregate for ConfigOrchestrator {
-    fn execute(&self, request: ConfigRequest) -> ConfigResponse {
-        match request {
-            ConfigRequest::LoadProjectConfig { project_root } => {
-                ConfigResponse::LoadProjectConfig {
-                    result: self.load_project_config(&project_root),
-                }
-            }
-            ConfigRequest::LoadForLanguage {
-                project_root,
-                language,
-            } => ConfigResponse::LoadForLanguage {
-                result: self.load_config_for_language(&project_root, language),
-            },
-            ConfigRequest::ReadConfig {
-                project_root,
-                language,
-            } => ConfigResponse::ReadConfig {
-                source: self.read_config(&project_root, language),
-            },
-            ConfigRequest::DiscoverWorkspaces { root } => ConfigResponse::DiscoverWorkspaces {
-                workspaces: self.discover_workspaces(&root),
-            },
-            ConfigRequest::LoadSync { project_root } => ConfigResponse::LoadSync {
-                config: self.load_config_sync(&project_root),
-            },
-            ConfigRequest::IgnoredPaths { project_root } => ConfigResponse::IgnoredPaths {
-                patterns: self.ignored_paths(&project_root),
-            },
-            ConfigRequest::IgnoredPathsForLanguage {
-                project_root,
-                language,
-            } => ConfigResponse::IgnoredPathsForLanguage {
-                patterns: self.ignored_paths_for_language(&project_root, language),
-            },
-        }
-    }
-}
-
-// ─── Block 3: Module Helpers ─────
-
-// FR-ConfigSystem-001/002 are satisfied by the capabilities themselves
-// (`ConfigYamlReader` implements `IConfigReadProtocol`, `WorkspaceDetector`
-// implements `IWorkspaceMembersProtocol`). The orchestrator does not
-// re-implement those seams: an agent must not implement a contract protocol
-// (AES405), and the container wires the capabilities directly for callers
-// that need them. The orchestrator holds the same capabilities as deps and
-// uses them to compose its own behaviour.
 impl ConfigOrchestrator {
     pub fn read_config(
         &self,
@@ -306,3 +256,53 @@ impl ConfigOrchestrator {
         (parsed, warnings)
     }
 }
+// ─── Block 2: Module Contract ──────────────
+
+impl IConfigOrchestratorAggregate for ConfigOrchestrator {
+    fn execute(&self, request: ConfigRequest) -> ConfigResponse {
+        match request {
+            ConfigRequest::LoadProjectConfig { project_root } => {
+                ConfigResponse::LoadProjectConfig {
+                    result: self.load_project_config(&project_root),
+                }
+            }
+            ConfigRequest::LoadForLanguage {
+                project_root,
+                language,
+            } => ConfigResponse::LoadForLanguage {
+                result: self.load_config_for_language(&project_root, language),
+            },
+            ConfigRequest::ReadConfig {
+                project_root,
+                language,
+            } => ConfigResponse::ReadConfig {
+                source: self.read_config(&project_root, language),
+            },
+            ConfigRequest::DiscoverWorkspaces { root } => ConfigResponse::DiscoverWorkspaces {
+                workspaces: self.discover_workspaces(&root),
+            },
+            ConfigRequest::LoadSync { project_root } => ConfigResponse::LoadSync {
+                config: self.load_config_sync(&project_root),
+            },
+            ConfigRequest::IgnoredPaths { project_root } => ConfigResponse::IgnoredPaths {
+                patterns: self.ignored_paths(&project_root),
+            },
+            ConfigRequest::IgnoredPathsForLanguage {
+                project_root,
+                language,
+            } => ConfigResponse::IgnoredPathsForLanguage {
+                patterns: self.ignored_paths_for_language(&project_root, language),
+            },
+        }
+    }
+}
+
+// ─── Block 3: Module Helpers ─────
+
+// FR-ConfigSystem-001/002 are satisfied by the capabilities themselves
+// (`ConfigYamlReader` implements `IConfigReadProtocol`, `WorkspaceDetector`
+// implements `IWorkspaceMembersProtocol`). The orchestrator does not
+// re-implement those seams: an agent must not implement a contract protocol
+// (AES405), and the container wires the capabilities directly for callers
+// that need them. The orchestrator holds the same capabilities as deps and
+// uses them to compose its own behaviour.

@@ -18,6 +18,19 @@ pub struct LoggingOrchestrator {
     walker: Arc<dyn IWalkerReportProtocol>,
 }
 
+impl LoggingOrchestrator {
+    pub fn new(
+        subscriber: Arc<dyn ISubscriberInstallProtocol>,
+        timer: Arc<dyn IPhaseTimerProtocol>,
+        walker: Arc<dyn IWalkerReportProtocol>,
+    ) -> Self {
+        Self {
+            subscriber,
+            timer,
+            walker,
+        }
+    }
+}
 // ─── Block 2: Module Contract ──────────────
 
 impl ILoggingAggregate for LoggingOrchestrator {
@@ -71,20 +84,6 @@ impl ILoggingAggregate for LoggingOrchestrator {
 }
 
 // ─── Block 3: Module Helpers ───────────
-
-impl LoggingOrchestrator {
-    pub fn new(
-        subscriber: Arc<dyn ISubscriberInstallProtocol>,
-        timer: Arc<dyn IPhaseTimerProtocol>,
-        walker: Arc<dyn IWalkerReportProtocol>,
-    ) -> Self {
-        Self {
-            subscriber,
-            timer,
-            walker,
-        }
-    }
-}
 
 impl Default for LoggingOrchestrator {
     fn default() -> Self {

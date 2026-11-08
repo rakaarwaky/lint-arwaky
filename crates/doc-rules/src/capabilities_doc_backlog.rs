@@ -25,7 +25,19 @@ use shared_doc_rules::utility_markdown_scanner::{doc_h2_contract, sections};
 
 pub struct BacklogCapability;
 
-// ─── Block 2: Module Contract ─────────────────────
+impl Default for BacklogCapability {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl BacklogCapability {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
+// ─── Block 2: Module Contract ─
 
 impl IBacklogDocProtocol for BacklogCapability {
     fn audit_backlog(&self, context: &DocAuditContext) -> Vec<DocFinding> {
@@ -44,19 +56,7 @@ impl IBacklogDocProtocol for BacklogCapability {
     }
 }
 
-// ─── Block 3: Module HelpersInherent Implementation and Helpers ─────────
-
-impl Default for BacklogCapability {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl BacklogCapability {
-    pub fn new() -> Self {
-        Self
-    }
-}
+// ─── Block 3: Module Helpers ───
 
 impl BacklogCapability {
     fn audit_one(document: &DocSource, context: &DocAuditContext, findings: &mut Vec<DocFinding>) {

@@ -6,7 +6,7 @@
 // and never carries unimplemented stubs. Each FR-backed trait maps to exactly
 // one `FR-AutoFix-NNN` heading in `crates/auto-fix/FRD.md`.
 //
-// FR count: exactly 4 FR-backed protocols.
+// FR count: exactly 5 FR-backed protocols.
 
 use crate::taxonomy_auto_fix_vo::FixOutcome;
 use crate::taxonomy_auto_fix_vo::FixResult;
@@ -29,6 +29,15 @@ pub trait IBypassFixProtocol: Send + Sync {
     fn fix_bypass_comments(&self, file_path: &str, line: LineNumber) -> FixOutcome;
     /// Internal: apply the fix with a dry-run flag (used by FR-004 pipeline).
     fn fix_bypass_dry(&self, file_path: &str, line: LineNumber, dry_run: bool) -> FixOutcome;
+}
+
+/// FR-AutoFix-005: rewrite a block-marker banner line to canonical form.
+pub trait IBlockMarkerFixProtocol: Send + Sync {
+    /// Rewrite the `Block N:` banner line at the given line number to canonical
+    /// form `// ─── Block N: Module <Name> ───` (Rust/TS) or `# ...` (Python).
+    fn fix_block_marker(&self, file_path: &str, line: LineNumber) -> FixOutcome;
+    /// Internal: apply the fix with a dry-run flag.
+    fn fix_block_marker_dry(&self, file_path: &str, line: LineNumber, dry_run: bool) -> FixOutcome;
 }
 
 /// FR-AutoFix-003: word-boundary-aware mechanical symbol rename.

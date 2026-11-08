@@ -1,5 +1,6 @@
 // Unit tests for auto-fix capabilities — standalone fix methods (bypass, unused import, rename).
 // Uses a mock IFileSystemIOProtocol that reads/writes directly (bypasses filesystem aggregate cache).
+use auto_fix_lint_arwaky::capabilities_block_marker_fix::BlockMarkerFix;
 use auto_fix_lint_arwaky::capabilities_bypass_fix::BypassFix;
 use auto_fix_lint_arwaky::capabilities_symbol_rename::SymbolRename;
 use auto_fix_lint_arwaky::capabilities_unused_import_fix::UnusedImportFix;
@@ -205,7 +206,15 @@ fn make_violation_report(files: HashMap<String, String>) -> ViolationReport {
     let unused_import_fix = Arc::new(UnusedImportFix::new(io.clone()));
     let bypass_fix = Arc::new(BypassFix::new(io.clone()));
     let symbol_rename = Arc::new(SymbolRename::new(io.clone()));
-    ViolationReport::new(linter, unused_import_fix, bypass_fix, symbol_rename, io)
+    let block_marker_fix = Arc::new(BlockMarkerFix::new(io.clone()));
+    ViolationReport::new(
+        linter,
+        unused_import_fix,
+        bypass_fix,
+        symbol_rename,
+        block_marker_fix,
+        io,
+    )
 }
 
 // ── fix_bypass_comments tests ──────────────────────────────

@@ -18,7 +18,7 @@ pub struct SetupContainer {
     adapter_installation: Arc<dyn IAdapterInstallationProtocol>,
 }
 
-// ─── Block 2: Module ContractContainer Construction ──────────────────────
+// ─── Block 2: Module Contract ───
 
 impl SetupContainer {
     pub fn new(io: Arc<dyn IFileSystemIOProtocol>) -> Self {

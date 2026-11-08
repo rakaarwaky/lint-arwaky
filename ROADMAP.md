@@ -6,31 +6,23 @@ RELEASED as v3.8.0. It supersedes 3.7.1 and 3.7.2, which were declared in `Cargo
 
 ## Roadmap Status
 
-### PR-LA-001: filesystem
+### PR-LA-001: auto-fix
 
 | Aspect       | Detail                            |
 |--------------|----------------------------------|
-| Priority     | P0                                |
+| Priority     | P2                                |
 | State        | Done                              |
-| Backlog      | [BACKLOG.md](crates/filesystem/BACKLOG.md) |
-
-### PR-LA-002: auto-fix
-
-| Aspect       | Detail                              |
-|--------------|-------------------------------------|
-| Priority     | P0                                    |
-| State        | Done                                  |
 | Backlog      | [BACKLOG.md](crates/auto-fix/BACKLOG.md) |
 
-### PR-LA-003: cli-commands
+### PR-LA-002: cli-commands
 
 | Aspect       | Detail                              |
 |--------------|-------------------------------------|
-| Priority     | P0                                    |
+| Priority     | P2                                    |
 | State        | Done                                  |
 | Backlog      | [BACKLOG.md](crates/cli-commands/BACKLOG.md) |
 
-### PR-LA-004: config-system
+### PR-LA-003: config-system
 
 | Aspect       | Detail                              |
 |--------------|-------------------------------------|
@@ -38,23 +30,15 @@ RELEASED as v3.8.0. It supersedes 3.7.1 and 3.7.2, which were declared in `Cargo
 | State        | Done                                  |
 | Backlog      | [BACKLOG.md](crates/config-system/BACKLOG.md) |
 
-### PR-LA-005: dispatcher
+### PR-LA-004: dispatcher
 
 | Aspect       | Detail                              |
 |--------------|-------------------------------------|
-| Priority     | P0                                    |
+| Priority     | P2                                    |
 | State        | Done                                  |
 | Backlog      | [BACKLOG.md](crates/dispatcher/BACKLOG.md) |
 
-### PR-LA-012: maintenance
-
-| Aspect       | Detail                              |
-|--------------|-------------------------------------|
-| Priority     | P0                                    |
-| State        | Done                                  |
-| Backlog      | [BACKLOG.md](crates/maintenance/BACKLOG.md) |
-
-### PR-LA-006: doc-rules
+### PR-LA-005: doc-rules
 
 | Aspect       | Detail                              |
 |--------------|-------------------------------------|
@@ -62,27 +46,43 @@ RELEASED as v3.8.0. It supersedes 3.7.1 and 3.7.2, which were declared in `Cargo
 | State        | Done                                  |
 | Backlog      | [BACKLOG.md](crates/doc-rules/BACKLOG.md) |
 
-### PR-LA-007: external-lint
+### PR-LA-012: maintenance
 
 | Aspect       | Detail                              |
 |--------------|-------------------------------------|
-| Priority     | P1                                    |
+| Priority     | P3                                    |
+| State        | Done                                  |
+| Backlog      | [BACKLOG.md](crates/maintenance/BACKLOG.md) |
+
+### PR-LA-006: external-lint
+
+| Aspect       | Detail                              |
+|--------------|-------------------------------------|
+| Priority     | P2                                    |
 | State        | Done                                  |
 | Backlog      | [BACKLOG.md](crates/external-lint/BACKLOG.md) |
 
-### PR-LA-008: file-watch
+### PR-LA-007: file-watch
 
 | Aspect       | Detail                              |
 |--------------|-------------------------------------|
-| Priority     | P1                                    |
+| Priority     | P3                                    |
 | State        | Done                                  |
 | Backlog      | [BACKLOG.md](crates/file-watch/BACKLOG.md) |
+
+### PR-LA-008: filesystem
+
+| Aspect       | Detail                              |
+|--------------|-------------------------------------|
+| Priority     | P0                                    |
+| State        | Done                                  |
+| Backlog      | [BACKLOG.md](crates/filesystem/BACKLOG.md) |
 
 ### PR-LA-009: git-hooks
 
 | Aspect       | Detail                              |
 |--------------|-------------------------------------|
-| Priority     | P1                                    |
+| Priority     | P3                                    |
 | State        | Done                                  |
 | Backlog      | [BACKLOG.md](crates/git-hooks/BACKLOG.md) |
 
@@ -98,7 +98,7 @@ RELEASED as v3.8.0. It supersedes 3.7.1 and 3.7.2, which were declared in `Cargo
 
 | Aspect       | Detail                              |
 |--------------|-------------------------------------|
-| Priority     | P1                                    |
+| Priority     | P3                                    |
 | State        | Done                                  |
 | Backlog      | [BACKLOG.md](crates/mcp-server/BACKLOG.md) |
 
@@ -114,7 +114,7 @@ RELEASED as v3.8.0. It supersedes 3.7.1 and 3.7.2, which were declared in `Cargo
 
 | Aspect       | Detail                              |
 |--------------|-------------------------------------|
-| Priority     | P2                                    |
+| Priority     | P1                                    |
 | State        | In Review                             |
 | Backlog      | [BACKLOG.md](crates/naming-rules/BACKLOG.md) |
 
@@ -122,9 +122,65 @@ RELEASED as v3.8.0. It supersedes 3.7.1 and 3.7.2, which were declared in `Cargo
 
 | Aspect       | Detail                              |
 |--------------|-------------------------------------|
-| Priority     | P2                                    |
+| Priority     | P1                                    |
 | State        | In Review                             |
 | Backlog      | [BACKLOG.md](crates/orphan-rules/BACKLOG.md) |
+
+### PR-LA-016: project-setup
+
+| Aspect       | Detail                              |
+|--------------|-------------------------------------|
+| Priority     | P2                                    |
+| State        | Done                                  |
+| Backlog      | [BACKLOG.md](crates/project-setup/BACKLOG.md) |
+
+### PR-LA-017: quality-rules
+
+| Aspect       | Detail                              |
+|--------------|-------------------------------------|
+| Priority     | P2                                    |
+| State        | Done                                  |
+| Backlog      | [BACKLOG.md](crates/quality-rules/BACKLOG.md) |
+
+### PR-LA-018: report-formatter
+
+| Aspect       | Detail                              |
+|--------------|-------------------------------------|
+| Priority     | P2                                    |
+| State        | Done                                  |
+| Backlog      | [BACKLOG.md](crates/report-formatter/BACKLOG.md) |
+
+### PR-LA-019: role-rules
+
+| Aspect       | Detail                              |
+|--------------|-------------------------------------|
+| Priority     | P2                                    |
+| State        | Done                                  |
+| Backlog      | [BACKLOG.md](crates/role-rules/BACKLOG.md) |
+
+### PR-LA-020: shared
+
+| Aspect       | Detail                              |
+|--------------|-------------------------------------|
+| Priority     | P2                                    |
+| State        | Done                                  |
+| Backlog      | [BACKLOG.md](crates/shared/BACKLOG.md) |
+
+### PR-LA-021: structure-rules
+
+| Aspect       | Detail                              |
+|--------------|-------------------------------------|
+| Priority     | P2                                    |
+| State        | Done                                  |
+| Backlog      | [BACKLOG.md](crates/structure-rules/BACKLOG.md) |
+
+### PR-LA-022: tui
+
+| Aspect       | Detail                              |
+|--------------|-------------------------------------|
+| Priority     | P2                                    |
+| State        | Done                                  |
+| Backlog      | [BACKLOG.md](crates/tui/BACKLOG.md) |
 
 ## Reference
 

@@ -17,6 +17,12 @@ pub struct ConfigParserProvider {
     io: Arc<dyn IFileSystemIOProtocol>,
 }
 
+impl ConfigParserProvider {
+    /// Create a new config parser with filesystem IO dependency.
+    pub fn new(io: Arc<dyn IFileSystemIOProtocol>) -> Self {
+        Self { io }
+    }
+}
 // ─── Block 2: Module Contract ───────────────
 
 impl IConfigMergeProtocol for ConfigParserProvider {
@@ -183,10 +189,3 @@ fn fold_user_rule_toggles(merged: &mut ArchitectureConfig, user: &ArchitectureCo
 }
 
 // ─── Block 3: Module Helpers ──────
-
-impl ConfigParserProvider {
-    /// Create a new config parser with filesystem IO dependency.
-    pub fn new(io: Arc<dyn IFileSystemIOProtocol>) -> Self {
-        Self { io }
-    }
-}

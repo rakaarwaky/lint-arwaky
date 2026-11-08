@@ -19,6 +19,12 @@ pub struct BypassFix {
     io: Arc<dyn IFileSystemIOProtocol>,
 }
 
+impl BypassFix {
+    pub fn new(io: Arc<dyn IFileSystemIOProtocol>) -> Self {
+        Self { io }
+    }
+}
+
 // ─── Block 2: Module Contract ──────────────
 
 impl IBypassFixProtocol for BypassFix {
@@ -33,10 +39,6 @@ impl IBypassFixProtocol for BypassFix {
 // ─── Block 3: Module Helpers ──────
 
 impl BypassFix {
-    pub fn new(io: Arc<dyn IFileSystemIOProtocol>) -> Self {
-        Self { io }
-    }
-
     pub(crate) fn fix_impl(&self, file_path: &str, line: LineNumber, dry_run: bool) -> FixOutcome {
         let fpath = match FilePath::new(file_path.to_string()) {
             Ok(p) => p,

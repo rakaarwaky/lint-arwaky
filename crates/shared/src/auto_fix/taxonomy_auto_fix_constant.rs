@@ -7,8 +7,10 @@ pub static FIXABLE_CODES: once_cell::sync::Lazy<Vec<ErrorCode>> =
     once_cell::sync::Lazy::new(|| {
         vec![
             ErrorCode::raw("AES101"),
-            ErrorCode::raw("AES304"),
             ErrorCode::raw("AES203"),
+            ErrorCode::raw("AES304"),
+            ErrorCode::raw("AES403"),
+            ErrorCode::raw("AES405"),
         ]
     });
 
@@ -21,3 +23,7 @@ pub static RUST_KEYWORDS: once_cell::sync::Lazy<Vec<&str>> = once_cell::sync::La
         "unsafe", "use", "where", "while", "yield",
     ]
 });
+
+/// Canonical block-marker names mirror those enforced by the role checkers.
+pub static NAMES: once_cell::sync::Lazy<[&str; 3]> =
+    once_cell::sync::Lazy::new(|| ["Declaration", "Contract", "Helpers"]);

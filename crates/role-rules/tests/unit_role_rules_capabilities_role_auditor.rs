@@ -257,20 +257,6 @@ fn block_order_no_inherent_impl_no_violation() {
 }
 
 #[test]
-fn block_order_default_impl_before_protocol_flagged() {
-    // `impl Default for Foo` is an inherent impl block.
-    let content = "pub struct Foo {}\nimpl Default for Foo {\n    fn default() -> Self { Self }\n}\nimpl IFooProtocol for Foo {}\n";
-    let f = make_file("src/capabilities_foo.rs", Language::Rust, content);
-    let mut v = Vec::new();
-    checker().check_capability_block_order(&f, &mut v);
-    assert_eq!(
-        v.len(),
-        1,
-        "`impl Default` before protocol impl should be flagged"
-    );
-}
-
-#[test]
 fn block_order_python_helper_before_protocol_flagged() {
     let content = "class Foo(IFooProtocol):\n    def _helper(self):\n        return 1\n\n    def execute(self):\n        return 2\n";
     let f = make_file("src/capabilities_foo.py", Language::Python, content);

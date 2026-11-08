@@ -11,6 +11,17 @@ use shared_quality_rules::taxonomy_quality_rules_vo::{
 
 pub struct SurfacesOrphanAnalyzer;
 
+impl Default for SurfacesOrphanAnalyzer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl SurfacesOrphanAnalyzer {
+    pub fn new() -> Self {
+        Self
+    }
+}
 // ─── Block 2: Module Contract ────────────────
 
 impl ISurfacesOrphanProtocol for SurfacesOrphanAnalyzer {
@@ -59,23 +70,12 @@ impl ISurfacesOrphanProtocol for SurfacesOrphanAnalyzer {
 
 // ─── Block 3: Module Helpers ────────────
 
-impl Default for SurfacesOrphanAnalyzer {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl SurfacesOrphanAnalyzer {
-    pub fn new() -> Self {
-        Self
-    }
-
     fn surface_category(suffix: &str) -> &'static str {
         match suffix {
-            "command" | "controller" | "page" | "router" => "smart",
-            "hook" | "store" | "action" | "screen" => "utility",
-            "component" | "view" | "layout" => "passive",
-            _ => "unknown",
+            "rs" | "py" | "ts" | "js" => "smart",
+            "md" | "txt" => "passive",
+            _ => "utility",
         }
     }
 }

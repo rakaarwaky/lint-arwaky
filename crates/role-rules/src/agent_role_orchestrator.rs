@@ -28,7 +28,7 @@ use shared_filesystem::taxonomy_filesystem_vo::Language;
 use shared_role_rules::utility_agent_role_checker::resolve_feature_protocol_count;
 use shared_role_rules::utility_role_reference_scanner::build_external_reference_map;
 
-// ─── Block 1: Module Declarations ──────────────────────────
+// ─── Block 1: Module Declaration ───
 
 pub struct RoleCheckerDeps {
     pub classifier: Arc<dyn IClassificationProtocol>,
@@ -53,6 +53,22 @@ pub struct RoleOrchestrator {
     deps: RoleCheckerDeps,
     config: ArchitectureConfig,
     ignored_paths: Vec<String>,
+}
+
+impl RoleOrchestrator {
+    pub fn new(deps: RoleCheckerDeps, config: &ArchitectureConfig) -> Self {
+        let ignored_paths: Vec<String> = config
+            .ignored_paths
+            .values
+            .iter()
+            .map(|fp| fp.value.replace('/', std::path::MAIN_SEPARATOR_STR))
+            .collect();
+        Self {
+            deps,
+            config: config.clone(),
+            ignored_paths,
+        }
+    }
 }
 
 // ─── Block 2: Module Contract ──────────────
@@ -80,20 +96,6 @@ impl RoleOrchestrator {
 
     pub fn name(&self) -> &str {
         "role-rules"
-    }
-
-    pub fn new(deps: RoleCheckerDeps, config: &ArchitectureConfig) -> Self {
-        let ignored_paths: Vec<String> = config
-            .ignored_paths
-            .values
-            .iter()
-            .map(|fp| fp.value.replace('/', std::path::MAIN_SEPARATOR_STR))
-            .collect();
-        Self {
-            deps,
-            config: config.clone(),
-            ignored_paths,
-        }
     }
 
     /// Run all role checks on pre-parsed FileEntry slices.

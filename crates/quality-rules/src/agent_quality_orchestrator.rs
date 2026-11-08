@@ -54,6 +54,16 @@ pub struct CodeAnalysisOrchestrator {
     config: ArchitectureConfig,
 }
 
+impl CodeAnalysisOrchestrator {
+    pub fn new(deps: CodeAnalysisDeps, config: ArchitectureConfig, layer_map: LayerMapVO) -> Self {
+        Self {
+            deps,
+            config,
+            layer_map,
+        }
+    }
+}
+
 // ─── Block 2: Module Contract ──────────────
 impl ICodeAnalysisAggregate for CodeAnalysisOrchestrator {
     fn execute(&self, request: CodeAnalysisRequest) -> CodeAnalysisResponse {
@@ -71,14 +81,6 @@ impl ICodeAnalysisAggregate for CodeAnalysisOrchestrator {
 // ─── Block 3: Module Helpers ──────
 
 impl CodeAnalysisOrchestrator {
-    pub fn new(deps: CodeAnalysisDeps, config: ArchitectureConfig, layer_map: LayerMapVO) -> Self {
-        Self {
-            deps,
-            config,
-            layer_map,
-        }
-    }
-
     pub fn name(&self) -> &str {
         "quality-rules"
     }

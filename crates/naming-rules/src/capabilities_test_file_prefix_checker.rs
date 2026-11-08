@@ -27,6 +27,18 @@ use shared_naming_rules::utility_test_prefix::{
 /// internal state.
 pub struct TestFilePrefixChecker {}
 
+impl Default for TestFilePrefixChecker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl TestFilePrefixChecker {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+
 // ─── Block 2: Module Contract ────────────────
 
 impl ITestFilePrefixProtocol for TestFilePrefixChecker {
@@ -63,17 +75,7 @@ impl ITestFilePrefixProtocol for TestFilePrefixChecker {
 
 // ─── Block 3: Module Helpers ────────────
 
-impl Default for TestFilePrefixChecker {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl TestFilePrefixChecker {
-    pub fn new() -> Self {
-        Self {}
-    }
-
     /// AES103 — a file in `tests/` or `benches/` sits flat and starts with a
     /// legal test-type prefix.
     ///
@@ -83,6 +85,10 @@ impl TestFilePrefixChecker {
     ///   2. the file's stem starts with no legal prefix for its directory
     ///   3. the file's stem starts with a prefix belonging to the *other*
     ///      directory (a bench file in `tests/`, or a test file in `benches/`)
+    ///
+    /// B-6a test seam: `pub` only so cross-crate unit tests can drive the
+    /// per-file rule; production traffic enters through
+    /// [`ITestFilePrefixProtocol::check_test_file_prefixes`].
     pub fn check_test_file_prefix_internal(
         &self,
         file: &str,
@@ -91,7 +97,7 @@ impl TestFilePrefixChecker {
         // A nested file is reported by the nesting rule alone: naming its stem
         // against the flat vocabulary would report the same defect twice.
         if let Some((directory, depth)) = nested_under(file) {
-            return Some(self.nested_result(file, filename, directory, depth));
+            return Some(nested_result(file, filename, directory, depth));
         }
 
         let slot = slot_of(file);
@@ -111,107 +117,100 @@ impl TestFilePrefixChecker {
         if has_legal_prefix(stem, slot) {
             return None;
         }
-        Some(self.prefix_result(file, filename, stem, slot))
+        Some(prefix_result(file, filename, stem, slot))
     }
+}
 
-    /// The subdirectory finding. Names the directory and how deep the file sits
-    /// so the reader knows which level to flatten.
-    fn nested_result(
-        &self,
-        file: &str,
-        filename: &str,
-        directory: &'static str,
-        depth: usize,
-    ) -> ViolationItem {
-        string_filename_violation(
-            file,
-            RULE_CODE_TEST_FILE_PREFIX,
+/// The subdirectory finding. Names the directory and how deep the file sits
+/// so the reader knows which level to flatten.
+fn nested_result(
+    file: &str,
+    filename: &str,
+    directory: &'static str,
+    depth: usize,
+) -> ViolationItem {
+    string_filename_violation(
+        file,
+        RULE_CODE_TEST_FILE_PREFIX,
+        format!(
+            "Test file '{filename}' sits {depth} level(s) below '{directory}/'. \
+             The file-name prefix IS the virtual folder: '{directory}/' must stay flat. \
+             Move the file up to '{directory}/' and let its prefix carry the type — \
+             e.g. 'unit_<subject>.rs' instead of '{directory}/<sub>/{filename}'."
+        ),
+        Severity::HIGH,
+        "TEST_FILE_PREFIX",
+        format!(
+            "Test file '{filename}' sits {depth} level(s) below '{directory}/'. \
+             The file-name prefix IS the virtual folder: '{directory}/' must stay flat."
+        ),
+        format!(
+            "Move the file up to '{directory}/' and let its prefix carry the type — \
+             e.g. 'unit_<subject>.rs' instead of '{directory}/<sub>/{filename}'."
+        ),
+    )
+}
+
+/// The prefix finding. Distinguishes "no legal prefix at all" from "a prefix
+/// from the wrong directory", because the fix differs: the first needs a
+/// rename, the second needs a move.
+fn prefix_result(file: &str, filename: &str, stem: &str, slot: TestSuiteSlot) -> ViolationItem {
+    let directory = slot.directory_label();
+    let legal = prefix_list(prefixes_for(slot));
+
+    // A prefix that is legal *somewhere* but not here: a test type inside
+    // `benches/`, or a bench inside `tests/`.
+    let foreign = [TestSuiteSlot::Tests, TestSuiteSlot::Benches]
+        .into_iter()
+        .filter(|other| *other != slot)
+        .find_map(|other| matched_prefix(stem, other).map(|p| (p, other.directory_label())));
+
+    let message = match foreign {
+        Some((prefix, home)) => format!(
+            "Test file '{filename}' starts with '{prefix}', which belongs in '{home}/', \
+             but this file sits in '{directory}/'. \
+             The prefix is the virtual folder: each test type lives in its own directory. \
+             Move the file to '{home}/' or rename it with a '{directory}/' prefix — \
+             legal '{directory}/' prefixes: {legal}."
+        ),
+        None => format!(
+            "Test file '{filename}' does not start with a legal test-type prefix. \
+             Files in '{directory}/' are typed by their prefix, which is the virtual folder. \
+             Rename the file to '<type>_<subject>.<ext>' — legal '{directory}/' prefixes: {legal}."
+        ),
+    };
+
+    let (why, fix) = match &foreign {
+        Some((prefix, home)) => (
             format!(
-                "Test file '{filename}' sits {depth} level(s) below '{directory}/'. \
-                 The file-name prefix IS the virtual folder: '{directory}/' must stay flat. \
-                 Move the file up to '{directory}/' and let its prefix carry the type — \
-                 e.g. 'unit_<subject>.rs' instead of '{directory}/<sub>/{filename}'."
-            ),
-            Severity::HIGH,
-            "TEST_FILE_PREFIX",
-            format!(
-                "Test file '{filename}' sits {depth} level(s) below '{directory}/'. \
-                 The file-name prefix IS the virtual folder: '{directory}/' must stay flat."
-            ),
-            format!(
-                "Move the file up to '{directory}/' and let its prefix carry the type — \
-                 e.g. 'unit_<subject>.rs' instead of '{directory}/<sub>/{filename}'."
-            ),
-        )
-    }
-
-    /// The prefix finding. Distinguishes "no legal prefix at all" from "a prefix
-    /// from the wrong directory", because the fix differs: the first needs a
-    /// rename, the second needs a move.
-    fn prefix_result(
-        &self,
-        file: &str,
-        filename: &str,
-        stem: &str,
-        slot: TestSuiteSlot,
-    ) -> ViolationItem {
-        let directory = slot.directory_label();
-        let legal = prefix_list(prefixes_for(slot));
-
-        // A prefix that is legal *somewhere* but not here: a test type inside
-        // `benches/`, or a bench inside `tests/`.
-        let foreign = [TestSuiteSlot::Tests, TestSuiteSlot::Benches]
-            .into_iter()
-            .filter(|other| *other != slot)
-            .find_map(|other| matched_prefix(stem, other).map(|p| (p, other.directory_label())));
-
-        let message = match foreign {
-            Some((prefix, home)) => format!(
                 "Test file '{filename}' starts with '{prefix}', which belongs in '{home}/', \
-                 but this file sits in '{directory}/'. \
-                 The prefix is the virtual folder: each test type lives in its own directory. \
-                 Move the file to '{home}/' or rename it with a '{directory}/' prefix — \
+                 but this file sits in '{directory}/'. The prefix is the virtual folder."
+            ),
+            format!(
+                "Move the file to '{home}/' or rename it with a '{directory}/' prefix — \
                  legal '{directory}/' prefixes: {legal}."
             ),
-            None => format!(
+        ),
+        None => (
+            format!(
                 "Test file '{filename}' does not start with a legal test-type prefix. \
-                 Files in '{directory}/' are typed by their prefix, which is the virtual folder. \
-                 Rename the file to '<type>_<subject>.<ext>' — legal '{directory}/' prefixes: {legal}."
+                 Files in '{directory}/' are typed by their prefix, which is the virtual folder."
             ),
-        };
+            format!(
+                "Rename the file to '<type>_<subject>.<ext>' — legal '{directory}/' prefixes: {legal}."
+            ),
+        ),
+    };
 
-        let (why, fix) = match &foreign {
-            Some((prefix, home)) => (
-                format!(
-                    "Test file '{filename}' starts with '{prefix}', which belongs in '{home}/', \
-                     but this file sits in '{directory}/'. The prefix is the virtual folder."
-                ),
-                format!(
-                    "Move the file to '{home}/' or rename it with a '{directory}/' prefix — \
-                     legal '{directory}/' prefixes: {legal}."
-                ),
-            ),
-            None => (
-                format!(
-                    "Test file '{filename}' does not start with a legal test-type prefix. \
-                     Files in '{directory}/' are typed by their prefix, which is the virtual folder."
-                ),
-                format!(
-                    "Rename the file to '<type>_<subject>.<ext>' — legal '{directory}/' prefixes: {legal}."
-                ),
-            ),
-        };
-
-        string_filename_violation(
-            file,
-            RULE_CODE_TEST_FILE_PREFIX,
-            message,
-            Severity::HIGH,
-            "TEST_FILE_PREFIX",
-            why,
-            fix,
-        )
-    }
+    string_filename_violation(
+        file,
+        RULE_CODE_TEST_FILE_PREFIX,
+        message,
+        Severity::HIGH,
+        "TEST_FILE_PREFIX",
+        why,
+        fix,
+    )
 }
 
 /// Whether *filename* is a module barrel, which carries no test of its own.

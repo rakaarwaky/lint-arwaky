@@ -30,7 +30,23 @@ pub struct GitHooksOrchestrator {
     config_init: Arc<dyn IConfigInitProtocol>,
 }
 
-// ─── Block 2: Module Contracts ─────────────
+impl GitHooksOrchestrator {
+    pub fn new(
+        diff_detection: Arc<dyn IDiffDetectionProtocol>,
+        hook_install: Arc<dyn IHookInstallProtocol>,
+        hook_uninstall: Arc<dyn IHookUninstallProtocol>,
+        config_init: Arc<dyn IConfigInitProtocol>,
+    ) -> Self {
+        Self {
+            diff_detection,
+            hook_install,
+            hook_uninstall,
+            config_init,
+        }
+    }
+}
+
+// ─── Block 2: Module Contract ──────────────
 
 impl IGitHooksAggregate for GitHooksOrchestrator {
     fn execute(&self, request: GitHooksRequest) -> GitHooksResponse {
@@ -51,7 +67,7 @@ impl IGitHooksAggregate for GitHooksOrchestrator {
     }
 }
 
-// ─── Block 3: Module Helpers ──────
+// ─── Block 3: Module Helpers ───────
 
 impl GitHooksOrchestrator {
     pub fn diff_protocol(&self) -> &dyn IDiffDetectionProtocol {
@@ -90,19 +106,5 @@ impl GitHooksOrchestrator {
 
     pub fn get_hook_manager_identity(&self) -> Identity {
         self.hook_install.get_hook_manager_identity()
-    }
-
-    pub fn new(
-        diff_detection: Arc<dyn IDiffDetectionProtocol>,
-        hook_install: Arc<dyn IHookInstallProtocol>,
-        hook_uninstall: Arc<dyn IHookUninstallProtocol>,
-        config_init: Arc<dyn IConfigInitProtocol>,
-    ) -> Self {
-        Self {
-            diff_detection,
-            hook_install,
-            hook_uninstall,
-            config_init,
-        }
     }
 }

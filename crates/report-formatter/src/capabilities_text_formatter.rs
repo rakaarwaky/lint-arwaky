@@ -12,9 +12,14 @@ use std::collections::BTreeMap;
 // ─── Block 1: Module Declaration ───────────────────────────
 /// TextFormatter — produces self-contained human-readable text output from ScanReport.
 pub struct TextFormatter;
+impl TextFormatter {
+    /// Create a new text formatter.
+    pub fn new() -> Self {
+        Self
+    }
+}
 
-// ─── Block 2: Module Contracts ──────────────
-
+// ─── Block 2: Module Contract ──────────────
 impl ITextFormatProtocol for TextFormatter {
     fn format_text(&self, report: &ScanReport) -> DisplayContent {
         format_text_report(report)
@@ -26,12 +31,6 @@ impl ITextFormatProtocol for TextFormatter {
 }
 
 // ─── Block 3: Module Helpers ──────
-impl TextFormatter {
-    /// Create a new text formatter.
-    pub fn new() -> Self {
-        Self
-    }
-}
 
 impl Default for TextFormatter {
     fn default() -> Self {
@@ -39,7 +38,7 @@ impl Default for TextFormatter {
     }
 }
 
-// ─── Free Functions (stateless renderers) ─────────────────
+// Free Functions (stateless renderers)
 
 /// FR-001: render the scan report as human-readable text.
 fn format_text_report(report: &ScanReport) -> DisplayContent {
@@ -202,7 +201,7 @@ fn format_text_report(report: &ScanReport) -> DisplayContent {
     DisplayContent::new(out)
 }
 
-// ─── Helper Functions ─────────────────────────────────────
+// Helper Functions
 
 fn severity_badge(sev: &shared_common::Severity) -> &'static str {
     match sev {
