@@ -106,7 +106,11 @@ impl BlockMarkerFix {
             return FixOutcome::applied(1);
         }
         lines[idx] = new_line.as_str();
-        let new_content = lines.join("\n");
+        let new_content = if content.ends_with('\n') {
+            format!("{}\n", lines.join("\n"))
+        } else {
+            lines.join("\n")
+        };
         if self.io.write_string(path, &new_content).is_err() {
             return FixOutcome::failed(FailReason::WriteError);
         }
