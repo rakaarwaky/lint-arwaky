@@ -83,9 +83,9 @@ pub fn is_protocol_base(base: &str) -> bool {
 pub fn is_protocol_decorator(name: &str) -> bool {
     let head = name
         .trim_start_matches('@')
-        .split(|c: char| c.is_ascii_digit() || c == '(')
-        .next()
-        .unwrap_or(name);
+        .chars()
+        .take_while(|c| !c.is_ascii_digit() && *c != '(')
+        .collect::<String>();
     head == "protocol"
         || head == "protocol_impl"
         || head.starts_with("with_protocol")
@@ -143,7 +143,7 @@ pub fn params_of(signature: &str) -> Vec<String> {
         return Vec::new();
     };
     let rest = &signature[open + 1..];
-    let mut out: Vec<String> = Vec::new();
+    let mut out = Vec::new();
     let mut depth = 0i32;
     let mut prev = 0;
     let push = |out: &mut Vec<String>, seg: &str| {
@@ -305,7 +305,7 @@ pub fn scan_protocol_impl(content: &str) -> bool {
 
 /// Collect distinct protocol trait names by line scan, for files with no parse metadata.
 pub fn scan_protocol_names(content: &str) -> Vec<String> {
-    let mut protocols: Vec<String> = Vec::new();
+    let mut protocols = Vec::new();
     let has_function = content.lines().any(|l| l.trim_start().starts_with("def "));
 
     for line in content.lines() {
@@ -337,8 +337,7 @@ pub fn scan_protocol_names(content: &str) -> Vec<String> {
                     }
                 }
             } else if let Some((_, after)) = type_part.split_once(" implements ") {
-                let iface_list =
-                    after.trim_matches(|c: char| c == '{' || c == '}' || c.is_whitespace());
+                let iface_list = after.trim().trim_matches('{').trim_matches('}');
                 for iface in iface_list.split(',') {
                     let i = iface.trim();
                     if is_protocol_trait(i) && !protocols.iter().any(|p| p == i) {
@@ -417,7 +416,10 @@ pub fn block_markers(content: &str) -> Vec<(usize, String, usize)> {
         let Some((num_str, name_tail)) = rest.split_once(':') else {
             continue;
         };
-        let digits: String = num_str.chars().filter(char::is_ascii_digit).collect();
+        let digits = num_str
+            .chars()
+            .filter(|c| c.is_ascii_digit())
+            .collect::<String>();
         if digits.is_empty() {
             continue;
         }
@@ -441,8 +443,7 @@ pub fn block_markers(content: &str) -> Vec<(usize, String, usize)> {
 }
 
 /// Block-order role checks (moved from utility_agent_role_helpers.rs).
-// ─── Agent rule checks (moved from utility_agent_role_helpers.rs) ───────────
-
+/// ─── Agent rule checks (moved from utility_agent_role_helpers.rs) ───────────
 /// Rule — an agent file implements no contract protocol. HIGH.
 pub fn check_agent_protocol_forbidden(file: &FileEntry, violations: &mut Vec<LintResult>) {
     let protocols = contract_protocol_impls(file);
@@ -628,7 +629,7 @@ pub fn check_constructor_in_block1(file: &FileEntry, violations: &mut Vec<LintRe
 
 /// Contract protocols implemented by a type declared in this file.
 fn contract_protocol_impls(file: &FileEntry) -> Vec<String> {
-    let mut out: Vec<String> = Vec::new();
+    let mut out = Vec::new();
     let mut push = |name: &str| {
         if !out.iter().any(|n| n == name) {
             out.push(name.to_string());
