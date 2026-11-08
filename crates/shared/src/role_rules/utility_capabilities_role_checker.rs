@@ -643,16 +643,22 @@ pub fn check_banner_hygiene(file: &FileEntry, violations: &mut Vec<LintResult>) 
         }
     }
 
-    // A-3: a capability file that declares a Block 1 banner but is missing
-    // Block 2 or Block 3 is incomplete — the reader's map is partial.
-    // Detect when block_markers found B1 but not B2 or B3.
+    // A-3: a capability file that declares some but not all Block banners is
+    // incomplete — the reader's map is partial in either direction (B1 missing
+    // but B2/B3 present, or any single banner alone). All three banners are
+    // required for a complete map.
     let declared_blocks: std::collections::BTreeSet<usize> =
         markers.iter().map(|(n, _, _)| *n).collect();
     let has_b1 = declared_blocks.contains(&1);
     let has_b2 = declared_blocks.contains(&2);
     let has_b3 = declared_blocks.contains(&3);
-    if has_b1 && (!has_b2 || !has_b3) {
+    let has_any = has_b1 || has_b2 || has_b3;
+    let all_three = has_b1 && has_b2 && has_b3;
+    if has_any && !all_three {
         let mut missing: Vec<String> = Vec::new();
+        if !has_b1 {
+            missing.push("Block 1: Module Declaration".to_string());
+        }
         if !has_b2 {
             missing.push("Block 2: Module Contract".to_string());
         }
@@ -662,12 +668,19 @@ pub fn check_banner_hygiene(file: &FileEntry, violations: &mut Vec<LintResult>) 
         let missing_list = missing.join(", ");
         let first_line = markers.first().map(|(_, _, ln)| *ln).unwrap_or(1);
         let mut fix_lines: Vec<String> = Vec::new();
+        if !has_b1 {
+            fix_lines
+                .push("// ─── Block 1: Module Declaration ───".to_string());
+            fix_lines.push("(add before type + constructor block)".to_string());
+        }
         if !has_b2 {
-            fix_lines.push("// ─── Block 2: Module Contract ───".to_string());
+            fix_lines
+                .push("// ─── Block 2: Module Contract ───".to_string());
             fix_lines.push("(add before the protocol impl block)".to_string());
         }
         if !has_b3 {
-            fix_lines.push("// ─── Block 3: Module Helpers ───".to_string());
+            fix_lines
+                .push("// ─── Block 3: Module Helpers ───".to_string());
             fix_lines.push("(add before the helper impl block)".to_string());
         }
         let fix_block = fix_lines.join("\n");
@@ -678,7 +691,7 @@ pub fn check_banner_hygiene(file: &FileEntry, violations: &mut Vec<LintResult>) 
             Severity::MEDIUM,
             format!(
                 "AES403 CAPABILITY_ROLE: Incomplete block banners.\n\
-                 WHY? File declares `Block 1: Module Declaration` but is missing {missing_list}. \
+                 WHY? File declares block banner(s) but is missing {missing_list}. \
                  The 3-block shape requires all three banners so the reader has a complete map.\n\
                  FIX: Add the missing banner(s):\n{fix_block}",
             ),
