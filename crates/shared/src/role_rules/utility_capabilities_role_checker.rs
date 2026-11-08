@@ -616,32 +616,9 @@ pub fn check_banner_hygiene(file: &FileEntry, violations: &mut Vec<LintResult>) 
         }
     }
 
-    // B-10: empty Block 3
-    if let Some((_, _, b3_line)) = markers.iter().find(|(n, _, _)| *n == 3) {
-        let b3_idx = b3_line - 1;
-        let mut has_content = false;
-        for line in lines.iter().skip(b3_idx + 1) {
-            let t = line.trim();
-            if t.is_empty() || is_comment(t) {
-                continue;
-            }
-            has_content = true;
-            break;
-        }
-        if !has_content {
-            violations.push(LintResult::new_arch(
-                &path,
-                *b3_line,
-                "AES403",
-                Severity::MEDIUM,
-                "AES403 CAPABILITY_ROLE: Empty Block 3.\n\
-                 WHY? `Block 3: Module Helpers` banner is present but nothing \
-                 follows it — the block is empty.\n\
-                 FIX: Either add helper code under Block 3, or remove the \
-                 Block 3 banner (B-10 allows two banners when Block 3 is empty).",
-            ));
-        }
-    }
+    // B-10: empty Block 3 is allowed — the banner itself is what matters
+    // (A-3 already requires all three banners to exist), so an empty Block 3
+    // is not a violation.
 
     // A-3: a capability file that declares some but not all Block banners is
     // incomplete — the reader's map is partial in either direction (B1 missing
