@@ -12,7 +12,7 @@ use rmcp::{ServerHandler, tool, tool_handler, tool_router};
 use std::sync::Arc;
 
 use crate::taxonomy_mcp_server_vo::{
-    DocsScaffoldArgs, ExecuteCommandArgs, GetConfigArgs, ListCommandsArgs,
+    DocsScaffoldArgs, ExecuteCommandArgs, ExecuteCommandOptions, GetConfigArgs, ListCommandsArgs,
 };
 
 use crate::surface_mcp_action_command::McpActionSurface;
@@ -46,24 +46,30 @@ impl LintArwakyMcpServer {
         Parameters(args): Parameters<ExecuteCommandArgs>,
     ) -> String {
         let action = args.action.clone();
-        let values = args.args.as_ref();
-        let path = match extract_string(values, "path", ".") {
-            Ok(value) => value,
-            Err(error) => return validation_error(&error),
-        };
-        let threshold = match extract_u64(values, "threshold", 80) {
-            Ok(value) if value <= 100 => value,
-            Ok(value) => {
-                return validation_error(&format!(
-                    "Invalid value for 'threshold': expected 0..=100, got {value}"
-                ));
-            }
-            Err(error) => return validation_error(&error),
-        };
-        let dry_run = match extract_bool(values, "dry_run", false) {
-            Ok(value) => value,
-            Err(error) => return validation_error(&error),
-        };
+        let options: ExecuteCommandOptions = args.args.unwrap_or_default();
+        let path_was_specified = options.path.is_some();
+        let path = options.path.unwrap_or_else(|| ".".to_string());
+        let threshold = options.threshold.unwrap_or(80);
+        let dry_run = options.dry_run.unwrap_or(false);
+        if threshold > 100 {
+            return validation_error(&format!(
+                "Invalid value for 'threshold': expected 0..=100, got {threshold}"
+            ));
+        }
+        if options.threshold.is_some() && action != "ci" {
+            return validation_error("'threshold' is only supported by the 'ci' action");
+        }
+        if options.dry_run.is_some() && action != "fix" {
+            return validation_error("'dry_run' is only supported by the 'fix' action");
+        }
+        if path_was_specified
+            && matches!(
+                action.as_str(),
+                "doctor" | "adapters" | "version" | "uninstall-hook" | "init" | "install" | "mcp-config" | "watch"
+            )
+        {
+            return validation_error(&format!("'path' is not supported by the '{action}' action"));
+        }
 
         tracing::info!(
             target: "lint_arwaky::audit",
@@ -75,10 +81,11 @@ impl LintArwakyMcpServer {
             dry_run,
             "MCP command invocation"
         );
-        let result = self
+        let mut result = self
             .action
             .execute_command(&action, &path, threshold, dry_run)
             .await;
+        attach_resolved_path(&self.action, &path, &mut result);
         let exit_code = result
             .get("exit_code")
             .and_then(serde_json::Value::as_i64)
@@ -102,25 +109,23 @@ impl LintArwakyMcpServer {
                 "MCP git-hook action result"
             );
         }
-        serde_json::to_string(&result).unwrap_or_default()
+        serialize_result(&result)
     }
 
     pub async fn handle_health_check(&self) -> String {
         let result = self.action.handle_health_check().await;
-        serde_json::to_string(&result).unwrap_or_else(|e| {
-            serde_json::json!({"error": format!("Serialization failed: {e}"), "exit_code": 2})
-                .to_string()
-        })
+        serialize_result(&result)
     }
 
     pub fn handle_list_commands(&self, Parameters(args): Parameters<ListCommandsArgs>) -> String {
         let result = self.action.handle_list_commands(args.domain);
-        serde_json::to_string(&result).unwrap_or_default()
+        serialize_result(&result)
     }
 
     pub fn handle_get_config(&self, Parameters(args): Parameters<GetConfigArgs>) -> String {
         let path = args.path.unwrap_or_else(|| ".".to_string());
-        self.action.handle_get_config(&path, args.language)
+        let result = self.action.handle_get_config(&path, args.language);
+        serialize_with_resolved_path(&self.action, &path, result)
     }
 
     /// Write missing template files in place.
@@ -131,15 +136,54 @@ impl LintArwakyMcpServer {
         Parameters(args): Parameters<DocsScaffoldArgs>,
     ) -> String {
         let path = args.path.unwrap_or_else(|| ".".to_string());
-        let result = self
+        let mut result = self
             .action
             .execute_docs_scaffold(&path, args.member.as_deref(), args.dry_run.unwrap_or(false))
             .await;
-        serde_json::to_string(&result).unwrap_or_else(|e| {
-            serde_json::json!({"error": format!("Serialization failed: {e}"), "exit_code": 2})
-                .to_string()
-        })
+        attach_resolved_path(&self.action, &path, &mut result);
+        serialize_result(&result)
     }
+}
+
+fn attach_resolved_path(
+    action: &McpActionSurface,
+    requested_path: &str,
+    result: &mut serde_json::Value,
+) {
+    let Some(object) = result.as_object_mut() else {
+        return;
+    };
+    if !object.contains_key("path") {
+        return;
+    }
+    if let Ok(path) = action.to_fp(requested_path) {
+        object.insert("resolved_path".to_string(), serde_json::json!(path.value()));
+    }
+}
+
+fn serialize_with_resolved_path(
+    action: &McpActionSurface,
+    requested_path: &str,
+    response: String,
+) -> String {
+    match serde_json::from_str::<serde_json::Value>(&response) {
+        Ok(mut value) => {
+            attach_resolved_path(action, requested_path, &mut value);
+            serialize_result(&value)
+        }
+        Err(_) => response,
+    }
+}
+
+fn serialize_result(result: &serde_json::Value) -> String {
+    serde_json::to_string(result).unwrap_or_else(|error| {
+        serde_json::json!({
+            "status": "error",
+            "error": format!("Serialization failed: {error}"),
+            "exit_code": 2
+        })
+        .to_string()
+    })
 }
 
 #[tool_handler]
@@ -159,13 +203,13 @@ impl ServerHandler for LintArwakyMcpServer {
 
 #[tool_router]
 impl LintArwakyMcpServer {
-    #[tool(description = "Execute any CLI command. This is the primary tool.")]
+    #[tool(description = "Run a supported linter action in the configured workspace. `path` defaults to the workspace root; relative paths resolve from that root and absolute paths must remain inside it. `threshold` is accepted only for `ci` (0..=100, default 80), and `dry_run` only for `fix` (default false). Unknown or inapplicable options are rejected. Path-bearing responses include `resolved_path`.")]
     pub async fn execute_command(&self, args: Parameters<ExecuteCommandArgs>) -> String {
         LintArwakyMcpServer::handle_execute_command(self, args).await
     }
 
     #[tool(
-        description = "List all available CLI commands with descriptions and examples. Optional `domain` filter (e.g. \"setup\", \"check\")."
+        description = "List command descriptions, MCP tool-call examples, CLI shell examples, and MCP support status. Optional `domain` filter (e.g. \"setup\", \"check\")."
     )]
     pub async fn list_commands(&self, args: Parameters<ListCommandsArgs>) -> String {
         LintArwakyMcpServer::handle_list_commands(self, args)
@@ -177,93 +221,20 @@ impl LintArwakyMcpServer {
     }
 
     #[tool(
-        description = "Return the effective architecture configuration for a target path/language. Shows rules, thresholds, adapters."
+        description = "Return the effective architecture configuration. `path` defaults to the configured workspace root; relative paths resolve from that root and absolute paths must remain inside it. Shows rules, thresholds, and adapters; path-bearing responses include `resolved_path`."
     )]
     pub async fn get_config(&self, args: Parameters<GetConfigArgs>) -> String {
         LintArwakyMcpServer::handle_get_config(self, args)
     }
 
     #[tool(
-        description = "Scaffold missing documentation templates from the embedded template set. Use `dry_run` to preview without writing. `strict` only affects the audit path."
+        description = "Scaffold missing documentation templates beneath the configured workspace root. `path` is workspace-relative or an in-workspace absolute path; `dry_run` previews without writing. `member` optionally limits scaffolding to one member."
     )]
     pub async fn docs_scaffold(&self, args: Parameters<DocsScaffoldArgs>) -> String {
         LintArwakyMcpServer::handle_docs_scaffold(self, args).await
     }
 }
 
-fn extract_string(
-    args: Option<&serde_json::Value>,
-    key: &str,
-    default: &str,
-) -> Result<String, String> {
-    let values = extract_args_object(args)?;
-    match values.and_then(|values| values.get(key)) {
-        None => Ok(default.to_string()),
-        Some(value) => value
-            .as_str()
-            .map(String::from)
-            .ok_or_else(|| format!("Invalid type for '{key}': expected a string")),
-    }
-}
-
-fn extract_u64(args: Option<&serde_json::Value>, key: &str, default: u64) -> Result<u64, String> {
-    let values = extract_args_object(args)?;
-    match values.and_then(|values| values.get(key)) {
-        None => Ok(default),
-        Some(value) => value
-            .as_u64()
-            .ok_or_else(|| format!("Invalid type for '{key}': expected a non-negative integer")),
-    }
-}
-
-fn extract_bool(
-    args: Option<&serde_json::Value>,
-    key: &str,
-    default: bool,
-) -> Result<bool, String> {
-    let values = extract_args_object(args)?;
-    match values.and_then(|values| values.get(key)) {
-        None => Ok(default),
-        Some(value) => value
-            .as_bool()
-            .ok_or_else(|| format!("Invalid type for '{key}': expected a boolean")),
-    }
-}
-
-fn extract_args_object(
-    args: Option<&serde_json::Value>,
-) -> Result<Option<&serde_json::Map<String, serde_json::Value>>, String> {
-    match args {
-        None => Ok(None),
-        Some(serde_json::Value::Object(values)) => Ok(Some(values)),
-        Some(_) => Err("Invalid type for 'args': expected an object".to_string()),
-    }
-}
-
 fn validation_error(error: &str) -> String {
     serde_json::json!({"status": "error", "error": error, "exit_code": 2}).to_string()
-}
-
-#[cfg(test)]
-mod tests {
-    use super::{extract_bool, extract_string, extract_u64};
-
-    #[test]
-    fn malformed_present_values_are_not_defaulted() {
-        let values = serde_json::json!({
-            "path": 42,
-            "threshold": "95",
-            "dry_run": "true"
-        });
-        assert!(extract_string(Some(&values), "path", ".").is_err());
-        assert!(extract_u64(Some(&values), "threshold", 80).is_err());
-        assert!(extract_bool(Some(&values), "dry_run", false).is_err());
-    }
-
-    #[test]
-    fn absent_values_use_documented_defaults() {
-        assert_eq!(extract_string(None, "path", ".").unwrap(), ".");
-        assert_eq!(extract_u64(None, "threshold", 80).unwrap(), 80);
-        assert!(!extract_bool(None, "dry_run", false).unwrap());
-    }
 }

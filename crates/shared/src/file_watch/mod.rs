@@ -23,3 +23,4 @@ pub use taxonomy_file_watch_vo::GitDiffResultVO;
 pub use taxonomy_file_watch_vo::WatchConfig;
 pub use taxonomy_file_watch_vo::WatchEvent;
 pub use taxonomy_file_watch_vo::WatchEventKind;
+pub use taxonomy_file_watch_vo::WatchOutputEvent;

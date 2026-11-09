@@ -95,7 +95,23 @@ fn execute_command_args_accepts_minimal_and_full_shapes() {
     )
     .expect("full args must deserialize");
     assert_eq!(full.action, "ci");
-    assert_eq!(full.args.as_ref().unwrap()["path"], "/tmp/proj");
+    let options = full.args.unwrap();
+    assert_eq!(options.path.as_deref(), Some("/tmp/proj"));
+    assert_eq!(options.threshold, Some(90));
+}
+
+#[test]
+fn execute_command_options_reject_unknown_or_mistyped_fields() {
+    assert!(serde_json::from_value::<ExecuteCommandArgs>(serde_json::json!({
+        "action": "scan",
+        "args": {"path": ".", "formatt": "json"}
+    }))
+    .is_err());
+    assert!(serde_json::from_value::<ExecuteCommandArgs>(serde_json::json!({
+        "action": "ci",
+        "args": {"threshold": "90"}
+    }))
+    .is_err());
 }
 
 #[test]

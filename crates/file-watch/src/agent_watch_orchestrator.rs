@@ -14,7 +14,7 @@ use shared_file_watch::contract_watch_protocol::{
 };
 use shared_file_watch::taxonomy_file_watch_request::WatchRequest;
 use shared_file_watch::taxonomy_file_watch_response::WatchResponse;
-use shared_file_watch::taxonomy_file_watch_vo::WatchConfig;
+use shared_file_watch::taxonomy_file_watch_vo::{WatchConfig, WatchOutputEvent};
 use shared_quality_rules::CodeAnalysisRequest;
 use shared_quality_rules::ICodeAnalysisAggregate;
 
@@ -43,7 +43,7 @@ impl WatchOrchestrator {
     }
 
     /// Full-project analysis run once on startup, to establish a baseline.
-    fn run_initial_lint(&self) {
+    fn run_initial_lint(&self) -> (usize, f64) {
         let results = self
             .linter
             .execute(CodeAnalysisRequest::RunAnalysis { files: vec![] })
@@ -56,16 +56,26 @@ impl WatchOrchestrator {
             score = score.value(),
             "Initial scan complete"
         );
+        (results.len(), score.value())
     }
 
-    fn run_watch_loop(&self, config: &WatchConfig, running: Arc<AtomicBool>) -> ExitCode {
+    fn run_watch_loop(
+        &self,
+        config: &WatchConfig,
+        running: Arc<AtomicBool>,
+        on_output: Arc<dyn Fn(WatchOutputEvent) + Send + Sync>,
+    ) -> ExitCode {
+        on_output(WatchOutputEvent::Started {
+            path: config.path.value().to_string(),
+        });
         info!(
             version = shared_common::RELEASE_VERSION,
             target = config.path.value(),
             "Watch mode started, press Ctrl+C to stop"
         );
 
-        self.run_initial_lint();
+        let (violations, score) = self.run_initial_lint();
+        on_output(WatchOutputEvent::InitialScanComplete { violations, score });
 
         // Start watcher (block on async call via minimal runtime)
         let rt = match tokio::runtime::Builder::new_current_thread()
@@ -100,8 +110,12 @@ impl WatchOrchestrator {
                     let filtered = self.filter.filter_events(batch);
 
                     for event in filtered {
-                        // FR-003: lint the changed file; failures are non-fatal
-                        let _ = self.lint.lint_changed(&event);
+                        // FR-003: lint the changed file; failures are non-fatal.
+                        let succeeded = self.lint.lint_changed(&event).is_ok();
+                        on_output(WatchOutputEvent::FileLinted {
+                            path: event.path,
+                            succeeded,
+                        });
                     }
                 }
                 Err(tokio::sync::broadcast::error::TryRecvError::Empty) => {}
@@ -116,6 +130,7 @@ impl WatchOrchestrator {
             warn!(error = %e, "failed to stop watcher cleanly");
         }
         info!("Watcher stopped");
+        on_output(WatchOutputEvent::Stopped);
         ExitCode::OK
     }
 }
@@ -124,8 +139,12 @@ impl WatchOrchestrator {
 impl IWatchAggregate for WatchOrchestrator {
     fn execute(&self, request: WatchRequest) -> WatchResponse {
         match request {
-            WatchRequest::Run { config, running } => WatchResponse::Run {
-                exit_code: self.run_watch_loop(&config, running),
+            WatchRequest::Run {
+                config,
+                running,
+                on_output,
+            } => WatchResponse::Run {
+                exit_code: self.run_watch_loop(&config, running, on_output),
             },
             WatchRequest::IsLintable { path } => WatchResponse::IsLintable {
                 lintable: self.filter.is_lintable(path.value()),

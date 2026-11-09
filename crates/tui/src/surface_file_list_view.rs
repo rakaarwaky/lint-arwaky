@@ -16,6 +16,16 @@ use shared_tui::utility_tui_theme as theme;
 
 pub struct FileListView;
 
+/// First displayed row for a selected position and viewport size.
+pub fn visible_window_start(display_len: usize, selected_position: usize, visible_rows: usize) -> usize {
+    if visible_rows == 0 || display_len <= visible_rows {
+        return 0;
+    }
+    selected_position
+        .min(display_len - 1)
+        .saturating_sub(visible_rows - 1)
+}
+
 impl FileListView {
     pub fn new() -> Self {
         Self
@@ -36,37 +46,56 @@ impl FileListView {
             .borders(Borders::ALL)
             .border_style(border_style);
 
-        // In search mode, an empty filtered set is meaningful: it represents a
-        // completed search with no matches rather than an unfiltered list.
-        let display_indices: Vec<usize> = if state.search.mode {
-            state.search.filtered_indices.clone()
+        // Keep per-frame row construction proportional to the viewport rather
+        // than the number of entries in a large directory.
+        let display_len = if state.search.mode {
+            state.search.filtered_indices.len()
         } else {
-            (0..state.navigation.entries.len()).collect()
+            state.navigation.entries.len()
         };
 
         // Empty states, in priority order. A zero-match search is guidance
         // (#367); an open folder with no rows says so; and a first run whose
-        // path dialog was dismissed says how to choose a root, because before
-        // `r` existed that state was unrecoverable (#1317).
-        let empty_hint =
-            if state.search.mode && !state.search.query.is_empty() && display_indices.is_empty() {
-                Some(format!(
-                    "No matches for '{}' — press Esc to clear filter",
-                    state.search.query
-                ))
-            } else if display_indices.is_empty() {
-                Some(empty_state_hint(state))
-            } else {
-                None
-            };
-
-        // In search mode, filter_pos is the highlight position in the displayed list.
-        // In normal mode, selected_index is the highlight position.
-        let display_selected = if state.search.mode {
-            (!state.search.filtered_indices.is_empty()).then_some(state.search.filter_pos)
+        // path dialog was dismissed says how to choose a root (#1317).
+        let empty_hint = if state.search.mode
+            && !state.search.query.is_empty()
+            && display_len == 0
+        {
+            Some(format!(
+                "No matches for '{}' — press Esc to clear filter",
+                state.search.query
+            ))
+        } else if display_len == 0 {
+            Some(empty_state_hint(state))
         } else {
-            Some(state.navigation.selected_index)
+            None
         };
+
+        let selected_position = if state.search.mode {
+            (!state.search.filtered_indices.is_empty())
+                .then_some(state.search.filter_pos.min(display_len.saturating_sub(1)))
+        } else if display_len > 0 {
+            Some(state.navigation.selected_index.min(display_len - 1))
+        } else {
+            None
+        };
+        let visible_rows = area.height.saturating_sub(2) as usize;
+        let window_start = selected_position
+            .map(|selected| visible_window_start(display_len, selected, visible_rows))
+            .unwrap_or(0);
+        let window_end = window_start.saturating_add(visible_rows).min(display_len);
+        let display_indices: Vec<usize> = (window_start..window_end)
+            .map(|position| {
+                if state.search.mode {
+                    state.search.filtered_indices[position]
+                } else {
+                    position
+                }
+            })
+            .collect();
+        let display_selected = selected_position
+            .filter(|position| *position >= window_start && *position < window_end)
+            .map(|position| position - window_start);
 
         let items: Vec<ListItem> = display_indices
             .iter()
