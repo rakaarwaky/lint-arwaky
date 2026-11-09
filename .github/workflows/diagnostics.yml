@@ -10,6 +10,12 @@ on:
     branches: [arena/14b199d5-lint-arwaky]
   workflow_dispatch:
 
+env:
+  # The real CI sets RUSTC_WRAPPER=sccache with a sibling action that installs
+  # it. This job does not, and an inherited wrapper that is not on PATH makes
+  # every cargo invocation fail before compiling anything.
+  RUSTC_WRAPPER: ""
+
 jobs:
   diagnose:
     name: Diagnose
@@ -22,34 +28,30 @@ jobs:
         with:
           components: clippy, rustfmt
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
-      - name: probe
-        run: |
-          echo "::notice title=probe::sha=$(git rev-parse --short HEAD) crates=$(ls crates | wc -l) root_manifest=$(test -f Cargo.toml && echo yes || echo no)"
-          cargo --version
-          echo "::notice title=probe::rustc $(rustc --version)"
-      - name: cargo check
-        run: |
-          set -o pipefail
-          cargo check --all-targets --message-format=short 2>&1 | tee /tmp/check.txt || true
-          echo "::notice title=check-lines::$(wc -l < /tmp/check.txt) lines"
-          tail -25 /tmp/check.txt | while IFS= read -r line; do
-            echo "::notice title=check-tail::${line//'%'/%25}"
-          done
-          grep -E "error(\[E[0-9]+\])?:" /tmp/check.txt | head -60 | while IFS= read -r line; do
-            echo "::error title=check::${line//'%'/%25}"
-          done
-          if grep -qE "error(\[E[0-9]+\])?:" /tmp/check.txt; then exit 1; fi
+
       - name: cargo fmt
         if: always()
         run: |
-          cargo fmt --all -- --check 2>&1 | tee /tmp/fmt.txt || true
-          grep -E "^Diff in " /tmp/fmt.txt | head -40 | while IFS= read -r line; do
+          cargo fmt --all -- --check > /tmp/fmt.txt 2>&1 || true
+          # Emit the whole diff, not just the hunk headers: the headers say
+          # where, the body says what.
+          head -120 /tmp/fmt.txt | while IFS= read -r line; do
             echo "::error title=fmt::${line//'%'/%25}"
           done
+
+      - name: cargo check
+        if: always()
+        run: |
+          cargo check --all-targets --message-format=short > /tmp/check.txt 2>&1 || true
+          echo "::notice title=check-lines::$(wc -l < /tmp/check.txt) lines"
+          grep -E "^[^ ]+\.rs:[0-9]+:[0-9]+: error|^error" /tmp/check.txt | head -60 | while IFS= read -r line; do
+            echo "::error title=check::${line//'%'/%25}"
+          done
+
       - name: cargo clippy
         if: always()
         run: |
-          cargo clippy --all-targets --message-format=short -- -D warnings 2>&1 | tee /tmp/clippy.txt || true
-          grep -E "^(error|warning)" /tmp/clippy.txt | head -60 | while IFS= read -r line; do
+          cargo clippy --all-targets --message-format=short -- -D warnings > /tmp/clippy.txt 2>&1 || true
+          grep -E "^[^ ]+\.rs:[0-9]+:[0-9]+: (error|warning)|^error" /tmp/clippy.txt | head -60 | while IFS= read -r line; do
             echo "::error title=clippy::${line//'%'/%25}"
           done
