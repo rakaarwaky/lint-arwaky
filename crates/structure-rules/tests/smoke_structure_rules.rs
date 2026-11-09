@@ -9,7 +9,7 @@ use shared_structure_rules::taxonomy_structure_rules_response::StructureResponse
 use std::time::{Duration, Instant};
 use structure_rules_lint_arwaky::root_structure_rules_container::RootStructureRulesContainer;
 
-/// The budget this suite holds itself to. The skill fixes smoke at under 5s.
+/// The budget this suite holds itself to: smoke stays under 5s.
 const SMOKE_BUDGET: Duration = Duration::from_secs(5);
 
 #[test]

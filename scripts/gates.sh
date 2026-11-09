@@ -102,9 +102,9 @@ FMT_PID=$!
 wait_and_report $FMT_PID
 echo "Phase 1 duration: $((SECONDS - ph1_start))s"
 
-# Skill markdown has a single source of truth at `crates/shared/skills/`.
-# The shared crate packages that directory directly and copies it to OUT_DIR
-# at build time for the generated `include_str!` calls.
+# Document templates have a single source of truth at `crates/shared/template/`.
+# `crates/shared/build.rs` embeds them into OUT_DIR at build time for the
+# generated `include_str!` calls.
 
 # ─── Phase 2: Build + Clippy (single compilation) ─────────
 # clippy builds all targets in debug, then build binary (instant)

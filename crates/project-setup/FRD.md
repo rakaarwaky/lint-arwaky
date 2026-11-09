@@ -200,8 +200,8 @@ Project setup delivers per-client MCP configuration, per-language `.env` files, 
 
 | Aspect | Detail |
 |--------|--------|
-| **Input** | Template key; source is `SetupRequest::{GetConfigTemplate, GetEmbeddedSkills}`. |
-| **Output** | `SetupResponse::{Template, Skills}`. |
+| **Input** | Template key; source is `SetupRequest::GetConfigTemplate`. |
+| **Output** | `SetupResponse::Template`. |
 | **Protocol** | `IConfigTemplateProtocol` |
 | **Method** | `get_config_template` |
 | **Event** | None. |

@@ -177,11 +177,11 @@ fn stage_doc_rules(manifest_dir: &Path, out_dir: &Path) {
         .parent()
         .and_then(|p| p.parent())
         .unwrap_or(manifest_dir);
-    let skills_dir = shared_dir.join("template");
+    let template_dir = shared_dir.join("template");
 
-    println!("cargo:rerun-if-changed={}", skills_dir.display());
+    println!("cargo:rerun-if-changed={}", template_dir.display());
     for doc in DOCS {
-        let p = skills_dir.join(doc).join("template.md");
+        let p = template_dir.join(doc).join("template.md");
         println!("cargo:rerun-if-changed={}", p.display());
     }
 
@@ -192,7 +192,7 @@ fn stage_doc_rules(manifest_dir: &Path, out_dir: &Path) {
     );
 
     for doc in DOCS {
-        let path = skills_dir.join(doc).join("template.md");
+        let path = template_dir.join(doc).join("template.md");
         let raw = fs::read_to_string(&path).unwrap_or_default();
         out = extract_doc_constants(doc, &raw, out);
     }

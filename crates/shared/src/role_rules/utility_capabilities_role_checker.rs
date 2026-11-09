@@ -153,8 +153,9 @@ pub fn check_implementor(file: &FileEntry, violations: &mut Vec<LintResult>) {
             "AES403 CAPABILITY_ROLE: Capability implements no contract protocol.\n\
              WHY? {found} A capability must implement a protocol contract; \
              an aggregate trait belongs to the agent layer (AES405).\n\
-             FIX: Create the contract with the `aes-contract` skill, \
-             then add the protocol implementation as Block 2 of this file."
+             FIX: Declare the contract protocol for this capability (see \
+             ARCHITECTURE.md, Contract Role), then add the protocol \
+             implementation as Block 2 of this file."
         ),
     ));
 }

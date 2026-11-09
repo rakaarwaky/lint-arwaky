@@ -29,23 +29,23 @@ AI agents working in this workspace must know the AES 7-layer naming convention,
 │   ├── cli-commands/                  # CLI command handlers (surface)
 │   ├── config-system/                 # config parsing + workspace detection
 │   ├── dispatcher/                    # command dispatch + panic isolation (surface)
-│   ├── doc-rules/                     # doc-shape + line-drift checks (AES601 family)
+│   ├── doc-rules/                     # doc-shape + line-drift checks (AES6xx)
 │   ├── external-lint/                 # shells out to clippy/ruff/eslint/mypy
 │   ├── file-watch/                    # watch mode (notify-based)
 │   ├── filesystem/                    # filesystem scanning / repo discovery
 │   ├── git-hooks/                     # pre-commit / pre-push hook integration
-│   ├── import-rules/                  # import graph validation (AES4xx)
+│   ├── import-rules/                  # layer & import boundary (AES2xx)
 │   ├── logging/                       # structured logging
 │   ├── maintenance/                   # codebase maintenance checks
 │   ├── mcp-server/                    # MCP protocol adapter (surface)
 │   ├── naming-rules/                  # naming rule checks (AES1xx)
-│   ├── orphan-rules/                  # orphan detection (AES2xx)
+│   ├── orphan-rules/                  # orphan detection (AES5xx)
 │   ├── project-setup/                 # scaffold / init
-│   ├── quality-rules/                 # quality checks (AES5xx)
+│   ├── quality-rules/                 # file & content quality (AES3xx)
 │   ├── report-formatter/              # violation report formatting
-│   ├── role-rules/                    # role/layer enforcement (AES3xx)
-│   ├── shared/                        # shared layer: contracts, VOs, doc-rules codegen, skill templates
-│   ├── structure-rules/               # structure/doc checks (AES6xx/7xx)
+│   ├── role-rules/                    # role/layer enforcement (AES4xx)
+│   ├── shared/                        # shared layer: contracts, VO, utility ,templates
+│   ├── structure-rules/               # folder structure (AES7xx)
 │   └── tui/                           # terminal UI (surface)
 ├── workspaces-bad/                    # scanner fixtures: intentional AES violations
 ├── workspaces-good/                   # scanner fixtures: clean AES-conformant code

@@ -114,7 +114,8 @@ pub fn check_implementor(file: &FileEntry, violations: &mut Vec<LintResult>) {
                  WHY? {why} An agent is the composition root for its feature, so it \
                  is the type that implements the feature's aggregate.\n\
                  FIX: Have one type declared in this file implement the \
-                 feature aggregate, or add the feature aggregate with the `aes-contract` skill."
+                 feature aggregate; the aggregate trait belongs to the \
+                 contract layer (see ARCHITECTURE.md, Contract Role)."
             ),
         ));
     }
@@ -263,7 +264,7 @@ fn count_feature_protocol_traits_with(feature_dir: &Path, referenced: &[String])
 /// feature's protocols are often split across sibling files such as
 /// `contract_<feature>_update_protocol.py`, so every `contract_<feature>_*`
 /// file is scanned, not just the exact-stem one. The trailing `starts_with`
-/// keeps a `skill_update` feature from picking up `contract_skill_protocol`.
+/// keeps an `<x>_update` feature from picking up `contract_<x>_protocol`.
 fn count_feature_protocol_traits_in_modules_dir(
     modules_shared: &Path,
     feature: &str,

@@ -90,7 +90,7 @@ pub const MEMBER_ROOT_FORBIDDEN_PREFIXES: &[(&str, &str)] = &[
 ];
 
 /// ─── AES704 — Test-suite coverage ───────────────────────────────────────────
-/// The aes-testing-suite skill fixes one test layout: seven test types in
+/// One test layout is fixed: seven test types in
 /// `tests/` plus benchmarks in `benches/`, each named by a flat prefix. A
 /// feature folder that owns source owes all eight, so a missing category is a
 /// structural gap rather than a naming slip.
