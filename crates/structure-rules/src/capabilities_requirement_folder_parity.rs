@@ -1,10 +1,18 @@
-// PURPOSE: RequirementFolderParity — AES706: PR-<project> id to crate folder mapping.
+// PURPOSE: RequirementFolderParity — AES706: PR-<segment> id to crate folder mapping.
 //
 // Every crate folder's FRD.md carries FR ids whose feature prefix matches the
 // folder name (crates/filesystem → FR-Filesystem-NNN), and every PR-<segment>-001..N
 // id in PRD.md / ROADMAP.md maps 1:1 to a crate folder by order
 // (PR-<segment>-001 → the first folder, `filesystem`). A mismatch fires AES706 so the
 // linter enforces the 1:1 contract between spec ids and crate folders.
+//
+// The `<segment>` token belongs to the audited project (`LA`, `PSD`, `CALC`, …),
+// never to lint-arwaky, so no violation name and no message may hardcode one
+// project's segment. The folder order is likewise derived from the folder names
+// that are actually crate folders: language caches (`__pycache__`), build
+// output (`target`, `dist`), and dependency trees never take a position, because
+// a single phantom folder at position 0 shifts every id onto its neighbour's
+// folder.
 
 use shared_doc_rules::taxonomy_doc_audit_context_vo::MemberRole;
 use shared_structure_rules::contract_structure_protocol::IStructurePrLaProtocol;
@@ -106,83 +114,347 @@ fn fr_id_matches_folder(fr_id: &str, prefix: &str) -> bool {
         .starts_with(&format!("FR-{}", prefix.to_ascii_uppercase()))
 }
 
-/// Part B: every PR-<segment>-001..N id in PRD.md / ROADMAP.md maps to a real
-/// crate folder by order (PR-<segment>-001 → first folder), the folder exists
-/// under a member dir, and the heading's title names that folder.
+/// Part B: every `PR-<segment>-001..N` id in PRD.md / ROADMAP.md maps to a real
+/// crate folder by order (`PR-<segment>-001` → first folder), and the heading's
+/// title names that folder.
 ///
-/// The folder order is derived from the actual crate folders present under
-/// each member dir, so AES706 can lint any project — not just lint-arwaky
-/// itself. Sorted alphabetically for a stable order independent of scan order.
+/// Folder order is scoped by language whenever the spec documents are: a
+/// document that carries one `PR-<segment>` sequence per language (`PR-PY-…`
+/// rows for the Python modules, `PR-TS-…` rows for the TypeScript packages)
+/// audits each sequence against its own member dir's folder order, so the
+/// Python rows never get compared against a TypeScript folder. A document with
+/// a single sequence spans the whole tree by design, and is audited against the
+/// folder order of every member dir in turn.
+///
+/// The order itself comes from the crate folders that actually exist — caches,
+/// build output, and dependency trees never take a position — so AES706 can
+/// lint any project, not just lint-arwaky itself.
 fn audit_pr_la_documents(root: &Path, ws_root: &Path) -> Vec<StructureFinding> {
     let members = utility_structure_parsers::scoped_member_dirs(root, ws_root);
-    let order = crate_folder_names(&members);
-    let mut findings = Vec::new();
-    let mut covered_positions = std::collections::BTreeSet::<usize>::new();
-    let mut any_spec_doc = false;
+    // Read every spec document once: the segment set spans both, so a folder
+    // reached by an id in either document counts as covered.
+    let documents: Vec<(&str, PathBuf, String)> = consts::PR_LA_DOCUMENTS
+        .iter()
+        .filter_map(|doc_name| {
+            let doc = ws_root.join(doc_name);
+            if !doc.is_file() {
+                return None;
+            }
+            let contents = std::fs::read_to_string(&doc).ok()?;
+            Some((*doc_name, doc, contents))
+        })
+        .collect();
+    // No spec document: the reverse check has nothing to agree with, so a
+    // project with folders but no PRD.md/ROADMAP.md is not penalized.
+    if documents.is_empty() {
+        return Vec::new();
+    }
 
-    for doc_name in consts::PR_LA_DOCUMENTS {
-        let doc = ws_root.join(doc_name);
-        if !doc.is_file() {
-            continue;
-        }
-        any_spec_doc = true;
-        let Ok(contents) = std::fs::read_to_string(&doc) else {
-            continue;
-        };
-        for (position, pr_la_id, title) in extract_pr_la_ids(&contents) {
-            covered_positions.insert(position);
-            let expected_folder = order.get(position).map(|s| s.as_str()).unwrap_or("");
-            if expected_folder.is_empty() {
-                findings.push(dangling_pr_la_finding(
-                    &doc, ws_root, &pr_la_id, position, doc_name,
-                ));
-                continue;
+    let segments = documents
+        .iter()
+        .flat_map(|(_, _, contents)| document_segments(contents))
+        .fold(Vec::<String>::new(), |mut all, segment| {
+            if !all.contains(&segment) {
+                all.push(segment);
             }
-            if !members
+            all
+        });
+    // Every `PR-<segment>` id across the spec documents, grouped by segment as
+    // (position, title). Used to bind each segment to the member dir whose
+    // folders its ids actually reference, so segment order need not match
+    // member dir order.
+    let segment_ids: Vec<(String, Vec<(usize, String)>)> = segments
+        .iter()
+        .map(|segment| {
+            let ids: Vec<(usize, String)> = documents
                 .iter()
-                .any(|member| member.join(expected_folder).is_dir())
-            {
-                findings.push(missing_folder_finding(
-                    &doc,
-                    ws_root,
-                    &pr_la_id,
-                    expected_folder,
-                ));
+                .flat_map(|(_, _, contents)| segment_id_positions(contents, segment))
+                .collect();
+            (segment.clone(), ids)
+        })
+        .collect();
+    let mut lanes = member_lanes(&members, &segment_ids);
+    let mut findings = Vec::new();
+
+    for (doc_name, doc, contents) in &documents {
+        for lane in lanes.iter_mut() {
+            // Only segment-bound lanes process ids. Unbound-member lanes
+            // (segment == None) exist solely to report their folders as
+            // unreached in the reverse check below.
+            let Some(segment) = lane.segment.as_deref() else {
                 continue;
-            }
-            if !title.is_empty() && !title_names_folder(&title, expected_folder) {
-                findings.push(title_mismatch_finding(
-                    &doc,
-                    ws_root,
-                    &pr_la_id,
-                    &title,
-                    expected_folder,
-                ));
+            };
+            for (position, pr_id, title) in extract_pr_ids(contents, Some(segment)) {
+                lane.covered_positions.insert(position);
+                let Some(expected_folder) = lane.order.get(position) else {
+                    findings.push(dangling_pr_id_finding(
+                        doc, ws_root, &pr_id, position, doc_name,
+                    ));
+                    continue;
+                };
+                if !title.is_empty() && !title_names_folder(&title, expected_folder) {
+                    findings.push(title_mismatch_finding(
+                        doc,
+                        ws_root,
+                        &pr_id,
+                        &title,
+                        expected_folder,
+                        &lane.label(),
+                    ));
+                }
             }
         }
     }
 
-    // Reverse check: every crate folder position must have a PR-<segment> id
-    // mapping in PRD.md / ROADMAP.md. Reports folders with no spec id at all.
-    // Only runs when at least one spec document exists, so a project with no
-    // PRD.md/ROADMAP.md is not penalized for having folders without ids.
-    if any_spec_doc {
-        for (position, folder) in order.iter().enumerate() {
-            if covered_positions.contains(&position) {
+    // Reverse check: every crate folder position in a lane's order must be
+    // reached by a `PR-<segment>` id in at least one spec document. Runs per
+    // lane because a position only means something inside its own member:
+    // merging members first would report one language's folder position
+    // against another language's folder.
+    for lane in &lanes {
+        for (position, folder) in lane.order.iter().enumerate() {
+            if lane.covered_positions.contains(&position) {
                 continue;
             }
-            findings.push(folder_without_pr_la_finding(position, folder));
+            findings.push(folder_without_pr_id_finding(
+                position,
+                folder,
+                &lane.label(),
+                &lane.rel_path(folder),
+            ));
         }
     }
 
     findings
 }
 
+/// One audit lane: a set of member dirs, the crate folder order over them, and
+/// the `PR-<segment>` token the document uses for that order.
+struct FolderLane {
+    /// The member dirs this lane orders, each paired with its own name.
+    owners: Vec<(PathBuf, String)>,
+    /// Every crate folder name across *owners*, sorted.
+    order: Vec<String>,
+    /// The `PR-<segment>` token this lane audits, e.g. `PSD`. `None` audits
+    /// every segment present in the documents.
+    segment: Option<String>,
+    /// Positions the spec documents reached, so the reverse check can report
+    /// the folders no id maps onto.
+    covered_positions: std::collections::BTreeSet<usize>,
+}
+
+impl FolderLane {
+    /// The member dirs this lane covers, e.g. `modules` or
+    /// `crates|modules|packages`, for message text.
+    fn label(&self) -> String {
+        self.owners
+            .iter()
+            .map(|(_, name)| name.as_str())
+            .collect::<Vec<_>>()
+            .join("|")
+    }
+
+    /// The path a finding for *folder* names: the member dir that holds it.
+    fn rel_path(&self, folder: &str) -> String {
+        for (member, name) in &self.owners {
+            if member.join(folder).is_dir() {
+                return format!("{name}/{folder}");
+            }
+        }
+        format!("{}/{folder}", self.label())
+    }
+}
+
+/// Build the audit lanes *members* owe the spec documents as a set.
+///
+/// `segment_ids` pairs each `PR-<segment>` token with its `(position, title)`
+/// ids across every spec document, so lanes bind segment→member by which
+/// member's folders the titles actually name — never by assuming segment order
+/// equals member dir order. A segment whose titles name no folder is audited
+/// against every member's merged order, and no position is silently excused.
+fn member_lanes(
+    members: &[PathBuf],
+    segment_ids: &[(String, Vec<(usize, String)>)],
+) -> Vec<FolderLane> {
+    let owners: Vec<(PathBuf, String)> = members
+        .iter()
+        .map(|member| (member.clone(), member_name(member)))
+        .collect();
+    if members.is_empty()
+        || members
+            .iter()
+            .all(|member| crate_folder_names(std::slice::from_ref(member)).is_empty())
+    {
+        return Vec::new();
+    }
+    if segment_ids.is_empty() {
+        // A spec document exists but declares no `PR-<segment>` id at all, so
+        // no position can be reached: one lane over the merged order reports
+        // every crate folder, which is how the missing ids surface.
+        return vec![FolderLane {
+            order: crate_folder_names(members),
+            owners,
+            segment: None,
+            covered_positions: std::collections::BTreeSet::new(),
+        }];
+    }
+    // Bind each segment to the member dir whose crate folders its titles name,
+    // matching titles to folder names. Empty titles are skipped; a segment
+    // binds to the member all its non-empty titles consistently name, and a
+    // segment whose titles name no folder stays audited against every member's
+    // merged order.
+    let mut lanes: Vec<FolderLane> = Vec::new();
+    let mut laned: Vec<(PathBuf, String)> = Vec::new();
+    for (segment, ids) in segment_ids {
+        let seg_bound = bound_members_for_segment(members, ids);
+        if seg_bound.len() == 1 {
+            let Some((member, name)) = seg_bound.first().cloned() else {
+                continue;
+            };
+            laned.push((member.clone(), name.clone()));
+            lanes.push(FolderLane {
+                owners: vec![(member.clone(), name.clone())],
+                order: crate_folder_names(std::slice::from_ref(&member)),
+                segment: Some(segment.clone()),
+                covered_positions: std::collections::BTreeSet::new(),
+            });
+            continue;
+        }
+        // Segment binds to no single member: audit it against every member's
+        // merged order, so all members are treated as laned.
+        laned.extend(owners.clone());
+        let order = crate_folder_names(members);
+        lanes.push(FolderLane {
+            owners: owners.clone(),
+            order: order.clone(),
+            segment: Some(segment.clone()),
+            covered_positions: std::collections::BTreeSet::new(),
+        });
+    }
+    // Members bound to no segment keep their folders unreached: one fallback
+    // lane reports every folder they hold, so `pr_folder_without_id` still
+    // fires for folders with no spec id.
+    let unbound: Vec<(PathBuf, String)> = owners
+        .into_iter()
+        .filter(|(m, _)| !laned.iter().any(|(b, _)| b == m))
+        .collect();
+    if !unbound.is_empty() {
+        let unbound_members: Vec<PathBuf> = unbound.iter().map(|(m, _)| m.clone()).collect();
+        let order = crate_folder_names(&unbound_members);
+        lanes.push(FolderLane {
+            owners: unbound,
+            order,
+            segment: None,
+            covered_positions: std::collections::BTreeSet::new(),
+        });
+    }
+    lanes
+}
+
+/// The member dirs whose crate folders are named by *ids*' titles. Empty
+/// titles are skipped. A segment binds to the member all its non-empty titles
+/// consistently name; a title naming no folder, or titles naming folders under
+/// multiple members, leaves the segment unbound.
+fn bound_members_for_segment(
+    members: &[PathBuf],
+    ids: &[(usize, String)],
+) -> Vec<(PathBuf, String)> {
+    // Non-empty titles only: an untitled heading (`### PR-LA-001`) names no
+    // folder and must not veto a segment whose other titles bind cleanly.
+    let titles: Vec<&str> = ids
+        .iter()
+        .map(|(_, t)| t.as_str())
+        .filter(|t| !t.is_empty())
+        .collect();
+    if titles.is_empty() {
+        return Vec::new(); // segment has no titles at all → unbound
+    }
+    let mut bound: Option<(PathBuf, String)> = None;
+    for title in titles {
+        let folder = named_folder(members, title);
+        let Some(folder) = folder else {
+            return Vec::new(); // a title names no folder → unbound
+        };
+        let owning_member = owning_member(members, &folder);
+        match bound {
+            None => bound = Some(owning_member),
+            Some(ref b) if b.0 == owning_member.0 => {}
+            Some(_) => return Vec::new(), // titles name folders under multiple members
+        }
+    }
+    bound.into_iter().collect()
+}
+
+/// The crate folder name that *title* names, if exactly one folder under any
+/// member matches it case-insensitively or by stem.
+fn named_folder(members: &[PathBuf], title: &str) -> Option<String> {
+    let mut matches: Vec<String> = Vec::new();
+    for member in members {
+        for folder in crate_folders(member) {
+            let name = folder.file_name()?.to_str()?;
+            if title_names_folder(title, name) && !matches.contains(&name.to_string()) {
+                matches.push(name.to_string());
+            }
+        }
+    }
+    if matches.len() == 1 {
+        if let Some(name) = matches.first() {
+            return Some(name.clone());
+        }
+        return None;
+    }
+    None
+}
+
+/// The member dir that holds *folder*, paired with its name.
+fn owning_member(members: &[PathBuf], folder: &str) -> (PathBuf, String) {
+    for member in members {
+        if member.join(folder).is_dir() {
+            return (member.clone(), member_name(member));
+        }
+    }
+    (
+        members.last().unwrap_or(&PathBuf::new()).clone(),
+        member_name(members.last().unwrap_or(&PathBuf::new())),
+    )
+}
+
+/// The distinct `PR-<segment>` tokens a document uses, in first-seen order.
+fn document_segments(contents: &str) -> Vec<String> {
+    let mut segments: Vec<String> = Vec::new();
+    for (_, pr_id, _) in extract_pr_ids(contents, None) {
+        let token = pr_id.split('-').nth(1).unwrap_or_default().to_string();
+        if !token.is_empty() && !segments.contains(&token) {
+            segments.push(token);
+        }
+    }
+    segments
+}
+
+/// Every `PR-<segment>-NNN` id in *contents* whose segment equals *segment*,
+/// as `(position, title)` pairs. Used to bind a segment to the member dir
+/// whose folders its titles name.
+fn segment_id_positions(contents: &str, segment: &str) -> Vec<(usize, String)> {
+    extract_pr_ids(contents, Some(segment))
+        .into_iter()
+        .map(|(position, _id, title)| (position, title))
+        .collect()
+}
+
+/// The member dir's own name (`crates`, `modules`, `packages`).
+fn member_name(member: &Path) -> String {
+    member
+        .file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or_default()
+        .to_string()
+}
+
 /// Finding: a feature crate folder has no FRD.md at all.
 fn missing_frd_finding(frd: &Path, ws_root: &Path, folder_name: &str) -> StructureFinding {
     StructureFinding::new(
         consts::RULE_CODE_PR_LA_FOLDER,
-        consts::PR_LA_VIOLATION_MISSING_FRD,
+        consts::PR_VIOLATION_MISSING_FRD,
         relative_to(frd, ws_root),
         format!(
             "'{folder_name}' holds no FRD.md, so its FR ids cannot be verified against its prefix"
@@ -197,21 +469,26 @@ fn missing_frd_finding(frd: &Path, ws_root: &Path, folder_name: &str) -> Structu
     )
 }
 
-/// Finding: a crate folder exists at a position in the crate order that has no
-/// corresponding PR-<segment>-NNN id in PRD.md / ROADMAP.md.
-fn folder_without_pr_la_finding(position: usize, folder: &str) -> StructureFinding {
+/// Finding: a crate folder exists at a position in its member's crate order
+/// that no PR-<segment>-NNN id in PRD.md / ROADMAP.md reaches.
+fn folder_without_pr_id_finding(
+    position: usize,
+    folder: &str,
+    member: &str,
+    path: &str,
+) -> StructureFinding {
     StructureFinding::new(
         consts::RULE_CODE_PR_LA_FOLDER,
-        consts::PR_LA_VIOLATION_FOLDER_WITHOUT_PR_LA_ID,
-        format!("crates/{folder}"),
+        consts::PR_VIOLATION_FOLDER_WITHOUT_ID,
+        path,
         format!(
-            "'{folder}' sits at crate position {position} but no PR-<segment> id maps to it"
+            "'{folder}' sits at {member} crate position {position} but no PR-<segment> id maps to it"
         ),
     )
     .with_reason(
         "PR-<segment> ids map 1:1 to crate folders by order, so every crate folder position needs a PR-<segment> id.",
         format!(
-            "Add 'PR-<segment>-{pos}' to PRD.md and ROADMAP.md that names '{folder}', where pos = {position} + 1.",
+            "Add a 'PR-<segment>-{pos}' heading to PRD.md and ROADMAP.md that names '{folder}', where pos = {position} + 1.",
             pos = position + 1,
         ),
     )
@@ -227,7 +504,7 @@ fn fr_mismatch_finding(
 ) -> StructureFinding {
     StructureFinding::new(
         consts::RULE_CODE_PR_LA_FOLDER,
-        consts::PR_LA_VIOLATION_FR_ID_MISMATCH,
+        consts::PR_VIOLATION_FR_ID_MISMATCH,
         relative_to(frd, ws_root),
         format!("folder '{folder_name}' carries FR id '{fr_id}' but its prefix must be 'FR-{prefix}'"),
     )
@@ -238,46 +515,23 @@ fn fr_mismatch_finding(
 }
 
 /// Finding: a PR-<segment> id has no crate folder at its position.
-fn dangling_pr_la_finding(
+fn dangling_pr_id_finding(
     doc: &Path,
     ws_root: &Path,
-    pr_la_id: &str,
+    pr_id: &str,
     position: usize,
     doc_name: &str,
 ) -> StructureFinding {
     StructureFinding::new(
         consts::RULE_CODE_PR_LA_FOLDER,
-        consts::PR_LA_VIOLATION_PR_LA_ID_MISMATCH,
+        consts::PR_VIOLATION_PR_ID_MISMATCH,
         relative_to(doc, ws_root),
-        format!("'{pr_la_id}' has no crate folder at position {position}"),
+        format!("'{pr_id}' has no crate folder at position {position}"),
     )
     .with_reason(
         "PR-<segment> ids map 1:1 to crate folders by order, so a position with no folder cannot be satisfied.",
         format!(
-            "Add a crate folder for position {position}, or remove the dangling '{pr_la_id}' from '{doc_name}'."
-        ),
-    )
-}
-
-/// Finding: the PR-<segment> id's mapped folder does not exist under any member dir.
-fn missing_folder_finding(
-    doc: &Path,
-    ws_root: &Path,
-    pr_la_id: &str,
-    expected_folder: &str,
-) -> StructureFinding {
-    StructureFinding::new(
-        consts::RULE_CODE_PR_LA_FOLDER,
-        consts::PR_LA_VIOLATION_PR_LA_ID_MISMATCH,
-        relative_to(doc, ws_root),
-        format!(
-            "'{pr_la_id}' maps to '{expected_folder}' but no crates|modules|packages/{expected_folder} folder exists"
-        ),
-    )
-    .with_reason(
-        "A PR-<segment> id must point at a real crate folder, by order.",
-        format!(
-            "Create crates|modules|packages/{expected_folder}, or remap '{pr_la_id}' to an existing folder."
+            "Add a crate folder for position {position}, or remove the dangling '{pr_id}' from '{doc_name}'."
         ),
     )
 }
@@ -286,25 +540,30 @@ fn missing_folder_finding(
 fn title_mismatch_finding(
     doc: &Path,
     ws_root: &Path,
-    pr_la_id: &str,
+    pr_id: &str,
     title: &str,
     expected_folder: &str,
+    member: &str,
 ) -> StructureFinding {
     StructureFinding::new(
         consts::RULE_CODE_PR_LA_FOLDER,
-        consts::PR_LA_VIOLATION_PR_LA_ID_MISMATCH,
+        consts::PR_VIOLATION_PR_ID_MISMATCH,
         relative_to(doc, ws_root),
-        format!("'{pr_la_id}' titles '{title}' but maps to folder '{expected_folder}'"),
+        format!(
+            "'{pr_id}' titles '{title}' but maps to '{member}/{expected_folder}' at its position"
+        ),
     )
     .with_reason(
         "The heading title of a PR-<segment> id should name the crate folder it maps to.",
         format!(
-            "Rename '{pr_la_id}'s heading to mention '{expected_folder}', or remap it to the folder named by '{title}'."
+            "Rename '{pr_id}'s heading to mention '{expected_folder}', or remap it to the folder named by '{title}'."
         ),
     )
 }
 
-/// Every immediate subdirectory of a member dir is a candidate crate folder.
+/// Every immediate subdirectory of a member dir is a candidate crate folder,
+/// except the non-crate ones: a language cache, build output, or dependency
+/// tree must never take a position in the order.
 fn crate_folders(member: &Path) -> Vec<PathBuf> {
     let Ok(entries) = std::fs::read_dir(member) else {
         return Vec::new();
@@ -313,14 +572,22 @@ fn crate_folders(member: &Path) -> Vec<PathBuf> {
         .flatten()
         .map(|e| e.path())
         .filter(|p| p.is_dir())
+        .filter(|p| !is_non_crate_dir(p))
         .collect();
     dirs.sort();
     dirs
 }
 
-/// Sorted names of every crate folder under *members*, used as the PR-<segment>
-/// folder order. Derived from the actual workspace being audited so AES706
-/// can lint any project — not just lint-arwaky itself.
+/// True when *folder* is a cache, build, dependency, or test-scaffolding
+/// directory rather than a crate folder.
+fn is_non_crate_dir(folder: &Path) -> bool {
+    let name = folder.file_name().and_then(|n| n.to_str()).unwrap_or("");
+    consts::NON_CRATE_DIRS.contains(&name) || name.ends_with(".egg-info")
+}
+
+/// Sorted names of every crate folder under *members*, the folder order a
+/// `PR-<segment>` sequence maps onto. Derived from the actual member layouts so
+/// AES706 can lint any project — not just lint-arwaky itself.
 fn crate_folder_names(members: &[PathBuf]) -> Vec<String> {
     let mut names: Vec<String> = members
         .iter()
@@ -329,7 +596,7 @@ fn crate_folder_names(members: &[PathBuf]) -> Vec<String> {
                 folder
                     .file_name()
                     .and_then(|n| n.to_str())
-                    .map(|s| s.to_string())
+                    .map(str::to_string)
             })
         })
         .collect();
@@ -457,14 +724,18 @@ pub fn has_surface_cargo_deps(folder: &Path) -> bool {
 /// `(position, id, title)`. The position is the id's slot in the crate folder
 /// order (`PR-<segment>-001` → 0), so it stays stable even when an id is
 /// mentioned more than once. The title is the heading text after the colon
-/// (empty when the heading has none), e.g. `### PR-LA-001: Multi-language
+/// (empty when the heading has none), e.g. `### PR-PSD-001: Multi-language
 /// scanning (Rust, Python, JS/TS)`.
-fn extract_pr_la_ids(contents: &str) -> Vec<(usize, String, String)> {
+///
+/// *segment* narrows the scan to one project token (`PSD`, `CALC`, …) when the
+/// document carries one id sequence per language; `None` returns every
+/// `PR-<segment>-<number>` shape.
+fn extract_pr_ids(contents: &str, segment: Option<&str>) -> Vec<(usize, String, String)> {
     let mut ids = Vec::new();
     for line in contents.lines() {
         // PR-<segment>-NNN ids appear inside markdown headings
-        // (`### PR-LA-001: …`), so scan the whole line rather than
-        // requiring a line prefix. The segment (e.g. `LA`, `GAMING`) is
+        // (`### PR-PSD-001: …`), so scan the whole line rather than
+        // requiring a line prefix. The segment (e.g. `PSD`, `CALC`) is
         // not hardcoded — any `PR-<segment>-<number>` shape is accepted.
         let mut search_from = 0;
         while let Some(rel) = line[search_from..].find("PR-") {
@@ -472,11 +743,15 @@ fn extract_pr_la_ids(contents: &str) -> Vec<(usize, String, String)> {
             let rest = &line[start + 3..]; // after "PR-"
 
             // Project segment: non-empty run of characters up to the dash
-            // that precedes the number, e.g. "LA" in "PR-LA-001".
+            // that precedes the number, e.g. "PSD" in "PR-PSD-001".
             let segment_end = rest.find('-').unwrap_or(rest.len());
-            let segment = &rest[..segment_end];
-            if segment.is_empty() || segment_end == rest.len() {
+            let token = &rest[..segment_end];
+            if token.is_empty() || segment_end == rest.len() {
                 search_from = start + 3;
+                continue;
+            }
+            if segment.is_some_and(|wanted| wanted != token) {
+                search_from = start + 3 + token.len() + 1;
                 continue;
             }
 
@@ -487,7 +762,7 @@ fn extract_pr_la_ids(contents: &str) -> Vec<(usize, String, String)> {
                 .take_while(|c| c.is_ascii_digit())
                 .collect();
             if digits.is_empty() {
-                search_from = start + 3 + segment.len() + 1;
+                search_from = start + 3 + token.len() + 1;
                 continue;
             }
 
@@ -498,12 +773,8 @@ fn extract_pr_la_ids(contents: &str) -> Vec<(usize, String, String)> {
             let after = &after_dash[digits.len()..];
             let title_raw = after.trim_start_matches([':', '|', ' ', '\t']);
             let title = title_raw.split('|').next().unwrap_or("").trim();
-            ids.push((
-                position,
-                format!("PR-{segment}-{digits}"),
-                title.to_string(),
-            ));
-            search_from = start + 3 + segment.len() + 1 + digits.len();
+            ids.push((position, format!("PR-{token}-{digits}"), title.to_string()));
+            search_from = start + 3 + token.len() + 1 + digits.len();
         }
     }
     ids

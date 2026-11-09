@@ -229,24 +229,29 @@ The structure-rules crate enforces the 7-layer AES folder discipline by auditing
 | Misplaced member-root file detection rate | 100% |
 | Conforming member-root false positive findings | 0 |
 
-### FR-STR-006: PR-LA Folder Alignment
+### FR-STR-006: PR ID Folder Alignment
 
-**Description:** The structure auditor shall enforce PR-LA folder alignment by verifying a strict 1:1 mapping between PR-LA identifiers, crate folder locations, and the feature requirement prefix in each folder's requirement document.
+**Description:** The structure auditor shall enforce PR ID folder alignment by verifying a strict 1:1 mapping between `PR-<segment>` identifiers, crate folder locations, and the feature requirement prefix in each folder's requirement document. The segment belongs to the audited project (`LA`, `PSD`, `CALC`, …), so no violation name, message, or folder order may assume lint-arwaky's own segment.
 
 #### Business Logic
 
-- Every PR-LA identifier declared in the root specification documents shall map 1:1 to a crate folder by positional order.
+- Every `PR-<segment>` identifier declared in the root specification documents shall map 1:1 to a crate folder by positional order.
+- The crate folder order shall be derived per member directory, so each language's sequence is audited against its own folder list rather than one flattened multi-language list.
+- The crate folder order shall exclude non-crate directories — language caches, build output, dependency trees, and test scaffolding — so they never take a positional slot.
 - Every crate folder at an assigned position shall carry an FRD.md document.
 - The requirement identifiers in a crate folder's FRD.md shall carry a feature prefix derived from the crate folder name.
-- A PR-LA heading title following the colon separator shall match the crate folder name.
+- A `PR-<segment>` heading title following the colon separator shall match the crate folder name.
 - Root specification documents PRD.md and ROADMAP.md shall be evaluated together to verify mutual agreement with the folder list.
 
 #### Edge Cases
 
-- When a PR-LA identifier in a root document has no matching crate folder at its position, the auditor shall emit an AES706 finding.
-- When a crate folder has no FRD.md document, the auditor shall emit an AES706 missing FRD finding.
-- When requirement identifiers in an FRD use a prefix that does not match the crate folder, the auditor shall emit an AES706 prefix mismatch finding.
-- When a heading title after the colon does not match the crate folder name, the auditor shall emit an AES706 title mismatch finding.
+- When a `PR-<segment>` identifier in a root document has no matching crate folder at its position, the auditor shall emit an AES706 `pr_id_mismatch` finding.
+- When a heading title after the colon does not match the crate folder name, the auditor shall emit an AES706 `pr_id_mismatch` finding.
+- When a crate folder has no FRD.md document, the auditor shall emit an AES706 `pr_missing_frd` finding.
+- When requirement identifiers in an FRD use a prefix that does not match the crate folder, the auditor shall emit an AES706 `pr_fr_id_mismatch` finding.
+- When a crate folder position is reached by no `PR-<segment>` identifier, the auditor shall emit an AES706 `pr_folder_without_id` finding.
+- When a specification document uses one `PR-<segment>` sequence per language, the auditor shall bind each sequence to one member directory and audit it against that member's own folder order.
+- When a cache or dependency directory (`__pycache__`, `node_modules`, `target`, `dist`, …) sits beside the crate folders, the auditor shall not count it as a crate folder.
 - When an unreadable specification document is encountered, the auditor shall skip checks for that document without failing the audit.
 
 #### Technical Specification
@@ -258,22 +263,25 @@ The structure-rules crate enforces the 7-layer AES folder discipline by auditing
 | **Protocol** | `IStructurePrLaProtocol` |
 | **Method** | `audit_pr_la_folder` |
 | **Event** | None; audit is synchronous |
-| **Error** | Unreadable specification document skipped; findings emitted for missing crate folder, missing FRD, prefix mismatch, or title mismatch |
+| **Error** | Unreadable specification document skipped; findings emitted for unmapped id, title mismatch, missing FRD, prefix mismatch, or folder without id |
 
 #### Test
 
 | Context | When Action | Then Observable Result |
 |---|---|---|
-| A PR-LA identifier lacks a corresponding crate folder | The auditor audits PR-LA folder alignment | An AES706 finding for the unmapped PR-LA identifier is emitted |
-| A crate folder's FRD uses a requirement prefix differing from its folder name | The auditor audits PR-LA folder alignment | An AES706 finding for the requirement prefix mismatch is emitted |
-| A crate folder at an expected PR-LA position lacks FRD.md | The auditor audits PR-LA folder alignment | An AES706 finding for missing FRD is emitted |
-| All PR-LA identifiers, crate folders, titles, and FR prefixes align | The auditor audits PR-LA folder alignment | Zero AES706 findings are emitted |
+| A `PR-<segment>` identifier lacks a corresponding crate folder | The auditor audits PR ID folder alignment | An AES706 `pr_id_mismatch` finding for the unmapped identifier is emitted |
+| A crate folder's FRD uses a requirement prefix differing from its folder name | The auditor audits PR ID folder alignment | An AES706 `pr_fr_id_mismatch` finding is emitted |
+| A crate folder at an expected position lacks FRD.md | The auditor audits PR ID folder alignment | An AES706 `pr_missing_frd` finding is emitted |
+| A crate folder position is reached by no identifier | The auditor audits PR ID folder alignment | An AES706 `pr_folder_without_id` finding is emitted |
+| A document carries one `PR-<segment>` sequence per language | The auditor audits PR ID folder alignment | Each sequence is compared against its own member's folder order |
+| A member directory holds `__pycache__` beside its module folders | The auditor audits PR ID folder alignment | The cache directory takes no position in the folder order |
+| All identifiers, crate folders, titles, and FR prefixes align | The auditor audits PR ID folder alignment | Zero AES706 findings are emitted |
 
 #### Metric
 
 | Target Metric | Value |
 |---|---|
-| PR-LA folder misalignment detection accuracy | 100% |
+| PR ID folder misalignment detection accuracy | 100% |
 | Conforming workspace false positive findings | 0 |
 
 ## Public Interface
