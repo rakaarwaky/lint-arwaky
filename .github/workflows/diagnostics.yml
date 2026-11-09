@@ -33,25 +33,25 @@ jobs:
         if: always()
         run: |
           cargo fmt --all -- --check > /tmp/fmt.txt 2>&1 || true
-          # Emit the whole diff, not just the hunk headers: the headers say
-          # where, the body says what.
-          head -120 /tmp/fmt.txt | while IFS= read -r line; do
-            echo "::error title=fmt::${line//'%'/%25}"
-          done
+          # GitHub caps annotations at 10 per step, so one annotation carries
+          # the whole report; newlines become "~" to stay on one line.
+          body=$(head -c 55000 /tmp/fmt.txt | sed -e 's/%/%25/g' | tr '\n' '~')
+          echo "::error title=fmt::$body"
 
       - name: cargo check
         if: always()
         run: |
           cargo check --all-targets --message-format=short > /tmp/check.txt 2>&1 || true
-          echo "::notice title=check-lines::$(wc -l < /tmp/check.txt) lines"
-          grep -E "^[^ ]+\.rs:[0-9]+:[0-9]+: error|^error" /tmp/check.txt | head -60 | while IFS= read -r line; do
-            echo "::error title=check::${line//'%'/%25}"
-          done
+          grep -E "error" /tmp/check.txt > /tmp/check_err.txt || true
+          echo "::notice title=check-lines::$(wc -l < /tmp/check.txt) total, $(wc -l < /tmp/check_err.txt) errors"
+          body=$(head -c 55000 /tmp/check_err.txt | sed -e 's/%/%25/g' | tr '\n' '~')
+          echo "::error title=check::$body"
 
       - name: cargo clippy
         if: always()
         run: |
           cargo clippy --all-targets --message-format=short -- -D warnings > /tmp/clippy.txt 2>&1 || true
-          grep -E "^[^ ]+\.rs:[0-9]+:[0-9]+: (error|warning)|^error" /tmp/clippy.txt | head -60 | while IFS= read -r line; do
-            echo "::error title=clippy::${line//'%'/%25}"
-          done
+          grep -E "error|warning" /tmp/clippy.txt > /tmp/clippy_err.txt || true
+          echo "::notice title=clippy-lines::$(wc -l < /tmp/clippy.txt) total, $(wc -l < /tmp/clippy_err.txt) findings"
+          body=$(head -c 55000 /tmp/clippy_err.txt | sed -e 's/%/%25/g' | tr '\n' '~')
+          echo "::error title=clippy::$body"
