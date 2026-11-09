@@ -27,7 +27,7 @@ fn every_seven_test_types_are_accepted_in_tests_dir() {
         let path = format!("crates/calc/tests/{prefix}adder.rs");
         assert!(
             audit(&path).is_none(),
-            "an agent writing {prefix}adder.rs is following the skill and must not be \\
+            "an agent writing {prefix}adder.rs is following the naming convention and must not be \\
              reported; got {:?}",
             audit(&path).map(|r| r.message.value().to_string())
         );

@@ -2,7 +2,7 @@
 
 ## Progress Overview
 
-RELEASED as v3.8.0. It supersedes 3.7.1 and 3.7.2, which were declared in `Cargo.toml` and `CHANGELOG.md` but never tagged (PE-3-01 / #623, now closed); the last published 3.7 release was `v3.7.0`, and everything since first shipped as 3.8.0. The `DEPLOY.md` Release Sign-off Checklist records per-domain evidence; it is a pipeline-health snapshot, not authorization to tag a future version. Persona-level acceptance scenarios (Developer, DevOps, AI Agent) verified clean (see `TEST.md` Section 4). Document gate `lint-arwaky-cli docs .` reports 0 document invariant violations across all crates and root documents. Open BA/SA/UX/ARCH/BE/FE/PE findings sit against GitHub Milestone "Audit Remediation (v3.7.1)" (created 2026-10-01); per-issue assignment is partially manual.
+RELEASED as v3.16.0 (tag `v3.16.0`, 2026-11-08). `VERSION` and `Cargo.toml` are at 3.16.1, the staged next patch. The v3.7.1/3.7.2 declarations (PE-3-01 / #623) stay superseded by v3.8.0, the first release cut after them. Release sign-off is recorded in `DEPLOY.md` and persona acceptance in `TEST.md` Section 4; both are pending re-collection for 3.16.1 and block the tag until filled. Open audit findings are read from the issue tracker rather than restated here, and the former "Audit Remediation (v3.7.1)" milestone is retired — every issue filed against it is closed. naming-rules and orphan-rules shipped in the 3.9-3.16 line and are recorded as Done, with their evidence in each crate's BACKLOG.md.
 
 ## Roadmap Status
 
@@ -115,7 +115,7 @@ RELEASED as v3.8.0. It supersedes 3.7.1 and 3.7.2, which were declared in `Cargo
 | Aspect       | Detail                              |
 |--------------|-------------------------------------|
 | Priority     | P1                                    |
-| State        | In Review                             |
+| State        | Done                                  |
 | Backlog      | [BACKLOG.md](crates/naming-rules/BACKLOG.md) |
 
 ### PR-LA-015: orphan-rules
@@ -123,7 +123,7 @@ RELEASED as v3.8.0. It supersedes 3.7.1 and 3.7.2, which were declared in `Cargo
 | Aspect       | Detail                              |
 |--------------|-------------------------------------|
 | Priority     | P1                                    |
-| State        | In Review                             |
+| State        | Done                                  |
 | Backlog      | [BACKLOG.md](crates/orphan-rules/BACKLOG.md) |
 
 ### PR-LA-016: project-setup

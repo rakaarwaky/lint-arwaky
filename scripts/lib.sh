@@ -129,15 +129,7 @@ copy_agents_to_config() {
     # Stale prompt files from older installs are removed on every run.
     rm -rf "$agents_dst/prompts"
     if [ -d "$agents_src" ]; then
-        mkdir -p "$agents_dst/skills" "$agents_dst/rules"
-
-        for SKILL_DIR in "$agents_src"/skills/*; do
-            if [ -d "$SKILL_DIR" ]; then
-                SKILL_NAME=$(basename "$SKILL_DIR")
-                cp -r "$SKILL_DIR" "$agents_dst/skills/$SKILL_NAME"
-                echo "  .agents/skills/$SKILL_NAME -> $config_dir/.agents/skills/$SKILL_NAME"
-            fi
-        done
+        mkdir -p "$agents_dst/rules"
     fi
 }
 

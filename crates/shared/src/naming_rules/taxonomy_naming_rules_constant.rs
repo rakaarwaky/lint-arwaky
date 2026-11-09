@@ -40,10 +40,10 @@ pub const MIN_WORDS_DEFAULT: usize = 3;
 
 // ─── AES103 — Test/bench file prefix vocabulary ─────────────────────────────
 //
-// The aes-testing-suite skill fixes one test layout for all three languages:
-// tests live in `tests/`, benchmarks in `benches/`, and the flat file-name
-// prefix IS the virtual folder. These constants are the machine-readable half
-// of that table; the skill's markdown table is the human-readable half.
+// One test layout is fixed for all three languages: tests live in `tests/`,
+// benchmarks in `benches/`, and the flat file-name prefix IS the virtual
+// folder. These constants are the machine-readable half of that table;
+// ARCHITECTURE.md documents the human-readable half.
 
 /// The directory every test file lives in.
 pub const TESTS_DIR: &str = "tests";

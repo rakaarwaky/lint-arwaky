@@ -1,6 +1,6 @@
 // FR-005: Workspace Detection — Capabilities layer
 // Implements IWorkspaceProtocol by delegating to utility_workspace_detection stateless functions.
-// 3-block structure per AES skill.
+// 3-block structure per the AES capability role (AES403).
 
 use shared_common::taxonomy_common_vo::PatternList;
 use shared_common::taxonomy_language_vo::ConfigLanguage;

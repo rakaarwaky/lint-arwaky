@@ -1,6 +1,6 @@
 // FR: Filesystem IO — Capabilities layer
 // Implements IFileSystemIOProtocol by delegating to utility_filesystem_io stateless functions.
-// 3-block structure per AES skill.
+// 3-block structure per the AES capability role (AES403).
 
 use shared_common::taxonomy_adapter_name_vo::ToolName;
 use shared_common::taxonomy_common_vo::PatternList;

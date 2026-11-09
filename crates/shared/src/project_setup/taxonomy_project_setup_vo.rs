@@ -1,4 +1,4 @@
-// PURPOSE: Setup value objects — contract surface types (AES402), embedded skill metadata,
+// PURPOSE: Setup value objects — contract surface types (AES402), setup metadata,
 //          and setup error variants.
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;

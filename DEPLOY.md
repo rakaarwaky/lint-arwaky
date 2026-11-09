@@ -15,17 +15,23 @@ Operations sign-offs" verbatim. The table maps each of those five named domains 
 role that actually owns the evidence on this project today (PE-5-01 / #629 — this table
 previously used role names that did not match the Deploy checklist's literal text):
 
-| Domain | Role / Owner | Sign-off Criterion | Status | Evidence (Commit / Artifact) | Date|
+| Domain | Role / Owner | Sign-off Criterion | Status | Evidence (commit / CI run) | Date |
 |---|---|---|---|---|---|
-| Product | Business Analyst (`@raka`) | Requirements/scope audit issues resolved with verifiable evidence; business outcome metrics current | Approved | `8d4342a` (PR #520, PR #567) | 2026-09-30|
-| Engineering | Architect + Tech Lead (`@raka`) | 34 AES rules pass with 0 internal violations on self-lint; `cargo build --release` succeeds | Approved | `8d4342a` (`lint-arwaky-cli check .`) | 2026-09-30|
-| QA | Tech Lead (`@raka`) | Full test suite & negative test matrix green (`TEST.md` Sections 3-4) | Approved | `8d4342a` (`cargo test --workspace`) | 2026-09-30|
-| Documentation | Business Analyst (`@raka`) | `lint-arwaky-cli docs .` reports 0 document invariant violations | Approved | `8d4342a` (`lint-arwaky-cli docs .`) | 2026-09-30|
-| Operations | Security Engineer + DevOps Engineer (`@raka`) | `SECURITY.md` supported versions & cargo-audit clean; binaries built, checksums registered | Approved | `8d4342a` (`cargo-audit`, PR #516; `target/release/lint-arwaky-*`) | 2026-09-30|
+| Product | Business analyst (`@raka`) | Requirements and scope audit closed with verifiable evidence; outcome metrics recorded in `PRD.md` | Pending — re-collect at tag time | must name the release commit + CI run | — |
+| Engineering | Architect + tech lead (`@raka`) | 41 AES rules, 0 self-lint violations on the release tag; `cargo build --release` succeeds | Pending — re-collect at tag time | must name the release commit + CI run | — |
+| QA | **Independent reviewer — not yet named** | Full suite and negative-test matrix green on the release tag | **Blocked** | no reviewer other than the release author exists today | — |
+| Documentation | Business analyst (`@raka`) | `lint-arwaky-cli docs .` reports 0 document-invariant violations on the release tag | Pending — re-collect at tag time | must name the release commit + CI run | — |
+| Operations | Security + DevOps engineer (`@raka`) | `SECURITY.md` supported versions and cargo-audit clean; binaries built and checksums recorded | Pending — re-collect at tag time | must name the release commit + CI run | — |
 
-**Caveat (PE-5-01 / #629, PE-3-01 / #623):** this record was captured at commit `8d4342a`
-before the BA/SA/UX/ARCH/BE/FE/PE audit backlog (#522-#631) existed. Re-collect all five
-sign-offs against the actual release commit before relying on it for a future cut.
+**Rules for this table.** These replace the withdrawn record that approved all five domains with one
+handle against `8d4342a` (2026-09-30): that commit does not exist in this repository, the row set
+predates eight minor releases, and a signature from the release author is not review.
+
+- Evidence must be a commit reachable from the release tag plus the CI run URL for that commit. A
+  hash that is not an ancestor of the tag is not evidence.
+- Product and QA are signed by someone other than the release author. While QA has no independent
+  reviewer, QA stays **Blocked** and the release is not eligible.
+- Re-collect the table for every release. A stale row is worse than an empty one.
 
 ---
 
@@ -114,7 +120,7 @@ cargo build --release --target x86_64-pc-windows-msvc
 
 ```bash
 lint-arwaky-cli version
-# Expected: lint-arwaky 3.8.0
+# Expected: lint-arwaky $(cat VERSION)   e.g. lint-arwaky 3.16.1
 
 lint-arwaky-cli doctor
 # Expected: cargo: OK (cargo X.Y.Z), binary: OK (/path/to/lint-arwaky-cli)
@@ -162,17 +168,16 @@ lint-arwaky-cli mcp-config --client hermes
 
 ### External Client Compatibility
 
-Three external, out-of-repo clients integrate against the 5-tool MCP surface
-(`execute_command`, `list_commands`, `read_skill`, `health_check`, `get_config`) at
-protocol version `2024-11-05`. No automated test exercises any of them today
+The MCP surface is five tools — `execute_command`, `list_commands`, `health_check`,
+`get_config`, `docs_scaffold` — at protocol version `2024-11-05`. No automated test exercises any of them today
 (PE-2-02 / #621), so this table is a manual verification record, not a passing
 CI gate:
 
 | Client | Protocol Version Verified | Last Verified | Notes|
 |---|---|---|---|
-| Claude Desktop | 2024-11-05 | — (unverified) | Config via `mcp-config --client claude`|
-| VS Code MCP extension | 2024-11-05 | — (unverified) | Config via `mcp-config --client vscode`|
-| Hermes Agent | 2024-11-05 | — (unverified) | Config via `mcp-config --client hermes`; ownership of this integration is not documented — confirm with whoever maintains it before depending on this table|
+| Claude Desktop | 2024-11-05 | unsupported — no owner assigned | Config emitted by `mcp-config --client claude`; not validated |
+| VS Code MCP extension | 2024-11-05 | unsupported — no owner assigned | Config emitted by `mcp-config --client vscode`; not validated |
+| Hermes Agent | 2024-11-05 | unsupported — no owner assigned | Config emitted by `mcp-config --client hermes`; ownership of this integration is undocumented |
 
 **Process note:** whoever changes the MCP tool surface (adds, removes, or renames a tool,
 or bumps the protocol version) updates this table in the same PR and states in the
@@ -238,17 +243,12 @@ lint-arwaky-cli init
 
 ## Production Deployment Checklist
 
-### Current Quality Status (update before each release attempt)
+### Current Quality Status (applies to 3.16.1, staged)
 
-Last updated: 2026-10-01
-
-- **Open defects:** 90+ logged across audit cycles (#522–#650), including 11+ confirmed CRITICAL — see PE #617. Severity counts are derived from issue **titles** (`[ROLE][SEVERITY] …`), not labels, until #618 is resolved (label writes fail with `Resource not accessible by integration`).
-- **CI detection-threshold gap — CLOSED:** the AES codes gate now enforces the reconciled scan-visible count (29 of 34 rules, per `TEST.md` §3.1/§3.2) with no safety margin — see QA #636.
-- **Self-lint gate integrity — CLOSED:** the `check .` step now fails loudly on unparseable output or non-zero exit instead of substituting `0` violations — see QA #642.
-- **Coverage measurement:** now computed in CI via `cargo-llvm-cov` (`coverage` job summary) — see QA #643; no minimum percentage is enforced yet.
-- **External-tool end-to-end coverage — CLOSED:** CI installs ruff/mypy/bandit/eslint/prettier/tsc and asserts tool-native findings — see QA #637.
-- **Doctest execution — CLOSED:** `cargo test --doc --workspace` runs as a dedicated CI step — see QA #638/#644.
-- **Release recommendation:** **NOT READY** — open CRITICAL defects and the missing release sign-off record (PE #629) block any release-ready verdict regardless of the above gate improvements.
+- **Release recommendation:** **NOT ELIGIBLE.** Two prerequisites are unmet: the sign-off table above has no reachable-commit evidence and no independent QA reviewer, and the persona acceptance record in `TEST.md` Section 4 has not been re-run for 3.16.1.
+- **Open defects:** read them from the tracker (`is:open label:severity-critical`) instead of a count restated here. The previous "90+ open across #522-#650" figure described a backlog that is fully closed and has been removed — a stale count is worse than a query.
+- **Gate status:** self-lint, workspace tests, fmt/clippy, doctests, coverage visibility, external-tool end-to-end checks and the 41-code AES floor are enforced by `.github/workflows/ci.yml`; see `TEST.md` Sections 3.1-3.5 for the thresholds they enforce.
+- **Known process gaps:** no 10k-file scan benchmark is recorded yet, and the rollback record below has not been rehearsed.
 
 ### Before Deploy
 
@@ -258,7 +258,7 @@ Last updated: 2026-10-01
 - [ ] `cargo fmt --all` and `cargo clippy --all-targets -- -D warnings` clean
 - [ ] `lint-arwaky-cli version` returns the candidate version recorded in `Cargo.toml`
 - [ ] `lint-arwaky-cli doctor` reports no issues
-- [ ] `lint-arwaky-mcp` responds to `tools/list` with all 5 expected tools
+- [ ] `lint-arwaky-mcp` responds to `tools/list` with the five contracted tools (`execute_command`, `list_commands`, `health_check`, `get_config`, `docs_scaffold`)
 - [ ] `health_check` MCP tool reports adapter availability, including missing optional tools
 - [ ] Bad Rust, Python, and TypeScript fixtures produce findings; good fixtures produce 0 findings
 - [ ] Demo configuration, external-tool availability, and expected exit codes are recorded
@@ -295,16 +295,11 @@ Rollback owner, trigger threshold, retained artifact, and post-rollback verifica
 
 ### Rollback Record (current candidate)
 
-Populated before the current candidate (resolving PE-3-01's tag ambiguity first) is
-marked Released (PE-5-02 / #630):
-
-- **Owner:** _(unassigned — fill before release; whoever holds release sign-off authority per the Release Sign-off Checklist above)_
-- **Trigger threshold:** _(unset — e.g. "P0/CRITICAL regression reported within 24h of release")_
-- **Retained artifact:** _(unset — e.g. "previous stable tag's binaries + checksum file kept available for N days", tracked alongside the Artifact Manifest in `TEST.md` Section 5.6)_
-- **Post-rollback verification:** _(unset — e.g. "`lint-arwaky-cli version` and `doctor` pass on the reinstalled tag; MCP `tools/list` smoke test passes")_
-
-This record is a prerequisite for the "Deploy" checklist's sign-off item above, not just
-the procedure in isolation.
+- **Owner:** Operations lead (`@raka`).
+- **Trigger threshold:** any P0/CRITICAL regression reported within 24 h of a release, or a confirmed case of `ci` passing a workspace it should have failed.
+- **Retained artifact:** the previous stable tag's release assets (`lint-arwaky-cli`, `lint-arwaky-mcp`, `lint-arwaky-tui`) plus the installer, retained 90 days.
+- **Post-rollback verification:** `lint-arwaky-cli version` reports the restored tag; `doctor` exits 0; the MCP `tools/list` smoke test returns the five contracted tools.
+- **Rehearsal:** not yet performed. The rehearsal (rollback 3.16.1 → 3.16.0 on a clean Linux x86_64 host, recording duration and verification output) is a release blocker and is recorded here with its date and result before the candidate is marked Released.
 
 Or rebuild from a specific tag:
 
