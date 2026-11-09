@@ -29,6 +29,8 @@ jobs:
         with:
           components: clippy, rustfmt
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
+      - name: build cli for self-lint
+        run: cargo build --bin lint-arwaky-cli 2>&1 | tail -3
 
       - name: cargo fmt
         if: always()
@@ -47,6 +49,27 @@ jobs:
           echo "::notice title=check-lines::$(wc -l < /tmp/check.txt) total, $(wc -l < /tmp/check_err.txt) errors"
           body=$(head -c 55000 /tmp/check_err.txt | sed -e 's/%/%25/g' | tr '\n' '~')
           echo "::error title=check::$body"
+
+      - name: cargo test
+        if: always()
+        run: |
+          cargo test --workspace --no-fail-fast > /tmp/test.txt 2>&1 || true
+          grep -E "^(test .* FAILED|failures:|---- .* stdout ----|thread .* panicked|error: test failed)" -A3 /tmp/test.txt > /tmp/test_err.txt || true
+          echo "::notice title=test-lines::$(wc -l < /tmp/test.txt) total, $(grep -c 'FAILED' /tmp/test.txt || true) failed"
+          body=$(head -c 55000 /tmp/test_err.txt | sed -e 's/%/%25/g' | tr '\n' '~')
+          echo "::error title=test::$body"
+
+      - name: self lint
+        if: always()
+        run: |
+          # Mirror the real Self-Lint step: `check .` must exit 0 with zero
+          # violations.
+          exit_code=0
+          ./target/debug/lint-arwaky-cli check . > /tmp/self.txt 2>&1 || exit_code=$?
+          echo "::notice title=self-exit::exit=$exit_code"
+          tail -120 /tmp/self.txt > /tmp/self_tail.txt || true
+          body=$(head -c 55000 /tmp/self_tail.txt | sed -e 's/%/%25/g' | tr '\n' '~')
+          echo "::error title=self::$body"
 
       - name: cargo clippy
         if: always()
