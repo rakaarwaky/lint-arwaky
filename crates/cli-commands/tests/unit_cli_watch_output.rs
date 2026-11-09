@@ -39,6 +39,9 @@ fn watch_output_formats_start_baseline_changes_and_stop_at_default_verbosity() {
     ];
 
     for (event, expected_error, expected_message) in cases {
-        assert_eq!(format_watch_output(event), (expected_error, expected_message.to_string()));
+        assert_eq!(
+            format_watch_output(event),
+            (expected_error, expected_message.to_string())
+        );
     }
 }

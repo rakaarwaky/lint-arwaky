@@ -17,7 +17,11 @@ use shared_tui::utility_tui_theme as theme;
 pub struct FileListView;
 
 /// First displayed row for a selected position and viewport size.
-pub fn visible_window_start(display_len: usize, selected_position: usize, visible_rows: usize) -> usize {
+pub fn visible_window_start(
+    display_len: usize,
+    selected_position: usize,
+    visible_rows: usize,
+) -> usize {
     if visible_rows == 0 || display_len <= visible_rows {
         return 0;
     }
@@ -57,9 +61,7 @@ impl FileListView {
         // Empty states, in priority order. A zero-match search is guidance
         // (#367); an open folder with no rows says so; and a first run whose
         // path dialog was dismissed says how to choose a root (#1317).
-        let empty_hint = if state.search.mode
-            && !state.search.query.is_empty()
-            && display_len == 0
+        let empty_hint = if state.search.mode && !state.search.query.is_empty() && display_len == 0
         {
             Some(format!(
                 "No matches for '{}' — press Esc to clear filter",

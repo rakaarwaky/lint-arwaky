@@ -7,9 +7,9 @@ use ratatui::backend::TestBackend;
 use tui_lint_arwaky::surface_confirm_component::ConfirmModal;
 use tui_lint_arwaky::surface_file_list_view::FileListView;
 use tui_lint_arwaky::surface_path_screen::PathScreen;
-use tui_lint_arwaky::surface_status_component::StatusComponent;
 use tui_lint_arwaky::surface_preview_view::PreviewView;
 use tui_lint_arwaky::surface_shortcut_component::ShortcutComponent;
+use tui_lint_arwaky::surface_status_component::StatusComponent;
 use tui_lint_arwaky::surface_tree_view::TreeView;
 use tui_lint_arwaky::{
     AesLayer, AppState, ConfirmState, FileEntry, PanelFocus, PreviewMode, TuiEvent,
@@ -224,7 +224,12 @@ fn large_file_list_renders_only_the_visible_window_around_selection() {
     let mut state = AppState::new("/project".to_string());
     state.path_dialog.visible = false;
     state.navigation.entries = (0..2_000)
-        .map(|index| file(&format!("file-{index:04}.rs"), &format!("/project/file-{index:04}.rs")))
+        .map(|index| {
+            file(
+                &format!("file-{index:04}.rs"),
+                &format!("/project/file-{index:04}.rs"),
+            )
+        })
         .collect();
     state.navigation.selected_index = 1_999;
 
@@ -233,8 +238,14 @@ fn large_file_list_renders_only_the_visible_window_around_selection() {
         .draw(|frame| FileListView::new().render(&state, frame, frame.area()))
         .unwrap();
     let text = buffer_text(&terminal);
-    assert!(text.contains("file-1999.rs"), "selected row must be rendered: {text}");
-    assert!(!text.contains("file-0000.rs"), "off-screen rows must not be materialized: {text}");
+    assert!(
+        text.contains("file-1999.rs"),
+        "selected row must be rendered: {text}"
+    );
+    assert!(
+        !text.contains("file-0000.rs"),
+        "off-screen rows must not be materialized: {text}"
+    );
 }
 
 #[test]
@@ -249,8 +260,14 @@ fn long_path_dialog_input_keeps_cursor_and_suffix_visible_at_minimum_width() {
         .draw(|frame| PathScreen::new().render(&state, frame, frame.area()))
         .unwrap();
     let text = buffer_text(&terminal);
-    assert!(text.contains("project_"), "caret and path suffix must remain visible: {text}");
-    assert!(text.contains('…'), "clipped leading path should be marked: {text}");
+    assert!(
+        text.contains("project_"),
+        "caret and path suffix must remain visible: {text}"
+    );
+    assert!(
+        text.contains('…'),
+        "clipped leading path should be marked: {text}"
+    );
 }
 
 #[test]
@@ -260,14 +277,20 @@ fn status_line_preserves_violation_state_at_minimum_width() {
     state.status_message = "A very long scan completed successfully".to_string();
     state.navigation.current_dir = "/project".to_string();
     state.set_violation_result("/project", 3);
-    state.navigation.entries.push(file("a-long-selected-file.rs", "/project/a-long-selected-file.rs"));
+    state.navigation.entries.push(file(
+        "a-long-selected-file.rs",
+        "/project/a-long-selected-file.rs",
+    ));
 
     let mut terminal = Terminal::new(TestBackend::new(40, 1)).unwrap();
     terminal
         .draw(|frame| StatusComponent::new().render(&state, frame, frame.area()))
         .unwrap();
     let text = buffer_text(&terminal);
-    assert!(text.contains("3 viol."), "violation badge should survive compaction: {text}");
+    assert!(
+        text.contains("3 viol."),
+        "violation badge should survive compaction: {text}"
+    );
     assert!(text.chars().count() <= 40);
 }
 
@@ -284,8 +307,14 @@ fn compact_background_status_keeps_action_and_violation_badge() {
         .draw(|frame| StatusComponent::new().render(&state, frame, frame.area()))
         .unwrap();
     let text = buffer_text(&terminal);
-    assert!(text.contains("Running"), "primary action should remain visible: {text}");
-    assert!(text.contains("3 viol."), "violation badge should remain visible: {text}");
+    assert!(
+        text.contains("Running"),
+        "primary action should remain visible: {text}"
+    );
+    assert!(
+        text.contains("3 viol."),
+        "violation badge should remain visible: {text}"
+    );
     assert!(text.chars().count() <= 40);
 }
 
@@ -304,8 +333,14 @@ fn compact_scan_status_keeps_progress_and_cancel_hint() {
         .draw(|frame| StatusComponent::new().render(&state, frame, frame.area()))
         .unwrap();
     let text = buffer_text(&terminal);
-    assert!(text.contains("4/10 files"), "progress count should remain visible: {text}");
-    assert!(text.contains("Esc"), "cancel affordance should remain visible: {text}");
+    assert!(
+        text.contains("4/10 files"),
+        "progress count should remain visible: {text}"
+    );
+    assert!(
+        text.contains("Esc"),
+        "cancel affordance should remain visible: {text}"
+    );
 }
 
 #[test]

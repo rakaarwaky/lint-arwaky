@@ -1,8 +1,8 @@
 // PURPOSE: WatchRequest — request payload for the watch aggregate
 
 use crate::taxonomy_file_watch_vo::WatchConfig;
-use shared_common::taxonomy_path_vo::FilePath;
 use crate::taxonomy_file_watch_vo::WatchOutputEvent;
+use shared_common::taxonomy_path_vo::FilePath;
 use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
 

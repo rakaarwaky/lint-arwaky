@@ -430,7 +430,10 @@ fn help_scroll_uses_help_content_even_when_backing_preview_is_stale() {
         .iter()
         .map(|cell| cell.symbol())
         .collect();
-    assert!(rendered.contains("For screen readers"), "last help rows should be reachable: {rendered}");
+    assert!(
+        rendered.contains("For screen readers"),
+        "last help rows should be reachable: {rendered}"
+    );
     assert!(!rendered.contains("stale action output"));
 }
 
@@ -467,7 +470,10 @@ fn wrapped_preview_last_visual_row_is_reachable_through_handler() {
         .iter()
         .map(|cell| cell.symbol())
         .collect();
-    assert!(rendered.contains("END"), "last wrapped content must render: {rendered}");
+    assert!(
+        rendered.contains("END"),
+        "last wrapped content must render: {rendered}"
+    );
 }
 
 #[test]

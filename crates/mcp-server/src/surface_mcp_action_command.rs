@@ -758,7 +758,9 @@ impl McpActionSurface {
                 let args = match *name {
                     "ci" => serde_json::json!({"path": ".", "threshold": 80}),
                     "fix" => serde_json::json!({"path": ".", "dry_run": true}),
-                    "doctor" | "adapters" | "version" | "uninstall-hook" | "init" | "install" => serde_json::Value::Null,
+                    "doctor" | "adapters" | "version" | "uninstall-hook" | "init" | "install" => {
+                        serde_json::Value::Null
+                    }
                     _ => serde_json::json!({"path": "."}),
                 };
                 let example = if supported {

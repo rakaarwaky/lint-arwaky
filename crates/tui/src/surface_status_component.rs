@@ -41,8 +41,8 @@ impl StatusComponent {
     pub fn render(&self, state: &AppState, frame: &mut Frame, area: Rect) {
         if area.width < 72 {
             let compact = compact_status(state, area.width as usize);
-            let paragraph = Paragraph::new(compact)
-                .style(Style::default().bg(theme::color(theme::BACKGROUND)));
+            let paragraph =
+                Paragraph::new(compact).style(Style::default().bg(theme::color(theme::BACKGROUND)));
             frame.render_widget(paragraph, area);
             return;
         }
@@ -256,13 +256,20 @@ fn compact_status(state: &AppState, width: usize) -> String {
     } else if state.scan.completed {
         let violations = format!("{} violations", state.scan.violations);
         let phase_budget = width.saturating_sub(display_width(&violations) + 3);
-        format!("{} | {}", truncate_cells(&state.scan.phase, phase_budget), violations)
+        format!(
+            "{} | {}",
+            truncate_cells(&state.scan.phase, phase_budget),
+            violations
+        )
     } else if state.actions.pending {
         let badge = state.violation_badge();
         let label_budget = width.saturating_sub(display_width(&badge) + 3);
         format!(
             "{} | {}",
-            truncate_cells(&format!("Running {}", state.actions.pending_label), label_budget),
+            truncate_cells(
+                &format!("Running {}", state.actions.pending_label),
+                label_budget
+            ),
             badge,
         )
     } else {

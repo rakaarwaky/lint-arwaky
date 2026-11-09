@@ -7,13 +7,21 @@ use tracing::error;
 
 pub fn format_watch_output(event: WatchOutputEvent) -> (bool, String) {
     match event {
-        WatchOutputEvent::Started { path } => (false, format!("Watching {path} — press Ctrl+C to stop")),
+        WatchOutputEvent::Started { path } => {
+            (false, format!("Watching {path} — press Ctrl+C to stop"))
+        }
         WatchOutputEvent::InitialScanComplete { violations, score } => (
             false,
             format!("Initial scan complete: {violations} violations, score {score:.1}"),
         ),
-        WatchOutputEvent::FileLinted { path, succeeded: true } => (false, format!("Linted {path}")),
-        WatchOutputEvent::FileLinted { path, succeeded: false } => (true, format!("Lint failed for {path}")),
+        WatchOutputEvent::FileLinted {
+            path,
+            succeeded: true,
+        } => (false, format!("Linted {path}")),
+        WatchOutputEvent::FileLinted {
+            path,
+            succeeded: false,
+        } => (true, format!("Lint failed for {path}")),
         WatchOutputEvent::Stopped => (false, "Watcher stopped".to_string()),
     }
 }

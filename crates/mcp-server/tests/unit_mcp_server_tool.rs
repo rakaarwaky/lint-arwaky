@@ -24,21 +24,27 @@ fn parse(json: &str) -> serde_json::Value {
 
 #[test]
 fn execute_command_options_deserialization_rejects_unknown_keys_and_wrong_types() {
-    assert!(serde_json::from_value::<ExecuteCommandArgs>(serde_json::json!({
-        "action": "scan",
-        "args": {"path": "src", "format": "json"}
-    }))
-    .is_err());
-    assert!(serde_json::from_value::<ExecuteCommandArgs>(serde_json::json!({
-        "action": "ci",
-        "args": {"threshold": "95"}
-    }))
-    .is_err());
-    assert!(serde_json::from_value::<ExecuteCommandArgs>(serde_json::json!({
-        "action": "scan",
-        "verbose": true
-    }))
-    .is_err());
+    assert!(
+        serde_json::from_value::<ExecuteCommandArgs>(serde_json::json!({
+            "action": "scan",
+            "args": {"path": "src", "format": "json"}
+        }))
+        .is_err()
+    );
+    assert!(
+        serde_json::from_value::<ExecuteCommandArgs>(serde_json::json!({
+            "action": "ci",
+            "args": {"threshold": "95"}
+        }))
+        .is_err()
+    );
+    assert!(
+        serde_json::from_value::<ExecuteCommandArgs>(serde_json::json!({
+            "action": "scan",
+            "verbose": true
+        }))
+        .is_err()
+    );
 }
 
 #[tokio::test]
@@ -93,7 +99,12 @@ async fn handle_execute_command_rejects_options_not_supported_by_action() {
     };
     let result = parse(&server().handle_execute_command(Parameters(args)).await);
     assert_eq!(result["exit_code"], 2);
-    assert!(result["error"].as_str().unwrap().contains("only supported by the 'ci'"));
+    assert!(
+        result["error"]
+            .as_str()
+            .unwrap()
+            .contains("only supported by the 'ci'")
+    );
 }
 
 #[tokio::test]
@@ -177,7 +188,11 @@ fn handle_get_config_reports_missing_config_loudly() {
     assert_eq!(result["exit_code"], 0);
     assert_eq!(
         result["resolved_path"],
-        tmp.path().canonicalize().unwrap().to_string_lossy().as_ref()
+        tmp.path()
+            .canonicalize()
+            .unwrap()
+            .to_string_lossy()
+            .as_ref()
     );
     let warnings = result["warnings"].as_array().expect("warnings array");
     assert!(

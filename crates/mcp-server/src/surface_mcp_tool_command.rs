@@ -65,7 +65,14 @@ impl LintArwakyMcpServer {
         if path_was_specified
             && matches!(
                 action.as_str(),
-                "doctor" | "adapters" | "version" | "uninstall-hook" | "init" | "install" | "mcp-config" | "watch"
+                "doctor"
+                    | "adapters"
+                    | "version"
+                    | "uninstall-hook"
+                    | "init"
+                    | "install"
+                    | "mcp-config"
+                    | "watch"
             )
         {
             return validation_error(&format!("'path' is not supported by the '{action}' action"));
@@ -203,7 +210,9 @@ impl ServerHandler for LintArwakyMcpServer {
 
 #[tool_router]
 impl LintArwakyMcpServer {
-    #[tool(description = "Run a supported linter action in the configured workspace. `path` defaults to the workspace root; relative paths resolve from that root and absolute paths must remain inside it. `threshold` is accepted only for `ci` (0..=100, default 80), and `dry_run` only for `fix` (default false). Unknown or inapplicable options are rejected. Path-bearing responses include `resolved_path`.")]
+    #[tool(
+        description = "Run a supported linter action in the configured workspace. `path` defaults to the workspace root; relative paths resolve from that root and absolute paths must remain inside it. `threshold` is accepted only for `ci` (0..=100, default 80), and `dry_run` only for `fix` (default false). Unknown or inapplicable options are rejected. Path-bearing responses include `resolved_path`."
+    )]
     pub async fn execute_command(&self, args: Parameters<ExecuteCommandArgs>) -> String {
         LintArwakyMcpServer::handle_execute_command(self, args).await
     }
