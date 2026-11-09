@@ -51,7 +51,8 @@ jobs:
       - name: cargo clippy
         if: always()
         run: |
-          cargo clippy --all-targets --message-format=short -- -D warnings > /tmp/clippy.txt 2>&1 || true
+          cargo clippy --all-targets --message-format=short > /tmp/clippy.txt 2>&1 || true
+          echo "::notice title=clippy-head::$(tail -3 /tmp/clippy.txt | tr '\n' '~' | sed -e 's/%/%25/g')"
           grep -E "^[^ ]+\.rs:[0-9]+:[0-9]+: (error|warning)|^error(\[|:)" /tmp/clippy.txt > /tmp/clippy_err.txt || true
           echo "::notice title=clippy-lines::$(wc -l < /tmp/clippy.txt) total, $(wc -l < /tmp/clippy_err.txt) findings"
           body=$(head -c 55000 /tmp/clippy_err.txt | sed -e 's/%/%25/g' | tr '\n' '~')
