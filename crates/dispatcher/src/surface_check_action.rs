@@ -11,21 +11,13 @@ use shared_external_lint::IExternalLintAggregate;
 use shared_filesystem::FilesystemRequest;
 use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared_import_rules::IImportRunnerAggregate;
-use shared_import_rules::taxonomy_import_rules_request::ImportRequest;
 use shared_naming_rules::INamingRunnerAggregate;
-use shared_naming_rules::taxonomy_naming_rules_request::NamingRequest;
 use shared_orphan_rules::IOrphanAggregate;
-use shared_orphan_rules::OrphanRequest;
-use shared_quality_rules::CodeAnalysisRequest;
 use shared_quality_rules::ICodeAnalysisAggregate;
 use shared_role_rules::IRoleRunnerAggregate;
-use shared_role_rules::taxonomy_role_rules_request::RoleRequest;
 use shared_structure_rules::IStructureAggregate;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
-use std::time::Instant;
-
-use crate::surface_ci_action::run_isolated;
 
 // Re-exported so the cancel-aware scan path stays reachable at its historical
 // import site (`surface_check_action::collect_scan_with_cancel` /
@@ -37,6 +29,11 @@ pub use crate::surface_scan_cancel_action::{CancellableScanOutcome, collect_scan
 /// dispatch protocol operations without holding the raw IO protocol (#571).
 /// File access goes through `aggregate`; `workspace`/`parser` stay seams because
 /// no aggregate facade exposes them.
+/// Shared latency guard threshold used by both the Criterion bench and the
+/// regression test so they never drift. Public because benches and integration
+/// tests are separate compilation units.
+pub const LATENCY_GUARD_MAX_RATIO: f64 = 1.2;
+
 #[derive(Clone)]
 pub struct FilesystemSeam {
     pub workspace: Arc<dyn IFilesystemAggregate>,
@@ -115,17 +112,20 @@ where
         Some(m) => validate_member_path(&opts, &root, m)?,
         None => root.clone(),
     };
-    // A subfolder or single-file target must still be judged against its whole
-    // member dir — the architecture rules read sibling files — so the scan
-    // widens to the member dir and only the *report* narrows.
+    // Always scan the full workspace root; the scope only narrows the report.
     let scope = shared_cli_commands::classify_scan_scope(&root, &target_path);
-    let scan_path = match scope.scan_root() {
-        "" => target_path.clone(),
-        member_root => member_root.to_string(),
-    };
+    let scan_root = root.clone();
 
+    let report_target = std::path::PathBuf::from(&target_path);
+    let workspace_root = std::path::PathBuf::from(&root);
     let violations = match opts.scan_aggregates.as_ref() {
-        Some(agg) => run_all_linters_in_process(&scan_path, agg, &mut on_progress),
+        Some(agg) => run_all_linters_in_process(
+            &scan_root,
+            &report_target,
+            &workspace_root,
+            agg,
+            &mut on_progress,
+        ),
         None => {
             // Subprocess fallback is forbidden (current_exe self-invocation
             // violates the architecture rules). Callers must provide a
@@ -147,7 +147,7 @@ where
 /// A failed canonicalization keeps the violation: dropping a real finding
 /// because a path did not resolve would hide a defect, which is worse than
 /// reporting one extra line.
-fn retain_scope(
+pub(crate) fn retain_scope(
     violations: Vec<ViolationItem>,
     scope: &shared_cli_commands::ScanScope,
 ) -> Vec<ViolationItem> {
@@ -255,460 +255,7 @@ pub fn collect_default_check(
     collect_scan_json(project_root, seam, agg)
 }
 
-/// Run all 8 linter groups in-process through their aggregate entry points (W10).
-///
-/// E902 fix: when the scan target is a member directory (e.g.
-/// `workspaces-good/modules`) the discovered workspace root is the parent
-/// (e.g. `workspaces-good`). Building the file index from that parent makes
-/// the entry paths relative to it, so a later root + relative-path join
-/// produces a doubled path (`workspaces-good/modules/workspaces-good/modules`)
-/// and a file-not-found E902 violation. The subprocess path avoided this:
-/// each linter's own file index scoping normalized the target. Here we keep
-/// the target itself as the scan scope, and every linter output that names a
-/// non-existent file is dropped (with no violation emitted) so stale or
-/// doubled paths can never surface as E902.
-///
-/// Each capability runs through `run_isolated`, so one panicking linter is
-/// logged to stderr while the others continue.
-pub(crate) fn run_all_linters_in_process(
-    path: &str,
-    agg: &ScanAggregates,
-    on_progress: &mut dyn FnMut(String, usize, usize),
-) -> Vec<ViolationItem> {
-    let seam = agg.fs_seam.clone();
-    let target = std::path::Path::new(path);
-    let target_canon =
-        canonicalize_via(&seam.aggregate, target).unwrap_or_else(|| std::path::PathBuf::from(path));
-    let target_canon_str = target_canon.to_string_lossy().to_string();
-    let target_canon_str_ref = target_canon_str.as_str();
-    tracing::info!(
-        target: "lint_arwaky::audit",
-        event = "scan_start",
-        path = target_canon_str_ref,
-        "scan starting"
-    );
-    let scan_start = Instant::now();
-    // W10: build the in-process file index directly from the scan target so
-    // member-scoped scans (e.g. `workspaces-bad/crates`) enumerate exactly the
-    // files the subprocess linters would see, instead of the parent workspace
-    // that `build_file_index_with_ignored` resolves to (which would mix or drop
-    // sibling members and produce doubled paths → E902 / missing codes).
-    let scan_root = target_canon.clone();
-    let root_fp = FilePath::new(scan_root.to_string_lossy().to_string()).unwrap_or_default();
-    let ignored = agg
-        .config
-        .execute(ConfigRequest::ignored_paths(&root_fp))
-        .into_patterns()
-        .values
-        .iter()
-        .map(|v| v.to_string())
-        .collect::<Vec<String>>();
-    tracing::debug!(
-        target: "lint_arwaky::audit",
-        event = "ignored_paths_loaded",
-        count = ignored.len(),
-        patterns = ignored.join(","),
-        "config ignored_paths loaded"
-    );
-
-    // Single-file target: build a one-entry index and run the auditors on it.
-    if scan_root.is_file() {
-        on_progress("Scanning file".to_string(), 0, 1);
-        let result = run_single_file_scan(&seam, &scan_root, agg, &root_fp, &ignored);
-        on_progress("Scan complete".to_string(), 1, 1);
-        return result;
-    }
-
-    // Discover source files under the target, matching the per-linter commands
-    // that call `discover_source_files(target, &ignored)` internally. Also
-    // cache them in the filesystem's file index + import map so
-    // `import_list()` / `resolved_import_list()` used by the in-process import
-    // auditor are populated for this target.
-    //
-    // Populate the filesystem's import cache + file index. This walks the
-    // discovered workspace root (the parent when the target is a member),
-    // which is what the orphan auditor and the import auditor's
-    // `import_list()` / `resolved_import_list()` expect — but the entries we
-    // pass to quality/role/import/naming below are scoped to the target only,
-    // so per-file rules never see sibling members (no doubled-path E902).
-    // Skip any config-provided ignore pattern that would exclude the scan
-    // target itself (a repo-root scan must always see its own tree), then
-    // add the fixture/test-workspace dir names so the workspace-root index
-    // walk never picks up `workspaces-bad`/`workspaces-good` as parent
-    // source. An explicit scan of a fixture dir is unaffected: the walk
-    // roots at that dir and the name filter only applies to entries of the
-    // scan target's siblings.
-    // An explicit scan of a fixture dir must not ignore the target itself —
-    // `build_file_index_with_ignored` uses ignore::WalkBuilder, so an ignore
-    // entry matching the scan root's own name suppresses its entire subtree.
-    let index_build_start = Instant::now();
-    seam.aggregate
-        .execute(FilesystemRequest::build_file_index_with_ignored(
-            std::path::Path::new(&scan_root),
-            &build_index_ignored(&ignored, &scan_root),
-        ));
-    tracing::debug!(
-        target: "lint_arwaky::audit",
-        event = "file_index_built",
-        elapsed_ms = index_build_start.elapsed().as_millis() as u64,
-        "file index build complete"
-    );
-
-    let discover_start = Instant::now();
-    let discovered = discover_lintable_files(&seam, &scan_root, &ignored);
-    let total_files = discovered.len();
-    tracing::info!(
-        target: "lint_arwaky::audit",
-        event = "files_discovered",
-        count = total_files,
-        elapsed_ms = discover_start.elapsed().as_millis() as u64,
-        "lintable files discovered under scan root"
-    );
-    on_progress("Files discovered".to_string(), 0, total_files);
-    let entries_start = Instant::now();
-    let entries = build_entries(&seam, &discovered);
-    let import_map = build_import_map(&seam, &entries);
-    tracing::info!(
-        target: "lint_arwaky::audit",
-        event = "index_built",
-        files = total_files,
-        elapsed_ms = entries_start.elapsed().as_millis() as u64,
-        "entry + import-map index built"
-    );
-    on_progress("Index built".to_string(), 0, total_files);
-    // AES103's subject is the files the default walk prunes, so they need their
-    // own discovery. The root here is the scan target rather than the
-    // workspace root, because a member-dir scan must judge its own test files
-    // and no sibling's.
-    let test_files = build_entries(
-        &seam,
-        &discover_test_suite_files(&seam, &scan_root, &ignored),
-    );
-    let parent_workspace = target_canon
-        .parent()
-        .and_then(|p| p.parent())
-        .map(|p| p.to_path_buf());
-    // AES5xx orphan (and AES205 cycle) violation paths are relative to the
-    // workspace root the orphan scanner resolved — for a member-dir scan target
-    // that is one level up (the target's parent), not two.
-    let workspace_root = target_canon.parent().map(|p| p.to_path_buf());
-    let mut all: Vec<ViolationItem> = Vec::new();
-    // Capability panics are logged after the scan-scope filters, so an isolated
-    // failure is visible without inventing a rule code.
-    let mut panics: Vec<String> = Vec::new();
-    // Quality, role, import, naming, and orphan groups run on parallel threads
-    // (wall time = slowest group). Each thread keeps its own panic collector;
-    // findings are re-appended in historical group order for determinism.
-    let parallel_start = Instant::now();
-    let (quality_v, role_v, import_v, naming_v, orphan_v) = {
-        let (quality, role, import, naming, orphan) = std::thread::scope(|s| {
-            let h_quality = s.spawn(|| {
-                let mut group_panics = Vec::new();
-                let group_start = Instant::now();
-                let violations = run_isolated("quality", &mut group_panics, || {
-                    // `RunAnalysis` takes `Vec<FileEntry>` by value, so this
-                    // is the only deep copy of the file bodies in a scan:
-                    // every other group borrows `entries` (#1359).
-                    agg.quality
-                        .execute(CodeAnalysisRequest::RunAnalysis {
-                            files: entries.clone(),
-                        })
-                        .into_violations()
-                        .iter()
-                        .map(ViolationItem::from_lint_result)
-                        .collect::<Vec<_>>()
-                });
-                tracing::info!(
-                    target: "lint_arwaky::audit",
-                    event = "quality_done",
-                    violations = violations.len(),
-                    elapsed_ms = group_start.elapsed().as_millis() as u64,
-                    "quality linter complete"
-                );
-                (violations, group_panics)
-            });
-            let h_role = s.spawn(|| {
-                let mut group_panics = Vec::new();
-                let group_start = Instant::now();
-                let violations = run_isolated("role", &mut group_panics, || {
-                    agg.role
-                        .execute(RoleRequest::audit(&entries))
-                        .into_violations()
-                        .iter()
-                        .map(ViolationItem::from_lint_result)
-                        .collect::<Vec<_>>()
-                });
-                tracing::info!(
-                    target: "lint_arwaky::audit",
-                    event = "role_done",
-                    violations = violations.len(),
-                    elapsed_ms = group_start.elapsed().as_millis() as u64,
-                    "role linter complete"
-                );
-                (violations, group_panics)
-            });
-            let h_import = s.spawn(|| {
-                let mut group_panics = Vec::new();
-                let group_start = Instant::now();
-                let violations = run_isolated("import", &mut group_panics, || {
-                    agg.import
-                        .execute(ImportRequest::audit_with_entries_and_imports(
-                            &entries,
-                            &import_map,
-                        ))
-                        .into_violations()
-                        .iter()
-                        .map(ViolationItem::from_lint_result)
-                        .collect::<Vec<_>>()
-                });
-                tracing::info!(
-                    target: "lint_arwaky::audit",
-                    event = "import_done",
-                    violations = violations.len(),
-                    elapsed_ms = group_start.elapsed().as_millis() as u64,
-                    "import linter complete"
-                );
-                (violations, group_panics)
-            });
-            let h_naming = s.spawn(|| {
-                let mut group_panics = Vec::new();
-                let group_start = Instant::now();
-                let violations = run_isolated("naming", &mut group_panics, || {
-                    agg.naming
-                        .execute(NamingRequest::audit_with_tests(&entries, &test_files))
-                        .into_violations()
-                });
-                tracing::info!(
-                    target: "lint_arwaky::audit",
-                    event = "naming_done",
-                    violations = violations.len(),
-                    elapsed_ms = group_start.elapsed().as_millis() as u64,
-                    "naming linter complete"
-                );
-                (violations, group_panics)
-            });
-            let h_orphan = s.spawn(|| {
-                let mut group_panics = Vec::new();
-                let group_start = Instant::now();
-                let violations = run_isolated("orphan", &mut group_panics, || {
-                    let (_graph_ctx, orphan_violations) = agg
-                        .orphan
-                        .execute(OrphanRequest::scan(
-                            &root_fp,
-                            &shared_common::taxonomy_common_vo::PatternList::new(ignored.clone()),
-                        ))
-                        .into_scan_outcome();
-                    orphan_violations
-                        .iter()
-                        .map(ViolationItem::from_lint_result)
-                        .collect::<Vec<_>>()
-                });
-                tracing::info!(
-                    target: "lint_arwaky::audit",
-                    event = "orphan_done",
-                    violations = violations.len(),
-                    elapsed_ms = group_start.elapsed().as_millis() as u64,
-                    "orphan linter complete"
-                );
-                (violations, group_panics)
-            });
-            (
-                h_quality.join().unwrap_or_default(),
-                h_role.join().unwrap_or_default(),
-                h_import.join().unwrap_or_default(),
-                h_naming.join().unwrap_or_default(),
-                h_orphan.join().unwrap_or_default(),
-            )
-        });
-        panics.extend(quality.1);
-        panics.extend(role.1);
-        panics.extend(import.1);
-        panics.extend(naming.1);
-        panics.extend(orphan.1);
-        (quality.0, role.0, import.0, naming.0, orphan.0)
-    };
-    tracing::info!(
-        target: "lint_arwaky::audit",
-        event = "parallel_linters_done",
-        elapsed_ms = parallel_start.elapsed().as_millis() as u64,
-        "file-scoped linter groups complete"
-    );
-    all.extend(quality_v);
-    all.extend(role_v);
-    all.extend(import_v);
-    all.extend(naming_v);
-    all.extend(orphan_v);
-    on_progress(
-        "Quality checks complete".to_string(),
-        total_files,
-        total_files,
-    );
-    on_progress("Role checks complete".to_string(), total_files, total_files);
-    on_progress(
-        "Import checks complete".to_string(),
-        total_files,
-        total_files,
-    );
-    on_progress(
-        "Naming checks complete".to_string(),
-        total_files,
-        total_files,
-    );
-    on_progress(
-        "Orphan checks complete".to_string(),
-        total_files,
-        total_files,
-    );
-
-    // External — adapters run on the target *as given* (relative paths resolve
-    // against the process CWD, exactly like the spawned linters did).
-    // When the scan target is a workspace root (has crates/packages/modules
-    // siblings), gate external violations to those member dirs only so root-
-    // level packaging files (setup.py at the workspace root) are not picked
-    // up — matching the gating the AES-quality / role / import / naming /
-    // orphan linters apply via `discover_lintable_files`.
-    let member_dirs: Vec<std::path::PathBuf> = ["crates", "packages", "modules"]
-        .into_iter()
-        .map(|n| target_canon.join(n))
-        .filter(|p| p.is_dir())
-        .collect();
-    let member_refs: Vec<&std::path::Path> = member_dirs.iter().map(|p| p.as_path()).collect();
-    let member_scope: Option<&[&std::path::Path]> = if member_refs.is_empty() {
-        None
-    } else {
-        Some(&member_refs)
-    };
-    let ext_target_fp = FilePath::new(path.to_string()).unwrap_or_default();
-    {
-        let ext_files = seam
-            .aggregate
-            .execute(FilesystemRequest::discover_files(std::path::Path::new(
-                &target_canon_str,
-            )))
-            .into_paths();
-        let has_rust = ext_files.iter().any(|f| f.ends_with(".rs"));
-        let has_python = ext_files.iter().any(|f| f.ends_with(".py"));
-        let has_js = ext_files.iter().any(|f| {
-            f.ends_with(".js") || f.ends_with(".jsx") || f.ends_with(".ts") || f.ends_with(".tsx")
-        });
-        let has_markdown = ext_files
-            .iter()
-            .any(|f| f.ends_with(".md") || f.ends_with(".markdown"));
-        // Honor the project's `adapters:` SSOT exactly like the `external`
-        // subcommand does — an empty list would run every language adapter,
-        // including tools the config never enables (markdownlint), which is
-        // where the workspaces-good false positives came from.
-        let config_entries = crate::surface_external_action::load_config_entries(
-            std::path::Path::new(&target_canon_str),
-            seam.aggregate.as_ref(),
-            agg.config_file_reader.as_ref(),
-        );
-        let adapter_count = config_entries.len();
-        let context = shared_external_lint::taxonomy_external_lint_vo::ExternalLintContext {
-            has_rust,
-            has_python,
-            has_js,
-            has_markdown,
-            ignored_paths: ignored.clone(),
-            ignored_rules: crate::surface_external_action::load_ignored_rules(
-                std::path::Path::new(&target_canon_str),
-                seam.aggregate.as_ref(),
-                agg.config_file_reader.as_ref(),
-            ),
-            config_entries,
-            ..shared_external_lint::taxonomy_external_lint_vo::ExternalLintContext::default()
-        };
-        let ext_start = Instant::now();
-        let agg_external = agg.external.clone();
-        let mut external: Vec<ViolationItem> = run_isolated("external", &mut panics, || {
-            crate::surface_external_action::run_member_external_batches(
-                &ext_target_fp,
-                &context,
-                &ignored,
-                &agg_external,
-                &member_dirs,
-                member_scope.is_some(),
-            )
-        });
-        tracing::info!(
-            target: "lint_arwaky::audit",
-            event = "external_done",
-            adapters = adapter_count,
-            elapsed_ms = ext_start.elapsed().as_millis() as u64,
-            "external adapters complete"
-        );
-        external.retain(|v| {
-            external_violation_in_scope(
-                v,
-                &seam,
-                &target_canon,
-                parent_workspace.as_deref(),
-                member_scope,
-            )
-        });
-        all.extend(external);
-    }
-
-    // Keep only violations that resolve to a real file under the scan scope
-    // (or, for AES205 cycles / AES5xx orphans, within the parent workspace).
-    // At a workspace root the scope is the member dirs only, so a root-level
-    // packaging file (e.g. setup.py) never surfaces from any linter.
-    all.retain(|v| {
-        violation_in_scan_scope(
-            v,
-            &seam,
-            &target_canon,
-            parent_workspace.as_deref(),
-            workspace_root.as_deref(),
-            member_scope,
-        )
-    });
-
-    // Structure — folder-layout audit (AES701–AES703). Its findings name a
-    // folder or a file inside one, and a folder path is not itself a file, so
-    // these are scoped separately and appended after the file-scope filter.
-    let structure_start = Instant::now();
-    all.extend(run_isolated("structure", &mut panics, || {
-        structure_violations_in_scope(&target_canon_str, agg)
-    }));
-    tracing::info!(
-        target: "lint_arwaky::audit",
-        event = "structure_done",
-        elapsed_ms = structure_start.elapsed().as_millis() as u64,
-        "structure audit complete"
-    );
-
-    // Doc invariants (AES601–AES606) audit the workspace document chain
-    // (FRD/BACKLOG pairs, PRD, AGENTS, ...) which is not part of the
-    // source-file index, so it runs against the scan target directly and its
-    // findings are appended after the file-scope filter like structure does.
-    let doc_start = Instant::now();
-    all.extend(run_isolated("doc", &mut panics, || {
-        doc_violations_in_scope(&target_canon_str, agg)
-    }));
-    tracing::info!(
-        target: "lint_arwaky::audit",
-        event = "doc_done",
-        elapsed_ms = doc_start.elapsed().as_millis() as u64,
-        "doc audit complete"
-    );
-
-    on_progress("Scan complete".to_string(), total_files, total_files);
-    tracing::info!(
-        target: "lint_arwaky::audit",
-        event = "scan_complete",
-        total_violations = all.len(),
-        elapsed_ms = scan_start.elapsed().as_millis() as u64,
-        "scan finished"
-    );
-    if !panics.is_empty() {
-        for line in &panics {
-            eprintln!("{line}");
-        }
-    }
-
-    all
-}
+pub(crate) use crate::surface_check_scan_action::run_all_linters_in_process;
 
 // Re-export scope and discovery helpers so existing call sites keep their
 // import paths unchanged.
@@ -999,5 +546,77 @@ mod bfs_tests {
             has_path(&discovered, &root_src),
             "root-level source files must be discovered at a workspace root: {discovered:?}"
         );
+    }
+}
+
+/// Unit tests for `retain_scope` — scope filtering with prefix edge cases.
+#[cfg(test)]
+mod retain_scope_tests {
+    use super::*;
+    use shared_cli_commands::ScanScope;
+    use shared_common::{ErrorCode, LineNumber, LintMessage, Severity};
+
+    fn mk_violation(file: &str, code: &str) -> ViolationItem {
+        ViolationItem {
+            code: ErrorCode::raw(code.to_string()),
+            file: FilePath::new(file.to_string()).unwrap(),
+            line: LineNumber::new(0),
+            column: shared_common::ColumnNumber::new(0),
+            message: LintMessage::new("test violation".to_string()),
+            severity: Severity::INFO,
+            violation_name: String::new(),
+            why: String::new(),
+            fix: String::new(),
+        }
+    }
+
+    #[test]
+    fn retain_scope_none_prefix_returns_everything() {
+        let violations = vec![
+            mk_violation("workspaces-bad/crates/alpha/src/lib.rs", "AES101"),
+            mk_violation("workspaces-bad/crates/beta/src/lib.rs", "AES102"),
+        ];
+        let scope = ScanScope::Workspace;
+        let result = retain_scope(violations, &scope);
+        assert_eq!(result.len(), 2);
+    }
+
+    #[test]
+    fn retain_scope_prefix_keeps_matching_drops_nonmatching() {
+        let violations = vec![
+            mk_violation(
+                "workspaces-bad/crates/naming_violations/src/agent_user_helper.rs",
+                "AES101",
+            ),
+            mk_violation("workspaces-bad/crates/other/src/lib.rs", "AES102"),
+        ];
+        let scope = ScanScope::Subfolder {
+            scan_root: "workspaces-bad/crates".to_string(),
+            filter_to: "workspaces-bad/crates/naming_violations/src".to_string(),
+        };
+        let result = retain_scope(violations, &scope);
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0].code.code(), "AES101");
+        assert_eq!(
+            result[0].file.value,
+            "workspaces-bad/crates/naming_violations/src/agent_user_helper.rs"
+        );
+    }
+
+    #[test]
+    fn retain_scope_non_canonicalizable_path_kept_not_dropped() {
+        // A path that does not exist on disk cannot be canonicalized; per the
+        // doc comment on `retain_scope`, it must be kept rather than dropped.
+        let violations = vec![mk_violation(
+            "/nonexistent/crates/naming_violations/src/agent_user_helper.rs",
+            "AES101",
+        )];
+        let scope = ScanScope::Subfolder {
+            scan_root: "workspaces-bad/crates".to_string(),
+            filter_to: "/nonexistent/crates/naming_violations/src".to_string(),
+        };
+        let result = retain_scope(violations, &scope);
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0].code.code(), "AES101");
     }
 }
