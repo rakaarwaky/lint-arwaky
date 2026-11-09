@@ -6,6 +6,7 @@ use crate::surface_check_action::{
 };
 use shared_common::ViolationItem;
 use shared_filesystem::FilesystemRequest;
+use shared_filesystem::utility_filesystem_io::is_source_file;
 use shared_filesystem::utility_path_filter;
 use shared_naming_rules::TESTS_DIR;
 use std::path::Path;
@@ -163,13 +164,21 @@ pub(crate) fn bfs_enter_subdirs(
             if !seen.insert(entry_path.to_path_buf()) {
                 continue;
             }
+            // Collect this directory's own top-level source files only.
+            // `discover_source_files` in `discover_lintable_files` already
+            // walks recursively from scan_root and handles nested trees;
+            // per-entry recursive discovery would re-root multi-segment
+            // ignored_paths (relative to scan_root) to each entry, breaking
+            // patterns such as `internal/lint-arwaky/.worktrees`.
             let n_before = discovered.len();
             discovered.extend(
                 seam.aggregate
-                    .execute(FilesystemRequest::discover_source_files(
-                        entry_path, ignored,
-                    ))
-                    .into_paths(),
+                    .execute(FilesystemRequest::ScanDirectory {
+                        root: entry_path.to_path_buf(),
+                    })
+                    .into_paths()
+                    .into_iter()
+                    .filter(|p| is_source_file(std::path::Path::new(p))),
             );
             tracing::debug!(
                 target: "lint_arwaky::audit",
