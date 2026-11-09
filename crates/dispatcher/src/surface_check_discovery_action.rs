@@ -7,6 +7,7 @@ use shared_common::ViolationItem;
 use shared_filesystem::FilesystemRequest;
 use shared_filesystem::utility_path_filter;
 use shared_naming_rules::TESTS_DIR;
+use std::path::Path;
 
 const BENCHES_DIR: &str = "benches";
 
@@ -343,8 +344,12 @@ pub(crate) fn run_all_linters_in_memory(
     path: &str,
     agg: &ScanAggregates,
 ) -> Result<Vec<ViolationItem>, String> {
+    let report_target = Path::new(path);
+    let workspace_root = Path::new(path).parent().unwrap_or(Path::new("."));
     let result = run_all_linters_in_process(
         path,
+        report_target,
+        workspace_root,
         agg,
         &mut |_phase: String, _done: usize, _total: usize| {},
     );

@@ -153,6 +153,7 @@ pub(crate) fn external_violation_in_scope(
     v: &ViolationItem,
     seam: &FilesystemSeam,
     target_canon: &std::path::Path,
+    report_target: &std::path::Path,
     parent_workspace: Option<&std::path::Path>,
     member_dirs: Option<&[&std::path::Path]>,
 ) -> bool {
@@ -166,7 +167,7 @@ pub(crate) fn external_violation_in_scope(
                     .into_path_exists()
         });
     }
-    resolved_canon.starts_with(target_canon)
+    resolved_canon.starts_with(report_target)
         || (v.code.code() == "AES205"
             && parent_workspace.is_some_and(|pw| resolved_canon.starts_with(pw)))
 }
@@ -181,6 +182,7 @@ pub(crate) fn violation_in_scan_scope(
     v: &ViolationItem,
     seam: &FilesystemSeam,
     target_canon: &std::path::Path,
+    report_target: &std::path::Path,
     parent_workspace: Option<&std::path::Path>,
     workspace_root: Option<&std::path::Path>,
     member_dirs: Option<&[&std::path::Path]>,
@@ -193,7 +195,7 @@ pub(crate) fn violation_in_scan_scope(
     {
         return false; // E902 guard: non-existent file — drop, no violation.
     }
-    let in_target = resolved_canon.starts_with(target_canon);
+    let in_target = resolved_canon.starts_with(report_target);
     let in_parent_ws = parent_workspace.is_some_and(|pw| resolved_canon.starts_with(pw));
     // At a workspace root, scope to member dirs only so root-level packaging
     // files are never reported — matching what the AES linters lint.
@@ -621,6 +623,230 @@ mod tests {
             violations.len(),
             0,
             "non-missing-doc finding for a nonexistent file must be dropped: {violations:?}"
+        );
+    }
+
+    fn make_violation(path: &std::path::Path, code: &str) -> ViolationItem {
+        ViolationItem {
+            code: shared_common::ErrorCode::raw(code),
+            file: shared_common::FilePath::new(path.to_string_lossy().to_string()).unwrap(),
+            line: shared_common::LineNumber::new(1),
+            column: shared_common::ColumnNumber::new(0),
+            message: shared_common::LintMessage::new("test"),
+            severity: shared_common::Severity::INFO,
+            violation_name: String::new(),
+            why: String::new(),
+            fix: String::new(),
+        }
+    }
+
+    /// Subfolder scope: violation under the report target passes; one outside
+    /// it is dropped even though it lives under the same scan root.
+    #[test]
+    fn subfolder_scope_filters_to_report_target() {
+        let tmp = tempfile::TempDir::new().unwrap();
+        let root = tmp.path();
+        let under = root.join("crates").join("alpha").join("src").join("lib.rs");
+        let outside = root.join("crates").join("beta").join("src").join("lib.rs");
+        std::fs::create_dir_all(under.parent().unwrap()).unwrap();
+        std::fs::create_dir_all(outside.parent().unwrap()).unwrap();
+        std::fs::write(&under, "fn main() {}").unwrap();
+        std::fs::write(&outside, "fn main() {}").unwrap();
+
+        let seam = fs_seam();
+        let target_canon = root.join("crates");
+        let report_target = root.join("crates").join("alpha").join("src").join("lib.rs");
+
+        let v_under = make_violation(&under, "AES100");
+        assert!(
+            violation_in_scan_scope(
+                &v_under,
+                &seam,
+                &target_canon,
+                &report_target,
+                None,
+                None,
+                None
+            ),
+            "file under report target must be in scope"
+        );
+
+        let v_outside = make_violation(&outside, "AES100");
+        assert!(
+            !violation_in_scan_scope(
+                &v_outside,
+                &seam,
+                &target_canon,
+                &report_target,
+                None,
+                None,
+                None
+            ),
+            "file outside report target must be out of scope"
+        );
+    }
+
+    /// SingleFile scope: only the named file passes; a sibling file is dropped.
+    #[test]
+    fn single_file_scope_filters_to_target_file() {
+        let tmp = tempfile::TempDir::new().unwrap();
+        let root = tmp.path();
+        let target = root.join("crates").join("alpha").join("lib.rs");
+        let sibling = root.join("crates").join("alpha").join("other.rs");
+        std::fs::create_dir_all(target.parent().unwrap()).unwrap();
+        std::fs::write(&target, "fn main() {}").unwrap();
+        std::fs::write(&sibling, "fn other() {}").unwrap();
+
+        let seam = fs_seam();
+        let target_canon = root.join("crates");
+        let report_target = &target;
+
+        let v_target = make_violation(&target, "AES100");
+        assert!(
+            violation_in_scan_scope(
+                &v_target,
+                &seam,
+                &target_canon,
+                report_target,
+                None,
+                None,
+                None
+            ),
+            "the named file must be in scope"
+        );
+
+        let v_sibling = make_violation(&sibling, "AES100");
+        assert!(
+            !violation_in_scan_scope(
+                &v_sibling,
+                &seam,
+                &target_canon,
+                report_target,
+                None,
+                None,
+                None
+            ),
+            "a sibling file must be out of scope"
+        );
+    }
+
+    /// Workspace scope: everything under the workspace root passes through.
+    #[test]
+    fn workspace_scope_passthrough() {
+        let tmp = tempfile::TempDir::new().unwrap();
+        let root = tmp.path();
+        let file = root.join("crates").join("alpha").join("src").join("lib.rs");
+        std::fs::create_dir_all(file.parent().unwrap()).unwrap();
+        std::fs::write(&file, "fn main() {}").unwrap();
+
+        let seam = fs_seam();
+        let target_canon = root;
+        let report_target = root;
+
+        let v = make_violation(&file, "AES100");
+        assert!(
+            violation_in_scan_scope(&v, &seam, target_canon, report_target, None, None, None),
+            "workspace scope must pass through all in-root violations"
+        );
+    }
+
+    /// TopLevel scope: violations must resolve under a member dir to pass.
+    #[test]
+    fn top_level_scope_scopes_to_member_dirs() {
+        let tmp = tempfile::TempDir::new().unwrap();
+        let root = tmp.path();
+        let crates_dir = root.join("crates");
+        let file = crates_dir.join("alpha").join("src").join("lib.rs");
+        let root_file = root.join("setup.py");
+        std::fs::create_dir_all(file.parent().unwrap()).unwrap();
+        std::fs::write(&file, "fn main() {}").unwrap();
+        std::fs::write(&root_file, "print('hi')").unwrap();
+
+        let seam = fs_seam();
+        let target_canon = root;
+        let report_target = &crates_dir;
+        let member_arr = [&crates_dir as &std::path::Path];
+        let member_dirs = Some(member_arr.as_slice());
+
+        let v_member = make_violation(&file, "AES100");
+        assert!(
+            violation_in_scan_scope(
+                &v_member,
+                &seam,
+                target_canon,
+                report_target,
+                None,
+                None,
+                member_dirs.as_deref()
+            ),
+            "file under member dir must be in scope at TopLevel"
+        );
+
+        let v_root = make_violation(&root_file, "AES100");
+        assert!(
+            !violation_in_scan_scope(
+                &v_root,
+                &seam,
+                target_canon,
+                report_target,
+                None,
+                None,
+                member_dirs.as_deref()
+            ),
+            "root-level packaging file must be out of scope at TopLevel"
+        );
+    }
+
+    /// E902 guard: a non-existent file is always dropped.
+    #[test]
+    fn nonexistent_file_is_dropped_e902() {
+        let tmp = tempfile::TempDir::new().unwrap();
+        let root = tmp.path();
+        let report_target = root.join("crates").join("alpha").join("src");
+
+        let seam = fs_seam();
+        let target_canon = &report_target;
+
+        let v = make_violation(&root.join("nonexistent.rs"), "AES100");
+        assert!(
+            !violation_in_scan_scope(&v, &seam, target_canon, &report_target, None, None, None),
+            "non-existent file must be dropped by E902 guard"
+        );
+    }
+
+    /// External violations anchor to report_target just like file violations.
+    #[test]
+    fn external_violation_anchors_to_report_target() {
+        let tmp = tempfile::TempDir::new().unwrap();
+        let root = tmp.path();
+        let under = root.join("crates").join("alpha").join("src").join("lib.rs");
+        let outside = root.join("other").join("main.rs");
+        std::fs::create_dir_all(under.parent().unwrap()).unwrap();
+        std::fs::create_dir_all(outside.parent().unwrap()).unwrap();
+        std::fs::write(&under, "fn main() {}").unwrap();
+        std::fs::write(&outside, "fn main() {}").unwrap();
+
+        let seam = fs_seam();
+        let target_canon = root.join("crates");
+        let report_target = root.join("crates").join("alpha").join("src").join("lib.rs");
+
+        let v_under = make_violation(&under, "AES100");
+        assert!(
+            external_violation_in_scope(&v_under, &seam, &target_canon, &report_target, None, None),
+            "external violation under report target must be in scope"
+        );
+
+        let v_outside = make_violation(&outside, "AES100");
+        assert!(
+            !external_violation_in_scope(
+                &v_outside,
+                &seam,
+                &target_canon,
+                &report_target,
+                None,
+                None
+            ),
+            "external violation outside report target must be out of scope"
         );
     }
 }

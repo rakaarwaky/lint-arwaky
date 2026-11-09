@@ -124,8 +124,16 @@ where
         member_root => member_root.to_string(),
     };
 
+    let report_target = std::path::PathBuf::from(&target_path);
+    let workspace_root = std::path::PathBuf::from(&root);
     let violations = match opts.scan_aggregates.as_ref() {
-        Some(agg) => run_all_linters_in_process(&scan_path, agg, &mut on_progress),
+        Some(agg) => run_all_linters_in_process(
+            &scan_path,
+            &report_target,
+            &workspace_root,
+            agg,
+            &mut on_progress,
+        ),
         None => {
             // Subprocess fallback is forbidden (current_exe self-invocation
             // violates the architecture rules). Callers must provide a
@@ -271,15 +279,17 @@ pub fn collect_default_check(
 /// Each capability runs through `run_isolated`, so one panicking linter is
 /// logged to stderr while the others continue.
 pub(crate) fn run_all_linters_in_process(
-    path: &str,
+    scan_root: &str,
+    report_target: &Path,
+    workspace_root: &Path,
     agg: &ScanAggregates,
     on_progress: &mut dyn FnMut(String, usize, usize),
 ) -> Vec<ViolationItem> {
     let seam = agg.fs_seam.clone();
 
-    let target = std::path::Path::new(path);
-    let target_canon =
-        canonicalize_via(&seam.aggregate, target).unwrap_or_else(|| std::path::PathBuf::from(path));
+    let target = std::path::Path::new(scan_root);
+    let target_canon = canonicalize_via(&seam.aggregate, target)
+        .unwrap_or_else(|| std::path::PathBuf::from(scan_root));
     let target_canon_str = target_canon.to_string_lossy().to_string();
     let target_canon_str_ref = target_canon_str.as_str();
 
@@ -392,14 +402,8 @@ pub(crate) fn run_all_linters_in_process(
         &discover_test_suite_files(&seam, &scan_root, &ignored),
     );
 
-    let parent_workspace = target_canon
-        .parent()
-        .and_then(|p| p.parent())
-        .map(|p| p.to_path_buf());
-    // AES5xx orphan (and AES205 cycle) violation paths are relative to the
-    // workspace root the orphan scanner resolved — for a member-dir scan target
-    // that is one level up (the target's parent), not two.
-    let workspace_root = target_canon.parent().map(|p| p.to_path_buf());
+    let parent_workspace = workspace_root.parent().map(|p| p.to_path_buf());
+    let workspace_root = Some(workspace_root.to_path_buf());
 
     let mut all: Vec<ViolationItem> = Vec::new();
     // Capability panics are logged after the scan-scope filters, so an isolated
@@ -531,7 +535,7 @@ pub(crate) fn run_all_linters_in_process(
     } else {
         Some(&member_refs)
     };
-    let ext_target_fp = FilePath::new(path.to_string()).unwrap_or_default();
+    let ext_target_fp = FilePath::new(target_canon_str.clone()).unwrap_or_default();
     {
         let ext_files = seam
             .aggregate
@@ -595,6 +599,7 @@ pub(crate) fn run_all_linters_in_process(
                 v,
                 &seam,
                 &target_canon,
+                report_target,
                 parent_workspace.as_deref(),
                 member_scope,
             )
@@ -611,6 +616,7 @@ pub(crate) fn run_all_linters_in_process(
             v,
             &seam,
             &target_canon,
+            report_target,
             parent_workspace.as_deref(),
             workspace_root.as_deref(),
             member_scope,
