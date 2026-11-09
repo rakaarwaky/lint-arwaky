@@ -8,7 +8,10 @@
 // one dispatcher aggregate per rule group. Both files implement the same
 // `McpActionSurface`, so callers see no new type.
 use super::surface_mcp_action_command::McpActionSurface;
-use crate::surface_mcp_action_view::{normalize_response, violations_response};
+use crate::surface_mcp_action_view::{normalize_response, violations_response, violations_to_json};
+use shared_role_rules::{
+    LAYER_AGENT, LAYER_CAPABILITIES, LAYER_CONTRACT, LAYER_SURFACES, LAYER_TAXONOMY, LAYER_UTILITY,
+};
 
 impl McpActionSurface {
     pub async fn execute_quality(&self, path: &str) -> serde_json::Value {

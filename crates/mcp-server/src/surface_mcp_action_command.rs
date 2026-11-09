@@ -3,6 +3,7 @@
 // MCP protocol surface (surface_mcp_tool_command) delegates here; this surface
 // delegates to dispatcher surfaces (pure business logic) and maps results to
 // JSON responses. No formatting/println — JSON is returned as serde_json::Value.
+use std::path::PathBuf;
 use std::sync::Arc;
 
 use dispatcher::surface_orphan_action::OrphanFactory;
@@ -22,13 +23,9 @@ use shared_orphan_rules::IOrphanAggregate;
 use shared_project_setup::ISetupAggregate;
 use shared_quality_rules::ICodeAnalysisAggregate;
 use shared_role_rules::IRoleRunnerAggregate;
-use shared_role_rules::{
-    LAYER_AGENT, LAYER_CAPABILITIES, LAYER_CONTRACT, LAYER_SURFACES, LAYER_TAXONOMY, LAYER_UTILITY,
-};
 
 use crate::surface_mcp_action_view::{
-    error_response, is_mutating_action, normalize_response, resolve_confined_path,
-    violations_to_json,
+    error_response, is_mutating_action, resolve_confined_path, violations_to_json,
 };
 
 #[derive(Clone)]
@@ -96,7 +93,7 @@ impl McpActionSurface {
         })
     }
 
-    fn authorize_action(&self, action: &str) -> Result<(), serde_json::Value> {
+    pub(crate) fn authorize_action(&self, action: &str) -> Result<(), serde_json::Value> {
         if is_mutating_action(action) && !self.deps.allow_mutations {
             Err(serde_json::json!({
                 "status": "error",
@@ -475,6 +472,4 @@ impl McpActionSurface {
             Err(e) => serde_json::json!({"error": e, "exit_code": 2}),
         }
     }
-
-    /// Run quality scan via dispatcher.
 }
