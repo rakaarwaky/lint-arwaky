@@ -129,7 +129,6 @@ impl McpActionSurface {
         path: &str,
         member: Option<&str>,
         rules: Option<&str>,
-        strict: bool,
     ) -> serde_json::Value {
         let fp = match self.to_fp(path) {
             Ok(f) => f,
@@ -360,8 +359,8 @@ impl McpActionSurface {
         let opts = dispatcher::surface_check_action::ScanOptions {
             path: Some(fp),
             multi_project_orchestrator: Some(self.deps.config_orchestrator.clone()),
-            filter: rules.map(str::to_string),
-            member: member.map(str::to_string),
+            filter: None,
+            member: None,
             // `ScanOptions.filesystem` is the seam handle; cloning the whole
             // `FilesystemSeam` here allocated a fresh copy per tool call.
             filesystem: self.deps.fs_seam.clone(),
