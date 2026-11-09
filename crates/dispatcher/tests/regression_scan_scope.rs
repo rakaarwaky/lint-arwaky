@@ -104,7 +104,11 @@ fn subfolder_scan_reports_only_member_a() {
 }
 
 /// The same scan applied to `member_b` reports only `member_b` paths — the
-/// scope contract holds symmetrically for both members.
+/// scope contract holds symmetrically for both members. `member_b` carries no
+/// local violations (its files are clean), so a non-emptiness assert is
+/// omitted by design: the guard here is the negative direction — no leak into
+/// `member_a` — and global (root-level) findings still report with paths
+/// that contain neither member dir.
 #[test]
 fn subfolder_scan_reports_only_member_b() {
     let root = fixture_path("workspaces-bad");
