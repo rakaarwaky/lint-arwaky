@@ -22,9 +22,19 @@ jobs:
         with:
           components: clippy, rustfmt
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
+      - name: probe
+        run: |
+          echo "::notice title=probe::sha=$(git rev-parse --short HEAD) crates=$(ls crates | wc -l) root_manifest=$(test -f Cargo.toml && echo yes || echo no)"
+          cargo --version
+          echo "::notice title=probe::rustc $(rustc --version)"
       - name: cargo check
         run: |
+          set -o pipefail
           cargo check --all-targets --message-format=short 2>&1 | tee /tmp/check.txt || true
+          echo "::notice title=check-lines::$(wc -l < /tmp/check.txt) lines"
+          tail -25 /tmp/check.txt | while IFS= read -r line; do
+            echo "::notice title=check-tail::${line//'%'/%25}"
+          done
           grep -E "error(\[E[0-9]+\])?:" /tmp/check.txt | head -60 | while IFS= read -r line; do
             echo "::error title=check::${line//'%'/%25}"
           done
