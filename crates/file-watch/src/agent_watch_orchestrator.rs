@@ -15,7 +15,7 @@ use shared_file_watch::contract_watch_protocol::{
 use shared_file_watch::taxonomy_file_watch_request::WatchRequest;
 use shared_file_watch::taxonomy_file_watch_response::WatchResponse;
 use shared_file_watch::taxonomy_file_watch_vo::ChangeLintSummary;
-use shared_file_watch::taxonomy_file_watch_vo::WatchConfig;
+use shared_file_watch::taxonomy_file_watch_vo::{WatchConfig, WatchOutputEvent};
 use shared_quality_rules::CodeAnalysisRequest;
 use shared_quality_rules::ICodeAnalysisAggregate;
 
@@ -71,7 +71,15 @@ impl WatchOrchestrator {
         }
     }
 
-    fn run_watch_loop(&self, config: &WatchConfig, running: Arc<AtomicBool>) -> ExitCode {
+    fn run_watch_loop(
+        &self,
+        config: &WatchConfig,
+        running: Arc<AtomicBool>,
+        on_output: Arc<dyn Fn(WatchOutputEvent) + Send + Sync>,
+    ) -> ExitCode {
+        on_output(WatchOutputEvent::Started {
+            path: config.path.value().to_string(),
+        });
         info!(
             version = shared_common::RELEASE_VERSION,
             target = config.path.value(),
@@ -83,6 +91,12 @@ impl WatchOrchestrator {
         const WATCH_SCORE_THRESHOLD: f64 = 80.0;
 
         let initial = self.run_initial_lint();
+        // Keep the progress stream main added: the initial result is reported
+        // before the loop starts, not only in the exit code.
+        on_output(WatchOutputEvent::InitialScanComplete {
+            violations: initial.violations,
+            score: initial.score,
+        });
         if initial.fails_policy(WATCH_SCORE_THRESHOLD) {
             error!(
                 violations = initial.violations,
@@ -143,10 +157,18 @@ impl WatchOrchestrator {
                                         "Changed file fails policy"
                                     );
                                 }
+                                on_output(WatchOutputEvent::FileLinted {
+                                    path: event.path,
+                                    succeeded: true,
+                                });
                                 worst = worst.combine(&summary);
                             }
                             Err(e) => {
                                 error!(file = %event.path, error = %e, "failed to lint changed file");
+                                on_output(WatchOutputEvent::FileLinted {
+                                    path: event.path,
+                                    succeeded: false,
+                                });
                                 worst.service_errors += 1;
                             }
                         }
@@ -169,6 +191,7 @@ impl WatchOrchestrator {
             service_errors = worst.service_errors,
             "Watcher stopped"
         );
+        on_output(WatchOutputEvent::Stopped);
         // Exit code contract: a runtime failure (a lint that could not run)
         // outranks a policy failure; a policy failure outranks success. The
         // loop previously returned `ExitCode::OK` on every path, including
@@ -187,8 +210,12 @@ impl WatchOrchestrator {
 impl IWatchAggregate for WatchOrchestrator {
     fn execute(&self, request: WatchRequest) -> WatchResponse {
         match request {
-            WatchRequest::Run { config, running } => WatchResponse::Run {
-                exit_code: self.run_watch_loop(&config, running),
+            WatchRequest::Run {
+                config,
+                running,
+                on_output,
+            } => WatchResponse::Run {
+                exit_code: self.run_watch_loop(&config, running, on_output),
             },
             WatchRequest::IsLintable { path } => WatchResponse::IsLintable {
                 lintable: self.filter.is_lintable(path.value()),

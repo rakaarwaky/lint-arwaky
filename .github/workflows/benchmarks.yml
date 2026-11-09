@@ -1,8 +1,9 @@
 name: Benchmarks
 
 # Nightly Criterion run against a cached baseline so the documented
-# performance budget (README.md → Performance; PRD.md → NFR table) has
-# automated regression detection instead of being aspirational.
+# performance budget (README.md → Performance; PRD.md → Success Metrics
+# table, metric #2) has automated regression detection instead of being
+# aspirational.
 # The job is advisory: it reports regressions on the run summary and fails
 # the job (visible on scheduled-run alerts), but it does not block PRs —
 # per-PR benchmarking on shared runners is too noisy for a hard gate.

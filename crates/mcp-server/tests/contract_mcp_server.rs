@@ -155,6 +155,15 @@ fn execute_command_args_forwards_the_documented_arguments() {
     assert_eq!(opts.strict, Some(true));
     assert_eq!(opts.dry_run, Some(true));
     assert_eq!(opts.threshold, Some(90));
+
+    // A mistyped value is rejected as well as a mistyped key.
+    assert!(
+        serde_json::from_value::<ExecuteCommandArgs>(serde_json::json!({
+            "action": "ci",
+            "args": {"threshold": "90"}
+        }))
+        .is_err()
+    );
 }
 
 #[test]

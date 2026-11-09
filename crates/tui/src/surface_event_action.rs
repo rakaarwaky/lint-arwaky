@@ -302,8 +302,11 @@ impl SurfaceActionHandler {
                 state.preview.scroll = state.preview.scroll.saturating_sub(10);
             }
             TuiEvent::PreviewScrollDown => {
-                state.preview.scroll = state.preview.scroll.saturating_add(10);
-                state.preview.scroll = state.preview.scroll.min(self.max_preview_scroll(state));
+                state.preview.scroll = state
+                    .preview
+                    .scroll
+                    .saturating_add(10)
+                    .min(self.max_preview_scroll(state));
             }
             // ---- Focus cycling between panels (Tree is display-only, never focused) ----
             TuiEvent::FocusNext => state.cycle_focus_forward(),
@@ -315,14 +318,15 @@ impl SurfaceActionHandler {
             TuiEvent::ToggleHelp => {
                 state.show_help = !state.show_help;
                 if state.show_help {
-                    // Save the active preview mode so we can restore it when help closes
+                    // Save the active preview mode so we can restore it when help closes.
                     state.preview.last_mode = Some(state.preview.mode);
                     state.preview.mode = PreviewMode::HelpOverlay;
                 } else {
-                    // Restore the previous preview mode, or fall back to ActionOutput
+                    // Restore the previous preview mode, or fall back to ActionOutput.
                     state.preview.mode =
                         state.preview.last_mode.unwrap_or(PreviewMode::ActionOutput);
                 }
+                state.preview.scroll = 0;
             }
             // ---- Search mode: incremental file filtering ----
             TuiEvent::ToggleSearch => {
@@ -440,6 +444,7 @@ impl SurfaceActionHandler {
             // the rest of the session with no way to correct it (#1317).
             TuiEvent::ChangeProjectRoot => {
                 state.path_dialog.input = state.navigation.project_root.clone();
+                state.path_dialog.cursor = state.path_dialog.input.len();
                 state.path_dialog.visible = true;
             }
             // ---- Background global actions: run on a worker thread, poll in event loop ----
@@ -475,10 +480,42 @@ impl SurfaceActionHandler {
                 state.set_status("Watch not supported in TUI");
             }
             // ---- Path input dialog: character-by-character editing ----
-            TuiEvent::PathInput(ch) => state.path_dialog.input.push(ch),
-            TuiEvent::PathBackspace => {
-                state.path_dialog.input.pop();
+            TuiEvent::PathInput(ch) => {
+                let cursor = state.path_dialog.cursor.min(state.path_dialog.input.len());
+                state.path_dialog.input.insert(cursor, ch);
+                state.path_dialog.cursor = cursor + ch.len_utf8();
             }
+            TuiEvent::PathBackspace => {
+                let cursor = state.path_dialog.cursor.min(state.path_dialog.input.len());
+                if cursor > 0 {
+                    let previous = state.path_dialog.input[..cursor]
+                        .char_indices()
+                        .last()
+                        .map(|(index, _)| index)
+                        .unwrap_or(0);
+                    state.path_dialog.input.replace_range(previous..cursor, "");
+                    state.path_dialog.cursor = previous;
+                }
+            }
+            TuiEvent::PathMoveLeft => {
+                let cursor = state.path_dialog.cursor.min(state.path_dialog.input.len());
+                state.path_dialog.cursor = state.path_dialog.input[..cursor]
+                    .char_indices()
+                    .last()
+                    .map(|(index, _)| index)
+                    .unwrap_or(0);
+            }
+            TuiEvent::PathMoveRight => {
+                let cursor = state.path_dialog.cursor.min(state.path_dialog.input.len());
+                state.path_dialog.cursor = cursor
+                    + state.path_dialog.input[cursor..]
+                        .chars()
+                        .next()
+                        .map(|ch| ch.len_utf8())
+                        .unwrap_or(0);
+            }
+            TuiEvent::PathMoveStart => state.path_dialog.cursor = 0,
+            TuiEvent::PathMoveEnd => state.path_dialog.cursor = state.path_dialog.input.len(),
             // ---- Path dialog: confirm typed path (empty input falls back to CWD) ----
             TuiEvent::PathConfirm => {
                 let raw = if state.path_dialog.input.trim().is_empty() {
@@ -514,6 +551,7 @@ impl SurfaceActionHandler {
             TuiEvent::PathCancel => {
                 state.path_dialog.visible = false;
                 state.path_dialog.input.clear();
+                state.path_dialog.cursor = 0;
                 // `r` is a real SHORTCUTS row (`ChangeProjectRoot`), so this
                 // instruction now names a key that dispatches.
                 state.set_status("Path dialog cancelled — press 'r' to change root");
@@ -523,6 +561,10 @@ impl SurfaceActionHandler {
             TuiEvent::Resize(w, h) => {
                 state.terminal_height = h;
                 state.terminal_width = w;
+                state.preview.scroll = state
+                    .preview
+                    .scroll
+                    .min(crate::surface_preview_view::max_scroll_for_state(state));
             }
             // ---- Quit: Esc first closes the help overlay, then actually quits ----
             TuiEvent::Quit => {
@@ -538,24 +580,16 @@ impl SurfaceActionHandler {
             TuiEvent::MouseScrollUp(_col, _row) => {
                 if state.navigation.panel_focus == PanelFocus::Preview {
                     state.preview.scroll = state.preview.scroll.saturating_sub(3);
-                } else if state.navigation.scroll_offset > 0 {
-                    state.navigation.scroll_offset -= 1;
-                    if state.navigation.selected_index > 0 {
-                        state.navigation.selected_index -= 1;
-                    }
+                } else {
+                    state.select_prev();
                 }
             }
             TuiEvent::MouseScrollDown(_col, _row) => {
-                let max_scroll = state.navigation.entries.len().saturating_sub(1);
                 if state.navigation.panel_focus == PanelFocus::Preview {
                     state.preview.scroll = state.preview.scroll.saturating_add(3);
                     state.preview.scroll = state.preview.scroll.min(self.max_preview_scroll(state));
-                } else if state.navigation.scroll_offset < max_scroll {
-                    state.navigation.scroll_offset += 1;
-                    let max_idx = state.navigation.entries.len().saturating_sub(1);
-                    if state.navigation.selected_index < max_idx {
-                        state.navigation.selected_index += 1;
-                    }
+                } else {
+                    state.select_next();
                 }
             }
             TuiEvent::CopyToClipboard => self.copy_to_clipboard(state),
@@ -797,19 +831,35 @@ impl SurfaceActionHandler {
                 state.navigation.panel_focus = PanelFocus::Tree;
             }
             HitTarget::FileList { row: panel_row } => {
-                if state.search.mode && !state.search.query.is_empty() {
-                    // Search mode: the panel shows filtered_indices, so panel_row
-                    // is a position in the filtered list, not an entry index.
-                    let pos = state.navigation.scroll_offset + panel_row;
-                    if let Some(entry_idx) = state.search.filtered_indices.get(pos).copied() {
-                        state.search.filter_pos = pos;
+                if panel_row == 0 || panel_row >= layout.band.height.saturating_sub(1) as usize {
+                    return;
+                }
+                let visible_rows = layout.band.height.saturating_sub(2) as usize;
+                let content_row = panel_row - 1;
+                let display_len = if state.search.mode {
+                    state.search.filtered_indices.len()
+                } else {
+                    state.navigation.entries.len()
+                };
+                let selected_position = if state.search.mode {
+                    state.search.filter_pos
+                } else {
+                    state.navigation.selected_index
+                };
+                let window_start = crate::surface_file_list_view::visible_window_start(
+                    display_len,
+                    selected_position,
+                    visible_rows,
+                );
+                let position = window_start.saturating_add(content_row);
+                if state.search.mode {
+                    if let Some(entry_idx) = state.search.filtered_indices.get(position).copied() {
+                        state.search.filter_pos = position;
                         state.navigation.selected_index = entry_idx;
                     }
-                } else {
-                    let new_index = state.navigation.scroll_offset + panel_row;
-                    if new_index < state.navigation.entries.len() {
-                        state.navigation.selected_index = new_index;
-                    }
+                } else if position < state.navigation.entries.len() {
+                    state.navigation.selected_index = position;
+                    state.navigation.scroll_offset = window_start;
                 }
                 state.navigation.panel_focus = PanelFocus::FileList;
             }
@@ -849,8 +899,7 @@ impl SurfaceActionHandler {
         if panel_height == 0 {
             return;
         }
-        let content_length = state.preview.text.lines().count().max(1);
-        let max_scroll = content_length.saturating_sub(panel_height as usize);
+        let max_scroll = crate::surface_preview_view::max_scroll_for_state(state);
         let fraction = relative_row as f64 / panel_height as f64;
         let new_scroll = (fraction * max_scroll as f64).round() as usize;
         state.preview.scroll = new_scroll.min(max_scroll);
@@ -858,14 +907,6 @@ impl SurfaceActionHandler {
 
     /// Compute the maximum valid preview scroll offset.
     fn max_preview_scroll(&self, state: &AppState) -> usize {
-        let h = state.terminal_height;
-        if h < 5 {
-            return 0;
-        }
-        // Same band height as file_list_visible_height: 1 header + 3 shortcuts
-        // + 1 status row = 5 overhead rows.
-        let preview_height = (h - 5) as usize;
-        let content_length = state.preview.text.lines().count().max(1);
-        content_length.saturating_sub(preview_height)
+        crate::surface_preview_view::max_scroll_for_state(state)
     }
 }

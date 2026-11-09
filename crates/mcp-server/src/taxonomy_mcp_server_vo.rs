@@ -3,55 +3,46 @@ use rmcp::schemars::JsonSchema;
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
 // ─── Block 1: Module Declaration ───────────────────────────
 pub struct ExecuteCommandArgs {
-    /// The command action to execute (e.g. "scan", "check", "security", "doctor")
+    /// The command action to execute (e.g. "scan", "check", "security", "doctor").
     pub action: String,
-    /// Action arguments. `path` resolves against the confined workspace root;
-    /// `member`, `rules`, `base`, `strict`, `dry_run` and `threshold` are
-    /// forwarded to the verb that owns them.
+    /// Supported options for the selected action. Unknown keys are rejected.
     ///
-    /// Unknown keys are rejected rather than ignored: a silently dropped
-    /// `member` widened a member-scoped scan to the whole workspace, and the
-    /// caller could not tell the two results apart.
+    /// `member`, `rules`, `base` and `strict` are forwarded to the verb that
+    /// owns them; dropping them silently made a member-scoped scan cover the
+    /// whole workspace, with no way for the caller to tell the two results
+    /// apart.
     pub args: Option<ExecuteCommandOptions>,
 }
 
-/// Every argument any CLI verb accepts through `execute_command`.
+/// Typed options accepted by `execute_command`.
 ///
-/// One flat struct rather than per-action enums because the action name is
-/// already the discriminator; the cost is that an argument is accepted for a
-/// verb that ignores it, which is reported rather than silently dropped.
+/// `path` is relative to the configured MCP workspace root; absolute paths are
+/// accepted only when they remain inside that root. It defaults to the root.
 #[derive(Debug, Default, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct ExecuteCommandOptions {
-    /// Workspace-confined path. Relative paths resolve against the configured
-    /// workspace root, not the MCP server cwd.
-    #[serde(default)]
+    /// Workspace-relative or in-workspace absolute target path (default: workspace root).
     pub path: Option<String>,
-    /// CI score threshold (0–100).
-    #[serde(default)]
+    /// Minimum score for the `ci` action only (default: 80, range: 0..=100).
     pub threshold: Option<u64>,
-    /// Preview without writing (fix, docs_scaffold).
-    #[serde(default)]
+    /// Preview fixes without writing files, for the `fix` action only (default: false).
     pub dry_run: Option<bool>,
-    /// Restrict a scan to one workspace member by name.
-    #[serde(default)]
+    /// Restrict a `check`/`scan` to one workspace member by name.
     pub member: Option<String>,
-    /// Filter reported violations by AES rule code.
-    #[serde(default)]
+    /// Filter reported violations by AES rule code (`check`/`scan`).
     pub rules: Option<String>,
-    // NOTE: no `layer`, `format` or `group` keys. The MCP surface already
+    /// Git base ref for the `git` action (default: `develop`).
+    pub base: Option<String>,
+    /// Force strict doc auditing for the `docs` action (default: false).
+    pub strict: Option<bool>,
+    // NOTE: no `layer`, `format` or `group` keys. The surface already
     // discriminates those through the action name — `taxonomy`/`contract`/…
     // select a layer, `quality`/`import`/… select a group — and its output is
     // always JSON. Accepting them here would recreate the bug this struct
     // exists to fix: a documented key that is decoded and then ignored.
-    /// Git base ref for the `git` verb.
-    #[serde(default)]
-    pub base: Option<String>,
-    /// Force strict doc auditing for `docs`.
-    #[serde(default)]
-    pub strict: Option<bool>,
 }
 
 #[derive(Debug, Deserialize, JsonSchema)]
@@ -62,7 +53,7 @@ pub struct ListCommandsArgs {
 
 #[derive(Debug, Deserialize, JsonSchema)]
 pub struct GetConfigArgs {
-    /// Optional project path to inspect config for
+    /// Workspace-relative or in-workspace absolute project path; defaults to workspace root.
     pub path: Option<String>,
     /// Optional language hint (rust, python, javascript)
     pub language: Option<String>,
@@ -71,7 +62,7 @@ pub struct GetConfigArgs {
 #[derive(Debug, Deserialize, JsonSchema)]
 // ─── Docs scaffold args ────────────────────────────────────────────────
 pub struct DocsScaffoldArgs {
-    /// Project path to scaffold docs into
+    /// Workspace-relative or in-workspace absolute project path; defaults to workspace root.
     pub path: Option<String>,
     /// Scope to a specific member crate (e.g. `billing`). Omit to scaffold all.
     pub member: Option<String>,

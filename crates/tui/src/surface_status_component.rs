@@ -10,6 +10,7 @@ use ratatui::style::Style;
 use ratatui::text::{Line, Span};
 use ratatui::widgets::Paragraph;
 use shared_tui::utility_tui_theme as theme;
+use unicode_width::UnicodeWidthChar;
 
 // Glyph fallbacks are owned by `utility_tui_theme::glyph`, not re-implemented
 // here: the confirm modal and the preview panel had grown their own copies, so
@@ -38,6 +39,13 @@ impl StatusComponent {
     }
 
     pub fn render(&self, state: &AppState, frame: &mut Frame, area: Rect) {
+        if area.width < 72 {
+            let compact = compact_status(state, area.width as usize);
+            let paragraph =
+                Paragraph::new(compact).style(Style::default().bg(theme::color(theme::BACKGROUND)));
+            frame.render_widget(paragraph, area);
+            return;
+        }
         let line = if state.scan.running {
             // Scan progress indicator: progress bar + phase + counts
             let bar_width = 20;
@@ -227,6 +235,88 @@ impl StatusComponent {
             Paragraph::new(line).style(Style::default().bg(theme::color(theme::BACKGROUND)));
         frame.render_widget(paragraph, area);
     }
+}
+
+fn compact_status(state: &AppState, width: usize) -> String {
+    if width == 0 {
+        return String::new();
+    }
+    let text = if state.scan.running {
+        if state.scan.files_total == 0 {
+            "Scan waiting for file count | Esc cancels".to_string()
+        } else {
+            format!(
+                "{} {}/{} files | {} viol. | Esc",
+                truncate_cells(&state.scan.phase, 9),
+                state.scan.files_done,
+                state.scan.files_total,
+                state.scan.violations,
+            )
+        }
+    } else if state.scan.completed {
+        let violations = format!("{} violations", state.scan.violations);
+        let phase_budget = width.saturating_sub(display_width(&violations) + 3);
+        format!(
+            "{} | {}",
+            truncate_cells(&state.scan.phase, phase_budget),
+            violations
+        )
+    } else if state.actions.pending {
+        let badge = state.violation_badge();
+        let label_budget = width.saturating_sub(display_width(&badge) + 3);
+        format!(
+            "{} | {}",
+            truncate_cells(
+                &format!("Running {}", state.actions.pending_label),
+                label_budget
+            ),
+            badge,
+        )
+    } else {
+        let selected = state
+            .selected_entry()
+            .map(|entry| entry.display_name())
+            .unwrap_or_else(|| "(none)".to_string());
+        let badge = state.violation_badge();
+        let badge_width = display_width(&badge).min(width);
+        let fixed_width = badge_width.saturating_add(6);
+        let selected_budget = width.saturating_sub(fixed_width).min(10);
+        let status_budget = width.saturating_sub(fixed_width + selected_budget);
+        format!(
+            "{} | {} | {}",
+            truncate_cells(&state.status_message, status_budget),
+            truncate_cells(&selected, selected_budget),
+            badge,
+        )
+    };
+    truncate_cells(&text, width)
+}
+
+fn display_width(text: &str) -> usize {
+    text.chars()
+        .map(|ch| UnicodeWidthChar::width(ch).unwrap_or(0))
+        .sum()
+}
+
+fn truncate_cells(text: &str, width: usize) -> String {
+    if display_width(text) <= width {
+        return text.to_string();
+    }
+    if width == 0 {
+        return String::new();
+    }
+    let mut result = String::new();
+    let mut used = 0;
+    for ch in text.chars() {
+        let ch_width = UnicodeWidthChar::width(ch).unwrap_or(0);
+        if used + ch_width > width.saturating_sub(1) {
+            break;
+        }
+        result.push(ch);
+        used += ch_width;
+    }
+    result.push('…');
+    result
 }
 
 impl Default for StatusComponent {

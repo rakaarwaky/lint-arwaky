@@ -13,10 +13,6 @@ use std::sync::Arc;
 
 use dispatcher::surface_check_action::FilesystemSeam;
 use dispatcher::surface_orphan_action::OrphanFactory;
-use shared_common::taxonomy_adapter_name_vo::ToolName;
-use shared_common::taxonomy_common_vo::PatternList;
-use shared_common::taxonomy_language_vo::ConfigLanguage;
-use shared_common::taxonomy_language_vo::Language;
 use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared_quality_rules::{CodeAnalysisRequest, CodeAnalysisResponse, ICodeAnalysisAggregate};
 use tui_lint_arwaky::surface_event_action::SurfaceActionHandler;
@@ -166,8 +162,8 @@ fn file_list_click_updates_selection() {
     h.handle(&mut state, TuiEvent::MouseClick(col, row));
 
     assert_eq!(state.navigation.panel_focus, PanelFocus::FileList);
-    // selected_index = scroll_offset + panel_row = 0 + 3
-    assert_eq!(state.navigation.selected_index, 3);
+    // Content row is panel_row minus the top border row: 3 - 1 = 2.
+    assert_eq!(state.navigation.selected_index, 2);
 }
 
 /// A click in the shortcuts/status band below the panels is ignored.
@@ -205,10 +201,10 @@ fn file_list_click_in_search_mode_resolves_filtered_indices() {
     let h = handler();
     h.handle(&mut state, TuiEvent::MouseClick(col, row));
 
-    // Click on filtered row 1 → entry 5, not entry 1.
-    assert_eq!(state.navigation.selected_index, 5);
+    // Click on filtered panel row 1 → content_row = 0 → filtered_indices[0] = 2.
+    assert_eq!(state.navigation.selected_index, 2);
     assert_eq!(
-        state.search.filter_pos, 1,
+        state.search.filter_pos, 0,
         "filter_pos must follow the click"
     );
     assert_eq!(state.navigation.panel_focus, PanelFocus::FileList);

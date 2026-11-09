@@ -360,6 +360,10 @@ pub fn from_key_event(key: KeyEvent, state: &AppState) -> TuiEvent {
         return match key.code {
             KeyCode::Char(ch) => TuiEvent::PathInput(ch),
             KeyCode::Backspace => TuiEvent::PathBackspace,
+            KeyCode::Left => TuiEvent::PathMoveLeft,
+            KeyCode::Right => TuiEvent::PathMoveRight,
+            KeyCode::Home => TuiEvent::PathMoveStart,
+            KeyCode::End => TuiEvent::PathMoveEnd,
             KeyCode::Enter => TuiEvent::PathConfirm,
             KeyCode::Tab => TuiEvent::PathUseCurrent,
             // I4: Esc dismisses the dialog and returns to the tree (not quit) (#355).
