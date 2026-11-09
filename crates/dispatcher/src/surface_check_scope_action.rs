@@ -849,4 +849,64 @@ mod tests {
             "external violation outside report target must be out of scope"
         );
     }
+
+    /// Issue 4 regression: explicit `workspace_root`/`parent_workspace` recompute
+    /// `parent_workspace = workspace_root.parent()`. With `member_dirs` unset
+    /// the scope is governed by the report target, so a violation under the
+    /// subfolder report target is kept while a sibling outside it is dropped.
+    #[test]
+    fn explicit_workspace_root_and_parent_workspace_scope() {
+        let tmp = tempfile::TempDir::new().unwrap();
+        let root = tmp.path();
+        let member = root.join("crates").join("alpha");
+        let subfolder = member.join("src");
+        let under = subfolder.join("lib.rs");
+        let sibling = member.join("other.rs");
+        std::fs::create_dir_all(&subfolder).unwrap();
+        std::fs::write(&under, "fn main() {}").unwrap();
+        std::fs::write(&sibling, "fn other() {}").unwrap();
+
+        let seam = fs_seam();
+        let target_canon = &member;
+        let report_target = &under;
+        // Explicit non-None workspace_root; parent_workspace recomputed from it.
+        let workspace_root = member.clone();
+        let parent_workspace = workspace_root
+            .parent()
+            .expect("member has a parent")
+            .to_path_buf();
+        assert_eq!(
+            parent_workspace,
+            root.join("crates"),
+            "parent_workspace must resolve to member's parent level"
+        );
+
+        let v_under = make_violation(&under, "AES100");
+        assert!(
+            violation_in_scan_scope(
+                &v_under,
+                &seam,
+                target_canon,
+                report_target,
+                Some(&parent_workspace),
+                Some(&workspace_root),
+                None
+            ),
+            "file under subfolder report target must be in scope"
+        );
+
+        let v_sibling = make_violation(&sibling, "AES100");
+        assert!(
+            !violation_in_scan_scope(
+                &v_sibling,
+                &seam,
+                target_canon,
+                report_target,
+                Some(&parent_workspace),
+                Some(&workspace_root),
+                None
+            ),
+            "sibling outside subfolder report target must be out of scope"
+        );
+    }
 }

@@ -1,7 +1,8 @@
 // PURPOSE: File discovery, BFS subdirectory walker, index-build helpers, and
 // in-memory linter runner for the check action.
 use crate::surface_check_action::{
-    FilesystemSeam, ScanAggregates, detect_language_from_path, run_all_linters_in_process,
+    FilesystemSeam, ScanAggregates, canonicalize_via, detect_language_from_path,
+    run_all_linters_in_process,
 };
 use shared_common::ViolationItem;
 use shared_filesystem::FilesystemRequest;
@@ -344,8 +345,15 @@ pub(crate) fn run_all_linters_in_memory(
     path: &str,
     agg: &ScanAggregates,
 ) -> Result<Vec<ViolationItem>, String> {
-    let report_target = Path::new(path);
-    let workspace_root = Path::new(path).parent().unwrap_or(Path::new("."));
+    // Canonicalize `path` before deriving the anchors so a relative input
+    // (e.g. `"."`) resolves to an absolute canonical path that `starts_with`
+    // against the absolute canonicalized `resolved_canon` inside the scope
+    // guard (mirrors `collect_scan`'s `canonicalize_via` on `root`).
+    let path_canon = canonicalize_via(&agg.fs_seam.aggregate, Path::new(path))
+        .map(|p| p.to_string_lossy().into_owned())
+        .unwrap_or_else(|| path.to_string());
+    let report_target = Path::new(&path_canon);
+    let workspace_root = Path::new(&path_canon).parent().unwrap_or(Path::new("."));
     let result = run_all_linters_in_process(
         path,
         report_target,

@@ -14,7 +14,7 @@
 use std::sync::Arc;
 
 use dispatcher_lint_arwaky::surface_check_action::{
-    FilesystemSeam, ScanAggregates, ScanOptions, collect_scan,
+    FilesystemSeam, ScanAggregates, ScanOptions, collect_scan, collect_scan_json,
 };
 use shared_common::ViolationItem;
 use shared_common::taxonomy_path_vo::FilePath;
@@ -241,5 +241,47 @@ fn in_process_missing_path_returns_error() {
     assert!(
         err.contains("does not exist"),
         "error message must mention the missing path, got: {err}"
+    );
+}
+
+/// Issue 3 regression: `collect_scan_json` derives `report_target` from the
+/// given `path` and the scope guard keeps only violations anchored under it.
+/// Anchoring must hold for an absolute `path` (the Issue 1 regression dropped
+/// every violation when `report_target` was a relative prefix). Assert both
+/// the rule code and the target file path.
+#[test]
+fn collect_scan_json_anchors_to_report_target() {
+    let root = fixture_path("workspaces-bad/crates/naming_violations")
+        .to_string_lossy()
+        .to_string();
+    let agg = build_scan_aggregates(&root);
+    let target = fixture_path("workspaces-bad/crates/naming_violations/src");
+    let report_target = target.to_string_lossy().to_string();
+    let violations = collect_scan_json(&report_target, &agg.fs_seam, &agg)
+        .expect("collect_scan_json of valid fixture must succeed");
+    assert!(
+        !violations.is_empty(),
+        "violations must be anchored under report_target {report_target}, got none"
+    );
+    let mut saw_aes102 = false;
+    for v in &violations {
+        let code = v.code.code();
+        assert!(
+            code.starts_with("AES"),
+            "expected an AES rule code, got {code} for file {}",
+            v.file.value
+        );
+        if code.starts_with("AES102") {
+            saw_aes102 = true;
+        }
+        assert!(
+            std::path::Path::new(&v.file.value).starts_with(&target),
+            "violation file must anchor under report_target {report_target}, got {}",
+            v.file.value
+        );
+    }
+    assert!(
+        saw_aes102,
+        "expected at least one AES102 violation, got none"
     );
 }
