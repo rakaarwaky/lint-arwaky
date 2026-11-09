@@ -1,69 +1,212 @@
-// Benchmark tests for dispatcher — output component and check action throughput.
-use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
+// Benchmark tests for dispatcher — full-root scan vs member-targeted scan latency.
+// Best practices: significance_level(0.05), sample_size(30+), no --check CLI surface changes.
+use criterion::{Criterion, criterion_group, criterion_main};
+use dispatcher_lint_arwaky::surface_check_action::{
+    FilesystemSeam, ScanAggregates, ScanOptions, collect_scan,
+};
+use shared_common::taxonomy_path_vo::FilePath;
+use std::path::PathBuf;
+use std::sync::Arc;
+use std::time::Instant;
 
-fn bench_output_json(c: &mut Criterion) {
-    let mut group = c.benchmark_group("output_json");
-    group.significance_level(0.05).confidence_level(0.95);
-
-    let results: Vec<shared_common::LintResult> = (0..200)
-        .map(|i| shared_common::taxonomy_lint_vo::LintResult {
-            file: shared_common::FilePath::new(format!("src/module_{}.rs", i)).unwrap(),
-            line: shared_common::LineNumber::new(i as i64),
-            column: Default::default(),
-            code: shared_common::ErrorCode::raw(format!("AES{}", 100 + (i % 15))),
-            message: shared_common::LintMessage::new(format!("violation at module_{}.rs:{}", i, i)),
-            source: None,
-            severity: if i % 3 == 0 {
-                shared_common::Severity::HIGH
-            } else {
-                shared_common::Severity::MEDIUM
-            },
-            enclosing_scope: None,
-            related_locations: Default::default(),
-        })
-        .collect();
-
-    for n in [20, 100, 200] {
-        group.throughput(criterion::Throughput::Elements(n as u64));
-        group.bench_with_input(
-            BenchmarkId::new("serialize_results", n),
-            &results[..n],
-            |b, r| {
-                b.iter(|| {
-                    std::hint::black_box(serde_json::to_string(r).unwrap());
-                });
-            },
-        );
-    }
-
-    group.finish();
+/// Resolve a fixture path relative to the workspace root (parent of
+/// `crates/dispatcher`).
+fn fixture_path(relative: &str) -> PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .and_then(|p| p.parent())
+        .map(|p| p.join(relative))
+        .expect("CARGO_MANIFEST_DIR must be crates/dispatcher")
 }
 
-fn bench_ci_report_construction(c: &mut Criterion) {
-    let mut group = c.benchmark_group("ci_report_construction");
+/// Mirror of the test wiring in `crates/dispatcher/tests/mock_common.rs` so the
+/// benchmark drives the same in-process aggregate path the CLI uses (W10).
+fn build_scan_aggregates(root: &str) -> ScanAggregates {
+    let fs_container = filesystem::root_filesystem_container::FilesystemContainer::new();
+    let filesystem = fs_container.orchestrator();
+    let fs_io = fs_container.io();
+    let fs_orchestrator = fs_container.orchestrator();
+    let fs_workspace = fs_container.workspace();
+    let fs_parser = fs_container.parser();
+
+    let fs_seam = Arc::new(FilesystemSeam {
+        workspace: fs_orchestrator.clone(),
+        parser: fs_orchestrator.clone(),
+        aggregate: filesystem.clone(),
+    });
+
+    let config_container = config_system::root_config_system_container::ConfigContainer::new(
+        filesystem.clone(),
+        fs_io.clone(),
+    );
+    let config_orchestrator = config_container.orchestrator();
+
+    let quality_container =
+        quality_rules::root_quality_rules_container::CodeAnalysisContainer::from_orchestrator(
+            &config_orchestrator,
+            root,
+        );
+    let quality = quality_container.code_analysis_linter();
+
+    let sync_config = config_orchestrator
+        .execute(shared_config_system::ConfigRequest::load_sync(
+            &FilePath::new(root.to_string()).unwrap_or_default(),
+        ))
+        .into_sync_config();
+
+    let import_container =
+        import_rules::root_import_rules_container::ImportContainer::new_with_config(
+            sync_config.clone(),
+            filesystem.clone(),
+            fs_io.clone(),
+            fs_workspace.clone(),
+            fs_parser.clone(),
+        );
+    let import = import_container.orchestrator();
+
+    let naming_container = naming_rules::root_naming_rules_container::NamingContainer::new(
+        Arc::new(sync_config.clone()),
+        Arc::new(shared_common::LayerMapVO::new(sync_config.layers.clone())),
+    );
+    let naming = naming_container.orchestrator();
+
+    let orphan_container =
+        orphan_rules::root_orphan_detector_container::OrphanContainer::from_orchestrator(
+            &config_orchestrator,
+            root,
+            filesystem.clone(),
+            fs_workspace.clone(),
+        );
+    let orphan = orphan_container.analyzer();
+
+    let external_container =
+        external_lint::root_external_lint_container::ExternalLintContainer::new(
+            filesystem.clone(),
+            fs_io.clone(),
+            fs_container.tool_resolution().clone(),
+            false,
+        );
+    let external = external_container.aggregate();
+
+    let role_container =
+        role_rules::root_role_rules_container::RoleContainer::new_with_config(sync_config);
+    let role = role_container.orchestrator();
+
+    let structure =
+        structure_rules::root_structure_rules_container::RootStructureRulesContainer::orchestrator(
+        );
+    let doc = doc_rules::root_doc_rules_container::RootDocRulesContainer::orchestrator();
+
+    ScanAggregates {
+        config_file_reader: config_container.file_reader(),
+        quality,
+        role,
+        import,
+        naming,
+        external,
+        orphan,
+        config: config_orchestrator,
+        structure,
+        doc,
+        fs_seam,
+    }
+}
+
+/// Drive `collect_scan` through the in-process aggregate path for a given target.
+/// `member` mirrors the CLI `--member` flag: when set, the scan still walks the
+/// full root (per PR 2) but narrows the reported output via `retain_scope`.
+fn run_scan(
+    agg: &ScanAggregates,
+    root: &str,
+    member: Option<&str>,
+) -> Result<Vec<shared_common::ViolationItem>, String> {
+    let full = fixture_path(root);
+    let opts = ScanOptions {
+        path: Some(FilePath::new(full.to_string_lossy().to_string()).expect("valid fixture path")),
+        multi_project_orchestrator: None,
+        filter: None,
+        member: member.map(|m| m.to_string()),
+        filesystem: agg.fs_seam.clone(),
+        scan_aggregates: Some(agg.clone()),
+    };
+    collect_scan(opts)
+}
+
+/// Scan the whole workspace root (`workspaces-good`) — `scan .`.
+fn scan_full_root(agg: &ScanAggregates) -> Result<Vec<shared_common::ViolationItem>, String> {
+    run_scan(agg, "workspaces-good", None)
+}
+
+/// Scan a single member dir (`workspaces-good/crates`) — `scan crates`.
+/// Per PR 2 this still walks the full root; only the report narrows.
+fn scan_member_targeted(agg: &ScanAggregates) -> Result<Vec<shared_common::ViolationItem>, String> {
+    run_scan(agg, "workspaces-good", Some("crates"))
+}
+
+/// Time a single `collect_scan` call with `Instant` (excludes criterion
+/// warm-up/iteration overhead) for the latency guard.
+fn time_scan<F>(f: F) -> u128
+where
+    F: Fn() -> Result<Vec<shared_common::ViolationItem>, String>,
+{
+    let start = Instant::now();
+    let violations = f().expect("scan must succeed");
+    let elapsed = start.elapsed().as_nanos();
+    eprintln!(
+        "scan returned {} violations in {} ms",
+        violations.len(),
+        elapsed / 1_000_000
+    );
+    elapsed
+}
+
+/// Build aggregates once per bench run (container setup is not part of the
+/// measured scan work), then measure both scan shapes on the same fixture.
+fn bench_scan_latency(c: &mut Criterion) {
+    let root = fixture_path("workspaces-good");
+    let agg = build_scan_aggregates(&root.to_string_lossy());
+
+    // Warm up: force both scan shapes to run once so caches/page faults don't
+    // distort the first measured iteration.
+    let _ = scan_full_root(&agg);
+    let _ = scan_member_targeted(&agg);
+
+    let mut group = c.benchmark_group("scan_latency");
     group.significance_level(0.05).confidence_level(0.95);
     group.sample_size(30);
 
-    group.bench_function("create_ci_report", |b| {
+    group.bench_function("full_root_scan", |b| {
         b.iter(|| {
-            let report = dispatcher_lint_arwaky::surface_ci_action::CiReport {
-                version: "2.0.0".to_string(),
-                score: 0.85,
-                threshold: 70,
-                pass: true,
-                reasons: vec!["AES101".to_string(), "AES304".to_string()],
-                critical: 1,
-                high: 2,
-                medium: 3,
-                low: 4,
-                total_violations: 10,
-            };
-            std::hint::black_box(report);
+            let violations = scan_full_root(&agg).expect("full-root scan must succeed");
+            std::hint::black_box(violations);
+        });
+    });
+
+    group.bench_function("member_targeted_scan", |b| {
+        b.iter(|| {
+            let violations = scan_member_targeted(&agg).expect("member-targeted scan must succeed");
+            std::hint::black_box(violations);
         });
     });
 
     group.finish();
+
+    // Latency guard: per PR 2 both `scan .` and `scan crates` walk the full root
+    // (`scan_root = root.clone()`), so the member-targeted scan latency must be
+    // within 1.2x of the full-root scan — not lower by design (it is not
+    // skipping work).
+    let root_ns = time_scan(|| scan_full_root(&agg));
+    let member_ns = time_scan(|| scan_member_targeted(&agg));
+    let ratio = member_ns as f64 / root_ns as f64;
+    eprintln!(
+        "latency guard: root={} ns member={} ns ratio={:.3}",
+        root_ns, member_ns, ratio
+    );
+    assert!(
+        ratio <= 1.2,
+        "member-targeted scan latency ({member_ns} ns, ratio {ratio:.3}x) must be <= 1.2x full-root scan latency ({root_ns} ns)",
+    );
 }
 
-criterion_group!(benches, bench_output_json, bench_ci_report_construction,);
+criterion_group!(benches, bench_scan_latency);
 criterion_main!(benches);
