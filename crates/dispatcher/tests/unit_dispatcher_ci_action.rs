@@ -6,13 +6,10 @@
 // the function type-checked and was never run.
 //
 // These tests assert the *contract*, not a score: a group that is omitted from
-// the run must be visible in `groups_run`, and a CRITICAL violation must fail
-// the gate regardless of how few violations there are.
-#[allow(dead_code)]
-#[path = "mock_common.rs"]
+// the run must be visible in `groups_run`.
 mod mock_common;
 
-use dispatcher_lint_arwaky::surface_ci_action::{CI_RULE_GROUPS, CiReport, collect_ci};
+use dispatcher_lint_arwaky::surface_ci_action::{CI_RULE_GROUPS, collect_ci};
 use shared_common::{FilePath, Threshold};
 
 fn threshold(value: u32) -> Threshold {
@@ -29,7 +26,7 @@ fn ci_reports_every_rule_group_it_scored() {
     // orphan only, so AES6xx/AES7xx-only trees passed with a score of 100.
     let root = env!("CARGO_MANIFEST_DIR");
     let aggregates = mock_common::build_scan_aggregates(root);
-    let report: CiReport = collect_ci(aggregates, Some(fp(root)), threshold(80))
+    let report = collect_ci(aggregates, Some(fp(root)), threshold(80))
         .expect("ci run against the workspace root must not error");
 
     for group in CI_RULE_GROUPS {
