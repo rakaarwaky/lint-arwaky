@@ -374,15 +374,55 @@ impl FilesystemOrchestrator {
             .collect()
     }
     /// Discovers source files under a root, filtering by ignored patterns.
+    /// Recursive walk so nested source trees (e.g. `src/lib.rs`) are found.
     pub fn discover_source_files(&self, root: &Path, ignored: &[String]) -> Vec<String> {
-        let pl = PatternList::new(ignored.to_vec());
-        self.deps
-            .io
-            .scan_directory_with_ignored(root, &pl)
-            .into_iter()
-            .filter(|p| self.deps.io.is_source_file(p))
-            .map(|p| p.to_string_lossy().to_string())
-            .collect()
+        let mut found = Vec::new();
+        self.discover_recursive(root, root, ignored, &mut found);
+        found.sort();
+        found.dedup();
+        found
+    }
+
+    /// Recursive directory walk used by `discover_source_files`. Skips
+    /// default-ignored dirs by base name and config-ignored patterns by their
+    /// full relative path from `root` (so multi-segment patterns such as
+    /// `internal/lint-arwaky/.worktrees` are honoured).
+    fn discover_recursive(
+        &self,
+        dir: &Path,
+        root: &Path,
+        ignored: &[String],
+        found: &mut Vec<String>,
+    ) {
+        let Ok(entries) = dir.read_dir() else {
+            return;
+        };
+        for entry in entries.flatten() {
+            let path = entry.path();
+            let name = path
+                .file_name()
+                .and_then(|n| n.to_str())
+                .unwrap_or_default();
+            if shared_common::DEFAULT_IGNORED_PATHS.contains(&name) {
+                continue;
+            }
+            let rel_str = path
+                .strip_prefix(root)
+                .map(|r| r.to_string_lossy().to_string())
+                .unwrap_or_else(|_| path.to_string_lossy().to_string());
+            if utility_path_filter::is_path_ignored(&rel_str, ignored) {
+                continue;
+            }
+            match entry.file_type() {
+                Ok(kind) if kind.is_dir() => {
+                    self.discover_recursive(&path, root, ignored, found);
+                }
+                Ok(kind) if kind.is_file() && self.deps.io.is_source_file(&path) => {
+                    found.push(path.to_string_lossy().to_string());
+                }
+                _ => {}
+            }
+        }
     }
     /// Discovers source files inside *directories* anywhere under *root*, with\n    /// those directories exempted from the default skip list (keeps `tests/`\n    /// and `benches/`). Recursive walk, depth-capped. AES103 needs these.
     pub fn discover_files_in_directories(
