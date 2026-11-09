@@ -406,112 +406,155 @@ pub(crate) fn run_all_linters_in_process(
     // failure is visible without inventing a rule code.
     let mut panics: Vec<String> = Vec::new();
 
-    let quality_start = Instant::now();
-    all.extend(run_isolated("quality", &mut panics, || {
-        agg.quality
-            .execute(CodeAnalysisRequest::RunAnalysis {
-                files: entries.clone(),
-            })
-            .into_violations()
-            .iter()
-            .map(ViolationItem::from_lint_result)
-            .collect::<Vec<_>>()
-    }));
+    // Quality, role, import, naming, and orphan groups read the same shared
+    // index (`entries` / `import_map` / `test_files`) and produce disjoint
+    // violation lists, so they run on parallel threads: wall time is the
+    // slowest group instead of their sum (issue #1365). Each thread keeps its
+    // own panic collector; findings are re-appended in the historical group
+    // order so the violation list stays deterministic.
+    let parallel_start = Instant::now();
+    let (quality_v, role_v, import_v, naming_v, orphan_v) = {
+        let (quality, role, import, naming, orphan) = std::thread::scope(|s| {
+            let h_quality = s.spawn(|| {
+                let mut group_panics = Vec::new();
+                let group_start = Instant::now();
+                let violations = run_isolated("quality", &mut group_panics, || {
+                    agg.quality
+                        .execute(CodeAnalysisRequest::RunAnalysis {
+                            files: entries.clone(),
+                        })
+                        .into_violations()
+                        .iter()
+                        .map(ViolationItem::from_lint_result)
+                        .collect::<Vec<_>>()
+                });
+                tracing::info!(
+                    target: "lint_arwaky::audit",
+                    event = "quality_done",
+                    violations = violations.len(),
+                    elapsed_ms = group_start.elapsed().as_millis() as u64,
+                    "quality linter complete"
+                );
+                (violations, group_panics)
+            });
+            let h_role = s.spawn(|| {
+                let mut group_panics = Vec::new();
+                let group_start = Instant::now();
+                let violations = run_isolated("role", &mut group_panics, || {
+                    agg.role
+                        .execute(RoleRequest::audit(&entries))
+                        .into_violations()
+                        .iter()
+                        .map(ViolationItem::from_lint_result)
+                        .collect::<Vec<_>>()
+                });
+                tracing::info!(
+                    target: "lint_arwaky::audit",
+                    event = "role_done",
+                    violations = violations.len(),
+                    elapsed_ms = group_start.elapsed().as_millis() as u64,
+                    "role linter complete"
+                );
+                (violations, group_panics)
+            });
+            let h_import = s.spawn(|| {
+                let mut group_panics = Vec::new();
+                let group_start = Instant::now();
+                let violations = run_isolated("import", &mut group_panics, || {
+                    agg.import
+                        .execute(ImportRequest::audit_with_entries_and_imports(
+                            &entries,
+                            &import_map,
+                        ))
+                        .into_violations()
+                        .iter()
+                        .map(ViolationItem::from_lint_result)
+                        .collect::<Vec<_>>()
+                });
+                tracing::info!(
+                    target: "lint_arwaky::audit",
+                    event = "import_done",
+                    violations = violations.len(),
+                    elapsed_ms = group_start.elapsed().as_millis() as u64,
+                    "import linter complete"
+                );
+                (violations, group_panics)
+            });
+            let h_naming = s.spawn(|| {
+                let mut group_panics = Vec::new();
+                let group_start = Instant::now();
+                let violations = run_isolated("naming", &mut group_panics, || {
+                    agg.naming
+                        .execute(NamingRequest::audit_with_tests(&entries, &test_files))
+                        .into_violations()
+                });
+                tracing::info!(
+                    target: "lint_arwaky::audit",
+                    event = "naming_done",
+                    violations = violations.len(),
+                    elapsed_ms = group_start.elapsed().as_millis() as u64,
+                    "naming linter complete"
+                );
+                (violations, group_panics)
+            });
+            let h_orphan = s.spawn(|| {
+                let mut group_panics = Vec::new();
+                let group_start = Instant::now();
+                let violations = run_isolated("orphan", &mut group_panics, || {
+                    let (_graph_ctx, orphan_violations) = agg
+                        .orphan
+                        .execute(OrphanRequest::scan(
+                            &root_fp,
+                            &shared_common::taxonomy_common_vo::PatternList::new(
+                                ignored.clone(),
+                            ),
+                        ))
+                        .into_scan_outcome();
+                    orphan_violations
+                        .iter()
+                        .map(ViolationItem::from_lint_result)
+                        .collect::<Vec<_>>()
+                });
+                tracing::info!(
+                    target: "lint_arwaky::audit",
+                    event = "orphan_done",
+                    violations = violations.len(),
+                    elapsed_ms = group_start.elapsed().as_millis() as u64,
+                    "orphan linter complete"
+                );
+                (violations, group_panics)
+            });
+            (
+                h_quality.join().unwrap(),
+                h_role.join().unwrap(),
+                h_import.join().unwrap(),
+                h_naming.join().unwrap(),
+                h_orphan.join().unwrap(),
+            )
+        });
+        panics.extend(quality.1);
+        panics.extend(role.1);
+        panics.extend(import.1);
+        panics.extend(naming.1);
+        panics.extend(orphan.1);
+        (quality.0, role.0, import.0, naming.0, orphan.0)
+    };
     tracing::info!(
         target: "lint_arwaky::audit",
-        event = "quality_done",
-        violations = all.len(),
-        elapsed_ms = quality_start.elapsed().as_millis() as u64,
-        "quality linter complete"
+        event = "parallel_linters_done",
+        elapsed_ms = parallel_start.elapsed().as_millis() as u64,
+        "file-scoped linter groups complete"
     );
-    on_progress(
-        "Quality checks complete".to_string(),
-        total_files,
-        total_files,
-    );
-    let role_start = Instant::now();
-    all.extend(run_isolated("role", &mut panics, || {
-        agg.role
-            .execute(RoleRequest::audit(&entries))
-            .into_violations()
-            .iter()
-            .map(ViolationItem::from_lint_result)
-            .collect::<Vec<_>>()
-    }));
-    tracing::info!(
-        target: "lint_arwaky::audit",
-        event = "role_done",
-        elapsed_ms = role_start.elapsed().as_millis() as u64,
-        "role linter complete"
-    );
+    all.extend(quality_v);
+    all.extend(role_v);
+    all.extend(import_v);
+    all.extend(naming_v);
+    all.extend(orphan_v);
+    on_progress("Quality checks complete".to_string(), total_files, total_files);
     on_progress("Role checks complete".to_string(), total_files, total_files);
-    let import_start = Instant::now();
-    // Workspace-wide import map so AES201/202/203/205 see cross-member imports
-    // (the dispatcher's fs instance differs from the import orchestrator's own).
-    all.extend(run_isolated("import", &mut panics, || {
-        agg.import
-            .execute(ImportRequest::audit_with_entries_and_imports(
-                &entries,
-                &import_map,
-            ))
-            .into_violations()
-            .iter()
-            .map(ViolationItem::from_lint_result)
-            .collect::<Vec<_>>()
-    }));
-    tracing::info!(
-        target: "lint_arwaky::audit",
-        event = "import_done",
-        elapsed_ms = import_start.elapsed().as_millis() as u64,
-        "import linter complete"
-    );
-    on_progress(
-        "Import checks complete".to_string(),
-        total_files,
-        total_files,
-    );
-    let naming_start = Instant::now();
-    all.extend(run_isolated("naming", &mut panics, || {
-        agg.naming
-            .execute(NamingRequest::audit_with_tests(&entries, &test_files))
-            .into_violations()
-    }));
-    tracing::info!(
-        target: "lint_arwaky::audit",
-        event = "naming_done",
-        elapsed_ms = naming_start.elapsed().as_millis() as u64,
-        "naming linter complete"
-    );
-    on_progress(
-        "Naming checks complete".to_string(),
-        total_files,
-        total_files,
-    );
-    let orphan_start = Instant::now();
-    all.extend(run_isolated("orphan", &mut panics, || {
-        let (_graph_ctx, orphan_violations) = agg
-            .orphan
-            .execute(OrphanRequest::scan(
-                &root_fp,
-                &shared_common::taxonomy_common_vo::PatternList::new(ignored.clone()),
-            ))
-            .into_scan_outcome();
-        orphan_violations
-            .iter()
-            .map(ViolationItem::from_lint_result)
-            .collect::<Vec<_>>()
-    }));
-    tracing::info!(
-        target: "lint_arwaky::audit",
-        event = "orphan_done",
-        elapsed_ms = orphan_start.elapsed().as_millis() as u64,
-        "orphan linter complete"
-    );
-    on_progress(
-        "Orphan checks complete".to_string(),
-        total_files,
-        total_files,
-    );
+    on_progress("Import checks complete".to_string(), total_files, total_files);
+    on_progress("Naming checks complete".to_string(), total_files, total_files);
+    on_progress("Orphan checks complete".to_string(), total_files, total_files);
 
     // External — adapters run on the target *as given* (relative paths resolve
     // against the process CWD, exactly like the spawned linters did).

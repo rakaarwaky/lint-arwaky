@@ -7,8 +7,9 @@
 // protocol (AES405), so the classification lives in the `RoleClassifier`
 // capability and this agent holds it as a dependency and delegates to it.
 
+use rayon::prelude::*;
 use shared_common::taxonomy_lint_vo::LintResult;
-use shared_filesystem::taxonomy_filesystem_vo::FileEntry;
+use shared_filesystem::taxonomy_filesystem_vo::{ExternalReferenceMap, FileEntry};
 use shared_role_rules::contract_role_protocol::IAgentRoleProtocol;
 use shared_role_rules::contract_role_protocol::ICapabilitiesRoleProtocol;
 use shared_role_rules::contract_role_protocol::IClassificationProtocol;
@@ -106,148 +107,168 @@ impl RoleOrchestrator {
 
         let references = build_external_reference_map(files);
 
-        for file in files {
-            if !file.parse_ok || file.content.is_empty() {
-                continue;
+        // Files are processed in parallel via rayon: each file accumulates its
+        // own violations (no shared accumulator, no locking), then the
+        // per-file results are concatenated in input order so the violation
+        // list stays deterministic. Role checks were the only per-file group
+        // without parallelism (issue #1365).
+        let per_file: Vec<Vec<LintResult>> = files
+            .par_iter()
+            .filter(|file| file.parse_ok && !file.content.is_empty())
+            .map(|file| {
+                let mut local = Vec::new();
+                self.check_file_into(file, &references, &mut local);
+                local
+            })
+            .collect();
+        violations.extend(per_file.into_iter().flatten());
+    }
+
+    /// Route one file through its layer's role auditors, appending findings to
+    /// `violations`. Extracted from the (now parallel) per-file loop so the
+    /// same routing logic runs once per file without a shared accumulator.
+    fn check_file_into(
+        &self,
+        file: &FileEntry,
+        references: &ExternalReferenceMap,
+        violations: &mut Vec<LintResult>,
+    ) {
+        let path_str = file.path.to_string_lossy().to_string();
+        let filename = file
+            .path
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or_default();
+        let stem = Path::new(filename)
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .unwrap_or_default();
+        let basename = stem;
+
+        // Skip barrel files (single source: shared_common::DEFAULT_RULE_EXCEPTIONS)
+        if shared_common::DEFAULT_RULE_EXCEPTIONS.contains(&filename) || filename == "main.rs" {
+            return;
+        }
+
+        if self.is_ignored(&path_str) {
+            return;
+        }
+
+        // FR-RoleRules-001: layer classification is delegated to the
+        // classifier capability; the agent only routes on the result.
+        let Some(layer) = self.deps.classifier.classify_layer(file) else {
+            return;
+        };
+
+        match layer.value.as_str() {
+            "agent"
+                if self.is_rule_enabled("AES405") && !self.is_exception("AES405", filename) =>
+            {
+                let deps = &self.deps;
+                let auditor: &dyn IAgentRoleProtocol = match file.language {
+                    Language::Rust => &*deps.agent_rust,
+                    Language::Python => &*deps.agent_python,
+                    Language::TypeScript | Language::JavaScript => &*deps.agent_ts,
+                    _ => return,
+                };
+                // Composition rules (implementor, type budget, Any) are
+                // grouped; the rest are called individually so each stays
+                // independently addressable. P14 takes the feature's
+                // declared protocol count because the auditor skips a
+                // feature that declares exactly one.
+                auditor.check_agent_routing(file, "agent", violations);
+                auditor.check_agent_block_order(file, violations);
+                auditor.check_agent_protocol_forbidden(file, violations);
+                auditor.check_agent_block_markers(file, violations);
+                auditor.check_agent_io_forbidden(file, violations);
+                auditor.check_agent_constant_placement(file, violations);
+                auditor.check_agent_computation(file, violations);
+                auditor.check_agent_abstract_method(file, violations);
+                auditor.check_agent_stateless(file, violations);
+                auditor.check_agent_free_fn(file, violations);
+                auditor.check_agent_subsystem_count(
+                    file,
+                    resolve_feature_protocol_count(&file.path),
+                    violations,
+                );
             }
-
-            let path_str = file.path.to_string_lossy().to_string();
-            let filename = file
-                .path
-                .file_name()
-                .and_then(|n| n.to_str())
-                .unwrap_or_default();
-            let stem = Path::new(filename)
-                .file_stem()
-                .and_then(|s| s.to_str())
-                .unwrap_or_default();
-            let basename = stem;
-
-            // Skip barrel files (single source: shared_common::DEFAULT_RULE_EXCEPTIONS)
-            if shared_common::DEFAULT_RULE_EXCEPTIONS.contains(&filename) || filename == "main.rs" {
-                continue;
-            }
-
-            if self.is_ignored(&path_str) {
-                continue;
-            }
-
-            // FR-RoleRules-001: layer classification is delegated to the
-            // classifier capability; the agent only routes on the result.
-            let Some(layer) = self.deps.classifier.classify_layer(file) else {
-                continue;
-            };
-
-            match layer.value.as_str() {
-                "agent"
-                    if self.is_rule_enabled("AES405") && !self.is_exception("AES405", filename) =>
+            "root" => {}
+            "surface" | "surfaces"
+                if self.is_rule_enabled("AES406") && !self.is_exception("AES406", filename) =>
+            {
+                match shared_role_rules::taxonomy_role_rules_vo::classify_surface_tier(basename)
                 {
-                    let deps = &self.deps;
-                    let auditor: &dyn IAgentRoleProtocol = match file.language {
-                        Language::Rust => &*deps.agent_rust,
-                        Language::Python => &*deps.agent_python,
-                        Language::TypeScript | Language::JavaScript => &*deps.agent_ts,
-                        _ => continue,
-                    };
-                    // Composition rules (implementor, type budget, Any) are
-                    // grouped; the rest are called individually so each stays
-                    // independently addressable. P14 takes the feature's
-                    // declared protocol count because the auditor skips a
-                    // feature that declares exactly one.
-                    auditor.check_agent_routing(file, "agent", violations);
-                    auditor.check_agent_block_order(file, violations);
-                    auditor.check_agent_protocol_forbidden(file, violations);
-                    auditor.check_agent_block_markers(file, violations);
-                    auditor.check_agent_io_forbidden(file, violations);
-                    auditor.check_agent_constant_placement(file, violations);
-                    auditor.check_agent_computation(file, violations);
-                    auditor.check_agent_abstract_method(file, violations);
-                    auditor.check_agent_stateless(file, violations);
-                    auditor.check_agent_free_fn(file, violations);
-                    auditor.check_agent_subsystem_count(
-                        file,
-                        resolve_feature_protocol_count(&file.path),
-                        violations,
-                    );
-                }
-                "root" => {}
-                "surface" | "surfaces"
-                    if self.is_rule_enabled("AES406") && !self.is_exception("AES406", filename) =>
-                {
-                    match shared_role_rules::taxonomy_role_rules_vo::classify_surface_tier(basename)
-                    {
-                        shared_role_rules::taxonomy_role_rules_vo::SurfaceTier::Smart => {
-                            // FRD: smart surfaces are subject to no checks.
-                            self.deps.surface.check_smart_surface(file, violations);
-                        }
-                        shared_role_rules::taxonomy_role_rules_vo::SurfaceTier::Utility => {
-                            self.deps.surface.check_fn_count_limit(file, violations);
-                            self.deps.surface.check_utility_surface(file, violations);
-                        }
-                        shared_role_rules::taxonomy_role_rules_vo::SurfaceTier::Passive => {
-                            self.deps.surface.check_fn_count_limit(file, violations);
-                            self.deps.surface.check_passive_surface(file, violations);
-                        }
+                    shared_role_rules::taxonomy_role_rules_vo::SurfaceTier::Smart => {
+                        // FRD: smart surfaces are subject to no checks.
+                        self.deps.surface.check_smart_surface(file, violations);
+                    }
+                    shared_role_rules::taxonomy_role_rules_vo::SurfaceTier::Utility => {
+                        self.deps.surface.check_fn_count_limit(file, violations);
+                        self.deps.surface.check_utility_surface(file, violations);
+                    }
+                    shared_role_rules::taxonomy_role_rules_vo::SurfaceTier::Passive => {
+                        self.deps.surface.check_fn_count_limit(file, violations);
+                        self.deps.surface.check_passive_surface(file, violations);
                     }
                 }
-                "contract"
-                    if self.is_rule_enabled("AES402") && !self.is_exception("AES402", filename) =>
-                {
-                    let auditor = match file.language {
-                        Language::Rust => &*self.deps.contract_rust,
-                        Language::Python => &*self.deps.contract_python,
-                        Language::TypeScript | Language::JavaScript => {
-                            &*self.deps.contract_typescript
-                        }
-                        _ => continue,
-                    };
-                    auditor.check_contract_routing(file, "contract", violations);
-                }
-                "capabilities" | "capability"
-                    if self.is_rule_enabled("AES403") && !self.is_exception("AES403", filename) =>
-                {
-                    let language = file.language;
-                    let deps = &self.deps;
-                    let auditor: &dyn ICapabilitiesRoleProtocol = match language {
-                        Language::Rust => &*deps.capabilities_rust,
-                        Language::Python => &*deps.capabilities_python,
-                        Language::TypeScript | Language::JavaScript => {
-                            &*deps.capabilities_typescript
-                        }
-                        _ => {
-                            continue;
-                        }
-                    };
-                    auditor.check_capability_routing_with_references(
-                        file,
-                        "capabilities",
-                        &references,
-                        violations,
-                    );
-                }
-                "utility"
-                    if self.is_rule_enabled("AES404") && !self.is_exception("AES404", filename) =>
-                {
-                    let language = file.language;
-                    let deps = &self.deps;
-                    let auditor: &dyn IUtilityRoleProtocol = match language {
-                        Language::Rust => &*deps.utility_rust,
-                        Language::Python => &*deps.utility_python,
-                        Language::TypeScript | Language::JavaScript => &*deps.utility_typescript,
-                        _ => continue,
-                    };
-                    auditor.check_utility_convention(file, violations);
-                }
-                "taxonomy"
-                    if self.is_rule_enabled("AES401") && !self.is_exception("AES401", filename) =>
-                {
-                    self.deps.taxonomy.check_entity(file, violations);
-                    self.deps.taxonomy.check_error(file, violations);
-                    self.deps.taxonomy.check_event(file, violations);
-                    self.deps.taxonomy.check_constant(file, violations);
-                }
-                _ => {}
             }
+            "contract"
+                if self.is_rule_enabled("AES402") && !self.is_exception("AES402", filename) =>
+            {
+                let auditor = match file.language {
+                    Language::Rust => &*self.deps.contract_rust,
+                    Language::Python => &*self.deps.contract_python,
+                    Language::TypeScript | Language::JavaScript => {
+                        &*self.deps.contract_typescript
+                    }
+                    _ => return,
+                };
+                auditor.check_contract_routing(file, "contract", violations);
+            }
+            "capabilities" | "capability"
+                if self.is_rule_enabled("AES403") && !self.is_exception("AES403", filename) =>
+            {
+                let language = file.language;
+                let deps = &self.deps;
+                let auditor: &dyn ICapabilitiesRoleProtocol = match language {
+                    Language::Rust => &*deps.capabilities_rust,
+                    Language::Python => &*deps.capabilities_python,
+                    Language::TypeScript | Language::JavaScript => {
+                        &*deps.capabilities_typescript
+                    }
+                    _ => {
+                        return;
+                    }
+                };
+                auditor.check_capability_routing_with_references(
+                    file,
+                    "capabilities",
+                    &references,
+                    violations,
+                );
+            }
+            "utility"
+                if self.is_rule_enabled("AES404") && !self.is_exception("AES404", filename) =>
+            {
+                let language = file.language;
+                let deps = &self.deps;
+                let auditor: &dyn IUtilityRoleProtocol = match language {
+                    Language::Rust => &*deps.utility_rust,
+                    Language::Python => &*deps.utility_python,
+                    Language::TypeScript | Language::JavaScript => &*deps.utility_typescript,
+                    _ => return,
+                };
+                auditor.check_utility_convention(file, violations);
+            }
+            "taxonomy"
+                if self.is_rule_enabled("AES401") && !self.is_exception("AES401", filename) =>
+            {
+                self.deps.taxonomy.check_entity(file, violations);
+                self.deps.taxonomy.check_error(file, violations);
+                self.deps.taxonomy.check_event(file, violations);
+                self.deps.taxonomy.check_constant(file, violations);
+            }
+            _ => {}
         }
     }
 

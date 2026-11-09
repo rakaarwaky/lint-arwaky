@@ -25,6 +25,37 @@ Lint Arwaky is a single-tool, multi-language architecture linter for monorepos. 
 | 7    | CI exit codes                                | `lint-arwaky-cli ci . --threshold 0`                                                                       |
 | 8    | Preview auto-fixes                           | `lint-arwaky-cli fix . --dry-run`                                                                          |
 
+## Performance
+
+### Budget
+
+| Metric | Target | Current status |
+| --- | --- | --- |
+| `lint-arwaky-cli scan .` p95 on a 10k-file tree (4-core CI runner) | < 60 s | **Not yet measured** — see PRD.md metric #2 |
+| `lint-arwaky-cli scan .` on a 546-file fixture (`workspaces-bad`) | — | Component benches cover the pipeline (see below) |
+
+### How it is measured
+
+- **Nightly Criterion regression run** — `.github/workflows/benchmarks.yml`
+  runs `cargo bench --workspace` on a schedule and compares against a cached
+  baseline; regressions are reported on the run summary. Advisory only: it
+  does not block PRs (per-PR benchmarking on shared runners is too noisy).
+- **Component benches** — `crates/*/benches/` cover tree-sitter parse
+  throughput (100–1000 files), graph construction, duplication analysis,
+  naming and role audit throughput (10–100 files), and unused-import
+  detection (10–200 imports per file).
+- **Phase timings** — `lint-arwaky-cli scan -v` emits per-phase `elapsed_ms`
+  tracing events (index build, discovery, per-linter-group, external
+  adapters) on stderr; stdout stays clean for piping.
+
+### Known gaps
+
+- No end-to-end scan benchmark on a generated 10k-file fixture yet; the 60 s
+  p95 target is unverified (PRD.md metric #2, DEPLOY.md "Known process gaps").
+- The five file-scoped linter groups (quality, role, import, naming, orphan)
+  run on parallel threads since the issue #1365 fix; external adapters,
+  structure, and doc audits run after them. The TUI cancel path
+  (`Esc`) checks for cancellation between groups.
 
 ## Reference
 
