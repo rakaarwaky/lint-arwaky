@@ -37,11 +37,6 @@ ignored_rules:
   - "markdownlint::MD024"
   - "markdownlint::MD041"
 ignored_paths:
-  - "packages/vendor"
-  - "packages/node_modules"
-  - "packages/dist"
-  - "packages/docs/generated"
-
 # ─── Architecture rules ─────────────────────────────────────────────────
 architecture:
   enabled: true
