@@ -3,7 +3,7 @@
 // MCP protocol surface (surface_mcp_tool_command) delegates here; this surface
 // delegates to dispatcher surfaces (pure business logic) and maps results to
 // JSON responses. No formatting/println — JSON is returned as serde_json::Value.
-use std::path::{Component, Path, PathBuf};
+use std::path::PathBuf;
 use std::sync::Arc;
 
 use dispatcher::surface_orphan_action::OrphanFactory;
@@ -27,7 +27,10 @@ use shared_role_rules::{
     LAYER_AGENT, LAYER_CAPABILITIES, LAYER_CONTRACT, LAYER_SURFACES, LAYER_TAXONOMY, LAYER_UTILITY,
 };
 
-use shared_common::taxonomy_violation_item_vo::ViolationItem;
+use crate::surface_mcp_action_helpers::{
+    error_response, is_mutating_action, normalize_response, resolve_confined_path,
+    violations_response, violations_to_json,
+};
 
 #[derive(Clone)]
 pub struct McpServerDependencies {
@@ -1047,99 +1050,4 @@ impl McpActionSurface {
                 .to_string()
         })
     }
-}
-
-/// Serialize violations to JSON (mirrors old execute_* shape + severity).
-fn violations_to_json(violations: &[ViolationItem]) -> Vec<serde_json::Value> {
-    violations
-        .iter()
-        .map(|v| {
-            serde_json::json!({
-                "file": v.file.value,
-                "code": v.code.code(),
-                "message": v.message.value,
-                "line": v.line.value(),
-                "column": v.column.value(),
-                "severity": format!("{}", v.severity),
-            })
-        })
-        .collect()
-}
-
-/// Standard scan response envelope.
-fn violations_response(
-    action: &str,
-    path: &str,
-    violations: &[ViolationItem],
-) -> serde_json::Value {
-    let exit_code = if violations.is_empty() { 0 } else { 1 };
-    serde_json::json!({
-        "status": if exit_code == 0 { "ok" } else { "warning" },
-                    "result": if exit_code == 0 { "clean" } else { "violations" },
-        "action": action,
-        "path": path,
-        "exit_code": exit_code,
-        "violation_count": violations.len(),
-        "results": violations_to_json(violations),
-    })
-}
-
-/// Resolve a client path beneath the configured root. Lexical parent segments
-/// are rejected before canonicalization, and canonicalization then protects
-/// against symlink escapes.
-pub fn resolve_confined_path(root: &Path, requested: &str) -> Result<PathBuf, serde_json::Value> {
-    if requested.trim().is_empty() {
-        return Err(error_response("Invalid path"));
-    }
-    let canonical_root = root
-        .canonicalize()
-        .map_err(|_| error_response("Workspace root does not exist"))?;
-    let requested_path = Path::new(requested);
-    if requested_path
-        .components()
-        .any(|part| matches!(part, Component::ParentDir))
-    {
-        return Err(error_response("Path escapes workspace root"));
-    }
-    let candidate = if requested_path.is_absolute() {
-        requested_path.to_path_buf()
-    } else {
-        canonical_root.join(requested_path)
-    };
-    let resolved = candidate
-        .canonicalize()
-        .map_err(|_| error_response("Path does not exist"))?;
-    if !resolved.starts_with(&canonical_root) {
-        return Err(error_response("Path escapes workspace root"));
-    }
-    Ok(resolved)
-}
-
-pub fn is_mutating_action(action: &str) -> bool {
-    matches!(
-        action,
-        "fix" | "install-hook" | "uninstall-hook" | "init" | "install" | "docs_scaffold"
-    )
-}
-
-fn normalize_response(mut response: serde_json::Value) -> serde_json::Value {
-    let exit_code = response
-        .get("exit_code")
-        .and_then(serde_json::Value::as_i64)
-        .unwrap_or(2);
-    if let Some(object) = response.as_object_mut() {
-        let normalized = if exit_code == 0 {
-            "ok"
-        } else if exit_code == 1 || exit_code == 3 {
-            "warning"
-        } else {
-            "error"
-        };
-        object.insert("status".to_string(), serde_json::json!(normalized));
-    }
-    response
-}
-
-fn error_response(message: &str) -> serde_json::Value {
-    serde_json::json!({"status": "error", "error": message, "exit_code": 2})
 }

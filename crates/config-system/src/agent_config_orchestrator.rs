@@ -43,20 +43,19 @@ struct CachedConfig {
     config: Arc<ArchitectureConfig>,
 }
 
-/// Hard bound on the parse cache.
-///
-/// `DashMap::with_capacity(32)` only pre-allocates — it never evicts — so a
-/// long-lived process (the MCP server, which holds one orchestrator for hours
-/// and can be pointed at many roots) grew this map without limit. One entry
-/// per distinct config path, bounded at 64, is ample for any real workspace.
-const CONFIG_CACHE_CAPACITY: usize = 64;
-
 pub struct ConfigOrchestrator {
     deps: ConfigOrchestratorDeps,
     config_cache: DashMap<CacheKey, CachedConfig>,
 }
 
 impl ConfigOrchestrator {
+    /// Hard bound on the parse cache.
+    ///
+    /// `DashMap::with_capacity(32)` only pre-allocates — it never evicts — so a
+    /// long-lived process (the MCP server, which holds one orchestrator for hours
+    /// and can be pointed at many roots) grew this map without limit. One entry
+    /// per distinct config path, bounded at 64, is ample for any real workspace.
+    const CONFIG_CACHE_CAPACITY: usize = 64;
     pub fn read_config(
         &self,
         project_root: &FilePath,
@@ -102,7 +101,7 @@ impl ConfigOrchestrator {
                 // This used to be a warning at most, which meant a `threshold:`
                 // typo left the effective gate at the embedded default of 80
                 // and every command still exited 0.
-                let parsed_project = parse_project_block(&source.raw_content);
+                let parsed_project = self.parse_project_block(&source.raw_content);
                 let mut errors = Vec::new();
                 if let Some(project) = parsed_project.as_ref() {
                     let validation = validate_project_config(project);
@@ -113,7 +112,7 @@ impl ConfigOrchestrator {
                             validation.reason.unwrap_or_default()
                         ));
                     }
-                } else if let Err(reason) = &parse_strictness_error(&source.raw_content) {
+                } else if let Err(reason) = &self.parse_strictness_error(&source.raw_content) {
                     // Unknown keys are rejected by the typed structs; a
                     // malformed file is reported the same way so the caller
                     // cannot mistake it for "no config".
@@ -248,7 +247,7 @@ impl ConfigOrchestrator {
         Self {
             deps,
             // FR-007: pre-allocated, and bounded by `evict_if_full`.
-            config_cache: DashMap::with_capacity(CONFIG_CACHE_CAPACITY),
+            config_cache: DashMap::with_capacity(Self::CONFIG_CACHE_CAPACITY),
         }
     }
 
@@ -277,12 +276,51 @@ impl ConfigOrchestrator {
     /// important: a miss costs one YAML parse, and the alternative — evicting
     /// nothing — costs unbounded memory.
     fn evict_if_full(&self) {
-        if self.config_cache.len() >= CONFIG_CACHE_CAPACITY {
+        if self.config_cache.len() >= Self::CONFIG_CACHE_CAPACITY {
             let victim = self.config_cache.iter().next().map(|e| e.key().clone());
             if let Some(victim) = victim {
                 self.config_cache.remove(&victim);
             }
         }
+    }
+
+    /// Read the top-level project keys out of a config body.
+    ///
+    /// The YAML root is the project block itself (`adapters:`, `ignored_rules:`,
+    /// …) with the rule tree nested under `architecture:`. Deserialising the whole
+    /// document into `ProjectConfig` would therefore always fail, so the
+    /// `architecture:` subtree is stripped first — it is validated by the parser.
+    fn parse_project_block(&self, raw: &str) -> Option<ProjectConfig> {
+        let stripped = self.project_block_yaml(raw);
+        parse_project_config(&stripped).ok()
+    }
+
+    /// The project-level YAML with `architecture:` removed and empty keys dropped.
+    ///
+    /// `ignored_paths:` with no value is written in the shipped config and means
+    /// "no ignore list". `#[serde(default)]` covers an *absent* key, not an
+    /// explicit null, so the nulls are pruned here — otherwise every load of the
+    /// default config would report a schema error that the operator cannot fix
+    /// without inventing an empty list.
+    fn project_block_yaml(&self, raw: &str) -> String {
+        let mut value: serde_yaml_ng::Value = match serde_yaml_ng::from_str(raw) {
+            Ok(value) => value,
+            Err(_) => return String::new(),
+        };
+        if let Some(map) = value.as_mapping_mut() {
+            map.remove(serde_yaml_ng::Value::String("architecture".to_string()));
+            map.retain(|_, v| !v.is_null());
+        }
+        serde_yaml_ng::to_string(&value).unwrap_or_default()
+    }
+
+    /// Why a config body could not be read as a `ProjectConfig` — surfaced so an
+    /// unknown key or bad value names the offending path instead of vanishing.
+    fn parse_strictness_error(&self, raw: &str) -> Result<(), String> {
+        if let Err(e) = serde_yaml_ng::from_str::<serde_yaml_ng::Value>(raw) {
+            return Err(format!("YAML is not well formed: {e}"));
+        }
+        parse_project_config(&self.project_block_yaml(raw)).map(|_| ())
     }
 
     /// Internal cache: parse once per key, serve later reads from the cache.
@@ -351,47 +389,6 @@ impl IConfigOrchestratorAggregate for ConfigOrchestrator {
             },
         }
     }
-}
-
-// ─── Config validation helpers ─────
-
-/// Read the top-level project keys out of a config body.
-///
-/// The YAML root is the project block itself (`adapters:`, `ignored_rules:`,
-/// …) with the rule tree nested under `architecture:`. Deserialising the whole
-/// document into `ProjectConfig` would therefore always fail, so the
-/// `architecture:` subtree is stripped first — it is validated by the parser.
-fn parse_project_block(raw: &str) -> Option<ProjectConfig> {
-    let stripped = project_block_yaml(raw);
-    parse_project_config(&stripped).ok()
-}
-
-/// The project-level YAML with `architecture:` removed and empty keys dropped.
-///
-/// `ignored_paths:` with no value is written in the shipped config and means
-/// "no ignore list". `#[serde(default)]` covers an *absent* key, not an
-/// explicit null, so the nulls are pruned here — otherwise every load of the
-/// default config would report a schema error that the operator cannot fix
-/// without inventing an empty list.
-fn project_block_yaml(raw: &str) -> String {
-    let mut value: serde_yaml_ng::Value = match serde_yaml_ng::from_str(raw) {
-        Ok(value) => value,
-        Err(_) => return String::new(),
-    };
-    if let Some(map) = value.as_mapping_mut() {
-        map.remove(serde_yaml_ng::Value::String("architecture".to_string()));
-        map.retain(|_, v| !v.is_null());
-    }
-    serde_yaml_ng::to_string(&value).unwrap_or_default()
-}
-
-/// Why a config body could not be read as a `ProjectConfig` — surfaced so an
-/// unknown key or bad value names the offending path instead of vanishing.
-fn parse_strictness_error(raw: &str) -> Result<(), String> {
-    if let Err(e) = serde_yaml_ng::from_str::<serde_yaml_ng::Value>(raw) {
-        return Err(format!("YAML is not well formed: {e}"));
-    }
-    parse_project_config(&project_block_yaml(raw)).map(|_| ())
 }
 
 // ─── Block 3: Module Helpers ─────

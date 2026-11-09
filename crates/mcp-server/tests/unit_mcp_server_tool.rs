@@ -94,6 +94,10 @@ async fn handle_execute_command_rejects_options_not_supported_by_action() {
             path: None,
             threshold: Some(90),
             dry_run: None,
+            member: None,
+            rules: None,
+            base: None,
+            strict: None,
         }),
     };
     let result = parse(&server().handle_execute_command(Parameters(args)).await);
