@@ -44,16 +44,23 @@ impl FileListView {
             (0..state.navigation.entries.len()).collect()
         };
 
-        // In search mode with zero matches, show empty-state guidance instead of the full list (#367).
-        let empty_hint =
-            if state.search.mode && !state.search.query.is_empty() && display_indices.is_empty() {
-                Some(format!(
-                    "No matches for '{}' — press Esc to clear filter",
-                    state.search.query
-                ))
-            } else {
-                None
-            };
+        // Empty states, in priority order. A zero-match search is guidance
+        // (#367); an open folder with no rows says so; and a first run whose
+        // path dialog was dismissed says how to choose a root, because before
+        // `r` existed that state was unrecoverable (#1317).
+        let empty_hint = if state.search.mode
+            && !state.search.query.is_empty()
+            && display_indices.is_empty()
+        {
+            Some(format!(
+                "No matches for '{}' — press Esc to clear filter",
+                state.search.query
+            ))
+        } else if display_indices.is_empty() {
+            Some(empty_state_hint(state))
+        } else {
+            None
+        };
 
         // In search mode, filter_pos is the highlight position in the displayed list.
         // In normal mode, selected_index is the highlight position.
@@ -139,6 +146,22 @@ impl FileListView {
 impl Default for FileListView {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+/// Copy for an empty Files panel.
+///
+/// Two different emptinesses share one blank panel today: a folder that holds
+/// nothing, and a session with no project root at all. They need different
+/// next actions, so they get different copy.
+fn empty_state_hint(state: &AppState) -> String {
+    if state.navigation.project_root.is_empty() {
+        "No project selected — press 'r' to choose a folder".to_string()
+    } else {
+        format!(
+            "No files here — h/← back, or r to change root ({})",
+            state.navigation.project_root
+        )
     }
 }
 

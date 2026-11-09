@@ -245,3 +245,166 @@ fn glyph_fallbacks_keep_unicode_when_color_is_on() {
     assert_eq!(theme::glyph::bar_filled(false), "\u{2588}");
     assert_eq!(theme::glyph::bar_empty(false), "\u{2591}");
 }
+
+// ── Rendering-level regressions ────────────────────────────────────────────
+//
+// The tests above pin pure logic. These draw a real frame, because several of
+// the original bugs were in the render path only: a label written to state but
+// never painted, and an empty panel with no copy.
+
+use ratatui::Terminal;
+use ratatui::backend::TestBackend;
+use tui_lint_arwaky::surface_file_list_view::FileListView;
+use tui_lint_arwaky::surface_shortcut_component::ShortcutComponent;
+use tui_lint_arwaky::surface_status_component::StatusComponent;
+
+fn buffer_text(terminal: &Terminal<TestBackend>) -> String {
+    terminal
+        .backend()
+        .buffer()
+        .content
+        .iter()
+        .map(|cell| cell.symbol())
+        .collect()
+}
+
+// #1321: the completion frame must actually be painted.
+#[test]
+fn a_finished_scan_paints_its_completion_label() {
+    let mut state = tui_lint_arwaky::AppState::new("/project".to_string());
+    state.set_scanning(true, "Scanning...".to_string(), 10);
+    state.finish_scan(4);
+
+    let mut terminal = Terminal::new(TestBackend::new(90, 2)).unwrap();
+    terminal
+        .draw(|frame| StatusComponent::new().render(&state, frame, frame.area()))
+        .unwrap();
+
+    let text = buffer_text(&terminal);
+    assert!(
+        text.contains("Done"),
+        "the completion label existed in state but was never rendered: {text:?}"
+    );
+    assert!(text.contains('4'), "completion must name the count: {text:?}");
+}
+
+// #1321: an in-flight scan without a file count reads as a wait, not 0%.
+#[test]
+fn an_unstarted_scan_paints_an_indeterminate_wait() {
+    let mut state = tui_lint_arwaky::AppState::new("/project".to_string());
+    state.set_scanning(true, "Starting scan...".to_string(), 0);
+
+    let mut terminal = Terminal::new(TestBackend::new(90, 2)).unwrap();
+    terminal
+        .draw(|frame| StatusComponent::new().render(&state, frame, frame.area()))
+        .unwrap();
+
+    let text = buffer_text(&terminal);
+    assert!(
+        text.contains("waiting for file count"),
+        "a zero denominator must not render as determinate progress: {text:?}"
+    );
+}
+
+// #1331: the badge must not print a count for a view nothing has examined.
+#[test]
+fn the_status_bar_prints_no_count_for_an_unexamined_view() {
+    let mut state = tui_lint_arwaky::AppState::new("/project".to_string());
+    state.set_violation_result("/project/other", 0);
+
+    let mut terminal = Terminal::new(TestBackend::new(90, 2)).unwrap();
+    terminal
+        .draw(|frame| StatusComponent::new().render(&state, frame, frame.area()))
+        .unwrap();
+
+    let text = buffer_text(&terminal);
+    assert!(
+        text.contains("— viol."),
+        "an out-of-scope result must render as neutral: {text:?}"
+    );
+    assert!(
+        !text.contains("0 viol."),
+        "a green zero was the false claim this issue reported: {text:?}"
+    );
+}
+
+// #1330 / #1317: an empty Files panel must carry guidance, not blank chrome.
+#[test]
+fn an_empty_files_panel_explains_the_next_action() {
+    let state = tui_lint_arwaky::AppState::new("/project".to_string());
+
+    let mut terminal = Terminal::new(TestBackend::new(60, 10)).unwrap();
+    terminal
+        .draw(|frame| FileListView::new().render(&state, frame, frame.area()))
+        .unwrap();
+
+    let text = buffer_text(&terminal);
+    assert!(
+        text.contains("No files here") || text.contains("No project selected"),
+        "an empty panel must say what to do next: {text:?}"
+    );
+}
+
+// #1327: while a confirm is pending the bar advertises only the gate's keys.
+#[test]
+fn the_shortcut_bar_swaps_to_the_gate_keys_during_a_confirm() {
+    let mut state = tui_lint_arwaky::AppState::new("/project".to_string());
+    state.actions.pending_confirm = Some(tui_lint_arwaky::ConfirmState {
+        pending: TuiEvent::ActionFixLive,
+        label: "Apply live fixes to files".to_string(),
+    });
+
+    let mut terminal = Terminal::new(TestBackend::new(120, 4)).unwrap();
+    terminal
+        .draw(|frame| ShortcutComponent::new().render(&state, frame, frame.area()))
+        .unwrap();
+
+    let text = buffer_text(&terminal);
+    assert!(text.contains("cancel"), "gate keys must be visible: {text:?}");
+    assert!(
+        !text.contains("c:check"),
+        "browse shortcuts are swallowed by the gate, so they must not be shown: {text:?}"
+    );
+}
+
+// #1320: the bar must fit the panel at every supported width.
+#[test]
+fn the_shortcut_bar_fits_every_supported_width() {
+    for width in [40u16, 60, 80, 100, 120, 160] {
+        let mut state = tui_lint_arwaky::AppState::new("/project".to_string());
+        state.path_dialog.visible = false;
+
+        let mut terminal = Terminal::new(TestBackend::new(width, 4)).unwrap();
+        terminal
+            .draw(|frame| ShortcutComponent::new().render(&state, frame, frame.area()))
+            .unwrap();
+
+        let text = buffer_text(&terminal);
+        assert!(
+            text.contains("help"),
+            "width {width} dropped the help affordance: {text:?}"
+        );
+    }
+}
+
+// #1321: a cancelled scan must not paint the completed-scan label.
+#[test]
+fn a_cancelled_scan_does_not_claim_done() {
+    let mut state = tui_lint_arwaky::AppState::new("/project".to_string());
+    state.set_scanning(true, "Scanning...".to_string(), 10);
+    state.finish_scan(0);
+    // Mirrors the Cancelled arm: the completion frame, but an honest label.
+    state.scan.phase = "Scan cancelled — no results written".to_string();
+
+    let mut terminal = Terminal::new(TestBackend::new(90, 2)).unwrap();
+    terminal
+        .draw(|frame| StatusComponent::new().render(&state, frame, frame.area()))
+        .unwrap();
+
+    let text = buffer_text(&terminal);
+    assert!(text.contains("cancelled"), "{text:?}");
+    assert!(
+        !text.contains("Done"),
+        "a stopped scan found nothing because it stopped: {text:?}"
+    );
+}

@@ -520,6 +520,17 @@ pub fn help_text() -> String {
             shortcut.key_label, shortcut.label
         ));
     }
+    // The layout changes silently twice on the way down (three columns, then a
+    // single panel) and then refuses to draw, so state both boundaries here
+    // rather than letting the user discover them by shrinking the window
+    // (#1328).
+    output.push_str(&format!(
+        "\nLayout: 3 panels at {} columns or wider; one panel below that.\n\
+         Minimum terminal: {}x{} — below it the app asks you to resize.\n",
+        shared_tui::utility_tui_theme::NARROW_BREAKPOINT_WIDTH,
+        shared_tui::utility_tui_theme::MIN_TERMINAL_WIDTH,
+        shared_tui::utility_tui_theme::MIN_TERMINAL_HEIGHT,
+    ));
     output.push_str("\nFor screen readers, use `lint-arwaky-cli` instead.\n");
     output
 }

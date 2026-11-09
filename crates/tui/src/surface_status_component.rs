@@ -99,6 +99,32 @@ impl StatusComponent {
                     Style::default().fg(theme::color(theme::SEPARATOR)),
                 ),
             ])
+        } else if state.scan.completed {
+            // The terminal frame of a scan. Before this existed the label was
+            // written into `phase` and never drawn, so the progress bar simply
+            // disappeared and completion had to be inferred from the preview
+            // repainting (#1321).
+            let violation_style = if state.scan.violations > 0 {
+                Style::default().fg(theme::color(theme::VIOLATIONS))
+            } else {
+                Style::default().fg(theme::color(theme::CLEAN))
+            };
+            Line::from(vec![
+                Span::styled(
+                    format!(" {} ", state.scan.phase),
+                    Style::default()
+                        .fg(theme::color(theme::CLEAN))
+                        .add_modifier(theme::EMPHASIS_HEADING),
+                ),
+                Span::styled(
+                    format!(" {} ", vsep()),
+                    Style::default().fg(theme::color(theme::SEPARATOR)),
+                ),
+                Span::styled(
+                    format!("{} {} violations", warn(), state.scan.violations),
+                    violation_style,
+                ),
+            ])
         } else if state.actions.pending {
             // Busy indicator for a pending background action (#565):
             // mirrors the scan busy path with a distinct "Running …" line.

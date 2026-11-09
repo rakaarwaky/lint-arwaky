@@ -130,6 +130,11 @@ impl SurfaceActionHandler {
                     state.finish_scan(0);
                     state.scan.running = false;
                     state.scan.cancel = None;
+                    // `finish_scan` labels a completed run "Done — N violations".
+                    // A cancelled scan found nothing because it stopped, not
+                    // because the tree is clean, so overwrite that label before
+                    // it reaches the completion frame.
+                    state.scan.phase = "Scan cancelled — no results written".to_string();
                     state.preview.mode = PreviewMode::ActionOutput;
                     state.preview.scroll = 0;
                     state.set_status("Scan cancelled");
@@ -639,8 +644,10 @@ impl SurfaceActionHandler {
         // A result describes the target it ran on, never the one now on
         // screen: leaving the count in place made the status bar assert the
         // previous folder's number (and its colour) about this one (#1331).
+        // The completion banner is part of that result, so it goes too.
         state.violation_count = 0;
         state.violation_scope = None;
+        state.scan.completed = false;
         // Clear stale preview when directory changes (#368), then say what the
         // panel is waiting for. A blank panel cannot be told apart from a broken
         // one, and the empty, idle, and error states all rendered identically

@@ -276,6 +276,12 @@ pub struct PreviewState {
 #[derive(Debug)]
 pub struct ScanProgressState {
     pub running: bool,
+    /// True between a finished scan and the next one.
+    ///
+    /// `finish_scan` writes a terminal label into `phase`, but the status bar
+    /// only drew that label while `running` was set — so the completion text
+    /// existed and was never rendered (#1321).
+    pub completed: bool,
     pub cancel: Option<std::sync::Arc<std::sync::atomic::AtomicBool>>,
     pub phase: String,
     pub files_done: usize,
@@ -369,6 +375,7 @@ impl AppState {
             },
             scan: ScanProgressState {
                 running: false,
+                completed: false,
                 cancel: None,
                 phase: String::new(),
                 files_done: 0,
@@ -605,6 +612,7 @@ impl AppState {
     /// Mark the scan as started with the given phase and total file count.
     pub fn set_scanning(&mut self, scanning: bool, phase: String, total: usize) {
         self.scan.running = scanning;
+        self.scan.completed = false;
         self.scan.phase = if scanning { phase } else { String::new() };
         self.scan.files_done = 0;
         self.scan.files_total = total;
@@ -627,6 +635,7 @@ impl AppState {
     /// and the user had to infer completion from the preview repainting (#1321).
     pub fn finish_scan(&mut self, total_violations: usize) {
         self.scan.running = false;
+        self.scan.completed = true;
         self.scan.files_done = self.scan.files_total;
         self.scan.files_total = 0;
         self.scan.violations = total_violations;
