@@ -23,7 +23,7 @@ use shared_role_rules::taxonomy_role_rules_request::RoleRequest;
 use crate::surface_check_action::{
     ScanAggregates, ScanOptions, apply_filter, build_entries, build_import_map,
     build_index_ignored, canonicalize_via, discover_lintable_files, discover_test_suite_files,
-    doc_violations_in_scope, external_violation_in_scope, run_single_file_scan,
+    doc_violations_in_scope, external_violation_in_scope, retain_scope, run_single_file_scan,
     structure_violations_in_scope, validate_member_path, violation_in_scan_scope,
 };
 
@@ -76,11 +76,14 @@ where
         Some(m) => validate_member_path(&opts, &root, m)?,
         None => root.clone(),
     };
+    // Always scan the full workspace root; the scope only narrows the report.
+    let scope = shared_cli_commands::classify_scan_scope(&root, &target_path);
+    let scan_root = root.clone();
     let report_target = Path::new(&target_path);
     let workspace_root = Path::new(&root);
     let (violations, stopped_early) = match opts.scan_aggregates.as_ref() {
         Some(agg) => run_all_linters_in_process_cancel(
-            &target_path,
+            &scan_root,
             report_target,
             workspace_root,
             agg,
@@ -103,6 +106,7 @@ where
             );
         }
     };
+    let violations = retain_scope(violations, &scope);
     let violations = apply_filter(violations, &opts.filter);
     Ok(CancellableScanOutcome {
         violations,

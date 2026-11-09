@@ -115,20 +115,15 @@ where
         Some(m) => validate_member_path(&opts, &root, m)?,
         None => root.clone(),
     };
-    // A subfolder or single-file target must still be judged against its whole
-    // member dir — the architecture rules read sibling files — so the scan
-    // widens to the member dir and only the *report* narrows.
+    // Always scan the full workspace root; the scope only narrows the report.
     let scope = shared_cli_commands::classify_scan_scope(&root, &target_path);
-    let scan_path = match scope.scan_root() {
-        "" => target_path.clone(),
-        member_root => member_root.to_string(),
-    };
+    let scan_root = root.clone();
 
     let report_target = std::path::PathBuf::from(&target_path);
     let workspace_root = std::path::PathBuf::from(&root);
     let violations = match opts.scan_aggregates.as_ref() {
         Some(agg) => run_all_linters_in_process(
-            &scan_path,
+            &scan_root,
             &report_target,
             &workspace_root,
             agg,
@@ -155,7 +150,7 @@ where
 /// A failed canonicalization keeps the violation: dropping a real finding
 /// because a path did not resolve would hide a defect, which is worse than
 /// reporting one extra line.
-fn retain_scope(
+pub(crate) fn retain_scope(
     violations: Vec<ViolationItem>,
     scope: &shared_cli_commands::ScanScope,
 ) -> Vec<ViolationItem> {
