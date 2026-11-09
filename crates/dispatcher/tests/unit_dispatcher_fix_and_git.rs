@@ -7,6 +7,7 @@
 use dispatcher_lint_arwaky::surface_fix_action::FixReport;
 use dispatcher_lint_arwaky::surface_git_action::validate_git_base_ref;
 use shared_common::ExitCode;
+use shared_common::LintResult;
 
 #[test]
 fn git_base_ref_accepts_ordinary_refs() {
@@ -82,6 +83,7 @@ fn report(dry_run: bool, remaining_fixable: usize, introduced: usize) -> FixRepo
         introduced: Vec::new(),
         remaining_fixable,
     };
+    report.introduced = (0..introduced).map(|_| LintResult::default()).collect();
     report.success = introduced == 0 && remaining_fixable == 0;
     report
 }
