@@ -9,6 +9,7 @@
 // `surface_check_action` so existing import paths stay valid.
 use shared_common::FilePath;
 use shared_common::ViolationItem;
+use std::path::Path;
 use std::sync::atomic::{AtomicBool, Ordering};
 
 use shared_config_system::ConfigRequest;
@@ -75,8 +76,17 @@ where
         Some(m) => validate_member_path(&opts, &root, m)?,
         None => root.clone(),
     };
+    let report_target = Path::new(&target_path);
+    let workspace_root = Path::new(&root);
     let (violations, stopped_early) = match opts.scan_aggregates.as_ref() {
-        Some(agg) => run_all_linters_in_process_cancel(&target_path, agg, cancel, &mut on_progress),
+        Some(agg) => run_all_linters_in_process_cancel(
+            &target_path,
+            report_target,
+            workspace_root,
+            agg,
+            cancel,
+            &mut on_progress,
+        ),
         None => {
             if cancel.load(Ordering::Relaxed) {
                 return Ok(CancellableScanOutcome {
@@ -105,6 +115,8 @@ where
 /// collected so far plus `stopped_early = true`.
 fn run_all_linters_in_process_cancel(
     path: &str,
+    report_target: &Path,
+    workspace_root: &Path,
     agg: &ScanAggregates,
     cancel: &AtomicBool,
     on_progress: &mut dyn FnMut(String, usize, usize),
@@ -160,11 +172,8 @@ fn run_all_linters_in_process_cancel(
         &discover_test_suite_files(&seam, &scan_root, &ignored),
     );
 
-    let parent_workspace = target_canon
-        .parent()
-        .and_then(|p| p.parent())
-        .map(|p| p.to_path_buf());
-    let workspace_root = target_canon.parent().map(|p| p.to_path_buf());
+    let parent_workspace = workspace_root.parent().map(|p| p.to_path_buf());
+    let workspace_root = Some(workspace_root.to_path_buf());
 
     let mut all: Vec<ViolationItem> = Vec::new();
 
@@ -317,6 +326,7 @@ fn run_all_linters_in_process_cancel(
                 v,
                 &seam,
                 &target_canon,
+                report_target,
                 parent_workspace.as_deref(),
                 member_scope,
             )
@@ -332,6 +342,7 @@ fn run_all_linters_in_process_cancel(
             v,
             &seam,
             &target_canon,
+            report_target,
             parent_workspace.as_deref(),
             workspace_root.as_deref(),
             member_scope,
