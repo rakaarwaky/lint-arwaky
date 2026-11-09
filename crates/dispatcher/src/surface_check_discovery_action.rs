@@ -24,26 +24,14 @@ pub(crate) fn discover_lintable_files(
         root = scan_root.to_string_lossy().as_ref(),
         "discovering lintable files"
     );
-    // Discover the target's own files with the config ignore list (a dir
-    // named `workspaces-bad` never matches a file pattern, so fixture
-    // targets are unaffected by the index build's fixture-dir exclusion).
-    let mut discovered = seam
-        .aggregate
-        .execute(FilesystemRequest::discover_source_files(scan_root, ignored))
-        .into_paths();
-    tracing::debug!(
-        target: "lint_arwaky::audit",
-        event = "walker_root_files",
-        count = discovered.len(),
-        "root-level source files discovered"
-    );
-    // Recurse into subdirs so nested source trees (crates/<name>/src/*) are
-    // fully covered, matching what the subprocess linters walk.
     let is_ws_root = ["crates", "packages", "modules"]
         .iter()
         .any(|name| scan_root.join(name).is_dir());
     let skip_dirs = build_skip_dirs(is_ws_root, scan_root);
+    let mut discovered = Vec::new();
     bfs_enter_subdirs(seam, scan_root, &skip_dirs, ignored, &mut discovered);
+    discovered.sort();
+    discovered.dedup();
     discovered
 }
 
