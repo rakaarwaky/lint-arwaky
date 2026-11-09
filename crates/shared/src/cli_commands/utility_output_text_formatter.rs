@@ -257,10 +257,16 @@ fn is_file_segment(segment: &str) -> bool {
     }
 }
 
-/// One violation block: `(file:line[:col])`, `CODE:NAME`, `WHY: …`, `FIX: …`.
+/// One violation block: `BADGE (file:line[:col])`, `CODE:NAME`, `WHY: …`, `FIX: …`.
+///
+/// The badge comes first and comes from `Severity::badge`, the same helper the
+/// report formatter and the TUI use. This output used to print no severity at
+/// all, so a reader triaging CRITICAL-first — the workflow `ci` exists to
+/// enforce — could not do it from `scan` text.
 fn render_violation(file: &str, v: &ViolationItem) {
     println!(
-        "({})",
+        "{} ({})",
+        v.severity.badge(),
         format_location(file, v.line.value(), v.column.value())
     );
     let name = if v.violation_name.is_empty() {

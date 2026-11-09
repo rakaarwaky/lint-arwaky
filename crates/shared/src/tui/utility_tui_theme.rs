@@ -120,3 +120,55 @@ pub fn highlight_style_with_override(high_contrast_requested: bool) -> Style {
     };
     base.add_modifier(Modifier::BOLD)
 }
+
+/// Glyph and border fallbacks for monochrome terminals.
+///
+/// The module header claims `NO_COLOR` collapses in one place. That was true
+/// for colour (`color()`) but not for glyphs: the status bar, the confirm
+/// modal, and the preview panel each grew a private fallback, so a fifth
+/// overlay meant a fourth border vocabulary and nothing tested that they
+/// agreed. Every fallback lives here so the claim holds.
+pub mod glyph {
+    use ratatui::symbols::border;
+
+    /// ASCII border set used when `NO_COLOR` is set.
+    pub const ASCII_BORDER: border::Set<'static> = border::Set {
+        top_left: "+",
+        top_right: "+",
+        bottom_left: "+",
+        bottom_right: "+",
+        vertical_left: "|",
+        vertical_right: "|",
+        horizontal_top: "-",
+        horizontal_bottom: "-",
+    };
+
+    /// The vertical separator used by status and header rows.
+    pub fn separator(no_color_requested: bool) -> &'static str {
+        if no_color_requested { "|" } else { "\u{2502}" }
+    }
+
+    /// The warning glyph shown before violation counts and confirm labels.
+    pub fn warn(no_color_requested: bool) -> &'static str {
+        if no_color_requested { "!" } else { "\u{26a0}" }
+    }
+
+    /// A filled cell of the scan progress bar.
+    pub fn bar_filled(no_color_requested: bool) -> &'static str {
+        if no_color_requested { "=" } else { "\u{2588}" }
+    }
+
+    /// An empty cell of the scan progress bar.
+    pub fn bar_empty(no_color_requested: bool) -> &'static str {
+        if no_color_requested { " " } else { "\u{2591}" }
+    }
+
+    /// The border set a bordered widget should draw.
+    pub fn border_set(no_color_requested: bool) -> border::Set<'static> {
+        if no_color_requested {
+            ASCII_BORDER
+        } else {
+            border::PLAIN
+        }
+    }
+}

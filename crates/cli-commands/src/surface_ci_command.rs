@@ -54,8 +54,18 @@ pub fn handle_ci(params: CiCommandParams) -> ExitCode {
                 println!("Result: PASS (exit code 0)");
                 ExitCode::OK
             } else {
-                for r in &report.reasons {
-                    info!(result = %r, "scan result");
+                // The failing run used to print nothing after the counters: no
+                // result line, no exit code, and every reason routed to a
+                // `tracing::info!` channel the default "warn" filter drops. A
+                // CI engineer watching a red build could not see why it failed.
+                println!("Result: FAIL (exit code {})", ExitCode::POLICY_FAIL.value());
+                if !report.reasons.is_empty() {
+                    println!();
+                    println!("Reasons:");
+                    for reason in &report.reasons {
+                        println!("  - {reason}");
+                        info!(result = %reason, "scan result");
+                    }
                 }
                 info!("scan result: FAIL");
                 ExitCode::POLICY_FAIL

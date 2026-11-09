@@ -23,6 +23,43 @@ use std::io::stdout;
 use std::sync::Arc;
 use std::time::Duration;
 
+/// Restores the terminal on every exit path from [`TuiCommandSurface::run`].
+///
+/// Raw mode, the alternate screen, and mouse capture are process-wide terminal
+/// state. `run` enabled all three and then restored them after the event loop,
+/// but every `?` between the two points returns early — `Terminal::new`,
+/// `terminal.draw`, `event::poll`, `event::read` — leaving the caller's shell
+/// in raw mode on the alternate screen with no echo. A `Drop` guard cannot be
+/// skipped by an early return or an unwind, so it owns the restore.
+pub struct TerminalGuard {
+    active: bool,
+}
+
+impl TerminalGuard {
+    fn new() -> Self {
+        Self { active: true }
+    }
+
+    /// Release the terminal exactly once. Called by `Drop`; callable directly
+    /// so the success path restores before returning its result rather than at
+    /// an unspecified point later in the caller.
+    pub fn restore(&mut self) {
+        if !self.active {
+            return;
+        }
+        self.active = false;
+        let _ = disable_raw_mode();
+        let _ = crossterm::execute!(stdout(), LeaveAlternateScreen);
+        let _ = crossterm::execute!(stdout(), crossterm::event::DisableMouseCapture);
+    }
+}
+
+impl Drop for TerminalGuard {
+    fn drop(&mut self) {
+        self.restore();
+    }
+}
+
 struct RenderViews {
     file_list: FileListView,
     preview: PreviewView,
@@ -60,6 +97,14 @@ impl TuiCommandSurface {
         enable_raw_mode()?;
         crossterm::execute!(stdout(), EnterAlternateScreen)?;
         crossterm::execute!(stdout(), crossterm::event::EnableMouseCapture)?;
+        // Armed immediately after the enables: everything below can return
+        // early through `?`, and a dropped guard still restores the terminal.
+        let mut guard = TerminalGuard::new();
+        // A panic inside the render closure unwinds, which the guard handles —
+        // but the default hook prints the message *before* unwinding, while the
+        // alternate screen is still active, so the user never sees it. Restore
+        // first, then let the default hook report.
+        install_panic_restore_hook();
 
         let backend = CrosstermBackend::new(stdout());
         let mut terminal = Terminal::new(backend)?;
@@ -82,9 +127,9 @@ impl TuiCommandSurface {
         let views = RenderViews::new();
         let result = self.event_loop(&mut terminal, &mut state, &views);
 
-        disable_raw_mode()?;
-        crossterm::execute!(stdout(), LeaveAlternateScreen)?;
-        crossterm::execute!(stdout(), crossterm::event::DisableMouseCapture)?;
+        // Restore before returning so the caller's shell is usable the moment
+        // `run` hands control back, not whenever the guard falls out of scope.
+        guard.restore();
 
         result
     }
@@ -122,10 +167,7 @@ impl TuiCommandSurface {
                     let min_h = shared_tui::utility_tui_theme::MIN_TERMINAL_HEIGHT;
                     let min_w = shared_tui::utility_tui_theme::MIN_TERMINAL_WIDTH;
                     if area.height < min_h || area.width < min_w {
-                        let message = format!(
-                            "Terminal too small — resize to at least {}x{}",
-                            min_w, min_h
-                        );
+                        let message = too_small_message(area.width, area.height, min_w, min_h);
                         let line = Line::from(vec![Span::styled(
                             message,
                             Style::default()
@@ -138,6 +180,7 @@ impl TuiCommandSurface {
                             .style(Style::default().bg(shared_tui::utility_tui_theme::color(
                                 shared_tui::utility_tui_theme::BACKGROUND,
                             )))
+                            .wrap(ratatui::widgets::Wrap { trim: true })
                             .alignment(Alignment::Center);
                         frame.render_widget(paragraph, area);
                         return;
@@ -250,6 +293,44 @@ pub fn help_overlay_event_for(code: KeyCode) -> TuiEvent {
     }
 }
 
+/// Make a panic readable: restore the terminal, then report.
+///
+/// Without this the panic text landed on the alternate screen and vanished with
+/// it, leaving a raw-mode shell and no diagnostic (#1326). The hook is
+/// installed once per process and chains to the previous hook, so panic
+/// payloads stay formatted exactly as before.
+fn install_panic_restore_hook() {
+    use std::sync::Once;
+    static ONCE: Once = Once::new();
+    ONCE.call_once(|| {
+        let previous = std::panic::take_hook();
+        std::panic::set_hook(Box::new(move |info| {
+            let _ = disable_raw_mode();
+            let _ = crossterm::execute!(stdout(), LeaveAlternateScreen);
+            let _ = crossterm::execute!(stdout(), crossterm::event::DisableMouseCapture);
+            previous(info);
+        }));
+    });
+}
+
+/// Copy for the too-small screen, chosen by what the terminal can actually show.
+///
+/// The fixed sentence was 45 columns wide while the guard fired below 40, so
+/// the instruction to enlarge the terminal was always clipped by the terminal
+/// it wanted enlarged (#1328). Name the current size and the target when they
+/// fit, and fall back to a token that always renders.
+pub fn too_small_message(width: u16, height: u16, min_w: u16, min_h: u16) -> String {
+    let long = format!("{width}x{height} — need {min_w}x{min_h}");
+    if long.chars().count() <= width as usize {
+        return long;
+    }
+    let short = "too small";
+    if short.chars().count() <= width as usize {
+        return short.to_string();
+    }
+    "!".to_string()
+}
+
 fn from_crossterm_event(event: event::Event, state: &AppState) -> TuiEvent {
     match event {
         event::Event::Key(key) => from_key_event(key, state),
@@ -259,7 +340,7 @@ fn from_crossterm_event(event: event::Event, state: &AppState) -> TuiEvent {
     }
 }
 
-fn from_key_event(key: KeyEvent, state: &AppState) -> TuiEvent {
+pub fn from_key_event(key: KeyEvent, state: &AppState) -> TuiEvent {
     // --- Pending confirmation: only y/Enter = confirm, n/Esc = cancel (#354) ---
     if state.actions.pending_confirm.is_some() {
         return match key.code {
@@ -296,6 +377,18 @@ fn from_key_event(key: KeyEvent, state: &AppState) -> TuiEvent {
             KeyCode::Esc => TuiEvent::SearchCancel,
             _ => TuiEvent::None,
         };
+    }
+
+    // --- A running scan owns Esc, after every overlay has had its turn ---
+    // `CancelScan` had a handler, a cancel token, and a `ScanUpdate::Cancelled`
+    // path, but no producer: no key ever mapped to it. Esc was bound to Quit,
+    // so the product's only cancellable operation could not be cancelled and
+    // the "habit" key killed the process instead (#1329).
+    //
+    // This sits below the confirm/help/path/search branches on purpose: while
+    // one of those is open, Esc belongs to the overlay, not to the scan.
+    if state.scan.running && key.code == KeyCode::Esc {
+        return TuiEvent::CancelScan;
     }
 
     // Normal mode is resolved from the shared shortcut table. Contextual

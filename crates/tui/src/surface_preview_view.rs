@@ -1,10 +1,12 @@
 // PURPOSE: PreviewView — TUI surface component for the preview panel (right panel)
 //
-// Renders four content modes depending on PreviewMode:
-//   - FileContent: inline file preview (up to 100 lines)
+// Renders content modes depending on PreviewMode:
 //   - LintResults: output from check/scan/fix/ci/orphan actions
 //   - ActionOutput: output from doctor/init/install/version/adapters actions
 //   - HelpOverlay: keyboard shortcut reference
+//
+// The right panel shows command output only — never file content or code.
+// Viewing a file selects it in the Files panel instead of opening it here.
 //
 // Help content is embedded as a static string in help_text().
 use crate::{AppState, PanelFocus, PreviewMode};
@@ -34,7 +36,6 @@ impl PreviewView {
         };
 
         let (title, content) = match state.preview.mode {
-            PreviewMode::FileContent => (" Preview ".to_string(), state.preview.text.clone()),
             PreviewMode::LintResults => (" Lint Results ".to_string(), state.preview.text.clone()),
             PreviewMode::ActionOutput => {
                 (" Action Output ".to_string(), state.preview.text.clone())

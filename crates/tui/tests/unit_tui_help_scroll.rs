@@ -45,6 +45,7 @@ fn no_op_executor() -> Arc<SurfaceLintExecutor> {
     };
 
     #[derive(Debug)]
+    #[expect(dead_code)]
     struct Ws;
     impl IWorkspaceProtocol for Ws {
         fn workspace_root(
@@ -98,6 +99,7 @@ fn no_op_executor() -> Arc<SurfaceLintExecutor> {
     }
 
     #[derive(Debug)]
+    #[expect(dead_code)]
     struct P;
     impl IParserProtocol for P {
         fn parse_warnings(&self) -> &[shared_filesystem::taxonomy_filesystem_vo::ParseWarning] {
@@ -125,6 +127,7 @@ fn no_op_executor() -> Arc<SurfaceLintExecutor> {
     }
 
     #[derive(Debug)]
+    #[expect(dead_code)]
     struct T;
     impl IToolResolutionProtocol for T {
         fn is_executable_in_path(

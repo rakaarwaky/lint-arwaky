@@ -56,9 +56,9 @@ fn aes_violations_show_badges_and_details() {
         .value()
         .to_string();
     assert!(text.contains("AES Violations: 3"));
-    assert!(text.contains("[!!!]"));
-    assert!(text.contains("[!! ]"));
-    assert!(text.contains("[!  ]"));
+    assert!(text.contains("[CRIT]"));
+    assert!(text.contains("[HIGH]"));
+    assert!(text.contains("[MED]"));
     assert!(text.contains("AES201 src/surface.rs:14"));
     assert!(text.contains("AES301"));
     assert!(text.contains("Severity breakdown:"));

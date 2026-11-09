@@ -203,14 +203,12 @@ fn format_text_report(report: &ScanReport) -> DisplayContent {
 
 // Helper Functions
 
+/// The severity badge is owned by `Severity::badge` so the report formatter,
+/// the `scan` text output, and the TUI cannot drift into three vocabularies.
+/// The old ASCII ladder (`[!!!]`, `[!! ]`, ...) encoded its level in trailing
+/// whitespace, which any copy-paste or grep strip away.
 fn severity_badge(sev: &shared_common::Severity) -> &'static str {
-    match sev {
-        shared_common::Severity::CRITICAL => "[!!!]",
-        shared_common::Severity::HIGH => "[!! ]",
-        shared_common::Severity::MEDIUM => "[!  ]",
-        shared_common::Severity::LOW => "[.  ]",
-        shared_common::Severity::INFO => "[   ]",
-    }
+    sev.badge()
 }
 
 fn group_by_code(results: &[&LintResult]) -> Vec<(String, usize)> {
