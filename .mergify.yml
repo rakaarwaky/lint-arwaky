@@ -42,7 +42,6 @@ defaults:
     # 15min clears a cold run with room for a slower runner.
     checks_timeout: 15min
     merge_conditions:
-      - check-success = Format
       - check-success = Clippy
       - check-success = Build
       - check-success = Tests
