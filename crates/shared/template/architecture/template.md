@@ -51,7 +51,7 @@
 | AES703 | Structure | Surface Folder Purity | MEDIUM |
 | AES704 | Structure | Test Suite Coverage | MEDIUM |
 | AES705 | Structure | Member-Root Placement | MEDIUM |
-| AES706 | Structure | PR-LA Folder Mapping | MEDIUM |
+| AES706 | Structure | PR ID Folder Mapping | MEDIUM |
 
 ---
 
@@ -199,6 +199,6 @@ project-root/
 
 ### AES705 — Member-Root Placement
 
-### AES706 — PR Folder Mapping
+### AES706 — PR ID Folder Mapping
 
 ````

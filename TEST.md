@@ -299,7 +299,7 @@ If any rule produces 0 violations, the test project is missing a trigger file.
 | AES703 | Surface folder purity                  | ✓   | ✓     | ✓   | ✓          |
 | AES704 | Test-suite category coverage           | ✓   | ✓     | ✓   | ✓          |
 | AES705 | Member-root placement                  | ✓   | ✓     | ✓   | ✓          |
-| AES706 | PR folder mapping                      | ✓   | ✓     | ✓   | ✓          |
+| AES706 | PR ID folder mapping                   | ✓   | ✓     | ✓   | ✓          |
 
 ¹ The AES6xx doc-invariant codes fire on the root spec documents (AGENTS.md,
 README.md, ARCHITECTURE.md, CONTRIBUTING.md, PRD.md, ROADMAP.md, DATA.md,

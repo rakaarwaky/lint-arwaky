@@ -185,28 +185,61 @@ pub const SURFACE_DOC: &str = "DESIGN.md";
 /// could pass the rule with no runnable coverage at all.
 pub const TEST_FILE_EXTENSIONS: &[&str] = &["rs", "py", "js", "ts", "jsx", "tsx"];
 
-/// ─── AES706 — PR-LA ID to crate folder mapping ─────────────────────────
+/// ─── AES706 — PR ID to crate folder mapping ─────────────────────────────
 /// Every crate folder's FRD.md must carry FR IDs whose feature prefix matches
 /// the folder name (e.g. `crates/filesystem` → `FR-Filesystem-NNN`), and every
-/// PR-LA-001..N id in PRD.md / ROADMAP.md must map to a real crate folder by
-/// order (PR-LA-001 → `filesystem`, because `crates/filesystem` exists). A
-/// mismatch fires AES706 so the linter enforces the 1:1 contract between spec
-/// IDs and crate folders.
+/// `PR-<segment>-001..N` id in PRD.md / ROADMAP.md must map to a real crate
+/// folder by order (e.g. `PR-PSD-001` → the first folder). The segment names the
+/// audited project — `LA`, `PSD`, `CALC`, … — so no violation name may hardcode
+/// one project's segment. A mismatch fires AES706 so the linter enforces the
+/// 1:1 contract between spec IDs and crate folders.
 pub const RULE_CODE_PR_LA_FOLDER: &str = "AES706";
 
 /// A crate folder's FRD carries an FR ID whose prefix does not match the folder
 /// name, e.g. `FR-005B` inside `crates/filesystem` instead of `FR-Filesystem-005`.
-pub const PR_LA_VIOLATION_FR_ID_MISMATCH: &str = "pr_la_fr_id_mismatch";
+pub const PR_LA_VIOLATION_FR_ID_MISMATCH: &str = "pr_fr_id_mismatch";
 
-/// A PR-LA-001..N id does not map to an existing crate folder by order.
-pub const PR_LA_VIOLATION_PR_LA_ID_MISMATCH: &str = "pr_la_id_mismatch";
+/// A `PR-<segment>-001..N` id does not map to an existing crate folder by
+/// order. Named without a segment token: the audited project chooses the
+/// segment (`PR-LA-`, `PR-PSD-`, `PR-CALC-`, …), so the violation must not bake
+/// lint-arwaky's own `LA` into its name.
+pub const PR_LA_VIOLATION_PR_LA_ID_MISMATCH: &str = "pr_id_mismatch";
 
 /// A crate folder exists at a position in the crate order that has no
 /// corresponding PR-<segment>-NNN id in PRD.md / ROADMAP.md.
-pub const PR_LA_VIOLATION_FOLDER_WITHOUT_PR_LA_ID: &str = "pr_la_folder_without_pr_la_id";
+pub const PR_LA_VIOLATION_FOLDER_WITHOUT_PR_LA_ID: &str = "pr_folder_without_id";
 
 /// A crate folder holds no FRD.md at all, so no FR ID can be checked against it.
-pub const PR_LA_VIOLATION_MISSING_FRD: &str = "pr_la_missing_frd";
+pub const PR_LA_VIOLATION_MISSING_FRD: &str = "pr_missing_frd";
+
+/// Directory names that never hold a crate folder, so the AES706 folder order
+/// skips them: language caches, build output, dependency trees, and test
+/// scaffolding.
+///
+/// A Python member dir carries `modules/__pycache__` as soon as the project is
+/// imported once. `_` sorts before every letter, so that cache dir would take
+/// position 0 and push every `PR-<segment>` id onto the folder of its
+/// predecessor — the off-by-one cascade the AES706 UX report describes.
+pub const NON_CRATE_DIRS: &[&str] = &[
+    "__pycache__",
+    "node_modules",
+    "target",
+    "dist",
+    "build",
+    "out",
+    "coverage",
+    "htmlcov",
+    "tests",
+    "benches",
+    "venv",
+    "env",
+    ".venv",
+    ".tox",
+    ".git",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".ruff_cache",
+];
 
 /// Explicit folder → FR prefix overrides for kebab-case folders whose prefix is
 /// an abbreviation rather than a full PascalCase conversion.

@@ -643,7 +643,7 @@ The shared capability hosts the contracts, value objects, doc-rules codegen, and
 
 #### Proposed Solution
 
-The structure-rules capability enforces AES7-layer folder purity (AES701), feature health (AES702), surface purity (AES703), and test-suite coverage (AES704), plus PR-LA id to folder parity (AES706).
+The structure-rules capability enforces AES7-layer folder purity (AES701), feature health (AES702), surface purity (AES703), and test-suite coverage (AES704), plus `PR-<segment>` id to folder parity (AES706).
 
 #### Main User Flow
 
