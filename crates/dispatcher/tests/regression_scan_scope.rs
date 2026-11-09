@@ -1,6 +1,6 @@
 // Regression test — full-root scan detects cross-member violations under a
 // subfolder target, but narrows the *reported* output to that subfolder
-// (PR #3, plan 4ae3d58a).
+// (pr-3 of plan 4ae3d58a).
 //
 // PR 2 made `collect_scan*` scan the full workspace root
 // (`scan_root = root.clone()`) and narrow the *reported* output via
