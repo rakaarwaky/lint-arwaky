@@ -308,7 +308,9 @@ fn member_lanes(
     for (segment, ids) in segment_ids {
         let seg_bound = bound_members_for_segment(members, ids);
         if seg_bound.len() == 1 {
-            let (member, name) = seg_bound.into_iter().next().unwrap();
+            let Some((member, name)) = seg_bound.first().cloned() else {
+                continue;
+            };
             laned.push((member.clone(), name.clone()));
             lanes.push(FolderLane {
                 owners: vec![(member.clone(), name.clone())],
@@ -396,10 +398,12 @@ fn named_folder(members: &[PathBuf], title: &str) -> Option<String> {
         }
     }
     if matches.len() == 1 {
-        Some(matches.into_iter().next().unwrap())
-    } else {
-        None
+        if let Some(name) = matches.first() {
+            return Some(name.clone());
+        }
+        return None;
     }
+    None
 }
 
 /// The member dir that holds *folder*, paired with its name.

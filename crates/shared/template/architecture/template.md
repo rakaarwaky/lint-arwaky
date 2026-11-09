@@ -170,6 +170,14 @@ Group 7 enforces folder structure invariants to maintain vertical slicing and la
 
 ### Terms
 
+| Term | Meaning |
+| ---- | ------- |
+| Project Workspaces | Project root containing all configuration and language members |
+| Workspace Member | One self-contained crate, package, or module inside the workspace |
+| Crates directory | Rust workspace members |
+| Packages directory | TypeScript or JavaScript packages |
+| Modules directory | Python modules |
+
 ### Vertical Slicing Layout
 
 AI agents frequently make this mistake: do NOT create `surface/`, `taxonomy/`, `contract/`, `capabilities/`, `utility/`, `agent/` folders. The correct structure groups files by feature, with layers as filenames, not directories.
