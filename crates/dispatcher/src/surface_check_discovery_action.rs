@@ -29,6 +29,18 @@ pub(crate) fn discover_lintable_files(
         .any(|name| scan_root.join(name).is_dir());
     let skip_dirs = build_skip_dirs(is_ws_root, scan_root);
     let mut discovered = Vec::new();
+    // Root-level source files: BFS walks subdirectories only, so gather the
+    // root's own lintable files here (mirroring what `discover_source_files`
+    // previously returned for the root itself).
+    discovered.extend(
+        seam.aggregate
+            .execute(FilesystemRequest::ScanDirectory {
+                root: scan_root.to_path_buf(),
+            })
+            .into_paths()
+            .into_iter()
+            .filter(|p| is_source_file(std::path::Path::new(p))),
+    );
     bfs_enter_subdirs(seam, scan_root, &skip_dirs, ignored, &mut discovered);
     discovered.sort();
     discovered.dedup();
