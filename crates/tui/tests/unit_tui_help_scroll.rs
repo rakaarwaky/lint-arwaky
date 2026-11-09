@@ -480,7 +480,7 @@ fn wrapped_preview_last_visual_row_is_reachable_through_handler() {
 fn max_preview_scroll_uses_full_panel_band_height() {
     let mut state = AppState::new("/tmp".to_string());
     state.terminal_height = 30;
-    // 40 content lines at height 30: band = 30 - 5 = 25 → max scroll = 15.
+    // 40 content lines at height 30: band = 30 - 5 = 25 → max scroll = 17.
     state.preview.text = (0..40)
         .map(|i| format!("line {i}"))
         .collect::<Vec<_>>()

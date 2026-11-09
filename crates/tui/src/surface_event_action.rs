@@ -511,7 +511,7 @@ impl SurfaceActionHandler {
                     + state.path_dialog.input[cursor..]
                         .chars()
                         .next()
-                        .map(char::len_utf8)
+                        .map(|ch| ch.len_utf8())
                         .unwrap_or(0);
             }
             TuiEvent::PathMoveStart => state.path_dialog.cursor = 0,
