@@ -264,14 +264,15 @@ fn collect_scan_json_anchors_to_report_target() {
         "violations must be anchored under report_target {report_target}, got none"
     );
     let mut saw_aes102 = false;
+    let known_codes = ["AES101", "AES102", "AES302", "AES303", "AES403", "AES405"];
     for v in &violations {
         let code = v.code.code();
         assert!(
-            code.starts_with("AES"),
-            "expected an AES rule code, got {code} for file {}",
+            known_codes.iter().any(|&c| c == code),
+            "expected a known AES rule code, got {code} for file {}",
             v.file.value
         );
-        if code.starts_with("AES102") {
+        if code == "AES102" {
             saw_aes102 = true;
         }
         assert!(

@@ -851,37 +851,45 @@ mod tests {
     }
 
     /// Issue 4 regression: explicit `workspace_root`/`parent_workspace` recompute
-    /// `parent_workspace = workspace_root.parent()`. With `member_dirs` unset
-    /// the scope is governed by the report target, so a violation under the
-    /// subfolder report target is kept while a sibling outside it is dropped.
+    /// `parent_workspace = workspace_root.parent()`. Relative violation paths
+    /// that miss the scan target fall back to `workspace_root` (exercising
+    /// `resolve_violation_path`'s `workspace_root` branch), and AES205
+    /// violations resolve against `parent_workspace` (exercising the
+    /// `parent_workspace` scope branches). A violation under the subfolder
+    /// report target is kept while a sibling outside it is dropped.
     #[test]
     fn explicit_workspace_root_and_parent_workspace_scope() {
         let tmp = tempfile::TempDir::new().unwrap();
         let root = tmp.path();
-        let member = root.join("crates").join("alpha");
-        let subfolder = member.join("src");
-        let under = subfolder.join("lib.rs");
-        let sibling = member.join("other.rs");
+        let crates = root.join("crates"); // workspace_root
+        let member = crates.join("alpha"); // scan target
+        let subfolder = member.join("src"); // report target (subfolder)
+        let under = subfolder.join("lib.rs"); // in subfolder
+        let shared = crates.join("shared").join("helper.rs"); // under workspace_root, outside subfolder
+        let rogue = crates.join("rogue").join("bad.rs"); // under workspace_root, outside subfolder
         std::fs::create_dir_all(&subfolder).unwrap();
+        std::fs::create_dir_all(shared.parent().unwrap()).unwrap();
+        std::fs::create_dir_all(rogue.parent().unwrap()).unwrap();
         std::fs::write(&under, "fn main() {}").unwrap();
-        std::fs::write(&sibling, "fn other() {}").unwrap();
+        std::fs::write(&shared, "fn shared() {}").unwrap();
+        std::fs::write(&rogue, "fn rogue() {}").unwrap();
 
         let seam = fs_seam();
         let target_canon = &member;
-        let report_target = &under;
+        let report_target = &subfolder;
         // Explicit non-None workspace_root; parent_workspace recomputed from it.
-        let workspace_root = member.clone();
+        let workspace_root = crates.clone();
         let parent_workspace = workspace_root
             .parent()
-            .expect("member has a parent")
+            .expect("crates has a parent")
             .to_path_buf();
         assert_eq!(
-            parent_workspace,
-            root.join("crates"),
-            "parent_workspace must resolve to member's parent level"
+            parent_workspace, root,
+            "parent_workspace must resolve to workspace_root.parent()"
         );
 
-        let v_under = make_violation(&under, "AES100");
+        // Violation under the subfolder report target is kept (in_target).
+        let v_under = make_violation(std::path::Path::new("src/lib.rs"), "AES100");
         assert!(
             violation_in_scan_scope(
                 &v_under,
@@ -895,10 +903,28 @@ mod tests {
             "file under subfolder report target must be in scope"
         );
 
-        let v_sibling = make_violation(&sibling, "AES100");
+        // AES205 violation under parent_workspace is kept via the parent_workspace
+        // branch (relative path forces the workspace_root fallback in resolution).
+        let v_shared = make_violation(std::path::Path::new("shared/helper.rs"), "AES205");
+        assert!(
+            violation_in_scan_scope(
+                &v_shared,
+                &seam,
+                target_canon,
+                report_target,
+                Some(&parent_workspace),
+                Some(&workspace_root),
+                None
+            ),
+            "AES205 under parent_workspace must be kept"
+        );
+
+        // Sibling outside the subfolder report target is dropped: AES100 does not
+        // consult the parent_workspace branch, and it is not under report_target.
+        let v_rogue = make_violation(std::path::Path::new("rogue/bad.rs"), "AES100");
         assert!(
             !violation_in_scan_scope(
-                &v_sibling,
+                &v_rogue,
                 &seam,
                 target_canon,
                 report_target,
