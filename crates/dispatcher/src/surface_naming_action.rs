@@ -12,6 +12,7 @@ use shared_common::FilePath;
 use shared_filesystem::FilesystemRequest;
 use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared_naming_rules::INamingRunnerAggregate;
+use shared_naming_rules::taxonomy_naming_audit_stats_vo::NamingAuditStats;
 use shared_naming_rules::taxonomy_naming_rules_request::NamingRequest;
 use shared_naming_rules::taxonomy_naming_rules_response::NamingResponse;
 
@@ -19,13 +20,25 @@ use shared_common::ViolationItem;
 
 use crate::surface_entries_store;
 
+/// What one naming audit produced: the findings and the per-rule counts.
+///
+/// The counts travel with the findings because an empty finding list used to
+/// mean two different things — "nothing is wrong" and "nothing was checked" —
+/// and only the counts tell them apart.
+pub struct NamingAuditOutcome {
+    /// The findings the audit raised.
+    pub violations: Vec<ViolationItem>,
+    /// How many files each rule read.
+    pub stats: NamingAuditStats,
+}
+
 pub fn collect_naming(
     path: Option<FilePath>,
     naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
     filter: Option<String>,
     fs_agg: Arc<dyn IFilesystemAggregate>,
     ignored_paths: &[String],
-) -> Result<Vec<ViolationItem>, String> {
+) -> Result<NamingAuditOutcome, String> {
     // 1. Resolve target path (default: current directory)
     let root = match &path {
         Some(p) => p.value().to_string(),
@@ -57,14 +70,14 @@ pub fn collect_naming(
     let test_files = surface_entries_store::build_test_entries(&fs_agg, root_path, ignored_paths);
     let request = NamingRequest::audit_with_tests(&source_files, &test_files);
     let NamingResponse::Audit {
-        violations: results,
+        mut violations,
+        stats,
     } = naming_orchestrator.execute(request)
     else {
         return Err("naming audit returned an unexpected response".to_string());
     };
 
     // 5. NamingResponse already carries ViolationItem end-to-end — no conversion.
-    let mut violations = results;
 
     // 6. Apply optional filter (by violation code)
     if let Some(ref filter_str) = filter {
@@ -72,8 +85,8 @@ pub fn collect_naming(
         violations.retain(|v| v.code.code().contains(&filter_upper));
     }
 
-    // 7. Return violations — CLI formats output and maps exit code
-    Ok(violations)
+    // 7. Return the findings and the counts — CLI formats output and maps exit code
+    Ok(NamingAuditOutcome { violations, stats })
 }
 
 pub struct _Aes303Placeholder {

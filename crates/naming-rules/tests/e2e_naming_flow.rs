@@ -61,7 +61,7 @@ fn run_audit(
         files: entries.to_vec(),
     };
     match orch.execute(request) {
-        NamingResponse::Audit { violations } => violations,
+        NamingResponse::Audit { violations, .. } => violations,
         NamingResponse::Name { .. } => panic!("expected an audit response"),
     }
 }
@@ -75,7 +75,7 @@ fn run_audit_with_tests(
     tests: &[FileEntry],
 ) -> Vec<shared_common::taxonomy_violation_item_vo::ViolationItem> {
     match orch.execute(NamingRequest::audit_with_tests(source, tests)) {
-        NamingResponse::Audit { violations } => violations,
+        NamingResponse::Audit { violations, .. } => violations,
         NamingResponse::Name { .. } => panic!("expected an audit response"),
     }
 }

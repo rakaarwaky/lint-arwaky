@@ -21,6 +21,17 @@ fn check(path: &str) -> Option<String> {
         .map(|r| r.message.value().to_string())
 }
 
+/// The action of the finding for *path*, when the rule fires.
+///
+/// The message states the problem and the fix states the action, so a test
+/// that looks for the action looks here and a test that looks for the problem
+/// looks at [`check`].
+fn fix(path: &str) -> Option<String> {
+    checker()
+        .check_test_file_prefix_internal(path, basename(path))
+        .map(|r| r.fix)
+}
+
 // ─── Construction ──────────────────────────────────────────────────────────
 
 #[test]
@@ -99,7 +110,7 @@ fn a_barrel_in_a_support_dir_is_skipped() {
 }
 
 #[test]
-fn a_file_under_the_support_dir_is_treated_as_flat() {
+fn a_support_prefixed_file_sits_flat_under_tests() {
     assert!(
         nested_under("crates/calc/tests/mock_filesystem.rs").is_none(),
         "`mock_filesystem.rs` sits directly under `tests/` and carries a legal support prefix"
@@ -119,12 +130,12 @@ fn a_file_with_no_legal_prefix_produces_a_violation() {
 
 #[test]
 fn the_violation_lists_the_legal_prefixes_for_that_directory() {
-    let message = check("crates/calc/tests/helpers.rs").expect("must fire");
+    let action = fix("crates/calc/tests/helpers.rs").expect("must fire");
     for prefix in ["contract_", "unit_", "e2e_"] {
         assert!(
-            message.contains(prefix),
-            "the message must list the legal set so a reader can rename without \\
-             guessing; missing {prefix} in: {message}"
+            action.contains(prefix),
+            "the action must list the legal set so a reader can rename without \\
+             guessing; missing {prefix} in: {action}"
         );
     }
 }
@@ -133,22 +144,23 @@ fn the_violation_lists_the_legal_prefixes_for_that_directory() {
 fn a_bench_prefix_inside_tests_says_move_rather_than_rename() {
     // `bench_` is legal in benches/ and nowhere else, so the fix is a move.
     let message = check("crates/calc/tests/bench_adder.rs").expect("must fire");
+    let action = fix("crates/calc/tests/bench_adder.rs").expect("must fire");
     assert!(
         message.contains("benches/"),
         "the message must name the directory the prefix belongs to; got {message}"
     );
     assert!(
-        message.contains("Move the file"),
-        "a prefix from the wrong directory needs a move, not a rename; got {message}"
+        action.contains("Move the file"),
+        "a prefix from the wrong directory needs a move, not a rename; got {action}"
     );
 }
 
 #[test]
 fn a_test_prefix_inside_benches_says_move_rather_than_rename() {
-    let message = check("crates/calc/benches/unit_adder.rs").expect("must fire");
+    let action = fix("crates/calc/benches/unit_adder.rs").expect("must fire");
     assert!(
-        message.contains("Move the file"),
-        "a prefix from the wrong directory needs a move, not a rename; got {message}"
+        action.contains("Move the file"),
+        "a prefix from the wrong directory needs a move, not a rename; got {action}"
     );
 }
 
@@ -156,9 +168,9 @@ fn a_test_prefix_inside_benches_says_move_rather_than_rename() {
 fn a_nested_file_reports_the_depth_it_sits_at() {
     let message = check("crates/calc/tests/inner/unit_adder.rs").expect("must fire");
     assert!(
-        message.contains("1 level(s) below"),
+        message.contains("1 level inside"),
         "the message must say how deep the file sits so the reader knows which \\
-         level to flatten; got {message}"
+         level to move the file up; got {message}"
     );
     // The nesting finding replaces the prefix finding rather than duplicating it.
     assert!(
