@@ -48,8 +48,9 @@ fn bench_unused_imports(c: &mut Criterion) {
         let imports = generate_imports(n);
         let used = n / 2;
         let content = generate_content(used);
-        let used_identifiers: Vec<SymbolName> =
-            (0..used).map(|i| SymbolName::new(format!("symbol_{i}"))).collect();
+        let used_identifiers: Vec<SymbolName> = (0..used)
+            .map(|i| SymbolName::new(format!("symbol_{i}")))
+            .collect();
         group.throughput(Throughput::Elements(n as u64));
         group.bench_with_input(BenchmarkId::new("rust_files", n), &n, |b, &_n| {
             b.iter(|| {

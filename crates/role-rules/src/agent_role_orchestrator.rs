@@ -161,9 +161,7 @@ impl RoleOrchestrator {
         };
 
         match layer.value.as_str() {
-            "agent"
-                if self.is_rule_enabled("AES405") && !self.is_exception("AES405", filename) =>
-            {
+            "agent" if self.is_rule_enabled("AES405") && !self.is_exception("AES405", filename) => {
                 let deps = &self.deps;
                 let auditor: &dyn IAgentRoleProtocol = match file.language {
                     Language::Rust => &*deps.agent_rust,
@@ -196,8 +194,7 @@ impl RoleOrchestrator {
             "surface" | "surfaces"
                 if self.is_rule_enabled("AES406") && !self.is_exception("AES406", filename) =>
             {
-                match shared_role_rules::taxonomy_role_rules_vo::classify_surface_tier(basename)
-                {
+                match shared_role_rules::taxonomy_role_rules_vo::classify_surface_tier(basename) {
                     shared_role_rules::taxonomy_role_rules_vo::SurfaceTier::Smart => {
                         // FRD: smart surfaces are subject to no checks.
                         self.deps.surface.check_smart_surface(file, violations);
@@ -218,9 +215,7 @@ impl RoleOrchestrator {
                 let auditor = match file.language {
                     Language::Rust => &*self.deps.contract_rust,
                     Language::Python => &*self.deps.contract_python,
-                    Language::TypeScript | Language::JavaScript => {
-                        &*self.deps.contract_typescript
-                    }
+                    Language::TypeScript | Language::JavaScript => &*self.deps.contract_typescript,
                     _ => return,
                 };
                 auditor.check_contract_routing(file, "contract", violations);
@@ -233,9 +228,7 @@ impl RoleOrchestrator {
                 let auditor: &dyn ICapabilitiesRoleProtocol = match language {
                     Language::Rust => &*deps.capabilities_rust,
                     Language::Python => &*deps.capabilities_python,
-                    Language::TypeScript | Language::JavaScript => {
-                        &*deps.capabilities_typescript
-                    }
+                    Language::TypeScript | Language::JavaScript => &*deps.capabilities_typescript,
                     _ => {
                         return;
                     }
@@ -243,7 +236,7 @@ impl RoleOrchestrator {
                 auditor.check_capability_routing_with_references(
                     file,
                     "capabilities",
-                    &references,
+                    references,
                     violations,
                 );
             }

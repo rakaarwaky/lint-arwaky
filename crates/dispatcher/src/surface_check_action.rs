@@ -276,13 +276,11 @@ pub(crate) fn run_all_linters_in_process(
     on_progress: &mut dyn FnMut(String, usize, usize),
 ) -> Vec<ViolationItem> {
     let seam = agg.fs_seam.clone();
-
     let target = std::path::Path::new(path);
     let target_canon =
         canonicalize_via(&seam.aggregate, target).unwrap_or_else(|| std::path::PathBuf::from(path));
     let target_canon_str = target_canon.to_string_lossy().to_string();
     let target_canon_str_ref = target_canon_str.as_str();
-
     tracing::info!(
         target: "lint_arwaky::audit",
         event = "scan_start",
@@ -290,16 +288,13 @@ pub(crate) fn run_all_linters_in_process(
         "scan starting"
     );
     let scan_start = Instant::now();
-
     // W10: build the in-process file index directly from the scan target so
     // member-scoped scans (e.g. `workspaces-bad/crates`) enumerate exactly the
     // files the subprocess linters would see, instead of the parent workspace
     // that `build_file_index_with_ignored` resolves to (which would mix or drop
     // sibling members and produce doubled paths → E902 / missing codes).
     let scan_root = target_canon.clone();
-
     let root_fp = FilePath::new(scan_root.to_string_lossy().to_string()).unwrap_or_default();
-
     let ignored = agg
         .config
         .execute(ConfigRequest::ignored_paths(&root_fp))
@@ -308,7 +303,6 @@ pub(crate) fn run_all_linters_in_process(
         .iter()
         .map(|v| v.to_string())
         .collect::<Vec<String>>();
-
     tracing::debug!(
         target: "lint_arwaky::audit",
         event = "ignored_paths_loaded",
@@ -382,7 +376,6 @@ pub(crate) fn run_all_linters_in_process(
         "entry + import-map index built"
     );
     on_progress("Index built".to_string(), 0, total_files);
-
     // AES103's subject is the files the default walk prunes, so they need their
     // own discovery. The root here is the scan target rather than the
     // workspace root, because a member-dir scan must judge its own test files
@@ -391,7 +384,6 @@ pub(crate) fn run_all_linters_in_process(
         &seam,
         &discover_test_suite_files(&seam, &scan_root, &ignored),
     );
-
     let parent_workspace = target_canon
         .parent()
         .and_then(|p| p.parent())
@@ -400,18 +392,13 @@ pub(crate) fn run_all_linters_in_process(
     // workspace root the orphan scanner resolved — for a member-dir scan target
     // that is one level up (the target's parent), not two.
     let workspace_root = target_canon.parent().map(|p| p.to_path_buf());
-
     let mut all: Vec<ViolationItem> = Vec::new();
     // Capability panics are logged after the scan-scope filters, so an isolated
     // failure is visible without inventing a rule code.
     let mut panics: Vec<String> = Vec::new();
-
-    // Quality, role, import, naming, and orphan groups read the same shared
-    // index (`entries` / `import_map` / `test_files`) and produce disjoint
-    // violation lists, so they run on parallel threads: wall time is the
-    // slowest group instead of their sum (issue #1365). Each thread keeps its
-    // own panic collector; findings are re-appended in the historical group
-    // order so the violation list stays deterministic.
+    // Quality, role, import, naming, and orphan groups run on parallel threads
+    // (wall time = slowest group). Each thread keeps its own panic collector;
+    // findings are re-appended in historical group order for determinism.
     let parallel_start = Instant::now();
     let (quality_v, role_v, import_v, naming_v, orphan_v) = {
         let (quality, role, import, naming, orphan) = std::thread::scope(|s| {
@@ -505,9 +492,7 @@ pub(crate) fn run_all_linters_in_process(
                         .orphan
                         .execute(OrphanRequest::scan(
                             &root_fp,
-                            &shared_common::taxonomy_common_vo::PatternList::new(
-                                ignored.clone(),
-                            ),
+                            &shared_common::taxonomy_common_vo::PatternList::new(ignored.clone()),
                         ))
                         .into_scan_outcome();
                     orphan_violations
@@ -525,11 +510,11 @@ pub(crate) fn run_all_linters_in_process(
                 (violations, group_panics)
             });
             (
-                h_quality.join().unwrap(),
-                h_role.join().unwrap(),
-                h_import.join().unwrap(),
-                h_naming.join().unwrap(),
-                h_orphan.join().unwrap(),
+                h_quality.join().unwrap_or_default(),
+                h_role.join().unwrap_or_default(),
+                h_import.join().unwrap_or_default(),
+                h_naming.join().unwrap_or_default(),
+                h_orphan.join().unwrap_or_default(),
             )
         });
         panics.extend(quality.1);
@@ -550,11 +535,27 @@ pub(crate) fn run_all_linters_in_process(
     all.extend(import_v);
     all.extend(naming_v);
     all.extend(orphan_v);
-    on_progress("Quality checks complete".to_string(), total_files, total_files);
+    on_progress(
+        "Quality checks complete".to_string(),
+        total_files,
+        total_files,
+    );
     on_progress("Role checks complete".to_string(), total_files, total_files);
-    on_progress("Import checks complete".to_string(), total_files, total_files);
-    on_progress("Naming checks complete".to_string(), total_files, total_files);
-    on_progress("Orphan checks complete".to_string(), total_files, total_files);
+    on_progress(
+        "Import checks complete".to_string(),
+        total_files,
+        total_files,
+    );
+    on_progress(
+        "Naming checks complete".to_string(),
+        total_files,
+        total_files,
+    );
+    on_progress(
+        "Orphan checks complete".to_string(),
+        total_files,
+        total_files,
+    );
 
     // External — adapters run on the target *as given* (relative paths resolve
     // against the process CWD, exactly like the spawned linters did).
