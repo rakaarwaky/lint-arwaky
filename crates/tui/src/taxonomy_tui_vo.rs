@@ -213,6 +213,11 @@ pub enum ScanUpdate {
         output: String,
         violation_count: usize,
         outcome: LintOutcome,
+        /// Violations per file, keyed by the path the result reports.
+        /// `FileEntry::violation_count` existed but nothing ever wrote it, so
+        /// the Files panel could not mark which rows the scan had flagged
+        /// while the status bar carried only a global total (#1322).
+        by_file: Vec<(String, usize)>,
     },
     /// Scan aborted before completion (user pressed Esc while scanning).
     Cancelled,
@@ -326,6 +331,14 @@ pub struct AppState {
     pub show_help: bool,
     pub should_quit: bool,
     pub violation_count: usize,
+    /// The target the count belongs to: the path the last completed scan or
+    /// action actually covered. `None` means no result covers the current view.
+    ///
+    /// The count is only two writers (`ScanUpdate::Complete` and
+    /// `poll_background_action`) and navigation never reset it, so the badge
+    /// kept asserting the previous folder's number — including a green `0` —
+    /// about whatever was on screen (#1331).
+    pub violation_scope: Option<String>,
     pub terminal_height: u16,
     pub terminal_width: u16,
 }
@@ -375,6 +388,7 @@ impl AppState {
             show_help: false,
             should_quit: false,
             violation_count: 0,
+            violation_scope: None,
             terminal_height: 0,
             terminal_width: 0,
         }
@@ -454,6 +468,35 @@ impl AppState {
         self.status_message = msg.into();
     }
 
+    /// Record a violation count together with the target it describes.
+    ///
+    /// Both must travel together: a bare count on the status line sits beside
+    /// `Selected: <file>` and reads as a fact about the current view.
+    pub fn set_violation_result(&mut self, scope: impl Into<String>, violations: usize) {
+        self.violation_count = violations;
+        self.violation_scope = Some(scope.into());
+    }
+
+    /// The violation cell for the status bar.
+    ///
+    /// Renders the count only when the recorded scope still matches what the
+    /// user is looking at; otherwise `—`, which is honest about having no
+    /// result for this target rather than borrowing the last one.
+    pub fn violation_badge(&self) -> String {
+        match self.violation_scope.as_deref() {
+            Some(scope) if scope == self.navigation.current_dir => {
+                format!("{} viol.", self.violation_count)
+            }
+            _ => "— viol.".to_string(),
+        }
+    }
+
+    /// True only when the recorded result covers the current directory, so the
+    /// badge stays neutral-coloured instead of claiming `0` is clean.
+    pub fn violation_badge_matches_view(&self) -> bool {
+        self.violation_scope.as_deref() == Some(self.navigation.current_dir.as_str())
+    }
+
     /// Claim the single long-operation slot held by `operation`, or decline it.
     ///
     /// A scan and a background action each fan out onto the process-global rayon
@@ -488,6 +531,27 @@ impl AppState {
     pub fn report_busy_slot(&mut self) {
         if let Some(holder) = self.busy_slot_holder() {
             self.set_status(format!("Busy: {holder} is running"));
+        }
+    }
+
+    /// Apply per-file violation counts to the entries currently listed.
+    ///
+    /// Matching is by suffix so a rule reporting an absolute path and an entry
+    /// holding the same absolute path agree, and so a scan rooted one level up
+    /// still marks a row. Counts land on `FileEntry::violation_count`, the
+    /// field the Files panel renders.
+    pub fn apply_file_violations(&mut self, by_file: &[(String, usize)]) {
+        for entry in &mut self.navigation.entries {
+            let mut total = 0usize;
+            for (path, count) in by_file {
+                // Rules disagree on path shape: some emit an absolute path,
+                // some one relative to the scan root prefixed with "./".
+                let needle = path.strip_prefix("./").unwrap_or(path.as_str());
+                if entry.full_path == *path || (!needle.is_empty() && entry.full_path.ends_with(needle)) {
+                    total += *count;
+                }
+            }
+            entry.violation_count = total;
         }
     }
 
@@ -556,12 +620,17 @@ impl AppState {
     }
 
     /// Mark the scan as finished and record the final violation count.
+    ///
+    /// The phase is left populated with a terminal label instead of being
+    /// cleared: clearing it removed the progress line in the same frame the
+    /// scan ended, so the bar disappeared with no 100% frame and no "done",
+    /// and the user had to infer completion from the preview repainting (#1321).
     pub fn finish_scan(&mut self, total_violations: usize) {
         self.scan.running = false;
-        self.scan.phase.clear();
-        self.scan.files_done = 0;
+        self.scan.files_done = self.scan.files_total;
         self.scan.files_total = 0;
         self.scan.violations = total_violations;
+        self.scan.phase = format!("Done — {total_violations} violations");
     }
 
     /// Cycle panel focus forward; the Tree panel is display-only and never a target.

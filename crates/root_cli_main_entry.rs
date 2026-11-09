@@ -19,7 +19,12 @@ fn init_tracing(verbosity: LogVerbosity) {
 #[command(
     name = "lint-arwaky",
     version,
-    about = "Autonomous code quality and architecture enforcement"
+    about = "Autonomous code quality and architecture enforcement",
+    // The interactive browser is a separate binary, so it cannot appear as a
+    // subcommand here. Without this line `--help` listed 20+ subcommands and
+    // never mentioned that the product also has an interactive mode (#1318).
+    after_help = "Interactive mode: run `lint-arwaky-tui` to browse the workspace.\n\
+                  Installed by the same script, and documented in README Quick Start."
 )]
 struct Cli {
     /// Increase log verbosity (`-v` → info, `-vv` → debug; scan-phase

@@ -321,6 +321,7 @@ impl SurfaceLintExecutor {
                     count,
                     outcome.stopped_early,
                 )
+                .with_file_counts(count_by_file(&outcome.violations))
             }
             Err(error) => LintExecutionResult::failure(format!("Error: {error}")),
         }
@@ -400,6 +401,9 @@ impl SurfaceLintExecutor {
                     },
                     success: report.pass,
                     cancelled: false,
+                    // `ci` reports a score, not per-file findings, so the
+                    // Files panel is not marked from this action.
+                    by_file: Vec::new(),
                 }
             }
             Err(e) => LintExecutionResult::failure(format!("Error: {e}")),
@@ -697,21 +701,41 @@ impl SurfaceLintExecutor {
 
 // ─── Block 3: Module Helpers ───────
 
+/// Violations per file, in report order.
+///
+/// Feeds `FileEntry::violation_count`, which the Files panel renders. Without
+/// it the panel showed an unmarked list beside a single global total, so going
+/// from "437 violations" to "which rows" meant reading the preview and matching
+/// paths back by eye (#1322).
+fn count_by_file(violations: &[shared_common::ViolationItem]) -> Vec<(String, usize)> {
+    let mut counts: Vec<(String, usize)> = Vec::new();
+    for v in violations {
+        let path = v.file.value.to_string();
+        match counts.iter_mut().find(|(p, _)| *p == path) {
+            Some((_, count)) => *count += 1,
+            None => counts.push((path, 1)),
+        }
+    }
+    counts
+}
+
 fn format_violations(path: &str, violations: &[shared_common::ViolationItem]) -> String {
     if violations.is_empty() {
         return format!("No violations found for {}.", path);
     }
     let mut output = format!("Found {} violation(s) for {}:\n\n", violations.len(), path);
     for (i, v) in violations.iter().enumerate() {
+        // Severity appears once, using the shared badge vocabulary. It used to
+        // appear twice on the same header line in a third format of its own,
+        // which is what made severity look different on every surface.
         output.push_str(&format!(
-            "{}. [{}] {}:{} — {}\n   Code: {} | Severity: {}\n\n",
+            "{}. {} {}:{} — {}\n   Code: {}\n\n",
             i + 1,
-            v.severity,
+            v.severity.badge(),
             v.file,
             v.line.value,
             v.message,
             v.code,
-            v.severity
         ));
     }
     output

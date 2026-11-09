@@ -87,6 +87,7 @@ impl SurfaceActionHandler {
                 output: result.output,
                 violation_count: result.violation_count,
                 outcome: result.outcome,
+                by_file: result.by_file,
             });
         });
 
@@ -109,17 +110,20 @@ impl SurfaceActionHandler {
                     output,
                     violation_count,
                     outcome,
+                    by_file,
                 } => {
                     state.finish_scan(violation_count);
                     state.preview.text = output;
-                    state.violation_count = violation_count;
+                    let scanned = state.selected_path();
+                    state.set_violation_result(scanned.clone(), violation_count);
+                    // Mark the rows the scan covered (#1322).
+                    state.apply_file_violations(&by_file);
                     state.preview.scroll = 0;
                     state.preview.mode = PreviewMode::LintResults;
-                    let path = state.selected_path();
-                    let status = outcome_label(outcome, &path);
+                    let status = outcome_label(outcome, &scanned);
                     state.set_status(format!(
                         "{}: {} | {} violations",
-                        status, path, violation_count
+                        status, scanned, violation_count
                     ));
                 }
                 ScanUpdate::Cancelled => {
@@ -191,7 +195,9 @@ impl SurfaceActionHandler {
         state.actions.pending = false;
         if state.actions.update_preview {
             state.preview.text = result.output;
-            state.violation_count = result.violation_count;
+            let acted_on = state.selected_path();
+            state.set_violation_result(acted_on, result.violation_count);
+            state.apply_file_violations(&result.by_file);
             state.preview.scroll = 0;
             state.preview.mode = state.actions.result_mode;
             let status = outcome_label(result.outcome, &state.selected_path());
@@ -424,6 +430,9 @@ impl SurfaceActionHandler {
                 state.set_status(format!("Cancelled: {}", confirm.label));
             }
             // ---- I4: re-open the project root dialog with current root pre-filled ----
+            // Reachable from the `r` binding. Before that row existed this arm
+            // had no producer, so a dismissed dialog fixed `project_root` for
+            // the rest of the session with no way to correct it (#1317).
             TuiEvent::ChangeProjectRoot => {
                 state.path_dialog.input = state.navigation.project_root.clone();
                 state.path_dialog.visible = true;
@@ -500,7 +509,9 @@ impl SurfaceActionHandler {
             TuiEvent::PathCancel => {
                 state.path_dialog.visible = false;
                 state.path_dialog.input.clear();
-                state.set_status("Path dialog cancelled — press 'r' to re-open");
+                // `r` is a real SHORTCUTS row (`ChangeProjectRoot`), so this
+                // instruction now names a key that dispatches.
+                state.set_status("Path dialog cancelled — press 'r' to change root");
                 self.load_directory(state, &state.navigation.current_dir.clone());
             }
             // ---- Resize: track terminal height for mouse click mapping ----
@@ -611,7 +622,8 @@ impl SurfaceActionHandler {
                 crate::FileEntry::from_path(&entry_path)
             })
             .collect();
-        if state.navigation.entries.is_empty() {
+        let empty_dir = state.navigation.entries.is_empty();
+        if empty_dir {
             state.set_status(format!("Empty or inaccessible: {}", path));
         }
         state
@@ -624,9 +636,25 @@ impl SurfaceActionHandler {
             });
         state.navigation.selected_index = 0;
         state.navigation.scroll_offset = 0;
-        // Clear stale preview when directory changes (#368)
-        state.preview.text.clear();
-        // No file content preview — Preview panel stays empty until action is run
+        // A result describes the target it ran on, never the one now on
+        // screen: leaving the count in place made the status bar assert the
+        // previous folder's number (and its colour) about this one (#1331).
+        state.violation_count = 0;
+        state.violation_scope = None;
+        // Clear stale preview when directory changes (#368), then say what the
+        // panel is waiting for. A blank panel cannot be told apart from a broken
+        // one, and the empty, idle, and error states all rendered identically
+        // (#1330).
+        state.preview.text = if empty_dir {
+            format!(
+                "No files in this folder.\n\n{path}\n\n\
+                 h/← to go back, or r to change the project root."
+            )
+        } else {
+            "Press c to check this folder, or s to scan it.\n\n\
+             j/k move    l/↵ open    Tab next panel    ? all keys"
+                .to_string()
+        };
         state.preview.mode = PreviewMode::ActionOutput;
         state.set_status(format!("Dir: {}", path));
         state.compute_filtered_indices();
@@ -643,7 +671,14 @@ impl SurfaceActionHandler {
             .into_content()
             .value;
         let display = if content.is_empty() {
-            shared_common::DisplayContent::new(format!("Cannot read file: {path}"))
+            // An empty file and an unreadable one used to collapse into the
+            // same "Cannot read" message, which reported a false error for a
+            // legitimately empty file and named no remedy either way (#1330).
+            shared_common::DisplayContent::new(format!(
+                "Cannot read this file.\n\n{path}\n\n\
+                 It is empty, binary, or not readable by this process.\n\
+                 j/k selects another file; l/↵ on a folder opens it."
+            ))
         } else {
             let lines: Vec<&str> = content.lines().take(max_lines).collect();
             let mut output = String::new();
@@ -753,6 +788,34 @@ impl SurfaceActionHandler {
     /// Hit-testing derives column boundaries from `compute_panel_layout` — the
     /// same rects the renderer draws — so the two can't drift apart (issue #555).
     fn handle_mouse_click(&self, state: &mut AppState, col: u16, row: u16) {
+        // A pending confirm is a gate: a click must not reach the panel
+        // underneath it. Only the modal's bottom line confirms; every other
+        // click, including outside the modal, cancels — so a pointer user has
+        // an exit without reaching for the keyboard (#1327).
+        if state.actions.pending_confirm.is_some() {
+            // The modal is centred on the whole frame, not on the panel band,
+            // so the hit-test must use the same rect the renderer draws into.
+            let frame = ratatui::layout::Rect::new(
+                0,
+                0,
+                state.terminal_width,
+                state.terminal_height,
+            );
+            let modal = crate::surface_confirm_component::modal_area(frame);
+            let on_confirm_line = row == modal.bottom().saturating_sub(2)
+                && col > modal.x
+                && col < modal.right().saturating_sub(1);
+            self.handle(
+                state,
+                if on_confirm_line {
+                    TuiEvent::ConfirmAction
+                } else {
+                    TuiEvent::CancelConfirm
+                },
+            );
+            return;
+        }
+
         let h = state.terminal_height;
         let w = state.terminal_width;
         if h < 5 || w < 10 {

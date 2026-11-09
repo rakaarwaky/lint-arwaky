@@ -49,6 +49,7 @@ pub enum ShortcutAction {
     CopyToFile,
     ToggleHelp,
     ToggleSearch,
+    ChangeProjectRoot,
 }
 
 impl ShortcutAction {
@@ -87,6 +88,7 @@ impl ShortcutAction {
             Self::CopyToFile => TuiEvent::CopyToFile,
             Self::ToggleHelp => TuiEvent::ToggleHelp,
             Self::ToggleSearch => TuiEvent::ToggleSearch,
+            Self::ChangeProjectRoot => TuiEvent::ChangeProjectRoot,
         }
     }
 }
@@ -446,6 +448,20 @@ pub const SHORTCUTS: &[Shortcut] = &[
         section: "General",
         normal_row: Some(2),
         result_row: Some(2),
+    },
+    // #355 fixed Esc so it cancels the path dialog instead of quitting, and
+    // left the status line telling the user to press `r` — a key with no row
+    // here, so no dispatch, no bar cell, and no help line. `ChangeProjectRoot`
+    // existed as a handler with no producer until this row.
+    Shortcut {
+        triggers: &[Trigger::Plain('r')],
+        action: ShortcutAction::ChangeProjectRoot,
+        key_label: "r",
+        label: "root",
+        result_label: "root",
+        section: "Navigation",
+        normal_row: Some(1),
+        result_row: Some(1),
     },
 ];
 

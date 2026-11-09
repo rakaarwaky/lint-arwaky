@@ -11,28 +11,23 @@ use ratatui::text::{Line, Span};
 use ratatui::widgets::Paragraph;
 use shared_tui::utility_tui_theme as theme;
 
-/// Returns the box-drawing character for a vertical separator.
-/// Falls back to "|" when NO_COLOR is set (#365).
+// Glyph fallbacks are owned by `utility_tui_theme::glyph`, not re-implemented
+// here: the confirm modal and the preview panel had grown their own copies, so
+// the NO_COLOR contract had four independent implementations (#1325).
 fn vsep() -> &'static str {
-    if theme::no_color() { "|" } else { "\u{2502}" }
+    theme::glyph::separator(theme::no_color())
 }
 
-/// Returns the warning character shown before violation counts.
-/// Falls back to "!" when NO_COLOR is set (#365).
 fn warn() -> &'static str {
-    if theme::no_color() { "!" } else { "\u{26a0}" }
+    theme::glyph::warn(theme::no_color())
 }
 
-/// Returns the progress-bar filled block.
-/// Falls back to "=" when NO_COLOR is set (#365).
 fn bar_filled() -> &'static str {
-    if theme::no_color() { "=" } else { "\u{2588}" }
+    theme::glyph::bar_filled(theme::no_color())
 }
 
-/// Returns the progress-bar empty block.
-/// Falls back to " " when NO_COLOR is set (#365).
 fn bar_empty() -> &'static str {
-    if theme::no_color() { " " } else { "\u{2591}" }
+    theme::glyph::bar_empty(theme::no_color())
 }
 
 pub struct StatusComponent;
@@ -62,13 +57,16 @@ impl StatusComponent {
                 state.scan.phase.clone()
             };
 
+            // A zero denominator means the dispatcher has not published its
+            // file count yet. That is an indeterminate wait, not 0% progress:
+            // an empty determinate bar is indistinguishable from a stuck one.
             let progress_detail = if state.scan.files_total > 0 {
                 format!(
-                    " {} {}/{}",
+                    " {} {}/{} files",
                     bar, state.scan.files_done, state.scan.files_total,
                 )
             } else {
-                format!(" {}", bar)
+                format!(" {} waiting for file count…", bar)
             };
 
             let violation_style = if state.scan.violations > 0 {
@@ -96,6 +94,10 @@ impl StatusComponent {
                     format!("{} {} violations", warn(), state.scan.violations),
                     violation_style,
                 ),
+                Span::styled(
+                    "  Esc cancel",
+                    Style::default().fg(theme::color(theme::SEPARATOR)),
+                ),
             ])
         } else if state.actions.pending {
             // Busy indicator for a pending background action (#565):
@@ -105,7 +107,11 @@ impl StatusComponent {
                 None => "(none)".to_string(),
             };
 
-            let violation_style = if state.violation_count > 0 {
+            // Neutral when no result covers the current view: a green `0` for
+            // a folder nothing has examined is a false claim (#1331).
+            let violation_style = if !state.violation_badge_matches_view() {
+                Style::default().fg(theme::color(theme::SEPARATOR))
+            } else if state.violation_count > 0 {
                 Style::default().fg(theme::color(theme::VIOLATIONS))
             } else {
                 Style::default().fg(theme::color(theme::CLEAN))
@@ -139,7 +145,7 @@ impl StatusComponent {
                     Style::default().fg(theme::color(theme::SEPARATOR)),
                 ),
                 Span::styled(
-                    format!("{} {} viol.", warn(), state.violation_count),
+                    format!("{} {}", warn(), state.violation_badge()),
                     violation_style,
                 ),
             ])
@@ -149,7 +155,11 @@ impl StatusComponent {
                 None => "(none)".to_string(),
             };
 
-            let violation_style = if state.violation_count > 0 {
+            // Neutral when no result covers the current view: a green `0` for
+            // a folder nothing has examined is a false claim (#1331).
+            let violation_style = if !state.violation_badge_matches_view() {
+                Style::default().fg(theme::color(theme::SEPARATOR))
+            } else if state.violation_count > 0 {
                 Style::default().fg(theme::color(theme::VIOLATIONS))
             } else {
                 Style::default().fg(theme::color(theme::CLEAN))
@@ -181,7 +191,7 @@ impl StatusComponent {
                     Style::default().fg(theme::color(theme::SEPARATOR)),
                 ),
                 Span::styled(
-                    format!("{} {} viol.", warn(), state.violation_count),
+                    format!("{} {}", warn(), state.violation_badge()),
                     violation_style,
                 ),
             ])

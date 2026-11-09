@@ -21,6 +21,10 @@ pub struct LintExecutionResult {
     /// Set true when a cooperative cancel token stopped the scan early,
     /// before every linter phase ran.
     pub cancelled: bool,
+    /// Violations per file for the target that ran, so the Files panel can mark
+    /// the rows a result covers. Empty when the action produces no per-file
+    /// findings (doctor, install, clipboard copy).
+    pub by_file: Vec<(String, usize)>,
 }
 
 impl LintExecutionResult {
@@ -31,6 +35,7 @@ impl LintExecutionResult {
             outcome: LintOutcome::Success,
             success: true,
             cancelled: false,
+            by_file: Vec::new(),
         }
     }
 
@@ -46,6 +51,7 @@ impl LintExecutionResult {
             outcome: LintOutcome::Success,
             success: true,
             cancelled,
+            by_file: Vec::new(),
         }
     }
 
@@ -58,6 +64,7 @@ impl LintExecutionResult {
             outcome: LintOutcome::Unavailable,
             success: false,
             cancelled: false,
+            by_file: Vec::new(),
         }
     }
 
@@ -68,7 +75,14 @@ impl LintExecutionResult {
             outcome: LintOutcome::Failure,
             success: false,
             cancelled: false,
+            by_file: Vec::new(),
         }
+    }
+
+    /// Attach per-file violation counts, for surfaces that mark rows.
+    pub fn with_file_counts(mut self, by_file: Vec<(String, usize)>) -> Self {
+        self.by_file = by_file;
+        self
     }
 
     /// True when the scan was genuinely stopped early by the cancel token.

@@ -80,10 +80,20 @@ impl FileListView {
                     Style::default().fg(theme::color(theme::LABEL))
                 };
 
-                let line = Line::from(vec![
+                let mut spans = vec![
                     Span::styled(format!("{} ", badge), Style::default().fg(badge_color)),
                     Span::styled(name, name_style),
-                ]);
+                ];
+                // `FileEntry::violation_count` was declared, never written, and
+                // never drawn, so the panel that owns navigation could not say
+                // which of its rows the scan had flagged (#1322).
+                if entry.violation_count > 0 {
+                    spans.push(Span::styled(
+                        format!("  {}", entry.violation_count),
+                        Style::default().fg(theme::color(theme::VIOLATIONS)),
+                    ));
+                }
+                let line = Line::from(spans);
 
                 let item_style = if Some(i) == display_selected {
                     theme::highlight_style()
