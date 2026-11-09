@@ -10,7 +10,7 @@ Contribute to Lint Arwaky by keeping 7-layer architecture discipline, no-bypass 
 - **Worktree discipline**: a feature or fix branch is worked in a git worktree, never by switching branches in the main checkout.
 - **No async runtime in the core**: the linter core uses `std::thread` and `rayon`; `tokio` is confined to `file-watch` and `mcp-server`.
 - **No bypasses**: `#[allow]`, `// eslint-disable`, and `# noqa` are not acceptable fixes. Correct the cause instead.
-- **Single source of truth**: `crates/shared/skills/` holds the skill markdown; `crates/shared/src/project_setup/taxonomy_project_setup_constant.rs` embeds it into the binary and is maintained manually — update it when a skill file is added, removed, or renamed. The `catalog_matches_the_skills_directory` test fails when the two disagree, so commit the regenerated constant with the skill change.
+- **Single source of truth**: `crates/shared/template/` holds the document templates; `crates/shared/build.rs` embeds them into the binary at build time. Regenerate and commit with any template change.
 
 ## Workflow
 

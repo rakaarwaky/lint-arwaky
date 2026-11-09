@@ -15,7 +15,7 @@ RELEASED as v3.8.0. It supersedes 3.7.1 and 3.7.2, which were declared in `Cargo
 | Dependencies | —                                 |
 | Updated      | 2026-10-02                        |
 
-### PR-LA-002: 34 AES rules enforcement across 7 groups
+### PR-LA-002: 41 AES rules enforcement across 7 groups
 
 | Aspect       | Detail                                  |
 |--------------|----------------------------------------|

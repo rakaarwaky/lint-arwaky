@@ -5,6 +5,19 @@
 
 - fix: render AES403 block marker WHY message in canonical banner format
 
+### Documentation
+
+- docs: remove every remaining skill reference (docs, MCP tool description, AES403/AES405 FIX messages, scripts, fixture data) after the 3.16.0 removal (#1302, #1332, #1333, #1334)
+- docs(prd): add acceptance criteria to all 22 requirements and publish the Workspace Exit Code Contract (#1305, #1308)
+- docs(prd): state 41 rules / AES601-AES610 and drop the duplicated external-lint user flow (#1309, #1310)
+- docs(prd): add business-outcome metrics and measurement methods to Goals (#1303)
+- docs(agents): correct four crate -> AES rule-group mappings (#1304)
+- docs(contributing): describe the trunk-based workflow that actually runs (#1307)
+- docs(test): regenerate the exit-code matrix from the contract; add 12 persona UAT scenarios, exit criteria and a waiver log (#1305, #1314, #1315, #1316)
+- docs(deploy): replace the withdrawn sign-off record, scope the quality status to the release, and fill the rollback record (#1306, #1311, #1312, #1313)
+- docs(roadmap): reconcile the released version, retire the empty milestone and close the two "In Review" rows (#1312)
+- docs(frd): drop the removed SetupRequest::GetEmbeddedSkills / SetupResponse::Skills variants (#1335)
+
 ## 3.16.0 (2026-11-08)
 
 ### Features

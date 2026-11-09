@@ -10,18 +10,18 @@ Contribute to Lint Arwaky by keeping 7-layer architecture discipline, no-bypass 
 - **Worktree discipline**: a feature or fix branch is worked in a git worktree, never by switching branches in the main checkout.
 - **No async runtime in the core**: the linter core uses `std::thread` and `rayon`; `tokio` is confined to `file-watch` and `mcp-server`.
 - **No bypasses**: `#[allow]`, `// eslint-disable`, and `# noqa` are not acceptable fixes. Correct the cause instead.
-- **Single source of truth**: `crates/shared/skills/` holds the skill markdown; `crates/shared/src/project_setup/taxonomy_project_setup_constant.rs` embeds it into the binary and is maintained manually — update it when a skill file is added, removed, or renamed. The `catalog_matches_the_skills_directory` test fails when the two disagree, so commit the regenerated constant with the skill change.
+- **Single source of truth**: `crates/shared/template/` holds the document templates; `crates/shared/build.rs` embeds them into the binary at build time. Regenerate and commit with any template change.
 
 ## Workflow
 
 | Step | Action                              | Detail                                                                                 |
 |------|------------------------------------|----------------------------------------------------------------------------------------|
-| 1    | Fork / Branch                     | `<branch-name>` following `<prefix>-<scope>`; branch into `develop`, not `main`      |
+| 1    | Fork / Branch                     | `<prefix>-<scope>` branch cut from `main`; keep it short-lived and open a PR        |
 | 2    | Implement                         | Follow FRD spec, write tests first in `crates/<crate>/tests/` named after the FR ID  |
-| 3    | Self-review                       | Check against acceptance criteria in `PRD.md` and run `bash scripts/gates.sh`         |
+| 3    | Self-review                       | Check the requirement's `Acceptance Criteria` in `PRD.md` and run `bash scripts/gates.sh` |
 | 4    | Submit PR                         | Link the `BACKLOG` ID, describe what changed, name the contribution path              |
 | 5    | Review                            | QA/PE sign-off on CRITICAL/WARNING findings, CI green, no merge conflicts            |
-| 6    | Merge                             | Squash into `develop`, then promote to `main` with `--delete-branch`                 |
+| 6    | Merge                             | Squash-merge the PR into `main` and delete the branch                               |
 
 ## Commit Convention
 

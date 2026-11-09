@@ -117,7 +117,7 @@ fn test_stems_in(dir: &Path) -> Vec<String> {
 /// Reports the missing `tests/` and `benches/` directories themselves, then one
 /// finding per absent prefix. Per-category findings (rather than one combined
 /// "your suite is incomplete") let a reader see exactly which seam is untested
-/// and match the message against the skill's own table.
+/// and match the message against the AES704 table in ARCHITECTURE.md.
 fn check_feature_test_suite(folder: &Path, rel: &str, findings: &mut Vec<StructureFinding>) {
     let tests_dir = folder.join(TESTS_DIR);
     let benches_dir = folder.join(BENCHES_DIR);

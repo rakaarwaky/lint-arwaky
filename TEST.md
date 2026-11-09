@@ -330,20 +330,31 @@ active for taxonomy, contract, capabilities, agent, and root.
 
 ### 3.4 Exit Code Tests
 
-| #  | Scenario                                      | Expected Exit Code              |
-| -- | --------------------------------------------- | --------------------------------|
-| 1  | `scan` on clean project                     | 0                               |
-| 2  | `scan` on workspaces-bad (violations found) | 1                               |
-| 3  | `scan` on nonexistent path                  | 2                               |
-| 4  | `scan` with invalid arguments               | 2                               |
-| 5  | `security` without cargo-audit installed    | 3 + visible scanner-missing warning|
-| 6  | `security` on pure Python without `pip-audit` | 3 + visible `pip-audit` warning; never silent `findings: []`|
-| 7  | `security` on JS/TS lockfile without npm      | 3 + visible `npm-audit` warning; never a clean result|
-| 8  | `ci --threshold 0` with violations          | 1                               |
-| 9  | `ci --threshold 100` with few violations    | 0                               |
-| 10 | `fix --dry-run` with violations             | 0 (preview only)                |
-| 11 | `doctor` with all tools installed           | 0                               |
-| 12 | `doctor` with missing tools                 | 0 (missing tools listed in body)|
+The contract itself lives in `PRD.md` → `Project Requirements` → `Workspace Exit Code Contract`.
+This table is the executable proof of that contract; it must not introduce outcomes the contract
+does not define.
+
+| #  | Scenario | Expected Exit Code |
+|----|----------|--------------------|
+| 1  | `scan` on clean project | 0 |
+| 2  | `scan` on workspaces-bad (violations found) | 1 |
+| 3  | `scan` on nonexistent path | 2 |
+| 4  | `scan` with invalid arguments | 2 |
+| 5  | `security` without cargo-audit installed | 3 + visible scanner-missing warning |
+| 6  | `security` on pure Python without `pip-audit` | 3 + visible `pip-audit` warning; never silent `findings: []` |
+| 7  | `security` on JS/TS lockfile without npm | 3 + visible `npm-audit` warning; never a clean result |
+| 8  | `ci --threshold 0` with violations | 1 |
+| 9  | `ci --threshold 100` with few violations | 0 |
+| 10 | `ci --threshold N` on a workspace with exactly N findings | 0 (boundary; N+1 findings → 1) |
+| 11 | `fix --dry-run` with violations | 0 (preview only) |
+| 12 | `fix` with every finding applied | 0 |
+| 13 | `fix` leaving at least one finding un-applied | 1 |
+| 14 | `docs` on a workspace with a document violation | 1 |
+| 15 | `docs` on a conformant workspace | 0 |
+| 16 | `doctor` with all tools installed | 0 |
+| 17 | `doctor` with missing tools | 0 (missing tools listed in body) |
+| 18 | `report` with no previous snapshot | 2 |
+| 19 | MCP `execute_command` on a path outside the workspace | `exit_code: 2` in the JSON result |
 
 ### 3.5 Test Suite Quality Thresholds
 
@@ -395,15 +406,54 @@ remediated under one shared "thin high-risk test suite" theme.
 
 ## 4. User Acceptance Testing (UAT)
 
-Persona-level end-to-end acceptance scenarios verifying business outcomes beyond synthetic rule fixtures:
+Persona-level end-to-end acceptance verifies business outcomes, not synthetic rule fixtures. Every
+scenario below is executed against a release candidate, and its evidence is a replayable transcript
+stored under `docs/uat/<version>/<UAT-ID>.log` (or a CI run URL) plus a commit that is reachable from
+the release tag.
 
-| Persona | Scenario | Test Data / Workflow | Expected Business Outcome | Sign-off Status | Verification Evidence|
-|---|---|---|---|---|---|
-| **Developer** | Local onboarding: clone repo, initialize config, verify toolchain, and run first clean architecture scan | Non-fixture real monorepo (`lint-arwaky` root) | Working CI gate & clean local scan reached in < 5 minutes | Verified | `8d4342a` (`init` → `doctor` → `check .`: 0 violations)|
-| **DevOps / CI Engineer** | Pipeline gating: integrate `ci --threshold` into CI workflow | Monorepo with mixed severity violations | Pipeline blocks below threshold (exit 1), allows clean passes (exit 0) | Verified | `8d4342a` (`ci . --threshold 0`: exit 0; bad workspaces: exit 1)|
-| **AI Agent** | Autonomous self-healing: detect AES violations and invoke auto-fix via MCP tools | Mixed workspace with known AES203 unused imports & AES304 bypasses | Violations fixed automatically via `execute_command`; `health_check` confirms clean state | Verified | `8d4342a` (MCP `execute_command fix` + `scan`: clean outcome)|
+### 4.1 Acceptance Matrix
 
----
+Scope: Linux x86_64 and macOS. The Windows MSVC target is build-only and explicitly out of scope
+for UAT until the runtime support decision lands.
+
+Status as of 3.16.1: **not run**. The previous "Verified" record cited `8d4342a`, a commit that does
+not exist in this repository, so it has been withdrawn rather than carried forward.
+
+| ID | Persona | Scenario | Test data / workflow | Expected business outcome | Status | Evidence |
+|----|---------|----------|----------------------|---------------------------|--------|----------|
+| UAT-001 | Developer | Onboarding: `init` → `doctor` → `check .` | Clean clone, no config file | Config written, toolchain reported, `check .` exits 0 | Not run | `docs/uat/3.16.1/UAT-001.log` |
+| UAT-002 | Developer | Negative: invalid config | Config with an unknown threshold type | Exit 2, the offending key is named, no stack trace | Not run | `docs/uat/3.16.1/UAT-002.log` |
+| UAT-003 | Developer | Boundary: toggle one rule off, rescan | `workspaces-bad/crates` and one rule disabled | That rule's findings disappear; every other rule still fires | Not run | `docs/uat/3.16.1/UAT-003.log` |
+| UAT-004 | DevOps / CI | Happy: clean workspace gated | `workspaces-good/crates`, `ci --threshold 0` | Exit 0, pipeline passes | Not run | `docs/uat/3.16.1/UAT-004.log` |
+| UAT-005 | DevOps / CI | Negative: violating workspace gated | `workspaces-bad/crates`, `ci --threshold 0` | Exit 1, every offending file and rule listed | Not run | `docs/uat/3.16.1/UAT-005.log` |
+| UAT-006 | DevOps / CI | Boundary: threshold equals finding count | Workspace with exactly N findings | Exit 0 at `--threshold N`, exit 1 at `--threshold N-1` | Not run | `docs/uat/3.16.1/UAT-006.log` |
+| UAT-007 | AI agent | Autonomous fix through MCP | `tools/list`, then `execute_command fix` on a known AES203 finding | Five tools listed; fix applied once; follow-up `scan` exits 0 | Not run | `docs/uat/3.16.1/UAT-007.log` |
+| UAT-008 | AI agent | Negative: path outside the workspace | `execute_command` with `../` target | `exit_code: 2`, nothing written, workspace untouched | Not run | `docs/uat/3.16.1/UAT-008.log` |
+| UAT-009 | AI agent | Health check with a missing adapter | `health_check` on a host without `ruff` | Adapter reported `not_installed`; result never claims a clean state | Not run | `docs/uat/3.16.1/UAT-009.log` |
+| UAT-010 | Release manager | Document gate on a mutated document copy | Workspace copy with one required H2 deleted | `docs .` exits 1 and names the document, code, and line | Not run | `docs/uat/3.16.1/UAT-010.log` |
+| UAT-011 | Maintainer | Report and delta | `scan .` then `report .` | By-code and by-member tables render; delta reflects the previous run | Not run | `docs/uat/3.16.1/UAT-011.log` |
+| UAT-012 | Maintainer | Preview then apply | `fix . --dry-run`, then `fix .` | Dry run changes zero bytes; apply rewrites each fixable finding once | Not run | `docs/uat/3.16.1/UAT-012.log` |
+
+### 4.2 Evidence Rules
+
+- Every row records tester, date, OS, exact commands, and captured output. A row whose evidence cannot be replayed is `Not run`, not `Verified`.
+- The evidence commit must be reachable from the release tag, and the signing date must be on or after the release-candidate date.
+- A scenario is `Verified` only when a reviewer other than the one who ran it can reproduce the stated outcome from the transcript.
+
+### 4.3 Exit Criteria
+
+UAT passes, and a release may proceed, only when all of the following hold:
+
+1. Every scenario in 4.1 is `Verified` with replayable evidence.
+2. Open CRITICAL defects are 0, counted from the `severity-critical` label (label writes must stay functional; if they regress, a milestone-based severity queue replaces this counter).
+3. Every deferred defect appears in the waiver log with an approver, a justification, and an expiry date.
+4. Each persona row is signed by name, role, and date, and QA is signed by someone other than the release author.
+
+### 4.4 Waiver Log
+
+| Defect | Scenario | Justification | Approved by | Expires |
+|--------|----------|---------------|-------------|---------|
+| _none recorded_ | — | — | — | — |
 
 ## 5. Release Eligibility Checklist
 
@@ -482,8 +532,8 @@ The base codebase must be clean of internal architecture rule violations.
   echo '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | lint-arwaky-mcp
   ```
 
-  **Criteria**: Responds in < 2 seconds with complete list of 6 registered
-  MCP tools (`execute_command`, `list_commands`, `read_skill`, `health_check`,
+  **Criteria**: Responds in < 2 seconds with the complete list of 5 registered
+  MCP tools (`execute_command`, `list_commands`, `health_check`,
   `get_config`, `docs_scaffold`).
 
 ### 5.4 Report Format Verification
@@ -526,12 +576,17 @@ the PE-4-01 and PE-4-02 caveats into one positive script rather than leaving the
 
 Caveats a presenter must know before going live:
 
-- Do not demo the TUI's gated destructive actions (`F` fix-live, `H` install-hook,
-  `U` uninstall-hook, `install`, `init`) until #552 closes — the confirm-gate currently
-  re-arms instead of executing (PE-4-01 / #626).
-- Scope any TUI portion of the demo to `workspaces-good`/`workspaces-bad` until #606
-  closes — see the Section 1 demo note (PE-4-02 / #627).
-- This script is also linked from `README.md`'s Quick Start section.
+- The TUI confirm-gate defect (#552) and the synchronous main-thread defect (#606) are closed, so
+  gated actions may be demoed — but only after a dry run of the exact sequence on the demo host,
+  because no UAT scenario currently covers the TUI (see UAT-012 and Section 4.1).
+- Scope any TUI portion of the demo to `workspaces-good`/`workspaces-bad`; do not point a live demo
+  at a customer tree.
+- `README.md`'s Quick Start does not link this script; the canonical entry point is this section.
+
+### 5.5.1 Demo Evidence
+
+Record the presenter, host, date, and terminal size with the demo, and link the transcript from
+`docs/uat/<version>/` so a future release can replay it.
 
 ### 5.6 Artifact Manifest
 

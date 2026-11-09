@@ -184,7 +184,7 @@ impl LintArwakyMcpServer {
     }
 
     #[tool(
-        description = "Scaffold missing documentation templates in place from embedded skills. Use `dry_run` to preview without writing. `strict` only affects the audit path."
+        description = "Scaffold missing documentation templates from the embedded template set. Use `dry_run` to preview without writing. `strict` only affects the audit path."
     )]
     pub async fn docs_scaffold(&self, args: Parameters<DocsScaffoldArgs>) -> String {
         LintArwakyMcpServer::handle_docs_scaffold(self, args).await
