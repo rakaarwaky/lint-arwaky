@@ -6,6 +6,8 @@
 //! key-to-event contract via the pure `help_overlay_event_for` seam, plus a
 //! state-level scroll round-trip through `AppState.preview.scroll`.
 use crossterm::event::KeyCode;
+use ratatui::Terminal;
+use ratatui::backend::TestBackend;
 use std::sync::Arc;
 
 use dispatcher::surface_check_action::FilesystemSeam;
@@ -13,6 +15,7 @@ use dispatcher::surface_orphan_action::OrphanFactory;
 use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use tui_lint_arwaky::surface_event_action::SurfaceActionHandler;
 use tui_lint_arwaky::surface_lint_action::SurfaceLintExecutor;
+use tui_lint_arwaky::surface_preview_view::{PreviewView, max_scroll_for_state};
 use tui_lint_arwaky::surface_tui_command::help_overlay_event_for;
 use tui_lint_arwaky::taxonomy_tui_event::TuiEvent;
 use tui_lint_arwaky::taxonomy_tui_vo::AppState;
@@ -339,7 +342,8 @@ fn help_overlay_back_and_forward_scroll_round_trips() {
     state.navigation.panel_focus = PanelFocus::Preview;
     state.preview.mode = PreviewMode::HelpOverlay;
     state.terminal_height = 30;
-    // 40 lines at 30 terminal height: max scroll = 40 - 26 = 14.
+    state.terminal_width = 40;
+    // 40 lines in a 25-row narrow panel band: 23 content rows after borders.
     state.preview.text = (0..40)
         .map(|i| format!("help line {i}"))
         .collect::<Vec<_>>()
@@ -369,8 +373,9 @@ fn help_overlay_back_and_forward_scroll_round_trips() {
     }
     assert_eq!(state.preview.scroll, 0, "backward keys must reach the top");
 
-    // Each forward key must strictly increase the scroll; `End` must reach max.
-    let max = state.preview.text.lines().count() - 26;
+    // Each forward key must strictly increase the scroll; `End` must reach the
+    // exact rendered-content bound (including the narrow panel's wrapping).
+    let max = max_scroll_for_state(&state);
     for code in [
         KeyCode::Char('j'),
         KeyCode::Down,
@@ -397,15 +402,85 @@ fn help_overlay_back_and_forward_scroll_round_trips() {
     );
 }
 
-/// #911 regression: `max_preview_scroll` must subtract the full panel band
+#[test]
+fn help_scroll_uses_help_content_even_when_backing_preview_is_stale() {
+    let mut state = AppState::new("/tmp".to_string());
+    state.terminal_width = 40;
+    state.terminal_height = 15;
+    state.navigation.panel_focus = PanelFocus::Preview;
+    state.preview.text = "stale action output".to_string();
+
+    let handler = SurfaceActionHandler::new(no_op_executor(), no_op_fs_aggregate());
+    handler.handle(&mut state, TuiEvent::ToggleHelp);
+    assert_eq!(state.preview.mode, PreviewMode::HelpOverlay);
+    let max = max_scroll_for_state(&state);
+    assert!(max > 0, "help should exceed the minimum preview viewport");
+
+    handler.handle(&mut state, TuiEvent::MoveBottom);
+    assert_eq!(state.preview.scroll, max);
+
+    let mut terminal = Terminal::new(TestBackend::new(40, 10)).unwrap();
+    terminal
+        .draw(|frame| PreviewView::new().render(&state, frame, frame.area()))
+        .unwrap();
+    let rendered: String = terminal
+        .backend()
+        .buffer()
+        .content
+        .iter()
+        .map(|cell| cell.symbol())
+        .collect();
+    assert!(
+        rendered.contains("For screen readers"),
+        "last help rows should be reachable: {rendered}"
+    );
+    assert!(!rendered.contains("stale action output"));
+}
+
+/// Preview scrolling uses the same wrapped content and viewport as the renderer.
 /// height (header + 3 shortcut rows + status = 5) from `terminal_height`,
 /// not 4. Before the fix, the last line of a long preview was unreachable
 /// via MoveBottom / PreviewScrollDown.
 #[test]
+fn wrapped_preview_last_visual_row_is_reachable_through_handler() {
+    let mut state = AppState::new("/tmp".to_string());
+    state.terminal_width = 40;
+    state.terminal_height = 15;
+    state.navigation.panel_focus = PanelFocus::Preview;
+    state.preview.mode = PreviewMode::LintResults;
+    state.preview.text = format!("{}END", "x".repeat(700));
+
+    let handler = SurfaceActionHandler::new(no_op_executor(), no_op_fs_aggregate());
+    let max = max_scroll_for_state(&state);
+    assert!(max > 0, "a wrapped line must have scrollable visual rows");
+    handler.handle(&mut state, TuiEvent::MoveBottom);
+    assert_eq!(state.preview.scroll, max);
+
+    let mut terminal = Terminal::new(TestBackend::new(40, 15)).unwrap();
+    terminal
+        .draw(|frame| {
+            let layout = tui_lint_arwaky::surface_tui_layout::compute_panel_layout(40, 15);
+            PreviewView::new().render(&state, frame, layout.band);
+        })
+        .unwrap();
+    let rendered: String = terminal
+        .backend()
+        .buffer()
+        .content
+        .iter()
+        .map(|cell| cell.symbol())
+        .collect();
+    assert!(
+        rendered.contains("END"),
+        "last wrapped content must render: {rendered}"
+    );
+}
+
+#[test]
 fn max_preview_scroll_uses_full_panel_band_height() {
     let mut state = AppState::new("/tmp".to_string());
     state.terminal_height = 30;
-    // 40 content lines at height 30: band = 30 - 5 = 25 → max scroll = 15.
+    // 40 content lines at height 30: band = 30 - 5 = 25 → max scroll = 17.
     state.preview.text = (0..40)
         .map(|i| format!("line {i}"))
         .collect::<Vec<_>>()
@@ -416,11 +491,10 @@ fn max_preview_scroll_uses_full_panel_band_height() {
     let h = SurfaceActionHandler::new(no_op_executor(), no_op_fs_aggregate());
     h.handle(&mut state, TuiEvent::MoveBottom);
 
-    // band = 30 - 5 = 25; content = 40 → max = 40 - 25 = 15.
-    // The pre-fix band (30 - 4 = 26) would have capped it at 14, leaving
-    // the last line unreachable.
+    // The band is 25 rows, with one border row at top and bottom, so the
+    // rendered paragraph viewport is 23 rows and 17 lines remain below it.
     assert_eq!(
-        state.preview.scroll, 15,
-        "MoveBottom must reach the true bottom (band height h-5)"
+        state.preview.scroll, 17,
+        "MoveBottom must reach the last visual row in the preview viewport"
     );
 }
