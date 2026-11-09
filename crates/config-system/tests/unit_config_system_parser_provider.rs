@@ -21,8 +21,7 @@ thresholds:
   max_file_lines:
     value: 400
 adapters:
-  - name:
-      value: ruff
+  - name: ruff
     status: enabled
     weight: 1.0
 "#;
