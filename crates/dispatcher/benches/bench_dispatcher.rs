@@ -11,7 +11,10 @@ use std::time::Instant;
 
 /// Member-targeted scan latency advisory threshold (mirrors the regression
 /// test in `crates/dispatcher/tests/regression_scan_latency.rs`).
-pub(crate) const LATENCY_GUARD_MAX_RATIO: f64 = 1.2;
+///
+/// Sourced from `surface_check_action::LATENCY_GUARD_MAX_RATIO` so the bench
+/// and the regression test never drift apart.
+use dispatcher_lint_arwaky::surface_check_action::LATENCY_GUARD_MAX_RATIO;
 
 /// Resolve a fixture path relative to the workspace root (parent of
 /// `crates/dispatcher`).
@@ -164,6 +167,17 @@ where
     elapsed
 }
 
+/// Median of `BENCH_LATENCY_REPS` timings of `f` for stable advisory output.
+fn median_ns<F>(f: F) -> u128
+where
+    F: Fn() -> Result<Vec<shared_common::ViolationItem>, String>,
+{
+    const BENCH_LATENCY_REPS: usize = 5;
+    let mut samples: Vec<u128> = (0..BENCH_LATENCY_REPS).map(|_| time_scan(&f)).collect();
+    samples.sort_unstable();
+    samples[samples.len() / 2]
+}
+
 /// Build aggregates once per bench run (container setup is not part of the
 /// measured scan work), then measure both scan shapes on the same fixture.
 fn bench_scan_latency(c: &mut Criterion) {
@@ -196,9 +210,12 @@ fn bench_scan_latency(c: &mut Criterion) {
     // `scan crates` walk the full root (`scan_root = root.clone()`), so the
     // member-targeted scan latency must be within LATENCY_GUARD_MAX_RATIO of
     // the full-root scan — not lower by design (it is not skipping work).
-    // CI enforcement lives in `crates/dispatcher/tests/regression_scan_latency.rs`.
-    let root_ns = time_scan(|| scan_full_root(&agg));
-    let member_ns = time_scan(|| scan_member_targeted(&agg));
+    // No CI gate enforces the ratio: benches are excluded from nextest and
+    // `benchmarks.yml` is nightly/advisory. The regression test
+    // `crates/dispatcher/tests/regression_scan_latency.rs` prints the same
+    // ratio and can enforce it opt-in via LATENCY_GUARD_ENFORCE=1.
+    let root_ns = median_ns(|| scan_full_root(&agg));
+    let member_ns = median_ns(|| scan_member_targeted(&agg));
     let ratio = member_ns as f64 / root_ns as f64;
     eprintln!(
         "latency guard (advisory): root={} ns member={} ns ratio={:.3} (threshold {})",

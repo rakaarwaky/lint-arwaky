@@ -37,6 +37,11 @@ pub use crate::surface_scan_cancel_action::{CancellableScanOutcome, collect_scan
 /// dispatch protocol operations without holding the raw IO protocol (#571).
 /// File access goes through `aggregate`; `workspace`/`parser` stay seams because
 /// no aggregate facade exposes them.
+/// Shared latency guard threshold used by both the Criterion bench and the
+/// regression test so they never drift. Public because benches and integration
+/// tests are separate compilation units.
+pub const LATENCY_GUARD_MAX_RATIO: f64 = 1.2;
+
 #[derive(Clone)]
 pub struct FilesystemSeam {
     pub workspace: Arc<dyn IFilesystemAggregate>,
