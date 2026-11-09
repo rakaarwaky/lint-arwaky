@@ -359,26 +359,36 @@ impl IConfigOrchestratorAggregate for ConfigOrchestrator {
 /// document into `ProjectConfig` would therefore always fail, so the
 /// `architecture:` subtree is stripped first — it is validated by the parser.
 fn parse_project_block(raw: &str) -> Option<ProjectConfig> {
-    let mut value: serde_yaml_ng::Value = serde_yaml_ng::from_str(raw).ok()?;
+    let stripped = project_block_yaml(raw);
+    parse_project_config(&stripped).ok()
+}
+
+/// The project-level YAML with `architecture:` removed and empty keys dropped.
+///
+/// `ignored_paths:` with no value is written in the shipped config and means
+/// "no ignore list". `#[serde(default)]` covers an *absent* key, not an
+/// explicit null, so the nulls are pruned here — otherwise every load of the
+/// default config would report a schema error that the operator cannot fix
+/// without inventing an empty list.
+fn project_block_yaml(raw: &str) -> String {
+    let mut value: serde_yaml_ng::Value = match serde_yaml_ng::from_str(raw) {
+        Ok(value) => value,
+        Err(_) => return String::new(),
+    };
     if let Some(map) = value.as_mapping_mut() {
         map.remove(serde_yaml_ng::Value::String("architecture".to_string()));
+        map.retain(|_, v| !v.is_null());
     }
-    let stripped = serde_yaml_ng::to_string(&value).ok()?;
-    parse_project_config(&stripped).ok()
+    serde_yaml_ng::to_string(&value).unwrap_or_default()
 }
 
 /// Why a config body could not be read as a `ProjectConfig` — surfaced so an
 /// unknown key or bad value names the offending path instead of vanishing.
 fn parse_strictness_error(raw: &str) -> Result<(), String> {
-    let mut value: serde_yaml_ng::Value = match serde_yaml_ng::from_str(raw) {
-        Ok(value) => value,
-        Err(e) => return Err(format!("YAML is not well formed: {e}")),
-    };
-    if let Some(map) = value.as_mapping_mut() {
-        map.remove(serde_yaml_ng::Value::String("architecture".to_string()));
+    if let Err(e) = serde_yaml_ng::from_str::<serde_yaml_ng::Value>(raw) {
+        return Err(format!("YAML is not well formed: {e}"));
     }
-    let stripped = serde_yaml_ng::to_string(&value).unwrap_or_default();
-    parse_project_config(&stripped).map(|_| ())
+    parse_project_config(&project_block_yaml(raw)).map(|_| ())
 }
 
 // ─── Block 3: Module Helpers ─────

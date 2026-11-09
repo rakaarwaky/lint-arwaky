@@ -43,6 +43,19 @@ fn a_partial_thresholds_block_keeps_the_default_line_budget() {
 }
 
 #[test]
+fn a_bare_null_key_needs_pruning_before_deserialise() {
+    // The shipped config writes `ignored_paths:` with nothing after it.
+    // `#[serde(default)]` covers an absent key, not an explicit null, so the
+    // load path prunes nulls before deserialising. This test pins that: without
+    // it, every run against the project's own config would report a schema
+    // error the operator could only silence by inventing an empty list.
+    let yaml = "project_name: lint-arwaky\nadapters:\n  - name: clippy\nignored_paths:\n";
+    let error = parse_project_config(yaml)
+        .expect_err("a bare null does not deserialise into FilePathList");
+    assert!(!error.is_empty());
+}
+
+#[test]
 fn an_unknown_top_level_key_is_rejected_and_named() {
     let yaml = format!("{}project_nam: typo\n", valid_yaml());
     let error = parse_project_config(&yaml).expect_err("an unknown key must be rejected");
