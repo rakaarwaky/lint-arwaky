@@ -51,7 +51,10 @@ impl PreviewView {
             vertical: 1,
             horizontal: 0,
         });
-        let content_length = visual_row_count(&content, inner_area.width).max(1);
+        // Content width inside borders is `area.width - 2`; must match
+        // `max_scroll_for_state` so scroll clamping reaches the last row.
+        let content_width = area.width.saturating_sub(2);
+        let content_length = visual_row_count(&content, content_width).max(1);
         let max_scroll = content_length.saturating_sub(inner_area.height as usize);
         let scroll_position = state.preview.scroll.min(max_scroll);
         let paragraph = Paragraph::new(content.clone())
