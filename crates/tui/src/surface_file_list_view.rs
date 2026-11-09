@@ -16,20 +16,6 @@ use shared_tui::utility_tui_theme as theme;
 
 pub struct FileListView;
 
-/// First displayed row for a selected position and viewport size.
-pub fn visible_window_start(
-    display_len: usize,
-    selected_position: usize,
-    visible_rows: usize,
-) -> usize {
-    if visible_rows == 0 || display_len <= visible_rows {
-        return 0;
-    }
-    selected_position
-        .min(display_len - 1)
-        .saturating_sub(visible_rows - 1)
-}
-
 impl FileListView {
     pub fn new() -> Self {
         Self
@@ -176,6 +162,20 @@ impl Default for FileListView {
     fn default() -> Self {
         Self::new()
     }
+}
+
+/// First displayed row for a selected position and viewport size.
+pub fn visible_window_start(
+    display_len: usize,
+    selected_position: usize,
+    visible_rows: usize,
+) -> usize {
+    if visible_rows == 0 || display_len <= visible_rows {
+        return 0;
+    }
+    selected_position
+        .min(display_len - 1)
+        .saturating_sub(visible_rows - 1)
 }
 
 /// Copy for an empty Files panel.
