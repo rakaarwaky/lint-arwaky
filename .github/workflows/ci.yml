@@ -11,7 +11,13 @@ env:
   CARGO_BUILD_JOBS: 4
   RUST_MIN_STACK: 33554432
   RUSTC_WRAPPER: sccache
-  SCCACHE_GHA_ENABLED: "false"
+  SCCACHE_GHA_ENABLED: "true"
+  CARGO_INCREMENTAL: "0"
+  CARGO_PROFILE_TEST_DEBUG: "0"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   clippy:
@@ -28,6 +34,8 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y mold
       - uses: mozilla-actions/sccache-action@fc920bf0ec8de6ee65d409111f7ec508035751ba # v0.0.11
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
+        with:
+          cache-on-failure: true
       - run: cargo clippy --all-targets -- -D warnings
       - name: Check formatting
         run: cargo fmt --all -- --check
@@ -44,6 +52,8 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y mold
       - uses: mozilla-actions/sccache-action@fc920bf0ec8de6ee65d409111f7ec508035751ba # v0.0.11
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
+        with:
+          cache-on-failure: true
       - run: cargo build --release
 
   test:
@@ -60,6 +70,8 @@ jobs:
           curl -LsSf https://get.nexte.st/latest/linux | tar zxf - -C ~/.cargo/bin
       - uses: mozilla-actions/sccache-action@fc920bf0ec8de6ee65d409111f7ec508035751ba # v0.0.11
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
+        with:
+          cache-on-failure: true
 
       - name: Build release binary (for regression tests)
         run: cargo build --release
@@ -86,6 +98,8 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y mold
       - uses: mozilla-actions/sccache-action@fc920bf0ec8de6ee65d409111f7ec508035751ba # v0.0.11
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
+        with:
+          cache-on-failure: true
       - name: Cache JS/TS lint tools
         uses: actions/cache@v4
         with:
@@ -310,6 +324,8 @@ jobs:
           tool: cargo-llvm-cov,cargo-nextest
       - uses: mozilla-actions/sccache-action@fc920bf0ec8de6ee65d409111f7ec508035751ba # v0.0.11
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
+        with:
+          cache-on-failure: true
       - name: Build the CLI for the subprocess-fallback tests
         # dispatcher::regression_scan_modes exercises the linter's subprocess
         # fallback, which shells out to a built CLI binary. `--lib --tests`
