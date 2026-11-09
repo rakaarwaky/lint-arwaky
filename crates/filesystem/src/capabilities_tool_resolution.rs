@@ -1,6 +1,6 @@
 // FR-004: Tool Resolution — Capabilities layer
 // Implements IToolResolutionProtocol by delegating to utility_tool_resolution stateless functions.
-// 3-block structure per AES skill.
+// 3-block structure per the AES capability role (AES403).
 
 use shared_common::taxonomy_adapter_name_vo::ToolName;
 use shared_common::taxonomy_path_vo::FilePath;

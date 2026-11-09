@@ -3,7 +3,7 @@
 // Consumer: orphan-detector, FR-003 (also uses FR-002 output)
 //
 // Capabilities: struct DependencyGraph — implements IGraphProtocol
-// 3-block structure per AES skill
+// 3-block structure per the AES capability role (AES403)
 
 use shared_filesystem::contract_filesystem_protocol::IGraphProtocol;
 use shared_filesystem::taxonomy_filesystem_vo::{

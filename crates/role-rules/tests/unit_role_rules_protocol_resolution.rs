@@ -62,23 +62,23 @@ fn python_modules_layout_split_contract_siblings_resolve() {
     let shared = tmp.path().join("modules/shared/src");
     fs::create_dir_all(&shared).unwrap();
     fs::write(
-        shared.join("contract_skill_protocol.py"),
-        "class ISkillProvisionProtocol:\n    pass\n\nclass ISkillRegistryProtocol:\n    pass\n",
+        shared.join("contract_widget_protocol.py"),
+        "class IWidgetProvisionProtocol:\n    pass\n\nclass IWidgetRegistryProtocol:\n    pass\n",
     )
     .unwrap();
     fs::write(
-        shared.join("contract_skill_update_protocol.py"),
-        "class ISkillUpdateProtocol:\n    pass\n",
+        shared.join("contract_widget_update_protocol.py"),
+        "class IWidgetUpdateProtocol:\n    pass\n",
     )
     .unwrap();
-    let skill_src = tmp.path().join("modules/skill/src");
-    fs::create_dir_all(&skill_src).unwrap();
+    let widget_src = tmp.path().join("modules/widget/src");
+    fs::create_dir_all(&widget_src).unwrap();
     fs::write(
-        skill_src.join("agent_skill_orchestrator.py"),
-        "class SkillOrchestrator:\n    def __init__(self, provision: ISkillProvisionProtocol, registry: ISkillRegistryProtocol, update: ISkillUpdateProtocol):\n        pass\n",
+        widget_src.join("agent_widget_orchestrator.py"),
+        "class WidgetOrchestrator:\n    def __init__(self, provision: IWidgetProvisionProtocol, registry: IWidgetRegistryProtocol, update: IWidgetUpdateProtocol):\n        pass\n",
     )
     .unwrap();
-    let agent = skill_src.join("agent_skill_orchestrator.py");
+    let agent = widget_src.join("agent_widget_orchestrator.py");
     assert_eq!(
         resolve_feature_protocol_count(&agent),
         3,
@@ -92,25 +92,25 @@ fn python_modules_layout_split_contract_siblings_filter_dead_references() {
     let shared = tmp.path().join("modules/shared/src");
     fs::create_dir_all(&shared).unwrap();
     fs::write(
-        shared.join("contract_skill_protocol.py"),
-        "class ISkillProvisionProtocol:\n    pass\n",
+        shared.join("contract_widget_protocol.py"),
+        "class IWidgetProvisionProtocol:\n    pass\n",
     )
     .unwrap();
     fs::write(
-        shared.join("contract_skill_update_protocol.py"),
-        "class ISkillUpdateProtocol:\n    pass\n\nclass ISkillUpdateDeadProtocol:\n    pass\n",
+        shared.join("contract_widget_update_protocol.py"),
+        "class IWidgetUpdateProtocol:\n    pass\n\nclass IWidgetUpdateDeadProtocol:\n    pass\n",
     )
     .unwrap();
-    let skill_src = tmp.path().join("modules/skill/src");
-    fs::create_dir_all(&skill_src).unwrap();
+    let widget_src = tmp.path().join("modules/widget/src");
+    fs::create_dir_all(&widget_src).unwrap();
     // The dead protocol is referenced nowhere in the feature, so only the two
     // live ones count.
     fs::write(
-        skill_src.join("agent_skill_orchestrator.py"),
-        "class SkillOrchestrator:\n    def __init__(self, provision: ISkillProvisionProtocol, update: ISkillUpdateProtocol):\n        pass\n",
+        widget_src.join("agent_widget_orchestrator.py"),
+        "class WidgetOrchestrator:\n    def __init__(self, provision: IWidgetProvisionProtocol, update: IWidgetUpdateProtocol):\n        pass\n",
     )
     .unwrap();
-    let agent = skill_src.join("agent_skill_orchestrator.py");
+    let agent = widget_src.join("agent_widget_orchestrator.py");
     assert_eq!(resolve_feature_protocol_count(&agent), 2);
 }
 
@@ -120,21 +120,21 @@ fn python_modules_layout_feature_prefix_does_not_overmatch() {
     let shared = tmp.path().join("modules/shared/src");
     fs::create_dir_all(&shared).unwrap();
     fs::write(
-        shared.join("contract_skill_protocol.py"),
-        "class ISkillProtocol:\n    pass\n",
+        shared.join("contract_widget_protocol.py"),
+        "class IWidgetProtocol:\n    pass\n",
     )
     .unwrap();
-    let skill_update_src = tmp.path().join("modules/skill_update/src");
-    fs::create_dir_all(&skill_update_src).unwrap();
-    // The `skill_update` feature has no contract file of its own; the
-    // `contract_skill_protocol.py` sibling belongs to the `skill` feature and
+    let widget_update_src = tmp.path().join("modules/widget_update/src");
+    fs::create_dir_all(&widget_update_src).unwrap();
+    // The `widget_update` feature has no contract file of its own; the
+    // `contract_widget_protocol.py` sibling belongs to the `widget` feature and
     // must not be counted for it.
     fs::write(
-        skill_update_src.join("agent_skill_update_orchestrator.py"),
-        "class SkillUpdateOrchestrator:\n    def __init__(self, skill: ISkillProtocol):\n        pass\n",
+        widget_update_src.join("agent_widget_update_orchestrator.py"),
+        "class WidgetUpdateOrchestrator:\n    def __init__(self, widget: IWidgetProtocol):\n        pass\n",
     )
     .unwrap();
-    let agent = skill_update_src.join("agent_skill_update_orchestrator.py");
+    let agent = widget_update_src.join("agent_widget_update_orchestrator.py");
     assert_eq!(resolve_feature_protocol_count(&agent), 0);
 }
 

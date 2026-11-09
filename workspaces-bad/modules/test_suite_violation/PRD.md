@@ -18,11 +18,11 @@ Developers, AI agents, and DevOps engineers on multi-language monorepos (Rust/Py
 | Out of Scope | Windows runtime support (cross-compile target only; >92% Linux/macOS userbase).         |
 | Success Metric | 3 passes/PR → ≤ 1 pass/PR (-66%) across the three languages.                        |
 
-### PR-LA-002: 34 AES rules enforcement across 7 groups
+### PR-LA-002: 41 AES rules enforcement across 7 groups
 
 | Aspect       | Detail                                                                                  |
 |--------------|------------------------------------------------------------------------------------------|
-| Description  | 34 AES rules across Naming, Import, Quality, Role, Orphan, Doc, Structure groups are enforced per scan.|
+| Description  | 41 AES rules across Naming, Import, Quality, Role, Orphan, Doc, Structure groups are enforced per scan.|
 | User Story   | As a DevOps engineer, I want every architectural rule enforced in CI so silent drift never reaches main.|
 | In Scope     | 34 rules across 7 groups in Rust/Python/TypeScript.                                    |
 | Out of Scope | Business-logic correctness; semantic runtime bugs; dynamic test quality.               |
@@ -44,7 +44,7 @@ Developers, AI agents, and DevOps engineers on multi-language monorepos (Rust/Py
 |--------------|------------------------------------------------------------------------------------------|
 | Description  | An MCP server exposes every CLI command via 5 tools so AI agents can self-lint.        |
 | User Story   | As an AI agent, I want `execute_command` to reach every CLI command so I can detect and fix lint issues autonomously.|
-| In Scope     | 5 MCP tools: `execute_command`, `list_commands`, `read_skill`, `health_check`, `get_config`.|
+| In Scope     | 5 MCP tools: `execute_command`, `list_commands`, `health_check`, `get_config`, `docs_scaffold`.|
 | Out of Scope | Server-side timeouts or cancellation (the client owns the timeout).                    |
 | Success Metric | 45 min/run manual triage → < 5 min/run autonomous agent loop.                         |
 
