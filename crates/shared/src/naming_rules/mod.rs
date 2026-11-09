@@ -1,11 +1,14 @@
 pub mod contract_naming_checker_protocol;
 pub mod contract_naming_runner_aggregate;
 pub mod contract_test_file_prefix_protocol;
+pub mod taxonomy_naming_audit_stats_vo;
+pub mod taxonomy_naming_finding_vo;
 pub mod taxonomy_naming_rules_constant;
 pub mod taxonomy_naming_rules_request;
 pub mod taxonomy_naming_rules_response;
 pub mod taxonomy_test_suite_slot_vo;
 pub mod utility_naming_checker;
+pub mod utility_naming_output;
 pub mod utility_test_prefix;
 
 // AES103 test/bench prefix vocabulary — shared with AES704 so the naming rule
@@ -26,6 +29,8 @@ pub use contract_naming_runner_aggregate::INamingRunnerAggregate;
 pub use contract_test_file_prefix_protocol::ITestFilePrefixProtocol;
 
 // ── Taxonomy types ──
+pub use taxonomy_naming_audit_stats_vo::NamingAuditStats;
+pub use taxonomy_naming_finding_vo::NamingFinding;
 pub use taxonomy_naming_rules_constant::ADAPTER_NAME;
 pub use taxonomy_naming_rules_constant::LAYER_PREFIXES;
 pub use taxonomy_naming_rules_constant::RULE_CODE_NAMING_CONVENTION;
@@ -38,3 +43,8 @@ pub use taxonomy_naming_rules_constant::SUFFIX_POLICY_STRICT;
 pub use taxonomy_naming_rules_request::NamingRequest;
 pub use taxonomy_naming_rules_response::NamingResponse;
 pub use taxonomy_test_suite_slot_vo::TestSuiteSlot;
+
+// ── Output text ──
+pub use utility_naming_output::{
+    NAMING_LINE_WIDTH, exemption_clause, naming_finding, render_naming_summary,
+};

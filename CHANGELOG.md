@@ -1,4 +1,17 @@
 # Changelog
+## Unreleased
+
+### Features
+
+- feat(naming-rules): one finding template for AES101/AES102/AES103 - the problem, the action and the rule in three distinct fields, one clause per line, ASCII only (#1378)
+- feat(naming-rules): per-rule inspected counts and a naming summary, so a clean run is distinguishable from a run that evaluated nothing (#1378)
+- feat(naming-rules): evaluate every file by path, including a file with no content, so a zero-byte file with a broken name is no longer reported as clean (#1378)
+- feat(naming-rules): name the exemption list in every fix, and derive the worked example from the directory the finding reports (#1378)
+
+### Documentation
+
+- docs(naming-rules): add the developer journey, one rendered output sample per rule, the severity model, the suppression section and the 72-of-80 column contract (#1378)
+
 ## 3.16.1 (2026-11-09)
 
 ### Bug Fixes

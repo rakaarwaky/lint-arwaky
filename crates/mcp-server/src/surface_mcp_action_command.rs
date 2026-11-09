@@ -379,7 +379,7 @@ impl McpActionSurface {
             self.deps.filesystem.clone(),
             &[],
         ) {
-            Ok(violations) => violations_response("naming", path, &violations),
+            Ok(outcome) => violations_response("naming", path, &outcome.violations),
             Err(e) => serde_json::json!({"error": e, "exit_code": 2}),
         }
     }

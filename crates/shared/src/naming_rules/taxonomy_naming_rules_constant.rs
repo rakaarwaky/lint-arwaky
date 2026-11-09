@@ -107,3 +107,27 @@ pub const ALL_TESTS_DIR_PREFIXES: &[&str] = &[
     "mock_",
     "fixture_",
 ];
+
+// ─── The rule behind each naming finding ────────────────────────────────
+//
+// The `why` field of a finding answers "why does this product care?", and
+// the answer is a policy, not a mechanism: every layer reads the same words,
+// so they live here rather than in one checker's file.
+
+/// The rule behind every AES101 stem-shape finding.
+pub const AES101_SHAPE_RULE: &str =
+    "File names are lowercase words joined by underscores, so the same name reads the same \
+     everywhere.";
+
+/// The rule behind every AES101 finding about a missing folder prefix.
+pub const AES101_FOLDER_RULE: &str =
+    "Every source file names the folder it belongs to, so a reader can place it without the \
+     architecture map.";
+
+/// The rule behind every AES102 finding about a suffix.
+pub const AES102_SUFFIX_RULE: &str =
+    "A suffix names the role a file plays, and each folder lists only the roles it owns.";
+
+/// The rule behind every AES103 finding about a test or bench file.
+pub const AES103_PREFIX_RULE: &str =
+    "The name prefix records the test type, so a runner finds the file and knows what it is.";
