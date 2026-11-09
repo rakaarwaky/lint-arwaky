@@ -8,7 +8,7 @@ pub struct ExecuteCommandArgs {
     /// The command action to execute (e.g. "scan", "check", "security", "doctor")
     pub action: String,
     /// Action arguments. `path` resolves against the confined workspace root;
-    /// `member`, `rules`, `layer`, `format`, `group`, `base` and `strict` are
+    /// `member`, `rules`, `base`, `strict`, `dry_run` and `threshold` are
     /// forwarded to the verb that owns them.
     ///
     /// Unknown keys are rejected rather than ignored: a silently dropped
@@ -41,15 +41,11 @@ pub struct ExecuteCommandOptions {
     /// Filter reported violations by AES rule code.
     #[serde(default)]
     pub rules: Option<String>,
-    /// Filter reported violations by AES layer (taxonomy, contract, agent, …).
-    #[serde(default)]
-    pub layer: Option<String>,
-    /// Output format for verbs that render violations (text, json, sarif, junit).
-    #[serde(default)]
-    pub format: Option<String>,
-    /// Restrict `scan` to one linter group.
-    #[serde(default)]
-    pub group: Option<String>,
+    // NOTE: no `layer`, `format` or `group` keys. The MCP surface already
+    // discriminates those through the action name — `taxonomy`/`contract`/…
+    // select a layer, `quality`/`import`/… select a group — and its output is
+    // always JSON. Accepting them here would recreate the bug this struct
+    // exists to fix: a documented key that is decoded and then ignored.
     /// Git base ref for the `git` verb.
     #[serde(default)]
     pub base: Option<String>,

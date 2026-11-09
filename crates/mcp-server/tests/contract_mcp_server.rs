@@ -117,6 +117,23 @@ fn execute_command_args_rejects_an_unknown_argument() {
 }
 
 #[test]
+fn execute_command_args_rejects_keys_the_surface_would_ignore() {
+    // `layer`/`group`/`format` are selected through the action name, not
+    // through an argument. Accepting them would recreate the original bug: a
+    // documented key that is decoded and then silently dropped.
+    for key in ["layer", "group", "format"] {
+        let result: Result<ExecuteCommandArgs, _> = serde_json::from_value(serde_json::json!({
+            "action": "scan",
+            "args": { "path": ".", key: "taxonomy" }
+        }));
+        assert!(
+            result.is_err(),
+            "`{key}` must not be accepted: the action name selects it"
+        );
+    }
+}
+
+#[test]
 fn execute_command_args_forwards_the_documented_arguments() {
     let args: ExecuteCommandArgs = serde_json::from_value(serde_json::json!({
         "action": "scan",
@@ -124,9 +141,6 @@ fn execute_command_args_forwards_the_documented_arguments() {
             "path": ".",
             "member": "billing",
             "rules": "AES101",
-            "layer": "taxonomy",
-            "format": "json",
-            "group": "quality",
             "base": "origin/main",
             "strict": true,
             "dry_run": true,
@@ -137,9 +151,6 @@ fn execute_command_args_forwards_the_documented_arguments() {
     let opts = args.args.expect("args present");
     assert_eq!(opts.member.as_deref(), Some("billing"));
     assert_eq!(opts.rules.as_deref(), Some("AES101"));
-    assert_eq!(opts.layer.as_deref(), Some("taxonomy"));
-    assert_eq!(opts.format.as_deref(), Some("json"));
-    assert_eq!(opts.group.as_deref(), Some("quality"));
     assert_eq!(opts.base.as_deref(), Some("origin/main"));
     assert_eq!(opts.strict, Some(true));
     assert_eq!(opts.dry_run, Some(true));
