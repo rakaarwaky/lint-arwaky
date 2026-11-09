@@ -7,7 +7,7 @@ mod mock_common;
 
 use mcp_server_lint_arwaky::surface_mcp_tool_command::LintArwakyMcpServer;
 use mcp_server_lint_arwaky::taxonomy_mcp_server_vo::{
-    ExecuteCommandArgs, GetConfigArgs, ListCommandsArgs,
+    ExecuteCommandArgs, ExecuteCommandOptions, GetConfigArgs, ListCommandsArgs,
 };
 use rmcp::handler::server::wrapper::Parameters;
 use std::sync::Arc;
@@ -21,6 +21,31 @@ fn parse(json: &str) -> serde_json::Value {
 }
 
 // ─── execute_command handler wiring ────────────────────────────────
+
+#[test]
+fn execute_command_options_deserialization_rejects_unknown_keys_and_wrong_types() {
+    assert!(
+        serde_json::from_value::<ExecuteCommandArgs>(serde_json::json!({
+            "action": "scan",
+            "args": {"path": "src", "format": "json"}
+        }))
+        .is_err()
+    );
+    assert!(
+        serde_json::from_value::<ExecuteCommandArgs>(serde_json::json!({
+            "action": "ci",
+            "args": {"threshold": "95"}
+        }))
+        .is_err()
+    );
+    assert!(
+        serde_json::from_value::<ExecuteCommandArgs>(serde_json::json!({
+            "action": "scan",
+            "verbose": true
+        }))
+        .is_err()
+    );
+}
 
 #[tokio::test]
 async fn handle_execute_command_wires_action_into_dispatch() {
@@ -48,7 +73,11 @@ async fn handle_execute_command_wires_path_arg_into_path_validation() {
     // surface has to allow mutations to reach the assertion.
     let args = ExecuteCommandArgs {
         action: "fix".to_string(),
-        args: Some(serde_json::json!({ "path": "" })),
+        args: Some(ExecuteCommandOptions {
+            path: Some(String::new()),
+            threshold: None,
+            dry_run: None,
+        }),
     };
     let server = LintArwakyMcpServer::new(Arc::new(
         mock_common::make_action_surface_allowing_mutations(),
@@ -56,6 +85,26 @@ async fn handle_execute_command_wires_path_arg_into_path_validation() {
     let result = parse(&server.handle_execute_command(Parameters(args)).await);
     assert_eq!(result["exit_code"], 2);
     assert_eq!(result["error"], "Invalid path");
+}
+
+#[tokio::test]
+async fn handle_execute_command_rejects_options_not_supported_by_action() {
+    let args = ExecuteCommandArgs {
+        action: "scan".to_string(),
+        args: Some(ExecuteCommandOptions {
+            path: None,
+            threshold: Some(90),
+            dry_run: None,
+        }),
+    };
+    let result = parse(&server().handle_execute_command(Parameters(args)).await);
+    assert_eq!(result["exit_code"], 2);
+    assert!(
+        result["error"]
+            .as_str()
+            .unwrap()
+            .contains("only supported by the 'ci'")
+    );
 }
 
 #[tokio::test]
@@ -88,11 +137,22 @@ fn handle_list_commands_returns_full_catalog_without_filter() {
     );
     assert!(
         commands.iter().all(|c| {
+            let has_examples = c["cli_example"].as_str().is_some()
+                && if c["mcp_supported"] == true {
+                    c["example"]["tool"] == "execute_command"
+                        && c["example"]["arguments"]["action"] == c["name"]
+                        && serde_json::from_value::<ExecuteCommandArgs>(
+                            c["example"]["arguments"].clone(),
+                        )
+                        .is_ok()
+                } else {
+                    c["example"].is_null() && c["mcp_note"].as_str().is_some()
+                };
             c["name"].as_str().is_some_and(|s| !s.is_empty())
                 && c["description"].as_str().is_some_and(|s| !s.is_empty())
-                && c["example"].as_str().is_some()
+                && has_examples
         }),
-        "every catalog entry must expose name/description/example: {}",
+        "every catalog entry must expose CLI and MCP-appropriate examples/status: {}",
         result
     );
 }
@@ -126,6 +186,14 @@ fn handle_get_config_reports_missing_config_loudly() {
     };
     let result = parse(&server().handle_get_config(Parameters(args)));
     assert_eq!(result["exit_code"], 0);
+    assert_eq!(
+        result["resolved_path"],
+        tmp.path()
+            .canonicalize()
+            .unwrap()
+            .to_string_lossy()
+            .as_ref()
+    );
     let warnings = result["warnings"].as_array().expect("warnings array");
     assert!(
         warnings.iter().any(|w| w

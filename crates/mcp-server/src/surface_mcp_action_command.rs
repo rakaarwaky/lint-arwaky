@@ -591,7 +591,12 @@ impl McpActionSurface {
         threshold: u64,
         dry_run: bool,
     ) -> serde_json::Value {
-        if let Err(error) = self.authorize_action(action) {
+        let authorization = if action == "fix" {
+            self.authorize_action_allow_dry_run(action, dry_run)
+        } else {
+            self.authorize_action(action)
+        };
+        if let Err(error) = authorization {
             return error;
         }
         let response = match action {
@@ -748,8 +753,34 @@ impl McpActionSurface {
                 Some(d) if !d.is_empty() => name.contains(d),
                 _ => true,
             })
-            .map(|(name, desc, example)| {
-                serde_json::json!({"name": name, "description": desc, "example": example})
+            .map(|(name, desc, cli_example)| {
+                let supported = !matches!(*name, "watch" | "mcp-config" | "config" | "git");
+                let args = match *name {
+                    "ci" => serde_json::json!({"path": ".", "threshold": 80}),
+                    "fix" => serde_json::json!({"path": ".", "dry_run": true}),
+                    "doctor" | "adapters" | "version" | "uninstall-hook" | "init" | "install" => {
+                        serde_json::Value::Null
+                    }
+                    _ => serde_json::json!({"path": "."}),
+                };
+                let example = if supported {
+                    serde_json::json!({
+                        "tool": "execute_command",
+                        "arguments": {"action": name, "args": args}
+                    })
+                } else {
+                    serde_json::Value::Null
+                };
+                serde_json::json!({
+                    "name": name,
+                    "description": desc,
+                    "example": example,
+                    "cli_example": cli_example,
+                    "mcp_supported": supported,
+                    "mcp_note": if supported { serde_json::Value::Null } else {
+                        serde_json::json!(format!("{name} is not available via MCP"))
+                    },
+                })
             })
             .collect();
         serde_json::json!({ "status": "ok", "commands": commands, "total": commands.len(), "exit_code": 0 })

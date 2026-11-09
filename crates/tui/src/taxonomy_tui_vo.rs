@@ -262,6 +262,8 @@ pub struct SearchState {
 pub struct PathDialogState {
     pub visible: bool,
     pub input: String,
+    /// Byte offset of the insertion point; always kept on a UTF-8 boundary.
+    pub cursor: usize,
 }
 
 #[derive(Debug)]
@@ -365,6 +367,7 @@ impl AppState {
             path_dialog: PathDialogState {
                 visible: true,
                 input: String::new(),
+                cursor: 0,
             },
             preview: PreviewState {
                 mode: PreviewMode::ActionOutput,

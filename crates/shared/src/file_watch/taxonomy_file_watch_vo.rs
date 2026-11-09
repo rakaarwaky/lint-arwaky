@@ -29,6 +29,16 @@ impl WatchConfig {
     }
 }
 
+/// User-facing lifecycle summaries emitted by the watch runner. The CLI owns
+/// rendering; the watcher reports structured events instead of relying on logs.
+#[derive(Debug, Clone, PartialEq)]
+pub enum WatchOutputEvent {
+    Started { path: String },
+    InitialScanComplete { violations: usize, score: f64 },
+    FileLinted { path: String, succeeded: bool },
+    Stopped,
+}
+
 // ─── Filesystem change events ─────────────────────────────────────────
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
