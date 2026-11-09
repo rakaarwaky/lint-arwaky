@@ -1,0 +1,45 @@
+name: Diagnostics
+# TEMPORARY — remove before merge.
+#
+# CI logs live on Azure blob storage, which this development sandbox cannot
+# reach, so the compiler's messages in the failing jobs were unreadable. This
+# workflow runs the same checks and re-emits every diagnostic as a workflow
+# *annotation*, which the public check-runs API does expose.
+on:
+  push:
+    branches: [arena/14b199d5-lint-arwaky]
+  workflow_dispatch:
+
+jobs:
+  diagnose:
+    name: Diagnose
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c # v1 stable
+        with:
+          components: clippy, rustfmt
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
+      - name: cargo check
+        run: |
+          cargo check --all-targets --message-format=short 2>&1 | tee /tmp/check.txt || true
+          grep -E "error(\[E[0-9]+\])?:" /tmp/check.txt | head -60 | while IFS= read -r line; do
+            echo "::error title=check::${line//'%'/%25}"
+          done
+          if grep -qE "error(\[E[0-9]+\])?:" /tmp/check.txt; then exit 1; fi
+      - name: cargo fmt
+        if: always()
+        run: |
+          cargo fmt --all -- --check 2>&1 | tee /tmp/fmt.txt || true
+          grep -E "^Diff in " /tmp/fmt.txt | head -40 | while IFS= read -r line; do
+            echo "::error title=fmt::${line//'%'/%25}"
+          done
+      - name: cargo clippy
+        if: always()
+        run: |
+          cargo clippy --all-targets --message-format=short -- -D warnings 2>&1 | tee /tmp/clippy.txt || true
+          grep -E "^(error|warning)" /tmp/clippy.txt | head -60 | while IFS= read -r line; do
+            echo "::error title=clippy::${line//'%'/%25}"
+          done
