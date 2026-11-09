@@ -777,7 +777,7 @@ mod tests {
                 report_target,
                 None,
                 None,
-                member_dirs.as_deref()
+                member_dirs
             ),
             "file under member dir must be in scope at TopLevel"
         );
@@ -791,7 +791,7 @@ mod tests {
                 report_target,
                 None,
                 None,
-                member_dirs.as_deref()
+                member_dirs
             ),
             "root-level packaging file must be out of scope at TopLevel"
         );

@@ -272,7 +272,7 @@ fn collect_scan_json_anchors_to_report_target() {
     for v in &violations {
         let code = v.code.code();
         assert!(
-            known_codes.iter().any(|&c| c == code),
+            known_codes.contains(&code),
             "expected a known AES rule code, got {code} for file {}",
             v.file.value
         );

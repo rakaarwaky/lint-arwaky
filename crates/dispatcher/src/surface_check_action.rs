@@ -1011,7 +1011,7 @@ mod bfs_tests {
 mod retain_scope_tests {
     use super::*;
     use shared_cli_commands::ScanScope;
-    use shared_common::{ColumnNumber, ErrorCode, LineNumber, LintMessage, Severity};
+    use shared_common::{ErrorCode, LineNumber, LintMessage, Severity};
 
     fn mk_violation(file: &str, code: &str) -> ViolationItem {
         ViolationItem {
