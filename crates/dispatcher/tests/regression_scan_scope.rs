@@ -1,125 +1,29 @@
-// Regression test — full-root scan detects violations under a subfolder
-// target, but narrows the *reported* output to that subfolder (PR #3, plan 4ae3d58a).
+// Regression test — full-root scan detects cross-member violations under a
+// subfolder target, but narrows the *reported* output to that subfolder
+// (PR #3, plan 4ae3d58a).
 //
 // PR 2 made `collect_scan*` scan the full workspace root
 // (`scan_root = root.clone()`) and narrow the *reported* output via
 // `retain_scope(violations, &scope.filter_prefix())`. This file guards that
-// behavior: a subfolder target (`crates/member_a`) must scan the whole member
-// dir (so cross-file import evidence is seen) but report only violations
-// under `member_a`.
+// behavior: a subfolder target (`crates/member_a`) scans the whole member dir
+// (so cross-file import evidence from `member_b` is seen) but reports only
+// violations under `member_a`.
 //
 // Fixtures:
 //   workspaces-bad/crates/member_a/capabilities_foo.rs — capabilities layer
+//     importing `agent` from member_b (AES201 evidence).
 //   workspaces-bad/crates/member_b/agent_bar.rs — agent layer, clean.
 //
 // Drive the in-process path (same as production), mirroring
-// `integration_in_process_aggregates.rs`. `path` is the workspace root
-// (`workspaces-bad`), scanned in full; `member` narrows the *reported* output
-// to that subfolder.
+// `regression_scan_modes.rs`. `path` is the workspace root (`workspaces-bad`),
+// scanned in full; `member` narrows the *reported* output to that subfolder.
 
+mod mock_common;
 use std::collections::HashSet;
-use std::sync::Arc;
 
-use dispatcher_lint_arwaky::surface_check_action::{
-    FilesystemSeam, ScanAggregates, ScanOptions, collect_scan,
-};
+use dispatcher_lint_arwaky::surface_check_action::{ScanAggregates, ScanOptions, collect_scan};
 use shared_common::ViolationItem;
 use shared_common::taxonomy_path_vo::FilePath;
-
-// ── Container wiring — mirrors crates/root_cli_main_entry.rs ──────────────
-
-fn build_scan_aggregates(root: &str) -> ScanAggregates {
-    let fs_container = filesystem::root_filesystem_container::FilesystemContainer::new();
-    let filesystem = fs_container.orchestrator();
-    let fs_io = fs_container.io();
-    let fs_orchestrator = fs_container.orchestrator();
-    let fs_workspace = fs_container.workspace();
-    let fs_parser = fs_container.parser();
-    let fs_tool_resolution = fs_container.tool_resolution();
-
-    let fs_seam = Arc::new(FilesystemSeam {
-        workspace: fs_orchestrator.clone(),
-        parser: fs_orchestrator.clone(),
-        aggregate: filesystem.clone(),
-    });
-
-    let config_container = config_system::root_config_system_container::ConfigContainer::new(
-        filesystem.clone(),
-        fs_io.clone(),
-    );
-    let config_orchestrator = config_container.orchestrator();
-
-    let quality_container =
-        quality_rules::root_quality_rules_container::CodeAnalysisContainer::from_orchestrator(
-            &config_orchestrator,
-            root,
-        );
-    let quality = quality_container.code_analysis_linter();
-
-    let import_container =
-        import_rules::root_import_rules_container::ImportContainer::from_orchestrator(
-            &config_orchestrator,
-            root,
-            filesystem.clone(),
-            fs_io.clone(),
-            fs_workspace.clone(),
-            fs_parser.clone(),
-        );
-    let import = import_container.orchestrator();
-
-    let sync_config = config_orchestrator
-        .execute(shared_config_system::ConfigRequest::load_sync(
-            &FilePath::new(root.to_string()).unwrap_or_default(),
-        ))
-        .into_sync_config();
-    let layer_map = shared_common::LayerMapVO::new(sync_config.layers.clone());
-    let naming_container = naming_rules::root_naming_rules_container::NamingContainer::new(
-        Arc::new(sync_config.clone()),
-        Arc::new(layer_map),
-    );
-    let naming = naming_container.orchestrator();
-
-    let orphan_container =
-        orphan_rules::root_orphan_detector_container::OrphanContainer::from_orchestrator(
-            &config_orchestrator,
-            root,
-            filesystem.clone(),
-            fs_workspace.clone(),
-        );
-    let orphan = orphan_container.analyzer();
-
-    let external_container =
-        external_lint::root_external_lint_container::ExternalLintContainer::new(
-            filesystem.clone(),
-            fs_io.clone(),
-            fs_tool_resolution.clone(),
-            false,
-        );
-    let external = external_container.aggregate();
-
-    let role_container =
-        role_rules::root_role_rules_container::RoleContainer::new_with_config(sync_config);
-    let role = role_container.orchestrator();
-
-    let structure =
-        structure_rules::root_structure_rules_container::RootStructureRulesContainer::orchestrator(
-        );
-    let doc = doc_rules::root_doc_rules_container::RootDocRulesContainer::orchestrator();
-
-    ScanAggregates {
-        config_file_reader: config_container.file_reader(),
-        quality,
-        role,
-        import,
-        naming,
-        external,
-        orphan,
-        config: config_orchestrator,
-        structure,
-        doc,
-        fs_seam,
-    }
-}
 
 // ── Test helpers ──────────────────────────────────────────────────────────
 
@@ -153,6 +57,28 @@ fn in_process_subfolder_scan(
     collect_scan(opts)
 }
 
+/// Assert the PR-2 scope contract: every reported violation is under
+/// `kept` and none leak under `dropped`. `kept` must be a subfolder of the
+/// scanned root (`crates/<x>`); `dropped` is its sibling.
+fn assert_scope_kept_and_dropped(violations: &[ViolationItem], kept: &str, dropped: &str) {
+    for v in violations {
+        assert!(
+            v.file.value.contains(kept),
+            "reported violation outside {kept}: {:?}",
+            v.file.value
+        );
+    }
+    let leaked: HashSet<String> = violations
+        .iter()
+        .filter(|v| v.file.value.contains(dropped))
+        .map(|v| v.file.value.clone())
+        .collect();
+    assert!(
+        leaked.is_empty(),
+        "expected no violations under {dropped}, got {leaked:?}"
+    );
+}
+
 // ── Tests ─────────────────────────────────────────────────────────────────
 
 /// A subfolder target reports violations under `member_a` and reports nothing
@@ -162,7 +88,8 @@ fn in_process_subfolder_scan(
 #[test]
 fn subfolder_scan_reports_only_member_a() {
     let root = fixture_path("workspaces-bad");
-    let agg = build_scan_aggregates(root.to_string_lossy().as_ref());
+    let root_str = root.to_string_lossy().to_string();
+    let agg = mock_common::build_scan_aggregates(&root_str);
     let violations = in_process_subfolder_scan(&agg, "workspaces-bad", "crates/member_a")
         .expect("subfolder scan of member_a must succeed");
 
@@ -173,52 +100,18 @@ fn subfolder_scan_reports_only_member_a() {
         "subfolder scan of member_a must report violations, got none"
     );
 
-    // Every reported violation must be under member_a.
-    for v in &violations {
-        assert!(
-            v.file.value.contains("crates/member_a"),
-            "reported violation outside member_a: {:?}",
-            v.file.value
-        );
-    }
-
-    // No violation may carry a path under member_b — that would mean
-    // retain_scope failed to narrow to the subfolder prefix.
-    let member_b_paths: HashSet<_> = violations
-        .iter()
-        .filter(|v| v.file.value.contains("crates/member_b"))
-        .map(|v| v.file.value.clone())
-        .collect();
-    assert!(
-        member_b_paths.is_empty(),
-        "expected no violations under crates/member_b, got {member_b_paths:?}"
-    );
+    assert_scope_kept_and_dropped(&violations, "crates/member_a", "crates/member_b");
 }
 
-/// The same scan applied to `member_b` reports only member_b paths — the
+/// The same scan applied to `member_b` reports only `member_b` paths — the
 /// scope contract holds symmetrically for both members.
 #[test]
 fn subfolder_scan_reports_only_member_b() {
     let root = fixture_path("workspaces-bad");
-    let agg = build_scan_aggregates(root.to_string_lossy().as_ref());
+    let root_str = root.to_string_lossy().to_string();
+    let agg = mock_common::build_scan_aggregates(&root_str);
     let violations = in_process_subfolder_scan(&agg, "workspaces-bad", "crates/member_b")
         .expect("subfolder scan of member_b must succeed");
 
-    for v in &violations {
-        assert!(
-            v.file.value.contains("crates/member_b"),
-            "reported violation outside member_b: {:?}",
-            v.file.value
-        );
-    }
-
-    let member_a_paths: HashSet<_> = violations
-        .iter()
-        .filter(|v| v.file.value.contains("crates/member_a"))
-        .map(|v| v.file.value.clone())
-        .collect();
-    assert!(
-        member_a_paths.is_empty(),
-        "expected no violations under crates/member_a, got {member_a_paths:?}"
-    );
+    assert_scope_kept_and_dropped(&violations, "crates/member_b", "crates/member_a");
 }

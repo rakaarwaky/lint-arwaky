@@ -1,6 +1,6 @@
-// AES201 ONLY — capabilities importing agent from member_b (forbidden).
-// Import segment `agent` maps to the agent layer; capabilities forbids agent
-// under the AES201 rule row (capabilities → surface,agent,capabilities,root).
+// AES201 — capabilities member imports segment `agent` (forbidden by the
+// capabilities rule row). The target lives in sibling member member_b, so
+// only a full-root scan sees the cross-member evidence.
 use agent::agent_bar::helper;
 
 pub struct CapabilitiesFoo;
