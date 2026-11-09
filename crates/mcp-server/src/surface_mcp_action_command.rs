@@ -408,6 +408,18 @@ impl McpActionSurface {
         let filesystem = self.deps.filesystem.clone();
         let factory = self.deps.fix_orchestrator_factory.clone();
         let path_owned = path.to_string();
+        // The operator's `ignored_paths` are honoured here for the same reason
+        // the CLI honours them: a fix run that rewrites an excluded tree is
+        // worse than one that finds nothing to fix (#1360).
+        let ignored = self
+            .deps
+            .config_orchestrator
+            .execute(shared_config_system::ConfigRequest::ignored_paths(&fp))
+            .into_patterns()
+            .values
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>();
         let fix_result = match Self::run_blocking(move || {
             dispatcher::surface_fix_action::collect_fix(
                 Some(fp),
@@ -415,7 +427,7 @@ impl McpActionSurface {
                 linter,
                 filesystem,
                 factory,
-                &[],
+                &ignored,
             )
         })
         .await

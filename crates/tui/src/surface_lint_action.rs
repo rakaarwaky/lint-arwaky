@@ -197,6 +197,29 @@ impl SurfaceLintExecutor {
         self.build_scan_aggregates()
     }
 
+    /// The operator's `ignored_paths`, resolved against the fix target.
+    ///
+    /// Empty when the config aggregate is unavailable — the same fallback
+    /// `build_scan_aggregates` uses, so a missing config never silently
+    /// widens the tree a fix run is allowed to rewrite.
+    fn ignored_patterns(&self, target: &Option<FilePath>) -> Vec<String> {
+        let orchestrator = match &self.config_orchestrator {
+            Some(orchestrator) => orchestrator,
+            None => return Vec::new(),
+        };
+        let root = match target {
+            Some(path) => path.clone(),
+            None => FilePath::new(".".to_string()).unwrap_or_default(),
+        };
+        orchestrator
+            .execute(shared_config_system::ConfigRequest::ignored_paths(&root))
+            .into_patterns()
+            .values
+            .iter()
+            .map(|value| value.to_string())
+            .collect()
+    }
+
     fn build_orphan_deps(&self) -> Option<OrphanScanDeps> {
         Some(OrphanScanDeps::new(
             self.orphan_aggregate.clone()?,
@@ -340,13 +363,16 @@ impl SurfaceLintExecutor {
             Ok(path) => path,
             Err(error) => return error,
         });
+        // Honour the operator's exclusions: a fix run that rewrites an
+        // ignored tree is worse than one that finds nothing to fix (#1360).
+        let ignored = self.ignored_patterns(&fp);
         match collect_fix_direct(
             fp,
             flags.dry_run,
             self.code_analysis.clone(),
             self.filesystem.clone(),
             fix_orch,
-            &[],
+            &ignored,
         ) {
             Ok(report) => {
                 let mode = if report.dry_run { "DRY-RUN" } else { "LIVE" };
