@@ -17,12 +17,7 @@ use shared_common::taxonomy_adapter_name_vo::ToolName;
 use shared_common::taxonomy_common_vo::PatternList;
 use shared_common::taxonomy_language_vo::ConfigLanguage;
 use shared_common::taxonomy_language_vo::Language;
-use shared_common::taxonomy_path_vo::FilePath;
 use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared_filesystem::contract_filesystem_protocol::{
-    IParserProtocol, IToolResolutionProtocol, IWorkspaceProtocol,
-};
-use shared_filesystem::taxonomy_filesystem_vo::{ParseWarning, ProjectLanguagesVO};
 use shared_quality_rules::{CodeAnalysisRequest, CodeAnalysisResponse, ICodeAnalysisAggregate};
 use tui_lint_arwaky::surface_event_action::SurfaceActionHandler;
 use tui_lint_arwaky::surface_lint_action::SurfaceLintExecutor;

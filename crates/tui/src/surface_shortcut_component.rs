@@ -62,7 +62,7 @@ impl ShortcutComponent {
 
         let results = matches!(
             state.preview.mode,
-            PreviewMode::LintResults | PreviewMode::ActionOutput | PreviewMode::FileContent
+            PreviewMode::LintResults | PreviewMode::ActionOutput
         );
         let rows = crate::surface_bindings_store::rows_for_context(results);
         let budget = area.width as usize;
@@ -212,7 +212,8 @@ mod tests {
     #[test]
     fn a_row_never_exceeds_its_budget() {
         for budget in [20usize, 40, 60, 80, 100, 120, 160] {
-            let spans = format_shortcuts(&widest_row(), budget);
+            let row = widest_row();
+            let spans = format_shortcuts(&row, budget);
             let w = width(&spans);
             assert!(
                 w <= budget,
@@ -224,7 +225,8 @@ mod tests {
     #[test]
     fn truncated_rows_keep_an_explicit_help_affordance() {
         for budget in [40usize, 80, 100] {
-            let spans = format_shortcuts(&widest_row(), budget);
+            let row = widest_row();
+            let spans = format_shortcuts(&row, budget);
             let text: String = spans.iter().map(|s| s.content.as_ref()).collect();
             assert!(
                 text.contains("?"),

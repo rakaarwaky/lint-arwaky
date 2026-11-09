@@ -48,19 +48,17 @@ impl FileListView {
         // (#367); an open folder with no rows says so; and a first run whose
         // path dialog was dismissed says how to choose a root, because before
         // `r` existed that state was unrecoverable (#1317).
-        let empty_hint = if state.search.mode
-            && !state.search.query.is_empty()
-            && display_indices.is_empty()
-        {
-            Some(format!(
-                "No matches for '{}' — press Esc to clear filter",
-                state.search.query
-            ))
-        } else if display_indices.is_empty() {
-            Some(empty_state_hint(state))
-        } else {
-            None
-        };
+        let empty_hint =
+            if state.search.mode && !state.search.query.is_empty() && display_indices.is_empty() {
+                Some(format!(
+                    "No matches for '{}' — press Esc to clear filter",
+                    state.search.query
+                ))
+            } else if display_indices.is_empty() {
+                Some(empty_state_hint(state))
+            } else {
+                None
+            };
 
         // In search mode, filter_pos is the highlight position in the displayed list.
         // In normal mode, selected_index is the highlight position.

@@ -58,10 +58,7 @@ pub fn handle_ci(params: CiCommandParams) -> ExitCode {
                 // result line, no exit code, and every reason routed to a
                 // `tracing::info!` channel the default "warn" filter drops. A
                 // CI engineer watching a red build could not see why it failed.
-                println!(
-                    "Result: FAIL (exit code {})",
-                    ExitCode::POLICY_FAIL.value()
-                );
+                println!("Result: FAIL (exit code {})", ExitCode::POLICY_FAIL.value());
                 if !report.reasons.is_empty() {
                     println!();
                     println!("Reasons:");

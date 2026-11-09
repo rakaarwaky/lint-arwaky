@@ -234,7 +234,6 @@ pub enum PanelFocus {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PreviewMode {
-    FileContent,
     LintResults,
     HelpOverlay,
     ActionOutput,
@@ -554,7 +553,9 @@ impl AppState {
                 // Rules disagree on path shape: some emit an absolute path,
                 // some one relative to the scan root prefixed with "./".
                 let needle = path.strip_prefix("./").unwrap_or(path.as_str());
-                if entry.full_path == *path || (!needle.is_empty() && entry.full_path.ends_with(needle)) {
+                if entry.full_path == *path
+                    || (!needle.is_empty() && entry.full_path.ends_with(needle))
+                {
                     total += *count;
                 }
             }

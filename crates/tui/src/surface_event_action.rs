@@ -599,8 +599,9 @@ impl SurfaceActionHandler {
             state.navigation.current_dir = path;
             self.load_directory(state, &state.navigation.current_dir.clone());
         } else {
-            // FR-003: Entry is a file → preview loaded in Preview panel.
-            self.load_file_preview(state, &path);
+            // FR-003: Entry is a file — mark it selected in the Files panel.
+            // The right panel keeps showing command output; it never renders
+            // file content or code (user audit requirement).
             state.set_status(format!("Selected: {}", path));
         }
     }
@@ -665,51 +666,11 @@ impl SurfaceActionHandler {
         state.compute_filtered_indices();
     }
 
-    /// Read up to 100 lines of a file for inline preview.
-    pub fn load_file_preview(&self, state: &mut AppState, path: &str) {
-        let fp = FilePath::new(path.to_string()).unwrap_or_default();
-        let file_path = std::path::Path::new(fp.value());
-        let max_lines = 100;
-        let content = self
-            .io
-            .execute(FilesystemRequest::read_file_result(file_path))
-            .into_content()
-            .value;
-        let display = if content.is_empty() {
-            // An empty file and an unreadable one used to collapse into the
-            // same "Cannot read" message, which reported a false error for a
-            // legitimately empty file and named no remedy either way (#1330).
-            shared_common::DisplayContent::new(format!(
-                "Cannot read this file.\n\n{path}\n\n\
-                 It is empty, binary, or not readable by this process.\n\
-                 j/k selects another file; l/↵ on a folder opens it."
-            ))
-        } else {
-            let lines: Vec<&str> = content.lines().take(max_lines).collect();
-            let mut output = String::new();
-            for (i, line) in lines.iter().enumerate() {
-                output.push_str(&format!("{:>4} │ {}\n", i + 1, line));
-            }
-            let total = content.lines().count();
-            if total > max_lines {
-                output.push_str(&format!("\n... ({} more lines)", total - max_lines));
-            }
-            shared_common::DisplayContent::new(output)
-        };
-        state.preview.text = display.to_string();
-        state.preview.scroll = 0;
-        state.preview.mode = PreviewMode::FileContent;
-    }
-
     /// Load preview for the currently selected entry if it's a file.
-    pub fn load_preview(&self, state: &mut AppState) {
-        if let Some(entry) = state.selected_entry()
-            && !entry.is_dir
-        {
-            let path = entry.full_path.clone();
-            self.load_file_preview(state, &path);
-        }
-    }
+    ///
+    /// The right panel never renders file content or code, so this is a
+    /// no-op: viewing a file only selects it in the Files panel.
+    pub fn load_preview(&self, _state: &mut AppState) {}
 
     /// Queue a lint action on the worker thread. Capturing only owned values
     /// keeps the event loop free to render, poll input, and accept Quit/Esc.

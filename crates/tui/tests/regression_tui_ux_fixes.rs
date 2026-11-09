@@ -35,7 +35,10 @@ fn every_displayed_binding_still_has_a_dispatch_entry_after_adding_r() {
     // `r` occupies a bar row, so the help overlay and the shortcut bar both
     // advertise it; the shared table is what keeps them honest.
     let help = tui_lint_arwaky::surface_bindings_store::help_text();
-    assert!(help.contains("root"), "help overlay must list the new binding");
+    assert!(
+        help.contains("root"),
+        "help overlay must list the new binding"
+    );
 }
 
 // ── #1329: Esc cancels a running scan instead of quitting ──────────────────
@@ -180,7 +183,11 @@ fn file_counts_tolerate_a_relative_result_path() {
 
 fn entry(full_path: &str) -> FileEntry {
     FileEntry {
-        name: full_path.rsplit('/').next().unwrap_or(full_path).to_string(),
+        name: full_path
+            .rsplit('/')
+            .next()
+            .unwrap_or(full_path)
+            .to_string(),
         full_path: full_path.to_string(),
         is_dir: false,
         layer: AesLayer::None,
@@ -285,7 +292,10 @@ fn a_finished_scan_paints_its_completion_label() {
         text.contains("Done"),
         "the completion label existed in state but was never rendered: {text:?}"
     );
-    assert!(text.contains('4'), "completion must name the count: {text:?}");
+    assert!(
+        text.contains('4'),
+        "completion must name the count: {text:?}"
+    );
 }
 
 // #1321: an in-flight scan without a file count reads as a wait, not 0%.
@@ -360,7 +370,10 @@ fn the_shortcut_bar_swaps_to_the_gate_keys_during_a_confirm() {
         .unwrap();
 
     let text = buffer_text(&terminal);
-    assert!(text.contains("cancel"), "gate keys must be visible: {text:?}");
+    assert!(
+        text.contains("cancel"),
+        "gate keys must be visible: {text:?}"
+    );
     assert!(
         !text.contains("c:check"),
         "browse shortcuts are swallowed by the gate, so they must not be shown: {text:?}"
