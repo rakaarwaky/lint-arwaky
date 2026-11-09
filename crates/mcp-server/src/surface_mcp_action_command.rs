@@ -472,8 +472,6 @@ impl McpActionSurface {
             Err(e) => serde_json::json!({"error": e, "exit_code": 2}),
         }
     }
-<<<<<<< HEAD
-=======
 
     /// Run quality scan via dispatcher.
     pub async fn execute_quality(&self, path: &str) -> serde_json::Value {
@@ -1095,5 +1093,4 @@ fn normalize_response(mut response: serde_json::Value) -> serde_json::Value {
 
 fn error_response(message: &str) -> serde_json::Value {
     serde_json::json!({"status": "error", "error": message, "exit_code": 2})
->>>>>>> 9df34c75 (Improve naming-rules UX documentation and output formatting (#1378))
 }
