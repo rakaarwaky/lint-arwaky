@@ -57,7 +57,10 @@ fn ci_rejects_a_nonexistent_path() {
     let aggregates = mock_common::build_scan_aggregates(root);
     let error = collect_ci(aggregates, Some(fp(root)), threshold(80))
         .expect_err("a missing path must be an error, not a clean run");
-    assert!(error.contains("does not exist"), "unexpected error: {error}");
+    assert!(
+        error.contains("does not exist"),
+        "unexpected error: {error}"
+    );
 }
 
 #[test]
@@ -73,7 +76,10 @@ fn ci_rejects_an_out_of_range_threshold() {
     let bad = Threshold::new(101);
     let error = collect_ci(aggregates, Some(fp(root)), bad)
         .expect_err("threshold above 100 must be rejected");
-    assert!(error.contains("threshold") || error.contains("Threshold"), "{error}");
+    assert!(
+        error.contains("threshold") || error.contains("Threshold"),
+        "{error}"
+    );
 }
 
 #[test]

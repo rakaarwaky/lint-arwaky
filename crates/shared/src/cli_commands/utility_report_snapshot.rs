@@ -3,6 +3,7 @@
 // taxonomy_report_snapshot_vo because a `utility_` file holds no types (AES404).
 use shared_common::ReportSnapshot;
 use shared_common::SnapshotStore;
+use shared_filesystem::utility_filesystem_io::write_string;
 use std::path::{Path, PathBuf};
 
 /// A stable, collision-free key for a target path.
@@ -131,5 +132,5 @@ pub fn write_store_at(path: &Path, target: &str, snapshot: ReportSnapshot) -> st
     // Write through a synced sibling + rename. A plain `fs::write` truncated
     // first, so a crash or a full disk mid-write destroyed every target's
     // baseline, not just this one.
-    crate::filesystem::utility_filesystem_io::write_string(path, &json)
+    write_string(path, &json)
 }

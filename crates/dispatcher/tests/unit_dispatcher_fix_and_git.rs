@@ -33,8 +33,8 @@ fn git_base_ref_rejects_option_injection() {
     // by git as an option, e.g. `--upload-pack=…` turns a diff into code
     // execution.
     for reference in ["--upload-pack=/bin/sh", "-c", "-"] {
-        let error = validate_git_base_ref(reference)
-            .expect_err("an option-shaped ref must be rejected");
+        let error =
+            validate_git_base_ref(reference).expect_err("an option-shaped ref must be rejected");
         assert!(
             error.contains("'-'"),
             "the error must name the reason for {reference}: {error}"
@@ -44,7 +44,13 @@ fn git_base_ref_rejects_option_injection() {
 
 #[test]
 fn git_base_ref_rejects_shell_metacharacters() {
-    for reference in ["main; rm -rf /", "main$(whoami)", "main`id`", "main|cat", "main&bg"] {
+    for reference in [
+        "main; rm -rf /",
+        "main$(whoami)",
+        "main`id`",
+        "main|cat",
+        "main&bg",
+    ] {
         assert!(
             validate_git_base_ref(reference).is_err(),
             "{reference} must be rejected"
@@ -123,9 +129,8 @@ fn fix_verdict_runtime_error_outranks_policy() {
 // ─── BE-3-03: fix discovery must honour ignored paths ──────────────────────
 
 /// Build a real filesystem aggregate over a scratch tree.
-fn fs_aggregate() -> std::sync::Arc<
-    dyn shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate,
-> {
+fn fs_aggregate()
+-> std::sync::Arc<dyn shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate> {
     filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator()
 }
 

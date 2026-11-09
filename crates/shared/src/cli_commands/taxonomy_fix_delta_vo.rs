@@ -16,7 +16,7 @@ use shared_common::taxonomy_lint_vo::LintResult;
 use std::collections::HashSet;
 
 /// What a fix run changed. Pure data; the caller decides the exit code.
-#[derive(Debug, Clone, Default, PartialEq, Eq)]
+#[derive(Debug, Clone, Default, PartialEq)]
 pub struct FixDelta {
     /// Findings present before the run and absent after it.
     pub resolved: Vec<LintResult>,

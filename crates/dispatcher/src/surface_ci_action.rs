@@ -272,8 +272,9 @@ pub fn collect_ci(
 /// code, severity, WHY and FIX are already resolved). The scoring helpers read
 /// only code/severity/message, but the report's counters and the JSON payload
 /// read everything, so the fields are carried across rather than defaulted.
-fn lint_result_from_violation(v: shared_common::ViolationItem) -> shared_common::taxonomy_lint_vo::LintResult
-{
+fn lint_result_from_violation(
+    v: shared_common::ViolationItem,
+) -> shared_common::taxonomy_lint_vo::LintResult {
     use shared_common::taxonomy_adapter_name_vo::AdapterName;
     use shared_common::taxonomy_lint_vo::{LintResult, LocationList};
     LintResult {

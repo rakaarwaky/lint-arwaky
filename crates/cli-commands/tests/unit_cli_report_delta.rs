@@ -228,8 +228,7 @@ fn targets_that_differ_only_by_separator_get_different_keys() {
     // paths shared one key: reporting on `/repo/a-b` overwrote the baseline for
     // `/repo/a/b`, and the next delta was computed against a different tree.
     let colliding = ["/repo/a-b", "/repo/a/b", "/repo/a_b"];
-    let keys: std::collections::HashSet<String> =
-        colliding.iter().map(|t| target_key(t)).collect();
+    let keys: std::collections::HashSet<String> = colliding.iter().map(|t| target_key(t)).collect();
     assert_eq!(
         keys.len(),
         colliding.len(),
@@ -241,7 +240,10 @@ fn targets_that_differ_only_by_separator_get_different_keys() {
 fn the_key_is_stable_across_calls_and_runs() {
     // The suffix is FNV-1a over the path, written inline precisely because a
     // persisted key must not change when the toolchain changes `DefaultHasher`.
-    assert_eq!(target_key("/repo/crates/shared"), target_key("/repo/crates/shared"));
+    assert_eq!(
+        target_key("/repo/crates/shared"),
+        target_key("/repo/crates/shared")
+    );
     assert!(target_key("/repo/crates/shared").starts_with("repo-crates-shared-"));
 }
 

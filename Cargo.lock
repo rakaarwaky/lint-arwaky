@@ -5058,6 +5058,7 @@ dependencies = [
  "serde",
  "serde_json",
  "shared-common-lint-arwaky",
+ "shared-filesystem-lint-arwaky",
 ]
 
 [[package]]

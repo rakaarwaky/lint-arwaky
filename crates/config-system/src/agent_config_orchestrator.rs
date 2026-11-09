@@ -18,12 +18,12 @@ use shared_config_system::taxonomy_config_system_request::ConfigRequest;
 use shared_config_system::taxonomy_config_system_response::ConfigResponse;
 use shared_config_system::taxonomy_config_system_vo::ArchitectureConfig;
 use shared_config_system::taxonomy_config_system_vo::ConfigResult;
-use shared_config_system::taxonomy_config_system_vo::ProjectConfig;
-use shared_config_system::utility_config_parser::parse_project_config;
-use shared_config_system::utility_config_parser::validate_project_config;
 use shared_config_system::taxonomy_config_system_vo::ConfigSource;
+use shared_config_system::taxonomy_config_system_vo::ProjectConfig;
 use shared_config_system::taxonomy_config_system_vo::WorkspaceInfo;
 use shared_config_system::utility_config_parser::default_config_for_language;
+use shared_config_system::utility_config_parser::parse_project_config;
+use shared_config_system::utility_config_parser::validate_project_config;
 use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use std::sync::Arc;
 
@@ -117,7 +117,10 @@ impl ConfigOrchestrator {
                     // Unknown keys are rejected by the typed structs; a
                     // malformed file is reported the same way so the caller
                     // cannot mistake it for "no config".
-                    errors.push(format!("Invalid configuration in {}: {reason}", source.path.value));
+                    errors.push(format!(
+                        "Invalid configuration in {}: {reason}",
+                        source.path.value
+                    ));
                 }
                 ConfigResult::new(config, source, warnings).with_errors(errors)
             }

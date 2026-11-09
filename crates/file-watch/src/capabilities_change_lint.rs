@@ -25,19 +25,11 @@ impl ChangeLintHandler {
 // ─── Block 2: Module Contract ───────────────
 
 impl IChangeLintProtocol for ChangeLintHandler {
-    fn lint_changed(
-        &self,
-        event: &WatchEvent,
-    ) -> Result<ChangeLintSummary, WatchServiceError> {
+    fn lint_changed(&self, event: &WatchEvent) -> Result<ChangeLintSummary, WatchServiceError> {
         if FilePath::new(&event.path).is_err() {
             // An unparseable path is not a violation; report a clean summary so
             // the caller's policy check stays false.
-            return Ok(ChangeLintSummary::new(
-                event.path.clone(),
-                0,
-                0,
-                100.0,
-            ));
+            return Ok(ChangeLintSummary::new(event.path.clone(), 0, 0, 100.0));
         }
         let results = self
             .linter

@@ -53,7 +53,10 @@ impl LintArwakyMcpServer {
         let path = options.path.clone().unwrap_or_else(|| ".".to_string());
         let threshold = options.threshold.unwrap_or(80);
         let dry_run = options.dry_run.unwrap_or(false);
-        let base = options.base.clone().unwrap_or_else(|| "develop".to_string());
+        let base = options
+            .base
+            .clone()
+            .unwrap_or_else(|| "develop".to_string());
         if threshold > 100 {
             return validation_error(&format!(
                 "Invalid value for 'threshold': expected 0..=100, got {threshold}"
@@ -84,7 +87,19 @@ impl LintArwakyMcpServer {
         if options.strict.is_some() && action != "docs" {
             return validation_error("'strict' is only supported by the 'docs' action");
         }
-        if path_was_specified && matches!(action.as_str(), "doctor" | "adapters" | "version" | "uninstall-hook" | "init" | "install" | "mcp-config" | "watch") {
+        if path_was_specified
+            && matches!(
+                action.as_str(),
+                "doctor"
+                    | "adapters"
+                    | "version"
+                    | "uninstall-hook"
+                    | "init"
+                    | "install"
+                    | "mcp-config"
+                    | "watch"
+            )
+        {
             return validation_error(&format!("'path' is not supported by the '{action}' action"));
         }
 

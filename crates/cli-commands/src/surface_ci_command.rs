@@ -14,8 +14,11 @@ pub struct CiCommandParams {
 }
 
 pub fn handle_ci(params: CiCommandParams) -> ExitCode {
-    match dispatcher::surface_ci_action::collect_ci(params.aggregates, params.path, params.threshold)
-    {
+    match dispatcher::surface_ci_action::collect_ci(
+        params.aggregates,
+        params.path,
+        params.threshold,
+    ) {
         Ok(report) => {
             println!(
                 "Lint Arwaky v{} — CI Architecture Compliance",

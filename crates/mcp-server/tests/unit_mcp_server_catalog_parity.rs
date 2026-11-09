@@ -108,7 +108,10 @@ fn the_catalog_documents_every_entry() {
     // `list_commands` renders description and example straight into the tool
     // result; an empty one reaches the model as an empty string.
     for (name, description, example) in COMMAND_CATALOG {
-        assert!(!description.trim().is_empty(), "`{name}` has no description");
+        assert!(
+            !description.trim().is_empty(),
+            "`{name}` has no description"
+        );
         assert!(!example.trim().is_empty(), "`{name}` has no usage example");
     }
 }

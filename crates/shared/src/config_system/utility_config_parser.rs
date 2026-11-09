@@ -600,19 +600,21 @@ pub fn parse_score_threshold(yaml_str: &str) -> Option<f64> {
 /// The check lives next to `validate_thresholds` because both are part of the
 /// same contract (`AC-LA-003-3`): an invalid threshold *or* adapter value must
 /// stop the run and name the offending key.
-pub fn validate_adapters(config: &crate::taxonomy_config_system_vo::ProjectConfig) -> ValidationResult {
+pub fn validate_adapters(
+    config: &crate::taxonomy_config_system_vo::ProjectConfig,
+) -> ValidationResult {
     // Adapter *names* are an open set — plugins and out-of-tree adapters are
     // legitimate — so only the numeric contract is checked here. The key-name
     // contract is enforced by `#[serde(deny_unknown_fields)]` on `AdapterEntry`.
     let mut errors: Vec<String> = Vec::new();
     for (index, adapter) in config.adapters.iter().enumerate() {
-        if !(adapter.weight > 0.0) {
+        if adapter.weight.partial_cmp(&0.0) != Some(std::cmp::Ordering::Greater) {
             errors.push(format!(
                 "config.adapters[{index}].weight must be positive, got {}",
                 adapter.weight
             ));
         }
-        if !(adapter.timeout > 0.0) {
+        if adapter.timeout.partial_cmp(&0.0) != Some(std::cmp::Ordering::Greater) {
             errors.push(format!(
                 "config.adapters[{index}].timeout must be positive, got {}",
                 adapter.timeout
@@ -656,8 +658,7 @@ pub fn validate_project_config(
 pub fn parse_project_config(
     yaml_str: &str,
 ) -> Result<crate::taxonomy_config_system_vo::ProjectConfig, String> {
-    serde_yaml_ng::from_str(yaml_str)
-        .map_err(|e| format!("Failed to deserialize YAML config: {e}"))
+    serde_yaml_ng::from_str(yaml_str).map_err(|e| format!("Failed to deserialize YAML config: {e}"))
 }
 
 /// Returns names of adapters whose status is "enabled" (default).

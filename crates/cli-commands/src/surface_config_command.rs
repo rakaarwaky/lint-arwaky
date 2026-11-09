@@ -24,7 +24,10 @@ pub fn handle_config_show(orchestrator: Arc<dyn IConfigOrchestratorAggregate>) -
     // file without saying so is how a typo looks like a passing setup.
     if !report.errors.is_empty() {
         println!();
-        println!("Configuration is invalid (exit code {}):", ExitCode::PREREQUISITE_MISSING.value());
+        println!(
+            "Configuration is invalid (exit code {}):",
+            ExitCode::PREREQUISITE_MISSING.value()
+        );
         for error in &report.errors {
             println!("  - {error}");
         }

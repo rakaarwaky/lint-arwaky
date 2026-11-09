@@ -51,7 +51,7 @@ pub fn build_fix_entries(
     let mut entries: Vec<FileEntry> = Vec::new();
     for path in paths {
         let Some(content) = filesystem
-            .execute(FilesystemRequest::read_lintable_file(&path.to_string_lossy()))
+            .execute(FilesystemRequest::read_lintable_file(&path))
             .into_content_opt()
         else {
             continue;
@@ -158,10 +158,7 @@ fn build_report(
 
     let delta = match after {
         Some(after) => {
-            let remaining = after
-                .iter()
-                .filter(|r| is_fixable(r.code.code()))
-                .count();
+            let remaining = after.iter().filter(|r| is_fixable(r.code.code())).count();
             FixDelta::between(before, after).with_remaining_fixable(remaining)
         }
         None => FixDelta::preview(before, &fixable),
@@ -170,7 +167,11 @@ fn build_report(
     let after_count = delta.after_count;
     // A preview is successful when it ran, whatever it found: nothing was
     // written, so "remaining fixable" is a report line, not a failure.
-    let success = if dry_run { !has_failed } else { delta.is_clean() };
+    let success = if dry_run {
+        !has_failed
+    } else {
+        delta.is_clean()
+    };
     FixReport {
         project_path,
         dry_run,
@@ -196,12 +197,8 @@ fn run_fix(
     fix_orchestrator: Arc<dyn IFixAggregate>,
     ignored: &[String],
 ) -> FixReport {
-    let before = run_analysis_with_fix_entries(
-        &code_analysis_linter,
-        &filesystem,
-        &project_path,
-        ignored,
-    );
+    let before =
+        run_analysis_with_fix_entries(&code_analysis_linter, &filesystem, &project_path, ignored);
 
     let fix_result = fix_orchestrator
         .execute(FixRequest::execute(&project_path, dry_run))

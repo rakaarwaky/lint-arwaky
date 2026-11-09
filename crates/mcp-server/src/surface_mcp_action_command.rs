@@ -236,14 +236,13 @@ impl McpActionSurface {
             filesystem: self.deps.fs_seam.clone(),
             scan_aggregates: Some(self.scan_aggregates()),
         };
-        let scan_result = match Self::run_blocking(move || {
-            dispatcher::surface_check_action::collect_scan(opts)
-        })
-        .await
-        {
-            Ok(scan_result) => scan_result,
-            Err(e) => return e,
-        };
+        let scan_result =
+            match Self::run_blocking(move || dispatcher::surface_check_action::collect_scan(opts))
+                .await
+            {
+                Ok(scan_result) => scan_result,
+                Err(e) => return e,
+            };
         match scan_result {
             Ok(violations) => {
                 let mut members: std::collections::BTreeMap<String, usize> =
@@ -259,9 +258,7 @@ impl McpActionSurface {
                         .collect::<Vec<_>>()
                         .join("/");
                     *members.entry(member).or_insert(0) += 1;
-                    *codes
-                        .entry(violation.code.code().to_string())
-                        .or_insert(0) += 1;
+                    *codes.entry(violation.code.code().to_string()).or_insert(0) += 1;
                 }
                 serde_json::json!({
                     "status": "ok",
@@ -786,10 +783,7 @@ impl McpActionSurface {
             return error;
         }
         let response = match action {
-            "check" | "scan" => {
-                self.execute_check(path, member.as_deref(), rules.as_deref())
-                    .await
-            }
+            "check" | "scan" => self.execute_check(path, member, rules).await,
             "ci" => self.execute_ci(path, threshold).await,
             "fix" => self.execute_fix(path, dry_run).await,
             "doctor" => self.execute_doctor().await,

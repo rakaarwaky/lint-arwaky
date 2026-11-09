@@ -20,7 +20,8 @@ fn valid_yaml() -> String {
 
 #[test]
 fn a_valid_project_block_parses() {
-    let config: ProjectConfig = parse_project_config(&valid_yaml()).expect("valid config must parse");
+    let config: ProjectConfig =
+        parse_project_config(&valid_yaml()).expect("valid config must parse");
     assert_eq!(config.thresholds.score.value(), 95.0);
     assert_eq!(config.thresholds.max_file_lines.value(), 400);
     assert_eq!(config.adapters.len(), 1);
@@ -50,8 +51,8 @@ fn a_bare_null_key_needs_pruning_before_deserialise() {
     // it, every run against the project's own config would report a schema
     // error the operator could only silence by inventing an empty list.
     let yaml = "project_name: lint-arwaky\nadapters:\n  - name: clippy\nignored_paths:\n";
-    let error = parse_project_config(yaml)
-        .expect_err("a bare null does not deserialise into FilePathList");
+    let error =
+        parse_project_config(yaml).expect_err("a bare null does not deserialise into FilePathList");
     assert!(!error.is_empty());
 }
 
@@ -110,7 +111,10 @@ fn an_out_of_range_score_fails_validation_and_names_the_key() {
     let result = validate_project_config(&config);
     assert!(!result.is_valid, "score 250 must be rejected");
     assert!(
-        result.reason.unwrap_or_default().contains("thresholds.score"),
+        result
+            .reason
+            .unwrap_or_default()
+            .contains("thresholds.score"),
         "the reason must name the dotted key"
     );
 }
