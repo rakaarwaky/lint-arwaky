@@ -852,11 +852,10 @@ mod tests {
 
     /// Issue 4 regression: explicit `workspace_root`/`parent_workspace` recompute
     /// `parent_workspace = workspace_root.parent()`. Relative violation paths
-    /// that miss the scan target fall back to `workspace_root` (exercising
-    /// `resolve_violation_path`'s `workspace_root` branch), and AES205
-    /// violations resolve against `parent_workspace` (exercising the
-    /// `parent_workspace` scope branches). A violation under the subfolder
-    /// report target is kept while a sibling outside it is dropped.
+    /// force the `workspace_root` fallback branch in `resolve_violation_path`;
+    /// AES205 violations under `parent_workspace` exercise that scope branch;
+    /// `member_dirs=None` covers the non-member path. A violation under the
+    /// subfolder report target is kept while a sibling outside it is dropped.
     #[test]
     fn explicit_workspace_root_and_parent_workspace_scope() {
         let tmp = tempfile::TempDir::new().unwrap();

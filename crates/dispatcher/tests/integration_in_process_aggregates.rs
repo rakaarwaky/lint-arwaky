@@ -264,6 +264,10 @@ fn collect_scan_json_anchors_to_report_target() {
         "violations must be anchored under report_target {report_target}, got none"
     );
     let mut saw_aes102 = false;
+    // Per-violation codes are pinned to the fixture's known set; they derive
+    // from `workspaces-bad/crates/naming_violations` and must be revisited if
+    // that fixture's rule set drifts. The `saw_aes102` presence check plus
+    // `starts_with(&target)` anchoring carry the regression regardless.
     let known_codes = ["AES101", "AES102", "AES302", "AES303", "AES403", "AES405"];
     for v in &violations {
         let code = v.code.code();
