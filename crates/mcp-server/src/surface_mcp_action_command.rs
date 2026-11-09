@@ -121,7 +121,16 @@ impl McpActionSurface {
     }
 
     /// Run check/scan — all linters combined via dispatcher.
-    pub async fn execute_check(&self, path: &str) -> serde_json::Value {
+    ///
+    /// `member` and `rules` are forwarded to `ScanOptions`; dropping them made
+    /// a member-scoped scan silently cover the whole workspace.
+    pub async fn execute_check(
+        &self,
+        path: &str,
+        member: Option<&str>,
+        rules: Option<&str>,
+        strict: bool,
+    ) -> serde_json::Value {
         let fp = match self.to_fp(path) {
             Ok(f) => f,
             Err(e) => return e,
@@ -129,22 +138,12 @@ impl McpActionSurface {
         let opts = dispatcher::surface_check_action::ScanOptions {
             path: Some(fp),
             multi_project_orchestrator: Some(self.deps.config_orchestrator.clone()),
-            filter: None,
-            member: None,
-            filesystem: Arc::new(self.deps.fs_seam.as_ref().clone()),
-            scan_aggregates: Some(dispatcher::surface_check_action::ScanAggregates {
-                quality: self.deps.code_analysis_linter.clone(),
-                role: self.deps.role_orchestrator.clone(),
-                import: self.deps.import_orchestrator.clone(),
-                naming: self.deps.naming_orchestrator.clone(),
-                external: self.deps.external_lint.clone(),
-                orphan: self.deps.orphan_orchestrator.clone(),
-                config: self.deps.config_orchestrator.clone(),
-                structure: self.deps.structure_orchestrator.clone(),
-                doc: self.deps.doc_orchestrator.clone(),
-                config_file_reader: self.deps.config_file_reader.clone(),
-                fs_seam: self.deps.fs_seam.clone(),
-            }),
+            filter: rules.map(str::to_string),
+            member: member.map(str::to_string),
+            // `ScanOptions.filesystem` is the seam handle; cloning the whole
+            // `FilesystemSeam` here allocated a fresh copy per tool call.
+            filesystem: self.deps.fs_seam.clone(),
+            scan_aggregates: Some(self.scan_aggregates()),
         };
         let scan_result =
             match Self::run_blocking(move || dispatcher::surface_check_action::collect_scan(opts))
@@ -172,33 +171,35 @@ impl McpActionSurface {
     }
 
     /// Run CI — scoring + threshold via dispatcher.
+    ///
+    /// `ci` scores the same ten rule groups as `scan`, so it gets the same
+    /// aggregate bundle. A private six-field struct is how the gate silently
+    /// dropped structure and doc coverage.
     pub async fn execute_ci(&self, path: &str, threshold: u64) -> serde_json::Value {
         let fp = match self.to_fp(path) {
             Ok(f) => f,
             Err(e) => return e,
         };
-        match dispatcher::surface_ci_action::collect_ci(
-            dispatcher::surface_ci_action::CiScanDeps {
-                code_analysis_linter: self.deps.code_analysis_linter.clone(),
-                import_orchestrator: self.deps.import_orchestrator.clone(),
-                naming_orchestrator: self.deps.naming_orchestrator.clone(),
-                config_orchestrator: self.deps.config_orchestrator.clone(),
-                orphan_orchestrator: self.deps.orphan_orchestrator.clone(),
-                filesystem: self.deps.filesystem.clone(),
-            },
-            Some(fp),
-            match u32::try_from(threshold)
-                .ok()
-                .and_then(|value| Threshold::try_new(value).ok())
-            {
-                Some(threshold) => threshold,
-                None => {
-                    return error_response(
-                        "Invalid 'threshold': expected an integer from 0 to 100",
-                    );
-                }
-            },
-        ) {
+        let threshold = match u32::try_from(threshold)
+            .ok()
+            .and_then(|value| Threshold::try_new(value).ok())
+        {
+            Some(threshold) => threshold,
+            None => {
+                return error_response("Invalid 'threshold': expected an integer from 0 to 100");
+            }
+        };
+        let aggregates = self.scan_aggregates();
+        let path_owned = path.to_string();
+        let ci_result = match Self::run_blocking(move || {
+            dispatcher::surface_ci_action::collect_ci(aggregates, Some(fp), threshold)
+        })
+        .await
+        {
+            Ok(ci_result) => ci_result,
+            Err(e) => return e,
+        };
+        match ci_result {
             Ok(report) => {
                 let exit_code = if report.pass { 0 } else { 1 };
                 serde_json::json!({
@@ -206,14 +207,139 @@ impl McpActionSurface {
                     "result": if report.pass { "pass" } else { "fail" },
                     "action": "ci",
                     "threshold": report.threshold,
-                    "path": path,
+                    "path": path_owned,
                     "exit_code": exit_code,
                     "total_violations": report.total_violations,
                     "score": report.score,
+                    "groups_run": report.groups_run,
                     "reasons": report.reasons,
                 })
             }
             Err(e) => serde_json::json!({"error": e, "exit_code": 2}),
+        }
+    }
+
+    /// Per-member and per-code violation counts — the JSON half of `report`.
+    ///
+    /// The delta half stays CLI-only: it reads and writes the persisted
+    /// snapshot store, which an MCP client should not mutate as a side effect
+    /// of asking a question.
+    pub async fn execute_report(&self, path: &str) -> serde_json::Value {
+        let fp = match self.to_fp(path) {
+            Ok(f) => f,
+            Err(error) => return error,
+        };
+        let opts = dispatcher::surface_check_action::ScanOptions {
+            path: Some(fp),
+            multi_project_orchestrator: Some(self.deps.config_orchestrator.clone()),
+            filter: None,
+            member: None,
+            filesystem: self.deps.fs_seam.clone(),
+            scan_aggregates: Some(self.scan_aggregates()),
+        };
+        let scan_result = match Self::run_blocking(move || {
+            dispatcher::surface_check_action::collect_scan(opts)
+        })
+        .await
+        {
+            Ok(scan_result) => scan_result,
+            Err(e) => return e,
+        };
+        match scan_result {
+            Ok(violations) => {
+                let mut members: std::collections::BTreeMap<String, usize> =
+                    std::collections::BTreeMap::new();
+                let mut codes: std::collections::BTreeMap<String, usize> =
+                    std::collections::BTreeMap::new();
+                for violation in &violations {
+                    let member = violation
+                        .file
+                        .value
+                        .split('/')
+                        .take(2)
+                        .collect::<Vec<_>>()
+                        .join("/");
+                    *members.entry(member).or_insert(0) += 1;
+                    *codes
+                        .entry(violation.code.code().to_string())
+                        .or_insert(0) += 1;
+                }
+                serde_json::json!({
+                    "status": "ok",
+                    "result": "complete",
+                    "action": "report",
+                    "path": path,
+                    "exit_code": 0,
+                    "total_violations": violations.len(),
+                    "members": members,
+                    "codes": codes,
+                })
+            }
+            Err(e) => serde_json::json!({"error": e, "exit_code": 2}),
+        }
+    }
+
+    /// Run the git-diff scan — the verb the catalog advertised but never
+    /// dispatched. `base` is validated by the dispatcher before it reaches
+    /// `git` (see `is_valid_ref`), so a flag-shaped ref cannot be injected.
+    pub async fn execute_git(&self, path: &str, base: &str) -> serde_json::Value {
+        let fp = match self.to_fp(path) {
+            Ok(f) => f,
+            Err(error) => return error,
+        };
+        let linter = self.deps.code_analysis_linter.clone();
+        let base = shared_common::GitBranchName::new(base.to_string());
+        let path_owned = path.to_string();
+        let git_result = match Self::run_blocking(move || {
+            dispatcher::surface_git_action::collect_git_diff(
+                linter,
+                base,
+                Some(&fp.value),
+                None,
+            )
+        })
+        .await
+        {
+            Ok(git_result) => git_result,
+            Err(e) => return e,
+        };
+        match git_result {
+            Ok(report) => {
+                let exit_code = if report.total_violations == 0 { 0 } else { 1 };
+                serde_json::json!({
+                    "status": if exit_code == 0 { "ok" } else { "warning" },
+                    "result": if exit_code == 0 { "clean" } else { "violations" },
+                    "action": "git",
+                    "path": path_owned,
+                    "base": report.base,
+                    "files_changed": report.files.len(),
+                    "exit_code": exit_code,
+                    "total_violations": report.total_violations,
+                })
+            }
+            // A bad base ref is a runtime error, never a clean scan: the old
+            // CLI path read an empty change list as "0 violations".
+            Err(e) => serde_json::json!({"error": e, "exit_code": 2}),
+        }
+    }
+
+    /// The aggregate bundle every scan-family verb runs. One builder, so a
+    /// verb can never quietly omit a rule group.
+    fn scan_aggregates(&self) -> dispatcher::surface_check_action::ScanAggregates {
+        dispatcher::surface_check_action::ScanAggregates {
+            quality: self.deps.code_analysis_linter.clone(),
+            role: self.deps.role_orchestrator.clone(),
+            import: self.deps.import_orchestrator.clone(),
+            naming: self.deps.naming_orchestrator.clone(),
+            external: self.deps.external_lint.clone(),
+            orphan: self.deps.orphan_orchestrator.clone(),
+            config: self.deps.config_orchestrator.clone(),
+            structure: self.deps.structure_orchestrator.clone(),
+            doc: self.deps.doc_orchestrator.clone(),
+            config_file_reader: self.deps.config_file_reader.clone(),
+            // Hold the Arc: cloning the seam copied three `Arc<dyn …>` handles
+            // into a fresh allocation on every single tool call.
+            fs_seam: self.deps.fs_seam.clone(),
         }
     }
 
@@ -234,22 +360,12 @@ impl McpActionSurface {
         let opts = dispatcher::surface_check_action::ScanOptions {
             path: Some(fp),
             multi_project_orchestrator: Some(self.deps.config_orchestrator.clone()),
-            filter: None,
-            member: None,
-            filesystem: Arc::new(self.deps.fs_seam.as_ref().clone()),
-            scan_aggregates: Some(dispatcher::surface_check_action::ScanAggregates {
-                quality: self.deps.code_analysis_linter.clone(),
-                role: self.deps.role_orchestrator.clone(),
-                import: self.deps.import_orchestrator.clone(),
-                naming: self.deps.naming_orchestrator.clone(),
-                external: self.deps.external_lint.clone(),
-                orphan: self.deps.orphan_orchestrator.clone(),
-                config: self.deps.config_orchestrator.clone(),
-                structure: self.deps.structure_orchestrator.clone(),
-                doc: self.deps.doc_orchestrator.clone(),
-                config_file_reader: self.deps.config_file_reader.clone(),
-                fs_seam: self.deps.fs_seam.clone(),
-            }),
+            filter: rules.map(str::to_string),
+            member: member.map(str::to_string),
+            // `ScanOptions.filesystem` is the seam handle; cloning the whole
+            // `FilesystemSeam` here allocated a fresh copy per tool call.
+            filesystem: self.deps.fs_seam.clone(),
+            scan_aggregates: Some(self.scan_aggregates()),
         };
         let layer_str = layer.to_string();
         let layer_result = match Self::run_blocking(move || {
@@ -280,15 +396,28 @@ impl McpActionSurface {
     }
 
     /// Run fix — auto-fix with dry_run support via dispatcher.
+    ///
+    /// The exit code comes from `FixReport::verdict`, the same decision the CLI
+    /// makes. This arm used to answer 0 for a partial fix while the CLI
+    /// answered 1, so an agent gating on `exit_code` saw a clean tree.
     pub async fn execute_fix(&self, path: &str, dry_run: bool) -> serde_json::Value {
         let fp = match self.to_fp(path) {
             Ok(f) => f,
             Err(error) => return error,
         };
         let linter = self.deps.code_analysis_linter.clone();
+        let filesystem = self.deps.filesystem.clone();
         let factory = self.deps.fix_orchestrator_factory.clone();
+        let path_owned = path.to_string();
         let fix_result = match Self::run_blocking(move || {
-            dispatcher::surface_fix_action::collect_fix(Some(fp), dry_run, linter, factory)
+            dispatcher::surface_fix_action::collect_fix(
+                Some(fp),
+                dry_run,
+                linter,
+                filesystem,
+                factory,
+                &[],
+            )
         })
         .await
         {
@@ -297,15 +426,8 @@ impl McpActionSurface {
         };
         match fix_result {
             Ok(report) => {
-                let exit_code = if report.has_failed {
-                    2 // runtime error — any Failed(reason) outranks policy fail
-                } else if report.success {
-                    0
-                } else if report.fixed_count > 0 {
-                    1 // partial fix — violations remain
-                } else {
-                    0
-                };
+                let verdict = report.verdict();
+                let exit_code = verdict.value();
                 let status = if report.has_failed {
                     "error"
                 } else if report.success {
@@ -314,16 +436,30 @@ impl McpActionSurface {
                     "partial"
                 };
                 serde_json::json!({
-                    "status": if status == "success" { "ok" } else if status == "partial" { "warning" } else { "error" },
+                    "status": if verdict == shared_common::ExitCode::OK {
+                        "ok"
+                    } else if verdict == shared_common::ExitCode::POLICY_FAIL {
+                        "warning"
+                    } else {
+                        "error"
+                    },
                     "result": status,
                     "action": "fix",
-                    "path": path,
+                    "path": path_owned,
                     "dry_run": report.dry_run,
                     "exit_code": exit_code,
                     "message": report.output,
                     "before_count": report.before_count,
                     "after_count": report.after_count,
                     "fixed_count": report.fixed_count,
+                    "remaining_fixable": report.remaining_fixable,
+                    "resolved": report.resolved.iter().map(|r| r.code.code()).collect::<Vec<_>>(),
+                    "introduced": report.introduced.iter().map(|r| serde_json::json!({
+                        "code": r.code.code(),
+                        "file": r.file.value,
+                        "line": r.line.value(),
+                        "message": r.message.value,
+                    })).collect::<Vec<_>>(),
                 })
             }
             Err(e) => serde_json::json!({"error": e, "exit_code": 2}),
@@ -590,12 +726,19 @@ impl McpActionSurface {
         path: &str,
         threshold: u64,
         dry_run: bool,
+        base: &str,
+        member: Option<&str>,
+        rules: Option<&str>,
+        strict: bool,
     ) -> serde_json::Value {
         if let Err(error) = self.authorize_action(action) {
             return error;
         }
         let response = match action {
-            "check" | "scan" => self.execute_check(path).await,
+            "check" | "scan" => {
+                self.execute_check(path, member.as_deref(), rules.as_deref())
+                    .await
+            }
             "ci" => self.execute_ci(path, threshold).await,
             "fix" => self.execute_fix(path, dry_run).await,
             "doctor" => self.execute_doctor().await,
@@ -605,7 +748,7 @@ impl McpActionSurface {
             "import" => self.execute_import(path).await,
             "naming" => self.execute_naming(path).await,
             "role" => self.execute_role(path).await,
-            "docs" => self.execute_docs(path).await,
+            "docs" => self.execute_docs(path, strict).await,
             "external" => self.execute_external(path).await,
             "taxonomy" => self.execute_layer_scan(path, LAYER_TAXONOMY, action).await,
             "contract" => self.execute_layer_scan(path, LAYER_CONTRACT, action).await,
@@ -671,12 +814,16 @@ impl McpActionSurface {
             "mcp-config" => {
                 serde_json::json!({"error": "mcp-config requires transport configuration — use CLI for full setup", "exit_code": 2})
             }
-            "config-show" => {
+            // The catalog advertises `config`; the arm only matched the
+            // internal spelling, so the advertised name answered exit 2.
+            "report" => self.execute_report(path).await,
+            "config" | "config-show" => {
                 let result = self.handle_get_config(path, None);
                 serde_json::from_str(&result).unwrap_or_else(
                     |_| serde_json::json!({"error": "Failed to serialize config", "exit_code": 2}),
                 )
             }
+            "git" => self.execute_git(path, base).await,
             _ => {
                 serde_json::json!({"error": format!("Unknown action: {}", action), "exit_code": 2})
             }
@@ -685,9 +832,9 @@ impl McpActionSurface {
     }
 
     /// Run docs audit via dispatcher (delegates to the docs-scaffold action module).
-    pub async fn execute_docs(&self, path: &str) -> serde_json::Value {
+    pub async fn execute_docs(&self, path: &str, strict: bool) -> serde_json::Value {
         crate::surface_mcp_docs_scaffold_command::McpDocsScaffoldSurface
-            .execute_docs(self, path)
+            .execute_docs(self, path, strict)
             .await
     }
 

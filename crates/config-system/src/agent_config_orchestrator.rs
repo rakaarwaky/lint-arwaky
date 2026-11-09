@@ -18,6 +18,9 @@ use shared_config_system::taxonomy_config_system_request::ConfigRequest;
 use shared_config_system::taxonomy_config_system_response::ConfigResponse;
 use shared_config_system::taxonomy_config_system_vo::ArchitectureConfig;
 use shared_config_system::taxonomy_config_system_vo::ConfigResult;
+use shared_config_system::taxonomy_config_system_vo::ProjectConfig;
+use shared_config_system::utility_config_parser::parse_project_config;
+use shared_config_system::utility_config_parser::validate_project_config;
 use shared_config_system::taxonomy_config_system_vo::ConfigSource;
 use shared_config_system::taxonomy_config_system_vo::WorkspaceInfo;
 use shared_config_system::utility_config_parser::default_config_for_language;
@@ -39,6 +42,14 @@ struct CachedConfig {
     content_hash: u64,
     config: Arc<ArchitectureConfig>,
 }
+
+/// Hard bound on the parse cache.
+///
+/// `DashMap::with_capacity(32)` only pre-allocates — it never evicts — so a
+/// long-lived process (the MCP server, which holds one orchestrator for hours
+/// and can be pointed at many roots) grew this map without limit. One entry
+/// per distinct config path, bounded at 64, is ample for any real workspace.
+const CONFIG_CACHE_CAPACITY: usize = 64;
 
 pub struct ConfigOrchestrator {
     deps: ConfigOrchestratorDeps,
@@ -86,7 +97,29 @@ impl ConfigOrchestrator {
                     );
                 }
                 let config = self.merge_and_fill_defaults_cached(&source, language);
-                ConfigResult::new(config, source, warnings)
+
+                // The file was found and read — so the values in it must hold.
+                // This used to be a warning at most, which meant a `threshold:`
+                // typo left the effective gate at the embedded default of 80
+                // and every command still exited 0.
+                let parsed_project = parse_project_block(&source.raw_content);
+                let mut errors = Vec::new();
+                if let Some(project) = parsed_project.as_ref() {
+                    let validation = validate_project_config(project);
+                    if !validation.is_valid {
+                        errors.push(format!(
+                            "Invalid configuration in {}: {}",
+                            source.path.value,
+                            validation.reason.unwrap_or_default()
+                        ));
+                    }
+                } else if let Err(reason) = &parse_strictness_error(&source.raw_content) {
+                    // Unknown keys are rejected by the typed structs; a
+                    // malformed file is reported the same way so the caller
+                    // cannot mistake it for "no config".
+                    errors.push(format!("Invalid configuration in {}: {reason}", source.path.value));
+                }
+                ConfigResult::new(config, source, warnings).with_errors(errors)
             }
             Ok(None) => {
                 let warnings = vec!["No config file found, using built-in defaults".to_string()];
@@ -97,12 +130,17 @@ impl ConfigOrchestrator {
                 )
             }
             Err(e) => {
+                // A config that exists but cannot be read is a prerequisite
+                // failure, not a quiet fall back to defaults: scoring a tree
+                // against settings the operator never wrote is how a broken
+                // config looks like a passing build.
                 let warnings = vec![format!("Config error: {}; using defaults", e)];
                 ConfigResult::new(
                     default_config_for_language(language.as_str()),
                     ConfigSource::new(language.as_str(), "embedded", ""),
                     warnings,
                 )
+                .with_errors(vec![format!("Cannot read configuration: {e}")])
             }
         }
     }
@@ -206,8 +244,8 @@ impl ConfigOrchestrator {
     pub fn new(deps: ConfigOrchestratorDeps) -> Self {
         Self {
             deps,
-            // FR-007: DashMap with pre-allocated capacity 32
-            config_cache: DashMap::with_capacity(32),
+            // FR-007: pre-allocated, and bounded by `evict_if_full`.
+            config_cache: DashMap::with_capacity(CONFIG_CACHE_CAPACITY),
         }
     }
 
@@ -230,6 +268,20 @@ impl ConfigOrchestrator {
         merged
     }
 
+    /// Keep the parse cache bounded.
+    ///
+    /// Evicts one arbitrary entry when at capacity. Which entry goes is not
+    /// important: a miss costs one YAML parse, and the alternative — evicting
+    /// nothing — costs unbounded memory.
+    fn evict_if_full(&self) {
+        if self.config_cache.len() >= CONFIG_CACHE_CAPACITY {
+            let victim = self.config_cache.iter().next().map(|e| e.key().clone());
+            if let Some(victim) = victim {
+                self.config_cache.remove(&victim);
+            }
+        }
+    }
+
     /// Internal cache: parse once per key, serve later reads from the cache.
     fn parse_cached(
         &self,
@@ -246,6 +298,7 @@ impl ConfigOrchestrator {
             return (cached.config.as_ref().clone(), Vec::new());
         }
         let (parsed, warnings) = self.deps.parser.parse_config_yaml_with_warnings(yaml_str);
+        self.evict_if_full();
         self.config_cache.insert(
             cache_key.clone(),
             CachedConfig {
@@ -295,6 +348,37 @@ impl IConfigOrchestratorAggregate for ConfigOrchestrator {
             },
         }
     }
+}
+
+// ─── Config validation helpers ─────
+
+/// Read the top-level project keys out of a config body.
+///
+/// The YAML root is the project block itself (`adapters:`, `ignored_rules:`,
+/// …) with the rule tree nested under `architecture:`. Deserialising the whole
+/// document into `ProjectConfig` would therefore always fail, so the
+/// `architecture:` subtree is stripped first — it is validated by the parser.
+fn parse_project_block(raw: &str) -> Option<ProjectConfig> {
+    let mut value: serde_yaml_ng::Value = serde_yaml_ng::from_str(raw).ok()?;
+    if let Some(map) = value.as_mapping_mut() {
+        map.remove(serde_yaml_ng::Value::String("architecture".to_string()));
+    }
+    let stripped = serde_yaml_ng::to_string(&value).ok()?;
+    parse_project_config(&stripped).ok()
+}
+
+/// Why a config body could not be read as a `ProjectConfig` — surfaced so an
+/// unknown key or bad value names the offending path instead of vanishing.
+fn parse_strictness_error(raw: &str) -> Result<(), String> {
+    let mut value: serde_yaml_ng::Value = match serde_yaml_ng::from_str(raw) {
+        Ok(value) => value,
+        Err(e) => return Err(format!("YAML is not well formed: {e}")),
+    };
+    if let Some(map) = value.as_mapping_mut() {
+        map.remove(serde_yaml_ng::Value::String("architecture".to_string()));
+    }
+    let stripped = serde_yaml_ng::to_string(&value).unwrap_or_default();
+    parse_project_config(&stripped).map(|_| ())
 }
 
 // ─── Block 3: Module Helpers ─────

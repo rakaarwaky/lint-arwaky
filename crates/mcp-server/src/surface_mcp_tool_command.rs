@@ -46,24 +46,21 @@ impl LintArwakyMcpServer {
         Parameters(args): Parameters<ExecuteCommandArgs>,
     ) -> String {
         let action = args.action.clone();
-        let values = args.args.as_ref();
-        let path = match extract_string(values, "path", ".") {
-            Ok(value) => value,
-            Err(error) => return validation_error(&error),
-        };
-        let threshold = match extract_u64(values, "threshold", 80) {
-            Ok(value) if value <= 100 => value,
-            Ok(value) => {
+        // Typed options, not a free-form map: an unknown key is a validation
+        // error instead of a silently ignored argument.
+        let options = args.args.clone().unwrap_or_default();
+        let path = options.path.clone().unwrap_or_else(|| ".".to_string());
+        let threshold = match options.threshold {
+            Some(value) if value <= 100 => value,
+            Some(value) => {
                 return validation_error(&format!(
                     "Invalid value for 'threshold': expected 0..=100, got {value}"
                 ));
             }
-            Err(error) => return validation_error(&error),
+            None => 80,
         };
-        let dry_run = match extract_bool(values, "dry_run", false) {
-            Ok(value) => value,
-            Err(error) => return validation_error(&error),
-        };
+        let dry_run = options.dry_run.unwrap_or(false);
+        let base = options.base.clone().unwrap_or_else(|| "develop".to_string());
 
         tracing::info!(
             target: "lint_arwaky::audit",
@@ -77,7 +74,16 @@ impl LintArwakyMcpServer {
         );
         let result = self
             .action
-            .execute_command(&action, &path, threshold, dry_run)
+            .execute_command(
+                &action,
+                &path,
+                threshold,
+                dry_run,
+                &base,
+                options.member.as_deref(),
+                options.rules.as_deref(),
+                options.strict.unwrap_or(false),
+            )
             .await;
         let exit_code = result
             .get("exit_code")
@@ -191,6 +197,10 @@ impl LintArwakyMcpServer {
     }
 }
 
+// The `extract_*` helpers are retained as the documented shape of the old
+// untyped path and are exercised by the unit tests below; production reads the
+// typed `ExecuteCommandOptions` instead.
+#[allow(dead_code)]
 fn extract_string(
     args: Option<&serde_json::Value>,
     key: &str,
@@ -206,6 +216,7 @@ fn extract_string(
     }
 }
 
+#[allow(dead_code)]
 fn extract_u64(args: Option<&serde_json::Value>, key: &str, default: u64) -> Result<u64, String> {
     let values = extract_args_object(args)?;
     match values.and_then(|values| values.get(key)) {
@@ -216,6 +227,7 @@ fn extract_u64(args: Option<&serde_json::Value>, key: &str, default: u64) -> Res
     }
 }
 
+#[allow(dead_code)]
 fn extract_bool(
     args: Option<&serde_json::Value>,
     key: &str,
@@ -230,6 +242,7 @@ fn extract_bool(
     }
 }
 
+#[allow(dead_code)]
 fn extract_args_object(
     args: Option<&serde_json::Value>,
 ) -> Result<Option<&serde_json::Map<String, serde_json::Value>>, String> {

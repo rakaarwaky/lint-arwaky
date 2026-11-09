@@ -17,6 +17,10 @@ pub struct ConfigShowEntry {
 pub struct ConfigShowReport {
     pub entries: Vec<ConfigShowEntry>,
     pub warnings: Vec<String>,
+    /// Schema errors from the loaded config. Non-empty means the file the
+    /// operator wrote is not the config the linters will run with, which is a
+    /// prerequisite failure (exit 3) rather than a display detail.
+    pub errors: Vec<String>,
 }
 
 /// Redact sensitive values from config content.
@@ -78,5 +82,11 @@ pub fn collect_config_show(
             }
         }
     }
+    // Surface load-time schema errors. `load_project_config` reports them on
+    // `ConfigResult::errors`; without this they were computed and discarded.
+    let loaded = orchestrator
+        .execute(ConfigRequest::load_project_config(&project_root))
+        .into_config_result();
+    report.errors = loaded.errors;
     report
 }

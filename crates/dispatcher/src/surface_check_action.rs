@@ -407,6 +407,10 @@ pub(crate) fn run_all_linters_in_process(
     let mut panics: Vec<String> = Vec::new();
 
     let quality_start = Instant::now();
+    // `CodeAnalysisRequest::RunAnalysis` takes `Vec<FileEntry>` by value, so
+    // this is the one deep copy of the file bodies in a scan. It is taken
+    // first, before any other group borrows `entries`, so the rest of the run
+    // shares one copy instead of cloning per consumer (#1359).
     all.extend(run_isolated("quality", &mut panics, || {
         agg.quality
             .execute(CodeAnalysisRequest::RunAnalysis {

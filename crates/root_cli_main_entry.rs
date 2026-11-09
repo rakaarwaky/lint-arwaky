@@ -585,12 +585,10 @@ fn main() {
         ),
         Command::Ci { path, threshold } => cli_commands::surface_ci_command::handle_ci(
             cli_commands::surface_ci_command::CiCommandParams {
-                code_analysis_linter: code_analysis_linter.clone(),
-                import_orchestrator: import_orchestrator.clone(),
-                naming_orchestrator: naming_orchestrator.clone(),
-                config_orchestrator: config_orchestrator.clone(),
-                orphan_orchestrator: orphan_orchestrator.clone(),
-                filesystem: filesystem.clone(),
+                // `ci` judges the same ten groups as `scan`, so it takes the
+                // same bundle — a second private dependency struct is how the
+                // gate silently lost structure and doc coverage.
+                aggregates: scan_aggregates.clone(),
                 path: Some(FilePath::new(path).unwrap_or_default()),
                 threshold: Threshold::new(threshold),
             },
@@ -602,7 +600,9 @@ fn main() {
             Some(FilePath::new(path).unwrap_or_default()),
             dry_run,
             code_analysis_linter.clone(),
+            filesystem.clone(),
             fix_orchestrator_factory.clone(),
+            &ignored_paths,
         ),
         Command::Git { base, path, filter } => cli_commands::surface_git_command::handle_git_diff(
             code_analysis_linter.clone(),

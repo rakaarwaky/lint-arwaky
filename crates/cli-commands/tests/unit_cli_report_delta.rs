@@ -220,6 +220,74 @@ fn an_absent_file_reads_as_an_empty_store() {
     assert!(store.entries.is_empty());
 }
 
+// ─── BE-5-03: keys that must not collide, and a corrupt store ───────────
+
+#[test]
+fn targets_that_differ_only_by_separator_get_different_keys() {
+    // The old slug collapsed every non-alphanumeric run to '-', so these three
+    // paths shared one key: reporting on `/repo/a-b` overwrote the baseline for
+    // `/repo/a/b`, and the next delta was computed against a different tree.
+    let colliding = ["/repo/a-b", "/repo/a/b", "/repo/a_b"];
+    let keys: std::collections::HashSet<String> =
+        colliding.iter().map(|t| target_key(t)).collect();
+    assert_eq!(
+        keys.len(),
+        colliding.len(),
+        "distinct targets must file distinct baselines: {keys:?}"
+    );
+}
+
+#[test]
+fn the_key_is_stable_across_calls_and_runs() {
+    // The suffix is FNV-1a over the path, written inline precisely because a
+    // persisted key must not change when the toolchain changes `DefaultHasher`.
+    assert_eq!(target_key("/repo/crates/shared"), target_key("/repo/crates/shared"));
+    assert!(target_key("/repo/crates/shared").starts_with("repo-crates-shared-"));
+}
+
+#[test]
+fn a_corrupt_store_is_preserved_not_overwritten() {
+    // A truncated file used to be read as "first run", so the next write
+    // replaced the only remaining copy of every target's baseline. The reader
+    // now moves it aside instead.
+    let dir = tempfile::tempdir().expect("temp dir");
+    let path = dir.path().join("snapshots.json");
+    std::fs::write(&path, "{\"entries\": {\"crates\": ").expect("write truncated json");
+
+    let store = shared_cli_commands::utility_report_snapshot::read_store_at(&path);
+    assert!(store.entries.is_empty(), "a corrupt store reads as empty");
+
+    let quarantine = path.with_extension("corrupt.json");
+    assert!(
+        quarantine.exists(),
+        "the unreadable store must be kept at {}",
+        quarantine.display()
+    );
+    assert_eq!(
+        std::fs::read_to_string(&quarantine).expect("quarantined file readable"),
+        "{\"entries\": {\"crates\": ",
+        "the quarantined copy must be byte-identical"
+    );
+}
+
+#[test]
+fn a_write_after_a_corrupt_read_starts_a_fresh_store() {
+    let dir = tempfile::tempdir().expect("temp dir");
+    let path = dir.path().join("snapshots.json");
+    std::fs::write(&path, "not json at all").expect("write garbage");
+
+    let snapshot = ReportSnapshot {
+        taken_at: 1_700_000_001,
+        members: BTreeMap::from([("crates/shared".to_string(), 4usize)]),
+        codes: BTreeMap::new(),
+    };
+    shared_cli_commands::utility_report_snapshot::write_store_at(&path, "crates", snapshot)
+        .expect("write succeeds over a corrupt store");
+
+    let store = shared_cli_commands::utility_report_snapshot::read_store_at(&path);
+    assert!(store.entries.contains_key(&target_key("crates")));
+}
+
 /// The renderer lists every member. The table used to stop after 20 rows and
 /// print "… and N more members", which hid the members that had cleared and
 /// left the visible rows short of `Total`. `render_report` writes straight to

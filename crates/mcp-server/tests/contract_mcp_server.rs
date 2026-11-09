@@ -95,7 +95,55 @@ fn execute_command_args_accepts_minimal_and_full_shapes() {
     )
     .expect("full args must deserialize");
     assert_eq!(full.action, "ci");
-    assert_eq!(full.args.as_ref().unwrap()["path"], "/tmp/proj");
+    let opts = full.args.as_ref().expect("args present");
+    assert_eq!(opts.path.as_deref(), Some("/tmp/proj"));
+    assert_eq!(opts.threshold, Some(90));
+}
+
+#[test]
+fn execute_command_args_rejects_an_unknown_argument() {
+    // Arguments used to be an untyped map and every unrecognised key was
+    // dropped in silence: a caller asking for `member: "billing"` got a
+    // workspace-wide scan and no way to tell the difference.
+    let unknown: Result<ExecuteCommandArgs, _> = serde_json::from_value(serde_json::json!({
+        "action": "scan",
+        "args": { "path": ".", "menber": "billing" }
+    }));
+    let error = unknown.expect_err("unknown argument must be rejected");
+    assert!(
+        error.to_string().contains("menber"),
+        "the error must name the bad key, got: {error}"
+    );
+}
+
+#[test]
+fn execute_command_args_forwards_the_documented_arguments() {
+    let args: ExecuteCommandArgs = serde_json::from_value(serde_json::json!({
+        "action": "scan",
+        "args": {
+            "path": ".",
+            "member": "billing",
+            "rules": "AES101",
+            "layer": "taxonomy",
+            "format": "json",
+            "group": "quality",
+            "base": "origin/main",
+            "strict": true,
+            "dry_run": true,
+            "threshold": 90
+        }
+    }))
+    .expect("every documented argument must deserialize");
+    let opts = args.args.expect("args present");
+    assert_eq!(opts.member.as_deref(), Some("billing"));
+    assert_eq!(opts.rules.as_deref(), Some("AES101"));
+    assert_eq!(opts.layer.as_deref(), Some("taxonomy"));
+    assert_eq!(opts.format.as_deref(), Some("json"));
+    assert_eq!(opts.group.as_deref(), Some("quality"));
+    assert_eq!(opts.base.as_deref(), Some("origin/main"));
+    assert_eq!(opts.strict, Some(true));
+    assert_eq!(opts.dry_run, Some(true));
+    assert_eq!(opts.threshold, Some(90));
 }
 
 #[test]

@@ -7,9 +7,55 @@ use serde::Deserialize;
 pub struct ExecuteCommandArgs {
     /// The command action to execute (e.g. "scan", "check", "security", "doctor")
     pub action: String,
-    /// Additional arguments. For scan/check: {"path": "/absolute/path/to/project"}.
-    /// Path MUST be absolute — relative paths resolve from MCP server cwd, not your project.
-    pub args: Option<serde_json::Value>,
+    /// Action arguments. `path` resolves against the confined workspace root;
+    /// `member`, `rules`, `layer`, `format`, `group`, `base` and `strict` are
+    /// forwarded to the verb that owns them.
+    ///
+    /// Unknown keys are rejected rather than ignored: a silently dropped
+    /// `member` widened a member-scoped scan to the whole workspace, and the
+    /// caller could not tell the two results apart.
+    pub args: Option<ExecuteCommandOptions>,
+}
+
+/// Every argument any CLI verb accepts through `execute_command`.
+///
+/// One flat struct rather than per-action enums because the action name is
+/// already the discriminator; the cost is that an argument is accepted for a
+/// verb that ignores it, which is reported rather than silently dropped.
+#[derive(Debug, Default, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct ExecuteCommandOptions {
+    /// Workspace-confined path. Relative paths resolve against the configured
+    /// workspace root, not the MCP server cwd.
+    #[serde(default)]
+    pub path: Option<String>,
+    /// CI score threshold (0–100).
+    #[serde(default)]
+    pub threshold: Option<u64>,
+    /// Preview without writing (fix, docs_scaffold).
+    #[serde(default)]
+    pub dry_run: Option<bool>,
+    /// Restrict a scan to one workspace member by name.
+    #[serde(default)]
+    pub member: Option<String>,
+    /// Filter reported violations by AES rule code.
+    #[serde(default)]
+    pub rules: Option<String>,
+    /// Filter reported violations by AES layer (taxonomy, contract, agent, …).
+    #[serde(default)]
+    pub layer: Option<String>,
+    /// Output format for verbs that render violations (text, json, sarif, junit).
+    #[serde(default)]
+    pub format: Option<String>,
+    /// Restrict `scan` to one linter group.
+    #[serde(default)]
+    pub group: Option<String>,
+    /// Git base ref for the `git` verb.
+    #[serde(default)]
+    pub base: Option<String>,
+    /// Force strict doc auditing for `docs`.
+    #[serde(default)]
+    pub strict: Option<bool>,
 }
 
 #[derive(Debug, Deserialize, JsonSchema)]

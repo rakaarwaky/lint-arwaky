@@ -12,13 +12,17 @@ pub fn handle_fix(
     path: Option<FilePath>,
     dry_run: bool,
     code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
+    filesystem: Arc<dyn shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate>,
     fix_orchestrator_factory: Arc<dyn Fn(bool) -> Arc<dyn IFixAggregate> + Send + Sync>,
+    ignored: &[String],
 ) -> ExitCode {
     match dispatcher::surface_fix_action::collect_fix(
         path,
         dry_run,
         code_analysis_linter,
+        filesystem,
         fix_orchestrator_factory,
+        ignored,
     ) {
         Ok(report) => {
             if report.dry_run {
@@ -44,31 +48,42 @@ pub fn handle_fix(
 
             if report.dry_run {
                 println!("Dry-run complete — no changes applied.");
-                if report.has_failed {
-                    error!("one or more fix previews failed with a runtime error");
-                    ExitCode::RUNTIME_ERROR
-                } else {
-                    ExitCode::OK
-                }
             } else {
                 println!(
                     "Fixed {} violations ({} remaining)",
                     report.fixed_count, report.after_count
                 );
-                if report.has_failed {
-                    // Any per-item Failed(reason) is a runtime error, per the
-                    // PRD Exit Code Contract `fix` aggregation rule. It must
-                    // outrank the policy-fail branch below.
-                    error!("one or more fix attempts failed with a runtime error");
-                    ExitCode::RUNTIME_ERROR
-                } else if report.success {
-                    println!("Fix complete — all violations resolved.");
-                    ExitCode::OK
-                } else {
-                    info!("fix complete — {} violations remain.", report.after_count);
-                    ExitCode::POLICY_FAIL
+                if !report.resolved.is_empty() {
+                    println!("Resolved:");
+                    for r in &report.resolved {
+                        println!("  [{}] {}", r.code.code(), r.message.value());
+                    }
                 }
             }
+
+            // A fix that introduced a finding made the tree worse. Report it
+            // explicitly: the count delta alone looked like a no-op.
+            if !report.introduced.is_empty() {
+                println!();
+                println!("Introduced by this run (regression):");
+                for r in &report.introduced {
+                    let loc = format_location(r.file.value(), r.line.value(), r.column.value());
+                    println!("  {} [{}] {}", loc, r.code.code(), r.message.value());
+                }
+            }
+
+            let verdict = report.verdict();
+            if report.has_failed {
+                error!("one or more fix attempts failed with a runtime error");
+            } else if verdict == ExitCode::OK && !report.dry_run {
+                println!("Fix complete — all violations resolved.");
+            } else if verdict == ExitCode::POLICY_FAIL {
+                info!(
+                    "fix complete — {} fixable violation(s) remain.",
+                    report.remaining_fixable
+                );
+            }
+            verdict
         }
         Err(e) => {
             error!(error = %e, "operation failed");

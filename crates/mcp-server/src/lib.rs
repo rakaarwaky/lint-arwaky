@@ -10,5 +10,6 @@ pub mod taxonomy_mcp_server_vo;
 // it moved here because the MCP server is its only consumer (issue #572).
 
 pub use taxonomy_mcp_server_vo::ExecuteCommandArgs;
+pub use taxonomy_mcp_server_vo::ExecuteCommandOptions;
 pub use taxonomy_mcp_server_vo::GetConfigArgs;
 pub use taxonomy_mcp_server_vo::ListCommandsArgs;

@@ -13,7 +13,15 @@ pub struct McpDocsScaffoldSurface;
 
 impl McpDocsScaffoldSurface {
     /// Run docs audit via dispatcher.
-    pub async fn execute_docs(&self, surface: &McpActionSurface, path: &str) -> serde_json::Value {
+    /// `strict` maps the CLI `--strict` flag onto `StrictModeOverride`: the
+    /// argument was silently ignored before, so an agent asking for strict doc
+    /// auditing got whatever the config file happened to say.
+    pub async fn execute_docs(
+        &self,
+        surface: &McpActionSurface,
+        path: &str,
+        strict: bool,
+    ) -> serde_json::Value {
         let fp = match surface.to_fp(path) {
             Ok(fp) => fp,
             Err(error) => return error,
@@ -27,7 +35,11 @@ impl McpDocsScaffoldSurface {
                 doc,
                 &fs_seam,
                 config_file_reader.as_ref(),
-                shared_doc_rules::StrictModeOverride::UseConfigFile,
+                if strict {
+                    shared_doc_rules::StrictModeOverride::ForceStrict
+                } else {
+                    shared_doc_rules::StrictModeOverride::UseConfigFile
+                },
             )
         })
         .await

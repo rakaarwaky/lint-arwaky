@@ -190,15 +190,11 @@ impl SurfaceLintExecutor {
         })
     }
 
+    /// The CI gate scores the same ten rule groups as `scan`, so it is built
+    /// from the same bundle. Delegating is the point: a second struct literal
+    /// here is how `ci` silently stopped scoring structure and doc.
     fn build_ci_deps(&self) -> Option<CiScanDeps> {
-        Some(CiScanDeps {
-            code_analysis_linter: self.code_analysis.clone(),
-            import_orchestrator: self.import_orchestrator.clone()?,
-            naming_orchestrator: self.naming_orchestrator.clone()?,
-            config_orchestrator: self.config_orchestrator.clone()?,
-            orphan_orchestrator: self.orphan_aggregate.clone()?,
-            filesystem: self.filesystem.clone(),
-        })
+        self.build_scan_aggregates()
     }
 
     fn build_orphan_deps(&self) -> Option<OrphanScanDeps> {
@@ -344,10 +340,28 @@ impl SurfaceLintExecutor {
             Ok(path) => path,
             Err(error) => return error,
         });
-        match collect_fix_direct(fp, flags.dry_run, self.code_analysis.clone(), fix_orch) {
+        match collect_fix_direct(
+            fp,
+            flags.dry_run,
+            self.code_analysis.clone(),
+            self.filesystem.clone(),
+            fix_orch,
+            &[],
+        ) {
             Ok(report) => {
                 let mode = if report.dry_run { "DRY-RUN" } else { "LIVE" };
-                let output = format!("[{}] {}", mode, report.output);
+                let mut output = format!("[{}] {}", mode, report.output);
+                if !report.introduced.is_empty() {
+                    output.push_str(&format!(
+                        "\nIntroduced by this run: {}",
+                        report
+                            .introduced
+                            .iter()
+                            .map(|r| r.code.code())
+                            .collect::<Vec<_>>()
+                            .join(", ")
+                    ));
+                }
                 if report.success {
                     LintExecutionResult::success(output, report.fixed_count)
                 } else {
@@ -363,7 +377,8 @@ impl SurfaceLintExecutor {
             Some(d) => d,
             None => {
                 return LintExecutionResult::failure(
-                    "CI validation requires quality, import, naming, orphan, and config aggregates."
+                    "CI validation requires quality, role, import, naming, orphan, \
+external, structure, doc, and config aggregates."
                         .to_string(),
                 );
             }
@@ -385,6 +400,10 @@ impl SurfaceLintExecutor {
                     report.critical,
                     status
                 );
+                output.push_str(&format!(
+                    "\nRule groups scored: {}",
+                    report.groups_run.join(", ")
+                ));
                 if !report.reasons.is_empty() {
                     output.push_str("\nReasons:\n");
                     for r in &report.reasons {
@@ -622,6 +641,13 @@ impl SurfaceLintExecutor {
             for w in &report.warnings {
                 output.push_str(&format!("  {}\n", w));
             }
+        }
+        if !report.errors.is_empty() {
+            output.push_str("\nInvalid configuration — the linters are NOT using this file:\n");
+            for error in &report.errors {
+                output.push_str(&format!("  {error}\n"));
+            }
+            return LintExecutionResult::failure(output);
         }
         LintExecutionResult::success(output, 0)
     }

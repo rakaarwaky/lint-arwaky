@@ -48,7 +48,8 @@ async fn handle_execute_command_wires_path_arg_into_path_validation() {
     // surface has to allow mutations to reach the assertion.
     let args = ExecuteCommandArgs {
         action: "fix".to_string(),
-        args: Some(serde_json::json!({ "path": "" })),
+        args: Some(serde_json::from_value(serde_json::json!({ "path": "" }))
+            .expect("typed options")),
     };
     let server = LintArwakyMcpServer::new(Arc::new(
         mock_common::make_action_surface_allowing_mutations(),
