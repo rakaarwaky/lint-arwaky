@@ -288,12 +288,12 @@ impl McpActionSurface {
         };
         let linter = self.deps.code_analysis_linter.clone();
         let base = shared_common::GitBranchName::new(base.to_string());
-        let path_owned = path.to_string();
+        let path_owned = fp.value.clone();
         let git_result = match Self::run_blocking(move || {
             dispatcher::surface_git_action::collect_git_diff(
                 linter,
                 base,
-                Some(&fp.value),
+                Some(fp.value.as_str()),
                 None,
             )
         })
@@ -596,6 +596,39 @@ impl McpActionSurface {
         }
     }
 
+    /// Run structure rules (AES701–AES706) via dispatcher.
+    ///
+    /// Distinct from `check`: this reports the folder/document layer alone,
+    /// which is what a caller asking for one group expects.
+    pub async fn execute_structure(&self, path: &str) -> serde_json::Value {
+        let fp = match self.to_fp(path) {
+            Ok(f) => f,
+            Err(e) => return e,
+        };
+        let root = fp.value.clone();
+        let root_owned = root.clone();
+        let structure = self.deps.structure_orchestrator.clone();
+        let fs_seam = self.deps.fs_seam.clone();
+        let config_file_reader = self.deps.config_file_reader.clone();
+        let structure_result = match Self::run_blocking(move || {
+            dispatcher::surface_structure_action::collect_structure(
+                &root,
+                structure,
+                &fs_seam,
+                config_file_reader.as_ref(),
+            )
+        })
+        .await
+        {
+            Ok(structure_result) => structure_result,
+            Err(e) => return e,
+        };
+        match structure_result {
+            Ok(violations) => violations_response("structure", &root_owned, &violations),
+            Err(e) => serde_json::json!({"error": e, "exit_code": 2}),
+        }
+    }
+
     /// Run doctor diagnostics via dispatcher.
     pub async fn execute_doctor(&self) -> serde_json::Value {
         let maint = self.deps.maintenance_orchestrator.clone();
@@ -730,7 +763,9 @@ impl McpActionSurface {
         rules: Option<&str>,
         strict: bool,
     ) -> serde_json::Value {
-        let authorization = if action == "fix" {
+        // `fix` and `docs_scaffold` are the two mutating actions with a
+        // preview mode; a dry run is safe in a read-only server.
+        let authorization = if matches!(action, "fix" | "docs_scaffold") {
             self.authorize_action_allow_dry_run(action, dry_run)
         } else {
             self.authorize_action(action)
@@ -754,6 +789,11 @@ impl McpActionSurface {
             "role" => self.execute_role(path).await,
             "docs" => self.execute_docs(path, strict).await,
             "external" => self.execute_external(path).await,
+            "structure" => self.execute_structure(path).await,
+            // The catalogue name is `docs_scaffold`; the catalogue does not
+            // list it, but the tool surface serves it and `is_mutating_action`
+            // already classifies it, so the arm must exist too.
+            "docs_scaffold" => self.execute_docs_scaffold(path, member, dry_run).await,
             "taxonomy" => self.execute_layer_scan(path, LAYER_TAXONOMY, action).await,
             "contract" => self.execute_layer_scan(path, LAYER_CONTRACT, action).await,
             "capabilities" => {

@@ -68,8 +68,12 @@ impl LintArwakyMcpServer {
         if options.dry_run.is_some() && action != "fix" {
             return validation_error("'dry_run' is only supported by the 'fix' action");
         }
-        if options.member.is_some() && !matches!(action.as_str(), "check" | "scan") {
-            return validation_error("'member' is only supported by 'check' and 'scan'");
+        if options.member.is_some()
+            && !matches!(action.as_str(), "check" | "scan" | "docs_scaffold")
+        {
+            return validation_error(
+                "'member' is only supported by 'check', 'scan' and 'docs_scaffold'",
+            );
         }
         if options.rules.is_some() && !matches!(action.as_str(), "check" | "scan") {
             return validation_error("'rules' is only supported by 'check' and 'scan'");
