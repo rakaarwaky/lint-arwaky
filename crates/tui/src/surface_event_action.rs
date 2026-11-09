@@ -546,17 +546,15 @@ impl SurfaceActionHandler {
                 }
             }
             TuiEvent::MouseScrollDown(_col, _row) => {
+                let max_scroll = state.navigation.entries.len().saturating_sub(1);
                 if state.navigation.panel_focus == PanelFocus::Preview {
                     state.preview.scroll = state.preview.scroll.saturating_add(3);
                     state.preview.scroll = state.preview.scroll.min(self.max_preview_scroll(state));
-                } else {
-                    let max_scroll = state.navigation.entries.len().saturating_sub(1);
-                    if state.navigation.scroll_offset < max_scroll {
-                        state.navigation.scroll_offset += 1;
-                        let max_idx = state.navigation.entries.len().saturating_sub(1);
-                        if state.navigation.selected_index < max_idx {
-                            state.navigation.selected_index += 1;
-                        }
+                } else if state.navigation.scroll_offset < max_scroll {
+                    state.navigation.scroll_offset += 1;
+                    let max_idx = state.navigation.entries.len().saturating_sub(1);
+                    if state.navigation.selected_index < max_idx {
+                        state.navigation.selected_index += 1;
                     }
                 }
             }
@@ -802,12 +800,8 @@ impl SurfaceActionHandler {
         if state.actions.pending_confirm.is_some() {
             // The modal is centred on the whole frame, not on the panel band,
             // so the hit-test must use the same rect the renderer draws into.
-            let frame = ratatui::layout::Rect::new(
-                0,
-                0,
-                state.terminal_width,
-                state.terminal_height,
-            );
+            let frame =
+                ratatui::layout::Rect::new(0, 0, state.terminal_width, state.terminal_height);
             let modal = crate::surface_confirm_component::modal_area(frame);
             let on_confirm_line = row == modal.bottom().saturating_sub(2)
                 && col > modal.x

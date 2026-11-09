@@ -98,7 +98,7 @@ clears its rect before drawing, so panel content never bleeds through a modal.
 |---------|----------|-------|-------|
 | Panel border | Every panel | `Borders::ALL` | single line |
 | Confirm border | Destructive-action gate | `ratatui::symbols::border::THICK` | thick line |
-| Confirm border (NO_COLOR) | Same gate, monochrome | `ASCII_BORDER` | `+ - |` |
+| Confirm border (NO_COLOR) | Same gate, monochrome | `ASCII_BORDER` | `+ - \|` |
 | Scrollbar | Vertical right edge | `ScrollbarOrientation::VerticalRight` | `↑`/`↓` end symbols |
 | Separator | Status and header dividers | `│` → `\|` under `NO_COLOR` | one cell |
 | Warning glyph | Violation counts, confirm modal | `⚠` → `!` under `NO_COLOR` | one cell |
