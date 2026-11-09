@@ -1,4 +1,4 @@
-// PURPOSE: MCP surface helpers — JSON response builders and path guards.
+// PURPOSE (surface layer — the `_view` half names MCP JSON rendering): MCP surface helpers — JSON response builders and path guards.
 //
 // Extracted from `surface_mcp_action_command.rs` (AES301: file too large).
 // These pure helpers build JSON envelopes, normalize responses, and guard

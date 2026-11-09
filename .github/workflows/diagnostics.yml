@@ -32,15 +32,6 @@ jobs:
       - name: build cli for self-lint
         run: cargo build --bin lint-arwaky-cli 2>&1 | tail -3
 
-      - name: environment probe
-        if: always()
-        run: |
-          echo "::notice title=self-helpers-exists::$(test -e crates/mcp-server/src/surface_mcp_action_helpers.rs && echo yes || echo no)"
-          echo "::notice title=self-command-lines::$(wc -l < crates/mcp-server/src/surface_mcp_action_command.rs)"
-          ./target/debug/lint-arwaky-cli check crates/mcp-server > /tmp/one.txt 2>&1 || true
-          echo "::notice title=self-mcp-only::$(grep -oP 'Total:\s*\K\d+' /tmp/one.txt | tail -1)"
-          tail -20 /tmp/one.txt | while IFS= read -r l; do echo "::notice title=self-mcp-tail::${l//'%'/%25}"; done
-
       - name: cargo fmt
         if: always()
         run: |

@@ -1,7 +1,8 @@
 // PURPOSE: Module declarations for mcp-server (Surface-only crate)
 // No contract/aggregate/capabilities layers — surface calls dispatcher directly.
 pub mod surface_mcp_action_command;
-pub mod surface_mcp_action_helpers;
+pub mod surface_mcp_action_group_command;
+pub mod surface_mcp_action_view;
 pub mod surface_mcp_docs_scaffold_command;
 pub mod surface_mcp_tool_command;
 pub mod taxonomy_mcp_server_vo;
