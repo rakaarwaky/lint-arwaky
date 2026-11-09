@@ -276,13 +276,11 @@ pub(crate) fn run_all_linters_in_process(
     on_progress: &mut dyn FnMut(String, usize, usize),
 ) -> Vec<ViolationItem> {
     let seam = agg.fs_seam.clone();
-
     let target = std::path::Path::new(path);
     let target_canon =
         canonicalize_via(&seam.aggregate, target).unwrap_or_else(|| std::path::PathBuf::from(path));
     let target_canon_str = target_canon.to_string_lossy().to_string();
     let target_canon_str_ref = target_canon_str.as_str();
-
     tracing::info!(
         target: "lint_arwaky::audit",
         event = "scan_start",
@@ -290,16 +288,13 @@ pub(crate) fn run_all_linters_in_process(
         "scan starting"
     );
     let scan_start = Instant::now();
-
     // W10: build the in-process file index directly from the scan target so
     // member-scoped scans (e.g. `workspaces-bad/crates`) enumerate exactly the
     // files the subprocess linters would see, instead of the parent workspace
     // that `build_file_index_with_ignored` resolves to (which would mix or drop
     // sibling members and produce doubled paths → E902 / missing codes).
     let scan_root = target_canon.clone();
-
     let root_fp = FilePath::new(scan_root.to_string_lossy().to_string()).unwrap_or_default();
-
     let ignored = agg
         .config
         .execute(ConfigRequest::ignored_paths(&root_fp))
@@ -308,7 +303,6 @@ pub(crate) fn run_all_linters_in_process(
         .iter()
         .map(|v| v.to_string())
         .collect::<Vec<String>>();
-
     tracing::debug!(
         target: "lint_arwaky::audit",
         event = "ignored_paths_loaded",
@@ -382,7 +376,6 @@ pub(crate) fn run_all_linters_in_process(
         "entry + import-map index built"
     );
     on_progress("Index built".to_string(), 0, total_files);
-
     // AES103's subject is the files the default walk prunes, so they need their
     // own discovery. The root here is the scan target rather than the
     // workspace root, because a member-dir scan must judge its own test files
@@ -391,7 +384,6 @@ pub(crate) fn run_all_linters_in_process(
         &seam,
         &discover_test_suite_files(&seam, &scan_root, &ignored),
     );
-
     let parent_workspace = target_canon
         .parent()
         .and_then(|p| p.parent())
@@ -400,112 +392,164 @@ pub(crate) fn run_all_linters_in_process(
     // workspace root the orphan scanner resolved — for a member-dir scan target
     // that is one level up (the target's parent), not two.
     let workspace_root = target_canon.parent().map(|p| p.to_path_buf());
-
     let mut all: Vec<ViolationItem> = Vec::new();
     // Capability panics are logged after the scan-scope filters, so an isolated
     // failure is visible without inventing a rule code.
     let mut panics: Vec<String> = Vec::new();
-
-    let quality_start = Instant::now();
-    all.extend(run_isolated("quality", &mut panics, || {
-        agg.quality
-            .execute(CodeAnalysisRequest::RunAnalysis {
-                files: entries.clone(),
-            })
-            .into_violations()
-            .iter()
-            .map(ViolationItem::from_lint_result)
-            .collect::<Vec<_>>()
-    }));
+    // Quality, role, import, naming, and orphan groups run on parallel threads
+    // (wall time = slowest group). Each thread keeps its own panic collector;
+    // findings are re-appended in historical group order for determinism.
+    let parallel_start = Instant::now();
+    let (quality_v, role_v, import_v, naming_v, orphan_v) = {
+        let (quality, role, import, naming, orphan) = std::thread::scope(|s| {
+            let h_quality = s.spawn(|| {
+                let mut group_panics = Vec::new();
+                let group_start = Instant::now();
+                let violations = run_isolated("quality", &mut group_panics, || {
+                    agg.quality
+                        .execute(CodeAnalysisRequest::RunAnalysis {
+                            files: entries.clone(),
+                        })
+                        .into_violations()
+                        .iter()
+                        .map(ViolationItem::from_lint_result)
+                        .collect::<Vec<_>>()
+                });
+                tracing::info!(
+                    target: "lint_arwaky::audit",
+                    event = "quality_done",
+                    violations = violations.len(),
+                    elapsed_ms = group_start.elapsed().as_millis() as u64,
+                    "quality linter complete"
+                );
+                (violations, group_panics)
+            });
+            let h_role = s.spawn(|| {
+                let mut group_panics = Vec::new();
+                let group_start = Instant::now();
+                let violations = run_isolated("role", &mut group_panics, || {
+                    agg.role
+                        .execute(RoleRequest::audit(&entries))
+                        .into_violations()
+                        .iter()
+                        .map(ViolationItem::from_lint_result)
+                        .collect::<Vec<_>>()
+                });
+                tracing::info!(
+                    target: "lint_arwaky::audit",
+                    event = "role_done",
+                    violations = violations.len(),
+                    elapsed_ms = group_start.elapsed().as_millis() as u64,
+                    "role linter complete"
+                );
+                (violations, group_panics)
+            });
+            let h_import = s.spawn(|| {
+                let mut group_panics = Vec::new();
+                let group_start = Instant::now();
+                let violations = run_isolated("import", &mut group_panics, || {
+                    agg.import
+                        .execute(ImportRequest::audit_with_entries_and_imports(
+                            &entries,
+                            &import_map,
+                        ))
+                        .into_violations()
+                        .iter()
+                        .map(ViolationItem::from_lint_result)
+                        .collect::<Vec<_>>()
+                });
+                tracing::info!(
+                    target: "lint_arwaky::audit",
+                    event = "import_done",
+                    violations = violations.len(),
+                    elapsed_ms = group_start.elapsed().as_millis() as u64,
+                    "import linter complete"
+                );
+                (violations, group_panics)
+            });
+            let h_naming = s.spawn(|| {
+                let mut group_panics = Vec::new();
+                let group_start = Instant::now();
+                let violations = run_isolated("naming", &mut group_panics, || {
+                    agg.naming
+                        .execute(NamingRequest::audit_with_tests(&entries, &test_files))
+                        .into_violations()
+                });
+                tracing::info!(
+                    target: "lint_arwaky::audit",
+                    event = "naming_done",
+                    violations = violations.len(),
+                    elapsed_ms = group_start.elapsed().as_millis() as u64,
+                    "naming linter complete"
+                );
+                (violations, group_panics)
+            });
+            let h_orphan = s.spawn(|| {
+                let mut group_panics = Vec::new();
+                let group_start = Instant::now();
+                let violations = run_isolated("orphan", &mut group_panics, || {
+                    let (_graph_ctx, orphan_violations) = agg
+                        .orphan
+                        .execute(OrphanRequest::scan(
+                            &root_fp,
+                            &shared_common::taxonomy_common_vo::PatternList::new(ignored.clone()),
+                        ))
+                        .into_scan_outcome();
+                    orphan_violations
+                        .iter()
+                        .map(ViolationItem::from_lint_result)
+                        .collect::<Vec<_>>()
+                });
+                tracing::info!(
+                    target: "lint_arwaky::audit",
+                    event = "orphan_done",
+                    violations = violations.len(),
+                    elapsed_ms = group_start.elapsed().as_millis() as u64,
+                    "orphan linter complete"
+                );
+                (violations, group_panics)
+            });
+            (
+                h_quality.join().unwrap_or_default(),
+                h_role.join().unwrap_or_default(),
+                h_import.join().unwrap_or_default(),
+                h_naming.join().unwrap_or_default(),
+                h_orphan.join().unwrap_or_default(),
+            )
+        });
+        panics.extend(quality.1);
+        panics.extend(role.1);
+        panics.extend(import.1);
+        panics.extend(naming.1);
+        panics.extend(orphan.1);
+        (quality.0, role.0, import.0, naming.0, orphan.0)
+    };
     tracing::info!(
         target: "lint_arwaky::audit",
-        event = "quality_done",
-        violations = all.len(),
-        elapsed_ms = quality_start.elapsed().as_millis() as u64,
-        "quality linter complete"
+        event = "parallel_linters_done",
+        elapsed_ms = parallel_start.elapsed().as_millis() as u64,
+        "file-scoped linter groups complete"
     );
+    all.extend(quality_v);
+    all.extend(role_v);
+    all.extend(import_v);
+    all.extend(naming_v);
+    all.extend(orphan_v);
     on_progress(
         "Quality checks complete".to_string(),
         total_files,
         total_files,
     );
-    let role_start = Instant::now();
-    all.extend(run_isolated("role", &mut panics, || {
-        agg.role
-            .execute(RoleRequest::audit(&entries))
-            .into_violations()
-            .iter()
-            .map(ViolationItem::from_lint_result)
-            .collect::<Vec<_>>()
-    }));
-    tracing::info!(
-        target: "lint_arwaky::audit",
-        event = "role_done",
-        elapsed_ms = role_start.elapsed().as_millis() as u64,
-        "role linter complete"
-    );
     on_progress("Role checks complete".to_string(), total_files, total_files);
-    let import_start = Instant::now();
-    // Workspace-wide import map so AES201/202/203/205 see cross-member imports
-    // (the dispatcher's fs instance differs from the import orchestrator's own).
-    all.extend(run_isolated("import", &mut panics, || {
-        agg.import
-            .execute(ImportRequest::audit_with_entries_and_imports(
-                &entries,
-                &import_map,
-            ))
-            .into_violations()
-            .iter()
-            .map(ViolationItem::from_lint_result)
-            .collect::<Vec<_>>()
-    }));
-    tracing::info!(
-        target: "lint_arwaky::audit",
-        event = "import_done",
-        elapsed_ms = import_start.elapsed().as_millis() as u64,
-        "import linter complete"
-    );
     on_progress(
         "Import checks complete".to_string(),
         total_files,
         total_files,
     );
-    let naming_start = Instant::now();
-    all.extend(run_isolated("naming", &mut panics, || {
-        agg.naming
-            .execute(NamingRequest::audit_with_tests(&entries, &test_files))
-            .into_violations()
-    }));
-    tracing::info!(
-        target: "lint_arwaky::audit",
-        event = "naming_done",
-        elapsed_ms = naming_start.elapsed().as_millis() as u64,
-        "naming linter complete"
-    );
     on_progress(
         "Naming checks complete".to_string(),
         total_files,
         total_files,
-    );
-    let orphan_start = Instant::now();
-    all.extend(run_isolated("orphan", &mut panics, || {
-        let (_graph_ctx, orphan_violations) = agg
-            .orphan
-            .execute(OrphanRequest::scan(
-                &root_fp,
-                &shared_common::taxonomy_common_vo::PatternList::new(ignored.clone()),
-            ))
-            .into_scan_outcome();
-        orphan_violations
-            .iter()
-            .map(ViolationItem::from_lint_result)
-            .collect::<Vec<_>>()
-    }));
-    tracing::info!(
-        target: "lint_arwaky::audit",
-        event = "orphan_done",
-        elapsed_ms = orphan_start.elapsed().as_millis() as u64,
-        "orphan linter complete"
     );
     on_progress(
         "Orphan checks complete".to_string(),
