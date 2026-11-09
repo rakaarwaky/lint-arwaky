@@ -72,6 +72,28 @@ Metric baselines are recorded here rather than restated elsewhere; a release tha
 - Renaming legacy files that predate the convention; automatic renaming of files (reporting only).
 - Certifying behavioural deadness that only tests can prove; auto-removal or rewriting of flagged files; cross-repository or distributed scanning.
 
+### Workspace Exit Code Contract
+
+Every subcommand returns one of four codes. This section is the single definition; no other document restates it.
+
+| Code | Meaning | Emitted when |
+|------|---------|--------------|
+| 0 | Ok / clean | The command completed and found nothing to fail on |
+| 1 | Policy fail | Violations found, CI above threshold, or findings left un-applied after a fix |
+| 2 | Runtime error | Bad path, invalid arguments, invalid configuration, dispatch failure |
+| 3 | Prerequisite missing | A required external tool is not installed |
+
+| Command | 0 | 1 | 2 | 3 |
+|---------|---|---|---|---|
+| `scan`, `check` | clean | violations found | bad path or invalid target | required tool missing |
+| `ci` | at or below threshold | above threshold | runtime failure | required tool missing |
+| `fix` | every fixable finding applied, or `--dry-run` | findings remain | runtime failure | required tool missing |
+| `docs` | no document violation | document violation found | runtime failure | — |
+| `report` | delta rendered | — | previous snapshot unreadable | — |
+| `doctor`, `adapters` | diagnostic completed | — | runtime failure | missing tools are reported in the body, not as a code |
+| `watch` | session ended cleanly | session ended with violations | runtime failure | required tool missing |
+| MCP `execute_command` | mirrors the CLI verb | mirrors the CLI verb | dispatch or path error (`exit_code: 2`) | mirrors the CLI verb |
+
 ---
 
 ## Project Requirements
@@ -97,9 +119,9 @@ Applies safe, deterministic corrections to source files that violate architectur
 
 #### Acceptance Criteria
 
-- `AC-PR-LA-001-1`: Preview reports every would-be change with a reason code and leaves the file byte-identical; exit 0.
-- `AC-PR-LA-001-2`: An applied fix rewrites each fixable violation exactly once; a second run reports no change; exit 0.
-- `AC-PR-LA-001-3`: An unsafe fix is skipped with a reason and the file untouched; the run exits 1 because findings remain.
+- `AC-LA-001-1`: Preview reports every would-be change with a reason code and leaves the file byte-identical; exit 0.
+- `AC-LA-001-2`: An applied fix rewrites each fixable violation exactly once; a second run reports no change; exit 0.
+- `AC-LA-001-3`: An unsafe fix is skipped with a reason and the file untouched; the run exits 1 because findings remain.
 
 ---
 
@@ -124,9 +146,9 @@ The terminal surface of the tool: one module per subcommand (scan, check, fix, c
 
 #### Acceptance Criteria
 
-- `AC-PR-LA-002-1`: Every documented subcommand exits with the code assigned in the Workspace Exit Code Contract below.
-- `AC-PR-LA-002-2`: `scan .` exits 1 on the bad workspace with every offending file and rule listed, and 0 on the good workspace.
-- `AC-PR-LA-002-3`: An unknown subcommand or invalid argument exits 2 with a usage message on stderr and nothing on stdout.
+- `AC-LA-002-1`: Every documented subcommand exits with the code assigned in the Workspace Exit Code Contract below.
+- `AC-LA-002-2`: `scan .` exits 1 on the bad workspace with every offending file and rule listed, and 0 on the good workspace.
+- `AC-LA-002-3`: An unknown subcommand or invalid argument exits 2 with a usage message on stderr and nothing on stdout.
 
 ---
 
@@ -151,9 +173,9 @@ The config system is the single source of truth for lint-arwaky configuration: i
 
 #### Acceptance Criteria
 
-- `AC-PR-LA-003-1`: With no config file present, embedded defaults are used: `scan .` exits 0 on a clean workspace and 1 on a violating one.
-- `AC-PR-LA-003-2`: One config edit (a rule set to `enabled: false`) changes behaviour for every subcommand in that run, with no rebuild.
-- `AC-PR-LA-003-3`: An invalid threshold or adapter value exits 2 and names the offending config key.
+- `AC-LA-003-1`: With no config file present, embedded defaults are used: `scan .` exits 0 on a clean workspace and 1 on a violating one.
+- `AC-LA-003-2`: One config edit (a rule set to `enabled: false`) changes behaviour for every subcommand in that run, with no rebuild.
+- `AC-LA-003-3`: An invalid threshold or adapter value exits 2 and names the offending config key.
 
 ---
 
@@ -178,9 +200,9 @@ The dispatcher is the single source of truth for workspace action business logic
 
 #### Acceptance Criteria
 
-- `AC-PR-LA-004-1`: The same verb through the CLI and through MCP returns identical violation fields (file, line, rule, severity).
-- `AC-PR-LA-004-2`: Cancelling before the completion milestone returns a partial report and does not report success.
-- `AC-PR-LA-004-3`: A panic isolated to one rule group is reported as a violation while the remaining groups still produce findings.
+- `AC-LA-004-1`: The same verb through the CLI and through MCP returns identical violation fields (file, line, rule, severity).
+- `AC-LA-004-2`: Cancelling before the completion milestone returns a partial report and does not report success.
+- `AC-LA-004-3`: A panic isolated to one rule group is reported as a violation while the remaining groups still produce findings.
 
 ---
 
@@ -205,9 +227,9 @@ Audits every recognized Markdown document against the ten document rules (AES601
 
 #### Acceptance Criteria
 
-- `AC-PR-LA-005-1`: `docs .` audits the ten recognized documents and reports one finding per seam with its AES6xx rule code.
-- `AC-PR-LA-005-2`: A sub-directory run resolves crosslinks and master-document invariants against that audit root, not the workspace root.
-- `AC-PR-LA-005-3`: A document missing a required H2 exits 1 and names the document, the rule code, and the line.
+- `AC-LA-005-1`: `docs .` audits the ten recognized documents and reports one finding per seam with its AES6xx rule code.
+- `AC-LA-005-2`: A sub-directory run resolves crosslinks and master-document invariants against that audit root, not the workspace root.
+- `AC-LA-005-3`: A document missing a required H2 exits 1 and names the document, the rule code, and the line.
 
 ---
 
@@ -233,9 +255,9 @@ Aggregates industry-standard linters and formatters — Clippy, Rustfmt, cargo-a
 
 #### Acceptance Criteria
 
-- `AC-PR-LA-006-1`: Only the adapters for languages present in the workspace run; an absent tool is reported, never silently skipped.
-- `AC-PR-LA-006-2`: Adapter output is normalized to the unified violation shape with tool-native codes and mapped severities.
-- `AC-PR-LA-006-3`: A missing required adapter exits 3 with a visible warning, a timed-out adapter yields a partial report, and no external findings exits 0.
+- `AC-LA-006-1`: Only the adapters for languages present in the workspace run; an absent tool is reported, never silently skipped.
+- `AC-LA-006-2`: Adapter output is normalized to the unified violation shape with tool-native codes and mapped severities.
+- `AC-LA-006-3`: A missing required adapter exits 3 with a visible warning, a timed-out adapter yields a partial report, and no external findings exits 0.
 
 ---
 
@@ -260,9 +282,9 @@ The file-watch capability monitors configured directories for filesystem changes
 
 #### Acceptance Criteria
 
-- `AC-PR-LA-007-1`: The initial full scan runs before watching starts and reports the same counts as a one-shot `scan .`.
-- `AC-PR-LA-007-2`: Saving a violating file surfaces the finding within the debounce window without reissuing a command.
-- `AC-PR-LA-007-3`: Ignored paths and suppressed rule codes stay filtered for the whole watch session.
+- `AC-LA-007-1`: The initial full scan runs before watching starts and reports the same counts as a one-shot `scan .`.
+- `AC-LA-007-2`: Saving a violating file surfaces the finding within the debounce window without reissuing a command.
+- `AC-LA-007-3`: Ignored paths and suppressed rule codes stay filtered for the whole watch session.
 
 ---
 
@@ -287,9 +309,9 @@ A single source supplies every piece of filesystem-derived data the other capabi
 
 #### Acceptance Criteria
 
-- `AC-PR-LA-008-1`: Parsing yields entries, imports, and a project-wide dependency graph for Rust, Python, and TS; no rule reads the filesystem itself.
-- `AC-PR-LA-008-2`: Workspace root and language presence are detected for a nested member, while a bare non-workspace path is rejected with exit 2.
-- `AC-PR-LA-008-3`: Read, write, discovery, and remove operations honour the assembled ignored-path set.
+- `AC-LA-008-1`: Parsing yields entries, imports, and a project-wide dependency graph for Rust, Python, and TS; no rule reads the filesystem itself.
+- `AC-LA-008-2`: Workspace root and language presence are detected for a nested member, while a bare non-workspace path is rejected with exit 2.
+- `AC-LA-008-3`: Read, write, discovery, and remove operations honour the assembled ignored-path set.
 
 ---
 
@@ -314,9 +336,9 @@ Installs, uninstalls, and runs a pre-commit hook that lints only the files chang
 
 #### Acceptance Criteria
 
-- `AC-PR-LA-009-1`: `install` writes a pre-commit hook that lints only the files changed against the base branch.
-- `AC-PR-LA-009-2`: A commit introducing an AES violation is blocked and the finding is printed.
-- `AC-PR-LA-009-3`: A commit that touches no violating file is allowed and exits 0.
+- `AC-LA-009-1`: `install` writes a pre-commit hook that lints only the files changed against the base branch.
+- `AC-LA-009-2`: A commit introducing an AES violation is blocked and the finding is printed.
+- `AC-LA-009-3`: A commit that touches no violating file is allowed and exits 0.
 
 ---
 
@@ -341,9 +363,9 @@ The import-rules capability enforces correct structural boundaries and dependenc
 
 #### Acceptance Criteria
 
-- `AC-PR-LA-010-1`: A forbidden cross-layer import yields AES201 naming the import, the file, and the source line.
-- `AC-PR-LA-010-2`: A missing mandatory import (AES202) and an unused import (AES203) are each reported once per file, with no duplicate finding.
-- `AC-PR-LA-010-3`: A dependency cycle (AES205) names every file participating in the cycle.
+- `AC-LA-010-1`: A forbidden cross-layer import yields AES201 naming the import, the file, and the source line.
+- `AC-LA-010-2`: A missing mandatory import (AES202) and an unused import (AES203) are each reported once per file, with no duplicate finding.
+- `AC-LA-010-3`: A dependency cycle (AES205) names every file participating in the cycle.
 
 ---
 
@@ -368,9 +390,9 @@ A single verbose flag (`-v`/`--verbose`) turns on the scan's real-time diagnosti
 
 #### Acceptance Criteria
 
-- `AC-PR-LA-011-1`: `-v` adds per-phase timings on stderr and leaves stdout byte-identical to a non-verbose run.
-- `AC-PR-LA-011-2`: No log file is written; every diagnostic goes to stderr.
-- `AC-PR-LA-011-3`: An error names the failing phase and the actionable fix.
+- `AC-LA-011-1`: `-v` adds per-phase timings on stderr and leaves stdout byte-identical to a non-verbose run.
+- `AC-LA-011-2`: No log file is written; every diagnostic goes to stderr.
+- `AC-LA-011-3`: An error names the failing phase and the actionable fix.
 
 ---
 
@@ -395,9 +417,9 @@ Before any lint run, answers "is this environment healthy and current": reports 
 
 #### Acceptance Criteria
 
-- `AC-PR-LA-012-1`: `doctor` reports toolchain and binary state, lists missing tools, and exits 0.
-- `AC-PR-LA-012-2`: `adapters` lists each adapter with its available or not-installed status.
-- `AC-PR-LA-012-3`: Cache reclamation removes only the tool's own cache paths.
+- `AC-LA-012-1`: `doctor` reports toolchain and binary state, lists missing tools, and exits 0.
+- `AC-LA-012-2`: `adapters` lists each adapter with its available or not-installed status.
+- `AC-LA-012-3`: Cache reclamation removes only the tool's own cache paths.
 
 ---
 
@@ -422,9 +444,9 @@ The MCP server exposes the linter to MCP clients: a listable, domain-filterable 
 
 #### Acceptance Criteria
 
-- `AC-PR-LA-013-1`: `tools/list` returns exactly the five contracted tools (execute_command, list_commands, health_check, get_config, docs_scaffold) within 2 seconds.
-- `AC-PR-LA-013-2`: `execute_command` on a path outside the workspace is refused with exit_code 2.
-- `AC-PR-LA-013-3`: Read-only mode refuses mutating actions, and an MCP result matches the CLI result for the same operation.
+- `AC-LA-013-1`: `tools/list` returns exactly the five contracted tools (execute_command, list_commands, health_check, get_config, docs_scaffold) within 2 seconds.
+- `AC-LA-013-2`: `execute_command` on a path outside the workspace is refused with exit_code 2.
+- `AC-LA-013-3`: Read-only mode refuses mutating actions, and an MCP result matches the CLI result for the same operation.
 
 ---
 
@@ -448,9 +470,9 @@ Enforces the AES 7-layer naming convention across file names so every file's nam
 
 #### Acceptance Criteria
 
-- `AC-PR-LA-014-1`: A stem violating the layer suffix policy yields AES102 naming the file and the expected suffix.
-- `AC-PR-LA-014-2`: A test file without a legal prefix yields AES103; the same file with a legal prefix yields no finding.
-- `AC-PR-LA-014-3`: A legacy file that predates the convention is reported, never renamed.
+- `AC-LA-014-1`: A stem violating the layer suffix policy yields AES102 naming the file and the expected suffix.
+- `AC-LA-014-2`: A test file without a legal prefix yields AES103; the same file with a legal prefix yields no finding.
+- `AC-LA-014-3`: A legacy file that predates the convention is reported, never renamed.
 
 ---
 
@@ -475,9 +497,9 @@ Detects dead, unused, or unreachable code components across the 7-layer AES arch
 
 #### Acceptance Criteria
 
-- `AC-PR-LA-015-1`: An unreachable module yields the AES5xx code for its layer together with the reachability gap.
-- `AC-PR-LA-015-2`: Container, main, and binary entry points are never reported as orphans.
-- `AC-PR-LA-015-3`: A file reachable only from a test is reported, because tests do not certify production reachability.
+- `AC-LA-015-1`: An unreachable module yields the AES5xx code for its layer together with the reachability gap.
+- `AC-LA-015-2`: Container, main, and binary entry points are never reported as orphans.
+- `AC-LA-015-3`: A file reachable only from a test is reported, because tests do not certify production reachability.
 
 ---
 
@@ -501,9 +523,9 @@ The project-setup capability scaffolds a new lint-arwaky crate or member folder 
 
 #### Acceptance Criteria
 
-- `AC-PR-LA-016-1`: `init` writes a configuration the tool then reads without error, and `doctor` exits 0 afterwards.
-- `AC-PR-LA-016-2`: An existing configuration is backed up rather than overwritten, and the run reports the backup path.
-- `AC-PR-LA-016-3`: Docs scaffolding previews under `dry_run` and writes only when run without it.
+- `AC-LA-016-1`: `init` writes a configuration the tool then reads without error, and `doctor` exits 0 afterwards.
+- `AC-LA-016-2`: An existing configuration is backed up rather than overwritten, and the run reports the backup path.
+- `AC-LA-016-3`: Docs scaffolding previews under `dry_run` and writes only when run without it.
 
 ---
 
@@ -527,9 +549,9 @@ The quality-rules capability enforces code quality standards (complexity, duplic
 
 #### Acceptance Criteria
 
-- `AC-PR-LA-017-1`: A file above the line cap yields AES301 and one below the floor yields AES302, each naming the limit.
-- `AC-PR-LA-017-2`: A bypass marker yields AES304 with the forbidden pattern quoted.
-- `AC-PR-LA-017-3`: Duplicated code yields AES305 naming both locations.
+- `AC-LA-017-1`: A file above the line cap yields AES301 and one below the floor yields AES302, each naming the limit.
+- `AC-LA-017-2`: A bypass marker yields AES304 with the forbidden pattern quoted.
+- `AC-LA-017-3`: Duplicated code yields AES305 naming both locations.
 
 ---
 
@@ -553,9 +575,9 @@ The report-formatter capability renders violation findings into human-readable a
 
 #### Acceptance Criteria
 
-- `AC-PR-LA-018-1`: Text, JSON, SARIF, and JUnit outputs carry the same findings, codes, paths, lines, and severities.
-- `AC-PR-LA-018-2`: `report .` shows the per-member delta against the previous run and exits 0.
-- `AC-PR-LA-018-3`: A report with zero findings renders an explicit clean line instead of an empty table.
+- `AC-LA-018-1`: Text, JSON, SARIF, and JUnit outputs carry the same findings, codes, paths, lines, and severities.
+- `AC-LA-018-2`: `report .` shows the per-member delta against the previous run and exits 0.
+- `AC-LA-018-3`: A report with zero findings renders an explicit clean line instead of an empty table.
 
 ---
 
@@ -579,9 +601,9 @@ The role-rules capability validates that each file's name and contents match its
 
 #### Acceptance Criteria
 
-- `AC-PR-LA-019-1`: A capabilities file implementing no contract yields AES403 naming the expected role.
-- `AC-PR-LA-019-2`: A utility file carrying business rules yields AES404.
-- `AC-PR-LA-019-3`: A surface file owning dispatch logic yields AES406.
+- `AC-LA-019-1`: A capabilities file implementing no contract yields AES403 naming the expected role.
+- `AC-LA-019-2`: A utility file carrying business rules yields AES404.
+- `AC-LA-019-3`: A surface file owning dispatch logic yields AES406.
 
 ---
 
@@ -605,9 +627,9 @@ The shared capability hosts the contracts, value objects, doc-rules codegen, and
 
 #### Acceptance Criteria
 
-- `AC-PR-LA-020-1`: Every rule consumes the same value-object shape, so a field addition is a single-site change.
-- `AC-PR-LA-020-2`: The shared crate imports no surface or capability crate (AES201 holds for shared).
-- `AC-PR-LA-020-3`: Generated document constants match the templates; editing a template without regenerating fails the build.
+- `AC-LA-020-1`: Every rule consumes the same value-object shape, so a field addition is a single-site change.
+- `AC-LA-020-2`: The shared crate imports no surface or capability crate (AES201 holds for shared).
+- `AC-LA-020-3`: Generated document constants match the templates; editing a template without regenerating fails the build.
 
 ---
 
@@ -631,9 +653,9 @@ The structure-rules capability enforces AES7-layer folder purity (AES701), featu
 
 #### Acceptance Criteria
 
-- `AC-PR-LA-021-1`: A feature folder missing a test category yields AES704 naming the missing category.
-- `AC-PR-LA-021-2`: A shared folder holding business logic yields AES701.
-- `AC-PR-LA-021-3`: A member-root file placed outside its layer folder yields AES705.
+- `AC-LA-021-1`: A feature folder missing a test category yields AES704 naming the missing category.
+- `AC-LA-021-2`: A shared folder holding business logic yields AES701.
+- `AC-LA-021-3`: A member-root file placed outside its layer folder yields AES705.
 
 ---
 
@@ -657,31 +679,9 @@ The tui capability provides a terminal user interface for lint-arwaky: browsing 
 
 #### Acceptance Criteria
 
-- `AC-PR-LA-022-1`: Scanning shows progress in the TUI and Esc cancels the running scan instead of quitting.
-- `AC-PR-LA-022-2`: Every destructive action requires an explicit confirmation and never auto-executes.
-- `AC-PR-LA-022-3`: A terminal smaller than the supported minimum shows a readable notice rather than clipped output.
-
-### Workspace Exit Code Contract
-
-Every subcommand returns one of four codes. This section is the single definition; no other document restates it.
-
-| Code | Meaning | Emitted when |
-|------|---------|--------------|
-| 0 | Ok / clean | The command completed and found nothing to fail on |
-| 1 | Policy fail | Violations found, CI above threshold, or findings left un-applied after a fix |
-| 2 | Runtime error | Bad path, invalid arguments, invalid configuration, dispatch failure |
-| 3 | Prerequisite missing | A required external tool is not installed |
-
-| Command | 0 | 1 | 2 | 3 |
-|---------|---|---|---|---|
-| `scan`, `check` | clean | violations found | bad path or invalid target | required tool missing |
-| `ci` | at or below threshold | above threshold | runtime failure | required tool missing |
-| `fix` | every fixable finding applied, or `--dry-run` | findings remain | runtime failure | required tool missing |
-| `docs` | no document violation | document violation found | runtime failure | — |
-| `report` | delta rendered | — | previous snapshot unreadable | — |
-| `doctor`, `adapters` | diagnostic completed | — | runtime failure | missing tools are reported in the body, not as a code |
-| `watch` | session ended cleanly | session ended with violations | runtime failure | required tool missing |
-| MCP `execute_command` | mirrors the CLI verb | mirrors the CLI verb | dispatch or path error (`exit_code: 2`) | mirrors the CLI verb |
+- `AC-LA-022-1`: Scanning shows progress in the TUI and Esc cancels the running scan instead of quitting.
+- `AC-LA-022-2`: Every destructive action requires an explicit confirmation and never auto-executes.
+- `AC-LA-022-3`: A terminal smaller than the supported minimum shows a readable notice rather than clipped output.
 
 ## Reference
 
