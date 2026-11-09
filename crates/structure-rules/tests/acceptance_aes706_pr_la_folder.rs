@@ -251,16 +251,23 @@ fn violation_names_carry_no_hardcoded_project_segment() {
         &root.join("PRD.md"),
         "# PRD\n\n### PR-PSD-001: renderer\n\n### PR-PSD-002: orphan\n",
     );
-    write(&root.join("ROADMAP.md"), "# ROADMAP\n\n### PR-PSD-001: renderer\n");
+    write(
+        &root.join("ROADMAP.md"),
+        "# ROADMAP\n\n### PR-PSD-001: renderer\n",
+    );
 
     let aes706 = mapping_findings(&audit(root));
 
     assert!(
-        aes706.iter().any(|(_, violation, _)| violation == "pr_id_mismatch"),
+        aes706
+            .iter()
+            .any(|(_, violation, _)| violation == "pr_id_mismatch"),
         "a PR-PSD id with no folder at its position must fire 'pr_id_mismatch'; got {aes706:#?}"
     );
     assert!(
-        aes706.iter().all(|(_, violation, _)| !violation.contains("_la_")),
+        aes706
+            .iter()
+            .all(|(_, violation, _)| !violation.contains("_la_")),
         "no AES706 violation name may hardcode the `la` segment; got {aes706:#?}"
     );
 }
@@ -292,8 +299,11 @@ fn cache_directory_does_not_shift_the_folder_order() {
         "# FRD — api\n\n### FR-Api-001\n",
     );
     fs::create_dir_all(root.join("modules/__pycache__")).expect("cache dir must be creatable");
-    fs::write(root.join("modules/__pycache__/animator.cpython-312.pyc"), "bytecode")
-        .expect("cache file must be writable");
+    fs::write(
+        root.join("modules/__pycache__/animator.cpython-312.pyc"),
+        "bytecode",
+    )
+    .expect("cache file must be writable");
     write(
         &root.join("PRD.md"),
         "# PRD\n\n### PR-PSD-001: Animator pipeline\n\n### PR-PSD-002: Api surface\n",
@@ -322,10 +332,7 @@ fn dependency_directory_is_not_reported_as_a_crate_folder() {
         &root.join("packages/auth/surface_auth_command.ts"),
         "// auth command\n",
     );
-    write(
-        &root.join("packages/auth/DESIGN.md"),
-        "# DESIGN — auth\n",
-    );
+    write(&root.join("packages/auth/DESIGN.md"), "# DESIGN — auth\n");
     write(
         &root.join("packages/client/surface_client_command.ts"),
         "// client command\n",
@@ -410,5 +417,151 @@ fn multi_language_document_scopes_each_sequence_to_its_own_member() {
     assert!(
         mismatches.is_empty(),
         "each language's PR sequence must match its own member's folder order; got {mismatches:#?}"
+    );
+}
+
+// ─── Sub-issue 4: lane binding is content-driven, not positional ──────────
+
+/// `member_lanes` used to bind spec segments to member dirs positionally via
+/// `members.iter().zip(segments)` whenever the counts matched. That assumed
+/// segment order equals member dir order (`crates`, `modules`, `packages`), so
+/// a document listing `PR-PY-…` then `PR-RS-…` while members are ordered
+/// `crates`, `modules` would bind `crates`→`PY` and `modules`→`RS`, emitting
+/// false `pr_id_mismatch`/`pr_folder_without_id` findings. The binding now
+/// derives from which member's folders the segment's titles actually name, so
+/// segment order never has to match member dir order.
+#[test]
+fn segment_order_does_not_match_member_order_does_not_misbind() {
+    let tmp = tempfile::tempdir().expect("temp dir must be creatable");
+    let root = tmp.path();
+
+    // crates/viewer (Rust), modules/animator + modules/api (Python).
+    write(
+        &root.join("crates/viewer/src/agent_viewer_orchestrator.rs"),
+        "//! viewer orchestrator\n",
+    );
+    write(
+        &root.join("crates/viewer/FRD.md"),
+        "# FRD — viewer\n\n### FR-Viewer-001\n",
+    );
+    write(
+        &root.join("modules/animator/agent_animator_orchestrator.py"),
+        "# animator orchestrator\n",
+    );
+    write(
+        &root.join("modules/animator/FRD.md"),
+        "# FRD — animator\n\n### FR-Animator-001\n",
+    );
+    write(
+        &root.join("modules/api/agent_api_orchestrator.py"),
+        "# api orchestrator\n",
+    );
+    write(
+        &root.join("modules/api/FRD.md"),
+        "# FRD — api\n\n### FR-Api-001\n",
+    );
+
+    // Segments declared PY then RS, while members are ordered crates then modules.
+    // Positional zip would bind crates→PY and modules→RS — wrong. Content binding
+    // binds PY→modules (animator/api) and RS→crates (viewer).
+    write(
+        &root.join("PRD.md"),
+        "# PRD\n\n\
+         ### PR-PY-001: Animator pipeline\n\n\
+         ### PR-PY-002: Api surface\n\n\
+         ### PR-RS-001: Viewer surface\n",
+    );
+    write(
+        &root.join("ROADMAP.md"),
+        "# ROADMAP\n\n\
+         ### PR-PY-001: Animator pipeline\n\n\
+         ### PR-PY-002: Api surface\n\n\
+         ### PR-RS-001: Viewer surface\n",
+    );
+
+    let mismatches = mapping_findings(&audit(root));
+
+    assert!(
+        mismatches.is_empty(),
+        "segment order must not have to match member dir order; got {mismatches:#?}"
+    );
+}
+
+/// When the number of declared `PR-<segment>` sequences differs from the
+/// number of member dirs, each segment must still bind to the member whose
+/// folders its titles name, and a member with no segment must not be folded
+/// into another segment's merged order.
+#[test]
+fn segment_count_mismatch_binds_each_segment_to_its_own_member() {
+    let tmp = tempfile::tempdir().expect("temp dir must be creatable");
+    let root = tmp.path();
+
+    // crates/viewer (Rust), modules/animator (Python), packages/auth (TS).
+    // Only RS and PY segments are declared — packages/auth gets none.
+    write(
+        &root.join("crates/viewer/src/agent_viewer_orchestrator.rs"),
+        "//! viewer orchestrator\n",
+    );
+    write(
+        &root.join("crates/viewer/FRD.md"),
+        "# FRD — viewer\n\n### FR-Viewer-001\n",
+    );
+    write(
+        &root.join("modules/animator/agent_animator_orchestrator.py"),
+        "# animator orchestrator\n",
+    );
+    write(
+        &root.join("modules/animator/FRD.md"),
+        "# FRD — animator\n\n### FR-Animator-001\n",
+    );
+    write(
+        &root.join("packages/auth/surface_auth_command.ts"),
+        "// auth command\n",
+    );
+    write(&root.join("packages/auth/DESIGN.md"), "# DESIGN — auth\n");
+
+    // 2 segments (RS, PY) vs 3 members (crates, modules, packages): count
+    // mismatch. RS→crates/viewer, PY→modules/animator; packages/auth has no
+    // segment so its folder is reported as unreached.
+    write(
+        &root.join("PRD.md"),
+        "# PRD\n\n\
+         ### PR-RS-001: Viewer surface\n\n\
+         ### PR-PY-001: Animator pipeline\n",
+    );
+    write(
+        &root.join("ROADMAP.md"),
+        "# ROADMAP\n\n\
+         ### PR-RS-001: Viewer surface\n\n\
+         ### PR-PY-001: Animator pipeline\n",
+    );
+
+    let findings = audit(root);
+    let folder_without_id: Vec<&str> = findings
+        .iter()
+        .filter(|(code, violation, _)| code == "AES706" && violation == "pr_folder_without_id")
+        .map(|(_, _, file)| file.as_str())
+        .collect();
+
+    // packages/auth holds no PR-<segment> id, so it is correctly reported once.
+    assert!(
+        folder_without_id.contains(&"packages/auth"),
+        "a member with no segment must report its unreached folder; got {folder_without_id:#?}"
+    );
+    assert_eq!(
+        folder_without_id.len(),
+        1,
+        "only packages/auth is unreached; crates/viewer and modules/animator are covered; got {folder_without_id:#?}"
+    );
+
+    // No pr_id_mismatch: RS and PY bind to the right members.
+    let mismatches: Vec<&str> = findings
+        .iter()
+        .filter(|(code, violation, _)| code == "AES706" && violation == "pr_id_mismatch")
+        .map(|(_, _, file)| file.as_str())
+        .collect();
+    assert!(
+        mismatches.is_empty(),
+        "segments bound by title must not emit pr_id_mismatch; got {mismatches:#?}"
     );
 }

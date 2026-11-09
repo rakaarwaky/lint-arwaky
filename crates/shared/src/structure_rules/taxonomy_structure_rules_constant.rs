@@ -197,20 +197,20 @@ pub const RULE_CODE_PR_LA_FOLDER: &str = "AES706";
 
 /// A crate folder's FRD carries an FR ID whose prefix does not match the folder
 /// name, e.g. `FR-005B` inside `crates/filesystem` instead of `FR-Filesystem-005`.
-pub const PR_LA_VIOLATION_FR_ID_MISMATCH: &str = "pr_fr_id_mismatch";
+pub const PR_VIOLATION_FR_ID_MISMATCH: &str = "pr_fr_id_mismatch";
 
 /// A `PR-<segment>-001..N` id does not map to an existing crate folder by
 /// order. Named without a segment token: the audited project chooses the
 /// segment (`PR-LA-`, `PR-PSD-`, `PR-CALC-`, …), so the violation must not bake
 /// lint-arwaky's own `LA` into its name.
-pub const PR_LA_VIOLATION_PR_LA_ID_MISMATCH: &str = "pr_id_mismatch";
+pub const PR_VIOLATION_PR_ID_MISMATCH: &str = "pr_id_mismatch";
 
 /// A crate folder exists at a position in the crate order that has no
 /// corresponding PR-<segment>-NNN id in PRD.md / ROADMAP.md.
-pub const PR_LA_VIOLATION_FOLDER_WITHOUT_PR_LA_ID: &str = "pr_folder_without_id";
+pub const PR_VIOLATION_FOLDER_WITHOUT_ID: &str = "pr_folder_without_id";
 
 /// A crate folder holds no FRD.md at all, so no FR ID can be checked against it.
-pub const PR_LA_VIOLATION_MISSING_FRD: &str = "pr_missing_frd";
+pub const PR_VIOLATION_MISSING_FRD: &str = "pr_missing_frd";
 
 /// Directory names that never hold a crate folder, so the AES706 folder order
 /// skips them: language caches, build output, dependency trees, and test
@@ -220,6 +220,15 @@ pub const PR_LA_VIOLATION_MISSING_FRD: &str = "pr_missing_frd";
 /// imported once. `_` sorts before every letter, so that cache dir would take
 /// position 0 and push every `PR-<segment>` id onto the folder of its
 /// predecessor — the off-by-one cascade the AES706 UX report describes.
+///
+/// Assumption: no legitimate crate folder bears one of these names. A project
+/// whose crate folder is named `tests`, `benches`, `build`, `out`, `env`, or
+/// `venv` would have that folder silently dropped from the AES706 order. The
+/// list is a conservative global default (caches/build output/dependency trees
+/// are never crate folders in any project); it is intentionally not overridable
+/// per-project in this release because deriving crate-ness from file contents
+/// (e.g. a `Cargo.toml`, `pyproject.toml`, or `package.json`) is what member
+/// roles already decide elsewhere in the audit.
 pub const NON_CRATE_DIRS: &[&str] = &[
     "__pycache__",
     "node_modules",

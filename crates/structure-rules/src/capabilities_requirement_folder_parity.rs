@@ -159,12 +159,32 @@ fn audit_pr_la_documents(root: &Path, ws_root: &Path) -> Vec<StructureFinding> {
             }
             all
         });
-    let mut lanes = member_lanes(&members, &segments);
+    // Every `PR-<segment>` id across the spec documents, grouped by segment as
+    // (position, title). Used to bind each segment to the member dir whose
+    // folders its ids actually reference, so segment order need not match
+    // member dir order.
+    let segment_ids: Vec<(String, Vec<(usize, String)>)> = segments
+        .iter()
+        .map(|segment| {
+            let ids: Vec<(usize, String)> = documents
+                .iter()
+                .flat_map(|(_, _, contents)| segment_id_positions(contents, segment))
+                .collect();
+            (segment.clone(), ids)
+        })
+        .collect();
+    let mut lanes = member_lanes(&members, &segment_ids);
     let mut findings = Vec::new();
 
     for (doc_name, doc, contents) in &documents {
         for lane in lanes.iter_mut() {
-            for (position, pr_id, title) in extract_pr_ids(contents, lane.segment.as_deref()) {
+            // Only segment-bound lanes process ids. Unbound-member lanes
+            // (segment == None) exist solely to report their folders as
+            // unreached in the reverse check below.
+            let Some(segment) = lane.segment.as_deref() else {
+                continue;
+            };
+            for (position, pr_id, title) in extract_pr_ids(contents, Some(segment)) {
                 lane.covered_positions.insert(position);
                 let Some(expected_folder) = lane.order.get(position) else {
                     findings.push(dangling_pr_id_finding(
@@ -247,19 +267,15 @@ impl FolderLane {
 
 /// Build the audit lanes *members* owe the spec documents as a set.
 ///
-/// A spec set that repeats one id sequence per language (`PR-PY-…` rows for the
-/// Python modules, then `PR-TS-…` rows for the TypeScript packages) gets one
-/// lane per sequence, bound to one member in sequence order (first sequence →
-/// first member), so each language is audited against its own folder order. A
-/// spec set with one sequence for the whole tree gets a single lane per segment
-/// over the merged folder order of every member. A spec set with no
-/// `PR-<segment>` id at all gets one ordering lane, which the reverse check uses
-/// to report every unreached folder.
-///
-/// The two shapes are only told apart when the counts agree — one sequence per
-/// member dir. A different count is read as sequence-per-segment over the merged
-/// order, so no folder is silently excused.
-fn member_lanes(members: &[PathBuf], segments: &[String]) -> Vec<FolderLane> {
+/// `segment_ids` pairs each `PR-<segment>` token with its `(position, title)`
+/// ids across every spec document, so lanes bind segment→member by which
+/// member's folders the titles actually name — never by assuming segment order
+/// equals member dir order. A segment whose titles name no folder is audited
+/// against every member's merged order, and no position is silently excused.
+fn member_lanes(
+    members: &[PathBuf],
+    segment_ids: &[(String, Vec<(usize, String)>)],
+) -> Vec<FolderLane> {
     let owners: Vec<(PathBuf, String)> = members
         .iter()
         .map(|member| (member.clone(), member_name(member)))
@@ -271,7 +287,7 @@ fn member_lanes(members: &[PathBuf], segments: &[String]) -> Vec<FolderLane> {
     {
         return Vec::new();
     }
-    if segments.is_empty() {
+    if segment_ids.is_empty() {
         // A spec document exists but declares no `PR-<segment>` id at all, so
         // no position can be reached: one lane over the merged order reports
         // every crate folder, which is how the missing ids surface.
@@ -282,28 +298,121 @@ fn member_lanes(members: &[PathBuf], segments: &[String]) -> Vec<FolderLane> {
             covered_positions: std::collections::BTreeSet::new(),
         }];
     }
-    if members.len() > 1 && segments.len() == members.len() {
-        return members
-            .iter()
-            .zip(segments)
-            .map(|(member, segment)| FolderLane {
-                owners: vec![(member.clone(), member_name(member))],
-                order: crate_folder_names(std::slice::from_ref(member)),
-                segment: Some(segment.to_string()),
+    // Bind each segment to the member dir whose crate folders its titles name,
+    // matching titles to folder names. Empty titles are skipped; a segment
+    // binds to the member all its non-empty titles consistently name, and a
+    // segment whose titles name no folder stays audited against every member's
+    // merged order.
+    let mut lanes: Vec<FolderLane> = Vec::new();
+    let mut laned: Vec<(PathBuf, String)> = Vec::new();
+    for (segment, ids) in segment_ids {
+        let seg_bound = bound_members_for_segment(members, ids);
+        if seg_bound.len() == 1 {
+            let (member, name) = seg_bound.into_iter().next().unwrap();
+            laned.push((member.clone(), name.clone()));
+            lanes.push(FolderLane {
+                owners: vec![(member.clone(), name.clone())],
+                order: crate_folder_names(std::slice::from_ref(&member)),
+                segment: Some(segment.clone()),
                 covered_positions: std::collections::BTreeSet::new(),
-            })
-            .collect::<Vec<FolderLane>>();
-    }
-    let order = crate_folder_names(members);
-    segments
-        .iter()
-        .map(|segment| FolderLane {
+            });
+            continue;
+        }
+        // Segment binds to no single member: audit it against every member's
+        // merged order, so all members are treated as laned.
+        laned.extend(owners.clone());
+        let order = crate_folder_names(members);
+        lanes.push(FolderLane {
             owners: owners.clone(),
             order: order.clone(),
-            segment: Some(segment.to_string()),
+            segment: Some(segment.clone()),
             covered_positions: std::collections::BTreeSet::new(),
-        })
-        .collect::<Vec<FolderLane>>()
+        });
+    }
+    // Members bound to no segment keep their folders unreached: one fallback
+    // lane reports every folder they hold, so `pr_folder_without_id` still
+    // fires for folders with no spec id.
+    let unbound: Vec<(PathBuf, String)> = owners
+        .into_iter()
+        .filter(|(m, _)| !laned.iter().any(|(b, _)| b == m))
+        .collect();
+    if !unbound.is_empty() {
+        let unbound_members: Vec<PathBuf> = unbound.iter().map(|(m, _)| m.clone()).collect();
+        let order = crate_folder_names(&unbound_members);
+        lanes.push(FolderLane {
+            owners: unbound,
+            order,
+            segment: None,
+            covered_positions: std::collections::BTreeSet::new(),
+        });
+    }
+    lanes
+}
+
+/// The member dirs whose crate folders are named by *ids*' titles. Empty
+/// titles are skipped. A segment binds to the member all its non-empty titles
+/// consistently name; a title naming no folder, or titles naming folders under
+/// multiple members, leaves the segment unbound.
+fn bound_members_for_segment(
+    members: &[PathBuf],
+    ids: &[(usize, String)],
+) -> Vec<(PathBuf, String)> {
+    // Non-empty titles only: an untitled heading (`### PR-LA-001`) names no
+    // folder and must not veto a segment whose other titles bind cleanly.
+    let titles: Vec<&str> = ids
+        .iter()
+        .map(|(_, t)| t.as_str())
+        .filter(|t| !t.is_empty())
+        .collect();
+    if titles.is_empty() {
+        return Vec::new(); // segment has no titles at all → unbound
+    }
+    let mut bound: Option<(PathBuf, String)> = None;
+    for title in titles {
+        let folder = named_folder(members, title);
+        let Some(folder) = folder else {
+            return Vec::new(); // a title names no folder → unbound
+        };
+        let owning_member = owning_member(members, &folder);
+        match bound {
+            None => bound = Some(owning_member),
+            Some(ref b) if b.0 == owning_member.0 => {}
+            Some(_) => return Vec::new(), // titles name folders under multiple members
+        }
+    }
+    bound.into_iter().collect()
+}
+
+/// The crate folder name that *title* names, if exactly one folder under any
+/// member matches it case-insensitively or by stem.
+fn named_folder(members: &[PathBuf], title: &str) -> Option<String> {
+    let mut matches: Vec<String> = Vec::new();
+    for member in members {
+        for folder in crate_folders(member) {
+            let name = folder.file_name()?.to_str()?;
+            if title_names_folder(title, name) && !matches.contains(&name.to_string()) {
+                matches.push(name.to_string());
+            }
+        }
+    }
+    if matches.len() == 1 {
+        Some(matches.into_iter().next().unwrap())
+    } else {
+        None
+    }
+}
+
+/// The member dir that holds *folder*, paired with its name.
+fn owning_member(members: &[PathBuf], folder: &str) -> (PathBuf, String) {
+    for member in members {
+        if member.join(folder).is_dir() {
+            return (member.clone(), member_name(member));
+        }
+    }
+    (
+        members.last().unwrap_or(&PathBuf::new()).clone(),
+        member_name(members.last().unwrap_or(&PathBuf::new())),
+    )
 }
 
 /// The distinct `PR-<segment>` tokens a document uses, in first-seen order.
@@ -316,6 +425,16 @@ fn document_segments(contents: &str) -> Vec<String> {
         }
     }
     segments
+}
+
+/// Every `PR-<segment>-NNN` id in *contents* whose segment equals *segment*,
+/// as `(position, title)` pairs. Used to bind a segment to the member dir
+/// whose folders its titles name.
+fn segment_id_positions(contents: &str, segment: &str) -> Vec<(usize, String)> {
+    extract_pr_ids(contents, Some(segment))
+        .into_iter()
+        .map(|(position, _id, title)| (position, title))
+        .collect()
 }
 
 /// The member dir's own name (`crates`, `modules`, `packages`).
@@ -331,7 +450,7 @@ fn member_name(member: &Path) -> String {
 fn missing_frd_finding(frd: &Path, ws_root: &Path, folder_name: &str) -> StructureFinding {
     StructureFinding::new(
         consts::RULE_CODE_PR_LA_FOLDER,
-        consts::PR_LA_VIOLATION_MISSING_FRD,
+        consts::PR_VIOLATION_MISSING_FRD,
         relative_to(frd, ws_root),
         format!(
             "'{folder_name}' holds no FRD.md, so its FR ids cannot be verified against its prefix"
@@ -356,7 +475,7 @@ fn folder_without_pr_id_finding(
 ) -> StructureFinding {
     StructureFinding::new(
         consts::RULE_CODE_PR_LA_FOLDER,
-        consts::PR_LA_VIOLATION_FOLDER_WITHOUT_PR_LA_ID,
+        consts::PR_VIOLATION_FOLDER_WITHOUT_ID,
         path,
         format!(
             "'{folder}' sits at {member} crate position {position} but no PR-<segment> id maps to it"
@@ -381,7 +500,7 @@ fn fr_mismatch_finding(
 ) -> StructureFinding {
     StructureFinding::new(
         consts::RULE_CODE_PR_LA_FOLDER,
-        consts::PR_LA_VIOLATION_FR_ID_MISMATCH,
+        consts::PR_VIOLATION_FR_ID_MISMATCH,
         relative_to(frd, ws_root),
         format!("folder '{folder_name}' carries FR id '{fr_id}' but its prefix must be 'FR-{prefix}'"),
     )
@@ -401,7 +520,7 @@ fn dangling_pr_id_finding(
 ) -> StructureFinding {
     StructureFinding::new(
         consts::RULE_CODE_PR_LA_FOLDER,
-        consts::PR_LA_VIOLATION_PR_LA_ID_MISMATCH,
+        consts::PR_VIOLATION_PR_ID_MISMATCH,
         relative_to(doc, ws_root),
         format!("'{pr_id}' has no crate folder at position {position}"),
     )
@@ -424,7 +543,7 @@ fn title_mismatch_finding(
 ) -> StructureFinding {
     StructureFinding::new(
         consts::RULE_CODE_PR_LA_FOLDER,
-        consts::PR_LA_VIOLATION_PR_LA_ID_MISMATCH,
+        consts::PR_VIOLATION_PR_ID_MISMATCH,
         relative_to(doc, ws_root),
         format!(
             "'{pr_id}' titles '{title}' but maps to '{member}/{expected_folder}' at its position"
