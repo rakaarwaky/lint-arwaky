@@ -25,7 +25,6 @@ Lint Arwaky is a single-tool, multi-language architecture linter for monorepos. 
 | 7    | CI exit codes                                | `lint-arwaky-cli ci . --threshold 0`                                                                       |
 | 8    | Preview auto-fixes                           | `lint-arwaky-cli fix . --dry-run`                                                                          |
 
-
 ## Reference
 
 
