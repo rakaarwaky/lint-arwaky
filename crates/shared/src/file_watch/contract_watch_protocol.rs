@@ -34,6 +34,13 @@ pub trait IChangeFilterProtocol: Send + Sync {
 }
 
 /// FR-FileWatch-003: Run Lint on Changed Files.
+///
+/// Returns the per-file summary so the caller can decide the exit code. The
+/// previous `Result<(), _>` made a passing and a failing change
+/// indistinguishable at every call site.
 pub trait IChangeLintProtocol: Send + Sync {
-    fn lint_changed(&self, event: &WatchEvent) -> Result<(), WatchServiceError>;
+    fn lint_changed(
+        &self,
+        event: &WatchEvent,
+    ) -> Result<crate::taxonomy_file_watch_vo::ChangeLintSummary, WatchServiceError>;
 }

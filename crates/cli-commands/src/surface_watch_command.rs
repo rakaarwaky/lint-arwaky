@@ -44,7 +44,7 @@ pub fn handle_watch(watch_aggregate: Arc<dyn IWatchAggregate>, path: Option<File
         on_stop,
         on_output,
     ) {
-        Ok(()) => ExitCode::OK,
+        Ok(exit_code) => exit_code,
         Err(e) => {
             error!(error = %e, "operation failed");
             ExitCode::RUNTIME_ERROR

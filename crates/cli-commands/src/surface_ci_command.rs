@@ -1,39 +1,21 @@
 // PURPOSE: CI command — CLI thin wrapper
 // Calls dispatcher for CI business logic, only adds CLI output.
 use shared_common::ExitCode;
-use std::sync::Arc;
 use tracing::{error, info};
 
 use shared_common::{FilePath, Threshold};
-use shared_config_system::IConfigOrchestratorAggregate;
-use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared_import_rules::IImportRunnerAggregate;
-use shared_naming_rules::INamingRunnerAggregate;
-use shared_orphan_rules::IOrphanAggregate;
-use shared_quality_rules::ICodeAnalysisAggregate;
 
-/// Parameters for the CI command — groups all linter aggregates + CLI args.
+/// Parameters for the CI command — the same aggregate bundle `scan` uses,
+/// because `ci` scores the same rule groups.
 pub struct CiCommandParams {
-    pub code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
-    pub import_orchestrator: Arc<dyn IImportRunnerAggregate>,
-    pub naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
-    pub config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
-    pub orphan_orchestrator: Arc<dyn IOrphanAggregate>,
-    pub filesystem: Arc<dyn IFilesystemAggregate>,
+    pub aggregates: dispatcher::surface_check_action::ScanAggregates,
     pub path: Option<FilePath>,
     pub threshold: Threshold,
 }
 
 pub fn handle_ci(params: CiCommandParams) -> ExitCode {
     match dispatcher::surface_ci_action::collect_ci(
-        dispatcher::surface_ci_action::CiScanDeps {
-            code_analysis_linter: params.code_analysis_linter,
-            import_orchestrator: params.import_orchestrator,
-            naming_orchestrator: params.naming_orchestrator,
-            config_orchestrator: params.config_orchestrator,
-            orphan_orchestrator: params.orphan_orchestrator,
-            filesystem: params.filesystem,
-        },
+        params.aggregates,
         params.path,
         params.threshold,
     ) {
@@ -49,6 +31,9 @@ pub fn handle_ci(params: CiCommandParams) -> ExitCode {
                 "CRITICAL: {} | HIGH: {} | MEDIUM: {} | LOW: {}",
                 report.critical, report.high, report.medium, report.low
             );
+            // The gate's coverage is part of its result: a group missing from
+            // this list is a group whose findings cannot fail the build.
+            println!("Rule groups scored: {}", report.groups_run.join(", "));
             println!();
             if report.pass {
                 println!("Result: PASS (exit code 0)");

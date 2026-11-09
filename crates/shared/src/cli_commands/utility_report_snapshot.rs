@@ -3,20 +3,47 @@
 // taxonomy_report_snapshot_vo because a `utility_` file holds no types (AES404).
 use shared_common::ReportSnapshot;
 use shared_common::SnapshotStore;
+use shared_filesystem::utility_filesystem_io::write_string;
 use std::path::{Path, PathBuf};
 
-/// A stable key for a target path: readable where it can be, and free of
-/// characters that cannot appear in a file name.
+/// A stable, collision-free key for a target path.
+///
+/// The readable part keeps `snapshots.json` legible; the FNV-1a suffix is what
+/// makes it a key. Collapsing every non-alphanumeric run to `-` mapped
+/// `/repo/a-b` and `/repo/a/b` onto the same slug, so reporting on one path
+/// overwrote the other's baseline and the delta was computed against a
+/// different tree.
 fn slug_for(target: &str) -> String {
-    let collapsed: Vec<&str> = target
-        .split(|c: char| !c.is_ascii_alphanumeric())
-        .filter(|s| !s.is_empty())
+    let readable: String = target
+        .chars()
+        .map(|c| if c.is_ascii_alphanumeric() { c } else { '-' })
+        .collect::<String>()
+        .trim_matches('-')
+        .chars()
+        .rev()
+        .take(48)
+        .collect::<String>()
+        .chars()
+        .rev()
         .collect();
-    if collapsed.is_empty() {
+    let readable = if readable.is_empty() {
         "workspace".to_string()
     } else {
-        collapsed.join("-")
+        readable
+    };
+    format!("{readable}-{:016x}", fnv1a_64(target.as_bytes()))
+}
+
+/// FNV-1a. Inline rather than `DefaultHasher` because the key is persisted:
+/// `DefaultHasher`'s algorithm is explicitly allowed to change between Rust
+/// releases, which would orphan every stored baseline on a toolchain bump.
+fn fnv1a_64(bytes: &[u8]) -> u64 {
+    let mut hash: u64 = 0xcbf2_9ce4_8422_2325;
+    for byte in bytes {
+        hash ^= u64::from(*byte);
+        hash = hash.wrapping_mul(0x0000_0100_0000_01b3);
     }
+    hash
 }
 
 /// The key a target's snapshot is filed under.
@@ -61,11 +88,21 @@ pub fn read_store_at(path: &Path) -> SnapshotStore {
     match serde_json::from_str(&text) {
         Ok(store) => store,
         Err(e) => {
+            // Keep the unreadable file instead of letting the next write
+            // replace it: a truncated or half-written store is the one case
+            // where the baseline is still partly recoverable by hand.
+            let quarantine = path.with_extension("corrupt.json");
+            let preserved = std::fs::rename(path, &quarantine).is_ok();
             // stderr, so piping the report's stdout to a file still shows this.
             eprintln!(
                 "lint-arwaky: the saved report snapshot at {} could not be read ({e}); \
-                 treating this run as the first, and the next run will overwrite it",
-                path.display()
+                 treating this run as the first{}",
+                path.display(),
+                if preserved {
+                    format!(" (unreadable file kept at {})", quarantine.display())
+                } else {
+                    String::new()
+                }
             );
             SnapshotStore::default()
         }
@@ -92,5 +129,8 @@ pub fn write_store_at(path: &Path, target: &str, snapshot: ReportSnapshot) -> st
     // the read failed and every report said it had no baseline.
     let json = serde_json::to_string_pretty(&store)
         .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e))?;
-    std::fs::write(path, json)
+    // Write through a synced sibling + rename. A plain `fs::write` truncated
+    // first, so a crash or a full disk mid-write destroyed every target's
+    // baseline, not just this one.
+    write_string(path, &json)
 }

@@ -19,6 +19,7 @@ pub use contract_watch_protocol::IWatchLifecycleProtocol;
 pub use taxonomy_file_watch_error::WatchServiceError;
 pub use taxonomy_file_watch_request::WatchRequest;
 pub use taxonomy_file_watch_response::WatchResponse;
+pub use taxonomy_file_watch_vo::ChangeLintSummary;
 pub use taxonomy_file_watch_vo::GitDiffResultVO;
 pub use taxonomy_file_watch_vo::WatchConfig;
 pub use taxonomy_file_watch_vo::WatchEvent;

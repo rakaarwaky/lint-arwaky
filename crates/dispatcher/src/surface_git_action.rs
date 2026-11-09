@@ -141,9 +141,7 @@ fn get_changed_files_sync(
     base: &GitBranchName,
 ) -> Result<Vec<FilePath>, String> {
     let base = base.value();
-    if !is_valid_ref(base) {
-        return Err(format!("[error] invalid git base ref: {base}"));
-    }
+    validate_git_base_ref(base)?;
     let output = Command::new("git")
         .args(["diff", "--name-only", &format!("{base}...HEAD")])
         .current_dir(&project_path.value)
@@ -151,6 +149,18 @@ fn get_changed_files_sync(
 
     match output {
         Ok(out) => {
+            // The exit status used to be ignored. `git diff` exits 128 for an
+            // unknown base ref with an empty stdout, which read as "no files
+            // changed" — the scan then reported zero violations and a clean
+            // exit code for a ref that does not exist.
+            if !out.status.success() {
+                let stderr = String::from_utf8_lossy(&out.stderr);
+                return Err(format!(
+                    "[error] git diff against '{base}' failed ({}): {}",
+                    out.status,
+                    stderr.trim()
+                ));
+            }
             let stdout = String::from_utf8_lossy(&out.stdout);
             Ok(stdout
                 .lines()
@@ -159,6 +169,27 @@ fn get_changed_files_sync(
                 .collect())
         }
         Err(e) => Err(format!("[error] git diff failed: {e}")),
+    }
+}
+
+/// Validate a git base ref, returning the reason when it is rejected.
+///
+/// Public so the check is testable: it was a private helper with no test, and
+/// it is the only thing standing between the MCP `base` argument and the `git`
+/// argument list.
+pub fn validate_git_base_ref(s: &str) -> Result<(), String> {
+    if is_valid_ref(s) {
+        Ok(())
+    } else if s.is_empty() {
+        Err("[error] git base ref must not be empty".to_string())
+    } else if s.starts_with('-') {
+        Err(format!(
+            "[error] invalid git base ref '{s}': a ref may not start with '-'"
+        ))
+    } else {
+        Err(format!(
+            "[error] invalid git base ref '{s}': only alphanumerics, '.', '_', '/' and '-' are allowed"
+        ))
     }
 }
 

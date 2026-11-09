@@ -16,6 +16,9 @@ workspace = true
 
 [dependencies]
 shared-common.workspace = true
+# The snapshot store writes through the shared atomic-write primitive rather
+# than truncating in place with `std::fs::write`.
+shared-filesystem.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 clap.workspace = true

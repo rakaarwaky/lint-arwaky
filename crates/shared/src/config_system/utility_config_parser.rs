@@ -1,6 +1,7 @@
 // PURPOSE: Taxonomy parser — YAML → ArchitectureConfig factory functions
 // These functions produce taxonomy VOs from raw YAML, so they belong in taxonomy layer.
 use crate::taxonomy_config_system_vo::ArchitectureConfig;
+use crate::taxonomy_config_system_vo::ValidationResult;
 use shared_common::taxonomy_common_vo::BooleanVO;
 use shared_common::taxonomy_path_vo::FilePath;
 use shared_common::taxonomy_path_vo::FilePathList;
@@ -593,6 +594,73 @@ pub fn parse_score_threshold(yaml_str: &str) -> Option<f64> {
         })
 }
 
+/// Validate the adapter block: every entry must name a known adapter and
+/// carry a sane weight/timeout.
+///
+/// The check lives next to `validate_thresholds` because both are part of the
+/// same contract (`AC-LA-003-3`): an invalid threshold *or* adapter value must
+/// stop the run and name the offending key.
+pub fn validate_adapters(
+    config: &crate::taxonomy_config_system_vo::ProjectConfig,
+) -> ValidationResult {
+    // Adapter *names* are an open set — plugins and out-of-tree adapters are
+    // legitimate — so only the numeric contract is checked here. The key-name
+    // contract is enforced by `#[serde(deny_unknown_fields)]` on `AdapterEntry`.
+    let mut errors: Vec<String> = Vec::new();
+    for (index, adapter) in config.adapters.iter().enumerate() {
+        if adapter.weight.partial_cmp(&0.0) != Some(std::cmp::Ordering::Greater) {
+            errors.push(format!(
+                "config.adapters[{index}].weight must be positive, got {}",
+                adapter.weight
+            ));
+        }
+        if adapter.timeout.partial_cmp(&0.0) != Some(std::cmp::Ordering::Greater) {
+            errors.push(format!(
+                "config.adapters[{index}].timeout must be positive, got {}",
+                adapter.timeout
+            ));
+        }
+    }
+    if errors.is_empty() {
+        ValidationResult::ok()
+    } else {
+        ValidationResult::fail(&errors.join(" | "))
+    }
+}
+
+/// Validate the whole project config: thresholds and adapters.
+///
+/// This is the function the load path must call. `validate_thresholds` alone
+/// existed but was reachable only from tests and a bench, so no command could
+/// exit 2 for a bad threshold.
+pub fn validate_project_config(
+    config: &crate::taxonomy_config_system_vo::ProjectConfig,
+) -> ValidationResult {
+    let thresholds = validate_thresholds(config);
+    let adapters = validate_adapters(config);
+    match (thresholds.is_valid, adapters.is_valid) {
+        (true, true) => ValidationResult::ok(),
+        (false, true) => thresholds,
+        (true, false) => adapters,
+        (false, false) => ValidationResult::fail(&format!(
+            "{} | {}",
+            thresholds.reason.unwrap_or_default(),
+            adapters.reason.unwrap_or_default()
+        )),
+    }
+}
+
+/// Deserialize a `ProjectConfig` from YAML, rejecting unknown keys.
+///
+/// The structs carry `#[serde(deny_unknown_fields)]`, so this is the strict
+/// entry point: a typo is an error naming the key instead of a silently
+/// dropped setting.
+pub fn parse_project_config(
+    yaml_str: &str,
+) -> Result<crate::taxonomy_config_system_vo::ProjectConfig, String> {
+    serde_yaml_ng::from_str(yaml_str).map_err(|e| format!("Failed to deserialize YAML config: {e}"))
+}
+
 /// Returns names of adapters whose status is "enabled" (default).
 /// Ignores special entries like "architecture" (internal analysis).
 /// Supports both `status` (string) and `enabled` (bool) fields per Appendix A.
@@ -740,10 +808,16 @@ pub fn validate_thresholds(
     let mut errors = Vec::new();
 
     if !(0.0..=100.0).contains(&t.score.value) {
-        errors.push("Score threshold must be between 0 and 100.".to_string());
+        errors.push(format!(
+            "Score threshold (config.thresholds.score) must be between 0 and 100, got {}",
+            t.score.value
+        ));
     }
     if t.max_file_lines.value <= 0 {
-        errors.push("max_file_lines threshold must be positive.".to_string());
+        errors.push(format!(
+            "max_file_lines threshold (config.thresholds.max_file_lines) must be positive, got {}",
+            t.max_file_lines.value
+        ));
     }
 
     if errors.is_empty() {

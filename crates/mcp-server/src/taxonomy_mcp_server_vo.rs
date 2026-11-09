@@ -9,6 +9,11 @@ pub struct ExecuteCommandArgs {
     /// The command action to execute (e.g. "scan", "check", "security", "doctor").
     pub action: String,
     /// Supported options for the selected action. Unknown keys are rejected.
+    ///
+    /// `member`, `rules`, `base` and `strict` are forwarded to the verb that
+    /// owns them; dropping them silently made a member-scoped scan cover the
+    /// whole workspace, with no way for the caller to tell the two results
+    /// apart.
     pub args: Option<ExecuteCommandOptions>,
 }
 
@@ -25,6 +30,19 @@ pub struct ExecuteCommandOptions {
     pub threshold: Option<u64>,
     /// Preview fixes without writing files, for the `fix` action only (default: false).
     pub dry_run: Option<bool>,
+    /// Restrict a `check`/`scan` to one workspace member by name.
+    pub member: Option<String>,
+    /// Filter reported violations by AES rule code (`check`/`scan`).
+    pub rules: Option<String>,
+    /// Git base ref for the `git` action (default: `develop`).
+    pub base: Option<String>,
+    /// Force strict doc auditing for the `docs` action (default: false).
+    pub strict: Option<bool>,
+    // NOTE: no `layer`, `format` or `group` keys. The surface already
+    // discriminates those through the action name — `taxonomy`/`contract`/…
+    // select a layer, `quality`/`import`/… select a group — and its output is
+    // always JSON. Accepting them here would recreate the bug this struct
+    // exists to fix: a documented key that is decoded and then ignored.
 }
 
 #[derive(Debug, Deserialize, JsonSchema)]

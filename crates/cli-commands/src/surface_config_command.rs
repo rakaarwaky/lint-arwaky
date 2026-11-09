@@ -17,6 +17,21 @@ pub fn handle_config_show(orchestrator: Arc<dyn IConfigOrchestratorAggregate>) -
     }
     if report.entries.is_empty() {
         println!("No config file found. Run `lint-arwaky init` to create one.");
+        return ExitCode::OK;
+    }
+    // A config that exists but does not validate is a prerequisite failure:
+    // the linters are not running with the settings on disk, and printing the
+    // file without saying so is how a typo looks like a passing setup.
+    if !report.errors.is_empty() {
+        println!();
+        println!(
+            "Configuration is invalid (exit code {}):",
+            ExitCode::PREREQUISITE_MISSING.value()
+        );
+        for error in &report.errors {
+            println!("  - {error}");
+        }
+        return ExitCode::PREREQUISITE_MISSING;
     }
     ExitCode::OK
 }
