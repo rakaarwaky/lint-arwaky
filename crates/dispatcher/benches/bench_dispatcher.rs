@@ -9,6 +9,10 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Instant;
 
+/// Member-targeted scan latency advisory threshold (mirrors the regression
+/// test in `crates/dispatcher/tests/regression_scan_latency.rs`).
+pub(crate) const LATENCY_GUARD_MAX_RATIO: f64 = 1.2;
+
 /// Resolve a fixture path relative to the workspace root (parent of
 /// `crates/dispatcher`).
 fn fixture_path(relative: &str) -> PathBuf {
@@ -143,8 +147,8 @@ fn scan_member_targeted(agg: &ScanAggregates) -> Result<Vec<shared_common::Viola
     run_scan(agg, "workspaces-good", Some("crates"))
 }
 
-/// Time a single `collect_scan` call with `Instant` (excludes criterion
-/// warm-up/iteration overhead) for the latency guard.
+/// Time a single `collect_scan` call with `Instant` for the advisory latency
+/// output (excludes criterion warm-up/iteration overhead).
 fn time_scan<F>(f: F) -> u128
 where
     F: Fn() -> Result<Vec<shared_common::ViolationItem>, String>,
@@ -166,14 +170,11 @@ fn bench_scan_latency(c: &mut Criterion) {
     let root = fixture_path("workspaces-good");
     let agg = build_scan_aggregates(&root.to_string_lossy());
 
-    // Warm up: force both scan shapes to run once so caches/page faults don't
-    // distort the first measured iteration.
-    let _ = scan_full_root(&agg);
-    let _ = scan_member_targeted(&agg);
-
     let mut group = c.benchmark_group("scan_latency");
     group.significance_level(0.05).confidence_level(0.95);
     group.sample_size(30);
+    // Warm up via Criterion's warm_up_time rather than manual pre-group calls.
+    group.warm_up_time(std::time::Duration::from_secs(1));
 
     group.bench_function("full_root_scan", |b| {
         b.iter(|| {
@@ -191,20 +192,17 @@ fn bench_scan_latency(c: &mut Criterion) {
 
     group.finish();
 
-    // Latency guard: per PR 2 both `scan .` and `scan crates` walk the full root
-    // (`scan_root = root.clone()`), so the member-targeted scan latency must be
-    // within 1.2x of the full-root scan — not lower by design (it is not
-    // skipping work).
+    // Latency guard (advisory output only): per PR 2 both `scan .` and
+    // `scan crates` walk the full root (`scan_root = root.clone()`), so the
+    // member-targeted scan latency must be within LATENCY_GUARD_MAX_RATIO of
+    // the full-root scan — not lower by design (it is not skipping work).
+    // CI enforcement lives in `crates/dispatcher/tests/regression_scan_latency.rs`.
     let root_ns = time_scan(|| scan_full_root(&agg));
     let member_ns = time_scan(|| scan_member_targeted(&agg));
     let ratio = member_ns as f64 / root_ns as f64;
     eprintln!(
-        "latency guard: root={} ns member={} ns ratio={:.3}",
-        root_ns, member_ns, ratio
-    );
-    assert!(
-        ratio <= 1.2,
-        "member-targeted scan latency ({member_ns} ns, ratio {ratio:.3}x) must be <= 1.2x full-root scan latency ({root_ns} ns)",
+        "latency guard (advisory): root={} ns member={} ns ratio={:.3} (threshold {})",
+        root_ns, member_ns, ratio, LATENCY_GUARD_MAX_RATIO
     );
 }
 
