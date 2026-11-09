@@ -32,9 +32,15 @@ fn contract_fix_command_handle_fix_exists() {
             Option<shared_common::FilePath>,
             bool,
             std::sync::Arc<dyn shared_quality_rules::ICodeAnalysisAggregate>,
+            // The fixer must honour the configured ignored paths, so the
+            // filesystem aggregate travels with it.
+            std::sync::Arc<
+                dyn shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate,
+            >,
             std::sync::Arc<
                 dyn Fn(bool) -> std::sync::Arc<dyn shared_auto_fix::IFixAggregate> + Send + Sync,
             >,
+            &[String],
         ) -> shared_common::ExitCode,
     >();
 }

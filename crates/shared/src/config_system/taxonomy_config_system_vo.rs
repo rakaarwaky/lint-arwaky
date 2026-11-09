@@ -134,6 +134,10 @@ pub struct ArchitectureRule {
     pub orphan: OrphanRuleVO,
 }
 
+// NOTE: no `deny_unknown_fields` here. `ArchitectureRule` uses `#[serde(flatten)]`
+// for its per-capability blocks, and serde documents that the two attributes do
+// not compose; the `architecture:` subtree is instead checked key-by-key by
+// `utility_config_parser::warn_unknown_architecture_keys`.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(default)]
 pub struct ArchitectureConfig {
@@ -215,10 +219,29 @@ string_value_object!(ActualValue);
 string_value_object!(ExpectedValue);
 
 /// Scoring thresholds.
+///
+/// Strict: `threshold: {score: 95}` (singular) used to deserialize cleanly, so
+/// the effective threshold stayed at the embedded default and nothing said the
+/// operator's number had been ignored.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(deny_unknown_fields)]
 pub struct Thresholds {
+    // Field defaults, not `#[serde(default)]` on the struct: a `thresholds:`
+    // block that sets only `score` must keep the default line budget rather
+    // than inheriting `Count::default()` (zero), which the range check would
+    // then reject.
+    #[serde(default = "default_score_threshold")]
     pub score: Score,
+    #[serde(default = "default_max_file_lines")]
     pub max_file_lines: Count,
+}
+
+fn default_score_threshold() -> Score {
+    Score::new(80.0)
+}
+
+fn default_max_file_lines() -> Count {
+    Count::new(500)
 }
 
 impl Thresholds {
@@ -268,6 +291,7 @@ impl std::fmt::Display for AdapterStatus {
 
 /// Single adapter configuration.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(deny_unknown_fields)]
 pub struct AdapterEntry {
     pub name: AdapterName,
     #[serde(default)]
@@ -325,6 +349,7 @@ impl AdapterEntry {
 
 /// Project configuration.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+#[serde(deny_unknown_fields)]
 pub struct ProjectConfig {
     #[serde(default = "default_project_name")]
     pub project_name: DescriptionVO,
@@ -396,6 +421,11 @@ pub struct ConfigResult {
     pub config: ArchitectureConfig,
     pub source: ConfigSource,
     pub warnings: Vec<String>,
+    /// Schema errors from the file that was actually read. Non-empty means the
+    /// loaded config is the *embedded fallback*, not the operator's file, and
+    /// the command must exit 2 (PREREQUISITE) instead of quietly scoring
+    /// against defaults.
+    pub errors: Vec<String>,
 }
 
 impl ConfigResult {
@@ -404,7 +434,21 @@ impl ConfigResult {
             config,
             source,
             warnings,
+            errors: Vec::new(),
         }
+    }
+
+    /// Record schema/validation errors. The config stays usable so callers can
+    /// still report per-key problems, but `has_errors()` turns the run into a
+    /// prerequisite failure.
+    pub fn with_errors(mut self, errors: Vec<String>) -> Self {
+        self.errors = errors;
+        self
+    }
+
+    /// Whether the config that was loaded is unusable (fallback in effect).
+    pub fn has_errors(&self) -> bool {
+        !self.errors.is_empty()
     }
 }
 

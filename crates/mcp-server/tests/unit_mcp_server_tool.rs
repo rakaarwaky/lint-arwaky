@@ -75,8 +75,7 @@ async fn handle_execute_command_wires_path_arg_into_path_validation() {
         action: "fix".to_string(),
         args: Some(ExecuteCommandOptions {
             path: Some(String::new()),
-            threshold: None,
-            dry_run: None,
+            ..Default::default()
         }),
     };
     let server = LintArwakyMcpServer::new(Arc::new(
@@ -95,6 +94,10 @@ async fn handle_execute_command_rejects_options_not_supported_by_action() {
             path: None,
             threshold: Some(90),
             dry_run: None,
+            member: None,
+            rules: None,
+            base: None,
+            strict: None,
         }),
     };
     let result = parse(&server().handle_execute_command(Parameters(args)).await);

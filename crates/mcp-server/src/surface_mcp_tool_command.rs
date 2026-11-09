@@ -46,21 +46,46 @@ impl LintArwakyMcpServer {
         Parameters(args): Parameters<ExecuteCommandArgs>,
     ) -> String {
         let action = args.action.clone();
+        // Typed options, not a free-form map: an unknown key is a validation
+        // error instead of a silently ignored argument.
         let options: ExecuteCommandOptions = args.args.unwrap_or_default();
         let path_was_specified = options.path.is_some();
-        let path = options.path.unwrap_or_else(|| ".".to_string());
+        let path = options.path.clone().unwrap_or_else(|| ".".to_string());
         let threshold = options.threshold.unwrap_or(80);
         let dry_run = options.dry_run.unwrap_or(false);
+        let base = options
+            .base
+            .clone()
+            .unwrap_or_else(|| "develop".to_string());
         if threshold > 100 {
             return validation_error(&format!(
                 "Invalid value for 'threshold': expected 0..=100, got {threshold}"
             ));
         }
+        // An argument the selected verb would ignore is an error, not a
+        // silently dropped key: a caller who passes `dry_run` to `check`
+        // believes the tree will not change, and it never would have.
         if options.threshold.is_some() && action != "ci" {
             return validation_error("'threshold' is only supported by the 'ci' action");
         }
         if options.dry_run.is_some() && action != "fix" {
             return validation_error("'dry_run' is only supported by the 'fix' action");
+        }
+        if options.member.is_some()
+            && !matches!(action.as_str(), "check" | "scan" | "docs_scaffold")
+        {
+            return validation_error(
+                "'member' is only supported by 'check', 'scan' and 'docs_scaffold'",
+            );
+        }
+        if options.rules.is_some() && !matches!(action.as_str(), "check" | "scan") {
+            return validation_error("'rules' is only supported by 'check' and 'scan'");
+        }
+        if options.base.is_some() && action != "git" {
+            return validation_error("'base' is only supported by the 'git' action");
+        }
+        if options.strict.is_some() && action != "docs" {
+            return validation_error("'strict' is only supported by the 'docs' action");
         }
         if path_was_specified
             && matches!(
@@ -90,7 +115,16 @@ impl LintArwakyMcpServer {
         );
         let mut result = self
             .action
-            .execute_command(&action, &path, threshold, dry_run)
+            .execute_command(
+                &action,
+                &path,
+                threshold,
+                dry_run,
+                &base,
+                options.member.as_deref(),
+                options.rules.as_deref(),
+                options.strict.unwrap_or(false),
+            )
             .await;
         attach_resolved_path(&self.action, &path, &mut result);
         let exit_code = result

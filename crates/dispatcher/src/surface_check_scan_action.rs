@@ -172,6 +172,9 @@ pub(crate) fn run_all_linters_in_process(
                 let mut group_panics = Vec::new();
                 let group_start = Instant::now();
                 let violations = run_isolated("quality", &mut group_panics, || {
+                    // `RunAnalysis` takes `Vec<FileEntry>` by value, so this is
+                    // the only deep copy of the file bodies in a scan: every
+                    // other group borrows `entries` (#1359).
                     agg.quality
                         .execute(CodeAnalysisRequest::RunAnalysis {
                             files: entries.clone(),

@@ -16,7 +16,7 @@ pub fn handle_watch(
     watch_aggregate: Arc<dyn IWatchAggregate>,
     path: Option<FilePath>,
     on_stop: Arc<dyn Fn() + Send + Sync>,
-) -> Result<(), String> {
+) -> Result<ExitCode, String> {
     handle_watch_with_output(watch_aggregate, path, on_stop, Arc::new(|_| {}))
 }
 
@@ -25,7 +25,7 @@ pub fn handle_watch_with_output(
     path: Option<FilePath>,
     on_stop: Arc<dyn Fn() + Send + Sync>,
     on_output: Arc<dyn Fn(WatchOutputEvent) + Send + Sync>,
-) -> Result<(), String> {
+) -> Result<ExitCode, String> {
     let root = match path {
         Some(p) => p.value().to_string(),
         None => ".".to_string(),
@@ -48,11 +48,10 @@ pub fn handle_watch_with_output(
         return Err("watch session returned an unexpected response".to_string());
     };
 
-    if exit_code == ExitCode::OK {
-        Ok(())
-    } else {
-        Err("watch session failed".to_string())
-    }
+    // The session's verdict is returned, not flattened. Collapsing a policy
+    // failure into `Err` mapped it to exit 2 (runtime), so a tree that simply
+    // has violations reported a linter crash.
+    Ok(exit_code)
 }
 
 pub struct _Aes303Placeholder {
