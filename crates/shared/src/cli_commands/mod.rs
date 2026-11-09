@@ -1,6 +1,7 @@
 pub mod taxonomy_action_vo;
 pub mod taxonomy_cli_commands_request;
 pub mod taxonomy_cli_commands_vo;
+pub mod taxonomy_fix_delta_vo;
 pub use shared_common::MemberDelta;
 pub use shared_common::ReportDelta;
 pub use shared_common::ReportSnapshot;
@@ -16,9 +17,8 @@ pub use taxonomy_cli_commands_vo::DiagnosticSeverity;
 pub use taxonomy_cli_commands_vo::PipelineDiagnostic;
 pub use taxonomy_cli_commands_vo::ScanGroup;
 pub use taxonomy_cli_commands_vo::ScanReport;
-pub mod utility_fix_delta;
+pub use taxonomy_fix_delta_vo::FixDelta;
 pub mod utility_output_text_formatter;
 pub mod utility_report_delta;
 pub mod utility_report_renderer;
 pub mod utility_report_snapshot;
-pub use utility_fix_delta::FixDelta;

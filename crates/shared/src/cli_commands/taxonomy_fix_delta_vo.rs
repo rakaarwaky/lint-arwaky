@@ -1,5 +1,6 @@
-// PURPOSE: utility_fix_delta — compare the pre-fix and post-fix violation sets
-// so a fix run reports what actually changed instead of a count subtraction.
+// PURPOSE: taxonomy_fix_delta_vo — compare the pre-fix and post-fix violation
+// sets so a fix run reports what actually changed instead of a count
+// subtraction.
 //
 // `collect_fix` used to derive its outcome from
 // `results.len().saturating_sub(after.len())`. Two runs with the same count but
