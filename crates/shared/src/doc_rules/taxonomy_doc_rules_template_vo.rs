@@ -179,12 +179,17 @@ pub const TEMPLATE_PROFILES: &[TemplateProfile] = &[
     // opened at line 60, so `modules/<feature-name>/src/` (line 97) is loose
     // prose outside the verbatim_copy extraction (lines 61-94) and never
     // reaches the catalog matcher.
+    //
+    // The template block itself now ships filled example content
+    // (# Agentic Engineering System Architecture + a concrete Overview
+    // paragraph) rather than placeholders, so the catalog is empty:
+    // there are no placeholder tokens left to pin.
     TemplateProfile {
         doc_name: ARCHITECTURE_DOC,
         template_file: "architecture/template.md",
 
         required_h2s: ARCHITECTURE_REQUIRED_H2S,
-        placeholder_catalog: &["<Project>", "<One paragraph."],
+        placeholder_catalog: &[],
     },
     TemplateProfile {
         doc_name: CONTRIBUTING_DOC,
