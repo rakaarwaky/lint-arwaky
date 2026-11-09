@@ -4,6 +4,7 @@
 
 pub mod surface_check_action;
 pub mod surface_check_discovery_action;
+pub mod surface_check_scan_action;
 pub mod surface_check_scope_action;
 pub mod surface_ci_action;
 pub mod surface_config_action;
