@@ -8,9 +8,16 @@
 - feat(naming-rules): evaluate every file by path, including a file with no content, so a zero-byte file with a broken name is no longer reported as clean (#1378)
 - feat(naming-rules): name the exemption list in every fix, and derive the worked example from the directory the finding reports (#1378)
 
+### Bug Fixes
+
+- fix(structure-rules): rename the AES706 violation names off lint-arwaky's own segment — `pr_la_id_mismatch` → `pr_id_mismatch`, `pr_la_missing_frd` → `pr_missing_frd`, `pr_la_fr_id_mismatch` → `pr_fr_id_mismatch`, `pr_la_folder_without_pr_la_id` → `pr_folder_without_id` — so a project using `PR-PSD-001` or `PR-CALC-001` ids is not told its violation is about `la` (#1375)
+- fix(structure-rules): drop non-crate directories (`__pycache__`, `node_modules`, `target`, `dist`, `.venv`, …) from the AES706 crate folder order, so a Python bytecode cache no longer takes position 0 and shifts every `PR-<segment>` id onto its predecessor's folder (#1375)
+- fix(structure-rules): scope the AES706 folder order per member dir, and audit one `PR-<segment>` sequence per language against its own member's folders instead of one flattened multi-language list (#1375)
+
 ### Documentation
 
 - docs(naming-rules): add the developer journey, one rendered output sample per rule, the severity model, the suppression section and the 72-of-80 column contract (#1378)
+- docs(architecture): retitle AES706 "PR ID Folder Mapping" and list its current violation names, segment-neutral wording, and per-member folder order (#1375)
 
 ## 3.16.1 (2026-11-09)
 

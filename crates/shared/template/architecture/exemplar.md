@@ -51,7 +51,7 @@ The Agentic Engineering System is a layered, AI-native architecture pattern. It 
 | AES703 | Structure | Surface Folder Purity | MEDIUM          |
 | AES704 | Structure | Test Suite Coverage   | MEDIUM          |
 | AES705 | Structure | Member-Root Placement | MEDIUM          |
-| AES706 | Structure | PR-LA Folder Mapping  | MEDIUM          |
+| AES706 | Structure | PR ID Folder Mapping  | MEDIUM          |
 
 ---
 
@@ -495,12 +495,12 @@ project-root/
 | Scope      | Member root level only                                                                                                       |
 | Fix        | Move the layer file into the member type that carries it (see Member Types `Carries`)                                        |
 
-### AES706 — PR Folder Mapping
+### AES706 — PR ID Folder Mapping
 
 | Field      | Value                                                                                                                                                                                                                                                              |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Fires when | `pr_la_missing_frd` (a module folder holds no FRD.md), `pr_la_fr_id_mismatch` (a module folder's FRD carries an FR id whose prefix does not match the folder name), or `pr_la_id_mismatch` (a `PR-LA-001..N` id does not map to an existing crate folder by order) |
-| Scope      | `PRD.md`, `ROADMAP.md`, and feature module folders under `crates/` / `modules/` / `packages/`                                                                                                                                                                      |
+| Fires when | `pr_missing_frd` (a module folder holds no FRD.md), `pr_fr_id_mismatch` (a module folder's FRD carries an FR id whose prefix does not match the folder name), `pr_id_mismatch` (a `PR-<segment>-001..N` id does not map to a crate folder by order, or its heading title names a different folder), or `pr_folder_without_id` (a crate folder position no `PR-<segment>` id reaches) |
+| Scope | `PRD.md`, `ROADMAP.md`, and feature module folders under `crates/` / `modules/` / `packages/`. `<segment>` is the project's own id token (`LA`, `PSD`, `CALC`, …); each member dir is ordered on its own, so a Python sequence is never compared against TypeScript folders, and caches/build output (`__pycache__`, `node_modules`, `target`, `dist`, …) never take a position |
 | Fix        | Create the missing module folder, rename mismatched FR ids to `FR-<Feature>-NNN`, or add the missing FRD.md                                                                                                                                                        |
 
 ````
