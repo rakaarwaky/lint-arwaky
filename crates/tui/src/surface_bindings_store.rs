@@ -49,6 +49,7 @@ pub enum ShortcutAction {
     CopyToFile,
     ToggleHelp,
     ToggleSearch,
+    ChangeProjectRoot,
 }
 
 impl ShortcutAction {
@@ -87,6 +88,7 @@ impl ShortcutAction {
             Self::CopyToFile => TuiEvent::CopyToFile,
             Self::ToggleHelp => TuiEvent::ToggleHelp,
             Self::ToggleSearch => TuiEvent::ToggleSearch,
+            Self::ChangeProjectRoot => TuiEvent::ChangeProjectRoot,
         }
     }
 }
@@ -447,6 +449,20 @@ pub const SHORTCUTS: &[Shortcut] = &[
         normal_row: Some(2),
         result_row: Some(2),
     },
+    // #355 fixed Esc so it cancels the path dialog instead of quitting, and
+    // left the status line telling the user to press `r` — a key with no row
+    // here, so no dispatch, no bar cell, and no help line. `ChangeProjectRoot`
+    // existed as a handler with no producer until this row.
+    Shortcut {
+        triggers: &[Trigger::Plain('r')],
+        action: ShortcutAction::ChangeProjectRoot,
+        key_label: "r",
+        label: "root",
+        result_label: "root",
+        section: "Navigation",
+        normal_row: Some(1),
+        result_row: Some(1),
+    },
 ];
 
 fn trigger_matches(trigger: Trigger, key: &KeyEvent) -> bool {
@@ -504,6 +520,17 @@ pub fn help_text() -> String {
             shortcut.key_label, shortcut.label
         ));
     }
+    // The layout changes silently twice on the way down (three columns, then a
+    // single panel) and then refuses to draw, so state both boundaries here
+    // rather than letting the user discover them by shrinking the window
+    // (#1328).
+    output.push_str(&format!(
+        "\nLayout: 3 panels at {} columns or wider; one panel below that.\n\
+         Minimum terminal: {}x{} — below it the app asks you to resize.\n",
+        shared_tui::utility_tui_theme::NARROW_BREAKPOINT_WIDTH,
+        shared_tui::utility_tui_theme::MIN_TERMINAL_WIDTH,
+        shared_tui::utility_tui_theme::MIN_TERMINAL_HEIGHT,
+    ));
     output.push_str("\nFor screen readers, use `lint-arwaky-cli` instead.\n");
     output
 }

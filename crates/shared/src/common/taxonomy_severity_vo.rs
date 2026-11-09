@@ -38,4 +38,21 @@ impl Severity {
             Severity::CRITICAL => 5.0,
         }
     }
+
+    /// The one severity badge used by every human-facing text surface.
+    ///
+    /// Before this existed the report formatter used an ASCII ladder
+    /// (`[!!!]`, `[!! ]`, `[!  ]`, `[.  ]`, `[   ]`) whose meaning lived in a
+    /// trailing space, the `scan` text output printed no severity at all, and
+    /// the TUI printed a third vocabulary. A badge carries no whitespace, so
+    /// copying it, grepping it, or pasting it into an issue keeps it intact.
+    pub fn badge(&self) -> &'static str {
+        match self {
+            Severity::INFO => "[INFO]",
+            Severity::LOW => "[LOW]",
+            Severity::MEDIUM => "[MED]",
+            Severity::HIGH => "[HIGH]",
+            Severity::CRITICAL => "[CRIT]",
+        }
+    }
 }

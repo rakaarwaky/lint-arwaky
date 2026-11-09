@@ -20,29 +20,18 @@ use shared_tui::utility_tui_theme as theme;
 /// Modal height in rows: three content lines plus the top and bottom border.
 const MODAL_HEIGHT: u16 = 5;
 
-/// ASCII border set used when NO_COLOR is set (#365).
-const ASCII_BORDER: border::Set<'static> = border::Set {
-    top_left: "+",
-    top_right: "+",
-    bottom_left: "+",
-    bottom_right: "+",
-    vertical_left: "|",
-    vertical_right: "|",
-    horizontal_top: "-",
-    horizontal_bottom: "-",
-};
-
-/// Returns the warning glyph shown before the action label.
-/// Falls back to "!" when NO_COLOR is set (#365).
+// The ASCII border set and the warning glyph come from the theme module so a
+// second overlay cannot ship a different fallback under the same contract
+// (#1325).
 fn warn() -> &'static str {
-    if theme::no_color() { "!" } else { "\u{26a0}" }
+    theme::glyph::warn(theme::no_color())
 }
 
 /// Returns the centered modal area, never taller or wider than the viewport.
 ///
 /// Shares the centering helper with the path-entry screen so both overlays
 /// land in the same place.
-fn modal_area(area: Rect) -> Rect {
+pub fn modal_area(area: Rect) -> Rect {
     let popup = crate::surface_path_screen::centered_rect(60, 30, area);
     Rect {
         height: popup.height.min(MODAL_HEIGHT).min(area.height),
@@ -71,7 +60,7 @@ impl ConfirmModal {
             .title(" Confirm ")
             .borders(Borders::ALL)
             .border_set(if theme::no_color() {
-                ASCII_BORDER
+                theme::glyph::ASCII_BORDER
             } else {
                 border::THICK
             })
@@ -98,15 +87,17 @@ impl ConfirmModal {
                 ),
             ]),
             Line::from(""),
+            // Cancel is the emphasized affordance and confirm is plain: on a
+            // data-loss gate the safe choice must not be the quieter one.
             Line::from(vec![
                 Span::styled(
-                    " [Enter/y] confirm ",
+                    " [Esc/n] cancel ",
                     Style::default()
                         .fg(theme::color(theme::KEY))
                         .add_modifier(theme::EMPHASIS_SELECTED),
                 ),
                 Span::styled(
-                    "[Esc/n] cancel",
+                    "[Enter/y] confirm",
                     Style::default().fg(theme::color(theme::SEPARATOR)),
                 ),
             ]),

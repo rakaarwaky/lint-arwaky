@@ -35,8 +35,8 @@ fn us1_report_with_aes_violations_has_severity_badges() {
         .value()
         .to_string();
     assert!(text.contains("AES Violations: 2"));
-    assert!(text.contains("[!!!] AES201 src/surface.rs:14"));
-    assert!(text.contains("[!! ] AES301 src/surface.rs:14"));
+    assert!(text.contains("[CRIT] AES201 src/surface.rs:14"));
+    assert!(text.contains("[HIGH] AES301 src/surface.rs:14"));
 }
 
 #[test]

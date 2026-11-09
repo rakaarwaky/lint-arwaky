@@ -44,13 +44,18 @@ impl FileListView {
             (0..state.navigation.entries.len()).collect()
         };
 
-        // In search mode with zero matches, show empty-state guidance instead of the full list (#367).
+        // Empty states, in priority order. A zero-match search is guidance
+        // (#367); an open folder with no rows says so; and a first run whose
+        // path dialog was dismissed says how to choose a root, because before
+        // `r` existed that state was unrecoverable (#1317).
         let empty_hint =
             if state.search.mode && !state.search.query.is_empty() && display_indices.is_empty() {
                 Some(format!(
                     "No matches for '{}' — press Esc to clear filter",
                     state.search.query
                 ))
+            } else if display_indices.is_empty() {
+                Some(empty_state_hint(state))
             } else {
                 None
             };
@@ -80,10 +85,20 @@ impl FileListView {
                     Style::default().fg(theme::color(theme::LABEL))
                 };
 
-                let line = Line::from(vec![
+                let mut spans = vec![
                     Span::styled(format!("{} ", badge), Style::default().fg(badge_color)),
                     Span::styled(name, name_style),
-                ]);
+                ];
+                // `FileEntry::violation_count` was declared, never written, and
+                // never drawn, so the panel that owns navigation could not say
+                // which of its rows the scan had flagged (#1322).
+                if entry.violation_count > 0 {
+                    spans.push(Span::styled(
+                        format!("  {}", entry.violation_count),
+                        Style::default().fg(theme::color(theme::VIOLATIONS)),
+                    ));
+                }
+                let line = Line::from(spans);
 
                 let item_style = if Some(i) == display_selected {
                     theme::highlight_style()
@@ -129,6 +144,22 @@ impl FileListView {
 impl Default for FileListView {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+/// Copy for an empty Files panel.
+///
+/// Two different emptinesses share one blank panel today: a folder that holds
+/// nothing, and a session with no project root at all. They need different
+/// next actions, so they get different copy.
+fn empty_state_hint(state: &AppState) -> String {
+    if state.navigation.project_root.is_empty() {
+        "No project selected — press 'r' to choose a folder".to_string()
+    } else {
+        format!(
+            "No files here — h/← back, or r to change root ({})",
+            state.navigation.project_root
+        )
     }
 }
 
