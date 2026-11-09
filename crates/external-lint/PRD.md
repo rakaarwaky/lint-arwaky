@@ -49,13 +49,13 @@ Without one gate, drift across naming, layering, imports, quality, roles, orphan
 | 1 | 3 passes/PR → ≤ 1 pass/PR (-66%) across the three languages. |
 | 2 | `scan` on `workspaces-bad/` produces violations for every applicable rule code. |
 
-### PR-LA-002: 41 AES rules enforcement across 7 groups
+### PR-LA-002: 34 AES rules enforcement across 7 groups
 
 #### Description
 
 | No | Detail |
 | --- | --- |
-| 1 | 41 AES rules across Naming, Import, Quality, Role, Orphan, Doc, Structure groups are enforced per scan. |
+| 1 | 34 AES rules across Naming, Import, Quality, Role, Orphan, Doc, Structure groups are enforced per scan. |
 | 2 | Silent drift never reaches main because every architectural rule is enforced in CI. |
 
 #### User Story
@@ -130,7 +130,7 @@ Without one gate, drift across naming, layering, imports, quality, roles, orphan
 | No | Detail |
 | --- | --- |
 | 1 | An MCP server exposes every CLI command via 5 tools so AI agents can self-lint. |
-| 2 | `execute_command`, `list_commands`, `health_check`, `get_config`, `docs_scaffold` are the five tools. |
+| 2 | `execute_command`, `list_commands`, `read_skill`, `health_check`, `get_config` are the five tools. |
 
 #### User Story
 
@@ -143,7 +143,7 @@ Without one gate, drift across naming, layering, imports, quality, roles, orphan
 
 | No | Detail |
 | --- | --- |
-| 1 | 5 MCP tools: `execute_command`, `list_commands`, `health_check`, `get_config`, `docs_scaffold`. |
+| 1 | 5 MCP tools: `execute_command`, `list_commands`, `read_skill`, `health_check`, `get_config`. |
 | 2 | Full CLI parity so every CLI command is reachable via `execute_command`. |
 
 #### Out of Scope
