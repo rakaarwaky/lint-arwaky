@@ -98,7 +98,7 @@ impl CodeAnalysisOrchestrator {
         // Parallel per-file processing using FileEntry content directly
         let file_violations: Vec<Vec<LintResult>> = files
             .par_iter()
-            .filter(|f| f.parse_ok && !f.content.is_empty())
+            .filter(|f| f.parse_ok)
             .map(|entry| {
                 let mut v = Vec::new();
                 let file = entry.path.to_string_lossy();
@@ -107,6 +107,42 @@ impl CodeAnalysisOrchestrator {
                     .and_then(|n| n.to_str())
                     .unwrap_or_default();
                 let c = &entry.content;
+
+                // Handle empty/unparseable files for AES302 (UX-S5-001)
+                if !entry.parse_ok || c.is_empty() {
+                    let def = match get_layer_def(&LayerNameVO::new(resolve_specialized_layer(&detect_layer_from_prefix(filename).unwrap_or_default(), &file, &collect_layer_keys(&self.layer_map))), &self.config.layers) {
+                        Some(d) => d,
+                        None => {
+                            // If we can't detect layer/def, we still report if it's a known file type or skip
+                            // For now, we only report if we have a definition, or fallback to generic
+                            return v;
+                        }
+                    };
+                    if def.code_analysis.min_lines.value > 0 && 0 < def.code_analysis.min_lines.value {
+                        // FileTooShort finding for empty/unparseable file
+                        v.push(LintResult::new_arch_with_name(
+                            &file,
+                            0,
+                            "AES302",
+                            shared_common::taxonomy_severity_vo::Severity::HIGH,
+                            format!(
+                                "File is empty or unparseable, fewer than the minimum {} lines.",
+                                def.code_analysis.min_lines.value
+                            ),
+                            "FILE_TOO_SHORT",
+                            format!(
+                                "File {} has no content, less than minimum {} lines",
+                                file, def.code_analysis.min_lines.value
+                            ),
+                            format!(
+                                "Expand the component or merge this logic into a related module. (min: {}).",
+                                def.code_analysis.min_lines.value
+                            ),
+                        ));
+                    }
+                    // Skip other rules for empty/unparseable files as per original logic (or we could report skip)
+                    return v;
+                }
 
                 // Layer-independent checks
                 self.deps
@@ -168,7 +204,7 @@ impl CodeAnalysisOrchestrator {
         // AES305: duplication analysis on pre-fetched entries
         let entries: Vec<(std::path::PathBuf, String)> = files
             .iter()
-            .filter(|f| f.parse_ok && !f.content.is_empty())
+            .filter(|f| f.parse_ok)
             .map(|f| (f.path.clone(), f.content.clone()))
             .collect();
         if !entries.is_empty() {

@@ -216,8 +216,7 @@ impl CodeDuplicationAnalyzer {
                 };
 
             let mut msg = format!(
-                "AES305 ({fired}): {pct:.0}% of this file's non-import windows are shared \
-                 (threshold: {threshold:.0}%). {shared_count} of {total} windows are non-unique.",
+                "AES305 ({fired}): {pct:.0}% of this file's non-import windows are shared (threshold: {threshold:.0}%). {shared_count} of {total} windows are non-unique.",
             );
 
             let range_positions: Vec<(usize, usize)> = positions
