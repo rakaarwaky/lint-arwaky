@@ -9,7 +9,7 @@ use shared_common::taxonomy_violation_item_vo::ViolationItem;
 use std::path::{Component, Path, PathBuf};
 
 /// Serialize violations to JSON (mirrors old execute_* shape + severity).
-pub(crate) fn violations_to_json(violations: &[ViolationItem]) -> Vec<Value> {
+pub fn violations_to_json(violations: &[ViolationItem]) -> Vec<Value> {
     violations
         .iter()
         .map(|v| {
@@ -42,7 +42,7 @@ pub(crate) fn violations_response(action: &str, path: &str, violations: &[Violat
 /// Resolve a client path beneath the configured root. Lexical parent segments
 /// are rejected before canonicalization, and canonicalization then protects
 /// against symlink escapes.
-pub(crate) fn resolve_confined_path(root: &Path, requested: &str) -> Result<PathBuf, Value> {
+pub fn resolve_confined_path(root: &Path, requested: &str) -> Result<PathBuf, Value> {
     if requested.trim().is_empty() {
         return Err(error_response("Invalid path"));
     }
@@ -70,14 +70,14 @@ pub(crate) fn resolve_confined_path(root: &Path, requested: &str) -> Result<Path
     Ok(resolved)
 }
 
-pub(crate) fn is_mutating_action(action: &str) -> bool {
+pub fn is_mutating_action(action: &str) -> bool {
     matches!(
         action,
         "fix" | "install-hook" | "uninstall-hook" | "init" | "install" | "docs_scaffold"
     )
 }
 
-pub(crate) fn normalize_response(mut response: Value) -> Value {
+pub fn normalize_response(mut response: Value) -> Value {
     let exit_code = response
         .get("exit_code")
         .and_then(Value::as_i64)
@@ -95,6 +95,6 @@ pub(crate) fn normalize_response(mut response: Value) -> Value {
     response
 }
 
-pub(crate) fn error_response(message: &str) -> Value {
+pub fn error_response(message: &str) -> Value {
     json!({"status": "error", "error": message, "exit_code": 2})
 }

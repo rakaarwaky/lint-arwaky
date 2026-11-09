@@ -24,7 +24,7 @@ use shared_project_setup::ISetupAggregate;
 use shared_quality_rules::ICodeAnalysisAggregate;
 use shared_role_rules::IRoleRunnerAggregate;
 
-use crate::surface_mcp_action_view::{
+pub use crate::surface_mcp_action_view::{
     error_response, is_mutating_action, resolve_confined_path, violations_to_json,
 };
 
