@@ -138,3 +138,70 @@ fn cancel_flipped_mid_scan_stops_short() {
         "a scan cancelled mid-flight must not emit the 'Scan complete' milestone; got {milestones:?}"
     );
 }
+
+/// Cancel flipped mid-scan with a subfolder target (`filter_prefix = Some(...)`):
+/// the dispatcher must observe the token mid-flight, stop before "Scan complete",
+/// and every partial violation it returns must fall within `retain_scope`'s
+/// filter prefix (matching both code and file path), plus `stopped_early == true`.
+#[test]
+fn cancel_flipped_mid_scan_subfolder_prefix_filters_partial_violations() {
+    let cancel = std::sync::Arc::new(AtomicBool::new(false));
+    let flipped = std::sync::Arc::new(AtomicBool::new(false));
+    let mut milestones: Vec<String> = Vec::new();
+
+    let fixture = many_file_fixture();
+    let mut opts = scan_opts();
+    opts.path = Some(FilePath::new(fixture.to_string_lossy().to_string()).unwrap());
+    // `member` names a subfolder inside the `crates` member dir so
+    // `validate_member_path` yields `fixture/crates/naming_violations/src`,
+    // which `classify_scan_scope` resolves to Subfolder scope with a
+    // non-None filter_prefix.
+    opts.member = Some("crates/naming_violations/src".to_string());
+
+    let scope_before = shared_cli_commands::classify_scan_scope(
+        &fixture.to_string_lossy(),
+        &fixture
+            .join("crates/naming_violations/src")
+            .to_string_lossy(),
+    );
+    assert!(
+        scope_before.filter_prefix().is_some(),
+        "subfolder target must yield a non-None filter_prefix"
+    );
+
+    let outcome = dispatcher_lint_arwaky::surface_check_action::collect_scan_with_cancel(
+        opts,
+        &cancel,
+        |phase, _done, _total| {
+            if !flipped.swap(true, std::sync::atomic::Ordering::Relaxed) {
+                let _ = phase;
+            }
+            milestones.push(phase.clone());
+            cancel.store(true, std::sync::atomic::Ordering::Relaxed);
+        },
+    )
+    .expect("subfolder mid-cancel scan must not error");
+
+    assert!(
+        outcome.stopped_early,
+        "a subfolder scan cancelled mid-flight must report stopped_early"
+    );
+    assert!(
+        !milestones.iter().any(|m| m == "Scan complete"),
+        "a subfolder scan cancelled mid-flight must not emit 'Scan complete'; got {milestones:?}"
+    );
+
+    // Every returned violation must be within the subfolder prefix
+    // (matching both code and file path).
+    let subfolder = fixture.join("crates/naming_violations/src");
+    let prefix = std::path::Path::new(&subfolder);
+    for v in &outcome.violations {
+        let file_path = std::path::Path::new(&v.file.value);
+        assert!(
+            file_path.starts_with(prefix),
+            "violation {code} at {file} is outside the subfolder prefix {prefix:?}",
+            code = v.code.code(),
+            file = v.file.value
+        );
+    }
+}

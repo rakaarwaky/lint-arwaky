@@ -115,20 +115,15 @@ where
         Some(m) => validate_member_path(&opts, &root, m)?,
         None => root.clone(),
     };
-    // A subfolder or single-file target must still be judged against its whole
-    // member dir — the architecture rules read sibling files — so the scan
-    // widens to the member dir and only the *report* narrows.
+    // Always scan the full workspace root; the scope only narrows the report.
     let scope = shared_cli_commands::classify_scan_scope(&root, &target_path);
-    let scan_path = match scope.scan_root() {
-        "" => target_path.clone(),
-        member_root => member_root.to_string(),
-    };
+    let scan_root = root.clone();
 
     let report_target = std::path::PathBuf::from(&target_path);
     let workspace_root = std::path::PathBuf::from(&root);
     let violations = match opts.scan_aggregates.as_ref() {
         Some(agg) => run_all_linters_in_process(
-            &scan_path,
+            &scan_root,
             &report_target,
             &workspace_root,
             agg,
@@ -155,7 +150,7 @@ where
 /// A failed canonicalization keeps the violation: dropping a real finding
 /// because a path did not resolve would hide a defect, which is worse than
 /// reporting one extra line.
-fn retain_scope(
+pub(crate) fn retain_scope(
     violations: Vec<ViolationItem>,
     scope: &shared_cli_commands::ScanScope,
 ) -> Vec<ViolationItem> {
@@ -1003,5 +998,77 @@ mod bfs_tests {
             has_path(&discovered, &root_src),
             "root-level source files must be discovered at a workspace root: {discovered:?}"
         );
+    }
+}
+
+/// Unit tests for `retain_scope` — scope filtering with prefix edge cases.
+#[cfg(test)]
+mod retain_scope_tests {
+    use super::*;
+    use shared_cli_commands::ScanScope;
+    use shared_common::{ColumnNumber, ErrorCode, LineNumber, LintMessage, Severity};
+
+    fn mk_violation(file: &str, code: &str) -> ViolationItem {
+        ViolationItem {
+            code: ErrorCode::raw(code.to_string()),
+            file: FilePath::new(file.to_string()).unwrap(),
+            line: LineNumber::new(0),
+            column: shared_common::ColumnNumber::new(0),
+            message: LintMessage::new("test violation".to_string()),
+            severity: Severity::INFO,
+            violation_name: String::new(),
+            why: String::new(),
+            fix: String::new(),
+        }
+    }
+
+    #[test]
+    fn retain_scope_none_prefix_returns_everything() {
+        let violations = vec![
+            mk_violation("workspaces-bad/crates/alpha/src/lib.rs", "AES101"),
+            mk_violation("workspaces-bad/crates/beta/src/lib.rs", "AES102"),
+        ];
+        let scope = ScanScope::Workspace;
+        let result = retain_scope(violations, &scope);
+        assert_eq!(result.len(), 2);
+    }
+
+    #[test]
+    fn retain_scope_prefix_keeps_matching_drops_nonmatching() {
+        let violations = vec![
+            mk_violation(
+                "workspaces-bad/crates/naming_violations/src/agent_user_helper.rs",
+                "AES101",
+            ),
+            mk_violation("workspaces-bad/crates/other/src/lib.rs", "AES102"),
+        ];
+        let scope = ScanScope::Subfolder {
+            scan_root: "workspaces-bad/crates".to_string(),
+            filter_to: "workspaces-bad/crates/naming_violations/src".to_string(),
+        };
+        let result = retain_scope(violations, &scope);
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0].code.code(), "AES101");
+        assert_eq!(
+            result[0].file.value,
+            "workspaces-bad/crates/naming_violations/src/agent_user_helper.rs"
+        );
+    }
+
+    #[test]
+    fn retain_scope_non_canonicalizable_path_kept_not_dropped() {
+        // A path that does not exist on disk cannot be canonicalized; per the
+        // doc comment on `retain_scope`, it must be kept rather than dropped.
+        let violations = vec![mk_violation(
+            "/nonexistent/crates/naming_violations/src/agent_user_helper.rs",
+            "AES101",
+        )];
+        let scope = ScanScope::Subfolder {
+            scan_root: "workspaces-bad/crates".to_string(),
+            filter_to: "/nonexistent/crates/naming_violations/src".to_string(),
+        };
+        let result = retain_scope(violations, &scope);
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0].code.code(), "AES101");
     }
 }
