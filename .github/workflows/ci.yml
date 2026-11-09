@@ -313,6 +313,7 @@ jobs:
         uses: taiki-e/install-action@fd09ccbe70d174f3c26b2fa0588e8c07a7bf4f7e # v2.37.0
         with:
           tool: cargo-llvm-cov,cargo-nextest
+      - uses: mozilla-actions/sccache-action@fc920bf0ec8de6ee65d409111f7ec508035751ba # v0.0.11
       - name: Build the CLI for the subprocess-fallback tests
         # dispatcher::regression_scan_modes exercises the linter's subprocess
         # fallback, which shells out to a built CLI binary. `--lib --tests`
@@ -325,13 +326,8 @@ jobs:
         # promising what survives in it. No instrumentation either — the binary
         # is a fixture for the subprocess path, not a subject whose coverage is
         # measured. (`cargo llvm-cov build` is not a subcommand.)
-        env:
-          RUSTC_WRAPPER: ""
         run: cargo build --bin lint-arwaky-cli
       - name: Compute coverage summary
-        # This job does not install sccache, so clear the workflow-wide wrapper
-        # before cargo-llvm-cov invokes `rustc`; otherwise the wrapper binary is
-        # missing and the run dies before compiling anything (QA #643).
-        env:
-          RUSTC_WRAPPER: ""
+        # sccache is installed above, so let the workflow-wide RUSTC_WRAPPER
+        # apply; it caches instrumented compilations across runs.
         run: cargo llvm-cov nextest --workspace --lib --tests --summary-only -j 4
