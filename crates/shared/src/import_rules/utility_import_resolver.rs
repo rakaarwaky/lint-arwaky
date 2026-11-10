@@ -162,6 +162,9 @@ pub fn extract_layer_from_import(segment: &Identity) -> Option<LayerNameVO> {
 }
 
 /// Find the line number of an import statement containing the given alias.
+/// Returns LineNumber::new(0) when the alias cannot be located — no fabricated
+/// line-1 fallback is emitted, since the caller cannot distinguish "line 1"
+/// from "unknown".
 pub fn find_import_line_number(content: &str, alias: &str) -> LineNumber {
     let first_part = alias.split('.').next().unwrap_or("");
     let pos_opt = content.lines().position(|l| {
@@ -175,7 +178,7 @@ pub fn find_import_line_number(content: &str, alias: &str) -> LineNumber {
     });
     let line = match pos_opt {
         Some(p) => p + 1,
-        None => 1,
+        None => 0,
     };
     LineNumber::new(line as i64)
 }

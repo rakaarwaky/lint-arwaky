@@ -262,7 +262,7 @@ impl DependencyCycleAnalyzer {
                     .unwrap_or_else(|| source.to_string());
                 Some(LintResult::new_arch_with_name(
                     &file,
-                    1,
+                    0,
                     "AES205",
                     Severity::CRITICAL,
                     "Circular dependency detected.",

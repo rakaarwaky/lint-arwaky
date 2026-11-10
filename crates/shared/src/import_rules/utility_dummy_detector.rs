@@ -497,6 +497,7 @@ fn is_short_marker(inner: &str) -> bool {
 
 /// Extract imported symbols from ImportEntry list (replaces imported_symbols).
 /// Returns (symbol_name, line_number) pairs — same shape as the legacy function.
+/// Line 0 means unknown: no fabricated line-1 fallback is emitted.
 pub fn imported_symbols_from_entries(entries: &[ImportEntry]) -> Vec<(SymbolName, LineNumber)> {
     let mut symbols = Vec::new();
     for entry in entries {
@@ -510,7 +511,7 @@ pub fn imported_symbols_from_entries(entries: &[ImportEntry]) -> Vec<(SymbolName
                 if sym.is_empty() || sym == "*" || sym == "self" || sym == "_" {
                     continue;
                 }
-                symbols.push((SymbolName::new(sym.clone()), LineNumber::new(1)));
+                symbols.push((SymbolName::new(sym.clone()), LineNumber::new(0)));
             }
         } else {
             // Single import — use last segment of raw_path
@@ -523,7 +524,7 @@ pub fn imported_symbols_from_entries(entries: &[ImportEntry]) -> Vec<(SymbolName
             {
                 continue;
             }
-            symbols.push((SymbolName::new(last.to_string()), LineNumber::new(1)));
+            symbols.push((SymbolName::new(last.to_string()), LineNumber::new(0)));
         }
     }
     symbols

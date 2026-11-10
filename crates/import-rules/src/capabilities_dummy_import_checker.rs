@@ -162,11 +162,18 @@ impl DummyImportChecker {
             ) {
                 continue;
             }
-            violations.push(LintResult::new_arch_with_name(file, line_no.value() as usize, "AES204", Severity::HIGH,
-                "Import intent mismatch: imported symbols placed inside _use_ dummy functions.".to_string(),
+            violations.push(LintResult::new_arch_with_name(
+                file,
+                line_no.value() as usize,
+                "AES204",
+                Severity::HIGH,
+                format!(
+                    "Import '{}' is only used inside dummy-use functions.",
+                    symbol_str
+                ),
                 "DUMMY_IMPORT",
-                "Imported symbols placed inside _use_ dummy functions are dead code — they exist only to suppress unused-import warnings.",
-                "Remove the dummy function and its imports, or move imports to where they're actually used.",
+                "Imported symbols inside dummy-use functions are dead code.",
+                "Remove the dummy-use function and its unused imports.",
             ));
         }
     }
@@ -182,16 +189,10 @@ impl DummyImportChecker {
                 start.value() as usize,
                 "AES204",
                 Severity::HIGH,
-                format!(
-                    "Dummy function detected; range ends at line {}.",
-                    end
-                ),
-                "DUMMY_IMPORT",
-                format!(
-                    "Dummy function range ends at line {} — these functions exist only to suppress unused-import warnings.",
-                    end
-                ),
-                "Remove the dummy function and ensure all imports are used in real code.",
+                format!("Dummy-use function at line {} has no real body.", end),
+                "EMPTY_FUNCTION",
+                "Dummy functions exist only to suppress unused-import warnings.",
+                "Remove the dummy-use function; use its imports in real code.",
             ));
         }
     }
@@ -204,8 +205,8 @@ impl DummyImportChecker {
                 start.value() as usize,
                 "AES204",
                 Severity::HIGH,
-                "Empty trait implementation".to_string(),
-                "DUMMY_IMPORT",
+                format!("Empty trait implementation at line {}.", start),
+                "EMPTY_IMPL",
                 "Trait implementations with empty bodies violate the contract abstraction.",
                 "Implement the trait properly or remove the empty impl.",
             ));
@@ -297,10 +298,10 @@ impl DummyImportChecker {
             });
             if has_taxonomy_import {
                 violations.push(LintResult::new_arch_with_name(file, dummy_function_line, "AES204", Severity::HIGH,
-                    "Taxonomy intent mismatch: raw primitives used where taxonomy VOs encode domain concepts.".to_string(),
-                    "DUMMY_IMPORT",
-                    "Taxonomy VOs encode domain concepts — using raw primitives defeats the purpose.",
-                    "Use taxonomy VOs (taxonomy_*.rs) instead of raw primitives like String or i32.",
+                    "Raw primitives used where taxonomy VOs encode domain concepts.".to_string(),
+                    "TAXONOMY_INTENT",
+                    "Taxonomy VOs encode domain concepts; using raw primitives defeats the purpose.",
+                    "Use taxonomy VOs instead of raw primitives like String or i32.",
                 ));
             }
         }
