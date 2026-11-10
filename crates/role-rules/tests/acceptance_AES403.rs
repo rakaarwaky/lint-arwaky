@@ -210,9 +210,14 @@ fn aes403_block_order_inherent_before_protocol_detected() {
         "inherent impl before protocol impl should trigger AES403"
     );
     assert_eq!(aes403[0].severity, shared_common::Severity::HIGH);
+    assert_eq!(
+        aes403[0].violation_name.as_str(),
+        "CAPABILITY_BLOCK_ORDER",
+        "the block-order defect keeps its own subtype"
+    );
     assert!(
-        aes403[0].message.to_string().contains("Block 2"),
-        "message should name the block-order rule"
+        aes403[0].why.to_string().contains("Block 2"),
+        "why should name the block-order rule"
     );
 }
 
@@ -349,6 +354,36 @@ fn aes403_typescript_no_implements_detected() {
     assert!(
         !aes403.is_empty(),
         "a TypeScript capability without `implements` should trigger AES403"
+    );
+}
+
+#[test]
+fn aes403_typescript_helper_before_protocol_flagged() {
+    // A private helper method declared before the public protocol method is a
+    // Block 3-above-Block 2 order violation, pinned to the TS block-order
+    // subtype.
+    let file = make_file(
+        "src/capabilities_user_service.ts",
+        Language::TypeScript,
+        &format!(
+            "{BANNERS}\
+             export class UserService implements IUserServiceProtocol {{\n\
+             \x20   private _helper(): number {{ return 2; }}\n\
+             \x20   execute(): number {{ return 1; }}\n\
+             }}\n"
+        ),
+    );
+    let aes403 = aes403_findings(vec![file]);
+    assert_eq!(
+        aes403.len(),
+        1,
+        "a TS helper before the protocol method should flag exactly once"
+    );
+    assert_eq!(aes403[0].severity, shared_common::Severity::HIGH);
+    assert_eq!(
+        aes403[0].violation_name.as_str(),
+        "CAPABILITY_BLOCK_ORDER",
+        "the TS block-order defect keeps its own subtype"
     );
 }
 

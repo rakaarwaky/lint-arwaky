@@ -112,15 +112,10 @@ impl IAgentRoleProtocol for AgentTsRoleAuditor {
                     i + 1,
                     "AES405",
                     Severity::MEDIUM,
-                    "Abstract class in a TypeScript agent file".to_string(),
-                    "AGENT_ROLE",
-                    format!(
-                        "Line {} declares an abstract class. An agent delegates to \
-                         protocols it consumes; it does not declare new abstract contracts.",
-                        i + 1
-                    ),
-                    "Move the interface to the feature's protocol file in the \
-                     shared layer.",
+                    format!("Abstract class at line {} in a TypeScript agent file; agents delegate to contracts", i + 1),
+                    "AGENT_ROLE_ABSTRACT_METHOD",
+                    "An agent delegates to protocols it consumes; it does not declare new abstract contracts.",
+                    "Move the interface to the feature's protocol file in the shared layer.",
                 ));
             }
         }
@@ -170,16 +165,10 @@ impl AgentTsRoleAuditor {
                 ctor_idx + 1,
                 "AES405",
                 Severity::HIGH,
-                "Constructor precedes protocol-delegating methods".to_string(),
-                "AGENT_ROLE",
-                format!(
-                    "The constructor at line {} appears before the first protocol \
-                     method at line {}.",
-                    ctor_idx + 1,
-                    proto_idx + 1
-                ),
-                "Order the class so that Block 2 (protocol-delegating methods) \
-                 comes before Block 3 (constructor).",
+                "Constructor precedes protocol-delegating methods in an agent class".to_string(),
+                "AGENT_ROLE_BLOCK_ORDER",
+                "Block 2 (protocol-delegating methods) must come before Block 3 (constructor) so the reader meets the orchestration contract first.",
+                "Order the class so protocol-delegating methods come before the constructor.",
             ));
         }
     }
@@ -222,13 +211,9 @@ impl AgentTsRoleAuditor {
                         i + 1,
                         "AES405",
                         Severity::MEDIUM,
-                        "Top-level constant in a TypeScript agent file".to_string(),
-                        "AGENT_ROLE",
-                        format!(
-                            "`const {name}` is declared at line {}. Policy constants \
-                             belong in the taxonomy layer.",
-                            i + 1
-                        ),
+                        format!("Top-level constant `{name}` in a TypeScript agent file; policy constants belong in taxonomy"),
+                        "AGENT_ROLE_CONSTANT_PLACEMENT",
+                        "Policy constants belong to the shared taxonomy so every layer reads one value.",
                         format!("Move `{name}` into the feature's taxonomy module and import it."),
                     ));
                 }
@@ -256,15 +241,13 @@ impl AgentTsRoleAuditor {
         if injected < 2 {
             violations.push(LintResult::new_arch_with_name(
                 path,
-                0,
+                crate::WHOLE_FILE,
                 "AES405",
                 Severity::LOW,
-                "Orchestrator has a single execution goal".to_string(),
-                "AGENT_ROLE",
-                "File injects 1 protocol field(s); an orchestrator must coordinate \
-                 at least 2 subsystems.",
-                "Either this work belongs in a capability file rather than an agent, \
-                 or inject the protocols of both subsystems into the constructor.",
+                "Agent injects fewer than two capability protocols, so it coordinates one subsystem".to_string(),
+                "AGENT_ROLE_SUBSYSTEM_COUNT",
+                "A feature whose shared module declares exactly one protocol is a genuine single-subsystem feature; forcing a second seam adds one that does no distinct job. When nothing injects a second protocol seam, this work belongs in a capability rather than an agent.",
+                "Either this work belongs in a capability file rather than an agent, or inject the protocols of both subsystems into the agent.",
             ));
         }
     }
@@ -283,13 +266,9 @@ impl AgentTsRoleAuditor {
                         i + 1,
                         "AES405",
                         Severity::MEDIUM,
-                        "Computation in a TypeScript agent file".to_string(),
-                        "AGENT_ROLE",
-                        format!(
-                            "Line {} calls `{token}`. An agent orchestrates; it does \
-                             not compute totals or averages over domain data.",
-                            i + 1
-                        ),
+                        format!("Computation in a TypeScript agent file at line {}; an agent orchestrates, it does not compute", i + 1),
+                        "AGENT_ROLE_COMPUTATION",
+                        "An agent orchestrates requests between subsystems; it does not aggregate domain totals.",
                         "Move the aggregation into a capability.",
                     ));
                 }
@@ -332,20 +311,16 @@ impl AgentTsRoleAuditor {
             if matches!(rest[..eq_pos].chars().last(), Some('=' | '!' | '<' | '>')) {
                 continue;
             }
-            let field = rest[..eq_pos].trim_end_matches(['+', '-', '*', '/', '%']);
+            let _field = rest[..eq_pos].trim_end_matches(['+', '-', '*', '/', '%']);
             violations.push(LintResult::new_arch_with_name(
                 path,
                 i + 1,
                 "AES405",
                 Severity::MEDIUM,
-                "State assignment outside constructor".to_string(),
-                "AGENT_ROLE",
-                format!(
-                    "Line {} assigns `this.{field}` outside the constructor.",
-                    i + 1
-                ),
-                "An agent holds no mutable state. Initialize the field in the \
-                 constructor and append to it; move domain data behind a protocol.",
+                format!("State assignment outside constructor at line {}; an agent holds no mutable state", i + 1),
+                "AGENT_ROLE_STATELESS",
+                "An agent holds no mutable state; assignments outside the constructor make behaviour depend on call order.",
+                "Initialize the field in the constructor and append to it; move domain data behind a protocol.",
             ));
         }
     }
@@ -396,11 +371,10 @@ impl AgentTsRoleAuditor {
                             i + 1,
                             "AES405",
                             Severity::LOW,
-                            "Module-level function in a TypeScript agent file".to_string(),
-                            "AGENT_ROLE",
-                            format!("`{name}` is declared at line {} at module level.", i + 1),
-                            "Move it into a `utility_<domain>.ts` file, or make it a \
-                             method on the agent's class.",
+                            format!("Module-level function `{name}` in a TypeScript agent file; it belongs in a utility file"),
+                            "AGENT_ROLE_FREE_FUNCTION",
+                            "An agent file holds one type and its methods; a free function is a utility that belongs elsewhere.",
+                            "Move it into a `utility_<domain>.ts` file, or make it a method on the agent's class.".to_string(),
                         ));
                     }
                 }

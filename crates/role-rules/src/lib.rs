@@ -1,4 +1,8 @@
 // PURPOSE: Module declarations for role-rules (role auditors, orchestrator, container)
+/// Whole-file line marker: a finding that applies to the entire file rather
+/// than a specific declaration. Renderers display this as `file`.
+pub const WHOLE_FILE: usize = 0;
+
 pub use agent_role_orchestrator::RoleCheckerDeps;
 pub use shared_role_rules::IAgentRoleProtocol;
 pub use shared_role_rules::ICapabilitiesRoleProtocol;

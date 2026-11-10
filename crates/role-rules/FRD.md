@@ -168,7 +168,7 @@ flowchart TD
 #### Business Logic
 
 - Capability files must carry the three banners; a missing middle or first banner over three is flagged.
-- The inherent impl must precede the protocol impl (block order); inherent-before-protocol is flagged.
+- The protocol impl must precede the inherent impl (block order); protocol-before-inherent is clean, inherent-before-protocol is flagged.
 - No embedded tests and no local constants outside constants blocks are permitted.
 - Exactly one protocol per capability unless explicitly multi-protocol; multi-protocol Rust is clean single, multi-protocol Python is detected.
 - A capability without an implementor is detected; non-capability files are ignored.
@@ -177,7 +177,7 @@ flowchart TD
 
 - All three banners exact produces no violation.
 - Banner count over three is flagged.
-- Correct block order is clean; inherent-before-protocol is flagged.
+- Correct block order is clean: protocol impl in Block 2 before inherent impl in Block 3; inherent-before-protocol is flagged.
 - Embedded test and local constant are flagged.
 - Missing banner and missing implementor are flagged.
 - Multi-protocol Rust single is clean; multi-protocol Python is detected.
@@ -362,6 +362,101 @@ flowchart TD
 | Method | execute(&self, request: RoleRequest) -> RoleResponse |
 | Request | RoleRequest::{RunAuditWithEntries, Name} |
 | Response | RoleResponse::{Audit, Name} |
+
+## Output Samples
+
+Every finding emitted by the per-language local checks in this crate follows the field contract: one `message` (one line, ≤72 chars, names the declaration + defect), one `why` (architectural reason, never repeats the message), one `fix` (one action, one line, ASCII only), and one `line` (real line number or `file` whole-file marker). Rendered at 80 columns.
+
+The shared sub-checks that run across all three languages live in `shared/role_rules/utility_capabilities_role_checker.rs` and `shared/role_rules/utility_agent_role_checker.rs`. Those findings still use the legacy `LintResult::new_arch` shape (code + subtype folded into `message`, line 0 for whole-file locations) and do not yet satisfy this contract. They are a known deferral: migrating them changes shared-crate output consumed by other crates and is tracked as follow-up work.
+
+```
+AES401 TAXONOMY_PRIMITIVE  HIGH  src/taxonomy_user_entity.rs:14
+  message: Primitive type 'String' in a taxonomy entity, error, or event.
+  why: The taxonomy layer declares values, not built-in types: a field typed
+       'String' erases the domain value that crosses the layer boundary.
+  fix: Replace the primitive field with the taxonomy value object that carries it.
+```
+
+```
+AES403 CAPABILITY_BLOCK_ORDER  HIGH  src/capabilities_user_service.rs:5
+  message: Inherent impl for 'UserService' sits above the protocol impl (lines 5 and 9).
+  why: Block 2 holds the protocol impl, Block 3 holds the inherent impl; the
+       protocol impl must precede it.
+  fix: Move the inherent impl below the Block 3 banner so the protocol impl precedes it.
+```
+
+Two-code file sample (one file, two defects):
+
+```
+AES405 AGENT_ROLE_BLOCK_ORDER  HIGH  src/agent_dispatcher.rs:7
+  message: Inherent impl at line 7 precedes the aggregate impl at line 4.
+  why: Block 2 (aggregate impl) must precede Block 3 (inherent impl) so the
+       reader meets the orchestration contract first.
+  fix: Reorder the file so it reads: Block 1 -> Block 2 -> Block 3.
+AES405 AGENT_ROLE_SUBSYSTEM_COUNT  LOW  src/agent_dispatcher.rs:file
+  message: Agent injects fewer than two capability protocols, so it coordinates one subsystem.
+  why: A feature whose shared module declares exactly one protocol is a genuine
+       single-subsystem feature; forcing a second seam adds one that does no distinct job.
+  fix: Either this work belongs in a capability file rather than an agent, or inject
+       the protocols of both subsystems into the agent.
+```
+
+## Severity Scale
+
+Every finding carries a severity from `{HIGH, MEDIUM, LOW}` — CRITICAL is never emitted.
+
+| Severity | Meaning | CI gating |
+|----------|---------|-----------|
+| HIGH | Structural defect that breaks layer discipline (wrong block order, primitive in taxonomy, missing implementor). | Fails the self-lint gate. |
+| MEDIUM | Placement or purity defect (local constant in capability, state in agent, type in utility). | Fails the self-lint gate. |
+| LOW | Style or hygiene defect (free function, single subsystem, skipped files). | Warns; does not fail CI unless `--strict`. |
+
+## Subtype Table
+
+Per-rule subtypes emitted by the per-language local checks. A finding's `violation_name` always names one of these; the generic role names (`CAPABILITY_ROLE`, `AGENT_ROLE`, ...) are retained only by the shared sub-checks during their deferral.
+
+| Rule | Subtype | Defect |
+|------|---------|--------|
+| AES401 | `TAXONOMY_PRIMITIVE` | Primitive-typed field in an entity / error / event. |
+| AES401 | `TAXONOMY_CONSTANT_STRUCT` / `_ENUM` / `_TRAIT` / `_TYPE_ALIAS` / `_FUNCTION` / `_IMPL` / `_CLASS` / `_INTERFACE` / `_MODULE` | Non-constant declaration in a const-only file. |
+| AES403 | `CAPABILITY_BLOCK_ORDER` | Inherent impl / helper method above the protocol impl. |
+| AES403 | `CAPABILITY_PROTOCOL_PLACEMENT` | Protocol impl outside region Block 2. |
+| AES405 | `AGENT_ROLE_BLOCK_ORDER` | Inherent / constructor block ahead of the aggregate block. |
+| AES405 | `AGENT_ROLE_TRAIT_DECLARED` | Trait declared inside an agent file. |
+| AES405 | `AGENT_ROLE_CONSTANT_PLACEMENT` | File-level policy constant in an agent file. |
+| AES405 | `AGENT_ROLE_SUBSYSTEM_COUNT` | Agent coordinates fewer than two subsystems. |
+| AES405 | `AGENT_ROLE_COMPUTATION` | Domain aggregation in an agent method. |
+| AES405 | `AGENT_ROLE_STATELESS` | Mutable receiver or state assignment outside the constructor. |
+| AES405 | `AGENT_ROLE_FREE_FUNCTION` | Module-level free function in an agent file. |
+| AES406 | `SURFACE_FN_COUNT` | Function count above the tier ceiling. |
+| AES406 | `SURFACE_CONTROL_FLOW` | Control-flow statements above the presentation budget. |
+| AES406 | `SURFACE_LOGIC_BYPASS` | Surface reaches into a layer it must not own. |
+| harness | `ROLE_SKIPPED_FILES` | Unparseable or empty files dropped from the audit; emitted once with a count. |
+
+## Developer Journey
+
+1. **Run the audit**: `lint-arwaky-cli check .` dispatches each file to its layer checker via the RoleOrchestrator.
+2. **Read one finding**: `message` states the fact, `why` explains the architectural reason, `fix` gives the one-line action.
+3. **Apply the fix**: follow the `fix` action; the `line` field points to the real declaration line, or `file` when the whole file is in scope.
+4. **Re-run**: a clean file produces no finding for that rule; skipped files are reported once with a count.
+
+## Glossary
+
+| Term | Definition |
+|------|------------|
+| Block 1 | Module declarations: types and injected dependencies. |
+| Block 2 | Module contract: the protocol / aggregate implementation. |
+| Block 3 | Module helpers: constructors, std traits, private helpers. |
+| Whole-file marker | `file` displayed in place of a numeric line when the finding applies to the entire file. |
+| Skipped file | An unparseable or empty file that carries no role and is reported once with a count. |
+
+## ASCII Policy
+
+All emitted finding text is ASCII only. Box-drawing characters (`───`, `─`), en-dashes (`–`), and em-dashes (`—`) never appear in `message`, `why`, or `fix`; they appear only in source-code comments that describe block banners.
+
+## Skip Behaviour
+
+Files that fail to parse or are empty are filtered out before auditing. They are reported once as a single `ROLE_SKIPPED_FILES` finding with a count, so the caller sees how many files were dropped instead of a silent filter. That finding carries the `AES401` code deliberately: it is a harness-level diagnostic, not a taxonomy-purity finding, and its `violation_name` is always `ROLE_SKIPPED_FILES`. Readers auditing taxonomy files for purity filter on the `TAXONOMY_*` subtypes, which keep them out of the skip-count noise. Unclassified paths (outside every layer directory) yield no role and no downstream finding.
 
 ## Reference
 
