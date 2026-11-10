@@ -168,7 +168,7 @@ flowchart TD
 #### Business Logic
 
 - Capability files must carry the three banners; a missing middle or first banner over three is flagged.
-- The inherent impl must precede the protocol impl (block order); inherent-before-protocol is flagged.
+- The protocol impl must precede the inherent impl (block order); protocol-before-inherent is clean, inherent-before-protocol is flagged.
 - No embedded tests and no local constants outside constants blocks are permitted.
 - Exactly one protocol per capability unless explicitly multi-protocol; multi-protocol Rust is clean single, multi-protocol Python is detected.
 - A capability without an implementor is detected; non-capability files are ignored.
@@ -177,7 +177,7 @@ flowchart TD
 
 - All three banners exact produces no violation.
 - Banner count over three is flagged.
-- Correct block order is clean; inherent-before-protocol is flagged.
+- Correct block order is clean: protocol impl in Block 2 before inherent impl in Block 3; inherent-before-protocol is flagged.
 - Embedded test and local constant are flagged.
 - Missing banner and missing implementor are flagged.
 - Multi-protocol Rust single is clean; multi-protocol Python is detected.

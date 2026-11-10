@@ -7,7 +7,6 @@ use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_m
 use role_rules_lint_arwaky::root_role_rules_container::RoleContainer;
 use shared_config_system::ArchitectureConfig;
 use shared_filesystem::taxonomy_filesystem_vo::{FileEntry, Language};
-use shared_role_rules::IRoleRunnerAggregate;
 use shared_role_rules::taxonomy_role_rules_request::RoleRequest;
 use std::path::PathBuf;
 

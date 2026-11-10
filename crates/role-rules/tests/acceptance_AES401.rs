@@ -46,10 +46,18 @@ fn aes401_constant_file_with_struct_detected() {
         .iter()
         .filter(|r| r.code.code() == "AES401")
         .collect();
-    assert!(
-        !aes401.is_empty(),
-        "taxonomy constant file with struct should trigger AES401"
+    assert_eq!(
+        aes401.len(),
+        1,
+        "a struct in a const-only file produces exactly one AES401 finding"
     );
+    assert_eq!(
+        aes401[0].violation_name.as_str(),
+        "TAXONOMY_CONSTANT_STRUCT"
+    );
+    // Fallback check has no parse metadata, so it reports the declaration
+    // line rather than the whole-file marker.
+    assert!(aes401[0].line.value() >= 1);
 }
 
 #[test]
@@ -86,10 +94,16 @@ fn aes401_entity_with_primitive_detected() {
         .iter()
         .filter(|r| r.code.code() == "AES401")
         .collect();
-    assert!(
-        !aes401.is_empty(),
-        "entity file with primitive types should trigger AES401"
+    // One finding per primitive-typed field: `name` and `age`.
+    assert_eq!(
+        aes401.len(),
+        2,
+        "each primitive field carries its own finding"
     );
+    for f in &aes401 {
+        assert_eq!(f.violation_name.as_str(), "TAXONOMY_PRIMITIVE");
+        assert_eq!(f.code.code(), "AES401");
+    }
 }
 
 // ── Error file with primitive types → PrimitiveUsage violation ──
@@ -106,10 +120,15 @@ fn aes401_error_with_primitive_detected() {
         .iter()
         .filter(|r| r.code.code() == "AES401")
         .collect();
-    assert!(
-        !aes401.is_empty(),
-        "error file with primitive types should trigger AES401"
+    assert_eq!(
+        aes401.len(),
+        1,
+        "error file with primitive types should trigger AES401 exactly once"
     );
+    for f in &aes401 {
+        assert_eq!(f.violation_name.as_str(), "TAXONOMY_PRIMITIVE");
+        assert_eq!(f.code.code(), "AES401");
+    }
 }
 
 // ── Event file with primitive types → PrimitiveUsage violation ──
@@ -126,10 +145,15 @@ fn aes401_event_with_primitive_detected() {
         .iter()
         .filter(|r| r.code.code() == "AES401")
         .collect();
-    assert!(
-        !aes401.is_empty(),
-        "event file with primitive types should trigger AES401"
+    assert_eq!(
+        aes401.len(),
+        1,
+        "event file with primitive types should trigger AES401 exactly once"
     );
+    for f in &aes401 {
+        assert_eq!(f.violation_name.as_str(), "TAXONOMY_PRIMITIVE");
+        assert_eq!(f.code.code(), "AES401");
+    }
 }
 
 // ── Non-taxonomy file is not checked by taxonomy rules ──
@@ -174,10 +198,18 @@ fn aes401_constant_file_with_type_alias_detected() {
         .iter()
         .filter(|r| r.code.code() == "AES401")
         .collect();
-    assert!(
-        !aes401.is_empty(),
-        "taxonomy constant file with a type alias should trigger AES401"
+    assert_eq!(
+        aes401.len(),
+        1,
+        "taxonomy constant file with a type alias should trigger exactly one AES401 finding"
     );
+    assert_eq!(
+        aes401[0].violation_name.as_str(),
+        "TAXONOMY_CONSTANT_TYPE_ALIAS"
+    );
+    // Metadata-driven constant findings apply to the whole file, so the line
+    // marker is the whole-file sentinel (rendered as `file`).
+    assert_eq!(aes401[0].line.value(), 0);
 }
 
 // ── Clean constant file without type aliases stays clean ──

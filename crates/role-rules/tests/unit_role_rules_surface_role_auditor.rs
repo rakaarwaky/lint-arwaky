@@ -85,10 +85,13 @@ fn fn_count_over_passive_limit_flagged() {
     let f = make_file("src/surface_something.rs", Language::Rust, &content);
     let mut v = Vec::new();
     checker().check_fn_count_limit(&f, &mut v);
-    assert!(
-        !v.is_empty(),
-        "51 functions in a passive-tier file should flag AES406"
+    assert_eq!(
+        v.len(),
+        1,
+        "51 functions in a passive-tier file should flag AES406 exactly once"
     );
+    assert_eq!(v[0].code.code(), "AES406");
+    assert_eq!(v[0].violation_name.as_str(), "SURFACE_FN_COUNT");
 }
 
 #[test]
@@ -106,10 +109,12 @@ fn fn_count_over_passive_limit_metadata_flagged() {
     let f = make_file_with_rust_meta("src/surface_palette_layout.rs", meta);
     let mut v = Vec::new();
     checker().check_fn_count_limit(&f, &mut v);
-    assert!(
-        !v.is_empty(),
-        "51 functions in a passive-tier file (via AST) should flag AES406"
+    assert_eq!(
+        v.len(),
+        1,
+        "51 functions in a passive-tier file (via AST) should flag AES406 exactly once"
     );
+    assert_eq!(v[0].violation_name.as_str(), "SURFACE_FN_COUNT");
 }
 
 #[test]
@@ -139,10 +144,13 @@ fn passive_surface_control_flow_flagged_fallback() {
     let f = make_file("src/surface_my_view.rs", Language::Rust, &content);
     let mut v = Vec::new();
     checker().check_passive_surface(&f, &mut v);
-    assert!(
-        !v.is_empty(),
-        "excess control flow in passive surface should be flagged"
+    assert_eq!(
+        v.len(),
+        1,
+        "excess control flow in passive surface should produce one finding"
     );
+    assert_eq!(v[0].code.code(), "AES406");
+    assert_eq!(v[0].violation_name.as_str(), "SURFACE_CONTROL_FLOW");
 }
 
 #[test]
@@ -155,10 +163,12 @@ fn fn_count_python_over_passive_limit_flagged() {
     let f = make_file("src/surface_something.py", Language::Python, &content);
     let mut v = Vec::new();
     checker().check_fn_count_limit(&f, &mut v);
-    assert!(
-        !v.is_empty(),
-        "51 functions in a passive-tier Python surface should flag AES406"
+    assert_eq!(
+        v.len(),
+        1,
+        "51 functions in a passive-tier Python surface should flag AES406 exactly once"
     );
+    assert_eq!(v[0].violation_name.as_str(), "SURFACE_FN_COUNT");
 }
 
 #[test]
@@ -192,10 +202,12 @@ fn fn_count_typescript_metadata_passive_51_flagged() {
     let f = make_file_with_ts_meta("src/surface_dashboard_view.ts", meta);
     let mut v = Vec::new();
     checker().check_fn_count_limit(&f, &mut v);
-    assert!(
-        !v.is_empty(),
-        "51 functions in a passive-tier TS surface (via AST) should flag AES406"
+    assert_eq!(
+        v.len(),
+        1,
+        "51 functions in a passive-tier TS surface (via AST) should flag AES406 exactly once"
     );
+    assert_eq!(v[0].violation_name.as_str(), "SURFACE_FN_COUNT");
 }
 
 #[test]
@@ -244,7 +256,8 @@ fn fn_count_passive_26_functions_now_clean() {
 
 #[test]
 fn fn_count_passive_51_functions_flagged() {
-    // 51 functions exceeds the passive limit of 50 → AES406.
+    // 51 functions exceeds the passive limit of 50 → AES406, one finding
+    // named SURFACE_FN_COUNT.
     let meta = RustMetadata {
         function_definitions: (0..51)
             .map(|i| shared_filesystem::taxonomy_filesystem_vo::RustFnItem {
@@ -257,10 +270,9 @@ fn fn_count_passive_51_functions_flagged() {
     let f = make_file_with_rust_meta("src/surface_palette_layout.rs", meta);
     let mut v = Vec::new();
     checker().check_fn_count_limit(&f, &mut v);
-    assert!(
-        !v.is_empty(),
-        "51 functions in a passive-tier file should flag AES406 (limit 50)"
-    );
+    assert_eq!(v.len(), 1, "one fn-count finding per file");
+    assert_eq!(v[0].code.code(), "AES406");
+    assert_eq!(v[0].violation_name.as_str(), "SURFACE_FN_COUNT");
 }
 
 // ── Tier classification sanity ─────────────────────────────
@@ -296,7 +308,7 @@ fn surface_calling_lint_path_flagged() {
     checker().check_passive_surface(&f, &mut v);
     assert_eq!(v.len(), 1);
     assert_eq!(v[0].code.code(), "AES406");
-    assert_eq!(v[0].violation_name.as_str(), "SURFACE_ROLE");
+    assert_eq!(v[0].violation_name.as_str(), "SURFACE_LOGIC_BYPASS");
 }
 
 #[test]
@@ -307,6 +319,7 @@ fn surface_calling_walk_rs_files_flagged() {
     checker().check_utility_surface(&f, &mut v);
     assert_eq!(v.len(), 1);
     assert_eq!(v[0].code.code(), "AES406");
+    assert_eq!(v[0].violation_name.as_str(), "SURFACE_LOGIC_BYPASS");
 }
 
 #[test]

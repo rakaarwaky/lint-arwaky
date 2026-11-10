@@ -99,11 +99,13 @@ impl IAgentRoleProtocol for AgentRustRoleAuditor {
     }
 
     fn check_agent_abstract_method(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
-        // Rust has no `@abstractmethod` marker. A trait declaration with a
-        // body-less required method is the Rust equivalent, and an agent must
-        // not declare one: it delegates to contracts it consumes.
+        // Rust has no `@abstractmethod` marker. A trait declaration is the
+        // Rust equivalent, and an agent must not declare one: it delegates to
+        // contracts it consumes. The body-less `fn` line check is a second
+        // indicator of a pure trait body.
         let path = file.path.to_string_lossy().to_string();
         let mut in_trait = false;
+        let mut flagged = false;
         for (i, line) in file.content.lines().enumerate() {
             let t = line.trim();
             if utility_agent_role_checker::is_comment(t) {
@@ -111,18 +113,31 @@ impl IAgentRoleProtocol for AgentRustRoleAuditor {
             }
             if t.starts_with("pub trait ") || t.starts_with("trait ") {
                 in_trait = true;
+                if !flagged {
+                    flagged = true;
+                    violations.push(LintResult::new_arch_with_name(
+                        &path,
+                        i + 1,
+                        "AES405",
+                        Severity::MEDIUM,
+                        "Trait declared in an agent file; agents may only hold capability protocols".to_string(),
+                        "AGENT_ROLE_TRAIT_DECLARED",
+                        format!("Line {} declares a trait. An agent delegates to contracts it consumes.", i + 1),
+                        "Move the trait declaration to `crates/shared/src/<feature>/`; an agent delegates to contracts it consumes.",
+                    ));
+                }
             }
-            if in_trait && t.ends_with('{') && t.starts_with("fn ") {
+            if in_trait && t.ends_with('{') && t.starts_with("fn ") && !flagged {
+                flagged = true;
                 violations.push(LintResult::new_arch_with_name(
                     &path,
                     i + 1,
                     "AES405",
                     Severity::MEDIUM,
-                    "Trait declared in an agent file".to_string(),
-                    "AGENT_ROLE",
+                    "Trait declared in an agent file; agents may only hold capability protocols".to_string(),
+                    "AGENT_ROLE_TRAIT_DECLARED",
                     format!("Line {} declares a body-less `fn` inside a trait.", i + 1),
-                    "An agent delegates to contracts it consumes; it does not \
-                     declare new ones. Move the trait to `crates/shared/src/<feature>/`.",
+                    "Move the trait declaration to `crates/shared/src/<feature>/`; an agent delegates to contracts it consumes.",
                 ));
             }
             if in_trait && t == "}" {
@@ -210,30 +225,26 @@ impl AgentRustRoleAuditor {
             }
         }
 
-        if let (Some((agg_idx, agg_src)), Some((inh_idx, inh_src))) =
+        if let (Some((agg_idx, _agg_src)), Some((inh_idx, _inh_src))) =
             (aggregate_line, inherent_line)
         {
-            // For banner-carrying files, an inherent impl above Block 3 is
-            // misplaced; for banner-less files, any inherent impl before the
-            // aggregate is misplaced.
-            let is_misplaced = match banner3_idx {
+            // The two detection cases are exclusive: a banner-carrying file is
+            // judged against the Block 3 banner, a banner-less file falls back
+            // to raw ordering against the aggregate impl.
+            let misplaced = match banner3_idx {
                 Some(b3) => inh_idx < b3,
                 None => inh_idx < agg_idx,
             };
-            if is_misplaced && inh_idx < agg_idx {
+            if misplaced {
                 violations.push(LintResult::new_arch_with_name(
                     path,
                     inh_idx + 1,
                     "AES405",
-                    Severity::HIGH,"Block 3 (inherent impl) precedes Block 2 (aggregate impl)".to_string(),
-                    "AGENT_ROLE",
-                    format!(
-                        "`{inh_src}` is declared at line {} but `{agg_src}` follows at line {}.",
-                        inh_idx + 1,
-                        agg_idx + 1
-                    ),
-                    "Reorder the file so it reads:\n  \
-                     Block 1 (type + injected deps) -> Block 2 (aggregate impl) -> Block 3 (constructor, std traits, helpers).",
+                    Severity::HIGH,
+                    format!("Inherent impl at line {} precedes the aggregate impl at line {}", inh_idx + 1, agg_idx + 1),
+                    "AGENT_ROLE_BLOCK_ORDER",
+                    "Block 2 (aggregate impl) must precede Block 3 (inherent impl) so the reader meets the orchestration contract first.",
+                    "Reorder the file so it reads: Block 1 (type + injected deps) -> Block 2 (aggregate impl) -> Block 3 (constructor, std traits, helpers).",
                 ));
             }
         }
@@ -271,8 +282,9 @@ impl AgentRustRoleAuditor {
                     i + 1,
                     "AES405",
                     Severity::MEDIUM,
-                    "File-level constant in an agent file".to_string(),
-                    "AGENT_ROLE",
+                    "File-level constant in an agent file; policy constants belong in taxonomy"
+                        .to_string(),
+                    "AGENT_ROLE_CONSTANT_PLACEMENT",
                     format!(
                         "`const {name}` is declared at line {}. Policy constants \
                          belong to the shared taxonomy so every layer reads one value.",
@@ -289,7 +301,9 @@ impl AgentRustRoleAuditor {
     /// A feature whose shared module declares exactly one protocol is a
     /// single-subsystem feature: its agent coordinates everything the feature
     /// has, and demanding a second seam would mean inventing a protocol that
-    /// does no distinct job.
+    /// does no distinct job. Whole-file findings use `crate::WHOLE_FILE`
+    /// (line 0), the crate-local marker for findings that apply to the file
+    /// rather than a declaration line.
     fn subsystem_count(
         &self,
         content: &str,
@@ -312,16 +326,13 @@ impl AgentRustRoleAuditor {
         if injected < 2 {
             violations.push(LintResult::new_arch_with_name(
                 path,
-                0,
+                crate::WHOLE_FILE,
                 "AES405",
                 Severity::LOW,
-                "Orchestrator has a single execution goal".to_string(),
-                "AGENT_ROLE",
-                "File injects 1 protocol field(s); an orchestrator must coordinate \
-                 at least 2 subsystems.",
-                "Either this work belongs in a capability file rather than an \
-                 agent, or the feature genuinely has more than one subsystem and the agent \
-                 should hold and coordinate their protocols.",
+                "Agent injects fewer than two capability protocols, so it coordinates one subsystem".to_string(),
+                "AGENT_ROLE_SUBSYSTEM_COUNT",
+                "A feature whose shared module declares exactly one protocol is a genuine single-subsystem feature; forcing a second seam adds one that does no distinct job. When nothing injects a second protocol seam, this work belongs in a capability rather than an agent.",
+                "Either this work belongs in a capability file rather than an agent, or inject the protocols of both subsystems into the agent.",
             ));
         }
     }
@@ -349,15 +360,14 @@ impl AgentRustRoleAuditor {
                         i + 1,
                         "AES405",
                         Severity::MEDIUM,
-                        "Computation in an agent file".to_string(),
-                        "AGENT_ROLE",
+                        "Computation in an agent file; an agent orchestrates, it does not compute domain totals".to_string(),
+                        "AGENT_ROLE_COMPUTATION",
                         format!(
                             "Line {} calls `{token}`. An agent orchestrates; it does \
                              not compute totals or averages over domain data.",
                             i + 1
                         ),
-                        "Move the aggregation into a capability, and have the agent \
-                         route to it.",
+                        "Move the aggregation into a capability, and have the agent route to it.",
                     ));
                 }
             }
@@ -383,15 +393,14 @@ impl AgentRustRoleAuditor {
                     i + 1,
                     "AES405",
                     Severity::MEDIUM,
-                    "Mutable receiver in an agent file".to_string(),
-                    "AGENT_ROLE",
+                    "Mutable receiver in an agent file; an agent holds no mutable state".to_string(),
+                    "AGENT_ROLE_STATELESS",
                     format!(
                         "Line {} takes `&mut self`. An agent coordinates \
                          dependencies and does not mutate its own state.",
                         i + 1
                     ),
-                    "Take `&self` and move any mutation behind the injected \
-                     protocol that owns the state.",
+                    "Take `&self` and move any mutation behind the injected protocol that owns the state.",
                 ));
             }
         }
@@ -456,8 +465,8 @@ impl AgentRustRoleAuditor {
                     i + 1,
                     "AES405",
                     Severity::LOW,
-                    "Free function in an agent file".to_string(),
-                    "AGENT_ROLE",
+                    format!("Free function `{name}` declared at file level; it belongs in a utility file"),
+                    "AGENT_ROLE_FREE_FUNCTION",
                     format!(
                         "`fn {name}` is declared at file level (line {}). An agent \
                          file holds one type and its methods.",

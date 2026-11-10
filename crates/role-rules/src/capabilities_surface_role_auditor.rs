@@ -18,7 +18,6 @@ use shared_filesystem::taxonomy_filesystem_vo::{FileEntry, Language, ParseMetada
 use shared_role_rules::contract_role_protocol::ISurfaceRoleProtocol;
 use shared_role_rules::taxonomy_role_rules_constant::{
     MAX_CONTROL_FLOW, MAX_FN_COUNT_PASSIVE, MAX_FN_COUNT_SMART, MAX_FN_COUNT_UTILITY,
-    MAX_PUBLIC_METHODS,
 };
 use shared_role_rules::taxonomy_role_rules_vo::{SurfaceTier, classify_surface_tier};
 
@@ -46,18 +45,24 @@ impl ISurfaceRoleProtocol for SurfaceRoleChecker {
     }
 
     fn check_utility_surface(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
-        self._check_passive_with_metadata(file, violations);
         self._check_domain_logic(file, violations);
         self._check_surface_logic(file, violations);
     }
 
     fn check_passive_surface(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
-        self._check_passive_with_metadata(file, violations);
         self._check_domain_logic(file, violations);
         self._check_surface_logic(file, violations);
     }
 
     fn check_fn_count_limit(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
+        // The function count is obtained the same way in both tier paths:
+        // the parsed count when available, else the lexical scan. A missing
+        // count was previously treated as zero and stayed silent, which made
+        // the tier check and the passive check disagree on the measurement.
+        // The count is reported exactly once here, against the tier ceiling;
+        // the passive and utility tier checks only add their domain-logic
+        // findings, so the reader never sees two competing counts for one
+        // file.
         let tier = classify_surface_tier(stem_of(file));
         let limit = match tier {
             SurfaceTier::Smart => MAX_FN_COUNT_SMART,
@@ -77,19 +82,19 @@ impl ISurfaceRoleProtocol for SurfaceRoleChecker {
         };
         violations.push(LintResult::new_arch_with_name(
             &path_str,
-            0,
+            crate::WHOLE_FILE,
             "AES406",
             Severity::HIGH,
             format!(
                 "{} tier surface has {} functions (max {})",
                 tier_name, fn_count, limit
             ),
-            "SURFACE_ROLE",
+            "SURFACE_FN_COUNT",
             format!(
-                "A {}-tier surface with too many functions has too many responsibilities.",
-                tier_name
+                "One function-count finding per file, counted once and measured the same way in every tier path; a {}-tier surface over {} functions carries too many responsibilities.",
+                tier_name, limit
             ),
-            "Split into smaller surface files, or move logic down to capabilities or an agent.",
+            "Move the helper functions into a utility_<domain>_* file, or move the logic down to a capability.",
         ));
     }
 }
@@ -97,28 +102,6 @@ impl ISurfaceRoleProtocol for SurfaceRoleChecker {
 // ─── Block 3: Module Helpers ──────
 
 impl SurfaceRoleChecker {
-    // ── Passive surface checks using ParseMetadata ──
-
-    fn _check_passive_with_metadata(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
-        let path_str = file.path.to_string_lossy();
-        let fn_count = count_functions(file).unwrap_or(0);
-        if fn_count > MAX_PUBLIC_METHODS {
-            violations.push(LintResult::new_arch_with_name(
-                &path_str,
-                0,
-                "AES406",
-                Severity::HIGH,
-                "Surface role boundary violation".to_string(),
-                "SURFACE_ROLE",
-                format!(
-                    "Surface file '{}' has {} functions (max {})",
-                    path_str, fn_count, MAX_PUBLIC_METHODS
-                ),
-                "Ensure surface only performs its designated responsibilities.",
-            ));
-        }
-    }
-
     // ── Domain logic check (control flow count) ──
 
     fn _check_domain_logic(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
@@ -142,15 +125,19 @@ impl SurfaceRoleChecker {
         if control_flow_count > MAX_CONTROL_FLOW {
             violations.push(LintResult::new_arch_with_name(
                 &path_str,
-                0,
+                crate::WHOLE_FILE,
                 "AES406",
-                Severity::HIGH,"Complex domain logic detected in a passive/utility surface".to_string(),
-                "SURFACE_ROLE",
+                Severity::HIGH,
                 format!(
-                    "Surface file has {} control flow statements (max {})",
+                    "{} control-flow statements in a passive or utility surface (max {})",
                     control_flow_count, MAX_CONTROL_FLOW
                 ),
-                "Move the complex domain/control logic into capabilities or orchestrator components.",
+                "SURFACE_CONTROL_FLOW",
+                format!(
+                    "A passive or utility surface is presentation only: more than {} control-flow statements is the logic of a capability, and it belongs there.",
+                    MAX_CONTROL_FLOW
+                ),
+                "Move the control flow into a capability and call it from the surface.",
             ));
         }
     }
@@ -188,10 +175,10 @@ impl SurfaceRoleChecker {
                         i + 1,
                         "AES406",
                         Severity::MEDIUM,
-                        "Business logic in surface layer".to_string(),
-                        "SURFACE_ROLE",
-                        "Surface-layer code must delegate business logic to the aggregate layer.",
-                        "Move the logic to a capabilities module and call it through a contract aggregate.",
+                        "Business logic runs directly in the surface file".to_string(),
+                        "SURFACE_LOGIC_BYPASS",
+                        "A surface must only call capability and utility code; this call reaches into a layer it must not own.",
+                        "Move the logic into a capabilities module and call it through a contract aggregate.",
                     ));
                 }
             }
