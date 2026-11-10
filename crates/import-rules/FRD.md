@@ -8,7 +8,9 @@
 
 The **import-rules** feature sits in the capabilities layer of the AES 7-layer architecture. It is invoked by the `check` command stage dedicated to import-rule auditing, and in turn calls the forbidden-layer checker, the mandatory-import checker, the unused-import checker, the dummy-constructor checker, and the circular-dependency analyzer. The feature performs zero I/O: all file discovery, content reading, and AST parsing are handled upstream by the filesystem aggregate, and the import orchestrator receives pre-fetched entries, imports, and used identifiers. All rule behavior is governed by YAML configuration; the crate makes no assumptions about allowed or forbidden dependencies beyond what the config declares.
 
-## Developer Journey
+## Functional Requirements
+
+### Developer Journey
 
 ### Persona
 
@@ -31,7 +33,7 @@ lint-arwaky-cli check --target /path/to/project --rules AES201,AES202,AES203,AES
 On first run against a project with mixed compliance, the output lists one finding per violating import. Each finding carries:
 
 - Code (`AES201` through `AES205`)
-- File and line (line `0` when unknown — never a fabricated index)
+- File and line (line `0` when unknown; never a fabricated index)
 - Severity (CRITICAL for AES201/AES205, HIGH for AES202/AES204, MEDIUM for AES203)
 - Violation name subtype (e.g. `FORBIDDEN_IMPORT`, `MANDATORY_IMPORT`, `UNUSED_IMPORT`, `DUMMY_IMPORT`, `CIRCULAR_IMPORT`)
 - Message, Why, Fix (in that order)
@@ -40,40 +42,40 @@ Example one-violation output:
 
 ```
 Layer 'surface' imports 'agent::runner' from forbidden layer 'agent'.
-  File: surface_ui.rs:7
+  File: <file>:<line>
   Code: AES201 (CRITICAL)
   Violation: FORBIDDEN_IMPORT
   Why: Layer 'surface' must not depend on 'agent' to maintain architectural boundaries.
-  Fix: Route the call through a contract aggregate
+  Fix: Route the call through a contract aggregate; agent orchestrators are internal.
 ```
 
 ### Worked Examples (one per code)
 
-**AES201 — Forbidden import:**
+**AES201 Forbidden import:**
 A surface file imports `agent::runner`.
 ```
 Layer 'surface' imports 'agent::runner' from forbidden layer 'agent'.
   Why: Layer 'surface' must not depend on 'agent' to maintain architectural boundaries.
-  Fix: Route the call through a contract aggregate
+  Fix: Route the call through a contract aggregate; agent orchestrators are internal.
 ```
 
-**AES202 — Missing mandatory import:**
+**AES202 Missing mandatory import:**
 A capabilities file is required to import `contract_calculator_protocol` but does not.
 ```
 Layer 'capabilities' is missing required import 'contract_calculator_protocol'.
   Why: Layer 'capabilities' must import 'contract_calculator_protocol' to satisfy architectural requirements.
-  Fix: Add the import declared by the AES202 mandatory rule key
+  Fix: Add the required import declared by the AES202 mandatory rule key.
 ```
 
-**AES203 — Unused import:**
+**AES203 Unused import:**
 A file imports `HashMap` but never references it.
 ```
-Unused import 'HashMap' detected.
-  Why: Unused imports clutter the codebase.
+Import 'HashMap' is never referenced outside the import statement.
+  Why: Unused imports clutter the codebase and hide real dependencies.
   Fix: Remove the unused import
 ```
 
-**AES204 — Dummy import:**
+**AES204 Dummy import:**
 A dummy-use function imports symbols only to suppress unused-import warnings.
 ```
 Import 'foo' is only used inside dummy-use functions.
@@ -81,8 +83,8 @@ Import 'foo' is only used inside dummy-use functions.
   Fix: Remove the dummy-use function and its unused imports
 ```
 
-**AES205 — Circular dependency:**
-`capabilities → agent → capabilities` forms a cycle.
+**AES205 Circular dependency:**
+`capabilities -> agent -> capabilities` forms a cycle.
 ```
 Circular dependency detected.
   Why: Circular dependency between layers 'capabilities' and 'agent' creates implicit bidirectional coupling.
@@ -109,19 +111,17 @@ architecture:
 
 Rules not listed, or listed without `enabled: true`, are enabled by default; set `enabled: false` to disable a rule.
 
-## Severity Scale
+### Severity Scale
 
 | Rule | Severity | Meaning |
 |------|----------|---------|
-| AES201 | CRITICAL | Forbidden layer import — architectural boundary violation |
-| AES205 | CRITICAL | Circular dependency — implicit bidirectional coupling |
-| AES202 | HIGH | Missing mandatory import — layer requirement unmet |
-| AES204 | HIGH | Dummy import / function / impl — dead code masquerading as real |
-| AES203 | MEDIUM | Unused import — clutter, not an architectural violation |
+| AES201 | CRITICAL | Forbidden layer import, architectural boundary violation |
+| AES205 | CRITICAL | Circular dependency, implicit bidirectional coupling |
+| AES202 | HIGH | Missing mandatory import, layer requirement unmet |
+| AES204 | HIGH | Dummy import / function / impl, dead code masquerading as real |
+| AES203 | MEDIUM | Unused import, clutter, not an architectural violation |
 
 Severity is printed on every finding as `[CRIT]`, `[HIGH]`, or `[MED]` via `Severity::badge()`.
-
-## Functional Requirements
 
 ### FR-ImportRules-001: Layer Dependency Violation
 
@@ -150,7 +150,7 @@ Severity is printed on every finding as `[CRIT]`, `[HIGH]`, or `[MED]` via `Seve
 | **Output** | Findings with code AES201, carrying the source module, target module, and source line number; returned inside the audit response. |
 | **Protocol** | `IImportForbiddenProtocol` |
 | **Method** | `check` |
-| **Event** | Progress: one `rule_started(code)` and one `rule_completed(code, finding_count)` event per rule; `partial_results` emitted after each file when results stream. Cancellation: a cancelled rule emits `rule_cancelled(code)` and the audit continues with remaining rules, reporting whatever findings were collected before cancellation. Partial results are always returned; the audit never silently drops a rule — a checker that errors emits a `RULE_UNAVAILABLE` record instead of failing the run. Implementation may defer events (FRD-only contract stated here). |
+| **Event** | Progress: one `rule_started(code)` and one `rule_completed(code, finding_count)` event per rule; `partial_results` emitted after each file when results stream. Cancellation: a cancelled rule emits `rule_cancelled(code)` and the audit continues with remaining rules, reporting whatever findings were collected before cancellation. Partial results are always returned; the audit never silently drops a rule; a checker that errors emits a `RULE_UNAVAILABLE` record instead of failing the run. Implementation may defer events (FRD-only contract stated here). |
 | **Error** | An unreadable file contributes no AES201 findings rather than failing the audit; a zero entry line still yields a locatable finding. |
 
 #### Test
@@ -194,7 +194,7 @@ Severity is printed on every finding as `[CRIT]`, `[HIGH]`, or `[MED]` via `Seve
 | **Output** | Findings with code AES202, naming the missing dependency; returned inside the audit response. |
 | **Protocol** | `IImportMandatoryProtocol` |
 | **Method** | `check` |
-| **Event** | Progress: one `rule_started(code)` and one `rule_completed(code, finding_count)` event per rule; `partial_results` emitted after each file when results stream. Cancellation: a cancelled rule emits `rule_cancelled(code)` and the audit continues with remaining rules, reporting whatever findings were collected before cancellation. Partial results are always returned; the audit never silently drops a rule — a checker that errors emits a `RULE_UNAVAILABLE` record instead of failing the run. Implementation may defer events (FRD-only contract stated here). |
+| **Event** | Progress: one `rule_started(code)` and one `rule_completed(code, finding_count)` event per rule; `partial_results` emitted after each file when results stream. Cancellation: a cancelled rule emits `rule_cancelled(code)` and the audit continues with remaining rules, reporting whatever findings were collected before cancellation. Partial results are always returned; the audit never silently drops a rule; a checker that errors emits a `RULE_UNAVAILABLE` record instead of failing the run. Implementation may defer events (FRD-only contract stated here). |
 | **Error** | A missing or empty input file yields no AES202 findings for that file rather than failing the run. |
 
 #### Test
@@ -230,6 +230,7 @@ Severity is printed on every finding as `[CRIT]`, `[HIGH]`, or `[MED]` via `Seve
 - An actual unused import is flagged exactly once per import entry; multiple unused imports each produce their own finding.
 - An aliased Python import used only via its alias produces no finding; a truly unused alias is flagged.
 - Barrel, mod-re-export, and index files produce no AES203 findings.
+- A Python `__init__.py` is skipped regardless of content or directory context, because `is_barrel_file` matches on basename only; to audit its imports, rename the file.
 - A parse failure of the file body yields no AES203 findings for that file rather than false positives.
 
 #### Technical Specification
@@ -240,7 +241,7 @@ Severity is printed on every finding as `[CRIT]`, `[HIGH]`, or `[MED]` via `Seve
 | **Output** | Findings with code AES203, naming the unused binding and its source line; returned inside the audit response. |
 | **Protocol** | `IUnusedImportProtocol` |
 | **Method** | `check` |
-| **Event** | Progress: one `rule_started(code)` and one `rule_completed(code, finding_count)` event per rule; `partial_results` emitted after each file when results stream. Cancellation: a cancelled rule emits `rule_cancelled(code)` and the audit continues with remaining rules, reporting whatever findings were collected before cancellation. Partial results are always returned; the audit never silently drops a rule — a checker that errors emits a `RULE_UNAVAILABLE` record instead of failing the run. Implementation may defer events (FRD-only contract stated here). |
+| **Event** | Progress: one `rule_started(code)` and one `rule_completed(code, finding_count)` event per rule; `partial_results` emitted after each file when results stream. Cancellation: a cancelled rule emits `rule_cancelled(code)` and the audit continues with remaining rules, reporting whatever findings were collected before cancellation. Partial results are always returned; the audit never silently drops a rule; a checker that errors emits a `RULE_UNAVAILABLE` record instead of failing the run. Implementation may defer events (FRD-only contract stated here). |
 | **Error** | A parse failure of the body yields no AES203 findings for that file instead of false positives. |
 
 #### Test
@@ -288,7 +289,7 @@ Severity is printed on every finding as `[CRIT]`, `[HIGH]`, or `[MED]` via `Seve
 | **Output** | Findings with code AES204, naming the dummy construct and its location; returned inside the audit response. |
 | **Protocol** | `IDummyImportCheckerProtocol` |
 | **Method** | `check` |
-| **Event** | Progress: one `rule_started(code)` and one `rule_completed(code, finding_count)` event per rule; `partial_results` emitted after each file when results stream. Cancellation: a cancelled rule emits `rule_cancelled(code)` and the audit continues with remaining rules, reporting whatever findings were collected before cancellation. Partial results are always returned; the audit never silently drops a rule — a checker that errors emits a `RULE_UNAVAILABLE` record instead of failing the run. Implementation may defer events (FRD-only contract stated here). |
+| **Event** | Progress: one `rule_started(code)` and one `rule_completed(code, finding_count)` event per rule; `partial_results` emitted after each file when results stream. Cancellation: a cancelled rule emits `rule_cancelled(code)` and the audit continues with remaining rules, reporting whatever findings were collected before cancellation. Partial results are always returned; the audit never silently drops a rule; a checker that errors emits a `RULE_UNAVAILABLE` record instead of failing the run. Implementation may defer events (FRD-only contract stated here). |
 | **Error** | A parse failure skips the file's dummy analysis rather than failing the audit. |
 
 #### Test
@@ -337,7 +338,7 @@ Severity is printed on every finding as `[CRIT]`, `[HIGH]`, or `[MED]` via `Seve
 | **Output** | Findings with code AES205, naming each detected cycle; an empty list when acyclic or when the rule is disabled. Returned inside the audit response. |
 | **Protocol** | `ICycleImportProtocol` |
 | **Method** | `check` |
-| **Event** | Progress: one `rule_started(code)` and one `rule_completed(code, finding_count)` event per rule; `partial_results` emitted after each file when results stream. Cancellation: a cancelled rule emits `rule_cancelled(code)` and the audit continues with remaining rules, reporting whatever findings were collected before cancellation. Partial results are always returned; the audit never silently drops a rule — a checker that errors emits a `RULE_UNAVAILABLE` record instead of failing the run. Implementation may defer events (FRD-only contract stated here). |
+| **Event** | Progress: one `rule_started(code)` and one `rule_completed(code, finding_count)` event per rule; `partial_results` emitted after each file when results stream. Cancellation: a cancelled rule emits `rule_cancelled(code)` and the audit continues with remaining rules, reporting whatever findings were collected before cancellation. Partial results are always returned; the audit never silently drops a rule; a checker that errors emits a `RULE_UNAVAILABLE` record instead of failing the run. Implementation may defer events (FRD-only contract stated here). |
 | **Error** | Unparseable edge entries are dropped; the scan completes on the remaining edges. |
 
 #### Test
@@ -357,14 +358,14 @@ Severity is printed on every finding as `[CRIT]`, `[HIGH]`, or `[MED]` via `Seve
 | AES205 detection rate for seeded cycle fixtures | 100% |
 | AES205 false-positive rate for acyclic fixtures | 0% |
 
-## Output Samples
+### Output Samples
 
-One rendered 80-column sample per code, each with `fix` text capped at 72 visible characters. Remedies are single actions; mutually exclusive remedies are separated or moved into `why`.
+One rendered 80-column sample per code, each with `fix` text capped at 72 visible characters. The base fix text for AES201 is `Route the call through a contract aggregate; agent orchestrators` (72 characters); it is shown capped here, but the First-Run Output and Worked Example sections above show the full text `Route the call through a contract aggregate; agent orchestrators are internal.` (74 characters), which the checker appends when allowed layers are configured and no config hint is attached. Remedies are single actions; mutually exclusive remedies are separated or moved into `why`.
 
 **AES201 (FORBIDDEN_IMPORT):**
 ```
 Layer 'surface' imports 'agent::runner' from forbidden layer 'agent'.
-  File: surface_ui.rs:7   Code: AES201 [CRIT]   Violation: FORBIDDEN_IMPORT
+  File: <file>:7   Code: AES201 [CRIT]   Violation: FORBIDDEN_IMPORT
   Why:  Layer 'surface' must not depend on 'agent' to maintain architectural boundaries.
   Fix:  Route the call through a contract aggregate
 ```
@@ -372,23 +373,23 @@ Layer 'surface' imports 'agent::runner' from forbidden layer 'agent'.
 **AES202 (MANDATORY_IMPORT):**
 ```
 Layer 'capabilities' is missing required import 'contract_calculator_protocol'.
-  File: capabilities_calc.rs:1   Code: AES202 [HIGH]   Violation: MANDATORY_IMPORT
+  File: <file>:1   Code: AES202 [HIGH]   Violation: MANDATORY_IMPORT
   Why:  Layer 'capabilities' must import 'contract_calculator_protocol' to satisfy architectural requirements.
-  Fix:  Add import declared by the AES202 mandatory rule key
+  Fix:  Add the required import declared by the AES202 mandatory rule key.
 ```
 
 **AES203 (UNUSED_IMPORT):**
 ```
-Unused import 'HashMap' detected.
-  File: app.rs:1   Code: AES203 [MED]   Violation: UNUSED_IMPORT
-  Why:  Unused imports clutter the codebase.
+Import 'HashMap' is never referenced outside the import statement.
+  File: <file>:1   Code: AES203 [MED]   Violation: UNUSED_IMPORT
+  Why:  Unused imports clutter the codebase and hide real dependencies.
   Fix:  Remove the unused import
 ```
 
 **AES204 (DUMMY_IMPORT):**
 ```
 Import 'foo' is only used inside dummy-use functions.
-  File: stub.rs:3   Code: AES204 [HIGH]   Violation: DUMMY_IMPORT
+  File: <file>:3   Code: AES204 [HIGH]   Violation: DUMMY_IMPORT
   Why:  Imported symbols inside dummy-use functions are dead code.
   Fix:  Remove the dummy-use function and its unused imports
 ```
@@ -396,7 +397,7 @@ Import 'foo' is only used inside dummy-use functions.
 **AES204 (EMPTY_FUNCTION):**
 ```
 Dummy-use function at line 4 has no real body.
-  File: stub.rs:4   Code: AES204 [HIGH]   Violation: EMPTY_FUNCTION
+  File: <file>:4   Code: AES204 [HIGH]   Violation: EMPTY_FUNCTION
   Why:  Dummy functions exist only to suppress unused-import warnings.
   Fix:  Remove the dummy-use function; use its imports in real code
 ```
@@ -404,7 +405,7 @@ Dummy-use function at line 4 has no real body.
 **AES204 (EMPTY_IMPL):**
 ```
 Empty trait implementation at line 8.
-  File: impl.rs:8   Code: AES204 [HIGH]   Violation: EMPTY_IMPL
+  File: <file>:8   Code: AES204 [HIGH]   Violation: EMPTY_IMPL
   Why:  Trait implementations with empty bodies violate the contract abstraction.
   Fix:  Implement the trait properly or remove the empty impl
 ```
@@ -412,7 +413,7 @@ Empty trait implementation at line 8.
 **AES204 (TAXONOMY_INTENT):**
 ```
 Raw primitives used where taxonomy VOs encode domain concepts.
-  File: model.rs:12   Code: AES204 [HIGH]   Violation: TAXONOMY_INTENT
+  File: <file>:12   Code: AES204 [HIGH]   Violation: TAXONOMY_INTENT
   Why:  Taxonomy VOs encode domain concepts; using raw primitives defeats the purpose.
   Fix:  Use taxonomy VOs instead of raw primitives
 ```
@@ -420,7 +421,7 @@ Raw primitives used where taxonomy VOs encode domain concepts.
 **AES205 (CIRCULAR_IMPORT):**
 ```
 Circular dependency detected.
-  File: handler.rs:0   Code: AES205 [CRIT]   Violation: CIRCULAR_IMPORT
+  File: <file>:0   Code: AES205 [CRIT]   Violation: CIRCULAR_IMPORT
   Why:  Circular dependency between layers 'capabilities' and 'agent' creates implicit bidirectional coupling.
   Fix:  Extract shared types to taxonomy; restructure dependency direction
 ```

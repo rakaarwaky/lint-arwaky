@@ -104,7 +104,7 @@ impl IImportMandatoryProtocol for ArchImportMandatoryChecker {
             })
             .collect();
 
-        Ok(LintResultList::new(dedup_by_file_line_code(
+        Ok(LintResultList::new(dedup_by_file_line_code_message(
             file_violations,
         )))
     }
@@ -196,7 +196,7 @@ impl ArchImportMandatoryChecker {
         config: &ArchitectureConfig,
     ) -> Option<Vec<String>> {
         for rule in &config.rules {
-            if rule.name.value != AES202_RULE_CODE && rule.rule_type.code() != AES202_RULE_CODE {
+            if rule.name.value != AES202_RULE_CODE {
                 continue;
             }
             if rule.mandatory.values.is_empty() {
@@ -258,9 +258,7 @@ impl ArchImportMandatoryChecker {
                     ),
                     "Add the required import declared by the AES202 mandatory rule key.",
                 );
-                if !violations.contains(&v) {
-                    violations.push(v);
-                }
+                violations.push(v);
             }
         }
     }
@@ -303,15 +301,18 @@ impl ArchImportMandatoryChecker {
     }
 }
 
-/// Deduplicate violations by (file, line, code) — HashSet for non-consecutive dedup.
-fn dedup_by_file_line_code(violations: Vec<LintResult>) -> Vec<LintResult> {
-    let mut seen: HashSet<(String, i64, String)> = HashSet::new();
+/// Deduplicate violations by (file, line, code, message) — HashSet for non-consecutive dedup.
+/// Includes the message so that multiple missing mandatory imports in one file
+/// (all with line 0 and code AES202) each survive as distinct findings.
+fn dedup_by_file_line_code_message(violations: Vec<LintResult>) -> Vec<LintResult> {
+    let mut seen: HashSet<(String, i64, String, String)> = HashSet::new();
     let mut unique = violations;
     unique.retain(|v| {
         seen.insert((
             v.file.value().to_string(),
             v.line.value(),
             v.code.code().to_string(),
+            v.message.value().to_string(),
         ))
     });
     unique

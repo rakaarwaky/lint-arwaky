@@ -205,8 +205,15 @@ fn e2e_audit_with_entries_returns_results() {
     let results = orch
         .execute(ImportRequest::audit_with_entries(&[file_entry]))
         .into_violations();
-    // Should at least not panic and produce some result
-    // Note: run_audit_with_entries may produce different results than run_audit
-    // since it uses pre-parsed entries rather than filesystem scan
-    let _ = results;
+    // run_audit_with_entries uses pre-parsed entries rather than filesystem scan,
+    // so it may return a different result set than run_audit. Assert non-empty
+    // and that at least one finding has a violation name.
+    assert!(
+        !results.is_empty(),
+        "audit_with_entries should return at least one violation for a capabilities file importing agent"
+    );
+    assert!(
+        results.iter().any(|r| !r.violation_name.is_empty()),
+        "each violation should carry a violation name"
+    );
 }

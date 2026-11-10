@@ -479,7 +479,7 @@ impl ArchImportForbiddenChecker {
                     let violation = LintResult::new_arch_with_name(
                         file,
                         line,
-                        "AES201",
+                        AES201_RULE_CODE,
                         Severity::CRITICAL,
                         message,
                         "FORBIDDEN_IMPORT",
