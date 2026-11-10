@@ -140,9 +140,7 @@ fn nested_result(
     } else {
         format!("{depth} levels")
     };
-    let problem = format!(
-        "Test file '{filename}' sits {levels} inside '{directory}/'."
-    );
+    let problem = format!("Test file '{filename}' sits {levels} inside '{directory}/'.");
     let action = format!(
         "Move the file to '{directory}/' and keep the {} type in its name, for example '{}'.",
         type_word(directory),
@@ -190,15 +188,11 @@ fn prefix_result(file: &str, filename: &str, stem: &str, slot: TestSuiteSlot) ->
     // prefixes are listed on the action line.
     let (problem, action) = match foreign {
         Some((prefix, home)) => (
-            format!(
-                "Test file '{filename}' starts with '{prefix}', which belongs in '{home}/'."
-            ),
+            format!("Test file '{filename}' starts with '{prefix}', which belongs in '{home}/'."),
             format!("Move the file to '{home}/'."),
         ),
         None => (
-            format!(
-                "Test file '{filename}' does not start with a legal test prefix."
-            ),
+            format!("Test file '{filename}' does not start with a legal test prefix."),
             format!(
                 "Rename the file to '<type>_<subject>.rs'. Legal '{directory}/' prefixes: {legal}."
             ),

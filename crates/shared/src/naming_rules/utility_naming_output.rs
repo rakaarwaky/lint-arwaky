@@ -104,9 +104,7 @@ fn rule_line(code: &str, label: &str, inspected: usize, findings: usize) -> Stri
     } else {
         plural(findings, "finding", "findings")
     };
-    format!(
-        "  {code}  {label:<20}  {inspected:>5} files checked  {state}\n"
-    )
+    format!("  {code}  {label:<20}  {inspected:>5} files checked  {state}\n")
 }
 
 /// How many findings carry *code*.

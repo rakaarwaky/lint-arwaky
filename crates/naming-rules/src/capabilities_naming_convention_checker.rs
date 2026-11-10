@@ -301,7 +301,10 @@ impl NamingConventionChecker {
 
     /// What is wrong with the stem's separators, in one clause.
     fn separator_detail(stem: &str) -> String {
-        if let Some(found) = stem.chars().find(|c| !c.is_ascii_alphanumeric() && *c != '_') {
+        if let Some(found) = stem
+            .chars()
+            .find(|c| !c.is_ascii_alphanumeric() && *c != '_')
+        {
             return format!("uses '{found}', which a file name may not hold");
         }
         if stem.starts_with('_') {
@@ -331,7 +334,9 @@ impl NamingConventionChecker {
         stem: &str,
         min_words: usize,
     ) -> String {
-        const FILLERS: [&str; 6] = ["user", "checker", "service", "handler", "manager", "adapter"];
+        const FILLERS: [&str; 6] = [
+            "user", "checker", "service", "handler", "manager", "adapter",
+        ];
         let mut words = Self::split_words(stem);
         // The folder word leads the name, the way the convention reads it.
         if let Some(folder) = folder
@@ -357,7 +362,10 @@ impl NamingConventionChecker {
             number += 1;
         }
         let example = words.join("_");
-        match std::path::Path::new(filename).extension().and_then(|e| e.to_str()) {
+        match std::path::Path::new(filename)
+            .extension()
+            .and_then(|e| e.to_str())
+        {
             Some(extension) => format!("{example}.{extension}"),
             None => example,
         }
@@ -401,7 +409,10 @@ impl NamingConventionChecker {
     /// pattern instead of a target that would still be wrong.
     fn suggested_file_name(stem: &str, filename: &str, min_words: usize) -> Option<String> {
         let repaired = Self::suggested_stem(stem, min_words)?;
-        match std::path::Path::new(filename).extension().and_then(|e| e.to_str()) {
+        match std::path::Path::new(filename)
+            .extension()
+            .and_then(|e| e.to_str())
+        {
             Some(extension) => Some(format!("{repaired}.{extension}")),
             None => Some(repaired),
         }

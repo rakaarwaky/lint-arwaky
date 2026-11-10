@@ -29,11 +29,7 @@ impl NamingFinding {
     ///
     /// The clause order of the constructor is the template's order: the
     /// problem, then the action, then the rule.
-    pub fn new(
-        message: impl Into<String>,
-        fix: impl Into<String>,
-        why: impl Into<String>,
-    ) -> Self {
+    pub fn new(message: impl Into<String>, fix: impl Into<String>, why: impl Into<String>) -> Self {
         Self {
             message: message.into(),
             fix: fix.into(),

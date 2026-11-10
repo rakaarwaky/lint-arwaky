@@ -221,7 +221,10 @@ impl SuffixPolicyChecker {
             return None;
         }
         let target = format!("{owner}_{}", rest.join("_"));
-        match std::path::Path::new(filename).extension().and_then(|e| e.to_str()) {
+        match std::path::Path::new(filename)
+            .extension()
+            .and_then(|e| e.to_str())
+        {
             Some(extension) => Some(format!("{target}.{extension}")),
             None => Some(target),
         }
@@ -260,22 +263,17 @@ impl SuffixPolicyChecker {
         allowed: &[String],
         owner: Option<&str>,
     ) -> ViolationItem {
-        let problem = format!(
-            "Suffix '{suffix}' is not allowed in the '{layer_display}' folder."
-        );
+        let problem = format!("Suffix '{suffix}' is not allowed in the '{layer_display}' folder.");
         // One action per finding. The suffix names a role another folder
         // plays, so the file takes that folder's name. A suffix no other
         // folder owns is dropped, or replaced by one this folder lists.
         let action = match owner {
-            Some(owner) if owner != layer_display => match Self::target_name(
-                stem,
-                layer_display,
-                owner,
-                filename,
-            ) {
-                Some(target) => format!("Rename the file to '{target}'."),
-                None => Self::suffix_action(suffix, allowed),
-            },
+            Some(owner) if owner != layer_display => {
+                match Self::target_name(stem, layer_display, owner, filename) {
+                    Some(target) => format!("Rename the file to '{target}'."),
+                    None => Self::suffix_action(suffix, allowed),
+                }
+            }
             _ => Self::suffix_action(suffix, allowed),
         };
         let exemption = exemption_clause(RULE_CODE_SUFFIX_PREFIX, filename);
@@ -376,9 +374,9 @@ impl SuffixPolicyChecker {
         // A file with no suffix at all and a file with the wrong suffix are
         // one defect: the name does not end with a suffix the folder allows.
         let problem = match suffix {
-            Some(suffix) => format!(
-                "Suffix '{suffix}' is not in the list the '{layer_display}' folder allows."
-            ),
+            Some(suffix) => {
+                format!("Suffix '{suffix}' is not in the list the '{layer_display}' folder allows.")
+            }
             None => format!(
                 "Stem '{stem}' does not end with a suffix the '{layer_display}' folder allows."
             ),

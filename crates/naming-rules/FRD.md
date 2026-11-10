@@ -20,7 +20,7 @@ flowchart TD
 
 The naming-rules feature sits in the capabilities and agent layer, called by the surface layer via the naming runner aggregate. The orchestrator coordinates naming convention validation, suffix/prefix policy checks, and test file prefix discipline. Zero disk I/O is performed directly by checkers; pre-parsed file entries are supplied by the caller and lint results return upstream to surface commands.
 
-## Developer Journey
+### Developer Journey
 
 **Persona.** A developer who has just added a file to a Rust workspace and wants to know whether the name will survive the repository's own gates. They are not an architect: they do not know that a "layer" exists, and they do not want to learn. They know the file they wrote, and they want to know what to rename it to.
 
@@ -57,7 +57,7 @@ The counts are the files each rule read, not the files that produced a finding. 
 
 **Rules reachable from one run.** AES101 (stem shape), AES102 (folder suffix), and AES103 (test and bench file prefix and placement) all run in the same command, and the summary lists each of them with the number of files it read.
 
-## Output Contract
+### Output Contract
 
 ### The finding template
 
@@ -110,7 +110,7 @@ The internal vocabulary of this document says "layer" where the emitted text say
 | Report text | The problem (`message`), with the rule and the action |
 | Naming summary (CLI text) | The files each rule read, the findings per rule, and the total per severity level |
 
-## Severity Model
+### Severity Model
 
 The three rules carry more than one severity level, so a reader can triage: a file in the wrong folder is a different weight from a file with a capital letter in its name.
 
@@ -125,7 +125,7 @@ The three rules carry more than one severity level, so a reader can triage: a fi
 | AES103 | The stem starts with a prefix belonging to the other directory | MEDIUM | The file needs a move, not a rename |
 | AES103 | The stem starts with no legal prefix | MEDIUM | The file needs a rename |
 
-## Suppression
+### Suppression
 
 A name that is deliberate is exempted by file name, per rule, in `lint_arwaky.config.yaml`:
 

@@ -115,13 +115,11 @@ pub const ALL_TESTS_DIR_PREFIXES: &[&str] = &[
 // so they live here rather than in one checker's file.
 
 /// The rule behind every AES101 stem-shape finding.
-pub const AES101_SHAPE_RULE: &str =
-    "File names are lowercase words joined by underscores, so the same name reads the same \
+pub const AES101_SHAPE_RULE: &str = "File names are lowercase words joined by underscores, so the same name reads the same \
      everywhere.";
 
 /// The rule behind every AES101 finding about a missing folder prefix.
-pub const AES101_FOLDER_RULE: &str =
-    "Every source file names the folder it belongs to, so a reader can place it without the \
+pub const AES101_FOLDER_RULE: &str = "Every source file names the folder it belongs to, so a reader can place it without the \
      architecture map.";
 
 /// The rule behind every AES102 finding about a suffix.

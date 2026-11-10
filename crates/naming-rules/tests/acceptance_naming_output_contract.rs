@@ -122,18 +122,15 @@ fn every_finding_carries_three_texts_that_do_not_restate_one_another() {
     for finding in sample_findings() {
         let (message, why, fix) = texts_of(&finding);
         assert_ne!(
-            message,
-            why,
+            message, why,
             "the message states the problem and the why states the rule; got {message}"
         );
         assert_ne!(
-            message,
-            fix,
+            message, fix,
             "the message states the problem and the fix states the action; got {message}"
         );
         assert_ne!(
-            why,
-            fix,
+            why, fix,
             "the why states the rule and the fix states the action; got {why}"
         );
     }
