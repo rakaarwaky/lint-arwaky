@@ -118,7 +118,7 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
                 paths: self.scan_directory(&root),
             },
             FilesystemRequest::DiscoverFiles { root } => FilesystemResponse::Paths {
-                paths: utility_workspace_detection::discover_files(root),
+                paths: utility_workspace_detection::discover_files(&root),
             },
             FilesystemRequest::CollectSourceFiles { dir, ignored } => {
                 FilesystemResponse::SourcePaths {
@@ -511,13 +511,6 @@ impl FilesystemOrchestrator {
             .collect()
     }
 
-    /// Discovers all files (source and non-source) under a root.
-    /// Recursive, file-only: language-detection input for the external-lint
-    /// orchestrator (keeps nested `src/*.py` visible to extension checks).
-    pub fn discover_files(&self, root: &Path) -> Vec<String> {
-        utility_workspace_detection::discover_files(root)
-    }
-
     /// Collects source-file paths under a directory, filtered by ignored patterns.
     pub fn collect_source_files(&self, dir: &Path, ignored: &[String]) -> Vec<FilePath> {
         let pl = PatternList::new(ignored.to_vec());
@@ -553,26 +546,6 @@ impl FilesystemOrchestrator {
             .lock()
             .map(|s| s.clone())
             .unwrap_or_default()
-    }
-
-    // Import resolution — thin delegation; the mechanism lives in `utility_import_resolution`.
-    /// Resolves an import to a workspace-relative source file.
-    /// Delegates to `utility_import_resolution::resolve_import_target`.
-    pub fn resolve_import_target(
-        &self,
-        imp: &ImportEntry,
-        src_rel: &str,
-        top_root: &Path,
-        all_files_set: &HashSet<&str>,
-        stem_index: &HashMap<String, Vec<String>>,
-    ) -> Option<String> {
-        shared_filesystem::utility_import_resolution::resolve_import_target(
-            imp,
-            src_rel,
-            top_root,
-            all_files_set,
-            stem_index,
-        )
     }
 
     // Warm-index building — scans, parses, and populates the cache fields; rebuilds only when the effective ignore set changes.
@@ -907,7 +880,13 @@ impl FilesystemOrchestrator {
                 &top_root,
             );
             let target_file =
-                self.resolve_import_target(imp, &src_rel, &top_root, &all_files_set, &stem_index);
+                shared_filesystem::utility_import_resolution::resolve_import_target(
+                    imp,
+                    &src_rel,
+                    &top_root,
+                    &all_files_set,
+                    &stem_index,
+                );
             let mut entry = imp.clone();
             if let Some(tgt_rel) = &target_file {
                 entry.resolved_path = Some(PathBuf::from(tgt_rel));
