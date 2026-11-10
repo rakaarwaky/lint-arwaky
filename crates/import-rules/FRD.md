@@ -2,9 +2,11 @@
 
 ## Feature Overview
 
-    [CLI `check` command] --> [import-rules aggregate] --> [import orchestrator]
-    [import orchestrator] --> [forbidden, mandatory, unused, dummy, cycle checkers]
-    [checkers] --> [lint violations]
+```mermaid
+[CLI `check` command] --> [import-rules aggregate] --> [import orchestrator]
+[import orchestrator] --> [forbidden, mandatory, unused, dummy, cycle checkers]
+[checkers] --> [lint violations]
+```
 
 The **import-rules** feature sits in the capabilities layer of the AES 7-layer architecture. It is invoked by the `check` command stage dedicated to import-rule auditing, and in turn calls the forbidden-layer checker, the mandatory-import checker, the unused-import checker, the dummy-constructor checker, and the circular-dependency analyzer. The feature performs zero I/O: all file discovery, content reading, and AST parsing are handled upstream by the filesystem aggregate, and the import orchestrator receives pre-fetched entries, imports, and used identifiers. All rule behavior is governed by YAML configuration; the crate makes no assumptions about allowed or forbidden dependencies beyond what the config declares.
 
@@ -18,13 +20,13 @@ The primary user is an architect or tech lead adding import-rule enforcement to 
 
 ### Entry Command
 
-```
+```shell
 lint-arwaky-cli check --import-rules
 ```
 
 Or via the aggregate directly:
 
-```
+```shell
 lint-arwaky-cli check --target /path/to/project --rules AES201,AES202,AES203,AES204,AES205
 ```
 
@@ -40,7 +42,7 @@ On first run against a project with mixed compliance, the output lists one findi
 
 Example one-violation output:
 
-```
+```text
 Layer 'surface' imports 'agent::runner' from forbidden layer 'agent'.
   File: <file>:<line>
   Code: AES201 (CRITICAL)
@@ -53,7 +55,8 @@ Layer 'surface' imports 'agent::runner' from forbidden layer 'agent'.
 
 **AES201 Forbidden import:**
 A surface file imports `agent::runner`.
-```
+
+```text
 Layer 'surface' imports 'agent::runner' from forbidden layer 'agent'.
   Why: Layer 'surface' must not depend on 'agent' to maintain architectural boundaries.
   Fix: Route the call through a contract aggregate; agent orchestrators are internal.
@@ -61,7 +64,8 @@ Layer 'surface' imports 'agent::runner' from forbidden layer 'agent'.
 
 **AES202 Missing mandatory import:**
 A capabilities file is required to import `contract_calculator_protocol` but does not.
-```
+
+```text
 Layer 'capabilities' is missing required import 'contract_calculator_protocol'.
   Why: Layer 'capabilities' must import 'contract_calculator_protocol' to satisfy architectural requirements.
   Fix: Add the required import declared by the AES202 mandatory rule key.
@@ -69,7 +73,8 @@ Layer 'capabilities' is missing required import 'contract_calculator_protocol'.
 
 **AES203 Unused import:**
 A file imports `HashMap` but never references it.
-```
+
+```text
 Import 'HashMap' is never referenced outside the import statement.
   Why: Unused imports clutter the codebase and hide real dependencies.
   Fix: Remove the unused import
@@ -77,7 +82,8 @@ Import 'HashMap' is never referenced outside the import statement.
 
 **AES204 Dummy import:**
 A dummy-use function imports symbols only to suppress unused-import warnings.
-```
+
+```text
 Import 'foo' is only used inside dummy-use functions.
   Why: Imported symbols inside dummy-use functions are dead code.
   Fix: Remove the dummy-use function and its unused imports
@@ -85,7 +91,8 @@ Import 'foo' is only used inside dummy-use functions.
 
 **AES205 Circular dependency:**
 `capabilities -> agent -> capabilities` forms a cycle.
-```
+
+```text
 Circular dependency detected.
   Why: Circular dependency between layers 'capabilities' and 'agent' creates implicit bidirectional coupling.
   Fix: Extract shared types to taxonomy, define a contract protocol, or restructure the dependency direction
@@ -130,9 +137,7 @@ Severity is printed on every finding as `[CRIT]`, `[HIGH]`, or `[MED]` via `Seve
 #### Business Logic
 
 - AES201 rejects a lower layer importing a higher one; agent, surface, capabilities, and taxonomy are each forbidden from specific importers, and utility remains allowed from taxonomy and capabilities.
-- The entry's first path segment determines the layer; findings carry the entry's
-  reported line number, or line 0 when no line is known. No fabricated line-1 or
-  index fallback is emitted.
+- The entry's first path segment determines the layer; findings carry the entry's reported line number, or line 0 when no line is known. No fabricated line-1 or index fallback is emitted.
 - Both Python and Rust import sources report the original source line, not the internal import index.
 - Every forbidden import in a file produces its own finding; no silent coalescing.
 
@@ -363,7 +368,8 @@ Severity is printed on every finding as `[CRIT]`, `[HIGH]`, or `[MED]` via `Seve
 One rendered 80-column sample per code, each with `fix` text capped at 72 visible characters. The base fix text for AES201 is `Route the call through a contract aggregate; agent orchestrators` (72 characters); it is shown capped here, but the First-Run Output and Worked Example sections above show the full text `Route the call through a contract aggregate; agent orchestrators are internal.` (74 characters), which the checker appends when allowed layers are configured and no config hint is attached. Remedies are single actions; mutually exclusive remedies are separated or moved into `why`.
 
 **AES201 (FORBIDDEN_IMPORT):**
-```
+
+```text
 Layer 'surface' imports 'agent::runner' from forbidden layer 'agent'.
   File: <file>:7   Code: AES201 [CRIT]   Violation: FORBIDDEN_IMPORT
   Why:  Layer 'surface' must not depend on 'agent' to maintain architectural boundaries.
@@ -371,7 +377,8 @@ Layer 'surface' imports 'agent::runner' from forbidden layer 'agent'.
 ```
 
 **AES202 (MANDATORY_IMPORT):**
-```
+
+```text
 Layer 'capabilities' is missing required import 'contract_calculator_protocol'.
   File: <file>:1   Code: AES202 [HIGH]   Violation: MANDATORY_IMPORT
   Why:  Layer 'capabilities' must import 'contract_calculator_protocol' to satisfy architectural requirements.
@@ -379,7 +386,8 @@ Layer 'capabilities' is missing required import 'contract_calculator_protocol'.
 ```
 
 **AES203 (UNUSED_IMPORT):**
-```
+
+```text
 Import 'HashMap' is never referenced outside the import statement.
   File: <file>:1   Code: AES203 [MED]   Violation: UNUSED_IMPORT
   Why:  Unused imports clutter the codebase and hide real dependencies.
@@ -387,7 +395,8 @@ Import 'HashMap' is never referenced outside the import statement.
 ```
 
 **AES204 (DUMMY_IMPORT):**
-```
+
+```text
 Import 'foo' is only used inside dummy-use functions.
   File: <file>:3   Code: AES204 [HIGH]   Violation: DUMMY_IMPORT
   Why:  Imported symbols inside dummy-use functions are dead code.
@@ -395,7 +404,8 @@ Import 'foo' is only used inside dummy-use functions.
 ```
 
 **AES204 (EMPTY_FUNCTION):**
-```
+
+```text
 Dummy-use function at line 4 has no real body.
   File: <file>:4   Code: AES204 [HIGH]   Violation: EMPTY_FUNCTION
   Why:  Dummy functions exist only to suppress unused-import warnings.
@@ -403,7 +413,8 @@ Dummy-use function at line 4 has no real body.
 ```
 
 **AES204 (EMPTY_IMPL):**
-```
+
+```text
 Empty trait implementation at line 8.
   File: <file>:8   Code: AES204 [HIGH]   Violation: EMPTY_IMPL
   Why:  Trait implementations with empty bodies violate the contract abstraction.
@@ -411,7 +422,8 @@ Empty trait implementation at line 8.
 ```
 
 **AES204 (TAXONOMY_INTENT):**
-```
+
+```text
 Raw primitives used where taxonomy VOs encode domain concepts.
   File: <file>:12   Code: AES204 [HIGH]   Violation: TAXONOMY_INTENT
   Why:  Taxonomy VOs encode domain concepts; using raw primitives defeats the purpose.
@@ -419,7 +431,8 @@ Raw primitives used where taxonomy VOs encode domain concepts.
 ```
 
 **AES205 (CIRCULAR_IMPORT):**
-```
+
+```text
 Circular dependency detected.
   File: <file>:0   Code: AES205 [CRIT]   Violation: CIRCULAR_IMPORT
   Why:  Circular dependency between layers 'capabilities' and 'agent' creates implicit bidirectional coupling.
