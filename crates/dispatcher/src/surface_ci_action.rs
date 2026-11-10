@@ -261,7 +261,7 @@ pub fn collect_ci(
         high: high_count,
         medium: medium_count,
         low: low_count,
-        total_violations: results.len(),
+        total_violations: critical_count + high_count + medium_count + low_count,
         groups_run,
     })
 }
