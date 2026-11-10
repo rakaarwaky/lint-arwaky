@@ -140,7 +140,7 @@ architecture:
 
 Every finding names this list in its action clause, with the config key and the file-name form, because neither is guessable. The exemption is matched on the bare file name, so the same file name in another folder is not exempted by accident. The list is the only suppression mechanism in scope: there is no inline suppression comment.
 
-## The empty-file policy
+### The empty-file policy
 
 A file with no content still has a name, and the name is what these rules judge. Every file the walk finds is evaluated by its path, whatever its size: a zero-byte file with a broken name produces a finding, exactly as a full file with the same name would.
 
@@ -284,7 +284,7 @@ This policy is pinned here because the two behaviours look identical from the ou
 | --- | --- |
 | 1 | Test Prefix Enforcement Accuracy is 100% and Misplacement Detection Rate is 100% |
 
-## Output Samples
+### Output Samples
 
 The samples below are the finding text as the rules render it: the rule code, then the problem clause, then the action clauses, then the rule clause. Each line stays inside the 72-character budget.
 
