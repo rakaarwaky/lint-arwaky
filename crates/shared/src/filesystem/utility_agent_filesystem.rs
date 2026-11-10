@@ -1,14 +1,25 @@
 // Utility helpers shared by the filesystem agent orchestrator.
 // All functions here are pure: no `self`, no side effects, domain-agnostic.
-use crate::utility_workspace_detection;
+// Inlined: stateless standalone function; no self-import (AES201: utility must not import utility).
 use std::collections::HashMap;
+use std::path::Path;
 use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 /// Builds a lexicographically-sorted index of file stems → file paths.
-/// Delegates to `utility_workspace_detection::build_stem_index`; kept as a
-/// thin agent wrapper for direct callers (e.g. tests).
 pub fn build_stem_index(file_paths: &[String]) -> HashMap<String, Vec<String>> {
-    utility_workspace_detection::build_stem_index(file_paths)
+    let mut stem_index: HashMap<String, Vec<String>> = HashMap::new();
+    for f in file_paths {
+        if let Some(stem) = Path::new(f).file_stem().and_then(|s| s.to_str()) {
+            stem_index
+                .entry(stem.to_string())
+                .or_default()
+                .push(f.clone());
+        }
+    }
+    for v in stem_index.values_mut() {
+        v.sort();
+    }
+    stem_index
 }
 
 /// Acquires a read guard on an `RwLock`, recovering from a poisoned lock.
