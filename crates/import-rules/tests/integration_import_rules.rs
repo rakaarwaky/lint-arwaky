@@ -182,3 +182,59 @@ fn orchestrator_detects_forbidden_import_in_temp_dir() {
         "Should detect AES201 forbidden import violation"
     );
 }
+
+#[test]
+fn orchestrator_detects_unused_import_in_temp_dir() {
+    let tmp = TempDir::new().unwrap();
+    // capabilities file with unused import
+    let file_path = tmp.path().join("capabilities_handler.rs");
+    std::fs::write(
+        &file_path,
+        "use std::collections::HashMap;\n\nfn process() {\n    let x = 1;\n}\n",
+    )
+    .unwrap();
+
+    let config = test_config();
+    let (fs, fs_io, ws, parser) = make_filesystem();
+    fs.execute(FilesystemRequest::build_file_index(tmp.path()));
+    let container = ImportContainer::new_with_config(config, fs, fs_io, ws, parser);
+    let orchestrator = container.orchestrator();
+
+    let target = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
+    let result = orchestrator
+        .execute(ImportRequest::audit(&target))
+        .into_result()
+        .unwrap();
+    assert!(
+        result.iter().any(|r| r.code.code() == "AES203"),
+        "Should detect AES203 unused import violation"
+    );
+}
+
+#[test]
+fn orchestrator_detects_dummy_import_in_temp_dir() {
+    let tmp = TempDir::new().unwrap();
+    // capabilities file with dummy-use function
+    let file_path = tmp.path().join("capabilities_handler.rs");
+    std::fs::write(
+        &file_path,
+        "use foo::bar;\n\nfn _use_stuff() { let _ = bar(); }\nfn real() {}\n",
+    )
+    .unwrap();
+
+    let config = test_config();
+    let (fs, fs_io, ws, parser) = make_filesystem();
+    fs.execute(FilesystemRequest::build_file_index(tmp.path()));
+    let container = ImportContainer::new_with_config(config, fs, fs_io, ws, parser);
+    let orchestrator = container.orchestrator();
+
+    let target = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
+    let result = orchestrator
+        .execute(ImportRequest::audit(&target))
+        .into_result()
+        .unwrap();
+    assert!(
+        result.iter().any(|r| r.code.code() == "AES204"),
+        "Should detect AES204 dummy import violation"
+    );
+}

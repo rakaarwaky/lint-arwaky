@@ -162,6 +162,9 @@ pub fn extract_layer_from_import(segment: &Identity) -> Option<LayerNameVO> {
 }
 
 /// Find the line number of an import statement containing the given alias.
+/// Returns LineNumber::new(0) when the alias cannot be located — no fabricated
+/// line-1 fallback is emitted, since the caller cannot distinguish "line 1"
+/// from "unknown".
 pub fn find_import_line_number(content: &str, alias: &str) -> LineNumber {
     let first_part = alias.split('.').next().unwrap_or("");
     let pos_opt = content.lines().position(|l| {
@@ -175,7 +178,7 @@ pub fn find_import_line_number(content: &str, alias: &str) -> LineNumber {
     });
     let line = match pos_opt {
         Some(p) => p + 1,
-        None => 1,
+        None => 0,
     };
     LineNumber::new(line as i64)
 }
@@ -195,4 +198,23 @@ pub fn is_future_import(content: &str, symbol: &str) -> bool {
                 || trimmed.contains(format!(", {}", symbol).as_str())
                 || trimmed.contains(format!(" {},", symbol).as_str()))
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn find_import_line_number_not_found_returns_zero() {
+        let content = "use std::collections::HashMap;\n\nfn main() {}\n";
+        let line = find_import_line_number(content, "NonExistentAlias");
+        assert_eq!(line.value(), 0, "unknown alias must resolve to line 0");
+    }
+
+    #[test]
+    fn find_import_line_number_found_returns_source_line() {
+        let content = "use std::collections::HashMap;\n\nuse std::io::Read;\n";
+        let line = find_import_line_number(content, "Read");
+        assert_eq!(line.value(), 3, "alias found on line 3");
+    }
 }

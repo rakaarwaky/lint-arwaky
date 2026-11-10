@@ -266,4 +266,13 @@ fn aes205_scan_mutual_cross_layer_cycle() {
         !aes205.is_empty(),
         "Mutual cross-layer dependency should produce AES205 cycle violation"
     );
+    // Cycle findings use line 0 — no fabricated source line.
+    for r in &aes205 {
+        assert_eq!(
+            r.line.value(),
+            0,
+            "AES205 cycle finding must use line 0, got {}",
+            r.line.value()
+        );
+    }
 }

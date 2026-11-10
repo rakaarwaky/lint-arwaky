@@ -6,6 +6,7 @@ use shared_common::{
 };
 use shared_filesystem::taxonomy_filesystem_vo::ImportEntry;
 use shared_import_rules::contract_import_protocol::IDummyImportCheckerProtocol;
+use shared_import_rules::taxonomy_import_rules_constant::AES204_RULE_CODE;
 use shared_import_rules::taxonomy_import_rules_error::ImportError;
 use shared_import_rules::utility_dummy_detector;
 use shared_import_rules::utility_import_resolver;
@@ -30,7 +31,7 @@ impl DummyImportChecker {
 
 impl IDummyImportCheckerProtocol for DummyImportChecker {
     fn rule_name(&self) -> Identity {
-        Identity::new("AES204")
+        Identity::new(AES204_RULE_CODE)
     }
 
     fn check_dummy_imports(
@@ -151,7 +152,7 @@ impl DummyImportChecker {
 
         for (symbol, line_no) in imported {
             let symbol_str = symbol.value().to_string();
-            if is_future_import(&lines, &symbol_str) {
+            if utility_import_resolver::is_future_import(&lines.join("\n"), &symbol_str) {
                 continue;
             }
             if utility_dummy_detector::symbol_used_real(
@@ -162,11 +163,18 @@ impl DummyImportChecker {
             ) {
                 continue;
             }
-            violations.push(LintResult::new_arch_with_name(file, line_no.value() as usize, "AES204", Severity::HIGH,
-                "Import intent mismatch: imported symbols placed inside _use_ dummy functions.".to_string(),
+            violations.push(LintResult::new_arch_with_name(
+                file,
+                line_no.value() as usize,
+                AES204_RULE_CODE,
+                Severity::HIGH,
+                format!(
+                    "Import '{}' is only used inside dummy-use functions.",
+                    symbol_str
+                ),
                 "DUMMY_IMPORT",
-                "Imported symbols placed inside _use_ dummy functions are dead code — they exist only to suppress unused-import warnings.",
-                "Remove the dummy function and its imports, or move imports to where they're actually used.",
+                "Imported symbols inside dummy-use functions are dead code.",
+                "Remove the dummy-use function and its unused imports.",
             ));
         }
     }
@@ -180,18 +188,12 @@ impl DummyImportChecker {
             violations.push(LintResult::new_arch_with_name(
                 file,
                 start.value() as usize,
-                "AES204",
+                AES204_RULE_CODE,
                 Severity::HIGH,
-                format!(
-                    "Dummy function detected; range ends at line {}.",
-                    end
-                ),
-                "DUMMY_IMPORT",
-                format!(
-                    "Dummy function range ends at line {} — these functions exist only to suppress unused-import warnings.",
-                    end
-                ),
-                "Remove the dummy function and ensure all imports are used in real code.",
+                format!("Dummy-use function at line {} has no real body.", end),
+                "EMPTY_FUNCTION",
+                "Dummy functions exist only to suppress unused-import warnings.",
+                "Remove the dummy-use function; use its imports in real code.",
             ));
         }
     }
@@ -202,10 +204,10 @@ impl DummyImportChecker {
             violations.push(LintResult::new_arch_with_name(
                 file,
                 start.value() as usize,
-                "AES204",
+                AES204_RULE_CODE,
                 Severity::HIGH,
-                "Empty trait implementation".to_string(),
-                "DUMMY_IMPORT",
+                format!("Empty trait implementation at line {}.", start),
+                "EMPTY_IMPL",
                 "Trait implementations with empty bodies violate the contract abstraction.",
                 "Implement the trait properly or remove the empty impl.",
             ));
@@ -222,8 +224,7 @@ impl DummyImportChecker {
         // Use ImportEntry from filesystem's AST parser
         let imported = utility_dummy_detector::imported_symbols_from_entries(import_entries);
 
-        let mut has_dummy_function = false;
-        let mut dummy_function_line = 0;
+        let mut dummy_function_line: Option<usize> = None;
         for (i, line) in lines.iter().enumerate() {
             let trimmed = line.trim();
             let is_dummy = match ctx.lang {
@@ -235,14 +236,14 @@ impl DummyImportChecker {
                 Language::Unknown => false,
             };
             if is_dummy {
-                has_dummy_function = true;
-                dummy_function_line = i + 1;
+                dummy_function_line = Some(i + 1);
                 break;
             }
         }
-        if !has_dummy_function {
-            return;
-        }
+        let dummy_function_line = match dummy_function_line {
+            Some(line) => line,
+            None => return,
+        };
 
         let has_real_usage = imported.iter().any(|(symbol, line_no)| {
             let is_taxonomy = lines
@@ -296,11 +297,11 @@ impl DummyImportChecker {
                 }
             });
             if has_taxonomy_import {
-                violations.push(LintResult::new_arch_with_name(file, dummy_function_line, "AES204", Severity::HIGH,
-                    "Taxonomy intent mismatch: raw primitives used where taxonomy VOs encode domain concepts.".to_string(),
-                    "DUMMY_IMPORT",
-                    "Taxonomy VOs encode domain concepts — using raw primitives defeats the purpose.",
-                    "Use taxonomy VOs (taxonomy_*.rs) instead of raw primitives like String or i32.",
+                violations.push(LintResult::new_arch_with_name(file, dummy_function_line, AES204_RULE_CODE, Severity::HIGH,
+                    "Raw primitives used where taxonomy VOs encode domain concepts.".to_string(),
+                    "TAXONOMY_INTENT",
+                    "Taxonomy VOs encode domain concepts; using raw primitives defeats the purpose.",
+                    "Use taxonomy VOs instead of raw primitives like String or i32.",
                 ));
             }
         }
@@ -346,10 +347,4 @@ impl DummyFileContext {
     fn str_refs(&self) -> Vec<&str> {
         self.lines.iter().map(|s| s.as_str()).collect()
     }
-}
-
-/// Check if any line matches `from __future__ import ...symbol...`.
-fn is_future_import(lines: &[&str], symbol: &str) -> bool {
-    let content = lines.join("\n");
-    utility_import_resolver::is_future_import(&content, symbol)
 }

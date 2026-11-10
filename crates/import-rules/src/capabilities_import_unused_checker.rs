@@ -7,6 +7,7 @@ use shared_cli_commands::LintResult;
 use shared_common::{FilePath, LintMessage, Severity, SymbolName};
 use shared_filesystem::taxonomy_filesystem_vo::ImportEntry;
 use shared_import_rules::contract_import_protocol::IUnusedImportProtocol;
+use shared_import_rules::taxonomy_import_rules_constant::AES203_RULE_CODE;
 use shared_import_rules::taxonomy_import_rules_error::ImportError;
 use shared_import_rules::utility_import_resolver;
 use shared_import_rules::utility_import_symbol_extractor;
@@ -154,11 +155,14 @@ impl UnusedImportRuleChecker {
             violations.push(LintResult::new_arch_with_name(
                 file,
                 ast_line,
-                "AES203",
+                AES203_RULE_CODE,
                 Severity::MEDIUM,
-                format!("Unused import '{}' detected.", alias_str),
+                format!(
+                    "Import '{}' is never referenced outside the import statement.",
+                    alias_str
+                ),
                 "UNUSED_IMPORT",
-                "Unused imports clutter the codebase.",
+                "Unused imports clutter the codebase and hide real dependencies.",
                 "Remove the unused import.",
             ));
         }
