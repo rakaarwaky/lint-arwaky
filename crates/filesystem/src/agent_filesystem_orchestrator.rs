@@ -2,6 +2,8 @@
 // Only orchestration: delegates to capabilities & utility
 use shared_common::{
     taxonomy_common_vo::{FileContentPair, PatternList},
+    taxonomy_default_constant::DEFAULT_IGNORED_PATHS,
+    taxonomy_language_vo::ConfigLanguage,
     taxonomy_lint_vo::ContentString,
     taxonomy_path_vo::FilePath,
 };
@@ -16,8 +18,8 @@ use shared_filesystem::{
     taxonomy_filesystem_response::FilesystemResponse,
     taxonomy_filesystem_vo::FileMode,
     taxonomy_filesystem_vo::{
-        FileEntry, GraphAnalysisContext, ImportEntry, ImportGraph, InboundLinkMap, InheritanceMap,
-        ParseMetadata, ParseWarning,
+        DefinitionEntry, FileEntry, GraphAnalysisContext, ImplEntry, ImportEntry, ImportGraph,
+        InboundLinkMap, InheritanceMap, Language, ParseMetadata, ParseWarning,
     },
     utility_path_filter, utility_test_file_discovery, utility_workspace_detection,
 };
@@ -26,8 +28,6 @@ use std::{
     path::{Path, PathBuf},
     sync::{Arc, Mutex, OnceLock, RwLock},
 };
-
-// ─── Macros ────────────────────────────────────────────────────────────────
 
 // ─── Block 1: Module Declaration ───────────────────────────
 pub struct FilesystemOrchestratorDeps {
@@ -78,9 +78,8 @@ impl FilesystemOrchestrator {
         }
     }
 
-    /// Resolves an import to a workspace-relative source file.\n
-    /// Supports Rust modules, external crates, relative imports, Python modules\n
-    /// and packages, and TypeScript/JavaScript packages.
+    /// Resolves an import to a workspace-relative source file.
+    /// Delegates to `utility_import_resolution::resolve_import_target`.
     pub fn resolve_import_target(
         &self,
         imp: &ImportEntry,
@@ -89,80 +88,13 @@ impl FilesystemOrchestrator {
         all_files_set: &HashSet<&str>,
         stem_index: &HashMap<String, Vec<String>>,
     ) -> Option<String> {
-        if imp.import_type == shared_filesystem::taxonomy_filesystem_vo::ImportType::Mod
-            && imp.resolved_path.is_none()
-        {
-            let src_dir = Path::new(src_rel)
-                .parent()
-                .map(|p| p.to_string_lossy().to_string())
-                .unwrap_or_default();
-            let mod_name = &imp.raw_path;
-            let candidate_rs = if src_dir.is_empty() {
-                format!("{}.rs", mod_name)
-            } else {
-                format!("{}/{}.rs", src_dir, mod_name)
-            };
-            let candidate_mod = if src_dir.is_empty() {
-                format!("{}/mod.rs", mod_name)
-            } else {
-                format!("{}/{}/mod.rs", src_dir, mod_name)
-            };
-            if all_files_set.contains(candidate_rs.as_str()) {
-                Some(candidate_rs)
-            } else if all_files_set.contains(candidate_mod.as_str()) {
-                Some(candidate_mod)
-            } else {
-                None
-            }
-        } else if imp.resolved_path.is_some() {
-            imp.resolved_path
-                .as_ref()
-                .map(|p| shared_filesystem::utility_container_wiring::path_to_relative(p, top_root))
-        } else {
-            let raw = &imp.raw_path;
-            let src_dir = Path::new(src_rel)
-                .parent()
-                .map(|p| p.to_string_lossy().to_string())
-                .unwrap_or_default();
-            if raw.starts_with("./") || raw.starts_with("../") {
-                let base = Path::new(&src_dir);
-                let rel = raw.strip_prefix("./").unwrap_or(raw);
-                // When the source file is at the scan root (src_dir is empty),
-                // "../x" cannot mean "one level above the root" — treat it as
-                // a direct relative path so that root-level files with
-                // `import "../y"` resolve to "y" instead of "../y".
-                let rel = if src_dir.is_empty() && rel.starts_with("../") {
-                    rel.trim_start_matches("../").to_string()
-                } else {
-                    rel.to_string()
-                };
-                let candidate = base.join(&rel).to_string_lossy().to_string();
-                if all_files_set.contains(candidate.as_str()) {
-                    Some(candidate)
-                } else if !candidate.contains('.') {
-                    let exts = [".ts", ".js", ".tsx", ".jsx", ".rs", ".py"];
-                    exts.iter().find_map(|ext| {
-                        let c = format!("{}{}", candidate, ext);
-                        if all_files_set.contains(c.as_str()) {
-                            Some(c)
-                        } else {
-                            None
-                        }
-                    })
-                } else {
-                    None
-                }
-            } else {
-                shared_filesystem::utility_import_resolution::resolve_by_language(
-                    imp,
-                    &src_dir,
-                    src_rel,
-                    top_root,
-                    all_files_set,
-                    stem_index,
-                )
-            }
-        }
+        shared_filesystem::utility_import_resolution::resolve_import_target(
+            imp,
+            src_rel,
+            top_root,
+            all_files_set,
+            stem_index,
+        )
     }
 
     /// Acquires a read guard on an `RwLock`, recovering from a poisoned lock.
@@ -592,7 +524,298 @@ impl FilesystemOrchestrator {
         }
         map
     }
+
+    /// Builds a lexicographically-sorted index of file stems → file paths.
+    /// Delegates to `utility_workspace_detection::build_stem_index`; kept as a
+    /// thin agent wrapper for direct callers (e.g. tests).
+    pub fn build_stem_index(file_paths: &[String]) -> HashMap<String, Vec<String>> {
+        shared_filesystem::utility_workspace_detection::build_stem_index(file_paths)
+    }
+
+    pub fn build_file_index_impl(&self, root: &Path, extra_ignored: &[String]) {
+        let effective_ignored: Vec<String> = {
+            let mut ig: Vec<String> = DEFAULT_IGNORED_PATHS
+                .iter()
+                .map(|s| format!("{}/", s))
+                .collect();
+            ig.extend_from_slice(extra_ignored);
+            ig
+        };
+        // Fast path: same ignore set as the current warm index — skip rebuild.
+        {
+            let tracked = match self.index_ignored.lock() {
+                Ok(g) => g,
+                Err(p) => p.into_inner(),
+            };
+            if tracked.as_ref() == Some(&effective_ignored) {
+                return;
+            }
+        }
+        let _rebuild_guard = match self.rebuild_lock.lock() {
+            Ok(g) => g,
+            Err(p) => p.into_inner(),
+        };
+        // Re-check under the rebuild lock in case another thread already
+        // rebuilt with the same ignore set while we were waiting.
+        {
+            let tracked = match self.index_ignored.lock() {
+                Ok(g) => g,
+                Err(p) => p.into_inner(),
+            };
+            if tracked.as_ref() == Some(&effective_ignored) {
+                return;
+            }
+        }
+        let ws_root = self
+            .deps
+            .workspace
+            .workspace_root(&FilePath::new(root.to_string_lossy().to_string()).unwrap_or_default())
+            .unwrap_or_else(|| root.to_path_buf());
+        let ignored = effective_ignored.clone();
+        let abs_root = self.deps.io.canonicalize(&ws_root).unwrap_or(ws_root);
+        let member_dirs: Vec<&str> = ["crates", "packages", "modules"]
+            .iter()
+            .filter(|d| abs_root.join(d).is_dir())
+            .copied()
+            .collect();
+        let scanned: Vec<PathBuf> =
+            shared_filesystem::utility_workspace_detection::discover_source_files(
+                &abs_root, &ignored,
+            )
+            .into_iter()
+            .map(PathBuf::from)
+            .filter(|p| {
+                if member_dirs.is_empty() {
+                    return true;
+                }
+                if let Ok(rel) = p.strip_prefix(&abs_root) {
+                    let rel_str = rel.to_string_lossy();
+                    member_dirs
+                        .iter()
+                        .any(|d| rel_str.starts_with(&format!("{}/", d)))
+                } else {
+                    true
+                }
+            })
+            .collect();
+        let mut entries = Vec::new();
+        let mut all_imports = Vec::new();
+        for path in &scanned {
+            let language = self
+                .deps
+                .workspace
+                .detect_language_from_path(&path.to_string_lossy());
+            let content = match self.deps.io.read_to_string(path) {
+                Ok(c) => c.value,
+                Err(_) => continue,
+            };
+            let lang_enum = match language {
+                ConfigLanguage::Rust => Language::Rust,
+                ConfigLanguage::Python => Language::Python,
+                ConfigLanguage::TypeScript => Language::TypeScript,
+            };
+            all_imports.extend(self.deps.parser.extract(path, &content, lang_enum));
+            let parse_ok = !content.is_empty() && lang_enum != Language::Unknown;
+            let extension = path
+                .extension()
+                .and_then(|e| e.to_str())
+                .unwrap_or("")
+                .to_string();
+            entries.push(FileEntry {
+                path: path.clone(),
+                extension,
+                language: lang_enum,
+                size: content.len() as u64,
+                content,
+                parse_ok,
+                parse_metadata: None,
+            });
+        }
+        self.deps.parser.parse_all(&mut entries);
+        self.deps.parser.resolve_barrel_imports(&abs_root);
+        let parser_imports = self.deps.parser.import_list();
+        // Snapshot before the parser cache gets overwritten by a scoped parse_all
+        if let Ok(mut snap) = self.imports_snapshot.lock() {
+            *snap = parser_imports.clone();
+        }
+        {
+            let mut w = Self::write_guard(&self.files);
+            *w = Some(entries.clone());
+        }
+        {
+            let mut w = Self::write_guard(&self.imports);
+            *w = Some(parser_imports);
+        }
+        {
+            let mut w = Self::write_guard(&self.file_index);
+            *w = Some(
+                entries
+                    .iter()
+                    .enumerate()
+                    .map(|(i, e)| (e.path.clone(), i))
+                    .collect(),
+            );
+        }
+        {
+            let mut w = Self::write_guard(&self.warnings);
+            *w = Some(self.deps.parser.parse_warnings().to_vec());
+        }
+        // Also clear the cached graph data so ensure_graph_built will rebuild it.
+        {
+            let mut w = Self::write_guard(&self.cached_reverse_links);
+            *w = None;
+        }
+        {
+            let mut w = Self::write_guard(&self.cached_definitions);
+            *w = None;
+        }
+        {
+            let mut w = Self::write_guard(&self.cached_implementations);
+            *w = None;
+        }
+        {
+            let mut w = match self.index_ignored.lock() {
+                Ok(g) => g,
+                Err(p) => p.into_inner(),
+            };
+            *w = Some(effective_ignored);
+        }
+    }
+
+    /// Builds the file index from a root. Warm-index semantics apply: a
+    /// rebuild happens only when the effective ignore set changes.
+    pub fn build_file_index(&self, root: &Path) {
+        self.build_file_index_impl(root, &[]);
+    }
+
+    /// Builds the file index with extra ignored patterns merged into the
+    /// defaults. Rebuilds when the effective ignore set differs from the
+    /// current warm index; no-op when it matches.
+    pub fn build_file_index_with_ignored(&self, root: &Path, ignored: &[String]) {
+        self.build_file_index_impl(root, ignored);
+    }
+
+    /// Builds and caches the dependency graph and its symbol relationships.
+    pub fn ensure_graph_built(&self) {
+        {
+            let guard = Self::read_guard(&self.cached_reverse_links);
+            if guard.is_some() {
+                return;
+            }
+        }
+        let files = {
+            let guard = Self::read_guard(&self.files);
+            guard.as_ref().cloned().unwrap_or_default()
+        };
+        let imports = {
+            let guard = Self::read_guard(&self.imports);
+            guard.as_ref().cloned().unwrap_or_default()
+        };
+        let mut definitions: Vec<DefinitionEntry> = Vec::new();
+        let mut implementations: Vec<ImplEntry> = Vec::new();
+        for entry in &files {
+            if !entry.parse_ok {
+                continue;
+            }
+            if let Some(ref meta) = entry.parse_metadata {
+                match meta {
+                    ParseMetadata::Rust(m) => {
+                        let lang = entry.language;
+                        for name in m
+                            .struct_definitions
+                            .iter()
+                            .chain(m.enum_definitions.iter())
+                            .chain(m.trait_definitions.iter())
+                            .chain(m.type_definitions.iter())
+                        {
+                            definitions.push(DefinitionEntry {
+                                name: name.clone(),
+                                file_path: entry.path.clone(),
+                                language: lang,
+                            });
+                        }
+                        for item in &m.impl_blocks {
+                            if let Some(ref trait_name) = item.trait_name {
+                                implementations.push(ImplEntry {
+                                    trait_name: trait_name.clone(),
+                                    file_path: entry.path.clone(),
+                                    language: lang,
+                                });
+                            }
+                        }
+                    }
+                    ParseMetadata::Python(m) => {
+                        for class in &m.class_declarations {
+                            definitions.push(DefinitionEntry {
+                                name: class.name.clone(),
+                                file_path: entry.path.clone(),
+                                language: entry.language,
+                            });
+                            // P4: class inheritance is a contract→capabilities bridge
+                            // (e.g. `class AdditionAnalyzer(CalculatorProtocol)`).
+                            for base in &class.bases {
+                                if !base.is_empty() {
+                                    implementations.push(ImplEntry {
+                                        trait_name: base.clone(),
+                                        file_path: entry.path.clone(),
+                                        language: entry.language,
+                                    });
+                                }
+                            }
+                        }
+                    }
+                    ParseMetadata::TypeScript(m) => {
+                        for class in &m.class_declarations {
+                            definitions.push(DefinitionEntry {
+                                name: class.name.clone(),
+                                file_path: entry.path.clone(),
+                                language: entry.language,
+                            });
+                            // P4: `implements` clauses are a contract→capabilities bridge
+                            // (e.g. `class AdditionAnalyzer implements CalculatorProtocol`).
+                            for iface in &class.implements {
+                                if !iface.is_empty() {
+                                    implementations.push(ImplEntry {
+                                        trait_name: iface.clone(),
+                                        file_path: entry.path.clone(),
+                                        language: entry.language,
+                                    });
+                                }
+                            }
+                        }
+                        for iface in &m.interface_declarations {
+                            definitions.push(DefinitionEntry {
+                                name: iface.clone(),
+                                file_path: entry.path.clone(),
+                                language: entry.language,
+                            });
+                        }
+                    }
+                    _ => {}
+                }
+            }
+        }
+        self.deps
+            .graph
+            .build_graph(&imports, &files, &definitions, &implementations);
+        let rl = self.deps.graph.reverse_links().clone();
+        {
+            let mut w = Self::write_guard(&self.cached_reverse_links);
+            *w = Some(rl);
+        }
+        let sd = self.deps.graph.symbol_definitions().clone();
+        {
+            let mut w = Self::write_guard(&self.cached_definitions);
+            *w = Some(sd);
+        }
+        let imp = self.deps.graph.implementations().clone();
+        {
+            let mut w = Self::write_guard(&self.cached_implementations);
+            *w = Some(imp);
+        }
+    }
 }
+
 // ─── Block 2: Module Contract ──────────────
 impl IFilesystemAggregate for FilesystemOrchestrator {
     fn execute(&self, request: FilesystemRequest) -> FilesystemResponse {

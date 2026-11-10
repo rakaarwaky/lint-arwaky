@@ -364,3 +364,85 @@ pub fn resolve_by_language(
         }
     }
 }
+
+/// Resolves an import to a workspace-relative source file.
+/// Supports Rust modules, external crates, relative imports, Python modules
+/// and packages, and TypeScript/JavaScript packages.
+pub fn resolve_import_target(
+    imp: &ImportEntry,
+    src_rel: &str,
+    top_root: &Path,
+    all_files_set: &HashSet<&str>,
+    stem_index: &HashMap<String, Vec<String>>,
+) -> Option<String> {
+    if imp.import_type == crate::taxonomy_filesystem_vo::ImportType::Mod
+        && imp.resolved_path.is_none()
+    {
+        let src_dir = Path::new(src_rel)
+            .parent()
+            .map(|p| p.to_string_lossy().to_string())
+            .unwrap_or_default();
+        let mod_name = &imp.raw_path;
+        let candidate_rs = if src_dir.is_empty() {
+            format!("{}.rs", mod_name)
+        } else {
+            format!("{}/{}.rs", src_dir, mod_name)
+        };
+        let candidate_mod = if src_dir.is_empty() {
+            format!("{}/mod.rs", mod_name)
+        } else {
+            format!("{}/{}/mod.rs", src_dir, mod_name)
+        };
+        if all_files_set.contains(candidate_rs.as_str()) {
+            Some(candidate_rs)
+        } else if all_files_set.contains(candidate_mod.as_str()) {
+            Some(candidate_mod)
+        } else {
+            None
+        }
+    } else if imp.resolved_path.is_some() {
+        imp.resolved_path
+            .as_ref()
+            .map(|p| crate::utility_container_wiring::path_to_relative(p, top_root))
+    } else {
+        let raw = &imp.raw_path;
+        let src_dir = Path::new(src_rel)
+            .parent()
+            .map(|p| p.to_string_lossy().to_string())
+            .unwrap_or_default();
+        if raw.starts_with("./") || raw.starts_with("../") {
+            let base = Path::new(&src_dir);
+            let rel = raw.strip_prefix("./").unwrap_or(raw);
+            let rel = if src_dir.is_empty() && rel.starts_with("../") {
+                rel.trim_start_matches("../").to_string()
+            } else {
+                rel.to_string()
+            };
+            let candidate = base.join(&rel).to_string_lossy().to_string();
+            if all_files_set.contains(candidate.as_str()) {
+                Some(candidate)
+            } else if !candidate.contains('.') {
+                let exts = [".ts", ".js", ".tsx", ".jsx", ".rs", ".py"];
+                exts.iter().find_map(|ext| {
+                    let c = format!("{}{}", candidate, ext);
+                    if all_files_set.contains(c.as_str()) {
+                        Some(c)
+                    } else {
+                        None
+                    }
+                })
+            } else {
+                None
+            }
+        } else {
+            crate::utility_import_resolution::resolve_by_language(
+                imp,
+                &src_dir,
+                src_rel,
+                top_root,
+                all_files_set,
+                stem_index,
+            )
+        }
+    }
+}

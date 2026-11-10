@@ -6,6 +6,7 @@
 
 use crate::taxonomy_filesystem_vo::ProjectLanguagesVO;
 use shared_common::taxonomy_language_vo::ConfigLanguage;
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
 // ─── IO primitives delegated to shared (AES201: utility cannot import utility) ───
@@ -408,4 +409,21 @@ pub fn scan_directory(root: &Path) -> Vec<String> {
 /// Discover all files (source + non-source) under root.
 pub fn discover_files(root: &Path) -> Vec<String> {
     scan_directory(root)
+}
+
+/// Builds a lexicographically-sorted index of file stems → file paths.
+pub fn build_stem_index(file_paths: &[String]) -> HashMap<String, Vec<String>> {
+    let mut stem_index: HashMap<String, Vec<String>> = HashMap::new();
+    for f in file_paths {
+        if let Some(stem) = Path::new(f).file_stem().and_then(|s| s.to_str()) {
+            stem_index
+                .entry(stem.to_string())
+                .or_default()
+                .push(f.clone());
+        }
+    }
+    for v in stem_index.values_mut() {
+        v.sort();
+    }
+    stem_index
 }
