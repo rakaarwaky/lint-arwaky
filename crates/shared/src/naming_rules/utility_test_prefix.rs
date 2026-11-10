@@ -19,10 +19,11 @@ pub use crate::taxonomy_naming_rules_constant::{
 /// Classify *path* into a test-suite slot.
 ///
 /// The slot is read from the file's own parent directory: a path counts as a
-/// test file only when it sits *directly* in `tests/` (or in a support
-/// directory beside them). A file at `tests/sub/unit_foo.rs` is reported as
-/// nested by the caller rather than silently accepted here, so the flat-layout
-/// rule stays a visible finding instead of an assumption.
+/// test file only when it sits *directly* in `tests/` or in `benches/`. No
+/// support directory under `tests/` is sanctioned, so there is no third
+/// answer. A file at `tests/sub/unit_foo.rs` is reported as nested by the
+/// caller rather than silently accepted here, so the flat-layout rule stays a
+/// visible finding instead of an assumption.
 pub fn slot_of(path: &str) -> TestSuiteSlot {
     match leaf_directory_of(path).as_deref() {
         Some(TESTS_DIR) => TestSuiteSlot::Tests,

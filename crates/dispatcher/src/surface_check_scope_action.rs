@@ -435,6 +435,7 @@ mod tests {
         ) -> shared_naming_rules::NamingResponse {
             shared_naming_rules::NamingResponse::Audit {
                 violations: Vec::new(),
+                stats: shared_naming_rules::NamingAuditStats::default(),
             }
         }
     }

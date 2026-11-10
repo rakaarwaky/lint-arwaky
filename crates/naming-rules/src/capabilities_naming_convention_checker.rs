@@ -10,22 +10,40 @@ use shared_common::taxonomy_violation_item_vo::ViolationItem;
 use shared_config_system::taxonomy_config_system_vo::ArchitectureConfig;
 use shared_naming_rules::contract_naming_checker_protocol::INamingConventionProtocol;
 use shared_naming_rules::taxonomy_naming_rules_constant::{
-    MIN_WORDS_DEFAULT, RULE_CODE_NAMING_CONVENTION,
+    AES101_FOLDER_RULE, AES101_SHAPE_RULE, LAYER_PREFIXES, MIN_WORDS_DEFAULT,
+    RULE_CODE_NAMING_CONVENTION,
 };
 use shared_naming_rules::utility_naming_checker::{
     basename_of, detect_layer, get_stem, parse_path, rule_exception_set, string_filename_violation,
 };
+use shared_naming_rules::utility_naming_output::{exemption_clause, naming_finding};
 
 use std::sync::OnceLock;
 
-// ─── Block 1: Module Declaration ────────────────────────────
+// ─── Block 1: Module Declaration ──────────────────────────────
 
-/// Stateless AES101 naming-convention checker (stem pattern validation).
+/// Stateless AES101 naming-convention checker (stem shape validation).
 ///
-/// Checks that each file's stem matches `prefix_concept_suffix`: lowercase
-/// alphanumeric words separated by underscores, with a configurable minimum
-/// word count. No internal state.
+/// Checks that each file's stem is a sequence of lowercase words joined by
+/// underscores, with a configurable minimum word count, and that the stem
+/// starts with the prefix of the folder the file sits in. No internal state.
 pub struct NamingConventionChecker {}
+
+/// The one stem rule a stem breaks.
+///
+/// A stem that breaks two rules produces one finding, naming the first: the
+/// reader fixes that one, re-runs, and meets the next. A finding that says
+/// "may have uppercase characters, a wrong separator, or too few words" makes
+/// the reader test three guesses by hand.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum BrokenRule {
+    /// The stem carries an uppercase letter.
+    Casing,
+    /// The stem carries a character a name may not hold, or an empty word.
+    Separator,
+    /// The stem holds fewer words than the configured minimum.
+    WordCount,
+}
 
 impl Default for NamingConventionChecker {
     fn default() -> Self {
@@ -126,7 +144,8 @@ impl NamingConventionChecker {
         }
     }
 
-    /// Check file naming conventions (AES101: pattern validation — lowercase, underscore, min N words).
+    /// Check file naming conventions (AES101: stem shape — lowercase words,
+    /// underscore separator, minimum word count, known folder prefix).
     ///
     /// B-6a test seam: `pub` only so cross-crate unit tests can drive the
     /// per-file rule without building a `FilePathList`; production traffic
@@ -152,64 +171,277 @@ impl NamingConventionChecker {
             return None;
         }
 
-        // Harden AES101: unprefixed files (no recognized layer prefix) cannot slip through.
-        // Every production source file must carry a recognized layer prefix.
-        if layer_name.is_none() {
-            return Some(string_filename_violation(
-                file,
-                RULE_CODE_NAMING_CONVENTION,
-                format!(
-                    "The stem '{}' does not match the required pattern 'prefix_concept_suffix'. \
-                     Expected: lowercase alphanumeric words separated by underscores, minimum {} words. \
-                     Issue: '{}' has no recognized layer prefix (taxonomy_, contract_, capabilities_, \
-                     utility_, agent_, surface_, root_).",
-                    stem, min_words, stem
-                ),
-                Severity::HIGH,
-                "NAMING_CONVENTION",
-                format!(
-                    "Stem '{}' does not match the required pattern 'prefix_concept_suffix'. \
-                     Issue: '{}' has no recognized layer prefix.",
-                    stem, stem
-                ),
-                format!(
-                    "Expected: lowercase alphanumeric words separated by underscores, minimum {} words. \
-                     Example valid names: 'capabilities_user_checker', 'capabilities_db_adapter'.",
-                    min_words
-                ),
-            ));
+        // Harden AES101: unprefixed files (no recognized layer prefix) cannot
+        // slip through. Every production source file must carry a recognized
+        // layer prefix, because the prefix is what places the file in the
+        // architecture.
+        let folder = layer_name.as_ref().map(|l| base_folder_of(l.value()));
+        if folder.is_none() {
+            return Some(Self::no_prefix_violation(file, filename, stem));
         }
 
         if !Self::naming_regex(min_words).is_some_and(|re| re.is_match(stem)) {
-            let layer_hint = layer_name
-                .as_ref()
-                .map(|l| format!(" (detected layer: '{}')", l.value()))
-                .unwrap_or_default();
-            return Some(string_filename_violation(
+            let broken = Self::first_broken_rule(stem);
+            return Some(Self::shape_violation(
                 file,
-                RULE_CODE_NAMING_CONVENTION,
-                format!(
-                    "The stem '{}' does not match the required pattern 'prefix_concept_suffix'. \
-                     Expected: lowercase alphanumeric words separated by underscores, minimum {} words. \
-                     Example valid names: 'capabilities_user_checker', 'capabilities_db_adapter'. \
-                     Issue: '{}' may have uppercase characters, wrong separator, or fewer than {} words{}.",
-                    stem, min_words, stem, min_words, layer_hint
-                ),
-                Severity::HIGH,
-                "NAMING_CONVENTION",
-                format!(
-                    "Stem '{}' does not match the required pattern 'prefix_concept_suffix'. \
-                     Issue: '{}' may have uppercase characters, wrong separator, or fewer than {} words{}.",
-                    stem, stem, min_words, layer_hint
-                ),
-                format!(
-                    "Expected: lowercase alphanumeric words separated by underscores, minimum {} words. \
-                     Example valid names: 'capabilities_user_checker', 'capabilities_db_adapter'.",
-                    min_words
-                ),
+                filename,
+                stem,
+                broken,
+                min_words,
+                folder.as_deref(),
             ));
         }
 
         None
     }
+
+    /// The first shape rule the stem breaks.
+    ///
+    /// The rules are met in the order a reader meets them: the casing, then
+    /// the separator, then the word count. The three cover the whole of the
+    /// pattern the gate applies, so the word count is the rule that catches a
+    /// stem the other two accepted.
+    fn first_broken_rule(stem: &str) -> BrokenRule {
+        if stem.chars().any(|c| c.is_ascii_uppercase()) {
+            return BrokenRule::Casing;
+        }
+        if stem.chars().any(|c| !c.is_ascii_alphanumeric() && c != '_')
+            || stem.split('_').any(|word| word.is_empty())
+        {
+            return BrokenRule::Separator;
+        }
+        BrokenRule::WordCount
+    }
+
+    /// The finding for a stem that names no known folder.
+    ///
+    /// This is the one AES101 finding about placement rather than spelling:
+    /// without the prefix the file cannot be placed in the architecture at
+    /// all, so it outranks a stem that merely breaks the shape rules.
+    fn no_prefix_violation(file: &str, filename: &str, stem: &str) -> ViolationItem {
+        let problem = format!("Stem '{stem}' does not start with a known folder prefix.");
+        let example = "capabilities_user_checker.rs";
+        let action = format!(
+            "Rename the file so its name starts with a legal prefix, for example '{example}'."
+        );
+        let legal = format!("Legal prefixes: {}.", LAYER_PREFIXES.join(", "));
+        let exemption = exemption_clause(RULE_CODE_NAMING_CONVENTION, filename);
+        let finding = naming_finding(
+            &[problem.as_str()],
+            &[
+                action.as_str(),
+                legal.as_str(),
+                "Then update the imports that name it.",
+                "Re-run the check to confirm the finding is gone.",
+                exemption.as_str(),
+            ],
+            &[AES101_FOLDER_RULE],
+        );
+        string_filename_violation(
+            file,
+            RULE_CODE_NAMING_CONVENTION,
+            finding.message,
+            Severity::HIGH,
+            "NAMING_CONVENTION",
+            finding.why,
+            finding.fix,
+        )
+    }
+
+    /// The finding for a stem that breaks one shape rule.
+    ///
+    /// The problem clause names the one rule that broke, the fix names the
+    /// file to rename to, and the two clauses after it close the loop: the
+    /// references move with the file, and the next run confirms it.
+    fn shape_violation(
+        file: &str,
+        filename: &str,
+        stem: &str,
+        broken: BrokenRule,
+        min_words: usize,
+        folder: Option<&str>,
+    ) -> ViolationItem {
+        let problem = match broken {
+            BrokenRule::Casing => format!("Stem '{stem}' contains uppercase characters."),
+            BrokenRule::Separator => {
+                format!("Stem '{stem}' {}.", Self::separator_detail(stem))
+            }
+            BrokenRule::WordCount => format!(
+                "Stem '{stem}' has {} words; the minimum is {min_words}.",
+                Self::word_count(stem)
+            ),
+        };
+        // The action names one concrete target: the repaired stem when the
+        // repair reaches the configured word count, and otherwise the worked
+        // example, which carries the same words and is legal too.
+        let target = Self::suggested_file_name(stem, filename, min_words)
+            .unwrap_or_else(|| Self::example_file_name(filename, folder, stem, min_words));
+        let action = format!("Rename the file to '{target}'.");
+        let exemption = exemption_clause(RULE_CODE_NAMING_CONVENTION, filename);
+        let finding = naming_finding(
+            &[problem.as_str()],
+            &[
+                action.as_str(),
+                "Then update the imports that name it.",
+                "Re-run the check to confirm the finding is gone.",
+                exemption.as_str(),
+            ],
+            &[AES101_SHAPE_RULE],
+        );
+        string_filename_violation(
+            file,
+            RULE_CODE_NAMING_CONVENTION,
+            finding.message,
+            Severity::MEDIUM,
+            "NAMING_CONVENTION",
+            finding.why,
+            finding.fix,
+        )
+    }
+
+    /// What is wrong with the stem's separators, in one clause.
+    fn separator_detail(stem: &str) -> String {
+        if let Some(found) = stem
+            .chars()
+            .find(|c| !c.is_ascii_alphanumeric() && *c != '_')
+        {
+            return format!("uses '{found}', which a file name may not hold");
+        }
+        if stem.starts_with('_') {
+            return "starts with an underscore".to_string();
+        }
+        if stem.ends_with('_') {
+            return "ends with an underscore".to_string();
+        }
+        "has an empty word between two underscores".to_string()
+    }
+
+    /// The number of words the stem holds.
+    fn word_count(stem: &str) -> usize {
+        stem.split('_').count()
+    }
+
+    /// A worked example file name for one broken stem.
+    ///
+    /// The example carries the words the file already holds, lowercased, and
+    /// it carries the folder the file sits in, so the name is legal in every
+    /// respect the rules check. Plain role words fill the gap to the
+    /// configured minimum; the words the file already carries are never
+    /// repeated. The reader can copy the example as it stands.
+    fn example_file_name(
+        filename: &str,
+        folder: Option<&str>,
+        stem: &str,
+        min_words: usize,
+    ) -> String {
+        const FILLERS: [&str; 6] = [
+            "user", "checker", "service", "handler", "manager", "adapter",
+        ];
+        let mut words = Self::split_words(stem);
+        // The folder word leads the name, the way the convention reads it.
+        if let Some(folder) = folder
+            && words.first().map(String::as_str) != Some(folder)
+        {
+            words.insert(0, folder.to_string());
+        }
+        // One plain role word per missing word, skipping the words the file
+        // already carries so the example never repeats itself.
+        for filler in FILLERS {
+            if words.len() >= min_words {
+                break;
+            }
+            if !words.iter().any(|word| word == filler) {
+                words.push(filler.to_string());
+            }
+        }
+        // A word count beyond the filler list still needs words; the number
+        // keeps every one of them distinct.
+        let mut number = 2;
+        while words.len() < min_words {
+            words.push(format!("part{number}"));
+            number += 1;
+        }
+        let example = words.join("_");
+        match std::path::Path::new(filename)
+            .extension()
+            .and_then(|e| e.to_str())
+        {
+            Some(extension) => format!("{example}.{extension}"),
+            None => example,
+        }
+    }
+
+    /// The words a stem holds, lowercased.
+    ///
+    /// A capital letter starts a new word, and every character a name may not
+    /// hold separates two words.
+    fn split_words(stem: &str) -> Vec<String> {
+        let mut words: Vec<String> = Vec::new();
+        let mut current = String::new();
+        let mut previous_was_lower = false;
+        for character in stem.chars() {
+            if character.is_ascii_uppercase() {
+                if previous_was_lower && !current.is_empty() {
+                    words.push(std::mem::take(&mut current));
+                }
+                current.push(character.to_ascii_lowercase());
+                previous_was_lower = false;
+            } else if character.is_ascii_alphanumeric() {
+                current.push(character.to_ascii_lowercase());
+                previous_was_lower = character.is_ascii_lowercase() || character.is_ascii_digit();
+            } else {
+                if !current.is_empty() {
+                    words.push(std::mem::take(&mut current));
+                }
+                previous_was_lower = false;
+            }
+        }
+        if !current.is_empty() {
+            words.push(current);
+        }
+        words
+    }
+
+    /// The file name the reader should rename the file to.
+    ///
+    /// `None` when the repair cannot reach the configured word count: a
+    /// missing concept cannot be invented, so the finding then names the
+    /// pattern instead of a target that would still be wrong.
+    fn suggested_file_name(stem: &str, filename: &str, min_words: usize) -> Option<String> {
+        let repaired = Self::suggested_stem(stem, min_words)?;
+        match std::path::Path::new(filename)
+            .extension()
+            .and_then(|e| e.to_str())
+        {
+            Some(extension) => Some(format!("{repaired}.{extension}")),
+            None => Some(repaired),
+        }
+    }
+
+    /// The closest legal stem for one that breaks the shape rules.
+    ///
+    /// Lowercase letters, digits and underscores are kept; a capital letter
+    /// starts a new word, and any other character becomes an underscore.
+    /// `None` when the repair cannot reach the configured word count: a
+    /// missing word cannot be invented, so the finding then offers an
+    /// example instead of a target that would still be wrong.
+    fn suggested_stem(stem: &str, min_words: usize) -> Option<String> {
+        let words = Self::split_words(stem);
+        if words.len() < min_words {
+            return None;
+        }
+        Some(words.join("_"))
+    }
+}
+
+/// The base folder name of a layer display string.
+///
+/// A specialized layer reads `capabilities(command)`; the folder a file name
+/// may carry is the base one.
+fn base_folder_of(layer_display: &str) -> String {
+    layer_display
+        .split('(')
+        .next()
+        .unwrap_or(layer_display)
+        .to_string()
 }
