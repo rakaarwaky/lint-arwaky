@@ -1,6 +1,7 @@
 use shared_common::taxonomy_layer_vo::LayerDefinition;
 use shared_common::taxonomy_path_vo::FilePath;
 use shared_common::taxonomy_severity_vo::Severity;
+use shared_orphan_rules::SURFACE_SEVERITY;
 use shared_orphan_rules::contract_orphan_protocol::ISurfacesOrphanProtocol;
 use shared_orphan_rules::utility_orphan_filename::{file_basename, file_stem};
 use shared_quality_rules::taxonomy_quality_rules_vo::{
@@ -22,12 +23,6 @@ impl SurfacesOrphanAnalyzer {
         Self
     }
 }
-
-// Severity is defect-keyed, not extension-keyed: AES506's defect is
-// "not reachable from entry point" — every surface orphan carries the same
-// severity regardless of file extension. The surface category stays in the
-// message text (informative only) and never influences severity.
-const SURFACE_SEVERITY: Severity = Severity::HIGH;
 
 // ─── Block 2: Module Contract ────────────────
 

@@ -23,6 +23,7 @@ pub use contract_orphan_protocol::ISurfacesOrphanProtocol;
 pub use contract_orphan_protocol::ITaxonomyOrphanProtocol;
 pub use contract_orphan_protocol::IUtilityOrphanProtocol;
 pub use taxonomy_orphan_rules_constant::CONSUMER_LAYERS;
+pub use taxonomy_orphan_rules_constant::SURFACE_SEVERITY;
 pub use taxonomy_orphan_rules_constant::TAXONOMY_RESCUERS;
 pub use taxonomy_orphan_rules_request::OrphanRequest;
 pub use taxonomy_orphan_rules_response::OrphanResponse;

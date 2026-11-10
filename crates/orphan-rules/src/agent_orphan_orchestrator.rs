@@ -289,27 +289,31 @@ impl ArchOrphanAnalyzer {
                 abs.to_string_lossy().to_string()
             })
             .collect();
-        let (content_map, unread_count) =
-            all_files
-                .iter()
-                .fold((HashMap::new(), 0usize), |(mut map, empty_count), f| {
-                    let path = match FilePath::new(f.clone()) {
-                        Ok(p) => p,
-                        Err(_) => return (map, empty_count + 1),
-                    };
-                    let content = self
-                        .deps
-                        .filesystem
-                        .execute(FilesystemRequest::read_cached(&path))
-                        .into_content();
-                    let c = content.value();
-                    if c.is_empty() {
-                        (map, empty_count + 1)
-                    } else {
-                        map.insert(f.clone(), c.to_string());
-                        (map, empty_count)
-                    }
-                });
+        // Aggregate file contents into (content_map, unread_count) via an
+        // explicit loop instead of `.fold()` — aggregation belongs in a
+        // capability, not an agent (AES405:AGENT_ROLE).
+        let mut content_map = HashMap::new();
+        let mut unread_count = 0usize;
+        for f in all_files.iter() {
+            let path = match FilePath::new(f.clone()) {
+                Ok(p) => p,
+                Err(_) => {
+                    unread_count += 1;
+                    continue;
+                }
+            };
+            let content = self
+                .deps
+                .filesystem
+                .execute(FilesystemRequest::read_cached(&path))
+                .into_content();
+            let c = content.value();
+            if c.is_empty() {
+                unread_count += 1;
+            } else {
+                content_map.insert(f.clone(), c.to_string());
+            }
+        }
         if unread_count > 0 {
             tracing::warn!(
                 unread_count = unread_count,
