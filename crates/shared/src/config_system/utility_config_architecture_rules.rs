@@ -352,7 +352,7 @@ static RULES: &[&[&str]] = &[
         "surface(component|view|layout)",
         "taxonomy,contract(aggregate),utility",
         "",
-        "agent,contract,capabilities,surface(command|controller|page|entry|hook|store|action|screen|router),root",
+        "agent,capabilities,contract(protocol),surface(command|controller|page|entry|hook|store|action|screen|router),root",
         "",
         "",
     ],
