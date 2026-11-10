@@ -223,19 +223,13 @@ impl CapabilitiesPythonRoleAuditor {
                 "AES403",
                 Severity::HIGH,
                 format!(
-                    "Block 2 (protocol methods) must precede Block 3 (helpers): helper `{help_src}` is declared before the first public protocol method `{proto_src}`.",
-                    help_src = help_src,
-                    proto_src = proto_src,
-                ),
-                "CAPABILITY_ROLE",
-                format!(
-                    "`{help_src}` is declared at line {} but the first public protocol method `{proto_src}` \
-                     follows at line {}.",
+                    "Block 3 helper `{help_src}` sits above Block 2 protocol method `{proto_src}` (lines {} and {}).",
                     help_idx + 1,
                     proto_idx + 1
                 ),
-                "Move all `def _helper` and `def with_*` methods below the public protocol methods.\n  \
-                 Block 1 (class + __init__) -> Block 2 (public protocol methods) -> Block 3 (private helpers, factories).",
+                "CAPABILITY_BLOCK_ORDER",
+                "Block 2 holds the public protocol methods; move the helper below them.",
+                "Move the helper below the first public protocol method.",
             ));
         }
     }
@@ -275,10 +269,7 @@ impl CapabilitiesPythonRoleAuditor {
                 format!("Local constant in capabilities file: `{name}`."),
                 "CAPABILITY_ROLE",
                 format!("`{name}` is declared as a module-level constant at line {}.", i + 1),
-                format!(
-                    "Move `{name}` into `taxonomy_<domain>_constant.py` so every layer shares one policy value.\n  \
-                     Keep the constant in this file only when it is a private mechanical detail, not a domain policy."
-                ),
+                "Move `{name}` into `taxonomy_<domain>_constant.py` so every layer shares one policy value.",
             ));
         }
     }
