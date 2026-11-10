@@ -8,7 +8,9 @@ use std::path::Path;
 use std::sync::Arc;
 
 use shared_cli_commands::LintResult;
-use shared_common::{ContentString, ErrorMessage, FilePath, FilePathList, ScanError, SymbolName};
+use shared_common::{
+    ContentString, ErrorMessage, FilePath, FilePathList, ScanError, Severity, SymbolName,
+};
 use shared_config_system::ArchitectureConfig;
 use shared_filesystem::FilesystemRequest;
 use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
@@ -23,6 +25,10 @@ use shared_import_rules::contract_import_protocol::IImportForbiddenProtocol;
 use shared_import_rules::contract_import_protocol::IImportMandatoryProtocol;
 use shared_import_rules::contract_import_protocol::IUnusedImportProtocol;
 use shared_import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
+use shared_import_rules::taxonomy_import_rules_constant::{
+    AES200_RULE_CODE, AES201_RULE_CODE, AES202_RULE_CODE, AES203_RULE_CODE, AES204_RULE_CODE,
+    AES205_RULE_CODE, VIOLATION_NAME_RULE_SKIP, VIOLATION_NAME_RULE_UNAVAILABLE,
+};
 use shared_import_rules::taxonomy_import_rules_request::ImportRequest;
 use shared_import_rules::taxonomy_import_rules_response::ImportResponse;
 
@@ -90,14 +96,7 @@ impl ImportOrchestrator {
             .collect();
 
         let import_list = self.deps.filesystem_parser.import_list();
-        let imports_map: HashMap<String, Vec<ImportEntry>> = {
-            let mut map: HashMap<String, Vec<ImportEntry>> = HashMap::new();
-            for entry in import_list {
-                let key = entry.source_file.to_string_lossy().to_string();
-                map.entry(key).or_default().push(entry.clone());
-            }
-            map
-        };
+        let imports_map = Self::build_imports_map(&import_list);
 
         let used_identifiers_map: HashMap<String, Vec<SymbolName>> = files
             .values
@@ -146,14 +145,7 @@ impl ImportOrchestrator {
             return Vec::new();
         }
         let import_list = self.deps.filesystem_parser.import_list();
-        let imports_map: HashMap<String, Vec<ImportEntry>> = {
-            let mut map: HashMap<String, Vec<ImportEntry>> = HashMap::new();
-            for entry in import_list {
-                let key = entry.source_file.to_string_lossy().to_string();
-                map.entry(key).or_default().push(entry);
-            }
-            map
-        };
+        let imports_map = Self::build_imports_map(&import_list);
         self.run_audit_with_entries_and_imports(files, &imports_map)
     }
     pub fn run_audit_with_entries_and_imports(
@@ -164,6 +156,14 @@ impl ImportOrchestrator {
         if !self.config.enabled.value {
             return Vec::new();
         }
+
+        // Count files skipped for parse failure or emptiness, state once for all five rules.
+        let skipped: Vec<String> = files
+            .iter()
+            .filter(|f| !f.parse_ok || f.content.is_empty())
+            .map(|f| f.path.to_string_lossy().to_string())
+            .collect();
+        let skipped_count = skipped.len();
 
         let file_paths: Vec<FilePath> = files
             .iter()
@@ -226,14 +226,35 @@ impl ImportOrchestrator {
 
         let root_dir = FilePath::new(".".to_string()).unwrap_or_default();
 
-        self.run_checks(
+        let mut results = self.run_checks(
             &file_list,
             &content_map,
             imports_map,
             &used_identifiers_map,
             &implemented_traits,
             &root_dir,
-        )
+        );
+
+        if skipped_count > 0 {
+            let mut skipped_sorted = skipped.clone();
+            skipped_sorted.sort();
+            let names = skipped_sorted.join(", ");
+            results.push(LintResult::new_arch_with_name(
+                "unknown",
+                0,
+                AES200_RULE_CODE,
+                Severity::INFO,
+                format!(
+                    "{} file(s) skipped for parse failure or emptiness: {}",
+                    skipped_count, names
+                ),
+                VIOLATION_NAME_RULE_SKIP,
+                "Skipped files are not checked by any import rule; their content is unavailable.",
+                "Fix parse errors or add content so the file can be analyzed.",
+            ));
+        }
+
+        results
     }
 
     pub fn new(
@@ -265,25 +286,39 @@ impl ImportOrchestrator {
         let mut results = Vec::new();
 
         // Sync checks: mandatory + forbidden
-        if let Ok(mandatory) = self.deps.mandatory.run_mandatory_imports(
-            &self.config,
-            &self.layer_map,
-            files,
-            root_dir,
-            content_map,
-            imports_map,
-        ) {
-            results.extend(mandatory.values);
+        if self.rule_enabled(AES202_RULE_CODE) {
+            match self.deps.mandatory.run_mandatory_imports(
+                &self.config,
+                &self.layer_map,
+                files,
+                root_dir,
+                content_map,
+                imports_map,
+            ) {
+                Ok(mandatory) => results.extend(mandatory.values),
+                Err(_) => results.push(Self::rule_unavailable_record(
+                    AES202_RULE_CODE,
+                    Severity::HIGH,
+                    "AES202 mandatory-import checker is unavailable.",
+                )),
+            }
         }
-        if let Ok(forbidden) = self.deps.forbidden.check_forbidden_imports(
-            &self.config,
-            &self.layer_map,
-            files,
-            root_dir,
-            content_map,
-            imports_map,
-        ) {
-            results.extend(forbidden.values);
+        if self.rule_enabled(AES201_RULE_CODE) {
+            match self.deps.forbidden.check_forbidden_imports(
+                &self.config,
+                &self.layer_map,
+                files,
+                root_dir,
+                content_map,
+                imports_map,
+            ) {
+                Ok(forbidden) => results.extend(forbidden.values),
+                Err(_) => results.push(Self::rule_unavailable_record(
+                    AES201_RULE_CODE,
+                    Severity::CRITICAL,
+                    "AES201 forbidden-import checker is unavailable.",
+                )),
+            }
         }
 
         // Cycle detection — prefer resolved imports when available
@@ -292,28 +327,28 @@ impl ImportOrchestrator {
             .filesystem
             .execute(FilesystemRequest::ResolvedImportList)
             .into_imports();
-        let resolved_imports_map: HashMap<String, Vec<ImportEntry>> = {
-            let mut map: HashMap<String, Vec<ImportEntry>> = HashMap::new();
-            for entry in resolved_imports_list {
-                let key = entry.source_file.to_string_lossy().to_string();
-                map.entry(key).or_default().push(entry);
-            }
-            map
-        };
+        let resolved_imports_map = Self::build_imports_map(&resolved_imports_list);
         let cycle_map = if resolved_imports_map.is_empty() {
             imports_map
         } else {
             &resolved_imports_map
         };
-        if let Ok(cycle) = self.deps.cycle.check_cycles(
-            &self.config,
-            &self.layer_map,
-            files,
-            root_dir,
-            content_map,
-            cycle_map,
-        ) {
-            results.extend(cycle);
+        if self.rule_enabled(AES205_RULE_CODE) {
+            match self.deps.cycle.check_cycles(
+                &self.config,
+                &self.layer_map,
+                files,
+                root_dir,
+                content_map,
+                cycle_map,
+            ) {
+                Ok(cycle) => results.extend(cycle),
+                Err(_) => results.push(Self::rule_unavailable_record(
+                    AES205_RULE_CODE,
+                    Severity::CRITICAL,
+                    "AES205 cycle checker is unavailable.",
+                )),
+            }
         }
 
         // Per-file checks: unused + dummy (parallelized via rayon)
@@ -333,24 +368,38 @@ impl ImportOrchestrator {
                     .get(file.value())
                     .map(|v| v.as_slice())
                     .unwrap_or(&[]);
-                if let Ok(unused) = self.deps.unused.check_unused_imports(
-                    file.value(),
-                    content,
-                    file_imports,
-                    file_ids,
-                    implemented_traits,
-                ) {
-                    local.extend(unused);
+                if self.rule_enabled(AES203_RULE_CODE) {
+                    match self.deps.unused.check_unused_imports(
+                        file.value(),
+                        content,
+                        file_imports,
+                        file_ids,
+                        implemented_traits,
+                    ) {
+                        Ok(unused) => local.extend(unused),
+                        Err(_) => local.push(Self::rule_unavailable_record(
+                            AES203_RULE_CODE,
+                            Severity::MEDIUM,
+                            "AES203 unused-import checker is unavailable for this file.",
+                        )),
+                    }
                 }
                 let content_str = ContentString::new(content.clone());
-                if let Ok(dummy) = self.deps.dummy.check_all_dummy(
-                    file,
-                    &content_str,
-                    root_dir,
-                    &self.layer_map,
-                    imports_map,
-                ) {
-                    local.extend(dummy);
+                if self.rule_enabled(AES204_RULE_CODE) {
+                    match self.deps.dummy.check_all_dummy(
+                        file,
+                        &content_str,
+                        root_dir,
+                        &self.layer_map,
+                        imports_map,
+                    ) {
+                        Ok(dummy) => local.extend(dummy),
+                        Err(_) => local.push(Self::rule_unavailable_record(
+                            AES204_RULE_CODE,
+                            Severity::HIGH,
+                            "AES204 dummy-import checker is unavailable for this file.",
+                        )),
+                    }
                 }
                 local
             })
@@ -358,6 +407,46 @@ impl ImportOrchestrator {
         results.extend(file_violations);
 
         results
+    }
+
+    /// Build a `HashMap` keyed by source-file path, mapping each file to its
+    /// import entries. Shared by the `run_audit`, `run_audit_with_entries`,
+    /// and `run_checks` (resolved-imports) call sites.
+    fn build_imports_map(import_list: &[ImportEntry]) -> HashMap<String, Vec<ImportEntry>> {
+        let mut map: HashMap<String, Vec<ImportEntry>> = HashMap::new();
+        for entry in import_list {
+            let key = entry.source_file.to_string_lossy().to_string();
+            map.entry(key).or_default().push(entry.clone());
+        }
+        map
+    }
+
+    /// Build a single "rule unavailable" audit record when a checker returns an error.
+    /// Other rules still report; this record carries the failing rule's code, message,
+    /// and severity so the audit surface never silently drops a rule.
+    fn rule_unavailable_record(code: &str, severity: Severity, message: &str) -> LintResult {
+        LintResult::new_arch_with_name(
+            "unknown",
+            0,
+            code,
+            severity,
+            message,
+            VIOLATION_NAME_RULE_UNAVAILABLE,
+            "A checker failed to run, so this rule produced no findings for this audit.",
+            "Re-run the audit after the checker error is resolved.",
+        )
+    }
+
+    /// Return true when the rule with the given code is enabled in config.
+    /// AES201–AES204 now check their own `enabled` flag like AES205 already does.
+    /// When no rule config exists for a code, the rule is enabled by default.
+    fn rule_enabled(&self, code: &str) -> bool {
+        self.config
+            .rules
+            .iter()
+            .find(|r| r.name.value == code)
+            .map(|r| r.enabled.value)
+            .unwrap_or(true)
     }
 
     fn collect_files(&self, target: &FilePath) -> FilePathList {
@@ -390,6 +479,7 @@ impl ImportOrchestrator {
         FilePathList::new(files)
     }
 }
+
 // ─── Block 2: Module Contract ──────────────
 
 impl IImportRunnerAggregate for ImportOrchestrator {
@@ -413,5 +503,3 @@ impl IImportRunnerAggregate for ImportOrchestrator {
         }
     }
 }
-
-// ─── Block 3: Module Helpers ──────

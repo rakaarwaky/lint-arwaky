@@ -344,6 +344,9 @@ impl ArchImportForbiddenChecker {
                 source_layer, allowed_layers_str
             )
         };
+        // Track seen (file, line, module) keys so only true duplicates collapse;
+        // two forbidden imports from the same layer on one line produce two findings.
+        let mut seen_keys: std::collections::HashSet<(String, i64, String)> = HashSet::new();
         // Pre-resolve all forbidden scopes once (not per entry)
         let resolved_forbidden: Vec<(&str, LayerNameVO, Vec<Identity>)> = forbidden_list
             .iter()
@@ -355,7 +358,7 @@ impl ArchImportForbiddenChecker {
             })
             .collect();
 
-        for (idx, entry) in entries.iter().enumerate() {
+        for entry in entries.iter() {
             let module_val = utility_import_resolver::entry_module_path(entry);
 
             // Pre-split module path once per entry (not per forbidden item)
@@ -413,52 +416,51 @@ impl ArchImportForbiddenChecker {
                 }
 
                 if is_forbidden {
+                    let module = utility_import_resolver::entry_module_path(entry);
                     let why = if source_layer == forbidden {
                         format!(
-                            "Layer '{}' is importing from itself. \
+                            "Layer '{}' imports from itself. \
                              {} layer files must be stateless and independent. \
                              Self-imports create hidden dependencies.",
                             source_layer, source_layer
                         )
                     } else {
-                        // WHY states the rule that was broken — no remediation advice here.
                         format!(
                             "Layer '{}' must not depend on '{}' to maintain architectural boundaries.",
                             source_layer, forbidden
                         )
                     };
-                    let forbidden_base = forbidden.split('(').next().unwrap_or(forbidden).trim();
-                    let fix = match (source_layer, forbidden_base) {
+                    let fix: String = match (source_layer, forbidden) {
                         ("utility", "utility") => {
                             "Inline small functions, consolidate tightly coupled utilities, extract shared data to taxonomy VO, or move the function into this file.".to_string()
                         }
                         ("capabilities", "capabilities") => {
-                            "Define a contract protocol (contract_*_protocol.rs) and use dependency injection to wire the capability implementation.".to_string()
+                            "Define a contract protocol contract_*_protocol.rs and use dependency injection to wire the capability implementation.".to_string()
                         }
                         ("agent", "agent") => {
-                            "Define a contract aggregate (contract_*_aggregate.rs) and use dependency injection to wire the agent implementation.".to_string()
+                            "Define a contract aggregate contract_*_aggregate.rs and use dependency injection to wire the agent implementation.".to_string()
                         }
                         ("utility", "contract") => {
-                            "Utility layer cannot use contract traits. If this function needs DI (trait param), move it to capabilities layer. If it only uses data from the contract, extract the data to a taxonomy VO instead.".to_string()
+                            "Utility layer cannot use contract traits. If this function needs DI trait param, move it to capabilities layer. If it only uses data from the contract, extract the data to a taxonomy VO instead.".to_string()
                         }
                         ("agent", "capabilities") => {
                             "Agent orchestrator must not import capabilities directly. Define a contract protocol and use dependency injection.".to_string()
                         }
                         ("surface", "capabilities") => {
                             format!(
-                                "Route the call through a contract(aggregate) — do not reference capabilities types in surface code.{hint}",
+                                "Route the call through a contract aggregate; do not reference capabilities types in surface code.{hint}",
                                 hint = allowed_hint
                             )
                         }
                         ("surface", "agent") => {
                             format!(
-                                "Route the call through a contract(aggregate) — agent orchestrators are internal.{hint}",
+                                "Route the call through a contract aggregate; agent orchestrators are internal.{hint}",
                                 hint = allowed_hint
                             )
                         }
                         ("surface", "contract") => {
                             format!(
-                                "Import the contract(aggregate) instead of the contract(protocol) — surface code wires DI, not the concrete trait.{hint}",
+                                "Import the contract aggregate instead of the contract protocol; surface code wires DI, not the concrete trait.{hint}",
                                 hint = allowed_hint
                             )
                         }
@@ -470,21 +472,22 @@ impl ArchImportForbiddenChecker {
                         }
                     };
                     let message = format!(
-                        "Layer '{}' is importing from forbidden layer '{}'.",
-                        source_layer, forbidden
+                        "Layer '{}' imports '{}' from forbidden layer '{}'.",
+                        source_layer, module, forbidden
                     );
-                    let line = if entry.line > 0 { entry.line } else { idx + 1 };
+                    let line = entry.line;
                     let violation = LintResult::new_arch_with_name(
                         file,
                         line,
-                        "AES201",
+                        AES201_RULE_CODE,
                         Severity::CRITICAL,
                         message,
                         "FORBIDDEN_IMPORT",
                         why,
                         fix,
                     );
-                    if !violations.contains(&violation) {
+                    let dedup_key = (file.to_string(), line as i64, module.to_string());
+                    if seen_keys.insert(dedup_key) {
                         violations.push(violation);
                     }
                 }

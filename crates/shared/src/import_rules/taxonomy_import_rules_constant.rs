@@ -27,3 +27,22 @@ pub const AES201_RULE_CODE: &str = "AES201";
 
 /// Rule code for AES202 — Mandatory Import
 pub const AES202_RULE_CODE: &str = "AES202";
+
+/// Rule code for AES203 — Unused Import
+pub const AES203_RULE_CODE: &str = "AES203";
+
+/// Rule code for AES204 — Dummy Import
+pub const AES204_RULE_CODE: &str = "AES204";
+
+/// Rule code for AES205 — Circular Dependency
+pub const AES205_RULE_CODE: &str = "AES205";
+
+/// Pseudo rule code for AES200 — audit-skip record for files dropped by parse
+/// failure or emptiness (no AES200 checker exists; the code marks the skip record).
+pub const AES200_RULE_CODE: &str = "AES200";
+
+/// Violation name for the AES200 audit-skip record.
+pub const VIOLATION_NAME_RULE_SKIP: &str = "RULE_SKIP";
+
+/// Violation name for a rule-unavailable record emitted when a checker errors.
+pub const VIOLATION_NAME_RULE_UNAVAILABLE: &str = "RULE_UNAVAILABLE";
