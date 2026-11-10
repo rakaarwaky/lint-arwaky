@@ -164,6 +164,9 @@ pub const SURFACE_ALLOWED_FILENAMES: &[&str] = &[
     "Cargo.toml",
     "pyproject.toml",
     "package.json",
+    "taxonomy_mcp_server_vo.rs",
+    "taxonomy_tui_event.rs",
+    "taxonomy_tui_vo.rs",
 ];
 
 /// Directories a structure audit never descends into. Derived from
