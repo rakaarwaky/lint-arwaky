@@ -156,9 +156,14 @@ impl ASTParser {
                     return (Vec::new(), Vec::new());
                 }
 
+                // .tsx files need the TSX grammar (JSX support); plain TS files
+                // use the TypeScript grammar.
                 let lang = match entry.language {
                     Language::Rust => tree_sitter_rust::LANGUAGE,
                     Language::Python => tree_sitter_python::LANGUAGE,
+                    Language::TypeScript if entry.extension == "tsx" => {
+                        tree_sitter_typescript::LANGUAGE_TSX
+                    }
                     Language::TypeScript => tree_sitter_typescript::LANGUAGE_TYPESCRIPT,
                     // JS shares the TS grammar structure for extraction purposes
                     Language::JavaScript => tree_sitter_javascript::LANGUAGE,
