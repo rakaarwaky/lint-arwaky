@@ -22,7 +22,7 @@ use shared_structure_rules::taxonomy_structure_rules_request::{
 };
 use shared_structure_rules::taxonomy_structure_rules_response::StructureResponse;
 use shared_structure_rules::utility_structure_parsers;
-use shared_structure_rules::utility_structure_parsers::{find_workspace_root, sorted};
+use shared_structure_rules::utility_structure_parsers::{find_workspace_root, rel_posix, sorted};
 
 use std::path::{Path, PathBuf};
 
@@ -452,13 +452,12 @@ fn member_name(member: &Path) -> String {
 
 /// Finding: a feature crate folder has no FRD.md at all.
 fn missing_frd_finding(frd: &Path, ws_root: &Path, folder_name: &str) -> StructureFinding {
+    let prefix = fr_prefix(folder_name);
     StructureFinding::new(
         consts::RULE_CODE_PR_LA_FOLDER,
         consts::PR_VIOLATION_MISSING_FRD,
-        relative_to(frd, ws_root),
-        format!(
-            "'{folder_name}' holds no FRD.md, so its FR ids cannot be verified against its prefix"
-        ),
+        rel_posix(frd, ws_root),
+        format!("'{prefix}' holds no FRD.md, so its FR ids cannot be verified against its prefix"),
     )
     .with_reason(
         "Every feature crate folder must carry an FRD.md whose FR ids match its folder name.",
@@ -477,19 +476,20 @@ fn folder_without_pr_id_finding(
     member: &str,
     path: &str,
 ) -> StructureFinding {
+    let one_based = position + 1;
     StructureFinding::new(
         consts::RULE_CODE_PR_LA_FOLDER,
         consts::PR_VIOLATION_FOLDER_WITHOUT_ID,
         path,
         format!(
-            "'{folder}' sits at {member} crate position {position} but no PR-<segment> id maps to it"
+            "'{folder}' sits at {member} crate position {one_based} but no PR-<segment> id maps to it"
         ),
     )
     .with_reason(
         "PR-<segment> ids map 1:1 to crate folders by order, so every crate folder position needs a PR-<segment> id.",
         format!(
-            "Add a 'PR-<segment>-{pos}' heading to PRD.md and ROADMAP.md that names '{folder}', where pos = {position} + 1.",
-            pos = position + 1,
+            "Add a 'PR-<segment>-{pos:03}' heading to PRD.md and ROADMAP.md that names '{folder}', where pos = {position} + 1.",
+            pos = one_based,
         ),
     )
 }
@@ -505,7 +505,7 @@ fn fr_mismatch_finding(
     StructureFinding::new(
         consts::RULE_CODE_PR_LA_FOLDER,
         consts::PR_VIOLATION_FR_ID_MISMATCH,
-        relative_to(frd, ws_root),
+        rel_posix(frd, ws_root),
         format!("folder '{folder_name}' carries FR id '{fr_id}' but its prefix must be 'FR-{prefix}'"),
     )
     .with_reason(
@@ -522,16 +522,17 @@ fn dangling_pr_id_finding(
     position: usize,
     doc_name: &str,
 ) -> StructureFinding {
+    let one_based = position + 1;
     StructureFinding::new(
         consts::RULE_CODE_PR_LA_FOLDER,
         consts::PR_VIOLATION_PR_ID_MISMATCH,
-        relative_to(doc, ws_root),
-        format!("'{pr_id}' has no crate folder at position {position}"),
+        rel_posix(doc, ws_root),
+        format!("'{pr_id}' has no crate folder at position {one_based}"),
     )
     .with_reason(
         "PR-<segment> ids map 1:1 to crate folders by order, so a position with no folder cannot be satisfied.",
         format!(
-            "Add a crate folder for position {position}, or remove the dangling '{pr_id}' from '{doc_name}'."
+            "Add a crate folder for position {one_based}, or remove the dangling '{pr_id}' from '{doc_name}'."
         ),
     )
 }
@@ -548,7 +549,7 @@ fn title_mismatch_finding(
     StructureFinding::new(
         consts::RULE_CODE_PR_LA_FOLDER,
         consts::PR_VIOLATION_PR_ID_MISMATCH,
-        relative_to(doc, ws_root),
+        rel_posix(doc, ws_root),
         format!(
             "'{pr_id}' titles '{title}' but maps to '{member}/{expected_folder}' at its position"
         ),
@@ -861,15 +862,6 @@ fn strip_suffix(s: &str) -> String {
         .or(s.strip_suffix("ed"))
         .or(s.strip_suffix("s"))
         .unwrap_or(s)
-        .to_string()
-}
-
-/// Relative path of *file* under *ws_root* for the finding report.
-fn relative_to(file: &Path, ws_root: &Path) -> String {
-    file.strip_prefix(ws_root)
-        .ok()
-        .and_then(|p| p.to_str())
-        .unwrap_or("")
         .to_string()
 }
 

@@ -62,7 +62,7 @@ The structure-rules crate enforces the 7-layer AES folder discipline by auditing
 - Every feature folder shall be mirrored as a shared layer subfolder in its member.
 - A documentation pair folder without an orchestrator shall fire an AES702 finding.
 - A feature folder lacking capabilities or root container shall fire an AES702 finding.
-- An audit root that is itself a member directory holding the orchestrator shall fire an AES702 finding.
+- An audit root that is itself a member directory is scanned for feature folders beneath it; a loose layer file at the member root fires AES705.
 
 #### Edge Cases
 
@@ -149,7 +149,7 @@ The structure-rules crate enforces the 7-layer AES folder discipline by auditing
 
 #### Business Logic
 
-- Every feature folder that owns source shall provide test coverage across required test categories: unit, contract, integration, e2e, acceptance, dogfood, and benches.
+- Every feature folder that owns source shall provide test coverage across required test categories: contract, unit, integration, dogfood, smoke, e2e, acceptance, and benches.
 - The auditor shall discover categories dynamically against the discovered tree rather than a hardcoded list.
 - An expected test category that is absent or empty shall fire an AES704 finding.
 - Non-feature members or members without source code shall not be required to maintain feature test suites.

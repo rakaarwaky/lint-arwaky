@@ -53,11 +53,13 @@ fn collect_files(dir: &Path, inventory: &mut FolderInventory, depth: usize) {
             .and_then(|n| n.to_str())
             .unwrap_or_default()
             .to_string();
+        let stem_lower = stem.to_ascii_lowercase();
 
-        let is_orchestrator = stem.starts_with(AGENT_PREFIX) && stem.ends_with(ORCHESTRATOR_SUFFIX);
-        let is_capability = stem.starts_with(CAPABILITIES_PREFIX);
-        let is_surface = stem.starts_with(SURFACE_PREFIX);
-        let is_root = stem.starts_with(ROOT_PREFIX);
+        let is_orchestrator =
+            stem_lower.starts_with(AGENT_PREFIX) && stem_lower.ends_with(ORCHESTRATOR_SUFFIX);
+        let is_capability = stem_lower.starts_with(CAPABILITIES_PREFIX);
+        let is_surface = stem_lower.starts_with(SURFACE_PREFIX);
+        let is_root = stem_lower.starts_with(ROOT_PREFIX);
 
         inventory.has_orchestrator |= is_orchestrator;
         inventory.has_capabilities |= is_capability;
@@ -115,6 +117,15 @@ pub fn is_member_dir(root: &Path) -> bool {
         root.file_name().and_then(|n| n.to_str()),
         Some("crates" | "modules" | "packages")
     )
+}
+
+/// Render *path* relative to *base* with POSIX separators, falling back to the
+/// absolute path (still POSIX-separated) when *path* is not beneath *base*.
+pub fn rel_posix(path: &Path, base: &Path) -> String {
+    match path.strip_prefix(base) {
+        Ok(p) => p.to_string_lossy().replace('\\', "/"),
+        Err(_) => path.to_string_lossy().replace('\\', "/"),
+    }
 }
 
 /// The member directories an audit should walk under *ws_root*, scoped to

@@ -11,7 +11,7 @@ use shared_structure_rules::taxonomy_structure_rules_request::{
 use shared_structure_rules::taxonomy_structure_rules_response::StructureResponse;
 use shared_structure_rules::utility_structure_parsers;
 
-use shared_structure_rules::utility_structure_parsers::{find_workspace_root, sorted};
+use shared_structure_rules::utility_structure_parsers::{find_workspace_root, rel_posix, sorted};
 
 use std::path::Path;
 
@@ -52,7 +52,7 @@ impl IStructureTestSuiteProtocol for TestSuiteCoverageAuditor {
                     continue;
                 }
                 let inventory = utility_structure_parsers::inventory(&folder);
-                let folder_rel = relative_to(&folder, &ws_root);
+                let folder_rel = rel_posix(&folder, &ws_root);
                 // A folder owning neither capabilities nor an orchestrator holds
                 // no feature source, so it owes no suite. Mirrors the AES702 gate.
                 if !inventory.has_capabilities && !inventory.has_orchestrator {
@@ -84,18 +84,12 @@ fn folder_name(folder: &Path) -> String {
         .to_string()
 }
 
-fn relative_to(folder: &Path, ws_root: &Path) -> String {
-    match folder.strip_prefix(ws_root) {
-        Ok(p) => p.to_string_lossy().replace('\\', "/"),
-        Err(_) => folder.to_string_lossy().replace('\\', "/"),
-    }
-}
-
 /// The stems of every collectable file sitting directly in *dir*, sorted for
-/// stable output.
-fn test_stems_in(dir: &Path) -> Vec<String> {
+/// stable output. Returns `None` when the directory cannot be read; callers
+/// treat `None` as "unreadable" and skip missing-category findings for it.
+fn test_stems_in(dir: &Path) -> Option<Vec<String>> {
     let Ok(entries) = std::fs::read_dir(dir) else {
-        return Vec::new();
+        return None;
     };
     let mut stems: Vec<String> = entries
         .flatten()
@@ -109,7 +103,7 @@ fn test_stems_in(dir: &Path) -> Vec<String> {
         .filter_map(|p| p.file_stem().and_then(|s| s.to_str()).map(String::from))
         .collect();
     stems.sort();
-    stems
+    Some(stems)
 }
 
 /// AES704 — a feature folder owes one file per test category.
@@ -127,7 +121,7 @@ fn check_feature_test_suite(folder: &Path, rel: &str, findings: &mut Vec<Structu
             StructureFinding::new(
                 consts::RULE_CODE_TEST_SUITE_COVERAGE,
                 consts::TEST_SUITE_VIOLATION_MISSING_TESTS_DIR,
-                rel.to_string(),
+                format!("{rel}/{TESTS_DIR}/"),
                 format!("feature folder '{rel}' has no '{TESTS_DIR}/' directory"),
             )
             .with_reason(
@@ -138,8 +132,7 @@ fn check_feature_test_suite(folder: &Path, rel: &str, findings: &mut Vec<Structu
                 format!("Add a '{TESTS_DIR}/' directory with one file per required test type."),
             ),
         );
-    } else {
-        let present = test_stems_in(&tests_dir);
+    } else if let Some(present) = test_stems_in(&tests_dir) {
         for prefix in required_tests_prefixes() {
             if present.iter().any(|s| s.starts_with(prefix)) {
                 continue;
@@ -148,7 +141,7 @@ fn check_feature_test_suite(folder: &Path, rel: &str, findings: &mut Vec<Structu
                 rel,
                 prefix,
                 &format!("{TESTS_DIR}/"),
-                format!("add '{prefix}<subject>'"),
+                format!("add '{prefix}<subject>' (`<subject>` substitutes the feature under test)"),
             ));
         }
     }
@@ -157,23 +150,26 @@ fn check_feature_test_suite(folder: &Path, rel: &str, findings: &mut Vec<Structu
         findings.push(StructureFinding::new(
             consts::RULE_CODE_TEST_SUITE_COVERAGE,
             consts::TEST_SUITE_VIOLATION_MISSING_BENCH_DIR,
-            rel.to_string(),
+            format!("{rel}/{BENCHES_DIR}/"),
             format!("feature folder '{rel}' has no '{BENCHES_DIR}/' directory"),
         )
         .with_reason(
             format!(
                 "A feature folder owes at least one '{BENCH_PREFIX}<subject>' performance regression benchmark."
             ),
-            format!("Add a '{BENCHES_DIR}/' directory holding one '{BENCH_PREFIX}<subject>' benchmark."),
+            format!(
+                "Add a '{BENCHES_DIR}/' directory holding one '{BENCH_PREFIX}<subject>' benchmark. `<subject>` substitutes the feature under test."
+            ),
         ));
-    } else {
-        let present = test_stems_in(&benches_dir);
+    } else if let Some(present) = test_stems_in(&benches_dir) {
         if !present.iter().any(|s| s.starts_with(BENCH_PREFIX)) {
             findings.push(missing_category(
                 rel,
                 BENCH_PREFIX,
                 &format!("{BENCHES_DIR}/"),
-                format!("add '{BENCH_PREFIX}<subject>'"),
+                format!(
+                    "add '{BENCH_PREFIX}<subject>' (`<subject>` substitutes the feature under test)"
+                ),
             ));
         }
     }
@@ -195,7 +191,7 @@ fn missing_category(rel: &str, prefix: &str, directory: &str, fix: String) -> St
     )
     .with_reason(
         format!("Every test type is required. '{prefix}' proves: {purpose}."),
-        format!("{fix} The prefix is the virtual folder."),
+        format!("{fix} — the file name must start with '{prefix}'."),
     )
 }
 

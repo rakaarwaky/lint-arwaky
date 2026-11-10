@@ -166,16 +166,15 @@ pub const SURFACE_ALLOWED_FILENAMES: &[&str] = &[
     "package.json",
 ];
 
-/// Directories a structure audit never descends into.
-pub const SKIPPED_DIRS: &[&str] = &["benches", "tests", "target", "node_modules", "__pycache__"];
+/// Directories a structure audit never descends into. Derived from
+/// [`NON_CRATE_DIRS`] so caches, build output, dependency trees, and test
+/// scaffolding never take a position in any folder order.
+pub const SKIPPED_DIRS: &[&str] = NON_CRATE_DIRS;
 
 /// Maximum recursion depth for the AES702 orchestrator walk. Feature folders
 /// never nest deeper than this in practice; the cap guards against
 /// pathologically deep layouts and symlink cycles.
 pub const MAX_ORCHESTRATOR_WALK_DEPTH: u32 = 10;
-
-/// The document file names that mark a folder's purpose and content.
-pub const SURFACE_DOC: &str = "DESIGN.md";
 
 /// The extensions a test or benchmark file may use.
 ///

@@ -2,7 +2,7 @@
 
 use shared_structure_rules::utility_structure_parsers;
 
-use shared_structure_rules::utility_structure_parsers::{find_workspace_root, sorted};
+use shared_structure_rules::utility_structure_parsers::{find_workspace_root, rel_posix, sorted};
 
 use shared_structure_rules::contract_structure_protocol::IStructureSurfacePurityProtocol;
 use shared_structure_rules::taxonomy_structure_rules_constant as consts;
@@ -37,10 +37,8 @@ impl IStructureSurfacePurityProtocol for SurfacePurityAuditor {
         // member; when it is the workspace root, all members are walked.
         let scoped = utility_structure_parsers::scoped_member_dirs(&root, &ws_root);
         for member in &scoped {
-            // Check the member folder itself
-            check_member_folder(member, &ws_root, &mut findings);
-
-            // Check subdirectories (feature folders)
+            // Check subdirectories (feature/surface folders). The member dir
+            // itself is a container, not a surface folder.
             for folder in utility_structure_parsers::feature_dirs(member) {
                 if folder_name(&folder) == consts::KERNEL_DIR {
                     continue;
@@ -72,15 +70,6 @@ fn folder_name(folder: &std::path::Path) -> String {
         .to_string()
 }
 
-/// Render *path* relative to *ws_root* with POSIX separators, falling back to
-/// the full path (still POSIX-separated) when it is not beneath the root.
-fn relative_posix(path: &std::path::Path, ws_root: &std::path::Path) -> String {
-    match path.strip_prefix(ws_root) {
-        Ok(p) => p.to_string_lossy().replace('\\', "/"),
-        Err(_) => path.to_string_lossy().replace('\\', "/"),
-    }
-}
-
 /// Check a single folder candidate for AES703 violations.
 fn check_member_folder(
     folder: &std::path::Path,
@@ -88,15 +77,19 @@ fn check_member_folder(
     findings: &mut Vec<StructureFinding>,
 ) {
     let inventory = utility_structure_parsers::inventory(folder);
+    // A surface folder is surface-dominated: surface files must outnumber all
+    // other classified files. A single surface file beside capabilities does
+    // not make the folder a surface folder — that stays a feature folder.
     if !inventory.is_surface_dominated() {
         return;
     }
-    let folder_rel = relative_posix(folder, ws_root);
+    let folder_rel = rel_posix(folder, ws_root);
     check_surface_folder(folder, &folder_rel, ws_root, &inventory, findings);
 }
 
 /// AES703 — a surface-dominated folder carries surfaces plus permitted support
-/// files. Capabilities and agent files are misplaced. DESIGN.md is required.
+/// files. Capabilities and agent files are misplaced; foreign taxonomy,
+/// contract, and logical files belong in shared/.
 fn check_surface_folder(
     folder: &std::path::Path,
     folder_rel: &str,
@@ -104,17 +97,27 @@ fn check_surface_folder(
     inventory: &shared_structure_rules::taxonomy_structure_rules_vo::FolderInventory,
     findings: &mut Vec<StructureFinding>,
 ) {
-    // Purity: no capabilities, agent, or utility files.
+    // Purity: no foreign-layer files. Barrels, entry wiring, packaging, and
+    // utility support files are permitted in a surface folder.
     for file in &inventory.files {
-        let (kind, destination) = if file.stem.starts_with(consts::CAPABILITIES_PREFIX)
-            || file.stem.starts_with(consts::AGENT_PREFIX)
+        let stem = &file.stem;
+        let (kind, destination) = if stem.starts_with(consts::CAPABILITIES_PREFIX)
+            || stem.starts_with(consts::AGENT_PREFIX)
         {
             ("a capability/agent file", "move it to a feature folder")
-        } else if file.stem.starts_with(consts::UTILITY_PREFIX) {
+        } else if stem.starts_with(consts::UTILITY_PREFIX) {
             ("a utility file", "move it to the shared folder")
+        } else if stem.starts_with("taxonomy_")
+            || stem.starts_with("contract_")
+            || stem.starts_with("logical_")
+        {
+            ("a foreign-layer file", "move it to shared/")
         } else {
             continue;
         };
+        if consts::SURFACE_ALLOWED_FILENAMES.contains(&file.name.as_str()) {
+            continue;
+        }
         findings.push(StructureFinding::new(
             consts::RULE_CODE_SURFACE_PURITY,
             consts::SURFACE_PURITY_VIOLATION_MISPLACED_FILES,
@@ -133,26 +136,24 @@ fn check_surface_folder(
     // Docs: DESIGN.md + BACKLOG.md required.
     let names = consts::SURFACE_DOC_PAIR;
     let missing = missing_docs(folder, names);
-    if !missing.is_empty() {
+    for name in missing {
+        let violation_type = if name == consts::DESIGN_DOC {
+            consts::SURFACE_PURITY_VIOLATION_NO_DESIGN
+        } else {
+            consts::SURFACE_PURITY_VIOLATION_NO_BACKLOG
+        };
         findings.push(StructureFinding::new(
             consts::RULE_CODE_SURFACE_PURITY,
-            if names.contains(&consts::DESIGN_DOC) && missing.contains(&consts::DESIGN_DOC) {
-                consts::SURFACE_PURITY_VIOLATION_NO_DESIGN
-            } else {
-                consts::SURFACE_PURITY_VIOLATION_NO_BACKLOG
-            },
+            violation_type,
             folder_rel.to_string(),
-            format!(
-                "surface folder '{folder_rel}' is missing {}",
-                missing.join(" and ")
-            ),
+            format!("surface folder '{folder_rel}' is missing '{name}'"),
         )
         .with_reason(
             format!(
                 "A surface folder carries {} recording its kind, entry points, and visible states.",
-                names.join(" and ")
+                name
             ),
-            format!("Add {} to the surface folder.", missing.join(" and ")),
+            format!("Add '{name}' to the surface folder."),
         ));
     }
 }

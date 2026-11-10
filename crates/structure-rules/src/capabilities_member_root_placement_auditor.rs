@@ -9,7 +9,7 @@ use shared_structure_rules::taxonomy_structure_rules_request::{
 use shared_structure_rules::taxonomy_structure_rules_response::StructureResponse;
 use shared_structure_rules::taxonomy_structure_rules_vo::LayerFile;
 use shared_structure_rules::utility_structure_parsers;
-use shared_structure_rules::utility_structure_parsers::{find_workspace_root, sorted};
+use shared_structure_rules::utility_structure_parsers::{find_workspace_root, rel_posix, sorted};
 
 use std::path::{Path, PathBuf};
 
@@ -85,7 +85,7 @@ fn misplaced_file_finding(
         file.rel(ws_root),
         format!(
             "member dir '{}' holds '{}' (prefix '{prefix}') at its root",
-            relative_to(member, ws_root),
+            rel_posix(member, ws_root),
             file.name,
         ),
     )
@@ -93,14 +93,6 @@ fn misplaced_file_finding(
         "A member dir carries folders and wiring. A layer file at its root has no feature folder to belong to.",
         destination.to_string(),
     )
-}
-
-/// Relative path of *path* against the workspace root.
-fn relative_to(path: &Path, ws_root: &Path) -> String {
-    match path.strip_prefix(ws_root) {
-        Ok(p) => p.to_string_lossy().replace('\\', "/"),
-        Err(_) => path.to_string_lossy().replace('\\', "/"),
-    }
 }
 
 /// The layer files sitting directly in a member dir.

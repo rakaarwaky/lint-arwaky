@@ -2,7 +2,7 @@
 
 use shared_structure_rules::utility_structure_parsers;
 
-use shared_structure_rules::utility_structure_parsers::{find_workspace_root, sorted};
+use shared_structure_rules::utility_structure_parsers::{find_workspace_root, rel_posix, sorted};
 
 use shared_structure_rules::contract_structure_protocol::IStructureSharedPurityProtocol;
 use shared_structure_rules::taxonomy_structure_rules_constant as consts;
@@ -39,7 +39,7 @@ impl IStructureSharedPurityProtocol for SharedPurityAuditor {
                 continue;
             }
             let inventory = utility_structure_parsers::inventory(&shared);
-            let folder_rel = relative_posix(&shared, &ws_root);
+            let folder_rel = rel_posix(&shared, &ws_root);
             check_shared_purity(&folder_rel, &ws_root, &inventory, &mut findings);
             check_shared_has_docs(&shared, &folder_rel, &mut findings);
         }
@@ -56,15 +56,6 @@ impl IStructureSharedPurityProtocol for SharedPurityAuditor {
 /// a directory that contains at least one of the member directories.
 fn workspace_root(root: &std::path::Path) -> std::path::PathBuf {
     find_workspace_root(root)
-}
-
-/// Render *path* relative to *ws_root* with POSIX separators, falling back to
-/// the full path (still POSIX-separated) when it is not beneath the root.
-fn relative_posix(path: &std::path::Path, ws_root: &std::path::Path) -> String {
-    match path.strip_prefix(ws_root) {
-        Ok(p) => p.to_string_lossy().replace('\\', "/"),
-        Err(_) => path.to_string_lossy().replace('\\', "/"),
-    }
 }
 
 /// AES701 — a shared folder holds taxonomy, utility, and contract files. A
