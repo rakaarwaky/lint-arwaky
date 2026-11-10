@@ -132,7 +132,9 @@ pub fn extract_imports(
             let grammar = match language {
                 Language::Rust => tree_sitter_rust::LANGUAGE,
                 Language::Python => tree_sitter_python::LANGUAGE,
-                Language::TypeScript if path.extension().and_then(|e| e.to_str()) == Some("tsx") => {
+                Language::TypeScript
+                    if path.extension().and_then(|e| e.to_str()) == Some("tsx") =>
+                {
                     tree_sitter_typescript::LANGUAGE_TSX
                 }
                 Language::TypeScript => tree_sitter_typescript::LANGUAGE_TYPESCRIPT,
