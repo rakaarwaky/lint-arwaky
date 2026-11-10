@@ -14,7 +14,9 @@ use shared_filesystem::contract_filesystem_protocol::IParserProtocol;
 use shared_filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
 use shared_filesystem::contract_filesystem_protocol::IWorkspaceProtocol;
 use shared_filesystem::taxonomy_filesystem_vo::{FileEntry, ImportEntry, ImportType, Language};
+use shared_filesystem::utility_agent_filesystem::build_stem_index as shared_build_stem_index;
 use shared_filesystem::utility_barrel_resolution::{parse_barrel_reexports, resolve_single_import};
+use shared_filesystem::utility_import_resolution::resolve_import_target;
 
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
@@ -44,7 +46,7 @@ fn build_file_set<'a>(paths: &'a [&'a str]) -> HashSet<&'a str> {
 
 fn build_stem_index(paths: &[&str]) -> HashMap<String, Vec<String>> {
     let string_paths: Vec<String> = paths.iter().map(|&s| s.to_string()).collect();
-    FilesystemOrchestrator::build_stem_index(&string_paths)
+    shared_build_stem_index(&string_paths)
 }
 
 fn make_orchestrator() -> FilesystemOrchestrator {
@@ -71,7 +73,7 @@ fn test_python_direct_path_resolves() {
     // Strategy A: Direct path lookup handles imports that already include member prefix.
     // `from modules.image.src.agent_image_orchestrator import X`
     // → should resolve to `modules/image/src/agent_image_orchestrator.py`
-    let orch = make_orchestrator();
+    let _orch = make_orchestrator();
     let imp = make_python_import("modules.image.src.agent_image_orchestrator", None);
     let files: HashSet<&str> = build_file_set(&[
         "modules/image/src/agent_image_orchestrator.py",
@@ -83,7 +85,7 @@ fn test_python_direct_path_resolves() {
     ]);
     let root = PathBuf::from(".");
     let result =
-        orch.resolve_import_target(&imp, "modules/test/src/test.py", &root, &files, &stem_index);
+        resolve_import_target(&imp, "modules/test/src/test.py", &root, &files, &stem_index);
     assert_eq!(
         result,
         Some("modules/image/src/agent_image_orchestrator.py".to_string()),
@@ -96,7 +98,7 @@ fn test_python_suffix_match_resolves_nested() {
     // Strategy C: Suffix/stem matching handles bare module names in nested directories.
     // `from capabilities_image_processing_processor import X`
     // where file is at `modules/image/src/capabilities_image_processing_processor.py`
-    let orch = make_orchestrator();
+    let _orch = make_orchestrator();
     let imp = make_python_import("capabilities_image_processing_processor", None);
     let files: HashSet<&str> = build_file_set(&[
         "modules/image/src/capabilities_image_processing_processor.py",
@@ -108,7 +110,7 @@ fn test_python_suffix_match_resolves_nested() {
     ]);
     let root = PathBuf::from(".");
     let result =
-        orch.resolve_import_target(&imp, "modules/test/src/test.py", &root, &files, &stem_index);
+        resolve_import_target(&imp, "modules/test/src/test.py", &root, &files, &stem_index);
     assert_eq!(
         result,
         Some("modules/image/src/capabilities_image_processing_processor.py".to_string()),
@@ -120,14 +122,14 @@ fn test_python_suffix_match_resolves_nested() {
 fn test_python_prefix_based_resolves() {
     // Strategy B: Prefix-based resolution (existing behavior).
     // `from some_module import X` where file is at `modules/some_module.py`
-    let orch = make_orchestrator();
+    let _orch = make_orchestrator();
     let imp = make_python_import("some_module", None);
     let files: HashSet<&str> =
         build_file_set(&["modules/some_module.py", "modules/test/src/test.py"]);
     let stem_index = build_stem_index(&["modules/some_module.py", "modules/test/src/test.py"]);
     let root = PathBuf::from(".");
     let result =
-        orch.resolve_import_target(&imp, "modules/test/src/test.py", &root, &files, &stem_index);
+        resolve_import_target(&imp, "modules/test/src/test.py", &root, &files, &stem_index);
     assert_eq!(
         result,
         Some("modules/some_module.py".to_string()),
@@ -139,7 +141,7 @@ fn test_python_prefix_based_resolves() {
 fn test_python_direct_path_preferred_over_prefix() {
     // Strategy A should be tried before Strategy B.
     // If direct path matches, it should be preferred over prefix-based.
-    let orch = make_orchestrator();
+    let _orch = make_orchestrator();
     let imp = make_python_import("modules.image.src.agent_image_orchestrator", None);
     let files: HashSet<&str> = build_file_set(&[
         "modules/image/src/agent_image_orchestrator.py",
@@ -153,7 +155,7 @@ fn test_python_direct_path_preferred_over_prefix() {
     ]);
     let root = PathBuf::from(".");
     let result =
-        orch.resolve_import_target(&imp, "modules/test/src/test.py", &root, &files, &stem_index);
+        resolve_import_target(&imp, "modules/test/src/test.py", &root, &files, &stem_index);
     // Should match direct path (Strategy A), NOT the double-prefix (Strategy B)
     assert_eq!(
         result,
@@ -165,13 +167,13 @@ fn test_python_direct_path_preferred_over_prefix() {
 #[test]
 fn test_python_import_with_resolved_path_returns_as_is() {
     // If resolved_path is already set, skip resolution.
-    let orch = make_orchestrator();
+    let _orch = make_orchestrator();
     let imp = make_python_import("some.module", Some("modules/some/module.py"));
     let files: HashSet<&str> = build_file_set(&["modules/some/module.py"]);
     let stem_index = build_stem_index(&["modules/some/module.py"]);
     let root = PathBuf::from(".");
     let result =
-        orch.resolve_import_target(&imp, "modules/test/src/test.py", &root, &files, &stem_index);
+        resolve_import_target(&imp, "modules/test/src/test.py", &root, &files, &stem_index);
     assert_eq!(
         result,
         Some("modules/some/module.py".to_string()),
@@ -182,13 +184,13 @@ fn test_python_import_with_resolved_path_returns_as_is() {
 #[test]
 fn test_python_no_match_returns_none() {
     // When no strategy finds a match, should return None.
-    let orch = make_orchestrator();
+    let _orch = make_orchestrator();
     let imp = make_python_import("nonexistent_module", None);
     let files: HashSet<&str> = build_file_set(&["modules/test/src/test.py"]);
     let stem_index = build_stem_index(&["modules/test/src/test.py"]);
     let root = PathBuf::from(".");
     let result =
-        orch.resolve_import_target(&imp, "modules/test/src/test.py", &root, &files, &stem_index);
+        resolve_import_target(&imp, "modules/test/src/test.py", &root, &files, &stem_index);
     assert!(result.is_none(), "Should return None when no match found");
 }
 
@@ -196,14 +198,14 @@ fn test_python_no_match_returns_none() {
 fn test_python_stem_match_skips_self_import() {
     // A file must not resolve to itself via Strategy C (stem match).
     // Regression: self-import through stem match creates a self-loop edge.
-    let orch = make_orchestrator();
+    let _orch = make_orchestrator();
     let imp = make_python_import("capabilities_image_processing_processor", None);
     let files: HashSet<&str> =
         build_file_set(&["modules/image/src/capabilities_image_processing_processor.py"]);
     let stem_index =
         build_stem_index(&["modules/image/src/capabilities_image_processing_processor.py"]);
     let root = PathBuf::from(".");
-    let result = orch.resolve_import_target(
+    let result = resolve_import_target(
         &imp,
         "modules/image/src/capabilities_image_processing_processor.py",
         &root,
@@ -220,7 +222,7 @@ fn test_python_stem_match_skips_self_import() {
 fn test_python_stem_match_ambiguous_uses_member_dir() {
     // Two files share a stem in different members; the importing member should win.
     // Determinism: prefer the importing file's member dir, then lexicographic order.
-    let orch = make_orchestrator();
+    let _orch = make_orchestrator();
     let imp = make_python_import("capabilities_shared_processor", None);
     let files: HashSet<&str> = build_file_set(&[
         "modules/image/src/capabilities_shared_processor.py",
@@ -234,7 +236,7 @@ fn test_python_stem_match_ambiguous_uses_member_dir() {
     ]);
     let root = PathBuf::from(".");
     // Importing file lives in modules/image/src — should prefer modules/image's copy.
-    let result = orch.resolve_import_target(
+    let result = resolve_import_target(
         &imp,
         "modules/image/src/root_image_entry.py",
         &root,
@@ -543,7 +545,7 @@ fn test_root_relative_dot_slash_resolves() {
     // Root-level main.js declares `import "./x"` → x.js must resolve.
     // Regression: #921 — Path::new("").join("x") = "x" (works), but
     // Path::new("").join("../y") = "../y" (never matches clean relative keys).
-    let orch = make_orchestrator();
+    let _orch = make_orchestrator();
     let imp = ImportEntry {
         source_file: PathBuf::from("main.js"),
         raw_path: "./x".to_string(),
@@ -560,7 +562,7 @@ fn test_root_relative_dot_slash_resolves() {
     let files: HashSet<&str> = build_file_set(&["main.js", "x.js"]);
     let stem_index = build_stem_index(&["main.js", "x.js"]);
     let root = PathBuf::from(".");
-    let result = orch.resolve_import_target(&imp, "main.js", &root, &files, &stem_index);
+    let result = resolve_import_target(&imp, "main.js", &root, &files, &stem_index);
     assert_eq!(
         result,
         Some("x.js".to_string()),
@@ -573,7 +575,7 @@ fn test_root_relative_dotdot_resolves() {
     // Root-level main.js declares `import "../y"` → y.js must resolve.
     // Regression: #921 — Path::new("").join("../y") = "../y", which never
     // matches the clean key "y.js" in all_files_set.
-    let orch = make_orchestrator();
+    let _orch = make_orchestrator();
     let imp = ImportEntry {
         source_file: PathBuf::from("main.js"),
         raw_path: "../y".to_string(),
@@ -590,7 +592,7 @@ fn test_root_relative_dotdot_resolves() {
     let files: HashSet<&str> = build_file_set(&["main.js", "y.js"]);
     let stem_index = build_stem_index(&["main.js", "y.js"]);
     let root = PathBuf::from(".");
-    let result = orch.resolve_import_target(&imp, "main.js", &root, &files, &stem_index);
+    let result = resolve_import_target(&imp, "main.js", &root, &files, &stem_index);
     assert_eq!(
         result,
         Some("y.js".to_string()),

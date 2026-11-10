@@ -879,14 +879,13 @@ impl FilesystemOrchestrator {
                 &imp.source_file,
                 &top_root,
             );
-            let target_file =
-                shared_filesystem::utility_import_resolution::resolve_import_target(
-                    imp,
-                    &src_rel,
-                    &top_root,
-                    &all_files_set,
-                    &stem_index,
-                );
+            let target_file = shared_filesystem::utility_import_resolution::resolve_import_target(
+                imp,
+                &src_rel,
+                &top_root,
+                &all_files_set,
+                &stem_index,
+            );
             let mut entry = imp.clone();
             if let Some(tgt_rel) = &target_file {
                 entry.resolved_path = Some(PathBuf::from(tgt_rel));
