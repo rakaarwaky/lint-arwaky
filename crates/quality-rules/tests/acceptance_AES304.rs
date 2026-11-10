@@ -172,3 +172,175 @@ fn ts_ignore_detected() {
     );
     assert_eq!(violations.len(), 1);
 }
+
+// ── Python branch (UX-S4-002) ───────────────────────────────
+// The Python branch must use Python vocabulary — no `unimplemented!()`
+// (Rust macro) and no `Result::Err` (Rust type) in the message or fix.
+
+#[test]
+fn python_not_implemented_message_is_python_vocabulary() {
+    let content = "def f():\n    raise NotImplementedError\n";
+    let mut violations: Vec<LintResult> = Vec::new();
+    checker_with_patterns(&["unwrap"]).check_bypass_comments(
+        "src/lib.py",
+        content,
+        &mut violations,
+    );
+    assert_eq!(
+        violations.len(),
+        1,
+        "Python `raise NotImplementedError` must produce one AES304 finding"
+    );
+    let v = &violations[0];
+    assert!(v.code.code().contains("AES304"));
+    // UX-S4-002: no Rust-only vocabulary in the Python branch.
+    assert!(
+        !v.message.value.contains("unimplemented!()") && !v.message.value.contains("Result::Err"),
+        "Python message must not use Rust vocabulary, got: {}",
+        v.message.value
+    );
+    assert!(
+        !v.fix.contains("Result::Err") && !v.fix.contains("unimplemented!()"),
+        "Python fix must not use Rust vocabulary, got: {}",
+        v.fix
+    );
+    // The message names the Python token it detected.
+    assert!(
+        v.message.value.contains("NotImplementedError"),
+        "Python message must name the matched token, got: {}",
+        v.message.value
+    );
+}
+
+#[test]
+fn python_assert_false_message_is_python_vocabulary() {
+    let content = "def f():\n    assert False, 'bad'\n";
+    let mut violations: Vec<LintResult> = Vec::new();
+    checker_with_patterns(&["unwrap"]).check_bypass_comments(
+        "src/lib.py",
+        content,
+        &mut violations,
+    );
+    assert_eq!(violations.len(), 1);
+    let v = &violations[0];
+    assert!(
+        !v.message.value.contains("unimplemented!()")
+            && !v.message.value.contains("Result::Err")
+            && !v.fix.contains("Result::Err"),
+        "Python assert-False finding must not use Rust vocabulary, got: {} / fix: {}",
+        v.message.value,
+        v.fix
+    );
+    assert!(
+        v.message.value.contains("assert False"),
+        "Python message must name the matched token, got: {}",
+        v.message.value
+    );
+}
+
+// ── Kind naming (UX-S2-004 / UX-S3-003) ────────────────────
+// Every AES304 finding's message must open with its kind word so the kind is
+// visible in the copy, not just in the subtype field.
+
+#[test]
+fn unwrap_message_names_its_kind() {
+    let content = "let x = value.unwrap();\n";
+    let mut violations: Vec<LintResult> = Vec::new();
+    checker_with_patterns(&["unwrap"]).check_bypass_comments(
+        "src/lib.rs",
+        content,
+        &mut violations,
+    );
+    assert_eq!(violations.len(), 1);
+    let v = &violations[0];
+    assert!(
+        v.message.value.starts_with("UNWRAP_EXPECT"),
+        "unwrap finding must open with its kind, got: {}",
+        v.message.value
+    );
+    assert!(
+        v.message.value.contains("unwrap"),
+        "unwrap finding must name the matched token, got: {}",
+        v.message.value
+    );
+}
+
+#[test]
+fn panic_message_names_its_kind() {
+    let content = "fn f() { panic!(\"bad\"); }\n";
+    let mut violations: Vec<LintResult> = Vec::new();
+    checker_with_patterns(&["panic"]).check_bypass_comments("src/lib.rs", content, &mut violations);
+    assert_eq!(violations.len(), 1);
+    let v = &violations[0];
+    assert!(
+        v.message.value.starts_with("PANIC"),
+        "panic finding must open with its kind, got: {}",
+        v.message.value
+    );
+    assert!(
+        v.message.value.contains("panic"),
+        "panic finding must name the matched token, got: {}",
+        v.message.value
+    );
+}
+
+#[test]
+fn todo_message_names_its_kind() {
+    let content = "fn f() { todo!(); }\n";
+    let mut violations: Vec<LintResult> = Vec::new();
+    checker_with_patterns(&["todo"]).check_bypass_comments("src/lib.rs", content, &mut violations);
+    assert_eq!(violations.len(), 1);
+    let v = &violations[0];
+    assert!(
+        v.message.value.starts_with("TODO"),
+        "todo finding must open with its kind, got: {}",
+        v.message.value
+    );
+    assert!(
+        v.message.value.contains("todo"),
+        "todo finding must name the matched token, got: {}",
+        v.message.value
+    );
+}
+
+#[test]
+fn unimplemented_message_names_its_kind() {
+    let content = "fn f() { unimplemented!(); }\n";
+    let mut violations: Vec<LintResult> = Vec::new();
+    checker_with_patterns(&["unimplemented"]).check_bypass_comments(
+        "src/lib.rs",
+        content,
+        &mut violations,
+    );
+    assert_eq!(violations.len(), 1);
+    let v = &violations[0];
+    assert!(
+        v.message.value.starts_with("UNIMPLEMENTED"),
+        "unimplemented finding must open with its kind, got: {}",
+        v.message.value
+    );
+    assert!(
+        v.message.value.contains("unimplemented"),
+        "unimplemented finding must name the matched token, got: {}",
+        v.message.value
+    );
+}
+
+#[test]
+fn bypass_comment_message_names_its_kind() {
+    let content = "// FIXME: this is broken\nlet x = 1;\n";
+    let mut violations: Vec<LintResult> = Vec::new();
+    checker_with_patterns(&["fixme"]).check_bypass_comments("src/lib.rs", content, &mut violations);
+    assert_eq!(violations.len(), 1);
+    let v = &violations[0];
+    assert!(
+        v.message.value.starts_with("BYPASS_COMMENT"),
+        "bypass comment finding must open with its kind, got: {}",
+        v.message.value
+    );
+    assert!(
+        v.message.value.contains("fixme"),
+        "bypass comment finding must name the matched token, got: {}",
+        v.message.value
+    );
+}

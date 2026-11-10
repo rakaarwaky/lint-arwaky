@@ -84,9 +84,9 @@ impl IMandatoryClassProtocol for MandatoryDefinitionChecker {
                 0,
                 "AES303",
                 Severity::HIGH,
-                "File is missing a struct, interface, or type definition.",
+                "File declares no struct, enum, trait, class, interface or type.",
                 "MANDATORY_DEFINITION",
-                format!("File {} has no class/struct/enum/trait definition", file),
+                "Every source file must name at least one primary type so its responsibilities stay grouped and its public shape is discoverable.",
                 "Group functions into a struct or implement an interface.",
             ));
         }

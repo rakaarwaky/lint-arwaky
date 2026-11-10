@@ -7,6 +7,10 @@ use shared_quality_rules::utility_bypass_detector::skip_cfg_test_block;
 // PURPOSE: DeadInheritanceChecker — IDeadInheritanceProtocol for AES303 dead inheritance sub-check
 // Detects empty/placeholder definitions: unit structs without impl, empty Python classes,
 // empty JS/TS classes or interfaces.
+// NOTE: empty class/interface bodies are owned by this checker (sub-check 2),
+// not by the mandatory-definition sub-check (UX-S5-006). A Python/JS file
+// whose only top-level symbol is an empty class therefore produces a single
+// DEAD_INHERITANCE finding, not a MANDATORY_DEFINITION one.
 // ALGORITHM:
 //   1. Iterate lines; skip #[cfg(test)] blocks
 //   2. For each `struct Foo;` (unit struct) → flag unless followed by impl block or has derive

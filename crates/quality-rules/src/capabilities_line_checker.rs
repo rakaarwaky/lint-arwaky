@@ -1,6 +1,7 @@
 use shared_cli_commands::LintResult;
 use shared_quality_rules::contract_quality_protocol::ILineCheckerProtocol;
 
+use super::agent_quality_orchestrator::WHOLE_FILE;
 use shared_common::taxonomy_layer_vo::LayerDefinition;
 use shared_common::taxonomy_severity_vo::Severity;
 
@@ -64,44 +65,32 @@ impl ILineCheckerProtocol for ArchLineChecker {
         if def.code_analysis.min_lines.value > 0 && count < def.code_analysis.min_lines.value {
             violations.push(LintResult::new_arch_with_name(
                 file,
-                count as usize,
+                WHOLE_FILE,
                 "AES302",
                 Severity::HIGH,
                 format!(
-                    "File has {} lines, fewer than the minimum {} lines.",
-                    count, def.code_analysis.min_lines.value
-                ),
-                "FILE_TOO_SHORT",
-                format!(
-                    "File has {} lines, less than minimum {} lines",
-                    count, def.code_analysis.min_lines.value
-                ),
-                format!(
-                    "Expand the component or merge this logic into a related module. (min: {}).",
+                    "File has {count} lines, fewer than the minimum {} lines.",
                     def.code_analysis.min_lines.value
                 ),
+                "FILE_TOO_SHORT",
+                "A source file must carry enough implementation to be meaningful on its own; a stub invites logic to be scattered across call sites.",
+                "Expand the component or merge this logic into a related module.",
             ));
         }
 
         if def.code_analysis.max_lines.value > 0 && count > def.code_analysis.max_lines.value {
             violations.push(LintResult::new_arch_with_name(
                 file,
-                count as usize,
+                WHOLE_FILE,
                 "AES301",
                 Severity::HIGH,
                 format!(
-                    "File has {} lines, more than the maximum {} lines.",
-                    count, def.code_analysis.max_lines.value
-                ),
-                "FILE_TOO_LARGE",
-                format!(
-                    "File has {} lines, exceeding maximum {} lines",
-                    count, def.code_analysis.max_lines.value
-                ),
-                format!(
-                    "Split the module into smaller, more focused files. (max: {}).",
+                    "File has {count} lines, more than the maximum {} lines.",
                     def.code_analysis.max_lines.value
                 ),
+                "FILE_TOO_LARGE",
+                "One bloated file hides its responsibilities and makes review, testing, and focused refactoring harder.",
+                "Split the module into smaller, more focused files.",
             ));
         }
     }
