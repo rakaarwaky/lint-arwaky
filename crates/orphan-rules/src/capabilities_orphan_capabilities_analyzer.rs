@@ -99,28 +99,41 @@ impl ICapabilitiesOrphanProtocol for CapabilitiesOrphanAnalyzer {
 
         // Both conditions must be satisfied for non-orphan
         if is_reachable && is_wired {
-            return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
+            return OrphanIndicatorResult::not_orphan(Severity::LOW);
         }
 
-        // Build diagnostic message
-        let reason = if !is_reachable && !is_wired {
-            format!(
-                "AES503 CAPABILITIES_ORPHAN: '{}' is not reachable and not wired in any container.\nWHY: A capability without reachability or wiring cannot be invoked.\nFIX: Ensure '{}' is imported by an entry file and wired in root_*_container.",
-                stem, stem
-            )
+        // Build diagnostic message — one sentence ≤72 visible chars, no code prefix, no WHY:/FIX:.
+        let message = if !is_reachable && !is_wired {
+            format!("'{}' is unreachable and not wired in any container.", stem)
         } else if !is_reachable {
+            format!("'{}' is not reachable from any entry point.", stem)
+        } else {
+            format!("'{}' is reachable but not wired in any container.", stem)
+        };
+
+        let why = if !is_reachable && !is_wired {
+            "A capability without reachability or wiring cannot be invoked.".to_string()
+        } else if !is_reachable {
+            "A capability must be reachable from an entry point to be invoked.".to_string()
+        } else {
+            "A wired capability is required for dependency injection resolution.".to_string()
+        };
+
+        let fix = if !is_reachable && !is_wired {
             format!(
-                "AES503 CAPABILITIES_ORPHAN: '{}' is not reachable from any entry point.\nWHY: A capability must be reachable from an entry point to be invoked.\nFIX: Add an import from a surface, agent, or entry file.",
+                "Ensure '{}' is imported by an entry file and wired in root_*_container.",
                 stem
             )
+        } else if !is_reachable {
+            "Add an import from a surface, agent, or entry file.".to_string()
         } else {
             format!(
-                "AES503 CAPABILITIES_ORPHAN: '{}' is reachable but not wired in any container.\nWHY: A wired capability is required for dependency injection resolution.\nFIX: Import and register '{}' in root_*_container.rs or root_*_container.py.",
-                stem, stem
+                "Import and register '{}' in root_*_container.rs or root_*_container.py.",
+                stem
             )
         };
 
-        OrphanIndicatorResult::new(true, reason, Severity::MEDIUM)
+        OrphanIndicatorResult::orphan("CAPABILITIES_ORPHAN", message, why, fix, Severity::MEDIUM)
     }
 }
 

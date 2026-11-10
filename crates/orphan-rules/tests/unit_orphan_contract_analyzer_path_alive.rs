@@ -1,6 +1,6 @@
 // Unit tests for is_path_alive path reachability matching — helper on ContractOrphanAnalyzer
-use orphan_rules_lint_arwaky::capabilities_orphan_contract_analyzer::is_path_alive;
 use shared_common::taxonomy_path_vo::FilePath;
+use shared_orphan_rules::utility_orphan_paths::is_path_alive;
 use shared_quality_rules::taxonomy_quality_rules_vo::ReachabilityResult;
 use std::collections::HashSet;
 

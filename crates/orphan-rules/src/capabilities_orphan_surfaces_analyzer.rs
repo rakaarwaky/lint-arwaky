@@ -1,8 +1,9 @@
 use shared_common::taxonomy_layer_vo::LayerDefinition;
 use shared_common::taxonomy_path_vo::FilePath;
 use shared_common::taxonomy_severity_vo::Severity;
+use shared_orphan_rules::SURFACE_SEVERITY;
 use shared_orphan_rules::contract_orphan_protocol::ISurfacesOrphanProtocol;
-use shared_orphan_rules::utility_orphan_filename::{file_basename, file_stem, file_suffix};
+use shared_orphan_rules::utility_orphan_filename::{file_basename, file_stem};
 use shared_quality_rules::taxonomy_quality_rules_vo::{
     InboundLinkMap, OrphanIndicatorResult, ReachabilityResult,
 };
@@ -22,6 +23,7 @@ impl SurfacesOrphanAnalyzer {
         Self
     }
 }
+
 // ─── Block 2: Module Contract ────────────────
 
 impl ISurfacesOrphanProtocol for SurfacesOrphanAnalyzer {
@@ -36,46 +38,29 @@ impl ISurfacesOrphanProtocol for SurfacesOrphanAnalyzer {
         let fp_val = f.value();
         let basename = file_basename(fp_val);
         let stem = file_stem(fp_val);
-        let suffix = file_suffix(&basename);
-        let category = Self::surface_category(&suffix);
 
-        // FR-009: Unclassifiable suffixes → skipped (no orphan check)
-        if category == "unknown" {
-            return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
+        // FR-009: Unclassifiable extensions → skipped (no orphan check)
+        let extension = basename.rsplit('.').next().unwrap_or("");
+        if !matches!(extension, "rs" | "py" | "ts" | "js" | "md" | "txt") {
+            return OrphanIndicatorResult::not_orphan(Severity::LOW);
         }
 
         // Surface is the outermost layer — only 1 condition: reachability from _entry
         let is_reachable = alive_files.paths.contains(f);
         if is_reachable {
-            return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
+            return OrphanIndicatorResult::not_orphan(Severity::LOW);
         }
 
-        let severity = match category {
-            "smart" => Severity::HIGH,
-            "utility" => Severity::MEDIUM,
-            "passive" => Severity::LOW,
-            _ => Severity::MEDIUM,
-        };
+        let severity = SURFACE_SEVERITY;
 
-        OrphanIndicatorResult::new(
-            true,
-            format!(
-                "AES506 SURFACE_ORPHAN: {} surface '{}' is not reachable from any entry point.\nWHY: A surface without reachability cannot handle any command.\nFIX: Import '{}' in a root_*_entry file or ensure it's reachable via the import graph.",
-                category, stem, stem
-            ),
+        OrphanIndicatorResult::orphan(
+            "SURFACE_ORPHAN",
+            format!("'{}' surface is not reachable from any entry point.", stem),
+            "A surface without reachability cannot handle any command.",
+            format!("Import '{}' in a root_*_entry file.", stem),
             severity,
         )
     }
 }
 
 // ─── Block 3: Module Helpers ────────────
-
-impl SurfacesOrphanAnalyzer {
-    fn surface_category(suffix: &str) -> &'static str {
-        match suffix {
-            "rs" | "py" | "ts" | "js" => "smart",
-            "md" | "txt" => "passive",
-            _ => "utility",
-        }
-    }
-}

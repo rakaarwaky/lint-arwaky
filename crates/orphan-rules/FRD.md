@@ -33,6 +33,7 @@ flowchart TD
 - An empty graph shall yield an empty entry-point set and an empty alive set, with no error.
 - Unreadable tree nodes shall be skipped without crashing.
 - Missing entry points shall yield an empty alive set, causing all files to be classified as orphans downstream.
+- **UX-S1-001 (P0):** When no entry point is found at all and no `orphan_entry_points` pattern is configured, the orchestrator returns a single `AES501` finding with `violation_name = "NO_ENTRY_POINT"` for the scanned root and does not run the layer analyzers. Message: `"No entry point found under '<root>'."`.
 
 #### Technical Specification
 

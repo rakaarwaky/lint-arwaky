@@ -39,10 +39,18 @@ fn aes501_taxonomy_file_not_imported_is_orphan() {
         "taxonomy_color.rs with no importers should be orphan"
     );
     assert_eq!(result.severity, Severity::LOW);
-    assert!(
-        result.reason.contains("taxonomy_color"),
-        "Reason should mention the file stem"
+    assert_eq!(result.subtype, "TAXONOMY_ORPHAN");
+    assert_eq!(
+        result.message,
+        "'taxonomy_color' is a taxonomy file with no importer."
     );
+    assert!(result.message.chars().count() <= 72);
+    assert!(!result.message.starts_with("AES501"));
+    assert!(!result.message.contains("WHY:"));
+    assert!(!result.message.contains("FIX:"));
+    assert!(result.message.ends_with('.'));
+    assert!(!result.why.is_empty());
+    assert!(!result.fix.is_empty());
 }
 
 #[test]
@@ -71,8 +79,10 @@ fn aes501_taxonomy_file_imported_by_capabilities_is_not_orphan() {
     assert!(
         !result.is_orphan,
         "taxonomy_color.rs imported by capabilities should NOT be orphan, reason: {}",
-        result.reason
+        result.message
     );
+    assert_eq!(result.severity, Severity::LOW);
+    assert!(result.message.chars().count() <= 72);
 }
 
 #[test]
@@ -98,7 +108,9 @@ fn aes501_taxonomy_file_imported_by_agent_is_not_orphan() {
         &HashMap::new(),
         &reachable_for(&fp),
     );
-    assert!(!result.is_orphan, "reason: {}", result.reason);
+    assert!(!result.is_orphan, "reason: {}", result.message);
+    assert_eq!(result.severity, Severity::LOW);
+    assert!(result.message.chars().count() <= 72);
 }
 
 #[test]
@@ -128,7 +140,12 @@ fn aes501_taxonomy_file_only_imported_by_other_taxonomy_is_orphan() {
         result.is_orphan,
         "taxonomy file only imported by taxonomy should be orphan"
     );
-    assert!(result.reason.contains("taxonomy_size"));
+    assert_eq!(result.subtype, "TAXONOMY_ORPHAN");
+    assert_eq!(result.severity, Severity::LOW);
+    assert!(result.message.contains("taxonomy_size"));
+    assert!(result.message.chars().count() <= 72);
+    assert!(!result.why.is_empty());
+    assert!(!result.fix.is_empty());
 }
 
 #[test]
@@ -149,7 +166,12 @@ fn aes501_taxonomy_helper_suffix_categorized_as_utility() {
     );
     assert!(result.is_orphan);
     // The reason should still mention the stem
-    assert!(result.reason.contains("taxonomy_helper"));
+    assert!(result.message.contains("taxonomy_helper"));
+    assert_eq!(result.subtype, "TAXONOMY_ORPHAN");
+    assert_eq!(result.severity, Severity::LOW);
+    assert!(result.message.chars().count() <= 72);
+    assert!(!result.why.is_empty());
+    assert!(!result.fix.is_empty());
 }
 
 #[test]
@@ -169,6 +191,11 @@ fn aes501_taxonomy_utility_suffix_also_flagged() {
         &empty_reachability(),
     );
     assert!(result.is_orphan);
+    assert_eq!(result.subtype, "TAXONOMY_ORPHAN");
+    assert_eq!(result.severity, Severity::LOW);
+    assert!(result.message.chars().count() <= 72);
+    assert!(!result.why.is_empty());
+    assert!(!result.fix.is_empty());
 }
 
 #[test]
@@ -198,6 +225,8 @@ fn aes501_taxonomy_file_imported_by_surface_is_not_orphan() {
         !result.is_orphan,
         "taxonomy file imported by surface layer should NOT be orphan"
     );
+    assert_eq!(result.severity, Severity::LOW);
+    assert!(result.message.chars().count() <= 72);
 }
 
 #[test]
@@ -222,4 +251,37 @@ fn aes501_taxonomy_file_with_self_import_only_is_orphan() {
         &empty_reachability(),
     );
     assert!(result.is_orphan, "Self-import should still be orphan");
+    assert_eq!(result.subtype, "TAXONOMY_ORPHAN");
+    assert_eq!(result.severity, Severity::LOW);
+    assert!(result.message.chars().count() <= 72);
+    assert!(!result.why.is_empty());
+    assert!(!result.fix.is_empty());
+}
+
+#[test]
+fn aes501_message_is_one_sentence_no_prefix() {
+    let analyzer = taxonomy_analyzer();
+    let fp = FilePath::new("crates/shared/src/taxonomy_color.rs".to_string()).unwrap();
+    let root = FilePath::new(".".to_string()).unwrap();
+    let empty_map = InboundLinkMap::new(HashMap::new());
+
+    let result = analyzer.is_taxonomy_orphan(
+        &fp,
+        &root,
+        None,
+        &empty_map,
+        &[],
+        &HashMap::new(),
+        &empty_reachability(),
+    );
+    assert!(!result.message.starts_with("AES501"));
+    assert!(!result.message.contains("WHY:"));
+    assert!(!result.message.contains("FIX:"));
+    assert!(result.message.ends_with('.'));
+    assert_eq!(
+        result.message.chars().count(),
+        "'taxonomy_color' is a taxonomy file with no importer."
+            .chars()
+            .count()
+    );
 }

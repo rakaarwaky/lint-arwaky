@@ -2,12 +2,12 @@ use shared_common::taxonomy_path_vo::FilePath;
 use shared_common::taxonomy_severity_vo::Severity;
 use shared_orphan_rules::contract_orphan_protocol::IAgentOrphanProtocol;
 use shared_orphan_rules::taxonomy_orphan_rules_vo::FileParseResultVO;
-use shared_orphan_rules::utility_orphan_filename::content_contains_whole_word;
+use shared_orphan_rules::utility_orphan_filename::{content_contains_whole_word, file_stem};
+use shared_orphan_rules::utility_orphan_paths::paths_equivalent;
 use shared_quality_rules::taxonomy_quality_rules_vo::{OrphanIndicatorResult, ReachabilityResult};
 use std::collections::HashMap;
 
 // ─── Block 1: Module Declaration ────────────────────────────
-
 pub struct AgentOrphanAnalyzer;
 
 impl Default for AgentOrphanAnalyzer {
@@ -35,7 +35,7 @@ impl IAgentOrphanProtocol for AgentOrphanAnalyzer {
         let fp = f.value();
         let content = match content_map.get(fp).cloned().unwrap_or_default() {
             c if c.is_empty() => {
-                return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
+                return OrphanIndicatorResult::not_orphan(Severity::LOW);
             }
             c => c,
         };
@@ -43,21 +43,10 @@ impl IAgentOrphanProtocol for AgentOrphanAnalyzer {
         let aggregate_traits = self.extract_aggregate_traits(fp, &content);
 
         // Condition 1: not reachable from any _entry file
-        let fp_path = std::path::Path::new(fp);
-        let is_alive = alive_files.paths.iter().any(|af| {
-            let af_val = af.value();
-            if af_val == fp {
-                return true;
-            }
-            if let Some(af_path) = std::path::Path::new(af_val).file_name() {
-                if let Some(fp_file) = fp_path.file_name() {
-                    if af_path == fp_file {
-                        return true;
-                    }
-                }
-            }
-            af_val.ends_with(fp) || fp.ends_with(af_val)
-        });
+        let is_alive = alive_files
+            .paths
+            .iter()
+            .any(|af| paths_equivalent(fp, af.value()));
 
         // Condition 2: not wired in container — check aggregate traits
         let is_wired = if !aggregate_traits.is_empty() {
@@ -88,29 +77,42 @@ impl IAgentOrphanProtocol for AgentOrphanAnalyzer {
 
         // Both conditions must be satisfied for non-orphan
         if is_alive && is_wired {
-            return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
+            return OrphanIndicatorResult::not_orphan(Severity::LOW);
         }
 
-        // Build diagnostic message
-        let filename = shared_common::utility_architecture_layer_detector::extract_filename(fp);
-        let reason = if !is_alive && !is_wired {
+        // Build diagnostic message — one sentence ≤72 visible chars, no code prefix, no WHY:/FIX:.
+        let stem = file_stem(fp);
+        let message = if !is_alive && !is_wired {
+            format!("'{}' is unreachable and not wired in any container.", stem)
+        } else if !is_alive {
+            format!("'{}' is not reachable from any entry point.", stem)
+        } else {
+            format!("'{}' is reachable but not wired in any container.", stem)
+        };
+
+        let why = if !is_alive && !is_wired {
+            "An agent without reachability or wiring cannot coordinate feature flow.".to_string()
+        } else if !is_alive {
+            "An unreachable agent cannot be invoked.".to_string()
+        } else {
+            "A wired agent is required for dependency injection resolution.".to_string()
+        };
+
+        let fix = if !is_alive && !is_wired {
             format!(
-                "AES505 AGENT_ORPHAN: '{}' is not reachable and not wired in any container.\nWHY: An agent without reachability or wiring cannot coordinate feature flow.\nFIX: Import '{}' in a surface/entry file and wire it in root_*_container.",
-                filename, filename
+                "Import '{}' in a surface/entry file and wire it in root_*_container.",
+                stem
             )
         } else if !is_alive {
-            format!(
-                "AES505 AGENT_ORPHAN: '{}' is not reachable from any entry point.\nWHY: An unreachable agent cannot be invoked.\nFIX: Import '{}' in a surface, capability, or entry file.",
-                filename, filename
-            )
+            format!("Import '{}' in a surface, capability, or entry file.", stem)
         } else {
             format!(
-                "AES505 AGENT_ORPHAN: '{}' is reachable but not wired in any container.\nWHY: A wired agent is required for dependency injection resolution.\nFIX: Register '{}' in root_*_container.rs or root_*_container.py.",
-                filename, filename
+                "Register '{}' in root_*_container.rs or root_*_container.py.",
+                stem
             )
         };
 
-        OrphanIndicatorResult::new(true, reason, Severity::HIGH)
+        OrphanIndicatorResult::orphan("AGENT_ORPHAN", message, why, fix, Severity::HIGH)
     }
 }
 
