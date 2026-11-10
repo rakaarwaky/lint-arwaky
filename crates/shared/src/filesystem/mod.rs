@@ -6,6 +6,7 @@ pub mod contract_filesystem_protocol;
 pub mod taxonomy_filesystem_request;
 pub mod taxonomy_filesystem_response;
 pub mod taxonomy_filesystem_vo;
+pub mod utility_agent_filesystem;
 pub mod utility_ast_python;
 pub mod utility_ast_rust;
 pub mod utility_ast_typescript;
