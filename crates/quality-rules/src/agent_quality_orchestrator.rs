@@ -25,11 +25,11 @@ use rayon::prelude::*;
 use shared_cli_commands::LintResult;
 
 use shared_quality_rules::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
-use shared_quality_rules::contract_quality_protocol::IBypassCheckerProtocol;
 use shared_quality_rules::contract_quality_protocol::ICodeMetricAnalyzerProtocol;
 use shared_quality_rules::contract_quality_protocol::IDeadInheritanceProtocol;
 use shared_quality_rules::contract_quality_protocol::ILineCheckerProtocol;
 use shared_quality_rules::contract_quality_protocol::IMandatoryClassProtocol;
+use shared_quality_rules::contract_quality_protocol::{IBypassCheckerProtocol, WHOLE_FILE};
 use shared_quality_rules::taxonomy_quality_rules_request::CodeAnalysisRequest;
 use shared_quality_rules::taxonomy_quality_rules_response::CodeAnalysisResponse;
 use shared_quality_rules::taxonomy_quality_rules_vo::AesCodeAnalysisViolation;
@@ -46,12 +46,6 @@ use shared_quality_rules::utility_violation_formatter::format_code_analysis_viol
 use std::sync::Arc;
 
 // ─── Block 1: Module Declaration ───────────────────────────
-
-/// Whole-file line marker (UX-S5-003). Findings about a file as a whole —
-/// AES301/AES302 line counts, AES303 missing definition, AES305 duplication
-/// share — carry this line instead of an invented location; the renderer
-/// prints "file" for line 0.
-pub const WHOLE_FILE: usize = 0;
 
 /// Per-rule enabled state for one analysis run.
 ///

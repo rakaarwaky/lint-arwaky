@@ -59,16 +59,6 @@ Last Updated: 2026-11-10
 | Aspect | Detail |
 | -------------- | --------------------------------------------- |
 | State | Ready |
-| Done | QualityRules |
-| In Progress | None |
-| Risk | None |
-| Updated | 2026-11-10 |
-
-### FR-QualityRules-006
-
-| Aspect | Detail |
-| -------------- | --------------------------------------------- |
-| State | Ready |
 | Done | Per-rule `enabled` flags honoured by the orchestrator (`RuleEnabled`); `skipped_names()` names the rules that did not run |
 | In Progress | None |
 | Risk | None |

@@ -254,7 +254,10 @@ impl CodeDuplicationAnalyzer {
         // of them. One pass over the distinct shared windows is enough to
         // join the whole cluster.
         for &fi in &flagged {
-            let fired = flags[fi].unwrap().fired;
+            let Some(flag) = &flags[fi] else {
+                continue;
+            };
+            let fired = flag.fired;
             let positions = if fired == "identical" {
                 &raw_positions
             } else {
@@ -302,7 +305,9 @@ impl CodeDuplicationAnalyzer {
             let mut sorted_files = group_files.clone();
             sorted_files.sort_by(|&a, &b| entries[a].0.cmp(entries[b].0));
             let anchor = sorted_files[0];
-            let anchor_flag = flags[anchor].unwrap();
+            let Some(anchor_flag) = flags[anchor] else {
+                continue;
+            };
             let anchor_path = entries[anchor].0;
 
             let others: Vec<String> = sorted_files[1..]

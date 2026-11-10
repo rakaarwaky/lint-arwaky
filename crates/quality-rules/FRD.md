@@ -30,9 +30,9 @@ The check command runs all 8 linter groups by default; restrict to the quality s
 **First-run output (text formatter, `check` command):**
 
 ```text
-  [HIGH] AES301 src/agent_orchestrator.rs:file  File has 1420 lines, more than the maximum 1000 lines.
-  [CRIT] AES304 src/capabilities_order_validator.rs:42  UNWRAP_EXPECT: forbidden `unwrap` call detected.
-  [MED]  AES305 src/capabilities_order_validator.rs:file  82% of this file's code appears in another file (the limit is 75%). Also duplicated in src/capabilities_payment_validator.rs. Blocks: lines 12-40 duplicated in src/capabilities_payment_validator.rs:lines 10-38; lines 88-101 duplicated in src/capabilities_payment_validator.rs:lines 80-95
+  [HIGH] AES301 src/agent_orchestrator:file  File has 1420 lines, more than the maximum 1000 lines.
+  [CRIT] AES304 src/order_validator:42  UNWRAP_EXPECT: forbidden `unwrap` call detected.
+  [MED]  AES305 src/order_validator:file  82% of this file's code appears in another file (the limit is 75%). Also duplicated in src/payment_validator. Blocks: lines 12-40 duplicated in src/payment_validator:lines 10-38; lines 88-101 duplicated in src/payment_validator:lines 80-95
 ```
 
 **Summary view (`report` command, when a baseline snapshot exists):**
@@ -97,7 +97,7 @@ One expected text-formatter line per code (badge, code, file:line, message):
 | AES303 (mandatory) | `[HIGH] AES303 src/capabilities_helpers:file  File declares no struct, enum, trait, class, interface or type.` |
 | AES303 (dead inheritance) | `[MED] AES303 src/capabilities_node:14  Unit struct without impl or derive` |
 | AES304 (unwrap) | `[CRIT] AES304 src/order_validator:42  UNWRAP_EXPECT: forbidden \`unwrap\` call detected.` |
-| AES304 (Python) | `[CRIT] AES304 src/utility_calc:9  UNIMPLEMENTED: \`raise NotImplementedError\` leaves the method unimplemented.` |
+| AES304 (Python) | `[CRIT] AES304 src/utility_calc:9  Unreachable-body marker \`raise NotImplementedError\` leaves the method without a body.` |
 | AES305 | `[MED] AES305 src/order_validator:file  AES305 (similar): 82% of this file's code appears in another file (the limit is 75%). Also duplicated in src/payment_validator. Blocks: lines 12-40 duplicated in src/payment_validator:lines 10-38 (+1 more)` |
 
 ### Progress & Cancellation Contract
@@ -109,23 +109,25 @@ The quality-rules analysis stage shall run as a single synchronous pass over the
 3. **QualityAnalysisFinished** — implicit on `execute` returning `CodeAnalysisResponse::Analysis { violations }`; the violation list is the result.
 4. **Cancellation** — the analysis is a single synchronous pass over the pre-fetched file set; it cannot be cancelled mid-pass. If the caller drops the request, the in-flight pass completes and its partial findings are discarded; no partial-finding event is emitted.
 
-**Forward contract:** the named events above (`QualityAnalysisStarted`, `QualityAnalysisProgress`, `QualityAnalysisFinished`) are the intended event vocabulary for a future asynchronous progress/cancellation pass. They are **not** yet wired into the current synchronous analysis, which emits no progress or lifecycle events. This section documents the target behaviour, not the present one.
-
 ## Functional Requirements
 
-### FR-QualityRules-001: Maximum File Line Count (AES301)
+### FR-QualityRules-001: File Line Count Limits (AES301 & AES302)
 
-**Description:** The quality-rules feature shall flag source files whose line count exceeds the configured maximum, and shall allow files at or below the limit.
+**Description:** The quality-rules feature shall flag source files whose line count exceeds the configured maximum (AES301) or falls below the configured minimum (AES302), and shall allow files at or within both limits.
 
 #### Business Logic
 
 - The AES301 check shall fire a `FileTooLarge` violation when a file's line count is above the configured maximum.
 - The violation message shall contain both the observed line count and the limit for diagnosis.
-- Files whose line count is exactly at the limit shall pass without a finding.
+- Files whose line count is exactly at the maximum shall pass without a finding.
+- The AES302 check shall fire a `FileTooShort` violation when a file's line count is under the configured minimum.
+- Files whose line count is exactly at the minimum shall pass without a finding.
 
 #### Edge Cases
 
-- A file one line over the limit shall produce a `FileTooLarge` finding; a file at the limit shall produce none.
+- A file one line over the maximum shall produce a `FileTooLarge` finding; a file at the maximum shall produce none.
+- A file one line under the minimum shall produce a `FileTooShort` finding; a file at the minimum shall produce none.
+- An empty file counts as below the minimum and shall produce a finding. The orchestrator emits a single `FileTooShort` finding ("File is empty or unparseable, fewer than the minimum N lines.") for a file whose content is empty or that failed to parse, and skips the remaining per-file rules for that file.
 - An unreadable file shall yield no finding rather than failing the analysis.
 - An empty scan set shall yield no findings.
 
@@ -134,7 +136,7 @@ The quality-rules analysis stage shall run as a single synchronous pass over the
 | Aspect | Detail |
 |--------|--------|
 | **Input** | File path plus content; source is `CodeAnalysisRequest::RunAnalysis` via `ICodeAnalysisAggregate::execute`. |
-| **Output** | A `FileTooLarge` violation inside `CodeAnalysisResponse::Analysis`. |
+| **Output** | A `FileTooLarge` (AES301) or `FileTooShort` (AES302) violation inside `CodeAnalysisResponse::Analysis`. |
 | **Protocol** | `ILineCheckerProtocol` |
 | **Method** | `check_line_counts` |
 | **Event** | See the Progress & Cancellation Contract above; the stage is synchronous and fires no per-finding events. |
@@ -146,58 +148,20 @@ The quality-rules analysis stage shall run as a single synchronous pass over the
 |---------|-------------|------------------------|
 | A source file exceeds the configured maximum | The quality-rules audit runs AES301 on that file | One `FileTooLarge` finding is produced and its message contains the observed line count and the limit |
 | A source file sits exactly at the configured maximum | The quality-rules audit runs AES301 on that file | No finding is produced |
-| The file content cannot be read | The quality-rules audit runs AES301 on that path | No finding is produced and the analysis continues |
-
-#### Metric
-
-| Target Metric | Value |
-|---------------|-------|
-| Findings per oversized file seeded into the scan | Exactly 1 |
-| Findings for an at-limit file | 0 |
-
-### FR-QualityRules-002: Minimum File Line Count (AES302)
-
-**Description:** The quality-rules feature shall flag source files whose line count falls below the configured minimum, and shall allow files at or above the limit.
-
-#### Business Logic
-
-- The AES302 check shall fire a `FileTooShort` violation when a file's line count is under the configured minimum.
-- The violation message shall contain both the observed line count and the limit for diagnosis.
-- Files whose line count is exactly at the minimum shall pass without a finding.
-
-#### Edge Cases
-
-- A file one line under the minimum shall produce a `FileTooShort` finding; a file at the minimum shall produce none.
-- An empty file counts as below the minimum and shall produce a finding. The orchestrator emits a single `FileTooShort` finding ("File is empty or unparseable, fewer than the minimum N lines.") for a file whose content is empty or that failed to parse, and skips the remaining per-file rules for that file.
-- An unreadable file yields no finding for a rule other than the empty-file `FileTooShort` case above, and never fails the analysis.
-
-#### Technical Specification
-
-| Aspect | Detail |
-|--------|--------|
-| **Input** | File path plus content; source is `CodeAnalysisRequest::RunAnalysis`. |
-| **Output** | A `FileTooShort` violation inside `CodeAnalysisResponse::Analysis`. |
-| **Protocol** | `ILineCheckerProtocol` |
-| **Method** | `check_line_counts` |
-| **Event** | See the Progress & Cancellation Contract above; the stage is synchronous and fires no per-finding events. |
-| **Error** | An unreadable file reports no finding rather than failing the analysis. |
-
-#### Test
-
-| Context | When Action | Then Observable Result |
-|---------|-------------|------------------------|
 | A source file is under the configured minimum | The quality-rules audit runs AES302 on that file | One `FileTooShort` finding is produced and its message contains the observed line count and the limit |
 | A source file sits exactly at the configured minimum | The quality-rules audit runs AES302 on that file | No finding is produced |
 | An empty file is scanned | The quality-rules audit runs AES302 on that file | One `FileTooShort` finding is produced |
+| The file content cannot be read | The quality-rules audit runs AES301 or AES302 on that path | No finding is produced and the analysis continues |
 
 #### Metric
 
 | Target Metric | Value |
 |---------------|-------|
-| Findings per undersized file seeded into the scan | Exactly 1 |
-| Findings for an at-minimum file | 0 |
+| Findings per oversized file seeded into the scan | Exactly 1 `FileTooLarge` |
+| Findings per undersized file seeded into the scan | Exactly 1 `FileTooShort` |
+| Findings for an at-limit or at-minimum file | 0 |
 
-### FR-QualityRules-003: Mandatory Definitions & Dead Inheritance (AES303)
+### FR-QualityRules-002: Mandatory Definitions & Dead Inheritance (AES303)
 
 **Description:** The quality-rules feature shall require a mandatory top-level definition in every source file and shall flag declared types that are never given a body.
 
@@ -240,13 +204,13 @@ The quality-rules analysis stage shall run as a single synchronous pass over the
 | Findings per definition-miss fixture seeded into the scan | Exactly 1 |
 | Findings per struct-without-impl fixture | Exactly 1 `DeadInheritance` |
 
-### FR-QualityRules-004: Bypass Detection (AES304)
+### FR-QualityRules-003: Bypass Detection (AES304)
 
 **Description:** The quality-rules feature shall detect bypass annotations and panic-style shortcuts that dodge quality checks, and shall count each occurrence as its own finding.
 
 #### Business Logic
 
-- The AES304 check shall fire one finding per occurrence for each bypass kind: `UNWRAP_EXPECT`, `PANIC`, `TODO`, `UNIMPLEMENTED`, and `BYPASS_COMMENT`.
+- The AES304 check shall fire one finding per occurrence for each bypass kind: `UNWRAP_EXPECT`, `PANIC`, `TODO`, `BYPASS_COMMENT`, and dead-body markers.
 - Each finding message shall open with its kind word and name the matched token or phrase, from one shared vocabulary across the five kinds.
 - Language-scoped phrase patterns (Python `raise NotImplementedError` / `assert False`, JS/TS `throw new ...`) shall use that language's own vocabulary in the message and fix, not Rust-only terms.
 - A file with no bypass markers shall produce no AES304 finding.
@@ -255,7 +219,7 @@ The quality-rules analysis stage shall run as a single synchronous pass over the
 
 - Multiple bypass sites in one file shall each fire a finding.
 - A comment-only todo marker shall flag the `TODO` kind; its message opens with `TODO` and names the matched token.
-- An unreachable-body marker (`unimplemented!`, `unreachable!`, Python `raise NotImplementedError`) shall fire a `UNIMPLEMENTED` finding; the Python variant's message and fix use Python vocabulary, not `unimplemented!()` or `Result::Err`.
+- An unreachable-body marker (`unreachable!`, Python `raise NotImplementedError`) shall fire a dead-body-marker finding; its message and fix use Python vocabulary, not Rust macro wording.
 - An unreadable file shall yield no finding rather than failing the analysis.
 
 #### Technical Specification
@@ -263,7 +227,7 @@ The quality-rules analysis stage shall run as a single synchronous pass over the
 | Aspect | Detail |
 |--------|--------|
 | **Input** | File content plus path; source is `CodeAnalysisRequest::RunAnalysis`. |
-| **Output** | Violations of kind `UNWRAP_EXPECT`, `PANIC`, `TODO`, `UNIMPLEMENTED`, or `BYPASS_COMMENT` inside `CodeAnalysisResponse::Analysis`. |
+| **Output** | Violations of kind `UNWRAP_EXPECT`, `PANIC`, `TODO`, `BYPASS_COMMENT`, and dead-body markers inside `CodeAnalysisResponse::Analysis`. |
 | **Protocol** | `IBypassCheckerProtocol` |
 | **Method** | `check_bypass_comments` |
 | **Event** | See the Progress & Cancellation Contract above; the stage is synchronous and fires no per-finding events. |
@@ -275,7 +239,7 @@ The quality-rules analysis stage shall run as a single synchronous pass over the
 |---------|-------------|------------------------|
 | A file contains one panic-style call | The quality-rules audit runs AES304 on that file | One `PANIC` finding is produced; its message opens with `PANIC` and names the matched token |
 | A file contains two bypass suppression comments | The quality-rules audit runs AES304 on that file | Two `BYPASS_COMMENT` findings are produced |
-| A Python method body is `raise NotImplementedError` | The quality-rules audit runs AES304 on that file | One `UNIMPLEMENTED` finding is produced; its message and fix use Python vocabulary, with no `unimplemented!()` or `Result::Err` wording |
+| A Python method body is `raise NotImplementedError` | The quality-rules audit runs AES304 on that file | One dead-body-marker finding is produced; its message and fix use Python vocabulary, with no `Result::Err` wording |
 | A clean file is scanned | The quality-rules audit runs AES304 on that file | No AES304 finding is produced |
 
 #### Metric
@@ -285,7 +249,7 @@ The quality-rules analysis stage shall run as a single synchronous pass over the
 | Findings per bypass occurrence seeded into the scan | Exactly 1, of the matching kind |
 | Findings for a clean file | 0 |
 
-### FR-QualityRules-005: Duplicate Code Detection (AES305)
+### FR-QualityRules-004: Duplicate Code Detection (AES305)
 
 **Description:** The quality-rules feature shall detect excessive code duplication across the scanned file set, and shall group near-identical files into a single finding.
 
@@ -329,7 +293,7 @@ The quality-rules analysis stage shall run as a single synchronous pass over the
 | Findings per seeded clone pair | Exactly 1 `CodeDuplication` |
 | Findings for a distinct-file fixture set | 0 |
 
-### FR-QualityRules-006: Per-Rule Enable Flags (UX-S5-002)
+### FR-QualityRules-005: Per-Rule Enable Flags (UX-S5-002)
 
 **Description:** The quality-rules feature shall honour each rule's own `enabled` flag in addition to the global `config.enabled` switch, and shall name the rules that did not run in the analysis summary.
 
