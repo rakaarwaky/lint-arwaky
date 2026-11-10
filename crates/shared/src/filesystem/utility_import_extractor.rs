@@ -127,9 +127,14 @@ pub fn extract_imports(
             extract_from_node(tree.root_node(), content, path, language, &mut imports);
         }
         None => {
+            // .tsx files need the TSX grammar (JSX support); plain TS files
+            // use the TypeScript grammar.
             let grammar = match language {
                 Language::Rust => tree_sitter_rust::LANGUAGE,
                 Language::Python => tree_sitter_python::LANGUAGE,
+                Language::TypeScript if path.extension().and_then(|e| e.to_str()) == Some("tsx") => {
+                    tree_sitter_typescript::LANGUAGE_TSX
+                }
                 Language::TypeScript => tree_sitter_typescript::LANGUAGE_TYPESCRIPT,
                 Language::JavaScript => tree_sitter_javascript::LANGUAGE,
                 Language::Unknown => return Vec::new(),
