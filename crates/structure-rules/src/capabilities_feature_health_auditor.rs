@@ -2,7 +2,7 @@
 
 use shared_structure_rules::utility_structure_parsers;
 
-use shared_structure_rules::utility_structure_parsers::{find_workspace_root, sorted};
+use shared_structure_rules::utility_structure_parsers::{find_workspace_root, rel_posix, sorted};
 
 use shared_structure_rules::contract_structure_protocol::IStructureFeatureHealthProtocol;
 use shared_structure_rules::taxonomy_structure_rules_constant as consts;
@@ -42,7 +42,7 @@ impl IStructureFeatureHealthProtocol for FeatureHealthAuditor {
                 if !inventory.has_capabilities && !inventory.has_orchestrator {
                     continue;
                 }
-                let folder_rel = relative_posix(&folder, &ws_root);
+                let folder_rel = rel_posix(&folder, &ws_root);
                 check_feature_folder(
                     &folder,
                     &folder_rel,
@@ -79,18 +79,9 @@ fn folder_name(folder: &std::path::Path) -> String {
         .to_string()
 }
 
-/// Render *path* relative to *ws_root* with POSIX separators, falling back to
-/// the full path (still POSIX-separated) when it is not beneath the root.
-fn relative_posix(path: &std::path::Path, ws_root: &std::path::Path) -> String {
-    match path.strip_prefix(ws_root) {
-        Ok(p) => p.to_string_lossy().replace('\\', "/"),
-        Err(_) => path.to_string_lossy().replace('\\', "/"),
-    }
-}
-
-/// AES702 — a feature folder carries capabilities and agents, has no foreign
-/// layer files (utility, surface, taxonomy, contract), and documents itself
-/// with FRD.md + BACKLOG.md.
+/// AES702 — a feature folder carries capabilities and agents,
+/// has no foreign layer files (utility, surface, taxonomy, contract), and
+/// documents itself with FRD.md + BACKLOG.md.
 fn check_feature_folder(
     folder: &std::path::Path,
     rel: &str,
@@ -145,8 +136,8 @@ fn check_feature_folder(
                 ),
             )
             .with_reason(
-                "The root container wires the feature's capabilities to contracts and is the only layer that may depend on everything below; without it the feature has no composition home.",
-                "Add a root_<concept>_container file to the feature folder, its 'src/' subfolder, or the member root that wires the folder's capabilities to their contracts.",
+                "The root container wires the feature's capabilities to contracts and is the only layer that may depend on everything below.",
+                "Add a root_<concept>_container file to the feature folder, its 'src/' subfolder, or the member root that wires the folder's capabilities to their contracts. `<concept>` substitutes the feature's own concept name.",
             ),
         );
     }
@@ -200,10 +191,7 @@ fn check_feature_docs(folder: &std::path::Path, rel: &str, findings: &mut Vec<St
 
 /// Reverse direction of AES702: a feature folder holding a feature doc pair
 /// must hold an orchestrator. A surface folder carrying DESIGN.md + BACKLOG.md
-/// is not subject to this check. Called only for folders that pass the
-/// feature-folder gate (hold at least one `capabilities_*` or `agent_*`
-/// file), so a non-agent surface or TS package folder that merely carries
-/// FRD.md + BACKLOG.md is never reached.
+/// is not subject to this check.
 fn check_reverse_doc_orchestrator(
     folder: &std::path::Path,
     rel: &str,
