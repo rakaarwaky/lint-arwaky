@@ -269,14 +269,25 @@ pub fn handle_naming(params: NamingCommandParams) -> ExitCode {
         params.filesystem.clone(),
         &params.ignored_paths,
     ) {
-        Ok(mut violations) => {
+        Ok(outcome) => {
+            let mut violations = outcome.violations;
             filter_by_layer(&mut violations, &params.layer);
+            let format = format_as_str(params.format);
             output_violations(
                 &violations,
                 &root,
-                format_as_str(params.format),
+                format,
                 is_member(&params.path, &params.filesystem_seam),
             );
+            // The summary is text: a machine-readable format must stay
+            // machine-readable, so the counts are printed only for the text
+            // surface.
+            if format == "text" {
+                print!(
+                    "{}",
+                    shared_naming_rules::render_naming_summary(&outcome.stats, &violations)
+                );
+            }
             exit_for(violations.len())
         }
         Err(e) => {

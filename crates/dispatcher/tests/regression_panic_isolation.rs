@@ -135,6 +135,7 @@ impl shared_naming_rules::INamingRunnerAggregate for CleanNaming {
     ) -> shared_naming_rules::NamingResponse {
         shared_naming_rules::NamingResponse::Audit {
             violations: Vec::new(),
+            stats: shared_naming_rules::NamingAuditStats::default(),
         }
     }
 }

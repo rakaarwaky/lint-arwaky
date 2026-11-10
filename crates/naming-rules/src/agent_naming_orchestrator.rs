@@ -10,11 +10,12 @@ use shared_naming_rules::contract_naming_checker_protocol::{
 };
 use shared_naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
 use shared_naming_rules::contract_test_file_prefix_protocol::ITestFilePrefixProtocol;
+use shared_naming_rules::taxonomy_naming_audit_stats_vo::NamingAuditStats;
 use shared_naming_rules::taxonomy_naming_rules_request::NamingRequest;
 use shared_naming_rules::taxonomy_naming_rules_response::NamingResponse;
 use std::sync::Arc;
 
-// ─── Block 1: Module Declaration ───────────────────────────
+// ─── Block 1: Module Declaration ──────────────────────────────
 
 pub struct NamingOrchestratorDeps {
     pub naming_convention: Arc<dyn INamingConventionProtocol>,
@@ -38,7 +39,10 @@ impl NamingOrchestrator {
     }
 
     /// Run audit on pre-parsed file entries from the filesystem crate.
-    fn run_audit_with_entries(&self, files: &[FileEntry]) -> Vec<ViolationItem> {
+    fn run_audit_with_entries(
+        &self,
+        files: &[FileEntry],
+    ) -> (Vec<ViolationItem>, NamingAuditStats) {
         self.run_audit_over(
             &FilePathList::new(Self::paths_of(files)),
             &FilePathList::default(),
@@ -48,25 +52,30 @@ impl NamingOrchestrator {
     /// AES101/AES102 read *source*; AES103 reads *tests*. Both file sets come
     /// from the caller because only the filesystem walk knows which directories
     /// the default skip list prunes.
-    fn run_audit_over(&self, source: &FilePathList, tests: &FilePathList) -> Vec<ViolationItem> {
-        // Naming checks are path-only — do NOT skip parse failures.
-        // `content.is_empty()` is used as a proxy for "unreadable" per the FRD glossary.
-        // If the filesystem crate adds a separate error field in the future,
-        // this filter should also check `parse_ok == false`.
+    fn run_audit_over(
+        &self,
+        source: &FilePathList,
+        tests: &FilePathList,
+    ) -> (Vec<ViolationItem>, NamingAuditStats) {
+        // Naming checks are path-only: the rules read the file name, never the
+        // body. A file with no content still has a name, so it is judged like
+        // any other — dropping it here would let a zero-byte file with a
+        // broken name pass as clean, which is the one state a naming audit
+        // must never report as clean.
         let root = FilePath::new(".".to_string()).unwrap_or_default();
         self.run_checks(source, tests, &root)
     }
 
-    /// The paths of every entry carrying content, as the rule checkers read them.
+    /// The path of every entry, as the rule checkers read them.
     ///
-    /// The `content.is_empty()` guard is the FRD's "unreadable" proxy; a file
-    /// with no body cannot be judged, and reporting on it would only produce
-    /// noise. It lives on the orchestrator because AES405 forbids a free
+    /// Every entry counts, whatever its content: a file whose body is empty
+    /// still carries a name, and the name is what these rules judge. Only a
+    /// path the path type rejects is dropped, because a rule cannot read it.
+    /// The function lives on the orchestrator because AES405 forbids a free
     /// function in an agent file.
     fn paths_of(files: &[FileEntry]) -> Vec<FilePath> {
         files
             .iter()
-            .filter(|f| !f.content.is_empty())
             .filter_map(|f| FilePath::new(f.path.to_string_lossy().to_string()).ok())
             .collect()
     }
@@ -86,8 +95,9 @@ impl NamingOrchestrator {
         files: &FilePathList,
         test_files: &FilePathList,
         root_dir: &FilePath,
-    ) -> Vec<ViolationItem> {
+    ) -> (Vec<ViolationItem>, NamingAuditStats) {
         let mut results: Vec<ViolationItem> = Vec::new();
+        let mut stats = NamingAuditStats::default();
 
         if Self::is_rule_enabled(&self.deps.config, "AES101") {
             let mut naming_results = Vec::<ViolationItem>::new();
@@ -98,6 +108,7 @@ impl NamingOrchestrator {
                 root_dir,
                 &mut naming_results,
             );
+            stats.aes101_inspected = files.values.len();
             results.extend(naming_results);
         }
 
@@ -110,6 +121,7 @@ impl NamingOrchestrator {
                 root_dir,
                 &mut suffix_results,
             );
+            stats.aes102_inspected = files.values.len();
             results.extend(suffix_results);
         }
 
@@ -122,10 +134,11 @@ impl NamingOrchestrator {
                 root_dir,
                 &mut prefix_results,
             );
+            stats.aes103_inspected = test_files.values.len();
             results.extend(prefix_results);
         }
 
-        results
+        (results, stats)
     }
 }
 // ─── Block 2: Module Contract ──────────────
@@ -133,18 +146,20 @@ impl NamingOrchestrator {
 impl INamingRunnerAggregate for NamingOrchestrator {
     fn execute(&self, request: NamingRequest) -> NamingResponse {
         match request {
-            NamingRequest::RunAuditWithEntries { files } => NamingResponse::Audit {
-                violations: self.run_audit_with_entries(&files),
-            },
+            NamingRequest::RunAuditWithEntries { files } => {
+                let (violations, stats) = self.run_audit_with_entries(&files);
+                NamingResponse::Audit { violations, stats }
+            }
             NamingRequest::RunAuditWithTestEntries {
                 source_files,
                 test_files,
-            } => NamingResponse::Audit {
-                violations: self.run_audit_over(
+            } => {
+                let (violations, stats) = self.run_audit_over(
                     &FilePathList::new(Self::paths_of(&source_files)),
                     &FilePathList::new(Self::paths_of(&test_files)),
-                ),
-            },
+                );
+                NamingResponse::Audit { violations, stats }
+            }
             NamingRequest::Name => NamingResponse::Name {
                 name: self.name().to_string(),
             },
@@ -152,4 +167,4 @@ impl INamingRunnerAggregate for NamingOrchestrator {
     }
 }
 
-// ─── Block 3: Module Helpers ──────
+// ─── Block 3: Module Helpers ──────────────

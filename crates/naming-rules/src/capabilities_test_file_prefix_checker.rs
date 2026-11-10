@@ -8,23 +8,25 @@ use shared_common::taxonomy_violation_item_vo::ViolationItem;
 use shared_config_system::taxonomy_config_system_vo::ArchitectureConfig;
 use shared_naming_rules::TestSuiteSlot;
 use shared_naming_rules::contract_test_file_prefix_protocol::ITestFilePrefixProtocol;
-use shared_naming_rules::taxonomy_naming_rules_constant::RULE_CODE_TEST_FILE_PREFIX;
+use shared_naming_rules::taxonomy_naming_rules_constant::{
+    AES103_PREFIX_RULE, BENCHES_DIR, RULE_CODE_TEST_FILE_PREFIX,
+};
 use shared_naming_rules::utility_naming_checker::{
     basename_of, get_stem, rule_exception_set, string_filename_violation,
 };
+use shared_naming_rules::utility_naming_output::{exemption_clause, naming_finding};
 use shared_naming_rules::utility_test_prefix::{
     has_legal_prefix, matched_prefix, nested_under, prefix_list, prefixes_for, slot_of,
 };
 
-// ─── Block 1: Module Declaration ────────────────────────────
+// ─── Block 1: Module Declaration ──────────────────────────────
 
 /// Stateless AES103 test-file prefix checker.
 ///
-/// Where AES101 reads a stem's shape and AES102 reads a layer suffix, AES103
+/// Where AES101 reads a stem's shape and AES102 reads a folder suffix, AES103
 /// reads the test-suite prefix of files that sit in `tests/` or `benches/`. It
-/// answers two questions: is the file flat (no subdirectory under either
-/// directory), and does its stem start with a legal test-type prefix. No
-/// internal state.
+/// answers two questions: does the file sit directly in that directory, and
+/// does its stem start with a legal test-type prefix. No internal state.
 pub struct TestFilePrefixChecker {}
 
 impl Default for TestFilePrefixChecker {
@@ -76,12 +78,12 @@ impl ITestFilePrefixProtocol for TestFilePrefixChecker {
 // ─── Block 3: Module Helpers ────────────
 
 impl TestFilePrefixChecker {
-    /// AES103 — a file in `tests/` or `benches/` sits flat and starts with a
-    /// legal test-type prefix.
+    /// AES103 — a file in `tests/` or `benches/` sits directly in that
+    /// directory and starts with a legal test-type prefix.
     ///
     /// Three findings, in the order they are checked:
-    ///   1. the file is nested below `tests/` or `benches/` (the prefix IS the
-    ///      virtual folder, so a subdirectory defeats discovery and CI filters)
+    ///   1. the file sits below `tests/` or `benches/` (the name prefix records
+    ///      the test type, so a subdirectory defeats discovery and CI filters)
     ///   2. the file's stem starts with no legal prefix for its directory
     ///   3. the file's stem starts with a prefix belonging to the *other*
     ///      directory (a bench file in `tests/`, or a test file in `benches/`)
@@ -121,33 +123,48 @@ impl TestFilePrefixChecker {
     }
 }
 
-/// The subdirectory finding. Names the directory and how deep the file sits
-/// so the reader knows which level to flatten.
+/// The subdirectory finding. Names the directory, how deep the file sits, and
+/// the name the file should carry there.
+///
+/// The worked example comes from the directory the finding reports: a file
+/// under `benches/` is told about a `bench_` name, because a file under
+/// `benches/` may not carry a `unit_` name.
 fn nested_result(
     file: &str,
     filename: &str,
     directory: &'static str,
     depth: usize,
 ) -> ViolationItem {
+    let levels = if depth == 1 {
+        "1 level".to_string()
+    } else {
+        format!("{depth} levels")
+    };
+    let problem = format!("Test file '{filename}' sits {levels} inside '{directory}/'.");
+    let action = format!(
+        "Move the file to '{directory}/' and keep the {} type in its name, for example '{}'.",
+        type_word(directory),
+        example_for(directory)
+    );
+    let exemption = exemption_clause(RULE_CODE_TEST_FILE_PREFIX, filename);
+    let finding = naming_finding(
+        &[problem.as_str()],
+        &[
+            action.as_str(),
+            "Then update the imports that name it.",
+            "Re-run the check to confirm the finding is gone.",
+            exemption.as_str(),
+        ],
+        &[AES103_PREFIX_RULE],
+    );
     string_filename_violation(
         file,
         RULE_CODE_TEST_FILE_PREFIX,
-        format!(
-            "Test file '{filename}' sits {depth} level(s) below '{directory}/'. \
-             The file-name prefix IS the virtual folder: '{directory}/' must stay flat. \
-             Move the file up to '{directory}/' and let its prefix carry the type — \
-             e.g. 'unit_<subject>.rs' instead of '{directory}/<sub>/{filename}'."
-        ),
-        Severity::HIGH,
+        finding.message,
+        Severity::MEDIUM,
         "TEST_FILE_PREFIX",
-        format!(
-            "Test file '{filename}' sits {depth} level(s) below '{directory}/'. \
-             The file-name prefix IS the virtual folder: '{directory}/' must stay flat."
-        ),
-        format!(
-            "Move the file up to '{directory}/' and let its prefix carry the type — \
-             e.g. 'unit_<subject>.rs' instead of '{directory}/<sub>/{filename}'."
-        ),
+        finding.why,
+        finding.fix,
     )
 }
 
@@ -165,52 +182,60 @@ fn prefix_result(file: &str, filename: &str, stem: &str, slot: TestSuiteSlot) ->
         .filter(|other| *other != slot)
         .find_map(|other| matched_prefix(stem, other).map(|p| (p, other.directory_label())));
 
-    let message = match foreign {
-        Some((prefix, home)) => format!(
-            "Test file '{filename}' starts with '{prefix}', which belongs in '{home}/', \
-             but this file sits in '{directory}/'. \
-             The prefix is the virtual folder: each test type lives in its own directory. \
-             Move the file to '{home}/' or rename it with a '{directory}/' prefix — \
-             legal '{directory}/' prefixes: {legal}."
-        ),
-        None => format!(
-            "Test file '{filename}' does not start with a legal test-type prefix. \
-             Files in '{directory}/' are typed by their prefix, which is the virtual folder. \
-             Rename the file to '<type>_<subject>.<ext>' — legal '{directory}/' prefixes: {legal}."
-        ),
-    };
-
-    let (why, fix) = match &foreign {
+    // One action per finding. A prefix that belongs to the other directory
+    // is a move: the name is legal, the place is not. A file with no legal
+    // prefix is a rename, and the rename is a pick-one, so the legal
+    // prefixes are listed on the action line.
+    let (problem, action) = match foreign {
         Some((prefix, home)) => (
-            format!(
-                "Test file '{filename}' starts with '{prefix}', which belongs in '{home}/', \
-                 but this file sits in '{directory}/'. The prefix is the virtual folder."
-            ),
-            format!(
-                "Move the file to '{home}/' or rename it with a '{directory}/' prefix — \
-                 legal '{directory}/' prefixes: {legal}."
-            ),
+            format!("Test file '{filename}' starts with '{prefix}', which belongs in '{home}/'."),
+            format!("Move the file to '{home}/'."),
         ),
         None => (
+            format!("Test file '{filename}' does not start with a legal test prefix."),
             format!(
-                "Test file '{filename}' does not start with a legal test-type prefix. \
-                 Files in '{directory}/' are typed by their prefix, which is the virtual folder."
-            ),
-            format!(
-                "Rename the file to '<type>_<subject>.<ext>' — legal '{directory}/' prefixes: {legal}."
+                "Rename the file to '<type>_<subject>.rs'. Legal '{directory}/' prefixes: {legal}."
             ),
         ),
     };
-
+    let exemption = exemption_clause(RULE_CODE_TEST_FILE_PREFIX, filename);
+    let finding = naming_finding(
+        &[problem.as_str()],
+        &[
+            action.as_str(),
+            "Then update the imports that name it.",
+            "Re-run the check to confirm the finding is gone.",
+            exemption.as_str(),
+        ],
+        &[AES103_PREFIX_RULE],
+    );
     string_filename_violation(
         file,
         RULE_CODE_TEST_FILE_PREFIX,
-        message,
-        Severity::HIGH,
+        finding.message,
+        Severity::MEDIUM,
         "TEST_FILE_PREFIX",
-        why,
-        fix,
+        finding.why,
+        finding.fix,
     )
+}
+
+/// The word the directory uses for the kind of file it holds.
+fn type_word(directory: &str) -> &'static str {
+    if directory == BENCHES_DIR {
+        "benchmark"
+    } else {
+        "test"
+    }
+}
+
+/// The worked example for one directory: the name a file there should carry.
+fn example_for(directory: &str) -> &'static str {
+    if directory == BENCHES_DIR {
+        "benches/bench_<subject>.rs"
+    } else {
+        "tests/unit_<subject>.rs"
+    }
 }
 
 /// Whether *filename* is a module barrel, which carries no test of its own.
