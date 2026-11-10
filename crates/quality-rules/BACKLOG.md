@@ -3,14 +3,14 @@
 FRD: [FRD.md](FRD.md)
 Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
 State: defined in root [ROADMAP.md](../../ROADMAP.md) — cited here, not restated
-Last Updated: 2026-09-17
+Last Updated: 2026-11-10
 
 ## Progress Overview
 
-- Done: `cargo test -p quality_rules --lib --tests` → 0 failures at `29c71083` (2026-09-17). Per-scenario evidence below.
+- Done: `CARGO_INCREMENTAL=0 cargo nextest run -p quality-rules-lint-arwaky --lib --tests -j 2` → 149 passed, 0 skipped (2026-11-10). Includes the new empty-file, duplication-cardinality, Python-vocabulary, AES305-message, and AES304-kind-naming acceptance tests.
 - In Progress: None
 - Blocked: None
-- Next Action: Re-run `cargo test -p quality_rules --lib --tests` after any code change to this crate
+- Next Action: Re-run `CARGO_INCREMENTAL=0 cargo nextest run -p quality-rules-lint-arwaky --lib --tests -j 2` after any code change to this crate
 
 ## Backlog Status
 
@@ -22,7 +22,7 @@ Last Updated: 2026-09-17
 | Done | QualityRules |
 | In Progress | None |
 | Risk | None |
-| Updated | 2026-09-29 |
+| Updated | 2026-11-10 |
 
 ### FR-QualityRules-002
 
@@ -32,7 +32,7 @@ Last Updated: 2026-09-17
 | Done | QualityRules |
 | In Progress | None |
 | Risk | None |
-| Updated | 2026-09-29 |
+| Updated | 2026-11-10 |
 
 ### FR-QualityRules-003
 
@@ -42,7 +42,7 @@ Last Updated: 2026-09-17
 | Done | QualityRules |
 | In Progress | None |
 | Risk | None |
-| Updated | 2026-09-29 |
+| Updated | 2026-11-10 |
 
 ### FR-QualityRules-004
 
@@ -52,17 +52,17 @@ Last Updated: 2026-09-17
 | Done | QualityRules |
 | In Progress | None |
 | Risk | None |
-| Updated | 2026-09-29 |
+| Updated | 2026-11-10 |
 
 ### FR-QualityRules-005
 
 | Aspect | Detail |
 | -------------- | --------------------------------------------- |
 | State | Ready |
-| Done | QualityRules |
+| Done | Per-rule `enabled` flags honoured by the orchestrator (`RuleEnabled`); `skipped_names()` names the rules that did not run |
 | In Progress | None |
 | Risk | None |
-| Updated | 2026-09-29 |
+| Updated | 2026-11-10 |
 
 ## Reference
 

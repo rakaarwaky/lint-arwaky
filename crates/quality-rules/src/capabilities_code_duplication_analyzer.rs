@@ -6,7 +6,12 @@
 //   4. Two global maps keyed on u64 hash; store file indices
 //   5. For each file, compute identical_pct (raw shared) and similar_pct (normalized shared)
 //   6. identical_pct > identical_threshold → "identical" violation; else similar_pct > similar_threshold → "similar"
-//   7. One violation per file with per-block line ranges (top 5, +N more)
+//   7. One violation per duplication group (UX-S5-005): a connected cluster of
+//      flagged files sharing windows produces a single finding anchored on the
+//      alphabetically first file, naming the other participants. The message
+//      (UX-S2-002, UX-S4-001) is a bounded plain-language statement of the
+//      duplicated percentage and the threshold, with a bounded list of the top
+//      5 duplicated blocks.
 //   8. `others` (matching files) resolved at output time only for flagged files,
 //      avoiding per-window HashSet cloning and String key allocations.
 
@@ -179,10 +184,24 @@ impl CodeDuplicationAnalyzer {
             }
         }
 
-        // Generate violations (pre-allocate with capacity hint).
+        // Generate violations.
+        //
+        // UX-S5-005: one finding per duplication group. Flagged files that
+        // share at least one window with each other form a cluster; each
+        // cluster produces a single finding anchored on the alphabetically
+        // first path, naming the other participants.
         const TOP_K: usize = 5;
-        let mut violations = Vec::with_capacity(n);
-        for (fi, (file_path, _)) in entries.iter().enumerate() {
+
+        // Build per-file flag records (fired tier, percentage, threshold).
+        #[derive(Clone, Copy)]
+        struct Flag {
+            fired: &'static str,
+            pct: f64,
+            threshold: f64,
+        }
+        let mut flags: Vec<Option<Flag>> = vec![None; n];
+        let mut flagged: Vec<usize> = Vec::new();
+        for fi in 0..n {
             if file_raw[fi].len() < min_dup_lines {
                 continue;
             }
@@ -194,57 +213,142 @@ impl CodeDuplicationAnalyzer {
             let similar_pct = norm_shared_counts[fi] as f64 / total as f64 * 100.0;
 
             // Highest-severity applicable classification wins.
-            let (fired, pct, threshold, positions, shared_count) =
-                if identical_pct > identical_threshold_pct {
-                    (
-                        "identical",
-                        identical_pct,
-                        identical_threshold_pct,
-                        &raw_positions[fi],
-                        raw_shared_counts[fi],
-                    )
-                } else if similar_pct > similar_threshold_pct {
-                    (
-                        "similar",
-                        similar_pct,
-                        similar_threshold_pct,
-                        &norm_positions[fi],
-                        norm_shared_counts[fi],
-                    )
-                } else {
-                    continue;
-                };
+            let flag = if identical_pct > identical_threshold_pct {
+                Flag {
+                    fired: "identical",
+                    pct: identical_pct,
+                    threshold: identical_threshold_pct,
+                }
+            } else if similar_pct > similar_threshold_pct {
+                Flag {
+                    fired: "similar",
+                    pct: similar_pct,
+                    threshold: similar_threshold_pct,
+                }
+            } else {
+                continue;
+            };
+            flags[fi] = Some(flag);
+            flagged.push(fi);
+        }
 
-            let mut msg = format!(
-                "AES305 ({fired}): {pct:.0}% of this file's non-import windows are shared \
-                 (threshold: {threshold:.0}%). {shared_count} of {total} windows are non-unique.",
-            );
-
-            let range_positions: Vec<(usize, usize)> = positions
-                .iter()
-                .map(|p| (p.start_line, p.end_line))
-                .collect();
-            let ranges = collapse_ranges(&range_positions);
+        // Union-find over flagged files: two flagged files are in the same
+        // group when they share at least one (tier-specific) window.
+        let mut parent: Vec<usize> = (0..n).collect();
+        fn find(v: &mut [usize], x: usize) -> usize {
+            let mut root = x;
+            while v[root] != root {
+                root = v[root];
+            }
+            // Path compression.
+            let mut cur = x;
+            while cur != root {
+                let next = v[cur];
+                v[cur] = root;
+                cur = next;
+            }
+            root
+        }
+        // For efficiency: for each flagged file, look at its shared windows
+        // and union it with every other flagged file that shares at least one
+        // of them. One pass over the distinct shared windows is enough to
+        // join the whole cluster.
+        for &fi in &flagged {
+            let Some(flag) = &flags[fi] else {
+                continue;
+            };
+            let fired = flag.fired;
+            let positions = if fired == "identical" {
+                &raw_positions
+            } else {
+                &norm_positions
+            };
             let global_map = if fired == "identical" {
                 &raw_global
             } else {
                 &norm_global
             };
-            let src_positions = if fired == "identical" {
+            for p in &positions[fi] {
+                let h = if fired == "identical" {
+                    p.raw_hash
+                } else {
+                    p.norm_hash
+                };
+                if let Some(file_set) = global_map.get(&h) {
+                    for &ofi in file_set {
+                        if ofi != fi && flags[ofi].is_some() {
+                            let a = find(&mut parent, fi);
+                            let b = find(&mut parent, ofi);
+                            if a != b {
+                                parent[b] = a;
+                            }
+                        }
+                    }
+                    // Break after the first shared window: the global map lists
+                    // every file that shares that hash, so one match already
+                    // reveals the whole cluster for this hash — further
+                    // windows only union members that are already connected.
+                    break;
+                }
+            }
+        }
+
+        // Group flagged files by root.
+        let mut groups: HashMap<usize, Vec<usize>> = HashMap::new();
+        for &fi in &flagged {
+            groups.entry(find(&mut parent, fi)).or_default().push(fi);
+        }
+
+        let mut violations: Vec<(String, AesCodeAnalysisViolation)> = Vec::new();
+        for group_files in groups.into_values() {
+            // Anchor on the alphabetically first path; others are the rest.
+            let mut sorted_files = group_files.clone();
+            sorted_files.sort_by(|&a, &b| entries[a].0.cmp(entries[b].0));
+            let anchor = sorted_files[0];
+            let Some(anchor_flag) = flags[anchor] else {
+                continue;
+            };
+            let anchor_path = entries[anchor].0;
+
+            let others: Vec<String> = sorted_files[1..]
+                .iter()
+                .map(|&ofi| entries[ofi].0.to_string())
+                .collect();
+            let others_joined = if others.is_empty() {
+                String::new()
+            } else {
+                others.join(", ")
+            };
+
+            // Bounded plain-language message (UX-S2-002, UX-S4-001): the
+            // percentage of the file's code that appears elsewhere, the
+            // threshold, and a bounded list of the top-5 duplicated blocks.
+            let positions = if anchor_flag.fired == "identical" {
                 &raw_positions
             } else {
                 &norm_positions
             };
+            let global_map = if anchor_flag.fired == "identical" {
+                &raw_global
+            } else {
+                &norm_global
+            };
+            let range_positions: Vec<(usize, usize)> = positions[anchor]
+                .iter()
+                .map(|p| (p.start_line, p.end_line))
+                .collect();
+            let ranges = collapse_ranges(&range_positions);
+
             let mut range_details: Vec<String> = Vec::new();
             for (rs, re) in ranges.iter().take(TOP_K) {
                 // Resolve other files at output time, deduped by window hash.
                 let mut seen_hashes = HashSet::new();
-                let mut others: HashSet<usize> = HashSet::new();
-                for p in positions
+                let mut others_in_range: HashSet<usize> = HashSet::new();
+                for p in positions[anchor]
                     .iter()
                     .filter(|p| p.start_line >= *rs && p.end_line <= *re)
                 {
-                    let h = if fired == "identical" {
+                    let h = if anchor_flag.fired == "identical" {
                         p.raw_hash
                     } else {
                         p.norm_hash
@@ -252,18 +356,18 @@ impl CodeDuplicationAnalyzer {
                     if seen_hashes.insert(h) {
                         if let Some(file_set) = global_map.get(&h) {
                             for &ofi in file_set {
-                                if ofi != fi {
-                                    others.insert(ofi);
+                                if ofi != anchor {
+                                    others_in_range.insert(ofi);
                                 }
                             }
                         }
                     }
                 }
                 let mut detail: Vec<String> = Vec::new();
-                for &ofi in &others {
+                for &ofi in &others_in_range {
                     // Line range into `ofi`: the intersection of all stored windows
                     // that overlap the current collapsed range.
-                    let ofi_windows = &src_positions[ofi];
+                    let ofi_windows = &positions[ofi];
                     let overlapping: Vec<_> = ofi_windows
                         .iter()
                         .filter(|w| w.start_line <= *re && w.end_line >= *rs)
@@ -280,16 +384,24 @@ impl CodeDuplicationAnalyzer {
                 range_details.push(format!("lines {rs}-{re} duplicated in {joined}"));
             }
             let extra = ranges.len().saturating_sub(TOP_K);
-            if extra > 0 {
-                range_details.push(format!("(+{extra} more)"));
+
+            let mut msg = format!(
+                "AES305 ({}): {}% of this file's code appears in another file (the limit is {}%).",
+                anchor_flag.fired, anchor_flag.pct, anchor_flag.threshold
+            );
+            if !others_joined.is_empty() {
+                msg.push_str(&format!(" Also duplicated in {others_joined}."));
             }
             if !range_details.is_empty() {
                 msg.push_str(" Blocks: ");
                 msg.push_str(&range_details.join("; "));
             }
+            if extra > 0 {
+                msg.push_str(&format!(" (+{extra} more)"));
+            }
 
             violations.push((
-                file_path.to_string(),
+                anchor_path.to_string(),
                 AesCodeAnalysisViolation::CodeDuplication {
                     reason: Some(LintMessage::new(msg)),
                 },

@@ -74,10 +74,10 @@ impl IBypassCheckerProtocol for BypassChecker {
                             i + 1,
                             "AES304",
                             Severity::CRITICAL,
-                            format!("Cargo.toml clippy allow bypass: `{}`", t),
+                            format!("Cargo.toml silences clippy with a bypass of `{}`.", t),
                             "BYPASS_COMMENT",
-                            format!("Cargo.toml clippy allow bypass: `{}`", t),
-                            "Remove the bypass comment and resolve the issue properly.",
+                            "Silencing a lint hides the defect instead of fixing it, so the bypass has to be removed or justified.",
+                            "Remove the bypass and resolve the underlying issue properly.",
                         ));
                     }
                 }
@@ -180,21 +180,16 @@ impl IBypassCheckerProtocol for BypassChecker {
 
             // Allow attribute: rustc annotation attributes → BYPASS_COMMENT.
             if starts_with_allow_attr(code_trim) {
+                let allow_line = code_trim.lines().next().unwrap_or(code_trim);
                 violations.push(LintResult::new_arch_with_name(
                     file,
                     line_number,
                     "AES304",
                     Severity::CRITICAL,
-                    format!(
-                        "Forbidden bypass attribute: '{}'.",
-                        code_trim.lines().next().unwrap_or(code_trim)
-                    ),
+                    format!("Forbidden bypass attribute '{allow_line}'."),
                     "BYPASS_COMMENT",
-                    format!(
-                        "Found forbidden bypass attribute: '{}'",
-                        code_trim.lines().next().unwrap_or(code_trim)
-                    ),
-                    "Remove the bypass comment and resolve the issue properly.",
+                    "A lint suppression hides the underlying defect instead of fixing it.",
+                    "Remove the bypass attribute and resolve the issue properly.",
                 ));
                 i += 1;
                 continue;
@@ -223,30 +218,49 @@ impl IBypassCheckerProtocol for BypassChecker {
                             && Self::has_safe_unwrap_variant(code_lower.as_str()))
                         && !is_inside_string_or_char(code_trim, pattern_pos)
                     {
-                        let reason = format!("Found forbidden bypass token: '{}'", token);
-                        let msg = match Self::classify_token(token) {
+                        let kind = Self::classify_token(token);
+                        // UX-S3-003: one kind vocabulary across FRD, subtype
+                        // and copy — every message opens with the kind word.
+                        let msg = match kind {
                             ViolationKind::UnwrapExpect => {
-                                "Forbidden unwrap or expect call detected.".to_string()
+                                format!("UNWRAP_EXPECT: forbidden `{token}` call detected.")
                             }
-                            ViolationKind::Panic => "Forbidden panic call detected.".to_string(),
+                            ViolationKind::Panic => {
+                                format!("PANIC: forbidden `{token}` call detected.")
+                            }
                             ViolationKind::Todo => {
-                                "Forbidden unfinished-implementation marker detected.".to_string()
+                                format!(
+                                    "TODO: forbidden `{token}` unfinished-work marker detected."
+                                )
                             }
                             ViolationKind::Unimplemented => {
-                                "Forbidden unimplemented-body marker detected.".to_string()
+                                format!(
+                                    "UNIMPLEMENTED: forbidden `{token}` dead-body marker detected."
+                                )
                             }
                             ViolationKind::BypassComment => {
-                                "Forbidden bypass comment or annotation detected.".to_string()
+                                format!(
+                                    "BYPASS_COMMENT: forbidden `{token}` bypass marker detected."
+                                )
                             }
                         };
 
-                        let why = reason;
-                        let fix = match Self::classify_token(token) {
-                            ViolationKind::UnwrapExpect => "Replace the unwrap/expect call with structured error handling.".to_string(),
-                            ViolationKind::Panic => "Return a Result or handle the failure case gracefully without panicking.".to_string(),
-                            ViolationKind::Todo => "Implement the function body with real logic.".to_string(),
-                            ViolationKind::Unimplemented => "Either implement the missing logic or return a Result::Err.".to_string(),
-                            ViolationKind::BypassComment => "Remove the bypass comment and resolve the issue properly.".to_string(),
+                        // UX-S2-003: message states the measurement once; why
+                        // states the rule rationale with no overlap; fix is one
+                        // action without repeating the limit parenthetical.
+                        let why = "Bypass markers dodge the defect instead of fixing it, so each occurrence must be resolved.";
+                        let fix = match kind {
+                            ViolationKind::UnwrapExpect => {
+                                "Replace the unwrap/expect call with structured error handling."
+                            }
+                            ViolationKind::Panic => "Handle the failure case without panicking.",
+                            ViolationKind::Todo => "Implement the function body with real logic.",
+                            ViolationKind::Unimplemented => {
+                                "Implement the missing logic or raise a specific exception that names the unmet precondition."
+                            }
+                            ViolationKind::BypassComment => {
+                                "Remove the bypass comment and resolve the issue properly."
+                            }
                         };
 
                         violations.push(LintResult::new_arch_with_name(
@@ -255,7 +269,7 @@ impl IBypassCheckerProtocol for BypassChecker {
                             "AES304",
                             Severity::CRITICAL,
                             msg,
-                            match Self::classify_token(token) {
+                            match kind {
                                 ViolationKind::UnwrapExpect => "UNWRAP_EXPECT",
                                 ViolationKind::Panic => "PANIC",
                                 ViolationKind::Todo => "TODO",
@@ -284,9 +298,9 @@ impl IBypassCheckerProtocol for BypassChecker {
                             line_number,
                             "AES304",
                             Severity::CRITICAL,
-                            "Forbidden bypass comment or annotation detected".to_string(),
+                            format!("BYPASS_COMMENT: forbidden `{token}` bypass marker detected."),
                             "BYPASS_COMMENT",
-                            format!("Found forbidden bypass pattern: '{}'", token),
+                            "A lint suppression hides the defect instead of fixing it.",
                             "Remove the bypass comment and resolve the issue properly.",
                         ));
 
@@ -302,6 +316,7 @@ impl IBypassCheckerProtocol for BypassChecker {
             if !matched && !code_trim.is_empty() {
                 match language {
                     Language::Python => {
+                        // UX-S4-002: Python branch uses Python vocabulary.
                         if code_lower.contains("raise notimplementederror")
                             || code_lower.contains("raise notimplemented")
                         {
@@ -310,20 +325,21 @@ impl IBypassCheckerProtocol for BypassChecker {
                                 line_number,
                                 "AES304",
                                 Severity::CRITICAL,
-                                "Forbidden unimplemented!() call detected".to_string(),
+                                "UNIMPLEMENTED: `raise NotImplementedError` leaves the method unimplemented.".to_string(),
                                 "UNIMPLEMENTED",
-                                "Found forbidden Python pattern: 'raise NotImplementedError'",
-                                "Either implement the missing logic or return a Result::Err.",
+                                "A NotImplementedError body is a placeholder, not behaviour: callers cannot rely on the method working.",
+                                "Implement the method, or raise a specific exception that names the unmet precondition.",
                             ));
                         } else if code_lower.contains("assert false") {
                             violations.push(LintResult::new_arch_with_name(
                                 file,
                                 line_number,
                                 "AES304",
-                                Severity::CRITICAL,"Forbidden panic call detected".to_string(),
+                                Severity::CRITICAL,
+                                "PANIC: `assert False` aborts the program at runtime.".to_string(),
                                 "PANIC",
-                                "Found forbidden Python pattern: 'assert False'",
-                                "Return a Result or handle the failure case gracefully without panicking.",
+                                "An unconditional assert turns a runtime check into a crash instead of a handled failure.",
+                                "Handle the failure case explicitly instead of asserting it away.",
                             ));
                         }
                     }
@@ -343,10 +359,11 @@ impl IBypassCheckerProtocol for BypassChecker {
                                 file,
                                 line_number,
                                 "AES304",
-                                Severity::CRITICAL,"Forbidden panic call detected".to_string(),
+                                Severity::CRITICAL,
+                                format!("PANIC: `{display}` bypasses a defect instead of fixing it."),
                                 "PANIC",
-                                format!("Found forbidden JS/TS pattern: '{}'", display),
-                                "Return a Result or handle the failure case gracefully without panicking.",
+                                "Swallowing or bypassing a failure with a generic throw hides the real defect from the caller.",
+                                "Raise a specific error that names the unmet precondition, or handle the failure at its source.",
                             ));
                         }
                     }

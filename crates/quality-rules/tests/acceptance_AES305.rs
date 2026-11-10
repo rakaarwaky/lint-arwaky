@@ -39,6 +39,13 @@ fn two_identical_files_produces_violation() {
     ];
 
     let violations = ana.handle_duplicates_entries(&entries);
+    // UX-S5-005: one finding per duplication group — a clone pair is a single
+    // group, so exactly one finding is expected.
+    assert_eq!(
+        violations.len(),
+        1,
+        "a clone pair must produce exactly one AES305 finding"
+    );
     let msg = match &violations.first() {
         Some((
             _,
@@ -47,8 +54,44 @@ fn two_identical_files_produces_violation() {
         _ => String::new(),
     };
     assert!(
-        msg.contains("(identical)") && msg.contains("threshold: 75%"),
+        msg.contains("(identical)") && msg.contains("the limit is 75%"),
         "no-config default must classify byte-identical files as identical at the 75% default, got: {msg}"
+    );
+}
+
+// UX-S5-005: cardinality — a clone pair is one duplication group, so the
+// analyzer must emit exactly one finding (not one per participant).
+#[test]
+fn clone_pair_produces_exactly_one_finding() {
+    let ana = analyzer();
+    let content = (0..30)
+        .map(|i| format!("fn function_{}() {{ let x = {}; return x; }}", i, i))
+        .collect::<Vec<_>>()
+        .join("\n");
+
+    let entries = vec![
+        (PathBuf::from("src/a.rs"), content.clone()),
+        (PathBuf::from("src/b.rs"), content),
+    ];
+
+    let violations = ana.handle_duplicates_entries(&entries);
+    assert_eq!(
+        violations.len(),
+        1,
+        "exactly one finding per duplication group is required"
+    );
+    // The finding is anchored on the alphabetically first file.
+    assert_eq!(violations[0].0, "src/a.rs");
+    // The other participant is named in the message.
+    let msg = match &violations[0].1 {
+        shared_quality_rules::AesCodeAnalysisViolation::CodeDuplication { reason: Some(msg) } => {
+            msg.to_string()
+        }
+        _ => String::new(),
+    };
+    assert!(
+        msg.contains("src/b.rs"),
+        "the finding must name the other participant, got: {msg}"
     );
 }
 
@@ -139,7 +182,7 @@ fn repeated_block_counts_each_occurrence_not_one() {
         _ => String::new(),
     };
     assert!(
-        msg.contains("100% of this file's non-import windows"),
+        msg.contains("100% of this file's code appears in another file"),
         "every repeated occurrence must count toward the similarity percentage, got: {msg}"
     );
 }
@@ -255,7 +298,7 @@ fn byte_identical_files_fall_to_similar_when_identical_threshold_equals_pct() {
         _ => String::new(),
     };
     assert!(
-        msg.contains("(similar)") && msg.contains("threshold: 50%"),
+        msg.contains("(similar)") && msg.contains("the limit is 50%"),
         "strict > against an equal threshold must push byte-identical files into the similar path, got: {msg}"
     );
 }
@@ -307,7 +350,7 @@ fn similar_fires_when_raw_windows_differ_but_normalized_match() {
         _ => String::new(),
     };
     assert!(
-        msg.contains("(similar)") && msg.contains("threshold: 10%"),
+        msg.contains("(similar)") && msg.contains("the limit is 10%"),
         "raw windows differ but normalized windows match → similar path must fire, got: {msg}"
     );
 }
@@ -342,7 +385,7 @@ fn identical_fires_when_raw_windows_match() {
         _ => String::new(),
     };
     assert!(
-        msg.contains("(identical)") && msg.contains("threshold: 1%"),
+        msg.contains("(identical)") && msg.contains("the limit is 1%"),
         "byte-identical windows with a low identical_threshold must fire the identical path, got: {msg}"
     );
 }
@@ -406,7 +449,7 @@ fn dup_threshold_fallback_used_when_new_fields_unset() {
         _ => String::new(),
     };
     assert!(
-        msg.contains("threshold: 99%"),
+        msg.contains("the limit is 99%"),
         "duplication_threshold must be the fallback for both new thresholds, got: {msg}"
     );
 }
@@ -624,18 +667,23 @@ fn import_windows_excluded_from_shared_count() {
         )) => msg.to_string(),
         _ => String::new(),
     };
-    // With import lines excluded, only logic windows count. The 10 logic lines
-    // produce windows that are shared, but import windows are excluded from both
-    // numerator and denominator. Assert the message references "non-import windows".
+    // UX-S4-001: the message is a bounded plain-language statement of the
+    // duplicated percentage and the limit — no scanner vocabulary such as
+    // "non-import windows" or "non-unique".
     assert!(
-        msg.contains("non-import windows"),
-        "message must reference non-import windows, got: {msg}"
+        msg.contains("% of this file's code appears in another file"),
+        "message must state the duplicated percentage in plain language, got: {msg}"
+    );
+    assert!(
+        !msg.contains("non-import windows") && !msg.contains("non-unique"),
+        "message must not use scanner vocabulary, got: {msg}"
     );
     // The pct should be based on logic windows only (not the full 20 lines).
     // 20 lines, min_lines default = 5 → 16 total windows. The 6 all-import
-    // windows (lines 1–6) are excluded; the 10 remaining windows are shared.
+    // windows (lines 1–6) are excluded; the 10 remaining windows are shared,
+    // so the message must report 100%.
     assert!(
-        msg.contains("10 of 10 windows are non-unique"),
+        msg.contains("100% of this file's code appears"),
         "denominator must count only non-import windows (10 logic windows), got: {msg}"
     );
 }
