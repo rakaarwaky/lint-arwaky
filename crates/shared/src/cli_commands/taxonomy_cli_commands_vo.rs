@@ -56,7 +56,7 @@ pub enum ScanGroup {
     External,
     /// Doc invariants (AES601–AES607).
     Doc,
-    /// Folder layout (AES701–AES703).
+    /// Folder layout (AES701–AES706).
     Structure,
 }
 
