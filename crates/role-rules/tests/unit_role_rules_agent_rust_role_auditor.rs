@@ -166,10 +166,13 @@ impl IRunnerAggregate for Orchestrator {
     let f = make_file("src/agent_thing.rs", content);
     let mut v = Vec::new();
     auditor().check_agent_block_order(&f, &mut v);
-    assert!(
-        !v.is_empty(),
-        "inherent impl before aggregate should be flagged"
+    assert_eq!(
+        v.len(),
+        1,
+        "inherent impl before aggregate should be flagged once"
     );
+    assert_eq!(v[0].code.code(), "AES405");
+    assert_eq!(v[0].violation_name.as_str(), "AGENT_ROLE_BLOCK_ORDER");
     assert_eq!(v[0].severity, Severity::HIGH);
 }
 
@@ -268,8 +271,27 @@ impl IRunnerAggregate for Orchestrator {
     assert!(v.is_empty(), "no const should pass");
 }
 
-// ── P14 subsystem count ──
+// ── P5 abstract method (trait declared in agent) ──
 
+#[test]
+fn p5_trait_declared_in_agent_flagged() {
+    // A trait declared in an agent file is flagged on the trait line itself:
+    // an agent delegates to contracts it consumes and must not declare one.
+    let content = "pub trait ISomething {\n    fn do_thing(&self) {}\n}\n";
+    let f = make_file("src/agent_thing.rs", content);
+    let mut v = Vec::new();
+    auditor().check_agent_abstract_method(&f, &mut v);
+    assert_eq!(
+        v.len(),
+        1,
+        "a body-less trait fn in an agent should be flagged once"
+    );
+    assert_eq!(v[0].code.code(), "AES405");
+    assert_eq!(v[0].violation_name.as_str(), "AGENT_ROLE_TRAIT_DECLARED");
+    assert_eq!(v[0].severity, Severity::MEDIUM);
+}
+
+// ── P14 subsystem count ──
 #[test]
 fn p14_single_protocol_field_flagged() {
     let content = "\
@@ -285,7 +307,11 @@ impl IRunnerAggregate for Orchestrator {
     let mut v = Vec::new();
     // feature_protocol_count = 2 (not a single-subsystem feature)
     auditor().check_agent_subsystem_count(&f, 2, &mut v);
-    assert!(!v.is_empty(), "single protocol field should be flagged");
+    assert_eq!(v.len(), 1, "one subsystem-count finding per file");
+    assert_eq!(v[0].code.code(), "AES405");
+    assert_eq!(v[0].violation_name.as_str(), "AGENT_ROLE_SUBSYSTEM_COUNT");
+    // Whole-file finding: no specific declaration line.
+    assert_eq!(v[0].line.value(), 0i64);
     assert_eq!(v[0].severity, Severity::LOW);
 }
 

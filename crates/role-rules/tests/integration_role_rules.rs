@@ -158,7 +158,29 @@ fn orchestrator_skips_unparseable_files() {
     let mut file = make_file("src/taxonomy_bad.rs", Language::Rust, "pub struct Bad {}");
     file.parse_ok = false;
     let results = orch.execute(RoleRequest::audit(&[file])).into_violations();
-    assert!(results.is_empty(), "unparseable files should be skipped");
+    let role_findings: Vec<_> = results
+        .iter()
+        .filter(|r| r.violation_name != "ROLE_SKIPPED_FILES")
+        .collect();
+    assert!(
+        role_findings.is_empty(),
+        "unparseable files should be skipped (no role finding), got: {results:?}"
+    );
+    // Exactly one skip finding, counted once, whole-file marker.
+    let skip_findings: Vec<_> = results
+        .iter()
+        .filter(|r| r.violation_name == "ROLE_SKIPPED_FILES")
+        .collect();
+    assert_eq!(
+        skip_findings.len(),
+        1,
+        "the skip finding is emitted once per audit run, got: {results:?}"
+    );
+    assert_eq!(
+        skip_findings[0].message.value,
+        "1 file(s) skipped: unparseable or empty, no role audit performed"
+    );
+    assert_eq!(skip_findings[0].line.value(), 0);
 }
 
 #[test]
@@ -169,5 +191,26 @@ fn orchestrator_skips_empty_content() {
 
     let file = make_file("src/taxonomy_empty.rs", Language::Rust, "");
     let results = orch.execute(RoleRequest::audit(&[file])).into_violations();
-    assert!(results.is_empty(), "empty content files should be skipped");
+    let role_findings: Vec<_> = results
+        .iter()
+        .filter(|r| r.violation_name != "ROLE_SKIPPED_FILES")
+        .collect();
+    assert!(
+        role_findings.is_empty(),
+        "empty content files should be skipped (no role finding), got: {results:?}"
+    );
+    let skip_findings: Vec<_> = results
+        .iter()
+        .filter(|r| r.violation_name == "ROLE_SKIPPED_FILES")
+        .collect();
+    assert_eq!(
+        skip_findings.len(),
+        1,
+        "an empty file is reported once with its count, got: {results:?}"
+    );
+    assert_eq!(
+        skip_findings[0].message.value,
+        "1 file(s) skipped: unparseable or empty, no role audit performed"
+    );
+    assert_eq!(skip_findings[0].line.value(), 0);
 }

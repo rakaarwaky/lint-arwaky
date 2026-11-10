@@ -228,6 +228,11 @@ fn block_order_inherent_before_protocol_flagged() {
     );
     assert_eq!(v[0].code.code(), "AES403");
     assert_eq!(v[0].severity, Severity::HIGH);
+    assert_eq!(
+        v[0].violation_name.as_str(),
+        "CAPABILITY_BLOCK_ORDER",
+        "the Rust block-order defect keeps its own subtype"
+    );
 }
 
 #[test]
@@ -307,6 +312,11 @@ fn block_order_ts_helper_before_protocol_flagged() {
         "a TS private helper before the public protocol method should be flagged"
     );
     assert_eq!(v[0].severity, Severity::HIGH);
+    assert_eq!(
+        v[0].violation_name.as_str(),
+        "CAPABILITY_BLOCK_ORDER",
+        "the TS block-order defect keeps its own subtype"
+    );
 }
 
 #[test]
@@ -327,6 +337,74 @@ fn block_order_ts_constructor_is_block_one() {
     assert!(
         v.is_empty(),
         "the constructor is Block 1 and must not be flagged"
+    );
+}
+
+// ──────────────────────────────────────────────────────────
+// Protocol placement — protocol impl outside region Block 2
+// ──────────────────────────────────────────────────────────
+
+#[test]
+fn block_order_rust_protocol_outside_block2_region_flagged() {
+    // B2 and B3 banners are separated by content, so a real Block 2 region
+    // exists. The protocol impl lands after the B3 banner, outside that
+    // region: a placement defect, distinct from block order.
+    let content = "// ─── Block 2: Module Contract ───\n\
+                   pub struct Foo {}\n\
+                   // ─── Block 3: Module Helpers ───\n\
+                   impl IFooProtocol for Foo {}\n";
+    let f = make_file("src/capabilities_foo.rs", Language::Rust, content);
+    let mut v = Vec::new();
+    checker().check_capability_block_order(&f, &mut v);
+    let placement: Vec<_> = v
+        .iter()
+        .filter(|r| r.violation_name == "CAPABILITY_PROTOCOL_PLACEMENT")
+        .collect();
+    assert_eq!(
+        placement.len(),
+        1,
+        "a protocol impl outside region Block 2 is flagged once with its own subtype"
+    );
+    assert_eq!(placement[0].code.code(), "AES403");
+    assert_eq!(placement[0].severity, Severity::HIGH);
+}
+
+#[test]
+fn block_order_rust_protocol_inside_block2_region_no_placement_violation() {
+    // B2 and B3 banners are separated by content, so a real Block 2 region
+    // exists. The protocol impl sits between the two banners, inside the
+    // region: no placement defect.
+    let content = "// ─── Block 2: Module Contract ───\n\
+                   impl IFooProtocol for Foo {}\n\
+                   // ─── Block 3: Module Helpers ───\n";
+    let f = make_file("src/capabilities_foo.rs", Language::Rust, content);
+    let mut v = Vec::new();
+    checker().check_capability_block_order(&f, &mut v);
+    assert!(
+        v.iter()
+            .all(|r| r.violation_name != "CAPABILITY_PROTOCOL_PLACEMENT"),
+        "a protocol impl inside region Block 2 is not a placement defect"
+    );
+}
+
+#[test]
+fn block_order_rust_adjacent_block2_block3_banner_no_placement_violation() {
+    // B1 and B2 are on consecutive lines, so B2's contract region is empty
+    // and B3 lands one line past B2 (b3 = b2 + 1). The guard `b3 > b2 + 1`
+    // therefore does not hold, which is the documented skip case: when
+    // B2/B3 are adjacent there is no Block 2 region to place the protocol
+    // impl in, so no placement defect is flagged.
+    let content = "// ─── Block 1: Module Declaration ───\n\
+                   // ─── Block 2: Module Contract ───\n\
+                   // ─── Block 3: Module Helpers ───\n\
+                   impl IFooProtocol for Foo {}\n";
+    let f = make_file("src/capabilities_foo.rs", Language::Rust, content);
+    let mut v = Vec::new();
+    checker().check_capability_block_order(&f, &mut v);
+    assert!(
+        v.iter()
+            .all(|r| r.violation_name != "CAPABILITY_PROTOCOL_PLACEMENT"),
+        "adjacent B2/B3 banners mean no Block 2 region; placement check is skipped"
     );
 }
 

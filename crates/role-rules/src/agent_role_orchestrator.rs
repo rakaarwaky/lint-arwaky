@@ -9,6 +9,7 @@
 
 use rayon::prelude::*;
 use shared_common::taxonomy_lint_vo::LintResult;
+use shared_common::taxonomy_severity_vo::Severity;
 use shared_filesystem::taxonomy_filesystem_vo::{ExternalReferenceMap, FileEntry};
 use shared_role_rules::contract_role_protocol::IAgentRoleProtocol;
 use shared_role_rules::contract_role_protocol::ICapabilitiesRoleProtocol;
@@ -107,6 +108,14 @@ impl RoleOrchestrator {
 
         let references = build_external_reference_map(files);
 
+        // Files that fail to parse or are empty are skipped: counted once and
+        // reported as a single skipped-files finding so the caller sees how
+        // many files were dropped, instead of a silent filter.
+        let skipped_count = files
+            .iter()
+            .filter(|file| !file.parse_ok || file.content.is_empty())
+            .count();
+
         // Files are processed in parallel via rayon: each file accumulates its
         // own violations (no shared accumulator, no locking), then the
         // per-file results are concatenated in input order so the violation
@@ -122,6 +131,19 @@ impl RoleOrchestrator {
             })
             .collect();
         violations.extend(per_file.into_iter().flatten());
+
+        if skipped_count > 0 {
+            violations.push(LintResult::new_arch_with_name(
+                "skipped-files",
+                crate::WHOLE_FILE,
+                "AES401",
+                Severity::LOW,
+                format!("{skipped_count} file(s) skipped: unparseable or empty, no role audit performed"),
+                "ROLE_SKIPPED_FILES",
+                "Unparseable or empty files carry no role and cannot be audited; fix the file or remove it from the audit set.",
+                "Repair the skipped files so they parse, or exclude them from the audit paths.",
+            ));
+        }
     }
 
     /// Route one file through its layer's role auditors, appending findings to

@@ -201,12 +201,26 @@ impl CapabilitiesRustRoleAuditor {
 
             if protocol_line.is_none()
                 && (t.starts_with("impl ") || t.starts_with("impl<"))
-                && t.contains("Protocol for")
+                && t.contains(" for ")
             {
-                // The block-order check uses the looser "Protocol for" substring
-                // so it does not miss protocol implementations that use a generic
-                // prefix or re-exported trait names.
-                protocol_line = Some((i, t.trim_end_matches('{').trim().to_string()));
+                // A trait impl (`impl Trait for Type`) — not a bare inherent
+                // `impl Type` block — is the protocol candidate. Contract
+                // protocols follow the `I*Protocol` naming convention, so this
+                // line-scan keys off the `impl <Trait> for <Type>` shape and
+                // the `I…Protocol` trait name together.
+                let trait_name = t
+                    .strip_prefix("impl ")
+                    .or_else(|| t.strip_prefix("impl<"))
+                    .unwrap_or("")
+                    .split(" for ")
+                    .next()
+                    .unwrap_or("")
+                    .trim()
+                    .trim_start_matches('<')
+                    .trim_end_matches('<');
+                if shared_role_rules::taxonomy_role_rules_entity::is_protocol_trait(trait_name) {
+                    protocol_line = Some((i, t.trim_end_matches('{').trim().to_string()));
+                }
             }
 
             if (t.starts_with("impl ") || t.starts_with("impl<")) && !t.contains(" for ") {
@@ -231,10 +245,6 @@ impl CapabilitiesRustRoleAuditor {
         // banner-carrying files the violation is an inherent impl before the
         // Block 3 banner (i.e. tucked into Block 1 or 2 instead of Block 3).
         // For banner-less files it is a raw-line ordering violation.
-        let proto_src = protocol_line
-            .as_ref()
-            .map(|(_, s)| s.as_str())
-            .unwrap_or("<protocol impl>");
         let proto_idx = protocol_line.as_ref().map(|(i, _)| *i);
 
         // Report every bare inherent impl that sits outside its legal region:
@@ -248,38 +258,30 @@ impl CapabilitiesRustRoleAuditor {
                 None => proto_idx.is_some_and(|p| inh_idx < p),
             };
             if is_misplaced {
+                let ty = Self::implementor_of(&inh_src);
+                let p = proto_idx.map(|p| p + 1);
                 violations.push(LintResult::new_arch_with_name(
                     path,
                     inh_idx + 1,
                     "AES403",
                     Severity::HIGH,
                     format!(
-                        "Block 2 (protocol impl) must precede Block 3 (inherent impl): `{inh_src}` is declared before `{proto_src}`.",
-                        inh_src = inh_src,
-                        proto_src = proto_src,
-                    ),
-                    "CAPABILITY_ROLE",
-                    format!(
-                        "`{inh_src}` is declared at line {} but `{proto_src}` follows at line {}.",
+                        "Inherent impl for '{ty}' sits above the protocol impl (lines {} and {}).",
                         inh_idx + 1,
-                        proto_idx.map(|p| p + 1).unwrap_or(inh_idx + 1)
+                        p.map(|n| n.to_string()).unwrap_or_else(|| "?".to_string())
                     ),
-                    match banner3_idx {
-                        Some(_) => "Reorder the file so the blocks read:\n  \
-                                     Block 1: Module Declaration -> Block 2: Module Contract -> Block 3: Module Helpers.\n  \
-                                     Move the bare inherent impl below the `// ─── Block 3: Module Helpers ───` banner.",
-                        None => "Reorder the file so the blocks read:\n  \
-                                     Block 1: Module Declaration -> Block 2: Module Contract -> Block 3: Module Helpers.\n  \
-                                     Move the protocol impl above the inherent impl instead.",
-                    },
+                    "CAPABILITY_BLOCK_ORDER",
+                    "Block 2 holds the protocol impl, Block 3 holds the inherent impl; move the inherent impl below the Block 3 banner so the protocol impl precedes it.",
+                    "Move the inherent impl below the Block 3 banner so the protocol impl precedes it.",
                 ));
             }
         }
 
-        // Protocol placement: the protocol impl must live strictly inside region
-        // Block 2 (between the B2 and B3 banners). A protocol impl elsewhere is
-        // itself a block-membership defect. When banners 2 and 3 are adjacent
-        // there is no Block 2 region to check, so skip the placement check.
+        // Protocol placement: the protocol impl must live strictly inside
+        // region Block 2 (between the B2 and B3 banners). A protocol impl
+        // elsewhere is itself a block-membership defect. When banners 2 and 3
+        // are adjacent there is no Block 2 region to check, so skip the
+        // placement check.
         if let (Some((proto_idx, proto_src)), Some(b2), Some(b3)) =
             (protocol_line, banner2_idx, banner3_idx)
         {
@@ -290,21 +292,25 @@ impl CapabilitiesRustRoleAuditor {
                     "AES403",
                     Severity::HIGH,
                     format!(
-                        "Protocol impl must live in region Block 2: `{proto_src}` is outside the `// ─── Block 2: Module Contract ───` .. `// ─── Block 3: Module Helpers ───` span.",
-                        proto_src = proto_src,
-                    ),
-                    "CAPABILITY_ROLE",
-                    format!(
-                        "`{proto_src}` is declared at line {}, outside region Block 2 (lines {}–{}).",
+                        "Protocol impl `{proto_src}` is outside region Block 2 (line {})",
                         proto_idx + 1,
-                        b2 + 1,
-                        b3 + 1
                     ),
-                    "Move the protocol trait implementation into region Block 2, between \
-                     the `// ─── Block 2: Module Contract ───` and `// ─── Block 3: Module Helpers ───` banners.",
+                    "CAPABILITY_PROTOCOL_PLACEMENT",
+                    "Block 2 holds the protocol impl; the protocol impl must be declared inside the Block 2 span.",
+                    "Move the protocol trait implementation between the Block 2 and Block 3 banners.",
                 ));
             }
         }
+    }
+
+    /// Extract the implementor type from an `impl <Type> {...}` line, falling
+    /// back to the whole trimmed line when the pattern is not recognised.
+    fn implementor_of(impl_src: &str) -> &str {
+        let t = impl_src.trim();
+        let rest = t.strip_prefix("impl ").unwrap_or(t);
+        let rest = rest.strip_prefix('<').unwrap_or(rest);
+        let name = rest.split_whitespace().next().unwrap_or(t);
+        name.trim_end_matches('{')
     }
 
     // ===============================================================
@@ -347,10 +353,7 @@ impl CapabilitiesRustRoleAuditor {
                         "`{name}` is declared as a file-level `const` at line {}.",
                         i + 1
                     ),
-                    format!(
-                        "Move `{name}` into `taxonomy_<domain>_constant.rs` so every layer shares one policy value.\n  \
-                         Keep the constant in this file only when it is a private mechanical detail, not a domain policy."
-                    ),
+                "Move `{name}` into `taxonomy_<domain>_constant.rs` so every layer shares one policy value.",
                 ));
             }
         }

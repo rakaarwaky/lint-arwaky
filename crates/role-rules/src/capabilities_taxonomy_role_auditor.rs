@@ -205,25 +205,18 @@ impl TaxonomyRoleChecker {
                             inner_trimmed == prim_clean || inner_trimmed.starts_with(prim_clean)
                         }) {
                             let primitive_clean = p.trim_end_matches('<');
-                            let msg = format!(
-                                "Primitive type '{}' in a taxonomy entity, error, or event.",
-                                primitive_clean,
-                            );
-
                             violations.push(LintResult::new_arch_with_name(
                                 &path_str,
                                 i + 1,
                                 "AES401",
                                 Severity::HIGH,
-                                msg,
-                                "TAXONOMY_ROLE",
+                                format!("Primitive type '{primitive_clean}' in a taxonomy entity, error, or event."),
+                                "TAXONOMY_PRIMITIVE",
                                 format!(
-                                    "Primitive type '{}' used on line {}",
-                                    primitive_clean,
-                                    i + 1,
+                                    "The taxonomy layer declares values, not built-in types: a field typed '{primitive_clean}' erases the domain value that crosses the layer boundary.",
+                                    primitive_clean = primitive_clean,
                                 ),
-                                "Replace primitives with taxonomy value objects; keep `_constant` \
-                                 files const-only.",
+                                "Replace the primitive field with the taxonomy value object that carries it.",
                             ));
                             break;
                         }
@@ -236,25 +229,18 @@ impl TaxonomyRoleChecker {
                             .starts_with(|c: char| c.is_alphanumeric() || c == '_'))
                 {
                     let primitive_clean = p.trim_end_matches('<');
-                    let msg = format!(
-                        "Primitive type '{}' in a taxonomy entity, error, or event.",
-                        primitive_clean,
-                    );
-
                     violations.push(LintResult::new_arch_with_name(
                         &path_str,
                         i + 1,
                         "AES401",
                         Severity::HIGH,
-                        msg,
-                        "TAXONOMY_ROLE",
+                        format!("Primitive type '{primitive_clean}' in a taxonomy entity, error, or event."),
+                        "TAXONOMY_PRIMITIVE",
                         format!(
-                            "Primitive type '{}' used on line {}",
-                            primitive_clean,
-                            i + 1,
+                            "The taxonomy layer declares values, not built-in types: a field typed '{primitive_clean}' erases the domain value that crosses the layer boundary.",
+                            primitive_clean = primitive_clean,
                         ),
-                        "Replace primitives with taxonomy value objects; keep `_constant` \
-                         files const-only.",
+                        "Replace the primitive field with the taxonomy value object that carries it.",
                     ));
                     break;
                 }
@@ -274,85 +260,73 @@ impl TaxonomyRoleChecker {
                 for name in &rust_meta.struct_definitions {
                     violations.push(LintResult::new_arch_with_name(
                         &path_str,
-                        0,
+                        crate::WHOLE_FILE,
                         "AES401",
                         Severity::HIGH,
-                        format!("Struct '{}' found in constant file.", name),
-                        "TAXONOMY_ROLE",
-                        format!("Struct '{}' found in constant file.", name),
-                        "Keep `_constant` files const-only: remove the non-const declaration or move it to the appropriate layer.",
+                        format!("Struct '{name}' declared in a const-only file."),
+                        "TAXONOMY_CONSTANT_STRUCT",
+                        "A const-only file holds values; a struct needs a lifetime and an owner and cannot be a compile-time constant.",
+                        format!("Move '{name}' to the taxonomy entity layer."),
                     ));
                 }
                 for name in &rust_meta.enum_definitions {
                     violations.push(LintResult::new_arch_with_name(
                         &path_str,
-                        0,
+                        crate::WHOLE_FILE,
                         "AES401",
                         Severity::HIGH,
-                        format!("Enum '{}' found in constant file.", name),
-                        "TAXONOMY_ROLE",
-                        format!("Enum '{}' found in constant file.", name),
-                        "Keep `_constant` files const-only: remove the non-const declaration or move it to the appropriate layer.",
+                        format!("Enum '{name}' declared in a const-only file."),
+                        "TAXONOMY_CONSTANT_ENUM",
+                        "A const-only file holds values; an enum is a type that varies and does not belong among constants.",
+                        format!("Move '{name}' to the taxonomy entity layer."),
                     ));
                 }
                 for name in &rust_meta.trait_definitions {
                     violations.push(LintResult::new_arch_with_name(
                         &path_str,
-                        0,
+                        crate::WHOLE_FILE,
                         "AES401",
                         Severity::HIGH,
-                        format!("Trait '{}' found in constant file.", name),
-                        "TAXONOMY_ROLE",
-                        format!("Trait '{}' found in constant file.", name),
-                        "Keep `_constant` files const-only: remove the non-const declaration or move it to the appropriate layer.",
+                        format!("Trait '{name}' declared in a const-only file."),
+                        "TAXONOMY_CONSTANT_TRAIT",
+                        "A const-only file holds values; a trait declares behaviour rather than a value and does not belong among constants.",
+                        format!("Move '{name}' to the taxonomy entity layer."),
                     ));
                 }
                 for name in &rust_meta.type_definitions {
                     violations.push(LintResult::new_arch_with_name(
                         &path_str,
-                        0,
+                        crate::WHOLE_FILE,
                         "AES401",
                         Severity::HIGH,
-                        format!("Type alias '{}' found in constant file.", name),
-                        "TAXONOMY_ROLE",
-                        format!("Type alias '{}' found in constant file.", name),
-                        "Keep `_constant` files const-only: remove the non-const declaration or move it to the appropriate layer.",
-                    ));
-                }
-                for name in &rust_meta.type_definitions {
-                    violations.push(LintResult::new_arch_with_name(
-                        &path_str,
-                        0,
-                        "AES401",
-                        Severity::HIGH,
-                        format!("Type alias '{}' found in constant file.", name),
-                        "TAXONOMY_ROLE",
-                        format!("Type alias '{}' found in constant file.", name),
-                        "Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.",
+                        format!("Type alias '{name}' declared in a const-only file."),
+                        "TAXONOMY_CONSTANT_TYPE_ALIAS",
+                        "A const-only file holds values; a type alias names a type rather than declaring a constant and does not belong among constants.",
+                        format!("Move '{name}' to the appropriate layer."),
                     ));
                 }
                 for fn_item in &rust_meta.function_definitions {
                     violations.push(LintResult::new_arch_with_name(
                         &path_str,
-                        0,
+                        crate::WHOLE_FILE,
                         "AES401",
                         Severity::HIGH,
-                        format!("Function '{}' found in constant file.", fn_item.name),
-                        "TAXONOMY_ROLE",
-                        format!("Function '{}' found in constant file.", fn_item.name),
-                        "Keep `_constant` files const-only: remove the non-const declaration or move it to the appropriate layer.",
+                        format!("Function '{name}' declared in a const-only file.", name = fn_item.name),
+                        "TAXONOMY_CONSTANT_FUNCTION",
+                        "A const-only file holds values; a function is executable behaviour and does not belong among constants.",
+                        format!("Move '{name}' out of the const-only file.", name = fn_item.name),
                     ));
                 }
                 if !rust_meta.impl_blocks.is_empty() {
                     violations.push(LintResult::new_arch_with_name(
                         &path_str,
-                        0,
+                        crate::WHOLE_FILE,
                         "AES401",
                         Severity::HIGH,
-                        "Impl block found in constant file.".to_string(),
-                        "TAXONOMY_ROLE",
-                        "Impl block found in constant file.",
-                        "Keep `_constant` files const-only: remove the non-const declaration or move it to the appropriate layer.",
+                        "Impl block declared in a const-only file.".to_string(),
+                        "TAXONOMY_CONSTANT_IMPL",
+                        "A const-only file holds values; an impl block attaches behaviour to a type and does not belong among constants.",
+                        "Remove the impl block or move it to the appropriate layer.".to_string(),
                     ));
                 }
             }
@@ -360,25 +334,25 @@ impl TaxonomyRoleChecker {
                 for class in &py_meta.class_declarations {
                     violations.push(LintResult::new_arch_with_name(
                         &path_str,
-                        0,
+                        crate::WHOLE_FILE,
                         "AES401",
                         Severity::HIGH,
-                        format!("Class '{}' found in constant file.", class.name),
-                        "TAXONOMY_ROLE",
-                        format!("Class '{}' found in constant file.", class.name),
-                        "Keep `_constant` files const-only: remove the non-const declaration or move it to the appropriate layer.",
+                        format!("Class '{}' declared in a const-only file.", class.name),
+                        "TAXONOMY_CONSTANT_CLASS",
+                        "A const-only file holds values; a class is a type, not a value, and does not belong among constants.",
+                        format!("Move '{}' to the appropriate layer.", class.name),
                     ));
                 }
                 for fn_item in &py_meta.function_definitions {
                     violations.push(LintResult::new_arch_with_name(
                         &path_str,
-                        0,
+                        crate::WHOLE_FILE,
                         "AES401",
                         Severity::HIGH,
-                        format!("Function '{}' found in constant file.", fn_item.name),
-                        "TAXONOMY_ROLE",
-                        format!("Function '{}' found in constant file.", fn_item.name),
-                        "Keep `_constant` files const-only: remove the non-const declaration or move it to the appropriate layer.",
+                        format!("Function '{}' declared in a const-only file.", fn_item.name),
+                        "TAXONOMY_CONSTANT_FUNCTION",
+                        "A const-only file holds values; a function is executable behaviour and does not belong among constants.",
+                        format!("Move '{}' out of the const-only file.", fn_item.name),
                     ));
                 }
             }
@@ -386,49 +360,49 @@ impl TaxonomyRoleChecker {
                 for class in &ts_meta.class_declarations {
                     violations.push(LintResult::new_arch_with_name(
                         &path_str,
-                        0,
+                        crate::WHOLE_FILE,
                         "AES401",
                         Severity::HIGH,
-                        format!("Class '{}' found in constant file.", class.name),
-                        "TAXONOMY_ROLE",
-                        format!("Class '{}' found in constant file.", class.name),
-                        "Keep `_constant` files const-only: remove the non-const declaration or move it to the appropriate layer.",
+                        format!("Class '{}' declared in a const-only file.", class.name),
+                        "TAXONOMY_CONSTANT_CLASS",
+                        "A const-only file holds values; a class is a type, not a value, and does not belong among constants.",
+                        format!("Move '{}' to the appropriate layer.", class.name),
                     ));
                 }
                 for name in &ts_meta.interface_declarations {
                     violations.push(LintResult::new_arch_with_name(
                         &path_str,
-                        0,
+                        crate::WHOLE_FILE,
                         "AES401",
                         Severity::HIGH,
-                        format!("Interface '{}' found in constant file.", name),
-                        "TAXONOMY_ROLE",
-                        format!("Interface '{}' found in constant file.", name),
-                        "Keep `_constant` files const-only: remove the non-const declaration or move it to the appropriate layer.",
+                        format!("Interface '{}' declared in a const-only file.", name),
+                        "TAXONOMY_CONSTANT_INTERFACE",
+                        "A const-only file holds values; an interface names a type shape rather than declaring a constant and does not belong among constants.",
+                        format!("Move '{}' to the appropriate layer.", name),
                     ));
                 }
                 for name in &ts_meta.type_alias_declarations {
                     violations.push(LintResult::new_arch_with_name(
                         &path_str,
-                        0,
+                        crate::WHOLE_FILE,
                         "AES401",
                         Severity::HIGH,
-                        format!("Type alias '{}' found in constant file.", name),
-                        "TAXONOMY_ROLE",
-                        format!("Type alias '{}' found in constant file.", name),
-                        "Keep `_constant` files const-only: remove the non-const declaration or move it to the appropriate layer.",
+                        format!("Type alias '{}' declared in a const-only file.", name),
+                        "TAXONOMY_CONSTANT_TYPE_ALIAS",
+                        "A const-only file holds values; a type alias names a type rather than declaring a constant and does not belong among constants.",
+                        format!("Move '{}' to the appropriate layer.", name),
                     ));
                 }
                 for fn_item in &ts_meta.function_definitions {
                     violations.push(LintResult::new_arch_with_name(
                         &path_str,
-                        0,
+                        crate::WHOLE_FILE,
                         "AES401",
                         Severity::HIGH,
-                        format!("Function '{}' found in constant file.", fn_item.name),
-                        "TAXONOMY_ROLE",
-                        format!("Function '{}' found in constant file.", fn_item.name),
-                        "Keep `_constant` files const-only: remove the non-const declaration or move it to the appropriate layer.",
+                        format!("Function '{}' declared in a const-only file.", fn_item.name),
+                        "TAXONOMY_CONSTANT_FUNCTION",
+                        "A const-only file holds values; a function is executable behaviour and does not belong among constants.",
+                        format!("Move '{}' out of the const-only file.", fn_item.name),
                     ));
                 }
             }
@@ -474,23 +448,17 @@ impl TaxonomyRoleChecker {
                 || t.starts_with("export type ")
                 || t.starts_with("export function ")
             {
+                let kind = const_declaration_kind(t);
+                let name = declaration_name(t).unwrap_or("<declaration>");
                 violations.push(LintResult::new_arch_with_name(
                     &path_str,
                     i + 1,
                     "AES401",
                     Severity::HIGH,
-                    format!(
-                        "Non-constant declaration '{}' found in constant file on line {}",
-                        t,
-                        i + 1,
-                    ),
-                    "TAXONOMY_ROLE",
-                    format!(
-                        "Non-constant declaration '{}' found in constant file on line {}",
-                        t,
-                        i + 1,
-                    ),
-                    "Keep `_constant` files const-only: remove the non-const declaration or move it to the appropriate layer.",
+                    format!("{} '{name}' declared in a const-only file.", kind.label()),
+                    kind.subtype(),
+                    "A const-only file holds values; any other declaration carries a type or behaviour that varies at runtime.",
+                    "Move the declaration to the appropriate layer, or replace it with a constant declaration.",
                 ));
             }
         }
@@ -503,4 +471,95 @@ impl TaxonomyRoleChecker {
             false
         }
     }
+}
+
+/// Classify a non-constant declaration line in a const-only file into its
+/// defect kind, so each sub-type of const-file impurity keeps its own subtype.
+fn const_declaration_kind(t: &str) -> ConstDeclarationKind {
+    if t.starts_with("pub struct ") || t.starts_with("struct ") {
+        ConstDeclarationKind::Struct
+    } else if t.starts_with("pub enum ") || t.starts_with("enum ") {
+        ConstDeclarationKind::Enum
+    } else if t.starts_with("pub trait ") || t.starts_with("trait ") {
+        ConstDeclarationKind::Trait
+    } else if t.starts_with("pub type ") || t.starts_with("type ") || t.starts_with("export type ")
+    {
+        ConstDeclarationKind::TypeAlias
+    } else if t.starts_with("pub fn ") || t.starts_with("fn ") || t.starts_with("export function ")
+    {
+        ConstDeclarationKind::Function
+    } else if t.starts_with("class ") || t.starts_with("export class ") {
+        ConstDeclarationKind::Class
+    } else if t.starts_with("export interface ") {
+        ConstDeclarationKind::Interface
+    } else if t.starts_with("impl ") {
+        ConstDeclarationKind::Impl
+    } else {
+        ConstDeclarationKind::Module
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum ConstDeclarationKind {
+    Struct,
+    Enum,
+    Trait,
+    TypeAlias,
+    Function,
+    Class,
+    Interface,
+    Impl,
+    Module,
+}
+
+impl ConstDeclarationKind {
+    const fn label(&self) -> &'static str {
+        match self {
+            Self::Struct => "Struct",
+            Self::Enum => "Enum",
+            Self::Trait => "Trait",
+            Self::TypeAlias => "Type alias",
+            Self::Function => "Function",
+            Self::Class => "Class",
+            Self::Interface => "Interface",
+            Self::Impl => "Impl block",
+            Self::Module => "Module",
+        }
+    }
+
+    const fn subtype(&self) -> &'static str {
+        match self {
+            Self::Struct => "TAXONOMY_CONSTANT_STRUCT",
+            Self::Enum => "TAXONOMY_CONSTANT_ENUM",
+            Self::Trait => "TAXONOMY_CONSTANT_TRAIT",
+            Self::TypeAlias => "TAXONOMY_CONSTANT_TYPE_ALIAS",
+            Self::Function => "TAXONOMY_CONSTANT_FUNCTION",
+            Self::Class => "TAXONOMY_CONSTANT_CLASS",
+            Self::Interface => "TAXONOMY_CONSTANT_INTERFACE",
+            Self::Impl => "TAXONOMY_CONSTANT_IMPL",
+            Self::Module => "TAXONOMY_CONSTANT_MODULE",
+        }
+    }
+}
+
+/// The declared name out of a declaration line, when one can be read.
+fn declaration_name(t: &str) -> Option<&str> {
+    let mut body = t;
+    if let Some(stripped) = t.strip_prefix("export ") {
+        body = stripped;
+    }
+    if let Some(stripped) = body.trim().strip_prefix("pub(crate) ") {
+        body = stripped;
+    } else if let Some(stripped) = body.trim().strip_prefix("pub ") {
+        body = stripped;
+    }
+    let body = body.trim();
+    let first_word = body.split_whitespace().next()?;
+    match first_word {
+        "struct" | "enum" | "trait" | "type" | "fn" | "class" | "interface" | "impl" | "mod" => {
+            body.split_whitespace().nth(1)
+        }
+        _ => None,
+    }
+    .map(str::trim)
 }
