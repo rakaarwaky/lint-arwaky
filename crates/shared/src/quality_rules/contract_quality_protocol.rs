@@ -8,6 +8,11 @@
 use crate::taxonomy_quality_rules_vo::AesCodeAnalysisViolation;
 use shared_common::taxonomy_layer_vo::LayerDefinition;
 use shared_common::taxonomy_lint_vo::LintResult;
+
+// Whole-file line marker (UX-S5-003). Findings about a file as a whole —
+// AES301/AES302 line counts, AES303 missing definition, AES305 duplication
+// share — carry this line instead of an invented location.
+pub const WHOLE_FILE: usize = 0;
 use std::path::PathBuf;
 
 pub trait IBypassCheckerProtocol: Send + Sync {
