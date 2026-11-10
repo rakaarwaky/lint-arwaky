@@ -37,6 +37,9 @@ fn lint_result_new_orphan_has_no_enclosing_scope() {
         "no importers",
         Severity::default(),
         "AES501",
+        "NO_ENTRY_POINT",
+        "no entry points configured",
+        "add an entry point",
     );
     assert!(r.enclosing_scope.is_none());
     assert_eq!(r.file.value(), "src/orphan.rs");

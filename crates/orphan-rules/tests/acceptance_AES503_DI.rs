@@ -322,7 +322,7 @@ pub fn create_app() -> MyOrchestrator {
         assert!(
             !result.is_orphan,
             "Contract with an alive implementor must not be orphan: {}",
-            result.reason
+            result.message
         );
     }
 

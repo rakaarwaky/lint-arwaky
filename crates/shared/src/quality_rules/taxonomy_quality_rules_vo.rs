@@ -16,10 +16,13 @@ use std::collections::HashSet;
 /// A set of file paths.
 pub type FilePathSet = HashSet<FilePath>;
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct OrphanIndicatorResult {
     pub is_orphan: bool,
-    pub reason: String,
+    pub subtype: String,
+    pub message: String,
+    pub why: String,
+    pub fix: String,
     pub severity: Severity,
 }
 
@@ -35,11 +38,28 @@ impl ReachabilityResult {
 }
 
 impl OrphanIndicatorResult {
-    pub fn new(is_orphan: bool, reason: String, severity: Severity) -> Self {
+    pub fn orphan(
+        subtype: impl Into<String>,
+        message: impl Into<String>,
+        why: impl Into<String>,
+        fix: impl Into<String>,
+        severity: Severity,
+    ) -> Self {
         Self {
-            is_orphan,
-            reason,
+            is_orphan: true,
+            subtype: subtype.into(),
+            message: message.into(),
+            why: why.into(),
+            fix: fix.into(),
             severity,
+        }
+    }
+
+    pub fn not_orphan(severity: Severity) -> Self {
+        Self {
+            is_orphan: false,
+            severity,
+            ..Default::default()
         }
     }
 }

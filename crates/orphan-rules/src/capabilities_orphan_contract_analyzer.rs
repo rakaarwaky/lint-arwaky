@@ -5,6 +5,7 @@ use shared_orphan_rules::taxonomy_orphan_rules_vo::FileParseResultVO;
 use shared_orphan_rules::utility_orphan_filename::{
     content_contains_whole_word, file_basename, file_suffix,
 };
+use shared_orphan_rules::utility_orphan_paths::summarize_names;
 use shared_quality_rules::taxonomy_quality_rules_vo::{
     InheritanceMap, OrphanIndicatorResult, ReachabilityResult,
 };
@@ -62,12 +63,12 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
         let suffix = file_suffix(fp);
         let content = content_map.get(fp).cloned().unwrap_or_default();
         if content.is_empty() {
-            return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
+            return OrphanIndicatorResult::not_orphan(Severity::LOW);
         }
 
         let trait_names = self.extract_trait_names(fp, &content);
         if trait_names.is_empty() {
-            return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
+            return OrphanIndicatorResult::not_orphan(Severity::LOW);
         }
 
         tracing::debug!(
@@ -82,13 +83,14 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
         let is_reachable = is_path_alive(fp, alive_files)
             || self.has_alive_implementor(inheritance_map, &trait_names, alive_files);
         if !is_reachable {
-            return OrphanIndicatorResult::new(
-                true,
+            return OrphanIndicatorResult::orphan(
+                "CONTRACT_ORPHAN",
                 format!(
-                    "AES502 CONTRACT_ORPHAN: Contract '{}' is not wired by any container.\nWHY: An unreachable contract cannot be consumed by any feature.\nFIX: Import and wire '{}' in root_*_container.",
-                    trait_names.join(", "),
-                    trait_names.join(", ")
+                    "Contract '{}' is not wired by any container.",
+                    summarize_names(&trait_names, 3)
                 ),
+                "An unreachable contract cannot be consumed by any feature.",
+                "Import and wire the contract in root_*_container.",
                 Severity::MEDIUM,
             );
         }
@@ -112,17 +114,17 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
                 })
                 .cloned()
                 .collect();
-            tracing::debug!(
-                unimplemented = ?unimplemented,
-                "is_contract_orphan: unimplemented protocols"
-            );
             if !unimplemented.is_empty() {
-                return OrphanIndicatorResult::new(
-                    true,
+                return OrphanIndicatorResult::orphan(
+                    "PROTOCOL_NOT_IMPLEMENTED",
                     format!(
-                        "AES502 CONTRACT_ORPHAN: Protocol '{}' has no capability implementing it.\nWHY: A protocol without an implementor cannot be used via dependency injection.\nFIX: Create a capability file implementing '{}'.",
-                        unimplemented.join(", "),
-                        unimplemented.join(", ")
+                        "Protocol '{}' has no capability implementing it.",
+                        summarize_names(&unimplemented, 3)
+                    ),
+                    "A protocol without an implementor cannot be used via dependency injection.",
+                    format!(
+                        "Create a capability file implementing '{}'.",
+                        summarize_names(&unimplemented, 3)
                     ),
                     Severity::MEDIUM,
                 );
@@ -133,7 +135,7 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
         // file is re-exported in a configured barrel file, the contract is
         // intentionally public and not an orphan.
         if Self::is_trait_re_exported_in_barrel(&trait_names, &search_files, content_map) {
-            return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
+            return OrphanIndicatorResult::not_orphan(Severity::LOW);
         }
 
         // Condition 3: aggregate not implemented by agent.
@@ -152,90 +154,29 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
                 .cloned()
                 .collect();
             if !unimplemented.is_empty() {
-                return OrphanIndicatorResult::new(
-                    true,
+                return OrphanIndicatorResult::orphan(
+                    "AGGREGATE_NOT_IMPLEMENTED",
                     format!(
-                        "AES502 CONTRACT_ORPHAN: Aggregate '{}' has no agent implementing it.\nWHY: An aggregate without an implementor cannot be resolved from the container.\nFIX: Create an agent file implementing '{}'.",
-                        unimplemented.join(", "),
-                        unimplemented.join(", ")
+                        "Aggregate '{}' has no agent implementing it.",
+                        summarize_names(&unimplemented, 3)
+                    ),
+                    "An aggregate without an implementor cannot be resolved from the container.",
+                    format!(
+                        "Create an agent file implementing '{}'.",
+                        summarize_names(&unimplemented, 3)
                     ),
                     Severity::MEDIUM,
                 );
             }
         }
 
-        OrphanIndicatorResult::new(false, String::new(), Severity::LOW)
+        OrphanIndicatorResult::not_orphan(Severity::LOW)
     }
 }
 
 // ─── Block 3: Module Helpers ────────────
 
-/// Normalizes a workspace-relative path for comparison.
-///
-/// Strips a leading `./` prefix and converts backslashes to forward slashes so
-/// that paths originating from different sources compare consistently.
-pub fn normalize_rel_path(p: &str) -> String {
-    p.trim_start_matches("./").replace('\\', "/")
-}
-
-/// Determines whether two workspace-relative paths refer to the same file.
-///
-/// Both inputs use the same `path_to_relative` format (workspace-relative,
-/// forward slashes). Matching is strict: exact equality after normalization, or a
-/// suffix match that begins at a path-separator boundary. Bare-basename matching
-/// is intentionally avoided so that common names such as `mod.rs`, `index.ts`, or
-/// `lib.rs` in one module cannot validate an unrelated file in another module.
-pub fn paths_equivalent(rel: &str, alive: &str) -> bool {
-    let a = normalize_rel_path(rel);
-    let b = normalize_rel_path(alive);
-    if a == b {
-        return true;
-    }
-    // Suffix match only at a separator boundary. A path without any directory
-    // component (bare basename) is only ever equal — never a suffix match — so
-    // a bare `lib.rs` cannot validate an unrelated deeper `lib.rs`.
-    if a.contains('/') {
-        if let Some(rest) = b.strip_suffix(&a) {
-            if rest.is_empty() || rest.ends_with('/') {
-                return true;
-            }
-        }
-    }
-    if b.contains('/') {
-        if let Some(rest) = a.strip_suffix(&b) {
-            if rest.is_empty() || rest.ends_with('/') {
-                return true;
-            }
-        }
-    }
-    false
-}
-
-/// Determines whether a workspace-relative path corresponds to any reachable file path.
-///
-/// Paths may be relative or absolute and may include a `./` prefix. Matching uses
-/// [`paths_equivalent`], so common file names in different modules never collide.
-///
-/// # Examples
-///
-/// ```rust,ignore
-/// assert!(is_path_alive("src/lib.rs", &alive_files));
-/// ```
-///
-/// # Arguments
-///
-/// * `rel` - Workspace-relative path to compare.
-/// * `alive_files` - Reachability results containing paths known to be reachable.
-///
-/// # Returns
-///
-/// `true` if a reachable path matches the supplied path, `false` otherwise.
-pub fn is_path_alive(rel: &str, alive_files: &ReachabilityResult) -> bool {
-    alive_files
-        .paths
-        .iter()
-        .any(|af| paths_equivalent(rel, af.value()))
-}
+use shared_orphan_rules::utility_orphan_paths::is_path_alive;
 
 impl ContractOrphanAnalyzer {
     fn extract_trait_names(&self, file_path: &str, content: &str) -> Vec<String> {

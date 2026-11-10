@@ -3,6 +3,7 @@ use shared_common::taxonomy_severity_vo::Severity;
 use shared_common::utility_architecture_layer_detector;
 use shared_orphan_rules::contract_orphan_protocol::IUtilityOrphanProtocol;
 use shared_orphan_rules::taxonomy_orphan_rules_constant::CONSUMER_LAYERS;
+use shared_orphan_rules::utility_orphan_paths::summarize_names;
 use shared_quality_rules::taxonomy_quality_rules_vo::{
     InboundLinkMap, OrphanIndicatorResult, ReachabilityResult,
 };
@@ -17,7 +18,6 @@ impl Default for UtilityOrphanAnalyzer {
         Self::new()
     }
 }
-
 impl UtilityOrphanAnalyzer {
     pub fn new() -> Self {
         Self
@@ -36,13 +36,17 @@ impl IUtilityOrphanProtocol for UtilityOrphanAnalyzer {
         alive_files: &ReachabilityResult,
     ) -> OrphanIndicatorResult {
         let fp = f.value();
+        let content = content_map.get(fp).cloned().unwrap_or_default();
+        if content.is_empty() {
+            return OrphanIndicatorResult::not_orphan(Severity::LOW);
+        }
         let module_name = match std::path::Path::new(fp)
             .file_stem()
             .and_then(|s| s.to_str())
         {
             Some(name) => name.to_string(),
             None => {
-                return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
+                return OrphanIndicatorResult::not_orphan(Severity::LOW);
             }
         };
 
@@ -142,34 +146,57 @@ impl IUtilityOrphanProtocol for UtilityOrphanAnalyzer {
 
         // Both conditions must be satisfied for non-orphan
         if is_reachable && has_consumer_importers {
-            return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
+            return OrphanIndicatorResult::not_orphan(Severity::LOW);
         }
 
-        // Build diagnostic message based on which conditions failed
+        // Build diagnostic message — one sentence ≤72 visible chars, no code prefix, no WHY:/FIX:.
         let imported_by_str = if utility_importers.is_empty() {
             String::new()
         } else {
-            format!(" (only by {})", utility_importers.join(", "))
+            format!(" (only by {})", summarize_names(&utility_importers, 3))
         };
 
-        let reason = if !is_reachable && !has_consumer_importers {
+        let message = if !is_reachable && !has_consumer_importers {
             format!(
-                "AES504 UTILITY_ORPHAN: '{}' is not reachable and not imported by a consumer layer{}.\nWHY: A utility without consumers cannot be used.\nFIX: Import '{}' in a consumer layer or remove the orphaned utility.",
-                module_name, imported_by_str, module_name
+                "'{}' unreachable; no consumer{}.",
+                module_name, imported_by_str
+            )
+        } else if !is_reachable {
+            format!("'{}' is not reachable from any entry point.", module_name)
+        } else {
+            format!(
+                "'{}' not imported by consumer layer{}.",
+                module_name, imported_by_str
+            )
+        };
+
+        let why = if !is_reachable && !has_consumer_importers {
+            "A utility with no consumer-layer importer and no entry-point reachability is dead code."
+                .to_string()
+        } else if !is_reachable {
+            "An unreachable utility provides no value.".to_string()
+        } else {
+            "A utility without consumers is dead code.".to_string()
+        };
+
+        let fix = if !is_reachable && !has_consumer_importers {
+            format!(
+                "Import '{}' in a consumer layer or remove the orphaned utility.",
+                module_name
             )
         } else if !is_reachable {
             format!(
-                "AES504 UTILITY_ORPHAN: '{}' is not reachable from any entry point.\nWHY: An unreachable utility provides no value.\nFIX: Import '{}' in a surface, capability, agent, or entry file.",
-                module_name, module_name
+                "Import '{}' in a surface, capability, agent, or entry file.",
+                module_name
             )
         } else {
             format!(
-                "AES504 UTILITY_ORPHAN: '{}' is not imported by a consumer layer{}.\nWHY: A utility without consumers is dead code.\nFIX: Import '{}' in a capabilities, agent, or surface file.",
-                module_name, imported_by_str, module_name
+                "Import '{}' in a capabilities, agent, or surface file.",
+                module_name
             )
         };
 
-        OrphanIndicatorResult::new(true, reason, Severity::MEDIUM)
+        OrphanIndicatorResult::orphan("UTILITY_ORPHAN", message, why, fix, Severity::MEDIUM)
     }
 }
 

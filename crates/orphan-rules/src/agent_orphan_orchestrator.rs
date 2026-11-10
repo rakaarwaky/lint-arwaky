@@ -22,8 +22,7 @@ use shared_common::taxonomy_common_vo::BooleanVO;
 use shared_common::taxonomy_layer_vo::LayerDefinition;
 use shared_common::taxonomy_layer_vo::OrphanRuleVO;
 use shared_common::{
-    AdapterName, ColumnNumber, DescriptionVO, ErrorCode, LayerNameVO, LineNumber, LintMessage,
-    LocationList, ScopeRef,
+    AdapterName, ColumnNumber, ErrorCode, LayerNameVO, LineNumber, LintMessage, LocationList,
 };
 use shared_role_rules::taxonomy_role_rules_constant::{
     LAYER_AGENT, LAYER_CAPABILITIES, LAYER_CONTRACT, LAYER_SURFACES, LAYER_TAXONOMY, LAYER_UTILITY,
@@ -69,32 +68,6 @@ impl ArchOrphanAnalyzer {
                 root_path, &ignored,
             ))
             .into_graph_context()
-    }
-
-    /// Identify entry points from a workspace file list.
-    pub fn identify_orphan_entry_points(&self, files: &OrphanFileListVO) -> OrphanFileListVO {
-        shared_orphan_rules::utility_orphan_filename::identify_entry_points(
-            std::slice::from_ref(files),
-            &[],
-        )
-    }
-
-    /// Trace the alive set for a set of entry points against an import graph.
-    pub fn trace_alive_files(
-        &self,
-        entry_points: &OrphanFileListVO,
-        context: &GraphAnalysisContext,
-    ) -> ReachabilityResult {
-        let alive_set = shared_orphan_rules::utility_orphan_graph::trace_reachability(
-            &entry_points.values,
-            &context.import_graph,
-        );
-        ReachabilityResult::new(
-            alive_set
-                .into_iter()
-                .map(|s| FilePath::new(s).unwrap_or_default())
-                .collect(),
-        )
     }
 
     pub fn check_orphans(&self, files: &OrphanFileListVO, root_dir: &FilePath) -> Vec<LintResult> {
@@ -205,6 +178,14 @@ impl ArchOrphanAnalyzer {
             "orphan inner scan started"
         );
         let configured = self.get_orphan_entry_points();
+        const DEFAULT_ENTRY_PATTERNS: [&str; 4] =
+            ["_entry.rs", "_entry.py", "_entry.ts", "_entry.js"];
+        // Issue 10/22: derive custom-pattern flag from `configured` instead of
+        // re-scanning `self.config.layers`. A custom pattern is present iff any
+        // entry in `configured` is not one of the 4 defaults.
+        let has_custom_entry_patterns = configured
+            .iter()
+            .any(|p| !DEFAULT_ENTRY_PATTERNS.contains(&p.as_str()));
         let configured_vo =
             shared_orphan_rules::taxonomy_orphan_rules_vo::OrphanEntryPatternListVO::new(
                 configured,
@@ -239,6 +220,35 @@ impl ArchOrphanAnalyzer {
             std::slice::from_ref(&entry_points_vo),
             &[configured_vo],
         );
+
+        // UX-S1-001 P0 — empty-entry-point guard: without any entry point, every file
+        // would look unreachable, so report a single whole-file finding instead of
+        // cascading orphan findings from the layer analyzers.
+        //
+        // `configured` already merges the 4 default entry patterns with any custom
+        // ones from `self.config.layers`, so deriving the custom-pattern flag from it
+        // avoids re-scanning the layer map (Issue 10/22).
+        if entry_points.values.is_empty() && !has_custom_entry_patterns {
+            let root_msg = root_dir.value();
+            let message = format!("No entry point found under '{root_msg}'.");
+            return vec![LintResult {
+                file: FilePath::new(root_msg.to_string()).unwrap_or_default(),
+                line: LineNumber::new(0),
+                column: ColumnNumber::new(0),
+                code: ErrorCode::raw("AES501"),
+                message: LintMessage::new(message),
+                source: Some(AdapterName::raw("architecture")),
+                severity: Severity::HIGH,
+                enclosing_scope: None,
+                related_locations: LocationList::new(),
+                violation_name: "NO_ENTRY_POINT".to_string(),
+                why: "Orphan detection measures reachability from an entry point; with none, every file would look unreachable."
+                    .to_string(),
+                fix: "Add a root_*_entry.rs file, or set layers.<layer>.orphan.orphan_entry_points in lint_arwaky.config.yaml."
+                    .to_string(),
+            }];
+        }
+
         // BFS reachability through the import graph. The graph already carries
         // synthetic DI edges (contract→capabilities bridge and container→wired
         // services), so a single linear BFS follows both import and DI paths.
@@ -279,25 +289,40 @@ impl ArchOrphanAnalyzer {
                 abs.to_string_lossy().to_string()
             })
             .collect();
-        // Pre-read all file contents from bounded cache so capabilities don't do I/O.
-        let content_map: HashMap<String, String> = all_files
-            .iter()
-            .filter_map(|f| {
-                let path = FilePath::new(f.clone()).ok()?;
-                let content = self
-                    .deps
-                    .filesystem
-                    .execute(FilesystemRequest::read_cached(&path))
-                    .into_content();
-                let c = content.value();
-                if c.is_empty() {
-                    tracing::warn!(file = %f, "file content empty or not in cache");
-                    None
-                } else {
-                    Some((f.clone(), c.to_string()))
+        // Aggregate file contents into (content_map, unread_count) via an
+        // explicit loop instead of `.fold()` — aggregation belongs in a
+        // capability, not an agent (AES405:AGENT_ROLE).
+        let mut content_map = HashMap::new();
+        let mut unread_count = 0usize;
+        for f in all_files.iter() {
+            let path = match FilePath::new(f.clone()) {
+                Ok(p) => p,
+                Err(_) => {
+                    unread_count += 1;
+                    continue;
                 }
-            })
-            .collect();
+            };
+            let content = self
+                .deps
+                .filesystem
+                .execute(FilesystemRequest::read_cached(&path))
+                .into_content();
+            let c = content.value();
+            if c.is_empty() {
+                unread_count += 1;
+            } else {
+                content_map.insert(f.clone(), c.to_string());
+            }
+        }
+        if unread_count > 0 {
+            tracing::warn!(
+                unread_count = unread_count,
+                total_files = all_files.len(),
+                "{} of {} files had unreadable content; they are treated as not-alive",
+                unread_count,
+                all_files.len()
+            );
+        }
 
         let violations: Vec<LintResult> = files
             .values
@@ -418,41 +443,34 @@ impl ArchOrphanAnalyzer {
                 file = f,
                 abs_path = abs_f_str,
                 is_orphan = res.is_orphan,
-                reason = %res.reason,
+                subtype = %res.subtype,
+                message = %res.message,
+                severity = ?res.severity,
                 "AES506 surface check"
             );
         }
         if res.is_orphan {
-            return Some(self._make_result(f, &res.reason, res.severity, code));
+            return Some(self._make_result(f, &res, code));
         }
         None
     }
 
-    fn _make_result(&self, file: &str, msg: &str, sev: Severity, code: &str) -> LintResult {
-        use shared_common::taxonomy_violation_item_vo::{
-            parse_fix, parse_violation_name, parse_why,
-        };
+    fn _make_result(&self, file: &str, res: &OrphanIndicatorResult, code: &str) -> LintResult {
         LintResult {
             file: FilePath {
                 value: file.to_string(),
             },
-            line: LineNumber::new(1),
-            column: ColumnNumber::new(1),
+            line: LineNumber::new(0),
+            column: ColumnNumber::new(0),
             code: ErrorCode::raw(code),
-            message: LintMessage::new(msg),
+            message: LintMessage::new(res.message.clone()),
             source: Some(AdapterName::raw("architecture")),
-            severity: sev,
-            enclosing_scope: Some(ScopeRef {
-                name: DescriptionVO::new(String::new()),
-                kind: DescriptionVO::new(String::new()),
-                file: None,
-                start_line: None,
-                end_line: None,
-            }),
+            severity: res.severity.clone(),
+            enclosing_scope: None,
             related_locations: LocationList::new(),
-            violation_name: parse_violation_name(code, msg),
-            why: parse_why(msg),
-            fix: parse_fix(msg),
+            violation_name: res.subtype.clone(),
+            why: res.why.clone(),
+            fix: res.fix.clone(),
         }
     }
 
@@ -469,14 +487,14 @@ impl ArchOrphanAnalyzer {
         // Barrel file exceptions (single source: shared_common::DEFAULT_RULE_EXCEPTIONS)
         let basename = f.rsplit(['/', '\\']).next().unwrap_or(f);
         if shared_common::DEFAULT_RULE_EXCEPTIONS.contains(&basename) {
-            return OrphanIndicatorResult::new(false, String::new(), Severity::HIGH);
+            return OrphanIndicatorResult::not_orphan(Severity::HIGH);
         }
 
         let layer_str = layer_vo.value.to_lowercase();
         let fp = match FilePath::new(f.to_string()) {
             Ok(fp) => fp,
             Err(_) => {
-                return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
+                return OrphanIndicatorResult::not_orphan(Severity::LOW);
             }
         };
         // Use top_root as the root directory (absolute path so file operations work)
@@ -548,7 +566,7 @@ impl ArchOrphanAnalyzer {
             );
         }
 
-        OrphanIndicatorResult::new(false, String::new(), Severity::LOW)
+        OrphanIndicatorResult::not_orphan(Severity::LOW)
     }
 
     fn get_orphan_entry_points(&self) -> Vec<String> {
@@ -594,9 +612,6 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
         match request {
             OrphanRequest::BuildGraphContext { root_dir, .. } => OrphanResponse::GraphContext {
                 context: self.build_orphan_graph_context(&root_dir),
-            },
-            OrphanRequest::IdentifyEntryPoints { files } => OrphanResponse::EntryPoints {
-                files: self.identify_orphan_entry_points(&files),
             },
             OrphanRequest::Check { files, root_dir } => OrphanResponse::Violations {
                 violations: self.check_orphans(&files, &root_dir),

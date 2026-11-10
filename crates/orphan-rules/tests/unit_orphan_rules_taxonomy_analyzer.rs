@@ -53,7 +53,7 @@ fn test_file_with_no_importers_is_orphan() {
         &empty_reachability(),
     );
     assert!(result.is_orphan);
-    assert!(!result.reason.is_empty());
+    assert!(!result.message.is_empty());
 }
 
 #[test]
@@ -108,7 +108,7 @@ fn test_file_only_imported_by_taxonomy_layer_is_orphan() {
         &empty_reachability(),
     );
     assert!(result.is_orphan);
-    assert!(result.reason.contains("taxonomy_color"));
+    assert!(result.message.contains("taxonomy_color"));
 }
 
 #[test]
@@ -129,5 +129,5 @@ fn test_utility_suffix_categorization() {
     );
     // "taxonomy_helper" has suffix "helper" → category is "utility"
     assert!(result.is_orphan);
-    assert!(!result.reason.is_empty());
+    assert!(!result.message.is_empty());
 }

@@ -157,7 +157,7 @@ fn test_trait_not_implemented_is_orphan() {
     );
     assert!(result.is_orphan);
     assert!(result.severity == Severity::MEDIUM);
-    assert!(result.reason.contains("IFooProtocol"));
+    assert!(result.message.contains("IFooProtocol"));
 }
 
 #[test]
