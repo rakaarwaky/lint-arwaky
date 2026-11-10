@@ -204,9 +204,14 @@ def some_func():
 from modules.agent.src.agent_session_health_checker import AgentSessionHealthChecker
 ";
     let violations = check_file(content, "/tmp/project/surface_tui_sessions_store.py");
-    assert_eq!(violations.len(), 2);
+    // Two `from agent.* import ...` statements (lines 6 and 11). Each Python `from`
+    // statement emits one entry for the module path and one for `module.symbol`;
+    // both are distinct imports at their source line, so 4 findings total.
+    assert_eq!(violations.len(), 4);
     assert_eq!(violations[0].line.value(), 6);
-    assert_eq!(violations[1].line.value(), 11);
+    assert_eq!(violations[1].line.value(), 6);
+    assert_eq!(violations[2].line.value(), 11);
+    assert_eq!(violations[3].line.value(), 11);
 }
 
 #[test]
@@ -247,6 +252,6 @@ fn aes201_falls_back_to_index_when_entry_line_is_zero() {
         )
         .unwrap();
     assert_eq!(result.values.len(), 1);
-    // When line == 0, fallback to idx + 1 (1 in this case)
-    assert_eq!(result.values[0].line.value(), 1);
+    // When line == 0, the finding carries line 0 (no fabricated index fallback)
+    assert_eq!(result.values[0].line.value(), 0);
 }

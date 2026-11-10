@@ -244,7 +244,7 @@ impl ArchImportMandatoryChecker {
             if !is_present {
                 let v = LintResult::new_arch_with_name(
                     file,
-                    1,
+                    0,
                     AES202_RULE_CODE,
                     Severity::HIGH,
                     format!(
@@ -256,7 +256,7 @@ impl ArchImportMandatoryChecker {
                         "Layer '{}' must import '{}' to satisfy architectural requirements.",
                         source_layer, required
                     ),
-                    "Add the required import statement.",
+                    "Add the required import declared by the AES202 mandatory rule key.",
                 );
                 if !violations.contains(&v) {
                     violations.push(v);

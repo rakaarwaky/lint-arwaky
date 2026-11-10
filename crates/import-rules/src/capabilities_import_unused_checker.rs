@@ -156,9 +156,12 @@ impl UnusedImportRuleChecker {
                 ast_line,
                 "AES203",
                 Severity::MEDIUM,
-                format!("Unused import '{}' detected.", alias_str),
+                format!(
+                    "Import '{}' is never referenced outside the import statement.",
+                    alias_str
+                ),
                 "UNUSED_IMPORT",
-                "Unused imports clutter the codebase.",
+                "Unused imports clutter the codebase and hide real dependencies.",
                 "Remove the unused import.",
             ));
         }
