@@ -235,7 +235,7 @@ Severity is printed on every finding as `[CRIT]`, `[HIGH]`, or `[MED]` via `Seve
 - An actual unused import is flagged exactly once per import entry; multiple unused imports each produce their own finding.
 - An aliased Python import used only via its alias produces no finding; a truly unused alias is flagged.
 - Barrel, mod-re-export, and index files produce no AES203 findings.
-- A Python `__init__.py` is skipped regardless of content or directory context, because `is_barrel_file` matches on basename only; to audit its imports, rename the file.
+- A package-init barrel file is skipped regardless of content or directory context, because `is_barrel_file` matches on basename only; to audit its imports, rename the file.
 - A parse failure of the file body yields no AES203 findings for that file rather than false positives.
 
 #### Technical Specification
