@@ -12,8 +12,6 @@ pub enum OrphanRequest {
         files: OrphanFileListVO,
         root_dir: FilePath,
     },
-    /// Resolve which files are reachable entry points.
-    IdentifyEntryPoints { files: OrphanFileListVO },
     /// Run orphan detection, building the graph context inline.
     Check {
         files: OrphanFileListVO,
@@ -42,11 +40,6 @@ impl OrphanRequest {
         Self::BuildGraphContext {
             files: files.clone(),
             root_dir: root_dir.clone(),
-        }
-    }
-    pub fn identify_entry_points(files: &OrphanFileListVO) -> Self {
-        Self::IdentifyEntryPoints {
-            files: files.clone(),
         }
     }
     pub fn check(files: &OrphanFileListVO, root_dir: &FilePath) -> Self {

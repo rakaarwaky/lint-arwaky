@@ -49,11 +49,15 @@ fn aes505_agent_with_aggregate_trait_not_used_by_surface_is_orphan() {
         "Agent file with unreferenced aggregate should be orphan"
     );
     assert_eq!(result.severity, Severity::HIGH);
+    assert_eq!(result.subtype, "AGENT_ORPHAN");
     assert!(
-        result.reason.contains("IFooAggregate") || result.reason.contains("not reachable"),
-        "Reason should mention the aggregate or reachability: {}",
-        result.reason
+        result.message.contains("unreachable"),
+        "Reason should mention unreachable: {}",
+        result.message
     );
+    assert!(result.message.chars().count() <= 72);
+    assert!(!result.why.is_empty());
+    assert!(!result.fix.is_empty());
 }
 
 #[test]
@@ -85,6 +89,11 @@ fn aes505_agent_with_aggregate_used_by_surface_is_not_orphan() {
         result.is_orphan,
         "Agent aggregate only used by surface (not container) SHOULD be orphan"
     );
+    assert_eq!(result.subtype, "AGENT_ORPHAN");
+    assert_eq!(result.severity, Severity::HIGH);
+    assert!(result.message.chars().count() <= 72);
+    assert!(!result.why.is_empty());
+    assert!(!result.fix.is_empty());
 }
 
 #[test]
@@ -114,10 +123,15 @@ fn aes505_agent_with_aggregate_used_by_container_is_not_orphan() {
         !result.is_orphan,
         "Agent aggregate used by container should NOT be orphan"
     );
+    assert!(result.subtype.is_empty());
+    assert_eq!(result.severity, Severity::LOW);
+    assert!(result.message.chars().count() <= 72);
+    assert!(result.why.is_empty());
+    assert!(result.fix.is_empty());
 }
 
 #[test]
-fn aes505_agent_with_aggregate_used_by_main_is_not_orphan() {
+fn aes505_agent_with_aggregate_used_by_main_is_orphan() {
     // In proper architecture, agents are wired in _container files, not entry files.
     // This test verifies that entry file references are NOT considered valid wiring.
     let analyzer = agent_analyzer();
@@ -145,6 +159,11 @@ fn aes505_agent_with_aggregate_used_by_main_is_not_orphan() {
         result.is_orphan,
         "Agent aggregate only used by entry file (not container) SHOULD be orphan"
     );
+    assert_eq!(result.subtype, "AGENT_ORPHAN");
+    assert_eq!(result.severity, Severity::HIGH);
+    assert!(result.message.chars().count() <= 72);
+    assert!(!result.why.is_empty());
+    assert!(!result.fix.is_empty());
 }
 
 #[test]
@@ -157,6 +176,11 @@ fn aes505_empty_content_is_not_orphan() {
 
     let result = analyzer.is_agent_orphan(&fp, &root, &[], &content_map, &empty_reachability());
     assert!(!result.is_orphan, "Empty content should not be flagged");
+    assert!(result.subtype.is_empty());
+    assert_eq!(result.severity, Severity::LOW);
+    assert!(result.message.chars().count() <= 72);
+    assert!(result.why.is_empty());
+    assert!(result.fix.is_empty());
 }
 
 #[test]
@@ -180,6 +204,11 @@ fn aes505_no_aggregate_traits_not_in_alive_set_is_orphan() {
         result.is_orphan,
         "File without aggregate traits and not in alive set should be orphan"
     );
+    assert_eq!(result.subtype, "AGENT_ORPHAN");
+    assert_eq!(result.severity, Severity::HIGH);
+    assert!(result.message.chars().count() <= 72);
+    assert!(!result.why.is_empty());
+    assert!(!result.fix.is_empty());
 }
 
 #[test]
@@ -209,24 +238,39 @@ fn aes505_no_aggregate_traits_in_alive_set_is_not_orphan() {
         !result.is_orphan,
         "File without aggregate traits but in alive set should NOT be orphan"
     );
+    assert!(result.subtype.is_empty());
+    assert_eq!(result.severity, Severity::LOW);
+    assert!(result.message.chars().count() <= 72);
+    assert!(result.why.is_empty());
+    assert!(result.fix.is_empty());
 }
 
 #[test]
 fn aes505_agent_violation_display_message() {
-    use shared_orphan_rules::AesOrphanViolation;
-    let _violation = AesOrphanViolation::AgentOrphan {
-        agg_name: "IFooAggregate".to_string(),
-        reason: Some(shared_common::taxonomy_message_vo::LintMessage::new(
-            "Agent file aggregate trait is not used by any surface, container, entry, or main file.".to_string(),
-        )),
-    };
-    let msg = format!(
-        "AES505 AGENT_ORPHAN: Aggregate '{}' is unreachable from any surface.\nWHY? {}\nFIX: Import and use '{}' in a surface_* file or root_*_container.rs.",
-        "IFooAggregate",
-        "Agent file aggregate trait is not used by any surface, container, entry, or main file.",
-        "IFooAggregate"
+    let analyzer = agent_analyzer();
+    let fp =
+        FilePath::new("crates/orphan-rules/src/agent_foo_orchestrator.rs".to_string()).unwrap();
+    let root = FilePath::new(".".to_string()).unwrap();
+    let mut content_map = HashMap::new();
+    content_map.insert(
+        fp.value().to_string(),
+        "impl IFooAggregate for FooOrchestrator {\n    fn run(&self) {}\n}".to_string(),
     );
-    assert!(msg.contains("AES505"));
-    assert!(msg.contains("IFooAggregate"));
-    assert!(msg.contains("unreachable"));
+    let all_files = vec![fp.value().to_string()];
+
+    let result =
+        analyzer.is_agent_orphan(&fp, &root, &all_files, &content_map, &empty_reachability());
+    assert!(result.is_orphan);
+    assert_eq!(result.subtype, "AGENT_ORPHAN");
+    assert_eq!(result.severity, Severity::HIGH);
+    assert_eq!(
+        result.message,
+        "'agent_foo_orchestrator' is unreachable and not wired in any container."
+    );
+    assert!(result.message.chars().count() <= 72);
+    assert!(!result.why.is_empty());
+    assert!(!result.fix.is_empty());
+    assert!(!result.message.starts_with("AES505"));
+    assert!(!result.message.contains("WHY:"));
+    assert!(!result.message.contains("FIX:"));
 }

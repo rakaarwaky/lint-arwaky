@@ -59,11 +59,14 @@ fn aes503_reachable_file_is_not_orphan() {
         result.is_orphan,
         "Reachable but unwired capabilities file should be orphan with mock filesystem"
     );
-    assert!(
-        result.reason.contains("not wired"),
-        "Should fail on wiring check, not reachability: {}",
-        result.reason
+    assert_eq!(result.subtype, "CAPABILITIES_ORPHAN");
+    assert_eq!(result.severity, Severity::MEDIUM);
+    assert_eq!(
+        result.message,
+        "'capabilities_foo' is reachable but not wired in any container."
     );
+    assert!(result.message.chars().count() <= 72);
+    assert!(!result.message.contains("not reachable"));
 }
 
 #[test]
@@ -82,8 +85,15 @@ fn aes503_unreachable_file_is_orphan() {
         result.is_orphan,
         "Unreachable capabilities file should be orphan"
     );
+    assert_eq!(result.subtype, "CAPABILITIES_ORPHAN");
     assert_eq!(result.severity, Severity::MEDIUM);
-    assert!(!result.reason.is_empty());
+    assert_eq!(
+        result.message,
+        "'capabilities_foo' is unreachable and not wired in any container."
+    );
+    assert!(result.message.chars().count() <= 72);
+    assert!(!result.why.is_empty());
+    assert!(!result.fix.is_empty());
 }
 
 #[test]
@@ -98,12 +108,15 @@ fn aes503_unreachable_file_reason_mentions_not_wired() {
 
     let result = analyzer.is_capabilities_orphan(&fp, &root, &alive, &content_map, &workspace_root);
     assert!(result.is_orphan);
-    // The reason should mention that the struct/trait is not wired
-    assert!(
-        result.reason.contains("not wired") || result.reason.contains("not reachable"),
-        "Reason should mention wiring or reachability: {}",
-        result.reason
+    assert_eq!(result.subtype, "CAPABILITIES_ORPHAN");
+    assert_eq!(result.severity, Severity::MEDIUM);
+    assert_eq!(
+        result.message,
+        "'capabilities_bar' is unreachable and not wired in any container."
     );
+    assert!(result.message.chars().count() <= 72);
+    assert!(!result.why.is_empty());
+    assert!(!result.fix.is_empty());
 }
 
 #[test]
@@ -135,36 +148,44 @@ fn aes503_multiple_files_one_reachable() {
         result_reachable.is_orphan,
         "Reachable but unwired should be orphan with mock filesystem"
     );
-    assert!(
-        result_reachable.reason.contains("not wired"),
-        "Should fail on wiring: {}",
-        result_reachable.reason
+    assert_eq!(
+        result_reachable.message,
+        "'capabilities_handler' is reachable but not wired in any container."
     );
+    assert!(result_reachable.message.chars().count() <= 72);
     // Unreachable file fails reachability check → "not reachable"
     assert!(result_orphan.is_orphan, "Unreachable should be orphan");
-    assert!(
-        result_orphan.reason.contains("not reachable"),
-        "Should fail on reachability: {}",
-        result_orphan.reason
+    assert_eq!(
+        result_orphan.message,
+        "'capabilities_legacy' is unreachable and not wired in any container."
     );
+    assert!(result_orphan.message.chars().count() <= 72);
 }
 
 #[test]
 fn aes503_capabilities_violation_display_message() {
-    use shared_orphan_rules::AesOrphanViolation;
-    let _violation = AesOrphanViolation::CapabilitiesOrphan {
-        stem: "capabilities_handler".to_string(),
-        reason: Some(shared_common::taxonomy_message_vo::LintMessage::new(
-            "Not wired in container.".to_string(),
-        )),
-    };
-    let msg = format!(
-        "AES503 CAPABILITIES_ORPHAN: '{}' is not wired.\nWHY? {}\nFIX: Register '{}' in root_*_entry.rs or root_*_container.rs.",
-        "capabilities_handler", "Not wired in container.", "capabilities_handler"
+    let analyzer = capabilities_analyzer();
+    let fp = FilePath::new("crates/orphan-rules/src/capabilities_handler.rs".to_string()).unwrap();
+    let root = FilePath::new(".".to_string()).unwrap();
+    let workspace_root = std::path::Path::new(".").to_path_buf();
+    let content_map = HashMap::new();
+
+    let alive = ReachabilityResult::new(HashSet::new());
+    let result = analyzer.is_capabilities_orphan(&fp, &root, &alive, &content_map, &workspace_root);
+
+    assert!(result.is_orphan);
+    assert_eq!(result.subtype, "CAPABILITIES_ORPHAN");
+    assert_eq!(result.severity, Severity::MEDIUM);
+    assert_eq!(
+        result.message,
+        "'capabilities_handler' is unreachable and not wired in any container."
     );
-    assert!(msg.contains("AES503"));
-    assert!(msg.contains("capabilities_handler"));
-    assert!(msg.contains("not wired"));
+    assert!(result.message.chars().count() <= 72);
+    assert!(!result.why.is_empty());
+    assert!(!result.fix.is_empty());
+    assert!(!result.message.starts_with("AES503"));
+    assert!(!result.message.contains("WHY:"));
+    assert!(!result.message.contains("FIX:"));
 }
 
 #[test]
@@ -290,14 +311,14 @@ fn aes503_reachable_unwired_message_mentions_di_bridge_gap() {
     let result = analyzer.is_capabilities_orphan(&fp, &root, &alive, &content_map, &workspace_root);
     assert!(result.is_orphan, "mock filesystem never reports wired");
     assert!(
-        result.reason.contains("is reachable but not wired"),
+        result.message.contains("is reachable but not wired"),
         "P5 message should explain the file is reachable but the wiring gap remains: {}",
-        result.reason
+        result.message
     );
     assert!(
-        !result.reason.contains("is not reachable"),
+        !result.message.contains("is not reachable"),
         "Reachable file must not be reported as unreachable: {}",
-        result.reason
+        result.message
     );
 }
 
@@ -368,4 +389,76 @@ fn aes503_di_impl_bridge_reaches_capabilities() {
         alive_set.contains(&capabilities),
         "capability implementing a reachable contract must be reachable via impl bridge"
     );
+}
+
+#[test]
+fn aes503_reachable_wired_is_not_orphan() {
+    // Issue 17: reachable+wired is NOT orphan using a real temp-dir workspace
+    // (pattern from acceptance_AES503_DI.rs). The capabilities file is wired
+    // into a root_*_container whose identifiers match.
+    let tmp = tempfile::TempDir::new().unwrap();
+    let ws_root = tmp.path();
+    let src = ws_root.join("crates").join("my-crate").join("src");
+    std::fs::create_dir_all(&src).unwrap();
+
+    // Entry file defines _entry suffix — acts as entry point for wiring check
+    std::fs::write(src.join("root_my_entry.rs"), "pub struct Main;\n").unwrap();
+
+    // Container file wired with identifier matching the capabilities struct name
+    std::fs::write(
+        src.join("root_my_container.rs"),
+        "pub use crate::capabilities_foo::Foo;\n",
+    )
+    .unwrap();
+
+    // Capabilities file defining Foo
+    std::fs::write(
+        src.join("capabilities_foo.rs"),
+        "pub struct Foo;\nimpl Foo { pub fn new() -> Self { Self } }\n",
+    )
+    .unwrap();
+
+    let real_workspace = std::sync::Arc::new(CapabilitiesWorkspace::new());
+    let analyzer = CapabilitiesOrphanAnalyzer::new(real_workspace);
+    let fp = FilePath::new("crates/my-crate/src/capabilities_foo.rs".to_string()).unwrap();
+    let root = FilePath::new(ws_root.to_str().unwrap()).unwrap();
+
+    let alive_set = ReachabilityResult::new(std::collections::HashSet::from([FilePath::new(
+        "crates/my-crate/src/capabilities_foo.rs",
+    )
+    .unwrap()]));
+    let mut content_map = HashMap::new();
+    content_map.insert(
+        fp.value().to_string(),
+        "pub struct Foo;\nimpl Foo { pub fn new() -> Self { Self } }\n".to_string(),
+    );
+
+    let result = analyzer.is_capabilities_orphan(&fp, &root, &alive_set, &content_map, ws_root);
+    // Real workspace: check_wired_in_container finds root_my_container.rs which
+    // references Foo, so the reachable+wired capabilities file is NOT an orphan.
+    assert!(
+        !result.is_orphan,
+        "reachable+wired capabilities file should NOT be orphan: {}",
+        result.message
+    );
+    assert_eq!(result.subtype, "");
+    assert!(result.message.chars().count() <= 72);
+}
+
+#[test]
+fn aes503_message_is_one_sentence_no_prefix() {
+    let analyzer = capabilities_analyzer();
+    let fp = FilePath::new("crates/orphan-rules/src/capabilities_handler.rs".to_string()).unwrap();
+    let root = FilePath::new(".".to_string()).unwrap();
+    let workspace_root = std::path::Path::new(".").to_path_buf();
+    let content_map = HashMap::new();
+
+    let alive = ReachabilityResult::new(HashSet::new());
+
+    let result = analyzer.is_capabilities_orphan(&fp, &root, &alive, &content_map, &workspace_root);
+    assert!(!result.message.starts_with("AES503"));
+    assert!(!result.message.contains("WHY:"));
+    assert!(!result.message.contains("FIX:"));
+    assert!(result.message.ends_with('.'));
+    assert!(result.message.chars().count() <= 72);
 }

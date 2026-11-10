@@ -1,9 +1,11 @@
 use shared_common::taxonomy_layer_vo::LayerDefinition;
 use shared_common::taxonomy_path_vo::FilePath;
 use shared_common::taxonomy_severity_vo::Severity;
-use shared_common::utility_architecture_layer_detector;
+use shared_common::utility_architecture_layer_detector::extract_filename;
 use shared_orphan_rules::contract_orphan_protocol::ITaxonomyOrphanProtocol;
+use shared_orphan_rules::taxonomy_orphan_rules_constant::TAXONOMY_RESCUERS;
 use shared_orphan_rules::utility_orphan_filename::file_stem;
+use shared_orphan_rules::utility_orphan_paths::summarize_names;
 use shared_quality_rules::taxonomy_quality_rules_vo::{
     InboundLinkMap, OrphanIndicatorResult, ReachabilityResult,
 };
@@ -50,15 +52,12 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
                 v.iter()
                     .filter(|importer| *importer != f.value())
                     .any(|importer| {
-                        let imp_filename =
-                            shared_common::utility_architecture_layer_detector::extract_filename(
-                                importer,
-                            );
-                        imp_filename.starts_with("contract_")
-                            || imp_filename.starts_with("capabilities_")
-                            || imp_filename.starts_with("agent_")
-                            || imp_filename.starts_with("surface_")
-                            || imp_filename.starts_with("root_")
+                        let imp_filename = extract_filename(importer);
+                        imp_filename.starts_with(TAXONOMY_RESCUERS[0])
+                            || imp_filename.starts_with(TAXONOMY_RESCUERS[1])
+                            || imp_filename.starts_with(TAXONOMY_RESCUERS[2])
+                            || imp_filename.starts_with(TAXONOMY_RESCUERS[3])
+                            || imp_filename.starts_with(TAXONOMY_RESCUERS[4])
                     })
             })
             .unwrap_or(false);
@@ -73,15 +72,12 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
                     inbound_links.get_importers(mod_rs.to_str().unwrap_or(""))
                 {
                     mod_importers.iter().any(|importer| {
-                        let imp_filename =
-                            shared_common::utility_architecture_layer_detector::extract_filename(
-                                importer,
-                            );
-                        imp_filename.starts_with("contract_")
-                            || imp_filename.starts_with("capabilities_")
-                            || imp_filename.starts_with("agent_")
-                            || imp_filename.starts_with("surface_")
-                            || imp_filename.starts_with("root_")
+                        let imp_filename = extract_filename(importer);
+                        imp_filename.starts_with(TAXONOMY_RESCUERS[0])
+                            || imp_filename.starts_with(TAXONOMY_RESCUERS[1])
+                            || imp_filename.starts_with(TAXONOMY_RESCUERS[2])
+                            || imp_filename.starts_with(TAXONOMY_RESCUERS[3])
+                            || imp_filename.starts_with(TAXONOMY_RESCUERS[4])
                     })
                 } else {
                     false
@@ -108,12 +104,8 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
                 if other_file == f.value() {
                     return false;
                 }
-                let filename = utility_architecture_layer_detector::extract_filename(other_file);
-                let is_higher = filename.starts_with("contract_")
-                    || filename.starts_with("capabilities_")
-                    || filename.starts_with("agent_")
-                    || filename.starts_with("surface_")
-                    || filename.starts_with("root_");
+                let filename = extract_filename(other_file);
+                let is_higher = TAXONOMY_RESCUERS.iter().any(|p| filename.starts_with(p));
                 if !is_higher {
                     return false;
                 }
@@ -131,50 +123,56 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
         if is_reachable
             && (has_higher_layer_importer || has_barrel_importer || has_content_importer)
         {
-            return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
+            return OrphanIndicatorResult::not_orphan(Severity::LOW);
         }
 
-        // Build diagnostic message
-        let reason = if !is_reachable && !has_higher_layer_importer {
+        // Build diagnostic message — one sentence ≤72 visible chars, no code prefix, no WHY:/FIX:.
+        let stem_owned = stem.to_string();
+        let message = if !is_reachable && !has_higher_layer_importer {
+            format!("'{}' is a taxonomy file with no importer.", stem_owned)
+        } else if !is_reachable {
+            format!(
+                "'{}' is a taxonomy file not reachable from any entry.",
+                stem_owned
+            )
+        } else {
+            format!("'{}' is not imported by any higher-layer file.", stem_owned)
+        };
+        let why = if !is_reachable && !has_higher_layer_importer {
             match &importers {
-                None => format!(
-                    "AES501 TAXONOMY_ORPHAN: '{}' is a taxonomy file with no importer.\nWHY: A taxonomy file must be imported by a contract or capability to be discoverable.\nFIX: Add an import from a higher-layer file.",
-                    stem
-                ),
-                Some(v) if v.is_empty() => format!(
-                    "AES501 TAXONOMY_ORPHAN: '{}' is a taxonomy file with no importer.\nWHY: A taxonomy file must be imported by a contract or capability to be discoverable.\nFIX: Add an import from a higher-layer file.",
-                    stem
-                ),
+                None => "A taxonomy file must be imported by a contract or capability to be discoverable."
+                    .to_string(),
+                Some(v) if v.is_empty() => {
+                    "A taxonomy file must be imported by a contract or capability to be discoverable."
+                        .to_string()
+                }
                 Some(v) => {
                     let low_layer: Vec<String> = v
                         .iter()
                         .filter(|i| *i != f.value())
-                        .map(|i| {
-                            shared_common::utility_architecture_layer_detector::extract_filename(i)
-                                .to_string()
-                        })
+                        .map(|i| extract_filename(i).to_string())
                         .collect();
                     format!(
-                        "AES501 TAXONOMY_ORPHAN: '{}' is a taxonomy file only imported by lower-layer files ({}).\nWHY: Taxonomy files must be imported by contract, agent, capability, surface, or root layers.\nFIX: Import '{}' from a higher-layer file.",
-                        stem,
-                        low_layer.join(", "),
-                        stem
+                        "Taxonomy files must be imported by contract, agent, capability, surface, or root layers; only lower layers import it ({}).",
+                        summarize_names(&low_layer, 3)
                     )
                 }
             }
         } else if !is_reachable {
-            format!(
-                "AES501 TAXONOMY_ORPHAN: '{}' is a taxonomy file not reachable from any entry.\nWHY: Taxonomy files must be reachable from the module barrel.\nFIX: Ensure the barrel mod.rs re-exports this file.",
-                stem
-            )
+            "Taxonomy files must be reachable from the module barrel.".to_string()
         } else {
-            format!(
-                "AES501 TAXONOMY_ORPHAN: '{}' is a taxonomy file not imported by any higher-layer file.\nWHY: Taxonomy files must be imported by contract, agent, capability, surface, or root layers.\nFIX: Add an import from a higher-layer file.",
-                stem
-            )
+            "Taxonomy files must be imported by contract, agent, capability, surface, or root layers.".to_string()
         };
 
-        OrphanIndicatorResult::new(true, reason, Severity::LOW)
+        let fix = if !is_reachable && !has_higher_layer_importer {
+            "Add an import from a higher-layer file.".to_string()
+        } else if !is_reachable {
+            "Ensure the barrel mod.rs re-exports this file.".to_string()
+        } else {
+            "Add an import from a higher-layer file.".to_string()
+        };
+
+        OrphanIndicatorResult::orphan("TAXONOMY_ORPHAN", message, why, fix, Severity::LOW)
     }
 }
 

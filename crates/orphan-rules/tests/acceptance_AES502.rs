@@ -48,7 +48,7 @@ fn aes502_protocol_trait_not_implemented_is_orphan() {
     );
     assert!(result.is_orphan);
     assert_eq!(result.severity, Severity::MEDIUM);
-    assert!(result.reason.contains("IFooProtocol"));
+    assert!(result.message.contains("IFooProtocol"));
 }
 
 #[test]
@@ -114,7 +114,7 @@ fn aes502_aggregate_not_called_by_surface_is_orphan() {
         &empty_reachability(),
     );
     assert!(result.is_orphan);
-    assert!(result.reason.contains("IFooAggregate"));
+    assert!(result.message.contains("IFooAggregate"));
 }
 
 #[test]
@@ -224,7 +224,7 @@ fn aes502_multiple_traits_one_not_implemented() {
         "File with one unimplemented trait should be flagged"
     );
     assert!(
-        result.reason.contains("IBarProtocol"),
+        result.message.contains("IBarProtocol"),
         "Reason should mention the unimplemented trait"
     );
 }
@@ -290,7 +290,7 @@ fn aes502_contract_with_alive_implementor_is_not_orphan() {
     assert!(
         !result.is_orphan,
         "Contract with an alive implementor should NOT be orphan: {}",
-        result.reason
+        result.message
     );
 }
 
@@ -361,13 +361,14 @@ fn aes502_contract_alive_implementor_matched_by_absolute_path_suffix() {
     assert!(
         !result.is_orphan,
         "Absolute alive path ending with the relative impl path should match: {}",
-        result.reason
+        result.message
     );
 }
 
 #[test]
 fn aes502_contract_implementor_same_basename_different_path_is_orphan() {
     // P3 negative case: `is_path_alive` must require a real path match — an
+    // alive file that only shares the implementor's basename (different
     // alive file that only shares the implementor's basename (different
     // directory) must NOT count, preventing false "reachable" results in
     // workspaces with duplicate file names (e.g. multiple capabilities_foo.rs).
@@ -400,7 +401,7 @@ fn aes502_contract_implementor_same_basename_different_path_is_orphan() {
     assert!(
         result.is_orphan,
         "Same-basename implementor at a different path must NOT make the contract alive: {}",
-        result.reason
+        result.message
     );
 }
 
@@ -440,6 +441,40 @@ fn aes502_contract_multiple_traits_only_one_has_alive_implementor() {
     assert!(
         !result.is_orphan,
         "One alive implementor among several traits is enough to satisfy reachability: {}",
-        result.reason
+        result.message
     );
+}
+
+#[test]
+fn aes502_message_is_one_sentence_no_prefix() {
+    let analyzer = contract_analyzer();
+    let fp = FilePath::new("crates/shared/src/contract_foo_protocol.rs".to_string()).unwrap();
+    let root = FilePath::new(".".to_string()).unwrap();
+    let mut content_map = HashMap::new();
+    content_map.insert(
+        fp.value().to_string(),
+        "pub trait IFooProtocol: Send + Sync {\n    fn do_thing(&self);\n}".to_string(),
+    );
+    content_map.insert(
+        "crates/shared/src/other_file.rs".to_string(),
+        "fn unrelated() {}".to_string(),
+    );
+    let all_files = vec![
+        fp.value().to_string(),
+        "crates/shared/src/other_file.rs".to_string(),
+    ];
+
+    let result = analyzer.is_contract_orphan(
+        &fp,
+        &root,
+        &InheritanceMap::new(HashMap::new()),
+        &all_files,
+        &content_map,
+        &empty_reachability(),
+    );
+    assert!(!result.message.starts_with("AES502"));
+    assert!(!result.message.contains("WHY:"));
+    assert!(!result.message.contains("FIX:"));
+    assert!(result.message.ends_with('.'));
+    assert!(result.message.chars().count() <= 72);
 }

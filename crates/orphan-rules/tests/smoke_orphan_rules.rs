@@ -13,6 +13,7 @@ use orphan_rules_lint_arwaky::capabilities_orphan_taxonomy_analyzer::TaxonomyOrp
 use orphan_rules_lint_arwaky::capabilities_orphan_utility_analyzer::UtilityOrphanAnalyzer;
 use orphan_rules_lint_arwaky::root_orphan_detector_container::OrphanContainer;
 use shared_common::taxonomy_path_vo::FilePath;
+use shared_common::taxonomy_severity_vo::Severity;
 use shared_config_system::ArchitectureConfig;
 use shared_orphan_rules::{IOrphanAggregate, OrphanFileListVO, OrphanRequest};
 use std::sync::Arc;
@@ -88,5 +89,13 @@ fn smoke_arch_analyzer_construct() {
     let results = analyzer
         .execute(OrphanRequest::check(&files, &root))
         .into_violations();
-    assert!(results.is_empty());
+    // Empty entry points → NO_ENTRY_POINT finding (UX-S1-001).
+    assert_eq!(results.len(), 1);
+    assert_eq!(results[0].code.code(), "AES501");
+    assert_eq!(results[0].violation_name, "NO_ENTRY_POINT");
+    assert_eq!(results[0].severity, Severity::HIGH);
+    assert!(results[0].message.value().contains("No entry point found"));
+    assert!(results[0].enclosing_scope.is_none());
+    assert!(!results[0].why.is_empty());
+    assert!(!results[0].fix.is_empty());
 }

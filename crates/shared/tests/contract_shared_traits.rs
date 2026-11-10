@@ -239,7 +239,15 @@ fn lint_result_new_arch_convenience() {
 
 #[test]
 fn lint_result_new_orphan_convenience() {
-    let result = LintResult::new_orphan("src/orphan.rs", "orphan file", Severity::MEDIUM, "AES401");
+    let result = LintResult::new_orphan(
+        "src/orphan.rs",
+        "orphan file",
+        Severity::MEDIUM,
+        "AES401",
+        "NO_ENTRY_POINT",
+        "orphan file",
+        "fix it",
+    );
     assert_eq!(result.file.value(), "src/orphan.rs");
     assert!(result.enclosing_scope.is_none());
 }

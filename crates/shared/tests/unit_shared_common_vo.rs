@@ -380,7 +380,15 @@ fn lint_result_new_arch_sets_defaults() {
 
 #[test]
 fn lint_result_new_orphan_has_no_scope() {
-    let result = LintResult::new_orphan("x.py", "orphaned", Severity::MEDIUM, "AES501");
+    let result = LintResult::new_orphan(
+        "x.py",
+        "orphaned",
+        Severity::MEDIUM,
+        "AES501",
+        "NO_ENTRY_POINT",
+        "orphaned",
+        "fix it",
+    );
     assert!(result.enclosing_scope.is_none());
     assert_eq!(result.column.value(), 0);
 }

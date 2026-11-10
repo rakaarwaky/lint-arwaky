@@ -7,6 +7,7 @@ pub mod taxonomy_orphan_rules_response;
 pub mod taxonomy_orphan_rules_vo;
 pub mod utility_orphan_filename;
 pub mod utility_orphan_graph;
+pub mod utility_orphan_paths;
 pub mod utility_parser_dispatcher;
 pub mod utility_python_parser;
 pub mod utility_rust_parser;
@@ -22,6 +23,7 @@ pub use contract_orphan_protocol::ISurfacesOrphanProtocol;
 pub use contract_orphan_protocol::ITaxonomyOrphanProtocol;
 pub use contract_orphan_protocol::IUtilityOrphanProtocol;
 pub use taxonomy_orphan_rules_constant::CONSUMER_LAYERS;
+pub use taxonomy_orphan_rules_constant::TAXONOMY_RESCUERS;
 pub use taxonomy_orphan_rules_request::OrphanRequest;
 pub use taxonomy_orphan_rules_response::OrphanResponse;
 pub use taxonomy_orphan_rules_vo::AesOrphanViolation;
@@ -39,5 +41,8 @@ pub use taxonomy_orphan_rules_vo::PythonParseResultVO;
 pub use taxonomy_orphan_rules_vo::RustParseResultVO;
 pub use taxonomy_orphan_rules_vo::TsParseResultVO;
 pub use taxonomy_orphan_rules_vo::extract_idents_from_stream;
+pub use utility_orphan_paths::{
+    is_path_alive, normalize_rel_path, paths_equivalent, summarize_names,
+};
 pub use utility_parser_dispatcher::is_supported;
 pub use utility_parser_dispatcher::parse_file_content;
