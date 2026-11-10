@@ -199,3 +199,22 @@ pub fn is_future_import(content: &str, symbol: &str) -> bool {
                 || trimmed.contains(format!(" {},", symbol).as_str()))
     })
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn find_import_line_number_not_found_returns_zero() {
+        let content = "use std::collections::HashMap;\n\nfn main() {}\n";
+        let line = find_import_line_number(content, "NonExistentAlias");
+        assert_eq!(line.value(), 0, "unknown alias must resolve to line 0");
+    }
+
+    #[test]
+    fn find_import_line_number_found_returns_source_line() {
+        let content = "use std::collections::HashMap;\n\nuse std::io::Read;\n";
+        let line = find_import_line_number(content, "Read");
+        assert_eq!(line.value(), 3, "alias found on line 3");
+    }
+}

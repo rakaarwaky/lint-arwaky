@@ -63,6 +63,19 @@ fn aes203_unused_std_import_detected() {
         "Unused HashMap import should be detected"
     );
     assert_eq!(results[0].code.code(), "AES203");
+    assert!(
+        results[0].message.value().contains("HashMap"),
+        "Message should name the unused import, got: {}",
+        results[0].message
+    );
+    assert!(
+        results[0]
+            .message
+            .value()
+            .contains("is never referenced outside the import statement"),
+        "Message should match canonical AES203 text, got: {}",
+        results[0].message
+    );
 }
 
 #[test]
@@ -110,12 +123,47 @@ fn main() {
         .unwrap();
     assert!(
         results.len() >= 2,
-        "Should detect at least 2 unused imports, got {}",
-        results.len()
+        "Should detect at least 2 unused imports, got {}: {:?}",
+        results.len(),
+        results
+    );
+    let aliases: Vec<String> = results
+        .iter()
+        .map(|r| r.message.value().to_string())
+        .collect();
+    assert!(
+        aliases.iter().any(|m| m.contains("HashMap")),
+        "HashMap must be flagged: {aliases:?}"
+    );
+    assert!(
+        aliases.iter().any(|m| m.contains("BTreeMap")),
+        "BTreeMap must be flagged: {aliases:?}"
     );
 }
 
-// ─── AES203: barrel file exemption ────────────────────────
+// ── AES203: line 0 for unknown locations ─────────────────
+
+#[test]
+fn aes203_unknown_location_uses_line_zero() {
+    // Import entry whose symbol cannot be located in content → line 0.
+    let content = "fn main() { println!(\"hi\"); }\n";
+    let imports = vec![rust_use("std::collections::HashMap")];
+    let results = checker()
+        .check_unused_imports("/tmp/test/src/app.rs", content, &imports, &[], &no_traits())
+        .unwrap();
+    assert!(
+        !results.is_empty(),
+        "Unused import must still be flagged even when source line is unknown"
+    );
+    for r in &results {
+        assert_eq!(
+            r.line.value(),
+            0,
+            "AES203 finding for unknown location must use line 0, got {}",
+            r.line.value()
+        );
+    }
+}
 
 #[test]
 fn aes203_lib_rs_skipped() {

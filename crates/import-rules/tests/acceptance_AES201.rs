@@ -186,6 +186,18 @@ fn aes201_reports_source_line_not_import_index() {
     assert_eq!(violations[0].code.code(), "AES201");
     // Source line of `use agent::runner;` is 5, whereas its 1-based index in the import list is 3.
     assert_eq!(violations[0].line.value(), 5);
+    assert!(
+        violations[0]
+            .message
+            .value()
+            .contains("from forbidden layer 'agent'"),
+        "Message should name source layer, module, and forbidden layer, got: {}",
+        violations[0].message
+    );
+    assert_eq!(
+        violations[0].violation_name, "FORBIDDEN_IMPORT",
+        "Violation name should be FORBIDDEN_IMPORT"
+    );
 }
 
 #[test]
@@ -212,6 +224,36 @@ from modules.agent.src.agent_session_health_checker import AgentSessionHealthChe
     assert_eq!(violations[1].line.value(), 6);
     assert_eq!(violations[2].line.value(), 11);
     assert_eq!(violations[3].line.value(), 11);
+}
+
+#[test]
+fn aes201_dedup_same_module_same_line_collapses() {
+    let _ = aes_config();
+    // Same module `agent::runner` appears twice on one line — only one finding.
+    let content = "use agent::runner; use agent::runner;\n";
+    let violations = check_file(content, "/tmp/project/surface_handler.rs");
+    assert_eq!(
+        violations.len(),
+        1,
+        "Same module on one line must dedup to one finding: {violations:?}"
+    );
+    assert_eq!(violations[0].code.code(), "AES201");
+}
+
+#[test]
+fn aes201_two_distinct_modules_same_line_produce_two_findings() {
+    let _ = aes_config();
+    // Two distinct forbidden imports from the same layer on one line.
+    let content = "use agent::runner; use agent::tracker;\n";
+    let violations = check_file(content, "/tmp/project/surface_handler.rs");
+    assert_eq!(
+        violations.len(),
+        2,
+        "Two distinct modules on one line produce two findings: {violations:?}"
+    );
+    for v in &violations {
+        assert_eq!(v.code.code(), "AES201");
+    }
 }
 
 #[test]

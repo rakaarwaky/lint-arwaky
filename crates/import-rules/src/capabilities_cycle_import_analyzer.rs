@@ -11,6 +11,7 @@ use shared_filesystem::taxonomy_filesystem_vo::ImportEntry;
 
 use shared_config_system::ArchitectureConfig;
 use shared_import_rules::contract_import_protocol::ICycleImportProtocol;
+use shared_import_rules::taxonomy_import_rules_constant::AES205_RULE_CODE;
 use shared_import_rules::taxonomy_import_rules_error::ImportError;
 use shared_import_rules::taxonomy_import_rules_vo::DependencyEdge;
 use shared_import_rules::utility_cycle_detector;
@@ -96,16 +97,21 @@ impl DependencyCycleAnalyzer {
         content_map: &HashMap<String, String>,
         imports_map: &HashMap<String, Vec<ImportEntry>>,
     ) -> Vec<LintResult> {
+        // Global kill switch: `config.enabled` disables the entire import-rules
+        // audit, distinct from the orchestrator's per-rule `rule_enabled` gate
+        // (which disables AES205 alone). Keeping both is intentional — this
+        // analyzer is the only import-rules check whose protocol method
+        // (`ICycleImportProtocol::scan` / `check_cycles`) returns `Vec<LintResult>`
+        // instead of `Result<..., ImportError>`, so a caller that skips the
+        // orchestrator's gate would otherwise run the analyzer when the whole
+        // audit is disabled.
         if !config.enabled.value {
             return vec![];
         }
-        let aes205_rule = config.rules.iter().find(|r| r.name.value == "AES205");
-        // Skip if AES205 rule is explicitly disabled
-        if let Some(rule) = aes205_rule {
-            if !rule.enabled.value {
-                return vec![];
-            }
-        }
+        let aes205_rule = config
+            .rules
+            .iter()
+            .find(|r| r.name.value == AES205_RULE_CODE);
         let mut layer_keys: Vec<String> = layer_map.values.keys().map(|k| k.to_string()).collect();
         // Fallback: if config.layers is empty, use canonical AES layer names.
         // config.layers is only populated when the YAML defines explicit layer overrides;
@@ -263,7 +269,7 @@ impl DependencyCycleAnalyzer {
                 Some(LintResult::new_arch_with_name(
                     &file,
                     0,
-                    "AES205",
+                    AES205_RULE_CODE,
                     Severity::CRITICAL,
                     "Circular dependency detected.",
                     "CIRCULAR_IMPORT",
