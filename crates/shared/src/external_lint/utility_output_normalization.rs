@@ -8,7 +8,7 @@
 /// runner prettier emits its report prefix as `[\e[33mwarn\e[39m]`, so an
 /// adapter matching the literal `[warn]` silently drops every finding and the
 /// scan reports the tool as clean. The same hazard applies to tsc's
-/// regex-matched lines and markdownlint's ` error ` delimiter.
+/// regex-matched lines and colorized adapter output.
 ///
 /// Normalizing once, before any adapter parses, keeps each adapter
 /// independent of color, TTY detection, `FORCE_COLOR`, and `NO_COLOR`.

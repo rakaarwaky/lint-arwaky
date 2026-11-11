@@ -50,19 +50,12 @@ impl CapabilitiesExternalLintSelector {
 // ─── Block 2: Module Contract ────────────────
 
 impl IExternalLintSelectorProtocol for CapabilitiesExternalLintSelector {
-    fn select_adapters(
-        &self,
-        has_rs: bool,
-        has_py: bool,
-        has_js: bool,
-        has_md: bool,
-    ) -> AdapterNameList {
+    fn select_adapters(&self, has_rs: bool, has_py: bool, has_js: bool) -> AdapterNameList {
         let mut adapter_names = Vec::new();
         for (present, group) in [
             (has_rs, &self.rust_adapters),
             (has_py, &self.python_adapters),
             (has_js, &self.js_adapters),
-            (has_md, &self.markdown_adapters),
         ] {
             if present {
                 adapter_names.extend(group.iter().cloned());

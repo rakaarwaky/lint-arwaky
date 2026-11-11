@@ -100,12 +100,7 @@ impl ExternalLintOrchestrator {
         let selected: Vec<String> = self
             .deps
             .selector
-            .select_adapters(
-                context.has_rust,
-                context.has_python,
-                context.has_js,
-                context.has_markdown,
-            )
+            .select_adapters(context.has_rust, context.has_python, context.has_js)
             .iter()
             .map(|a| a.value().to_string())
             .collect();
@@ -237,7 +232,6 @@ impl ExternalLintOrchestrator {
             has_rust: languages.has_rust,
             has_python: languages.has_python,
             has_js: languages.has_js,
-            has_markdown: languages.has_markdown,
             // Built-in ignore list, so a caller that delegates the whole context
             // to this agent still gets findings filtered out of `target`,
             // `node_modules`, `tests` and the rest. An empty list would skip

@@ -290,9 +290,6 @@ fn run_all_linters_in_process_cancel(
         let has_js = ext_files.iter().any(|f| {
             f.ends_with(".js") || f.ends_with(".jsx") || f.ends_with(".ts") || f.ends_with(".tsx")
         });
-        let has_markdown = ext_files
-            .iter()
-            .any(|f| f.ends_with(".md") || f.ends_with(".markdown"));
         let config_entries = crate::surface_external_action::load_config_entries(
             std::path::Path::new(&target_canon_str),
             seam.aggregate.as_ref(),
@@ -302,7 +299,6 @@ fn run_all_linters_in_process_cancel(
             has_rust,
             has_python,
             has_js,
-            has_markdown,
             ignored_paths: ignored.clone(),
             ignored_rules: crate::surface_external_action::load_ignored_rules(
                 std::path::Path::new(&target_canon_str),

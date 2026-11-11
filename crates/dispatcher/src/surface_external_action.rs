@@ -61,9 +61,6 @@ pub fn collect_external_direct(
     let has_js = files.iter().any(|f| {
         f.ends_with(".js") || f.ends_with(".jsx") || f.ends_with(".ts") || f.ends_with(".tsx")
     });
-    let has_markdown = files
-        .iter()
-        .any(|f| f.ends_with(".md") || f.ends_with(".markdown"));
 
     // Load adapter entries from config (pre-computed, no orchestrator I/O)
     let config_entries = load_config_entries(root_path, &*filesystem, config_file_reader);
@@ -76,7 +73,6 @@ pub fn collect_external_direct(
         has_rust,
         has_python,
         has_js,
-        has_markdown,
         ignored_paths: ignored_paths.to_vec(),
         ignored_rules: load_ignored_rules(root_path, &*filesystem, config_file_reader),
         config_entries,
@@ -322,7 +318,6 @@ pub fn single_file_external_context(
         has_rust: extension == "rs",
         has_python: extension == "py",
         has_js: matches!(extension, "js" | "jsx" | "ts" | "tsx"),
-        has_markdown: matches!(extension, "md" | "markdown"),
         ignored_paths: ignored.to_vec(),
         ignored_rules,
         config_entries,
@@ -341,31 +336,10 @@ pub fn single_file_external_context(
 /// skips the spawn entirely.
 pub fn target_markdown_context(
     base: &ExternalLintContext,
-    target: &FilePath,
-    config_ignored_paths: &[String],
+    _target: &FilePath,
+    _config_ignored_paths: &[String],
 ) -> ExternalLintContext {
-    let merged_ignored: Vec<String> = shared_common::DEFAULT_IGNORED_PATHS
-        .iter()
-        .map(|s| s.to_string())
-        .chain(config_ignored_paths.iter().cloned())
-        .collect();
-
-    // A single-file target is its own Markdown list (no walk); a directory
-    // target gets the pre-filtered `*.md`/`*.markdown` set under it.
-    let target_path = std::path::Path::new(target.value());
-    let markdown_files = if target_path.is_file() {
-        Some(vec![target.value().to_string()])
-    } else {
-        let mut files: Vec<String> = Vec::new();
-        collect_markdown_files(target_path, target_path, &merged_ignored, &mut files);
-        Some(files)
-    };
-
-    let mut ctx = base.clone();
-    ctx.markdown_files = markdown_files;
-    ctx.markdown_timeout =
-        shared_external_lint::taxonomy_external_lint_vo::markdown_scan_timeout(&ctx);
-    ctx
+    base.clone()
 }
 
 /// Recursively collect `*.md`/`*.markdown` files under `dir`, pruning any
