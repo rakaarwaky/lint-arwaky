@@ -413,7 +413,6 @@ fn orchestrator_with(
         vec![AdapterName::raw("stub".to_string())],
         Vec::new(),
         Vec::new(),
-        Vec::new(),
     );
     let deps = ExternalLintDeps {
         markdown_adapter: None,

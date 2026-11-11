@@ -212,7 +212,6 @@ fn selector_with_custom_lists() {
         vec![AdapterName::raw("clippy")],
         vec![AdapterName::raw("ruff")],
         vec![],
-        vec![],
     );
     let selected = selector.select_adapters(true, true, false, false);
     assert_eq!(selected.len(), 2); // only rust + python, no js

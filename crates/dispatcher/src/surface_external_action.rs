@@ -105,12 +105,7 @@ pub fn collect_external_direct(
 
     let pairs: Vec<(FilePath, ExternalLintContext)> = targets
         .iter()
-        .map(|t| {
-            (
-                t.clone(),
-                target_markdown_context(&context, t, ignored_paths),
-            )
-        })
+        .map(|t| (t.clone(), context.clone()))
         .collect();
 
     let mut violations: Vec<ViolationItem> = run_external_batches(pairs, &external_lint);
@@ -325,58 +320,6 @@ pub fn single_file_external_context(
     }
 }
 
-/// Per-target context variant: fills the markdownlint pre-filtered file list
-/// and the resolved markdownlint timeout on top of a base context.
-///
-/// The Markdown file list is computed here (surface layer, pre-scan) from the
-/// target directory and the project's ignored paths, so the adapter hands
-/// markdownlint explicit paths instead of a whole-tree glob — the walk of
-/// vendored and generated trees is the dominant cost of a large scan. When
-/// no Markdown files survive the filter the list is empty and the adapter
-/// skips the spawn entirely.
-pub fn target_markdown_context(
-    base: &ExternalLintContext,
-    _target: &FilePath,
-    _config_ignored_paths: &[String],
-) -> ExternalLintContext {
-    base.clone()
-}
-
-/// Recursively collect `*.md`/`*.markdown` files under `dir`, pruning any
-/// entry whose path (relative to `root`) matches an ignored pattern. Directory
-/// entries that match are pruned by their segment, so whole vendored trees
-/// (`node_modules`, `dist`, ...) are never entered.
-fn collect_markdown_files(
-    dir: &std::path::Path,
-    root: &std::path::Path,
-    ignored: &[String],
-    out: &mut Vec<String>,
-) {
-    // Intentional: `discover_files` walks with `ignore::WalkBuilder` and
-    // `git_ignore(true)`, so gitignored `*.md`/`*.markdown` files are already
-    // excluded from the markdownlint pre-filter list before `ignored_paths`
-    // pruning is applied below. Matches the established `build_file_index`
-    // pattern (discover_files + ignored_paths post-filter).
-    // Reuse the shared discover_files walker instead of a hand-rolled std::fs
-    // recursion; it yields every file under `dir`, and we prune by extension
-    // and by the project's ignored paths below.
-    for path_str in shared_filesystem::utility_workspace_detection::discover_files(dir) {
-        let path = std::path::Path::new(&path_str);
-        let rel = path
-            .strip_prefix(root)
-            .unwrap_or(path)
-            .to_string_lossy()
-            .replace(std::path::MAIN_SEPARATOR, "/");
-        if shared_filesystem::utility_filesystem_io::is_path_ignored(&rel, ignored) {
-            continue;
-        }
-        let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
-        if matches!(ext, "md" | "markdown") {
-            out.push(path.to_string_lossy().to_string());
-        }
-    }
-}
-
 /// Bounded parallelism cap for the member-dir batch pool. Each batch thread
 /// may itself fan out one thread per selected adapter inside the orchestrator,
 /// so capping the batch pool keeps total OS-thread growth at O(cap × adapters)
@@ -498,7 +441,7 @@ pub fn run_external_batches(
 pub fn run_member_external_batches(
     target_fp: &FilePath,
     base_context: &ExternalLintContext,
-    ignored: &[String],
+    _ignored: &[String],
     external_lint: &Arc<dyn IExternalLintAggregate>,
     member_dirs: &[std::path::PathBuf],
     workspace_root: bool,
@@ -513,7 +456,7 @@ pub fn run_member_external_batches(
     };
     let pairs: Vec<(FilePath, ExternalLintContext)> = targets
         .iter()
-        .map(|t| (t.clone(), target_markdown_context(base_context, t, ignored)))
+        .map(|t| (t.clone(), base_context.clone()))
         .collect();
     run_external_batches(pairs, external_lint)
 }
@@ -620,38 +563,5 @@ mod tests {
         // nondeterministic. Only assert every target was visited exactly once.
         seen_strs.sort();
         assert_eq!(seen_strs, vec!["x.md", "y.md", "z.md"]);
-    }
-
-    /// collect_markdown_files prunes node_modules/dist/packages/vendor
-    /// while keeping valid .md and .markdown files (T5).
-    #[test]
-    fn collect_markdown_files_prunes_ignored_dirs() {
-        let root = tempfile::tempdir().unwrap().keep().to_path_buf();
-        std::fs::create_dir_all(root.join("node_modules/x")).unwrap();
-        std::fs::write(root.join("node_modules/x/ign.md"), "x").unwrap();
-        std::fs::create_dir_all(root.join("dist")).unwrap();
-        std::fs::write(root.join("dist/y.md"), "x").unwrap();
-        std::fs::create_dir_all(root.join("packages/vendor")).unwrap();
-        std::fs::write(root.join("packages/vendor/z.md"), "x").unwrap();
-        std::fs::write(root.join("a.md"), "x").unwrap();
-        std::fs::write(root.join("b.markdown"), "x").unwrap();
-
-        let ignored = vec![
-            "node_modules".to_string(),
-            "dist".to_string(),
-            "packages/vendor".to_string(),
-        ];
-        let mut out: Vec<String> = Vec::new();
-        collect_markdown_files(&root, &root, &ignored, &mut out);
-        out.sort();
-
-        assert_eq!(
-            out,
-            vec![
-                format!("{}", root.join("a.md").display()),
-                format!("{}", root.join("b.markdown").display()),
-            ],
-            "only non-pruned markdown files survive"
-        );
     }
 }

@@ -8,7 +8,6 @@ pub struct CapabilitiesExternalLintSelector {
     rust_adapters: Vec<AdapterName>,
     python_adapters: Vec<AdapterName>,
     js_adapters: Vec<AdapterName>,
-    markdown_adapters: Vec<AdapterName>,
 }
 
 impl CapabilitiesExternalLintSelector {
@@ -16,13 +15,11 @@ impl CapabilitiesExternalLintSelector {
         rust_adapters: Vec<AdapterName>,
         python_adapters: Vec<AdapterName>,
         js_adapters: Vec<AdapterName>,
-        markdown_adapters: Vec<AdapterName>,
     ) -> Self {
         Self {
             rust_adapters,
             python_adapters,
             js_adapters,
-            markdown_adapters,
         }
     }
 
@@ -43,7 +40,6 @@ impl CapabilitiesExternalLintSelector {
                 AdapterName::raw("prettier"),
                 AdapterName::raw("tsc"),
             ],
-            vec![AdapterName::raw("markdownlint")],
         )
     }
 }

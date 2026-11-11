@@ -84,7 +84,7 @@ fn collect_scan_with_filter_returns_error_for_nonexistent() {
 // has_python / has_js).
 
 #[test]
-fn markdown_file_context_selects_the_markdown_adapter() {
+fn markdown_file_context_sets_no_language_flags() {
     for name in ["README.md", "notes.markdown"] {
         let ctx = single_file_external_context(Path::new(name), &[], Vec::new(), Vec::new());
         assert!(!ctx.has_rust && !ctx.has_python && !ctx.has_js, "{name}");

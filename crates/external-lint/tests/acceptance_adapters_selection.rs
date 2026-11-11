@@ -132,7 +132,6 @@ fn acceptance_custom_selector_respects_configuration() {
         vec![AdapterName::raw("clippy")],
         vec![AdapterName::raw("ruff")],
         vec![],
-        vec![],
     );
     let selected = selector.select_adapters(true, true, true, true);
     let names: Vec<&str> = selected.iter().map(|a| a.value()).collect();
@@ -142,24 +141,15 @@ fn acceptance_custom_selector_respects_configuration() {
 #[test]
 fn acceptance_custom_selector_empty_for_disabled_languages() {
     // A project that only wants JS adapters but has no JS
-    let selector = CapabilitiesExternalLintSelector::new(
-        vec![],
-        vec![],
-        vec![AdapterName::raw("eslint")],
-        vec![],
-    );
+    let selector =
+        CapabilitiesExternalLintSelector::new(vec![], vec![], vec![AdapterName::raw("eslint")]);
     let selected = selector.select_adapters(true, true, false, false);
     assert!(selected.is_empty()); // no JS files → no adapters selected
 }
 
 #[test]
 fn acceptance_custom_markdown_selector() {
-    let selector = CapabilitiesExternalLintSelector::new(
-        vec![],
-        vec![],
-        vec![],
-        vec![AdapterName::raw("markdownlint")],
-    );
+    let selector = CapabilitiesExternalLintSelector::new(vec![], vec![], vec![]);
     let selected = selector.select_adapters(false, false, false, true);
     let names: Vec<&str> = selected.iter().map(|a| a.value()).collect();
     assert_eq!(names, vec!["markdownlint"]);
