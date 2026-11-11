@@ -1,5 +1,5 @@
 // PURPOSE: `ignored_rules` parsing — the rule-suppression switch every project
-// uses to silence an individual external-tool rule (e.g. `markdownlint::MD013`)
+// uses to silence an individual external-tool rule (e.g. `clippy::needless_pass_by_value`)
 // without a second, per-tool config file.
 //
 // The list is read straight from the YAML rather than through
@@ -25,10 +25,11 @@ fn absent_key_parses_to_no_suppressions() {
 
 #[test]
 fn external_tool_codes_are_read_verbatim() {
-    let yaml = "ignored_rules:\n  - \"markdownlint::MD013\"\n  - \"markdownlint::MD060\"\n";
+    let yaml =
+        "ignored_rules:\n  - \"clippy::needless_pass_by_value\"\n  - \"clippy::redundant_clone\"\n";
     assert_eq!(
         parse_ignored_rules_from_yaml(yaml),
-        vec!["markdownlint::MD013", "markdownlint::MD060"]
+        vec!["clippy::needless_pass_by_value", "clippy::redundant_clone"]
     );
 }
 
@@ -36,10 +37,10 @@ fn external_tool_codes_are_read_verbatim() {
 fn aes_codes_and_tool_codes_coexist_in_one_list() {
     // The point of routing tool rules through `ignored_rules` is that a project
     // suppresses by reported code, whatever produced it.
-    let yaml = "ignored_rules:\n  - \"AES205\"\n  - \"markdownlint::MD024\"\n";
+    let yaml = "ignored_rules:\n  - \"AES205\"\n  - \"clippy::redundant_clone\"\n";
     assert_eq!(
         parse_ignored_rules_from_yaml(yaml),
-        vec!["AES205", "markdownlint::MD024"]
+        vec!["AES205", "clippy::redundant_clone"]
     );
 }
 
@@ -53,17 +54,20 @@ fn malformed_yaml_degrades_to_no_suppressions() {
 
 #[test]
 fn non_list_value_is_treated_as_absent() {
-    assert!(parse_ignored_rules_from_yaml("ignored_rules: \"MD013\"").is_empty());
+    assert!(
+        parse_ignored_rules_from_yaml("ignored_rules: \"clippy::needless_pass_by_value\"")
+            .is_empty()
+    );
 }
 
 #[test]
 fn non_string_entries_are_skipped_not_stringified() {
     // `42` is not a rule code. Coercing it would produce a pattern that can
     // never match, silently misleading whoever reads the config.
-    let yaml = "ignored_rules:\n  - 42\n  - \"markdownlint::MD013\"\n  - true\n";
+    let yaml = "ignored_rules:\n  - 42\n  - \"clippy::needless_pass_by_value\"\n  - true\n";
     assert_eq!(
         parse_ignored_rules_from_yaml(yaml),
-        vec!["markdownlint::MD013"]
+        vec!["clippy::needless_pass_by_value"]
     );
 }
 
@@ -71,6 +75,12 @@ fn non_string_entries_are_skipped_not_stringified() {
 fn duplicate_entries_are_preserved() {
     // Deduplication is the filter's job, not the parser's; keeping the list
     // faithful means the config round-trips as written.
-    let yaml = "ignored_rules:\n  - \"MD013\"\n  - \"MD013\"\n";
-    assert_eq!(parse_ignored_rules_from_yaml(yaml), vec!["MD013", "MD013"]);
+    let yaml = "ignored_rules:\n  - \"clippy::needless_pass_by_value\"\n  - \"clippy::needless_pass_by_value\"\n";
+    assert_eq!(
+        parse_ignored_rules_from_yaml(yaml),
+        vec![
+            "clippy::needless_pass_by_value",
+            "clippy::needless_pass_by_value"
+        ]
+    );
 }
