@@ -26,7 +26,6 @@ adapters:
   # Internal
   - name: "architecture"
     weight: 3.0
-ignored_paths:
 # ─── Architecture rules ─────────────────────────────────────────────────
 architecture:
   enabled: true
