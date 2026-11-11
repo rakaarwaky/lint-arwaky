@@ -66,7 +66,8 @@ ignored_rules:
 #[test]
 fn a_non_list_value_is_treated_as_no_suppressions() {
     // Fail closed: an unreadable shape must not suppress everything.
-    let rules = parse_ignored_rules_from_yaml("ignored_rules: \"clippy::needless_pass_by_value\"\n");
+    let rules =
+        parse_ignored_rules_from_yaml("ignored_rules: \"clippy::needless_pass_by_value\"\n");
     assert!(rules.is_empty());
 }
 

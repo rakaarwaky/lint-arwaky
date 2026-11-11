@@ -25,7 +25,8 @@ fn absent_key_parses_to_no_suppressions() {
 
 #[test]
 fn external_tool_codes_are_read_verbatim() {
-    let yaml = "ignored_rules:\n  - \"clippy::needless_pass_by_value\"\n  - \"clippy::redundant_clone\"\n";
+    let yaml =
+        "ignored_rules:\n  - \"clippy::needless_pass_by_value\"\n  - \"clippy::redundant_clone\"\n";
     assert_eq!(
         parse_ignored_rules_from_yaml(yaml),
         vec!["clippy::needless_pass_by_value", "clippy::redundant_clone"]
@@ -53,7 +54,10 @@ fn malformed_yaml_degrades_to_no_suppressions() {
 
 #[test]
 fn non_list_value_is_treated_as_absent() {
-    assert!(parse_ignored_rules_from_yaml("ignored_rules: \"clippy::needless_pass_by_value\"").is_empty());
+    assert!(
+        parse_ignored_rules_from_yaml("ignored_rules: \"clippy::needless_pass_by_value\"")
+            .is_empty()
+    );
 }
 
 #[test]
@@ -72,5 +76,11 @@ fn duplicate_entries_are_preserved() {
     // Deduplication is the filter's job, not the parser's; keeping the list
     // faithful means the config round-trips as written.
     let yaml = "ignored_rules:\n  - \"clippy::needless_pass_by_value\"\n  - \"clippy::needless_pass_by_value\"\n";
-    assert_eq!(parse_ignored_rules_from_yaml(yaml), vec!["clippy::needless_pass_by_value", "clippy::needless_pass_by_value"]);
+    assert_eq!(
+        parse_ignored_rules_from_yaml(yaml),
+        vec![
+            "clippy::needless_pass_by_value",
+            "clippy::needless_pass_by_value"
+        ]
+    );
 }
