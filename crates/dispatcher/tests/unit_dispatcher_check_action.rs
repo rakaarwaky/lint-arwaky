@@ -103,11 +103,14 @@ fn source_file_context_selects_only_its_own_language() {
 
 #[test]
 fn extensionless_file_context_selects_no_adapter() {
-    let ctx = single_file_external_context(Path::new("Makefile"), &[], Vec::new(), Vec::new());
-    assert!(
-        !ctx.has_rust && !ctx.has_python && !ctx.has_js,
-        "an extensionless target is not a language project"
-    );
+    let cases = [Path::new("Makefile"), Path::new("README.markdown")];
+    for name in cases {
+        let ctx = single_file_external_context(name, &[], Vec::new(), Vec::new());
+        assert!(
+            !ctx.has_rust && !ctx.has_python && !ctx.has_js,
+            "a {name:?} target is not a language project"
+        );
+    }
 }
 
 #[test]
