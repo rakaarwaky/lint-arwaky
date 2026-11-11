@@ -2,7 +2,7 @@
 // suppression list that lets a project silence individual linter rules (AES or
 // external-tool native) without a separate per-tool config file.
 //
-// This is the key that carries a project's markdownlint policy, so its parse
+// This is the key that carries a project's clippy policy, so its parse
 // contract matters: a malformed entry must never silently widen suppression.
 
 use shared_config_system::utility_config_parser::parse_ignored_rules_from_yaml;
@@ -22,15 +22,15 @@ fn empty_list_yields_no_suppressions() {
 fn external_tool_codes_are_read_verbatim() {
     let yaml = "\
 ignored_rules:
-  - \"markdownlint::MD013\"
-  - \"markdownlint::MD060\"
+  - \"clippy::needless_pass_by_value\"
+  - \"clippy::redundant_clone\"
 ";
     let rules = parse_ignored_rules_from_yaml(yaml);
     assert_eq!(
         rules,
         vec![
-            "markdownlint::MD013".to_string(),
-            "markdownlint::MD060".to_string()
+            "clippy::needless_pass_by_value".to_string(),
+            "clippy::redundant_clone".to_string()
         ]
     );
 }
@@ -40,12 +40,12 @@ fn aes_codes_mix_freely_with_tool_codes() {
     let yaml = "\
 ignored_rules:
   - \"AES205\"
-  - \"markdownlint::MD013\"
+  - \"clippy::redundant_clone\"
 ";
     let rules = parse_ignored_rules_from_yaml(yaml);
     assert_eq!(rules.len(), 2, "both entries survive: {rules:?}");
     assert!(rules.iter().any(|r| r == "AES205"));
-    assert!(rules.iter().any(|r| r == "markdownlint::MD013"));
+    assert!(rules.iter().any(|r| r == "clippy::redundant_clone"));
 }
 
 #[test]
