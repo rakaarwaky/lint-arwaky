@@ -2,7 +2,7 @@
 // suppression list that lets a project silence individual linter rules (AES or
 // external-tool native) without a separate per-tool config file.
 //
-// This is the key that carries a project's markdownlint policy, so its parse
+// This is the key that carries a project's clippy policy, so its parse
 // contract matters: a malformed entry must never silently widen suppression.
 
 use shared_config_system::utility_config_parser::parse_ignored_rules_from_yaml;
@@ -22,15 +22,15 @@ fn empty_list_yields_no_suppressions() {
 fn external_tool_codes_are_read_verbatim() {
     let yaml = "\
 ignored_rules:
-  - \"markdownlint::MD013\"
-  - \"markdownlint::MD060\"
+  - \"clippy::needless_pass_by_value\"
+  - \"clippy::redundant_clone\"
 ";
     let rules = parse_ignored_rules_from_yaml(yaml);
     assert_eq!(
         rules,
         vec![
-            "markdownlint::MD013".to_string(),
-            "markdownlint::MD060".to_string()
+            "clippy::needless_pass_by_value".to_string(),
+            "clippy::redundant_clone".to_string()
         ]
     );
 }
@@ -40,12 +40,12 @@ fn aes_codes_mix_freely_with_tool_codes() {
     let yaml = "\
 ignored_rules:
   - \"AES205\"
-  - \"markdownlint::MD013\"
+  - \"clippy::redundant_clone\"
 ";
     let rules = parse_ignored_rules_from_yaml(yaml);
     assert_eq!(rules.len(), 2, "both entries survive: {rules:?}");
     assert!(rules.iter().any(|r| r == "AES205"));
-    assert!(rules.iter().any(|r| r == "markdownlint::MD013"));
+    assert!(rules.iter().any(|r| r == "clippy::redundant_clone"));
 }
 
 #[test]
@@ -56,17 +56,18 @@ fn non_string_entries_are_skipped_not_stringified() {
     let yaml = "\
 ignored_rules:
   - 42
-  - \"MD013\"
+  - \"clippy::needless_pass_by_value\"
   - true
 ";
     let rules = parse_ignored_rules_from_yaml(yaml);
-    assert_eq!(rules, vec!["MD013".to_string()]);
+    assert_eq!(rules, vec!["clippy::needless_pass_by_value".to_string()]);
 }
 
 #[test]
 fn a_non_list_value_is_treated_as_no_suppressions() {
     // Fail closed: an unreadable shape must not suppress everything.
-    let rules = parse_ignored_rules_from_yaml("ignored_rules: \"MD013\"\n");
+    let rules =
+        parse_ignored_rules_from_yaml("ignored_rules: \"clippy::needless_pass_by_value\"\n");
     assert!(rules.is_empty());
 }
 

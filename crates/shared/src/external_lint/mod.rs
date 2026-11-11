@@ -26,9 +26,6 @@ pub use contract_external_lint_protocol::IJsToolResolutionProtocol;
 
 // ── Taxonomy VOs ──
 pub use taxonomy_duration_vo::Timeout;
-pub use taxonomy_external_lint_constant::{
-    MARKDOWNLINT_CLI_VARIANTS, MARKDOWNLINT_EXTENSIONS, MARKDOWNLINT_FIX_FLAG,
-};
 pub use taxonomy_external_lint_request::ExternalLintRequest;
 pub use taxonomy_external_lint_response::ExternalLintResponse;
 pub use taxonomy_external_lint_vo::ExternalLintContext;

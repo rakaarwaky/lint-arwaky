@@ -72,11 +72,10 @@ impl ILinterAdapterProtocol for PrettierAdapter {
         let wd = self.tool_resolution.resolve_js_working_dir(path);
         let abs_path = self.io.canonicalize_path_str(path);
 
-        // FR-ExternalLint scopes this adapter to JavaScript/TypeScript
-        // formatting; markdown is markdownlint's job. A directory target
-        // would otherwise hand prettier every file type it supports
-        // (markdown, yaml, json, …), so narrow it to a JS/TS glob — the
-        // file-target guard above already does the same for single files.
+        // A directory target would otherwise hand prettier every file type
+        // it supports (markdown, yaml, json, …), so narrow it to a JS/TS
+        // glob — the file-target guard above already does the same for
+        // single files.
         let target = if self.io.is_dir(Path::new(&abs_path.value)) {
             format!(
                 "{}/**/*.{{ts,tsx,js,jsx}}",

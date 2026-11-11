@@ -171,26 +171,6 @@ fn from_lint_result_invents_nothing_for_a_tool_message() {
     assert!(item.fix.is_empty(), "no FIX to invent");
 }
 
-/// A tool code that itself contains a colon must not leak message prose into
-/// the name slot: `markdownlint::MD022` splits on its own prefix.
-#[test]
-fn a_colon_in_the_tool_code_does_not_leak_into_the_name() {
-    let result = LintResult::new_arch(
-        "crates/doc/README.md",
-        1,
-        "markdownlint::MD022",
-        Severity::HIGH,
-        "Headings should be surrounded by blank lines [Expected: 1; Actual: 2]",
-    );
-    let item = ViolationItem::from_lint_result(&result);
-
-    assert!(
-        item.violation_name.is_empty(),
-        "message prose must not be read as a name; got {:?}",
-        item.violation_name
-    );
-}
-
 /// Lowercase prose is a description, never a violation name.
 #[test]
 fn lowercase_prose_is_not_a_violation_name() {

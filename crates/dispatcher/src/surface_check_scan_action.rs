@@ -357,13 +357,10 @@ pub(crate) fn run_all_linters_in_process(
         let has_js = ext_files.iter().any(|f| {
             f.ends_with(".js") || f.ends_with(".jsx") || f.ends_with(".ts") || f.ends_with(".tsx")
         });
-        let has_markdown = ext_files
-            .iter()
-            .any(|f| f.ends_with(".md") || f.ends_with(".markdown"));
         // Honor the project's `adapters:` SSOT exactly like the `external`
         // subcommand does — an empty list would run every language adapter,
-        // including tools the config never enables (markdownlint), which is
-        // where the workspaces-good false positives came from.
+        // including tools the config never enables, which is where the
+        // workspaces-good false positives came from.
         let config_entries = crate::surface_external_action::load_config_entries(
             Path::new(&target_canon_str),
             seam.aggregate.as_ref(),
@@ -374,7 +371,6 @@ pub(crate) fn run_all_linters_in_process(
             has_rust,
             has_python,
             has_js,
-            has_markdown,
             ignored_paths: ignored.clone(),
             ignored_rules: crate::surface_external_action::load_ignored_rules(
                 Path::new(&target_canon_str),
@@ -382,7 +378,6 @@ pub(crate) fn run_all_linters_in_process(
                 agg.config_file_reader.as_ref(),
             ),
             config_entries,
-            ..ExternalLintContext::default()
         };
         let ext_start = Instant::now();
         let agg_external = agg.external.clone();

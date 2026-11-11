@@ -341,12 +341,9 @@ pub(crate) fn run_single_file_scan(
             .map(ViolationItem::from_lint_result)
             .collect::<Vec<_>>()
     }));
-    // External — the MarkdownLint adapter is the only one that lints a single
-    // file meaningfully: every other adapter shells out to a project-wide tool
-    // (cargo, ruff, eslint) whose findings name other files, so on a one-file
-    // target they would all be dropped by the scope filter below anyway. The
-    // adapter itself already early-returns empty for a non-Markdown file, so
-    // this is safe to call unconditionally.
+    // External — every adapter shells out to a project-wide tool whose findings
+    // name other files, so on a one-file target they would all be dropped by
+    // the scope filter below anyway.
     all.extend(run_isolated("external", &mut panics, || {
         crate::surface_external_action::collect_single_file_external(
             scan_root,

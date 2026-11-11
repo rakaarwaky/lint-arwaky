@@ -68,7 +68,7 @@ workspaces-good/
 > safety margin (QA #636).
 >
 > **External tools prerequisite**: Python & JS/TS scans require external tools
-> installed (ruff, mypy, bandit, eslint, prettier, tsc, markdownlint-cli2) for
+> installed (ruff, mypy, bandit, eslint, prettier, tsc) for
 > external lint violations. **CI satisfies this**: the `self-lint` job in
 > `.github/workflows/ci.yml` installs all seven tools and asserts tool-native
 > (non-AES) violation codes appear in the bad-workspace scan output before the
@@ -128,26 +128,13 @@ cargo run --bin lint-arwaky-cli -- scan workspaces-good/packages
 ```
 
 > Language is auto-detected from file extensions. No language flag needed.
-> Python, JS/TS, and Markdown scans require external tools installed (ruff,
-> mypy, bandit, eslint, prettier, tsc, markdownlint-cli2) for external lint
+> Python and JS/TS scans require external tools installed (ruff,
+> mypy, bandit, eslint, prettier, tsc) for external lint
 > violations — see the prerequisite note in §1, which the CI `self-lint` job
 > satisfies (QA #637).
 >
-> A single Markdown file is a scan target too, and the `markdownlint` adapter
-> runs on it:
->
-> ```bash
-> # Run markdownlint over one file (adapter selected from the .md extension)
-> cargo run --bin lint-arwaky-cli -- scan workspaces-good/crates/calculator/BACKLOG.md
-> ```
->
 > Rule policy lives in `ignored_rules:` in `lint_arwaky.config.yaml`, beside the
-> `adapters:` list. A listed code is dropped from the report when it matches as
-> a case-insensitive substring, so `markdownlint::MD013` silences exactly that
-> one rule and `MD013` works too. No per-tool companion config file is needed:
-> `markdownlint-cli2` reads its policy only from the directory it runs in and
-> never walks up, so a tool-specific file would have to be duplicated into
-> every scan root.
+> `adapters:` list.
 
 ### 2.3 Individual Rule Surface
 

@@ -65,7 +65,7 @@ impl ICommandExecutorProtocol for MockCmdExecutor {
     }
 }
 
-/// Minimal `IJsToolResolutionProtocol` so the markdown adapter can be wired
+/// Minimal `IJsToolResolutionProtocol` so the JS adapters can be wired
 /// without a real filesystem.
 struct MockJsResolution;
 impl IJsToolResolutionProtocol for MockJsResolution {
@@ -75,7 +75,7 @@ impl IJsToolResolutionProtocol for MockJsResolution {
         _: Vec<String>,
         _: &FilePath,
     ) -> Option<Vec<String>> {
-        Some(vec!["markdownlint".to_string()])
+        Some(vec!["eslint".to_string()])
     }
     fn resolve_js_working_dir(&self, path: &FilePath) -> FilePath {
         path.clone()
@@ -97,7 +97,7 @@ impl IJsToolResolutionProtocol for MockJsResolution {
 #[test]
 fn e2e_rust_only_project_selects_clippy_rustfmt_audit() {
     let selector = CapabilitiesExternalLintSelector::with_defaults();
-    let selected = selector.select_adapters(true, false, false, false);
+    let selected = selector.select_adapters(true, false, false);
     let names: Vec<&str> = selected.iter().map(|a| a.value()).collect();
     assert_eq!(names, vec!["clippy", "rustfmt", "cargo-audit"]);
 }
@@ -107,7 +107,7 @@ fn e2e_rust_only_project_selects_clippy_rustfmt_audit() {
 #[test]
 fn e2e_python_only_project_selects_ruff_mypy_bandit() {
     let selector = CapabilitiesExternalLintSelector::with_defaults();
-    let selected = selector.select_adapters(false, true, false, false);
+    let selected = selector.select_adapters(false, true, false);
     let names: Vec<&str> = selected.iter().map(|a| a.value()).collect();
     assert_eq!(names, vec!["ruff", "mypy", "bandit"]);
 }
@@ -117,28 +117,18 @@ fn e2e_python_only_project_selects_ruff_mypy_bandit() {
 #[test]
 fn e2e_js_only_project_selects_eslint_prettier_tsc() {
     let selector = CapabilitiesExternalLintSelector::with_defaults();
-    let selected = selector.select_adapters(false, false, true, false);
+    let selected = selector.select_adapters(false, false, true);
     let names: Vec<&str> = selected.iter().map(|a| a.value()).collect();
     assert_eq!(names, vec!["eslint", "prettier", "tsc"]);
-}
-
-// ─── E2E: Markdown-only project ───────────────────────────
-
-#[test]
-fn e2e_markdown_only_project_selects_markdownlint() {
-    let selector = CapabilitiesExternalLintSelector::with_defaults();
-    let selected = selector.select_adapters(false, false, false, true);
-    let names: Vec<&str> = selected.iter().map(|a| a.value()).collect();
-    assert_eq!(names, vec!["markdownlint"]);
 }
 
 // ─── E2E: Mixed project ───────────────────────────────────
 
 #[test]
-fn e2e_mixed_project_selects_all_ten() {
+fn e2e_mixed_project_selects_all_nine() {
     let selector = CapabilitiesExternalLintSelector::with_defaults();
-    let selected = selector.select_adapters(true, true, true, true);
-    assert_eq!(selected.len(), 10);
+    let selected = selector.select_adapters(true, true, true);
+    assert_eq!(selected.len(), 9);
     let names: Vec<&str> = selected.iter().map(|a| a.value()).collect();
     assert!(names.contains(&"clippy"));
     assert!(names.contains(&"rustfmt"));
@@ -149,7 +139,6 @@ fn e2e_mixed_project_selects_all_ten() {
     assert!(names.contains(&"eslint"));
     assert!(names.contains(&"prettier"));
     assert!(names.contains(&"tsc"));
-    assert!(names.contains(&"markdownlint"));
 }
 
 // ─── E2E: No languages detected ───────────────────────────
@@ -157,7 +146,7 @@ fn e2e_mixed_project_selects_all_ten() {
 #[test]
 fn e2e_no_languages_detected_selects_nothing() {
     let selector = CapabilitiesExternalLintSelector::with_defaults();
-    let selected = selector.select_adapters(false, false, false, false);
+    let selected = selector.select_adapters(false, false, false);
     assert!(selected.is_empty());
 }
 
@@ -167,7 +156,7 @@ fn e2e_no_languages_detected_selects_nothing() {
 fn e2e_full_pipeline_rust_python() {
     // Step 1: Select adapters (simulating language detection)
     let selector = CapabilitiesExternalLintSelector::with_defaults();
-    let selected = selector.select_adapters(true, true, false, false);
+    let selected = selector.select_adapters(true, true, false);
     let selected_names: Vec<String> = selected.iter().map(|a| a.value().to_string()).collect();
 
     // Step 2: Build orchestrator with matching adapters
@@ -223,7 +212,6 @@ fn e2e_full_pipeline_rust_python() {
 
     // Step 3: Verify adapter_names matches
     let deps = ExternalLintDeps {
-        markdown_adapter: None,
         adapters,
         filesystem: Arc::new(MockFilesystem::with_files(files)),
         filesystem_io: io_arc.clone(),
@@ -246,16 +234,16 @@ fn e2e_full_pipeline_rust_python() {
     assert!(results.values.is_empty()); // adapters scan empty dirs → no findings
 }
 
-// ─── E2E: Full pipeline — Markdown project ────────────────
+// ─── E2E: Full pipeline — JS-only project ─────────────────
 
 #[test]
-fn e2e_full_pipeline_markdown_only() {
+fn e2e_full_pipeline_js_only() {
     let selector = CapabilitiesExternalLintSelector::with_defaults();
-    let selected = selector.select_adapters(false, false, false, true);
+    let selected = selector.select_adapters(false, false, true);
     let selected_names: Vec<String> = selected.iter().map(|a| a.value().to_string()).collect();
 
     let lint_exec: Arc<dyn ICommandExecutorProtocol> = Arc::new(MockCmdExecutor);
-    let files = vec!["README.md".to_string(), "CHANGELOG.md".to_string()];
+    let files = vec!["app.ts".to_string()];
     let fs_arc: Arc<dyn shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate> =
         Arc::new(MockFilesystem::with_files(files.clone()));
     let tr_arc: Arc<dyn shared_filesystem::IToolResolutionProtocol> =
@@ -265,21 +253,44 @@ fn e2e_full_pipeline_markdown_only() {
 
     let mut adapters: HashMap<String, Arc<dyn ILinterAdapterProtocol>> = HashMap::new();
     for name in &selected_names {
-        if name == "markdownlint" {
-            adapters.insert(
-                name.clone(),
-                Arc::new(external_lint_lint_arwaky::MarkdownLintAdapter::new(
-                    lint_exec.clone(),
-                    Arc::new(MockJsResolution),
-                    io_arc.clone(),
-                    tr_arc.clone(),
-                )),
-            );
+        match name.as_str() {
+            "eslint" => {
+                adapters.insert(
+                    name.clone(),
+                    Arc::new(external_lint_lint_arwaky::ESLintAdapter::new(
+                        lint_exec.clone(),
+                        Arc::new(MockJsResolution),
+                        io_arc.clone(),
+                        tr_arc.clone(),
+                    )),
+                );
+            }
+            "prettier" => {
+                adapters.insert(
+                    name.clone(),
+                    Arc::new(external_lint_lint_arwaky::PrettierAdapter::new(
+                        lint_exec.clone(),
+                        Arc::new(MockJsResolution),
+                        io_arc.clone(),
+                        tr_arc.clone(),
+                    )),
+                );
+            }
+            "tsc" => {
+                adapters.insert(
+                    name.clone(),
+                    Arc::new(external_lint_lint_arwaky::TSCAdapter::new(
+                        lint_exec.clone(),
+                        io_arc.clone(),
+                        tr_arc.clone(),
+                    )),
+                );
+            }
+            _ => {}
         }
     }
 
     let deps = ExternalLintDeps {
-        markdown_adapter: None,
         adapters,
         filesystem: fs_arc.clone(),
         filesystem_io: io_arc.clone(),
@@ -289,7 +300,7 @@ fn e2e_full_pipeline_markdown_only() {
     let orchestrator = ExternalLintOrchestrator::new(deps);
     let adapter_names = orchestrator.adapter_names();
     let registered: Vec<&str> = adapter_names.iter().map(|a| a.value()).collect();
-    assert!(registered.contains(&"markdownlint"));
+    assert!(registered.contains(&"eslint"));
 
     let path = FilePath::new("/tmp".to_string()).unwrap();
     let results = orchestrator.scan_all(&path);
