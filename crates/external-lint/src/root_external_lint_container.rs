@@ -6,8 +6,8 @@
 //      capabilities_command_executor (ICommandExecutorProtocol),
 //      capabilities_js_tool_resolver (IJsToolResolutionProtocol), and
 //      capabilities_cargo_dir_resolver (ICargoDirProtocol)
-//   3. Registers all 10 adapters (ruff, bandit, mypy, eslint, prettier, tsc,
-//      markdownlint, clippy, rustfmt, cargo-audit)
+//   3. Registers all 9 adapters (ruff, bandit, mypy, eslint, prettier, tsc,
+//      clippy, rustfmt, cargo-audit)
 //
 // Each adapter follows the same pattern: Arc<dyn ILinterAdapterProtocol> in a HashMap keyed by name.
 use std::collections::HashMap;
@@ -107,18 +107,6 @@ impl ExternalLintContainer {
                 tool_resolution.clone(),
             )),
         );
-        let markdown_adapter = Arc::new(
-            crate::capabilities_md_markdownlint_adapter::MarkdownLintAdapter::new(
-                command_executor.clone(),
-                js_executor.clone(),
-                io.clone(),
-                tool_resolution.clone(),
-            ),
-        );
-        adapters.insert(
-            "markdownlint".to_string(),
-            markdown_adapter.clone() as Arc<dyn ILinterAdapterProtocol>,
-        );
         adapters.insert(
             "clippy".to_string(),
             Arc::new(
@@ -169,7 +157,6 @@ impl ExternalLintContainer {
         Self {
             aggregate: Arc::new(ExternalLintOrchestrator::new(ExternalLintDeps {
                 adapters,
-                markdown_adapter: Some(markdown_adapter),
                 filesystem,
                 filesystem_io: io,
                 selector,

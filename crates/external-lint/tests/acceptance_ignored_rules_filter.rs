@@ -88,25 +88,26 @@ fn surviving_codes(
         }),
     );
     let fs = Arc::new(MockFilesystem::new());
+    // Use a custom selector so the stub adapter is selected regardless of name.
+    let selector = Arc::new(CapabilitiesExternalLintSelector::new(
+        vec![AdapterName::raw(adapter_name)],
+        Vec::new(),
+        Vec::new(),
+    ));
     let orchestrator = ExternalLintOrchestrator::new(ExternalLintDeps {
-        markdown_adapter: None,
         adapters,
         filesystem: fs.clone(),
         filesystem_io: fs,
-        // Every language flag is true, so the default selector picks this
-        // adapter regardless of its name; the filter is what is under test.
-        selector: Arc::new(CapabilitiesExternalLintSelector::with_defaults()),
+        selector,
         normalizer: Arc::new(OutputNormalizer),
     });
     let context = ExternalLintContext {
         has_rust: true,
-        has_python: true,
-        has_js: true,
-        has_markdown: true,
+        has_python: false,
+        has_js: false,
         ignored_rules: ignored,
         config_entries: Vec::new(),
         ignored_paths: Vec::new(),
-        ..ExternalLintContext::default()
     };
     orchestrator
         .execute(ExternalLintRequest::scan_all_with_context(
@@ -120,39 +121,29 @@ fn surviving_codes(
         .collect()
 }
 
-const MD_CODES: [&str; 3] = [
-    "markdownlint::MD013",
-    "markdownlint::MD024",
-    "markdownlint::MD041",
-];
+const STUB_CODES: [&str; 3] = ["toolx::RULE013", "toolx::RULE024", "toolx::RULE041"];
 
 #[test]
 fn an_empty_list_suppresses_nothing() {
-    let codes = surviving_codes("markdownlint", &MD_CODES, Vec::new());
+    let codes = surviving_codes("toolx", &STUB_CODES, Vec::new());
     assert_eq!(codes.len(), 3, "all findings survive: {codes:?}");
 }
 
 #[test]
 fn a_full_code_suppresses_only_that_finding() {
-    let codes = surviving_codes(
-        "markdownlint",
-        &MD_CODES,
-        vec!["markdownlint::MD013".to_string()],
-    );
+    let codes = surviving_codes("toolx", &STUB_CODES, vec!["toolx::RULE013".to_string()]);
     assert_eq!(
         codes,
-        vec![
-            "markdownlint::MD024".to_string(),
-            "markdownlint::MD041".to_string()
-        ]
+        vec!["toolx::RULE024".to_string(), "toolx::RULE041".to_string()]
     );
 }
 
 #[test]
 fn a_bare_rule_id_suppresses_it_under_any_tool_prefix() {
-    // `MD013` rather than `markdownlint::MD013` — the same convenience
-    // `scan --filter` offers, so a single-tool project needs one short entry.
-    let codes = surviving_codes("markdownlint", &MD_CODES, vec!["MD013".to_string()]);
+    // A bare rule ID (no tool prefix) suppresses under any tool prefix —
+    // the same convenience `scan --filter` offers, so a single-tool
+    // project needs one short entry.
+    let codes = surviving_codes("toolx", &STUB_CODES, vec!["RULE013".to_string()]);
     assert!(!codes.iter().any(|c| c.contains("MD013")), "{codes:?}");
     assert_eq!(codes.len(), 2, "{codes:?}");
 }
@@ -160,30 +151,23 @@ fn a_bare_rule_id_suppresses_it_under_any_tool_prefix() {
 #[test]
 fn multiple_entries_accumulate() {
     let codes = surviving_codes(
-        "markdownlint",
-        &MD_CODES,
-        vec![
-            "markdownlint::MD013".to_string(),
-            "markdownlint::MD024".to_string(),
-        ],
+        "toolx",
+        &STUB_CODES,
+        vec!["toolx::RULE013".to_string(), "toolx::RULE024".to_string()],
     );
-    assert_eq!(codes, vec!["markdownlint::MD041".to_string()]);
+    assert_eq!(codes, vec!["toolx::RULE041".to_string()]);
 }
 
 #[test]
 fn suppression_is_case_insensitive() {
-    let codes = surviving_codes(
-        "markdownlint",
-        &MD_CODES,
-        vec!["MARKDOWNLINT::md013".to_string()],
-    );
+    let codes = surviving_codes("toolx", &STUB_CODES, vec!["TOOLX::rule013".to_string()]);
     assert!(!codes.iter().any(|c| c.contains("MD013")), "{codes:?}");
 }
 
 #[test]
 fn an_entry_matching_nothing_suppresses_nothing() {
     // A stale entry must not degrade into "suppress everything".
-    let codes = surviving_codes("markdownlint", &MD_CODES, vec!["MD999".to_string()]);
+    let codes = surviving_codes("toolx", &STUB_CODES, vec!["RULE999".to_string()]);
     assert_eq!(codes.len(), 3, "{codes:?}");
 }
 
@@ -212,9 +196,9 @@ fn one_entry_can_silence_a_whole_rule_range() {
 #[test]
 fn suppressing_everything_yields_an_empty_report() {
     let codes = surviving_codes(
-        "markdownlint",
-        &MD_CODES,
-        MD_CODES.iter().map(|c| c.to_string()).collect(),
+        "toolx",
+        &STUB_CODES,
+        STUB_CODES.iter().map(|c| c.to_string()).collect(),
     );
     assert!(codes.is_empty(), "a fully suppressed project reports 0");
 }
