@@ -200,7 +200,7 @@ fn selector_with_defaults_selects_nine_when_markdown_absent() {
     use external_lint_lint_arwaky::capabilities_external_lint_selector::CapabilitiesExternalLintSelector;
 
     let selector = CapabilitiesExternalLintSelector::with_defaults();
-    let selected = selector.select_adapters(true, true, true, false);
+    let selected = selector.select_adapters(true, true, true);
     assert_eq!(selected.len(), 9);
 }
 
@@ -212,9 +212,8 @@ fn selector_with_custom_lists() {
         vec![AdapterName::raw("clippy")],
         vec![AdapterName::raw("ruff")],
         vec![],
-        vec![],
     );
-    let selected = selector.select_adapters(true, true, false, false);
+    let selected = selector.select_adapters(true, true, false);
     assert_eq!(selected.len(), 2); // only rust + python, no js
     let names: Vec<&str> = selected.iter().map(|a| a.value()).collect();
     assert!(names.contains(&"clippy"));

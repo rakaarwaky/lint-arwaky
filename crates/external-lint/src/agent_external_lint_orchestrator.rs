@@ -38,12 +38,6 @@ use tracing::warn;
 
 pub struct ExternalLintDeps {
     pub adapters: HashMap<String, Arc<dyn ILinterAdapterProtocol>>,
-    /// Concrete handle to the markdownlint adapter so the orchestrator can
-    /// attach the per-scan `ExternalLintContext` (pre-filtered target file
-    /// list, resolved timeout) without a downcast. Registered alongside
-    /// `adapters["markdownlint"]`; `None` for test wiring that omits it.
-    pub markdown_adapter:
-        Option<Arc<crate::capabilities_md_markdownlint_adapter::MarkdownLintAdapter>>,
     pub filesystem: Arc<dyn IFilesystemAggregate>,
     pub filesystem_io: Arc<dyn IFileSystemIOProtocol>,
     pub selector: Arc<dyn IExternalLintSelectorProtocol>,
@@ -100,12 +94,7 @@ impl ExternalLintOrchestrator {
         let selected: Vec<String> = self
             .deps
             .selector
-            .select_adapters(
-                context.has_rust,
-                context.has_python,
-                context.has_js,
-                context.has_markdown,
-            )
+            .select_adapters(context.has_rust, context.has_python, context.has_js)
             .iter()
             .map(|a| a.value().to_string())
             .collect();
@@ -142,33 +131,13 @@ impl ExternalLintOrchestrator {
             .collect();
 
         let path_for_threads = path.clone();
-        let markdown_adapter = self.deps.markdown_adapter.clone();
         let mut handles: Vec<thread::JoinHandle<AdapterOutcome>> = Vec::new();
         for (name, adapter) in &jobs {
             let name = name.clone();
             let adapter = adapter.clone();
             let path = path_for_threads.clone();
-            let context = context.clone();
-            let markdown_adapter = markdown_adapter.clone();
             handles.push(thread::spawn(move || {
-                // The markdownlint adapter takes the pre-computed context
-                // (pre-filtered Markdown file list, resolved timeout,
-                // `ignored_rules`) so it can skip the subprocess entirely or
-                // hand the CLI an explicit file list instead of a directory
-                // glob. Other adapters keep their own constants and targets.
-                let md = markdown_adapter
-                    .as_ref()
-                    .filter(|_| name == "markdownlint")
-                    .cloned();
-                let wrapped = match md {
-                    Some(md) => {
-                        let concrete: crate::capabilities_md_markdownlint_adapter::MarkdownLintAdapter = (*md).clone();
-                        Arc::new(concrete.with_context(std::sync::Arc::new(context)))
-                            as Arc<dyn ILinterAdapterProtocol>
-                    }
-                    None => adapter.clone(),
-                };
-                AdapterOutcome::run(&name, &wrapped, &path, Instant::now())
+                AdapterOutcome::run(&name, &adapter, &path, Instant::now())
             }));
         }
         let mut all = Vec::new();
@@ -198,11 +167,11 @@ impl ExternalLintOrchestrator {
 
         // …and by the project's `ignored_rules:` list. Matching is a
         // case-insensitive substring, so one entry can silence a whole family:
-        // a bare `MD024` drops every adapter's MD024, while
-        // `markdownlint::MD024` drops only markdownlint's. This is the single
-        // rule-suppression switch for the project, and it is what replaces a
-        // per-tool config file — a project's markdownlint policy lives in the
-        // same `lint_arwaky.config.yaml` as its adapter list.
+        // a bare `redundant_clone` drops every adapter's redundant_clone,
+        // while `clippy::redundant_clone` drops only clippy's. This is the
+        // single rule-suppression switch for the project, and it is what
+        // replaces a per-tool config file — a project's clippy policy lives
+        // in the same `lint_arwaky.config.yaml` as its adapter list.
         if !context.ignored_rules.is_empty() {
             let patterns: Vec<String> = context
                 .ignored_rules
@@ -237,7 +206,6 @@ impl ExternalLintOrchestrator {
             has_rust: languages.has_rust,
             has_python: languages.has_python,
             has_js: languages.has_js,
-            has_markdown: languages.has_markdown,
             // Built-in ignore list, so a caller that delegates the whole context
             // to this agent still gets findings filtered out of `target`,
             // `node_modules`, `tests` and the rest. An empty list would skip
@@ -252,7 +220,6 @@ impl ExternalLintOrchestrator {
             // empty here means "report everything the tools found".
             ignored_rules: Vec::new(),
             config_entries: Vec::new(),
-            ..ExternalLintContext::default()
         }
     }
 }
