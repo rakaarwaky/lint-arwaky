@@ -167,11 +167,11 @@ impl ExternalLintOrchestrator {
 
         // …and by the project's `ignored_rules:` list. Matching is a
         // case-insensitive substring, so one entry can silence a whole family:
-        // a bare `MD024` drops every adapter's MD024, while
-        // `markdownlint::MD024` drops only markdownlint's. This is the single
-        // rule-suppression switch for the project, and it is what replaces a
-        // per-tool config file — a project's markdownlint policy lives in the
-        // same `lint_arwaky.config.yaml` as its adapter list.
+        // a bare `redundant_clone` drops every adapter's redundant_clone,
+        // while `clippy::redundant_clone` drops only clippy's. This is the
+        // single rule-suppression switch for the project, and it is what
+        // replaces a per-tool config file — a project's clippy policy lives
+        // in the same `lint_arwaky.config.yaml` as its adapter list.
         if !context.ignored_rules.is_empty() {
             let patterns: Vec<String> = context
                 .ignored_rules

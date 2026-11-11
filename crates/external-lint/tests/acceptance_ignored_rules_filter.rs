@@ -141,8 +141,9 @@ fn a_full_code_suppresses_only_that_finding() {
 
 #[test]
 fn a_bare_rule_id_suppresses_it_under_any_tool_prefix() {
-    // `MD013` rather than `markdownlint::MD013` — the same convenience
-    // `scan --filter` offers, so a single-tool project needs one short entry.
+    // A bare rule ID (no tool prefix) suppresses under any tool prefix —
+    // the same convenience `scan --filter` offers, so a single-tool
+    // project needs one short entry.
     let codes = surviving_codes("toolx", &STUB_CODES, vec!["RULE013".to_string()]);
     assert!(!codes.iter().any(|c| c.contains("MD013")), "{codes:?}");
     assert_eq!(codes.len(), 2, "{codes:?}");
