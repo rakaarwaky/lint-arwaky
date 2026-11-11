@@ -378,7 +378,6 @@ pub(crate) fn run_all_linters_in_process(
                 agg.config_file_reader.as_ref(),
             ),
             config_entries,
-            ..ExternalLintContext::default()
         };
         let ext_start = Instant::now();
         let agg_external = agg.external.clone();

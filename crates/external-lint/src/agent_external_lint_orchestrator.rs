@@ -220,7 +220,6 @@ impl ExternalLintOrchestrator {
             // empty here means "report everything the tools found".
             ignored_rules: Vec::new(),
             config_entries: Vec::new(),
-            ..ExternalLintContext::default()
         }
     }
 }

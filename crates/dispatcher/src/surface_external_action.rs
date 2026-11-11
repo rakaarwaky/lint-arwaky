@@ -76,7 +76,6 @@ pub fn collect_external_direct(
         ignored_paths: ignored_paths.to_vec(),
         ignored_rules: load_ignored_rules(root_path, &*filesystem, config_file_reader),
         config_entries,
-        ..ExternalLintContext::default()
     };
 
     // The external adapters shell out to project-wide tools that recursively
@@ -316,7 +315,6 @@ pub fn single_file_external_context(
         ignored_paths: ignored.to_vec(),
         ignored_rules,
         config_entries,
-        ..ExternalLintContext::default()
     }
 }
 
