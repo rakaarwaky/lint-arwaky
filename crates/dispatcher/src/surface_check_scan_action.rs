@@ -359,8 +359,8 @@ pub(crate) fn run_all_linters_in_process(
         });
         // Honor the project's `adapters:` SSOT exactly like the `external`
         // subcommand does — an empty list would run every language adapter,
-        // including tools the config never enables (markdownlint), which is
-        // where the workspaces-good false positives came from.
+        // including tools the config never enables, which is where the
+        // workspaces-good false positives came from.
         let config_entries = crate::surface_external_action::load_config_entries(
             Path::new(&target_canon_str),
             seam.aggregate.as_ref(),

@@ -65,10 +65,6 @@ pub fn collect_external_direct(
     // Load adapter entries from config (pre-computed, no orchestrator I/O)
     let config_entries = load_config_entries(root_path, &*filesystem, config_file_reader);
 
-    // Pre-filter the Markdown target list for the markdownlint adapter:
-    // explicit paths per member dir keep the CLI from walking vendored and
-    // ignored trees (the dominant cost of a whole-workspace scan). Per-target
-    // contexts are built after the member dirs are known.
     let context = ExternalLintContext {
         has_rust,
         has_python,
@@ -432,10 +428,8 @@ pub fn run_external_batches(
 
 /// Surface-layer entry point for the `check` action's external adapter run:
 /// builds the per-member target list (workspace-root scopes to
-/// `crates`/`packages`/`modules`; a plain path stays single-target), wraps
-/// each target with the markdownlint pre-filtered context, and runs the
-/// batches in parallel. Returns the concatenated violations, pre-filter
-/// still applied by the caller.
+/// `crates`/`packages`/`modules`; a plain path stays single-target), and runs
+/// the batches in parallel. Returns the concatenated violations.
 pub fn run_member_external_batches(
     target_fp: &FilePath,
     base_context: &ExternalLintContext,

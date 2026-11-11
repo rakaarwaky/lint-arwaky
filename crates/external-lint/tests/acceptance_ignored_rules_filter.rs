@@ -108,7 +108,6 @@ fn surviving_codes(
         ignored_rules: ignored,
         config_entries: Vec::new(),
         ignored_paths: Vec::new(),
-        ..ExternalLintContext::default()
     };
     orchestrator
         .execute(ExternalLintRequest::scan_all_with_context(
