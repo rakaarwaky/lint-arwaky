@@ -262,10 +262,9 @@ pub fn collect_external(
 /// Run the external adapters against a single-file target.
 ///
 /// The language flags come from the file's own extension rather than from a
-/// project walk: a lone `.md` file *is* a Markdown-only project, which is what
-/// makes the MarkdownLint adapter fire on `scan README.md`. Every other adapter
-/// shells out to a project-wide tool whose findings name other files, so the
-/// caller's scope filter drops them anyway.
+/// project walk: a lone file of an unsupported extension carries no language
+/// flags. Every other adapter shells out to a project-wide tool whose findings
+/// name other files, so the caller's scope filter drops them anyway.
 pub fn collect_single_file_external(
     scan_root: &Path,
     ignored: &[String],
@@ -295,8 +294,7 @@ pub fn collect_single_file_external(
 }
 
 /// Build the external-lint context for a single-file target from the file's own
-/// extension. Public so the extension-to-language mapping is directly testable:
-/// it is the whole reason `scan README.md` reaches the MarkdownLint adapter.
+/// extension. Public so the extension-to-language mapping is directly testable.
 pub fn single_file_external_context(
     scan_root: &Path,
     ignored: &[String],
