@@ -56,17 +56,17 @@ fn non_string_entries_are_skipped_not_stringified() {
     let yaml = "\
 ignored_rules:
   - 42
-  - \"MD013\"
+  - \"clippy::needless_pass_by_value\"
   - true
 ";
     let rules = parse_ignored_rules_from_yaml(yaml);
-    assert_eq!(rules, vec!["MD013".to_string()]);
+    assert_eq!(rules, vec!["clippy::needless_pass_by_value".to_string()]);
 }
 
 #[test]
 fn a_non_list_value_is_treated_as_no_suppressions() {
     // Fail closed: an unreadable shape must not suppress everything.
-    let rules = parse_ignored_rules_from_yaml("ignored_rules: \"MD013\"\n");
+    let rules = parse_ignored_rules_from_yaml("ignored_rules: \"clippy::needless_pass_by_value\"\n");
     assert!(rules.is_empty());
 }
 

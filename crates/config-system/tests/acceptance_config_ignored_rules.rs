@@ -53,7 +53,7 @@ fn malformed_yaml_degrades_to_no_suppressions() {
 
 #[test]
 fn non_list_value_is_treated_as_absent() {
-    assert!(parse_ignored_rules_from_yaml("ignored_rules: \"MD013\"").is_empty());
+    assert!(parse_ignored_rules_from_yaml("ignored_rules: \"clippy::needless_pass_by_value\"").is_empty());
 }
 
 #[test]
@@ -71,6 +71,6 @@ fn non_string_entries_are_skipped_not_stringified() {
 fn duplicate_entries_are_preserved() {
     // Deduplication is the filter's job, not the parser's; keeping the list
     // faithful means the config round-trips as written.
-    let yaml = "ignored_rules:\n  - \"MD013\"\n  - \"MD013\"\n";
-    assert_eq!(parse_ignored_rules_from_yaml(yaml), vec!["MD013", "MD013"]);
+    let yaml = "ignored_rules:\n  - \"clippy::needless_pass_by_value\"\n  - \"clippy::needless_pass_by_value\"\n";
+    assert_eq!(parse_ignored_rules_from_yaml(yaml), vec!["clippy::needless_pass_by_value", "clippy::needless_pass_by_value"]);
 }
