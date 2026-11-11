@@ -12,7 +12,7 @@ The external-lint feature sits in the feature layer, invoked by the surface CLI 
 
 #### Business Logic
 
-- Adapters shall be selected in deterministic language-group order: Rust (`clippy`, `rustfmt`, `cargo-audit`), Python (`ruff`, `mypy`, `bandit`), JS/TS (`eslint`, `prettier`, `tsc`), Markdown (`markdownlint`), and Secrets (`gitleaks`).
+- Adapters shall be selected in deterministic language-group order: Rust (`clippy`, `rustfmt`, `cargo-audit`), Python (`ruff`, `mypy`, `bandit`), JS/TS (`eslint`, `prettier`, `tsc`), and Secrets (`gitleaks`).
 - When caller context does not supply language flags, the feature shall query the filesystem aggregate for project language presence without scanning directory trees directly.
 - The adapter list shall be executed sequentially without threading, passing the target path to each selected adapter.
 - Results shall be filtered against configured rules and ignored path patterns before returning to the caller.
@@ -20,7 +20,7 @@ The external-lint feature sits in the feature layer, invoked by the surface CLI 
 #### Edge Cases
 
 - If no languages are detected, the feature shall return an empty adapter list and run zero scans.
-- If all languages are detected, the feature shall select up to ten adapters.
+- If all languages are detected, the feature shall select up to nine adapters.
 - If an adapter fails during execution, the feature shall log a warning and continue executing subsequent adapters.
 - If an adapter binary is missing from the environment, the feature shall log a warning, treat that adapter's results as empty, and continue the scan.
 
@@ -28,7 +28,7 @@ The external-lint feature sits in the feature layer, invoked by the surface CLI 
 
 | Aspect | Detail |
 |--------|--------|
-| **Input** | Target file path, boolean flags (`has_rust`, `has_python`, `has_js`, `has_markdown`), and optional audit context with configuration entries and ignored path patterns. Source: caller scan request. |
+| **Input** | Target file path, boolean flags (`has_rust`, `has_python`, `has_js`), and optional audit context with configuration entries and ignored path patterns. Source: caller scan request. |
 | **Output** | Ordered list of selected adapter names and aggregated normalized lint results. Destination: caller. |
 | **Protocol** | `IExternalLintSelectorProtocol` |
 | **Method** | `select_adapters` |
@@ -102,11 +102,11 @@ The external-lint feature sits in the feature layer, invoked by the surface CLI 
 
 #### Business Logic
 
-- Rule codes shall use tool-native identifiers prefixed with the tool name: Clippy `clippy::<lint_name>`, Rustfmt `rustfmt::unformatted`, cargo-audit `cargo-audit::<RUSTSEC-ID>`, Ruff `ruff::<code>`, Mypy `mypy::<error-code>`, Bandit `bandit::<test-id>`, ESLint `eslint::<rule-id>`, Prettier `prettier::diff`, tsc `tsc::<error-code>`, and markdownlint `markdownlint::<MD-id>`.
+- Rule codes shall use tool-native identifiers prefixed with the tool name: Clippy `clippy::<lint_name>`, Rustfmt `rustfmt::unformatted`, cargo-audit `cargo-audit::<RUSTSEC-ID>`, Ruff `ruff::<code>`, Mypy `mypy::<error-code>`, Bandit `bandit::<test-id>`, ESLint `eslint::<rule-id>`, Prettier `prettier::diff`, tsc `tsc::<error-code>`.
 - File paths in tool reports shall be canonicalized to absolute paths, and line numbers shall be extracted from tool-specific diagnostic fields.
 - Diagnostic severity shall follow the per-tool mapping: Clippy `correctness`→CRITICAL, `suspicious`/`perf`→HIGH, `style`/`complexity`→MEDIUM, `pedantic`/`nursery`/`restriction`→LOW; Rustfmt diff→MEDIUM.
 - cargo-audit `Critical`→CRITICAL, `High`→HIGH, `Medium`→MEDIUM, `Low`/`Unknown`→LOW; Ruff `E999` and all `S*`→CRITICAL, `F8xx`/`B0xx`→HIGH, `F401`→MEDIUM, `E1xx`/`E5xx`/`W2xx`→LOW, default→MEDIUM.
-- Mypy `error`→HIGH, `warning`→MEDIUM, `note`→LOW; Bandit HIGH confidence with HIGH severity→CRITICAL, HIGH→HIGH, MEDIUM→MEDIUM, LOW→LOW; ESLint severity 2→HIGH, 1→MEDIUM; Prettier diff→MEDIUM; tsc error→HIGH; markdownlint rule violation→MEDIUM.
+- Mypy `error`→HIGH, `warning`→MEDIUM, `note`→LOW; Bandit HIGH confidence with HIGH severity→CRITICAL, HIGH→HIGH, MEDIUM→MEDIUM, LOW→LOW; ESLint severity 2→HIGH, 1→MEDIUM; Prettier diff→MEDIUM; tsc error→HIGH.
 - Ruff severity shall be determined by the rule code rather than the tool's own severity field.
 
 #### Edge Cases
