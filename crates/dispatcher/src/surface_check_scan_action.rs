@@ -385,7 +385,6 @@ pub(crate) fn run_all_linters_in_process(
             crate::surface_external_action::run_member_external_batches(
                 &ext_target_fp,
                 &context,
-                &ignored,
                 &agg_external,
                 &member_dirs,
                 member_scope.is_some(),

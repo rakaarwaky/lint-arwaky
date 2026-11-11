@@ -19,7 +19,7 @@ fn absent_key_parses_to_no_suppressions() {
     // A config that never mentions the key must not suppress anything: an
     // empty list is the "report everything" state, so a project that adds an
     // adapter without touching this key still sees all of its findings.
-    let yaml = "adapters:\n  - name: \"markdownlint\"\n    weight: 1.0\n";
+    let yaml = "adapters:\n  - name: \"clippy\"\n    weight: 1.0\n";
     assert!(parse_ignored_rules_from_yaml(yaml).is_empty());
 }
 

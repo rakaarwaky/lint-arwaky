@@ -2,7 +2,6 @@
 pub mod contract_external_lint_aggregate;
 pub mod contract_external_lint_protocol;
 pub mod taxonomy_duration_vo;
-pub mod taxonomy_external_lint_constant;
 pub mod taxonomy_external_lint_request;
 pub mod taxonomy_external_lint_response;
 pub mod taxonomy_external_lint_vo;

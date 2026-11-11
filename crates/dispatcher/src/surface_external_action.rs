@@ -431,7 +431,6 @@ pub fn run_external_batches(
 pub fn run_member_external_batches(
     target_fp: &FilePath,
     base_context: &ExternalLintContext,
-    _ignored: &[String],
     external_lint: &Arc<dyn IExternalLintAggregate>,
     member_dirs: &[std::path::PathBuf],
     workspace_root: bool,

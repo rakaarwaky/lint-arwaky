@@ -144,7 +144,7 @@ fn a_bare_rule_id_suppresses_it_under_any_tool_prefix() {
     // the same convenience `scan --filter` offers, so a single-tool
     // project needs one short entry.
     let codes = surviving_codes("toolx", &STUB_CODES, vec!["RULE013".to_string()]);
-    assert!(!codes.iter().any(|c| c.contains("MD013")), "{codes:?}");
+    assert!(!codes.iter().any(|c| c.contains("RULE013")), "{codes:?}");
     assert_eq!(codes.len(), 2, "{codes:?}");
 }
 
@@ -161,7 +161,7 @@ fn multiple_entries_accumulate() {
 #[test]
 fn suppression_is_case_insensitive() {
     let codes = surviving_codes("toolx", &STUB_CODES, vec!["TOOLX::rule013".to_string()]);
-    assert!(!codes.iter().any(|c| c.contains("MD013")), "{codes:?}");
+    assert!(!codes.iter().any(|c| c.contains("RULE013")), "{codes:?}");
 }
 
 #[test]
