@@ -244,7 +244,7 @@ Audits every recognized Markdown document against the ten document rules (AES601
 
 #### Proposed Solution
 
-Aggregates industry-standard linters and formatters — Clippy, Rustfmt, cargo-audit, Ruff, Mypy, Bandit, ESLint, Prettier, TSC — across Rust, Python, JS/TS, and Markdown, normalizing their reports into the unified violation format using tool-native rule codes and mapped severities. Auto-fix runs through each tool's native fix command. The tools run sequentially, and language detection is delegated to the filesystem source rather than performed here.
+Aggregates industry-standard linters and formatters — Clippy, Rustfmt, cargo-audit, Ruff, Mypy, Bandit, ESLint, Prettier, TSC — across Rust, Python, and JS/TS, normalizing their reports into the unified violation format using tool-native rule codes and mapped severities. Auto-fix runs through each tool's native fix command. The tools run sequentially, and language detection is delegated to the filesystem source rather than performed here.
 
 #### Main User Flow
 

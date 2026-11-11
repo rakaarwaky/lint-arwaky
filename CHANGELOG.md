@@ -21,7 +21,7 @@
 
 ### Removed
 
-- Removed the markdownlint adapter from external-lint. The `markdownlint` adapter entry and `markdownlint::*` ignored rules in config files are now ignored; markdown files are no longer linted by markdownlint.
+- feat(external-lint): remove the markdownlint adapter from external-lint. The `markdownlint` adapter entry and `markdownlint::*` ignored rules in config files are now ignored; markdown files are no longer linted by markdownlint.
 
 ## 3.16.1 (2026-11-09)
 

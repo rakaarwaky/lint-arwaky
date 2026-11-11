@@ -128,7 +128,7 @@ cargo run --bin lint-arwaky-cli -- scan workspaces-good/packages
 ```
 
 > Language is auto-detected from file extensions. No language flag needed.
-> Python, JS/TS, and Markdown scans require external tools installed (ruff,
+> Python and JS/TS scans require external tools installed (ruff,
 > mypy, bandit, eslint, prettier, tsc) for external lint
 > violations — see the prerequisite note in §1, which the CI `self-lint` job
 > satisfies (QA #637).
