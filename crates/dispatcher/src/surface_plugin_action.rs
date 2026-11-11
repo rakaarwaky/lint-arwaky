@@ -42,7 +42,6 @@ pub fn collect_adapters_detailed(filesystem: &dyn IFilesystemAggregate) -> Vec<A
         ("eslint", "ESLint (JavaScript)"),
         ("prettier", "Prettier (JavaScript)"),
         ("tsc", "TypeScript Compiler"),
-        ("markdownlint-cli", "markdownlint (Markdown)"),
     ] {
         list.push(AdapterDetail {
             name: b.into(),

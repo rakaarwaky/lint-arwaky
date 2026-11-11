@@ -88,8 +88,6 @@ pub mod capabilities_rs_clippy_adapter;
 pub use capabilities_rs_clippy_adapter::RustLinterAdapter;
 pub mod capabilities_rs_fmt_adapter;
 pub use capabilities_rs_fmt_adapter::RustFmtAdapter;
-pub mod capabilities_md_markdownlint_adapter;
-pub use capabilities_md_markdownlint_adapter::MarkdownLintAdapter;
 pub mod capabilities_secrets_gitleaks_adapter;
 pub use capabilities_secrets_gitleaks_adapter::GitleaksAdapter;
 pub mod root_external_lint_container;

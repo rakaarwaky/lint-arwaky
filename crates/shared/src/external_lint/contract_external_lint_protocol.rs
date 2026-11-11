@@ -34,23 +34,15 @@ use shared_common::taxonomy_severity_vo::Severity;
 use shared_quality_rules::taxonomy_quality_rules_vo::LintResultList;
 
 /// FR-ExternalLint-001: select the set of adapters to run given the detected
-/// language booleans and whether Markdown files are present. Returns the ordered
-/// list of adapter names in language-group order (Rust → Python → JS →
-/// markdown). When `has_markdown` is true, `markdownlint` is appended after the
-/// JS group.
+/// language booleans. Returns the ordered list of adapter names in
+/// language-group order (Rust → Python → JS).
 ///
 /// The language booleans are pre-computed by the caller — either from the
 /// surface, or from the `filesystem` aggregate's
 /// `FilesystemRequest::DetectProjectLanguages`. This trait maps flags to
 /// adapter names and nothing else.
 pub trait IExternalLintSelectorProtocol: Send + Sync {
-    fn select_adapters(
-        &self,
-        has_rs: bool,
-        has_py: bool,
-        has_js: bool,
-        has_md: bool,
-    ) -> AdapterNameList;
+    fn select_adapters(&self, has_rs: bool, has_py: bool, has_js: bool) -> AdapterNameList;
 }
 
 /// FR-ExternalLint-002: each linter adapter exposes the canonical scanning and

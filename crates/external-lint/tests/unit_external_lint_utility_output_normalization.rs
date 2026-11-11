@@ -39,11 +39,11 @@ fn colorized_paths_and_columns_are_cleaned_for_regex_matching() {
 
 #[test]
 fn colorized_delimiter_text_is_cleaned_for_substring_matching() {
-    // markdownlint splits on " error ", so a colored severity must not break it.
-    let raw = "docs/bad.md:1:1 error MD018/no-missing-space-atx No space";
+    // Some adapters split on " error ", so a colored severity must not break it.
+    let raw = "docs/bad.py:1:1 error CL001/unused-var No space";
     let colored = format!("\u{1b}[33m{raw}\u{1b}[0m\n");
     let stripped = strip_ansi_escapes(&colored);
-    assert!(stripped.contains(" error MD018/"), "got {stripped:?}");
+    assert!(stripped.contains(" error CL001/"), "got {stripped:?}");
 }
 
 // ── Sequence shapes ────────────────────────────────────────

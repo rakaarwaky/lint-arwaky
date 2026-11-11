@@ -299,7 +299,7 @@ fn external_lint_executor_implements_protocol() {
 fn selector_implements_protocol() {
     let selector = external_lint_lint_arwaky::capabilities_external_lint_selector::CapabilitiesExternalLintSelector::with_defaults();
     let _dyn_sel: &dyn IExternalLintSelectorProtocol = &selector;
-    let result = _dyn_sel.select_adapters(true, true, true, false);
+    let result = _dyn_sel.select_adapters(true, true, true);
     assert_eq!(result.len(), 9); // 3 rust + 3 python + 3 js (markdown off)
 }
 
@@ -313,7 +313,6 @@ fn orchestrator_implements_aggregate_protocol() {
     use std::collections::HashMap;
 
     let deps = ExternalLintDeps {
-        markdown_adapter: None,
         adapters: HashMap::new(),
         filesystem: Arc::new(MockFilesystem::new()),
         filesystem_io: Arc::new(MockFilesystem::new()),
@@ -413,10 +412,8 @@ fn orchestrator_with(
         vec![AdapterName::raw("stub".to_string())],
         Vec::new(),
         Vec::new(),
-        Vec::new(),
     );
     let deps = ExternalLintDeps {
-        markdown_adapter: None,
         adapters,
         filesystem: Arc::new(MockFilesystem::with_languages(languages)),
         filesystem_io: Arc::new(MockFilesystem::new()),
@@ -509,7 +506,6 @@ fn output_normalizer_has_production_call_sites() {
     // 2. The deps struct carries a live normalizer field.
     use external_lint_lint_arwaky::agent_external_lint_orchestrator::ExternalLintDeps;
     let deps: ExternalLintDeps = ExternalLintDeps {
-        markdown_adapter: None,
         adapters: std::collections::HashMap::new(),
         filesystem: Arc::new(MockFilesystem::new()),
         filesystem_io: Arc::new(MockFilesystem::new()),
