@@ -19,6 +19,10 @@
 - docs(naming-rules): add the developer journey, one rendered output sample per rule, the severity model, the suppression section and the 72-of-80 column contract (#1378)
 - docs(architecture): retitle AES706 "PR ID Folder Mapping" and list its current violation names, segment-neutral wording, and per-member folder order (#1375)
 
+### Removed
+
+- Removed the markdownlint adapter from external-lint. The `markdownlint` adapter entry and `markdownlint::*` ignored rules in config files are now ignored; markdown files are no longer linted by markdownlint.
+
 ## 3.16.1 (2026-11-09)
 
 ### Bug Fixes
@@ -458,11 +462,6 @@
 - **User overrides are rejected, not silently merged.** The merge now locks the
   `architecture:` business fields to the tool's values and reports a warning
   naming the fields it ignored, instead of accepting a config that changes them.
-- **Markdownlint's four doc-style rules are off by default.** MD013, MD060,
-  MD033 and MD024 collide with how documentation is normally written (long
-  spec-table rows, compact unaligned tables, `<Type>` generic notation in prose,
-  repeated per-layer and per-version headings). The structural rules stay on.
-  A project that wants one back declares it in its own config.
 
 ### Fixes
 

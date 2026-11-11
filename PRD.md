@@ -47,7 +47,7 @@ Metric baselines are recorded here rather than restated elsewhere; a release tha
 - Single source of truth for configuration: discovery across a bounded priority chain, workspace-type detection, merging user settings onto embedded defaults, threshold and adapter validation, ignored-path assembly.
 - Dispatcher action entry points for each workspace verb (check, scan, ci, fix, config, git, setup, watch, docs, import, external, maintenance, naming, orphan, plugin, quality, role, structure, layer scan, version, suppression) merging findings from every enabled rule group into one report.
 - Document-invariant audit across AES601–AES610 (all ten recognized documents) with machine-readable violation types; the ARCHITECTURE.md Rule Index is the single source for rule counts (41 rules).
-- External-lint aggregation of Clippy, Rustfmt, cargo-audit, Ruff, Mypy, Bandit, ESLint, Prettier, TSC, and markdownlint-cli normalized into unified violations.
+- External-lint aggregation of Clippy, Rustfmt, cargo-audit, Ruff, Mypy, Bandit, ESLint, Prettier, TSC normalized into unified violations.
 - Real-time file watching with debouncing, filtering, deduplication, and an initial full-project scan.
 - Pre-commit hook installing/linting only changed files against the base branch and blocking commits on AES violations.
 - Import-rule enforcement across the 7-layer AES architecture (AES201–AES205) governed by YAML configuration.
@@ -244,7 +244,7 @@ Audits every recognized Markdown document against the ten document rules (AES601
 
 #### Proposed Solution
 
-Aggregates industry-standard linters and formatters — Clippy, Rustfmt, cargo-audit, Ruff, Mypy, Bandit, ESLint, Prettier, TSC, and markdownlint-cli — across Rust, Python, JS/TS, and Markdown, normalizing their reports into the unified violation format using tool-native rule codes and mapped severities. Auto-fix runs through each tool's native fix command. The tools run sequentially, and language detection is delegated to the filesystem source rather than performed here.
+Aggregates industry-standard linters and formatters — Clippy, Rustfmt, cargo-audit, Ruff, Mypy, Bandit, ESLint, Prettier, TSC — across Rust, Python, JS/TS, and Markdown, normalizing their reports into the unified violation format using tool-native rule codes and mapped severities. Auto-fix runs through each tool's native fix command. The tools run sequentially, and language detection is delegated to the filesystem source rather than performed here.
 
 #### Main User Flow
 
