@@ -98,17 +98,6 @@ impl IAdapterHealthProtocol for AdapterHealthChecker {
                     .status
                     == "OK",
             },
-            HealthCheckAdapterVO {
-                name: "markdownlint-cli".to_string(),
-                language: "Markdown".to_string(),
-                available: utility_maintenance_helpers::check_tool(
-                    "markdownlint-cli",
-                    &["--version"],
-                    false,
-                )
-                .status
-                    == "OK",
-            },
         ];
         HealthCheckResult { adapters }
     }
