@@ -76,21 +76,6 @@ fn collect_scan_with_filter_returns_error_for_nonexistent() {
     assert!(result.is_err());
 }
 
-// ─── Single-file external context ───
-//
-// `scan README.md` reaches the external adapters through the language flags
-// derived from the file's own extension. Markdown detection lives in the
-// surface layer's `ExternalLintContext` language booleans (has_rust /
-// has_python / has_js).
-
-#[test]
-fn markdown_file_context_sets_no_language_flags() {
-    for name in ["README.md", "notes.markdown"] {
-        let ctx = single_file_external_context(Path::new(name), &[], Vec::new(), Vec::new());
-        assert!(!ctx.has_rust && !ctx.has_python && !ctx.has_js, "{name}");
-    }
-}
-
 #[test]
 fn source_file_context_selects_only_its_own_language() {
     let cases = [
@@ -118,11 +103,14 @@ fn source_file_context_selects_only_its_own_language() {
 
 #[test]
 fn extensionless_file_context_selects_no_adapter() {
-    let ctx = single_file_external_context(Path::new("Makefile"), &[], Vec::new(), Vec::new());
-    assert!(
-        !ctx.has_rust && !ctx.has_python && !ctx.has_js,
-        "an extensionless target is not a language project"
-    );
+    let cases = [Path::new("Makefile"), Path::new("README.markdown")];
+    for name in cases {
+        let ctx = single_file_external_context(name, &[], Vec::new(), Vec::new());
+        assert!(
+            !ctx.has_rust && !ctx.has_python && !ctx.has_js,
+            "a {name:?} target is not a language project"
+        );
+    }
 }
 
 #[test]
