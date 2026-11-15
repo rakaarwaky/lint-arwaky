@@ -99,7 +99,12 @@ ph1_start=$SECONDS
 echo -e "\n${CYAN}━━━ Phase 1: Format (fast, no build) ━━━${NC}"
 run_gate "Rust Format" cargo fmt --all -- --check &
 FMT_PID=$!
-wait_and_report $FMT_PID
+
+# Installer lib tests: pure-bash offline checks for scripts/lib.sh helpers.
+# Fast (no build, no network) — runs in parallel with the format check.
+run_gate "Installer lib tests" bash scripts/tests/installer_lib_test.sh &
+INSTALLER_PID=$!
+wait_and_report $FMT_PID $INSTALLER_PID
 echo "Phase 1 duration: $((SECONDS - ph1_start))s"
 
 # Document templates have a single source of truth at `crates/shared/template/`.
