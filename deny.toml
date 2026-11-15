@@ -9,13 +9,6 @@ version = 2
 unused-ignored-advisory = "warn"
 unmaintained = "all"
 ignore = [
-    # paste is unmaintained but only a transitive dep via ratatui; no direct usage.
-    # Upstream issue: https://github.com/dtolnay/paste
-    "RUSTSEC-2024-0436",
-    # DNS rebinding affects rmcp's Streamable HTTP server transport. We lock
-    # rmcp 3.5.0 and construct only rmcp::transport::stdio in
-    # crates/root_mcp_main_entry.rs. Re-review if HTTP/SSE transport is added.
-    "RUSTSEC-2026-0189",
     # unsafe-libyaml is unmaintained (archived) but only a transitive dep via
     # serde_yaml_ng (YAML config parsing); no safe upstream replacement.
     # Re-review if a safe YAML parser (saphyr/serde-saphyr) replaces it.

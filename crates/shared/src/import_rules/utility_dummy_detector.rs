@@ -477,11 +477,7 @@ fn function_body_is_dummy(lines: &[&str]) -> bool {
     }
 
     let inner = trimmed.trim_start_matches('{').trim_end_matches('}').trim();
-    if inner.is_empty() || is_short_marker(inner) {
-        return true;
-    }
-
-    false
+    inner.is_empty() || is_short_marker(inner)
 }
 
 fn is_short_marker(inner: &str) -> bool {
