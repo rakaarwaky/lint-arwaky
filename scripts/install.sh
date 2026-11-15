@@ -138,27 +138,33 @@ install_dependencies() {
     echo -e "\n${BOLD}[2/5] Checking dependencies...${NC}"
     detect_pkg_mgr
 
+    # Rust is needed by every mode that builds from source; rustup writes into
+    # ~/.cargo/bin, which install_rust_if_missing exports into this shell.
+    install_rust_if_missing
+
+    local pip_remedy npm_remedy mold_remedy
+    pip_remedy="$(pip_install_cmd) && python3 -m pip install --user"
+    npm_remedy="$(npm_remedy)"
+    mold_remedy="$(mold_remedy)"
+
     # Core dependencies
     if [ "$MODE" = "dev" ] || [ "$include_dev" = "true" ]; then
-        install_if_missing cargo "Rust/Cargo" 'curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y && . "$HOME/.cargo/env"'
-        install_if_missing sccache "sccache" "sccache_install"
-        install_if_missing mold "mold" "mold_install"
-    elif [ "$MODE" = "local" ] || [ "$MODE" = "global" ]; then
-        install_if_missing cargo "Rust/Cargo" 'curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y && . "$HOME/.cargo/env"'
+        ensure_sccache
+        install_if_missing mold "mold" "mold_install" "$mold_remedy"
     fi
 
     # External linters
-    install_if_missing npm "npm" "npm_install"
-    install_if_missing eslint "eslint" "npm_install_global eslint"
-    install_if_missing tsc "typescript" "npm_install_global typescript"
-    install_if_missing mypy "mypy" "pip_install mypy"
-    install_if_missing ruff "ruff" "pip_install ruff"
-    install_if_missing bandit "bandit" "pip_install bandit"
+    install_if_missing npm "npm" "npm_install" "$npm_remedy"
+    install_if_missing eslint "eslint" "npm_install_global eslint" "npm install -g eslint"
+    install_if_missing tsc "typescript" "npm_install_global typescript" "npm install -g typescript"
+    install_if_missing mypy "mypy" "pip_install mypy" "$pip_remedy mypy"
+    install_if_missing ruff "ruff" "pip_install ruff" "$pip_remedy ruff"
+    install_if_missing bandit "bandit" "pip_install bandit" "$pip_remedy bandit"
 
     # Dev-only dependencies
     if [ "$MODE" = "dev" ] || [ "$include_dev" = "true" ]; then
-        install_if_missing prettier "prettier" "npm_install_global prettier"
-        install_if_missing pytest "pytest" "pip_install pytest pytest-cov"
+        install_if_missing prettier "prettier" "npm_install_global prettier" "npm install -g prettier"
+        install_if_missing pytest "pytest" "pip_install pytest pytest-cov" "$pip_remedy pytest pytest-cov"
     fi
 }
 
@@ -166,8 +172,11 @@ install_dependencies() {
 build_from_source() {
     echo -e "\n${BOLD}[3/5] Building from source...${NC}"
 
+    ensure_cargo_bin_on_path
+    ensure_sccache
+
     if ! command -v cargo &>/dev/null; then
-        die "cargo not found. Install Rust first: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh"
+        die "cargo not found. Install Rust first: $RUSTUP_CMD"
     fi
 
     if $DRY_RUN; then
@@ -349,6 +358,7 @@ install_local() {
     install_docs "$config_dir" "$PROJECT_ROOT"
     setup_aliases
     verify_installation "$install_bin"
+    install_summary "$install_bin"
 
     local version
     version=$(get_project_version)
@@ -361,7 +371,10 @@ install_local() {
 install_global() {
     if [ "$(id -u)" -ne 0 ]; then
         warn "Global installation typically requires root. Re-running with sudo..."
-        sudo bash "$0" --global ${REINSTALL:+--reinstall} ${DRY_RUN:+--dry-run}
+        local -a sudo_args=(--global)
+        [ "$REINSTALL" = "true" ] && sudo_args+=(--reinstall)
+        [ "$DRY_RUN" = "true" ] && sudo_args+=(--dry-run)
+        sudo bash "$0" "${sudo_args[@]}"
         return
     fi
 
@@ -375,6 +388,7 @@ install_global() {
     build_from_source
     install_binaries "$install_bin" "${binaries[@]}"
     install_docs "$config_dir" "$PROJECT_ROOT"
+    install_summary "$install_bin"
 
     local version
     version=$(get_project_version)
@@ -398,6 +412,7 @@ install_remote() {
     install_docs "$config_dir" "$PROJECT_ROOT"
     setup_aliases
     verify_installation "$install_bin"
+    install_summary "$install_bin"
 
     echo -e "\n${BOLD}${GREEN}Done (Remote)!${NC}"
     echo "Config: $config_dir"
@@ -414,19 +429,24 @@ install_dev() {
     # Extra dev tools
     echo -e "\n${BOLD}Setting up developer tools...${NC}"
 
-    if ! command -v cargo &>/dev/null; then
-        info "Installing Rust toolchain..."
-        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-        source "$HOME/.cargo/env" || true
-    fi
+    install_rust_if_missing
+    ensure_cargo_bin_on_path
 
-    rustup component add clippy rustfmt 2>/dev/null || true
+    if $DRY_RUN; then
+        echo "  [dry-run] rustup component add clippy rustfmt"
+    else
+        rustup component add clippy rustfmt 2>/dev/null || true
+    fi
 
     # cargo extensions
     for tool in cargo-nextest cargo-audit cargo-watch; do
         if ! command -v "$tool" &>/dev/null; then
             info "Installing $tool..."
-            cargo install "$tool" --locked || true
+            if $DRY_RUN; then
+                echo "  [dry-run] cargo install $tool --locked"
+            else
+                cargo install "$tool" --locked || true
+            fi
         fi
     done
 
@@ -446,11 +466,17 @@ install_dev() {
     setup_git_hooks "$PROJECT_ROOT"
     verify_installation "$install_bin"
 
-    # Run quality gates
+    # Run quality gates (skipped on --dry-run: they build the whole workspace)
     if [ -f "$PROJECT_ROOT/scripts/gates.sh" ]; then
-        echo -e "\n${BOLD}Running quality gates...${NC}"
-        bash "$PROJECT_ROOT/scripts/gates.sh"
+        if $DRY_RUN; then
+            echo "  [dry-run] bash $PROJECT_ROOT/scripts/gates.sh"
+        else
+            echo -e "\n${BOLD}Running quality gates...${NC}"
+            bash "$PROJECT_ROOT/scripts/gates.sh"
+        fi
     fi
+
+    install_summary "$install_bin"
 
     echo -e "\n${BOLD}${GREEN}======================================================${NC}"
     echo -e "${BOLD}${GREEN} Developer environment setup complete! Happy coding! 🚀${NC}"

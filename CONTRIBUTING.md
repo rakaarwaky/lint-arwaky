@@ -11,6 +11,7 @@ Contribute to Lint Arwaky by keeping 7-layer architecture discipline, no-bypass 
 - **No async runtime in the core**: the linter core uses `std::thread` and `rayon`; `tokio` is confined to `file-watch` and `mcp-server`.
 - **No bypasses**: `#[allow]`, `// eslint-disable`, and `# noqa` are not acceptable fixes. Correct the cause instead.
 - **Single source of truth**: `crates/shared/template/` holds the document templates; `crates/shared/build.rs` embeds them into the binary at build time. Regenerate and commit with any template change.
+- **Installer helper tests**: `scripts/tests/installer_lib_test.sh` is a pure-bash offline suite for the `scripts/lib.sh` installer helpers (no network, no sudo, no root, no bats). It runs inside `bash scripts/gates.sh` (Phase 1, alongside the format check) and can be run standalone with `bash scripts/tests/installer_lib_test.sh`.
 
 ## Workflow
 
