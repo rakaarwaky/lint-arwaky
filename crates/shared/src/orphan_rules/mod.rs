@@ -8,6 +8,7 @@ pub mod taxonomy_orphan_rules_vo;
 pub mod utility_orphan_filename;
 pub mod utility_orphan_graph;
 pub mod utility_orphan_paths;
+pub mod utility_orphan_progress;
 pub mod utility_parser_dispatcher;
 pub mod utility_python_parser;
 pub mod utility_rust_parser;
@@ -45,5 +46,6 @@ pub use taxonomy_orphan_rules_vo::extract_idents_from_stream;
 pub use utility_orphan_paths::{
     is_path_alive, normalize_rel_path, paths_equivalent, summarize_names,
 };
+pub use utility_orphan_progress::{PROGRESS_INTERVAL, ctrl_c_flag};
 pub use utility_parser_dispatcher::is_supported;
 pub use utility_parser_dispatcher::parse_file_content;

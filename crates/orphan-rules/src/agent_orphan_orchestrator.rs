@@ -8,7 +8,7 @@ use shared_common::taxonomy_path_vo::FilePath;
 use shared_common::taxonomy_severity_vo::Severity;
 use shared_config_system::ArchitectureConfig;
 use shared_orphan_rules::IOrphanAggregate;
-use shared_orphan_rules::{OrphanRequest, OrphanResponse};
+use shared_orphan_rules::{OrphanRequest, OrphanResponse, PROGRESS_INTERVAL, ctrl_c_flag};
 
 use shared_filesystem::FilesystemRequest;
 use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
@@ -30,11 +30,32 @@ use shared_role_rules::taxonomy_role_rules_constant::{
 
 use std::collections::HashMap;
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 
-use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
+use rayon::iter::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
 use tracing::{debug, instrument, trace};
 
 // ─── Block 1: Module Declaration ───────────────────────────
+
+/// Result of one orchestrator scan: findings, whether the scan was cut
+/// short by Ctrl+C, and how many files had unreadable content.
+pub struct OrphanScanOutcome {
+    pub violations: Vec<LintResult>,
+    pub partial: bool,
+    pub unread_count: usize,
+    pub total_files: usize,
+}
+
+impl OrphanScanOutcome {
+    pub fn complete(violations: Vec<LintResult>, unread_count: usize, total_files: usize) -> Self {
+        Self {
+            violations,
+            partial: false,
+            unread_count,
+            total_files,
+        }
+    }
+}
 
 /// Dependencies for ArchOrphanAnalyzer to avoid too_many_arguments.
 pub struct ArchOrphanDeps {
@@ -78,13 +99,16 @@ impl ArchOrphanAnalyzer {
         let all_files = context.all_workspace_files.clone();
         let full_files_vo = OrphanFileListVO::new(all_files);
         self._check_orphans_inner(files, root_dir, &context, &full_files_vo)
+            .violations
     }
 
-    pub fn scan_orphans(
+    /// Scan variant that also reports whether the run was cut short by
+    /// Ctrl+C and how many files had unreadable content.
+    pub fn scan_orphans_detailed(
         &self,
         root_dir: &FilePath,
         ignored: &[String],
-    ) -> (GraphAnalysisContext, Vec<LintResult>) {
+    ) -> (GraphAnalysisContext, OrphanScanOutcome) {
         let root_path = std::path::Path::new(root_dir.value());
         let context = self
             .deps
@@ -94,8 +118,17 @@ impl ArchOrphanAnalyzer {
             ))
             .into_graph_context();
         let files_vo = OrphanFileListVO::new(context.all_workspace_files.clone());
-        let results = self.check_orphans_with_context(&files_vo, root_dir, &context);
-        (context, results)
+        let outcome = self.check_orphans_with_context_detailed(&files_vo, root_dir, &context);
+        (context, outcome)
+    }
+
+    pub fn scan_orphans(
+        &self,
+        root_dir: &FilePath,
+        ignored: &[String],
+    ) -> (GraphAnalysisContext, Vec<LintResult>) {
+        let (context, outcome) = self.scan_orphans_detailed(root_dir, ignored);
+        (context, outcome.violations)
     }
 
     pub fn check_orphans_with_context(
@@ -104,6 +137,16 @@ impl ArchOrphanAnalyzer {
         root_dir: &FilePath,
         context: &GraphAnalysisContext,
     ) -> Vec<LintResult> {
+        self.check_orphans_with_context_detailed(files, root_dir, context)
+            .violations
+    }
+
+    pub fn check_orphans_with_context_detailed(
+        &self,
+        files: &OrphanFileListVO,
+        root_dir: &FilePath,
+        context: &GraphAnalysisContext,
+    ) -> OrphanScanOutcome {
         debug!(
             config_enabled = self.config.enabled.value,
             root = root_dir.value,
@@ -112,7 +155,7 @@ impl ArchOrphanAnalyzer {
             "orphan check"
         );
         if !self.config.enabled.value {
-            return Vec::new();
+            return OrphanScanOutcome::complete(Vec::new(), 0, files.values.len());
         }
 
         // Files are already expanded before graph context build (in scan_orphans),
@@ -125,8 +168,22 @@ impl ArchOrphanAnalyzer {
         files: &[shared_filesystem::taxonomy_filesystem_vo::FileEntry],
         context: &GraphAnalysisContext,
     ) -> Vec<LintResult> {
+        self.check_orphans_with_entries_detailed(files, context)
+            .violations
+    }
+
+    /// Entry-based variant that also reports cancellation and unread-file state.
+    pub fn check_orphans_with_entries_detailed(
+        &self,
+        files: &[shared_filesystem::taxonomy_filesystem_vo::FileEntry],
+        context: &GraphAnalysisContext,
+    ) -> OrphanScanOutcome {
         if !self.config.enabled.value {
-            return Vec::new();
+            return OrphanScanOutcome::complete(
+                Vec::new(),
+                0,
+                files.iter().filter(|f| f.parse_ok).count(),
+            );
         }
         let file_paths: Vec<String> = files
             .iter()
@@ -142,11 +199,15 @@ impl ArchOrphanAnalyzer {
     ///
     /// Entry points are identified across the workspace, and reachability follows
     /// import and dependency-injection relationships before each file is evaluated.
+    /// Progress is emitted as `OrphanScanStarted` / `OrphanPhaseProgress`
+    /// (at most every 250 files) / `OrphanScanFinished` tracing events, and a
+    /// SIGINT (Ctrl+C) stops the scan early, returning the findings produced so
+    /// far with `partial: true`.
     ///
     /// # Examples
     ///
     /// ```ignore
-    /// let violations = analyzer._check_orphans_inner(
+    /// let outcome = analyzer._check_orphans_inner(
     ///     &files,
     ///     &root_dir,
     ///     &context,
@@ -156,7 +217,8 @@ impl ArchOrphanAnalyzer {
     ///
     /// # Returns
     ///
-    /// The orphan violations found during the scan.
+    /// An [`OrphanScanOutcome`] with the violations found, whether the scan was
+    /// cut short by Ctrl+C, and the count of files with unreadable content.
     #[instrument(skip(self))]
     fn _check_orphans_inner(
         &self,
@@ -164,7 +226,40 @@ impl ArchOrphanAnalyzer {
         root_dir: &FilePath,
         context: &GraphAnalysisContext,
         file_vo: &OrphanFileListVO,
-    ) -> Vec<LintResult> {
+    ) -> OrphanScanOutcome {
+        let cancel = ctrl_c_flag();
+        self._check_orphans_inner_with_cancel(files, root_dir, context, file_vo, Some(&cancel))
+    }
+
+    fn _check_orphans_inner_with_cancel(
+        &self,
+        files: &OrphanFileListVO,
+        root_dir: &FilePath,
+        context: &GraphAnalysisContext,
+        file_vo: &OrphanFileListVO,
+        cancel: Option<&Arc<AtomicBool>>,
+    ) -> OrphanScanOutcome {
+        let is_cancelled = || cancel.is_some_and(|c| c.load(Ordering::SeqCst));
+        let total_files = files.values.len();
+
+        // Phase 1: graph build.
+        tracing::info!(
+            target: "lint_arwaky::orphan",
+            event = "OrphanScanStarted",
+            phase = "graph_build",
+            files = total_files,
+            all_workspace_files = context.all_workspace_files.len(),
+            "orphan scan: building graph context"
+        );
+        if is_cancelled() {
+            return OrphanScanOutcome {
+                violations: Vec::new(),
+                partial: true,
+                unread_count: 0,
+                total_files,
+            };
+        }
+
         let surface_count = files
             .values
             .iter()
@@ -172,7 +267,7 @@ impl ArchOrphanAnalyzer {
             .count();
         debug!(
             root = root_dir.value,
-            total_files = files.values.len(),
+            total_files = total_files,
             surface_files = surface_count,
             all_ws = context.all_workspace_files.len(),
             "orphan inner scan started"
@@ -220,6 +315,15 @@ impl ArchOrphanAnalyzer {
             std::slice::from_ref(&entry_points_vo),
             &[configured_vo],
         );
+        tracing::info!(
+            target: "lint_arwaky::orphan",
+            event = "OrphanPhaseProgress",
+            phase = "graph_build",
+            done = total_files,
+            total = total_files,
+            entry_points = entry_points.values.len(),
+            "orphan scan: entry points identified"
+        );
 
         // UX-S1-001 P0 — empty-entry-point guard: without any entry point, every file
         // would look unreachable, so report a single whole-file finding instead of
@@ -231,22 +335,27 @@ impl ArchOrphanAnalyzer {
         if entry_points.values.is_empty() && !has_custom_entry_patterns {
             let root_msg = root_dir.value();
             let message = format!("No entry point found under '{root_msg}'.");
-            return vec![LintResult {
-                file: FilePath::new(root_msg.to_string()).unwrap_or_default(),
-                line: LineNumber::new(0),
-                column: ColumnNumber::new(0),
-                code: ErrorCode::raw("AES501"),
-                message: LintMessage::new(message),
-                source: Some(AdapterName::raw("architecture")),
-                severity: Severity::HIGH,
-                enclosing_scope: None,
-                related_locations: LocationList::new(),
-                violation_name: "NO_ENTRY_POINT".to_string(),
-                why: "Orphan detection measures reachability from an entry point; with none, every file would look unreachable."
-                    .to_string(),
-                fix: "Add a root_*_entry.rs file, or set layers.<layer>.orphan.orphan_entry_points in lint_arwaky.config.yaml."
-                    .to_string(),
-            }];
+            return OrphanScanOutcome {
+                violations: vec![LintResult {
+                    file: FilePath::new(root_msg.to_string()).unwrap_or_default(),
+                    line: LineNumber::new(0),
+                    column: ColumnNumber::new(0),
+                    code: ErrorCode::raw("AES501"),
+                    message: LintMessage::new(message),
+                    source: Some(AdapterName::raw("architecture")),
+                    severity: Severity::HIGH,
+                    enclosing_scope: None,
+                    related_locations: LocationList::new(),
+                    violation_name: "NO_ENTRY_POINT".to_string(),
+                    why: "Orphan detection measures reachability from an entry point; with none, every file would look unreachable."
+                        .to_string(),
+                    fix: "Add a root_*_entry.rs file, or set layers.<layer>.orphan.orphan_entry_points in lint_arwaky.config.yaml."
+                        .to_string(),
+                }],
+                partial: false,
+                unread_count: 0,
+                total_files,
+            };
         }
 
         // BFS reachability through the import graph. The graph already carries
@@ -289,12 +398,39 @@ impl ArchOrphanAnalyzer {
                 abs.to_string_lossy().to_string()
             })
             .collect();
+
+        // Phase 2: content read.
+        tracing::info!(
+            target: "lint_arwaky::orphan",
+            event = "OrphanScanStarted",
+            phase = "content_read",
+            files = all_files.len(),
+            "orphan scan: reading file contents"
+        );
         // Aggregate file contents into (content_map, unread_count) via an
         // explicit loop instead of `.fold()` — aggregation belongs in a
         // capability, not an agent (AES405:AGENT_ROLE).
         let mut content_map = HashMap::new();
         let mut unread_count = 0usize;
-        for f in all_files.iter() {
+        for (i, f) in all_files.iter().enumerate() {
+            if is_cancelled() {
+                return OrphanScanOutcome {
+                    violations: Vec::new(),
+                    partial: true,
+                    unread_count,
+                    total_files,
+                };
+            }
+            if (i + 1) % PROGRESS_INTERVAL == 0 || i + 1 == all_files.len() {
+                tracing::info!(
+                    target: "lint_arwaky::orphan",
+                    event = "OrphanPhaseProgress",
+                    phase = "content_read",
+                    done = i + 1,
+                    total = all_files.len(),
+                    "orphan scan: content read progress"
+                );
+            }
             let path = match FilePath::new(f.clone()) {
                 Ok(p) => p,
                 Err(_) => {
@@ -316,6 +452,8 @@ impl ArchOrphanAnalyzer {
         }
         if unread_count > 0 {
             tracing::warn!(
+                target: "lint_arwaky::orphan",
+                event = "OrphanUnreadFiles",
                 unread_count = unread_count,
                 total_files = all_files.len(),
                 "{} of {} files had unreadable content; they are treated as not-alive",
@@ -323,11 +461,45 @@ impl ArchOrphanAnalyzer {
                 all_files.len()
             );
         }
+        tracing::info!(
+            target: "lint_arwaky::orphan",
+            event = "OrphanScanFinished",
+            phase = "content_read",
+            findings = 0usize,
+            unread_count = unread_count,
+            "orphan scan: content read complete"
+        );
 
+        // Phase 3: evaluation.
+        tracing::info!(
+            target: "lint_arwaky::orphan",
+            event = "OrphanScanStarted",
+            phase = "evaluation",
+            files = files.values.len(),
+            "orphan scan: evaluating orphan rules"
+        );
+
+        // rayon's parallel iterator cannot be interrupted mid-flight, so each
+        // item checks the cancel flag: after SIGINT the remaining queue is
+        // drained as no-ops and only the findings produced so far survive.
         let violations: Vec<LintResult> = files
             .values
             .par_iter()
-            .filter_map(|f| {
+            .enumerate()
+            .filter_map(|(i, f)| {
+                if (i + 1) % PROGRESS_INTERVAL == 0 || i + 1 == files.values.len() {
+                    tracing::info!(
+                        target: "lint_arwaky::orphan",
+                        event = "OrphanPhaseProgress",
+                        phase = "evaluation",
+                        done = i + 1,
+                        total = files.values.len(),
+                        "orphan scan: evaluation progress"
+                    );
+                }
+                if is_cancelled() {
+                    return None;
+                }
                 self._process_file(
                     f,
                     context,
@@ -339,12 +511,28 @@ impl ArchOrphanAnalyzer {
                 )
             })
             .collect();
+
+        let partial = is_cancelled();
+        let violations_count = violations.len();
         debug!(
             entry_points = entry_points.values.len(),
-            violations = violations.len(),
+            violations = violations_count,
             "orphan inner scan complete"
         );
-        violations
+        tracing::info!(
+            target: "lint_arwaky::orphan",
+            event = "OrphanScanFinished",
+            phase = "evaluation",
+            findings = violations_count,
+            partial = partial,
+            "orphan scan: evaluation complete"
+        );
+        OrphanScanOutcome {
+            violations,
+            partial,
+            unread_count,
+            total_files,
+        }
     }
 
     #[instrument(skip(self))]
@@ -627,10 +815,12 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
                 violations: self.check_orphans_with_entries(&files, &context),
             },
             OrphanRequest::Scan { root_dir, ignored } => {
-                let (context, violations) = self.scan_orphans(&root_dir, &ignored.values);
+                let (context, outcome) = self.scan_orphans_detailed(&root_dir, &ignored.values);
                 OrphanResponse::ScanOutcome {
                     context,
-                    violations,
+                    violations: outcome.violations,
+                    partial: outcome.partial,
+                    unread_count: outcome.unread_count,
                 }
             }
         }

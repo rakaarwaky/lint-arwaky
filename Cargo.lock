@@ -3819,6 +3819,7 @@ name = "orphan-rules-lint-arwaky"
 version = "3.16.1"
 dependencies = [
  "criterion",
+ "ctrlc",
  "filesystem-lint-arwaky",
  "once_cell",
  "rayon",
@@ -5203,6 +5204,7 @@ dependencies = [
 name = "shared-orphan-rules-lint-arwaky"
 version = "3.16.1"
 dependencies = [
+ "ctrlc",
  "serde",
  "shared-common-lint-arwaky",
  "shared-filesystem-lint-arwaky",

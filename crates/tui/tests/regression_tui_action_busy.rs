@@ -37,6 +37,8 @@ impl IOrphanAggregate for NoopOrphan {
         OrphanResponse::ScanOutcome {
             context: Default::default(),
             violations: Vec::new(),
+            partial: false,
+            unread_count: 0,
         }
     }
 }
