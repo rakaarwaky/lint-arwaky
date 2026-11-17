@@ -158,15 +158,7 @@ RELEASED as v3.16.0 (tag `v3.16.0`, 2026-11-08). `VERSION` and `Cargo.toml` are 
 | State        | Done                                  |
 | Backlog      | [BACKLOG.md](crates/role-rules/BACKLOG.md) |
 
-### PR-LA-020: shared
-
-| Aspect       | Detail                              |
-|--------------|-------------------------------------|
-| Priority     | P2                                    |
-| State        | Done                                  |
-| Backlog      | [BACKLOG.md](crates/shared/BACKLOG.md) |
-
-### PR-LA-021: structure-rules
+### PR-LA-020: structure-rules
 
 | Aspect       | Detail                              |
 |--------------|-------------------------------------|
@@ -174,7 +166,7 @@ RELEASED as v3.16.0 (tag `v3.16.0`, 2026-11-08). `VERSION` and `Cargo.toml` are 
 | State        | Done                                  |
 | Backlog      | [BACKLOG.md](crates/structure-rules/BACKLOG.md) |
 
-### PR-LA-022: tui
+### PR-LA-021: tui
 
 | Aspect       | Detail                              |
 |--------------|-------------------------------------|

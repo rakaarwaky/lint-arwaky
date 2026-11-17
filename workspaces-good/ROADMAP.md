@@ -114,7 +114,7 @@ All six root documents created and all feature layer mirrors in place.
 | Dependencies | —                                           |
 | Updated      | 2026-10-26                                  |
 
-### PR-CALC-013: Shared operation
+### PR-CALC-013: Single Orchestrator operation
 
 | Aspect       | Detail                                    |
 |--------------|---------------------------------------------|
@@ -123,7 +123,7 @@ All six root documents created and all feature layer mirrors in place.
 | Dependencies | —                                           |
 | Updated      | 2026-10-26                                  |
 
-### PR-CALC-014: Shared operation
+### PR-CALC-014: Subtraction operation
 
 | Aspect       | Detail                                    |
 |--------------|---------------------------------------------|
@@ -132,34 +132,7 @@ All six root documents created and all feature layer mirrors in place.
 | Dependencies | —                                           |
 | Updated      | 2026-10-26                                  |
 
-### PR-CALC-015: Shared operation
-
-| Aspect       | Detail                                    |
-|--------------|---------------------------------------------|
-| Priority     | P2                                          |
-| State        | Done                                        |
-| Dependencies | —                                           |
-| Updated      | 2026-10-26                                  |
-
-### PR-CALC-016: Single Orchestrator operation
-
-| Aspect       | Detail                                    |
-|--------------|---------------------------------------------|
-| Priority     | P2                                          |
-| State        | Done                                        |
-| Dependencies | —                                           |
-| Updated      | 2026-10-26                                  |
-
-### PR-CALC-017: Subtraction operation
-
-| Aspect       | Detail                                    |
-|--------------|---------------------------------------------|
-| Priority     | P2                                          |
-| State        | Done                                        |
-| Dependencies | —                                           |
-| Updated      | 2026-10-26                                  |
-
-### PR-CALC-018: Subtraction operation
+### PR-CALC-015: Subtraction operation
 
 | Aspect       | Detail                                    |
 |--------------|---------------------------------------------|
