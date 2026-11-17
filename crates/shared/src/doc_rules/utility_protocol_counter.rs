@@ -353,7 +353,10 @@ mod tests {
                      class ISystemProgressProtocol(ABC):\n\
                      pass\n";
         let count = count_python_protocol_classes(text);
-        assert_eq!(count, 3, "must count 3 protocol classes (excluding Aggregate)");
+        assert_eq!(
+            count, 3,
+            "must count 3 protocol classes (excluding Aggregate)"
+        );
     }
 
     #[test]
@@ -372,7 +375,10 @@ mod tests {
         let text = "class IExampleProtocol :\n\
                      pass\n";
         let count = count_python_protocol_classes(text);
-        assert_eq!(count, 1, "must count 1 protocol class with whitespace before colon");
+        assert_eq!(
+            count, 1,
+            "must count 1 protocol class with whitespace before colon"
+        );
     }
 
     #[test]
