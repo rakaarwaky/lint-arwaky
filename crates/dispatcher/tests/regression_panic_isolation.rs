@@ -149,6 +149,8 @@ impl shared_orphan_rules::IOrphanAggregate for CleanOrphan {
         shared_orphan_rules::OrphanResponse::ScanOutcome {
             context: Default::default(),
             violations: Vec::new(),
+            partial: false,
+            unread_count: 0,
         }
     }
 }

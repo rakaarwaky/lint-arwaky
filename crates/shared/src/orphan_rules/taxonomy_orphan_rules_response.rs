@@ -17,6 +17,13 @@ pub enum OrphanResponse {
     ScanOutcome {
         context: GraphAnalysisContext,
         violations: Vec<LintResult>,
+        /// True when the scan was cut short (e.g. by Ctrl+C) before every
+        /// phase completed; the violations are the partial findings produced
+        /// so far.
+        partial: bool,
+        /// Count of files whose content could not be read; they are treated
+        /// as not-alive during the scan.
+        unread_count: usize,
     },
 }
 
@@ -44,10 +51,32 @@ impl OrphanResponse {
             Self::ScanOutcome {
                 context,
                 violations,
+                ..
             } => (context, violations),
             Self::Violations { violations } => (GraphAnalysisContext::default(), violations),
             Self::GraphContext { context } => (context, Vec::new()),
             Self::EntryPoints { .. } => (GraphAnalysisContext::default(), Vec::new()),
+        }
+    }
+
+    /// Take the scan outcome with its metadata. `partial` is true when the
+    /// scan was cut short (e.g. by Ctrl+C); `unread_count` reports files whose
+    /// content could not be read and were treated as not-alive.
+    pub fn into_detailed_scan_outcome(
+        self,
+    ) -> (GraphAnalysisContext, Vec<LintResult>, bool, usize) {
+        match self {
+            Self::ScanOutcome {
+                context,
+                violations,
+                partial,
+                unread_count,
+            } => (context, violations, partial, unread_count),
+            Self::Violations { violations } => {
+                (GraphAnalysisContext::default(), violations, false, 0)
+            }
+            Self::GraphContext { context } => (context, Vec::new(), false, 0),
+            Self::EntryPoints { .. } => (GraphAnalysisContext::default(), Vec::new(), false, 0),
         }
     }
 }
