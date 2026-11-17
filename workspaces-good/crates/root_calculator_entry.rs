@@ -1,5 +1,6 @@
 use calculator::root_calculator_container::CalculatorContainer;
 use calculator_cli::surface_calculator_command;
+use calculator_cli::surface_calculator_screen;
 use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
@@ -23,6 +24,7 @@ fn main() {
 
     match cli.command {
         Some(Command::Run { path: _ }) | None => {
+            let _ = surface_calculator_screen::show;
             surface_calculator_command::run(container.orchestrator());
         }
     }

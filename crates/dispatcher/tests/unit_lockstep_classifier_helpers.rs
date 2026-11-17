@@ -145,8 +145,12 @@ const FIXTURES: &[Fixture] = &[
 ];
 
 /// Write one fixture folder; both lockstep tests pin against it.
-fn write_fixture(name: &str, cargo_toml: &str) -> std::path::PathBuf {
-    let dir = std::env::temp_dir().join(format!("lockstep-{name}-{:?}", std::process::id()));
+fn write_fixture(test_prefix: &str, name: &str, cargo_toml: &str) -> std::path::PathBuf {
+    let dir = std::env::temp_dir().join(format!(
+        "lockstep-{test_prefix}-{name}-{:?}-{:?}",
+        std::process::id(),
+        std::thread::current().id()
+    ));
     fs::create_dir_all(&dir).unwrap_or_else(|e| panic!("fixture {name}: {e}"));
     fs::write(dir.join("Cargo.toml"), cargo_toml).expect("write fixture Cargo.toml");
     dir
@@ -155,7 +159,7 @@ fn write_fixture(name: &str, cargo_toml: &str) -> std::path::PathBuf {
 #[test]
 fn capability_exposure_lockstep_pin() {
     for fixture in FIXTURES {
-        let folder = write_fixture(fixture.name, fixture.cargo_toml);
+        let folder = write_fixture("capability", fixture.name, fixture.cargo_toml);
         let doc = doc_exposes(&folder);
         let structure = structure_exposes(&folder);
         assert_eq!(
@@ -176,7 +180,7 @@ fn capability_exposure_lockstep_pin() {
 #[test]
 fn surface_dependency_lockstep_pin() {
     for fixture in FIXTURES {
-        let folder = write_fixture(fixture.name, fixture.cargo_toml);
+        let folder = write_fixture("surface", fixture.name, fixture.cargo_toml);
         let doc = doc_surface_deps(&folder);
         let structure = structure_surface_deps(&folder);
         assert_eq!(

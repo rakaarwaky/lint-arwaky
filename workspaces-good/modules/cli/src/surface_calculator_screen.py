@@ -1,10 +1,6 @@
-import sys
-from pathlib import Path
+"""Surface fixture exercising unified surface self-import rule."""
 
-# Surface fixture: unified surface self-import — `surface` is allowed to import
-# other `surface` files (row 10 of the 11-scope AES201 Import Matrix).
-sys.path.insert(0, str(Path(__file__).parent.parent))
-from cli.src.surface_calculator_command import run as command_run  # noqa: E402
+from cli.src.surface_calculator_command import run as command_run
 
 
 def show(calc) -> None:
