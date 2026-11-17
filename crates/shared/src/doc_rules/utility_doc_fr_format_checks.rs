@@ -286,9 +286,11 @@ fn count_python_protocol_classes(text: &str) -> usize {
     text.lines()
         .filter_map(|line| line.trim().strip_prefix("class "))
         .filter(|rest| {
+            // Extract the class name: stop at '(' (base classes), ':' (body),
+            // or whitespace — the delimiters that end a Python class name.
             let name: String = rest
                 .chars()
-                .take_while(|c| c.is_alphanumeric() || *c == '_')
+                .take_while(|c| *c != '(' && *c != ':' && !c.is_whitespace())
                 .collect();
             name.starts_with('I') && name.ends_with("Protocol") && !name.contains("Aggregate")
         })

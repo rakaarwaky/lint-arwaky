@@ -185,9 +185,11 @@ fn count_python_protocol_classes(text: &str) -> usize {
     text.lines()
         .filter_map(|line| line.trim().strip_prefix("class "))
         .filter(|rest| {
+            // Extract the class name: stop at '(' (base classes), ':' (body),
+            // or whitespace — the delimiters that end a Python class name.
             let name: String = rest
                 .chars()
-                .take_while(|c| c.is_alphanumeric() || *c == '_')
+                .take_while(|c| *c != '(' && *c != ':' && !c.is_whitespace())
                 .collect();
             name.starts_with('I') && name.ends_with("Protocol") && !name.contains("Aggregate")
         })
@@ -335,5 +337,53 @@ mod tests {
             names.contains("rotate_sync"),
             "sync def method must be found"
         );
+    }
+
+    #[test]
+    fn count_python_protocol_classes_with_abc_bases() {
+        // Python protocol classes that inherit from ABC should be counted.
+        // The class name extraction must stop at '(' so that "ISystemProtocol(ABC):"
+        // yields "ISystemProtocol", not "ISystemProtocolABC".
+        let text = "class ISystemConfigurationProtocol(ABC):\n\
+                     pass\n\n\
+                     class ISystemWorkspaceProtocol(ABC):\n\
+                     pass\n\n\
+                     class ISystemAggregate(ABC):\n\
+                     pass\n\n\
+                     class ISystemProgressProtocol(ABC):\n\
+                     pass\n";
+        let count = count_python_protocol_classes(text);
+        assert_eq!(count, 3, "must count 3 protocol classes (excluding Aggregate)");
+    }
+
+    #[test]
+    fn count_python_protocol_classes_with_no_bases() {
+        let text = "class IExampleProtocol:\n\
+                     pass\n\n\
+                     class IOtherProtocol:\n\
+                     pass\n";
+        let count = count_python_protocol_classes(text);
+        assert_eq!(count, 2, "must count 2 protocol classes");
+    }
+
+    #[test]
+    fn count_python_protocol_classes_with_whitespace_before_colon() {
+        // Class name followed by whitespace and colon (no base classes).
+        let text = "class IExampleProtocol :\n\
+                     pass\n";
+        let count = count_python_protocol_classes(text);
+        assert_eq!(count, 1, "must count 1 protocol class with whitespace before colon");
+    }
+
+    #[test]
+    fn count_python_protocol_classes_ignores_non_protocol() {
+        let text = "class SomeClass(ABC):\n\
+                     pass\n\n\
+                     class ISystemAggregate(ABC):\n\
+                     pass\n\n\
+                     class ISystemProtocol:\n\
+                     pass\n";
+        let count = count_python_protocol_classes(text);
+        assert_eq!(count, 1, "must count only ISystemProtocol");
     }
 }
