@@ -14,8 +14,8 @@ use shared_doc_rules::utility_doc_aspect_entry_checks::{
     AspectEntryDefect, detect_aspect_entry_tables,
 };
 use shared_doc_rules::utility_doc_common_checks::{
-    BacklogQualifierDefect, HeadingDefect, detect_doc_heading, missing_link_violation_type,
-    required_links,
+    BacklogQualifierDefect, detect_doc_heading, heading_defect_messages,
+    missing_link_violation_type, required_links,
 };
 use shared_doc_rules::utility_doc_entry_regexes::ds_entry_re;
 use shared_doc_rules::utility_doc_fr_format_checks::collect_any_id_set;
@@ -48,11 +48,13 @@ impl IDesignDocProtocol for DesignCapability {
             if context.document_name(document) != consts::DESIGN_DOC {
                 continue;
             }
-            Self::audit_one(document, context, &mut findings);
-            context.stamp(document, &mut findings);
-            for f in &mut findings {
+            let mut document_findings = Vec::new();
+            Self::audit_one(document, context, &mut document_findings);
+            context.stamp(document, &mut document_findings);
+            for f in &mut document_findings {
                 f.code = consts::RULE_CODE_DESIGN_DOC;
             }
+            findings.extend(document_findings);
         }
         findings
     }
@@ -92,11 +94,15 @@ impl DesignCapability {
                 )
             {
                 let (violation, message, reason, fix) = match &defect {
-                    BacklogQualifierDefect::TokenNotDeclared { line, token, valid } => (
+                    BacklogQualifierDefect::TokenNotDeclared {
+                        line: _,
+                        token,
+                        valid,
+                    } => (
                         consts::DS_BACKLOG_ID_MISSING,
                         format!(
-                            "line {} BACKLOG token `{}` is not declared in any spec union",
-                            line, token
+                            "BACKLOG token `{}` is not declared in any spec union",
+                            token
                         ),
                         format!(
                             "The BACKLOG entry `{}` has no matching ID in the paired spec union.",
@@ -108,9 +114,9 @@ impl DesignCapability {
                             valid.join(", ")
                         ),
                     ),
-                    BacklogQualifierDefect::IdNoEntry { line, id } => (
+                    BacklogQualifierDefect::IdNoEntry { line: _, id } => (
                         consts::BACKLOG_QUALIFIER_MISMATCH,
-                        format!("line {} declared ID `{}` has no BACKLOG entry", line, id),
+                        format!("declared ID `{}` has no BACKLOG entry", id),
                         format!(
                             "ID `{}` is declared by a spec but has no corresponding BACKLOG entry.",
                             id
@@ -118,16 +124,13 @@ impl DesignCapability {
                         format!("Add a BACKLOG entry for `{}`.", id),
                     ),
                     BacklogQualifierDefect::StrayId {
-                        line,
+                        line: _,
                         token,
                         id,
                         valid,
                     } => (
                         consts::BACKLOG_QUALIFIER_MISMATCH,
-                        format!(
-                            "line {} BACKLOG entry `{}` cites undeclared id `{}`",
-                            line, token, id
-                        ),
+                        format!("BACKLOG entry `{}` cites undeclared id `{}`", token, id),
                         format!(
                             "BACKLOG entry `{}` references id `{}` which no spec declares.",
                             token, id
@@ -158,57 +161,21 @@ impl DesignCapability {
         // Heading structure.
         if let Some((required, allowed)) = doc_h2_contract(consts::DESIGN_DOC) {
             for defect in detect_doc_heading(text, consts::DESIGN_DOC, required, allowed) {
-                let (violation, message, reason, fix) = match &defect {
-                    HeadingDefect::H1Count { line: _, count } => (
-                        DOC_VIOLATION_NAMES.h1_count_violation(),
-                        format!("{} H1 headings; template requires exactly one", count),
-                        format!(
-                            "{} has {} H1 headings; the template fixes exactly one H1 at the top.",
-                            consts::DESIGN_DOC,
-                            count
-                        ),
-                        format!(
-                            "Remove the extra H1 heading(s) so {} keeps exactly one H1.",
-                            consts::DESIGN_DOC
-                        ),
-                    ),
-                    HeadingDefect::H2Missing { line: _, missing } => (
-                        DOC_VIOLATION_NAMES.h2_missing(),
-                        format!("missing required H2 section(s): {}", missing.join(", ")),
-                        format!(
-                            "{} is missing required H2 section(s): {}",
-                            consts::DESIGN_DOC,
-                            missing.join(", ")
-                        ),
-                        format!("Add the missing H2 section(s): {}", missing.join(", ")),
-                    ),
-                    HeadingDefect::H2Unexpected {
-                        line: _,
-                        unexpected,
-                    } => (
-                        DOC_VIOLATION_NAMES.h2_unexpected(),
-                        format!("unexpected H2 section(s): {}", unexpected.join(", ")),
-                        format!(
-                            "{} carries H2 section(s) outside the template: {}",
-                            consts::DESIGN_DOC,
-                            unexpected.join(", ")
-                        ),
-                        format!(
-                            "Remove the off-template H2 section(s): {}",
-                            unexpected.join(", ")
-                        ),
-                    ),
-                };
-                findings.push(
-                    DocFinding::new_with_line(
-                        "",
-                        defect.line(),
-                        consts::RULE_CODE_DESIGN_DOC,
+                let (violation, message, reason, fix) =
+                    heading_defect_messages(consts::DESIGN_DOC, &defect);
+                let mut f = DocFinding::new_with_line(
+                    "",
+                    defect.line(),
+                    consts::RULE_CODE_DESIGN_DOC,
+                    violation,
+                    message,
+                )
+                .with_reason(reason, fix);
+                f.severity =
+                    shared_doc_rules::taxonomy_doc_rules_violation_vo::severity_for_violation(
                         violation,
-                        message,
-                    )
-                    .with_reason(reason, fix),
-                );
+                    );
+                findings.push(f);
             }
         }
 
@@ -233,15 +200,12 @@ impl DesignCapability {
     ) -> DocFinding {
         let (violation, message, reason, fix) = match &defect {
             AspectEntryDefect::MissingAspect {
-                line,
+                line: _,
                 h3_title,
                 aspect,
             } => (
                 DOC_VIOLATION_NAMES.missing_h4_aspect(),
-                format!(
-                    "line {} `### {}` missing aspect H4 `#### {}`",
-                    line, h3_title, aspect
-                ),
+                format!("`### {}` missing aspect H4 `#### {}`", h3_title, aspect),
                 format!(
                     "The HOW-TO template requires every entry H3 under `### {}` to carry a `#### {}` subsection.",
                     h3_title, aspect
@@ -249,14 +213,13 @@ impl DesignCapability {
                 format!("Add `#### {}` under `### {}`.", aspect, h3_title),
             ),
             AspectEntryDefect::OrderMismatch {
-                line,
+                line: _,
                 h3_title,
                 aspects,
             } => (
                 DOC_VIOLATION_NAMES.h4_order_violation(),
                 format!(
-                    "line {} `### {}` aspect H4s out of canonical order: expected {}",
-                    line,
+                    "`### {}` aspect H4s out of canonical order: expected {}",
                     h3_title,
                     aspects.join(", ")
                 ),
@@ -272,14 +235,14 @@ impl DesignCapability {
                 ),
             ),
             AspectEntryDefect::EmptyBody {
-                line,
+                line: _,
                 aspect,
                 h3_title,
             } => (
                 DOC_VIOLATION_NAMES.missing_h4_aspect(),
                 format!(
-                    "line {} `#### {}` under `### {}` carries an empty body",
-                    line, aspect, h3_title
+                    "`#### {}` under `### {}` carries an empty body",
+                    aspect, h3_title
                 ),
                 format!(
                     "Every PRD aspect `#### {}` under `### {}` must carry non-empty content.",
@@ -288,14 +251,14 @@ impl DesignCapability {
                 format!("Add content to `#### {}` under `### {}`.", aspect, h3_title),
             ),
             AspectEntryDefect::NotATable {
-                line,
+                line: _,
                 aspect,
                 h3_title,
             } => (
                 DOC_VIOLATION_NAMES.section_not_table(),
                 format!(
-                    "line {} `#### {}` under `### {}` must be a markdown table",
-                    line, aspect, h3_title
+                    "`#### {}` under `### {}` must be a markdown table",
+                    aspect, h3_title
                 ),
                 format!(
                     "The aspect `#### {}` under `### {}` must carry a `| No | Detail |` table.",
@@ -306,11 +269,11 @@ impl DesignCapability {
                     aspect, h3_title
                 ),
             ),
-            AspectEntryDefect::HeaderMissing { line, aspect } => (
+            AspectEntryDefect::HeaderMissing { line: _, aspect } => (
                 DOC_VIOLATION_NAMES.table_missing_columns(),
                 format!(
-                    "line {} `#### {}` aspect table header missing required columns",
-                    line, aspect
+                    "`#### {}` aspect table header missing required columns",
+                    aspect
                 ),
                 format!(
                     "The aspect table must carry columns `| No | Detail |` under `#### {}`; a header missing a required column cannot be parsed.",
@@ -322,14 +285,13 @@ impl DesignCapability {
                 ),
             ),
             AspectEntryDefect::HeaderExtra {
-                line,
+                line: _,
                 aspect,
                 extras,
             } => (
                 DOC_VIOLATION_NAMES.table_extra_columns(),
                 format!(
-                    "line {} `#### {}` aspect table carries extra column(s): {}",
-                    line,
+                    "`#### {}` aspect table carries extra column(s): {}",
                     aspect,
                     extras.join(", ")
                 ),
@@ -344,14 +306,14 @@ impl DesignCapability {
                 ),
             ),
             AspectEntryDefect::RowNumbering {
-                line,
+                line: _,
                 aspect,
                 h3_title,
             } => (
                 DOC_VIOLATION_NAMES.row_numbering_violation(),
                 format!(
-                    "line {} `#### {}` under `### {}` row numbers are not contiguous 1..N",
-                    line, aspect, h3_title
+                    "`#### {}` under `### {}` row numbers are not contiguous 1..N",
+                    aspect, h3_title
                 ),
                 format!(
                     "The aspect table rows under `#### {}` must be numbered contiguously starting at 1.",
@@ -363,7 +325,7 @@ impl DesignCapability {
                 ),
             ),
             AspectEntryDefect::RowCount {
-                line,
+                line: _,
                 aspect,
                 h3_title,
                 total,
@@ -371,8 +333,8 @@ impl DesignCapability {
             } => (
                 DOC_VIOLATION_NAMES.row_count_violation(),
                 format!(
-                    "line {} `#### {}` under `### {}` bounded aspect carries {} rows, expected exactly {}",
-                    line, aspect, h3_title, total, seed_min
+                    "`#### {}` under `### {}` bounded aspect carries {} rows, expected exactly {}",
+                    aspect, h3_title, total, seed_min
                 ),
                 format!(
                     "The bounded aspect `#### {}` under `### {}` must carry exactly {} numbered rows.",
@@ -384,7 +346,7 @@ impl DesignCapability {
                 ),
             ),
             AspectEntryDefect::RowMinimum {
-                line,
+                line: _,
                 aspect,
                 h3_title,
                 total,
@@ -392,8 +354,8 @@ impl DesignCapability {
             } => (
                 DOC_VIOLATION_NAMES.row_minimum_violation(),
                 format!(
-                    "line {} `#### {}` under `### {}` open-ended aspect carries {} rows, need at least {}",
-                    line, aspect, h3_title, total, min
+                    "`#### {}` under `### {}` open-ended aspect carries {} rows, need at least {}",
+                    aspect, h3_title, total, min
                 ),
                 format!(
                     "The open-ended aspect `#### {}` under `### {}` must carry at least {} numbered rows.",
@@ -405,14 +367,14 @@ impl DesignCapability {
                 ),
             ),
             AspectEntryDefect::EmptyDetailCell {
-                line,
+                line: _,
                 aspect,
                 row_no,
             } => (
                 DOC_VIOLATION_NAMES.empty_detail_cell(),
                 format!(
-                    "line {} `#### {}` row `{}` Detail cell is empty or a placeholder dash",
-                    line, aspect, row_no
+                    "`#### {}` row `{}` Detail cell is empty or a placeholder dash",
+                    aspect, row_no
                 ),
                 format!(
                     "Every numbered row in `#### {}` must carry real content in its Detail cell; a lone dash cell carries nothing.",

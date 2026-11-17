@@ -888,3 +888,43 @@ pub fn detect_doc_heading(
     }
     defects
 }
+
+/// Translate one `HeadingDefect` into the four message strings a capability
+/// reports: `(violation_type, message, why, fix)`. The capability names the
+/// document under audit so the copy reads naturally per doc type. Every
+/// capability that audits heading structure calls this instead of re-stating
+/// the same message, reason, and remedy for each doc type (UX-S2-004).
+pub fn heading_defect_messages(
+    doc: &str,
+    defect: &HeadingDefect,
+) -> (&'static str, String, String, String) {
+    match defect {
+        HeadingDefect::H1Count { count, .. } => (
+            crate::taxonomy_doc_rules_violation_vo::DOC_VIOLATION_NAMES.h1_count_violation(),
+            format!("{doc} opens with {count} level-1 headings"),
+            format!("{doc} must open with exactly one H1 naming the project"),
+            format!("Keep exactly one `# {doc}` line at the top of {doc}"),
+        ),
+        HeadingDefect::H2Missing { missing, .. } => (
+            crate::taxonomy_doc_rules_violation_vo::DOC_VIOLATION_NAMES.h2_missing(),
+            format!("{doc} has no H2 heading for {}", missing.join(", ")),
+            format!("{doc} needs a level-2 heading for every template-required section"),
+            format!(
+                "Add the missing `## {}` section(s) to {doc}",
+                missing.join(" `## `")
+            ),
+        ),
+        HeadingDefect::H2Unexpected { unexpected, .. } => (
+            crate::taxonomy_doc_rules_violation_vo::DOC_VIOLATION_NAMES.h2_unexpected(),
+            format!(
+                "{doc} carries H2 heading(s) outside the template: {}",
+                unexpected.join(", ")
+            ),
+            format!("{doc} must not carry H2 headings the template does not declare"),
+            format!(
+                "Remove or rename the unexpected heading(s): {}",
+                unexpected.join(", ")
+            ),
+        ),
+    }
+}

@@ -48,8 +48,12 @@ pub fn line_drift_findings(
                     format!("Give the {doc_name} H1 a title."),
                 ),
             };
-            DocFinding::new_with_line("", defect.line(), code, violation, message)
-                .with_reason(reason, fix)
+            let mut finding =
+                DocFinding::new_with_line("", defect.line(), code, violation, message)
+                    .with_reason(reason, fix);
+            finding.severity =
+                super::taxonomy_doc_rules_violation_vo::severity_for_violation(violation);
+            finding
         })
         .collect()
 }
@@ -75,11 +79,11 @@ pub fn detect_doc_line_drift(text: &str, template: &[&str]) -> Vec<LineDriftDefe
         }
     }
     for (name, want_lines) in &template_sections {
+        // A missing template section is reported by the heading check
+        // (`h2_missing`); emitting `MissingTemplateSection` here too
+        // double-reports the same gap (UX-S2-002). Skip the line comparison
+        // when the section is absent.
         let Some((_, have_lines)) = doc_sections.iter().find(|(key, _)| key == name) else {
-            defects.push(LineDriftDefect::MissingTemplateSection {
-                line: 0,
-                section: name.clone(),
-            });
             continue;
         };
         let want_placeholders = placeholder_lines(want_lines);

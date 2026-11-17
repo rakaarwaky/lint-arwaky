@@ -11,7 +11,7 @@ use shared_doc_rules::taxonomy_doc_rules_constant as consts;
 use shared_doc_rules::taxonomy_doc_rules_request::{DocFinding, DocSource};
 use shared_doc_rules::taxonomy_doc_rules_violation_vo::DOC_VIOLATION_NAMES;
 use shared_doc_rules::utility_doc_common_checks::{
-    HeadingDefect, detect_doc_heading, missing_link_violation_type, required_links,
+    detect_doc_heading, heading_defect_messages, missing_link_violation_type, required_links,
 };
 use shared_doc_rules::utility_doc_fr_format_checks::{PrIdParityDefect, detect_pr_id_parity};
 use shared_doc_rules::utility_doc_line_drift::detect_doc_line_drift;
@@ -42,11 +42,13 @@ impl IRoadmapDocProtocol for RoadmapCapability {
             if context.document_name(document) != consts::ROADMAP_DOC {
                 continue;
             }
-            Self::audit_one(document, context, &mut findings);
-            context.stamp(document, &mut findings);
-            for f in &mut findings {
+            let mut document_findings = Vec::new();
+            Self::audit_one(document, context, &mut document_findings);
+            context.stamp(document, &mut document_findings);
+            for f in &mut document_findings {
                 f.code = consts::RULE_CODE_ROADMAP_DOC;
             }
+            findings.extend(document_findings);
         }
         findings
     }
@@ -76,21 +78,18 @@ impl RoadmapCapability {
         {
             for defect in detect_pr_id_parity(prd, document) {
                 let (violation, message, reason, fix) = match &defect {
-                    PrIdParityDefect::PrMissingFromRoadmap { line, id } => (
+                    PrIdParityDefect::PrMissingFromRoadmap { line: _, id } => (
                         DOC_VIOLATION_NAMES.pr_roadmap_id_missing(),
                         format!(
-                            "line {} PR `{}` declared in PRD has no ROADMAP `Roadmap Status` entry",
-                            line, id
+                            "PR `{}` declared in PRD has no ROADMAP `Roadmap Status` entry",
+                            id
                         ),
                         format!("Add `{}` to ROADMAP's `Roadmap Status` table.", id),
                         format!("Add `{}` under `Roadmap Status` in ROADMAP.md.", id),
                     ),
-                    PrIdParityDefect::RoadmapNotInPrd { line, id, valid } => (
+                    PrIdParityDefect::RoadmapNotInPrd { line: _, id, valid } => (
                         DOC_VIOLATION_NAMES.roadmap_pr_id_not_pr(),
-                        format!(
-                            "line {} ROADMAP `PR-` item `{}` is not declared in the PRD",
-                            line, id
-                        ),
+                        format!("ROADMAP `PR-` item `{}` is not declared in the PRD", id),
                         format!(
                             "The PRD declares `Project Requirements`; `{}` must appear there first.",
                             id
@@ -121,57 +120,21 @@ impl RoadmapCapability {
         // Heading structure.
         if let Some((required, allowed)) = doc_h2_contract(consts::ROADMAP_DOC) {
             for defect in detect_doc_heading(text, consts::ROADMAP_DOC, required, allowed) {
-                let (violation, message, reason, fix) = match &defect {
-                    HeadingDefect::H1Count { line: _, count } => (
-                        DOC_VIOLATION_NAMES.h1_count_violation(),
-                        format!("{} H1 headings; template requires exactly one", count),
-                        format!(
-                            "{} has {} H1 headings; the template fixes exactly one H1 at the top.",
-                            consts::ROADMAP_DOC,
-                            count
-                        ),
-                        format!(
-                            "Remove the extra H1 heading(s) so {} keeps exactly one H1.",
-                            consts::ROADMAP_DOC
-                        ),
-                    ),
-                    HeadingDefect::H2Missing { line: _, missing } => (
-                        DOC_VIOLATION_NAMES.h2_missing(),
-                        format!("missing required H2 section(s): {}", missing.join(", ")),
-                        format!(
-                            "{} is missing required H2 section(s): {}",
-                            consts::ROADMAP_DOC,
-                            missing.join(", ")
-                        ),
-                        format!("Add the missing H2 section(s): {}", missing.join(", ")),
-                    ),
-                    HeadingDefect::H2Unexpected {
-                        line: _,
-                        unexpected,
-                    } => (
-                        DOC_VIOLATION_NAMES.h2_unexpected(),
-                        format!("unexpected H2 section(s): {}", unexpected.join(", ")),
-                        format!(
-                            "{} carries H2 section(s) outside the template: {}",
-                            consts::ROADMAP_DOC,
-                            unexpected.join(", ")
-                        ),
-                        format!(
-                            "Remove the off-template H2 section(s): {}",
-                            unexpected.join(", ")
-                        ),
-                    ),
-                };
-                findings.push(
-                    DocFinding::new_with_line(
-                        "",
-                        defect.line(),
-                        consts::RULE_CODE_ROADMAP_DOC,
+                let (violation, message, reason, fix) =
+                    heading_defect_messages(consts::ROADMAP_DOC, &defect);
+                let mut f = DocFinding::new_with_line(
+                    "",
+                    defect.line(),
+                    consts::RULE_CODE_ROADMAP_DOC,
+                    violation,
+                    message,
+                )
+                .with_reason(reason, fix);
+                f.severity =
+                    shared_doc_rules::taxonomy_doc_rules_violation_vo::severity_for_violation(
                         violation,
-                        message,
-                    )
-                    .with_reason(reason, fix),
-                );
+                    );
+                findings.push(f);
             }
         }
 
