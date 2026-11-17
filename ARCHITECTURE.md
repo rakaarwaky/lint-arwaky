@@ -133,10 +133,10 @@ Group 2 enforces layer dependency boundaries to maintain architectural integrity
 | ----- | ----- |
 | Severity | CRITICAL |
 | Fires when | An import violates the allowed/mandatory/forbidden triple for the file's filename-prefix layer scope |
-| Scope | Every scanned source file whose stem maps to one of the 13 layer scopes |
+| Scope | Every scanned source file whose stem maps to one of the 11 layer scopes |
 | Fix | Remove or redirect the import to a layer the scope's Allowed cell permits |
 
-#### Import Matrix (13 Scopes)
+#### Import Matrix (11 Scopes)
 
 | # | Scope | Allowed | Mandatory | Forbidden |
 | - | ----- | ------- | --------- | --------- |
