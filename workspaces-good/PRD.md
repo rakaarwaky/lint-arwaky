@@ -264,61 +264,7 @@ Multiplies two numbers and returns the result.
 2. The calculator applies the multiplication capability.
 3. The user receives the product.
 
-### PR-CALC-013: Shared operation
-
-#### User Stories
-
-| As a | I want | So that | Priority |
-|------|--------|---------|----------|
-| user | use shared contracts | keep all features on one data model | P2 |
-
-#### Proposed Solution
-
-Hosts shared contracts, value objects, and parsers used by every feature.
-
-#### Main User Flow
-
-1. A rule imports a shared contract VO.
-2. The VO carries parsed file data, dependency edges, and language flags.
-3. All rules read the same shape of data, preventing drift.
-
-### PR-CALC-014: Shared operation
-
-#### User Stories
-
-| As a | I want | So that | Priority |
-|------|--------|---------|----------|
-| user | use shared contracts | keep all features on one data model | P2 |
-
-#### Proposed Solution
-
-Hosts shared contracts, value objects, and parsers used by every feature.
-
-#### Main User Flow
-
-1. A rule imports a shared contract VO.
-2. The VO carries parsed file data, dependency edges, and language flags.
-3. All rules read the same shape of data, preventing drift.
-
-### PR-CALC-015: Shared operation
-
-#### User Stories
-
-| As a | I want | So that | Priority |
-|------|--------|---------|----------|
-| user | use shared contracts | keep all features on one data model | P2 |
-
-#### Proposed Solution
-
-Hosts shared contracts, value objects, and parsers used by every feature.
-
-#### Main User Flow
-
-1. A rule imports a shared contract VO.
-2. The VO carries parsed file data, dependency edges, and language flags.
-3. All rules read the same shape of data, preventing drift.
-
-### PR-CALC-016: Single Orchestrator operation
+### PR-CALC-013: Single Orchestrator operation
 
 #### User Stories
 
@@ -336,7 +282,7 @@ The single orchestrator coordinates execution across calculator features and rep
 2. It delegates to the appropriate feature capability.
 3. Results are aggregated and returned.
 
-### PR-CALC-017: Subtraction operation
+### PR-CALC-014: Subtraction operation
 
 #### User Stories
 
@@ -354,7 +300,7 @@ Subtracts one number from another and returns the result.
 2. The calculator applies the subtraction capability.
 3. The user receives the difference.
 
-### PR-CALC-018: Subtraction operation
+### PR-CALC-015: Subtraction operation
 
 #### User Stories
 
