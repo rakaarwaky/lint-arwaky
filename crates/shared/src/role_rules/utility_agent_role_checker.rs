@@ -206,6 +206,18 @@ pub fn count_protocol_fields(content: &str, language: Language) -> (usize, usize
                         }
                     }
                 }
+                // Protocol-typed dataclass fields — `@dataclass` classes
+                // (e.g. `RendererDependencies`) declare protocol seams as
+                // class-level fields without an `__init__`. Count those
+                // fields so a feature whose deps are wired through a
+                // dataclass is not misread as single-subsystem.
+                if t.contains("I") && t.contains("Protocol") && t.contains(":") {
+                    let ty = annotation_of(t);
+                    if is_protocol_name(ty) {
+                        injected += 1;
+                        push_distinct(&mut distinct, ty.to_string());
+                    }
+                }
             }
             Language::TypeScript | Language::JavaScript => {
                 // A field declaration (`private readonly dep: IFooProtocol`)

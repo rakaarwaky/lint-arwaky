@@ -38,7 +38,7 @@ pub fn scan_io_forbidden(
             continue;
         }
         for (token, what) in tokens {
-            if t.contains(token) {
+            if token_occurs(t, token) {
                 violations.push(LintResult::new_arch(
                     path,
                     i + 1,
@@ -56,4 +56,32 @@ pub fn scan_io_forbidden(
             }
         }
     }
+}
+
+/// True when `token` occurs as a standalone identifier/token in `t`, not as
+/// a substring of a larger word. E.g. `Path(` matches `Path(` but not
+/// `FilePath(` (because the preceding `e` is an identifier character).
+///
+/// Token boundary rules:
+/// - The preceding character (if any) must NOT be alphanumeric or `_`.
+/// - The following character (if any) must NOT be alphanumeric or `_`.
+pub fn token_occurs(line: &str, token: &str) -> bool {
+    let mut start = 0usize;
+    while let Some(pos) = line[start..].find(token) {
+        let abs = start + pos;
+        let pre_ok = abs == 0 || {
+            let prev = line.as_bytes()[abs - 1];
+            !prev.is_ascii_alphanumeric() && prev != b'_'
+        };
+        let after = abs + token.len();
+        let post_ok = after >= line.len() || {
+            let next = line.as_bytes()[after];
+            !next.is_ascii_alphanumeric() && next != b'_'
+        };
+        if pre_ok && post_ok {
+            return true;
+        }
+        start = after;
+    }
+    false
 }
