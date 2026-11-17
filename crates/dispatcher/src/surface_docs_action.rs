@@ -97,7 +97,7 @@ pub fn collect_docs(
     // reach MemberDocChecker / TemplateBodyChecker through DocAuditContext.
     let doc_cfg =
         load_doc_rules_config_from_yaml(root, fs_seam).unwrap_or_else(DocRulesConfig::staged);
-    let DocResponse::Findings { findings } =
+    let DocResponse::Findings { findings, .. } =
         doc_orchestrator.execute(DocRequest::audit_all(root, Some(doc_cfg), strict_override));
     Ok(findings
         .into_iter()

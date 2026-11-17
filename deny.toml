@@ -23,6 +23,9 @@ ignore = [
     # for doc checks); consider switching to yaml-rust2 if syntect adds it.
     # Upstream advisory: https://rustsec.org/advisories/RUSTSEC-2024-0320
     "RUSTSEC-2024-0320",
+    # chrono is unmaintained. Transitive dep via rmcp/schemars; no safe upgrade.
+    # Upstream advisory: https://rustsec.org/advisories/RUSTSEC-2026-0543
+    "RUSTSEC-2026-0543",
 ]
 yanked = "warn"
 
