@@ -74,7 +74,9 @@ pub fn token_occurs(line: &str, token: &str) -> bool {
             !prev.is_ascii_alphanumeric() && prev != b'_'
         };
         let after = abs + token.len();
-        let post_ok = after >= line.len() || {
+        // A `::`-terminated token is a path prefix (`std::fs::`, `reqwest::`),
+        // so the next identifier segment is expected and must not block a match.
+        let post_ok = after >= line.len() || token.ends_with("::") || {
             let next = line.as_bytes()[after];
             !next.is_ascii_alphanumeric() && next != b'_'
         };

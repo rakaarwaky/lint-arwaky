@@ -171,6 +171,7 @@ pub fn check_any_annotation(file: &FileEntry, violations: &mut Vec<LintResult>) 
 pub fn count_protocol_fields(content: &str, language: Language) -> (usize, usize) {
     let mut injected = 0usize;
     let mut distinct: Vec<String> = Vec::new();
+    let mut in_init_signature = false;
     let lines: Vec<&str> = content.lines().collect();
 
     for (i, raw) in lines.iter().enumerate() {
@@ -197,6 +198,7 @@ pub fn count_protocol_fields(content: &str, language: Language) -> (usize, usize
                 // joined before the params are split, and each param
                 // contributes its annotation, not the whole `name: Type` text.
                 if t.starts_with("def __init__") {
+                    in_init_signature = true;
                     let sig = read_wrapped_params(&lines, i);
                     for param in params_of(&sig) {
                         let ty = annotation_of(&param);
@@ -205,6 +207,16 @@ pub fn count_protocol_fields(content: &str, language: Language) -> (usize, usize
                             push_distinct(&mut distinct, ty.to_string());
                         }
                     }
+                }
+                // While inside a wrapped `__init__` signature, the
+                // continuation lines are parameters already counted above —
+                // they are not class-level dataclass fields. Stop counting
+                // them once the closing `)` arrives.
+                if in_init_signature {
+                    if t.contains(')') {
+                        in_init_signature = false;
+                    }
+                    continue;
                 }
                 // Protocol-typed dataclass fields — `@dataclass` classes
                 // (e.g. `RendererDependencies`) declare protocol seams as
