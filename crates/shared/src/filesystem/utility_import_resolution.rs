@@ -419,12 +419,13 @@ pub fn resolve_import_target(
                 rel.to_string()
             };
             let candidate = base.join(&rel).to_string_lossy().to_string();
-            if all_files_set.contains(candidate.as_str()) {
-                Some(candidate)
-            } else if !candidate.contains('.') {
+            let normalized = normalize_relative_candidate(&candidate);
+            if all_files_set.contains(normalized.as_str()) {
+                Some(normalized)
+            } else if !normalized.contains('.') {
                 let exts = [".ts", ".js", ".tsx", ".jsx", ".rs", ".py"];
                 exts.iter().find_map(|ext| {
-                    let c = format!("{}{}", candidate, ext);
+                    let c = format!("{}{}", normalized, ext);
                     if all_files_set.contains(c.as_str()) {
                         Some(c)
                     } else {
@@ -445,4 +446,23 @@ pub fn resolve_import_target(
             )
         }
     }
+}
+
+/// Normalize a relative path containing `../` or `./` segments into a
+/// canonical form (e.g. `packages/homepage/src/../../shared/src/common/foo`
+/// becomes `packages/shared/src/common/foo`). This lets the import graph
+/// match normalized workspace file paths instead of raw join results.
+fn normalize_relative_candidate(path: &str) -> String {
+    let parts: Vec<&str> = path.split('/').collect();
+    let mut normalized: Vec<&str> = Vec::new();
+    for part in parts {
+        match part {
+            "." | "" => {}
+            ".." => {
+                normalized.pop();
+            }
+            _ => normalized.push(part),
+        }
+    }
+    normalized.join("/")
 }
