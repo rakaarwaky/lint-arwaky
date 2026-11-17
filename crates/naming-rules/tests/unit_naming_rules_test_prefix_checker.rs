@@ -118,6 +118,14 @@ fn a_support_prefixed_file_sits_flat_under_tests() {
     assert!(check("crates/calc/tests/mock_filesystem.rs").is_none());
 }
 
+#[test]
+fn conftest_py_is_skipped_even_without_a_legal_prefix() {
+    // pytest auto-discovers `conftest.py` as the directory's shared fixture
+    // file; it carries no test of its own, so prefix discipline does not apply
+    // and no config exception should be needed.
+    assert!(check("crates/calc/tests/conftest.py").is_none());
+}
+
 // ─── Illegal names, violation ──────────────────────────────────────────────
 
 #[test]

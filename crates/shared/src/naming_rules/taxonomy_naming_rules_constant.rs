@@ -108,6 +108,13 @@ pub const ALL_TESTS_DIR_PREFIXES: &[&str] = &[
     "fixture_",
 ];
 
+/// pytest's `conftest.py` — auto-discovered by pytest as the shared fixture
+/// file for a test directory, carrying no test of its own. Silently skipped by
+/// AES103 for the same reason barrels (`mod.rs`, `lib.rs`, `__init__.py`,
+/// `index.ts`, `index.js`) are: it names no test, so prefix discipline does
+/// not apply. Users should never need a config exception for it.
+pub const PYTEST_CONFTEST_FILENAME: &str = "conftest.py";
+
 // ─── The rule behind each naming finding ────────────────────────────────
 //
 // The `why` field of a finding answers "why does this product care?", and

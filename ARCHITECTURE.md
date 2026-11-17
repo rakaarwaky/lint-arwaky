@@ -121,6 +121,8 @@ Group 1 enforces file naming conventions to ensure clarity and consistency acros
 | support (`regression_`, `behavioral_`, `mock_`, `fixture_`) | `tests/` | auxiliary fixtures / regression markers |
 | any | outside both dirs | no test-type prefix required |
 
+**Skipped by default (no exception config needed):** `conftest.py` (pytest's auto-discovered shared fixture file), plus the barrels `mod.rs`, `lib.rs`, `__init__.py`, `index.ts`, `index.js` — none carries a test of its own.
+
 ---
 
 ## Group 2: Layer & Import Boundary (AES201–AES205)

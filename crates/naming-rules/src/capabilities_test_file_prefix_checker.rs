@@ -9,7 +9,7 @@ use shared_config_system::taxonomy_config_system_vo::ArchitectureConfig;
 use shared_naming_rules::TestSuiteSlot;
 use shared_naming_rules::contract_test_file_prefix_protocol::ITestFilePrefixProtocol;
 use shared_naming_rules::taxonomy_naming_rules_constant::{
-    AES103_PREFIX_RULE, BENCHES_DIR, RULE_CODE_TEST_FILE_PREFIX,
+    AES103_PREFIX_RULE, BENCHES_DIR, PYTEST_CONFTEST_FILENAME, RULE_CODE_TEST_FILE_PREFIX,
 };
 use shared_naming_rules::utility_naming_checker::{
     basename_of, get_stem, rule_exception_set, string_filename_violation,
@@ -110,7 +110,9 @@ impl TestFilePrefixChecker {
         // A barrel names no test of its own — `mod.rs` re-exports the support
         // code beside it. Prefix discipline is about the files a test runner
         // discovers, and a barrel is not one. Skipped for the same reason
-        // AES101 skips barrels.
+        // AES101 skips barrels. `conftest.py` is skipped for the same reason:
+        // pytest auto-discovers it as the directory's shared fixture file, so
+        // it carries no test of its own either.
         if is_barrel(filename) {
             return None;
         }
@@ -238,10 +240,11 @@ fn example_for(directory: &str) -> &'static str {
     }
 }
 
-/// Whether *filename* is a module barrel, which carries no test of its own.
+/// Whether *filename* is a module barrel or pytest's shared fixture file, each
+/// of which carries no test of its own.
 fn is_barrel(filename: &str) -> bool {
     matches!(
         filename,
-        "mod.rs" | "lib.rs" | "__init__.py" | "index.ts" | "index.js"
+        "mod.rs" | "lib.rs" | "__init__.py" | "index.ts" | "index.js" | PYTEST_CONFTEST_FILENAME
     )
 }

@@ -125,6 +125,17 @@ fn a_support_prefixed_helper_is_accepted_flat() {
 }
 
 #[test]
+fn conftest_py_is_skipped_by_default() {
+    // pytest auto-discovers `conftest.py` as a shared fixture file in the test
+    // tree. It carries no test of its own, so AES103 must silently ignore it
+    // — no config exception required.
+    assert!(
+        audit("crates/calc/tests/conftest.py").is_none(),
+        "conftest.py is pytest's shared fixture file and must not produce an AES103 finding"
+    );
+}
+
+#[test]
 fn a_regression_guard_is_a_legal_name_even_though_it_is_not_a_category() {
     // TEST.md §2.0 requires one regression file per defect fix, so the prefix
     // must be legal. Whether the folder still owes the seven types is AES704's
