@@ -149,10 +149,8 @@ Group 2 enforces layer dependency boundaries to maintain architectural integrity
 | 7 | `contract(aggregate)` | `taxonomy,contract` | `taxonomy` | `agent,surface,capabilities,root` |
 | 8 | `capabilities` | `taxonomy,contract,utility` | `taxonomy,contract(protocol)` | `surface,agent,capabilities,root` |
 | 9 | `agent(orchestrator)` | `taxonomy,contract(aggregate),contract(protocol),utility` | `taxonomy,contract(aggregate)` | `surface,capabilities,root` |
-| 10 | `root` | `taxonomy,contract,capabilities,agent,surface` | — | — |
-| 11 | `surface(command|controller|page)` | `taxonomy,contract(aggregate),utility` | — | `agent,capabilities,contract(protocol),root` |
-| 12 | `surface(hook|store|action|screen|router)` | `taxonomy,contract(aggregate),utility` | — | `agent,capabilities,contract(protocol),surface(command|controller|page|entry),root` |
-| 13 | `surface(component|view|layout)` | `taxonomy,contract(aggregate),utility` | — | `agent,contract,capabilities,surface(command|controller|page|entry|hook|store|action|screen|router),root` |
+| 10 | `surface` | `taxonomy,contract(aggregate),utility,surface` | — | `contract(protocol),capabilities,agent,root` |
+| 11 | `root` | `taxonomy,contract,capabilities,agent,surface` | — | — |
 
 ### AES202 — Mandatory Import
 
