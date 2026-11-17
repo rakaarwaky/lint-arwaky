@@ -82,6 +82,20 @@ impl IDocRunnerAggregate for DocOrchestrator {
         let context =
             DocAuditContext::new(&root, documents, master, members, config, strict_override);
 
+        // The audit manifest: every document the audit read, and every
+        // required root document that was absent (missing or unreadable) so a
+        // consumer can report coverage alongside violations.
+        let audited = context
+            .documents()
+            .iter()
+            .map(|document| context.relative_path(document))
+            .collect::<Vec<_>>();
+        let absent = shared_doc_rules::taxonomy_doc_rules_constant::REQUIRED_ROOT_DOCS
+            .iter()
+            .filter(|name| !root.join(name).is_file())
+            .map(|name| name.to_string())
+            .collect::<Vec<_>>();
+
         let mut findings = Vec::new();
         findings.extend(self.agents.audit_agents(&context));
         findings.extend(self.architecture.audit_architecture(&context));
@@ -96,6 +110,8 @@ impl IDocRunnerAggregate for DocOrchestrator {
 
         DocResponse::Findings {
             findings: utility_doc_collector::sorted(findings),
+            audited,
+            absent,
         }
     }
 }

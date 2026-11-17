@@ -8,4 +8,6 @@ ignore = [
     # unsafe-libyaml is unmaintained (archived) but only a transitive dep via
     # serde_yaml; no direct usage. Mirrors the reviewed exception in deny.toml.
     "RUSTSEC-2024-0449",
+    # chrono is unmaintained; transitive dep via rmcp/schemars; no safe upgrade.
+    "RUSTSEC-2026-0543",
 ]

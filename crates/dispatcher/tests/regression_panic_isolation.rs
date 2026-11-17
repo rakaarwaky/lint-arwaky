@@ -182,6 +182,8 @@ impl shared_doc_rules::IDocRunnerAggregate for CleanDoc {
     fn execute(&self, _request: shared_doc_rules::DocRequest) -> shared_doc_rules::DocResponse {
         shared_doc_rules::DocResponse::Findings {
             findings: Vec::new(),
+            audited: Vec::new(),
+            absent: Vec::new(),
         }
     }
 }
