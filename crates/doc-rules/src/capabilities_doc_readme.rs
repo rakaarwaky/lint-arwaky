@@ -13,7 +13,7 @@ use shared_doc_rules::taxonomy_doc_rules_violation_vo::DOC_VIOLATION_NAMES;
 use shared_doc_rules::utility_capabilities_doc_h2_checks::{
     SectionShapeDefect, SectionShapeDefectKind, detect_h2_table,
 };
-use shared_doc_rules::utility_doc_common_checks::detect_doc_heading;
+use shared_doc_rules::utility_doc_common_checks::{detect_doc_heading, heading_defect_messages};
 use shared_doc_rules::utility_doc_line_drift::detect_doc_line_drift;
 use shared_doc_rules::utility_markdown_scanner::{doc_h2_contract, sections};
 
@@ -42,11 +42,13 @@ impl IReadmeDocProtocol for ReadmeCapability {
             if context.document_name(document) != consts::README_DOC {
                 continue;
             }
-            Self::audit_one(document, context, &mut findings);
-            context.stamp(document, &mut findings);
-            for f in &mut findings {
+            let mut document_findings = Vec::new();
+            Self::audit_one(document, context, &mut document_findings);
+            context.stamp(document, &mut document_findings);
+            for f in &mut document_findings {
                 f.code = consts::RULE_CODE_README_DOC;
             }
+            findings.extend(document_findings);
         }
         findings
     }
@@ -72,77 +74,21 @@ impl ReadmeCapability {
         // Heading structure.
         if let Some((required, allowed)) = doc_h2_contract(consts::README_DOC) {
             for defect in detect_doc_heading(text, consts::README_DOC, required, allowed) {
-                let (violation, message, reason, fix) = match &defect {
-                    shared_doc_rules::utility_doc_common_checks::HeadingDefect::H1Count {
-                        line: _,
-                        count,
-                    } => (
-                        DOC_VIOLATION_NAMES.h1_count_violation(),
-                        format!(
-                            "{} opens with {} level-1 headings",
-                            consts::README_DOC,
-                            count
-                        ),
-                        format!(
-                            "{} must open with exactly one H1 naming the project",
-                            consts::README_DOC
-                        ),
-                        format!(
-                            "Keep exactly one `# {}` line at the top of {}",
-                            consts::README_DOC,
-                            consts::README_DOC
-                        ),
-                    ),
-                    shared_doc_rules::utility_doc_common_checks::HeadingDefect::H2Missing {
-                        line: _,
-                        missing,
-                    } => (
-                        DOC_VIOLATION_NAMES.h2_missing(),
-                        format!(
-                            "{} has no H2 heading for {}",
-                            consts::README_DOC,
-                            missing.join(", ")
-                        ),
-                        format!(
-                            "{} needs a level-2 heading for every template-required section",
-                            consts::README_DOC
-                        ),
-                        format!(
-                            "Add the missing `## {}` section(s) to {}",
-                            missing.join(" `## `"),
-                            consts::README_DOC
-                        ),
-                    ),
-                    shared_doc_rules::utility_doc_common_checks::HeadingDefect::H2Unexpected {
-                        line: _,
-                        unexpected,
-                    } => (
-                        DOC_VIOLATION_NAMES.h2_unexpected(),
-                        format!(
-                            "{} carries H2 heading(s) outside the template: {}",
-                            consts::README_DOC,
-                            unexpected.join(", ")
-                        ),
-                        format!(
-                            "{} must not carry H2 headings the template does not declare",
-                            consts::README_DOC
-                        ),
-                        format!(
-                            "Remove or rename the unexpected heading(s): {}",
-                            unexpected.join(", ")
-                        ),
-                    ),
-                };
-                findings.push(
-                    DocFinding::new_with_line(
-                        "",
-                        defect.line(),
-                        consts::RULE_CODE_README_DOC,
+                let (violation, message, reason, fix) =
+                    heading_defect_messages(consts::README_DOC, &defect);
+                let mut f = DocFinding::new_with_line(
+                    "",
+                    defect.line(),
+                    consts::RULE_CODE_README_DOC,
+                    violation,
+                    message,
+                )
+                .with_reason(reason, fix);
+                f.severity =
+                    shared_doc_rules::taxonomy_doc_rules_violation_vo::severity_for_violation(
                         violation,
-                        message,
-                    )
-                    .with_reason(reason, fix),
-                );
+                    );
+                findings.push(f);
             }
         }
 
@@ -159,8 +105,7 @@ impl ReadmeCapability {
             SectionShapeDefectKind::ExtraColumns => (
                 DOC_VIOLATION_NAMES.table_extra_columns(),
                 format!(
-                    "line {} `{} {}` table carries column(s) outside the template: {}",
-                    defect.line,
+                    "`{} {}` table carries column(s) outside the template: {}",
                     defect.marker,
                     defect.title,
                     defect.extra_columns.join(", ")
@@ -180,8 +125,8 @@ impl ReadmeCapability {
             SectionShapeDefectKind::HeaderRepeated => (
                 DOC_VIOLATION_NAMES.table_header_repeated(),
                 format!(
-                    "line {} `{} {}` repeats its header row as a data row",
-                    defect.line, defect.marker, defect.title
+                    "`{} {}` repeats its header row as a data row",
+                    defect.marker, defect.title
                 ),
                 format!(
                     "The HOW-TO template mandates one header row under `{}`; repeating it in a data-row position ships the column names where filled values belong.",
@@ -197,8 +142,7 @@ impl ReadmeCapability {
             SectionShapeDefectKind::MissingColumns => (
                 DOC_VIOLATION_NAMES.table_missing_columns(),
                 format!(
-                    "line {} `{} {}` must be a markdown table with columns {}",
-                    defect.line,
+                    "`{} {}` must be a markdown table with columns {}",
                     defect.marker,
                     defect.title,
                     defect.columns.join(" | ")
@@ -217,8 +161,7 @@ impl ReadmeCapability {
             SectionShapeDefectKind::NotTable => (
                 DOC_VIOLATION_NAMES.section_not_table(),
                 format!(
-                    "line {} `{} {}` must be a markdown table with columns {}",
-                    defect.line,
+                    "`{} {}` must be a markdown table with columns {}",
                     defect.marker,
                     defect.title,
                     defect.columns.join(" | ")

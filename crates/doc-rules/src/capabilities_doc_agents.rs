@@ -15,7 +15,7 @@ use shared_doc_rules::utility_capabilities_doc_h2_checks::{
     detect_h2_table,
 };
 use shared_doc_rules::utility_doc_common_checks::{
-    HeadingDefect, detect_doc_heading, missing_link_violation_type, required_links,
+    detect_doc_heading, heading_defect_messages, missing_link_violation_type, required_links,
 };
 use shared_doc_rules::utility_doc_line_drift::detect_doc_line_drift;
 use shared_doc_rules::utility_markdown_scanner::{doc_h2_contract, sections};
@@ -45,11 +45,13 @@ impl IAgentsDocProtocol for AgentsCapability {
             if context.document_name(document) != consts::AGENTS_DOC {
                 continue;
             }
-            Self::audit_one(document, context, &mut findings);
-            context.stamp(document, &mut findings);
-            for f in &mut findings {
+            let mut document_findings = Vec::new();
+            Self::audit_one(document, context, &mut document_findings);
+            context.stamp(document, &mut document_findings);
+            for f in &mut document_findings {
                 f.code = consts::RULE_CODE_AGENTS_DOC;
             }
+            findings.extend(document_findings);
         }
         findings
     }
@@ -79,7 +81,7 @@ impl AgentsCapability {
                         consts::AGENTS_DOC
                     ),
                     format!(
-                        "Add a `---` YAML frontmatter block at the top of {} .",
+                        "Add a `---` YAML frontmatter block at the top of {}.",
                         consts::AGENTS_DOC
                     ),
                 ),
@@ -102,57 +104,21 @@ impl AgentsCapability {
         // Heading structure (exactly one H1, required H2s, no off-template H2s).
         if let Some((required, allowed)) = doc_h2_contract(consts::AGENTS_DOC) {
             for defect in detect_doc_heading(text, consts::AGENTS_DOC, required, allowed) {
-                let (violation, message, reason, fix) = match &defect {
-                    HeadingDefect::H1Count { line: _, count } => (
-                        consts::DOC_STRUCTURE_VIOLATION_H1_COUNT,
-                        format!("{} H1 headings; template requires exactly one", count),
-                        format!(
-                            "{} has {} H1 headings; the template fixes exactly one H1 at the top.",
-                            consts::AGENTS_DOC,
-                            count
-                        ),
-                        format!(
-                            "Remove the extra H1 heading(s) so {} keeps exactly one H1.",
-                            consts::AGENTS_DOC
-                        ),
-                    ),
-                    HeadingDefect::H2Missing { line: _, missing } => (
-                        consts::DOC_STRUCTURE_VIOLATION_H2_MISSING,
-                        format!("missing required H2 section(s): {}", missing.join(", ")),
-                        format!(
-                            "{} is missing required H2 section(s): {}",
-                            consts::AGENTS_DOC,
-                            missing.join(", ")
-                        ),
-                        format!("Add the missing H2 section(s): {}", missing.join(", ")),
-                    ),
-                    HeadingDefect::H2Unexpected {
-                        line: _,
-                        unexpected,
-                    } => (
-                        consts::DOC_STRUCTURE_VIOLATION_H2_UNEXPECTED,
-                        format!("unexpected H2 section(s): {}", unexpected.join(", ")),
-                        format!(
-                            "{} carries H2 section(s) outside the template: {}",
-                            consts::AGENTS_DOC,
-                            unexpected.join(", ")
-                        ),
-                        format!(
-                            "Remove the off-template H2 section(s): {}",
-                            unexpected.join(", ")
-                        ),
-                    ),
-                };
-                findings.push(
-                    DocFinding::new_with_line(
-                        "",
-                        defect.line(),
-                        consts::RULE_CODE_AGENTS_DOC,
+                let (violation, message, reason, fix) =
+                    heading_defect_messages(consts::AGENTS_DOC, &defect);
+                let mut f = DocFinding::new_with_line(
+                    "",
+                    defect.line(),
+                    consts::RULE_CODE_AGENTS_DOC,
+                    violation,
+                    message,
+                )
+                .with_reason(reason, fix);
+                f.severity =
+                    shared_doc_rules::taxonomy_doc_rules_violation_vo::severity_for_violation(
                         violation,
-                        message,
-                    )
-                    .with_reason(reason, fix),
-                );
+                    );
+                findings.push(f);
             }
         }
 
@@ -177,8 +143,7 @@ impl AgentsCapability {
             SectionShapeDefectKind::ExtraColumns => (
                 DOC_VIOLATION_NAMES.table_extra_columns(),
                 format!(
-                    "line {} `{} {}` table carries column(s) outside the template: {}",
-                    defect.line,
+                    "`{} {}` table carries column(s) outside the template: {}",
                     defect.marker,
                     defect.title,
                     defect.extra_columns.join(", ")
@@ -198,8 +163,8 @@ impl AgentsCapability {
             SectionShapeDefectKind::HeaderRepeated => (
                 DOC_VIOLATION_NAMES.table_header_repeated(),
                 format!(
-                    "line {} `{} {}` repeats its header row as a data row",
-                    defect.line, defect.marker, defect.title
+                    "`{} {}` repeats its header row as a data row",
+                    defect.marker, defect.title
                 ),
                 format!(
                     "The HOW-TO template mandates one header row under `{}`; repeating it in a data-row position ships the column names where filled values belong.",
@@ -215,8 +180,7 @@ impl AgentsCapability {
             SectionShapeDefectKind::MissingColumns => (
                 DOC_VIOLATION_NAMES.table_missing_columns(),
                 format!(
-                    "line {} `{} {}` must be a markdown table with columns {}",
-                    defect.line,
+                    "`{} {}` must be a markdown table with columns {}",
                     defect.marker,
                     defect.title,
                     defect.columns.join(" | ")
@@ -235,8 +199,7 @@ impl AgentsCapability {
             SectionShapeDefectKind::NotTable => (
                 DOC_VIOLATION_NAMES.section_not_table(),
                 format!(
-                    "line {} `{} {}` must be a markdown table with columns {}",
-                    defect.line,
+                    "`{} {}` must be a markdown table with columns {}",
                     defect.marker,
                     defect.title,
                     defect.columns.join(" | ")
@@ -270,8 +233,7 @@ impl AgentsCapability {
             consts::RULE_CODE_AGENTS_DOC,
             DOC_VIOLATION_NAMES.entry_missing_row(),
             format!(
-                "line {} `## {}` table row labels do not match the template; missing {}, extra {}",
-                defect.line,
+                "`## {}` table row labels do not match the template; missing {}, extra {}",
                 defect.title,
                 defect.missing.join(", "),
                 defect.extra.join(", ")
