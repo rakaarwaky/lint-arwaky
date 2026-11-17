@@ -226,12 +226,20 @@ fn aes201_surface_importing_capabilities_is_forbidden_unified() {
 
 #[test]
 fn aes201_surface_importing_contract_protocol_is_forbidden_unified() {
-    // `contract::import_protocol` is the actual protocol file in the contract layer.
-    // `contract::aggregate_foo` is also caught by the bare "contract" suffix match.
     let violations = detect_surface("use contract::import_protocol;\n");
     assert!(
         !violations.is_empty(),
         "surface importing contract(protocol) must be forbidden"
+    );
+}
+
+#[test]
+fn aes201_surface_importing_contract_aggregate_is_allowed() {
+    let violations = detect_surface("use contract::import_aggregate;\n");
+    assert!(
+        violations.is_empty(),
+        "surface importing contract(aggregate) must be allowed, got {} violations",
+        violations.len()
     );
 }
 
