@@ -281,3 +281,20 @@ fn mandatory_class_definition_defaults_to_true() {
             .value
     );
 }
+
+#[test]
+fn surface_layer_allows_self_and_forbids_upward() {
+    let def = layer("surface");
+    for allowed in ["taxonomy", "contract(aggregate)", "utility", "surface"] {
+        assert!(
+            def.allowed.values.contains(&allowed.to_string()),
+            "surface must allow {allowed}"
+        );
+    }
+    for forbidden in ["agent", "capabilities", "contract(protocol)", "root"] {
+        assert!(
+            def.forbidden.values.contains(&forbidden.to_string()),
+            "surface must forbid {forbidden}"
+        );
+    }
+}
