@@ -1,4 +1,23 @@
 # Changelog
+## 3.17.0 (2026-11-17)
+
+### Features
+
+- feat(naming-rules): ignore conftest.py by default in AES103 (#1441)
+
+### Bug Fixes
+
+- fix(structure-rules): exempt shared folders from PR id requirement (AES706) (#1438)
+- fix: resolve Cargo.toml lint warnings (missing [lints] inheritance, redundant homepage) (#1429)
+- fix(orphan-rules): resolve remaining UX issues AES501-AES506 (#1385) (#1421)
+- fix(doc-rules): resolve all UX issues AES601-AES610 (#1397) (#1422)
+- fix(AES609): count Python protocol classes with base classes correctly (#1420)
+
+### Maintenance
+
+- chore(ci): speed up CI jobs (#1389)
+- chore(ci): enable sccache in coverage job (#1387)
+
 ## Unreleased
 
 ### Features
