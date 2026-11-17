@@ -244,13 +244,21 @@ fn run_all_linters_in_process_cancel(
         return (all, true);
     }
 
-    let (_graph_ctx, orphan_violations) = agg
+    let (_graph_ctx, orphan_violations, orphan_partial, orphan_unread) = agg
         .orphan
         .execute(OrphanRequest::scan(
             &root_fp,
             &shared_common::taxonomy_common_vo::PatternList::new(ignored.clone()),
         ))
-        .into_scan_outcome();
+        .into_detailed_scan_outcome();
+    if orphan_unread > 0 {
+        tracing::warn!(
+            target: "lint_arwaky::orphan",
+            event = "OrphanUnreadFiles",
+            unread_count = orphan_unread,
+            "orphan scan reported files with unreadable content"
+        );
+    }
     all.extend(
         orphan_violations
             .iter()
@@ -261,7 +269,10 @@ fn run_all_linters_in_process_cancel(
         total_files,
         total_files,
     );
-    if cancel.load(Ordering::Relaxed) {
+    // A cancelled orphan scan returns the findings produced so far; treat that
+    // the same as any other early stop so the caller can distinguish a
+    // user-interrupted run from a clean completion.
+    if cancel.load(Ordering::Relaxed) || orphan_partial {
         return (all, true);
     }
 

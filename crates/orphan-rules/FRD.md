@@ -15,6 +15,58 @@ flowchart TD
     C -->|violations| A
 ```
 
+**Glossary:**
+
+| Term | Means |
+|------|-------|
+| entry point | an entry file matching a configured pattern, or a default entry-name pattern |
+| reachable / alive | some entry point can import this file, directly or through other files |
+| wired | a root container file names this file's type in its dependency-injection registration |
+| container | a root container file that assembles the application |
+| barrel | a re-export file (module root, package initialiser, or index) that re-exports the files beside it |
+| surface | the outermost layer: render tree or command handler |
+
+**Severity Scale:**
+
+| Severity | Rules | Meaning |
+|----------|-------|---------|
+| HIGH | AES501, AES505, AES506 | Architectural violation: orphaned agent or unreachable surface |
+| MEDIUM | AES502, AES503, AES504 | Dead code: unreachable contract, unwired capabilities, unimported utility |
+| LOW | (not used for orphans) | Reserved |
+
+**Output Samples:**
+
+Normal findings:
+```text
+src/contract_user_protocol.rs
+  AES502  CONTRACT_ORPHAN  contract 'IUserProtocol' has no live implementor
+          why  a protocol without an implementor cannot be resolved through DI
+          fix  create capabilities_user_checker.rs implementing 'IUserProtocol'
+
+src/utility_string_helper.rs
+  AES504  UTILITY_ORPHAN   utility 'utility_string_helper' has no consumer
+          why  only utility files import it, so no feature can reach it
+          fix  import it from capabilities_user_checker.rs, or delete it
+
+src/root/
+  AES506  SURFACE_ORPHAN   smart surface 'surface_order_list' is not reachable from any entry point
+          why  a surface without reachability cannot handle any command
+          fix  import it from root_cli_main_entry.rs
+
+1 entry point found (root_cli_main_entry.rs), 412 files, 3 findings
+```
+
+Empty entry-point state:
+```text
+.
+  AES501  NO_ENTRY_POINT  no entry point found under '.'
+          why  orphan detection measures reachability from an entry point; with none,
+               every file looks unreachable
+          fix  add a root_*_entry.rs file, or set layers.<layer>.orphan.orphan_entry_points
+
+0 files evaluated, 1 finding
+```
+
 ## Functional Requirements
 
 ### FR-OrphanRules-001: Build Graph Context, Entry Points, and Reachability
@@ -43,7 +95,7 @@ flowchart TD
 | **Output** | `OrphanResponse::GraphContext` (context) and `OrphanResponse::EntryPoints` (entry points); both feed downstream analyzers. |
 | **Protocol** | `IOrphanParserProtocol` |
 | **Method** | `build_orphan_graph_context`, `identify_entry_points`, `trace_reachability` |
-| **Event** | None — context build is synchronous. |
+| **Event** | `OrphanScanStarted { files }`, `OrphanPhaseProgress { phase, done, total }` at most every 250 files, `OrphanScanFinished { findings }`. On cancellation the findings already produced are returned with `partial: true`. |
 | **Error** | Unreadable tree nodes are skipped; missing entry points yield an empty alive set (correct behaviour, no error). |
 
 #### Test
@@ -86,7 +138,7 @@ flowchart TD
 | **Output** | `OrphanResponse::Violations` with AES501 codes. |
 | **Protocol** | `ITaxonomyOrphanProtocol` |
 | **Method** | `is_taxonomy_orphan` |
-| **Event** | None. |
+| **Event** | `OrphanScanStarted { files }`, `OrphanPhaseProgress { phase, done, total }` at most every 250 files, `OrphanScanFinished { findings }`. On cancellation the findings already produced are returned with `partial: true`. |
 | **Error** | A missing context triggers a pre-check build rather than a crash; unreadable files are skipped. |
 
 #### Test
@@ -132,7 +184,7 @@ flowchart TD
 | **Output** | `OrphanResponse::Violations` with AES502 codes; `ScanOutcome` for full scans. |
 | **Protocol** | `IContractOrphanProtocol` |
 | **Method** | `is_contract_orphan` |
-| **Event** | None. |
+| **Event** | `OrphanScanStarted { files }`, `OrphanPhaseProgress { phase, done, total }` at most every 250 files, `OrphanScanFinished { findings }`. On cancellation the findings already produced are returned with `partial: true`. |
 | **Error** | An unmatched reference reports an orphan rather than an error; unreadable files are skipped. |
 
 #### Test
@@ -179,7 +231,7 @@ flowchart TD
 | **Output** | `OrphanResponse::Violations` with AES503 codes, including violation display messages. |
 | **Protocol** | `ICapabilitiesOrphanProtocol` |
 | **Method** | `is_capabilities_orphan` |
-| **Event** | None. |
+| **Event** | `OrphanScanStarted { files }`, `OrphanPhaseProgress { phase, done, total }` at most every 250 files, `OrphanScanFinished { findings }`. On cancellation the findings already produced are returned with `partial: true`. |
 | **Error** | A gap in DI wiring is reported as the violation itself (the message mentions the DI bridge gap), not as a tool error. |
 
 #### Test
@@ -223,7 +275,7 @@ flowchart TD
 | **Output** | `OrphanResponse::Violations` with AES504 codes. |
 | **Protocol** | `IUtilityOrphanProtocol` |
 | **Method** | `is_utility_orphan` |
-| **Event** | None. |
+| **Event** | `OrphanScanStarted { files }`, `OrphanPhaseProgress { phase, done, total }` at most every 250 files, `OrphanScanFinished { findings }`. On cancellation the findings already produced are returned with `partial: true`. |
 | **Error** | Missing references produce a violation (the orphan), not a tool error. |
 
 #### Test
@@ -268,7 +320,7 @@ flowchart TD
 | **Output** | `OrphanResponse::Violations` with AES505 codes. |
 | **Protocol** | `IAgentOrphanProtocol` |
 | **Method** | `is_agent_orphan` |
-| **Event** | None. |
+| **Event** | `OrphanScanStarted { files }`, `OrphanPhaseProgress { phase, done, total }` at most every 250 files, `OrphanScanFinished { findings }`. On cancellation the findings already produced are returned with `partial: true`. |
 | **Error** | An unreachable aggregate registers as an orphan rather than a tool failure. |
 
 #### Test
@@ -312,7 +364,7 @@ flowchart TD
 | **Output** | `OrphanResponse::Violations` with AES506 codes. |
 | **Protocol** | `ISurfacesOrphanProtocol` |
 | **Method** | `is_surface_orphan` |
-| **Event** | None. |
+| **Event** | `OrphanScanStarted { files }`, `OrphanPhaseProgress { phase, done, total }` at most every 250 files, `OrphanScanFinished { findings }`. On cancellation the findings already produced are returned with `partial: true`. |
 | **Error** | A missing registration entry maps to an orphan finding; parse errors skip the entry. |
 
 #### Test
