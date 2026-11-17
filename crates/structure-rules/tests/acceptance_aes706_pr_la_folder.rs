@@ -565,3 +565,121 @@ fn segment_count_mismatch_binds_each_segment_to_its_own_member() {
         "segments bound by title must not emit pr_id_mismatch; got {mismatches:#?}"
     );
 }
+
+// ─── Sub-issue 5: shared folders are exempt from PR id requirement ─────────
+
+/// A `shared` (or `kernel`) crate folder is a shared contract layer exempt
+/// from the PR id / FRD requirement, so it must not take a position in the
+/// PR-<segment> order. When a member dir holds `packages/shared` alongside
+/// feature packages, the sequence maps only onto the feature folders.
+#[test]
+fn shared_folder_is_exempt_from_pr_id_requirement() {
+    let tmp = tempfile::tempdir().expect("temp dir must be creatable");
+    let root = tmp.path();
+    // packages/shared: shared layer, no FRD.md, must not need a PR id.
+    fs::create_dir_all(root.join("packages/shared/src")).unwrap();
+    write(
+        &root.join("packages/shared/src/styles.css"),
+        "/* shared styles */\n",
+    );
+    // packages/viewer: a real feature surface with FRD.md.
+    write(
+        &root.join("packages/viewer/surface_viewer_command.ts"),
+        "// viewer command\n",
+    );
+    write(
+        &root.join("packages/viewer/DESIGN.md"),
+        "# DESIGN — viewer\n",
+    );
+    // PRD maps PR-PSD-001 to viewer only; shared needs no id.
+    write(
+        &root.join("PRD.md"),
+        "# PRD\n\n### PR-PSD-001: Viewer surface\n",
+    );
+    write(
+        &root.join("ROADMAP.md"),
+        "# ROADMAP\n\n### PR-PSD-001: Viewer surface\n",
+    );
+
+    let aes706 = mapping_findings(&audit(root));
+
+    assert!(
+        aes706.is_empty(),
+        "packages/shared must take no position in the PR order; got {aes706:#?}"
+    );
+}
+
+/// The same exemption applies to a Rust member dir: `crates/shared` must not
+/// be reported as a crate folder without a PR id.
+#[test]
+fn shared_folder_in_rust_member_is_exempt() {
+    let tmp = tempfile::tempdir().expect("temp dir must be creatable");
+    let root = tmp.path();
+    // crates/shared: shared kernel crate.
+    fs::create_dir_all(root.join("crates/shared/src")).unwrap();
+    write(
+        &root.join("crates/shared/src/lib.rs"),
+        "//! shared contracts\n",
+    );
+    // crates/cli: a feature crate.
+    write(
+        &root.join("crates/cli/src/agent_cli_orchestrator.rs"),
+        "//! cli orchestrator\n",
+    );
+    write(
+        &root.join("crates/cli/FRD.md"),
+        "# FRD — cli\n\n### FR-Cli-001\n",
+    );
+    write(
+        &root.join("PRD.md"),
+        "# PRD\n\n### PR-LA-001: Cli surface\n",
+    );
+    write(
+        &root.join("ROADMAP.md"),
+        "# ROADMAP\n\n### PR-LA-001: Cli surface\n",
+    );
+
+    let aes706 = mapping_findings(&audit(root));
+
+    assert!(
+        aes706.is_empty(),
+        "crates/shared must take no position in the PR order; got {aes706:#?}"
+    );
+}
+
+/// The same exemption applies to a Python member dir: `modules/shared` must
+/// not be reported as a module without a PR id.
+#[test]
+fn shared_folder_in_python_member_is_exempt() {
+    let tmp = tempfile::tempdir().expect("temp dir must be creatable");
+    let root = tmp.path();
+    // modules/shared: shared contract layer, no FRD.md.
+    write(
+        &root.join("modules/shared/contract_shared_protocol.py"),
+        "# shared protocol\n",
+    );
+    // modules/animator: a feature module.
+    write(
+        &root.join("modules/animator/agent_animator_orchestrator.py"),
+        "# animator orchestrator\n",
+    );
+    write(
+        &root.join("modules/animator/FRD.md"),
+        "# FRD — animator\n\n### FR-Animator-001\n",
+    );
+    write(
+        &root.join("PRD.md"),
+        "# PRD\n\n### PR-PSD-001: Animator pipeline\n",
+    );
+    write(
+        &root.join("ROADMAP.md"),
+        "# ROADMAP\n\n### PR-PSD-001: Animator pipeline\n",
+    );
+
+    let aes706 = mapping_findings(&audit(root));
+
+    assert!(
+        aes706.is_empty(),
+        "modules/shared must take no position in the PR order; got {aes706:#?}"
+    );
+}

@@ -586,6 +586,13 @@ fn is_non_crate_dir(folder: &Path) -> bool {
     consts::NON_CRATE_DIRS.contains(&name) || name.ends_with(".egg-info")
 }
 
+/// True when *folder* is a shared crate. A shared folder is exempt from the
+/// PR id / FRD requirement, so it takes no position in the PR order.
+fn is_kernel_dir(folder: &Path) -> bool {
+    let name = folder.file_name().and_then(|n| n.to_str()).unwrap_or("");
+    name == "shared"
+}
+
 /// Sorted names of every crate folder under *members*, the folder order a
 /// `PR-<segment>` sequence maps onto. Derived from the actual member layouts so
 /// AES706 can lint any project — not just lint-arwaky itself.
@@ -593,12 +600,15 @@ fn crate_folder_names(members: &[PathBuf]) -> Vec<String> {
     let mut names: Vec<String> = members
         .iter()
         .flat_map(|member| {
-            crate_folders(member).into_iter().filter_map(|folder| {
-                folder
-                    .file_name()
-                    .and_then(|n| n.to_str())
-                    .map(str::to_string)
-            })
+            crate_folders(member)
+                .into_iter()
+                .filter(|folder| !is_kernel_dir(folder))
+                .filter_map(|folder| {
+                    folder
+                        .file_name()
+                        .and_then(|n| n.to_str())
+                        .map(str::to_string)
+                })
         })
         .collect();
     names.sort();

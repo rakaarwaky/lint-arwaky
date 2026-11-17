@@ -607,33 +607,7 @@ The role-rules capability validates that each file's name and contents match its
 
 ---
 
-### PR-LA-020: shared
-
-#### User Stories
-
-| As a | I want | So that | Priority |
-|------|--------|---------|----------|
-| Rule developer | shared contracts, VOs, and parsers in one place | every rule consumes the same data model | P2 |
-
-#### Proposed Solution
-
-The shared capability hosts the contracts, value objects, doc-rules codegen, and document templates used by every other crate. It is a pure dependency: no surface logic, no business rules, just shared data types and helpers.
-
-#### Main User Flow
-
-1. A rule imports a shared contract VO.
-2. The VO carries parsed file data, dependency edges, and language flags.
-3. All rules read the same shape of data, preventing drift.
-
-#### Acceptance Criteria
-
-- `AC-LA-020-1`: Every rule consumes the same value-object shape, so a field addition is a single-site change.
-- `AC-LA-020-2`: The shared crate imports no surface or capability crate (AES201 holds for shared).
-- `AC-LA-020-3`: Generated document constants match the templates; editing a template without regenerating fails the build.
-
----
-
-### PR-LA-021: structure-rules
+### PR-LA-020: structure-rules
 
 #### User Stories
 
@@ -659,7 +633,7 @@ The structure-rules capability enforces AES7-layer folder purity (AES701), featu
 
 ---
 
-### PR-LA-022: tui
+### PR-LA-021: tui
 
 #### User Stories
 
