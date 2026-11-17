@@ -138,3 +138,31 @@ impl DocViolationNames {
 
 /// The documented violation-name set used by every per-doc capability.
 pub const DOC_VIOLATION_NAMES: DocViolationNames = DocViolationNames;
+
+/// Severity for one doc-rule violation kind (UX-S3-001).
+///
+/// All AES6xx findings are HIGH per ARCHITECTURE.md §19; the mapping below
+/// keeps the HIGH default while naming the three families that carry a
+/// distinct severity so the FRD can document the table and consumers can
+/// route by kind:
+/// - `line_drift`, `h1_count`, `h2_missing`, `h2_unexpected` — template
+///   drift, MEDIUM (structural, not architectural-policy, gaps).
+/// - `missing_required_doc`, `missing_member_doc`, `forbidden_member_doc` —
+///   a document the workspace contract requires is absent or misplaced,
+///   HIGH (breaks the document chain).
+/// - everything else (spec purity, ID format, crosslinks, table shape) —
+///   HIGH, the ARCHITECTURE.md §19 default.
+pub fn severity_for_violation(
+    violation_type: &str,
+) -> shared_common::taxonomy_severity_vo::Severity {
+    use shared_common::taxonomy_severity_vo::Severity;
+    match violation_type {
+        crate::taxonomy_doc_rules_constant::DOC_STRUCTURE_VIOLATION_LINE_DRIFT
+        | crate::taxonomy_doc_rules_constant::DOC_STRUCTURE_VIOLATION_H1_COUNT
+        | crate::taxonomy_doc_rules_constant::DOC_STRUCTURE_VIOLATION_H2_MISSING
+        | crate::taxonomy_doc_rules_constant::DOC_STRUCTURE_VIOLATION_H2_UNEXPECTED => {
+            Severity::MEDIUM
+        }
+        _ => Severity::HIGH,
+    }
+}
