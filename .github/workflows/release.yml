@@ -115,8 +115,17 @@ jobs:
         # and this check still looked for it. Assert the real shape, and that
         # it parses, so a renamed or reshaped payload fails here rather than
         # in a consumer.
+        #
+        # `scan` exits non-zero when violations are found — that is Self-Lint's
+        # job to assert, not this smoke check. Capture the exit code so a
+        # non-zero status does not abort the step under `set -e`.
         run: |
-          ./lint-arwaky-cli scan . --format json > scan.json
+          exit_code=0
+          ./lint-arwaky-cli scan . --format json > scan.json || exit_code=$?
+          if [ "$exit_code" -ne 0 ] && [ ! -s scan.json ]; then
+            echo "::error::scan exited ${exit_code} without producing output"
+            exit 1
+          fi
           python3 - <<'PY'
           import json, sys
 
