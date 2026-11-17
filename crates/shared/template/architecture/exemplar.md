@@ -126,7 +126,7 @@ Group 2 enforces layer dependency boundaries to maintain architectural integrity
 | Field      | Value                                                                                                |
 | ---------- | ---------------------------------------------------------------------------------------------------- |
 | Fires when | An import violates the allowed/mandatory/forbidden triple for the file's filename-prefix layer scope |
-| Scope      | Every scanned source file whose stem maps to one of the 13 layer scopes                              |
+| Scope      | Every scanned source file whose stem maps to one of the 11 layer scopes                              |
 | Fix        | Remove or redirect the import to a layer the scope's Allowed cell permits                            |
 
 #### Import Matrix
@@ -142,10 +142,8 @@ Group 2 enforces layer dependency boundaries to maintain architectural integrity
 | 7   | `contract(aggregate)`                     | `taxonomy,contract`                                       | `taxonomy`                     | `agent,surface,capabilities,root`                                                                   |
 | 8   | `capabilities`                            | `taxonomy,contract,utility`                               | `taxonomy,contract(protocol)`  | `surface,agent,capabilities,root`                                                                   |
 | 9   | `agent(orchestrator)`                     | `taxonomy,contract(aggregate),contract(protocol),utility` | `taxonomy,contract(aggregate)` | `surface,capabilities,root`                                                                         |
-| 10  | `root`                                    | `taxonomy,contract,utility,capabilities,agent,surface`    | —                              | —                                                                                                   |
-| 11  | `surface(command|controller|page|router)` | `taxonomy,contract(aggregate),utility,surface`            | —                              | `agent,capabilities,contract(protocol),root`                                                        |
-| 12  | `surface(hook|store|action|screen)`       | `taxonomy,utility,surface(component|view|layout)`         | —                              | `agent,capabilities,contract,surface(command|controller|page|router|hook|store|action|screen),root` |
-| 13  | `surface(component|view|layout)`          | `taxonomy`                                                | —                              | `agent,contract,capabilities,utility,surface,root`                                                  |
+| 10  | `surface`                                 | `taxonomy,contract(aggregate),utility,surface`            | —                              | `contract(protocol),capabilities,agent,root`                                                        |
+| 11  | `root`                                    | `taxonomy,contract,capabilities,agent,surface`            | —                              | —                                                                                                   |
 
 ### AES202 — Mandatory Import
 

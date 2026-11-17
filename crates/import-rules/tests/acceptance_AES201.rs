@@ -139,6 +139,119 @@ fn aes201_surface_importing_agent_is_forbidden() {
     assert!(count > 0, "surface importing agent must be forbidden");
 }
 
+// ─── AES201: unified surface import matrix ────────────────
+
+/// Surface layer definition with an empty forbidden list so the
+/// `default_forbidden` fallback (agent, capabilities, contract(protocol), root)
+/// is exercised.
+fn surface_config() -> (ArchitectureConfig, LayerMapVO) {
+    let mut layers = HashMap::new();
+    layers.insert(
+        LayerNameVO::new("surface"),
+        LayerDefinition {
+            forbidden: PatternList::default(),
+            allowed: PatternList::new(vec![
+                "taxonomy",
+                "contract(aggregate)",
+                "utility",
+                "surface",
+            ]),
+            ..Default::default()
+        },
+    );
+    let layer_map = LayerMapVO::new(layers.clone());
+    let config = ArchitectureConfig::new(
+        BooleanVO::new(true),
+        layers,
+        vec![],
+        NamingConfig::new(Count::new(3)),
+        FilePathList::new(vec![]),
+        BooleanVO::new(false),
+    );
+    (config, layer_map)
+}
+
+fn detect_surface(content: &str) -> Vec<shared_cli_commands::LintResult> {
+    let checker = ArchImportForbiddenChecker::new();
+    let (config, layer_map) = surface_config();
+    let result = checker
+        .check_single_file(
+            "/tmp/project/surface_handler.rs",
+            content,
+            "/tmp/project",
+            &config,
+            &layer_map,
+        )
+        .unwrap();
+    result.values
+}
+
+#[test]
+fn aes201_surface_importing_surface_is_allowed() {
+    let violations = detect_surface("use surface::ui_component;\n");
+    assert!(
+        violations.is_empty(),
+        "surface importing surface must be allowed, got {} violations",
+        violations.len()
+    );
+}
+
+#[test]
+fn aes201_surface_importing_utility_is_allowed() {
+    let violations = detect_surface("use utility::helper;\n");
+    assert!(
+        violations.is_empty(),
+        "surface importing utility must be allowed, got {} violations",
+        violations.len()
+    );
+}
+
+#[test]
+fn aes201_surface_importing_agent_is_forbidden_unified() {
+    let violations = detect_surface("use agent::runner;\n");
+    assert!(
+        !violations.is_empty(),
+        "surface importing agent must be forbidden"
+    );
+}
+
+#[test]
+fn aes201_surface_importing_capabilities_is_forbidden_unified() {
+    let violations = detect_surface("use capabilities::orchestrator;\n");
+    assert!(
+        !violations.is_empty(),
+        "surface importing capabilities must be forbidden"
+    );
+}
+
+#[test]
+fn aes201_surface_importing_contract_protocol_is_forbidden_unified() {
+    let violations = detect_surface("use contract::import_protocol;\n");
+    assert!(
+        !violations.is_empty(),
+        "surface importing contract(protocol) must be forbidden"
+    );
+}
+
+#[test]
+fn aes201_surface_importing_contract_aggregate_is_allowed() {
+    let violations = detect_surface("use contract::import_aggregate;\n");
+    assert!(
+        violations.is_empty(),
+        "surface importing contract(aggregate) must be allowed, got {} violations",
+        violations.len()
+    );
+}
+
+#[test]
+fn aes201_surface_importing_root_is_forbidden_unified() {
+    let violations = detect_surface("use root::entry;\n");
+    assert!(
+        !violations.is_empty(),
+        "surface importing root must be forbidden"
+    );
+}
+
 // ─── AES201: agent layer violations ───────────────────────
 
 #[test]

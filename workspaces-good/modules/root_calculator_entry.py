@@ -5,6 +5,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
 from cli.src.surface_calculator_command import run
+from cli.src.surface_calculator_screen import show
 from root_calculator_container import CalculatorContainer
 
 
@@ -19,6 +20,7 @@ def main():
 
     if args.command is None or args.command == "run":
         container = CalculatorContainer()
+        _ = show
         run(container.orchestrator())
     else:
         parser.print_help()

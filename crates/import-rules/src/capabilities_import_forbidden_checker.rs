@@ -203,7 +203,12 @@ impl ArchImportForbiddenChecker {
                 if !def.forbidden.values.is_empty() {
                     def.forbidden.values.clone()
                 } else if is_surface {
-                    vec!["agent".into(), "capabilities".into(), "utility".into()]
+                    vec![
+                        "agent".into(),
+                        "capabilities".into(),
+                        "contract(protocol)".into(),
+                        "root".into(),
+                    ]
                 } else {
                     vec![]
                 }
@@ -461,6 +466,13 @@ impl ArchImportForbiddenChecker {
                         ("surface", "contract") => {
                             format!(
                                 "Import the contract aggregate instead of the contract protocol; surface code wires DI, not the concrete trait.{hint}",
+                                hint = allowed_hint
+                            )
+                        }
+                        ("surface", _) => {
+                            format!(
+                                "Surface code must import only from the allowed layers (taxonomy, contract(aggregate), utility, surface); do not depend on '{cap}'.{hint}",
+                                cap = forbidden,
                                 hint = allowed_hint
                             )
                         }
