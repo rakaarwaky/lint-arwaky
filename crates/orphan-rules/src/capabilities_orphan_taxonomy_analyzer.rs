@@ -1,3 +1,4 @@
+use shared_common::DEFAULT_RULE_EXCEPTIONS;
 use shared_common::taxonomy_layer_vo::LayerDefinition;
 use shared_common::taxonomy_path_vo::FilePath;
 use shared_common::taxonomy_severity_vo::Severity;
@@ -45,43 +46,42 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
         let is_reachable = alive_files.paths.contains(f);
 
         // Condition 2: not imported by any contract_ file
+        let is_higher_layer_importer = |importer: &str| {
+            let imp_filename = extract_filename(importer);
+            TAXONOMY_RESCUERS
+                .iter()
+                .any(|p| imp_filename.starts_with(p))
+        };
+
         let importers = inbound_links.get_importers(f.value());
         let has_higher_layer_importer = importers
             .as_ref()
             .map(|v| {
                 v.iter()
                     .filter(|importer| *importer != f.value())
-                    .any(|importer| {
-                        let imp_filename = extract_filename(importer);
-                        imp_filename.starts_with(TAXONOMY_RESCUERS[0])
-                            || imp_filename.starts_with(TAXONOMY_RESCUERS[1])
-                            || imp_filename.starts_with(TAXONOMY_RESCUERS[2])
-                            || imp_filename.starts_with(TAXONOMY_RESCUERS[3])
-                            || imp_filename.starts_with(TAXONOMY_RESCUERS[4])
-                    })
+                    .any(|importer| is_higher_layer_importer(importer))
             })
             .unwrap_or(false);
 
-        // Fallback: barrel re-exports — if a sibling mod.rs re-exports this file
-        // and mod.rs has higher-layer importers, consider this file as imported.
+        // Fallback: barrel re-exports — if any sibling barrel (from
+        // DEFAULT_RULE_EXCEPTIONS) re-exports this file and the barrel has
+        // higher-layer importers, consider this file as imported.
         let has_barrel_importer = if !has_higher_layer_importer {
             let file_path = std::path::Path::new(f.value());
             if let Some(parent) = file_path.parent() {
-                let mod_rs = parent.join("mod.rs");
-                if let Some(mod_importers) =
-                    inbound_links.get_importers(mod_rs.to_str().unwrap_or(""))
-                {
-                    mod_importers.iter().any(|importer| {
-                        let imp_filename = extract_filename(importer);
-                        imp_filename.starts_with(TAXONOMY_RESCUERS[0])
-                            || imp_filename.starts_with(TAXONOMY_RESCUERS[1])
-                            || imp_filename.starts_with(TAXONOMY_RESCUERS[2])
-                            || imp_filename.starts_with(TAXONOMY_RESCUERS[3])
-                            || imp_filename.starts_with(TAXONOMY_RESCUERS[4])
-                    })
-                } else {
-                    false
-                }
+                DEFAULT_RULE_EXCEPTIONS.iter().any(|barrel| {
+                    let barrel_path = parent.join(barrel);
+                    if let Some(barrel_importers) =
+                        inbound_links.get_importers(barrel_path.to_str().unwrap_or(""))
+                    {
+                        barrel_importers
+                            .iter()
+                            .filter(|importer| *importer != f.value())
+                            .any(|importer| is_higher_layer_importer(importer))
+                    } else {
+                        false
+                    }
+                })
             } else {
                 false
             }

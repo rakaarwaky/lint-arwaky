@@ -131,3 +131,95 @@ fn test_utility_suffix_categorization() {
     assert!(result.is_orphan);
     assert!(!result.message.is_empty());
 }
+
+#[test]
+fn test_barrel_fallback_across_default_rule_exceptions() {
+    let analyzer = TaxonomyOrphanAnalyzer::new();
+    let target = "packages/shared/src/models/taxonomy_user_vo.ts";
+    let fp = FilePath::new(target.to_string()).unwrap();
+    let root = FilePath::new(".".to_string()).unwrap();
+
+    let barrels = ["index.ts", "index.tsx", "index.js", "mod.rs", "__init__.py"];
+    for barrel_name in barrels {
+        let barrel_path = format!("packages/shared/src/models/{barrel_name}");
+        let mut mapping = HashMap::new();
+        mapping.insert(
+            barrel_path,
+            vec!["packages/shared/src/client/contract_client_protocol.ts".to_string()],
+        );
+        let inbound = InboundLinkMap::new(mapping);
+
+        let result = analyzer.is_taxonomy_orphan(
+            &fp,
+            &root,
+            None,
+            &inbound,
+            &[],
+            &HashMap::new(),
+            &reachable_for(&fp),
+        );
+        assert!(
+            !result.is_orphan,
+            "barrel '{barrel_name}' with higher-layer importer should rescue taxonomy file"
+        );
+    }
+}
+
+#[test]
+fn test_barrel_fallback_self_import_filtered() {
+    let analyzer = TaxonomyOrphanAnalyzer::new();
+    let target = "packages/shared/src/models/taxonomy_user_vo.ts";
+    let fp = FilePath::new(target.to_string()).unwrap();
+    let root = FilePath::new(".".to_string()).unwrap();
+
+    // The barrel only lists the file itself as an importer (self-import)
+    let barrel_path = "packages/shared/src/models/index.ts".to_string();
+    let mut mapping = HashMap::new();
+    mapping.insert(barrel_path, vec![target.to_string()]);
+    let inbound = InboundLinkMap::new(mapping);
+
+    let result = analyzer.is_taxonomy_orphan(
+        &fp,
+        &root,
+        None,
+        &inbound,
+        &[],
+        &HashMap::new(),
+        &reachable_for(&fp),
+    );
+    assert!(
+        result.is_orphan,
+        "self-import in barrel must be filtered out and file declared orphan"
+    );
+}
+
+#[test]
+fn test_barrel_fallback_only_lower_layer_importer_is_orphan() {
+    let analyzer = TaxonomyOrphanAnalyzer::new();
+    let target = "packages/shared/src/models/taxonomy_user_vo.ts";
+    let fp = FilePath::new(target.to_string()).unwrap();
+    let root = FilePath::new(".".to_string()).unwrap();
+
+    // Barrel is imported by another taxonomy file (not a higher-layer rescuer)
+    let barrel_path = "packages/shared/src/models/index.ts".to_string();
+    let mut mapping = HashMap::new();
+    mapping.insert(
+        barrel_path,
+        vec!["packages/shared/src/models/taxonomy_other_vo.ts".to_string()],
+    );
+    let inbound = InboundLinkMap::new(mapping);
+
+    let result = analyzer.is_taxonomy_orphan(
+        &fp,
+        &root,
+        None,
+        &inbound,
+        &[],
+        &HashMap::new(),
+        &reachable_for(&fp),
+    );
+    assert!(
+        result.is_orphan,
+        "barrel imported only by taxonomy-layer files should not rescue target"
+    );
+}
