@@ -140,6 +140,22 @@ pull_request_rules:
         remove:
           - stale
 
+  # ── Keep PRs up to date with main ───────────────────────────────────────
+  # Rebases PR branches onto latest main when main advances, so PRs entering
+  # the merge queue are already fresh. This runs independently of the queue:
+  # the queue only updates PRs when they are about to be tested; this rule
+  # keeps every open PR current at all times.
+  - name: keep-prs-up-to-date
+    conditions:
+      - base = main
+      - -draft
+      - -merged
+      - -closed
+      - -conflict
+    actions:
+      update:
+        method: merge
+
   # ── Welcome comment on new PRs (created within the last 5 minutes) ────
   - name: welcome-new-pr
     conditions:
