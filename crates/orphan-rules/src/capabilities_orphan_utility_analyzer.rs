@@ -1,3 +1,4 @@
+use shared_common::DEFAULT_RULE_EXCEPTIONS;
 use shared_common::taxonomy_path_vo::FilePath;
 use shared_common::taxonomy_severity_vo::Severity;
 use shared_common::utility_architecture_layer_detector;
@@ -107,14 +108,14 @@ impl IUtilityOrphanProtocol for UtilityOrphanAnalyzer {
             }
         }
 
-        // Fallback: barrel re-exports — if a sibling mod.rs or __init__.py re-exports this file
-        // and the barrel has consumer-layer importers, consider this file as imported.
+        // Fallback: barrel re-exports — if any sibling barrel (from
+        // DEFAULT_RULE_EXCEPTIONS: mod.rs, __init__.py, index.ts, index.js, index.tsx)
+        // re-exports this file and the barrel has consumer-layer importers, consider
+        // this file as imported.
         if consumer_importers.is_empty() {
             let file_path = std::path::Path::new(fp);
             if let Some(parent) = file_path.parent() {
-                // Try mod.rs (Rust) and __init__.py (Python)
-                let barrel_names = ["mod.rs", "__init__.py"];
-                for barrel in &barrel_names {
+                for barrel in DEFAULT_RULE_EXCEPTIONS {
                     let barrel_path = parent.join(barrel);
                     if let Some(mod_importers) =
                         inbound_links.get_importers(barrel_path.to_str().unwrap_or(""))
@@ -205,8 +206,30 @@ impl IUtilityOrphanProtocol for UtilityOrphanAnalyzer {
 impl UtilityOrphanAnalyzer {
     pub fn is_module_imported(_file_path: &str, content: &str, module_name: &str) -> bool {
         content.lines().any(|line| {
-            line.contains(&format!("use {module_name}"))
+            if line.contains(&format!("use {module_name}"))
                 || line.contains(&format!("from {module_name}"))
+            {
+                return true;
+            }
+            // Check TypeScript/JavaScript import specs with quotes: '...', "...", `...`
+            for quote in ['\'', '"', '`'] {
+                let from_pat = format!("from {quote}");
+                let Some((_, spec)) = line.split_once(&from_pat) else {
+                    continue;
+                };
+                let Some((path_spec, _)) = spec.split_once(quote) else {
+                    continue;
+                };
+                let trimmed = path_spec.trim();
+                let stem = std::path::Path::new(trimmed)
+                    .file_stem()
+                    .and_then(|s| s.to_str())
+                    .unwrap_or(trimmed);
+                if stem == module_name {
+                    return true;
+                }
+            }
+            false
         })
     }
 }
