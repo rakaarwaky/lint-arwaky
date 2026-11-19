@@ -153,8 +153,7 @@ pull_request_rules:
       - -closed
       - -conflict
     actions:
-      update:
-        method: merge
+      update: {}
 
   # ── Welcome comment on new PRs (created within the last 5 minutes) ────
   - name: welcome-new-pr
