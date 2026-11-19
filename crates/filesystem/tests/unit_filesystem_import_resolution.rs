@@ -9,6 +9,8 @@ use filesystem_lint_arwaky::capabilities_dependency_graph::DependencyGraph;
 use filesystem_lint_arwaky::capabilities_filesystem_io::CapabilitiesFileSystemIO;
 use filesystem_lint_arwaky::capabilities_tool_resolution::CapabilitiesToolResolution;
 use filesystem_lint_arwaky::capabilities_workspace_root_finder::CapabilitiesWorkspace;
+use shared_filesystem::FilesystemRequest;
+use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared_filesystem::contract_filesystem_protocol::IParserProtocol;
 use shared_filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
@@ -33,6 +35,22 @@ fn make_python_import(raw: &str, resolved: Option<&str>) -> ImportEntry {
         language: Language::Python,
         is_dynamic: false,
         is_resolved: resolved.is_some(),
+        symbols: vec![],
+        is_reexport: false,
+        is_wildcard: false,
+        line: 0,
+    }
+}
+
+fn make_typescript_import(source_file: &str, raw_path: &str) -> ImportEntry {
+    ImportEntry {
+        source_file: PathBuf::from(source_file),
+        raw_path: raw_path.to_string(),
+        resolved_path: None,
+        import_type: ImportType::Import,
+        language: Language::TypeScript,
+        is_dynamic: false,
+        is_resolved: false,
         symbols: vec![],
         is_reexport: false,
         is_wildcard: false,
@@ -597,5 +615,413 @@ fn test_root_relative_dotdot_resolves() {
         result,
         Some("y.js".to_string()),
         "root-level relative import ../y must resolve to y.js (strip leading .. for root)"
+    );
+}
+
+// ─── JS/TS extension-swapping tests ─────────────────────────────────────────
+
+#[test]
+fn test_js_import_resolves_to_ts_file_on_disk() {
+    // Primary bug regression: ESM/TypeScript projects import `.js` specifiers
+    // that point to `.ts` source files on disk.
+    let _orch = make_orchestrator();
+    let imp = make_typescript_import("packages/root_web_main_entry.ts", "./root_web_container.js");
+    let files: HashSet<&str> = build_file_set(&[
+        "packages/root_web_main_entry.ts",
+        "packages/root_web_container.ts",
+    ]);
+    let stem_index = build_stem_index(&[
+        "packages/root_web_main_entry.ts",
+        "packages/root_web_container.ts",
+    ]);
+    let root = PathBuf::from(".");
+    let result = resolve_import_target(
+        &imp,
+        "packages/root_web_main_entry.ts",
+        &root,
+        &files,
+        &stem_index,
+    );
+    assert_eq!(
+        result,
+        Some("packages/root_web_container.ts".to_string()),
+        ".js relative import must resolve to .ts file on disk"
+    );
+}
+
+#[test]
+fn test_jsx_import_resolves_to_tsx_file_on_disk() {
+    let _orch = make_orchestrator();
+    let imp = make_typescript_import("packages/ui/button.jsx", "./icon.jsx");
+    let files: HashSet<&str> = build_file_set(&["packages/ui/button.jsx", "packages/ui/icon.tsx"]);
+    let stem_index = build_stem_index(&["packages/ui/button.jsx", "packages/ui/icon.tsx"]);
+    let root = PathBuf::from(".");
+    let result = resolve_import_target(&imp, "packages/ui/button.jsx", &root, &files, &stem_index);
+    assert_eq!(
+        result,
+        Some("packages/ui/icon.tsx".to_string()),
+        ".jsx import must swap to .tsx file on disk"
+    );
+}
+
+#[test]
+fn test_ts_import_resolves_to_js_file_on_disk() {
+    // Reverse direction: a `.ts` import specifier must swap to `.js` on disk.
+    let _orch = make_orchestrator();
+    let imp = make_typescript_import("packages/ui/button.ts", "./legacy.ts");
+    let files: HashSet<&str> = build_file_set(&["packages/ui/button.ts", "packages/ui/legacy.js"]);
+    let stem_index = build_stem_index(&["packages/ui/button.ts", "packages/ui/legacy.js"]);
+    let root = PathBuf::from(".");
+    let result = resolve_import_target(&imp, "packages/ui/button.ts", &root, &files, &stem_index);
+    assert_eq!(
+        result,
+        Some("packages/ui/legacy.js".to_string()),
+        ".ts import must swap to .js file on disk"
+    );
+}
+
+#[test]
+fn test_tsx_import_resolves_to_jsx_file_on_disk() {
+    let _orch = make_orchestrator();
+    let imp = make_typescript_import("packages/ui/app.tsx", "./widget.tsx");
+    let files: HashSet<&str> = build_file_set(&["packages/ui/app.tsx", "packages/ui/widget.jsx"]);
+    let stem_index = build_stem_index(&["packages/ui/app.tsx", "packages/ui/widget.jsx"]);
+    let root = PathBuf::from(".");
+    let result = resolve_import_target(&imp, "packages/ui/app.tsx", &root, &files, &stem_index);
+    assert_eq!(
+        result,
+        Some("packages/ui/widget.jsx".to_string()),
+        ".tsx import must swap to .jsx file on disk"
+    );
+}
+
+#[test]
+fn test_mjs_import_resolves_to_mts_file_on_disk() {
+    let _orch = make_orchestrator();
+    let imp = make_typescript_import("packages/core/index.mts", "./util.mjs");
+    let files: HashSet<&str> =
+        build_file_set(&["packages/core/index.mts", "packages/core/util.mts"]);
+    let stem_index = build_stem_index(&["packages/core/index.mts", "packages/core/util.mts"]);
+    let root = PathBuf::from(".");
+    let result = resolve_import_target(&imp, "packages/core/index.mts", &root, &files, &stem_index);
+    assert_eq!(
+        result,
+        Some("packages/core/util.mts".to_string()),
+        ".mjs import must swap to .mts file on disk"
+    );
+}
+
+#[test]
+fn test_mts_import_resolves_to_mjs_file_on_disk() {
+    let _orch = make_orchestrator();
+    let imp = make_typescript_import("packages/core/index.mjs", "./util.mts");
+    let files: HashSet<&str> =
+        build_file_set(&["packages/core/index.mjs", "packages/core/util.mjs"]);
+    let stem_index = build_stem_index(&["packages/core/index.mjs", "packages/core/util.mjs"]);
+    let root = PathBuf::from(".");
+    let result = resolve_import_target(&imp, "packages/core/index.mjs", &root, &files, &stem_index);
+    assert_eq!(
+        result,
+        Some("packages/core/util.mjs".to_string()),
+        ".mts import must swap to .mjs file on disk"
+    );
+}
+
+#[test]
+fn test_cjs_import_resolves_to_cts_file_on_disk() {
+    let _orch = make_orchestrator();
+    let imp = make_typescript_import("packages/core/index.cts", "./helper.cjs");
+    let files: HashSet<&str> =
+        build_file_set(&["packages/core/index.cts", "packages/core/helper.cts"]);
+    let stem_index = build_stem_index(&["packages/core/index.cts", "packages/core/helper.cts"]);
+    let root = PathBuf::from(".");
+    let result = resolve_import_target(&imp, "packages/core/index.cts", &root, &files, &stem_index);
+    assert_eq!(
+        result,
+        Some("packages/core/helper.cts".to_string()),
+        ".cjs import must swap to .cts file on disk"
+    );
+}
+
+#[test]
+fn test_cts_import_resolves_to_cjs_file_on_disk() {
+    let _orch = make_orchestrator();
+    let imp = make_typescript_import("packages/core/index.cjs", "./helper.cts");
+    let files: HashSet<&str> =
+        build_file_set(&["packages/core/index.cjs", "packages/core/helper.cjs"]);
+    let stem_index = build_stem_index(&["packages/core/index.cjs", "packages/core/helper.cjs"]);
+    let root = PathBuf::from(".");
+    let result = resolve_import_target(&imp, "packages/core/index.cjs", &root, &files, &stem_index);
+    assert_eq!(
+        result,
+        Some("packages/core/helper.cjs".to_string()),
+        ".cts import must swap to .cjs file on disk"
+    );
+}
+
+#[test]
+fn test_js_import_prefers_ts_when_both_ts_and_tsx_exist() {
+    // Priority verification: `.js` import swaps try `.ts` before `.tsx` and `.jsx`.
+    let _orch = make_orchestrator();
+    let imp = make_typescript_import("packages/ui/entry.ts", "./foo.js");
+    let files: HashSet<&str> = build_file_set(&[
+        "packages/ui/entry.ts",
+        "packages/ui/foo.ts",
+        "packages/ui/foo.tsx",
+    ]);
+    let stem_index = build_stem_index(&[
+        "packages/ui/entry.ts",
+        "packages/ui/foo.ts",
+        "packages/ui/foo.tsx",
+    ]);
+    let root = PathBuf::from(".");
+    let result = resolve_import_target(&imp, "packages/ui/entry.ts", &root, &files, &stem_index);
+    assert_eq!(
+        result,
+        Some("packages/ui/foo.ts".to_string()),
+        ".js swap must prefer .ts over .tsx"
+    );
+}
+
+#[test]
+fn test_exact_file_match_takes_precedence_over_swap() {
+    // Suggestion 2: When both `./foo.js` and `./foo.ts` exist on disk and a module
+    // imports `./foo.js`, the exact match on `normalized` must take precedence.
+    let _orch = make_orchestrator();
+    let imp = make_typescript_import("packages/ui/entry.ts", "./foo.js");
+    let files: HashSet<&str> = build_file_set(&[
+        "packages/ui/entry.ts",
+        "packages/ui/foo.js",
+        "packages/ui/foo.ts",
+    ]);
+    let stem_index = build_stem_index(&[
+        "packages/ui/entry.ts",
+        "packages/ui/foo.js",
+        "packages/ui/foo.ts",
+    ]);
+    let root = PathBuf::from(".");
+    let result = resolve_import_target(&imp, "packages/ui/entry.ts", &root, &files, &stem_index);
+    assert_eq!(
+        result,
+        Some("packages/ui/foo.js".to_string()),
+        "exact match on ./foo.js must win over swapped .ts file"
+    );
+}
+
+#[test]
+fn test_non_js_ts_extensions_unaffected() {
+    let _orch = make_orchestrator();
+    // .rs import that does not exist on disk should return None (not swap to .py)
+    let imp_rs = ImportEntry {
+        source_file: PathBuf::from("crates/foo/src/lib.rs"),
+        raw_path: "./missing.rs".to_string(),
+        resolved_path: None,
+        import_type: ImportType::Mod,
+        language: Language::Rust,
+        is_dynamic: false,
+        is_resolved: false,
+        symbols: vec![],
+        is_reexport: false,
+        is_wildcard: false,
+        line: 0,
+    };
+    let files_rs: HashSet<&str> =
+        build_file_set(&["crates/foo/src/lib.rs", "crates/foo/src/other.py"]);
+    let stem_rs = build_stem_index(&["crates/foo/src/lib.rs", "crates/foo/src/other.py"]);
+    let root = PathBuf::from(".");
+    let res_rs =
+        resolve_import_target(&imp_rs, "crates/foo/src/lib.rs", &root, &files_rs, &stem_rs);
+    assert!(
+        res_rs.is_none(),
+        ".rs imports must not swap to other extensions"
+    );
+
+    // .py import that does not exist on disk should return None
+    let imp_py = make_python_import("./missing.py", None);
+    let files_py: HashSet<&str> = build_file_set(&["modules/foo/test.py", "modules/foo/other.rs"]);
+    let stem_py = build_stem_index(&["modules/foo/test.py", "modules/foo/other.rs"]);
+    let res_py = resolve_import_target(&imp_py, "modules/foo/test.py", &root, &files_py, &stem_py);
+    assert!(
+        res_py.is_none(),
+        ".py imports must not swap to other extensions"
+    );
+}
+
+#[test]
+fn test_dts_declaration_import_does_not_swap() {
+    // Bug 4: `.d.ts` declaration file imports must not be swapped to `.d.tsx`, `.d.js`, etc.
+    let _orch = make_orchestrator();
+    let imp = make_typescript_import("src/main.ts", "./types.d.ts");
+    let files: HashSet<&str> =
+        build_file_set(&["src/main.ts", "src/types.d.tsx", "src/types.d.js"]);
+    let stem_index = build_stem_index(&["src/main.ts", "src/types.d.tsx", "src/types.d.js"]);
+    let root = PathBuf::from(".");
+    let result = resolve_import_target(&imp, "src/main.ts", &root, &files, &stem_index);
+    assert!(
+        result.is_none(),
+        ".d.ts imports must not be swapped to other extensions"
+    );
+}
+
+#[test]
+fn test_directory_with_dot_in_name_still_gets_extension_added() {
+    // Regression: `normalized.contains('.')` was true for `./lib.v2/foo` due to the dot
+    // in `lib.v2`, skipping extension addition. Path::extension().is_none() returns true
+    // for the final segment `foo`.
+    let _orch = make_orchestrator();
+    let imp = make_typescript_import("packages/client/src/index.ts", "./lib.v2/foo");
+    let files: HashSet<&str> = build_file_set(&[
+        "packages/client/src/index.ts",
+        "packages/client/src/lib.v2/foo.ts",
+    ]);
+    let stem_index = build_stem_index(&[
+        "packages/client/src/index.ts",
+        "packages/client/src/lib.v2/foo.ts",
+    ]);
+    let root = PathBuf::from(".");
+    let result = resolve_import_target(
+        &imp,
+        "packages/client/src/index.ts",
+        &root,
+        &files,
+        &stem_index,
+    );
+    assert_eq!(
+        result,
+        Some("packages/client/src/lib.v2/foo.ts".to_string()),
+        "directory with dot in name must still receive extension addition"
+    );
+}
+
+#[test]
+fn test_dotted_directory_with_js_extension_swap() {
+    // Suggestion 3: Combined dotted directory + explicit `.js` extension swap.
+    let _orch = make_orchestrator();
+    let imp = make_typescript_import("packages/client/src/index.ts", "./lib.v2/container.js");
+    let files: HashSet<&str> = build_file_set(&[
+        "packages/client/src/index.ts",
+        "packages/client/src/lib.v2/container.ts",
+    ]);
+    let stem_index = build_stem_index(&[
+        "packages/client/src/index.ts",
+        "packages/client/src/lib.v2/container.ts",
+    ]);
+    let root = PathBuf::from(".");
+    let result = resolve_import_target(
+        &imp,
+        "packages/client/src/index.ts",
+        &root,
+        &files,
+        &stem_index,
+    );
+    assert_eq!(
+        result,
+        Some("packages/client/src/lib.v2/container.ts".to_string()),
+        "dotted directory path with .js specifier must swap to .ts"
+    );
+}
+
+#[test]
+fn test_root_level_extension_swap_resolves() {
+    // Suggestion 3: Root-level (`src_dir == ""`) extension swapping: `main.ts` imports `./container.js`
+    // resolving to root `container.ts`.
+    let _orch = make_orchestrator();
+    let imp = make_typescript_import("main.ts", "./container.js");
+    let files: HashSet<&str> = build_file_set(&["main.ts", "container.ts"]);
+    let stem_index = build_stem_index(&["main.ts", "container.ts"]);
+    let root = PathBuf::from(".");
+    let result = resolve_import_target(&imp, "main.ts", &root, &files, &stem_index);
+    assert_eq!(
+        result,
+        Some("container.ts".to_string()),
+        "root-level .js import must swap to .ts on disk"
+    );
+}
+
+#[test]
+fn test_unresolvable_relative_import_returns_none() {
+    let _orch = make_orchestrator();
+    let imp = make_typescript_import("packages/client/src/index.ts", "./missing_file.js");
+    let files: HashSet<&str> = build_file_set(&["packages/client/src/index.ts"]);
+    let stem_index = build_stem_index(&["packages/client/src/index.ts"]);
+    let root = PathBuf::from(".");
+    let result = resolve_import_target(
+        &imp,
+        "packages/client/src/index.ts",
+        &root,
+        &files,
+        &stem_index,
+    );
+    assert!(
+        result.is_none(),
+        "unresolvable relative import must return None"
+    );
+}
+
+#[test]
+fn e2e_js_specifier_import_graph_reaches_target_files() {
+    // End-to-end: TypeScript ESM project where modules import each other using
+    // explicit `.js` specifiers pointing to `.ts` files on disk.
+    let tmp = tempfile::TempDir::new().unwrap();
+    let root = tmp.path();
+    let packages_dir = root.join("packages");
+    let client_src = packages_dir.join("client").join("src");
+    std::fs::create_dir_all(&client_src).unwrap();
+
+    let entry_rel = "packages/root_web_main_entry.ts";
+    let container_rel = "packages/root_web_container.ts";
+    let client_container_rel = "packages/client/src/root_client_container.ts";
+    let orchestrator_rel = "packages/client/src/agent_client_orchestrator.ts";
+
+    std::fs::write(
+        root.join(entry_rel),
+        "import { RootWebContainer } from './root_web_container.js';\nnew RootWebContainer().run();\n",
+    )
+    .unwrap();
+    std::fs::write(
+        root.join(container_rel),
+        "import { RootClientContainer } from './client/src/root_client_container.js';\nexport class RootWebContainer { run() { new RootClientContainer().start(); } }\n",
+    )
+    .unwrap();
+    std::fs::write(
+        root.join(client_container_rel),
+        "import { AgentClientOrchestrator } from './agent_client_orchestrator.js';\nexport class RootClientContainer { start() { new AgentClientOrchestrator().execute(); } }\n",
+    )
+    .unwrap();
+    std::fs::write(
+        root.join(orchestrator_rel),
+        "export class AgentClientOrchestrator { execute() {} }\n",
+    )
+    .unwrap();
+
+    let orch = make_orchestrator();
+    let context = orch
+        .execute(FilesystemRequest::build_orphan_graph_context(root, &[]))
+        .into_graph_context();
+
+    let graph = &context.import_graph.mapping;
+    assert!(
+        graph
+            .get(entry_rel)
+            .map(|v| v.contains(&container_rel.to_string()))
+            .unwrap_or(false),
+        "entry → root_web_container edge missing: {:?}",
+        graph
+    );
+    assert!(
+        graph
+            .get(container_rel)
+            .map(|v| v.contains(&client_container_rel.to_string()))
+            .unwrap_or(false),
+        "root_web_container → root_client_container edge missing: {:?}",
+        graph
+    );
+    assert!(
+        graph
+            .get(client_container_rel)
+            .map(|v| v.contains(&orchestrator_rel.to_string()))
+            .unwrap_or(false),
+        "root_client_container → agent_client_orchestrator edge missing: {:?}",
+        graph
     );
 }
