@@ -420,20 +420,36 @@ pub fn resolve_import_target(
             };
             let candidate = base.join(&rel).to_string_lossy().to_string();
             let normalized = normalize_relative_candidate(&candidate);
+            let probe = |stem: &str, exts: &[&str]| {
+                exts.iter().find_map(|ext| {
+                    let candidate = format!("{}{}", stem, ext);
+                    all_files_set
+                        .contains(candidate.as_str())
+                        .then_some(candidate)
+                })
+            };
+            let normalized_path = Path::new(&normalized);
             if all_files_set.contains(normalized.as_str()) {
                 Some(normalized)
-            } else if !normalized.contains('.') {
-                let exts = [".ts", ".js", ".tsx", ".jsx", ".rs", ".py"];
-                exts.iter().find_map(|ext| {
-                    let c = format!("{}{}", normalized, ext);
-                    if all_files_set.contains(c.as_str()) {
-                        Some(c)
-                    } else {
-                        None
-                    }
-                })
+            } else if normalized_path.extension().is_none() {
+                probe(&normalized, &[".ts", ".js", ".tsx", ".jsx", ".rs", ".py"])
             } else {
-                None
+                let ext_str = normalized_path.extension().and_then(|ext| ext.to_str());
+                let stem = ext_str
+                    .map(|ext| &normalized[..normalized.len() - ext.len() - 1])
+                    .unwrap_or(&normalized);
+                let swap_candidates: &[&str] = match ext_str {
+                    Some("js") => &[".ts", ".tsx", ".jsx"],
+                    Some("jsx") => &[".tsx", ".ts", ".js"],
+                    Some("ts") if !stem.ends_with(".d") => &[".tsx", ".js", ".jsx"],
+                    Some("tsx") => &[".ts", ".jsx", ".js"],
+                    Some("mjs") => &[".mts"],
+                    Some("mts") => &[".mjs"],
+                    Some("cjs") => &[".cts"],
+                    Some("cts") => &[".cjs"],
+                    _ => &[],
+                };
+                probe(stem, swap_candidates)
             }
         } else {
             crate::utility_import_resolution::resolve_by_language(
