@@ -166,9 +166,30 @@ fn count_protocol_decls_in_text(path: &Path, text: &str) -> usize {
             return 0;
         }
         count_python_protocol_classes(text)
+    } else if ext == Some("ts") || ext == Some("tsx") {
+        count_typescript_protocol_interfaces(text)
     } else {
         count_rust_protocol_traits(text)
     }
+}
+
+/// Count TypeScript `export interface I*Protocol` capability seams.
+///
+/// Matched on the interface name alone — `I*Aggregate` interfaces are
+/// composite entry points rather than capability seams and are excluded.
+fn count_typescript_protocol_interfaces(text: &str) -> usize {
+    text.lines()
+        .filter_map(|line| {
+            let trimmed = line.trim();
+            let rest = trimmed.strip_prefix("export interface ")?;
+            let name: String = rest
+                .chars()
+                .take_while(|c| c.is_alphanumeric() || *c == '_')
+                .collect();
+            (name.starts_with('I') && name.ends_with("Protocol") && !name.contains("Aggregate"))
+                .then_some(())
+        })
+        .count()
 }
 
 /// Count `pub trait I*Protocol` capability seams in Rust source text.
@@ -225,7 +246,37 @@ fn is_protocol_decl(line: &str) -> bool {
 pub fn contract_method_names(module_dir: &Path) -> Option<HashSet<String>> {
     let mut names = HashSet::new();
     walk_source_files(module_dir, &mut |path, text| {
-        let is_python = path.extension().and_then(|e| e.to_str()) == Some("py");
+        let ext = path.extension().and_then(|e| e.to_str());
+        let is_python = ext == Some("py");
+        let is_ts = ext == Some("ts") || ext == Some("tsx");
+        if is_ts {
+            let mut in_protocol = false;
+            for line in text.lines() {
+                let trimmed = line.trim();
+                if trimmed.starts_with("export interface I") && trimmed.contains("Protocol") {
+                    in_protocol = true;
+                    continue;
+                }
+                if in_protocol {
+                    if trimmed.starts_with('}') {
+                        in_protocol = false;
+                        continue;
+                    }
+                    let after_async = trimmed.strip_prefix("async ").unwrap_or(trimmed);
+                    let Some((ident, _)) = after_async.split_once('(') else {
+                        continue;
+                    };
+                    let name = ident.trim();
+                    if !name.is_empty()
+                        && name.chars().all(|c| c.is_alphanumeric() || c == '_')
+                        && !name.starts_with(|c: char| c.is_ascii_digit())
+                    {
+                        names.insert(name.to_string());
+                    }
+                }
+            }
+            return;
+        }
         for line in text.lines() {
             let trimmed = line.trim();
             if is_python {
@@ -287,7 +338,7 @@ fn walk_source_files(dir: &Path, visit: &mut dyn FnMut(&Path, &str)) -> Option<(
             }
         } else if matches!(
             path.extension().and_then(|e| e.to_str()),
-            Some("rs") | Some("py")
+            Some("rs") | Some("py") | Some("ts") | Some("tsx")
         ) {
             let Ok(text) = fs::read_to_string(&path) else {
                 continue;
@@ -391,5 +442,103 @@ mod tests {
                      pass\n";
         let count = count_python_protocol_classes(text);
         assert_eq!(count, 1, "must count only ISystemProtocol");
+    }
+
+    #[test]
+    fn count_typescript_protocol_interfaces_basic() {
+        let text = "export interface IClientTransportProtocol {\n\
+                     send(data: string): Promise<void>;\n\
+                     }\n\
+                     export interface IClientInspectProtocol {\n\
+                     inspect(): object;\n\
+                     }\n\
+                     export interface IClientRenderProtocol {\n\
+                     render(): void;\n\
+                     }\n\
+                     export interface IClientStreamProtocol {\n\
+                     stream(): void;\n\
+                     }\n\
+                     export interface IClientSystemProtocol {\n\
+                     system(): void;\n\
+                     }\n";
+        let count = count_typescript_protocol_interfaces(text);
+        assert_eq!(count, 5, "must count all 5 TypeScript protocol interfaces");
+    }
+
+    #[test]
+    fn count_typescript_protocol_interfaces_excludes_aggregate() {
+        let text = "export interface IClientAggregate {\n\
+                     transport: IClientTransportProtocol;\n\
+                     }\n\
+                     export interface IClientTransportProtocol {\n\
+                     send(): void;\n\
+                     }\n";
+        let count = count_typescript_protocol_interfaces(text);
+        assert_eq!(count, 1, "must exclude IClientAggregate");
+    }
+
+    #[test]
+    fn count_typescript_protocol_interfaces_excludes_non_protocol() {
+        let text = "export interface ClientConfig {\n\
+                     timeout: number;\n\
+                     }\n\
+                     interface IPrivateProtocol {\n\
+                     hidden(): void;\n\
+                     }\n\
+                     export interface ITransportProtocol {\n\
+                     connect(): void;\n\
+                     }\n";
+        let count = count_typescript_protocol_interfaces(text);
+        assert_eq!(
+            count, 1,
+            "must exclude non-exported interfaces and non-protocol names"
+        );
+    }
+
+    #[test]
+    fn count_typescript_protocol_interfaces_generics_and_extends() {
+        let text = "export interface IParserProtocol<T> extends IBaseProtocol {\n\
+                     parse(input: string): T;\n\
+                     }\n\
+                     export interface ISerializerProtocol<T, R> {\n\
+                     serialize(val: T): R;\n\
+                     }\n";
+        let count = count_typescript_protocol_interfaces(text);
+        assert_eq!(count, 2, "must support generics and extends clauses");
+    }
+
+    #[test]
+    fn contract_method_names_finds_typescript_interface_methods() {
+        let dir = std::env::temp_dir().join("lint_arwaky_ts_methods_test");
+        if std::fs::create_dir_all(&dir).is_err() {
+            return;
+        }
+        let file_path = dir.join("contract_client_protocol.ts");
+        let mut f = match std::fs::File::create(&file_path) {
+            Ok(f) => f,
+            Err(_) => return,
+        };
+        let src = "export interface IClientTransportProtocol {\n\
+                   send(data: string): Promise<void>;\n\
+                   receive(): string;\n\
+                   }\n\
+                   export interface IClientAggregate {\n\
+                   aggregateMethod(): void;\n\
+                   }\n";
+        if f.write_all(src.as_bytes()).is_err() {
+            return;
+        }
+        drop(f);
+        let result = contract_method_names(&dir);
+        let _ = std::fs::remove_dir_all(&dir);
+        let Some(names) = result else { return };
+        assert!(
+            names.contains("send"),
+            "TypeScript interface method 'send' must be found"
+        );
+        assert!(
+            names.contains("receive"),
+            "TypeScript interface method 'receive' must be found"
+        );
     }
 }

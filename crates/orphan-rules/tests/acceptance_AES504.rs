@@ -270,3 +270,111 @@ fn aes504_message_is_one_sentence_no_prefix() {
     assert!(result.message.ends_with('.'));
     assert!(result.message.chars().count() <= 72);
 }
+
+#[test]
+fn aes504_is_module_imported_typescript_relative_and_quotes() {
+    let mod_name = "contract_client_aggregate";
+
+    // Single quotes with relative paths
+    let single_rel = "import { foo } from './contract_client_aggregate';";
+    assert!(UtilityOrphanAnalyzer::is_module_imported(
+        "consumer.ts",
+        single_rel,
+        mod_name
+    ));
+
+    let single_rel_parent = "import { foo } from '../client/contract_client_aggregate';";
+    assert!(UtilityOrphanAnalyzer::is_module_imported(
+        "consumer.ts",
+        single_rel_parent,
+        mod_name
+    ));
+
+    // Double quotes with relative paths
+    let double_rel = "import { foo } from \"./contract_client_aggregate\";";
+    assert!(UtilityOrphanAnalyzer::is_module_imported(
+        "consumer.ts",
+        double_rel,
+        mod_name
+    ));
+
+    let double_rel_parent = "import type { Foo } from \"../../client/contract_client_aggregate\";";
+    assert!(UtilityOrphanAnalyzer::is_module_imported(
+        "consumer.ts",
+        double_rel_parent,
+        mod_name
+    ));
+
+    // Backticks with relative paths
+    let backtick_rel = "import { foo } from `./contract_client_aggregate`;";
+    assert!(UtilityOrphanAnalyzer::is_module_imported(
+        "consumer.ts",
+        backtick_rel,
+        mod_name
+    ));
+
+    // Bare imports
+    let bare_single = "import { foo } from 'contract_client_aggregate';";
+    assert!(UtilityOrphanAnalyzer::is_module_imported(
+        "consumer.ts",
+        bare_single,
+        mod_name
+    ));
+
+    // Rust use and Python from
+    let rust_use = "use contract_client_aggregate::foo;";
+    assert!(UtilityOrphanAnalyzer::is_module_imported(
+        "consumer.rs",
+        rust_use,
+        mod_name
+    ));
+
+    let py_from = "from contract_client_aggregate import foo";
+    assert!(UtilityOrphanAnalyzer::is_module_imported(
+        "consumer.py",
+        py_from,
+        mod_name
+    ));
+
+    // Negative cases: unrelated module
+    let unrelated = "import { foo } from './contract_other_aggregate';";
+    assert!(!UtilityOrphanAnalyzer::is_module_imported(
+        "consumer.ts",
+        unrelated,
+        mod_name
+    ));
+}
+
+#[test]
+fn aes504_utility_rescued_by_index_ts_barrel() {
+    let analyzer = utility_analyzer();
+    let fp =
+        FilePath::new("packages/shared/src/utils/utility_string_helper.ts".to_string()).unwrap();
+    let root = FilePath::new(".".to_string()).unwrap();
+    let mut content_map = HashMap::new();
+    content_map.insert(
+        fp.value().to_string(),
+        "export function helper(): string { return 'ok'; }\n".to_string(),
+    );
+    let all_files = vec![fp.value().to_string()];
+
+    // index.ts in same directory is imported by a surface file
+    let mut inbound = HashMap::new();
+    inbound.insert(
+        "packages/shared/src/utils/index.ts".to_string(),
+        vec!["packages/cli/src/surface_main.ts".to_string()],
+    );
+
+    let result = analyzer.is_utility_orphan(
+        &fp,
+        &root,
+        &all_files,
+        &InboundLinkMap::new(inbound),
+        &content_map,
+        &reachable_for(&fp),
+    );
+    assert!(
+        !result.is_orphan,
+        "utility reachable and re-exported by index.ts with consumer importer should NOT be orphan"
+    );
+}
