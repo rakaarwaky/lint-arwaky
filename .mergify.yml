@@ -34,10 +34,10 @@ defaults:
     # Update the PR with latest main before running CI on the integration
     # commit. `merge` rather than `rebase`: the GitHub ruleset sets
     # strict_required_status_checks_policy, which rejects a force-push unless
-    # Mergify sets an update_bot_account. The merge commit is squashed away by
-    # merge_method below, so main's history stays linear.
+    # Mergify sets an update_bot_account. The merge commit is kept in history
+    # as the PR boundary.
     update_method: merge
-    merge_method: squash
+    merge_method: merge
     # The queue re-runs CI on the integration commit with cold caches, so the
     # numbers that matter are the queue's, not a warm local run's: Tests takes
     # ~6m30s and Self-Lint-AES ~1m30s there. Both are merge_conditions, so the
