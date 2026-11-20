@@ -2,9 +2,11 @@ name: CI
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main]
   pull_request:
-    branches: [main, develop]
+    branches: [main]
+  schedule:
+    - cron: '0 2 * * *'
 
 # Cancel stale runs on the same ref so a new push to a PR does not leave an
 # old run hogging runners. A merge-queue run on a synthetic branch is keyed
@@ -340,6 +342,7 @@ jobs:
   # output (summary printed in the job log). See TEST.md §3.5 for thresholds.
   coverage:
     name: Coverage
+    if: github.event_name == 'push' || github.event_name == 'schedule'
     runs-on: ubuntu-latest
     permissions:
       contents: read
