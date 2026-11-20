@@ -69,16 +69,23 @@ merge_queue:
 
 merge_protections_settings:
   # Auto-queue every non-draft, conflict-free PR targeting main.
+  # Security: only PRs authored by rakaarwaky are allowed.
   auto_merge_conditions:
     - base = main
     - -draft
     - -conflict
+    - author = rakaarwaky
   # Post a status comment on each PR so you always know where it sits.
   post_comment: true
   reporting_method: check-runs
 
 queue_rules:
   - name: default
+    queue_conditions:
+      - base = main
+      - -draft
+      - -conflict
+      - author = rakaarwaky
 
 priority_rules:
   - name: hotfixes-first
