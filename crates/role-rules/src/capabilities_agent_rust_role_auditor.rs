@@ -316,11 +316,10 @@ impl AgentRustRoleAuditor {
             shared_filesystem::taxonomy_filesystem_vo::Language::Rust,
         );
         // A feature whose shared module declares exactly one protocol is a
-        // single-subsystem feature — but only when the agent actually injects
-        // one seam. Four seams of the same protocol type are still
-        // coordinate-able distinct subsystems, so the skip requires exactly
-        // one injected seam.
-        if feature_protocol_count == 1 && injected == 1 {
+        // single-subsystem feature. Forcing a second seam adds one that does
+        // no distinct job, so skip whenever there is exactly one protocol,
+        // regardless of how many seams the agent injects.
+        if feature_protocol_count == 1 {
             return;
         }
         if injected < 2 {

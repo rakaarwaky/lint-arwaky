@@ -351,6 +351,27 @@ impl IRunnerAggregate for Orchestrator {
     assert!(v.is_empty(), "single-subsystem feature should be skipped");
 }
 
+#[test]
+fn p14_single_protocol_injected_zero_no_violation() {
+    // feature_protocol_count == 1 but injected == 0: single protocol, no
+    // injected seams. Single-protocol features are single-subsystem by
+    // definition, so this must not fire AES405.
+    let content = "\
+pub struct Orchestrator {}
+
+impl IRunnerAggregate for Orchestrator {
+    fn execute(&self) {}
+}
+";
+    let f = make_file("src/agent_thing.rs", content);
+    let mut v = Vec::new();
+    auditor().check_agent_subsystem_count(&f, 1, &mut v);
+    assert!(
+        v.is_empty(),
+        "single protocol with zero injected seams should be skipped"
+    );
+}
+
 // ── P7 computation ──
 
 #[test]
