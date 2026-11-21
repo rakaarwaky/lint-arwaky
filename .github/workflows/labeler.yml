@@ -1,26 +1,43 @@
-name: PR Labeler
+# .github/workflows/labeler.yml — apply .github/labeler.yml rules on PRs
+#
+# Runs on every pull_request_target (opened / synchronized / reopened /
+# labeled / unlabeled) and applies the labeler.yml classification.
+#
+# Before the labeler runs, this workflow ensures all required labels exist
+# on the repo (missing ones are created). The actions/labeler step silently
+# skips labels that do not exist, so auto-creation keeps it working.
 
-# Applies labels to PRs based on changed files (see .github/labeler.yml).
-# Also syncs labels when a PR is updated.
+name: Apply labeler
 
 on:
-  # pull_request_target gives the token write access to label PRs opened
-  # from forks. This workflow only reads changed-file metadata (no checkout,
-  # no code execution), so the privileged event is safe here.
   pull_request_target:
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize, reopened, labeled, unlabeled]
 
-# Reads repository metadata and writes PR labels only.
 permissions:
   contents: read
   pull-requests: write
+  # gh label create needs admin:write on labels
+  issues: write
 
 jobs:
-  label:
-    name: Label PR
+  labeler:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/labeler@bf12e9b00b37c5c0ca2b87b79b2daf7891dbda13 # v7
+      - uses: actions/checkout@v4
+
+      - name: Ensure required labels exist
+        # Create any skip labels that are missing. gh label create --force
+        # is idempotent; it creates the label only if absent.
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          for lbl in release setup ci configuration test chore; do
+            gh label create "$lbl" --force --color "e6e6e6" \
+              --description "Risa release-skip label — $lbl" || true
+          done
+
+      - name: Apply labeler.yml
+        uses: actions/labeler@v5
         with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          sync-labels: true
+          dot: true
+          repository-token: ${{ secrets.GITHUB_TOKEN }}
