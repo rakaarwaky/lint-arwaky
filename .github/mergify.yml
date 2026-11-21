@@ -20,9 +20,9 @@ defaults:
     merge_method: merge
     checks_timeout: 15min
     merge_conditions:
-      - check-success = lint
-      - check-success = clippy
-      - check-success = test
+      - check-success = Lint
+      - check-success = Clippy
+      - check-success = Tests
 
 queue_rules:
   - name: default
@@ -122,9 +122,9 @@ pull_request_rules:
   # Auto-merge when CI passes
   - name: auto-merge-queue
     conditions:
-      - check-success = lint
-      - check-success = clippy
-      - check-success = test
+      - check-success = Lint
+      - check-success = Clippy
+      - check-success = Tests
       - -draft
       - -closed
       - author = rakaarwaky
