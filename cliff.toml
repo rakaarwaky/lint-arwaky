@@ -1,0 +1,23 @@
+[git]
+conventional_commits = true
+filter_unconventional = false
+
+commit_parsers = [
+  { message = "^chore\\(release\\):", skip = true },
+  { message = "^Merge ",              skip = true },
+  { message = "^feat",                group = "Added" },
+  { message = "^fix",                group = "Fixed" },
+  { message = "^perf",               group = "Changed" },
+  { message = "^(docs|test|refactor|chore|ci)", skip = true },
+  { message = ".*",                  group = "Other" },
+]
+
+[changelog]
+prepend = true
+trim = true
+header = """
+# Changelog
+
+This changelog shows the current release in full plus a summary of the previous release.
+Older releases are available as git tags.
+"""

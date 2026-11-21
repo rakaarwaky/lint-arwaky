@@ -247,43 +247,17 @@ if ! $NO_CHANGELOG; then
     die "$CHANGELOG missing — cannot insert release entry"
   fi
 
-  LAST_TAG="$(latest_tag)"
-  if [[ -n "$LAST_TAG" ]]; then
-    RANGE="${LAST_TAG}..HEAD"
-  else
-    RANGE="HEAD"
-    warn "No v* tag found — changelog covers all history"
+  # git-cliff is the mandatory changelog source (R8). It regenerates the
+  # release entry from conventional commits since the last v* tag, grouped by
+  # Added / Fixed / Changed / Other per cliff.toml.
+  if ! command -v git-cliff &>/dev/null; then
+    die "git-cliff not found — install it before running bump.sh (R8)"
   fi
+  git-cliff --latest
+  pass "Updated $CHANGELOG via git-cliff (entry for $CALCULATED_VERSION)"
 
-  # Dedupe: a squash-merge leaves the subject once as a PR-merge commit and
-  # once as the original commit; auto-release.yml has the same quirk.
-  DATE="$(date +%Y-%m-%d)"
-  FEATS="$(git log "$RANGE" --pretty=format:'- %s' --grep='^feat(\([^)]+\))?:' -E 2>/dev/null | head -20 | awk '!seen[$0]++' || true)"
-  FIXES="$(git log "$RANGE" --pretty=format:'- %s' --grep='^fix(\([^)]+\))?:' -E 2>/dev/null | head -20 | awk '!seen[$0]++' || true)"
-  CHORES="$(git log "$RANGE" --pretty=format:'- %s' --grep='^(chore|refactor|docs|test|perf)(\([^)]+\))?:' -E 2>/dev/null | head -20 | awk '!seen[$0]++' || true)"
-
-  python3 - "$CHANGELOG" "$CALCULATED_VERSION" "$DATE" "$FEATS" "$FIXES" "$CHORES" <<'PYEOF'
-import sys
-changelog, version, date = sys.argv[1], sys.argv[2], sys.argv[3]
-feats, fixes, chores = sys.argv[4], sys.argv[5], sys.argv[6]
-sections = []
-if feats.strip():
-    sections.append("### Features\n\n" + feats.strip())
-if fixes.strip():
-    sections.append("### Bug Fixes\n\n" + fixes.strip())
-if chores.strip():
-    sections.append("### Maintenance\n\n" + chores.strip())
-if not sections:
-    sections.append("- No significant changes")
-body = "\n\n".join(sections)
-entry = "## %s (%s)\n\n%s\n\n" % (version, date, body)
-with open(changelog) as f:
-    content = f.read()
-first_nl = content.index('\n') + 1
-with open(changelog, 'w') as f:
-    f.write(content[:first_nl] + entry + content[first_nl:])
-PYEOF
-  pass "Updated $CHANGELOG (entry: ## $CALCULATED_VERSION ($DATE))"
+  # Roll the changelog to the newest 2 releases (R13).
+  bash "$SCRIPT_DIR/changelog.sh"
 fi
 
 # 6. Sanity — the workspace still resolves with the new version. If the
