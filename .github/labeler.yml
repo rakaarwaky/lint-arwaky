@@ -1,62 +1,118 @@
-# GitHub Labeler configuration (v7 format).
-# Labels are applied to PRs based on which files they change.
+# .github/labeler.yml — classify PRs by changed paths so Risa can skip
+# PRs that carry no user-facing change.
+#
+# Risa reads these labels on every pr_merged event.
+# Skip rule: if a merged PR has ANY of these labels AND no files changed in
+# crates/**, modules/**, or packages/**, Risa ends with NO_REPLY.
+# If a PR touches source files in any of those trees, Risa processes it
+# regardless of labels.
+#
+# Skip labels: release, setup, ci, configuration, test, chore
+#
+# Shared AES architecture (both repos):
+#   crates/       — Rust source
+#   packages/     — TypeScript source
+#   modules/      — Python source
+#   fixtures/     — test data
+#   scripts/      — helper tooling
+#   docs/         — documentation
+#
+# Language-specific config:
+#   Rust:      Cargo.toml, Cargo.lock, rust-toolchain.toml, clippy.toml, rustfmt.toml, deny.toml
+#   Python:    pyproject.toml, uv.lock, ruff.toml, mypy.ini, pytest.ini, tox.ini
+#   TypeScript: package.json, package-lock.json, tsconfig*.json, knip.json
 
-# Rust
-rust:
-  - changed-files:
-      - any-glob-to-any-file: crates/**/*.rs
-      - any-glob-to-any-file: crates/**/Cargo.toml
-      - any-glob-to-any-file: crates/**/Cargo.lock
+# ── release ──────────────────────────────────────────────────────────────────
+# Risa's own prep PRs. The label is applied manually by Risa before merge;
+# this rule is a catch-all to re-apply it if stripped.
+release:
+  - any: ['**']
+    if: "contains(github.event.pull_request.labels.*.name, 'release')"
 
-# Python
-python:
-  - changed-files:
-      - any-glob-to-any-file: modules/**/*.py
-      - any-glob-to-any-file: modules/**/pyproject.toml
-      - any-glob-to-any-file: modules/**/requirements.txt
+# ── setup ────────────────────────────────────────────────────────────────────
+# Workflow, Mergify, labeler, action, and automation changes.
+setup:
+  - any:
+      - '.github/**'
+      - '.mergify.yml'
+      - '.mergify.yaml'
+      - 'labeler.yml'
+      - '.github/labeler.yml'
 
-# TypeScript / JavaScript
-typescript:
-  - changed-files:
-      - any-glob-to-any-file: packages/**/*.ts
-      - any-glob-to-any-file: packages/**/*.tsx
-      - any-glob-to-any-file: packages/**/package.json
-
-# CI / Workflows
+# ── ci ───────────────────────────────────────────────────────────────────────
+# CI pipeline files only.
 ci:
-  - changed-files:
-      - any-glob-to-any-file: .github/workflows/**
-      - any-glob-to-any-file: .github/dependabot.yml
+  - any:
+      - '.github/workflows/**'
+      - '.github/actions/**'
+      - 'scripts/ci.sh'
+      - '.codecov.yml'
+      - 'codecov.yml'
 
-# Documentation
-documentation:
-  - changed-files:
-      - any-glob-to-any-file: "**/*.md"
-
-# Configuration
+# ── configuration ────────────────────────────────────────────────────────────
+# Build, tool, and package configuration — no runtime behaviour change.
+# Lockfiles (Cargo.lock, package-lock.json, uv.lock) are intentionally
+# EXCLUDED: dependency updates DO affect the shipped build, so dep PRs
+# must NOT be skipped. Only top-level manifests and tool configs here.
 configuration:
-  - changed-files:
-      - any-glob-to-any-file: "*.yaml"
-      - any-glob-to-any-file: "*.yml"
-      - any-glob-to-any-file: lint_arwaky.config.yaml
+  - any:
+      # Rust
+      - 'Cargo.toml'
+      - 'rust-toolchain.toml'
+      - 'clippy.toml'
+      - 'rustfmt.toml'
+      - 'deny.toml'
+      # Python
+      - 'pyproject.toml'
+      - 'ruff.toml'
+      - '.ruff.toml'
+      - 'mypy.ini'
+      - 'pytest.ini'
+      - 'tox.ini'
+      - 'setup.cfg'
+      # TypeScript
+      - 'package.json'
+      - 'tsconfig*.json'
+      - 'knip.json'
+      # Changelog infra
+      - 'cliff.toml'
+      - 'scripts/bump.sh'
+      - 'scripts/changelog.sh'
 
-# Dependencies
-dependencies:
-  - changed-files:
-      - any-glob-to-any-file: "**/Cargo.toml"
-      - any-glob-to-any-file: "**/Cargo.lock"
-      - any-glob-to-any-file: "**/package.json"
-      - any-glob-to-any-file: "**/requirements.txt"
+# ── test ─────────────────────────────────────────────────────────────────────
+# Test-only changes — no user-facing behaviour.
+test:
+  - any:
+      - 'crates/**/tests/**'
+      - 'crates/**/test/**'
+      - 'modules/**/tests/**'
+      - 'modules/**/test/**'
+      - 'packages/**/tests/**'
+      - 'packages/**/test/**'
+      - 'tests/**'
+      - 'test_*.py'
+      - '*_test.py'
+      - '*.test.ts'
+      - '*.spec.ts'
+      - 'conftest.py'
+      - '**/conftest.py'
+      - 'fixtures/**'
+      - '**/fixtures/**'
 
-# Tests
-tests:
-  - changed-files:
-      - any-glob-to-any-file: crates/**/tests/**
-      - any-glob-to-any-file: modules/**/tests/**
-      - any-glob-to-any-file: packages/**/tests/**
-
-# Fixtures (test workspaces)
-fixtures:
-  - changed-files:
-      - any-glob-to-any-file: workspaces-bad/**
-      - any-glob-to-any-file: workspaces-good/**
+# ── chore ────────────────────────────────────────────────────────────────────
+# Maintenance: docs, version stamps, license, deps, packaging metadata.
+# A PR that touches ONLY files in this list gets `chore`.
+# A PR that touches source (crates/, modules/, packages/) does NOT get
+# `chore` — it gets no label and Risa processes it.
+# If a PR touches both docs AND source, `chore` is applied (docs matched)
+# but Risa should verify no source files changed before skipping.
+chore:
+  - any:
+      - 'CHANGELOG.md'
+      - 'docs/**'
+      - '**/*.md'
+      - 'LICENSE'
+      - '.gitignore'
+      - '.editorconfig'
+      - 'dependabot.yml'
+      - '.github/dependabot.yml'
