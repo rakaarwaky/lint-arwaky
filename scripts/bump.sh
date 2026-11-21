@@ -253,7 +253,10 @@ if ! $NO_CHANGELOG; then
   if ! command -v git-cliff &>/dev/null; then
     die "git-cliff not found — install it before running bump.sh (R8)"
   fi
-  git-cliff --latest
+  # --latest ignores the version just stamped and labels the entry as the
+  # next patch (for example 3.17.1 while Cargo.toml is 3.18.0). Pass the
+  # stamped version so the changelog heading matches the release.
+  git-cliff --unreleased --tag "v${CALCULATED_VERSION}" --prepend "$CHANGELOG"
   pass "Updated $CHANGELOG via git-cliff (entry for $CALCULATED_VERSION)"
 
   # Roll the changelog to the newest 2 releases (R13).
