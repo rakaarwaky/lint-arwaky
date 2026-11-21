@@ -89,17 +89,11 @@ jobs:
         # nextest cannot substitute for `cargo test --doc`.
         run: cargo test --doc --workspace
 
-  # Self-Lint was split in two. The AES gate (`self-lint-aes`) is the only
-  # part that needs to block merges: it builds the CLI and runs the AES
-  # scanner, which catches architectural regressions introduced by the PR.
-  # The external-tool half (`self-lint-external`) installs ruff/mypy/bandit
-  # and eslint/prettier/tsc, then runs gitleaks. Those installs are slow
-  # and network-bound; they run in parallel with the queue and are
-  # non-blocking (`continue-on-error: true`), so a flaky pip/npm install
-  # does not dequeue an otherwise green PR. Failures still show up in the
-  # PR checks UI for follow-up.
-  self-lint-aes:
-    name: Self-Lint-AES
+  # Self-Lint (lint job). `lint-arwaky` lints itself using its own source code:
+  # build the CLI binary, then run the AES scanner against the workspace.
+  # This is the only self-lint check that blocks merges.
+  lint:
+    name: Lint
     runs-on: ubuntu-latest
     permissions:
       contents: read

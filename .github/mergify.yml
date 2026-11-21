@@ -1,0 +1,146 @@
+# Mergify configuration for rakaarwaky/lint-arwaky.
+# Docs: https://docs.mergify.com/
+#
+# Automatic queue model: every PR authored by rakaarwaky targeting `main` is
+# queued and merged automatically upon passing quality gates.
+#
+# Uses in-place checks (mode: serial, max_checks_retries: 0) so the queue
+# tests each PR on its own branch, compatible with the repository ruleset's
+# strict_required_status_checks_policy.
+
+merge_queue:
+  max_parallel_checks: 1
+  mode: serial
+  status_comments: outcomes
+  queue_controls_comment: true
+
+defaults:
+  queue_rule:
+    update_method: merge
+    merge_method: merge
+    checks_timeout: 15min
+    merge_conditions:
+      - check-success = Lint
+      - check-success = Clippy
+      - check-success = Tests
+
+queue_rules:
+  - name: default
+    queue_conditions:
+      - base = main
+      - author = rakaarwaky
+    merge_method: merge
+    batch_size: 1
+    max_checks_retries: 0
+
+merge_protections_settings:
+  auto_merge_conditions:
+    - base = main
+    - -draft
+    - -conflict
+    - author = rakaarwaky
+  post_comment: true
+  reporting_method: check-runs
+
+priority_rules:
+  - name: hotfixes-first
+    conditions:
+      - label = hotfix
+    priority: high
+    allow_checks_interruption: true
+  - name: refactors-last
+    conditions:
+      - label = refactor
+    priority: low
+
+pull_request_rules:
+  - name: keep-prs-up-to-date
+    conditions:
+      - base = main
+      - -draft
+      - -merged
+      - -closed
+      - -conflict
+    actions:
+      update: {}
+
+  - name: warn-on-conflicts
+    conditions:
+      - conflict
+      - -merged
+      - -closed
+    actions:
+      label:
+        add:
+          - conflict
+
+  - name: stale-cleanup
+    conditions:
+      - base = main
+      - -merged
+      - -closed
+      - -label = stale
+      - updated-at < 14 days ago
+      - created-at < 30 days ago
+    actions:
+      comment:
+        message: >
+          This PR has been open for 30 days with no commits for 14. If you're
+          still working on it, push a commit or leave a comment. Otherwise this
+          PR will auto-close in 7 days.
+      label:
+        add:
+          - stale
+
+  - name: close-abandoned-stale
+    conditions:
+      - base = main
+      - -merged
+      - -closed
+      - label = stale
+      - updated-at < 7 days ago
+    actions:
+      close:
+        message: 'Closed automatically — no activity for 7+ days after a stale warning.'
+      label:
+        remove:
+          - stale
+
+  - name: welcome-new-pr
+    conditions:
+      - base = main
+      - -merged
+      - -closed
+      - -label = stale
+      - created-at < 5 minutes ago
+    actions:
+      comment:
+        message: >
+          Thanks for the PR! CI is running — the merge queue picks it up
+          automatically once all checks pass.
+
+  # Auto-merge when CI passes
+  - name: auto-merge-queue
+    conditions:
+      - check-success = Lint
+      - check-success = Clippy
+      - check-success = Tests
+      - -draft
+      - -closed
+      - author = rakaarwaky
+    actions:
+      queue:
+        name: default
+
+  # Notify when a PR merges
+  - name: merged-notification
+    conditions:
+      - merged
+      - base = main
+    actions:
+      comment:
+        message: Merged via the merge queue. Thanks for the contribution!
+
+scopes:
+  source:
+    files: {}
