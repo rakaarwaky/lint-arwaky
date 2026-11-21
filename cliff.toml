@@ -5,11 +5,13 @@ filter_unconventional = false
 commit_parsers = [
   { message = "^chore\\(release\\):", skip = true },
   { message = "^Merge ",              skip = true },
-  { message = "^feat",                group = "Added" },
-  { message = "^fix",                group = "Fixed" },
-  { message = "^perf",               group = "Changed" },
+  { message = "^fix\\(mergify\\)",    skip = true },
+  { message = "^setup",               skip = true },
+  { message = "^feat",                group = "New" },
+  { message = "^fix",                 group = "Fixed" },
+  { message = "^perf",                group = "Changed" },
   { message = "^(docs|test|refactor|chore|ci)", skip = true },
-  { message = ".*",                  group = "Other" },
+  { message = ".*",                   skip = true },
 ]
 
 [changelog]
