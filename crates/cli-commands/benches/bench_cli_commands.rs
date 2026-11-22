@@ -1,8 +1,6 @@
 // Benchmark tests for cli-commands — formatting and scan dispatch throughput.
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
-use shared_cli_commands::taxonomy_cli_commands_request::{
-    ScanMode, ScanRequest, ScanTarget,
-};
+use shared_cli_commands::taxonomy_cli_commands_request::{ScanMode, ScanRequest, ScanTarget};
 
 fn bench_format_lint_results(c: &mut Criterion) {
     let mut group = c.benchmark_group("format_lint_results");
