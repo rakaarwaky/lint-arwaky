@@ -1,5 +1,6 @@
 // Benchmark tests for cli-commands — formatting and scan dispatch throughput.
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
+use shared_cli_commands::taxonomy_cli_commands_request::{ScanMode, ScanRequest, ScanTarget};
 
 fn bench_format_lint_results(c: &mut Criterion) {
     let mut group = c.benchmark_group("format_lint_results");
@@ -16,6 +17,9 @@ fn bench_format_lint_results(c: &mut Criterion) {
             severity: shared_common::Severity::MEDIUM,
             enclosing_scope: None,
             related_locations: Default::default(),
+            violation_name: Default::default(),
+            why: Default::default(),
+            fix: Default::default(),
         })
         .collect();
 
@@ -37,9 +41,8 @@ fn bench_scan_request_construction(c: &mut Criterion) {
 
     group.bench_function("create_scan_request", |b| {
         b.iter(|| {
-            let target = shared_cli_commands::ScanTarget::new("/tmp/project".to_string());
-            let req =
-                shared_cli_commands::ScanRequest::new(target, shared_cli_commands::ScanMode::Check);
+            let target = ScanTarget::new("/tmp/project".to_string());
+            let req = ScanRequest::new(target, ScanMode::Check);
             std::hint::black_box(req);
         });
     });
