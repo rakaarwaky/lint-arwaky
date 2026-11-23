@@ -306,8 +306,8 @@ Each functional requirement below implements exactly one capability behind one A
 
 #### Edge Cases
 
-- ROADMAP entry `PR-LA-001` with no `PR-LA-001` in PRD fires `pr_roadmap_id_missing`
-- PRD declares `PR-LA-016` with no roadmap entry fires `roadmap_pr_id_not_pr`
+- ROADMAP entry `PR-<PROJECT>-NNN` with no matching entry in PRD fires `pr_roadmap_id_missing`
+- PRD declares `PR-<PROJECT>-NNN` with no roadmap entry fires `roadmap_pr_id_not_pr`
 - Roadmap row missing `State` fires `entry_missing_row`
 
 #### Technical Specification
@@ -325,8 +325,8 @@ Each functional requirement below implements exactly one capability behind one A
 
 | Context | When Action | Then Observable Result |
 |---------|-------------|------------------------|
-| PRD declares `PR-LA-001` but ROADMAP has no entry | The audit runs parity check | A `pr_roadmap_id_missing` finding fires |
-| ROADMAP has `PR-LA-099` not in PRD | The audit runs parity check | A `roadmap_pr_id_not_pr` finding fires |
+| PRD declares `PR-<PROJECT>-NNN` but ROADMAP has no entry | The audit runs parity check | A `pr_roadmap_id_missing` finding fires |
+| ROADMAP has `PR-<PROJECT>-MMM` not in PRD | The audit runs parity check | A `roadmap_pr_id_not_pr` finding fires |
 
 #### Metric
 
@@ -600,13 +600,13 @@ FIX: Add a `## Project Requirements` section with the required subsections.
 ```text
 [HIGH] (ROADMAP.md:27)
 AES606:pr_roadmap_id_missing
-WHY: PRD.md declares PR-LA-001 but ROADMAP.md has no matching Roadmap Status entry; parity is broken.
-FIX: Add a Roadmap Status row for PR-LA-001.
+WHY: PRD.md declares PR-<PROJECT>-NNN but ROADMAP.md has no matching Roadmap Status entry; parity is broken.
+FIX: Add a Roadmap Status row for PR-<PROJECT>-NNN.
 
 [HIGH] (ROADMAP.md:44)
 AES606:roadmap_pr_id_not_pr
-WHY: ROADMAP.md declares PR-LA-099 but PRD.md has no matching Project Requirements entry.
-FIX: Remove the orphan ROADMAP row or add the PR-LA-099 entry to PRD.md.
+WHY: ROADMAP.md declares PR-<PROJECT>-MMM but PRD.md has no matching Project Requirements entry.
+FIX: Remove the orphan ROADMAP row or add the PR-<PROJECT>-MMM entry to PRD.md.
 
 [HIGH] (ROADMAP.md:52)
 AES606:entry_missing_row
