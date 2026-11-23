@@ -49,10 +49,10 @@ Last Updated: 2026-11-23
 | Aspect | Detail |
 |--------|--------|
 | State | Done |
-| Done | ImportRules |
+| Done | AES204 dummy-import checker (`DummyImportChecker` / `IDummyImportCheckerProtocol` in `crates/import-rules/src/capabilities_dummy_import_checker.rs`), wired via `ImportOrchestrator`; exercised by `smoke_import_rules.rs` (11), `integration_import_rules.rs` (8), `unit_agent_import_orchestrator.rs` (4), `contract_import_rules.rs` (6). Gate: `CARGO_INCREMENTAL=0 cargo nextest run -p import-rules-lint-arwaky --lib --tests` → 112 tests, 0 failures at `54d2404d` (CI run `45203607718`). |
 | In Progress | None |
 | Risk | None |
-| Updated | 2026-11-10 |
+| Updated | 2026-11-23 |
 
 ### FR-ImportRules-005
 
