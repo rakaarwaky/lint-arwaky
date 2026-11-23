@@ -40,4 +40,4 @@ jobs:
         uses: actions/labeler@v5
         with:
           dot: true
-          repository-token: ${{ secrets.GITHUB_TOKEN }}
+          repo-token: ${{ secrets.GITHUB_TOKEN }}

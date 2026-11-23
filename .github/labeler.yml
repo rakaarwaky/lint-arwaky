@@ -27,7 +27,6 @@
 # this rule is a catch-all to re-apply it if stripped.
 release:
   - any: ['**']
-    if: "contains(github.event.pull_request.labels.*.name, 'release')"
 
 # ── setup ────────────────────────────────────────────────────────────────────
 # Workflow, Mergify, labeler, action, and automation changes.
