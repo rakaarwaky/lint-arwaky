@@ -39,10 +39,10 @@ Last Updated: 2026-11-23
 | Aspect | Detail |
 |--------|--------|
 | State | Done |
-| Done | ImportRules |
+| Done | AES203 unused-import checker (`UnusedImportRuleChecker` / `IUnusedImportProtocol` in `crates/import-rules/src/capabilities_import_unused_checker.rs`), wired via `ImportOrchestrator`; exercised by `acceptance_AES203.rs` (24), `unit_import_rules_unused_checker.rs` (10), `integration_import_rules.rs` (8), `unit_agent_import_orchestrator.rs` (4). Gate: `CARGO_INCREMENTAL=0 cargo nextest run -p import-rules-lint-arwaky --lib --tests` → 112 tests, 0 failures at `54d2404d` (CI run `45203607718`). |
 | In Progress | None |
 | Risk | None |
-| Updated | 2026-11-10 |
+| Updated | 2026-11-23 |
 
 ### FR-ImportRules-004
 
