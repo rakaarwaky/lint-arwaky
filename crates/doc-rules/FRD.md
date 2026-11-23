@@ -493,7 +493,7 @@ Each functional requirement below implements exactly one capability behind one A
 
 | Context | When Action | Then Observable Result |
 |---------|-------------|------------------------|
-| Design Requirements H3 reads `Tokens` instead of `DS-UI-001` | The audit runs the H3 sweep | An `h3_unexpected` finding fires |
+| Design Requirements H3 reads `Tokens` instead of `DS-<NAME>-NNN` | The audit runs the H3 sweep | An `h3_unexpected` finding fires |
 | A table appears under Design Requirements | The audit checks template conformance | A `table_not_in_template` finding fires |
 
 #### Metric
