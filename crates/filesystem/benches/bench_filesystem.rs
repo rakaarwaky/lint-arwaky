@@ -247,6 +247,7 @@ fn bench_graph_queries(c: &mut Criterion) {
             symbols: vec![],
             is_reexport: false,
             is_wildcard: false,
+            line: 0,
         })
         .collect();
     let graph = DependencyGraph::new();
