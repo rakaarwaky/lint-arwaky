@@ -630,7 +630,7 @@ FIX: Add a `## Backlog` row for FR-DOC-009.
 [HIGH] (DATA.md:33)
 AES608:id_missing_feature_prefix
 WHY: DATA.md heading DT-001 lacks the SHARED qualifier; data IDs must read DT-SHARED-NNN.
-FIX: Rename the heading to DT-SHARED-001.
+FIX: Rename the heading to DT-SHARED-NNN.
 
 [HIGH] (DATA.md:57)
 AES608:source_file_named
