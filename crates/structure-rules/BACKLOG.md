@@ -3,10 +3,11 @@
 FRD: [FRD.md](FRD.md)
 Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
 State: defined in root [ROADMAP.md](../../ROADMAP.md) — cited here, not restated
-Last Updated: 2026-11-09
+Last Updated: 2026-11-23
 
 ## Progress Overview
 
+- Done: All 6 backlog rows reconciled to Done at HEAD; gate: `CARGO_INCREMENTAL=0 cargo nextest run --workspace --lib --tests` → Tests job passed at `e6cb89989215f435141aa68992a71dce44bc243c` (CI run `45261257668`, 2026-11-23). Per-row source and test evidence below.
 - Done: AES702 root-container enforcement added: a feature folder must hold a `root_<concept>_container` or `root_<concept>_entry` file under it, in its `src/` subfolder, or at the member root (a member-root composition file answers for the features beneath it). New violation type `feature_missing_root_container`. `cargo test -p structure-rules-lint-arwaky --lib --tests` → 0 failures. Per-scenario evidence below.
 - Done: AES702 shared-layer mirror check added: a feature folder must be mirrored as a `shared/src/<feature>/` subfolder in its member's layer. New violation type `feature_missing_shared_subfolder`; surface folders are exempt. `cargo nextest run -p structure-rules-lint-arwaky --lib --tests` → 0 failures. Per-scenario evidence below.
 - Done: AES704 (test-suite coverage) added; the two contract files were renamed to `contract_`/`unit_` prefixes so AES103 passes, and `unit_`, `integration_`, `dogfood_`, `smoke_`, `e2e_`, `acceptance_`, and `benches/bench_structure_rules.rs` were added to satisfy AES704. `cargo nextest run -p structure-rules-lint-arwaky --lib --tests` → 0 failures. Per-scenario evidence below.
@@ -21,61 +22,61 @@ Last Updated: 2026-11-09
 
 | Aspect | Detail |
 | -------------- | --------------------------------------------- |
-| State | Ready |
-| Done | STR |
+| State | Done |
+| Done | Shared Folder Purity and Documentation (`IStructureSharedPurityProtocol`); source: `crates/structure-rules/src/capabilities_shared_purity_auditor.rs`, `crates/structure-rules/src/agent_structure_orchestrator.rs`; tests: `crates/structure-rules/tests/contract_structure_rules.rs`, `crates/structure-rules/tests/integration_structure_rules.rs`, `crates/structure-rules/tests/acceptance_FR_STRUCT_004.rs`; Gate: `CARGO_INCREMENTAL=0 cargo nextest run --workspace --lib --tests` → Tests job passed at `e6cb89989215f435141aa68992a71dce44bc243c` (CI run `45261257668`, 2026-11-23).
 | In Progress | None |
 | Risk | None |
-| Updated | 2026-09-29 |
+| Updated | 2026-11-23 |
 
 ### FR-STR-002
 
 | Aspect | Detail |
 | -------------- | --------------------------------------------- |
-| State | Ready |
-| Done | STR |
+| State | Done |
+| Done | Feature Folder Health and Documentation (`IStructureFeatureHealthProtocol`); source: `crates/structure-rules/src/capabilities_feature_health_auditor.rs`, `crates/structure-rules/src/agent_structure_orchestrator.rs`; tests: `crates/structure-rules/tests/contract_structure_rules.rs`, `crates/structure-rules/tests/contract_structure_rules_aes702_705.rs`, `crates/structure-rules/tests/integration_structure_rules.rs`; Gate: `CARGO_INCREMENTAL=0 cargo nextest run --workspace --lib --tests` → Tests job passed at `e6cb89989215f435141aa68992a71dce44bc243c` (CI run `45261257668`, 2026-11-23).
 | In Progress | None |
 | Risk | None |
-| Updated | 2026-09-29 |
+| Updated | 2026-11-23 |
 
 ### FR-STR-003
 
 | Aspect | Detail |
 | -------------- | --------------------------------------------- |
-| State | Ready |
-| Done | STR |
+| State | Done |
+| Done | Surface Folder Purity and Documentation (`IStructureSurfacePurityProtocol`); source: `crates/structure-rules/src/capabilities_surface_purity_auditor.rs`, `crates/structure-rules/src/agent_structure_orchestrator.rs`; tests: `crates/structure-rules/tests/contract_structure_rules.rs`, `crates/structure-rules/tests/integration_structure_rules.rs`, `crates/structure-rules/tests/acceptance_FR_STRUCT_004.rs`; Gate: `CARGO_INCREMENTAL=0 cargo nextest run --workspace --lib --tests` → Tests job passed at `e6cb89989215f435141aa68992a71dce44bc243c` (CI run `45261257668`, 2026-11-23).
 | In Progress | None |
 | Risk | None |
-| Updated | 2026-09-29 |
+| Updated | 2026-11-23 |
 
 ### FR-STR-004
 
 | Aspect | Detail |
 | -------------- | --------------------------------------------- |
-| State | Ready |
-| Done | STR |
+| State | Done |
+| Done | Test Suite Category Coverage (`IStructureTestSuiteProtocol`); source: `crates/structure-rules/src/capabilities_test_suite_coverage_auditor.rs`, `crates/structure-rules/src/agent_structure_orchestrator.rs`; tests: `crates/structure-rules/tests/e2e_structure_rules_flow.rs`, `crates/structure-rules/tests/integration_structure_rules.rs`, `crates/structure-rules/tests/acceptance_FR_STRUCT_004.rs`; Gate: `CARGO_INCREMENTAL=0 cargo nextest run --workspace --lib --tests` → Tests job passed at `e6cb89989215f435141aa68992a71dce44bc243c` (CI run `45261257668`, 2026-11-23).
 | In Progress | None |
 | Risk | None |
-| Updated | 2026-09-29 |
+| Updated | 2026-11-23 |
 
 ### FR-STR-005
 
 | Aspect | Detail |
 | -------------- | --------------------------------------------- |
-| State | Ready |
-| Done | STR |
+| State | Done |
+| Done | Member-Root File Placement (`IStructureMemberRootProtocol`); source: `crates/structure-rules/src/capabilities_member_root_placement_auditor.rs`, `crates/structure-rules/src/agent_structure_orchestrator.rs`; tests: `crates/structure-rules/tests/contract_structure_rules_aes702_705.rs`, `crates/structure-rules/tests/contract_structure_rules.rs`, `crates/structure-rules/tests/acceptance_aes706_pr_la_folder.rs`; Gate: `CARGO_INCREMENTAL=0 cargo nextest run --workspace --lib --tests` → Tests job passed at `e6cb89989215f435141aa68992a71dce44bc243c` (CI run `45261257668`, 2026-11-23).
 | In Progress | None |
 | Risk | None |
-| Updated | 2026-09-29 |
+| Updated | 2026-11-23 |
 
 ### FR-STR-006
 
 | Aspect | Detail |
 | -------------- | --------------------------------------------- |
-| State | Ready |
-| Done | STR |
+| State | Done |
+| Done | PR ID Folder Alignment (`IStructurePrLaProtocol, `IStructureAggregate`); source: `crates/structure-rules/src/capabilities_requirement_folder_parity.rs`, `crates/structure-rules/src/agent_structure_orchestrator.rs`; tests: `crates/structure-rules/tests/acceptance_aes706_pr_la_folder.rs`, `crates/structure-rules/tests/smoke_structure_rules.rs`, `crates/structure-rules/tests/dogfood_structure_rules.rs`; Gate: `CARGO_INCREMENTAL=0 cargo nextest run --workspace --lib --tests` → Tests job passed at `e6cb89989215f435141aa68992a71dce44bc243c` (CI run `45261257668`, 2026-11-23).
 | In Progress | None |
 | Risk | None |
-| Updated | 2026-11-09 |
+| Updated | 2026-11-23 |
 
 ## Reference
 
