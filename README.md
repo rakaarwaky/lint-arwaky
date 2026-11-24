@@ -13,7 +13,6 @@ Lint Arwaky is a single-tool, multi-language architecture linter for monorepos. 
 
 ## Quick Start
 
-
 | Step | Action                                       | Command                                                                                                    |
 | ---- | -------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
 | 1    | Install the pre-built binary (Linux x86\_64) | `curl -sSL https://raw.githubusercontent.com/rakaarwaky/lint-arwaky/main/scripts/install.remote.sh | bash` |
@@ -26,7 +25,6 @@ Lint Arwaky is a single-tool, multi-language architecture linter for monorepos. 
 | 8    | Preview auto-fixes                           | `lint-arwaky-cli fix . --dry-run`                                                                          |
 
 ## Reference
-
 
 | Artifact     | Purpose                                          | Link                               |
 | ------------ | ------------------------------------------------ | ---------------------------------- |
