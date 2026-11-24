@@ -23,7 +23,7 @@ jobs:
   labeler:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Ensure required labels exist
         # Create any skip labels that are missing. gh label create --force
@@ -37,7 +37,7 @@ jobs:
           done
 
       - name: Apply labeler.yml
-        uses: actions/labeler@v5
+        uses: actions/labeler@v7
         with:
           dot: true
           repo-token: ${{ secrets.GITHUB_TOKEN }}
