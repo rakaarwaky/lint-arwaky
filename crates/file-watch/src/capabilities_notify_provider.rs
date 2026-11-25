@@ -4,7 +4,7 @@ use std::sync::Mutex;
 use std::time::Duration;
 
 use notify::{RecommendedWatcher, RecursiveMode};
-use notify_debouncer_mini::new_debouncer;
+use notify_debouncer_mini::{DebouncedEventBatch, new_debouncer};
 use shared_common::taxonomy_common_vo::BooleanVO;
 use shared_common::taxonomy_message_vo::LintMessage;
 use shared_file_watch::contract_watch_protocol::IWatchLifecycleProtocol;
@@ -67,8 +67,14 @@ impl IWatchLifecycleProtocol for NotifyWatchProvider {
 
         let mut debouncer = new_debouncer(
             Duration::from_millis(config.debounce_ms),
-            move |res: Result<Vec<notify_debouncer_mini::DebouncedEvent>, _>| {
-                if let Ok(events) = res {
+            move |res: Result<DebouncedEventBatch, _>| {
+                if let Ok(batch) = res {
+                    let events = match batch {
+                        DebouncedEventBatch::Events(events) => events,
+                        // Rescan signals missed events; the provider has no
+                        // cached state to refresh, so there is nothing to do.
+                        _ => Vec::new(),
+                    };
                     for event in events {
                         let path_str = event.path.to_string_lossy().to_string();
                         let skip = ignore.iter().any(|p| path_str.contains(p.as_str()));

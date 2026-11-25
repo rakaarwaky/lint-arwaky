@@ -269,7 +269,7 @@ fn parse_options<'o>() -> Options<'o> {
 fn collect_h2s<'a>(root: comrak::nodes::Node<'a>) -> Vec<String> {
     let mut h2s = Vec::new();
     for node in root.children() {
-        if let NodeValue::Heading(h) = node.data().value {
+        if let NodeValue::Heading(ref h) = node.data().value {
             if h.level == 2 {
                 let text = node.collect_text().trim().to_string();
                 if !text.is_empty() {
@@ -286,7 +286,7 @@ fn collect_h2s<'a>(root: comrak::nodes::Node<'a>) -> Vec<String> {
 fn collect_h4s<'a>(root: comrak::nodes::Node<'a>) -> Vec<String> {
     let mut h4s = Vec::new();
     for node in root.descendants() {
-        if let NodeValue::Heading(h) = node.data().value {
+        if let NodeValue::Heading(ref h) = node.data().value {
             if h.level == 4 {
                 let text = node.collect_text().trim().to_string();
                 if !text.is_empty() {
