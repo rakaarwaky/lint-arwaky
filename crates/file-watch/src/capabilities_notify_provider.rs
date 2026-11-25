@@ -71,9 +71,29 @@ impl IWatchLifecycleProtocol for NotifyWatchProvider {
                 if let Ok(batch) = res {
                     let events = match batch {
                         DebouncedEventBatch::Events(events) => events,
-                        // Rescan signals missed events; the provider has no
-                        // cached state to refresh, so there is nothing to do.
-                        _ => Vec::new(),
+                        // Rescan signals missed events; the provider keeps no
+                        // cached state to refresh, so surface the loss instead
+                        // of dropping it silently (#901: no event may be lost
+                        // without a trace).
+                        DebouncedEventBatch::Rescan => {
+                            tracing::warn!(
+                                "watch debouncer requested a rescan; missed \
+                                 filesystem events cannot be replayed because \
+                                 no state is cached"
+                            );
+                            Vec::new()
+                        }
+                        // `DebouncedEventBatch` is #[non_exhaustive]; keep the
+                        // catch-all so a future variant degrades to the same
+                        // observable warning rather than an empty silent drop.
+                        _ => {
+                            tracing::warn!(
+                                "watch debouncer delivered an unhandled batch \
+                                 variant; missed filesystem events cannot be \
+                                 replayed because no state is cached"
+                            );
+                            Vec::new()
+                        }
                     };
                     for event in events {
                         let path_str = event.path.to_string_lossy().to_string();
