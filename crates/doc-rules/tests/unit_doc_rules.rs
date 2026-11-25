@@ -164,3 +164,46 @@ fn heading_defect_messages_names_the_document() {
         "message must name the missing section, got {message}"
     );
 }
+
+/// QA-S3-001: pin the comrak-generated doc-shape constants so a major comrak
+/// bump that changes heading/table/text extraction fails loudly here instead
+/// of silently drifting the AES6xx doc gate. These constants are emitted by
+/// `crates/shared/build.rs` from the reference templates via comrak, so a
+/// change in comrak's parse behavior shifts them and breaks this test.
+#[test]
+fn comrak_generated_doc_shape_constants_are_pinned() {
+    assert_eq!(
+        consts::AGENTS_REQUIRED_H2S,
+        &[
+            "Agent Overview",
+            "Runtime",
+            "Project Structure",
+            "Commands",
+            "Reference",
+        ],
+        "AGENTS_REQUIRED_H2S must match the comrak extraction of agents/template.md"
+    );
+    assert_eq!(
+        consts::AGENTS_RUNTIME_ROW_LABELS,
+        &[
+            "Language",
+            "Environment",
+            "Artifacts",
+            "Package Manager",
+            "Version Probe",
+            "Setup",
+            "Activation",
+        ],
+        "AGENTS_RUNTIME_ROW_LABELS must match the comrak table extraction"
+    );
+    assert_eq!(
+        consts::PRD_ROW_LABELS,
+        &["User Stories", "Proposed Solution", "Main User Flow"],
+        "PRD_ROW_LABELS must match the comrak H4 extraction of prd/template.md"
+    );
+    assert_eq!(
+        consts::FR_FIELDS,
+        &["Input", "Output", "Protocol", "Method", "Event", "Error"],
+        "FR_FIELDS must match the comrak table extraction of frd/template.md"
+    );
+}
