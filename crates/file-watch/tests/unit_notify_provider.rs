@@ -72,3 +72,55 @@ async fn real_debounced_event_is_not_discarded() {
         "every real debounced event must be forwarded, none may be discarded"
     );
 }
+
+/// The `Events` arm must honour `ignore_patterns`: a path matching an ignore
+/// pattern is suppressed while a non-matching path in the same watch is still
+/// forwarded. This covers the skip branch inside `DebouncedEventBatch::Events`
+/// that the single-event regression test never exercises.
+#[tokio::test]
+async fn ignored_pattern_is_not_forwarded_but_other_paths_are() {
+    let tmp = tempfile::tempdir().expect("tempdir");
+    let root = tmp.path().to_path_buf();
+    let kept = root.join("keep.txt");
+    let ignored = root.join("skip.log");
+    fs::write(&kept, "a").expect("write kept");
+    fs::write(&ignored, "a").expect("write ignored");
+
+    let config = WatchConfig {
+        path: shared_common::taxonomy_path_vo::FilePath::new(root.to_string_lossy().into_owned())
+            .expect("valid path"),
+        recursive: false,
+        debounce_ms: 50,
+        ignore_patterns: vec!["skip.log".to_string()],
+    };
+
+    let provider = NotifyWatchProvider::new();
+    let mut rx = provider.subscribe();
+    provider
+        .start(&config)
+        .await
+        .expect("watcher starts on an existing path");
+
+    fs::write(&ignored, "b").expect("write ignored again");
+    fs::write(&kept, "b").expect("write kept again");
+
+    let deadline = Duration::from_secs(3);
+    let start = std::time::Instant::now();
+    let mut saw_kept = false;
+    let mut saw_ignored = false;
+    while start.elapsed() < deadline && !saw_kept {
+        // Bound the recv so a quiet channel (the ignored event is correctly
+        // suppressed, so no further events arrive) cannot hang the test.
+        match tokio::time::timeout(Duration::from_millis(500), rx.recv()).await {
+            Ok(Ok(event)) => {
+                saw_kept |= event.path.contains("keep.txt");
+                saw_ignored |= event.path.contains("skip.log");
+            }
+            Ok(Err(tokio::sync::broadcast::error::RecvError::Lagged(_))) => continue,
+            Ok(Err(tokio::sync::broadcast::error::RecvError::Closed)) => break,
+            Err(_elapsed) => break,
+        }
+    }
+    assert!(saw_kept, "non-ignored path must be forwarded");
+    assert!(!saw_ignored, "ignored path must not be forwarded");
+}
