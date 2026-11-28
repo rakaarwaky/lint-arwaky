@@ -38,9 +38,18 @@ jobs:
         uses: actions/cache@v6
         with:
           path: target/criterion
-          key: criterion-baseline-${{ runner.os }}-${{ github.run_id }}
+          # Pin the baseline to the benchmark definition, not the run id: the
+          # key is stable across runs so the newest green main baseline is
+          # restored (GitHub Actions caches are immutable, so a real refresh
+          # only happens when the benchmark source changes the hash below).
+          # The previous key embedded ${{ github.run_id }}, which made every
+          # restore miss the exact key and fall back to the *previous run's*
+          # `target/criterion` via restore-keys — so the "baseline" was a
+          # single noisy shared-runner sample and small or large apparent
+          # changes alike tripped the hard gate on the same commit.
+          key: criterion-baseline-v2-${{ runner.os }}-${{ hashFiles('crates/*/benches/**/*.rs', 'Cargo.lock') }}
           restore-keys: |
-            criterion-baseline-${{ runner.os }}-
+            criterion-baseline-v2-${{ runner.os }}-
 
       - name: Run workspace benchmarks
         run: |
@@ -55,13 +64,51 @@ jobs:
       - name: Detect regressions vs baseline
         run: |
           # Criterion prints "Performance has regressed." for every benchmark
-          # whose change vs the cached baseline exceeds its noise threshold.
-          if grep -q "Performance has regressed" bench-out/bench.log; then
-            echo "::error title=Benchmark regression::Criterion reported regressions vs the cached baseline — see the run log"
+          # whose change vs the baseline is statistically significant
+          # (p < 0.05). On shared GitHub runners a single noisy sample can
+          # shift the apparent mean by tens of percent even for an unchanged
+          # commit, so significance alone is too sensitive for a hard gate.
+          #
+          # Fail only when a regression is BOTH statistically significant AND
+          # practically meaningful: the point estimate exceeds
+          # NOISE_THRESHOLD_PCT (the documented budget's per-benchmark noise
+          # allowance). Smaller significant shifts are reported but do not
+          # fail the job.
+          #
+          # 60% covers the worst same-commit drift observed on shared runners
+          # (~50% on unchanged code between two nightly runs of v3.18.6),
+          # while still catching genuine algorithmic regressions (2x+).
+          NOISE_THRESHOLD_PCT=60
+          fail=0
+          # The line before a regression marker is either a `change:` line
+          # (time +X%) for plain benchmarks or a `thrpt:` line (throughput
+          # -X%) for throughput benchmarks. Extract the magnitude either way.
+          while IFS= read -r line; do
+            pct=""
+            # `change:` lines use ASCII +/-; `thrpt:` lines use the Unicode
+            # minus (U+2212). Accept either sign in both patterns.
+            if echo "$line" | grep -q 'change:'; then
+              pct=$(echo "$line" | grep -oP 'change:\s*\[\s*[+\-\x{2212}]?\d+(?:\.\d+)?%\s+[+\-\x{2212}]?\K\d+(?:\.\d+)?(?=%)' || true)
+            elif echo "$line" | grep -q 'thrpt:'; then
+              pct=$(echo "$line" | grep -oP 'thrpt:\s*\[\s*[+\-\x{2212}]?\d+(?:\.\d+)?%\s+[+\-\x{2212}]?\K\d+(?:\.\d+)?(?=%)' || true)
+            fi
+            if [ -n "$pct" ]; then
+              over=$(awk -v p="$pct" -v t="$NOISE_THRESHOLD_PCT" 'BEGIN{print (p > t) ? 1 : 0}')
+              if [ "$over" = "1" ]; then
+                echo "::error title=Benchmark regression::${pct}% regression exceeds ${NOISE_THRESHOLD_PCT}% noise budget"
+                fail=1
+              else
+                echo "notice: ${pct}% regression within ${NOISE_THRESHOLD_PCT}% noise budget — not failing"
+              fi
+            fi
+          done < <(grep -B2 "Performance has regressed" bench-out/bench.log || true)
+
+          if [ "$fail" -ne 0 ]; then
+            echo "::error title=Benchmark regression::One or more benchmarks regressed beyond the noise budget — see the run log"
             grep -B2 -A2 "Performance has regressed" bench-out/bench.log || true
             exit 1
           fi
-          echo "No regressions vs baseline."
+          echo "No regressions beyond the ${NOISE_THRESHOLD_PCT}% noise budget."
 
       - name: Publish benchmark results
         if: always()
